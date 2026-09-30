@@ -33,6 +33,7 @@ export default function SlideEditorToolsTextComp({
         >
             <SlideEditorToolTitleComp title={tran('Color')} isInline>
                 <SlideEditorToolsColorComp
+                    label={tran('Text Color')}
                     color={props.color}
                     handleColorChanging={(newColor) => {
                         setProps({

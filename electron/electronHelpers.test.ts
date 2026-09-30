@@ -53,6 +53,7 @@ import {
     askGuideHelp,
     answerGuideHelp,
     sweepStalePrintPreviewFiles,
+    toEditorWindowKey,
     toShortcutKey,
     toUnpackedPath,
     unlocking,
@@ -147,6 +148,7 @@ describe('electronHelpers', () => {
                 key: 'a',
             }),
         ).toBe('Ctrl + Shift + A');
+        expect(toShortcutKey({ key: '' })).toBe('');
     });
 
     test('opens download page with current app version', () => {
@@ -154,6 +156,22 @@ describe('electronHelpers', () => {
 
         expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
             'https://www.openworship.app/download?mv=1.2.3',
+        );
+    });
+
+    test('reports a download page that the system browser refuses', async () => {
+        const error = new Error('no browser');
+        electronMockState.shell.openExternal.mockRejectedValueOnce(error);
+        const consoleError = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+
+        goDownload();
+        await Promise.resolve();
+
+        expect(consoleError).toHaveBeenCalledWith(
+            'Failed to open the download page:',
+            error,
         );
     });
 
@@ -203,6 +221,20 @@ describe('electronHelpers', () => {
         await expect(first).resolves.toBe('first');
         await expect(second).resolves.toBe('second');
         expect(order).toEqual(['first:start', 'first:end', 'second:start']);
+    });
+
+    test('times out a lock that is never released', async () => {
+        vi.useFakeTimers();
+        void unlocking('stuck-key', () => new Promise(() => {}));
+        const waiting = unlocking('stuck-key', () => 'never');
+        const rejected = expect(waiting).rejects.toThrow(
+            'Timeout waiting for unlock: stuck-key',
+        );
+
+        await vi.advanceTimersByTimeAsync(60_000);
+
+        await rejected;
+        vi.useRealTimers();
     });
 
     test('returns theme background from nativeTheme', () => {
@@ -275,6 +307,20 @@ describe('electronHelpers', () => {
             { printBackground: true },
             expect.any(Function),
         );
+    });
+
+    test('printing safely does nothing when there is no live window', async () => {
+        printCurrentWindow(undefined);
+        await expect(previewPrintCurrentWindow(undefined)).resolves.toBeNull();
+
+        const destroyed = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => true),
+        });
+        printCurrentWindow(destroyed as any);
+        await expect(
+            previewPrintCurrentWindow(destroyed as any),
+        ).resolves.toBeNull();
+        expect(destroyed.webContents.print).not.toHaveBeenCalled();
     });
 
     test('opens a PDF preview window for current window print output', async () => {
@@ -780,5 +826,38 @@ describe('electronHelpers', () => {
         vi.advanceTimersByTime(1);
         expect(callback).toHaveBeenCalledTimes(1);
         vi.useRealTimers();
+    });
+});
+
+describe('toEditorWindowKey', () => {
+    const base = 'https://localhost:3000/appDocumentEditor.html';
+
+    test('names the same window for two slides of one document', () => {
+        const first = toEditorWindowKey(
+            `${base}?file=a.ows&uuid=app_document_editor&id=2`,
+        );
+        const second = toEditorWindowKey(
+            `${base}?file=a.ows&id=1&uuid=app_document_editor`,
+        );
+        const noSlide = toEditorWindowKey(
+            `${base}?file=a.ows&uuid=app_document_editor`,
+        );
+        expect(first).not.toBeNull();
+        expect(first).toBe(second);
+        expect(first).toBe(noSlide);
+    });
+
+    test('keeps two documents apart', () => {
+        expect(toEditorWindowKey(`${base}?file=a.ows&id=1`)).not.toBe(
+            toEditorWindowKey(`${base}?file=b.ows&id=1`),
+        );
+    });
+
+    test('ignores other pages and the in-place editor', () => {
+        expect(
+            toEditorWindowKey('https://localhost:3000/setting.html?uuid=x'),
+        ).toBeNull();
+        expect(toEditorWindowKey(base)).toBeNull();
+        expect(toEditorWindowKey('not a url')).toBeNull();
     });
 });

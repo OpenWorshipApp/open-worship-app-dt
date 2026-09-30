@@ -83,6 +83,9 @@ type ArchiveManifestType = {
     presentingFlow: string;
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
+    // The exporting machine's data folder (`writeArchiveManifest`); absent
+    // from a bundle written before it was recorded.
+    dataDirPath?: string | null;
 };
 
 /**
@@ -160,16 +163,27 @@ function toItemPathRefs(item: PresentingFlowItemType): PathRefType[] {
             },
         ];
     }
-    if (type === DragTypeEnum.FOREGROUND && item.data?.target === 'web') {
-        return [
-            {
-                kind: 'web',
-                get: () => toStringOrNull(item.data?.data?.filePath),
-                set: (newFilePath) => {
-                    item.data.data.filePath = newFilePath;
+    if (type === DragTypeEnum.FOREGROUND) {
+        // The foreground widgets that reference a FILE. Each one carries it at
+        // the same place in the payload, and each has its own folder to be put
+        // back into -- see `kindDirSettingNameMap`.
+        const foregroundKindMap: { [key: string]: ArchiveFileKindType } = {
+            web: 'web',
+            video: 'foreground-video',
+            image: 'foreground-image',
+        };
+        const kind = foregroundKindMap[item.data?.target];
+        if (kind !== undefined) {
+            return [
+                {
+                    kind,
+                    get: () => toStringOrNull(item.data?.data?.filePath),
+                    set: (newFilePath) => {
+                        item.data.data.filePath = newFilePath;
+                    },
                 },
-            },
-        ];
+            ];
+        }
     }
     return [];
 }
@@ -325,6 +339,10 @@ function validateManifest(jsonData: unknown): ArchiveManifestType {
         backgroundMetas: validateArchiveBackgroundMetas(
             manifest.backgroundMetas,
         ),
+        dataDirPath:
+            typeof manifest.dataDirPath === 'string'
+                ? manifest.dataDirPath
+                : null,
     };
 }
 
@@ -434,7 +452,12 @@ export async function importPresentingFlowArchive(archiveFilePath: string) {
         }
         const dirPathByKind = resolveKindDirPaths(manifest.files);
         const { localFilePathByOriginalPath, writtenItemFilePaths } =
-            await importArchiveFiles(extractDir, manifest.files, dirPathByKind);
+            await importArchiveFiles(
+                extractDir,
+                manifest.files,
+                dirPathByKind,
+                manifest.dataDirPath,
+            );
         await applyImportedPaths(jsonData.items, localFilePathByOriginalPath);
         await applyImportedCanvasMedia(
             writtenItemFilePaths,

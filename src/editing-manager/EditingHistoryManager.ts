@@ -31,6 +31,27 @@ export function checkIsHistoryMovementEventType(
 ): eventType is HistoryMovementType {
     return HISTORY_MOVEMENT_TYPES.includes(eventType as HistoryMovementType);
 }
+/**
+ * The head and the file are compared to decide whether anything is unsaved,
+ * and `metadata.lastEditDate` moves on its own -- so it is blanked on both
+ * sides first or every document would read as modified forever.
+ *
+ * Exported because the editing menu's Discard button and the Bible Notes
+ * list's `Discard Change` item both ask the same question: a second copy of
+ * this would let the two disagree about whether there is anything to discard.
+ */
+export function sanitizeForUpdatingComparison(jsonText: string | null) {
+    if (jsonText === null) {
+        return null;
+    }
+    try {
+        const jsonData = JSON.parse(jsonText);
+        jsonData.metadata ??= {};
+        jsonData.metadata.lastEditDate = '';
+        return JSON.stringify(jsonData);
+    } catch (_error) {}
+    return jsonText;
+}
 const CURRENT_FILE_SIGN = '-head';
 const MAX_HISTORY_FILES = 100;
 export class FileLineHandler {
@@ -273,18 +294,18 @@ export class FileLineHandler {
     }
 
     async ensureHistoriesDir() {
-        if (!(await fsCheckDirExist(this.dirPath))) {
-            await fsCreateDir(this.dirPath);
-        }
         let currentFilePath = await this.getCurrentFileFullPath();
         if (currentFilePath !== null) {
             return;
         }
-        await this.clearHistories();
-        await fsCreateDir(this.dirPath);
+        // Asked before anything is made: a run sheet still naming a deleted
+        // document reads it on every load, and a folder made first was left
+        // behind, empty, each time.
         if (!(await fsCheckFileExist(this.filePath))) {
             throw new Error(`File ${this.filePath} does not exist`);
         }
+        await this.clearHistories();
+        await fsCreateDir(this.dirPath);
         currentFilePath = this.toCurrentFileFullPath(0);
         await fsCloneFile(this.filePath, currentFilePath);
         // A history cleared and rebuilt reuses `0-head` -- a path that may
@@ -412,6 +433,53 @@ export default class EditingHistoryManager {
         return await fsCheckDirExist(
             EditingHistoryManager.genFolderPath(this.filePath),
         );
+    }
+
+    /**
+     * Whether a Discard would actually throw something away: a step to walk
+     * back or forward, or a head that no longer matches the file.
+     *
+     * Mirrors exactly what the editing menu's own Discard button is enabled
+     * on (`canUndo || canRedo || canSave`), so a note item's menu and the
+     * note window cannot disagree about whether there is anything pending.
+     *
+     * A head that cannot be READ counts as discardable on purpose: an
+     * unparseable head is what makes every note in that file refuse to open,
+     * and discarding it is the only way back to the file on disk.
+     *
+     * It reads two files, so it is asked when a menu is being OPENED -- a
+     * user gesture -- never per render or per list row.
+     */
+    async checkCanDiscard() {
+        if (!(await this.checkHasHistories())) {
+            return false;
+        }
+        if ((await this.checkCanUndo()) || (await this.checkCanRedo())) {
+            return true;
+        }
+        const historyText = await this.getCurrentHistory();
+        if (historyText === null) {
+            return true;
+        }
+        const sanitizedHistoryText = sanitizeForUpdatingComparison(historyText);
+        const sanitizedText = sanitizeForUpdatingComparison(
+            await this.getOriginalData(),
+        );
+        return sanitizedHistoryText !== sanitizedText;
+    }
+
+    /**
+     * The whole history folder, gone, because the FILE is going.
+     *
+     * NOT `discard()`, which is the button a USER presses: that one answers
+     * "there is nothing to walk back" with a no-op, so a delete that cleaned
+     * up through it cleaned up only conditionally. A folder holding one entry
+     * -- what `ensureHistoriesDir` leaves when the write after it fails -- was
+     * left on disk for the next file of that name to read as its own unsaved
+     * state.
+     */
+    async deleteHistories() {
+        await this.fileLineHandler.clearHistories();
     }
 
     async discard() {

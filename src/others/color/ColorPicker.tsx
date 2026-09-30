@@ -5,18 +5,43 @@ import { useCallback, useState } from 'react';
 
 import colorList from '../color-list.json';
 import type { AppColorType } from './colorHelpers';
-import { transparentColor, colorToTransparent } from './colorHelpers';
+import {
+    transparentColor,
+    colorToTransparent,
+    checkIsColorDark,
+    removeOpacityFromHexColor,
+} from './colorHelpers';
 import OpacitySliderComp from './OpacitySliderComp';
 import RenderColorsComp from './RenderColorsComp';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import {
+    createMouseEvent,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 import { tran } from '../../lang/langHelpers';
 
 freezeObject(colorList);
+
+/**
+ * The text color the collapsed chip writes its own hex in. The chip is painted
+ * in the color it names, so a fixed text color vanishes on the one swatch that
+ * matches it (`#ffffff` in white on white). A mostly see-through color shows
+ * the panel behind it instead, and keeps the theme's own text.
+ */
+function genPreviewTextStyle(color: AppColorType | null | undefined) {
+    if (!color || colorToTransparent(color) < 128) {
+        return {};
+    }
+    const isDark = checkIsColorDark(removeOpacityFromHexColor(color));
+    return {
+        color: isDark ? '#ffffff' : '#000000',
+        textShadow: 'none',
+    };
+}
 
 function setOpacity(color: string, opacity: number) {
     const hex = transparentColor(opacity);
@@ -30,6 +55,66 @@ function setOpacity(color: string, opacity: number) {
     return newColor.join('');
 }
 
+function ColorValueInputComp({
+    color,
+    label,
+    onColorChange,
+}: Readonly<{
+    color: AppColorType | null | undefined;
+    label: string;
+    onColorChange: (color: string, event: MouseEvent) => void;
+}>) {
+    const [draft, setDraft] = useState(color ?? '');
+    useAppEffect(() => {
+        setDraft(color ?? '');
+    }, [color]);
+    const applyDraft = (input: HTMLInputElement) => {
+        let hex = draft.trim().replace(/^#/, '');
+        if (!/^(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(hex)) {
+            setDraft(color ?? '');
+            return;
+        }
+        if (hex.length < 5) {
+            hex = hex.replace(/./g, '$&$&');
+        }
+        const nextColor = `#${hex.toUpperCase()}`;
+        setDraft(nextColor);
+        if (nextColor !== color?.toUpperCase()) {
+            const bounds = input.getBoundingClientRect();
+            onColorChange(nextColor, createMouseEvent(bounds.x, bounds.y));
+        }
+    };
+    return (
+        <input
+            type="text"
+            className="color-picker-value px-1 text-color-preview"
+            aria-label={label}
+            title={label}
+            value={draft}
+            autoComplete="off"
+            spellCheck={false}
+            style={{
+                backgroundColor: color ?? 'transparent',
+                ...genPreviewTextStyle(color),
+            }}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            onBlur={(event) => applyDraft(event.currentTarget)}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (event.key === 'Escape') {
+                        setDraft(color ?? '');
+                    } else {
+                        applyDraft(event.currentTarget);
+                    }
+                }
+            }}
+        />
+    );
+}
+
 export default function ColorPickerComp({
     defaultColor,
     color,
@@ -37,6 +122,7 @@ export default function ColorPickerComp({
     onNoColor,
     isCollapsable = false,
     isNoImmediate = false,
+    colorInputLabel,
 }: Readonly<{
     defaultColor: AppColorType;
     color: AppColorType | null | undefined;
@@ -44,6 +130,7 @@ export default function ColorPickerComp({
     onNoColor?: (color: AppColorType, event: MouseEvent) => void;
     isCollapsable?: boolean;
     isNoImmediate?: boolean;
+    colorInputLabel?: string;
 }>) {
     const [isOpened, setIsOpened] = useState(false);
     const [localColor, setLocalColor] = useState(color);
@@ -72,10 +159,12 @@ export default function ColorPickerComp({
                 onNoColorRef.current?.(defaultColorRef.current, event);
                 return;
             }
-            const newColorStr = setOpacity(
-                newColor as string,
-                opacityRef.current,
-            );
+            // Alpha 0 is only ever "no color" (the slider stops at 1), so a
+            // color picked from there must come out visible: carrying the 0
+            // over stored an invisible `#FF000000` for "red".
+            const opacityToKeep =
+                opacityRef.current === 0 ? 255 : opacityRef.current;
+            const newColorStr = setOpacity(newColor as string, opacityToKeep);
             applyNewColorRef.current(newColorStr, event);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,20 +207,38 @@ export default function ColorPickerComp({
     if (isCollapsable && !isOpened) {
         return (
             <div
-                className="app-flex-item color-picker app-caught-hover-pointer "
+                className="app-flex-item color-picker"
                 onContextMenu={handleContextMenuOpening}
-                onClick={handleOpen}
             >
-                <i className="bi bi-chevron-right" />
-                <div
-                    className="h-100 px-1 app-ellipsis text-color-preview"
-                    style={{
-                        backgroundColor: color ?? 'transparent',
-                        width: 'calc(100% - 10px)',
-                    }}
+                <button
+                    type="button"
+                    className="color-picker-toggle app-caught-hover-pointer"
+                    aria-expanded={false}
+                    aria-label={`${tran('Choose Color')}: ${color ?? ''}`}
+                    style={colorInputLabel ? { flex: '0 0 auto' } : undefined}
+                    onClick={handleOpen}
                 >
-                    {color}
-                </div>
+                    <i className="bi bi-chevron-right" />
+                    {!colorInputLabel && (
+                        <span
+                            className="h-100 px-1 app-ellipsis text-color-preview"
+                            style={{
+                                backgroundColor: color ?? 'transparent',
+                                width: 'calc(100% - 10px)',
+                                ...genPreviewTextStyle(color),
+                            }}
+                        >
+                            {color}
+                        </span>
+                    )}
+                </button>
+                {colorInputLabel && (
+                    <ColorValueInputComp
+                        color={localColor}
+                        label={colorInputLabel}
+                        onColorChange={applyNewColor}
+                    />
+                )}
                 <ContextMenuDotsButtonComp
                     onOpening={handleContextMenuOpening}
                 />
@@ -144,10 +251,16 @@ export default function ColorPickerComp({
             onContextMenu={handleContextMenuOpening}
         >
             {isCollapsable ? (
-                <i
-                    className="app-caught-hover-pointer bi bi-chevron-down"
+                <button
+                    type="button"
+                    className="color-picker-toggle app-caught-hover-pointer"
+                    aria-expanded={true}
+                    aria-label={tran('Collapse')}
+                    title={tran('Collapse')}
                     onClick={handleClose}
-                />
+                >
+                    <i className="bi bi-chevron-down" />
+                </button>
             ) : null}
             <ContextMenuDotsButtonComp
                 className="float-end"
@@ -159,6 +272,7 @@ export default function ColorPickerComp({
                     selectedColor={localColor}
                     onColorChange={handleColorChanging}
                     isNoImmediate={isNoImmediate}
+                    canNoColor={onNoColor !== undefined}
                 />
                 {localColor !== null && (
                     <OpacitySliderComp

@@ -59,6 +59,13 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...parts: string[]) => parts.join('/'),
     fsCheckFileExist: fsCheckFileExistMock,
+    // The real one against a data folder at `/data` (tested in
+    // `fileHelpers.test.ts`).
+    toDataDirRelativePath: (filePath: string) => {
+        return filePath.startsWith('/data/')
+            ? `@data${filePath.slice('/data'.length)}`
+            : filePath;
+    },
 }));
 
 import {
@@ -66,11 +73,41 @@ import {
     getSettingForce,
     getSettingPrefix,
     setSetting,
+    toFilePathSettingKey,
     useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
     useWatchStateSettingString,
 } from './settingHelpers';
+
+describe('toFilePathSettingKey', () => {
+    test('a file in the data folder is named relative to it', () => {
+        // The same name whatever drive or computer the folder is on.
+        expect(toFilePathSettingKey('/data/documents/song 74.ows')).toBe(
+            '@data_documents_song_74_ows',
+        );
+        expect(toFilePathSettingKey('/elsewhere/a.ows')).toBe(
+            '_elsewhere_a_ows',
+        );
+    });
+
+    test('a key too long for a file name is cut and given a hash', () => {
+        const longPath = `/data/documents/${'សេចក្តីស្រឡាញ់'.repeat(8)}.ows`;
+        const key = toFilePathSettingKey(
+            '/data/presenting-flows/a.owpf',
+            longPath,
+        );
+        expect(new TextEncoder().encode(key).length).toBeLessThanOrEqual(150);
+        expect(key).toMatch(/-[0-9a-f]{8}$/);
+        // Stable, and different for a different file.
+        expect(
+            toFilePathSettingKey('/data/presenting-flows/a.owpf', longPath),
+        ).toBe(key);
+        expect(
+            toFilePathSettingKey('/data/presenting-flows/b.owpf', longPath),
+        ).not.toBe(key);
+    });
+});
 
 describe('helper settingHelpers', () => {
     let container: HTMLDivElement | null = null;
@@ -265,6 +302,32 @@ describe('helper settingHelpers', () => {
         });
 
         expect(numericDefaultProbe.value).toBe(8);
+    });
+
+    test('reads a fractional number setting back as it was written', async () => {
+        // The foreground Scale slider steps by 0.1, so `1.5` is an ordinary
+        // stored value. Read with `parseInt` it came back as `1` and the panel
+        // silently reset itself every time it remounted.
+        getItemMock.mockReturnValue('1.5');
+        const fractionProbe = await renderSettingHook(() => {
+            return useStateSettingNumber('scale-setting', 1);
+        });
+
+        expect(fractionProbe.value).toBe(1.5);
+
+        await fractionProbe.update(0.4);
+        expect(setItemMock).toHaveBeenLastCalledWith('scale-setting', '0.4');
+
+        await unmountRoot();
+
+        // Junk still falls back, and `Infinity` is junk here even though
+        // `parseFloat` is happy to return it.
+        getItemMock.mockReturnValue('Infinity');
+        const infiniteProbe = await renderSettingHook(() => {
+            return useStateSettingNumber('scale-setting', 2);
+        });
+
+        expect(infiniteProbe.value).toBe(2);
     });
 
     test('adds the reader prefix only on reader pages', () => {

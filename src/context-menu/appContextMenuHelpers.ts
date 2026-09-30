@@ -105,8 +105,22 @@ export const setPositionMenu = (
 
 export const contextControl: {
     setDataDelegator: ((data: AppContextMenuPropsType | null) => void) | null;
+    /**
+     * The open menu's own closer, so a SECOND menu replaces the first properly
+     * instead of being laid on top of it.
+     *
+     * A menu's items are often built asynchronously (a clipboard read, a file
+     * read), so two right-clicks in quick succession both reach
+     * `showAppContextMenu` before either menu — and therefore its full-window
+     * backdrop, the thing that normally swallows the second press — exists.
+     * The second `open` then had no `close` of its own, and the keyboard LAYER
+     * it claimed stayed on the stack for good (see
+     * `KeyboardEventListener.addLayer`).
+     */
+    closeCurrent: (() => void) | null;
 } = {
     setDataDelegator: null,
+    closeCurrent: null,
 };
 
 export type AppContextMenuControlType = {
@@ -135,12 +149,21 @@ export function showAppContextMenu(
     const closeMenu = () => {
         contextControl.setDataDelegator?.(null);
     };
+    // Whatever is already open goes first. Two menus can be asked for before
+    // either is drawn (see `contextControl.closeCurrent`), and the one being
+    // replaced has to hand back its keyboard layer and its Escape key rather
+    // than leave both behind.
+    contextControl.closeCurrent?.();
     const promise = new Promise<void>((resolve) => {
         const onClose = () => {
+            if (contextControl.closeCurrent === onClose) {
+                contextControl.closeCurrent = null;
+            }
             closeMenu();
             KeyboardEventListener.unregisterEventListener(escEvent);
             resolve();
         };
+        contextControl.closeCurrent = onClose;
         contextControl.setDataDelegator?.({
             event,
             items,
@@ -308,6 +331,20 @@ export function useAppContextMenuData() {
         });
         setData(newData);
     };
+    // The host going away with a menu still open — a route change inside this
+    // window, a dev HMR update — would leave that menu's keyboard layer on the
+    // stack with its owner gone and nothing able to release it. Firing a
+    // `close` that nothing opened is a no-op, so this is safe to run on every
+    // unmount.
+    useAppEffect(() => {
+        return () => {
+            contextControl.closeCurrent = null;
+            WindowEventListener.fireEvent({
+                widget: 'context-menu',
+                state: 'close',
+            });
+        };
+    }, []);
     useAppEffect(() => {
         contextControl.setDataDelegator = (newData) => {
             setData1(newData);

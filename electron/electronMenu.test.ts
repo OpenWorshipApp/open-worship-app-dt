@@ -35,8 +35,12 @@ vi.mock('./finderOverlayHelpers', async (importOriginal) => {
 // Read inside the menu builder, so a getter over mutable state lets one test
 // build the menu as a Store install without `vi.resetModules()`.
 const platformFlags = vi.hoisted(() => {
-    return { isWindowsStore: false };
+    return { aiEnabled: false, isWindowsStore: false };
 });
+
+vi.mock('./aiHelpers', () => ({
+    checkIsAiEnabled: () => platformFlags.aiEnabled,
+}));
 
 vi.mock('./electronHelpers', () => ({
     copyDebugInfoToClipboard,
@@ -67,6 +71,7 @@ describe('electronMenu', () => {
     beforeEach(() => {
         electronMockState.reset();
         platformFlags.isWindowsStore = false;
+        platformFlags.aiEnabled = false;
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
         openFindOverlay.mockClear();
@@ -223,6 +228,9 @@ describe('electronMenu', () => {
             (item: any) => item.label === 'Find',
         );
 
+        findItem.click(undefined, undefined);
+        expect(openFindOverlay).not.toHaveBeenCalled();
+
         findItem.click(undefined, mainWin);
 
         expect(openFindOverlay).toHaveBeenCalledWith(mainWin);
@@ -316,6 +324,22 @@ describe('electronMenu', () => {
 
         clickSubmenuItem(helpMenu, 'Check for Updates Online');
         expect(goDownload).toHaveBeenCalledTimes(1);
+
+        clickSubmenuItem(helpMenu, 'AI Chat');
+        expect(appController.openAiChatPage).toHaveBeenCalledTimes(1);
+    });
+
+    test('shows the help assistant only when AI features are enabled', () => {
+        platformFlags.aiEnabled = true;
+        const appController = createAppController();
+        initMenu(appController as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const helpMenu = template.find((item: any) => item.role === 'help');
+
+        clickSubmenuItem(helpMenu, 'App Help (Chatbot)');
+
+        expect(appController.openChatbotPage).toHaveBeenCalledTimes(1);
     });
 
     test('a Store install drops "Check for Updates Online"', () => {
@@ -535,6 +559,46 @@ describe('electronMenu', () => {
         }
     });
 
+    test('renderer help items appear first and route their click data', () => {
+        const helpClick = vi.fn();
+        setCustomMenusData('daily-tips', {
+            menusData: {
+                help: [
+                    {
+                        label: 'Tips of the Day',
+                        clickData: { isOpenDailyTip: true },
+                    },
+                    {
+                        label: 'All tips',
+                        clickData: { isBrowseDailyTips: true },
+                    },
+                ],
+            } as any,
+            clickMenu: helpClick,
+        });
+
+        try {
+            initMenu(createAppController() as any);
+            const template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            const helpMenu = template.find((item: any) => {
+                return item.role === 'help';
+            });
+            expect(helpMenu.submenu[0].label).toBe('Tips of the Day');
+            expect(helpMenu.submenu[1].label).toBe('All tips');
+            expect(helpMenu.submenu[2]).toEqual({ type: 'separator' });
+
+            helpMenu.submenu[0].click();
+            helpMenu.submenu[1].click();
+            expect(helpClick).toHaveBeenCalledWith({ isOpenDailyTip: true });
+            expect(helpClick).toHaveBeenCalledWith({
+                isBrowseDailyTips: true,
+            });
+        } finally {
+            setCustomMenusData('daily-tips', null);
+        }
+    });
+
     test('custom tool items from several renderers are ordered by owner key', () => {
         const firstClick = vi.fn();
         const secondClick = vi.fn();
@@ -569,6 +633,8 @@ describe('electronMenu', () => {
 function createAppController() {
     return {
         openAboutPage: vi.fn(),
+        openAiChatPage: vi.fn(),
+        openChatbotPage: vi.fn(),
         openFindPage: vi.fn(),
         mainController: {
             gotoSettingHomePage: vi.fn(),

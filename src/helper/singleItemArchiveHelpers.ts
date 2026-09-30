@@ -98,13 +98,30 @@ export type SingleItemArchiveConfigType = {
      */
     getItemDirSettingName?: () => string;
     /**
+     * The item's LIVE content, when that is not what is on disk.
+     *
+     * An editable item keeps unsaved work in its EDITING HISTORY and only
+     * reaches the file when somebody presses Save (a bible note is written
+     * that way: its editor never touches the file). An export is that work
+     * leaving the machine, so bundling the saved copy hands the other side the
+     * note as it was before this morning -- silently, because nothing about a
+     * bundle says which of the two it holds.
+     *
+     * `null` means the file on disk IS the truth and is copied verbatim, which
+     * is what every item kind without this hook does.
+     */
+    readItemContent?: (filePath: string) => Promise<string | null>;
+    /**
      * Files the item's own CONTENTS point at, beyond what `addDocument` finds
      * (a bible note's items embed images in their Lexical content). Called with
-     * the collector so the files ride in `manifest.files` like every other.
+     * the collector so the files ride in `manifest.files` like every other, and
+     * with the content actually being exported -- an image embedded in unsaved
+     * text has to travel with the text that points at it.
      */
     collectExtraFiles?: (
         collector: ArchiveFileCollector,
         filePath: string,
+        content: string | null,
     ) => Promise<void>;
     /**
      * Destinations for kinds whose folder is not a dir-source setting at all —
@@ -136,6 +153,9 @@ type ArchiveManifestType = {
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
     colorNotes: { [key: string]: string };
+    // The exporting machine's data folder (`writeArchiveManifest`); absent
+    // from a bundle written before it was recorded.
+    dataDirPath?: string | null;
 };
 
 export function toSingleItemArchiveFileName(
@@ -170,7 +190,13 @@ export async function createSingleItemArchive(
                 `Unable to read the ${config.itemLabel}: ${filePath}`,
             );
         }
-        await config.collectExtraFiles?.(collector, filePath);
+        // Resolved AFTER the item is collected and BEFORE anything is staged:
+        // the override replaces the bytes of an entry that is already there.
+        const liveContent = (await config.readItemContent?.(filePath)) ?? null;
+        if (liveContent !== null) {
+            collector.setFileContent(filePath, liveContent);
+        }
+        await config.collectExtraFiles?.(collector, filePath, liveContent);
         const { archiveFiles, archiveEntries } = await stageArchiveFiles(
             collector,
             stagingDir,
@@ -323,6 +349,10 @@ function validateManifest(
             colorNotes !== null && typeof colorNotes === 'object'
                 ? colorNotes
                 : {},
+        dataDirPath:
+            typeof manifest.dataDirPath === 'string'
+                ? manifest.dataDirPath
+                : null,
     };
 }
 
@@ -383,7 +413,12 @@ export async function importSingleItemArchive(
             await toPresetDirPathByKind(config),
         );
         const { localFilePathByOriginalPath, writtenItemFilePaths } =
-            await importArchiveFiles(extractDir, manifest.files, dirPathByKind);
+            await importArchiveFiles(
+                extractDir,
+                manifest.files,
+                dirPathByKind,
+                manifest.dataDirPath,
+            );
         const itemFilePath = localFilePathByOriginalPath.get(manifest.item);
         if (itemFilePath === undefined) {
             throw new Error(`The archive holds no ${config.itemLabel}`);

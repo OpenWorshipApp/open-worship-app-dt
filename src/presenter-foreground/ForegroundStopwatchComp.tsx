@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties } from 'react';
+import { useCallback, useMemo, type CSSProperties } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
@@ -17,26 +17,28 @@ import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import {
+    checkIsSessionData,
+    toSessionShowingList,
+    useForegroundSessions,
+} from './foregroundSessionHelpers';
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllStopwatches(
     showingScreenIds: [number, ForegroundStopwatchDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIds) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.setStopwatchData(null);
-                    screenForegroundManager.setStopwatchData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIds) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.setStopwatchData(null);
+                screenForegroundManager.setStopwatchData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function handleHiding(screenId: number) {
@@ -47,6 +49,12 @@ function handleHiding(screenId: number) {
 
 export default function ForegroundStopwatchComp() {
     useScreenForegroundManagerEvents(['update']);
+    // Per-instance, not module-level: nothing here may assume this panel stays
+    // a single mount for good -- that assumption is what left only one stage
+    // refreshing in `useVarySlidesData`.
+    const attemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(500);
+    }, []);
     const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
         (data) => {
             return data.stopwatchData !== null;
@@ -64,10 +72,46 @@ export default function ForegroundStopwatchComp() {
         .filter((item) => {
             return item !== null;
         });
+    const showingRef = useAppCurrentRef(showingScreenIdDataList);
+    // A stopwatch is ONE thing on the screen, so a session here is a saved
+    // LOOK -- its own size, place and colours -- for the one a service
+    // actually needs: the big centred timer for the countdown to the start,
+    // the small corner one behind a testimony.
+    const {
+        activeId,
+        prefix,
+        element: sessionsElement,
+    } = useForegroundSessions({
+        widgetKey: 'stopwatch',
+        toPrefix: (suffix) => {
+            return `stopwatch${suffix}`;
+        },
+        checkIsOnScreen: (sessionId) => {
+            return showingScreenIdDataList.some(([, data]) => {
+                return checkIsSessionData(data, sessionId);
+            });
+        },
+        hideSession: (sessionId) => {
+            for (const [screenId, data] of showingRef.current) {
+                if (checkIsSessionData(data, sessionId)) {
+                    handleHiding(screenId);
+                }
+            }
+        },
+    });
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
-        prefix: 'stopwatch',
+        prefix,
         onChange: (extraStyle) => {
-            refreshAllStopwatches(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                // THIS session's stopwatch only. `activeId` is read from the
+                // render the control was touched in, not at fire time: the
+                // change belongs to the session it was made on even if the
+                // strip is switched inside the half-second.
+                refreshAllStopwatches(
+                    toSessionShowingList(showingRef.current, activeId),
+                    extraStyle,
+                );
+            });
         },
         isFontSize: true,
     });
@@ -86,9 +130,10 @@ export default function ForegroundStopwatchComp() {
                 new Date(),
                 genStyle(),
                 isForceChoosing,
+                activeId,
             );
         },
-        [genStyle],
+        [genStyle, activeId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -103,11 +148,15 @@ export default function ForegroundStopwatchComp() {
                 return;
             }
             screenForegroundManager.setStopwatchData({
+                // The session rides a LIVE drop from this panel, which is this
+                // session acting. A run-sheet row replayed weeks later carries
+                // none -- see `applyForegroundDragData`.
+                id: activeId || undefined,
                 dateTime: new Date(),
                 extraStyle: genStyle(),
             });
         },
-        [genStyle],
+        [genStyle, activeId],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const genStyleRef = useAppCurrentRef(genStyle);
@@ -122,20 +171,20 @@ export default function ForegroundStopwatchComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <ForegroundLayoutComp
-            target="stopwatch"
-            fullChildHeaders={<h4>{tran('Stopwatch')}</h4>}
-            childHeadersOnHidden={genHidingElement(true)}
-            isOnScreen={showingScreenIdDataList.length > 0}
-        >
+        <ForegroundLayoutComp target="stopwatch">
+            {sessionsElement}
             {propsSetting}
-            <hr />
-            <div className="app-border-white-round p-2">
-                <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+            <div className="fg-body">
+                {/*
+                 * The caption stays, the card around it goes: this panel has
+                 * exactly one thing to say and one button to press, and a
+                 * border inside a bordered panel said neither.
+                 */}
+                <span className="fg-group-name">
                     <i className="bi bi-stopwatch" />
-                    <small>{tran('Count up from zero')}</small>
-                </div>
-                <div className="d-flex">
+                    <span>{tran('Count up from zero')}</span>
+                </span>
+                <div className="fg-actions">
                     <button
                         className="btn btn-primary"
                         title={tran('Start Stopwatch')}
@@ -151,9 +200,9 @@ export default function ForegroundStopwatchComp() {
                         label={tran('Show on Screens')}
                         onOpening={handleContextMenuOpening}
                     />
+                    {genHidingElement(false)}
                 </div>
             </div>
-            <div className="mt-2">{genHidingElement(false)}</div>
         </ForegroundLayoutComp>
     );
 }

@@ -12,6 +12,7 @@ import SlideRendererComp from './SlideRendererComp';
 import type AppDocument from '../../app-document-list/AppDocument';
 import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { SlideThumbnailContext } from '../../slide-editor/canvas/box/slideThumbnailContext';
 
 function useData() {
     const selectedEditingSlideContext = use(SelectedEditingSlideContext);
@@ -97,11 +98,13 @@ export default function SlideRenderComp({
             onContextMenu={handleContextMenuOpening}
             onClick={onClick}
         >
-            <SlideRendererComp
-                canvasItemsJson={slide.canvasItemsJson}
-                width={`${slide.width}px`}
-                height={`${slide.height}px`}
-            />
+            <SlideThumbnailContext value={true}>
+                <SlideRendererComp
+                    canvasItemsJson={slide.canvasItemsJson}
+                    width={`${slide.width}px`}
+                    height={`${slide.height}px`}
+                />
+            </SlideThumbnailContext>
         </VarySlideRenderComp>
     );
 }

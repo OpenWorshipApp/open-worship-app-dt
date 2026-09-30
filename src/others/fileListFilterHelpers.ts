@@ -2,8 +2,12 @@ import { useCallback, useMemo, useState } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { getFileDotExtension, pathBasename } from '../server/fileHelpers';
-import { useStateSettingString } from '../helper/settingHelpers';
+import { getSetting, useStateSettingString } from '../helper/settingHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import {
+    genColorNoteDataList,
+    genFilePathColorMap,
+} from '../helper/colorNoteHelpers';
 
 // Below this many files a filter/sort bar costs more (vertical space on a
 // small sidebar, an extra pass over the list) than it can ever save, so it is
@@ -104,11 +108,11 @@ export function genCombinedSortFilePaths(
     };
 }
 
-function toSortSettingName(settingName: string) {
+export function toSortSettingName(settingName: string) {
     return `${settingName}-list-sort`;
 }
 
-function toFilterTypeSettingName(settingName: string) {
+export function toFilterTypeSettingName(settingName: string) {
     return `${settingName}-list-filter-type`;
 }
 
@@ -122,6 +126,63 @@ function fromSortText(sortText: string): SortDataType {
         return DEFAULT_SORT_DATA;
     }
     return { key: key as SortKeyType, isAscending: direction !== 'desc' };
+}
+
+/**
+ * The paths in the order the list SHOWS them, worked out with NOTHING
+ * rendered.
+ *
+ * `RenderListComp` filters, sorts and colour-groups the paths before the body
+ * ever sees them, so a directory listing is not what the operator is looking
+ * at: Windows hands `readdir` back in its own order, which puts `1_cv.mp4`
+ * immediately before `20_cv.mp4` while the grid -- sorted -- draws `10_cv.mp4`
+ * next. A slide show walking the raw list therefore skipped the tile right
+ * beside the one it had just shown. Both now come through here, off the same
+ * primitives the list renders with, so the two cannot drift again.
+ *
+ * The search TEXT is deliberately left out: it is not persisted (see
+ * `useFileListFilterData`), so a show running with its panel closed has no way
+ * to know it and must not guess one.
+ */
+export function toDisplayedFilePaths(
+    settingName: string,
+    filePaths: string[],
+    baseSortFilePaths?: (filePaths: string[]) => string[],
+) {
+    let newFilePaths = filePaths;
+    if (newFilePaths.length >= MIN_FILTERABLE_FILE_COUNT) {
+        newFilePaths = filterFilePaths(
+            newFilePaths,
+            '',
+            getSetting(toFilterTypeSettingName(settingName)) ?? '',
+        );
+    }
+    const sortFilePaths = genCombinedSortFilePaths(
+        baseSortFilePaths,
+        fromSortText(getSetting(toSortSettingName(settingName)) ?? ''),
+    );
+    const sort = (somePaths: string[]) => {
+        return sortFilePaths === undefined
+            ? somePaths
+            : sortFilePaths(somePaths);
+    };
+    const colorNoteMap = genFilePathColorMap(newFilePaths);
+    // Same test as `RenderFileItemsWithColorNote`: the "unknown" group is
+    // always seeded, so one key means nothing is grouped and the list is drawn
+    // flat. A colour note nobody has read yet counts as unknown, which is
+    // exactly what the panel would draw in that state too.
+    if (Object.keys(colorNoteMap).length === 1) {
+        return sort(newFilePaths);
+    }
+    const orderedFilePaths: string[] = [];
+    for (const colorNote of genColorNoteDataList(colorNoteMap)) {
+        const groupFilePaths = colorNoteMap[colorNote];
+        if (!groupFilePaths?.length) {
+            continue;
+        }
+        orderedFilePaths.push(...sort(groupFilePaths));
+    }
+    return orderedFilePaths;
 }
 
 export type FileListFilterDataType = {

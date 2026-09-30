@@ -39,8 +39,18 @@ export default function PresentingControlComp() {
     // Identity-stable, so the menu listener below is registered ONCE for the
     // life of the window rather than re-registered on every render — and so the
     // effect that registers it does not silently capture a stale closure.
+    // A TOGGLE, both from the key and from the menu — the menu already says so
+    // (`isTogglePresentingControl`), and a chord that opens the overlay but
+    // cannot take it away again sends the operator hunting for the ✕ with the
+    // drawing still over the app.
+    //
+    // Armed, the overlay swallows the keyboard whole and replays only its own
+    // keys under its own layer, so this chord cannot close it from there —
+    // Escape disarms first, which is the order the toolbar teaches anyway.
     const handleStartControlling = useCallback(() => {
-        setIsControlling(true);
+        setIsControlling((oldIsControlling) => {
+            return !oldIsControlling;
+        });
     }, []);
     const handleMenuItemClicked = useCallback(
         (_event: any, data: { isTogglePresentingControl?: boolean }) => {

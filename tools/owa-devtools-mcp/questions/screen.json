@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-09-04",
+    "updated": "2026-09-27",
     "sections": [
         {
             "id": "screens",
@@ -127,6 +127,24 @@
                         "related": [
                             "W-01"
                         ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "mini-screen-wallpaper",
+                    "text": "Why does the preview show my desktop wallpaper?",
+                    "kind": "what",
+                    "keywords": [
+                        "desktop in the preview",
+                        "wallpaper behind",
+                        "background of the preview",
+                        "checkered squares",
+                        "grey squares",
+                        "my desktop is showing"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "find": "Show Monitor Wallpaper",
                         "guide": true
                     }
                 },

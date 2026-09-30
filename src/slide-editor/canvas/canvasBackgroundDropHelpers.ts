@@ -4,6 +4,8 @@ import type { AppColorType } from '../../others/color/colorHelpers';
 import { checkIsYouTubeUrl } from './youtubeUrlHelpers';
 import type CanvasController from './CanvasController';
 import { getAllCameraDevices } from '../../helper/cameraHelpers';
+import { tran } from '../../lang/langHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 /**
  * Dropping a Background-panel item onto the slide canvas.
@@ -109,6 +111,18 @@ export async function applyCanvasBackgroundDropPlan(
 ) {
     if (plan.kind === 'color') {
         if (targetCanvasItemId !== null) {
+            // A locked box cannot be edited any other way -- the Box tools
+            // hide themselves and Delete/arrows/double-click do nothing -- so
+            // a dropped color must not be the one edit that gets through.
+            const targetCanvasItem = canvasController.canvas.canvasItems.find(
+                (canvasItem) => {
+                    return canvasItem.id === targetCanvasItemId;
+                },
+            );
+            if (targetCanvasItem?.isLocked) {
+                showSimpleToast(tran('Locked'), tran('This item is locked'));
+                return;
+            }
             // Dropped ON a box: recolor it instead of covering it. Same call
             // the Box tools' color picker ends up making, so it commits as one
             // edit and repaints the box live.

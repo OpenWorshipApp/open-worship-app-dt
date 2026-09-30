@@ -37,6 +37,12 @@ vi.mock('../server/fontHelpers', () => ({
     getFontFamilyMapByNodeFont: getFontFamilyMapByNodeFontMock,
 }));
 
+vi.mock('./directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: getSettingMock,
+    },
+}));
+
 vi.mock('../server/appProvider', () => ({
     default: appProviderMock,
 }));

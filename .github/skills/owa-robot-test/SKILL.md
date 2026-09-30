@@ -24,7 +24,7 @@ unit or Playwright tests.
 - **"prod" / "release" / "packaged"** → **prod mode** (§2b): build the release
   (`npm run pack:<os>`) and drive the PACKAGED app out of `release/` instead of
   `npm run dev` — before a release, after a packaging/protocol/native-module change,
-  or when a bug reproduces "only in the installed app". It is a *target*, so it
+  or when a bug reproduces "only in the installed app". It is a _target_, so it
   combines with any focus or mode: `prod presenter`, `prod full`, `prod presentingFlow`.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
@@ -93,7 +93,7 @@ Confirm at least these are available: `mcp__owa-devtools__list_pages`,
 `mcp__owa-devtools__wait_for`, `mcp__owa-devtools__list_console_messages`,
 `mcp__owa-devtools__list_network_requests`. **`evaluate_script` is not on that list and
 never will be**: the MCP firewall refuses it and drops it from `tools/list` (CLAUDE.md
-*Agent access*), so every check in this skill reads the page through a snapshot, a
+_Agent access_), so every check in this skill reads the page through a snapshot, a
 screenshot, `wait_for` or an `owa_*` tool. Older notes further down that still say
 `evaluate_script` describe what to READ — take it from a snapshot instead.
 
@@ -102,14 +102,14 @@ truncated form elsewhere) — the bare tool name after it is what matters. Also
 load the app-level tools, which are faster and more reliable than hunting
 through a snapshot:
 
-| Tool | Use it for |
-| --- | --- |
-| `owa_app_state` | Every live instance, its windows, and one window's page / language / theme / visible tabs — check WHERE you are before navigating. |
-| `owa_find_ui` | Find a control by its visible text or tooltip; returns its position + the component that renders it (dev), and `highlight: true` outlines it in the real window (handy for a screenshot). |
-| `owa_list_screens` | The presentation screens showing right now + the displays available — use it in the mandatory screen block (§6a) instead of inferring from target enumeration. |
-| `owa_hide_screens` | Hide one screen by id, or all of them. **Destructive** — it takes content off a projector; never call it on a display the user says is in live use. |
-| `owa_help_search` / `owa_help_page` | Search/read the bundled knowledge (`manual` = the W-xx recipes in references/user-workflows.md, `internal` = these notes) by id. |
-| `owa_guide_start` / `_step` / `_status` | Draw the numbered walkthrough card in the app window. Not needed for QA; it is what the in-app chatbot uses. |
+| Tool                                    | Use it for                                                                                                                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `owa_app_state`                         | Every live instance, its windows, and one window's page / language / theme / visible tabs — check WHERE you are before navigating.                                                        |
+| `owa_find_ui`                           | Find a control by its visible text or tooltip; returns its position + the component that renders it (dev), and `highlight: true` outlines it in the real window (handy for a screenshot). |
+| `owa_list_screens`                      | The presentation screens showing right now + the displays available — use it in the mandatory screen block (§6a) instead of inferring from target enumeration.                            |
+| `owa_hide_screens`                      | Hide one screen by id, or all of them. **Destructive** — it takes content off a projector; never call it on a display the user says is in live use.                                       |
+| `owa_help_search` / `owa_help_page`     | Search/read the bundled knowledge (`manual` = the W-xx recipes in references/user-workflows.md, `internal` = these notes) by id.                                                          |
+| `owa_guide_start` / `_step` / `_status` | Draw the numbered walkthrough card in the app window. Not needed for QA; it is what the in-app chatbot uses.                                                                              |
 
 ### 1. Is the app already running?
 
@@ -309,20 +309,20 @@ firewall), so it doubles as a prod row rather than costing one.
 
 #### What changes in prod (assertion deltas — the full model is KB §18)
 
-| Area | Dev | Packaged — what to do instead |
-|------|-----|-------------------------------|
-| Page URLs (step 5) | `https://localhost:3000/<page>.html` | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:244`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well. |
-| userData / `setting.json` (KB §3, §10) | `%APPDATA%\open-worship-app-dev` | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`. |
-| Missing Khmer key (§6d) | `tran()` **throws**, subtree blanks — Critical | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only. |
-| Toast stack check (§6, GL-10) | lock, `F6`, hover the toast, `F6` | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`). |
-| `owa_find_ui` component names, `data-react-comp-*` | present | Absent (the Vite plugin is `apply: 'serve'`). Locate by label / `data-widget-name` / `aria-label` only. Findings name the control, not the file — find the file in `src/` afterwards. |
-| Extra Binaries (§6e, MD-05) | mocked: copies the local `bin-<ver>.tar.gz` | **Real download from the release CDN** — this is the only place that path is ever exercised; needs network. A missing local pack is irrelevant here. ⚠️ **The published pack can be OLDER than the local one** and its yt-dlp too old for current YouTube: observed 2026-09-11, CDN `0.0.2` (yt-dlp 2026.07.04) 403'd on every media download while the local `0.0.3` (2026.08.19) worked on the same machine — dev cannot see this. Always record `info.json`'s version + binary names, and attribute a media failure with the three runs in KB §18.5 before calling it BLOCKED. |
-| Hidden-screen console (§6a, SC-05) | forwarded to the `npm run dev` terminal | The packaged main process has no terminal attached: `SC-05` is `BLOCKED: no main-process stdout in prod`, not FAIL. |
-| Console noise (KB §7) | Electron security warnings, HMR, React DevTools | None of those; **any** `[warn]` / `[error]` in the packaged console is worth a look. |
-| Experiments page, `isDev` menu items | present | Absent; rows citing `src/experiments/` are `EXCLUDED` in prod. |
-| Window title / icon | `icon-dev.png`, dev title | The release icon. A dev icon on the packaged window is a packaging bug. |
-| AI / chatbot (`CB-xx`) | on by default | Off unless the setting says on (P0-3). The **Help → App Help (Chatbot)** item and the 🤖 button must be present with it on, and the packaged MCP host (`mcpUrl` in `status`) must serve `tools/list` from `app.asar.unpacked` — one `curl` against it proves the unpacked copy loads. |
-| Certificates | `ignore-certificate-errors` | Real TLS: a Bible-XML-from-URL import (§6g) or SongSelect that fails only in prod is a finding, not network noise. |
+| Area                                               | Dev                                             | Packaged — what to do instead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:244`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
+| userData / `setting.json` (KB §3, §10)             | `%APPDATA%\open-worship-app-dev`                | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`.                                                                                                                                                                                                                                                                                                                                               |
+| Missing Khmer key (§6d)                            | `tran()` **throws**, subtree blanks — Critical  | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only.                                                                                                                                                                                                                                                                                                      |
+| Toast stack check (§6, GL-10)                      | lock, `F6`, hover the toast, `F6`               | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`).                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `owa_find_ui` component names, `data-react-comp-*` | present                                         | Absent (the Vite plugin is `apply: 'serve'`). Locate by label / `data-widget-name` / `aria-label` only. Findings name the control, not the file — find the file in `src/` afterwards.                                                                                                                                                                                                                                                                                                                                                                                             |
+| Extra Binaries (§6e, MD-05)                        | mocked: copies the local `bin-<ver>.tar.gz`     | **Real download from the release CDN** — this is the only place that path is ever exercised; needs network. A missing local pack is irrelevant here. ⚠️ **The published pack can be OLDER than the local one** and its yt-dlp too old for current YouTube: observed 2026-09-11, CDN `0.0.2` (yt-dlp 2026.07.04) 403'd on every media download while the local `0.0.3` (2026.08.19) worked on the same machine — dev cannot see this. Always record `info.json`'s version + binary names, and attribute a media failure with the three runs in KB §18.5 before calling it BLOCKED. |
+| Hidden-screen console (§6a, SC-05)                 | forwarded to the `npm run dev` terminal         | The packaged main process has no terminal attached: `SC-05` is `BLOCKED: no main-process stdout in prod`, not FAIL.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Console noise (KB §7)                              | Electron security warnings, HMR, React DevTools | None of those; **any** `[warn]` / `[error]` in the packaged console is worth a look.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Experiments page, `isDev` menu items               | present                                         | Absent; rows citing `src/experiments/` are `EXCLUDED` in prod.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Window title / icon                                | `icon-dev.png`, dev title                       | The release icon. A dev icon on the packaged window is a packaging bug.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| AI / chatbot (`CB-xx`)                             | on by default                                   | Off unless the setting says on (P0-3). The **Help → App Help (Chatbot)** item and the 🤖 button must be present with it on, and the packaged MCP host (`mcpUrl` in `status`) must serve `tools/list` from `app.asar.unpacked` — one `curl` against it proves the unpacked copy loads.                                                                                                                                                                                                                                                                                             |
+| Certificates                                       | `ignore-certificate-errors`                     | Real TLS: a Bible-XML-from-URL import (§6g) or SongSelect that fails only in prod is a finding, not network noise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Everything else — screen block §6a, media block §6e, presenting flow §6f, coverage
 accounting §6b, the honesty rules — is unchanged.
@@ -353,7 +353,7 @@ accounting §6b, the honesty rules — is unchanged.
 4. Do not restart the user's dev stack for them; say that it was stopped and why.
 
 **Report additions (required in every prod report — template in test-plan.md):** a
-*Build under test* block (version, commit + dirty flag, exe path, `builtAt`, pack
+_Build under test_ block (version, commit + dirty flag, exe path, `builtAt`, pack
 artefacts, userData used, whether `ai-enabled` was toggled and restored) and, per
 delta row above, what was observed. A report that does not name `owa://local` as the
 origin driven is not a prod report.
@@ -388,14 +388,14 @@ The window opens on `presenter.html`. To test another page, **navigate the curre
 selected page directly to its dev URL** with `mcp__owa-devtools__navigate_page` (reuse the
 same window — do NOT open a brand-new tab):
 
-| Page | Navigate to (dev) | Prod mode (§2b) |
-|------|-------------------|-----------------|
-| Presenter | `https://localhost:3000/presenter.html` | `owa://local/presenter.html` |
-| Bible Reader | `https://localhost:3000/reader.html` | `owa://local/reader.html` |
-| Slide / Doc Editor | `https://localhost:3000/appDocumentEditor.html` | `owa://local/appDocumentEditor.html` |
-| Settings | ⚠️ **popup window — do NOT `navigate_page` the main window here** (see warning) | same |
-| Lyric Editor / Bible Note / Web Editor / About / Screen | popup windows — see [references/ui-map.md](./references/ui-map.md) | same, on the `owa://local` origin |
-| Find bar | `finder.html`, pinned INSIDE the searched window as a `WebContentsView` — see [references/ui-map.md](./references/ui-map.md) | same |
+| Page                                                    | Navigate to (dev)                                                                                                            | Prod mode (§2b)                      |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Presenter                                               | `https://localhost:3000/presenter.html`                                                                                      | `owa://local/presenter.html`         |
+| Bible Reader                                            | `https://localhost:3000/reader.html`                                                                                         | `owa://local/reader.html`            |
+| Slide / Doc Editor                                      | `https://localhost:3000/appDocumentEditor.html`                                                                              | `owa://local/appDocumentEditor.html` |
+| Settings                                                | ⚠️ **popup window — do NOT `navigate_page` the main window here** (see warning)                                              | same                                 |
+| Lyric Editor / Bible Note / Web Editor / About / Screen | popup windows — see [references/ui-map.md](./references/ui-map.md)                                                           | same, on the `owa://local` origin    |
+| Find bar                                                | `finder.html`, pinned INSIDE the searched window as a `WebContentsView` — see [references/ui-map.md](./references/ui-map.md) | same                                 |
 
 > ⚠️ **Popup-only pages (`setting.html`, `about.html`, finder, lyric/bible/web editors) must
 > NOT be loaded in the main window.** They open via `window.open` as separate windows. If you
@@ -446,14 +446,14 @@ must end the run with a status. For every scenario:
 **Always run the toast check once per session** (`[GL-10, GL-15, GL-23]`, test-plan §S9)
 — from a real refusal, because `window.testSimpleToasts()` is reachable only through the
 refused `evaluate_script`: **Lock** screen 0 → `press_key F6` with `includeSnapshot` (ONE
-`alert`, *Screen Manager is locked*) → `hover` that alert's uid (its timer stops) →
+`alert`, _Screen Manager is locked_) → `hover` that alert's uid (its timer stops) →
 `press_key F6` with `includeSnapshot` again → **two** `alert`s, stacked → **Unlock** and hover
 elsewhere. The hover is what makes it deterministic: a toast lives 4 s, and the refusal is
 said once a second per screen (a single F6 is refused by four layers and used to stack four
 identical toasts), so the second press must come ≥1 s later and a tool round trip can
 outlast the first toast (verified 2026-09-12). ⚠️ **The hover has to land inside those 4 s,
-and a slow session cannot** (2026-09-15: three tries, each answering *element no longer
-exists* / *did not become interactive* because reading the press's own snapshot took longer
+and a slow session cannot** (2026-09-15: three tries, each answering _element no longer
+exists_ / _did not become interactive_ because reading the press's own snapshot took longer
 than the toast lived). Keep the hover in the very next call after the press, with nothing
 else in that turn; if it still misses, the honest row is `GL-10 PARTIAL: one toast verified,
 stacking not reached at this session's latency` — never FAIL, and never a PASS you did not
@@ -526,14 +526,14 @@ end), so an interrupted or context-compacted session loses nothing:
 
 ```json
 {
-    "matrixVersion": "2026-07-08",
-    "runId": "20260708-1430",
-    "startedAt": "2026-07-08T14:30:00+07:00",
-    "focus": "full",
-    "rows": {
-        "PM-29": { "status": "PASS", "evidence": "shot-014-bg-color.png" },
-        "PM-32": { "status": "BLOCKED", "note": "EX-03: no camera device" }
-    }
+  "matrixVersion": "2026-07-08",
+  "runId": "20260708-1430",
+  "startedAt": "2026-07-08T14:30:00+07:00",
+  "focus": "full",
+  "rows": {
+    "PM-29": { "status": "PASS", "evidence": "shot-014-bg-color.png" },
+    "PM-32": { "status": "BLOCKED", "note": "EX-03: no camera device" }
+  }
 }
 ```
 
@@ -547,7 +547,7 @@ restarting from zero. This is how a full-coverage pass can span several sessions
    you go) → `PR` → **`SP` + `SC` (the mandatory screen block §6a — run it while
    content from `PM` is still live)** → `KB` (F6–F10 double as cleanup).
 2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`) → **`XW` (cross-window
-   edit→present propagation, §6c — open the editor as a *separate* window and confirm a
+   edit→present propagation, §6c — open the editor as a _separate_ window and confirm a
    saved edit reaches the Presenter/screen; run it whenever editing/lists were touched)**.
 3. Popups `PU` (each opened from its trigger row).
 4. **Mandatory media block §6e (`MD-01..02` + its teardown `MD-04`)** — sweep the two
@@ -578,7 +578,7 @@ single-window walkthrough that opens the editor **in-place** (the `Slide Editor`
 > is an intentional snapshot — a **saved** edit does **not** auto-update the live `screen.html`
 > output (the operator applies it by **re-presenting**). So the auto-reload targets are the
 > Presenter **center preview** and **list rows** only; the live screen is verified via the
-> *re-present* apply-path, not by expecting it to change on save. See KB §12.2 / §12.4.
+> _re-present_ apply-path, not by expecting it to change on save. See KB §12.2 / §12.4.
 
 **Run scenario [test-plan.md §S18], rows `XW-01..10`, whenever the run touches the editor,
 the document/lyric/presenting-flow lists, or the `useFileSourceEvents`/file-reload wiring** (a
@@ -612,7 +612,7 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    `.ows`, so XW-04's assertion is the reverse of what older revisions of this file said
    (verified 2026-08-10, KB §12.2b). For the live `screen.html` of a **presented** slide
    (XW-03): staying stale after an edit is **expected** (intentional snapshot) — verify by
-   **re-presenting** and confirming the screen *then* updates; only a broken re-present is a
+   **re-presenting** and confirming the screen _then_ updates; only a broken re-present is a
    FAIL. Re-presenting a dirty document projects its **unsaved** state.
 5. **The lyric half (`XW-08`, `XW-09`, `XW-10`) — needs no editor window at all.** Copy a real
    `.owl` to a scratch name in the documents dir, select it, **Add Stage** so two panes show,
@@ -627,7 +627,8 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    Read the markers out of the panes' **shadow roots** (`el.shadowRoot.textContent`), not the
    light DOM. Then delete the scratch files and its `.histories` dir, and re-select whatever was
    selected before.
-6. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
+
+6. **Restore** with editor **Undo** (never _Discard_) + re-save; delete the scratch doc.
 
 Caveat: opening/closing the separate editor window can trigger an `owa-devtools` "browser
 reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from
@@ -681,24 +682,25 @@ Notes:
 
 **No other product flow runs the external binaries.** `downloadVideoOrAudio`
 ([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only product
-caller of `extra-bin/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
+caller of `extra-bin/<platform>/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
 (appHelpers.ts:336) also runs it, but only from the dev-only experiments page
 (`src/experiments/html-in-canvas/youtubeDemo.tsx`), and `checkIsExtraBinInstalled` only
 checks file existence, never executes — and `downloadVideoOrAudio` is what points yt-dlp
-at `extra-bin/ffmpeg/bin` and `extra-bin/qjs/qjs` — so a wrong/missing/stale binary
+at `extra-bin/<platform>/ffmpeg/bin` and `extra-bin/<platform>/qjs/qjs` — so a wrong/missing/stale binary
 passes typecheck, tests, build and every other matrix row, and only shows up here. Rows `MD-01..06`; recipe:
 test-plan.md §S19.
 
 **The binaries are NOT in the app package.** They are installed on demand from
-**Settings → Others → Extra Binaries** into `<data parent dir>/extra-bin/`
-(dev: `Desktop\open-worship-data-dev\extra-bin`), which is why the block now starts at
-`MD-05`:
+**Settings → Others → Extra Binaries** into `<data parent dir>/extra-bin/<platform>/`
+(dev on Windows: `Desktop\open-worship-data-dev\extra-bin\win`; one folder per OS since
+`EN-29`, and an older flat install for this OS is moved in on the first check), which is
+why the block now starts at `MD-05`:
 
-- **`MD-05` runs first** whenever the panel says *Not installed* — press **Download and
+- **`MD-05` runs first** whenever the panel says _Not installed_ — press **Download and
   Install**, then **Re-extract** (it must work with no network, because the
   `bin-*.tar.gz` is kept on disk on purpose). If the panel offers **Update to `<ver>`**,
   take it: the superseded archive must disappear.
-- **`MD-06`** proves the guard: with `extra-bin\yt` moved aside, a download raises a
+- **`MD-06`** proves the guard: with `extra-bin\<platform>\yt` moved aside, a download raises a
   **Media Tools Required** confirm that jumps to the panel, spawns no yt-dlp, and does
   **not** stack a second "download failed" toast on a `No`. Restore the folder after.
 - In **dev the install is mocked** — it copies
@@ -729,7 +731,7 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
    from the second copy on) — plus any orphaned partial. Match that title, **not
    `*YouTube*`**: the user's own library holds real downloads whose names also end in
    `- YouTube` (`ស្រែកថ្វាយព្រះអង្គ Shout to the Lord - YouTube.MKV`, `4K Christian Church
-   Worship … - YouTube.mp4`). Say in the report how many you found: leftovers mean the
+Worship … - YouTube.mp4`). Say in the report how many you found: leftovers mean the
    previous run skipped its teardown.
    ⚠️ **The partial is written to `%TEMP%`, not to the media dir** (verified 2026-09-15:
    `-o %TEMP%\temp-<ms>.%(ext)s`, so a failed run leaves `%TEMP%\temp-<ms>.*`, and only the
@@ -741,7 +743,7 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
    ⚠️ **Driving this with the tools:** there is no right-click tool — press the list
    header's ⋮ (`owa_click "Background > More Options"`, `ListMenuButtonComp`) and the same
    menu opens. Then the URL box is an app **input popup**, which `owa_type` refuses on
-   purpose (*"part of a question the app is asking the user"*); use chrome-devtools
+   purpose (_"part of a question the app is asking the user"_); use chrome-devtools
    `fill` + `click` on the uids from `take_snapshot` instead (verified 2026-09-15).
 2. **Audio (MD-02)** — Background → **♫Audios♫** split → same menu (the popup label must
    read **Audio URL:**) → **Ok**. This one runs `-x --audio-format mp3`, i.e. an actual
@@ -750,15 +752,15 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
    and an **`.mp3`** in the audios dir, plus the new thumbnail/row in the panel.
 4. Optional but cheap — prove the JS runtime is really QuickJS by reading the spawned
    command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
-   carry `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
+   carry `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\<platform>\qjs\qjs.exe`.
 5. **Delete both again (MD-04, part 2)** — once step 3's evidence (screenshot + on-disk
    listing) is captured. Three gotchas:
    - ⚠️ **An agent cannot press Move to Trash, and that is the firewall working**
-     (verified 2026-09-15): `owa_click "Move to Trash"` is refused — *"switched off,
-     because it cannot be undone by pressing it again"* — and the uid interlock covers
-     chrome-devtools' `click` too (CLAUDE.md *Agent access*). So **the on-disk Recycle Bin
+     (verified 2026-09-15): `owa_click "Move to Trash"` is refused — _"switched off,
+     because it cannot be undone by pressing it again"_ — and the uid interlock covers
+     chrome-devtools' `click` too (CLAUDE.md _Agent access_). So **the on-disk Recycle Bin
      below is the agent's teardown path**, and `CM-06` is `BLOCKED: destructive-label
-     interlock, human-only` rather than a row to fake. A HUMAN tester still uses the app's
+interlock, human-only` rather than a row to fake. A HUMAN tester still uses the app's
      own path — 🖱️R the row → **Move to Trash** → **Yes** — which also covers `CM-06` and
      refreshes the list through the real `delete` event.
    - **Move to Trash is hidden while the item is on a screen** (`isInScreen`,
@@ -793,7 +795,7 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
 
 Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.part` bug,
 and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
-reporting a download failure. A `(1)` on the run's *first* download means step 0 was
+reporting a download failure. A `(1)` on the run's _first_ download means step 0 was
 skipped, not that the app misbehaved.
 
 ### 6f. PRESENTING_FLOW DEEP MODE — the run sheet, exhaustively (argument `presentingFlow`)
@@ -810,7 +812,7 @@ per square centimetre in the app and the most ways to ship a silent regression.
   `"focus": "presentingFlow"` in `coverage-<runid>.json`. Every row in the scope set below ends
   the run with a status. Resume the newest matching state file rather than restarting.
 - **The three mandatory blocks still run** (§6a screen, §6d locale, §6e media) — and §6a
-  is ridden *from the presenting flow* (present a row, drive the `screen.html` target), so it
+  is ridden _from the presenting flow_ (present a row, drive the `screen.html` target), so it
   costs almost nothing extra here.
 - **The phases below are run in order**, each with its own evidence. A phase that is
   skipped is reported as skipped, with its rows BLOCKED and the reason.
@@ -1009,8 +1011,8 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
 7. **`[ST-49]`** **Save** (windows reload — expected), then open the reader's bible-key
    selector: the bible must have moved out of the **English** group into its own locale
    heading and render `(<key>) កិច្ចការ ២៨:១៥`. Screenshot that; it is the block's evidence.
-8. **`[ST-50]` Teardown, always.** 🗑 → **Yes** trashes `<key>.xml` but **leaves
-   `<key>.xml.cache`** (13 MB) — delete that folder yourself. Then restore anything the run
+8. **`[ST-50]` Teardown, always.** 🗑 → **Yes** trashes `<key>.xml` and deletes the
+   sibling `<key>.xml.cache` folder. Confirm both are gone. Then restore anything the run
    moved: the reader's bible key, and any lookup-history entry the key switch added
    (`RendHistoryItemComp` → its red ✕).
 
@@ -1092,7 +1094,7 @@ naming workflows/pages):
 4. **Divergence rule:** if the live app does not match a workflow step, STOP treating
    the workflow as truth for that step: decide bug vs. drift (check `src/` and
    [references/knowledge-base.md](./references/knowledge-base.md)). App bug → file a
-   Finding and write the tutorial to the *intended* behavior with a note. Doc drift →
+   Finding and write the tutorial to the _intended_ behavior with a note. Doc drift →
    **fix `user-workflows.md` in the same run** (bump `workflowsVersion`) and generate
    from the corrected text. Never publish a tutorial step you did not see work.
 5. Restore any state you changed (KB §10) and clean up per step 8.
@@ -1177,7 +1179,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   instance is live and newer, so every tool call drives IT — usually an
   `electron:watch` chain that restarted the dev app when the pack re-created
   `electron-build/`. Stop the dev chain (§2b P0-1), or pin with `OWA_CDP_PORT=<prod
-  port>` and restart the MCP client. Nothing observed before that fix counts as prod
+port>` and restart the MCP client. Nothing observed before that fix counts as prod
   evidence.
 - **Prod mode: the pack fails with `EPERM … electron-build\db-exts\fts5.dll`** — a dev
   app is holding the file; the build, not the app, died (memory

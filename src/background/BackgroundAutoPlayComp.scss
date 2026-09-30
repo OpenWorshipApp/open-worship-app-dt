@@ -1,0 +1,46 @@
+// ONE strip at the TOP of the list, holding the folder-session chips and the
+// slide show side by side -- the rail the foreground media widgets carry. At
+// rest it costs a row of about 26px and never moves: which folder am I on, and
+// is a show running, are what the operator glances at, and the card's own
+// footer hides itself. Two stacked strips were tried first and cost a whole
+// row of pictures in a panel that is often 200px tall.
+.background-media-bar {
+  // The opened rules WIN the room -- they were opened on purpose -- so this
+  // strip never shrinks; the grid gives it up instead (see the rule below,
+  // which is what lets it). `flex: 0 1 auto` was tried and is wrong: with a
+  // scroller on it the strip collapsed to its toolbar row and the rules
+  // scrolled out of sight. It still may not outgrow the card, though: this
+  // panel can be dragged down to 200px, where even the rules alone do not
+  // fit and were being cut off at the window edge, so past that it scrolls
+  // inside itself.
+  flex: 0 0 auto;
+  max-height: 100%;
+  overflow-y: auto;
+  // Wraps so the slide-show rules, when opened, take a line of their own and
+  // the strip grows -- nothing here floats over the grid above it.
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 20px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--app-line);
+}
+
+// Capped in pixels rather than as a share of the card: `h-100` on a card
+// inside a resize pane does not always give a definite height for a
+// percentage to resolve against, and when it does not the rules run off the
+// bottom of the window. A flat number always resolves, and the rules scroll
+// inside it on the shortest panels.
+.background-media-bar .slide-auto-play-options-panel {
+  max-height: 148px;
+  overflow-y: auto;
+}
+
+// A flex item will not shrink below its content unless it is told it may, so
+// without this the card grows taller than the panel -- by the height of this
+// strip, and by more once the show's rules are opened -- and the grid is
+// simply cut off at the bottom of the window. The grid inside already
+// scrolls, so giving up the room costs it nothing.
+.background-has-media-bar > .card-body {
+  min-height: 0;
+}

@@ -5,8 +5,11 @@ import {
     fsCheckFileExist,
     pathDirname,
     pathJoin,
+    pathResolve,
+    pathSeparator,
     type MimetypeNameType,
 } from '../server/fileHelpers';
+import { selectableDataDirectories } from '../setting/directory-setting/dataDirectories';
 import { checkAreArraysEqual } from '../server/comparisonHelpers';
 import appProvider from '../server/appProvider';
 import { handleError } from './errorHelpers';
@@ -167,9 +170,85 @@ async function watchDir(dirPath: string, signal: AbortSignal) {
 }
 
 type WatchingStateType = {
-    dirPath: string;
+    dirPaths: string[];
     abortController: AbortController;
 };
+
+/**
+ * Windows decides a path case-insensitively, so two spellings of one folder
+ * must not become two watches — and on Linux they really are two folders.
+ */
+function toComparablePath(dirPath: string) {
+    return pathSeparator === '\\' ? dirPath.toLowerCase() : dirPath;
+}
+
+function checkIsPathInside(parentDirPath: string, dirPath: string) {
+    const comparableParent = toComparablePath(parentDirPath);
+    const comparableDir = toComparablePath(dirPath);
+    if (comparableParent === comparableDir) {
+        return true;
+    }
+    // A drive or filesystem root already ends with the separator, and doubling
+    // it would stop `C:\` (or `/`) from covering anything at all.
+    const prefix = comparableParent.endsWith(pathSeparator)
+        ? comparableParent
+        : `${comparableParent}${pathSeparator}`;
+    return comparableDir.startsWith(prefix);
+}
+
+/**
+ * The fewest roots that still cover every folder: a directory already inside
+ * one being watched is dropped, because the watch is recursive. In the common
+ * setup — every child folder under the parent directory — that leaves exactly
+ * ONE watch, which is what it was before this function existed.
+ */
+function toMinimalDirPaths(dirPaths: string[]) {
+    const minimalDirPaths: string[] = [];
+    for (const dirPath of dirPaths) {
+        const isCovered = minimalDirPaths.some((keptDirPath) => {
+            return checkIsPathInside(keptDirPath, dirPath);
+        });
+        if (isCovered) {
+            continue;
+        }
+        // The new one may itself cover something already kept (a folder picked
+        // ABOVE the parent directory), so those stop being roots of their own.
+        for (let i = minimalDirPaths.length - 1; i >= 0; i--) {
+            if (checkIsPathInside(dirPath, minimalDirPaths[i])) {
+                minimalDirPaths.splice(i, 1);
+            }
+        }
+        minimalDirPaths.push(dirPath);
+    }
+    return minimalDirPaths;
+}
+
+/**
+ * Every folder the app must hear about, not just the parent directory.
+ *
+ * EACH child folder is individually configurable, so any one of them can be
+ * pointed OUTSIDE the parent — and a recursive watch rooted at the parent
+ * alone then never hears about it. What went stale was silent and total: a
+ * document edited in another window never reached the Presenter preview, the
+ * list never gained or lost a row, and even re-presenting kept projecting the
+ * copy the renderer already had. Only reopening the window recovered.
+ */
+async function resolveWatchingDirPaths() {
+    const dirPaths: string[] = [];
+    const parentDirPath =
+        (await appLocalStorage.getSelectedParentDirectory()) ?? '';
+    if (parentDirPath.trim() !== '') {
+        dirPaths.push(pathResolve(parentDirPath));
+    }
+    for (const { settingName } of selectableDataDirectories) {
+        // Synchronous: a setting read, not a filesystem one.
+        const dirPath = DirSource.getDirPathBySettingName(settingName);
+        if (dirPath) {
+            dirPaths.push(dirPath);
+        }
+    }
+    return toMinimalDirPaths(dirPaths);
+}
 
 let watchingState: WatchingStateType | null = null;
 let startingPromise: Promise<void> | null = null;
@@ -177,18 +256,24 @@ const resolvedPromise = Promise.resolve();
 
 async function startWatchingDataDir() {
     try {
-        const dirPath =
-            (await appLocalStorage.getSelectedParentDirectory()) ?? '';
-        if (dirPath.trim() === '') {
+        const dirPaths = await resolveWatchingDirPaths();
+        if (dirPaths.length === 0) {
             return;
         }
+        // ONE controller for every root, so `unwatchDataDir` still releases
+        // the whole set in a single abort.
         const abortController = new AbortController();
-        const isWatching = await watchDir(dirPath, abortController.signal);
+        const watchingDirPaths: string[] = [];
+        for (const dirPath of dirPaths) {
+            if (await watchDir(dirPath, abortController.signal)) {
+                watchingDirPaths.push(dirPath);
+            }
+        }
         // Only a watch that actually started is remembered, so a run that found
         // no directory (first launch, before the user picks one) is retried by
         // the next caller instead of being latched as "done".
-        if (isWatching) {
-            watchingState = { dirPath, abortController };
+        if (watchingDirPaths.length > 0) {
+            watchingState = { dirPaths: watchingDirPaths, abortController };
         }
     } finally {
         startingPromise = null;
@@ -226,4 +311,35 @@ export function unwatchDataDir() {
     }
     watchingState.abortController.abort();
     watchingState = null;
+}
+
+/**
+ * Re-aim the watches after a CHILD folder was pointed somewhere else.
+ *
+ * Without this the new folder is heard about only on the next launch, which is
+ * the same silent staleness one folder at a time. It re-resolves rather than
+ * trusting the caller, and does nothing at all when the set has not moved —
+ * `watchDataDir` is on the hot path, this is not, so the work belongs here.
+ */
+export async function resyncDataDirWatches() {
+    if (watchingState === null) {
+        // Nothing is watching yet, so the next registration resolves the
+        // current set anyway.
+        return;
+    }
+    const dirPaths = await resolveWatchingDirPaths();
+    const currentDirPaths = watchingState.dirPaths;
+    const isSameSet =
+        dirPaths.length === currentDirPaths.length &&
+        dirPaths.every((dirPath, index) => {
+            return (
+                toComparablePath(dirPath) ===
+                toComparablePath(currentDirPaths[index])
+            );
+        });
+    if (isSameSet) {
+        return;
+    }
+    unwatchDataDir();
+    await watchDataDir();
 }

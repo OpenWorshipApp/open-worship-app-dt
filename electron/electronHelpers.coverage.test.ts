@@ -1,21 +1,29 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { mkdir, readdir, rm, writeFile, tarC, tarX, tarR } = vi.hoisted(() => ({
-    mkdir: vi.fn(),
-    readdir: vi.fn(),
-    rm: vi.fn(),
-    writeFile: vi.fn(),
-    tarC: vi.fn(async () => undefined),
-    tarX: vi.fn(async () => undefined),
-    tarR: vi.fn(async () => undefined),
-}));
+const { mkdir, readdir, readFile, rm, writeFile, tarC, tarX, tarR } =
+    vi.hoisted(() => ({
+        mkdir: vi.fn(),
+        readdir: vi.fn(),
+        readFile: vi.fn(),
+        rm: vi.fn(),
+        writeFile: vi.fn(),
+        tarC: vi.fn(async () => undefined),
+        tarX: vi.fn(async () => undefined),
+        tarR: vi.fn(async () => undefined),
+    }));
 
 vi.mock('electron', async () => {
     const mod = await import('./testElectronModule');
     return mod.createElectronModuleMock();
 });
 
-vi.mock('node:fs/promises', () => ({ mkdir, readdir, rm, writeFile }));
+vi.mock('node:fs/promises', () => ({
+    mkdir,
+    readdir,
+    readFile,
+    rm,
+    writeFile,
+}));
 
 vi.mock('tar', () => ({ c: tarC, x: tarX, r: tarR }));
 
@@ -24,6 +32,7 @@ const { settingManagerMock } = vi.hoisted(() => ({
         getPopupWinBounds: vi.fn(() => null as any),
         setPopupWinBounds: vi.fn(),
         clearPopupWinBounds: vi.fn(),
+        getClientSetting: vi.fn(() => ''),
     },
 }));
 
@@ -36,17 +45,22 @@ vi.mock('./ElectronSettingManager', () => ({
 }));
 
 import {
+    captureWindowImage,
     captureWebScreenShot,
     copyDebugInfoToClipboard,
+    findScreenWindow,
+    genTimeoutAttempt,
     guardBrowsing,
     POPUP_FRAME_NAME_PREFIX,
     previewPrintCurrentWindow,
     printCurrentWindow,
     printHTMLContent,
     resetPopupWindowsBounds,
+    sendChatAttachment,
     tarAppend,
     tarCreate,
     tarExtract,
+    takeChatAttachment,
 } from './electronHelpers';
 import { electronMockState } from './testElectronModule';
 import {
@@ -76,6 +90,7 @@ describe('electronHelpers coverage', () => {
         vi.clearAllMocks();
         mkdir.mockResolvedValue(undefined);
         readdir.mockResolvedValue([]);
+        readFile.mockResolvedValue('');
         rm.mockResolvedValue(undefined);
         writeFile.mockResolvedValue(undefined);
         tarC.mockResolvedValue(undefined);
@@ -84,6 +99,7 @@ describe('electronHelpers coverage', () => {
         settingManagerMock.getPopupWinBounds.mockClear().mockReturnValue(null);
         settingManagerMock.setPopupWinBounds.mockClear();
         settingManagerMock.clearPopupWinBounds.mockClear();
+        settingManagerMock.getClientSetting.mockClear().mockReturnValue('');
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, 'error')
@@ -147,6 +163,29 @@ describe('electronHelpers coverage', () => {
         expect(filter('documents/a.pptx-htmls/1.html')).toBe(false);
         expect(filter('documents/wedding-htmls')).toBe(true);
         expect(filter('documents/a.ows')).toBe(true);
+    });
+
+    test('tar-create leaves out whole entries named for replacement', async () => {
+        // A data archive appends the LIVE state of a document whose editing
+        // head is ahead of the file, so the pass that copies must skip that
+        // one entry -- otherwise the archive holds it twice, stale copy first.
+        await tarCreate(
+            '/tmp/in',
+            '/tmp/a.tar',
+            ['documents'],
+            false,
+            undefined,
+            ['documents/sermon.ows'],
+        );
+        const { filter } = tarC.mock.calls.at(-1)?.[0] as {
+            filter: (entryPath: string) => boolean;
+        };
+
+        expect(filter('documents/sermon.ows')).toBe(false);
+        // an exact entry, not a prefix and not a name
+        expect(filter('documents/sermon.ows.bg.json')).toBe(true);
+        expect(filter('lyrics/sermon.ows')).toBe(true);
+        expect(filter('documents')).toBe(true);
     });
 
     test('appends to an existing tar', async () => {
@@ -262,6 +301,144 @@ describe('electronHelpers coverage', () => {
         // already on screen, so it is only raised
         expect(selfWin.restore).not.toHaveBeenCalled();
         expect(selfWin.focus).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([false, true])(
+        'reuses the editor for the same document at another slide (minimized: %s)',
+        (isMinimized) => {
+            const base = 'https://localhost:3000/appDocumentEditor.html';
+            const oldUrl = `${base}?file=sermon.ows&id=1&uuid=old`;
+            const nextUrl = `${base}?uuid=new&id=4&file=sermon.ows`;
+            const closedEditor = createWindowAt(
+                oldUrl,
+                { x: 10, y: 20 },
+                {
+                    isDestroyed: vi.fn(() => true),
+                },
+            );
+            const otherEditor = createWindowAt(`${base}?file=other.ows&id=1`, {
+                x: 20,
+                y: 30,
+            });
+            const editor = createWindowAt(
+                oldUrl,
+                { x: 30, y: 40 },
+                {
+                    isMinimized: vi.fn(() => isMinimized),
+                },
+            );
+            const parent = createMockBrowserWindow();
+            electronMockState.browserWindows.push(
+                closedEditor,
+                otherEditor,
+                editor,
+                parent,
+            );
+            guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+            const open =
+                parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+            expect(
+                open({
+                    url: nextUrl,
+                    frameName: `${POPUP_FRAME_NAME_PREFIX}_editor`,
+                    features: 'popup',
+                }),
+            ).toEqual({ action: 'deny' });
+            expect(editor.webContents.loadURL).toHaveBeenCalledExactlyOnceWith(
+                nextUrl,
+            );
+            expect(editor.focus).toHaveBeenCalledOnce();
+            expect(editor.restore).toHaveBeenCalledTimes(isMinimized ? 1 : 0);
+            for (const untouched of [closedEditor, otherEditor, parent]) {
+                expect(untouched.webContents.loadURL).not.toHaveBeenCalled();
+                expect(untouched.focus).not.toHaveBeenCalled();
+            }
+        },
+    );
+
+    test('opens a new editor when only a different document is open', () => {
+        const base = 'https://localhost:3000/appDocumentEditor.html';
+        const otherEditor = createWindowAt(`${base}?file=other.ows&id=1`, {
+            x: 0,
+            y: 0,
+        });
+        const parent = createMockBrowserWindow();
+        electronMockState.browserWindows.push(otherEditor, parent);
+        guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+        const open = parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            open({
+                url: `${base}?file=sermon.ows&id=4`,
+                frameName: `${POPUP_FRAME_NAME_PREFIX}_editor`,
+                features: 'popup',
+            }).action,
+        ).toBe('allow');
+        expect(otherEditor.webContents.loadURL).not.toHaveBeenCalled();
+        expect(otherEditor.focus).not.toHaveBeenCalled();
+    });
+
+    test('cascades a new group member while preserving the remembered popup size', () => {
+        vi.useFakeTimers();
+        settingManagerMock.getPopupWinBounds.mockReturnValue({
+            x: 1400,
+            y: 100,
+            width: 460,
+            height: 640,
+            isMaximized: false,
+        });
+        const group = createWindowAt(
+            'https://localhost:3000/about.html?uuid=one',
+            { x: 100, y: 200 },
+        );
+        const parent = createMockBrowserWindow();
+        electronMockState.browserWindows.push(group, parent);
+        guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+        const open = parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        const response = open({
+            url: 'https://localhost:3000/about.html?uuid=two',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_about`,
+            features: 'popup',
+        });
+        expect(response.action).toBe('allow');
+        expect(response.overrideBrowserWindowOptions).toMatchObject({
+            x: 120,
+            y: 220,
+            width: 460,
+            height: 640,
+        });
+        vi.runAllTimers();
+        expect(group.focus).toHaveBeenCalledOnce();
+    });
+
+    test('reopening the chatbot sends it the current app page', () => {
+        vi.useFakeTimers();
+        const url = 'https://localhost:3000/chatbot.html?uuid=chatbot';
+        const selfWin = createWindowAt(url, { x: 0, y: 0 });
+        const parentWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => 'https://localhost:3000/presenter.html'),
+            }),
+        });
+        electronMockState.browserWindows.push(selfWin, parentWin);
+
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            windowOpenHandler({
+                url,
+                frameName: `${POPUP_FRAME_NAME_PREFIX}_chatbot`,
+                features: 'popup,appTopToMain',
+            } as any),
+        ).toEqual({ action: 'deny' });
+        expect(selfWin.webContents.send).toHaveBeenCalledWith(
+            'main:app:chatbot-launch-focus',
+            '/presenter.html',
+        );
     });
 
     test('a non-resizable popup without a menu bar', () => {
@@ -469,6 +646,43 @@ describe('electronHelpers coverage', () => {
         vi.runAllTimers();
     });
 
+    test('reset skips dead windows, cascades matching popups, and unmaximizes them', () => {
+        vi.useFakeTimers();
+        settingManagerMock.getPopupWinBounds.mockReturnValue({
+            x: 200,
+            y: 150,
+            width: 500,
+            height: 400,
+            isMaximized: false,
+        });
+        const parentWin = createMockBrowserWindow();
+        const first = openPopup(parentWin, {
+            url: 'https://localhost:3000/about.html?uuid=one',
+        }).popupWin;
+        const second = openPopup(parentWin, {
+            url: 'https://localhost:3000/about.html?uuid=two',
+        }).popupWin;
+        const dead = openPopup(parentWin, {
+            url: 'https://localhost:3000/about.html?uuid=three',
+        }).popupWin;
+        second.isMaximized.mockReturnValue(true);
+        dead.isDestroyed.mockReturnValue(true);
+        electronMockState.browserWindows.push(createMockBrowserWindow());
+
+        resetPopupWindowsBounds(parentWin as any);
+
+        expect(second.unmaximize).toHaveBeenCalledTimes(1);
+        expect(first.setBounds).toHaveBeenCalled();
+        expect(second.setBounds).toHaveBeenCalledWith(
+            expect.objectContaining({
+                x: expect.any(Number),
+                y: expect.any(Number),
+            }),
+        );
+        expect(dead.setBounds).not.toHaveBeenCalled();
+        vi.runAllTimers();
+    });
+
     test('a failed print is reported rather than thrown', () => {
         const win = createMockBrowserWindow({
             webContents: createMockWebContents({
@@ -657,5 +871,165 @@ describe('electronHelpers coverage', () => {
             expect.any(Error),
         );
         expect(captureWin.close).toHaveBeenCalledTimes(2);
+    });
+
+    test('routes one pending screenshot to the help window and then forgets it', () => {
+        expect(sendChatAttachment({ image: 'first' })).toBe(false);
+        expect(takeChatAttachment()).toEqual({ image: 'first' });
+        expect(takeChatAttachment()).toBeNull();
+
+        const chatbotWin = createWindowAt(
+            'https://localhost:3000/chatbot.html?uuid=chatbot',
+            { x: 0, y: 0 },
+        );
+        electronMockState.browserWindows.push(chatbotWin);
+
+        expect(sendChatAttachment({ image: 'second' })).toBe(true);
+        expect(chatbotWin.webContents.send).toHaveBeenCalledWith(
+            'main:app:chat-attach',
+            { image: 'second' },
+        );
+        expect(takeChatAttachment()).toEqual({ image: 'second' });
+    });
+
+    test('captures only a live window and finds a showing screen by id', async () => {
+        const destroyedWin = createWindowAt(
+            'https://localhost:3000/screen.html?screenId=2',
+            { x: 0, y: 0 },
+            { isDestroyed: vi.fn(() => true) },
+        );
+        const screenWin = createWindowAt(
+            'https://localhost:3000/screen.html?screenId=2',
+            { x: 0, y: 0 },
+        );
+        screenWin.webContents.capturePage.mockResolvedValue({
+            toDataURL: () => 'data:image/png;base64,SCREEN',
+        });
+        electronMockState.browserWindows.push(destroyedWin, screenWin);
+
+        expect(findScreenWindow(2)).toBe(screenWin);
+        expect(findScreenWindow(3)).toBeNull();
+        await expect(captureWindowImage(null)).rejects.toThrow(
+            'That window is not open',
+        );
+        await expect(captureWindowImage(destroyedWin as any)).rejects.toThrow(
+            'That window is not open',
+        );
+        await expect(captureWindowImage(screenWin as any)).resolves.toBe(
+            'data:image/png;base64,SCREEN',
+        );
+    });
+
+    test('can run a throttled attempt immediately and debounce the next one', () => {
+        vi.useFakeTimers();
+        const call = vi.fn();
+        const schedule = genTimeoutAttempt(100, false);
+
+        schedule(call);
+        schedule(call);
+        expect(call).toHaveBeenCalledTimes(1);
+        vi.advanceTimersByTime(100);
+        expect(call).toHaveBeenCalledTimes(2);
+
+        schedule(call, true);
+        expect(call).toHaveBeenCalledTimes(3);
+    });
+
+    test('opens ordinary web popups externally and denies the Electron window', () => {
+        const parentWin = createMockBrowserWindow();
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            windowOpenHandler({
+                url: 'https://example.com/help',
+                frameName: 'ordinary-link',
+                features: '',
+            } as any),
+        ).toEqual({ action: 'deny' });
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'https://example.com/help',
+        );
+    });
+
+    test('honours left, top, centre, and bottom popup alignment', () => {
+        vi.useFakeTimers();
+        const parentWin = createMockBrowserWindow({
+            getBounds: vi.fn(() => ({
+                x: 100,
+                y: 200,
+                width: 800,
+                height: 600,
+            })),
+        });
+
+        const leftTop = openPopup(parentWin, {
+            features:
+                'popup,width=200,height=100,appAlignHorizontal=left,' +
+                'appAlignVertical=top',
+        }).response.overrideBrowserWindowOptions;
+        expect(leftTop).toMatchObject({ x: 100, y: 200 });
+
+        const centreBottom = openPopup(parentWin, {
+            url: 'https://localhost:3000/find.html?uuid=other',
+            features:
+                'popup,width=200,height=100,appAlignHorizontal=center,' +
+                'appAlignVertical=bottom',
+        }).response.overrideBrowserWindowOptions;
+        expect(centreBottom).toMatchObject({ x: 400, y: 800 });
+        vi.runAllTimers();
+    });
+
+    test('allows captures only from registered local Webs folders and caches the lookup', async () => {
+        const captureWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                capturePage: vi.fn(async () => ({
+                    toDataURL: () => 'data:image/png;base64,LOCAL',
+                })),
+            }),
+        });
+        electronMockState.setBrowserWindowFactory(() => captureWin);
+        settingManagerMock.getClientSetting.mockReturnValue(
+            'C:\\mock-user-data',
+        );
+        readdir.mockResolvedValue([
+            'select-dir-web-bg-session-a',
+            'unrelated-setting',
+        ]);
+        readFile.mockResolvedValue('$DATA_DIR_PATH/extra-webs');
+        const localUrl = 'file:///C:/mock-user-data/extra-webs/page.html';
+
+        await expect(
+            captureWebScreenShot(localUrl, {
+                width: 320,
+                height: 200,
+                delay: 0,
+            }),
+        ).resolves.toBe('data:image/png;base64,LOCAL');
+        await expect(
+            captureWebScreenShot('file:///private/setting.json', {
+                width: 320,
+                height: 200,
+                delay: 0,
+            }),
+        ).rejects.toThrow('Only a web address');
+        expect(readdir).toHaveBeenCalledTimes(1);
+
+        vi.useFakeTimers();
+        vi.setSystemTime(Date.now() + 6000);
+        readdir.mockRejectedValueOnce(new Error('drive unplugged'));
+        await expect(
+            captureWebScreenShot('file:///C:/outside/page.html', {
+                width: 320,
+                height: 200,
+                delay: 0,
+            }),
+        ).rejects.toThrow('Only a web address');
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+            'Could not read the web folders setting:',
+            expect.any(Error),
+        );
+        vi.useRealTimers();
     });
 });

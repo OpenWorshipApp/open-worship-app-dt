@@ -3,10 +3,14 @@ import { tran } from '../../lang/langHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import appProvider from '../../server/appProvider';
 import {
+    ensureDirectory,
     fsCheckFileExist,
+    fsList,
+    fsMove,
     fsReadFile,
     pathJoin,
 } from '../../server/fileHelpers';
+import { handleError } from '../errorHelpers';
 import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage';
 
 export const EXTRA_BIN_INFO_FILE_NAME = 'info.json';
@@ -65,10 +69,88 @@ export type ExtraBinPathsType = {
  * app-managed bible data folder in `dataDirectories.ts`.
  */
 export function getExtraBinDirPath() {
+    return pathJoin(getExtraBinRootDirPath(), getExtraBinPlatformName());
+}
+
+function getExtraBinRootDirPath() {
     return pathJoin(
         appLocalStorage.defaultStorageDirPath,
         appManagedDataDirNames.EXTRA_BIN,
     );
+}
+
+/**
+ * Which pack this computer runs, named the way
+ * `extra-work/buildPlatformHelpers.mjs` names the packs it builds (`win`,
+ * `mac`, `mac-int`, `linux-arm64` …) -- and the name of the folder it lives in
+ * under `extra-bin/`. One folder per platform because the pack sits in the
+ * DATA folder, which a flash drive carries between computers: in one shared
+ * folder a Mac found the Windows pack, re-extracted it on every Download and
+ * Install and failed each time, and a Mac pack on Linux read as "Installed"
+ * and failed every download with "Exec format error".
+ */
+export function getExtraBinPlatformName() {
+    const { isWindows, isMac, isArm64, is64System } = appProvider.systemUtils;
+    if (isMac) {
+        return isArm64 ? 'mac' : 'mac-int';
+    }
+    const osName = isWindows ? 'win' : 'linux';
+    if (isArm64) {
+        return `${osName}-arm64`;
+    }
+    return is64System ? osName : `${osName}-i386`;
+}
+
+const LEGACY_EXTRA_BIN_ENTRY_NAMES = new Set([
+    'yt',
+    'ffmpeg',
+    'qjs',
+    EXTRA_BIN_INFO_FILE_NAME,
+]);
+
+async function readExtraBinInfoPlatform(infoPath: string): Promise<unknown> {
+    try {
+        return JSON.parse(await fsReadFile(infoPath)).platform;
+    } catch (_error) {
+        return null;
+    }
+}
+
+/**
+ * A pack installed before the per-platform folders sat straight in
+ * `extra-bin/`. Moved into this computer's own folder when its `info.json`
+ * says it was built for this OS, so nothing is downloaded twice; a pack for
+ * another OS is left where it is for that OS to move.
+ */
+export async function moveLegacyExtraBinPack() {
+    const rootDirPath = getExtraBinRootDirPath();
+    const legacyInfoPath = pathJoin(rootDirPath, EXTRA_BIN_INFO_FILE_NAME);
+    if (!(await fsCheckFileExist(legacyInfoPath))) {
+        return;
+    }
+    const platform = await readExtraBinInfoPlatform(legacyInfoPath);
+    // The OS decides, not the processor: an Intel Mac pack runs on Apple
+    // silicon, and it is what such a machine may well have downloaded.
+    const osName = getExtraBinPlatformName().split('-')[0];
+    if (typeof platform !== 'string' || platform.split('-')[0] !== osName) {
+        return;
+    }
+    const dirPath = getExtraBinDirPath();
+    await ensureDirectory(dirPath);
+    for (const { name } of await fsList(rootDirPath)) {
+        if (
+            !LEGACY_EXTRA_BIN_ENTRY_NAMES.has(name) &&
+            !EXTRA_BIN_ARCHIVE_REGEX.test(name)
+        ) {
+            continue;
+        }
+        try {
+            await fsMove(pathJoin(rootDirPath, name), pathJoin(dirPath, name));
+        } catch (error) {
+            // Another window moving the same pack at the same moment.
+            handleError(error);
+        }
+    }
 }
 
 export function getExtraBinPaths(): ExtraBinPathsType {
@@ -89,6 +171,7 @@ export function getExtraBinPaths(): ExtraBinPathsType {
  * ffmpeg half of the pack is gone" need different answers.
  */
 export async function checkIsExtraBinInstalled() {
+    await moveLegacyExtraBinPack();
     const { ytDlpBinPath, ffmpegBinPath, qjsBinPath } = getExtraBinPaths();
     const targetList = [
         ['yt-dlp', ytDlpBinPath],

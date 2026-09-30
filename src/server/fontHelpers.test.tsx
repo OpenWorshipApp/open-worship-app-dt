@@ -45,7 +45,7 @@ vi.mock('../helper/appHooks', async () => {
     };
 });
 
-vi.mock('./appHelpers', () => ({
+vi.mock('./electronSendHelpers', () => ({
     electronSendAsync: electronSendAsyncMock,
 }));
 

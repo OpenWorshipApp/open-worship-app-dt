@@ -1,0 +1,254 @@
+// @vitest-environment jsdom
+
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+// A macOS machine importing a bundle made on Windows: every path function the
+// module reaches runs with POSIX rules, and the manifest carries Windows paths.
+const h = vi.hoisted(() => {
+    return {
+        sessionData: {
+            defaultStorageDirPath: '/Volumes/USB/data' as string | null,
+        },
+        copiedTo: [] as { dirPath: string; fileFullName: string }[],
+        importedPathByName: new Map<string, string>(),
+        clonedTo: [] as { sourcePath: string; targetPath: string }[],
+        writtenTo: [] as { targetPath: string; content: string }[],
+    };
+});
+
+vi.mock('../server/appProvider', async () => {
+    const { posix } = await import('node:path');
+    return {
+        default: {
+            isPageScreen: false,
+            isPageReader: false,
+            isMainPage: false,
+            systemUtils: { isDev: false, isWindows: false },
+            sessionData: h.sessionData,
+            pathUtils: posix,
+            messageUtils: { sendData: () => {}, sendDataSync: () => null },
+        },
+    };
+});
+
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+    },
+}));
+
+vi.mock('../server/fileHelpers', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../server/fileHelpers')>();
+    return {
+        ...actual,
+        // Everything the archive extracted is there; nothing of that name is
+        // in the destination yet.
+        fsCheckFileExist: async (filePath: string) => {
+            return filePath.startsWith('/tmp/extract/');
+        },
+        ensureDirectory: async () => {},
+        fsCloneFile: async (sourcePath: string, targetPath: string) => {
+            h.clonedTo.push({ sourcePath, targetPath });
+            return true;
+        },
+        fsCreateFile: async (targetPath: string, content: string) => {
+            h.writtenTo.push({ targetPath, content });
+            return true;
+        },
+        fsCopyFilePathToPath: async (
+            _sourcePath: string,
+            dirPath: string,
+            fileFullName: string,
+        ) => {
+            h.copiedTo.push({ dirPath, fileFullName });
+            return (
+                h.importedPathByName.get(fileFullName) ??
+                actual.pathJoin(dirPath, fileFullName)
+            );
+        },
+    };
+});
+
+const { ArchiveFileCollector, importArchiveFiles, stageArchiveFiles } =
+    await import('./appArchiveHelpers');
+
+const WINDOWS_DATA_DIR = String.raw`C:\Users\x\data`;
+const dirPathByKind = new Map([
+    ['document', '/Volumes/USB/data/documents'],
+    ['video', '/Volumes/USB/data/videos'],
+] as const);
+
+beforeEach(() => {
+    h.sessionData.defaultStorageDirPath = '/Volumes/USB/data';
+    h.copiedTo.length = 0;
+    h.clonedTo.length = 0;
+    h.writtenTo.length = 0;
+    h.importedPathByName.clear();
+});
+
+describe('importArchiveFiles across operating systems', () => {
+    test('names the file after the Windows path, not WITH it', async () => {
+        await importArchiveFiles(
+            '/tmp/extract',
+            [
+                {
+                    originalPath: String.raw`${WINDOWS_DATA_DIR}\documents\Song.ows`,
+                    archivePath: 'files/001-Song.ows',
+                    kind: 'document',
+                },
+            ],
+            new Map(dirPathByKind),
+        );
+        expect(h.copiedTo).toEqual([
+            {
+                dirPath: '/Volumes/USB/data/documents',
+                fileFullName: 'Song.ows',
+            },
+        ]);
+    });
+
+    test('cleans a name this machine would refuse', async () => {
+        await importArchiveFiles(
+            '/tmp/extract',
+            [
+                {
+                    originalPath: '/home/me/data/documents/What?.ows',
+                    archivePath: 'files/001-What_.ows',
+                    kind: 'document',
+                },
+            ],
+            new Map(dirPathByKind),
+        );
+        expect(h.copiedTo[0].fileFullName).toBe('What.ows');
+    });
+
+    test("finds a document's own media by the path it has HERE", async () => {
+        // Imported beside this machine's own, different `intro.mp4`.
+        h.importedPathByName.set(
+            'intro.mp4',
+            '/Volumes/USB/data/videos/intro (1).mp4',
+        );
+        const { localFilePathByOriginalPath } = await importArchiveFiles(
+            '/tmp/extract',
+            [
+                {
+                    originalPath: String.raw`${WINDOWS_DATA_DIR}\videos\intro.mp4`,
+                    archivePath: 'files/001-intro.mp4',
+                    kind: 'video',
+                },
+            ],
+            new Map(dirPathByKind),
+            WINDOWS_DATA_DIR,
+        );
+        // The document says `$DATA_DIR_PATH\videos\intro.mp4`, which reads
+        // back on this machine as the path below.
+        expect(
+            localFilePathByOriginalPath.get(
+                '/Volumes/USB/data/videos/intro.mp4',
+            ),
+        ).toBe('/Volumes/USB/data/videos/intro (1).mp4');
+        expect(
+            localFilePathByOriginalPath.get(
+                String.raw`${WINDOWS_DATA_DIR}\videos\intro.mp4`,
+            ),
+        ).toBe('/Volumes/USB/data/videos/intro (1).mp4');
+    });
+
+    test('a bundle from before the data folder was recorded keys as before', async () => {
+        const { localFilePathByOriginalPath } = await importArchiveFiles(
+            '/tmp/extract',
+            [
+                {
+                    originalPath: String.raw`${WINDOWS_DATA_DIR}\videos\intro.mp4`,
+                    archivePath: 'files/001-intro.mp4',
+                    kind: 'video',
+                },
+            ],
+            new Map(dirPathByKind),
+        );
+        expect([...localFilePathByOriginalPath.keys()]).toEqual([
+            String.raw`${WINDOWS_DATA_DIR}\videos\intro.mp4`,
+        ]);
+    });
+});
+
+// An editable item keeps unsaved work in its editing history and only reaches
+// the file on a Save, so what an export has to carry is not always what is on
+// disk. The bytes are overridden; the entry, and therefore the whole import
+// side, is not.
+describe('ArchiveFileCollector live content', () => {
+    test('stages the override instead of copying the file', async () => {
+        const collector = new ArchiveFileCollector();
+        await collector.addFile('/tmp/extract/note.own', 'note');
+        await collector.addFile('/tmp/extract/picture.png', 'note-asset');
+        expect(
+            collector.setFileContent('/tmp/extract/note.own', 'HEAD TEXT'),
+        ).toBe(true);
+        await stageArchiveFiles(collector, '/tmp/staging', []);
+        expect(h.writtenTo).toEqual([
+            {
+                targetPath: '/tmp/staging/files/001-note.own',
+                content: 'HEAD TEXT',
+            },
+        ]);
+        // everything without one is still copied, byte for byte
+        expect(h.clonedTo).toEqual([
+            {
+                sourcePath: '/tmp/extract/picture.png',
+                targetPath: '/tmp/staging/files/002-picture.png',
+            },
+        ]);
+    });
+
+    // The two halves in one: the bytes an export stages under an archive path
+    // are the bytes an import reads back from that same path and writes into
+    // the user's folder. Nothing here runs tar -- what it holds to is that the
+    // override travels under the ENTRY, so the note that lands is the one the
+    // window was showing and not the one the file held.
+    test('the bytes staged under an entry are the file an import writes', async () => {
+        const collector = new ArchiveFileCollector();
+        await collector.addFile('/tmp/extract/note.own', 'note');
+        collector.setFileContent('/tmp/extract/note.own', 'UNSAVED HEAD');
+        const { archiveFiles } = await stageArchiveFiles(
+            collector,
+            '/tmp/staging',
+            [],
+        );
+        const [entry] = archiveFiles;
+        expect(h.writtenTo).toEqual([
+            {
+                targetPath: `/tmp/staging/${entry.archivePath}`,
+                content: 'UNSAVED HEAD',
+            },
+        ]);
+
+        const { localFilePathByOriginalPath } = await importArchiveFiles(
+            '/tmp/extract',
+            archiveFiles,
+            new Map([['note', '/Volumes/USB/data/bible-notes']] as const),
+        );
+        // read from the very entry the override was staged into
+        expect(h.copiedTo).toEqual([
+            {
+                dirPath: '/Volumes/USB/data/bible-notes',
+                fileFullName: 'note.own',
+            },
+        ]);
+        expect(localFilePathByOriginalPath.get('/tmp/extract/note.own')).toBe(
+            '/Volumes/USB/data/bible-notes/note.own',
+        );
+    });
+
+    test('a path nobody collected cannot be given content', async () => {
+        const collector = new ArchiveFileCollector();
+        expect(collector.setFileContent('/tmp/extract/note.own', 'x')).toBe(
+            false,
+        );
+        await stageArchiveFiles(collector, '/tmp/staging', []);
+        expect(h.writtenTo).toEqual([]);
+        expect(h.clonedTo).toEqual([]);
+    });
+});

@@ -1,4 +1,10 @@
-import { useCallback, type MouseEvent, type DragEvent } from 'react';
+import {
+    lazy,
+    useCallback,
+    useState,
+    type MouseEvent,
+    type DragEvent,
+} from 'react';
 
 import { tran } from '../lang/langHelpers';
 import Bible from './Bible';
@@ -35,6 +41,9 @@ import {
 import FileSource from '../helper/FileSource';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import AppSuspenseComp from '../others/AppSuspenseComp';
+
+const BibleSlidesPopupComp = lazy(() => import('./BibleSlidesPopupComp'));
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -89,6 +98,8 @@ export default function BibleItemRenderComp({
     filePath: string;
 }>) {
     const { bibleKey } = bibleItem;
+    const [generatingBibleItem, setGeneratingBibleItem] =
+        useState<BibleItem | null>(null);
     const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useBibleItemsViewControllerContext();
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
@@ -123,6 +134,15 @@ export default function BibleItemRenderComp({
                     },
                 },
             ];
+            if (appProvider.isPagePresenter) {
+                menuItems.push({
+                    childBefore: genContextMenuItemIcon('file-earmark-slides'),
+                    menuElement: tran('Generate Slides'),
+                    onSelect: () => {
+                        setGeneratingBibleItem(bibleItemRef.current.clone());
+                    },
+                });
+            }
             const attachedBackgroundData =
                 await attachBackgroundManager.getAttachedBackground(
                     filePathRef.current,
@@ -207,81 +227,93 @@ export default function BibleItemRenderComp({
     }
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <li
-            className={
-                'list-group-item item app-caught-hover-pointer' +
-                ' app-has-action-rail-2' +
-                (isOnScreen ? ' app-cue-on-air' : '')
-            }
-            ref={improveBibleItemTitleOnHover.bind(
-                null,
-                bibleItem.bibleKey,
-                bibleItem.toVerseFullKey(),
-            )}
-            data-bible-item-id={`${fileSource.name}-${bibleItem.id}`}
-            data-index={index + 1}
-            draggable
-            onDragStart={handleDragStartEvent}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDataDropping}
-            onDoubleClick={handleDoubleClick}
-            onContextMenu={handleContextMenuOpening}
-        >
-            <div className={`d-flex ps-1 ${isOnScreen ? 'app-on-screen' : ''}`}>
-                <ItemColorNoteComp item={bibleItem} />
-                <div className="d-flex flex-fill">
-                    <div className="px-1">
-                        <BibleKeySelectionMiniComp
-                            bibleKey={bibleItem.bibleKey}
-                            onBibleKeyChange={(
-                                _isContextMenu,
-                                _oldBibleKey,
-                                newBibleKey,
-                            ) => {
-                                changeBible(newBibleKey);
+        <>
+            <li
+                className={
+                    'list-group-item item app-caught-hover-pointer' +
+                    ' app-has-action-rail-2' +
+                    (isOnScreen ? ' app-cue-on-air' : '')
+                }
+                ref={improveBibleItemTitleOnHover.bind(
+                    null,
+                    bibleItem.bibleKey,
+                    bibleItem.toVerseFullKey(),
+                )}
+                data-bible-item-id={`${fileSource.name}-${bibleItem.id}`}
+                data-index={index + 1}
+                draggable
+                onDragStart={handleDragStartEvent}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDataDropping}
+                onDoubleClick={handleDoubleClick}
+                onContextMenu={handleContextMenuOpening}
+            >
+                <div
+                    className={`d-flex ps-1 ${isOnScreen ? 'app-on-screen' : ''}`}
+                >
+                    <ItemColorNoteComp item={bibleItem} />
+                    <div className="d-flex flex-fill">
+                        <div className="px-1">
+                            <BibleKeySelectionMiniComp
+                                bibleKey={bibleItem.bibleKey}
+                                onBibleKeyChange={(
+                                    _isContextMenu,
+                                    _oldBibleKey,
+                                    newBibleKey,
+                                ) => {
+                                    changeBible(newBibleKey);
+                                }}
+                                isMinimal
+                            />
+                        </div>
+                        <span
+                            className="app-ellipsis"
+                            style={{
+                                fontFamily,
                             }}
-                            isMinimal
-                        />
-                    </div>
-                    <span
-                        className="app-ellipsis"
-                        style={{
-                            fontFamily,
-                        }}
-                    >
-                        <BibleViewTitleEditorComp
-                            bibleItem={bibleItem}
-                            withCtrl
-                            onTargetChange={async (newBibleTarget) => {
-                                const bible = await getBible(bibleItem);
-                                if (bible === null) {
-                                    return;
-                                }
-                                bibleItem.target = newBibleTarget;
-                                bibleItem.save(bible);
-                            }}
-                        />
-                    </span>
-                    {warningMessage && (
-                        <span className="float-end" title={warningMessage}>
-                            ⚠️
+                        >
+                            <BibleViewTitleEditorComp
+                                bibleItem={bibleItem}
+                                withCtrl
+                                onTargetChange={async (newBibleTarget) => {
+                                    const bible = await getBible(bibleItem);
+                                    if (bible === null) {
+                                        return;
+                                    }
+                                    bibleItem.target = newBibleTarget;
+                                    bibleItem.save(bible);
+                                }}
+                            />
                         </span>
-                    )}
+                        {warningMessage && (
+                            <span className="float-end" title={warningMessage}>
+                                ⚠️
+                            </span>
+                        )}
+                    </div>
                 </div>
-            </div>
-            {/* Pinned to the row's border edge, outside the content's own
+                {/* Pinned to the row's border edge, outside the content's own
                 padding: that is what puts this rail at the same x as every
                 other list's, which is the whole point of having one. */}
-            <div className="app-action-rail app-action-rail--pinned">
-                <AttachBackgroundIconComp
-                    filePath={filePath}
-                    id={bibleItem.id}
-                />
-                <ContextMenuDotsButtonComp
-                    onOpening={handleContextMenuOpening}
-                />
-            </div>
-        </li>
+                <div className="app-action-rail app-action-rail--pinned">
+                    <AttachBackgroundIconComp
+                        filePath={filePath}
+                        id={bibleItem.id}
+                    />
+                    <ContextMenuDotsButtonComp
+                        onOpening={handleContextMenuOpening}
+                    />
+                </div>
+            </li>
+            {generatingBibleItem !== null && (
+                <AppSuspenseComp>
+                    <BibleSlidesPopupComp
+                        bibleItem={generatingBibleItem}
+                        onClose={() => setGeneratingBibleItem(null)}
+                    />
+                </AppSuspenseComp>
+            )}
+        </>
     );
 }

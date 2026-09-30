@@ -4,16 +4,32 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-09-02",
+    "updated": "2026-09-28",
     "sections": [
         {
             "id": "slides",
             "label": "Working with slides",
             "panel": "Slides",
-            "recipes": [
-                "W-15"
-            ],
+            "recipes": ["W-15"],
             "questions": [
+                {
+                    "id": "bulk-font",
+                    "text": "How do I apply a font size or font family to all slides or selected canvas items?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bulk font",
+                        "all slides",
+                        "selected slides",
+                        "custom selection",
+                        "font size",
+                        "font family"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Bulk Font",
+                        "guide": true
+                    }
+                },
                 {
                     "id": "add-slide",
                     "text": "How do I add a slide?",
@@ -123,10 +139,7 @@
             "id": "canvas",
             "label": "The slide canvas",
             "panel": "Canvas",
-            "recipes": [
-                "W-15",
-                "W-28"
-            ],
+            "recipes": ["W-15", "W-28"],
             "questions": [
                 {
                     "id": "add-text",
@@ -195,9 +208,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-28"
-                        ],
+                        "related": ["W-28"],
                         "find": "Insert Medias",
                         "guide": true
                     },
@@ -242,12 +253,7 @@
                     "id": "insert-camera",
                     "text": "How do I put a camera on a slide?",
                     "kind": "howto",
-                    "keywords": [
-                        "camera",
-                        "webcam",
-                        "live feed",
-                        "video in"
-                    ],
+                    "keywords": ["camera", "webcam", "live feed", "video in"],
                     "resources": {
                         "recipe": "W-15",
                         "find": "Insert Camera",
@@ -269,6 +275,82 @@
                     "resources": {
                         "recipe": "W-28",
                         "find": "Background",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "drop-colour-locked-box",
+                    "text": "Why doesn’t dropping a colour change my box?",
+                    "kind": "fix",
+                    "keywords": [
+                        "colour",
+                        "color",
+                        "locked",
+                        "padlock",
+                        "will not change",
+                        "repaint",
+                        "drop"
+                    ],
+                    "resources": {
+                        "recipe": "W-28",
+                        "find": "Unlock"
+                    }
+                },
+                {
+                    "id": "type-slide-colors",
+                    "text": "How do I type an exact background or text color for a slide item?",
+                    "kind": "howto",
+                    "keywords": [
+                        "background color",
+                        "text color",
+                        "hex",
+                        "paste color",
+                        "opacity",
+                        "transparency"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Background Color",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "blend-box",
+                    "text": "How do I blend a box with the one behind it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "blend mode",
+                        "multiply",
+                        "screen blend",
+                        "overlay",
+                        "see through",
+                        "mix",
+                        "transparent picture",
+                        "drop the black out"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Blend Mode",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "shadow-box",
+                    "text": "How do I put a shadow behind a box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "shadow",
+                        "box shadow",
+                        "drop shadow",
+                        "glow",
+                        "blur",
+                        "lift off the background",
+                        "shadow behind the letters",
+                        "logo shadow"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Shadow",
                         "guide": true
                     }
                 }

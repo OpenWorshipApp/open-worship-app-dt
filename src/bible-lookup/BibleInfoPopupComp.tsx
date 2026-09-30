@@ -3,7 +3,7 @@ import '../popup-widget/popupWidget.scss';
 import { Fragment, useCallback, type MouseEvent } from 'react';
 
 import appProvider from '../server/appProvider';
-import { ModalComp } from '../app-modal/ModalComp';
+import { MODAL_KEYBOARD_LAYER, ModalComp } from '../app-modal/ModalComp';
 import HeaderAlertPopupComp from '../popup-widget/HeaderAlertPopupComp';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { getLanguageTitle, tran } from '../lang/langHelpers';
@@ -159,6 +159,10 @@ export default function BibleInfoPopupComp({
             close();
         },
         [],
+        // Explicitly, not from the context: this component RENDERS the
+        // wrapper that claims the layer, so it sits ABOVE the provider and
+        // would otherwise register on `root` -- silenced by its own popup.
+        MODAL_KEYBOARD_LAYER,
     );
     const title = tran('Bible Information');
     return (

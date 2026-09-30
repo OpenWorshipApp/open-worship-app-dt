@@ -96,7 +96,16 @@ export type AgentFileActionType =
     | 'delete'
     | AgentSlideActionType;
 
-export type AgentFileKindNameType = AgentEditableKindType;
+/**
+ * The two kinds of DOCUMENT `owa_lyric_file` / `owa_slide_file` write. It used
+ * to be an alias of `AgentEditableKindType`, which is a different question --
+ * that one is "has an editing history" and a bible NOTE has one too, without
+ * being a document these tools can create or validate.
+ */
+export type AgentFileKindNameType = Extract<
+    AgentEditableKindType,
+    'slide' | 'lyric'
+>;
 
 export type AgentFileRequestType = {
     kind?: AgentFileKindNameType;
@@ -232,16 +241,34 @@ async function checkSlideContent(content: string) {
         return `There is no \`items\` array. ${SLIDE_CONTENT_HELP}`;
     }
     const AppDocument = await getAppDocumentClass();
+    // The document's own `metadata` is never taken from the caller — `create`
+    // writes a fresh one and `update` keeps the file's — so it is not judged
+    // either. Spread under the caller's, a partial one refused the whole
+    // document as "Invalid data" while every slide in it was fine.
+    const toCheckedJson = (items: AnyObjectType[]) => {
+        return {
+            ...json,
+            items,
+            metadata: { app: 'open-worship', fileVersion: 1, initDate: '' },
+        };
+    };
     try {
         // The app's OWN validator, so what is accepted here is exactly what
         // the app can open — never a second opinion that could drift from it.
-        AppDocument.validate({
-            metadata: { app: 'open-worship', fileVersion: 1, initDate: '' },
-            ...json,
-        });
+        AppDocument.validate(toCheckedJson(json.items));
     } catch (error: any) {
+        const refusedIndex = json.items.findIndex((item: AnyObjectType) => {
+            try {
+                AppDocument.validate(toCheckedJson([item]));
+                return false;
+            } catch {
+                return true;
+            }
+        });
         return (
-            'This app refused that document: ' +
+            'This app refused that document' +
+            (refusedIndex === -1 ? '' : ` at slide ${refusedIndex + 1}`) +
+            ': ' +
             String(error?.message ?? error).slice(0, 300)
         );
     }

@@ -90,10 +90,16 @@ const fileUtils = {
     createWriteStream: fs.createWriteStream,
     createReadStream: fs.createReadStream,
     readdir: fs.readdir,
+    // Synchronous for the one read that happens before a window can render:
+    // finding a data folder whose drive came back under another letter.
+    readdirSync: fs.readdirSync,
     stat: fs.stat,
     mkdir: fs.mkdir,
     writeFile: fs.writeFile,
     rename: fs.rename,
+    // A settings write lands whole: written beside the target, then renamed
+    // over it (`fsWriteFileAtomicSync`).
+    renameSync: fs.renameSync,
     unlink: fs.unlink,
     rmdir: fs.rmdir,
     readFile: fs.readFile,

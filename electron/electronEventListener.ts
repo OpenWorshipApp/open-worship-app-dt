@@ -4,6 +4,7 @@ import electron, {
     clipboard,
     type FileFilter,
     type IpcMain,
+    type IpcMainEvent,
     nativeTheme,
     shell,
     systemPreferences,
@@ -11,7 +12,8 @@ import electron, {
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
-import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import { writeClipboardText } from './clipboardHelpers';
+import { getMcpToken, getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -22,6 +24,11 @@ import {
     decryptFile,
     encryptFile,
 } from './archiveCryptoHelpers';
+import {
+    forgetDisplayWallpapers,
+    readDisplayWallpaper,
+    type DisplaySizeType,
+} from './displayWallpaperHelpers';
 import {
     attemptClosing,
     captureWebScreenShot,
@@ -158,9 +165,11 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     // What the in-app chatbot connects to. Both doors are on ports this
     // process picked at launch, so nothing in the renderer can hardcode them.
+    // The MCP capability stays off the URL and crosses only this IPC seam.
     ipcMain.on('main:app:get-ai-endpoints', (event) => {
         event.returnValue = {
             mcpUrl: getMcpUrl(),
+            mcpToken: getMcpToken(),
             cdpPort: getRemoteDebuggingPort(),
         };
     });
@@ -215,12 +224,40 @@ export function initEventListenerApp(appController: ElectronAppController) {
             );
         },
     );
+
+    // A monitor's DESKTOP BACKGROUND, for the mini screen previewer's backdrop.
+    // The screen windows are transparent, so what the audience sees where the
+    // app draws nothing is that display's wallpaper -- this is how the card can
+    // show it instead of a checkered "nothing here" pattern. Deliberately the
+    // wallpaper FILE rather than a screen capture: no other window is in it, and
+    // it needs no retaking. Null (rather than an error) when this machine will
+    // not say what its background is.
+    onAsync(
+        ipcMain,
+        'main:app:read-display-wallpaper',
+        async ({
+            displayIndex,
+            width,
+            sizes,
+            isForced,
+        }: {
+            displayIndex: number;
+            width?: number;
+            sizes?: DisplaySizeType[];
+            isForced?: boolean;
+        }) => {
+            if (isForced) {
+                forgetDisplayWallpapers();
+            }
+            return await readDisplayWallpaper({ displayIndex, width, sizes });
+        },
+    );
 }
 
 function onAsync<T1, T2>(
     ipc: IpcMain,
     eventName: string,
-    callee: (data: T1) => OptionalPromise<T2>,
+    callee: (data: T1, event: IpcMainEvent) => OptionalPromise<T2>,
 ): void {
     ipc.on(eventName, async (event, data: T1) => {
         const replyEventName = (data as any)?.replyEventName;
@@ -233,7 +270,7 @@ function onAsync<T1, T2>(
         // The renderer rejects when the reply is an Error instance.
         let result: T2 | Error;
         try {
-            result = await callee(data);
+            result = await callee(data, event);
         } catch (error) {
             console.error(`${eventName}:`, error);
             result = error instanceof Error ? error : new Error(String(error));
@@ -452,6 +489,7 @@ export function initEventOther(appController: ElectronAppController) {
             files: string[];
             isGzip?: boolean;
             excludeNamePatterns?: string[];
+            excludeEntryPaths?: string[];
         }) => {
             return tarCreate(
                 data.inputDir,
@@ -459,6 +497,7 @@ export function initEventOther(appController: ElectronAppController) {
                 data.files,
                 data.isGzip,
                 data.excludeNamePatterns,
+                data.excludeEntryPaths,
             );
         },
     );
@@ -530,8 +569,19 @@ export function initEventOther(appController: ElectronAppController) {
         if (typeof text !== 'string' || text.length === 0) {
             return;
         }
-        clipboard.writeText(text);
+        void writeClipboardText(text);
     });
+
+    onAsync(
+        ipcMain,
+        'main:app:write-clipboard-text',
+        (data: { text?: unknown }) => {
+            return writeClipboardText(data?.text);
+        },
+    );
+    onAsync(ipcMain, 'main:app:read-clipboard-text', () =>
+        clipboard.readText(),
+    );
 
     ipcMain.on('main:app:reveal-path', (_, filePath: string) => {
         if (typeof filePath !== 'string' || filePath.length === 0) {
@@ -552,6 +602,16 @@ export function initEventOther(appController: ElectronAppController) {
                 return true;
             } catch (error) {
                 console.error('Error trashing item:', error);
+                // Electron's words when Windows will not recycle the item: a
+                // USB flash drive has no Recycle Bin. Retrying cannot change
+                // that, and the renderer is waiting to ask the person whether
+                // to delete it outright (`FileSource.trash`).
+                if (
+                    error instanceof Error &&
+                    error.message.includes('Operation was aborted')
+                ) {
+                    return false;
+                }
             }
             console.log('Retrying trashing item:', resolvedFilePath);
             await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -570,13 +630,34 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:pdf-to-images',
-        (data: { filePath: string; outDir: string; isForce: boolean }) => {
+        (
+            data: {
+                filePath: string;
+                outDir: string;
+                isForce: boolean;
+                progressEventName?: string;
+            },
+            event,
+        ) => {
             const mainDisplay = appController.settingManager.primaryDisplay;
             return pdfToImages(
                 data.filePath,
                 data.outDir,
                 mainDisplay.size.width,
                 data.isForce,
+                (completed, total) => {
+                    if (!data.progressEventName) {
+                        return;
+                    }
+                    try {
+                        event.sender.send(data.progressEventName, {
+                            completed,
+                            total,
+                        });
+                    } catch {
+                        // A closed renderer should not abort PDF conversion.
+                    }
+                },
             );
         },
     );

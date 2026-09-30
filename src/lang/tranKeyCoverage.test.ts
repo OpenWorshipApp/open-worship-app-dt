@@ -20,7 +20,10 @@ const REPO_DIR = path.resolve(
     '..',
 );
 const SRC_DIR = path.join(REPO_DIR, 'src');
-const KM_SOURCE_PATH = path.join(SRC_DIR, 'lang', 'data', 'km', 'index.ts');
+
+function toPackSourcePath(langCode: string) {
+    return path.join(SRC_DIR, 'lang', 'data', langCode, 'index.ts');
+}
 
 // A `'…'`, `"…"` or a template literal with no `${}` -- one piece of a key.
 const LITERAL_SOURCE =
@@ -51,22 +54,29 @@ function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();
 }
 
-function readKhmerKeys() {
-    const kmSource = readFileSync(KM_SOURCE_PATH, 'utf-8');
-    const start = kmSource.indexOf('const dictionary = {');
-    const end = kmSource.indexOf('function sanitizeTranKey');
+function readPackKeys(langCode: string) {
+    const packSource = readFileSync(toPackSourcePath(langCode), 'utf-8');
+    const start = packSource.indexOf('const dictionary = {');
+    const end = packSource.indexOf('function sanitizeTranKey');
     if (start === -1 || end === -1) {
-        throw new Error('The km dictionary is no longer shaped as expected');
+        throw new Error(
+            `The ${langCode} dictionary is no longer shaped as expected`,
+        );
     }
-    const objectText = kmSource
+    const objectText = packSource
         .slice(start + 'const dictionary = '.length, end)
         .trim()
         .replace(/;$/, '');
     const dictionary = evaluateLiteral(objectText) as Record<string, string>;
     return {
-        kmSource,
+        packSource,
         keySet: new Set(Object.keys(dictionary).map(sanitizeTranKey)),
     };
+}
+
+function readKhmerKeys() {
+    const { packSource, keySet } = readPackKeys('km');
+    return { kmSource: packSource, keySet };
 }
 
 function listSourceFiles(dirPath: string): string[] {
@@ -159,6 +169,166 @@ describe('Khmer translation coverage', () => {
         // Unquoted identifier keys are keys too.
         expect(keySet.has(sanitizeTranKey('Sort'))).toBe(true);
         expect(kmSource).toContain('return key.trim().toLowerCase();');
+    });
+
+    // `toForegroundDragLabel` translates through a LOOKUP
+    // (`tran(targetLabelMap[target])`), so the sweep above cannot see those
+    // keys at all. They are the labels on every foreground row of a presenting
+    // flow, and a missing one throws in a Khmer window while every other check
+    // stays green -- exactly the hole this file exists to close.
+    test('every foreground widget label has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(
+                SRC_DIR,
+                'presenter-foreground',
+                'foregroundDragHelpers.ts',
+            ),
+            'utf-8',
+        );
+        const start = source.indexOf('const targetLabelMap');
+        const end = source.indexOf('};', start);
+        if (start === -1 || end === -1) {
+            throw new Error('`targetLabelMap` is no longer shaped as expected');
+        }
+        const labels = [
+            ...source
+                .slice(start, end)
+                .matchAll(/:\s*('(?:[^'\\\n]|\\.)*')\s*,/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        // A regex that stopped matching would pass an empty list.
+        expect(labels).toContain('Countdown');
+        expect(labels.length).toBeGreaterThanOrEqual(10);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // The blend-mode picker has the same hole for the same reason: it draws
+    // its options with `tran(mode.labelKey)` over a list, which no static
+    // sweep can read. A missing one blanks the Foreground panel -- and now a
+    // slide's canvas-item properties -- in a Khmer window the moment somebody
+    // opens Properties.
+    test('every blend-mode label has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(SRC_DIR, 'helper', 'blendModeHelpers.ts'),
+            'utf-8',
+        );
+        const start = source.indexOf('const BLEND_MODE_GROUP_LIST');
+        const end = source.indexOf('] as const;', start);
+        if (start === -1 || end === -1) {
+            throw new Error(
+                '`BLEND_MODE_GROUP_LIST` is no longer shaped as expected',
+            );
+        }
+        const labels = [
+            ...source
+                .slice(start, end)
+                .matchAll(/labelKey:\s*('(?:[^'\\\n]|\\.)*')/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        // A regex that stopped matching would pass an empty list. Five group
+        // names plus fifteen modes; `normal` is written as a literal
+        // `tran('Normal')` in the JSX, so the sweep above already has it.
+        expect(labels).toContain('Screen Blend');
+        expect(labels.length).toBeGreaterThanOrEqual(20);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // The position pad names its nine cells through the same dynamic
+    // `tran(cell.labelKey)` that no static sweep can read, and it is the
+    // control the panel OPENS on -- a missing one blanks Properties in a
+    // Khmer window before anything else is touched.
+    test('every position-pad cell has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(
+                SRC_DIR,
+                'presenter-foreground',
+                'ForegroundPositionPadComp.tsx',
+            ),
+            'utf-8',
+        );
+        const start = source.indexOf('const PAD_ROW_LIST');
+        const end = source.indexOf('] as const;', start);
+        if (start === -1 || end === -1) {
+            throw new Error('`PAD_ROW_LIST` is no longer shaped as expected');
+        }
+        const labels = [
+            ...source
+                .slice(start, end)
+                .matchAll(/labelKey:\s*('(?:[^'\\\n]|\\.)*')/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        // A regex that stopped matching would pass an empty list.
+        expect(labels).toContain('Middle center');
+        expect(labels).toHaveLength(9);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // The transition picker names its effects through a dynamic
+    // `tran(TRANSITION_LABEL_MAP[effect])`, for the same reason the pad does:
+    // the screen's own menu shows bare identifiers, and a volunteer's panel
+    // must not.
+    test('every transition label has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(
+                SRC_DIR,
+                'presenter-foreground',
+                'propertiesSettingHelpers.tsx',
+            ),
+            'utf-8',
+        );
+        const start = source.indexOf('const TRANSITION_LABEL_MAP');
+        const end = source.indexOf('};', start);
+        if (start === -1 || end === -1) {
+            throw new Error(
+                '`TRANSITION_LABEL_MAP` is no longer shaped as expected',
+            );
+        }
+        const labels = [
+            ...source.slice(start, end).matchAll(/:\s*('[^'\n]+')/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        expect(labels).toContain('No Transition');
+        expect(labels.length).toBeGreaterThanOrEqual(4);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // Every other interface language is held to the Khmer file, which the
+    // tests above hold to the app: that also covers the dynamic
+    // `tran(prop)` keys no sweep can read. A key French lacks throws in a
+    // French window exactly as it does in a Khmer one; a key only French has
+    // is a leftover.
+    test('the French dictionary carries exactly the Khmer keys', () => {
+        const khmerKeySet = readKhmerKeys().keySet;
+        const { packSource, keySet: frenchKeySet } = readPackKeys('fr');
+        expect({
+            missing: [...khmerKeySet].filter((key) => !frenchKeySet.has(key)),
+            extra: [...frenchKeySet].filter((key) => !khmerKeySet.has(key)),
+        }).toEqual({ missing: [], extra: [] });
+        expect(packSource).toContain('return key.trim().toLowerCase();');
     });
 
     test('reads a key the way tran() receives it', () => {

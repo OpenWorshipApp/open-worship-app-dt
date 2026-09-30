@@ -83,7 +83,7 @@ export default function BibleFindPreviewerComp() {
                     className="form-select form-select-sm"
                     value={tabKey}
                     title={tran(activeLabelKey)}
-                    aria-label={tran(activeLabelKey)}
+                    aria-label={tran('Bible Online Lookup')}
                     onChange={handleTabChanging}
                 >
                     {tabTypeList.map(([key, labelKey]) => {

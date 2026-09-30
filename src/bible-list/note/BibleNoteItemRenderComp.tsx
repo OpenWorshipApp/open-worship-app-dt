@@ -97,8 +97,17 @@ export default function BibleNoteItemRenderComp({
                         'file-earmark-arrow-down',
                     ),
                     menuElement: tran('Export'),
-                    onSelect: () => {
-                        exportBibleNoteItem(noteItemRef.current);
+                    onSelect: async () => {
+                        // The item as its own window has it: this list holds
+                        // what is SAVED, and what leaves the machine has to be
+                        // the last thing typed, not the last thing saved.
+                        const liveNoteItem =
+                            await noteRef.current.getEditingItemById(
+                                noteItemRef.current.id,
+                            );
+                        exportBibleNoteItem(
+                            liveNoteItem ?? noteItemRef.current,
+                        );
                     },
                 },
             ];
@@ -180,6 +189,9 @@ export default function BibleNoteItemRenderComp({
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
     const fileSource = FileSource.getInstance(filePath);
+    const openingLabel = `${tran('Open BibleNote')}: ${
+        noteItem.title || tran('No title')
+    }`;
     return (
         <li
             className="list-group-item item app-has-action-rail"
@@ -200,8 +212,25 @@ export default function BibleNoteItemRenderComp({
                 <ItemColorNoteComp item={noteItem} />
                 <i
                     className={'bi bi-journal mx-1 app-caught-hover-pointer'}
-                    title={tran('Open BibleNote')}
+                    role="button"
+                    tabIndex={0}
+                    // Named with the note it opens, like a slide card is named
+                    // with its own slide: every row otherwise carried the same
+                    // three words, so neither a keyboard, a screen reader nor
+                    // `owa_click` could say WHICH note to open.
+                    aria-label={openingLabel}
+                    title={openingLabel}
                     onClick={handleBibleNoteOpening}
+                    onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') {
+                            return;
+                        }
+                        // Otherwise Space scrolls the panel under the window
+                        // that is opening.
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleBibleNoteOpening();
+                    }}
                 />
                 {isEditingTitle ? (
                     <div className="flex-fill">

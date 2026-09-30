@@ -30,6 +30,7 @@ vi.mock('../helper/debuggerHelpers', async () => {
 });
 
 import KeyboardEventListener, {
+    KeyboardLayerContext,
     PlatformEnum,
     allArrows,
     checkIsControlKeys,
@@ -73,6 +74,142 @@ describe('KeyboardEventListener', () => {
         }
         container?.remove();
         container = null;
+    });
+
+    test('a subtree that claims a layer registers its own keys under it', async () => {
+        // A modal pushes its layer in an EFFECT, and effects run child-first,
+        // so a child that read the stack at mount would pin `root` and go dead
+        // the moment the modal's layer went up. The layer travels as context,
+        // read during render, parent first.
+        const outsideListener = vi.fn();
+        const insideListener = vi.fn();
+
+        function Outside() {
+            useKeyboardRegistering([{ key: 'F6' }], outsideListener, []);
+            return null;
+        }
+        function Inside() {
+            useKeyboardRegistering([{ key: 'F6' }], insideListener, []);
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(
+                <>
+                    <Outside />
+                    <KeyboardLayerContext value="bible-lookup">
+                        <Inside />
+                    </KeyboardLayerContext>
+                </>,
+            );
+        });
+
+        const event = {
+            key: 'F6',
+            ctrlKey: false,
+            altKey: false,
+            shiftKey: false,
+            metaKey: false,
+            defaultPrevented: false,
+        };
+
+        // Nothing claimed yet: the app underneath answers.
+        KeyboardEventListener.fireEvent(event as any);
+        await flushAsyncEvents();
+        expect(outsideListener).toHaveBeenCalledTimes(1);
+        expect(insideListener).not.toHaveBeenCalled();
+
+        // Claimed: only the subtree that owns the keyboard answers. This is
+        // the F6-clears-a-live-screen-through-an-open-modal bug.
+        KeyboardEventListener.addLayer('bible-lookup');
+        KeyboardEventListener.fireEvent(event as any);
+        await flushAsyncEvents();
+        expect(outsideListener).toHaveBeenCalledTimes(1);
+        expect(insideListener).toHaveBeenCalledTimes(1);
+
+        // Released: the app has its keyboard back.
+        KeyboardEventListener.removeLayer('bible-lookup');
+        KeyboardEventListener.fireEvent(event as any);
+        await flushAsyncEvents();
+        expect(outsideListener).toHaveBeenCalledTimes(2);
+        expect(insideListener).toHaveBeenCalledTimes(1);
+    });
+
+    test('an explicit layer still beats the subtree it sits in', async () => {
+        const listener = vi.fn();
+        function Probe() {
+            useKeyboardRegistering([{ key: 'F7' }], listener, [], 'popup');
+            return null;
+        }
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(
+                <KeyboardLayerContext value="bible-lookup">
+                    <Probe />
+                </KeyboardLayerContext>,
+            );
+        });
+        const event = {
+            key: 'F7',
+            ctrlKey: false,
+            altKey: false,
+            shiftKey: false,
+            metaKey: false,
+            defaultPrevented: false,
+        };
+        KeyboardEventListener.addLayer('bible-lookup');
+        KeyboardEventListener.fireEvent(event as any);
+        await flushAsyncEvents();
+        expect(listener).not.toHaveBeenCalled();
+
+        KeyboardEventListener.addLayer('popup');
+        KeyboardEventListener.fireEvent(event as any);
+        await flushAsyncEvents();
+        expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    test('re-asserts a layer instead of stacking it, so one close is enough', () => {
+        // A widget that opens twice without closing in between -- an async
+        // context-menu builder racing itself, a host unmounted with its menu
+        // open -- used to push a DUPLICATE, and `removeLayer` takes one
+        // occurrence off. The stack kept a layer nobody owned and every
+        // `root` shortcut under it (Ctrl+B, F5-F10, the slide arrows) was
+        // dead for the rest of the session.
+        KeyboardEventListener.addLayer('context-menu');
+        KeyboardEventListener.addLayer('context-menu');
+        KeyboardEventListener.addLayer('context-menu');
+        expect((KeyboardEventListener as any)._layers).toEqual([
+            'root',
+            'context-menu',
+        ]);
+
+        KeyboardEventListener.removeLayer('context-menu');
+        expect(KeyboardEventListener.getLastLayer()).toBe('root');
+        expect(
+            KeyboardEventListener.toEventMapperKey({ key: 'ArrowRight' }),
+        ).toBe('root>ArrowRight');
+    });
+
+    test('a second widget re-asserting moves it to the top of the stack', () => {
+        KeyboardEventListener.addLayer('presenting-control');
+        KeyboardEventListener.addLayer('context-menu');
+        KeyboardEventListener.addLayer('presenting-control');
+        expect((KeyboardEventListener as any)._layers).toEqual([
+            'root',
+            'context-menu',
+            'presenting-control',
+        ]);
+        KeyboardEventListener.removeLayer('presenting-control');
+        expect(KeyboardEventListener.getLastLayer()).toBe('context-menu');
+        KeyboardEventListener.removeLayer('context-menu');
+        expect(KeyboardEventListener.getLastLayer()).toBe('root');
     });
 
     test('formats shortcut keys for each platform and rejects incompatible control maps', () => {

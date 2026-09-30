@@ -27,13 +27,45 @@ import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    genForegroundPropsSettingNames,
+    useForegroundSessions,
+} from './foregroundSessionHelpers';
 
-function getSystemTimezoneMinuteOffset() {
+/** Every setting ONE clock owns, whichever session holds it. */
+function genClockSettingNames(id: string) {
+    return [
+        `foreground-city-name-setting-${id}`,
+        `foreground-timezone-minute-offset-setting-${id}`,
+        `foreground-time-is-24-hour-format-setting-${id}`,
+        ...genForegroundPropsSettingNames(`time-${id}`),
+    ];
+}
+
+/**
+ * Where one session's clocks are listed. A clock's own id is a uuid, so the
+ * clocks themselves never collide between sessions -- only the LIST of them
+ * needs the suffix.
+ */
+function toIdListSettingName(suffix: string) {
+    return `foreground-time-id-list${suffix}`;
+}
+
+/**
+ * HOURS, despite every surrounding name. `TimingController` multiplies this by
+ * `60 * 60 * 1000`, so hours is what the whole chain has always meant -- the
+ * box just used to be labelled `min`, and a volunteer who typed the minute
+ * offset for their city (420 for Phnom Penh) got a clock weeks out. The data
+ * field and the setting key keep the old `...MinuteOffset` spelling on purpose:
+ * they are persisted in `screen-foreground-manager` and in one setting file per
+ * clock, and renaming them would blank a clock that is already on a screen.
+ */
+function getSystemTimezoneHourOffset() {
     const date = new Date();
     return -date.getTimezoneOffset() / 60;
 }
 
-function getMinuteOffsetFromCity(event: any) {
+function getHourOffsetFromCity(event: any) {
     return new Promise<[string, number] | null>((resolve) => {
         const cityNames = tz
             .names()
@@ -53,8 +85,8 @@ function getMinuteOffsetFromCity(event: any) {
                     childBefore: genContextMenuItemIcon('clock'),
                     menuElement: title,
                     onSelect: () => {
-                        const minuteOffset = tz(name).utcOffset() / 60;
-                        resolve([title, minuteOffset]);
+                        const hourOffset = tz(name).utcOffset() / 60;
+                        resolve([title, hourOffset]);
                     },
                 };
             }),
@@ -81,7 +113,7 @@ function TimeInSetComp({
     const [timezoneMinuteOffset, setTimezoneMinuteOffset] =
         useStateSettingNumber(
             `foreground-timezone-minute-offset-setting-${id}`,
-            getSystemTimezoneMinuteOffset,
+            getSystemTimezoneHourOffset,
         );
     const [is24HourFormat, setIs24HourFormat] = useStateSettingBoolean(
         `foreground-time-is-24-hour-format-setting-${id}`,
@@ -130,12 +162,12 @@ function TimeInSetComp({
         setTimezoneMinuteOffset,
     );
     const handleUseCurrentTimezone = useCallback(() => {
-        setTimezoneMinuteOffsetRef.current(getSystemTimezoneMinuteOffset());
+        setTimezoneMinuteOffsetRef.current(getSystemTimezoneHourOffset());
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const setCityNameRef = useAppCurrentRef(setCityName);
     const handleChooseCity = useCallback(async (event: any) => {
-        const result = await getMinuteOffsetFromCity(event);
+        const result = await getHourOffsetFromCity(event);
         if (result === null) {
             return;
         }
@@ -152,9 +184,15 @@ function TimeInSetComp({
     );
     const handleTimezoneOffsetChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setTimezoneMinuteOffsetRef.current(
-                Number.parseInt(event.target.value),
-            );
+            // HOURS, and `parseFloat` rather than `parseInt`: India is +5:30
+            // and Nepal +5:45, and truncating those put the clock half an hour
+            // out. An empty or half-typed box parses to NaN, which would reach
+            // `TimingController` as an Invalid Date -- hold the old value.
+            const newOffset = Number.parseFloat(event.target.value);
+            if (Number.isNaN(newOffset)) {
+                return;
+            }
+            setTimezoneMinuteOffsetRef.current(newOffset);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -192,78 +230,70 @@ function TimeInSetComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="d-flex flex-column gap-2">
-            <div className="btn-group">
+        <div className="fg-group">
+            <div className="fg-fields">
                 <button
-                    className="btn btn-outline-secondary"
+                    type="button"
+                    className="fg-quiet-btn"
                     title={tran('Use this device’s timezone')}
                     onClick={handleUseCurrentTimezone}
                 >
-                    <i className="bi bi-geo-alt" />{' '}
-                    {tran('Use Current Timezone')}
+                    <i className="bi bi-geo-alt" />
+                    <span>{tran('Use Current Timezone')}</span>
                 </button>
                 <button
-                    className="btn btn-outline-secondary"
+                    type="button"
+                    className="fg-quiet-btn"
                     title={tran('Pick a city to set its timezone')}
                     onClick={handleChooseCity}
                 >
-                    <i className="bi bi-globe-americas" /> {tran('Choose City')}
+                    <i className="bi bi-globe-americas" />
+                    <span>{tran('Choose City')}</span>
                 </button>
             </div>
-            <div className="d-flex flex-wrap align-items-center gap-2">
-                <div
-                    className="input-group"
-                    style={{ width: '250px' }}
+            <div className="fg-fields">
+                <label
+                    className="fg-field fg-field-grow"
                     title={tran('Label shown above the time')}
                 >
-                    <span className="input-group-text">
-                        <i className="bi bi-buildings" />
-                    </span>
+                    <i className="bi bi-buildings" />
                     <input
-                        className="form-control"
                         type="text"
+                        aria-label={tran('Label shown above the time')}
                         placeholder={tran('City')}
                         value={cityName}
                         onChange={handleCityNameChange}
                     />
-                </div>
-                <div
-                    className="input-group"
-                    style={{ width: '230px' }}
-                    title={tran('Timezone Minute Offset')}
+                </label>
+                <label
+                    className="fg-field"
+                    title={tran('Timezone Hour Offset')}
                 >
-                    <span className="input-group-text">
-                        <i className="bi bi-clock" />
-                    </span>
-                    <span className="input-group-text">
-                        {tran('UTC Offset')}
-                    </span>
+                    <i className="bi bi-clock" />
+                    <span className="fg-field-name">{tran('UTC Offset')}</span>
                     <input
-                        className="form-control"
+                        className="fg-num"
                         type="number"
+                        step="0.25"
+                        aria-label={tran('Timezone Hour Offset')}
                         value={timezoneMinuteOffset}
                         onChange={handleTimezoneOffsetChange}
                     />
-                    <span className="input-group-text">min</span>
-                </div>
-                <div className="input-group-text">
-                    <div className="form-check form-switch mb-0">
-                        <input
-                            className="form-check-input app-caught-hover-pointer"
-                            type="checkbox"
-                            role="switch"
-                            id={`time-format-${id}`}
-                            checked={isAmPmFormat}
-                            onChange={handleTimeFormatChange}
-                        />
-                        <label
-                            className="form-check-label"
-                            htmlFor={`time-format-${id}`}
-                        >
-                            {tran('AM/PM')}
-                        </label>
-                    </div>
-                </div>
+                    <span className="fg-unit-static">h</span>
+                </label>
+                <label className="fg-field" htmlFor={`time-format-${id}`}>
+                    <input
+                        className="form-check-input app-caught-hover-pointer mt-0"
+                        type="checkbox"
+                        role="switch"
+                        id={`time-format-${id}`}
+                        checked={isAmPmFormat}
+                        onChange={handleTimeFormatChange}
+                    />
+                    <span className="fg-field-name">{tran('AM/PM')}</span>
+                </label>
+            </div>
+            <div className="fg-actions">
                 <button
                     className="btn btn-primary"
                     title={tran('Show Time')}
@@ -324,8 +354,9 @@ function getAllShowingScreenIdDataList() {
 
 function ForegroundTimeItemComp({
     id,
+    itemNumber,
     onRemove,
-}: Readonly<{ id: string; onRemove?: () => void }>) {
+}: Readonly<{ id: string; itemNumber: number; onRemove?: () => void }>) {
     useScreenForegroundManagerEvents(['update']);
     const showingScreenIdDataList = getAllShowingScreenIdDataList().filter(
         ([, data]) => data.id === id,
@@ -346,12 +377,26 @@ function ForegroundTimeItemComp({
         },
         isFontSize: true,
     });
+    const removeLabel = `${tran('Remove Time')} ${itemNumber}`;
     return (
-        <div className="app-border-white-round p-2">
+        <ForegroundLayoutComp
+            target={'time-' + id}
+            // The border stays: these sit in a LIST, so it separates one
+            // clock from the next rather than boxing a panel inside a panel.
+            extraBodyClassName="app-border-white-round p-2"
+        >
             {onRemove ? (
-                <i
-                    className="bi bi-x-lg float-end app-caught-hover-pointer"
-                    style={{ color: 'red' }}
+                // A real button, named and numbered. It used to be a bare
+                // `<i onClick>` with no title, aria-label, role or tabIndex:
+                // absent from the accessibility tree, unreachable from the
+                // keyboard, and the only control in this panel a screen reader
+                // could not announce. The number matters for the same reason it
+                // does on a message -- three clocks otherwise give three
+                // controls with one name.
+                <button
+                    className="btn btn-sm btn-outline-danger float-end"
+                    title={removeLabel}
+                    aria-label={removeLabel}
                     onClick={() => {
                         for (const [
                             screenId,
@@ -361,49 +406,41 @@ function ForegroundTimeItemComp({
                         }
                         onRemove();
                     }}
-                />
+                >
+                    <i className="bi bi-x-lg" />
+                </button>
             ) : null}
             {propsSetting}
-            <hr />
-            <div>
+            <div className="fg-body">
                 <TimeInSetComp
                     genStyle={genStyle}
                     id={id}
                     showingScreenIdDataList={showingScreenIdDataList}
                 />
+                {showingScreenIdDataList.length > 0 ? (
+                    <div className="fg-actions">
+                        <ScreensRendererComp
+                            showingScreenIdDataList={showingScreenIdDataList}
+                            buttonText={tran('Hide Time')}
+                            handleForegroundHiding={handleHiding}
+                            isMini={false}
+                        />
+                    </div>
+                ) : null}
             </div>
-            <div>
-                <ScreensRendererComp
-                    showingScreenIdDataList={showingScreenIdDataList}
-                    buttonText={tran('Hide Time')}
-                    handleForegroundHiding={handleHiding}
-                    isMini={false}
-                />
-            </div>
-        </div>
+        </ForegroundLayoutComp>
     );
 }
 
-function RenderShownMiniComp() {
-    useScreenForegroundManagerEvents(['update']);
-    const allShowingScreenIdDataList = getAllShowingScreenIdDataList();
-    return (
-        <ScreensRendererComp
-            showingScreenIdDataList={allShowingScreenIdDataList}
-            buttonText={tran('Hide Time')}
-            genTitle={(data) => {
-                return `Time: ${data.id}`;
-            }}
-            handleForegroundHiding={handleHiding}
-            isMini
-        />
-    );
-}
-
-const idListSettingManager = genStringListSettingManager(
-    'foreground-time-id-list',
-);
-function useIdList() {
+/**
+ * This session's clocks. One manager per session, made on the suffix rather
+ * than at module scope: the module-level one wrote every session's list to
+ * the same key.
+ */
+function useIdList(suffix: string) {
+    const idListSettingManager = useMemo(() => {
+        return genStringListSettingManager(toIdListSettingName(suffix));
+    }, [suffix]);
     const [idList, setIdList] = useState<string[]>([]);
     const setIdList1 = (newIdList: string[]) => {
         setIdList(newIdList);
@@ -416,27 +453,29 @@ function useIdList() {
             return;
         }
         setIdList1([crypto.randomUUID()]);
-    }, []);
+    }, [idListSettingManager]);
     return [idList, setIdList1] as const;
 }
 
-export default function ForegroundTimeComp() {
-    const [idList, setIdList] = useIdList();
-    useScreenForegroundManagerEvents(['update']);
-    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
+/** The clocks one session holds, read straight off its own setting. */
+function readSessionIdList(suffix: string) {
+    return genStringListSettingManager(
+        toIdListSettingName(suffix),
+    ).getSetting();
+}
+
+/** The panel, ON ONE SESSION: that session's clocks and nothing else. */
+function TimeBodyComp({ suffix }: Readonly<{ suffix: string }>) {
+    const [idList, setIdList] = useIdList(suffix);
     return (
-        <ForegroundLayoutComp
-            target="time"
-            fullChildHeaders={<h4>{tran('Time')}</h4>}
-            childHeadersOnHidden={<RenderShownMiniComp />}
-            isOnScreen={isOnScreen}
-        >
+        <>
             <div className="d-flex flex-wrap gap-1">
-                {idList.map((id) => {
+                {idList.map((id, index) => {
                     return (
                         <ForegroundTimeItemComp
                             key={id}
                             id={id}
+                            itemNumber={index + 1}
                             onRemove={
                                 idList.length > 1
                                     ? () => {
@@ -452,16 +491,60 @@ export default function ForegroundTimeComp() {
                     );
                 })}
                 <button
-                    className="btn btn-outline-info"
+                    type="button"
+                    className="fg-quiet-btn"
                     title={tran('Add Time')}
-                    style={{ width: '20px', padding: '0' }}
                     onClick={() => {
                         setIdList([...idList, crypto.randomUUID()]);
                     }}
                 >
-                    <i className="bi bi-plus" />
+                    <i className="bi bi-plus-lg" />
+                    <span>{tran('Add Time')}</span>
                 </button>
             </div>
+        </>
+    );
+}
+
+export default function ForegroundTimeComp() {
+    useScreenForegroundManagerEvents(['update']);
+    // A session here holds a whole SET of clocks: the one wall of world
+    // times for a mission Sunday, the single service clock the rest of the
+    // year -- kept side by side instead of built again each time.
+    const { suffix, element: sessionsElement } = useForegroundSessions({
+        widgetKey: 'time',
+        // No `toPrefix`: the Properties here belong to each CLOCK
+        // (`time-<uuid>`) rather than to the session, so a session prefix
+        // would name twenty keys nothing ever wrote. The clocks' own keys
+        // are swept below instead.
+        toOwnSettingNames: (sessionSuffix) => {
+            return [
+                toIdListSettingName(sessionSuffix),
+                ...readSessionIdList(sessionSuffix).flatMap(
+                    genClockSettingNames,
+                ),
+            ];
+        },
+        checkIsOnScreen: (_sessionId, sessionSuffix) => {
+            const idSet = new Set(readSessionIdList(sessionSuffix));
+            return getAllShowingScreenIdDataList().some(([, data]) => {
+                return idSet.has(data.id);
+            });
+        },
+        hideSession: (_sessionId, sessionSuffix) => {
+            const idSet = new Set(readSessionIdList(sessionSuffix));
+            for (const [screenId, data] of getAllShowingScreenIdDataList()) {
+                if (idSet.has(data.id)) {
+                    handleHiding(screenId, data);
+                }
+            }
+        },
+    });
+    return (
+        <ForegroundLayoutComp target="time">
+            {sessionsElement}
+            {/* Keyed by the session so the list is re-read from ITS key. */}
+            <TimeBodyComp key={suffix} suffix={suffix} />
         </ForegroundLayoutComp>
     );
 }

@@ -1,6 +1,7 @@
 import { appManagedDataDirNames } from '../helper/constants';
 import { tran } from '../lang/langHelpers';
 import {
+    checkIsHiddenName,
     fsCheckDirExist,
     fsCheckFileExist,
     fsCloneFile,
@@ -58,6 +59,37 @@ export function getResourcesDataDirPath() {
         appLocalStorage.defaultStorageDirPath,
         appManagedDataDirNames.RESOURCES,
     );
+}
+
+/**
+ * The folders directly inside `<selected parent dir>/resources`, as full paths
+ * sorted by name -- what the panel offers to add with one press, since that
+ * folder belongs to Resources and every copy lands in it.
+ *
+ * One `readdir` of one folder, never a walk: a copy is always a direct child.
+ * Hidden names are left out, which also keeps a copy still being written
+ * (`.copying-…`) off the list. A folder that is not there yet is simply none.
+ */
+export async function listResourcesDataDirFolders() {
+    try {
+        const resourcesDirPath = getResourcesDataDirPath();
+        const dirents = await fsListDirents(resourcesDirPath);
+        return dirents
+            .filter((dirent) => {
+                return dirent.isDirectory && !checkIsHiddenName(dirent.name);
+            })
+            .map((dirent) => {
+                return dirent.name;
+            })
+            .sort((a, b) => {
+                return a.localeCompare(b, undefined, { sensitivity: 'base' });
+            })
+            .map((name) => {
+                return pathJoin(resourcesDirPath, name);
+            });
+    } catch (_error) {
+        return [];
+    }
 }
 
 /**

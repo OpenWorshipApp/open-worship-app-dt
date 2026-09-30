@@ -5,7 +5,117 @@ import { useAppEffect, useAppEffectAsync } from './appHooks';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
 
-const webScreenshotCacheManager = new CacheManager<string>(10);
+// Loaded on demand, and only ever for a `file:` url. The screen managers
+// import THIS module lazily to keep its chain out of a screen window's
+// initial load (`screenWebsiteHelpers`), and a static import of the whole
+// file/mime layer here would put that straight back for everyone.
+async function importFileHelpers() {
+    return await import('../server/fileHelpers');
+}
+
+/**
+ * TWO caches, one budget, and the difference between them is whether the
+ * page can be PROVEN not to have changed.
+ *
+ * A capture is far and away the most expensive thing in this module: a hidden
+ * BrowserWindow, a page load and a three-second sleep, two at a time. A
+ * remote page can change with nothing here to observe it, so its shot has to
+ * expire — that is what the ten seconds below are for, and they stay.
+ *
+ * A LOCAL FILE is not like that. Its key carries the md5 of its own bytes
+ * (`genScreenshotCacheKey`), so an entry that is still in the cache is still
+ * correct, and expiring it buys nothing but another hidden window and another
+ * three seconds — paid again on every tab switch, every panel re-open and
+ * every scroll that remounts a tile, on the machines that can least afford
+ * it. So a file's shot is bounded by BYTES and evicted oldest-first, never by
+ * time. The ceiling is the same `MAX_CACHED_SCREENSHOT_CHARS` it always was,
+ * shared by both caches: this holds no more memory than before, it just stops
+ * throwing away work it can prove is still good.
+ */
+const REMOTE_SHOT_EXPIRATION_SECOND = 10;
+const webScreenshotCacheManager = new CacheManager<string>(
+    REMOTE_SHOT_EXPIRATION_SECOND,
+);
+const fileScreenshotCacheManager = new CacheManager<string>(null);
+// A key lives in exactly one of them, so "ask both" is how anything holding
+// only a key (the budget sweep, a refresh) reaches the right one.
+const screenshotCacheManagerList = [
+    webScreenshotCacheManager,
+    fileScreenshotCacheManager,
+];
+
+// Hashing costs a read of the file, and a panel of tiles asks about the same
+// few files at once. The md5 is memoised against what a STAT can see — size
+// and mtime — so a cache hit costs one stat instead of a read, and the memo
+// expires like everything else here rather than growing.
+const fileMd5CacheManager = new CacheManager<string>(10);
+
+/**
+ * The md5 of the file a `file:` url names, or null when the url is not a file
+ * or there is nothing there to read.
+ *
+ * mtime is only the MEMO, never the identity: a file restored from a backup or
+ * copied back into place gets a new mtime with the same bytes, and re-rendering
+ * a page nobody changed is the cost this whole thing exists to avoid.
+ */
+async function getCaptureFileMd5(url: string) {
+    if (!url.startsWith('file:') || !URL.canParse(url)) {
+        return null;
+    }
+    const { fsGetFileStamp, getFileMD5, toFilePathFromFileUrl } =
+        await importFileHelpers();
+    const filePath = toFilePathFromFileUrl(url);
+    const fileStamp = await fsGetFileStamp(filePath);
+    if (fileStamp === null) {
+        return null;
+    }
+    const stampKey = `${filePath}-${fileStamp.size}-${fileStamp.modifiedAt}`;
+    const cachedMd5 = fileMd5CacheManager.getSync(stampKey);
+    if (cachedMd5 !== null) {
+        return cachedMd5;
+    }
+    const md5 = await getFileMD5(filePath);
+    if (md5 === null) {
+        return null;
+    }
+    fileMd5CacheManager.setSync(stampKey, md5);
+    return md5;
+}
+
+/**
+ * Which cache this capture belongs in, and under what key.
+ *
+ * The url stays FIRST in both shapes: `refreshWebCapturing` finds every
+ * size/delay variant of a page by that prefix, and a file's old md5 has to be
+ * reachable the same way.
+ */
+async function genScreenshotCacheKey(
+    url: string,
+    width: number,
+    height: number,
+    delay: number,
+) {
+    const md5 = await getCaptureFileMd5(url);
+    const sizeKey = `${width}-${height}-${delay}`;
+    if (md5 === null) {
+        return {
+            key: `${url}-${sizeKey}`,
+            cacheManager: webScreenshotCacheManager,
+            md5: null,
+        };
+    }
+    return {
+        key: `${url}-${md5}-${sizeKey}`,
+        cacheManager: fileScreenshotCacheManager,
+        md5,
+    };
+}
+
+function checkHasCachedScreenshot(key: string) {
+    return screenshotCacheManagerList.some((cacheManager) => {
+        return cacheManager.hasSync(key);
+    });
+}
 
 // Budgeted by TOTAL SIZE, not by entry count. A count cap of 3 was the thrash
 // trigger once website canvas items started capturing too: a document with 5
@@ -33,10 +143,7 @@ async function capCachedScreenshots(key: string, imageData: string | null) {
     // only ever shrinks while evicting, so with many small shots it grows
     // without bound. `hasSync` is the cache's own expiry check.
     for (const cachedKey of Array.from(cachedScreenshotSizeMap.keys())) {
-        if (
-            cachedKey !== key &&
-            !webScreenshotCacheManager.hasSync(cachedKey)
-        ) {
+        if (cachedKey !== key && !checkHasCachedScreenshot(cachedKey)) {
             cachedScreenshotSizeMap.delete(cachedKey);
         }
     }
@@ -55,7 +162,36 @@ async function capCachedScreenshots(key: string, imageData: string | null) {
         }
         cachedScreenshotSizeMap.delete(oldestKey);
         totalSize -= size;
-        await webScreenshotCacheManager.delete(oldestKey);
+        await deleteCachedScreenshot(oldestKey);
+    }
+}
+
+async function deleteCachedScreenshot(key: string) {
+    for (const cacheManager of screenshotCacheManagerList) {
+        await cacheManager.delete(key);
+    }
+}
+
+/**
+ * Every shot of this url taken of bytes it no longer has.
+ *
+ * Kept by MD5, not by key: one file is legitimately cached at several sizes
+ * at once — the editor canvas, the Canvas Items list and a slide thumbnail
+ * each ask for their own box — and dropping the siblings of the size being
+ * captured would make those surfaces evict each other forever, which is the
+ * thrash `genWebsiteCaptureSize` exists to avoid.
+ */
+function dropStaleCachedScreenshots(url: string, md5: string) {
+    const urlPrefix = `${url}-`;
+    const livePrefix = `${url}-${md5}-`;
+    for (const key of Array.from(cachedScreenshotSizeMap.keys())) {
+        if (!key.startsWith(urlPrefix) || key.startsWith(livePrefix)) {
+            continue;
+        }
+        cachedScreenshotSizeMap.delete(key);
+        for (const cacheManager of screenshotCacheManagerList) {
+            cacheManager.deleteSync(key);
+        }
     }
 }
 
@@ -95,10 +231,11 @@ function releaseCaptureSlot() {
     runningCaptureCount--;
 }
 
-// A screenshot never self-invalidates: a clock or a scoreboard page stays
-// frozen until the TTL lapses AND the component remounts. `refreshWebCapturing`
-// is how the UI forces a re-capture; every mounted `useWebCapturing` for that
-// url re-runs.
+// A remote screenshot never self-invalidates: a clock or a scoreboard page
+// stays frozen until the TTL lapses AND the component remounts.
+// `refreshWebCapturing` is how the UI forces a re-capture; every mounted
+// `useWebCapturing` for that url re-runs. A local file needs it only to get
+// the tiles on screen redrawn — its edited bytes already key elsewhere.
 const captureRefreshListenerMap = new Map<string, Set<() => void>>();
 
 // Keys whose in-flight capture was invalidated by `refreshWebCapturing` before
@@ -112,7 +249,9 @@ export function refreshWebCapturing(src: string) {
     for (const key of Array.from(cachedScreenshotSizeMap.keys())) {
         if (key.startsWith(keyPrefix)) {
             cachedScreenshotSizeMap.delete(key);
-            webScreenshotCacheManager.deleteSync(key);
+            for (const cacheManager of screenshotCacheManagerList) {
+                cacheManager.deleteSync(key);
+            }
         }
     }
     // A capture that is STILL RUNNING was started before this refresh, and the
@@ -158,15 +297,27 @@ export async function captureWebScreenShot(
         delay?: number;
     },
 ) {
-    const key = `${url}-${width}-${height}-${delay}`;
+    const { key, cacheManager, md5 } = await genScreenshotCacheKey(
+        url,
+        width,
+        height,
+        delay,
+    );
     // Cache-first, before any slot/coalescing: an already-captured shot must
     // never wait behind an unrelated in-flight capture.
-    if (await webScreenshotCacheManager.has(key)) {
-        return await webScreenshotCacheManager.get(key);
+    if (await cacheManager.has(key)) {
+        return await cacheManager.get(key);
     }
     const inFlight = inFlightCaptureMap.get(key);
     if (inFlight !== undefined) {
         return await inFlight;
+    }
+    if (md5 !== null) {
+        // A miss on a file usually means its bytes MOVED, so whatever is still
+        // held under an older md5 is a picture of a page that no longer
+        // exists. Only on the miss, so a hit still costs nothing — and it
+        // keeps the shared byte budget for pages somebody can still be shown.
+        dropStaleCachedScreenshots(url, md5);
     }
     const capturePromise = (async () => {
         await acquireCaptureSlot();
@@ -188,7 +339,7 @@ export async function captureWebScreenShot(
             // Refreshed away mid-flight; a newer capture owns this key now.
             return imageData;
         }
-        await webScreenshotCacheManager.set(key, imageData);
+        await cacheManager.set(key, imageData);
         await capCachedScreenshots(key, imageData);
         return imageData;
     })();

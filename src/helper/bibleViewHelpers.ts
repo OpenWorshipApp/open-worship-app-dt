@@ -79,20 +79,26 @@ export function useBibleViewFontSize() {
 
 // The lookup panels' own base font size (`LocationNameLookupPanelComp.scss`),
 // which everything inside them is sized against. Scaling by THIS rather than by
-// the bible's default is what makes their body text come out at the bible text's
+// the bible's default is what makes their body text follow the bible text's
 // size instead of merely moving in step with it: dividing by the bible default
 // yields 1x at the default setting, i.e. 13.5px body beside 35px scripture.
 const PANEL_BASE_FONT_SIZE = 13.5;
 
+// The panels are narrow floating widgets laid OVER the scripture, so their text
+// runs a step under the bible text's size rather than matching it: at full size
+// a Khmer record's two-line description held barely a phrase per line
+// (2026-09-21, asked for with a picture).
+const PANEL_TO_BIBLE_TEXT_RATIO = 0.85;
+
 // Clamped because the underlying range is 5..150px: unclamped, either end leaves
-// the panel unreadable or too large to show a record at all. The ceiling is the
-// bible default (35 / 13.5 ≈ 2.59) rounded up, so the normal setting is reached
-// exactly and only extreme zoom is capped.
+// the panel unreadable or too large to show a record at all. The ceiling sits
+// above the bible default (35 * 0.85 / 13.5 ≈ 2.2), so the normal setting is
+// reached exactly and only extreme zoom is capped.
 const MIN_TEXT_SCALE = 0.7;
 const MAX_TEXT_SCALE = 2.6;
 
 /**
- * Zoom factor that renders panel text at the bible text's size.
+ * Zoom factor that renders panel text a step under the bible text's size.
  *
  * Applied as CSS `zoom` (not `transform: scale`) so the panel's layout box grows
  * with it and its content keeps scrolling inside its own widget.
@@ -101,6 +107,9 @@ export function useBibleViewTextScale() {
     const fontSize = useBibleViewFontSize();
     return Math.min(
         MAX_TEXT_SCALE,
-        Math.max(MIN_TEXT_SCALE, fontSize / PANEL_BASE_FONT_SIZE),
+        Math.max(
+            MIN_TEXT_SCALE,
+            (fontSize * PANEL_TO_BIBLE_TEXT_RATIO) / PANEL_BASE_FONT_SIZE,
+        ),
     );
 }

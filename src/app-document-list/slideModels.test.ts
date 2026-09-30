@@ -63,6 +63,25 @@ function createSlideJson(id: number) {
 }
 
 describe('slide models', () => {
+    test('bundled Bible fonts loaded in the renderer are available to text boxes', async () => {
+        getFontFamiliesMock.mockResolvedValue([]);
+        vi.stubGlobal('document', {
+            fonts: new Set([
+                { family: '"app-Battambang"', status: 'loaded' },
+                { family: 'Failed Font', status: 'error' },
+            ]),
+        });
+        const slide = new Slide('/docs/bible.ows', {
+            ...createSlideJson(0),
+            canvasItems: ['app-Battambang', 'Missing Font', 'Failed Font'].map(
+                (fontFamily) => ({ type: 'text', fontFamily }) as any,
+            ),
+        });
+        expect(await slide.getUnavailableFontFamilies()).toEqual([
+            'Missing Font',
+            'Failed Font',
+        ]);
+    });
     beforeEach(() => {
         vi.clearAllMocks();
         vi.unstubAllGlobals();
@@ -195,6 +214,24 @@ describe('slide models', () => {
         expect(errorSlide.isError).toBe(true);
         expect(errorSlide.toJson()).toEqual({ invalid: true });
         expect(Slide.checkIsThisType(errorSlide)).toBe(true);
+    });
+
+    test('normalises a pre-type slide before comparing it', () => {
+        // The Slide constructor stamps  onto everything it builds, so a
+        // document saved before that field existed differed from its own
+        // loaded form and every one of its slides showed the unsaved marker.
+        const legacy: any = {
+            id: 0,
+            metadata: { width: 1920, height: 1080 },
+            canvasItems: [],
+        };
+        expect(Slide.toComparableJson(legacy).type).toBe('slide');
+        expect(legacy.type).toBeUndefined();
+
+        // Already normal: returned untouched, so a big document allocates
+        // nothing on this path.
+        const modern: any = { ...legacy, type: 'slide' };
+        expect(Slide.toComparableJson(modern)).toBe(modern);
     });
 
     test('covers PdfSlide DOM serialization and file helpers', async () => {

@@ -8,6 +8,7 @@ const h = vi.hoisted(() => ({
     openFileMock: vi.fn(),
     openMarkdownPreviewMock: vi.fn(),
     openBibleNotePreviewMock: vi.fn(),
+    openPdfPreviewMock: vi.fn(),
     readResourceNoteItemsMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
 }));
@@ -15,6 +16,10 @@ const h = vi.hoisted(() => ({
 vi.mock('./resourcePreviewOpenHelpers', () => ({
     openMarkdownPreview: h.openMarkdownPreviewMock,
     openBibleNotePreview: h.openBibleNotePreviewMock,
+}));
+
+vi.mock('../helper/pdfPreviewHelpers', () => ({
+    openPdfPreview: h.openPdfPreviewMock,
 }));
 
 vi.mock('./resourcePreviewHelpers', async (importOriginal) => {
@@ -283,10 +288,32 @@ describe('ResourcesFileRowComp previews', () => {
         expect(getMenuLabels()).not.toContain('Open');
     });
 
-    test('any other file still goes to the OS', async () => {
-        await renderRow('/r/Document/GEN.1.pdf');
+    test('a PDF previews in the app, whatever case its extension', async () => {
+        await renderRow('/r/Document/GEN.1.PDF');
         await press(getRowButton());
-        expect(h.openFileMock).toHaveBeenCalledWith('/r/Document/GEN.1.pdf');
+        expect(h.openPdfPreviewMock).toHaveBeenCalledWith(
+            '/r/Document/GEN.1.PDF',
+        );
+        expect(h.openFileMock).not.toHaveBeenCalled();
+    });
+
+    test("a PDF's menu offers Preview PDF, and still Open", async () => {
+        await renderRow('/r/Document/GEN.1.pdf');
+        await act(async () => {
+            getRowButton().dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
+        });
+        const labels = getMenuLabels();
+        expect(labels[0]).toBe('Preview PDF');
+        expect(labels).toContain('Open');
+    });
+
+    test('any other file still goes to the OS', async () => {
+        await renderRow('/r/Document/GEN.1.docx');
+        await press(getRowButton());
+        expect(h.openFileMock).toHaveBeenCalledWith('/r/Document/GEN.1.docx');
         expect(h.openMarkdownPreviewMock).not.toHaveBeenCalled();
+        expect(h.openPdfPreviewMock).not.toHaveBeenCalled();
     });
 });

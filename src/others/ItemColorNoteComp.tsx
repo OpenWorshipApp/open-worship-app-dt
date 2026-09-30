@@ -4,7 +4,7 @@ import { tran } from '../lang/langHelpers';
 import colorList from './color-list.json';
 import type ColorNoteInf from '../helper/ColorNoteInf';
 import { useAppEffectAsync } from '../helper/appHooks';
-import { freezeObject } from '../helper/helpers';
+import { freezeObject, pressElementLikeButton } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -59,9 +59,18 @@ export default function ItemColorNoteComp({
     item: ColorNoteInf;
     onChange?: (colorNote: string | null) => void;
 }>) {
-    const [colorNote, setColorNote] = useState<string | null>(null);
+    // The list already resolved this file's colour note and kept it on the
+    // item (`useFilePaths`), so seed from that: re-reading it asynchronously
+    // per item costs an `fsCheckFileExist` EVERY time the item mounts, and
+    // with a windowed list an item mounts again on every scroll back.
+    const [colorNote, setColorNote] = useState<string | null>(
+        item.colorNote ?? null,
+    );
     useAppEffectAsync(
         async (contextMethods) => {
+            if (item.colorNote !== undefined) {
+                return;
+            }
             const colorNote = await item.getColorNote();
             contextMethods.setColorNote(colorNote ?? '');
         },
@@ -87,14 +96,27 @@ export default function ItemColorNoteComp({
         return reverseColorMap[colorNote ?? ''] ?? tran('No Color');
     }, [colorNote]);
 
+    const handleChoosing = chooseColorNote.bind(null, colorNote, setColorNote1);
     return (
-        <span
-            className={`color-note ${colorNote ? 'active' : ''}`}
-            title={title}
-        >
+        <span className={`color-note ${colorNote ? 'active' : ''}`}>
+            {/*
+              Button semantics by hand, for the same reason the colour swatches
+              beside it need them: a styled `<i>` with an `onClick` is not a
+              control to the accessibility tree. It was unreachable by keyboard,
+              invisible to a screen reader, and -- because the only `title` sat
+              on the WRAPPER -- anything that finds a control by its words (the
+              help chatbot's matcher, `owa_find_ui`) resolved the span and
+              pressed something that has no handler. Name, role and the press
+              all belong on the one element now.
+            */}
             <i
+                role="button"
+                tabIndex={0}
+                aria-label={title}
+                title={title}
                 className="bi bi-record-circle app-caught-hover-pointer"
-                onClick={chooseColorNote.bind(null, colorNote, setColorNote1)}
+                onClick={handleChoosing}
+                onKeyDown={pressElementLikeButton}
                 style={{
                     textShadow: '0 0 2px var(--bs-info-text-emphasis)',
                     ...(colorNote

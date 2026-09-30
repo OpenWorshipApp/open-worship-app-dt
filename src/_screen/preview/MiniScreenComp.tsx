@@ -11,6 +11,7 @@ import MiniScreenBodyComp, {
     openMiniScreenContextMenu,
 } from './MiniScreenBodyComp';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { pressElementLikeButton } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
 
 ScreenManager.initReceiveScreenMessage();
@@ -41,13 +42,25 @@ export default function MiniScreenComp() {
             ref={containerRef}
         >
             <MiniScreenBodyComp previewScale={previewScale} />
+            {/* This is the only route to `Add New Screen` that is not a
+                right-click, so it has to be operable without a mouse: as a
+                bare <i> it was out of the accessibility tree, unreachable by
+                keyboard, and had no uid for anything driving the app.
+                `pressElementLikeButton` dispatches the click at the icon's own
+                centre, which is what gives the context menu coordinates to
+                position against -- a plain `.click()` opens it at 0,0. */}
             <i
                 className={
                     'bi bi-three-dots-vertical' +
                     ' app-caught-hover-pointer app-round-icon'
                 }
+                role="button"
+                tabIndex={0}
                 title={tran('More Options')}
+                aria-label={tran('More Options')}
+                aria-haspopup="menu"
                 onClick={openMiniScreenContextMenu}
+                onKeyDown={pressElementLikeButton}
                 style={{
                     right: '7px',
                     bottom: '7px',

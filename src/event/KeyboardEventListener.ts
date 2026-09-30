@@ -1,4 +1,6 @@
 import {
+    createContext,
+    use,
     useMemo,
     type DependencyList,
     type KeyboardEvent as ReactKeyboardEvent,
@@ -115,7 +117,26 @@ export default class KeyboardEventListener extends EventHandler<string> {
         return getLastItem(this._layers);
     }
 
+    // A widget is either up or it is not: there is no such thing as a second
+    // context menu. An `open` that no `close` ever answers used to push a
+    // DUPLICATE, and `removeLayer` takes ONE occurrence off — so the stack kept
+    // a layer nobody owned, every key went on dispatching as
+    // `context-menu>...`, and EVERY `root` shortcut (Ctrl+B, F5–F10, the slide
+    // arrows, Ctrl+Shift+P) was dead for the rest of the session with nothing
+    // left to release it. Measured live on 2026-09-28 at
+    // `['root', 'context-menu', 'context-menu', 'context-menu']` — two quick
+    // right-clicks on the slides previewer are enough, because its menu is
+    // built asynchronously and the second press comes before there is a
+    // backdrop to swallow it.
+    //
+    // Re-asserting instead of stacking: the widget moves to the TOP, which is
+    // what a second `open` means, and one `close` is enough to let the app
+    // have its keyboard back.
     static addLayer(layer: AppWidgetType) {
+        const index = this._layers.indexOf(layer);
+        if (index > -1) {
+            this._layers.splice(index, 1);
+        }
         this._layers.push(layer);
     }
 
@@ -331,12 +352,29 @@ function genEventNames(eventMappers: EventMapperType[], layer?: string) {
     });
     return eventNames;
 }
+/**
+ * Which layer the keys registered UNDER THIS SUBTREE belong to.
+ *
+ * The layer cannot be taken from the stack at mount for a subtree that is the
+ * very thing claiming it: the stack is pushed in an effect, and effects run
+ * child-first, so a modal's own keys would pin `root` and go dead the moment
+ * the modal's layer went up — the trap `miniScreenOverlayControlComps` already
+ * works around by passing its layer by hand at every call.
+ *
+ * React context is read during RENDER, parent first, so a provider above the
+ * subtree settles this for everything inside it with no call site to change.
+ * `null` (the default) keeps the historical behaviour for everything that is
+ * not inside a claiming subtree.
+ */
+export const KeyboardLayerContext = createContext<AppWidgetType | null>(null);
+
 export function useKeyboardRegistering(
     eventMappers: EventMapperType[],
     listener: KeyboardListenerType,
     deps: DependencyList,
     layer?: AppWidgetType,
 ) {
+    const contextLayer = use(KeyboardLayerContext);
     // Pin the layer at mount. Callers pass inline mapper arrays, so the memo
     // recomputes every render — if a background component re-renders while a
     // modal layer is on top, deriving the layer lazily would re-register its
@@ -346,7 +384,9 @@ export function useKeyboardRegistering(
     const mountLayer = useMemo(() => {
         return KeyboardEventListener.getLastLayer() ?? undefined;
     }, []);
-    const targetLayer = layer ?? mountLayer;
+    // An explicit layer wins (a host that owns one), then the subtree's own
+    // (a modal claiming the keyboard), then what was on top at mount.
+    const targetLayer = layer ?? contextLayer ?? mountLayer;
     const eventNames = useMemo(() => {
         const eventNames = genEventNames(eventMappers, targetLayer);
         return eventNames;

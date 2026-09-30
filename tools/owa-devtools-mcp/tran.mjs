@@ -65,7 +65,7 @@ function readSourceDictionaries() {
     if (!existsSync(dataDirPath)) {
         return sourceDictionariesCache;
     }
-    for (const langCode of ['en', 'km']) {
+    for (const langCode of ['en', 'km', 'fr']) {
         const filePath = path.join(dataDirPath, langCode, 'index.ts');
         if (!existsSync(filePath)) {
             continue;
@@ -181,6 +181,7 @@ export function loadTranBundle() {
         languages: [
             { code: 'en', name: 'English', nativeName: 'English' },
             { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ' },
+            { code: 'fr', name: 'French', nativeName: 'Français' },
         ].filter((language) => {
             return dictionaries[language.code] !== undefined;
         }),

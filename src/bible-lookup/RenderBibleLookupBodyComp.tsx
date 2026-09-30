@@ -1,4 +1,7 @@
-import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    toInputText,
+    toTrailingReference,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import RenderLookupSuggestionComp from './RenderLookupSuggestionComp';
 import { keyToBook } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
@@ -15,15 +18,23 @@ export default function RenderBibleLookupBodyComp() {
     const editingResult = use(EditingResultContext);
     const bibleKeyRef = useAppCurrentRef(bibleKey);
     const viewControllerRef = useAppCurrentRef(viewController);
+    const editingResultRef = useAppCurrentRef(editingResult);
     const handleBookSelecting = useCallback(
         async (_: string, newBook: string) => {
             const newText = await toInputText(bibleKeyRef.current, newBook);
-            viewControllerRef.current.inputText = newText;
+            // "Psalms 23:1" matched no book: picking the one it meant keeps
+            // the "23:1" that was already typed instead of dropping it.
+            const trailingReference = toTrailingReference(
+                editingResultRef.current?.result.guessingBook ?? null,
+            );
+            viewControllerRef.current.inputText =
+                trailingReference !== null && newText.endsWith(' ')
+                    ? `${newText}${trailingReference}`
+                    : newText;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
-    const editingResultRef = useAppCurrentRef(editingResult);
     const handleChapterSelecting = useCallback(async (newChapter: number) => {
         if (editingResultRef.current === null) {
             return;

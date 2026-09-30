@@ -181,12 +181,25 @@ export default class Slide
             return [];
         }
         const fontFamilies = this.fontFamilies();
+        // Bible fonts are bundled @font-face resources, not OS-installed fonts.
+        // Generated title/next-verse text boxes use those same family names.
+        const registeredFonts = new Set<string>();
+        globalThis.document?.fonts?.forEach((font) => {
+            if (font.status !== 'error') {
+                registeredFonts.add(
+                    font.family.replaceAll(/['"]/g, '').trim().toLowerCase(),
+                );
+            }
+        });
         const unavailableFonts: string[] = [];
         for (const fontFamily of fontFamilies) {
             const isFontAvailable = availableFontFamilies.includes(
                 fontFamily.trim().toLowerCase(),
             );
-            if (!isFontAvailable) {
+            if (
+                !isFontAvailable &&
+                !registeredFonts.has(fontFamily.trim().toLowerCase())
+            ) {
                 unavailableFonts.push(fontFamily);
             }
         }
@@ -218,6 +231,19 @@ export default class Slide
             return this.jsonError;
         }
         return this.originalJson;
+    }
+
+    // The constructor stamps `type: 'slide'` onto every slide it builds, so
+    // a document written before that field existed carries it on the loaded
+    // side and not in the saved file. Comparing the two raw shapes marked
+    // EVERY slide of such a document unsaved, for ever. Normalise the saved
+    // side the same way before comparing. The argument is returned untouched
+    // in the common case, so a 200-slide document allocates nothing.
+    static toComparableJson(json: SlidePropsType): SlidePropsType {
+        if (json.type === 'slide') {
+            return json;
+        }
+        return { ...json, type: 'slide' };
     }
 
     checkIsWrongDimension(dim: { width: number; height: number }) {

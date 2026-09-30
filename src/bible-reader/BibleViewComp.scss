@@ -34,6 +34,183 @@
 .bible-view {
   min-width: 200px;
   border: 1px solid transparent;
+  container-type: inline-size;
+
+  // -- Header ---------------------------------------------------------------
+  // ONE line at every width. The actions used to be laid out in the row while
+  // painted away (`visibility`), so they held their width at rest: the title
+  // gave that room up to buttons nobody could see, and in a split pane the
+  // whole row wrapped, spending a second line of every pane on nothing but a
+  // faint ⋮. Now the passage owns the row, and the actions float OVER the
+  // title's end while the pointer is on the header -- revealed where they are
+  // wanted, costing no room anywhere else.
+  .bible-view-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+    // `.card-header` is a fixed 40px app-wide; this title is set in the
+    // passage's own type size, so the row follows it.
+    height: auto;
+    min-height: var(--app-action-rail-line);
+    // What the header paints over the card: Bootstrap's cap wash on the
+    // reader's `.card-header`, nothing on the lookup's. The actions' ground
+    // re-composes the same two layers, because the wash is translucent -- a
+    // ground made of it alone lets the title show straight through.
+    --app-bible-view-header-wash: transparent;
+
+    &.card-header {
+      --app-bible-view-header-wash: var(--bs-card-cap-bg);
+    }
+
+    // What stays in the row at the right: the ⋮, and whatever else must be
+    // pressable at rest. The actions hang off its LEFT edge, so they can never
+    // cover one of these, however many there are.
+    > .bible-view-header-end {
+      position: relative;
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+      flex: none;
+    }
+
+    // The title's parts keep their size and the reference gives way: a long
+    // passage ellipsizes rather than scrolling sideways out of sight.
+    .bible-view-title-material {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+
+      > .bible-view-title-lead {
+        flex: none;
+      }
+    }
+
+    .bible-view-title-content {
+      min-width: 0;
+
+      > .bible-view-title-keys {
+        flex: none;
+      }
+    }
+
+    // Down from `.app-flex-item`'s 120px, which in a narrow pane clipped the
+    // reference on the right with no ellipsis to say so.
+    .bible-view-reference {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .bible-view-header-actions {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 100%;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      // Measured against the bible view (`container-type` above), since the
+      // containing block here is only the end group. Short of the full width
+      // by the end group at its widest, so it never spills out of the pane.
+      max-width: calc(100cqw - 3.5rem);
+      // Room for the fade below, so the title runs out under it instead of
+      // being cut mid-letter by a hard edge.
+      padding: 0 2px 0 1.25rem;
+      // Only a pane narrower than every action at once ever scrolls this, and
+      // a focused button is scrolled into view by the browser.
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      // Opacity, not `visibility`: a hidden control cannot take focus, and a
+      // keyboard has to be able to reach these (`:focus-visible` below reveals
+      // them). A compositor-only fade, finite -- never a paint loop.
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s ease-out;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(
+            var(--app-bible-view-header-wash),
+            var(--app-bible-view-header-wash)
+          ),
+          var(--bs-card-bg, var(--bs-body-bg));
+        mask-image: linear-gradient(to right, transparent, #000 1.25rem);
+      }
+
+      // Header chrome, not a row of filled buttons: at rest these were painted
+      // at a tenth of their strength, and at full strength a green-cyan-blue
+      // block would shout over the passage it sits on. One quiet ghost weight,
+      // the same as the ⋮ beside them. (0,5,0), so Bootstrap's `.btn-group`
+      // corner and margin rules (0,4,0) lose without an `!important`.
+      .btn-group {
+        flex: none;
+        gap: 2px;
+      }
+
+      .btn-group > .btn,
+      > .bible-view-header-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 26px;
+        height: 26px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 5px;
+        background-color: transparent;
+        color: var(--app-muted);
+        line-height: 1;
+
+        > i {
+          font-size: 0.95rem;
+        }
+
+        &:hover,
+        &:focus-visible {
+          background-color: var(--bs-tertiary-bg);
+          color: var(--app-ink);
+        }
+      }
+
+      // Closing the pane turns red only as it is about to be pressed.
+      > .bible-view-header-close:hover,
+      > .bible-view-header-close:focus-visible {
+        color: var(--bs-danger-text-emphasis);
+      }
+
+      // It is not one of the passage's own actions, so it stands apart from
+      // them -- when there are any; alone, a rule beside it divides nothing.
+      > .btn-group + .bible-view-header-close {
+        position: relative;
+        margin-left: 5px;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: -4px;
+          top: 5px;
+          bottom: 5px;
+          width: 1px;
+          background-color: var(--app-line);
+        }
+      }
+    }
+
+    &:hover .bible-view-header-actions,
+    &:has(:focus-visible) .bible-view-header-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
 
   .card-header {
     .bible-extra-key:hover {

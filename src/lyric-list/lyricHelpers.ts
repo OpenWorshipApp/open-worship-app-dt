@@ -4,12 +4,17 @@ import type { OpenLyricTheme, OpenLyricPreviewSetting } from 'open-lyric';
 import Lyric from './Lyric';
 import LyricAppDocumentStage0 from './LyricAppDocumentStage0';
 import LyricAppDocumentStage1 from './LyricAppDocumentStage1';
+import LyricAppDocumentStage2 from './LyricAppDocumentStage2';
+import LyricAppDocumentStage3 from './LyricAppDocumentStage3';
+import LyricAppDocumentStage4 from './LyricAppDocumentStage4';
+import LyricAppDocumentStage5 from './LyricAppDocumentStage5';
 import { genOpenLyricFontFaces, initAllLangCss } from '../lang/langHelpers';
 import SettingManager from '../helper/SettingManager';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { checkIsDarkMode } from '../others/themeHelpers';
 import { installOpenLyricPrintPopupHandler } from './lyricPrintHelpers';
+import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
 
 interface ThemeTargetInf {
     get theme(): OpenLyricTheme;
@@ -88,6 +93,9 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     const openLyricPreviewer = new OpenLyric();
     openLyricPreviewer.value = content;
 
+    const openLyricPlayer = new OpenLyricPluginPlayer();
+    openLyricPreviewer.addPlugin('player', openLyricPlayer);
+
     openLyricPreviewer.loadSetting = () => {
         const setting = loadOpenLyricSetting();
         return setting;
@@ -115,46 +123,67 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
 }
 
 /**
- * Stage number -> the class that renders it, indexed by stage.
+ * Stage number -> the LAYOUT that renders it, indexed by stage.
  *
- * The instance cache keys on the CLASS name + file path
- * (`AppDocumentSourceAbs._getInstance`), so a stage only gets an identity of
- * its own by having a class of its own. This list is therefore also the
- * authoritative answer to "how many stages exist" — `getAvailableLyricStages`
- * below is what the previewer offers, so adding a layout here is all it takes
- * to make another stage selectable.
+ * A layout, not an identity: stage 0 is the plain one, 1 adds the section
+ * titles and chords, 2 and 3 are the band's look-ahead (a stage-1 slide with
+ * the next one or two under it, smaller and dimmer), 4 is the same look-ahead
+ * with stage-0 slides for the audience, 5 is a stage-1 slide between the
+ * previous (top left) and the next (bottom right), and every stage past
+ * the list keeps the stage-1 look (`FALLBACK_STAGE_CLASS`) it always had. So
+ * this list says how a stage LOOKS, never how many stages there are. What a
+ * stage number of its own buys past the end of this list is its own
+ * `lyric-stage-style-<stage>` record — padding, opacity, font boost, theme and
+ * custom CSS — which is what the Stage Previewer's ⚙ edits, and its own
+ * cached slides.
  */
 const LYRIC_APP_DOCUMENT_STAGE_CLASSES = [
     LyricAppDocumentStage0,
     LyricAppDocumentStage1,
+    LyricAppDocumentStage2,
+    LyricAppDocumentStage3,
+    LyricAppDocumentStage4,
+    LyricAppDocumentStage5,
 ];
+// Adding a layout? Raise `STAGE_NUMBER_CHOICE_COUNT` (`screenHelpers`) with
+// it, so the St: and Add Stage menus offer the new stage without Increment.
+// NOT the last entry: a screen already set to `St: 6` showed the stage-1
+// layout before the look-ahead stages existed, and still does.
+const FALLBACK_STAGE_CLASS = LyricAppDocumentStage1;
 
-export function getAvailableLyricStages() {
-    return LYRIC_APP_DOCUMENT_STAGE_CLASSES.map((_, stage) => {
-        return stage;
-    });
+/**
+ * A stage number is any non-negative integer — screens have always allowed one
+ * (the mini screen's `St:` menu increments without a ceiling), so the previewer
+ * and everything that reads a PERSISTED stage have to accept the same range or
+ * a screen set to `St: 3` shows a stage nothing can preview.
+ */
+export function checkIsValidLyricStage(stage: number) {
+    return Number.isInteger(stage) && stage >= 0;
 }
 
 /**
- * Resolves to a REGISTERED stage, and reports which one it landed on.
+ * Resolves a stage to its document, and reports the stage it landed on.
  *
- * The returned number is the stage actually rendered, not the one asked for:
- * every unregistered stage used to fall through to `LyricAppDocumentStage1`,
- * which handed back the very same cached instance stage 1 was already using —
- * so a second pane rendered a byte-identical clone under a label claiming it
- * was something else, and `genCacheKey`'s `stage:` part could not tell the two
- * apart either. Callers that resolve a PERSISTED stage (presenting flow items,
- * `lyricSlideScreenHelpers`) need this to stay total, so an out-of-range stage
- * clamps to the nearest registered one instead of failing.
+ * Total on purpose — callers resolve a PERSISTED number (presenting flow
+ * items, `lyricSlideScreenHelpers`, a screen's `St:`) — so a negative or
+ * non-finite stage lands on the base stage rather than failing. It no longer
+ * clamps at the top: a stage past the layout list keeps its OWN number and
+ * gets its own instance (see `getStageInstance`), because the number is what
+ * picks the stage's style record, and clamping used to hand a stage past the
+ * list back the stage-1 document while still echoing its number to the caller.
  */
 export function getLyricAppDocumentStageByStage(
     filePath: string,
     stage: number,
 ): [number, LyricAppDocumentStageAbstract] {
-    const resolvedStage = Math.min(
-        Math.max(Number.isFinite(stage) ? Math.trunc(stage) : 0, 0),
-        LYRIC_APP_DOCUMENT_STAGE_CLASSES.length - 1,
+    const resolvedStage = Math.max(
+        Number.isFinite(stage) ? Math.trunc(stage) : 0,
+        0,
     );
-    const StageClass = LYRIC_APP_DOCUMENT_STAGE_CLASSES[resolvedStage];
-    return [resolvedStage, StageClass.getInstance(filePath)];
+    const StageClass =
+        LYRIC_APP_DOCUMENT_STAGE_CLASSES[resolvedStage] ?? FALLBACK_STAGE_CLASS;
+    return [
+        resolvedStage,
+        StageClass.getStageInstance(filePath, resolvedStage),
+    ];
 }

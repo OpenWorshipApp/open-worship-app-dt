@@ -1,7 +1,7 @@
 import './BackgroundVideosComp.scss';
 
-import { useCallback, type ReactElement, type RefObject } from 'react';
-import { useRef, useState } from 'react';
+import { useCallback, type ReactElement } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -16,7 +16,7 @@ import {
     toDownloadFailureMessage,
 } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
-import { playMediaElement } from '../helper/mediaHelpers';
+import VideoTilePreviewComp, { HOVER_PLAY_DELAY } from './VideoTilePreviewComp';
 import { tran } from '../lang/langHelpers';
 import {
     showProgressBar,
@@ -34,59 +34,9 @@ import {
     setIsFadingAtTheEndSetting,
 } from './videoBackgroundHelpers';
 import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
+import { useBackgroundSessions } from './backgroundSessionHelpers';
 import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
-
-// Mounting every <video> in the folder at once spawns dozens of demuxers,
-// which kills low-spec machines. Render a same-size placeholder and only
-// mount the <video> once the tile first becomes visible.
-function LazyMountVideoComp({
-    videoRef,
-    src,
-}: Readonly<{
-    videoRef: RefObject<HTMLVideoElement | null>;
-    src: string;
-}>) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [isVideoMounted, setIsVideoMounted] = useState(false);
-    useAppEffect(() => {
-        const container = containerRef.current;
-        if (isVideoMounted || container === null) {
-            return;
-        }
-        const observer = new IntersectionObserver((entries) => {
-            if (
-                entries.some((entry) => {
-                    return entry.isIntersecting;
-                })
-            ) {
-                setIsVideoMounted(true);
-            }
-        });
-        observer.observe(container);
-        return () => {
-            observer.disconnect();
-        };
-    }, [isVideoMounted]);
-    return (
-        <div ref={containerRef} className="w-100 h-100">
-            {isVideoMounted ? (
-                <video
-                    className="w-100 h-100"
-                    ref={videoRef}
-                    loop
-                    muted
-                    preload="metadata"
-                    src={src}
-                    style={{
-                        objectFit: 'cover',
-                        objectPosition: 'center center',
-                        pointerEvents: 'none',
-                    }}
-                />
-            ) : null}
-        </div>
-    );
-}
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function RendBodyComp({
     filePath,
@@ -110,26 +60,38 @@ function RendBodyComp({
             delete methodMapIsFadingAtTheEnd[fileSource.src];
         };
     }, [fileSource]);
-    const vRef = useRef<HTMLVideoElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
     const fileSourceRef = useAppCurrentRef(fileSource);
-    const handleMouseEnter = useCallback((event: any) => {
-        if (vRef.current === null) {
+    const [isHovering, setIsHovering] = useState(false);
+    // Moving the mouse ACROSS a grid must not build and tear down a player per
+    // tile it passes over. Per tile: a leave cancels only its own pending
+    // enter.
+    const attemptHover = useMemo(() => {
+        return genTimeoutAttempt(HOVER_PLAY_DELAY);
+    }, []);
+    const handleMouseEnter = useCallback(() => {
+        attemptHover(() => {
+            setIsHovering(true);
+        });
+    }, [attemptHover]);
+    const handleMouseLeave = useCallback(() => {
+        attemptHover(() => {
+            setIsHovering(false);
+        }, true);
+    }, [attemptHover]);
+    const handleDurationRead = useCallback((duration: number) => {
+        const element = rootRef.current;
+        if (element === null || element.title) {
             return;
         }
-        playMediaElement(vRef.current);
-        const currentTarget = event.currentTarget as HTMLDivElement;
-        if (!Number.isNaN(vRef.current.duration) && !currentTarget.title) {
-            currentTarget.title =
-                `${fileSourceRef.current.fullName}\n` +
-                `(${timeToTimeString(vRef.current.duration)})`;
-        }
+        element.title =
+            `${fileSourceRef.current.fullName}\n` +
+            `(${timeToTimeString(duration)})`;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    const handleMouseLeave = useCallback(() => {
-        vRef.current?.pause();
     }, []);
     return (
         <div
+            ref={rootRef}
             className="card-body app-overflow-hidden app-blank-bg"
             style={{
                 height: `${height}px`,
@@ -144,7 +106,11 @@ function RendBodyComp({
                     return Number.parseInt(key);
                 })}
             />
-            <LazyMountVideoComp videoRef={vRef} src={fileSource.src} />
+            <VideoTilePreviewComp
+                src={fileSource.src}
+                isHovering={isHovering}
+                onDurationRead={handleDurationRead}
+            />
             <div
                 className="position-absolute mx-1 text-white"
                 style={{
@@ -263,15 +229,24 @@ function genExtraItemContextMenuItems(filePath: string) {
 }
 
 export default function BackgroundVideosComp() {
+    const session = useBackgroundSessions({
+        target: 'background-video',
+        dirSourceSettingName: dirSourceSettingNames.BACKGROUND_VIDEO,
+        autoPlayPrefix: 'background-video',
+    });
     return (
         <BackgroundMediaComp
+            // Keyed by session: a grid of clips left on screen while its
+            // folder changed underneath would keep every tile's player.
+            key={session.activeId}
+            topBarChild={session.element}
+            autoPlayPrefix={session.autoPlayPrefix}
             defaultFolderName={defaultDataDirNames.BACKGROUND_VIDEO}
             dragType={DragTypeEnum.BACKGROUND_VIDEO}
             rendChild={rendChild}
-            dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
+            dirSourceSettingName={session.dirSourceSettingName}
             genContextMenuItems={genVideoDownloadContextMenuItems}
             genExtraItemContextMenuItems={genExtraItemContextMenuItems}
-            itemFillingClassname="video-thumbnail"
         />
     );
 }

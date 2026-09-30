@@ -1,6 +1,30 @@
 // @vitest-environment jsdom
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
+
+// `sanitizeFileName` is the shared rule in `fileHelpers`, whose module graph
+// reads `appProvider` on load. Nothing else about either matters here.
+vi.mock('../../server/appProvider', async () => {
+    const { win32 } = await import('node:path');
+    return {
+        default: {
+            isPageScreen: false,
+            isPageReader: false,
+            isMainPage: false,
+            systemUtils: { isDev: false },
+            sessionData: { defaultStorageDirPath: null },
+            pathUtils: win32,
+            messageUtils: { sendData: () => {}, sendDataSync: () => null },
+        },
+    };
+});
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+    },
+}));
 
 import type { SongSelectLyricsType } from './songSelectApiHelpers';
 

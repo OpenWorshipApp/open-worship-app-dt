@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-09-02",
+    "updated": "2026-09-19",
     "sections": [
         {
             "id": "general",
@@ -104,6 +104,27 @@
                     },
                     "starter": true,
                     "starterRank": 12
+                },
+                {
+                    "id": "repair-links",
+                    "text": "My pictures and videos are missing after moving my data folder to another computer. How do I fix them?",
+                    "kind": "howto",
+                    "keywords": [
+                        "repair links",
+                        "usb stick",
+                        "flash drive",
+                        "moved",
+                        "broken",
+                        "missing picture",
+                        "another computer"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Repair Links"
+                    }
                 },
                 {
                     "id": "reset-settings",

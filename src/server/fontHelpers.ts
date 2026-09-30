@@ -4,7 +4,7 @@ import { useAppEffectAsync } from '../helper/appHooks';
 import type { FontListType } from './appProvider';
 import appProvider from './appProvider';
 import CacheManager from '../others/CacheManager';
-import { electronSendAsync } from './appHelpers';
+import { electronSendAsync } from './electronSendHelpers';
 import { unlocking } from './unlockingHelpers';
 
 const cacheManager = new CacheManager<FontListType | null>(10);

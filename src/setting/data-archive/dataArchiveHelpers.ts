@@ -11,6 +11,7 @@ import {
     toExtractedArchivePath,
     writeArchiveManifest,
     ARCHIVE_VERSION,
+    BIBLE_XML_ARCHIVE_ITEM_KIND,
     type ImportCollisionPolicyType,
 } from '../../helper/appArchiveHelpers';
 import { protectArchiveFile } from '../../helper/archivePasswordHelpers';
@@ -19,6 +20,9 @@ import DirSource from '../../helper/DirSource';
 // wholesale, and a mocked named export comes back `undefined` — which here would
 // be baked silently into the exclusion regex below.
 import { HISTORY_DIR_NAME_SUFFIX } from '../../editing-manager/editingHistoryPathHelpers';
+import EditingHistoryManager, {
+    sanitizeForUpdatingComparison,
+} from '../../editing-manager/EditingHistoryManager';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import {
@@ -32,11 +36,15 @@ import {
     ensureDirectory,
     fsCheckDirExist,
     fsCloneFile,
+    fsCreateFile,
     fsDeleteFile,
+    fsGetFileSize,
     fsList,
     getDownloadPath,
     pathJoin,
     pathSeparator,
+    splitPathRoot,
+    toPathCompareKey,
 } from '../../server/fileHelpers';
 import { tran } from '../../lang/langHelpers';
 import {
@@ -114,12 +122,6 @@ export type ExportableDataFolderType = {
     fileNames?: string[];
 };
 
-function toPathSegments(dirPath: string) {
-    return dirPath.split(pathSeparator).filter((part) => {
-        return part.length > 0;
-    });
-}
-
 /**
  * The deepest folder every selected directory lives under, plus each one's path
  * relative to it. That folder becomes tar's `cwd`, which is what lets the
@@ -127,18 +129,36 @@ function toPathSegments(dirPath: string) {
  *
  * The prefix is always cut at least one segment short of the shortest path, so
  * a single selected folder still has a name of its own inside the archive.
+ *
+ * The ROOT is kept whole (`splitPathRoot`): splitting on the separator alone
+ * turned `/Volumes/USB/data` into the relative `Volumes/USB/data`, which only
+ * resolved when the app was started from `/` -- so Export Data failed on a
+ * Linux desktop and in dev on macOS -- and stripped a share's `\\`.
  */
 export function toCommonAncestor(dirPaths: string[]) {
-    const segmentsList = dirPaths.map(toPathSegments);
-    let commonLength = Math.min(
-        ...segmentsList.map((segments) => {
-            return segments.length - 1;
-        }),
-    );
+    const splitPaths = dirPaths.map((dirPath) => {
+        return splitPathRoot(dirPath);
+    });
+    const root = splitPaths[0]?.root ?? '';
+    const segmentsList = splitPaths.map(({ segments }) => {
+        return segments;
+    });
+    const isSameRoot = splitPaths.every((splitPath) => {
+        return toPathCompareKey(splitPath.root) === toPathCompareKey(root);
+    });
+    let commonLength = isSameRoot
+        ? Math.min(
+              ...segmentsList.map((segments) => {
+                  return segments.length - 1;
+              }),
+          )
+        : 0;
     for (let index = 0; index < commonLength; index++) {
-        const segment = segmentsList[0][index].toLocaleLowerCase();
+        // Compared the way this computer's disks compare names: `Docs` and
+        // `docs` are one folder on Windows and two on Linux.
+        const segment = toPathCompareKey(segmentsList[0][index]);
         const isSame = segmentsList.every((segments) => {
-            return segments[index].toLocaleLowerCase() === segment;
+            return toPathCompareKey(segments[index]) === segment;
         });
         if (!isSame) {
             commonLength = index;
@@ -151,7 +171,8 @@ export function toCommonAncestor(dirPaths: string[]) {
                 ' different drives?), so they cannot go in one archive',
         );
     }
-    const ancestorDir = pathJoin(...segmentsList[0].slice(0, commonLength));
+    const ancestorDir =
+        root + segmentsList[0].slice(0, commonLength).join(pathSeparator);
     const entries = segmentsList.map((segments) => {
         return segments.slice(commonLength).join('/');
     });
@@ -159,9 +180,9 @@ export function toCommonAncestor(dirPaths: string[]) {
 }
 
 /**
- * Where a folder actually is. An app-managed one (the bible databases) has no
- * directory setting to read — the app fixed its place — so it answers for
- * itself; everything else is wherever the user pointed it.
+ * Where a folder actually is. An app-managed one (the bible data, the
+ * resources) has no directory setting to read — the app fixed its place — so
+ * it answers for itself; everything else is wherever the user pointed it.
  */
 export async function getDataDirectoryPath(dataDirectory: DataDirectoryType) {
     if (dataDirectory.getDirPath !== undefined) {
@@ -245,6 +266,88 @@ function toTarEntries(folders: ExportableDataFolderType[], entries: string[]) {
     });
 }
 
+/**
+ * The exported files whose LIVE state is not what is on disk, as
+ * `{ entryPath, text }` ready to be written into a staging dir.
+ *
+ * An editable document -- a slide document, a lyric, a presenting flow, a
+ * bible note -- holds what has been typed into it in its EDITING HISTORY
+ * until somebody presses Save, and this archive is written straight from the
+ * folders. Without this, a backup taken minutes before a service carries the
+ * sermon notes as they were this morning, and nothing about the archive says
+ * so.
+ *
+ * The `.histories` folders themselves still stay out (they are the undo
+ * stack, and for one 300KB note they run to megabytes): what travels is the
+ * head's own text under the FILE's name, so the other machine opens the
+ * document exactly as this one is showing it.
+ *
+ * Only the top level of each folder is looked at, which is the level the app
+ * itself treats as a Documents / Bible Notes / Presenting Flows folder, and
+ * only the history folders in it are opened -- so a data set of media costs
+ * one listing per folder and not one stat per file.
+ */
+export async function collectUnsavedDataEntries(
+    folders: ExportableDataFolderType[],
+    entries: string[],
+) {
+    const unsavedEntries: { entryPath: string; text: string }[] = [];
+    for (const [index, folder] of folders.entries()) {
+        // A filtered folder archives named files and holds no documents.
+        if (folder.dataDirectory.fileNamePattern !== undefined) {
+            continue;
+        }
+        let dirEntries;
+        try {
+            dirEntries = await fsList(folder.dirPath);
+        } catch (error) {
+            handleError(error);
+            continue;
+        }
+        for (const dirEntry of dirEntries) {
+            if (
+                dirEntry.isFile ||
+                !dirEntry.name.endsWith(HISTORY_DIR_NAME_SUFFIX)
+            ) {
+                continue;
+            }
+            const fileFullName = dirEntry.name.slice(
+                0,
+                -HISTORY_DIR_NAME_SUFFIX.length,
+            );
+            const filePath = pathJoin(folder.dirPath, fileFullName);
+            try {
+                const manager = EditingHistoryManager.getInstance(filePath);
+                const headText = await manager.getCurrentHistory();
+                if (headText === null) {
+                    continue;
+                }
+                // The same comparison the editing menu lights its Save button
+                // on: `metadata.lastEditDate` moves on its own, so a raw
+                // compare calls every document modified forever.
+                const savedText = await manager.getOriginalData();
+                if (
+                    sanitizeForUpdatingComparison(headText) ===
+                    sanitizeForUpdatingComparison(savedText)
+                ) {
+                    continue;
+                }
+                // The RAW head, not the sanitized one -- that copy exists only
+                // to answer "is anything pending".
+                unsavedEntries.push({
+                    entryPath: `${entries[index]}/${fileFullName}`,
+                    text: headText,
+                });
+            } catch (error) {
+                // One unreadable head is no reason to refuse somebody's whole
+                // backup: that file is archived as it sits on disk instead.
+                handleError(error);
+            }
+        }
+    }
+    return unsavedEntries;
+}
+
 async function attemptDeletingFile(filePath: string) {
     try {
         await fsDeleteFile(filePath);
@@ -278,16 +381,31 @@ export async function createDataArchive(
     // on the system volume (usually the smallest) and then force a full
     // cross-volume copy back. Beside it, both files sit on the volume the
     // operator already chose and the wrap is a same-volume read and write.
+    //
+    // NOT `<archive>.part`: that is the name `encryptFile` builds its OWN output
+    // under, and opening it for writing truncated this tar before a byte of it
+    // was read. Every protected Export Data came out an 80-byte container
+    // holding nothing, and it was found only at import, as tar's
+    // "Unrecognized archive format".
     const plainFilePath = password
-        ? `${archiveFilePath}.part`
+        ? `${archiveFilePath}.plain.part`
         : archiveFilePath;
     try {
+        const unsavedEntries = await collectUnsavedDataEntries(
+            folders,
+            entries,
+        );
         await tarCreate(
             ancestorDir,
             plainFilePath,
             toTarEntries(folders, entries),
             false,
             EXCLUDED_NAME_PATTERNS,
+            // Left out of this pass because the pass after it writes the same
+            // entry from the document's live state. One entry per file.
+            unsavedEntries.map((entry) => {
+                return entry.entryPath;
+            }),
         );
         const manifest: DataArchiveManifestType = {
             version: ARCHIVE_VERSION,
@@ -302,9 +420,23 @@ export async function createDataArchive(
         const stagingDir = await createWorkDir('owadata-manifest');
         try {
             await writeArchiveManifest(stagingDir, manifest);
+            for (const { entryPath, text } of unsavedEntries) {
+                await fsCreateFile(
+                    pathJoin(stagingDir, ...entryPath.split('/')),
+                    text,
+                    true,
+                );
+            }
             // Appended BEFORE any wrapping: `tar.r` only works on a plain tar,
-            // and it certainly cannot append to ciphertext.
-            await tarAppend(plainFilePath, stagingDir, [MANIFEST_FILE_NAME]);
+            // and it certainly cannot append to ciphertext. The unsaved
+            // documents ride the same append -- they are a handful of text
+            // files, not the gigabytes the main pass refuses to stage.
+            await tarAppend(plainFilePath, stagingDir, [
+                MANIFEST_FILE_NAME,
+                ...unsavedEntries.map((entry) => {
+                    return entry.entryPath;
+                }),
+            ]);
         } finally {
             await safeDeleteDir(stagingDir);
         }
@@ -375,17 +507,42 @@ function validateManifest(jsonData: unknown): DataArchiveManifestType {
 /**
  * Read just the manifest — the archive can be gigabytes and the user has not
  * chosen anything yet, so only that one entry is unpacked.
+ *
+ * A Bible Data bundle is answered with its KIND instead of being refused. Both
+ * are exported into Downloads, a protected one of either is `<name>.<kind>.enc`
+ * and passes this flow's file dialog, and by the time this runs its password
+ * has been typed and the whole file decrypted — ending that on "Invalid data
+ * archive manifest" left a volunteer with the right file and no way in.
+ * Decided by the manifest, not the name, so a renamed bundle is caught too.
  */
-export async function readDataArchiveManifest(archiveFilePath: string) {
+export async function readDataArchiveManifest(
+    archiveFilePath: string,
+): Promise<
+    DataArchiveManifestType | { kind: typeof BIBLE_XML_ARCHIVE_ITEM_KIND }
+> {
+    // An empty file is what a protected export wrote before the `.part` fix
+    // above, and tar's own answer for it — "TAR_BAD_ARCHIVE: Unrecognized
+    // archive format" — tells a volunteer nothing about what to do next.
+    if ((await fsGetFileSize(archiveFilePath)) === 0) {
+        throw new Error(
+            'This archive is empty, so there is nothing in it to import.' +
+                ' Export the data again from the machine it came from',
+        );
+    }
     const workDir = await createWorkDir('owadata-read');
     try {
         await tarExtract(archiveFilePath, workDir, [MANIFEST_FILE_NAME]);
-        return validateManifest(
-            await readArchiveManifest(
-                workDir,
-                'This file is not an Open Worship data archive (no manifest)',
-            ),
+        const jsonData = await readArchiveManifest(
+            workDir,
+            'This file is not an Open Worship data archive (no manifest)',
         );
+        if (
+            (jsonData as { itemKind?: unknown } | null)?.itemKind ===
+            BIBLE_XML_ARCHIVE_ITEM_KIND
+        ) {
+            return { kind: BIBLE_XML_ARCHIVE_ITEM_KIND };
+        }
+        return validateManifest(jsonData);
     } finally {
         await safeDeleteDir(workDir);
     }
@@ -507,7 +664,7 @@ export async function importDataArchive(
                 return folder.entry;
             }),
         );
-        for (const { folder, dirPath } of destinations) {
+        for (const { folder, dataDirectory, dirPath } of destinations) {
             const sourceDir = toExtractedArchivePath(extractDir, folder.entry);
             if (!(await fsCheckDirExist(sourceDir))) {
                 continue;
@@ -518,6 +675,9 @@ export async function importDataArchive(
                 getImportCollisionPolicy(folder.settingName),
                 counts,
             );
+            // Inside the loop, before the unpacked copy is deleted: the hook
+            // reads what the archive held, not what the folder holds now.
+            await dataDirectory.afterImport?.(dirPath as string, sourceDir);
         }
     } finally {
         await safeDeleteDir(extractDir);

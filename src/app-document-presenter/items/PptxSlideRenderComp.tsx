@@ -120,6 +120,8 @@ export default function PptxSlideRenderComp({
     width,
     index,
     onClick,
+    menuSlide,
+    isWithSubSlides = true,
 }: Readonly<{
     pptxSlide: PptxSlide;
     width: number;
@@ -129,10 +131,16 @@ export default function PptxSlideRenderComp({
         index: number,
         varySlide: VarySlideType,
     ) => void;
+    // The slide the card's menu is about: a sub-slide's menu is its PPTX
+    // slide's, since the sub-slide is not a slide of the document on its own.
+    menuSlide?: PptxSlide;
+    // False where a grid gives each sub-slide a cell of its own
+    // (`toVarySlideGridItems`), so only this one card is drawn.
+    isWithSubSlides?: boolean;
 }>) {
     const pptxAppDocument = useVaryAppDocumentContext() as PptxAppDocument;
     const pptxAppDocumentRef = useAppCurrentRef(pptxAppDocument);
-    const pptxSlideRef = useAppCurrentRef(pptxSlide);
+    const pptxSlideRef = useAppCurrentRef(menuSlide ?? pptxSlide);
     const handleContextMenuOpening = useCallback(
         (event: MouseEvent, extraMenuItems: ContextMenuItemType[]) => {
             pptxAppDocumentRef.current.showSlideContextMenu(
@@ -162,7 +170,7 @@ export default function PptxSlideRenderComp({
                     height={pptxSlide.height}
                 />
             </VarySlideRenderComp>
-            {pptxSlide.subSlides.map((subSlide, i) => {
+            {(isWithSubSlides ? pptxSlide.subSlides : []).map((subSlide, i) => {
                 const subIndex = PptxSlide.calcIndex(index, i);
                 return (
                     <VarySlideRenderComp

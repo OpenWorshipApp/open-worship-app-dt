@@ -75,7 +75,7 @@ export default function RenderLookupRecordItemComp({
             >
                 <i className={`${record.iconClass} mt-1 text-secondary`} />
                 <span className="d-flex flex-column location-name-lookup__text">
-                    <span className="fw-semibold text-truncate">
+                    <span className="text-truncate">
                         {record.name}
                         {record.kjvName ? (
                             <span

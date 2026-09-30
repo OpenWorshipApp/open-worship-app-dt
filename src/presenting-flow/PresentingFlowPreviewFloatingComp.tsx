@@ -46,10 +46,13 @@ import {
     setPresentingFlowPreviewSelectedItem,
     toPresentingFlowPreviewItemKey,
     toPresentingFlowPreviewRectSettingName,
+    toPresentingFlowPreviewRevealKey,
     usePresentingFlowPreviewCollapsedCount,
     usePresentingFlowPreviewFilePaths,
 } from './presentingFlowPreviewFloatingHelpers';
 import { useThemeSource } from '../others/themeHelpers';
+import VirtualListComp from '../virtual-list/VirtualListComp';
+import { revealVirtualElement } from '../virtual-list/virtualRevealHelpers';
 
 // Its own setting, so zooming the presenting flow preview does not resize the slides
 // in the documents previewer (and the other way round).
@@ -69,6 +72,11 @@ const DEFAULT_THUMBNAIL_SCALE = 50;
 // reasoning, as the documents panel's floating previews.
 const WIDGET_STAGGER_STEP = 24;
 const WIDGET_STAGGER_COUNT = 6;
+
+// What a FOLDED line takes: its label row and the divider under it. Only ever
+// used for a line that has not been drawn yet -- every one that has is
+// measured -- so it is the scrollbar's accuracy, not the layout's.
+const COLLAPSED_ITEM_HEIGHT = 34;
 
 // The same keys that advance the presenter's own slide list, forward only —
 // a run sheet is walked from where it is to its end.
@@ -219,7 +227,47 @@ function landPresentingFlowRunOnIndex(
     // decide what takes part in the run, and an element the run has stopped on
     // with its body hidden shows the operator nothing at all.
     expandPresentingFlowPreviewItem(filePath, itemKey);
-    const element = toElementBox(container, index);
+    const getElement = () => {
+        return toElementBox(container, index);
+    };
+    const element = getElement();
+    if (element !== null) {
+        fireLandedPresentingFlowRun(
+            filePath,
+            presentingFlowItem,
+            index,
+            element,
+            isFromJump,
+        );
+        return;
+    }
+    // The sheet is windowed, so a line the run jumps to from far away has no
+    // box until the list is asked for it -- and then one React commit later,
+    // which is what the wait is for. Landing carries on with whatever comes
+    // back, null included: an element that cannot be drawn is the same
+    // "nothing to bring into view" this has always handled.
+    revealVirtualElement(
+        toPresentingFlowPreviewRevealKey(filePath, presentingFlowItem, index),
+        getElement,
+    ).then((revealedElement) => {
+        fireLandedPresentingFlowRun(
+            filePath,
+            presentingFlowItem,
+            index,
+            revealedElement,
+            isFromJump,
+        );
+    }, handleError);
+}
+
+/** The half of landing that needs the element: scroll to it, then fire it. */
+function fireLandedPresentingFlowRun(
+    filePath: string,
+    presentingFlowItem: PresentingFlowItem,
+    index: number,
+    element: Element | null,
+    isFromJump: boolean,
+) {
     if (element !== null) {
         bringPresentingFlowRunElementToView(element);
     }
@@ -613,6 +661,16 @@ function PresentingFlowPreviewBodyComp({
     useAppEffect(() => {
         containerRef.current?.focus({ preventScroll: true });
     }, [filePath]);
+    const getItemRevealKey = useCallback(
+        (presentingFlowItem: PresentingFlowItem, index: number) => {
+            return toPresentingFlowPreviewRevealKey(
+                filePath,
+                presentingFlowItem,
+                index,
+            );
+        },
+        [filePath],
+    );
     return (
         <div
             className="app-presenting-flow-preview d-flex flex-column app-focusable"
@@ -642,17 +700,29 @@ function PresentingFlowPreviewBodyComp({
                     {tran('No items in this presenting flow')}
                 </div>
             ) : (
-                presentingFlowItems.map((presentingFlowItem, i) => {
-                    return (
-                        <PresentingFlowItemPreviewComp
-                            key={`${presentingFlowItem.type}-${i}`}
-                            presentingFlowItem={presentingFlowItem}
-                            index={i}
-                            itemCount={presentingFlowItems.length}
-                            thumbnailWidth={thumbnailWidth}
-                        />
-                    );
-                })
+                /* Only the lines on screen are mounted. A line is not cheap —
+                   it holds an on-screen subscription of its own, and an
+                   unfolded one a whole document's worth of slide cards — so a
+                   sheet of a thousand of them used to cost a thousand before
+                   the first could be read. Rows here are not one height (a
+                   folded header against a song opened out), so each one is
+                   measured as it is drawn. */
+                <VirtualListComp
+                    items={presentingFlowItems}
+                    getItemKey={getItemRevealKey}
+                    estimateRowHeight={COLLAPSED_ITEM_HEIGHT}
+                    style={{ flexShrink: 0 }}
+                    renderItem={(presentingFlowItem, i) => {
+                        return (
+                            <PresentingFlowItemPreviewComp
+                                presentingFlowItem={presentingFlowItem}
+                                index={i}
+                                itemCount={presentingFlowItems.length}
+                                thumbnailWidth={thumbnailWidth}
+                            />
+                        );
+                    }}
+                />
             )}
             {/* Same auto-hiding footer the background panel uses, folding away
                 into a `...` handle. It is made sticky in this widget's SCSS —

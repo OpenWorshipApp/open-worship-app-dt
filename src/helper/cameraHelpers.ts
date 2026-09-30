@@ -168,17 +168,44 @@ export function releaseCameraStream(cameraId: string) {
 export async function getCameraAndShowMedia(
     {
         id,
+        label,
         extraStyle,
         parentContainer,
         width,
+        onUnavailable,
     }: ForegroundCameraDataType & {
         parentContainer: HTMLElement;
         width?: number;
+        /**
+         * Told when the camera cannot be opened HERE. A failure used to be a
+         * `console.error` and nothing else, so the operator saw the camera in
+         * the mini preview, an on-screen dot on the widget and a working Hide
+         * button -- with nothing on the projector and no message anywhere they
+         * would look. This stays a callback rather than a toast so that this
+         * module keeps no `tran`/toast/settings imports: it also loads in the
+         * screen window, where a toast IS the projector and must never appear.
+         */
+        onUnavailable?: (cameraName: string) => void;
     },
     animData?: StyleAnimType,
 ) {
+    let acquiredDeviceId: string | null = null;
     try {
-        const mediaStream = await getCameraStream(id);
+        // Resolve BEFORE opening, the way the slide camera item already does
+        // (`slideCameraSyncHelpers`). This runs in the screen window too, and
+        // that is a different document from the presenter -- Chromium rotates
+        // `deviceId` per origin and per session, so the id the presenter saved
+        // can be dead here. Without this the projector showed nothing while the
+        // mini preview kept working, and the throw went to the console only.
+        const resolvedId = await resolveCameraDeviceId(id, label ?? '');
+        if (resolvedId === null) {
+            onUnavailable?.(label || id);
+            return () => {};
+        }
+        // Ref-counted, so the several previews one window draws of the same
+        // camera share ONE stream instead of re-handshaking the device.
+        const mediaStream = await acquireCameraStream(resolvedId);
+        acquiredDeviceId = resolvedId;
         const video = document.createElement('video');
         video.srcObject = mediaStream;
         video.onloadedmetadata = () => {
@@ -189,23 +216,28 @@ export async function getCameraAndShowMedia(
         }
         Object.assign(video.style, extraStyle ?? {});
         parentContainer.innerHTML = '';
-        const stopAllStreams = () => {
-            const tracks = mediaStream.getVideoTracks();
-            for (const track of tracks) {
-                track.stop();
+        const releaseThisStream = () => {
+            if (acquiredDeviceId === null) {
+                return;
             }
+            releaseCameraStream(acquiredDeviceId);
+            acquiredDeviceId = null;
         };
         if (animData === undefined) {
             parentContainer.appendChild(video);
-            return stopAllStreams;
+            return releaseThisStream;
         }
         animData.animIn(video, parentContainer);
         return async () => {
             await animData.animOut(video);
-            stopAllStreams();
+            releaseThisStream();
         };
     } catch (error) {
+        if (acquiredDeviceId !== null) {
+            releaseCameraStream(acquiredDeviceId);
+        }
         handleError(error);
+        onUnavailable?.(label || id);
     }
     return () => {};
 }

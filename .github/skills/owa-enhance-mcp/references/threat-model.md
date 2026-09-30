@@ -1,6 +1,6 @@
 # Threat model — what an agent driving this app can reach
 
-_Last measured 2026-09-14, against the running dev app._
+_Last measured 2026-09-23, against the running dev app._
 
 ## The thing that makes this different from a browser automation server
 
@@ -35,9 +35,13 @@ normal Tuesday. A prompt-injected model with `evaluate_script` is a remote
 shell on a church's computer, and the volunteer sees a help window that looks
 like it is thinking.
 
-**Anything at all on the machine.** `host.mjs` binds `127.0.0.1` and checks
-`Origin`, which stops a web page. It stops nothing that can open a socket —
-there is no credential on that door (`MC-01`).
+**A holder of this launch's capability.** `host.mjs` binds `127.0.0.1`, checks
+`Origin`, and requires a fresh 256-bit bearer token on `/mcp`. The app writes
+that token only into its mode-0600 discovery file and hands it to the chatbot
+over IPC; a socket client that merely finds the port gets `401` before a
+session exists (`MC-01`). A process running as the same OS account can read the
+discovery file, so this is a local account boundary, not a sandbox from the
+operator's own processes.
 
 ## The policy — `tools/owa-devtools-mcp/firewall.mjs`
 
@@ -195,8 +199,8 @@ Added 2026-09-02, and the first tool here that opens a socket to somewhere a
 language model chose. It inverts the direction of every other risk in this
 file, so it gets its own threat statement.
 
-**What it would have cost to get wrong.** The app's own doors are on loopback
-and neither carries a credential (`MC-01`): the CDP endpoint — whose HTTP
+**What it would have cost to get wrong.** The app's own doors are on loopback.
+The MCP door now carries its per-launch credential (`MC-01`); the CDP endpoint — whose HTTP
 surface includes `/json/list` and `/json/new?url=` — and the MCP host. A fetch
 tool that could name `127.0.0.1` would be a way for an injected model to drive
 the app from inside its own answer, and that is a shorter path than any of the
@@ -255,9 +259,10 @@ machine's own LAN address and capturing it exactly as a website item does:
 `electron/webCaptureHelpers.ts` now holds it to: **a capture may talk to the
 site it was asked for and to the public internet; never to this machine, and
 never to anything else on the local network.** Its own memory-only session;
-permissions, downloads and `window.open` refused; `sandbox: true`; http(s) only
-at the first load and at every redirect; and `onBeforeRequest` over the same
-three patterns and the same `webUrlPolicy.mjs` dialect the guest's wall uses.
+permissions, downloads and `window.open` refused; `sandbox: true`; a judged
+first load and every redirect; and `onBeforeRequest` over four patterns — the
+guest's three plus `file:///*` — and the same `webUrlPolicy.mjs` dialect the
+guest's wall uses.
 The **same-host exemption** is the difference from the guest: no chat site ever
 needs a local address, but a church's intranet notice board is a legitimate
 slide, so a private page may load its own assets and nothing else private.
@@ -266,6 +271,25 @@ Loopback gets no exemption at all.
 `webSecurity` stays OFF — it might be load-bearing for a real user's slide,
 nothing measured says whether it is, and the wall closes what it would open.
 That is the residual, and it is why the wall rather than the flag is the fix.
+
+**Amended 2026-09-24: the app's own pages are `file:` URLs.** "http(s) only at
+the first load" was scheme-shaped, and the thing it has to separate is not the
+scheme. The Webs panel's **New File** writes an `.html` into
+`<data folder>/webs`, and the Background **Webs** tab, every Foreground **Web
+Show** widget and a slide's website item put it up as
+`file:///…/webs/x.html` — so the first cut switched every local tile off
+(globe-and-url placeholder, one `Only a web address can be captured` per file
+in the console) while a remote URL item beside them kept its picture. The rule
+now has a second half: **a local page may be captured only out of a folder
+this app's Webs panel was pointed at, and it may read that folder and nothing
+else of this machine.** The folders are the `select-dir-web-bg*` directory
+settings plus the default `<data folder>/webs`; the test is
+`resolveCaptureTarget` (extension as well as folder, `..` resolved first, case
+folded on Windows and macOS only), and `file:///*` joins the wall's patterns —
+without it no `file:` request was judged at all, so a SITE's page could read
+the disk through `webSecurity: false`. A shared document fails the same test
+by naming the other church's folders. Proven live by putting a fetching page
+in the webs folder: its own sibling READ, one folder up BLOCKED.
 
 **What is NOT closed, and is not claimed to be:**
 
@@ -316,7 +340,6 @@ never be one:
 
 | Id | Gap |
 | --- | --- |
-| `MC-01` | The HTTP door has **no credential**. Origin-checking stops a web page; any local process drives the app. A token in the published endpoint file would close the browser and cross-user cases. |
 | `MC-13` | `press_key` on the developer's door is unguarded: Enter on a focused *Move to Trash* names no label at any point. The model has not been offered `press_key` since 2026-09-08, and the walkthrough's own key press is judged by the control that names the key since 2026-09-14. |
 | `MC-03` | `window.open` from a locked-down renderer still gets `nodeIntegration: true` through `handlePopupWindowOpen`, which is a way back to Node for code already running in that window. |
 | `MC-04` | `appProvider.fileUtils` is the full `fs` surface in the chatbot window. It genuinely writes files (a saved report, a saved picture), so narrowing it to the calls that window makes is real work. |

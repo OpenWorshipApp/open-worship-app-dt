@@ -45,11 +45,5 @@ export default class LyricAppDocumentStage1 extends LyricAppDocumentStageAbstrac
         return canvasItemProps;
     }
 
-    static getInstance(filePath: string) {
-        return this._getInstance(filePath, () => {
-            return new this(filePath);
-        });
-    }
-
     cleanDataMap() {}
 }

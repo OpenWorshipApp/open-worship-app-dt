@@ -14,11 +14,16 @@ import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelper
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { pressElementLikeButton } from '../../helper/helpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { useStateSettingString } from '../../helper/settingHelpers';
 import { DRAW_MODE_SETTING_PREFIX } from '../managers/screenSettingKeyHelpers';
 import type { DrawModeType } from '../screenTypeHelpers';
-import { getStageAccentColor } from '../screenHelpers';
+import {
+    getStageAccentColor,
+    STAGE_NUMBER_CHOICE_COUNT,
+} from '../screenHelpers';
+import { useScreenMaskManagerEvents } from '../managers/screenEventHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
@@ -32,13 +37,64 @@ const LazyMiniScreenFocusHandlersComp = lazy(() => {
     return import('./MiniScreenFocusHandlersComp');
 });
 
+const LazyMiniScreenMaskHandlersComp = lazy(() => {
+    return import('./MiniScreenMaskHandlersComp');
+});
+
+/**
+ * The blanking switch, deliberately a button of its OWN rather than a third
+ * entry in the Drawing/Focusing picker beside it.
+ *
+ * Those two are alternatives -- one pointer, one overlay, the picker choosing
+ * which the button drives. A mask is not an alternative to either: it is room
+ * geometry that stays up while an operator draws and spotlights over it, so
+ * folding it into that picker would have made setting a mask turn drawing off.
+ *
+ * Its dot stays lit while a mask is set, because a mask is invisible in a
+ * closed panel and an operator needs to be able to see that the black bar at
+ * the top of the picture is deliberate.
+ */
+function MaskSwitchComp({
+    isMaskHandlersVisible,
+    setIsMaskHandlersVisible,
+}: Readonly<{
+    isMaskHandlersVisible: boolean;
+    setIsMaskHandlersVisible: (isVisible: boolean) => void;
+}>) {
+    const { screenMaskManager } = useScreenManagerContext();
+    useScreenMaskManagerEvents(['update']);
+    const isMasking = screenMaskManager?.isShowing ?? false;
+    const title = `${tran(isMaskHandlersVisible ? 'Disable' : 'Enable')} ${tran(
+        'Mask',
+    )}`;
+    return (
+        <button
+            className={
+                'btn btn-sm btn-' +
+                (isMaskHandlersVisible || isMasking
+                    ? 'primary'
+                    : 'outline-secondary')
+            }
+            style={{ width: 25 }}
+            onClick={() => {
+                setIsMaskHandlersVisible(!isMaskHandlersVisible);
+            }}
+            title={title}
+            aria-label={title}
+            aria-pressed={isMaskHandlersVisible}
+        >
+            <i className="bi bi-square-half" />
+        </button>
+    );
+}
+
 function getNewStageNumber(
     event: any,
     currentStageNumber: number,
     onChange: (newStageNumber: number) => void,
 ) {
     const items: ContextMenuItemType[] = Array.from(
-        { length: 5 },
+        { length: STAGE_NUMBER_CHOICE_COUNT },
         (_, i) => i,
     ).map((i) => {
         return {
@@ -255,6 +311,7 @@ function DrawSwitchComp({
 
 export default function ScreenPreviewerFooterComp() {
     const [isAudioHandlersVisible, setIsAudioHandlersVisible] = useState(false);
+    const [isMaskHandlersVisible, setIsMaskHandlersVisible] = useState(false);
     const screenManager = useScreenManagerContext();
     // Restore the draw panel's on/off state persisted for this screen.
     // Which overlay control the panel shows. Persisted per screen so the
@@ -293,6 +350,9 @@ export default function ScreenPreviewerFooterComp() {
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const stageLabel =
+        `${tran('Stage')} ${stageNumber}: ` +
+        `${tran('Click to change Stage Number')}`;
     return (
         <div
             className="card-footer w-100"
@@ -331,20 +391,44 @@ export default function ScreenPreviewerFooterComp() {
                             setDrawMode={setDrawMode}
                         />
                     </div>
+                    <div className="ms-1">
+                        <MaskSwitchComp
+                            isMaskHandlersVisible={isMaskHandlersVisible}
+                            setIsMaskHandlersVisible={setIsMaskHandlersVisible}
+                        />
+                    </div>
                 </div>
-                <div
-                    className="flex-grow-1 d-flex justify-content-end"
-                    title={`${tran('Stage')} ${stageNumber}`}
-                >
+                <div className="flex-grow-1 d-flex justify-content-end">
+                    {/* Role, focus and the key press belong on the one element
+                        that carries the name, like every other icon-control in
+                        this footer. Without them this was a bare <div onClick>:
+                        no keyboard could reach it, a screen reader announced
+                        nothing, and it was absent from the accessibility tree
+                        entirely -- which also meant nothing could open its
+                        menu. The name used to sit on BOTH this element and its
+                        wrapper, so anything reading a control by its words got
+                        it twice ("St:0 Stage 0: Click to change Stage Number").
+                        `St:` itself stays an untranslated mnemonic, like the
+                        BG/SL/BB/FG codes above it and `Tr:` beside it -- the
+                        row is one line tall, and translating abbreviations is
+                        what blanked the slide editor's tools panel once. It is
+                        aria-hidden so the translated name is announced instead
+                        of the letters. */}
                     <div
                         className="d-flex app-caught-hover-pointer me-1"
-                        title={`${tran('Stage')} ${stageNumber}: ${tran('Click to change Stage Number')}`}
+                        role="button"
+                        tabIndex={0}
+                        title={stageLabel}
+                        aria-label={stageLabel}
                         style={{
                             color: getStageAccentColor(stageNumber),
                         }}
                         onClick={handleStageNumberChange}
+                        onKeyDown={pressElementLikeButton}
                     >
-                        <small className="mx-1">St:</small>
+                        <small className="mx-1" aria-hidden="true">
+                            St:
+                        </small>
                         <div
                             className="px-0"
                             style={{
@@ -376,6 +460,11 @@ export default function ScreenPreviewerFooterComp() {
                     ) : (
                         <LazyMiniScreenDrawHandlersComp />
                     )}
+                </AppSuspenseComp>
+            ) : null}
+            {isMaskHandlersVisible ? (
+                <AppSuspenseComp>
+                    <LazyMiniScreenMaskHandlersComp />
                 </AppSuspenseComp>
             ) : null}
         </div>

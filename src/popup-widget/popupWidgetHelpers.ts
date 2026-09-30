@@ -49,6 +49,7 @@ export type InputDataType = {
     title: string;
     body: ReactElement;
     onConfirm: (isOk: boolean) => void;
+    canConfirm?: () => boolean;
     escToCancel?: boolean;
     enterToOk?: boolean;
     extraStyles?: CSSProperties;
@@ -101,6 +102,7 @@ export function showAppInput(
     title: string,
     body: ReactElement,
     options?: {
+        canConfirm?: () => boolean;
         escToCancel?: boolean;
         enterToOk?: boolean;
         extraStyles?: CSSProperties;

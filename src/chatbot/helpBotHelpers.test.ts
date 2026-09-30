@@ -23,6 +23,8 @@ import {
     describeActionError,
     genBackToPresenterLead,
     genBackToPresenterRoute,
+    genGuideActions,
+    genReaderButtonReferenceAnswer,
     readCountdownAsk,
     runBotAction,
 } from './helpBotHelpers';
@@ -32,6 +34,130 @@ beforeEach(() => {
     callTool.mockClear();
     parseToolJson.mockReset();
     parseToolJson.mockReturnValue(null);
+});
+
+describe('walkthrough actions', () => {
+    test('carry the exact question into a broad manual recipe', () => {
+        const actions = genGuideActions(
+            { id: 'W-11' },
+            'reader',
+            true,
+            'The words are too small.',
+        );
+        expect(actions.map((action) => action.args)).toEqual([
+            {
+                manualId: 'W-11',
+                page: 'reader.html',
+                mode: 'show',
+                topic: 'The words are too small.',
+            },
+            {
+                demoId: 'reader-font-larger',
+            },
+        ]);
+        expect(actions[1].ask).toBeUndefined();
+    });
+
+    test('offline help offers a walkthrough but never a recipe-built demo', () => {
+        const actions = genGuideActions(
+            { id: 'W-11' },
+            'reader',
+            false,
+            'The words are too small.',
+        );
+        expect(actions.map((action) => action.label)).toEqual([
+            'Show me step by step',
+        ]);
+    });
+
+    test('starts the known font-size demo without a second model round', async () => {
+        parseToolJson.mockReturnValue({
+            isRunning: true,
+            isDemo: true,
+            isTargetFound: true,
+            canDemo: true,
+            stepCount: 1,
+        });
+        const action = genGuideActions(
+            { id: 'W-11' },
+            'reader',
+            true,
+            'The words are too small.',
+        )[1];
+        const result = await runBotAction(action);
+        expect(callTool).toHaveBeenCalledWith('owa_guide_start', {
+            demoId: 'reader-font-larger',
+        });
+        expect(result.isNeedingModel).toBe(false);
+        expect(result.text).toContain('Press **Do it**');
+    });
+
+    test('still prepares a model-built demo for a localized Reader task', async () => {
+        parseToolJson.mockReturnValue({
+            isRunning: true,
+            isDemo: false,
+            isTargetFound: true,
+            stepCount: 1,
+        });
+        const action = genGuideActions(
+            { id: 'W-11' },
+            'reader',
+            true,
+            'Use the Khmer book and chapter buttons.',
+        )[1];
+        const result = await runBotAction(action);
+        expect(callTool).toHaveBeenCalledWith('owa_guide_start', {
+            manualId: 'W-11',
+            page: 'reader.html',
+            mode: 'show',
+            topic: 'Use the Khmer book and chapter buttons.',
+        });
+        expect(result.isNeedingModel).toBe(true);
+        expect(result.text).toContain('prepare the safe **Do it** step');
+    });
+});
+
+describe('localized Bible button lookup', () => {
+    test('turns an English reference into exact book, chapter, and verse buttons', () => {
+        const answer = genReaderButtonReferenceAnswer(
+            'I use a Khmer Bible. Typing John 3:16 does not work. Use the book and chapter buttons.',
+            'reader',
+        );
+        expect(answer?.text).toContain('do not need to type');
+        expect(answer?.text).toContain("in your Bible's own language");
+        expect(answer?.actions?.map((action) => action.label)).toEqual([
+            'Show me step by step',
+            'Do it for me',
+        ]);
+        expect(answer?.actions?.[1].args).toMatchObject({
+            page: 'reader.html',
+            mode: 'demo',
+            steps: [
+                { find: 'Clear input', action: 'click' },
+                { find: 'John', action: 'click' },
+                { find: 'Chapter 3', action: 'click' },
+                { find: 'Verse 16', action: 'click' },
+            ],
+        });
+    });
+
+    test('does not take over an ordinary Reader question', () => {
+        expect(
+            genReaderButtonReferenceAnswer(
+                'How do I make the words larger?',
+                'reader',
+            ),
+        ).toBeNull();
+    });
+
+    test('offline help returns the button solution without searching', async () => {
+        const answer = await askHelpBot(
+            'My non-English Bible will not accept John 3:16. Use the book and chapter buttons.',
+            'reader',
+        );
+        expect(answer.actions?.[1].label).toBe('Do it for me');
+        expect(callTool).not.toHaveBeenCalled();
+    });
 });
 
 // Reported from a real window: the assistant asked "would you like help to

@@ -13,11 +13,18 @@ export default function RenderColorsComp({
     selectedColor,
     onColorChange,
     isNoImmediate = false,
+    canNoColor = true,
 }: Readonly<{
     colors: AnyObjectType;
     selectedColor: AppColorType | null | undefined;
     onColorChange: (color: AppColorType | null, event: MouseEvent) => void;
     isNoImmediate?: boolean;
+    // Whether this picker can actually clear. A picker with nothing to clear
+    // -- the Background Colors tab before any screen has a colour -- used to
+    // draw the red "x" tile anyway, fully enabled-looking, wired to a handler
+    // its owner never supplied: pressing it did nothing at all. An offered
+    // control that cannot act is worse than no control.
+    canNoColor?: boolean;
 }>) {
     const onColorChangeRef = useAppCurrentRef(onColorChange);
     const handleNoColoring = useCallback((event: any) => {
@@ -41,10 +48,12 @@ export default function RenderColorsComp({
     return (
         <div>
             <div className="d-flex flex-wrap app-border-white-round">
-                <RenderNoColorComp
-                    isSelected={!selectedColor}
-                    onClick={handleNoColoring}
-                />
+                {canNoColor ? (
+                    <RenderNoColorComp
+                        isSelected={!selectedColor}
+                        onClick={handleNoColoring}
+                    />
+                ) : null}
                 {Object.entries(colors).map(
                     ([name, color]: [string, AppColorType]) => {
                         return (

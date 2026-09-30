@@ -152,23 +152,28 @@ describe('writing the size', () => {
 
 describe('the text scale chrome tracks', () => {
     // The panels' own base font size, which the scale is relative to so their
-    // body text lands ON the bible text's size rather than merely moving with
+    // body text follows the bible text's size rather than merely moving with
     // it (dividing by the bible default would give 1x — 13.5px beside 35px).
     const PANEL_BASE_FONT_SIZE = 13.5;
+    // ...a step under it, because the panels are narrow widgets over the text.
+    const PANEL_TO_BIBLE_TEXT_RATIO = 0.85;
 
-    test('renders panel body text at the bible text size', () => {
+    test('renders panel body text a step under the bible text size', () => {
         setBibleViewFontSize(DEFAULT_BIBLE_TEXT_FONT_SIZE);
         const scale = useBibleViewTextScale();
         expect(PANEL_BASE_FONT_SIZE * scale).toBeCloseTo(
-            DEFAULT_BIBLE_TEXT_FONT_SIZE,
+            DEFAULT_BIBLE_TEXT_FONT_SIZE * PANEL_TO_BIBLE_TEXT_RATIO,
             1,
+        );
+        expect(PANEL_BASE_FONT_SIZE * scale).toBeLessThan(
+            DEFAULT_BIBLE_TEXT_FONT_SIZE,
         );
     });
 
     test('follows the size in between', () => {
         setBibleViewFontSize(27);
         expect(useBibleViewTextScale()).toBeCloseTo(
-            27 / PANEL_BASE_FONT_SIZE,
+            (27 * PANEL_TO_BIBLE_TEXT_RATIO) / PANEL_BASE_FONT_SIZE,
             5,
         );
     });

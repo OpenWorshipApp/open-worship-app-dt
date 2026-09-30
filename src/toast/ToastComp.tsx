@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useToastSimpleShowing } from '../event/ToastEventListener';
 import type { SimpleToastType } from './SimpleToastComp';
 import SimpleToastComp from './SimpleToastComp';
+import DailyTipComp from './DailyTipComp';
 
 // Keep the stack bounded, a burst of toasts must not grow the DOM unbounded.
 export const MAX_STACKED_TOAST_COUNT = 5;
@@ -29,11 +30,9 @@ export default function ToastComp() {
             return [...oldToasts, newToast].slice(-MAX_STACKED_TOAST_COUNT);
         });
     });
-    if (toasts.length === 0) {
-        return null;
-    }
     return (
         <div className="app-toast-stack">
+            <DailyTipComp />
             {toasts.map((toast) => {
                 return (
                     <SimpleToastComp

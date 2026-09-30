@@ -6,6 +6,7 @@ const {
     appErrorMock,
     bibleItemFromJsonMock,
     genCopyingMenuMock,
+    quickTrimTextMock,
     sanitizeFindingTextMock,
     sanitizePreviewTextMock,
     tranMock,
@@ -23,6 +24,7 @@ const {
         ...json,
     })),
     genCopyingMenuMock: vi.fn(() => [{ menuElement: 'copy' }]),
+    quickTrimTextMock: vi.fn((_locale: string, text: string) => text),
     sanitizeFindingTextMock: vi.fn(
         async (_locale: string, text: string) => text,
     ),
@@ -49,6 +51,7 @@ vi.mock('../bible-list/bibleItemHelpers', () => ({
     genBibleItemCopyingContextMenu: genCopyingMenuMock,
 }));
 vi.mock('../lang/langHelpers', () => ({
+    quickTrimText: quickTrimTextMock,
     sanitizeFindingText: sanitizeFindingTextMock,
     sanitizePreviewText: sanitizePreviewTextMock,
     tran: tranMock,
@@ -82,6 +85,7 @@ import {
     setBibleSearchingTabType,
     toFindChunkRange,
     toFindPageWindow,
+    toFindWildCardText,
     toFoundVerseCount,
     type BibleFindResultType,
     type FindDataType,
@@ -472,5 +476,48 @@ describe('toFindChunkRange', () => {
 
     test('leaves the range unclamped until the count is known', () => {
         expect(toFindChunkRange(4, 20, null)).toEqual([61, 80]);
+    });
+});
+
+describe('toFindWildCardText', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        quickTrimTextMock.mockImplementation(
+            (_locale: string, text: string) => text,
+        );
+    });
+
+    test('wraps every word of the RAW query, trimming only as the test', () => {
+        // `quickTrimText` answers "is there anything of this locale here?";
+        // the needle keeps the untrimmed word, which is what the verse text
+        // is actually searched for.
+        quickTrimTextMock.mockImplementation((_locale: string, text: string) =>
+            text.toUpperCase(),
+        );
+        expect(toFindWildCardText('en' as any, 'my shepherd')).toBe(
+            '%my%%shepherd%',
+        );
+    });
+
+    test('returns null when the query holds nothing of this bible script', () => {
+        // Measured 2026-09-20: a Khmer word looked up in the KJV built
+        // `LIKE '%%'` and answered "31,102 verses found" -- the whole bible.
+        quickTrimTextMock.mockImplementation(() => '');
+        expect(toFindWildCardText('en' as any, 'ឥន្ទ្រីយ')).toBeNull();
+    });
+
+    test('returns null for an empty query', () => {
+        expect(toFindWildCardText('en' as any, '')).toBeNull();
+        expect(toFindWildCardText('en' as any, '   ')).toBeNull();
+    });
+
+    test('returns null when only quotes survive the trim', () => {
+        // `%'%` loses its quote to the strip and lands on the same
+        // match-everything needle.
+        expect(toFindWildCardText('en' as any, "'")).toBeNull();
+    });
+
+    test('strips quotes but keeps a needle that still has words', () => {
+        expect(toFindWildCardText('en' as any, "lord's")).toBe('%lords%');
     });
 });

@@ -63,6 +63,17 @@ interface MyProps {
     // When set, the widget's size and location are saved under this setting key
     // and restored the next time it opens.
     persistKey?: string;
+    // The panel's own ENGLISH name, stamped into the DOM the way a resizable
+    // pane stamps its `toWidgetLabel` key. Without it a floating panel is a
+    // nameless box: everything inside it reports the pane BEHIND it as the
+    // panel it is in, so a control this panel shares with another place --
+    // the file grid a foreground component reuses from the Background tabs --
+    // cannot be told apart from its twin. `owa_find_ui "clock"` rang the
+    // Background tile and the Web Show tile at once, and no scope could
+    // separate them. Translated on screen, English here, for the same reason
+    // the panes are: a name only a Khmer window answers to is a name the
+    // matcher loses the moment the app is switched over.
+    widgetName?: string;
     // Bump this to pull the widget back to the front. For hosts whose "open"
     // gesture can land on a widget that is ALREADY open: pressing inside a
     // widget raises it, but a request coming from anywhere else in the app has
@@ -99,6 +110,7 @@ export default function FloatingWidgetComp({
     extraActionButtons = null,
     options = {},
     persistKey,
+    widgetName,
     raiseToken,
     onClose,
 }: PropsWithChildren<MyProps>) {
@@ -402,6 +414,23 @@ export default function FloatingWidgetComp({
         [],
     );
 
+    // Fill the viewport, or put the widget back at the size and place it had.
+    // Shared by the header's double-press and the full-view button.
+    const handleToggleMaximized = useCallback(() => {
+        const next = toggleMaximizedWidgetRect(
+            widgetRectRef.current,
+            restoreRectRef.current,
+            optionsRef.current,
+            isHeaderOnlyRef.current,
+        );
+        // Kept in step synchronously, the way a drag does: a press landing
+        // before React re-renders must not resize from the stale rect.
+        widgetRectRef.current = next.rect;
+        setWidgetRect(next.rect);
+        setRestoreRect(next.restoreRect);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Double-pressing the header is the quick "fill the viewport" gesture, and
     // doing it again puts the widget back at the size and place it had.
     const handleHeaderPointerDown = useCallback(
@@ -439,17 +468,7 @@ export default function FloatingWidgetComp({
             // Cleared so a third press starts counting again instead of undoing
             // what the second one just did.
             lastHeaderPressRef.current = null;
-            const next = toggleMaximizedWidgetRect(
-                widgetRectRef.current,
-                restoreRectRef.current,
-                optionsRef.current,
-                isHeaderOnlyRef.current,
-            );
-            // Kept in step synchronously, the way a drag does: a press landing
-            // before React re-renders must not resize from the stale rect.
-            widgetRectRef.current = next.rect;
-            setWidgetRect(next.rect);
-            setRestoreRect(next.restoreRect);
+            handleToggleMaximized();
             // Held back from the widget's own handler so this press starts no
             // move gesture — the widget just jumped somewhere else, and a drag
             // from the old grab point would fight it.
@@ -464,6 +483,9 @@ export default function FloatingWidgetComp({
     const collapseLabel = isCollapsed
         ? tran('Expand floating widget')
         : tran('Collapse floating widget');
+    const fullViewLabel = isMaximized
+        ? tran('Exit full view')
+        : tran('Full view');
     const actionButtons = (
         <div
             className="floating-widget__actions"
@@ -491,6 +513,19 @@ export default function FloatingWidgetComp({
             <button
                 type="button"
                 className="floating-widget__button"
+                onClick={handleToggleMaximized}
+                aria-label={fullViewLabel}
+                title={fullViewLabel}
+            >
+                <i
+                    className={`bi bi-${
+                        isMaximized ? 'fullscreen-exit' : 'arrows-fullscreen'
+                    }`}
+                />
+            </button>
+            <button
+                type="button"
+                className="floating-widget__button"
                 onClick={onClose}
                 aria-label={tran('Close floating widget')}
                 title={tran('Close floating widget')}
@@ -504,6 +539,7 @@ export default function FloatingWidgetComp({
         <div
             ref={widgetRef}
             data-bs-theme={theme}
+            data-widget-name={widgetName}
             className={[
                 'floating-widget',
                 isAboveModal ? 'floating-widget--above-modal' : '',

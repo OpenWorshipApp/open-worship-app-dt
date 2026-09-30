@@ -216,6 +216,7 @@ describe('toBibleSummary', () => {
 describe('toForegroundSummary', () => {
     it('names each widget and what it is showing', () => {
         const items = toForegroundSummary({
+            messageDataList: [],
             countdownData: null,
             stopwatchData: { dateTime: new Date() },
             timeDataList: [
@@ -230,11 +231,15 @@ describe('toForegroundSummary', () => {
             quickTextData: null,
             cameraDataList: [],
             webDataList: [],
+            videoDataList: [{ filePath: 'C:\\media\\snow.mp4' }],
+            imageDataList: [{ filePath: '/media/logo.png' }],
         });
         expect(items).toEqual([
             'stopwatch',
             'clock "Phnom Penh"',
             'marquee at the top: "Welcome <b>everyone</b>"',
+            'video snow.mp4',
+            'picture logo.png',
         ]);
     });
 });

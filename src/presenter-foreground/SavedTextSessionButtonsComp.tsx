@@ -157,21 +157,34 @@ export default function SavedTextSessionButtonsComp({
     };
     return (
         <>
+            {/*
+             * Quiet, both of them. These used to be a green outline and a
+             * grey one beside a teal Today's Date and a solid blue Show --
+             * four colours, of which only the last one reaches a projector.
+             */}
             <button
-                className="btn btn-sm btn-outline-success"
+                type="button"
+                className="fg-quiet-btn"
                 title={tran('Save the current text as a session')}
                 onClick={handleSaveSession}
             >
-                <i className="bi bi-floppy" /> {tran('Save')}
+                <i className="bi bi-floppy" />
+                <span>{tran('Save')}</span>
             </button>
             <button
-                className="btn btn-sm btn-outline-secondary"
+                type="button"
+                className="fg-quiet-btn"
                 title={tran('Pick a previously saved session')}
                 disabled={savedSessions.length === 0}
                 onClick={handleOpenSavedSessions}
             >
-                <i className="bi bi-clock-history" /> {tran('Saved')}
-                {savedSessions.length > 0 ? ` (${savedSessions.length})` : ''}
+                <i className="bi bi-clock-history" />
+                <span>
+                    {tran('Saved')}
+                    {savedSessions.length > 0
+                        ? ` (${savedSessions.length})`
+                        : ''}
+                </span>
             </button>
         </>
     );

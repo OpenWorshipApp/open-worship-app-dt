@@ -8,25 +8,174 @@ Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
 ---
 
+### `MC-46` — Presenter and Reader demos and tips · done 2026-09-28
+
+Added fourteen lessons to the shared Presenter catalog (74 → 88; 78 have a
+safe actionable start). They cover Bible Lookup references, Keep Open, history
+and study tools; media filters, sorting and folders; flow filters and sorting;
+Messages, notice rotation/spacing, foreground Effects and Image Show preparation.
+Titles and descriptions are translated into Khmer and French, and tips stay
+in their existing topic groups.
+
+Library targets retain the named panel and use the exact localized label so a
+Background filter cannot press the Documents or Bible Notes filter. The Khmer
+live check caught English "Images" matching a folder-path button, and bare
+"Messages" matching part of the translated "Documents" label. Translated scoped
+targets and panel-scoped visibility checks avoid both collisions; regressions
+cover those choices. Opening steps skip an already-visible panel. Output,
+playback and style changes remain
+explanation-only: opening Properties would be safe, changing a live overlay
+would not. The existing path-editor tooltip is English even in localized UI;
+its scoped target deliberately retains that literal label.
+
+Measured through a fresh server: all fourteen lessons reached their explanatory
+steps, and screen contents were identical before and after. English, French and
+Khmer tip titles/descriptions were checked live. MCP before/after:
+53 host tools / 24 model tools / ~7,397 model schema tokens per round; no schema
+change. Policy probe: 25/25. No safety, schema cost or developer-interface
+tradeoff; the small lesson catalog grows only with text.
+#### Reader feature demos and practical tips
+
+Reader-only inventory found saved Bible lists and note-file management absent
+from the original 61 lessons; copy formats, Resources and graph tools were
+buried in broad overviews. Added 38 focused lessons (99 total), each with a
+searchable usage tip and Khmer/French title and detail. Nineteen additions
+start with a safe named action, bringing that total to 49; the featured
+assistant shelf remains 30. File choices, graph records, native menus,
+destructive steps, exports and congregation output remain self-guided.
+
+Reader mixed lessons now mark explanation steps as `look`, so the card says
+Next after opening a menu instead of offering a Do it with nothing to press.
+Scoped targets translate the panel and control independently. Older-host
+inline fallback preserves the full Reader instructions in show mode.
+`tools/owa-devtools-mcp/reader-demo-coverage.md` maps the Reader surface to
+the lessons and explains how to use them. No tool, public argument or policy
+change is needed: baseline 53 tools, 24 to the model, ~7,397 schema tokens per
+round. The policy baseline passed 16 checks; its Presenter-only checks were
+skipped to honor the Reader-only scope, not counted as passing.
+
+Verification: 67 focused tests passed. All 19 new action-bearing lessons
+completed through fresh stdio servers; retries resolved interruptions from
+concurrent development reloads and a Bible Information popup left open by the
+test driver. The Reader's All tips counter showed 99, searching Copy Text
+found its focused tip, and Show it started the HTTP guide with the Copy
+control ringed; the final instruction was a `look` step. The after-probe again
+passed 16 policy checks and skipped Presenter checks. The host still lists 53
+tools, 24 to the model; the measured ~7,394 tokens/round is within the 7,450
+ratchet (a concurrent schema wording change accounts for the three-token
+difference, not this catalog). File exports and destructive choices were not
+executed.
+
+Tradeoff: more static lesson text in the local catalog, no per-question schema
+growth, provider calls or new retained state. Benefits both developer and
+volunteer callers through the same guide; security policy stays intact.
+
+
+### `MC-44` — the redaction net missed OpenAI's own key format · done 2026-09-26
+
+Found while checking whether an OAuth-issued OpenRouter key would be scrubbed,
+by calling `redactSecrets` on one key of each shape. The generic provider-key
+rule was `\bsk-[A-Za-z0-9]{20,}` — letters and digits only — so it stopped at
+the second hyphen of every current format: OpenAI's `sk-proj-` (what the
+dashboard hands out today), `sk-svcacct-` and `sk-admin-`, and OpenRouter's
+`sk-or-v1-`, all went through WHOLE unless a `Bearer` or a named field such as
+`apiKey:` sat in front. Two garbled-marker bugs rode beside it: with no capture
+group, the second argument `replace` passes its callback is the match's
+OFFSET, not `undefined`, so every such marker read `11[redacted …]`; and the
+named-credential rule re-redacted a value the key rule had already replaced
+(`[redacted` is eight characters), leaving `… firewall] by the app firewall]`.
+The old tests asked only `not.toContain`, which all three passed. Now one rule
+`\bsk-[A-Za-z0-9_-]{20,}` covers every `sk-` family (the Anthropic-first
+ordering it needed is gone), the callback asks `typeof keep === 'string'`,
+the named rule skips a value that is already a marker, and
+`firewall.test.mjs` checks EXACT output for six formats plus `sk-SK` (the
+Slovak locale tag) left alone.
+
+### `MC-43` — expand Reader demos and cover them in Tips · done 2026-09-26
+
+The Reader assistant featured 24 zero-model practice choices while several
+safe, universal controls were only mentioned in broad self-guided lessons.
+Shipped seven more deterministic Reader choices: type a complete reference,
+remove one reference part, toggle automatic Bible audio, filter and sort
+notes, and open Reader Settings or Help. Added separate saved-Bibles and
+Bible-Notes visibility Tips too, but kept them self-guided after live testing
+proved an open pane is a labeled container rather than a pressable toggle. The
+shared catalog now supplies 61 Reader tips, 30 with a safe actionable start,
+while 30 are featured in the empty assistant. The previous whole-panel lesson
+is self-guided for the same reason, so the shelf grows by six while gaining
+seven working actions. No tool or schema enum was added, so the 53-tool surface
+and model token bill remain flat.
+
+### `MC-42` — resilient Presenter tip demos · done 2026-09-23
+
+Presenter tips could outpace the long-running MCP host during development and
+fail with an unknown built-in demo; an older host could also recognize a newly
+actionable lesson only as show-only. Tips now retry both stale outcomes with a
+compact inline guide. The Presenter catalog exposes safe first actions for 51 of
+56 lessons, and mixed lessons resolve explanation-only follow-ups as `look`
+steps so **Do it** becomes **Next** after the action. The five disruptive or
+native-menu-only lessons remain show-only. Tool count and model schema stay flat.
+
+### `MC-41` — complete Presenter demo catalog · done 2026-09-23
+
+Presenter Tips of the Day exposed only six checked-in demos, leaving documents,
+audience screens, media, service planning, help and the native View menu outside
+the zero-model guide path. Shipped 56 Presenter lessons through the existing
+`owa_guide_start { demoId }` contract: 24 safe deterministic controls and 32
+self-guided lessons for state-dependent, native-menu or live-output work. No new
+tool or schema enum was added; unsafe effects remain explanation-only, so a demo
+cannot change congregation output, reload or relaunch the app, reset the layout,
+or open Developer Tools.
+
+### `MC-40` — precompiled Reader demos · done 2026-09-22
+
+The guide could run explicit steps, but every caller had to invent them and the
+chatbot needed a model to do so. Shipped a shared `readerDemos.mjs` catalog and a
+`demoId` option on `owa_guide_start`; the existing guarded, announced guide still
+performs one step per human press. The guide can now choose a named `<select>`
+option as well as type/set a slider. No new tool was added. Live: all four demos
+completed against the Reader; the localized reference demo pressed Khmer John,
+chapter 3 and verse 16, and the search demo explicitly changed a remembered
+Resources picker to Find. Model surface: 7,355 → 7,404 tokens/round, under the
+7,450 ratchet.
+
+### `MC-39` — walkthroughs aimed at controls hidden behind ⋯ · done 2026-09-22
+
+The Reader’s Font Size range exists inside an `.app-auto-hide` footer opened
+by the visible three-dot control. The guide ringed the invisible slider at the
+bottom edge, so a senior saw a target that could not be clicked. Separately,
+some toolbar controls exist only under CSS `:hover`.
+
+**Shipped.** The guide distinguishes the two prerequisites. A CSS-hover control
+is held visible without moving the user’s pointer. A click-open auto-hide
+footer rings its real three-dot sibling; the first **Do it** clicks that and
+keeps the step in place, and the second acts on the now-visible control. Live,
+the first press exposed Font Size without changing it, the second moved the
+range by +8, and the test value was restored to 17. Focused guide tests pin the
+two-press sequence.
+
 ## Security
 
-### `MC-01` — the HTTP door has no credential · open
+### `MC-01` — the HTTP door has no credential · done 2026-09-23
 
-`host.mjs` binds `127.0.0.1` and checks `Origin`, which stops a web page. It
-stops nothing that can open a socket. Proven 2026-09-01: a plain Node script
-with no credential opened a session and called tools.
+Proven 2026-09-01: a plain Node script with no credential opened a session and
+called tools. Closed with a fresh 256-bit token from `startOwaMcpHost`, written
+beside the endpoint in `<temp>/open-worship-app-cdp/<pid>.json` (mode 0600),
+required as `Authorization: Bearer` on every `/mcp` request, and passed to the
+chatbot over the existing synchronous endpoint IPC. The token never enters the
+URL, a log line, a tool result or the model context. The audit and live verify
+scripts read the same published pair; URL overrides require `OWA_MCP_TOKEN`
+too, so a capability is not sent to a different local service by accident.
 
-The fix is a token generated by `startOwaMcpHost`, written into the published
-endpoint file (`<temp>/open-worship-app-cdp/<pid>.json`, already per-user),
-required as `authorization: Bearer` on `/mcp`, and read by
-`src/chatbot/mcpClient.ts` and `discovery.mjs`.
+Before: missing credentials initialized a session and called tools. After: a
+missing or wrong token gets `401` before session routing; the published token
+reaches the normal MCP response, and the real chatbot still lists and calls
+tools. Origin checking remains as the browser-facing first layer.
 
-Weigh it honestly before doing it: a local process running as the same user can
-read that file, so this does **not** defend against local code — which already
-has the machine anyway. What it closes is the browser case more robustly than
-an `Origin` check, and the cross-user case. Touches ~5 files across main,
-renderer and the package. Deferred in favour of the firewall, which is where
-the escalation actually was: a prompt-injected model is not local code.
+Residual, stated rather than hidden: a process running as the same OS account
+can read the discovery file. This closes the browser and cross-user cases; it
+does not pretend to sandbox the operator's own processes. The stdio developer
+door and the model's tool schema are unchanged.
 
 ### `MC-02` — the destructive interlock is label-based · done 2026-09-02
 
@@ -107,7 +256,8 @@ the calls it makes.
 credentials. A secret in an unanticipated shape gets through. This is accepted
 rather than solved: it is why the tools that dump memory wholesale are denied
 outright instead of being trusted to the net. Revisit if a new provider or
-credential shape lands.
+credential shape lands — `MC-44` is what happens when nobody does: OpenAI's
+own `sk-proj-` format, its default, was getting through whole.
 
 ---
 
@@ -162,11 +312,11 @@ cannot be spent back unnoticed. What was cut, and why it could be:
   `PAGE_TEXT` for the six `page` arguments that described themselves.
 
 **One cut was too deep, and only the live window showed it.** With the
-contradiction gone, *Walk me through changing the background to a colour* got
+contradiction gone, _Walk me through changing the background to a colour_ got
 steps and an OFFER — the model read "never demo a step that changes what the
 congregation sees" as covering the walkthrough itself. One sentence back —
-*the default `show` presses NOTHING, so start it when they ask to be walked
-through* — and the re-ask started the card with the model's own three steps,
+_the default `show` presses NOTHING, so start it when they ask to be walked
+through_ — and the re-ask started the card with the model's own three steps,
 the ring on **Background** (`isTargetFound: true`). +25 tokens, kept.
 
 Tool-call counts behind the choices, off every recorded ask in
@@ -179,12 +329,12 @@ window starts most walkthroughs itself), and 0 for `owa_tran`,
 
 ## Correctness / usability
 
-### `MC-08` — `verify-chatbot-*.mjs` hardcode port 39223 · open
+### `MC-08` — `verify-chatbot-*.mjs` hardcode port 39223 · done 2026-09-23
 
 Inherited from the chatbot skill's `EC-05`. The MCP port is a preference, not a
 promise: `host.mjs` falls through to a free port when 39223 is taken. Both
-verify scripts should read `mcpUrl` from the published instance file the way
-`audit-mcp-tools.mjs` and `probe-mcp.mjs` do.
+verify scripts now read the newest published `mcpUrl` and `mcpToken`; the E2E
+driver takes the pair from the same live instance whose CDP port it probes.
 
 ### `MC-11` — the audit's soft imports never ran on Windows · done 2026-09-02
 
@@ -239,7 +389,7 @@ open is the developer's door, where `press_key` is still unguarded.
 
 With the uid-aimed acting tools withheld (`MC-06`), the model keeps
 `owa_click`, `owa_type` — both label-guarded — and `press_key`, which is
-guarded by nothing. Enter on a focused *Move to Trash* is a destructive press
+guarded by nothing. Enter on a focused _Move to Trash_ is a destructive press
 the interlock cannot see, because no label is named at any point.
 
 Not closed here because the cure looks worse than the disease: `press_key` is
@@ -276,10 +426,11 @@ and never to anything else on the local network**:
   cached response belonging to anything the user is signed in to.
 - **Permissions, downloads and `window.open` refused**, plus `sandbox: true`
   and no preload.
-- **`checkIsCaptureUrlAllowed`** — http(s) only, at the first load and at every
-  redirect, which is what closes the `file://` disk read.
-- **The network wall**, `onBeforeRequest` over the same three patterns
-  (`*://*/*`, `ws://*/*`, `wss://*/*`) and the same `webUrlPolicy.mjs` dialect
+- **`resolveCaptureTarget`** — a web address, or one of the app's OWN local
+  pages, at the first load and at every redirect, which is what closes the
+  `file://` disk read.
+- **The network wall**, `onBeforeRequest` over four patterns (`*://*/*`,
+  `ws://*/*`, `wss://*/*`, `file:///*`) and the same `webUrlPolicy.mjs` dialect
   the guest's uses. The **same-host exemption** is what keeps a church's own
   intranet notice board working: a private page may load its own assets and
   nothing else private. Loopback gets no exemption at all.
@@ -296,6 +447,30 @@ machine not at all, and `file://` is refused in a sentence.
 (28 462 and 167 822 characters), so cross-origin assets on a public page are
 untouched. Unit rules in `electron/webCaptureHelpers.test.ts`, against the
 REAL dialect — a hand-written twin is what gets `127.1` and `0x7f.1` wrong.
+
+**Amended 2026-09-24 — the app makes local pages of its own, and "http(s)
+only" switched them all off.** Reported with a screenshot of the console: six
+`Only a web address can be captured, not: file:///…/webs/test1.html` errors,
+the Background **Webs** tab and the Foreground **Web Show** panel showing the
+globe-and-url placeholder for every file, and the one remote URL item beside
+them still carrying its picture. Those pages are the app's own: **New File** in
+that panel writes an `.html` into `<data folder>/webs` and the app's own editor
+edits it. The bullet above was scheme-shaped, and what separates those pages
+from `file:///C:/Users/.../setting.json` is the FOLDER. `resolveCaptureTarget`
+now takes a `file:` URL when it is an `.html`/`.htm` inside a folder the Webs
+panel was pointed at — the `select-dir-web-bg*` directory settings plus the
+default `<data folder>/webs`, read by `listWebCaptureDirPaths` in
+`electronHelpers.ts` (5 s cache, asked only for a URL that is not http(s)) —
+with `..` resolved away and case folded on Windows and macOS only. `file:///*`
+joined the wall's patterns, which is a TIGHTENING as well as a loosening: no
+`file:` request had ever been judged, so a SITE's page could read the disk
+through `webSecurity: false`, and now it cannot while a local page reaches its
+own folder and no further. A shared document fails the same test by naming the
+other church's folders; where the two really are the same item,
+`$DATA_DIR_PATH` has already rewritten it into this user's own webs folder.
+Proven live both ways with a page dropped in that folder that fetches a
+sibling and a file one level up: sibling READ, level up BLOCKED, and the six
+tiles came back with a clean console.
 
 ### `MC-17` — the outbound budget has no per-site memory · open
 
@@ -413,9 +588,9 @@ script actually means. Until then, a script that writes checks
 `pinCdpPort` or by `OWA_CDP_PORT` — is now the WHOLE candidate list, which is
 what `resolveAppBrowserUrl` had always done, so the two halves of one server
 can no longer drive two different apps. `describeDeadPin` in `discovery.mjs`
-writes the refusal `requireLivePort` throws: *"Port 9999 was named by
+writes the refusal `requireLivePort` throws: _"Port 9999 was named by
 OWA_CDP_PORT and is not answering. The app published 62807 (dev). Point
-OWA_CDP_PORT at one of those, or unset it to take the newest."* The old
+OWA_CDP_PORT at one of those, or unset it to take the newest."_ The old
 message said "start the app" with the app right there on another port, which
 is the half of this that made it hard to notice.
 
@@ -475,9 +650,81 @@ start, the way help pages are. It needs dictionary keys first — `km` has
 `Next` and `Back`, not `Done`, `Step`, `Do it` or `Skip` — and a missing key
 THROWS in dev, so it is a change to `src/lang` as much as to this package.
 
+### `MC-37` — `checkAgentFileName` passes a Windows device name with an extension · open
+
+`RESERVED_NAME_PATTERN` in `agentFileName.mjs` matches the WHOLE name, so
+`nul.old` and `CON.backup` pass — and Windows reserves them whatever follows
+the first dot, so such a file cannot be created or opened there. The app's own
+rule for names a person types has had this since `EN-35` (2026-09-19,
+`getPortableFileNameProblem` in `src/server/fileHelpers.ts`), and
+`createNewFileDetail` now refuses such a name at the disk boundary, so an
+agent's `create` fails there rather than making the file — but it fails with
+the app's toast, not with this module's sentence for the model. Fix: match
+`/^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)/i`, and add `nul.old` to
+`agentFileName.test.mjs`.
+
+### `MC-38` — a broad recipe's demo started at the wrong task and could not hover or move a slider · done 2026-09-22
+
+Measured from the chatbot's **Do it for me** under _The words are too small_:
+`owa_guide_start` replayed W-11 from Bible Reference, step 1/7. The server knew
+only the manual id, not the question that selected it. A later Font Size step
+could reveal the CSS-hidden row, but its default click landed on a label and did
+not change the range. Event-driven controls had no way to express “hover here to
+show the next button.”
+
+`owa_guide_start` now accepts `topic` and conservatively selects the matching
+manual step. Step actions add `hover`; the runtime both holds CSS-only hover
+targets and dispatches pointer/mouse hover events for event-driven surfaces,
+without moving the user's real pointer. `type` recognizes range inputs and sets
+them through the native value setter plus `input`/`change`. The chatbot does not
+expose a recipe-built demo button while a keyed model is preparing exact live
+steps. A live keyed run caught the model starting the whole manual itself and
+then calling its actions through **Add Extra Bible**; `manualId` is therefore
+show-only at the server boundary, and executable demos require explicit steps.
+The last/only action no longer changes its button to **Done** before it has run.
+Range steps also accept signed relative values (`+8`) and keep the type-only
+matcher while waiting, so they never fall onto a nearby label. Stable range,
+book and chapter titles give exact safe targets even while the visible Reader
+controls use localized text. Tool count remains unchanged; fresh audit: 53
+host tools, 27 `owa_*`, 24 model-visible, 7,355 model tokens/round against the
+7,450 ceiling, no warnings.
+
+The live four-step localized lookup exposed a render race too: a book button
+that appeared during the action's wait was misclassified as something the click
+had revealed, so the guide kept the vanished book step. A target found during
+the pre-action wait is now removed from that after-action list. While the card
+shows a successful result, **Do it** is disabled until the advance, preventing a
+quick second press (or a throttled background-window timer) from repeating the
+same action.
+
 ---
 
 ## Done
+
+### `MC-45` — a scope named one panel and pressed a control in its sibling · done 2026-09-27
+
+Found while testing bible notes, not by a report. `owa_click "Bible Notes >
+More Options"` pressed the **Bibles** panel's button, and `owa_find_ui`
+listed that panel's controls first. The scope is the one thing a caller
+writes to say WHICH of two look-alikes is meant, so getting it wrong is the
+single outcome it exists to prevent — and in the Reader those two panels are
+a `⋮` apart.
+
+`checkIsInScope` accepted ANY tier off `matchTier`, including tier 3 ("every
+word of the needle somewhere in the label, in any order"). Both note panes
+sit inside a pane called **Bible and Notes**, which holds "bible" and
+"notes" — so every control under it, the Bibles pane's included, passed the
+scope. Tier 3 is a bag of words; a panel NAME is not. Scopes are held to
+tiers 0–2 now (`SCOPE_MAX_TIER`), which leaves every real one untouched:
+`Background > Videos` and `Web Show > clock` are tier 0 on their own pane.
+
+Proven both ways: the new `domMatch.test.mjs` case fails on the old
+comparison and passes on the new one, and a FRESH server driven against the
+live Reader answers `Bible Notes > More Options` with 15 matches all in
+**Bible Notes**, `Bibles > More Options` with 15 all in **Bibles**. (The
+running server and the page both cache the matcher, so a live re-check needs
+a new server and a page reload — `dom-match-memoised-in-page`.)
+
 
 ### `MC-32` — a string evaluated at load killed every strict-CSP window's preload · done 2026-09-18
 
@@ -539,11 +786,11 @@ merely re-joined would read as a change. `domMatch.test.mjs` +1 (73).
 
 ### `MC-24` — CRUD over the user's data, every change undoable · done 2026-09-14
 
-Asked for directly, in three messages: *add all possible tools: bible-item
-crud, bible-note crud, document (app-document, lyric) crud*; *add tools for
-app-document slides: crud, update slide with style with text*; and *make sure
+Asked for directly, in three messages: _add all possible tools: bible-item
+crud, bible-note crud, document (app-document, lyric) crud_; _add tools for
+app-document slides: crud, update slide with style with text_; and _make sure
 all actions have backup action, e.g. delete it should move to trash and can
-undo*.
+undo_.
 
 Shipped: `delete` on `owa_lyric_file` / `owa_slide_file`; six slide actions on
 `owa_slide_file` (`slides`, `add-slide`, `update-slide` with text, font, size,
@@ -602,7 +849,7 @@ clicked again; a created file stays created. What holds:
   throws on an existing path unless told to override, and never is).
 - **`update` writes the editing history, not the file.** Undoable with Ctrl+Z,
   left visibly dirty with its `*`, and the human presses Save. This is the
-  whole reason the destructive half is safe to offer: *point, don't press*
+  whole reason the destructive half is safe to offer: _point, don't press_
   applied to content. It also leaves a song already on a screen alone.
 - **The name is refused, never cleaned**, in BOTH layers off one shared module
   (`agentFileName.mjs`) — and checked FIRST, because the content validator
@@ -640,8 +887,6 @@ Still true and NOT fixed: a presenting flow that referenced the old name stops
 finding it. The tool says so in its answer, which is a note rather than a fix
 — run-sheet entries are file references (memory:
 `presenting-flow-references-vs-presets`) and nothing rewrites them.
-
-
 
 ### `MC-19` — nothing could tell a volunteer WHY a song was refused · done 2026-09-02
 
@@ -704,8 +949,8 @@ Shipped as `owa_read_website` — text, optional links, optional screenshot —
 with the address policy in `webUrlPolicy.mjs` enforced at two layers, a
 locked-down offscreen window in `electron/webPageHelpers.ts`, its own network
 budget, a banner that NAMES the site, and the result fenced as a document
-rather than as a message. See [threat-model.md](./threat-model.md) *Reaching
-out* for what it closes and the three things it knowingly does not.
+rather than as a message. See [threat-model.md](./threat-model.md) _Reaching
+out_ for what it closes and the three things it knowingly does not.
 
 Cost, measured: **+347 tokens per round**, host 44 → 45 tools, the model's list
 25 → 26. Verified live against the running app through a fresh server: a real

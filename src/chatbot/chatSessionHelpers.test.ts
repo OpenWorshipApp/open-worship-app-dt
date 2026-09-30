@@ -17,6 +17,7 @@ import {
     checkCanAddChatSession,
     checkCanClearChatSessions,
     checkCanSoloChatSession,
+    applyChatLaunchFocus,
     genChatSessionTitle,
     genNewChatSession,
     genSessionId,
@@ -265,6 +266,45 @@ describe('saveChatSessions', () => {
 
         expect(state.sessions).toEqual([session]);
         expect(state.activeId).toBe('round-trip');
+    });
+});
+
+describe('applyChatLaunchFocus', () => {
+    test('the active tab follows the page that launched the chatbot', () => {
+        const active = genSession({ id: 'active', focus: 'reader' });
+        const other = genSession({ id: 'other', focus: 'reader' });
+
+        const state = applyChatLaunchFocus(
+            { sessions: [active, other], activeId: active.id },
+            'presenter',
+        );
+
+        expect(state.sessions[0].focus).toBe('presenter');
+        expect(state.sessions[1]).toBe(other);
+    });
+
+    test('a new launch supersedes an earlier manual choice', () => {
+        const active = genSession({
+            id: 'active',
+            focus: 'reader',
+            isFocusChosen: true,
+        });
+        const state = applyChatLaunchFocus(
+            { sessions: [active], activeId: active.id },
+            'presenter',
+        );
+
+        expect(state.sessions[0]).toMatchObject({
+            focus: 'presenter',
+            isFocusChosen: false,
+        });
+    });
+
+    test('a missing opener leaves the restored tab alone', () => {
+        const active = genSession({ id: 'active', focus: 'reader' });
+        const state = { sessions: [active], activeId: active.id };
+
+        expect(applyChatLaunchFocus(state, null)).toBe(state);
     });
 });
 
@@ -625,6 +665,46 @@ describe('attachments on a message', () => {
             attachRequests: ['screenshot', 'delete-everything', 'file'],
         });
         expect(message.attachRequests).toEqual(['screenshot', 'file']);
+    });
+
+    test('old assistant machinery and dead show chips are cleaned on load', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'bot',
+            text: [
+                'Move the slider to the right.',
+                'OPTIONS: Yes, step by step | No thanks',
+                'SHOWS: none',
+            ].join('\n'),
+            shows: [
+                { kind: 'control', value: 'none', name: 'none' },
+                {
+                    kind: 'control',
+                    value: 'Bible Version buttons',
+                    name: 'Bible Version buttons',
+                },
+                {
+                    kind: 'control',
+                    value: 'Split view button (if shown)',
+                    name: 'Split view button (if shown)',
+                },
+                {
+                    kind: 'control',
+                    value: 'NIV button on screen',
+                    name: 'NIV button on screen',
+                },
+                {
+                    kind: 'control',
+                    value: 'Font Size',
+                    name: 'Font Size',
+                },
+            ],
+        });
+
+        expect(message.text).toBe('Move the slider to the right.');
+        expect(message.shows).toEqual([
+            { kind: 'control', value: 'Font Size', name: 'Font Size' },
+        ]);
     });
 });
 

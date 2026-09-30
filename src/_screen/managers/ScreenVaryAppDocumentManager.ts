@@ -49,7 +49,10 @@ import type { DocxSlidePropsType } from '../../app-document-list/DocxSlide';
 import DocxSlide from '../../app-document-list/DocxSlide';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
-import { unlocking } from '../../server/unlockingHelpers';
+import {
+    collectLiveOnScreenMap,
+    persistOnScreenEntry,
+} from './onScreenSettingPersistHelpers';
 import type {
     VarySlideDataType,
     VarySlideType,
@@ -255,16 +258,23 @@ class ScreenVaryAppDocumentManager
         // rather than of the one that also pauses.
         cancelScreenSlideMediaControl(this.screenId);
         this._varySlideData = varySlideData;
-        unlocking(screenManagerSettingNames.VARY_APP_DOCUMENT, () => {
-            const allSlideList = getAppDocumentListOnScreenSetting();
-            if (varySlideData === null) {
-                delete allSlideList[this.key];
-            } else {
-                allSlideList[this.key] = varySlideData;
-            }
-            const string = JSON.stringify(allSlideList);
-            setSetting(screenManagerSettingNames.VARY_APP_DOCUMENT, string);
-            this.fireUpdateEvent();
+        persistOnScreenEntry({
+            lockKey: screenManagerSettingNames.VARY_APP_DOCUMENT,
+            settingName: screenManagerSettingNames.VARY_APP_DOCUMENT,
+            key: this.key,
+            value: varySlideData,
+            readMap: getAppDocumentListOnScreenSetting,
+            collectLive: () => {
+                return collectLiveOnScreenMap(
+                    ScreenVaryAppDocumentManager.getAllInstances(),
+                    (instance) => {
+                        return instance.varySlideData;
+                    },
+                );
+            },
+            onDone: () => {
+                this.fireUpdateEvent();
+            },
         });
         this.render();
         this.sendSyncScreen();
@@ -579,6 +589,41 @@ class ScreenVaryAppDocumentManager
             }
             return true;
         });
+    }
+
+    /**
+     * What each screen is showing RIGHT NOW, asked of the live managers.
+     *
+     * `getDataList` above answers from the PERSISTED map, which is the same
+     * answer one write behind: that save goes through `unlocking`, so with a
+     * second screen or a sync group holding the lock it can be ~100ms late.
+     * Stepping a slide has to know where the run actually is — reading the
+     * lagging copy made a quick second arrow press recompute "next" from the
+     * slide that had already left the screen, and the projector looked stuck.
+     *
+     * Falls back to the persisted map when there is no live manager at all: a
+     * window that draws no screen previews has nothing to ask.
+     */
+    static getPresentingDataList(filePath?: string, varySlideId?: number) {
+        const instanceList = this.getAllInstances();
+        if (instanceList.length === 0) {
+            return this.getDataList(filePath, varySlideId);
+        }
+        const dataList: [string, VarySlideScreenDataType][] = [];
+        for (const instance of instanceList) {
+            const data = instance.varySlideData;
+            if (data === null) {
+                continue;
+            }
+            if (filePath !== undefined && data.filePath !== filePath) {
+                continue;
+            }
+            if (varySlideId !== undefined && data.itemJson.id !== varySlideId) {
+                continue;
+            }
+            dataList.push([instance.key, data]);
+        }
+        return dataList;
     }
 
     applySlideSrcWithSyncGroup(

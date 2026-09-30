@@ -26,7 +26,10 @@ import {
 } from '../../../helper/cameraHelpers';
 import { CAMERA_ITEM_ATTR } from '../../../helper/constants';
 import { handleError } from '../../../helper/errorHelpers';
-import { playMediaElement } from '../../../helper/mediaHelpers';
+import {
+    playMediaElement,
+    releaseMediaElement,
+} from '../../../helper/mediaHelpers';
 import { showSimpleToast } from '../../../toast/toastHelpers';
 
 // The well is a FIXED height with the item centred in it, never a height
@@ -313,8 +316,7 @@ function CanvasItemPreviewBodyComp() {
                 // running the previous cleanup, so stripping `src` on a
                 // source-key change would blank what it just wrote.
                 if (!media.isConnected) {
-                    media.removeAttribute('src');
-                    media.load();
+                    releaseMediaElement(media);
                 }
             }
         };

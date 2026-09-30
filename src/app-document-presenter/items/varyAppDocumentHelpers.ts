@@ -5,15 +5,18 @@ import {
 
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import appProvider from '../../server/appProvider';
+import type { SlideAutoPlayOptionsType } from '../../slide-auto-play/slideAutoPlayRuleHelpers';
+import {
+    DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
+    toNextIndex,
+} from '../../slide-auto-play/slideAutoPlayRuleHelpers';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
-import {
-    bringDomToTopView,
-    HIGHLIGHT_SELECTED_CLASSNAME,
-} from '../../helper/helpers';
+import { bringDomToTopView } from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { notifyElementHighlight } from '../../helper/domHelpers';
+import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
 import EventHandler from '../../event/EventHandler';
@@ -111,10 +114,22 @@ export function showVarySlideInViewport(id: number) {
     }, 0);
 }
 
+/**
+ * The slide a step lands on, or null when there is none to land on.
+ *
+ * The slide-show options ride in here so an arrow key and a running show take
+ * the same route: with the default rules (`all`, one at a time) this is the
+ * walk it has always been, and `repeatKind` is what makes a show END rather
+ * than wrap. A disabled slide is stepped OVER, so the step counts slides the
+ * operator can actually see; the search stops once it has been round the
+ * list, which is what keeps a document of nothing but disabled slides from
+ * spinning here for ever.
+ */
 function findNextSlide(
     isNext: boolean,
     varySlides: VarySlideType[],
     itemId: number,
+    options: SlideAutoPlayOptionsType = DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
 ) {
     const enabledIds = varySlides
         .filter((item) => {
@@ -126,34 +141,68 @@ function findNextSlide(
     if (enabledIds.length === 0) {
         return null;
     }
-    if (enabledIds.length === 1 && enabledIds[0] === itemId) {
-        return null;
-    }
-    let index = varySlides.findIndex((item) => {
+    const index = varySlides.findIndex((item) => {
         return item.id === itemId;
     });
     if (index === -1) {
         return null;
     }
-    index += isNext ? 1 : -1;
-    index += varySlides.length;
-
-    const nextVarySlide = varySlides[index % varySlides.length] ?? null;
-    if (nextVarySlide?.isDisabled) {
-        return findNextSlide(isNext, varySlides, nextVarySlide.id);
+    if (enabledIds.length === 1 && enabledIds[0] === itemId) {
+        return null;
     }
-    return nextVarySlide;
+    let cursorIndex = index;
+    for (let taken = 0; taken < varySlides.length; taken += 1) {
+        const nextIndex = toNextIndex(cursorIndex, varySlides.length, {
+            isNext,
+            step: taken === 0 ? options.step : 1,
+            repeatKind: options.repeatKind,
+        });
+        if (nextIndex === null) {
+            return null;
+        }
+        const nextVarySlide = varySlides[nextIndex] ?? null;
+        if (nextVarySlide === null) {
+            return null;
+        }
+        if (!nextVarySlide.isDisabled) {
+            return nextVarySlide;
+        }
+        cursorIndex = nextIndex;
+    }
+    return null;
 }
 
+/**
+ * Step every screen showing a slide of this document onto the next one.
+ *
+ * Asked of the SCREEN MANAGERS rather than of the DOM. It used to read the
+ * highlighted cards -- `[data-vary-app-document-item-id].app-highlight-selected`
+ * and the `[data-screen-id]` badges inside them -- which is the same answer
+ * one step removed, since that highlight IS `getDataList()` rendered. With a
+ * windowed list the card of the slide on screen need not be mounted at all
+ * (the operator has scrolled away from it), and reading the DOM then said
+ * "nothing is showing" and left the projector where it was.
+ *
+ * A pptx sub-slide is asked too. It is a card of its own in the grid
+ * (`toVarySlideGridItems`), clicking it puts ITS id on the screen, and asking
+ * only the parents left a presented sub-slide unowned: nothing matched, and
+ * the arrow keys went dead on it.
+ */
 export function handleNextItemSelecting({
-    container,
     varySlides,
     isNext,
+    options = DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
 }: {
-    container: HTMLDivElement;
     varySlides: VarySlideType[];
     isNext: boolean;
+    options?: SlideAutoPlayOptionsType;
 }) {
+    // The editor page draws no on-screen highlight and never moved a screen
+    // from here; it can be open beside the presenter, and advancing from both
+    // would step every screen twice.
+    if (appProvider.isPageAppDocumentEditor) {
+        return false;
+    }
     const allVarySlides = varySlides.reduce((bucket, varySlide) => {
         bucket.push(varySlide);
         if (PptxSlide.checkIsThisType(varySlide)) {
@@ -161,40 +210,49 @@ export function handleNextItemSelecting({
         }
         return bucket;
     }, [] as VarySlideType[]);
-    const divSelectedList = container.querySelectorAll(
-        `[${DATA_QUERY_KEY}].${HIGHLIGHT_SELECTED_CLASSNAME}`,
-    );
-    const foundList = Array.from(divSelectedList).reduce(
+    const foundList = allVarySlides.reduce(
         (
             bucket: {
                 varySlide: VarySlideType;
                 screenId: number;
             }[],
-            divSelected,
+            varySlide,
         ) => {
-            const itemId = Number.parseInt(
-                divSelected?.getAttribute(DATA_QUERY_KEY) ?? '',
+            // The LIVE managers, not the persisted map they save into: the
+            // save is lock-deferred, so a quick second press used to step
+            // from the slide that had already left the screen.
+            const onScreenList =
+                ScreenVaryAppDocumentManager.getPresentingDataList(
+                    varySlide.filePath,
+                    varySlide.id,
+                );
+            if (onScreenList.length === 0) {
+                return bucket;
+            }
+            const targetItem = findNextSlide(
+                isNext,
+                allVarySlides,
+                varySlide.id,
+                options,
             );
-            const selectedElements = Array.from(
-                divSelected.querySelectorAll<HTMLElement>('[data-screen-id]'),
-            );
-            const screenIds = selectedElements.map((element) => {
-                return Number.parseInt(element.dataset.screenId ?? '');
-            });
-            const targetItem = findNextSlide(isNext, allVarySlides, itemId);
             if (targetItem === null) {
                 return bucket;
             }
             return bucket.concat(
-                screenIds.map((screenId) => {
-                    return { varySlide: targetItem, screenId };
+                onScreenList.map(([key]) => {
+                    return {
+                        varySlide: targetItem,
+                        screenId: Number.parseInt(key),
+                    };
                 }),
             );
         },
         [],
     );
+    // Nothing to step to: with "no repeat" that is the show reaching the end
+    // of the document, which the caller turns into a stop.
     if (foundList.length === 0) {
-        return;
+        return false;
     }
     for (let i = 0; i < foundList.length; i++) {
         const { varySlide, screenId } = foundList[i];
@@ -212,10 +270,49 @@ export function handleNextItemSelecting({
             focusNoteEditor(varySlide);
         }, i * 100);
     }
+    return true;
 }
 
 export function getContainerDiv(): HTMLDivElement | null {
     return document.querySelector(`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`);
+}
+
+/**
+ * Whether this previewer may answer a navigation key.
+ *
+ * Which previewer owns the arrows is DOM focus, and it has to be: several are
+ * mounted at once — a floating document preview, one pane per lyric stage —
+ * and every one of them gets this callback, so letting each act would step
+ * every open previewer at the same time.
+ *
+ * What was missing is that nothing ever hands that focus BACK. Every file list
+ * in the app is a tab stop of its own (`FileListHandlerComp`), so picking the
+ * next song leaves focus on the Documents list; a popup closing, or this
+ * previewer re-mounting because the selected document changed kind, leaves it
+ * on `<body>`. `document.activeElement === null` was meant to be the rescue
+ * and is unreachable — Chromium parks focus on `<body>`, never on null
+ * (measured 2026-09-28) — so the key was swallowed in silence with a projector
+ * waiting.
+ *
+ * Unowned focus is now claimed, by ONE previewer: the first in the document,
+ * which is the main panel.
+ */
+function checkCanMoveSlide(element: HTMLDivElement) {
+    const { activeElement } = document;
+    // Inside the panel counts — the sticky document menu button and the slide
+    // menu row are in there, and pressing one must not disarm the arrows.
+    if (activeElement === element || element.contains(activeElement)) {
+        return true;
+    }
+    const isUnowned = activeElement === null || activeElement === document.body;
+    if (!isUnowned || element !== getContainerDiv()) {
+        return false;
+    }
+    // Take it, so the panel shows its focus border and the next key lands here
+    // with no detour. `preventScroll`: the list must not jump under the
+    // operator just because a key arrived.
+    element.focus({ preventScroll: true });
+    return true;
 }
 
 export function handleSlideMoving(
@@ -235,10 +332,8 @@ export function handleSlideMoving(
     if (element === null) {
         return;
     }
-    if (document.activeElement === null) {
-        element.focus();
-        return;
-    } else if (document.activeElement !== element) {
+    // A field being typed into keeps its own arrows, wherever it sits.
+    if (checkIsTypingTarget(event) || !checkCanMoveSlide(element)) {
         return;
     }
     event.preventDefault();
@@ -247,7 +342,6 @@ export function handleSlideMoving(
         isLeft = true;
     }
     handleNextItemSelecting({
-        container: element,
         varySlides,
         isNext: !isLeft,
     });

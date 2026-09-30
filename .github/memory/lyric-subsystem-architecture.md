@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: da5728a5-2e42-4a20-8512-65b8dc76a945
-  modified: 2026-08-07T16:45:00.000Z
+  modified: 2026-09-27T16:00:27.191Z
 ---
 
 Lyric documents (`src/lyric-list/`) are **not** ordinary slide documents. A
@@ -34,11 +34,22 @@ Things that bite:
   Do NOT re-read from disk here — it sits on the per-slide path
   (`getSlidesQuick` calls it per render per stage pane). The owner keeps it
   current on the file's `update` event (`LyricManager.refreshOpenLyricContent`).
-- **Stages are separate document instances.** `getLyricAppDocumentStageByStage()`
-  returns a different `LyricAppDocumentStage0/1` per stage, each with its own
-  `openLyric` field and its own cache entries. Stage 0's
-  `stageOpenLyricOptions.css` is what hides chords and section titles
-  (`display: none`); stage 1 omits those rules and sets `isWithKeyNote: true`.
+- **Stages are separate document instances, and there is no ceiling on the
+  number (2026-09-27).** `getLyricAppDocumentStageByStage()` returns a different
+  instance per stage, each with its own `openLyric` field and its own cache
+  entries. `LYRIC_APP_DOCUMENT_STAGE_CLASSES` is the LAYOUT list, not the stage
+  list: stage 0's `stageOpenLyricOptions.css` hides chords and section titles
+  (`display: none`), every stage from 1 up borrows the LAST entry
+  (`LyricAppDocumentStage1` — `isWithKeyNote: true`, no hiding) and differs only
+  by its own `lyric-stage-style-<stage>` record. What makes that safe is
+  `LyricAppDocumentStageAbstract.getStageInstance(filePath, stage)`: the
+  instance cache keys on the CLASS NAME plus the path, so the stage goes in as
+  `_getInstance`'s new `cacheKeySuffix` and is STAMPED on the new object.
+  Without it a class IS the identity, which is why the resolver used to clamp at
+  the last layout — and clamping handed stage 2, 3 and 4 the one stage-1
+  instance while still echoing the asked-for number back, so a second pane was a
+  byte-identical clone and a screen on `St: 3` showed the stage-1 render.
+  Anything that renders per stage must key on the NUMBER, never on the class.
 - **Each stage's style is a user setting now (2026-08-07).**
   `slidePaddingPercentage` / `slideBackgroundAlpha` / `extraSlideFontSize` /
   `slideTheme` used to be hard-coded `LyricAppDocument` fields nothing ever
@@ -54,6 +65,12 @@ Things that bite:
   - `stageStyle` is a **getter**, not a field: `stage` is a base-class field that
     `LyricAppDocumentStage1` overrides, and derived fields initialise after the
     base's, so a field initialiser would freeze every stage on stage 0's style.
+    More load-bearing since `getStageInstance` STAMPS `stage` after construction
+    — anything reading `this.stage` during construction now reads the layout's
+    default rather than the stage the caller asked for.
+  - The parse memo (`parsedByStage`) was documented as bounded by the two stage
+    classes. It is LRU-bounded at 16 entries instead, since the number of stages
+    a user can create is now open-ended.
   - The custom CSS is **appended** by `withCustomCss()`, never merged into either
     side of the `allOpenLyricOptions` spread — `css` is a plain string, so the
     last object to carry it wins outright and stage 0 would lose the rules that

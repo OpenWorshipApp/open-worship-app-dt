@@ -10,9 +10,11 @@
 // has to run on very low-spec machines, for one class this file implements in
 // ~120 lines.
 //
-// Bound to 127.0.0.1 and Origin-checked: a page in a browser must not be able
-// to drive the operator's app.
+// Bound to 127.0.0.1, Origin-checked and protected by a per-launch bearer
+// capability: neither a web page nor an unrelated local account may drive the
+// operator's app merely by finding the port.
 
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import http from 'node:http';
 
 import { pinCdpPort } from './discovery.mjs';
@@ -97,6 +99,20 @@ function checkIsAllowedOrigin(origin) {
     }
 }
 
+function checkIsAuthorized(authorization, token) {
+    const value = Array.isArray(authorization)
+        ? authorization[0]
+        : authorization;
+    if (typeof value !== 'string') {
+        return false;
+    }
+    const actual = Buffer.from(value, 'utf8');
+    const expected = Buffer.from(`Bearer ${token}`, 'utf8');
+    return (
+        actual.length === expected.length && timingSafeEqual(actual, expected)
+    );
+}
+
 function readBody(req) {
     return new Promise((resolve, reject) => {
         const chunks = [];
@@ -145,6 +161,10 @@ export async function startOwaMcpHost({
     if (getCdpPort !== null) {
         pinCdpPort(getCdpPort);
     }
+    // A fresh capability for every app launch. It is published only in the
+    // mode-0600 discovery file and handed to the in-app client over IPC; it
+    // never appears in the URL, a log line or an MCP result.
+    const token = randomBytes(32).toString('base64url');
     const sessionMap = new Map();
 
     async function closeSession(sessionId) {
@@ -294,6 +314,15 @@ export async function startOwaMcpHost({
                 sendJson(res, 404, { error: 'Not found' });
                 return;
             }
+            if (!checkIsAuthorized(req.headers.authorization, token)) {
+                sendJson(
+                    res,
+                    401,
+                    { error: 'Unauthorized' },
+                    { 'www-authenticate': 'Bearer' },
+                );
+                return;
+            }
             if (req.method === 'POST') {
                 await handlePost(req, res, sessionId);
                 return;
@@ -371,6 +400,7 @@ export async function startOwaMcpHost({
     return {
         port: actualPort,
         url: `http://127.0.0.1:${actualPort}${MCP_PATH}`,
+        token,
         async close() {
             clearInterval(sweepId);
             await Promise.all(

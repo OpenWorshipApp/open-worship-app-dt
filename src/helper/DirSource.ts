@@ -65,6 +65,17 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         this.setDirPath(newDirPath);
         setSetting(this.settingName, newDirPath);
         this.fireReloadEvent();
+        // A folder moved OUT of the parent directory needs a watch of its own,
+        // and one moved back in no longer does. Imported here rather than at
+        // the top because `dirWatchingHelpers` imports this module: a static
+        // edge back would close the cycle at module-eval time. Fire and forget
+        // — nothing here waits on the watch, and a failure is the watcher's to
+        // report.
+        import('./dirWatchingHelpers')
+            .then(({ resyncDataDirWatches }) => {
+                return resyncDataDirWatches();
+            })
+            .catch(handleError);
     }
 
     static toCacheKey(settingName: string) {

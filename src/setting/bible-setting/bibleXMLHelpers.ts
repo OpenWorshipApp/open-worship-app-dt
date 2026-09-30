@@ -518,7 +518,8 @@ export async function deleteBibleXML(bibleKey: string) {
         return;
     }
     const fileSource = FileSource.getInstance(filePath);
-    await fileSource.trash();
+    // `ask`: a data folder on a USB stick under Windows has no Recycle Bin.
+    await fileSource.trash('ask');
     // The folder sits BESIDE the file, so trashing the XML leaves it behind.
     // Left there it would still answer for this key the moment a bible with the
     // same key is imported or re-created.

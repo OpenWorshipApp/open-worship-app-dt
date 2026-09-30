@@ -1,5 +1,5 @@
 import type { CSSProperties, MouseEvent } from 'react';
-import { createRef, useCallback, useMemo, useState } from 'react';
+import { createRef, useCallback, useState } from 'react';
 
 import {
     checkIsBibleLookupInputFocused,
@@ -86,13 +86,56 @@ function genAvailableStyle(isDisabled: boolean): CSSProperties {
     };
 }
 
+/**
+ * One of the icons stacked against the right edge of the lookup input.
+ *
+ * `role`/`tabIndex`/`aria-label` rather than a real `<button>`: these are 12px
+ * glyphs in an absolutely positioned `line-height: 0` column, and a button's
+ * own box would have to be unstyled back out. It is the same shape the colour
+ * swatches use (`RenderColorComp`). As bare `<i>` elements they carried a
+ * `title` and nothing else, so the accessibility tree showed three unnamed
+ * text nodes where three controls are.
+ */
+function RenderInputActionIconComp({
+    iconClassName,
+    label,
+    color,
+    isDisabled,
+    onActivate,
+}: Readonly<{
+    iconClassName: string;
+    label: string;
+    color: string;
+    isDisabled: boolean;
+    onActivate: (event: any) => void;
+}>) {
+    return (
+        <i
+            className={`${iconClassName} app-caught-hover-pointer`}
+            role="button"
+            tabIndex={isDisabled ? -1 : 0}
+            aria-label={label}
+            aria-disabled={isDisabled || undefined}
+            title={label}
+            style={{ color, ...genAvailableStyle(isDisabled) }}
+            onClick={onActivate}
+            onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') {
+                    return;
+                }
+                // Space would scroll the lookup body away from the input.
+                event.preventDefault();
+                onActivate(event);
+            }}
+        />
+    );
+}
+
 export default function InputExtraButtonsComp() {
     const viewController = useLookupBibleItemControllerContext();
     const { inputText } = useInputTextContext();
     const isTabAvailable = useTabAvailable(viewController, inputText);
-    const availableStyle = useMemo(() => {
-        return genAvailableStyle(inputText === '');
-    }, [inputText]);
+    const isInputEmpty = inputText === '';
     const extractButtonsRef = createRef<HTMLDivElement>();
     useAppEffect(() => {
         const wrapper = extractButtonsRef.current;
@@ -176,40 +219,34 @@ export default function InputExtraButtonsComp() {
             }
             style={{ position: 'absolute', fontSize: '12px', lineHeight: '0' }}
         >
-            <i
-                className="bi bi-x app-caught-hover-pointer"
-                title={
+            <RenderInputActionIconComp
+                iconClassName="bi bi-x"
+                label={
                     tran('Clear input') +
                     ` [${toShortcutKey(ctrlEscapeEventMap)}]`
                 }
-                style={{
-                    color: 'red',
-                    ...availableStyle,
-                }}
-                onClick={removeInputText}
+                color="red"
+                isDisabled={isInputEmpty}
+                onActivate={removeInputText}
             />
-            <i
-                className="bi bi-x app-caught-hover-pointer"
-                title={
+            <RenderInputActionIconComp
+                iconClassName="bi bi-x"
+                label={
                     tran('Clear input chunk') +
                     ` [${toShortcutKey(escapeEventMap)}]`
                 }
-                style={{
-                    color: 'var(--bs-danger-text-emphasis)',
-                    ...availableStyle,
-                }}
-                onClick={handleClearInputChunk}
+                color="var(--bs-danger-text-emphasis)"
+                isDisabled={isInputEmpty}
+                onActivate={handleClearInputChunk}
             />
-            <i
-                className="bi bi-arrow-bar-right app-caught-hover-pointer"
-                title={
+            <RenderInputActionIconComp
+                iconClassName="bi bi-arrow-bar-right"
+                label={
                     tran('Tab to complete') + ` [${toShortcutKey(tabEventMap)}]`
                 }
-                style={{
-                    color: 'var(--bs-secondary-text-emphasis)',
-                    ...genAvailableStyle(!isTabAvailable),
-                }}
-                onClick={handleTabbing}
+                color="var(--bs-secondary-text-emphasis)"
+                isDisabled={!isTabAvailable}
+                onActivate={handleTabbing}
             />
         </div>
     );

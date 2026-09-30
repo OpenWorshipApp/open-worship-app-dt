@@ -7,7 +7,31 @@
 // Exits 1 on any failed check. Read-only checks plus one harmless click
 // (the Bible version button) and one type into the reader reference box.
 
-const MCP_URL = 'http://127.0.0.1:39223/mcp';
+import { readdirSync, readFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const discoveryDir = path.join(os.tmpdir(), 'open-worship-app-cdp');
+const [instance] = readdirSync(discoveryDir)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => {
+        try {
+            return JSON.parse(
+                readFileSync(path.join(discoveryDir, name), 'utf8'),
+            );
+        } catch {
+            return null;
+        }
+    })
+    .filter((one) => one?.mcpUrl && one?.mcpToken)
+    .sort((one, other) => {
+        return String(other.startedAt).localeCompare(String(one.startedAt));
+    });
+if (!instance) {
+    throw new Error('No app is publishing an authenticated MCP endpoint.');
+}
+const MCP_URL = process.env.OWA_MCP_URL ?? instance.mcpUrl;
+const MCP_TOKEN = process.env.OWA_MCP_TOKEN ?? instance.mcpToken;
 
 let sessionId = null;
 let requestId = 0;
@@ -17,6 +41,7 @@ async function post(body) {
     const headers = {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
+        authorization: `Bearer ${MCP_TOKEN}`,
     };
     if (sessionId !== null) {
         headers['mcp-session-id'] = sessionId;

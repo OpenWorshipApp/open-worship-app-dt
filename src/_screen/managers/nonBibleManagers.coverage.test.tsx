@@ -33,6 +33,8 @@ const mocks = vi.hoisted(() => ({
     genMarquee: vi.fn(),
     genQuickText: vi.fn(),
     genWeb: vi.fn(),
+    genVideo: vi.fn(),
+    genImage: vi.fn(),
     getCameraAndShowMedia: vi.fn(),
     genPdfSlide: vi.fn(),
     genPptxSlide: vi.fn(),
@@ -138,12 +140,15 @@ vi.mock('../screenHelpers', () => ({
 }));
 
 vi.mock('../screenForegroundHelpers', () => ({
+    genHtmlForegroundMessage: mocks.genQuickText,
     genHtmlForegroundCountdown: mocks.genCountdown,
     genHtmlForegroundMarquee: mocks.genMarquee,
     genHtmlForegroundQuickText: mocks.genQuickText,
     genHtmlForegroundStopwatch: mocks.genStopwatch,
     genHtmlForegroundTime: mocks.genTime,
     genHtmlForegroundWeb: mocks.genWeb,
+    genHtmlForegroundVideo: mocks.genVideo,
+    genHtmlForegroundImage: mocks.genImage,
 }));
 
 vi.mock('../../helper/cameraHelpers', () => ({
@@ -278,10 +283,21 @@ describe('non-Bible manager coverage', () => {
             await import('./ScreenForegroundManager'));
         varyModule = await import('./ScreenVaryAppDocumentManager');
         ScreenVaryAppDocumentManager = varyModule.default;
-    });
+    }, 60000);
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // jsdom implements none of these and writes a "Not
+        // implemented" page of stack to the console for every call.
+        vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(
+            undefined,
+        );
+        vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(
+            () => {},
+        );
+        vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(
+            () => {},
+        );
         vi.useRealTimers();
         document.body.innerHTML = '';
 
@@ -336,6 +352,8 @@ describe('non-Bible manager coverage', () => {
             handleRemoving: vi.fn(async () => {}),
         }));
         mocks.genWeb.mockImplementation(() => createManagedRenderResult());
+        mocks.genVideo.mockImplementation(() => createManagedRenderResult());
+        mocks.genImage.mockImplementation(() => createManagedRenderResult());
         mocks.getCameraAndShowMedia.mockImplementation(
             async ({ parentContainer }) => {
                 parentContainer.appendChild(document.createElement('video'));
@@ -637,12 +655,18 @@ describe('non-Bible manager coverage', () => {
             'setBackgroundVideoCurrentTimeForce',
         );
         const renderSpy = vi.spyOn(manager, 'render');
+        const loopFadeSpy = vi
+            .spyOn(manager, '_fadeOverVideoLoop')
+            .mockResolvedValue(undefined);
         manager._handleBackgroundVideo(fadingContainer);
         fadingVideo.dispatchEvent(new Event('timeupdate'));
         expect(syncGroupSpy).toHaveBeenCalledWith('video-fade', 8, true);
-        expect(renderSpy).toHaveBeenCalledWith(
-            expect.objectContaining({ duration: 3000 }),
-        );
+        // The end-of-clip fade runs on the element that is already playing.
+        // It must NOT go back through `render()`: that builds a fresh
+        // `<video src=...>`, and a `file://` media resource is not cached, so
+        // every loop re-read the whole clip from disk.
+        expect(loopFadeSpy).toHaveBeenCalledWith(fadingContainer, fadingVideo);
+        expect(renderSpy).not.toHaveBeenCalled();
 
         manager.clear();
         expect(manager.backgroundSrc).toBeNull();
@@ -1281,46 +1305,121 @@ describe('non-Bible manager coverage', () => {
         expect(manager.backgroundSrc).toBeNull();
     });
 
-    test('the end-of-video fade waits out the whole fade before swapping', async () => {
-        vi.useFakeTimers();
-        try {
-            const base = createScreenManagerBase(25);
-            const manager = new ScreenBackgroundManager(
-                base,
-                createEffectManager(),
-            );
-            const container = document.createElement('div');
-            const video = document.createElement('video');
-            video.id = 'video-ending';
-            Object.defineProperties(video, {
-                currentTime: { configurable: true, writable: true, value: 8 },
-                duration: { configurable: true, writable: true, value: 10 },
-            });
-            container.appendChild(video);
-            mocks.getIsFadingAtTheEndSetting.mockReturnValue(true);
-            const renderSpy = vi
-                .spyOn(manager, 'render')
-                .mockImplementation(() => {});
+    test('the end-of-video crossfade covers the wrap and re-uses one copy', async () => {
+        const base = createScreenManagerBase(25);
+        const effectManager = createEffectManager();
+        // Mirror what the real fade leaves behind, or the assertions below
+        // pass whether or not the code puts anything back.
+        effectManager.styleAnimList.fade.animOut = vi.fn(
+            async (element: HTMLElement) => {
+                element.style.opacity = '0';
+            },
+        );
+        effectManager.styleAnimList.fade.animIn = vi.fn(
+            async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            },
+        );
+        const manager = new ScreenBackgroundManager(base, effectManager);
+        const rootContainer = document.createElement('div');
+        const container = document.createElement('div');
+        const video = document.createElement('video');
+        video.id = 'video-ending';
+        container.appendChild(video);
+        rootContainer.appendChild(container);
+        document.body.appendChild(rootContainer);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(
+            rootContainer as any,
+        );
+        const renderSpy = vi
+            .spyOn(manager, 'render')
+            .mockImplementation(() => {});
+        // What a foreground Opacity slider would have authored.
+        container.style.opacity = '0.5';
+        mocks.getIsFadingAtTheEndSetting.mockReturnValue(true);
 
-            manager._handleBackgroundVideo(container);
-            video.dispatchEvent(new Event('timeupdate'));
+        await manager._fadeOverVideoLoop(container, video);
 
-            const [animData] = renderSpy.mock.calls.at(-1) as any;
-            const animOutPromise = animData.animOut();
-            let isSettled = false;
-            void animOutPromise.then(() => {
-                isSettled = true;
-            });
+        const { animIn, animOut } = effectManager.styleAnimList.fade;
+        // NOTHING fades out. The copy coming in covers the clip that is still
+        // playing its last seconds; dipping the one element to zero and back
+        // -- which is what this did for a while -- goes through black, and
+        // that black is the blank the audience sees at the end of every clip.
+        expect(animOut).not.toHaveBeenCalled();
+        const twin = rootContainer.lastElementChild as HTMLElement;
+        expect(twin).not.toBe(container);
+        expect(animIn).toHaveBeenCalledWith(twin, rootContainer);
+        expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+        // The copy comes in at the opacity the background asked for, and the
+        // clip that just ended is parked out of sight rather than removed.
+        expect(twin.style.opacity).toBe('0.5');
+        expect(container.style.opacity).toBe('0');
+        expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+        // Nothing may go back through `render()`: that is what re-read the
+        // whole clip from disk on every lap.
+        expect(renderSpy).not.toHaveBeenCalled();
 
-            await vi.advanceTimersByTimeAsync(animData.duration);
-            expect(isSettled).toBe(false);
+        // The next lap hands back to the copy that is already there -- two
+        // elements for the life of the background, not one more per lap.
+        const twinVideo = twin.querySelector('video') as HTMLVideoElement;
+        await manager._fadeOverVideoLoop(twin, twinVideo);
+        expect(rootContainer.children).toHaveLength(2);
+        expect(rootContainer.lastElementChild).toBe(container);
+        expect(container.style.opacity).toBe('0.5');
+        expect(twin.style.opacity).toBe('0');
 
-            await vi.advanceTimersByTimeAsync(1000);
-            await animOutPromise;
-            expect(isSettled).toBe(true);
-        } finally {
-            vi.useRealTimers();
-        }
+        rootContainer.remove();
+    });
+
+    test('clearing a background takes both halves of the crossfade away', async () => {
+        const base = createScreenManagerBase(27);
+        const effectManager = createEffectManager();
+        const manager = new ScreenBackgroundManager(base, effectManager);
+        const rootContainer = document.createElement('div');
+        const showing = document.createElement('div');
+        const parked = document.createElement('div');
+        // The parked half of a crossfade is already invisible.
+        parked.style.opacity = '0';
+        rootContainer.append(parked, showing);
+        document.body.appendChild(rootContainer);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(
+            rootContainer as any,
+        );
+        vi.spyOn(manager, 'backgroundSrc', 'get').mockReturnValue(null as any);
+
+        manager.render();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        // Only the last child used to go, which left the parked copy -- and
+        // its media player -- behind for the rest of the service.
+        expect(rootContainer.children).toHaveLength(0);
+        // The parked one is not faded out on its way: `animOut` puts
+        // `opacity: 1` on first, which would bring a frozen frame INTO view.
+        expect(effectManager.styleAnim.animOut).toHaveBeenCalledTimes(1);
+        expect(effectManager.styleAnim.animOut).toHaveBeenCalledWith(showing);
+
+        rootContainer.remove();
+    });
+
+    test('the end-of-video fade gives up when the background was swapped', async () => {
+        const base = createScreenManagerBase(26);
+        const effectManager = createEffectManager();
+        const manager = new ScreenBackgroundManager(base, effectManager);
+        const rootContainer = document.createElement('div');
+        const container = document.createElement('div');
+        const video = document.createElement('video');
+        video.id = 'video-swapped';
+        container.appendChild(video);
+        // Never attached: the operator changed the background mid-fade.
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(
+            rootContainer as any,
+        );
+
+        await manager._fadeOverVideoLoop(container, video);
+
+        expect(effectManager.styleAnimList.fade.animOut).not.toHaveBeenCalled();
+        expect(effectManager.styleAnimList.fade.animIn).not.toHaveBeenCalled();
     });
 
     test('the fading-at-end preference defaults to on', async () => {

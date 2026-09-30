@@ -22,12 +22,40 @@ import {
 import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
 import { tran } from '../lang/langHelpers';
+import { DATA_DIR_PATH_ALIAS } from './dataDirAliasHelpers';
 import {
-    type DataDirAliasType,
-    fromPortableText,
-    genDataDirAlias,
-    toPortableText,
-} from './dataDirAliasHelpers';
+    checkIsHiddenName,
+    fsMkDirSync,
+    getDataDirPath,
+    pathJoin,
+    pathSeparator,
+    toPortableFileText,
+    toRealFileText,
+} from './storageFileHelpers';
+
+export {
+    checkIsHiddenName,
+    DATA_DIR_MARKER_FILE_NAME,
+    ensureDataDirMarkerIdSync,
+    findDataDirsOnVolumesSync,
+    findMovedDataDirSync,
+    fsExistSync,
+    fsMkDirSync,
+    fsReadSync,
+    fsUnlinkSync,
+    fsWriteFileSync,
+    getDataDirPath,
+    getUserWritablePath,
+    listVolumeRootsSync,
+    pathJoin,
+    pathSeparator,
+    readDataDirMarkerIdSync,
+    splitPathRoot,
+    splitVolumePath,
+    toPathCompareKey,
+    toPortableFileText,
+    toRealFileText,
+} from './storageFileHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -124,11 +152,6 @@ export function checkIsAppFile(fileFullName: string) {
     return isAppFile;
 }
 
-export const pathSeparator = appProvider.pathUtils.sep;
-export function pathJoin(...paths: string[]): string {
-    return appProvider.pathUtils.join(...paths);
-}
-
 export function pathResolve(...paths: string[]): string {
     const path = appProvider.pathUtils.resolve(...paths);
     if (path.endsWith(pathSeparator)) {
@@ -145,6 +168,440 @@ export function pathDirname(filePath: string) {
     return appProvider.pathUtils.dirname(filePath);
 }
 
+// --- Names and paths every computer a data folder visits accepts ----------
+// Windows, macOS and Linux, and the exFAT/FAT flash drive carried between
+// them. A name is judged by the STRICTEST of those file systems, not by the one
+// the app runs on: `Service 10:30` is legal on a Mac's own disk, and the file
+// it makes can then be neither copied to the stick nor opened on the church's
+// Windows laptop. Everything here is pure, so both OS families are tested from
+// either one.
+
+// Refused by Windows, and by exFAT/FAT on every OS.
+// eslint-disable-next-line no-control-regex
+const UNSAFE_NAME_CHARACTER_REGEX = /[<>:"/\\|?*\u0000-\u001f]/;
+// eslint-disable-next-line no-control-regex
+const UNSAFE_NAME_CHARACTERS_REGEX = /[<>:"/\\|?*\u0000-\u001f]/g;
+// Reserved by Windows whatever follows the first dot: `nul.txt` cannot be
+// created there either, nor opened once another OS has made it.
+const RESERVED_NAME_REGEX = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)/i;
+
+/**
+ * Long enough for any song title, and short enough that the app's own side
+ * files (`<name>.ows.bg.json`, `<name>.ows.histories`) stay well inside the
+ * 255-character limit every one of those file systems has.
+ */
+export const PORTABLE_NAME_MAX_LENGTH = 120;
+
+export type PortableFileNameProblemType =
+    | 'empty'
+    | 'characters'
+    | 'leading-dot'
+    | 'trailing-dot-or-space'
+    | 'reserved'
+    | 'too-long';
+
+/**
+ * Why this name cannot be a file on every computer, or null when it can. For
+ * a name a PERSON typed: refused with the reason, never quietly rewritten,
+ * because a file that turns up under another name is lost to whoever looks
+ * for it by the one they typed.
+ */
+export function getPortableFileNameProblem(
+    name: string,
+): PortableFileNameProblemType | null {
+    if (name.trim() === '') {
+        return 'empty';
+    }
+    if (UNSAFE_NAME_CHARACTER_REGEX.test(name)) {
+        return 'characters';
+    }
+    // Hidden on macOS and Linux, and left out of every whole-data backup.
+    if (name.trimStart().startsWith('.')) {
+        return 'leading-dot';
+    }
+    // Windows drops a trailing dot or space from a name, so the file it makes
+    // is not the one asked for, and one made elsewhere cannot be opened there.
+    if (/[. ]$/.test(name)) {
+        return 'trailing-dot-or-space';
+    }
+    if (RESERVED_NAME_REGEX.test(name.trim())) {
+        return 'reserved';
+    }
+    if (Array.from(name).length > PORTABLE_NAME_MAX_LENGTH) {
+        return 'too-long';
+    }
+    return null;
+}
+
+/** What to tell a person whose name `getPortableFileNameProblem` refused. */
+export function describePortableFileNameProblem(
+    problem: PortableFileNameProblemType,
+) {
+    if (problem === 'empty') {
+        return tran('Please type a name.');
+    }
+    if (problem === 'characters') {
+        return (
+            tran(
+                'A name cannot contain these characters, which some computers refuse:',
+            ) + ' \\ / : * ? " < > |'
+        );
+    }
+    if (problem === 'leading-dot') {
+        return tran('A name cannot start with a dot.');
+    }
+    if (problem === 'trailing-dot-or-space') {
+        return tran('A name cannot end with a dot or a space.');
+    }
+    if (problem === 'reserved') {
+        return tran(
+            'This name is reserved by Windows. Please choose another one.',
+        );
+    }
+    return tran('This name is too long. Please use a shorter one.');
+}
+
+/**
+ * The nearest name every computer accepts, for text nobody typed as a file
+ * name -- a song title from a catalogue, a web page's title, a URL's last
+ * part. The words are kept as they read, so the row still looks like the
+ * title; `fallbackName` stands in when nothing usable is left.
+ */
+export function toPortableFileName(name: string, fallbackName: string) {
+    let sanitized = name
+        .replace(UNSAFE_NAME_CHARACTERS_REGEX, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/^[. ]+/, '')
+        .replace(/[. ]+$/, '');
+    // By code point, so a cut never splits an emoji's surrogate pair.
+    sanitized = Array.from(sanitized)
+        .slice(0, PORTABLE_NAME_MAX_LENGTH)
+        .join('')
+        .replace(/[. ]+$/, '');
+    if (RESERVED_NAME_REGEX.test(sanitized)) {
+        const dotIndex = sanitized.indexOf('.');
+        sanitized =
+            dotIndex === -1
+                ? `${sanitized}_`
+                : `${sanitized.slice(0, dotIndex)}_${sanitized.slice(dotIndex)}`;
+    }
+    return sanitized || fallbackName;
+}
+
+/**
+ * The last name in a path written on ANY operating system. `pathBasename`
+ * only knows the running one: on macOS it reads all of
+ * `C:\Users\x\data\Song.ows` as a single name, which a bundle imported from a
+ * Windows machine then used as the new file's name.
+ */
+export function toBaseNameOfAnyOs(filePath: string) {
+    const parts = filePath.split(/[\\/]/).filter((part) => {
+        return part.length > 0;
+    });
+    return parts.at(-1) ?? '';
+}
+
+/**
+ * The file a download URL names, as a name every computer accepts: the query
+ * string and fragment are not part of it (`…/song.ows?dl=1` is `song.ows`,
+ * where the whole address once gave `song.ows?dl=1`, refused by Windows and
+ * never listed as a document), and `%20` reads as a space.
+ */
+export function toFileFullNameFromUrl(url: string, fallbackName: string) {
+    try {
+        const lastPart = decodeURIComponent(
+            toBaseNameOfAnyOs(new URL(url).pathname),
+        );
+        return toPortableFileFullName(lastPart, fallbackName);
+    } catch (_error) {
+        return fallbackName;
+    }
+}
+
+/**
+ * `toPortableFileName` for a name WITH its extension: the two are cleaned
+ * apart, so a cut to length never eats the extension and a Linux-made
+ * `What?.owl` becomes `What.owl` rather than `What .owl`.
+ */
+export function toPortableFileFullName(
+    fileFullName: string,
+    fallbackName: string,
+) {
+    const dotIndex = fileFullName.lastIndexOf('.');
+    if (dotIndex <= 0) {
+        return toPortableFileName(fileFullName, fallbackName);
+    }
+    const dotExtension = fileFullName
+        .slice(dotIndex)
+        .replace(UNSAFE_NAME_CHARACTERS_REGEX, '');
+    return (
+        toPortableFileName(fileFullName.slice(0, dotIndex), fallbackName) +
+        dotExtension
+    );
+}
+
+/**
+ * Where a file inside one data folder sits in another -- the folder a bundle
+ * was exported from and the one it is imported into, possibly on different
+ * operating systems. Null when the file is not inside `fromDirPath` (a
+ * sibling that merely starts with the same letters, `data-dev` beside `data`,
+ * is not inside it).
+ */
+export function rebaseDataDirPath(
+    filePath: string,
+    fromDirPath: string,
+    toDirPath: string,
+    sep = pathSeparator,
+) {
+    const fromDir = fromDirPath.replace(/[\\/]+$/, '');
+    if (!fromDir || !filePath.startsWith(fromDir)) {
+        return null;
+    }
+    const rest = filePath.slice(fromDir.length);
+    if (!/^[\\/]/.test(rest)) {
+        return null;
+    }
+    const parts = rest.split(/[\\/]/).filter((part) => {
+        return part.length > 0;
+    });
+    if (parts.length === 0) {
+        return null;
+    }
+    return [toDirPath.replace(/[\\/]+$/, ''), ...parts].join(sep);
+}
+
+// --- Repairing links to where the data folder used to be ------------------
+// `$DATA_DIR_PATH` is written lazily, and only for the folder's CURRENT
+// location: a file saved before it existed, or while the folder lived
+// somewhere else, still names a path on another computer, and points at
+// nothing on this one.
+
+export type DataDirLinkType = {
+    // Where the link starts in the text, and how much of it names the old
+    // folder (everything before one of the data folder's own top-level
+    // folders -- the part replaced by the alias).
+    index: number;
+    prefixLength: number;
+    // The link as a path, to prove it really is gone before touching it.
+    linkPath: string;
+    // From the data folder's top-level folder on: where it lives now.
+    segments: string[];
+    isUrl: boolean;
+    // The separator as written: `\`, a JSON-escaped `\\` … or `/`.
+    separator: string;
+};
+
+function escapeRegExpText(text: string) {
+    return text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Every absolute path or `file://` URL in `text` that runs through one of
+ * `childNames` (the data folder's own top-level folders: `images`,
+ * `documents` …), however it is escaped. A candidate, not a verdict: the
+ * caller checks it points at nothing and that the same names exist here.
+ */
+export function findDataDirLinks(text: string, childNames: string[]) {
+    if (childNames.length === 0) {
+        return [];
+    }
+    const name = String.raw`[^\\/:*?"<>|\r\n\t]+`;
+    const children = childNames.map(escapeRegExpText).join('|');
+    // Only after a quote, a bracket, a space or a line start: a `/` inside
+    // `https://host/images/a.png` is not a path on this disk.
+    // A link may end AT one of those folders (a folder setting, `basePath`)
+    // or run on past it; either way the folder's name must be whole, so an
+    // `images2` is never taken for `images`.
+    const linkRegex = new RegExp(
+        String.raw`(?<=["'(\s]|^)(file:\/\/\/?)?([A-Za-z]:)?(\\{8}|\\{4}|\\{2}|\\|\/)((?:${name}\3)*?)(${children})(?:\3((?:${name}\3)*${name}))?(?![^\\/:*?"<>|\r\n\t])`,
+        'gm',
+    );
+    const links: DataDirLinkType[] = [];
+    for (const match of text.matchAll(linkRegex)) {
+        const [whole, url, drive, separator, middle, child, matchedRest] =
+            match;
+        const isUrl = url !== undefined;
+        // A URL ends at the first character a URL would have encoded.
+        const rest =
+            isUrl && matchedRest !== undefined
+                ? matchedRest.split(/[\s)'"]/)[0]
+                : (matchedRest ?? '');
+        if (isUrl && separator !== '/') {
+            continue;
+        }
+        const tailText = rest === '' ? '' : `${separator}${rest}`;
+        const pathText = `${drive ?? ''}${separator}${middle}${child}${tailText}`;
+        let segments =
+            rest === '' ? [child] : [child, ...rest.split(separator)];
+        let linkPath = pathText
+            .split(separator)
+            .join(separator === '/' ? '/' : '\\');
+        if (isUrl) {
+            try {
+                segments = segments.map(decodeURIComponent);
+                linkPath = decodeURIComponent(linkPath);
+            } catch (_error) {
+                continue;
+            }
+        }
+        const matchedTailLength =
+            matchedRest === undefined
+                ? 0
+                : separator.length + matchedRest.length;
+        links.push({
+            index: match.index,
+            prefixLength: whole.length - child.length - matchedTailLength,
+            linkPath,
+            segments,
+            isUrl,
+            separator,
+        });
+    }
+    return links;
+}
+
+/**
+ * `text` with every link to an old location of the data folder pointed at the
+ * current one -- only a link whose own path is GONE and whose file exists
+ * here (a folder chosen elsewhere on purpose still exists, and is left
+ * alone). Written as `$DATA_DIR_PATH`, in the form and escape level the link
+ * had, so it keeps following the folder from now on.
+ */
+export async function repairDataDirLinksInText(
+    text: string,
+    dataDirPath: string,
+    childNames: string[],
+    checkIsThere: (filePath: string) => Promise<boolean>,
+) {
+    const links = findDataDirLinks(text, childNames);
+    let repairedText = text;
+    let count = 0;
+    // Right to left, so the indices of the earlier links stay valid.
+    for (const link of links.reverse()) {
+        if (
+            (await checkIsThere(link.linkPath)) ||
+            !(await checkIsThere(pathJoin(dataDirPath, ...link.segments)))
+        ) {
+            continue;
+        }
+        const aliasPrefix = link.isUrl
+            ? `file:///${DATA_DIR_PATH_ALIAS}/`
+            : `${DATA_DIR_PATH_ALIAS}${link.separator}`;
+        repairedText =
+            repairedText.slice(0, link.index) +
+            aliasPrefix +
+            repairedText.slice(link.index + link.prefixLength);
+        count += 1;
+    }
+    return { text: repairedText, count };
+}
+
+export const DATA_DIR_RELATIVE_PATH_TOKEN = '@data';
+
+/**
+ * A path inside the data folder written relative to it --
+ * `@data/documents/song.ows` -- the same on every computer the folder visits;
+ * any other path unchanged. For a NAME made from a path (a setting key), which
+ * the `$DATA_DIR_PATH` alias cannot reach because it rewrites file contents,
+ * not file names.
+ */
+export function toDataDirRelativePath(filePath: string) {
+    const dataDirPath = getDataDirPath();
+    if (dataDirPath === null) {
+        return filePath;
+    }
+    return (
+        rebaseDataDirPath(
+            filePath,
+            dataDirPath,
+            DATA_DIR_RELATIVE_PATH_TOKEN,
+            '/',
+        ) ?? filePath
+    );
+}
+
+/**
+ * A path's folder and file name, `''` for the folder of a bare name. On
+ * Windows EITHER separator splits -- `E:\data/lyrics/a.owl` is a real Windows
+ * path, and splitting it on `\` alone named the file `data/lyrics/a.owl` in
+ * `E:\` -- while on macOS and Linux only `/` does, `\` being an ordinary
+ * character in a name there.
+ */
+export function splitFilePath(
+    filePath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    const index = isWindows
+        ? Math.max(filePath.lastIndexOf('\\'), filePath.lastIndexOf('/'))
+        : filePath.lastIndexOf('/');
+    return {
+        dirPath: index === -1 ? '' : filePath.substring(0, index),
+        fileFullName: filePath.substring(index + 1),
+    };
+}
+
+/**
+ * The path a `file://` URL names on this computer. A Windows share keeps its
+ * server (`file://server/share/a.png` → `\\server\share\a.png`), which reading
+ * the URL's `pathname` alone dropped.
+ */
+export function toFilePathFromFileUrl(
+    src: string,
+    isWindows = pathSeparator === '\\',
+) {
+    const url = new URL(src);
+    const filePath = decodeURIComponent(url.pathname);
+    if (!isWindows) {
+        return filePath;
+    }
+    if (url.host) {
+        return `\\\\${url.host}${filePath.replaceAll('/', '\\')}`;
+    }
+    return filePath.substring(1).replaceAll('/', '\\');
+}
+
+// Startup-safe path, marker and synchronous filesystem helpers live in
+// `storageFileHelpers` and are re-exported above.
+/** `C:\…`, `C:/…` or a network share `\\server\share\…`. */
+export function checkIsWindowsAbsolutePath(filePath: string) {
+    return /^[A-Za-z]:[\\/]/.test(filePath) || /^\\\\[^\\]/.test(filePath);
+}
+
+/**
+ * Whether a stored path was written on the OTHER operating system family:
+ * `D:\Songs` read on a Mac, `/Users/me/Songs` read on Windows. Such a path
+ * names nothing here, and must be kept exactly as written -- resolving it
+ * made `D:\Songs` into `/D:\Songs` on a Mac, which saved back and came home to
+ * Windows as `C:\D:\Songs`, the real folder lost for good.
+ */
+export function checkIsForeignAbsolutePath(
+    filePath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    if (isWindows) {
+        return filePath.startsWith('/') && !/^[\\/]{2}/.test(filePath);
+    }
+    return checkIsWindowsAbsolutePath(filePath);
+}
+
+/**
+ * Whether a stored path is absolute on THIS operating system family. A path
+ * written on the other one is not a path here at all: `C:\a` on a Mac is a
+ * relative name, and `/Users/a` on Windows is a folder on the current drive,
+ * so code that resolves or tests one answers about the wrong file.
+ * `isWindows` defaults to the running OS; tests pass it.
+ */
+export function checkIsNativeAbsolutePath(
+    filePath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    if (isWindows) {
+        return checkIsWindowsAbsolutePath(filePath);
+    }
+    return filePath.startsWith('/');
+}
+
 export function getFileName(fileFullName: string) {
     return fileFullName.substring(0, fileFullName.lastIndexOf('.'));
 }
@@ -157,23 +614,58 @@ export function addExtension(name: string, extension: string) {
     return `${name}${extension}`;
 }
 
+/** Keep a generated title, adding a numbered suffix when it is already taken. */
+export async function getAvailableFileName(
+    dirPath: string,
+    name: string,
+    dotExtension: string,
+) {
+    let candidate = name;
+    for (let number = 2; ; number++) {
+        if (
+            !(await fsCheckFileExist(
+                dirPath,
+                addExtension(candidate, dotExtension),
+            ))
+        ) {
+            return candidate;
+        }
+        const suffix = ` (${number})`;
+        candidate =
+            Array.from(name)
+                .slice(0, PORTABLE_NAME_MAX_LENGTH - suffix.length)
+                .join('') + suffix;
+    }
+}
+
 export const createNewFileDetail = async (
     dir: string,
     name: string,
     content: string,
     mimetypeName: MimetypeNameType,
 ) => {
-    // TODO: verify file name before create
     const extensions = getMimetypeExtensions(mimetypeName);
     if (extensions.length === 0) {
         throw new Error(`No extensions found for mimetype: ${mimetypeName}`);
+    }
+    // Refused here, at the one place every new document, song, run sheet,
+    // Bible list and notes file is made: a name this computer accepts and the
+    // next one refuses (`Service 10:30` on a Mac) makes a file that can be
+    // neither copied to the stick nor opened on Windows.
+    const problem = getPortableFileNameProblem(name);
+    if (problem !== null) {
+        showSimpleToast(
+            tran('Invalid file name'),
+            describePortableFileNameProblem(problem),
+        );
+        return null;
     }
     const fileFullName = `${name}.${extensions[0]}`;
     try {
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
-        showSimpleToast(tran('Creating Presenting Flow'), error.message);
+        showSimpleToast(tran('Creating File'), error.message);
     }
     return null;
 };
@@ -205,8 +697,17 @@ export type MimetypeNameType = (typeof mimetypeNameTypeList)[number];
  * cache, the data archive — has to agree, or a file skipped by one shows up
  * through another.
  */
-export function checkIsHiddenName(fileFullName: string) {
-    return fileFullName.startsWith('.');
+// Written by the OS into any folder it shows, including a flash drive's: the
+// thumbnail cache, the folder-view settings and a custom-icon file.
+const SYSTEM_FILE_NAME_SET = new Set(['thumbs.db', 'desktop.ini', 'icon\r']);
+
+/**
+ * A file the operating system keeps beside the user's own -- never one of
+ * theirs, so never offered in a list of them. Not dot-prefixed, so
+ * `checkIsHiddenName` does not catch it.
+ */
+export function checkIsSystemFileName(fileFullName: string) {
+    return SYSTEM_FILE_NAME_SET.has(fileFullName.toLowerCase());
 }
 
 export function getFileMetaData(
@@ -336,49 +837,6 @@ function _fsRmdir(dirPath: string) {
 
 function _fsReaddir(dirPath: string) {
     return fsFilePromise<string[]>(appProvider.fileUtils.readdir, dirPath);
-}
-
-// A data folder carried between computers keeps no absolute path of its own in
-// any file: text written inside it stores the folder as `$DATA_DIR_PATH`, and
-// every text read expands it (see `dataDirAliasHelpers`). Web files are loaded
-// by an <iframe> straight from disk, where nothing would expand it, so they
-// keep real paths.
-const webFileExtensions = mimeWebList.flatMap(({ extensions }) => {
-    return extensions;
-});
-// One entry, rebuilt only when the data folder changes.
-let dataDirAlias: DataDirAliasType | null = null;
-function getDataDirAlias(filePath: string) {
-    // `?.`: the test doubles of `appProvider` carry no `sessionData`.
-    const dirPath = appProvider.sessionData?.defaultStorageDirPath;
-    if (
-        !dirPath ||
-        webFileExtensions.includes(getFileDotExtension(filePath).toLowerCase())
-    ) {
-        return null;
-    }
-    if (dataDirAlias?.dirPath !== dirPath) {
-        dataDirAlias = genDataDirAlias(
-            dirPath,
-            pathSeparator,
-            appProvider.browserUtils.pathToFileURL,
-        );
-    }
-    return dataDirAlias;
-}
-function toRealFileText(filePath: string, text: string) {
-    const alias = getDataDirAlias(filePath);
-    return alias === null ? text : fromPortableText(text, alias);
-}
-function toPortableFileText(filePath: string, text: string) {
-    const alias = getDataDirAlias(filePath);
-    // Only what is written INSIDE the data folder: an export, a temp file or
-    // a download stays readable by whatever opens it. Reads resolve the alias
-    // anywhere, so a file copied off the drive still works.
-    if (alias === null || !filePath.startsWith(alias.prefix)) {
-        return text;
-    }
-    return toPortableText(text, alias);
 }
 
 // const rwState: { [key: string]: { r: number; w: number } } = {};
@@ -565,6 +1023,26 @@ export async function fsGetFileSize(filePath: string) {
     return stat.size;
 }
 
+/**
+ * What a file looks like from the OUTSIDE — its size and when it last
+ * changed — or null when there is no file there.
+ *
+ * A stat, deliberately, not a read: this is for deciding whether something
+ * derived from a file's bytes (a checksum, a screenshot) can be reused, and
+ * asking that question must not cost as much as re-deriving the answer.
+ */
+export async function fsGetFileStamp(filePath: string) {
+    try {
+        const stat = await _fsStat(filePath);
+        if (!stat.isFile()) {
+            return null;
+        }
+        return { size: stat.size, modifiedAt: stat.mtimeMs };
+    } catch (_error) {
+        return null;
+    }
+}
+
 export async function fsList(dir: string) {
     if (!dir) {
         return [];
@@ -632,11 +1110,19 @@ export async function fsListDirents(
     });
 }
 
+/**
+ * The files in a folder, hidden ones left out. A data folder on a flash drive
+ * used on a Mac collects `._<name>` AppleDouble stubs beside real files, and
+ * every caller here read one as the real thing: an editing history found two
+ * `…-head` files and gave up (undo, redo and the unsaved `*` all stopped), and a
+ * PDF's page images never matched its page count, so it re-rendered on every
+ * open. Nothing in the app keeps a dot-file of its own in a listed folder.
+ */
 export async function fsListFiles(dirPath: string) {
     const foundFileList = await fsList(dirPath);
     return foundFileList
-        .filter(({ isFile }) => {
-            return isFile;
+        .filter(({ isFile, name }) => {
+            return isFile && !checkIsHiddenName(name);
         })
         .map(({ name }) => {
             return name;
@@ -692,12 +1178,6 @@ export function fsCreateDir(dirPath: string, isRecursive = true) {
     return _fsMkdir(dirPath, isRecursive);
 }
 
-export function fsMkDirSync(dirPath: string, isRecursive = true) {
-    return appProvider.fileUtils.mkdirSync(dirPath, {
-        recursive: isRecursive,
-    });
-}
-
 export async function fsWriteFile(
     filePath: string,
     data: string | Buffer,
@@ -708,18 +1188,6 @@ export async function fsWriteFile(
         flag: 'w',
     });
     return filePath;
-}
-
-export function fsWriteFileSync(filePath: string, txt: string, encoding?: any) {
-    // Settings go through here, and they hold most of the data folder's paths.
-    return appProvider.fileUtils.writeFileSync(
-        filePath,
-        toPortableFileText(filePath, txt),
-        {
-            encoding: encoding ?? 'utf8',
-            flag: 'w',
-        },
-    );
 }
 
 export async function fsCreateFile(
@@ -736,10 +1204,6 @@ export async function fsCreateFile(
     }
     await _fsWriteFile(filePath, txt);
     return filePath;
-}
-
-export function fsExistSync(filePath: string) {
-    return appProvider.fileUtils.existsSync(filePath);
 }
 
 export async function fsRenameFile(
@@ -766,10 +1230,6 @@ export async function fsDeleteFile(filePath: string) {
     }
 }
 
-export function fsUnlinkSync(filePath: string) {
-    return appProvider.fileUtils.unlinkSync(filePath);
-}
-
 export async function fsDeleteDir(dirPath: string) {
     if (await fsCheckFileExist(dirPath)) {
         throw new Error(`${dirPath} is not a directory`);
@@ -786,17 +1246,17 @@ export async function fsReadFile(filePath: string) {
     return text;
 }
 
-export function fsReadSync(filePath: string) {
-    return toRealFileText(
-        filePath,
-        appProvider.fileUtils.readFileSync(filePath, 'utf8'),
-    );
-}
-
 // The bytes of a file as base64 -- a saved picture on its way back to the
 // clipboard, which takes a data URL and never a path.
 export function fsReadFileBase64Sync(filePath: string) {
     return appProvider.fileUtils.readFileSync(filePath, 'base64');
+}
+
+// The raw bytes of a file that is not text -- a picture going into an exported
+// package. Deliberately not through `_fsReadFile`, whose portable-path
+// rewriting is for text.
+export function fsReadFileBytes(filePath: string) {
+    return fsFilePromise<Uint8Array>(appProvider.fileUtils.readFile, filePath);
 }
 
 export async function fsCopyFilePathToPath(
@@ -863,10 +1323,6 @@ export async function selectFiles(
     );
     hideProgressBar('Selecting File');
     return filePaths;
-}
-
-export function getUserWritablePath(): string {
-    return appProvider.messageUtils.sendDataSync('main:app:get-data-path');
 }
 
 export function getDesktopPath(): string {

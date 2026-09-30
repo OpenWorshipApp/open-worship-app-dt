@@ -7,10 +7,7 @@ import {
     useVaryAppDocumentSelecting,
 } from '../event/PreviewingEventListener';
 import { useVarySlideSelecting } from '../event/VaryAppDocumentEventListener';
-import {
-    useStateSettingString,
-    useStateSettingBoolean,
-} from '../helper/settingHelpers';
+import { useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp from '../others/TabRenderComp';
 import type { TabHeaderPropsType } from '../others/TabRenderComp';
 import AppSuspenseComp from '../others/AppSuspenseComp';
@@ -24,11 +21,20 @@ import {
 } from '../bible-reader/BibleItemsViewController';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { getIsAnyForegroundShowing } from '../presenter-foreground/foregroundHelpers';
+import { getForegroundShowingScreenIdDataList } from '../presenter-foreground/foregroundHelpers';
+import type { ForegroundWidgetType } from '../presenter-foreground/foregroundWidgetHelpers';
+import {
+    FOREGROUND_OPEN_PANELS_SETTING_NAME,
+    FOREGROUND_WIDGET_LIST,
+    genForegroundPanelMenuItems,
+    toForegroundPanelPersistKey,
+    toOpenPanelKeys,
+    toToggledPanelKeys,
+} from '../presenter-foreground/foregroundWidgetHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import {
     checkIsOnScreen,
     PRESENT_TAB_SETTING_NAME,
-    PRESENT_FOREGROUND_FLOATING_SETTING_NAME,
 } from './presenterRendererHelpers';
 import type {
     DataInputType,
@@ -43,9 +49,47 @@ const LazyAppDocumentPreviewerComp = lazy(() => {
 const LazyPresenterBiblePreviewerRenderComp = lazy(() => {
     return import('./PresenterBiblePreviewerRenderComp');
 });
-const LazyPresenterForegroundComp = lazy(() => {
-    return import('../presenter-foreground/PresenterForegroundComp');
-});
+/**
+ * One component of the Foreground in its OWN floating panel: opened from the
+ * launcher, closed by its own ✕, and remembering its size and place across a
+ * reload through `persistKey`. Mounted beside the launcher rather than inside
+ * it, so closing the launcher leaves the panels the operator is working in up.
+ */
+function ForegroundWidgetPanelComp({
+    widget,
+    onClose,
+}: Readonly<{ widget: ForegroundWidgetType; onClose: () => void }>) {
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen =
+        getForegroundShowingScreenIdDataList(widget.checkIsOnScreen).length > 0;
+    const { Comp } = widget;
+    return (
+        <FloatingWidgetComp
+            title={
+                <span className={isOnScreen ? 'app-on-screen' : ''}>
+                    {toIconedLabel(widget.labelKey)}
+                </span>
+            }
+            persistKey={toForegroundPanelPersistKey(widget.key)}
+            // Every foreground component reuses the Background tabs' own file
+            // grid, so its tiles carry the same words as the ones in the
+            // Background panel. Naming the panel is what lets a find be aimed
+            // at one of them: `Video Show > snow.mp4` rather than both.
+            widgetName={widget.labelKey}
+            onClose={onClose}
+            options={{
+                width: 460,
+                height: 520,
+                minWidth: 300,
+                minHeight: 200,
+            }}
+        >
+            <AppSuspenseComp>
+                <Comp />
+            </AppSuspenseComp>
+        </FloatingWidgetComp>
+    );
+}
 
 function RenderToggleFullViewComp({
     isFullWidget,
@@ -122,12 +166,14 @@ const PIN_ELEMENT = <VaryAppDocumentPinComp />;
 
 function ForegroundFloatingComp() {
     const viewController = useBibleItemsViewControllerContext();
-    const [isShowing, setIsShowing] = useStateSettingBoolean(
-        PRESENT_FOREGROUND_FLOATING_SETTING_NAME,
-        false,
+    // Which components have a panel open, as one setting: the chooser and the
+    // panels both read it, so a pick lands in both the same render.
+    const [openKeysRaw, setOpenKeysRaw] = useStateSettingString<string>(
+        FOREGROUND_OPEN_PANELS_SETTING_NAME,
+        '',
     );
     useScreenForegroundManagerEvents(['update']);
-    const isOnScreen = getIsAnyForegroundShowing();
+    const openKeys = toOpenPanelKeys(openKeysRaw);
     const foregroundTabs = useMemo<TabHeaderPropsType<'f'>[]>(
         () => [
             {
@@ -140,38 +186,42 @@ function ForegroundFloatingComp() {
         ],
         [viewController],
     );
+    const handleToggling = (key: string) => {
+        setOpenKeysRaw((prev) => {
+            return toToggledPanelKeys(prev, key);
+        });
+    };
     return (
         <>
             <TabRenderComp<'f'>
                 tabs={foregroundTabs}
-                activeTabs={isShowing ? ['f'] : []}
-                setActiveTab={() => {
-                    setIsShowing((prev) => !prev);
+                activeTabs={openKeys.length > 0 ? ['f'] : []}
+                setActiveTab={(_key, event) => {
+                    // At the cursor, and gone the moment something is picked:
+                    // the chooser is a menu, not another panel to put away.
+                    showAppContextMenu(
+                        event as any,
+                        genForegroundPanelMenuItems(
+                            openKeysRaw,
+                            handleToggling,
+                            tran,
+                        ),
+                    );
                 }}
             />
-            {isShowing ? (
-                <FloatingWidgetComp
-                    title={
-                        <span className={isOnScreen ? 'app-on-screen' : ''}>
-                            {toIconedLabel('Foreground')}
-                        </span>
-                    }
-                    persistKey="floating-widget-rect-foreground"
-                    onClose={() => {
-                        setIsShowing(false);
-                    }}
-                    options={{
-                        width: 420,
-                        height: 560,
-                        minWidth: 300,
-                        minHeight: 220,
-                    }}
-                >
-                    <AppSuspenseComp>
-                        <LazyPresenterForegroundComp />
-                    </AppSuspenseComp>
-                </FloatingWidgetComp>
-            ) : null}
+            {FOREGROUND_WIDGET_LIST.filter((widget) => {
+                return openKeys.includes(widget.key);
+            }).map((widget) => {
+                return (
+                    <ForegroundWidgetPanelComp
+                        key={widget.key}
+                        widget={widget}
+                        onClose={() => {
+                            handleToggling(widget.key);
+                        }}
+                    />
+                );
+            })}
         </>
     );
 }

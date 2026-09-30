@@ -15,6 +15,12 @@ invisible on a dev machine makes the app unusable for the target users.
   change; prefer the lighter approach even if it costs a little more code.
 - Watch for eager imports, preloading whole files/collections (e.g. bibles,
   media) when only a slice is needed, and unbounded in-memory maps.
+- Renderer entry points and `boot.ts` import only leaf helpers. Do not make a
+  startup helper import a mixed feature module such as `fileHelpers`,
+  `appHelpers` or drag helpers for one small primitive: Rolldown can then put
+  document, screen and React server-rendering code in every renderer's static
+  closure. Split the primitive into a dependency-light module and re-export it
+  from the broad helper for existing callers. Memory `renderer-entry-static-closure`.
 - No `infinite` CSS animation of a PAINT property (`color`, `border-color`,
   `text-decoration-color`, `box-shadow`, `background`) on anything that stays
   mounted at rest — run it a few times or animate `opacity`/`transform` only.
@@ -55,11 +61,12 @@ Every React function component must have a name ending in `Comp`
 (e.g. `FormComp`, `ForegroundCountDownComp`).
 
 Every label a user reads goes through `tran()` (in render, never at module
-scope) with its Khmer string in `src/lang/data/km/index.ts`. A missing one
-THROWS in dev. `src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC
-key without Khmer — write keys as literals so it can read them (EN-20). A
-dynamic `tran(prop)` still needs the live Khmer pass (memory
-`tran-missing-key-throws-in-dev`).
+scope) with its Khmer string in `src/lang/data/km/index.ts` AND its French
+string in `src/lang/data/fr/index.ts`. A missing one THROWS in dev.
+`src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC key without
+Khmer, and on any difference between the French and Khmer key sets — write
+keys as literals so it can read them (EN-20). A dynamic `tran(prop)` still
+needs the live Khmer pass (memory `tran-missing-key-throws-in-dev`).
 
 ## Running the app for verification (`npm run dev`)
 
@@ -87,7 +94,7 @@ not sufficient — take a screenshot of the live app and confirm the change
 actually renders/behaves as intended before considering the work done.
 
 The CDP endpoint has **no fixed port** since 2026-08-31: Chromium binds a free
-one and the app publishes it (see *Agent access* below). Nothing needs that
+one and the app publishes it (see _Agent access_ below). Nothing needs that
 number: the project's `./.mcp.json` registers `owa-devtools` →
 `node tools/owa-devtools-mcp/bin.mjs`, which discovers the running instance
 itself (same thing per-user, if that file is missing:
@@ -155,7 +162,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   loads at startup; chrome-devtools-mcp and puppeteer are imported on the first
   MCP session. The SAME server is what `./.mcp.json` spawns over stdio for an
   outside agent (as `owa-devtools`), so the chatbot and the agent share one tool
-  set — chrome-devtools' plus the `owa_*` ones. **The in-app host is PINNED to
+  set — chrome-devtools' plus the `owa_*` ones. **The HTTP door requires a
+  per-launch bearer capability** (2026-09-23, `MC-01`): 256 random bits from
+  `startOwaMcpHost`, published beside `mcpUrl` in the mode-0600 instance file,
+  passed to the chatbot over IPC, and checked before an MCP session is opened.
+  It never enters the URL, logs, results or model context; a missing or wrong
+  token gets 401. The stdio door is unchanged. **The in-app host is PINNED to
   its own instance** (2026-09-09, `pinCdpPort` in `discovery.mjs`, fed by
   `getCdpPort: () => remoteDebuggingPort` from `startMcpHost`): discovery is
   newest-first, which is right for the stdio bin and wrong for a server living
@@ -180,7 +192,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   carry no address at all and were refused for it — an agent could not reload
   the window in front of it); `owa_click`/`owa_type`
   refuse a label that cannot be undone (delete, trash, discard, erase, remove,
-  uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — NOT
+  uninstall, overwrite, _clear all_, _reset all_, factory, sign/log out — NOT
   bare `reset` or `clear`, which are `Reset Widgets Size` and `Clear Bible`)
   **in every language the app is shown in, read on the CONTROL as well as on
   the words** (2026-09-14, `MC-23`, `destructiveLabel.mjs`): the list was
@@ -191,12 +203,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   destructively-worded `tran()` key, read by the firewall on the words and
   again IN THE PAGE on the element about to be pressed (`PRESS_GUARD_SOURCE`,
   the module's own functions as source text): a title or aria-label that
-  cannot be undone, a key whose titled control cannot be (`F6` is *Clear All
-  [F6]*), a picker's chosen option, and anything inside the app's confirm /
+  cannot be undone, a key whose titled control cannot be (`F6` is _Clear All
+  [F6]_), a picker's chosen option, and anything inside the app's confirm /
   alert / input popups, which are the user's to answer. An element's own TEXT
   is read only on a control, so a slide card saying "erase my sin" stays
   pressable, and so does a translation the dictionary shares with an allowed
-  control (Khmer *Clear Bible* is *Delete Bible*), the app's confirm behind it;
+  control (Khmer _Clear Bible_ is _Delete Bible_), the app's confirm behind it;
   **and so do `click`/`fill`/`fill_form`/`drag`, which carry no label at all**
   — they aim by a uid out of a snapshot, so the interlock was two
   `take_snapshot` lines away from being irrelevant, and the label is now
@@ -226,8 +238,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `owa_click` used to answer `clicked: <the control>` and stop, which is a tool
   reporting its own ACTION where the caller needs the action's EFFECT — and a
   model that manages to click something then reports the goal achieved. Asked to
-  turn a projector on, it pressed a toolbar-reveal decoration and said *"Done —
-  the screen is now showing"* to a room with nothing on the wall. The answer now
+  turn a projector on, it pressed a toolbar-reveal decoration and said _"Done —
+  the screen is now showing"_ to a room with nothing on the wall. The answer now
   carries `isOnNow` (a control with an on/off state), `didChange`, and
   `unverified` — a SENTENCE, not a flag, because a missing key is something a
   model infers past. The control is read back ~250 ms AFTER the press: this app
@@ -238,7 +250,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   four `<i title="Show">` decorations into the presenter's auto-hide footers, and
   `matchTier` ranks an exact label above every looser fit, so the bare word beat
   the screen's own `Toggle showing screen` control every time. They are
-  `Reveal Hidden Controls` now — renaming them to *Show Hidden Controls* first
+  `Reveal Hidden Controls` now — renaming them to _Show Hidden Controls_ first
   still won `Show` on a whole-word match, so the word had to LEAVE the label
   rather than move within it. `ShowHideScreen`'s own title went through `tran()`
   in the same change (it was hardcoded English, so the app's most important
@@ -263,32 +275,109 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `behind`. And the matcher's tiers 1–3 (a whole word inside a longer label,
   a word-start, every word somewhere) are right for a ring near a misspelt
   step and wrong for a click: of 92 presses the harness first counted as
-  done, at least ten had pressed the WRONG control — the projector's *Clear
-  All [F6]* for the drawing panel's *Clear*, *Break lines following model
-  formatting* for *Follow*, the help window opened for a bolded *ASSISTANT*.
+  done, at least ten had pressed the WRONG control — the projector's _Clear
+  All [F6]_ for the drawing panel's _Clear_, _Break lines following model
+  formatting_ for _Follow_, the help window opened for a bolded _ASSISTANT_.
   `isPressSafe` (tier 0, or a label part equal to the words once a
   `[shortcut]` and a leading glyph come off, or the very panel asked for) is
   the bar; `findBest` keeps scanning a step's candidates for one that clears
   it (`preferPressSafe`) instead of returning the first candidate's loose
   match; a loose fit is refused with the label it found, reported as
-  `nearest`, and never ringed. A step that only describes what to see (*The
-  bar under the search box says how many matched*) is `kind: "look"` — Next
+  `nearest`, and never ringed. A step that only describes what to see (_The
+  bar under the search box says how many matched_) is `kind: "look"` — Next
   instead of Do it, no failed press, no model round. A bold is read from 1 to
   120 characters (40 dropped W-08's tab row and misaligned the rest; a `**✕**`
   did the same the other way). Pages with no numbered step (W-01, W-09, W-10,
   W-17) walk their bold-led bullets and paragraphs. Do it across the manual:
   wrong presses ≥10 → 0, recipes that start 33 → 37, honest refusals go UP
   because a wrong press is now a refusal that names what it found.
+- **Tips belong to the operator page** (2026-09-28). In addition to Presenter
+  and Reader, `pageDemos.mjs` supplies local lessons for Settings, Slide Editor,
+  Bible Note, Web Editor, Lyric Editor and Local Web Share. `DailyTipComp`
+  listens for the focused-window Help menu in every supported window; only the
+  main window owns the shared menu registration. Its automatic shown marker is
+  per page, with the existing five-minute delay and global opt-out. A hidden
+  window waits for focus. `demoHelpers.mjs` routes built-in demos to their
+  declared page and preserves an explicit same-page URL, so Show it stays in
+  the originating popup; `pickTarget` prefers an exact URL before a substring.
+  **The card takes itself off after a minute** (2026-09-29,
+  `DAILY_TIP_AUTO_CLOSE_MS`), which is the other half of not covering the
+  controls a volunteer is reaching for. It is TWO clocks held by one flag: a
+  `setTimeout` that carries its remaining time across a pause, and a 3px bar
+  along the card's bottom edge running a finite `transform: scaleX()` -- never
+  a width, a repaint or a per-second tick, which would re-render the card
+  sixty times over a busy panel. The pointer resting on the card pauses both
+  (`animation-play-state` + the effect's teardown), so leaving carries on from
+  where the bar stopped rather than granting a fresh minute; browsing All tips
+  and starting a walkthrough hold it too. Focus is deliberately NOT a second
+  hold -- a click leaves its own button focused and the card would sit there
+  for good. The bar is exempted from the global `prefers-reduced-motion` clamp
+  in `interaction.scss` for the reason the spinners are: clamped to 0.001ms it
+  empties at once and then contradicts a card that is still there.
+- **The Presenter and Reader have checked-in demos that need no model**
+  (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 99
+  Reader-only lessons through the same guarded card. Thirty are featured
+  in the Reader assistant's zero-model practice shelf: the original font
+  larger/smaller, localized John 3:16 and Bible Find demos; passage history,
+  reference clearing, people/places, two versions, full view, copy/split/save,
+  scrolling, line layout, advanced study views and book filtering; and direct
+  practice for typing a complete reference, removing one reference part,
+  automatic Bible audio, filtering and sorting notes, Settings and Help.
+  Forty-nine of the 99 Reader tips begin with a safe deterministic action;
+  Reader additions cover copying formats, saved list and note file management,
+  Resources, names and graphs with practical searchable tips. Mixed steps use
+  `look` after the safe action, and scoped labels translate each part.
+  The coverage map is `tools/owa-devtools-mcp/reader-demo-coverage.md`.
+  Stateful, file-dependent, native-menu, pane-visibility and audience-output
+  lessons stay self-guided. The catalog is
+  shared with the chatbot's empty state, so the words a senior presses and the
+  steps the MCP runs cannot drift. A demo changes one visible thing per **Do
+  it** press; the search lesson names the Bible Online Lookup picker, selects
+  **Find** even when it remembered Resources, and leaves the search box for the
+  person's own word. The Presenter catalog has 89 lessons across documents,
+  audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
+  planning, app help and the View menu. Seventy-nine lessons now begin with a
+  safe deterministic **Do it**
+  action, then turn any explanation-only follow-up into **Next**; ten native-menu
+  or disruptive lessons remain fully self-guided.
+  No lesson can present, reload, relaunch, reset layout, or open Developer Tools
+  for the person. **The foreground had two vague lessons for ten components**
+  (2026-09-24): one per component now — Marquee Top / Bottom, Quick Text,
+  Countdown, Stopwatch, Time, Video / Image / Camera / Web Show — plus
+  Properties, saved sessions and taking an overlay back off, filed under one
+  **Foreground overlays** heading of their own rather than buried in
+  "Background and media". Each is the same two safe presses — the
+  **Foreground** tab opens the launcher, which is a CONTEXT MENU, and the row
+  in it opens that component's floating panel — then a `look` step for
+  whatever would reach a screen, because no lesson starts a countdown or puts a
+  clip up. Two things that shape made necessary: the launcher row and the panel
+  it opens carry the SAME words, so `checkIsControl` had to learn
+  `role="menuitem"` or "choose Video Show" could ring the panel that name
+  already opened; and a lesson is searched by the word ON THE BUTTON, so every
+  one names its own component in its detail line (a friendly title alone left
+  "countdown" matching no countdown lesson). Tips also send their current
+  inline lesson when a hot-reloaded
+  renderer finds an older long-running MCP catalog. `demoId` is a string
+  validated against those catalogs at call time, not a growing schema enum
+  sent to the model on every round. Fourteen additional Presenter-only lessons
+  (2026-09-28) cover lookup
+  references/history/study tools, media folders/filtering/sorting, flow
+  filtering/sorting, Messages/rotation/spacing, overlay Effects and Image Show
+  playback preparation. Library controls keep their panel scope in every
+  language, and already-open panels are skipped. This
+  adds no tool, spends no provider credit and keeps schema cost flat as lessons
+  are added.
 - **The screens tool says what is ON the projector, not only whether it is on**
   (2026-09-09, `tools/owa-devtools-mcp/agentScreens.mjs` +
   `src/helper/agentScreenHelpers.ts`). `owa_list_screens` used to answer
   `isAnyShowing`, the ids and the displays, and a model handed "showing: true"
   for a screen with a verse on it INFERRED the rest: measured on the standing
-  corpus with the projector showing a Khmer verse, *the words no come out big
-  screen* took 9 rounds and 36 s to conclude "nothing has actually been sent to
+  corpus with the projector showing a Khmer verse, _the words no come out big
+  screen_ took 9 rounds and 36 s to conclude "nothing has actually been sent to
   it yet: turning the screen on just gives you a blank canvas", and the "yes"
   under the panic answer took 8 rounds -- `owa_find_ui "show screen"` found
-  nothing (`EC-115`), the model pressed the *0 Screen: 0* badge, then pressed
+  nothing (`EC-115`), the model pressed the _0 Screen: 0_ badge, then pressed
   the toggle by a DOUBLED label (`labelOf` joined a title and an aria-label
   that carry the same words; `labelPartsOf` now keeps each name once). The
   answer now carries `screens[]` -- per screen, SHOWING OR NOT, because a
@@ -320,14 +409,14 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
 - **The state tool says what the user is in the MIDDLE of** (2026-09-09,
   `src/helper/agentPresenterHelpers.ts` + `tools/owa-devtools-mcp/agentPresenter.mjs`).
   `owa_list_screens` says what the projector holds; nothing said what the user
-  had SELECTED, and a model infers past a missing field: with *Amazing Grace*
-  highlighted and a Khmer hymn on the (off) screen, *which song is selected?*
-  was answered with the hymn, and *show the next slide* ran to the ten-round
+  had SELECTED, and a model infers past a missing field: with _Amazing Grace_
+  highlighted and a Khmer hymn on the (off) screen, _which song is selected?_
+  was answered with the hymn, and _show the next slide_ ran to the ten-round
   cap -- six `owa_list_ui` calls hunting the slide cards (a card had NO
   accessible name, so none was ever listed), a 200-row dump that wrote 34 574
   tokens into the cache, a press on a slide's `Index: 5` badge that changed the
   congregation's screen because it happened to bubble to the card, and then
-  *"I could not find an answer for that"*. Now `owa_app_state` on the Presenter
+  _"I could not find an answer for that"_. Now `owa_app_state` on the Presenter
   page carries `selectedDocument` -- name, kind, `slideCount`, `slides[]`
   (number, name, first words, `onScreens`, `isDisabled`) and `onScreen` /
   `next` / `previous` worked out the arrow keys' way (wrap, skip disabled; with
@@ -339,7 +428,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `toSlideAccessibleName`, through `tran`), and ONE function builds both the
   attribute and the field, so `owa_click` presses a slide by exact words --
   which PRESENTS it -- and `owa_list_screens` then says what went up. Re-asked:
-  the selected song is right in 2 rounds, *show the next slide* is 2 rounds and
+  the selected song is right in 2 rounds, _show the next slide_ is 2 rounds and
   one confirmation, then `owa_click "Slide 5: 671826"` and a check (4 rounds,
   7.6 s, proven on the wall); `/selected`, `/next` and `/previous` do the same
   with no model (1.5--3 s), and the offline bot answers the same questions from
@@ -367,11 +456,11 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   document slide by slide, never wrap, step over PARKED only), or
   `availableSheets` and a `note` when none is open -- over the same
   `owa-agent-presenter` relay as `selectedDocument`, read whatever the
-  selection is. *What's next in my running order?* went from 6 rounds and an
+  selection is. _What's next in my running order?_ went from 6 rounds and an
   unverified guess to 2 rounds; `/run` and the offline bot say the same
   sentence (`describeRunSheet`) with no model. **No tool advances a run** (a
   key press is what does it, and `press_key` is withheld), and the prompt
-  says so because the first re-ask offered to *press Space*. **A list row is
+  says so because the first re-ask offered to _press Space_. **A list row is
   the label, the panel, where it sits and only what is unusual**
   (`showsOnHover`, `isDisabled`): one `owa_list_ui limit: 200` answer had
   been 34 574 tokens at ~180 a row, and every row carried `component` and
@@ -382,7 +471,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   previewer footer's title). **Steps written from a search excerpt without
   opening the page are handed back to the model ONCE, in code**: the rule had
   been in the prompt since the first run and on the top hit since the day
-  before, and *How do I edit a slide?* asked from the Bible Reader was still
+  before, and _How do I edit a slide?_ asked from the Bible Reader was still
   written off the excerpt 3 runs in 4, each time starting "in the Documents
   list" -- a panel the Reader does not have (it is `BibleReaderComp` and
   nothing else). Both loops push the answer back with a user turn naming the
@@ -390,8 +479,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   the Reader's and Editor's prompts now say which panels that page lacks and
   that the way back is the 🖥️ **Go Back to Presenter** button (the Reader has
   no Presenter tab -- two "passing" answers had sent the user to one). The
-  same run found the manual had no page for REMOVING a file: *and how do I
-  undo that?* under *How do I add a song?* took six lookups to end on
+  same run found the manual had no page for REMOVING a file: _and how do I
+  undo that?_ under _How do I add a song?_ took six lookups to end on
   **Delete**, an item no menu in this app has. W-43 names **Move to Trash**,
   the confirm and the Recycle Bin, and the corpus carries two questions for
   it.
@@ -425,7 +514,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
 - **A foreground extra is started by its WORDS** (2026-09-11, `owa_foreground`:
   `tools/owa-devtools-mcp/agentForeground.mjs` +
   `src/helper/agentForegroundHelpers.ts`, over the `owa-agent-foreground`
-  relay in `domHelpers.ts`, lazily imported). *Start a 5 minute countdown* once
+  relay in `domHelpers.ts`, lazily imported). _Start a 5 minute countdown_ once
   cost $0.18 and started nothing: the Foreground tab is a TOGGLE the model shut,
   and the widget is a form written for a person. `EC-167`: `stateOf` in
   `genClickExpression` reads `aria-selected` and a `.nav-link`'s `active`
@@ -446,7 +535,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `builtinActionHelpers.ts` carries `clearable` from
   `controls.clear[].hasSomething` — a layer held on a HIDDEN screen is still
   cleared, and a Clear press is proven by the layer reading empty. Open:
-  `EC-169` (*Put Blessed Assurance on the screen* turns the screen on to the
+  `EC-169` (_Put Blessed Assurance on the screen_ turns the screen on to the
   wordless **First** slide) and `EC-170` (the W-08 demo's step 2 clicks
   **Colors**; no card can double-click a video).
 - **A panel divider is a named control, and the card right-clicks it where it
@@ -462,7 +551,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   (walked TO a collapsed strip, which carries the pane's name, not over it as
   the drag getters do). A right-click step whose target is a separator
   right-clicks it in place — one press opens the app's own menu, `withMore`
-  names the item, the next press chooses it — and a step naming a *divider*
+  names the item, the next press chooses it — and a step naming a _divider_
   gets NO list-region fallback: a collapsed panel has no divider, and the
   fallback opened the nearest list's own menu. `openContextMenu` aims at the
   centre of anything thinner than its 20 px inset. Two older defects fell
@@ -471,9 +560,9 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   exact match and `owa_click` REFUSED its own collapsed strip** (`tierOf` now
   tries the words as asked, against the joined label and each part, before
   the trimmed ones); and `dropStepsAlreadyDone` read a whole step for the
-  window it goes to, so W-31's *Open View…* step, whose example list says
-  *presenter* two sentences on, was dropped and the card opened on *Click a
-  ticked one* — it reads the first sentence only now. W-31 carries the
+  window it goes to, so W-31's _Open View…_ step, whose example list says
+  _presenter_ two sentences on, was dropped and the card opened on _Click a
+  ticked one_ — it reads the first sentence only now. W-31 carries the
   divider route as steps 7–9 and `questions/common.json` a question for it.
 - **Reaching OUT is `owa_read_website`** (2026-09-02), the only tool here that
   opens a socket to somewhere a MODEL chose rather than driving a window the
@@ -489,7 +578,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   immediately before it connects, which is the authoritative one. Both are
   needed — `localtest.me` is a real public domain whose A record is
   `127.0.0.1`, and loopback is where this app serves its own CDP and MCP doors
-  with no credential on either. Node's `new URL()` canonicalises `0177.0.0.1`,
+  (the MCP door is authenticated, but a model must not reach either). Node's
+  `new URL()` canonicalises `0177.0.0.1`,
   `2130706433`, `0x7f.1` and `127.1` to `127.0.0.1` before the policy reads
   them, so the checks read the canonical hostname and must never be "improved"
   to match the raw string. The page loads in a window locked down separately
@@ -514,8 +604,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   the site it was asked for and to the public internet; never to this machine,
   and never to anything else on the local network**: its own memory-only
   session, permissions / downloads / `window.open` refused, `sandbox: true`,
-  http(s) only at the first load and every redirect, and `onBeforeRequest`
-  over the same three patterns (`*://*/*`, `ws://*/*`, `wss://*/*`) and the
+  a judged first load and every redirect, and `onBeforeRequest`
+  over four patterns (`*://*/*`, `ws://*/*`, `wss://*/*`, `file:///*`) and the
   same `webUrlPolicy.mjs` dialect the guest's wall uses. The **same-host
   exemption** is the difference from that guest, and it is what keeps a
   church's own intranet notice board working — a private page may load its own
@@ -525,6 +615,32 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   Re-measured after: the notice board captures byte for byte the same 7 106
   characters, reaches this machine not at all, `file://` is refused in a
   sentence, and `example.com` / Wikipedia are untouched.
+  **The app's OWN pages are `file:` URLs, and that first cut took them down
+  with the rest** (2026-09-24). The Webs panel's **New File** writes an
+  `.html` into `<data folder>/webs`, its own editor edits it, and the
+  Background **Webs** tab, every Foreground **Web Show** widget and a slide's
+  website item put that page up as `file:///…/webs/x.html` — so "http(s) only"
+  left every one of those tiles on the globe-and-url placeholder with one
+  `Only a web address can be captured` per file in the console, while the
+  remote URL item beside them kept its picture. What separates them from
+  `file:///C:/Users/.../setting.json` is the FOLDER, not the scheme, so the
+  rule has a second half: **a local page may be captured only out of a folder
+  this app's Webs panel was pointed at, and it may read that folder and
+  nothing else of this machine.** The folders are the `select-dir-web-bg*`
+  directory settings — one file per key under the data folder, `$DATA_DIR_PATH`
+  and either OS family's separator expanded — plus the default
+  `<data folder>/webs`; `listWebCaptureDirPaths` in `electronHelpers.ts` reads
+  them (5 s cache, only ever for a URL that is not http(s)), and the rule
+  itself is `resolveCaptureTarget` in `webCaptureHelpers.ts`: extension
+  checked as well as folder (`setting.json` must not become a page by being
+  moved), `..` resolved away first, case folded on Windows and macOS and NOT
+  on Linux. `file:///*` had to JOIN the wall's patterns or no `file:` request
+  was ever judged at all — a SITE now reads no file, and a local page reads
+  only its own folder. A shared document fails the same test by naming the
+  other church's folders; where the two really are the same item,
+  `$DATA_DIR_PATH` has already rewritten it into this user's own webs folder.
+  Proven live with a page in that folder fetching both ways: it read its own
+  sibling and was blocked one folder up.
   What comes back is FENCED as a document that was read rather than as anything
   talking to the model, which is the second line; the first is that no refusal
   in the firewall cares what a page says. Exfiltration is narrowed, not closed:
@@ -546,7 +662,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   overwrites;
   **`update` writes the EDITING HISTORY, never the file** — undoable with
   Ctrl+Z, left visibly dirty with its `*`, the human presses Save, which is
-  *point, don't press* applied to content and is also why a song already on a
+  _point, don't press_ applied to content and is also why a song already on a
   screen is untouched (a presented slide is a snapshot until re-presented); **a
   name is REFUSED, never quietly cleaned**; and **content must pass the app's
   OWN validator**. Two things are checked in TWO places on purpose, the same
@@ -557,7 +673,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   content validator first and answer "your song is malformed" when the real
   complaint was the path in the name, and checked twice because
   `createNewFileDetail` still carries a `// TODO: verify file name before
-  create`. The CONTENT is checked by `validateOpenLyric` in the tool (line
+create`. The CONTENT is checked by `validateOpenLyric` in the tool (line
   numbers and what to write instead, no round trip — `owa_lyric_validate`
   already owns that grammar) and by the app's own `checkMarkdown` /
   `AppDocument.validate` at the disk boundary. They reach the app the way the
@@ -574,10 +690,10 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   now named in the refusal.
 - **The data tools change what the user KEEPS, so every change is backed up
   first and a delete is a move to the trash** (2026-09-14, `MC-24`; asked for
-  by the user — *add all possible tools: bible-item crud, bible-note crud,
-  document (app-document, lyric) crud*, *update slide with style with text*,
-  *make sure all actions have backup action, e.g. delete it should move to
-  trash and can undo*). `owa_lyric_file` / `owa_slide_file` gained `delete`,
+  by the user — _add all possible tools: bible-item crud, bible-note crud,
+  document (app-document, lyric) crud_, _update slide with style with text_,
+  _make sure all actions have backup action, e.g. delete it should move to
+  trash and can undo_). `owa_lyric_file` / `owa_slide_file` gained `delete`,
   and the slide tool six slide actions — `slides`, `add-slide`,
   `update-slide` (per box: text, font, size, colour, alignment, position, a
   box removed or added; a locked box refused), `delete-slide`, `move-slide`,
@@ -647,12 +763,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `electronHelpers`, which reaches `aiHelpers` through `webCaptureHelpers`,
   and that tighter CSP has no 'unsafe-eval' — nor does EVERY page's in a
   packaged build. `importEsm` built its `Function` at load, the preload threw,
-  and the chatbot opened on *Standing by* with no provider; it is built on the
+  and the chatbot opened on _Standing by_ with no provider; it is built on the
   first call now, which only the main process makes (memory
   `preload-must-not-eval-at-load`).
 - **Discovery**: `publishAiEndpoints()` writes
-  `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, isDev,
-  userDataPath, startedAt}` — one file per live instance, swept when a pid is
+  `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, mcpToken, isDev,
+userDataPath, startedAt}` — one file per live instance, swept when a pid is
   gone, removed on `will-quit`. Chromium reports its chosen port through
   `<userData>/DevToolsActivePort`, which is polled after `ready`.
   **A port named on purpose is a PIN, not a preference** (2026-09-17,
@@ -665,17 +781,17 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   dev app that nodemon had restarted onto a new port left a "pinned" script
   driving whatever was published last — the PACKAGED app, with the user's real
   data, if one is up. A named port is now that port or nothing, and
-  `describeDeadPin` writes the refusal: *"Port 9999 was named by OWA_CDP_PORT
-  and is not answering. The app published 62807 (dev)."* The old message said
+  `describeDeadPin` writes the refusal: _"Port 9999 was named by OWA_CDP_PORT
+  and is not answering. The app published 62807 (dev)."_ The old message said
   "start the app" with the app right there, which is what made it hard to see.
   Pinning by KIND (`OWA_CDP_TARGET=dev`, which survives a restart) is `MC-31`.
-- **Master switch**: Settings → Others → *Enable AI features* writes
+- **Master switch**: Settings → Others → _Enable AI features_ writes
   `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
   `checkIsAiEnabled()` reads that file directly (before `ready`, before the
   setting manager exists); off means neither door opens, the Help menu drops
   the chatbot item, and the renderer's AI providers refuse to hand out a
   client. It only takes effect on the next launch — that is the point.
-  The panel SAYS so and hands over the restart: *Restart the app to apply*
+  The panel SAYS so and hands over the restart: _Restart the app to apply_
   sits under the switch whether or not it was just touched, with a
   **Restart Now** button beside it (amber once it was), and View →
   **Relaunch** is the same thing one row under Reload. Both confirm first —
@@ -702,7 +818,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   **The manual is indexed WHOLE and the internal notes to their first
   3 000 characters** (2026-09-10): W-42 and W-22 run past 30 KB, and with
   every page cut at 3 000 the help window's own page was searchable to
-  its step 1 — *spending limit* found an internal banner and no manual
+  its step 1 — _spending limit_ found an internal banner and no manual
   page, and the assistant said the app had no such setting. The manual is
   what answers come from, so it costs the index its whole ~200 KB; the
   185 internal notes would cost megabytes read on every search.
@@ -717,7 +833,13 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   nodemon on `electron-build` AND `tools/owa-devtools-mcp`, so a knowledge
   rebuild — or any save in that package — relaunches a dev app another session
   may be driving, and that relaunch can quit at once; touch a watched file to
-  get it back (2026-09-14, three sessions on one dev app).
+  get it back (2026-09-14, three sessions on one dev app). With no nodemon
+  config it watches `js,mjs,cjs,json` only, so what relaunches it is the
+  rebuild's `index.json`. An edit that leaves a note's index entry alone —
+  past its first 3 000 characters of body and 1 500 of `#`/`**` lines, title
+  and front matter untouched — can be copied as that one `.md` to the same
+  path under `electron-build/knowledge/internal/` instead: the same bundle,
+  and no relaunch (2026-09-19).
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Bible]`, never as an English
   label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in
@@ -908,7 +1030,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
     (`AC-13`). An audio-only request from a site's own https top page goes to
     the window (`askAiChatMicrophone` → `app:ai-chat:microphone-ask`), refused
     silently unless it came from the FRONT tab on its own site, else asked on
-    the amber line with *Don't allow* focused. A yes is per origin, in memory,
+    the amber line with _Don't allow_ focused. A yes is per origin, in memory,
     until quit or Sign out, and only the window asked may answer. The CHECK
     handler says yes for that page (Electron has no "ask" state, and a site
     reading denied never asks); the cost is that `enumerateDevices` names the
@@ -935,24 +1057,24 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
     (`clearStorageData` + `clearCache` + `clearAuthCache`, via
     `main:app:clear-ai-chat-data`) is the **↤** in the head row AND a line on
     the chooser card (a window with every tab on a site cannot open the card).
-    It asks on the strip's amber `role="alertdialog"` line with *Keep me signed
-    in* focused; a yes clears each tab's `lastUrl` and site-given `pageTitle`,
+    It asks on the strip's amber `role="alertdialog"` line with _Keep me signed
+    in_ focused; a yes clears each tab's `lastUrl` and site-given `pageTitle`,
     keeps a name the user typed, and remounts every guest through a
     window-local epoch in the React key.
   - **The browser tells the truth**: Electron's own user agent, and
     `--disable-blink-features=AutomationControlled` (`electron/index.ts`)
     switches `navigator.webdriver` off. A plain-Chrome user agent plus
-    `webdriver: true` read as *Robot* and looped Cloudflare on claude.ai; a
+    `webdriver: true` read as _Robot_ and looped Cloudflare on claude.ai; a
     Chrome user agent on a browser with Chromium traits is the mismatch a bot
     check scores. If Google ever refuses a sign-in, rewrite the `User-Agent`
     HEADER for its sign-in hosts in `onBeforeSendHeaders`, never what page
-    script reads. A first claude.ai visit shows *Verify you are human*, which
+    script reads. A first claude.ai visit shows _Verify you are human_, which
     the person ticks.
   - **Tabs**: the chatbot's strip EXTRACTED to `RenderSessionTabsComp`
     (generic over `{id, isLocked}` plus `genTitle` / `canAdd` /
     `canClearAll`), shared rules in `chatWindowShared.scss`.
     `aichat-sessions` keeps 8 tabs of `{providerKey, title, pageTitle, lastUrl,
-    isLocked, lastUsedAt}`; `lastUrl` is only an https page on the site's own
+isLocked, lastUsedAt}`; `lastUrl` is only an https page on the site's own
     hosts (`toKeptUrl`), never a sign-in page. **Three live guests at most**
     (`toLiveSessionIds`: active + 2 most recent; the rest unmount and reload
     later — each site is a renderer process). Hide with `visibility: hidden`,
@@ -986,14 +1108,14 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   **`setAppMenuItems` keeps ONE entry per key**, so a key every window
   contributes is owned by whichever loaded last and every other window's press
   is dropped by its own `getIsWindowFocused()` guard — opening Settings used to
-  take *Start Controlling* away from the presenter. Both pass
+  take _Start Controlling_ away from the presenter. Both pass
   `{ isRoutedToFocusedWindow: true }`, which routes the click to the window in
   front instead; `lang`, `file`, `insert` and `view` keep owner routing on
   purpose.
 - **The focus vocabulary is declared ONCE**, in
   `tools/owa-devtools-mcp/botFocus.mjs` (no `node:fs`, so the renderer bundles
   the module the server runs). Eight windows, each `{key, label, window,
-  isMainWindow, howToOpen, openFind}`, and the `key` is NOT a label: it is
+isMainWindow, howToOpen, openFind}`, and the `key` is NOT a label: it is
   spliced into `page: "<key>.html"` by `owa_find_ui`/`owa_app_state`, so it
   must stay the
   html base name. It used to be a two-value union written out by hand in the
@@ -1012,7 +1134,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   for — a recipe about Settings walked in the Presenter rings whatever word
   happens to match there, reported as a card about Settings ringing a Bible
   version off “Language: click **English**”, that button reading `KJV English
-  KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
+KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
   Between them those fields are why a walkthrough of a window nobody
   opened now opens it instead of reporting that it is not there: the chatbot's
   `genPageOpenAnswer` navigates or presses, starts the walkthrough it was asked
@@ -1023,7 +1145,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   them, naming page files and the list of open windows.
 - **Chatbot**: `html/chatbot.html` → `src/chatbot/*`, opened by the **🤖**
   (`ChatbotButtonComp`, left of Help on the presenter, slide editor and reader
-  — the only windows with a top bar), Help → *App Help (Chatbot)*, or
+  — the only windows with a top bar), Help → _App Help (Chatbot)_, or
   `AppAssistantComp` (above). The 🤖 STAYS when the master switch is off: the
   press reads the switch and offers Settings → Others, because a vanished
   button explains nothing; the Tools entry withdraws (a menu item cannot
@@ -1035,12 +1157,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   history rides EVERY round of the loop.
   - **Tabs** persist whole to `local-storage/chatbot-sessions`
     (`chatSessionHelpers.ts`, 12 tabs × 60 messages, debounced save +
-    `beforeunload` flush). `⋮` or right-click: rename, **lock**, close, *Close
-    other chats…*, *Clear all chats…* — the last two confirm on a line under
+    `beforeunload` flush). `⋮` or right-click: rename, **lock**, close, _Close
+    other chats…_, _Clear all chats…_ — the last two confirm on a line under
     the strip and `saveChatSessions` at once; a LOCKED tab (`isLocked`) has no
     `×`, is refused by `handleClosingSession`, and both step around it.
-  - **The head row belongs to the tab in front**: three `<select>`s — *asking
-    about* (`BOT_FOCUS_LIST`, following the opener window until picked), the
+  - **The head row belongs to the tab in front**: three `<select>`s — _asking
+    about_ (`BOT_FOCUS_LIST`, following the opener window until picked), the
     assistant, the model. Their `aria-label`s must stay distinct (`Which part of the app` / `Which assistant answers` / `Which model answers`) —
     `extra-work/verify-chatbot-e2e.mjs` finds them by label. A keyless
     provider's option TEXT reads `<name> — needs an API key` (Windows draws no
@@ -1054,7 +1176,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
     re-read on window focus, and **Open AI settings** under a refused key lands
     on its box too. `chatbot-llm-provider` / `chatbot-llm-model-<provider>`
     only seed a NEW tab. Three models per provider (speed + list price on
-    hover) plus *More models…* (the account's `models.list`); a non-reasoning
+    hover) plus _More models…_ (the account's `models.list`); a non-reasoning
     OpenAI model gets no `reasoning_effort`.
   - **Providers are declared ONCE, in `LLM_PROVIDER_MAP`**
     (`Record<LlmProviderType, …>` lookups and a `keyField`; ternaries once sent
@@ -1076,7 +1198,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
     `getLlmModel`, window load, `askLlmBot`) and leaves a keyed provider's
     off-list pick alone. `keyField` UNSET means always available, and it sits
     LAST in the map so any real key outranks it. Only
-    `stepfun/step-3.7-flash:free` sees pictures; *More models…* is hidden for
+    `stepfun/step-3.7-flash:free` sees pictures; _More models…_ is hidden for
     it. Its `warning` (words and attachments leave the machine and may be kept)
     is STICKY atop the log and repeated in Settings while no key is set;
     `warningLinks` come from `FREE_SERVICE_MAP` so both disclosures name the
@@ -1186,7 +1308,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   the conversation scrolled, at the user's ask with a picture (2026-09-10,
   `EC-160`); the box was wanted back the same afternoon and the rest —
   the head band, its grip strip, the 📌, `autoHideHelpers.ts` — the next
-  morning: *please remove all auto-hide feature from the chatbot*. A
+  morning: _please remove all auto-hide feature from the chatbot_. A
   control that has to be found again before it can be pressed is a control
   in the way, in a window used minutes before a service. Do not reintroduce
   a hide-on-scroll, hide-on-idle or collapse of any row there without being
@@ -1208,7 +1330,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   make this one sticky, or give it a dismiss.
 - **Opening either AI window asks the caution FIRST** (2026-09-12, `EC-175`,
   the user's own ask, both icons circled in a picture). `askAiCaution`
-  (`src/helper/ai/aiCautionHelpers.ts`) is ONE confirm — *Be careful with AI*,
+  (`src/helper/ai/aiCautionHelpers.ts`) is ONE confirm — _Be careful with AI_,
   **Cancel** / **Open** — in front of every user-initiated route into the 🤖
   and the ✨: the two toolbar buttons, the two Tools entries (Ctrl+Shift+A
   included) and the two native Help items, which land on the IPC receivers in
@@ -1225,11 +1347,19 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   failing closed there would make the shortcut silently do nothing, which
   reads as a broken app rather than as a warning. On the 🤖 the master switch
   is asked BEFORE the caution: there is nothing to be careful about in a
-  window that is not going to open. The Presenting Control's *hand this
-  snapshot to the help window* is NOT gated — that press carries its own
+  window that is not going to open. The Presenting Control's _hand this
+  snapshot to the help window_ is NOT gated — that press carries its own
   intent, and a Cancel would strand the snapshot the main process is holding.
   Its four strings need Khmer keys like any other label outside
   `src/chatbot/`; a missing one THROWS in dev.
+  For automated chatbot verification, this caution remains person-only by
+  default. A narrow exception applies only when `owa_app_state` confirms a
+  development instance and the user explicitly authorizes acceptance in the
+  current conversation: automation may press this caution's exact **Open**
+  button through the development CDP endpoint. A generic “continue” is not
+  consent. The exception never applies to packaged/production instances,
+  **Allow more**, projector or destructive confirmations, or any other blocking
+  dialog, and it is not a reason to weaken the MCP firewall.
 - **The wait says what it is DOING** (`src/chatbot/progressHelpers.ts`). One
   unchanging `Looking it up…` line for the ~55 seconds a question takes when it
   reads a web page, drafts a song and creates it cannot tell a window that is
@@ -1256,7 +1386,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   conversation, and a twenty-step question would otherwise re-render the whole
   message list twenty times.
 - **The four starter chips are not the corpus** — `More… — everything it can
-  answer` under them opens all of it for that window (184 in the Presenter),
+answer` under them opens all of it for that window (184 in the Presenter),
   grouped by SECTION label, which is a panel of the app, merged across pages so
   two `Screens` headings do not show the filing through. `getAllQuestions` in
   `questionHelpers.ts`; `RenderAllQuestionsComp` mounts only once pressed, so a
@@ -1277,7 +1407,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   saved conversations the first time**, since the only way to discover Alt+↑ is
   to press it and get something back. Only what came out of the BOX is recorded:
   a starter chip and a quick-reply press are not, or the walk goes past three
-  presses of *Yes* to reach the sentence worth keeping. Index -1 is the user's
+  presses of _Yes_ to reach the sentence worth keeping. Index -1 is the user's
   own half-written words, held aside on the way in and handed back at the bottom
   of the walk; typing resets it to -1 and switching tabs does too. **Alt**, not
   the bare arrows, which already belong to the caret in a multi-line box and to
@@ -1298,8 +1428,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   exists because a feature nobody announces is a feature nobody has, and hiding
   its own controls is that mistake one level down.
 - **Every answer says what it cost, and the tab keeps the running total**
-  (2026-09-10, `src/chatbot/usageHelpers.ts`; asked for by the user — *as a
-  user I want to see how many credit used per chat session*). Every model
+  (2026-09-10, `src/chatbot/usageHelpers.ts`; asked for by the user — _as a
+  user I want to see how many credit used per chat session_). Every model
   round comes back with a `usage` block and the window threw it away, so a
   volunteer was spending the church's API credit with nothing on screen
   saying how much — the one figure that decides whether the assistant is
@@ -1323,21 +1453,21 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   table in `usageHelpers` (`MODEL_PRICE_MAP`, checked against the providers
   2026-09-10: Anthropic cache reads a tenth and writes 1.25×, the GPT-5 family
   and Kimi K3 cached input a tenth), which `toPriceLabel` also prints on the
-  model picker's hover so the two cannot drift — a free service reads *free*
-  (priced at zero, a fact, not "unknown"), a model with no row reads *price
-  not known* with the tokens still counted, and a mixed tab says both.
+  model picker's hover so the two cannot drift — a free service reads _free_
+  (priced at zero, a fact, not "unknown"), a model with no row reads _price
+  not known_ with the tokens still counted, and a mixed tab says both.
   **`/credit`** (also `/cost`, `/usage`, `/spent`, `/tokens`) answers from the
   tab's own total with no model, handed in as `BuiltinRunContextType.usage`:
-  no tool reads the window, and a free model asked *how much has this chat
-  cost?* quoted the manual's sample figure back as the answer — so the recipe
+  no tool reads the window, and a free model asked _how much has this chat
+  cost?_ quoted the manual's sample figure back as the answer — so the recipe
   carries no quotable number now and says the assistant cannot read it.
   Measured on the standing corpus the same morning: twelve questions on
   Sonnet 5 ≈ $0.28 in all, a cache-cold first ask ≈ $0.04 and a cache-warm
   one-round follow-up ≈ $0.004.
 - **The assistant cannot run up the bill on its own** (2026-09-10,
-  `src/chatbot/spendGuardHelpers.ts`; asked for by the user — *I don't want
+  `src/chatbot/spendGuardHelpers.ts`; asked for by the user — _I don't want
   to mistakenly get stuck in an infinite loop of programmatic error that eats
-  all my credit or floods the bill*). Every cap the loop had was per ASK —
+  all my credit or floods the bill_). Every cap the loop had was per ASK —
   ten rounds, Stop — and a runaway is a bounded ask repeated: a window
   re-asking on every render, a card rescuing the same step for ever, a
   relaunch loop, a script driving the window. The guard is a circuit breaker
@@ -1377,8 +1507,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
 - **A recipe id is scrubbed in code, at both ends** (2026-09-08,
   `scrubRecipeIds` in `help.mjs`, `src/chatbot/recipeIdHelpers.ts`). The
   prompt has forbidden "an id like W-06 -- not even in passing" since the
-  first run, and a where-is answer still opened with *"W-08 has exactly what
-  you need"* -- twice on the same question, written from a search hit without
+  first run, and a where-is answer still opened with _"W-08 has exactly what
+  you need"_ -- twice on the same question, written from a search hit without
   opening the page. A rule the model can ignore is not a rule. Page bodies had
   been scrubbed since `EC-21`; search EXCERPTS never were ("(W-08 step 1)",
   "see W-28"), and a two-round answer is written from the excerpt. Now one
@@ -1388,11 +1518,11 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   leaves by -- LAST, so a title lands in clean text -- replacing an id with
   the page's own title, which `learnPageTitles` folded into the tool watch
   off that ask's search hits and opened pages (`pageTitles`, per ask, never
-  kept), or with *the guide page*. Real-world tokens of the same shape
+  kept), or with _the guide page_. Real-world tokens of the same shape
   (`UTF-8`, `USB-3`) are left alone. The guide card's `stripInternalIds` got
   the lettered id (`W-01b`) in the same change -- it was leaving "see b".
   Beside it, `checkIsWalkthroughEcho` drops a model option that says **Show
-  me step by step** in other words (*Yes, walk me through it* sat beside it on
+  me step by step** in other words (_Yes, walk me through it_ sat beside it on
   7 of 7 walkthrough answers), only ever when those buttons are present.
 - **A supported question is a LABEL, not a search** (2026-09-03,
   `findKnownQuestionRecipe` in `help.mjs`). Measured on all 258 corpus
@@ -1413,8 +1543,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   opens it (5 rounds → 2 on the panic chip). And `MIN_HELP_HIT_SCORE` (6,
   `helpBotHelpers`) is the floor under which a hit is not a hit — no right
   top hit in 258 scored under it, three wrong ones did — read by the offline
-  `answerFromManual` and by `applyToolWatch`, so *Can it stream to
-  Facebook?* no longer offers to walk the user through the Presenter overview
+  `answerFromManual` and by `applyToolWatch`, so _Can it stream to
+  Facebook?_ no longer offers to walk the user through the Presenter overview
   (score 2). The score distributions overlap everywhere above 6, so this floor
   is garbage removal, not a confidence measure.
 - **A line starting with `/` is a COMMAND, and no model ever sees it**
@@ -1435,7 +1565,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   MODEL cannot fire one because the button's `BUILTIN_TOOL_NAME` is a pseudo
   tool the server never registers, caught in `handleActing` like the report's
   Send; and a tool's own error text never reaches the user. `BUILTIN_TOOL_NAME`
-  is declared in `helpBotHelpers` (the offline bot offers *Turn the screen on*
+  is declared in `helpBotHelpers` (the offline bot offers _Turn the screen on_
   under "nothing is showing", and the command module imports that one). The
   same research fixed two offline-bot defects: `TASK_QUESTION_PATTERN` keeps a
   how-do-I that mentions the screen away from the state answer, and the focus is
@@ -1451,7 +1581,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   firewall) and the answer is the same report, preview box and **Create "…"
   / Copy song text** buttons the model's answer carries, nothing written
   until Create is pressed; `/lyric` over pasted words drafts those. The same
-  words in prose — *Create a lyric file from https://…*, the starter chip —
+  words in prose — _Create a lyric file from https://…_, the starter chip —
   are drafted by the offline bot too (`readSongLinkAsk`: a song word beside
   exactly one https address in a short message → `answerLyricLink`, before
   the paste check), where measured with the assistant paused they were
@@ -1497,8 +1627,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   one) because the same press also opens that window, and a renderer still
   loading has nobody listening.
 - **Every chip is pressable, and every ASSET opens** (2026-09-12, the user's
-  ask: *as a user I want to always be able to download assets in chat
-  session*). A pointed-at control is RUNG where it lives
+  ask: _as a user I want to always be able to download assets in chat
+  session_). A pointed-at control is RUNG where it lives
   (`owa_highlight_selector`, by the stored selector rather than by its words —
   half the labels in this app are on more than one control); everything else —
   a picture, a dropped file, the report just written, the song just created —
@@ -1520,7 +1650,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   The chip's NAME comes from `labelPartsOf`, not `describe`'s joined `label`:
   joined, the settings button reads "Setting Setting".
 - **An ANSWER can carry materials too.** A `SHOWS:` frame -- `SHOWS: <control
-  name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
+name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   other two and drawn as the same chips: pressing a control name rings it
   through `owa_find_ui` AT PRESS TIME (against the window as it is now, not as
   it was when the answer was written), and a path opens its folder or, for a
@@ -1528,8 +1658,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   preview carries **Copy** and **Save a copy** (`downloadImageBase64Data`, the
   app's own save-and-reveal), so a picture worth opening is a picture the user
   can keep. **And every picture chip carries a copy icon** (2026-09-12, the
-  user's ask: *for all images preview in chatbot should have icon to copy
-  image to clipboard*): `RenderCopyPictureIconComp`, drawn on an image chip
+  user's ask: _for all images preview in chatbot should have icon to copy
+  image to clipboard_): `RenderCopyPictureIconComp`, drawn on an image chip
   whose bytes are still in the window, in the ask row and under answers alike,
   stops the press so it does not also open the preview or ring a control, and
   goes through `copyImageToClipboard` in `attachmentHelpers.ts` — the one
@@ -1551,14 +1681,14 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   aimed by a snapshot uid (`click`, `fill`, `fill_form`, `drag`, `hover`,
   `type_text`) — `owa_click`/`owa_type` say what they press, in the user's own
   language, and are what the interlock reads; **the two acting tools that carry
-  no label at all** (`press_key`, `handle_dialog` — 2026-09-08: asked *Nothing
-  is showing on the projector*, Sonnet 5 rang the wrong control, then pressed
+  no label at all** (`press_key`, `handle_dialog` — 2026-09-08: asked _Nothing
+  is showing on the projector_, Sonnet 5 rang the wrong control, then pressed
   F5 through `press_key` on two windows and the congregation's screen came on
   with nobody having asked; a key has nothing the destructive interlock can
   read, and F5/F6 ARE the projector); the window openers (`new_page`,
   `close_page`, `navigate_page`, against `owa_goto_page`); the page readers
   (`take_snapshot`, `list_pages`, `select_page`, `wait_for`, the two console
-  and two network readers — the same day, *the words no come out big screen*
+  and two network readers — the same day, _the words no come out big screen_
   took three `take_snapshot`s at ~8 000 tokens each, read the console, ran to
   the ten-round cap and answered "I could not find an answer" after 72 s and
   225 000 tokens; no graded answer had ever called one of these and passed,
@@ -1578,7 +1708,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   key a week out of credit, and all twelve corpus questions posted the same
   41 KB request three times (the OpenAI SDK retries a 429 whatever kind it
   is; this one was `insufficient_quota`), waited 3–5 s, and answered from
-  the offline bot under *"ChatGPT could not answer"* — with a live Claude key
+  the offline bot under _"ChatGPT could not answer"_ — with a live Claude key
   one option along in the head row. Now a failure that is the PROVIDER's
   (`checkIsProviderFault`: 401/403, 429, 5xx — never a 400 and never a
   no-status network error, which another key would share) is retried ONCE on
@@ -1594,17 +1724,17 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   busy-service 429 is handled by its own salvage pass past round one and by
   the stand-in or the offline bot on round one; the Anthropic loop keeps the
   SDK default. The same measurement fixed two offline answers: `nearMisses`
-  in `domMatch.mjs` no longer scores filler words (*to*, *the* made a verse
+  in `domMatch.mjs` no longer scores filler words (_to_, _the_ made a verse
   row outrank the **Background** panel), and a Presenter recipe answered on
   the Reader leads with the 🖥️ **Go Back to Presenter** route
   (`genBackToPresenterRoute`, ONE source for the prompt and the offline bot;
   the manual's `**bold**` is stripped before its panel names are looked for).
 - **An unusual answer from a provider comes with the door to it** (2026-09-10,
-  `src/chatbot/providerIssueHelpers.ts`; asked for by the user — *if there
+  `src/chatbot/providerIssueHelpers.ts`; asked for by the user — _if there
   any unusual response from api then give buttons for user to go to the api
-  dashboard*). Measured first through the real window on the ChatGPT key
-  that has been out of credit since `EC-83`: the note read *"out of credit
-  or being rate-limited"* with the body saying `insufficient_quota` in plain
+  dashboard_). Measured first through the real window on the ChatGPT key
+  that has been out of credit since `EC-83`: the note read _"out of credit
+  or being rate-limited"_ with the body saying `insufficient_quota` in plain
   sight, and nothing under it a volunteer could press. The window had read
   only the HTTP STATUS, and a status is not enough: an OpenAI 429 is an
   empty account (`insufficient_quota`, now also `credit_balance_exhausted`)
@@ -1617,8 +1747,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   own error page that day, never remembered — and the words it used, with
   a body left only in `error.message` parsed back out) into a KIND, and the
   kind decides both the sentence (`describeLlmError`) and the buttons
-  (`genProviderIssueActions`): an empty account gets *Open ChatGPT
-  billing*, a refused key *Open AI settings* + *Open Claude API keys*, a
+  (`genProviderIssueActions`): an empty account gets _Open ChatGPT
+  billing_, a refused key _Open AI settings_ + _Open Claude API keys_, a
   rate limit the limits page, a bare 429 both doors, a busy service its
   status page; the keyless provider gets the settings panel, because the
   way out of a busy free pool is a key of one's own. The buttons are two
@@ -1626,15 +1756,15 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   (`OPEN_PROVIDER_PAGE_TOOL_NAME`, `OPEN_AI_SETTING_TOOL_NAME`) and
   registered nowhere; **a button carries a provider and a page NAME, never
   an address** — `getLlmProviderPageUrl` resolves it at the press out of
-  `PAID_PROVIDER_PAGE_MAP`, the ONE table of console pages (Settings' *Get
-  key* buttons read it too), so nothing a model says and nothing a
+  `PAID_PROVIDER_PAGE_MAP`, the ONE table of console pages (Settings' _Get
+  key_ buttons read it too), so nothing a model says and nothing a
   hand-edited session file carries can open a page. They ride the
   stand-in note (named for the provider that FAILED), the offline-fallback
-  note, a rescue's one line and the report's *I could not look into it*.
+  note, a rescue's one line and the report's _I could not look into it_.
   The Anthropic console answers on `platform.claude.com` now; Kimi
   documents no billing page, so its console home stands in rather than a
-  guessed deep link. Re-asked on the same dead key: *"the AI account is out
-  of credit"* and **Open ChatGPT billing**, the press opening the page and
+  guessed deep link. Re-asked on the same dead key: _"the AI account is out
+  of credit"_ and **Open ChatGPT billing**, the press opening the page and
   saying so in the transcript.
 - **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropic` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
@@ -1668,7 +1798,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   side, and a part standing for both can never be rescued by walking up —
   every ancestor they share is the same node, so every longer candidate still
   matches two. It returned null, which is what made the chip the user had
-  POINTED AT answer *there is nothing left to show for that one*, and it took
+  POINTED AT answer _there is nothing left to show for that one_, and it took
   every control INSIDE the pane with it: 156 of 949 elements in a two-Bible
   Reader had no selector at all (→ 12 after, 0 mis-targeted). A lone named
   panel is left unqualified, so an ordinary selector does not start carrying a
@@ -1710,6 +1840,20 @@ IS in production DOM is `data-widget-name` on every resizable pane — its Engli
 language the app is in. That is what `domMatch.mjs` reads for the parent path
 (`Background > Videos`) and for the `inPanel` a match reports.
 
+**A FLOATING panel carries it too** (2026-09-24, `FloatingWidgetComp`'s
+`widgetName`, passed by every foreground component). Reported as _"component
+shared between background and foreground got highlighted at the same time"_:
+each foreground component reuses the Background tabs' own windowed file grid,
+so the same file name, folder box and search icon are on screen twice, and the
+floating panel drew its name nowhere — everything inside it reported the
+Presenter pane BEHIND it as the panel it was in. `owa_find_ui "clock"` answered
+four matches with nothing to tell them apart and rang all four. The panel is
+named now, so `inPanel` reads `Web Show` against `Background` and a scope picks
+one: `Web Show > clock`. Naming it also makes the panel itself a control that
+answers to its own name — which is why `checkIsControl` counts `role="menuitem"`
+(see the demo catalog above): the launcher row that OPENS a panel carries the
+same words as the panel it opened.
+
 ## owa-devtools / CDP driving notes
 
 - **Screen output window.** The presentation screen is a separate Electron
@@ -1730,16 +1874,33 @@ language the app is in. That is what `domMatch.mjs` reads for the parent path
   `press_key`, `Delete`/`Backspace`) do NOT change the model unless the Electron
   window has genuine OS **foreground** focus. `select_page` bringToFront alone is
   not enough; if real typing is required, ask the user to click the window.
-- **Much of the UI is painted only under the mouse.** Toolbars like the six
-  icons above a bible view are laid out and clickable the whole time and
-  hidden with `visibility` (a `:hover` rule on an ancestor several levels
-  up), so `getBoundingClientRect` says they are on screen and a screenshot
+- **Much of the UI is painted only under the mouse.** Toolbars like the
+  icons in a bible view's header are laid out the whole time and painted
+  away by a `:hover` rule on an ancestor (`visibility` on most such rows;
+  that one is `opacity` + `pointer-events: none`, floated over the title's
+  end), so `getBoundingClientRect` says they are on screen and a screenshot
   says they are not. `domMatch.mjs` classifies with `checkVisibility` —
   `shown` / `hidden` (painted away, revealable) / `gone` (no box) — reports
   `showsOnHover` on a match, and FORCES the hover before ringing, clicking
   or typing: the page's own `:hover` rules re-aimed at a `data-owa-hover`
   attribute, one reveal at a time, always released. Driving the app by
   hand, remember a control can be real, clickable and invisible at once.
+  A guide can also use `action: "hover"` when an event-driven surface creates
+  another control; it dispatches pointer/mouse hover events without moving the
+  person's real pointer. A CSS-hidden target normally needs no hover step —
+  name it directly. Guide `type` can set a range slider value as well as a text
+  box; a signed value such as `+8` changes a range relative to its current
+  value. The last actionable demo step is still **Do it** until it has run — it
+  must never become **Done** and close without acting. When a broad manual is
+  started with `topic`, only the task-matching step
+  is shown; the chatbot's keyed **Do it for me** path uses that as a safe pointer
+  while it rebuilds the demo from the live localized controls. A `manualId` is
+  show-only: executable demos must pass explicit live steps, and preparing one
+  never presses ahead — the person presses **Do it** once per visible action.
+  Known repeatable Reader jobs do not need a model to rediscover those steps:
+  small text uses the named Font Size range, and a localized Bible reference
+  uses Clear input → the book's stable model-name title → Chapter N → Verse N
+  while the buttons keep their localized visible words.
 - **Verifying file-drop features.** Synthetic `DragEvent` drops can't exercise
   `readDroppedFiles` (`src/others/droppingFileHelpers.ts`) — `webkitGetAsEntry()`
   returns null for programmatic `DataTransfer`s. The drag-over mimetype gate IS
@@ -1752,7 +1913,7 @@ language the app is in. That is what `domMatch.mjs` reads for the parent path
   button only (see below). What DOES drive the whole real pipeline: dispatch a
   plain bubbling `Event('drop')` and `Object.defineProperty` a fabricated
   `dataTransfer` onto it — `{items: [{kind: 'file', webkitGetAsEntry: () => ({
-  isFile: true }), getAsFile: () => file}]}` — since React only forwards the
+isFile: true }), getAsFile: () => file}]}` — since React only forwards the
   property. Stamp `appFilePath` on the `File` (the electron preload does this
   for real drops) and handlers that resolve a real path, e.g. the presenting flow
   archive import, run end to end against a real file on disk.
@@ -1890,7 +2051,7 @@ two by hand.
 the focus area — presenting to a screen is the app's core purpose and screen-only
 bugs never reproduce in the mini-preview. Each run must present a real item,
 verify clear-button states, show the screen, drive the `screen.html?screenId=N`
-CDP target, then clear/hide/restore. The only exclusion is *leaving* a screen
+CDP target, then clear/hide/restore. The only exclusion is _leaving_ a screen
 taken over or touching a display the user says is in live use.
 
 **`presentingFlow` is a tracked MODE, not a focus area.** `/owa-robot-test presentingFlow` runs the
@@ -1914,9 +2075,12 @@ recorded in the matrix. (The matrix lives at
 
 **Those three binaries are NOT bundled with the app** (refactor27). They ship as
 a separate `bin-<ver>.tar.gz` the user installs from **Settings → Others → Extra
-Binaries** into `<data parent dir>/extra-bin/` (`yt/`, `ffmpeg/bin/`, `qjs/`,
-plus `info.json` and the archive itself, which is kept on purpose so a corrupted
-binary can be re-extracted offline). Consequences:
+Binaries** into `<data parent dir>/extra-bin/<platform>/` (`yt/`, `ffmpeg/bin/`,
+`qjs/`, plus `info.json` and the archive itself, which is kept on purpose so a
+corrupted binary can be re-extracted offline). `<platform>` is the build's own
+name for the pack (`win`, `mac`, `mac-int`, `linux-arm64` …): the data folder
+travels between OSes on a stick, and one shared folder mixed their packs
+(`EN-29`, memory `extra-bin-on-demand`). Consequences:
 
 - A run on a fresh machine must **install the pack first** (`MD-05`) — a media
   download with it absent raises a confirm dialog that jumps to that panel
@@ -1948,7 +2112,7 @@ the user's own library holds real downloads whose names also end in `- YouTube`.
 
 `.claude/skills/owa-enhance-chatbot` is the counterpart to owa-robot-test for the
 **AI subsystem**: robot-test QAs the chatbot (`CB-01..CB-14`), this one changes
-it. Scope is everything in *Agent access* above — `src/chatbot/*`,
+it. Scope is everything in _Agent access_ above — `src/chatbot/*`,
 `tools/owa-devtools-mcp/*`, `electron/aiHelpers.ts`,
 `extra-work/build-knowledge.mjs` — with the MCP tool surface as its main subject.
 
@@ -1959,7 +2123,7 @@ way to use the app; currently around rung 2) and a `references/scoreboard.md` th
 takes one row per run — pass rate, leaks, median tool rounds, cost, rung. Every
 run must leave the assistant measurably better and say by how much, a question
 that passed before must never come back failing, and when the evidence says the
-current design *caps* a rung, the finding is that — size the structural change and
+current design _caps_ a rung, the finding is that — size the structural change and
 put it to the user rather than shaving another 200 tokens off a description.
 
 - **Tool surface IS chatbot performance.** `llmBotHelpers.ts` sends every tool
@@ -1968,13 +2132,13 @@ put it to the user rather than shaving another 200 tokens off a description.
   ~85k worst case for one question** — 29 of those tools are chrome-devtools' and
   include `evaluate_script`. Baseline it with
   `node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs` (reads
-  `mcpUrl` from the published instance file, `--json`, and warns when an acting
+  `mcpUrl` and `mcpToken` from the published instance file, `--json`, and warns when an acting
   tool is missing from `notify.mjs`'s `ACTING_TOOLS`).
 - **Every run researches before it builds** (`references/research.md`): ask the
   live assistant a standing corpus of real volunteer questions, grade each answer
   (correct? actionable? internals leaked? rounds used? did the walkthrough ring
   land?), mine the app for gaps it cannot see or do, and only then implement —
-  graded against three axes, *smarter / easier / more impressive*. The argument
+  graded against three axes, _smarter / easier / more impressive_. The argument
   `research` runs that phase alone and ships nothing.
 - Tracked work carries stable `EC-xx` ids in the skill's `references/backlog.md`;
   add what you find there even when you don't do it.
@@ -2001,8 +2165,8 @@ surface grew 19% in a day because adding a tool is easy and nobody is billed at
 the time), **good for a developer** driving QA over stdio, and **good for the
 chatbot** answering a volunteer over HTTP. Preference order for any change is
 **remove → deny → merge → sharpen → add**. Tracked work carries `MC-xx` ids in
-`references/backlog.md`; `MC-01` (the HTTP door has no credential) is the open
-hole worth knowing about — `MC-02` (the uid-aimed acting tools) and `MC-16`
+`references/backlog.md`; `MC-01` (the HTTP door's per-launch bearer token),
+`MC-02` (the uid-aimed acting tools) and `MC-16`
 (the window a slide's website loads in) are CLOSED, the latter down to a
 documented `webSecurity: false` residual. `MC-14` put a RATCHET on the token
 bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses
@@ -2037,8 +2201,8 @@ for good, Electron's own passing with no box), `references/backlog.md` the
 ## owa-enhance skill
 
 `.claude/skills/owa-enhance` is the umbrella for the WHOLE app, asked for on
-2026-09-14 as *research (planning without file update), then report and wait
-to apply*. `/owa-enhance [auto | security | performance | reliability | ui |
+2026-09-14 as _research (planning without file update), then report and wait
+to apply_. `/owa-enhance [auto | security | performance | reliability | ui |
 dev-flow | code-health | docs | full]` researches, writes one report and
 STOPS. Research changes nothing — no edit, format, stage, setting, user data,
 screen or API credit — and its one write is a gitignored
@@ -2058,3 +2222,73 @@ catch, true for any session driving the live app: `performance_start_trace`
 and `lighthouse_audit` both RELOAD the window they are aimed at unless told
 `reload: false` / `mode: "snapshot"`. Same mirror rule:
 `.github/skills/owa-enhance` is a copy.
+
+## owa-upgrade-unit-test skill
+
+`.claude/skills/owa-upgrade-unit-test` owns the UNIT TEST SUITE and the climb
+to **99% line coverage**. `/owa-upgrade-unit-test [measure | plan | <path> |
+next | fix-flaky | gate | report]`. Where `/owa-robot-test` drives the live
+window and its `coverage-expansion/` tracks UI PATHS, this one moves vitest
+line coverage over both projects — `vitest.config.ts` (`src/**`,
+`tools/**/*.test.mjs`) and `vitest.electron.config.ts`.
+
+**The reported number is not the real number.** `npm run test:coverage` prints
+78.28% lines and `test:electron:coverage` 84.29%, both measured over the files
+a test happened to LOAD — v8 measures nothing else unless `coverage.include`
+is given, and neither committed config gives one. Over the whole surface the
+honest figure is **48.17% (25 395 / 52 715 lines across 986 files), 502 files
+at exactly 0%, 26 793 lines short of 99%** (measured 2026-09-26 @ `22217577`).
+That denominator can only shrink: deleting a test that loads a big untested
+file RAISES the reported percentage. So every number the skill states comes
+from `scripts/coverage-gap.mjs`, which measures loaded and unloaded files
+alike, writes only under the gitignored `test-results/unit-coverage/` (so
+`apply` survives a cleared conversation) and carries `--no-run`, `--surface=`,
+`--dir=`, `--uncovered=<file>` (the missing line RANGES), `--json` and
+`--goal=`.
+
+Three things that run costs if they are not known: full instrumentation is
+~2.5× slower (src 124 s against 55 s, electron 33 s against 9 s) and pushes
+`src/_screen/components.smoke.test.tsx` past the committed 10 s `testTimeout`,
+so the script passes `--testTimeout=60000`; **a failing test means vitest
+writes NO coverage report at all**, and the script says so rather than
+printing a stale number; and `lint:pre` is red on a Windows checkout for line
+endings alone (`core.autocrlf` true, no `endOfLine` in `.prettierrc` — ~1 270
+files), so check your own new files and never `npm run format` the tree.
+`lint:es` does not lint test files; prettier does.
+
+**The gap has a shape, and it names the cause.** By kind: `module` 70%,
+`helper` 57.3%, `component` **10.1%** (415 files — half the remaining gap),
+entry files 0%. The two dark folders are `src/presenting-flow` (29 files,
+0.4%, 28 at zero) and `src/presenter-foreground` (28 files, 0.2%) — neither is
+neglect: the 2026-08-24 prune that deleted `appProvider.mock.ts` took **65 test
+files** with it, including that entire presenting-flow suite and both `lang`
+km-completeness suites (memory `appprovider-mock-node-env`). Rebuilding them
+**without** re-adding a shared provider fake is the main job, because the
+deletion was the user's explicit decision — _"remove all mock for app-provider,
+I don't need mocking anymore"_ — and no shared mock, `setupFiles` injection or
+test-only provider shim may come back, whatever it does for the number.
+
+**Two rules bind every run.** The number comes from the script, never from
+`test:coverage`. And **a test must be able to FAIL**: an import-and-render that
+asserts nothing lights the same lines and catches nothing, so where a batched
+smoke harness is the right tool — it is, for 415 components, on the
+`src/_screen/components.smoke.test.tsx` pattern of one mock surface amortised
+over a folder — it still asserts something true, and the run reports the
+smoke-render share of its gain separately from the behavioural share. Branch
+coverage is reported beside lines for the same reason: lines rise with smoke
+renders while every `catch` stays unrun. A failing test is never deleted or
+`.skip`ped to raise a number, and a `tran()` key that throws during a render is
+a BUG FOUND, not a thing to mock around.
+
+Work is planned as `UT-xx` batches in `references/plan.md`, ranked by uncovered
+lines per hour rather than by file size; `references/baseline.md` carries the
+measured baseline, every exclusion **with its reason** (an exclusion moves the
+goalposts, so it is a decision, not a cleanup — the 19 renderer entry files are
+left undecided on purpose) and a six-rung ladder whose rung 6 is 99% locked
+behind a committed `coverage.thresholds`; `references/recipes.md` carries the
+repo's real idioms — the `// @vitest-environment jsdom` first line, `vi.hoisted`
+mock bundles, `createRoot` + `act` or `renderToStaticMarkup` (there is no
+`@testing-library/react` here), the `vi.mock`-factory-survives-`resetModules`
+fork, and a table of this app's recurring defect classes as ready-made test
+targets. Same mirror rule: `.agents/skills/owa-upgrade-unit-test` and
+`.github/skills/owa-upgrade-unit-test` are copies.

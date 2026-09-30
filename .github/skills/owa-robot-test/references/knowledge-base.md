@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-09-12
+docVersion: 2026-09-26
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -409,6 +409,50 @@ Keep the main window on `presenter.html`.
   is a **High** finding. (Its jsdom twin `HandleAlertComp.test.tsx` was deleted in the
   2026-08-24 test prune — the live `window.tryPopup()` probe is now the only coverage.)
 
+- **`press_key ContextMenu` opens the app's own right-click menu on the FOCUSED element**
+  (verified 2026-09-26). There is no right-click tool, and this is the way in: click a
+  focusable control so it takes focus, then press `ContextMenu`. It reached the colour
+  swatch menu (`Copy '#000080' to clipboard`, `CM-48`) and the media-session chip menu
+  (`Rename Session` / `Remove Session`). It does **not** work on background/document list
+  ITEMS, which are plain divs and never take focus — for those, press the item's own
+  `⋮` (`ContextMenuDotsButtonComp`), which opens the same menu.
+- ⚠️ **A uid from an earlier turn is usually dead in the Background grid, and `click`
+  still reports success.** The grid re-renders on every screen event (it re-marks which
+  tile is on screen), so a `⋮` clicked from a stale snapshot does nothing at all and
+  looks exactly like a broken control — four attempts across two lists read as "the item
+  menu is dead" before a same-turn snapshot+click opened it first time. **Snapshot and
+  click in the same turn.**
+- ⚠️ **`take_snapshot` and `owa_find_ui` can both miss an open context menu.** Three
+  consecutive attempts reported no `menuitem` while a `take_screenshot` showed the menu
+  plainly open. **Verify a context menu with a screenshot**, not with the a11y tree.
+- ⚠️ **`fill` on an `input[type=color]` does not drive React's `onChange`.** The DOM value
+  changes and `owa_find_ui` reads it back, but React's `localColor` never updates — so the
+  Enter/blur that commits (`SelectCustomColorComp` is `isNoImmediate` in both background
+  pickers) re-applies the colour that is ALREADY live, and `applyBackgroundSrc`'s same-src
+  toggle then **clears the background**. It reads exactly like "choosing a custom colour
+  wipes the background"; it is a harness artifact, not a bug. `PM-90`'s "a new colour
+  applies" half is not provable with these tools.
+- **Background media click is a TOGGLE** — for images *and* videos (verified 2026-09-26;
+  earlier revisions said media had not been re-tested). One click applies, a second click
+  on the same item clears (`ScreenBackgroundManager.applyBackgroundSrc` returns null when
+  `this.backgroundSrc?.src === data.src`). Unlike a slide card, which re-applies.
+- **The live-tab marker is `●`, not `*`** — `.app-on-screen::before { content: 'cf' }`
+  (`src/others/appInit.scss`). `take_snapshot` shows it in the accessible name
+  (`button "●Videos"`); `owa_list_ui` strips it. The matrix's `PM-27` said `*` until
+  2026-09-26.
+- **Scope the thumbnail slider.** `owa_type "Thumbnail Size"` unscoped matches the
+  **Presenter's** `Slide Thumbnail Size Scale` (max 200), not the Background footer's
+  `Thumbnail Size` (max 500) — it silently resizes the wrong panel. Use
+  `Background > Thumbnail Size`.
+- **A web background looks blank on the mini screen when the PAGE is blank.** The mini
+  screen shows the captured screenshot and the projector shows a live iframe (by design,
+  `PM-125`) — so a black page like `clock.html` reads as "the mini preview is not
+  rendering it". Re-test with a page that has a strong flat colour (`snow.html` is dark
+  red) before filing anything.
+- **An empty slide draws nothing on the output, and that is correct.** `Peaching` slide 1
+  has `items: []` and only an attached background; `owa_slide_file action:"slides"` is the
+  cheap way to tell an empty slide from a slide that failed to render.
+
 ---
 
 ## 6. `.app-on-screen` / live-output semantics — and driving the screen window
@@ -460,15 +504,29 @@ round and proves the interlock still works, which is itself worth a line in the 
 | `[debug] [vite] connecting… / connected` | dev HMR |
 | `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
 | `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
+| `Unrecognized feature: 'web-share'.` (slide editor, or any page showing a LIVE YouTube box) | Chromium in Electron does not know the `web-share` permission, and the YouTube box's iframe asks for it in its `allow` list (the standard YouTube embed snippet, `BoxEditorNormalViewYouTubeModeComp.tsx`). One per live player; since 2026-09-26 only the editing canvas and a screen run one — a thumbnail is a still (ED-51). Observed 2026-09-26 |
 | `[warn] If you are profiling the playground app, please ensure you turn off the debug view…` (reader page) | third-party dev-mode noise from the bundled **`bible-note`** dependency (`node_modules/bible-note/dist/bible-note.mjs`) — nothing in `src/` emits it. Observed 2026-09-11 |
 
 Real console issues to flag: uncaught errors, unhandled promise rejections, React
 key/warning spam, failed dynamic imports.
 
 ## 8. Known-benign network — DO NOT report
-- On presenter load the **same live background video is fetched repeatedly** (3× observed
-  2026-07-06 with `award background(1).mp4`; **11×** observed 2026-07-08 with `6_cv.mp4`, all
-  `200`) — redundant I/O, not an error, but worth tracking as it may be growing.
+- On presenter load the **same live background video is fetched a handful of times** (3×
+  observed 2026-07-06 with `award background(1).mp4`; **11×** observed 2026-07-08 with
+  `6_cv.mp4`, all `200`) — the Videos tab's own thumbnails plus the live background, at
+  LOAD only. Redundant I/O, not an error.
+- ⚠️ **A background video re-fetched once per LOOP, forever, was a real defect and is
+  fixed** (2026-09-26). It is the one shape of this to still report if it comes back.
+  `ScreenBackgroundManager._handleBackgroundVideo` used to run the end-of-clip fade by
+  calling `render()`, which builds a fresh `<video src=…>`; `file://` media is not cached,
+  so each lap was a full `range: bytes=0-` read — 37 re-reads of one 2.6 MB clip in a few
+  minutes on one screen (~470 MB/hour). `_fadeOverVideoLoop` now fades the element that is
+  already playing, and the clip's own `loop` restarts it. **How to check:** filter the
+  screen (or presenter) target's requests to `resourceTypes: ["media"]`, note the count and
+  the highest reqid, wait longer than the clip, and re-list. The count must NOT grow, and
+  the reqid base must be unchanged (a base that moved means the page reloaded and the log
+  reset — that measurement is void, take another). Confirm a repeat is a full read, not a
+  media range seek, with `get_network_request` — a re-read shows `range: bytes=0-`.
 - `file://` media loads are normal.
 Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken images/media.
 
@@ -492,6 +550,17 @@ Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken ima
   named: `Help`, `Full view`, `AI Chat`, `App Assistant`, `Setting`, the five clear buttons…),
   so both older observations — "Help's name is a raw URL" and "the fullscreen toggle has no
   name" — are retired. An unnamed node there is now a **regression**, not the status quo.
+- ⚠️ **Scanning for UNNAMED nodes is not enough — scan for controls that are MISSING.** A
+  styled `<i>`/`<div>` with an `onClick` and a `title` is named to `owa_find_ui` (which
+  reads the DOM) and absent from `take_snapshot` (which reads the accessibility tree), so
+  it looks fine from either side alone. Cross-check the two: anything `owa_find_ui` returns
+  with `tag: "i"` or `tag: "div"` that has no matching node in the snapshot is
+  keyboard-unreachable and has no uid, which also silently blocks any coverage row that
+  needs to press it. Four such controls were found and fixed in the mini-screen previewer
+  on 2026-09-26 (Full view, the Stage picker, the floating ⋮, both audio Repeat toggles);
+  the fix is `role="button"` + `tabIndex={0}` + `aria-pressed` where it toggles +
+  `onKeyDown={pressElementLikeButton}`. That helper dispatches the click at the element's
+  own centre, which is also what lets a context menu it opens position itself.
 
 ---
 
@@ -560,14 +629,33 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
    else automatically does.)*
 2. The file on disk changes → **each other renderer's** watch fires. ⚠️ **Rewritten
    2026-08-11 (refactor28):** it is no longer one `fs.watch` per mounted `DirSource`
-   (`useDirSourceWatching` is gone). Each renderer now runs **ONE recursive watch on the whole
-   data parent dir**, started **lazily** by `watchDataDir()` the first time anything registers a
+   (`useDirSourceWatching` is gone). Each renderer now runs a recursive watch per **watch
+   root**, started **lazily** by `watchDataDir()` the first time anything registers a
    `FileSource` listener (`src/helper/dirWatchingHelpers.ts`, `FileSource.registerEventListener*`).
    Consequence for testing: propagation no longer depends on which list is mounted — a document
    previewed with its list hidden still refreshes. `watchDataDir()` is memoized, so the settled
-   case is a field read; the watch is released by `unwatchDataDir()`, whose ONE caller is the
-   data-directory setting (it aborts by the identity the watch STARTED on — after the selection
-   moves, nothing could name the old tree again).
+   case is a field read; the watch is released by `unwatchDataDir()`, whose callers are the
+   data-directory setting and `resyncDataDirWatches()` (it aborts by the identity the watch
+   STARTED on — after the selection moves, nothing could name the old tree again).
+
+   ⚠️ **The roots are the parent directory AND every child folder pointed outside it**
+   (corrected 2026-09-19; until then it really was the parent directory alone, and that was a
+   bug). Each child folder — Documents, Videos, Bible Notes … — is separately configurable, so
+   any one of them can sit in a sibling tree; a watch rooted at the parent alone then never
+   heard about it, and the staleness was silent and total (list never gained or lost a row, a
+   document edited in another window never reached the Presenter preview, and even
+   **re-presenting kept projecting the copy the renderer already had** — only reopening the
+   window recovered). `resolveWatchingDirPaths` collects the parent plus every configured
+   child and `toMinimalDirPaths` drops the ones already covered recursively, so the ordinary
+   setup — everything under the parent — is still exactly ONE watch. A child folder moved in
+   or out at runtime is picked up by `resyncDataDirWatches()`, called from `DirSource`'s
+   `dirPath` setter.
+
+   **Testing consequence:** an XW run on a profile whose folders all sit under the parent
+   directory cannot see this class of bug at all. To exercise it, point one child folder
+   somewhere else (or test on a profile that already does) and assert BOTH halves — a file
+   added/removed in that folder reaching the list, and a content change reaching the
+   Presenter preview.
 3. **`handleFileEvent` itself does no I/O.** It records the changed path and its parent
    directory and arms a **500 ms trailing debounce** — a media download writes its file in
    hundreds of chunks and every chunk is an event, so the filesystem work runs once per burst,

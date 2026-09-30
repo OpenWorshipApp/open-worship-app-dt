@@ -7,8 +7,10 @@ import {
 import { PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME } from './helper/constants';
 import { handleError } from './helper/errorHelpers';
 import { sanitizeCssValue } from './helper/sanitizeHelpers';
-import { getSetting, setSetting } from './helper/settingHelpers';
-import { getAppFontFamily, getAppFontWeight } from './setting/settingHelpers';
+import {
+    getAppFontFamily,
+    getAppFontWeight,
+} from './setting/appFontSettingHelpers';
 import appProvider from './server/appProvider';
 import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 
@@ -47,14 +49,80 @@ async function initFontFamily() {
  * short in the middle is picked up by the next launch rather than undone.
  */
 async function initPresentingFlowRenameMigration() {
-    if (getSetting(PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME) !== null) {
+    if (
+        appLocalStorage.getItem(
+            PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME,
+        ) !== null
+    ) {
         return;
     }
-    setSetting(PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME, 'true');
+    appLocalStorage.setItem(
+        PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME,
+        'true',
+    );
     try {
         const { default: migratePresentingFlowRename } =
             await import('./helper/presentingFlowRenameMigration');
         await migratePresentingFlowRename();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+// Kept in the DATA folder's own settings, so the folder is migrated once
+// whichever computer first opens it with this version.
+const SETTING_KEY_PATH_MIGRATION_SETTING_NAME = 'setting-key-path-migration';
+
+/**
+ * Per data folder, once: setting names made from an absolute path are renamed
+ * to the relative form (`settingKeyPathMigration`), so panel sizes and run-sheet
+ * rows survive the folder moving to another drive or computer. Same claim-first
+ * pattern as the migration above.
+ */
+async function initSettingKeyPathMigration() {
+    if (
+        appLocalStorage.getItem(SETTING_KEY_PATH_MIGRATION_SETTING_NAME) !==
+        null
+    ) {
+        return;
+    }
+    appLocalStorage.setItem(SETTING_KEY_PATH_MIGRATION_SETTING_NAME, 'true');
+    try {
+        const { default: migrateSettingKeyPaths } =
+            await import('./helper/settingKeyPathMigration');
+        await migrateSettingKeyPaths();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+// Kept in the DATA folder's own settings, beside the two above.
+const PREVIEWER_NOTE_CLOSE_MIGRATION_SETTING_NAME =
+    'previewer-note-close-migration';
+
+/**
+ * Per data folder, once: the presenter previewer's Note pane ships CLOSED now,
+ * and a shipped default is only ever read for a document with no stored layout
+ * -- so every document opened before this version is closed here instead
+ * (`previewerNoteCloseMigration`). Same claim-first pattern as the two above,
+ * and it must run BEFORE a previewer renders, which reads its layout
+ * synchronously.
+ */
+async function initPreviewerNoteCloseMigration() {
+    if (
+        appLocalStorage.getItem(PREVIEWER_NOTE_CLOSE_MIGRATION_SETTING_NAME) !==
+        null
+    ) {
+        return;
+    }
+    appLocalStorage.setItem(
+        PREVIEWER_NOTE_CLOSE_MIGRATION_SETTING_NAME,
+        'true',
+    );
+    try {
+        const { default: migratePreviewerNoteClose } =
+            await import('./helper/previewerNoteCloseMigration');
+        await migratePreviewerNoteClose();
     } catch (error) {
         handleError(error);
     }
@@ -66,6 +134,8 @@ export async function init(callback: () => void = () => {}) {
     appProvider.sessionData.defaultStorageDirPath =
         appLocalStorage.defaultStorageDirPath;
     await initPresentingFlowRenameMigration();
+    await initSettingKeyPathMigration();
+    await initPreviewerNoteCloseMigration();
     initFontFamily();
     const currentLocale = getCurrentLocale();
     // Keep the document language in sync with the app locale so assistive tech

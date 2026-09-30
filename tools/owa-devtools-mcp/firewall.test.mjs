@@ -361,6 +361,39 @@ describe('redactSecrets', () => {
         expect(text).toContain('redacted');
     });
 
+    // Exact output, not `not.toContain`: a check that only asks whether the
+    // key is gone passed while `sk-proj-` went through whole and while every
+    // marker carried the match's offset in front of it ("11[redacted ...]").
+    it('takes every current key format out whole, and writes only the marker', () => {
+        const keyList = [
+            'sk-proj-Ab3dEf6hIj9kLmN0pQrStUvW_x-Yz12AbCdEfGhabcdefghijklmn',
+            'sk-svcacct-Ab3dEf6hIj9kLmN0pQrStUvWxYz1234',
+            'sk-admin-Ab3dEf6hIj9kLmN0pQrStUvWxYz1234',
+            'sk-ant-api03-Ab3dEf6hIj9kLmN0pQrStUvW_x-Yz12',
+            'sk-or-v1-0123456789abcdef0123456789abcdef',
+            'sk-Ab3dEf6hIj9kLmN0pQrStUvWxYz1234',
+        ];
+        for (const key of keyList) {
+            expect(redactSecrets(`the key is ${key}.`)).toBe(
+                'the key is [redacted by the app firewall].',
+            );
+        }
+    });
+
+    it('writes one marker where a named credential holds a provider key', () => {
+        expect(
+            redactSecrets('x-api-key: sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA'),
+        ).toBe('x-api-key: [redacted by the app firewall]');
+        expect(redactSecrets('"apiKey": "0123456789abcdef"')).toBe(
+            '"apiKey": "[redacted by the app firewall]"',
+        );
+    });
+
+    it('leaves a locale tag and a short sk- word alone', () => {
+        const text = 'Language: sk-SK, sk-latn; see sk-2 above';
+        expect(redactSecrets(text)).toBe(text);
+    });
+
     it('takes a bearer token and a JWT out', () => {
         expect(
             redactSecrets('authorization: Bearer abcdefghijklmnop0123456789'),

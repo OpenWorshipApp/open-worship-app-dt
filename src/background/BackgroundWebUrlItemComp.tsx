@@ -26,7 +26,10 @@ function genFileNameElement(fileName: string) {
                     fontSize: '14px',
                 }}
             >
-                {fileName}
+                {/* Isolated so the RTL line `app-ellipsis-left` needs for its
+                    left ellipsis cannot reorder the name's own runs -- see
+                    `BackgroundMediaItemComp`. */}
+                <bdi>{fileName}</bdi>
             </p>
         </div>
     );

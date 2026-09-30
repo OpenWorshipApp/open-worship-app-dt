@@ -249,6 +249,16 @@ export default function GraphSurfaceComp<TContext>({
     }, [graph.nodeList, source, context]);
     const viewByKeyRef = useAppCurrentRef(viewByKey);
 
+    // Reuse the root view the body already resolved. The title bar and exports
+    // must follow the dataset language without loading data in the panel shell
+    // or treating a language change as a graph edit.
+    const rootTitle = viewByKey.get(graph.rootKey)?.name;
+    useEffect(() => {
+        if (rootTitle !== undefined) {
+            engine.setResolvedTitle(graph.key, graph.rootKey, rootTitle);
+        }
+    }, [engine, graph.key, graph.rootKey, graph.title, rootTitle]);
+
     /**
      * Neighbour counts for the expand badges.
      *

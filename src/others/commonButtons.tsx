@@ -7,13 +7,13 @@ import KeyboardEventListener, {
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { askAiCaution } from '../helper/ai/aiCautionHelpers';
+import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
 import { tran } from '../lang/langHelpers';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { goToPath } from '../router/routeHelpers';
-import { openOthersSetting, openSettingPage } from '../setting/settingHelpers';
+import { openSettingPage } from '../setting/settingHelpers';
 import appProvider from '../server/appProvider';
 import { checkIsMainWindow, getHelpPageUrl } from '../server/appHelpers';
 
@@ -60,31 +60,6 @@ export function SettingButtonComp() {
             <i className="bi bi-gear-wide-connected" />
         </button>
     );
-}
-
-/**
- * What the 🤖 button does with the master switch off.
- *
- * Says what is off and offers the one place that turns it back on. The
- * switch only takes effect on the next launch, so the dialog says that too
- * rather than leaving the user pressing a button that still does nothing.
- */
-async function askToEnableAI() {
-    const isOk = await showAppConfirm(
-        tran('Enable AI features'),
-        `${tran('AI features are turned off in Settings.')} ` +
-            `${tran('Would you like to open Settings to enable them?')} ` +
-            `(${tran('Restart the app to apply')})`,
-        {
-            cancelButtonLabel: 'No',
-            confirmButtonLabel: 'Yes',
-        },
-    );
-    if (isOk) {
-        // The Others tab holds the switch, so the panel that answers the
-        // dialog is the one the window opens on.
-        openOthersSetting();
-    }
 }
 
 /**

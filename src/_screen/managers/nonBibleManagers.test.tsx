@@ -93,6 +93,7 @@ vi.mock('../screenHelpers', () => ({
 }));
 
 vi.mock('../screenForegroundHelpers', () => ({
+    genHtmlForegroundMessage: renderForegroundHelperMock,
     genHtmlForegroundCountdown: renderForegroundHelperMock,
     genHtmlForegroundMarquee: vi.fn(() => ({
         element: document.createElement('div'),
@@ -102,6 +103,8 @@ vi.mock('../screenForegroundHelpers', () => ({
     genHtmlForegroundStopwatch: renderForegroundHelperMock,
     genHtmlForegroundTime: renderForegroundHelperMock,
     genHtmlForegroundWeb: renderForegroundHelperMock,
+    genHtmlForegroundVideo: renderForegroundHelperMock,
+    genHtmlForegroundImage: renderForegroundHelperMock,
 }));
 
 vi.mock('../../helper/cameraHelpers', () => ({

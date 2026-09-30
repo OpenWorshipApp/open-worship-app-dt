@@ -2,10 +2,10 @@
 id: W-35
 title: "Bring a song in from CCLI SongSelect"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-52, PL-103, PL-104]
+verify: [ST-57, PL-103, PL-104]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-29"
 ---
 # W-35 — Bring a song in from CCLI SongSelect
 
@@ -57,7 +57,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-52` · `PL-103` · `PL-104`
+`ST-57` · `PL-103` · `PL-104`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-29).
 :::

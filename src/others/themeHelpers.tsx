@@ -6,7 +6,7 @@ import {
     HEX_COLOR_BLACK,
     checkIsColorDark,
     HEX_COLOR_WHITE,
-} from './color/colorHelpers';
+} from './color/colorValueHelpers';
 
 export const themeOptions = ['light', 'dark', 'system'] as const;
 export type ThemeOptionType = (typeof themeOptions)[number];

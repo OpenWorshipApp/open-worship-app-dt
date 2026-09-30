@@ -28,7 +28,7 @@ const {
             src: `src:${filePath}`,
             fullName,
             duplicate: vi.fn(),
-            trash: vi.fn(async () => {}),
+            trash: vi.fn(async (): Promise<string | null> => 'trashed'),
             fireSelectEvent: vi.fn(),
         };
         fileSourceInstances.set(filePath, instance);
@@ -203,13 +203,42 @@ describe('FileItemHandlerComp', () => {
             expect.stringContaining('trash.txt'),
             { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
         );
-        expect(fileSource.trash).toHaveBeenCalledTimes(1);
-        expect(trashAllMaterialFilesMock).toHaveBeenCalledWith(fileSource);
+        // `ask`: on a drive with no trash the person is asked about deleting
+        // it for good rather than the delete failing.
+        expect(fileSource.trash).toHaveBeenCalledWith('ask');
+        expect(trashAllMaterialFilesMock).toHaveBeenCalledWith(
+            fileSource,
+            'none',
+        );
         expect(onTrashed).toHaveBeenCalledTimes(1);
 
         showAppConfirmMock.mockResolvedValue(false);
         await trashMenu[0].onSelect?.(new MouseEvent('click'));
         expect(fileSource.trash).toHaveBeenCalledTimes(1);
+    });
+
+    test('side files follow a file that was deleted for good', async () => {
+        const fileSource = getMockFileSource('/usb/song.ows');
+        fileSource.trash.mockResolvedValueOnce('deleted');
+        showAppConfirmMock.mockResolvedValue(true);
+        const onTrashed = vi.fn();
+
+        await genTrashContextMenu('/usb/song.ows', onTrashed)[0].onSelect?.(
+            new MouseEvent('click'),
+        );
+        expect(trashAllMaterialFilesMock).toHaveBeenCalledWith(
+            fileSource,
+            'delete',
+        );
+
+        // Kept, or not removable at all: nothing else is touched.
+        trashAllMaterialFilesMock.mockClear();
+        fileSource.trash.mockResolvedValueOnce(null);
+        await genTrashContextMenu('/usb/song.ows', onTrashed)[0].onSelect?.(
+            new MouseEvent('click'),
+        );
+        expect(trashAllMaterialFilesMock).not.toHaveBeenCalled();
+        expect(onTrashed).toHaveBeenCalledTimes(1);
     });
 
     test('renders file items, handles click, opens menus, and switches to rename mode', async () => {

@@ -65,15 +65,20 @@ export async function genContextMenuBibleKeys(
                 disabled: true,
             },
             ...bibleInfoList.map((bibleInfo) => {
-                const menuText = `(${bibleInfo.key}) ${bibleInfo.title}`;
+                const { title } = bibleInfo;
+                const menuText = `(${bibleInfo.key}) ${title}`;
+                const menuTitle = `(${bibleInfo.key}) ${title}`;
                 return {
                     childBefore: genContextMenuItemIcon('book'),
                     menuElement: (
-                        <span data-locale-ff={bibleInfo.locale}>
+                        <div
+                            className="w-100 app-overflow-hidden app-ellipsis"
+                            data-locale-ff={bibleInfo.locale}
+                        >
                             {menuText}
-                        </span>
+                        </div>
                     ),
-                    title: bibleInfo.title,
+                    title: menuTitle,
                     onSelect: (event1: any) => {
                         onSelect(event1, bibleInfo.key);
                     },

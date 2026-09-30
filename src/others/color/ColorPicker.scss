@@ -1,6 +1,39 @@
 .color-picker {
   max-width: 270px;
 
+  .color-picker-value {
+    flex: 1 1 auto;
+    width: 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    font: inherit;
+
+    &:focus-visible {
+      outline: 2px solid var(--bs-info);
+      outline-offset: -2px;
+    }
+  }
+
+  // The chevron and, without direct text entry, the color chip.
+  .color-picker-toggle {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+
+    &:focus-visible {
+      outline: 2px solid var(--bs-info);
+      outline-offset: -2px;
+    }
+  }
+
   .item {
     width: 30px;
     height: 30px;

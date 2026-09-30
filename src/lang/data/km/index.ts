@@ -29,6 +29,217 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    // Presenter-only practice lessons.
+    'Type a complete reference in Bible Lookup':
+        'វាយឯកសារយោងពេញលេញក្នុងការស្វែងរកព្រះគម្ពីរ',
+    'Enter a book, chapter and verse range together, then check the preview.':
+        'បញ្ចូលកណ្ឌ ជំពូក និងចន្លោះខជាមួយគ្នា រួចពិនិត្យមើលជាមុន។',
+    'Keep Bible Lookup open between passages':
+        'រក្សាការស្វែងរកព្រះគម្ពីរឱ្យនៅបើករវាងបទគម្ពីរ',
+    'Use Keep Open when preparing several Bible passages in a row.':
+        'ប្រើ រក្សាឱ្យនៅបើក ពេលរៀបចំបទគម្ពីរជាច្រើនជាបន្តបន្ទាប់។',
+    'Reuse a passage from lookup history':
+        'ប្រើបទគម្ពីរពីប្រវត្តិស្វែងរកឡើងវិញ',
+    'Bring back an earlier reference from the history above Bible Lookup.':
+        'យកឯកសារយោងមុនពីប្រវត្តិនៅខាងលើការស្វែងរកព្រះគម្ពីរមកវិញ។',
+    'Explore study tools in Bible Lookup':
+        'ស្វែងយល់ពីឧបករណ៍សិក្សាក្នុងការស្វែងរកព្រះគម្ពីរ',
+    'Find words, cross references and local Resources without leaving the Presenter.':
+        'ស្វែងរកពាក្យ ឯកសារយោងឆ្លង និងធនធានក្នុងម៉ាស៊ីន ដោយមិនចាកចេញពីផ្ទាំងបង្ហាញ។',
+    'Find media by its file name': 'ស្វែងរកមេឌៀតាមឈ្មោះឯកសារ',
+    'Use the Background name filter to narrow a busy media folder.':
+        'ប្រើតម្រងឈ្មោះក្នុងផ្ទាំងផ្ទៃខាងក្រោយ ដើម្បីបង្រួមបញ្ជីមេឌៀ។',
+    'Sort a media folder before the service': 'តម្រៀបថតមេឌៀមុនការថ្វាយបង្គំ',
+    'Open Background Sort to choose the order of media files.':
+        'បើក តម្រៀប ក្នុងផ្ទាំងផ្ទៃខាងក្រោយ ដើម្បីជ្រើសរើសលំដាប់ឯកសារមេឌៀ។',
+    'Check which media folder is open': 'ពិនិត្យថាតើថតមេឌៀណាកំពុងបើក',
+    'Reveal the Background path editor when an expected file is missing.':
+        'បង្ហាញប្រអប់កែផ្លូវក្នុងផ្ទាំងផ្ទៃខាងក្រោយ ពេលរកឯកសារដែលចង់បានមិនឃើញ។',
+    'Find a service flow by name': 'ស្វែងរកលំដាប់ថ្វាយបង្គំតាមឈ្មោះ',
+    'Filter the Presenting Flow List to find the right service order.':
+        'ត្រងបញ្ជីលំដាប់បង្ហាញ ដើម្បីរកលំដាប់ថ្វាយបង្គំដែលត្រឹមត្រូវ។',
+    'Organize the list of service flows': 'រៀបចំបញ្ជីលំដាប់ថ្វាយបង្គំ',
+    'Use Presenting Flow List Sort without rearranging the cues inside a flow.':
+        'តម្រៀបបញ្ជីលំដាប់បង្ហាញ ដោយមិនប្ដូរលំដាប់ជំហាននៅក្នុងវា។',
+    'Prepare several audience messages': 'រៀបចំសារជាច្រើនសម្រាប់អ្នកចូលរួម',
+    'Use Messages for separate notices with their own Show and Hide controls.':
+        'ប្រើ សារ សម្រាប់សេចក្ដីជូនដំណឹងដាច់ដោយឡែក ដែលមានប៊ូតុងបង្ហាញ និងលាក់រៀងៗខ្លួន។',
+    'Rotate notices before the service':
+        'ប្ដូរសេចក្ដីជូនដំណឹងជាបន្តបន្ទាប់មុនការថ្វាយបង្គំ',
+    'Use Messages Rotate and its seconds setting for a repeating notice board.':
+        'ប្រើការប្ដូរសារវេនគ្នា និងការកំណត់វិនាទី ដើម្បីបង្ហាញសេចក្ដីជូនដំណឹងម្ដងហើយម្ដងទៀត។',
+    'Give audience messages room to breathe':
+        'បន្ថែមចន្លោះឱ្យសារសម្រាប់អ្នកចូលរួមងាយអាន',
+    'Use Messages Properties and Effects for padding, line height and text contrast.':
+        'ប្រើ លក្ខណសម្បត្តិ និងបែបផែនរបស់សារ ដើម្បីកំណត់ចន្លោះក្នុងប្រអប់ កម្ពស់បន្ទាត់ និងភាពច្បាស់នៃអក្សរ។',
+    'Find border and shadow effects for an overlay':
+        'រកបែបផែនស៊ុម និងស្រមោលសម្រាប់ធាតុជាន់ពីលើ',
+    'Open Quick Text, then explore the Effects section inside Properties.':
+        'បើក អត្ថបទរហ័ស រួចស្វែងយល់ពីផ្នែកបែបផែនក្នុងលក្ខណសម្បត្តិ។',
+    'Prepare an image overlay slide show':
+        'រៀបចំការបង្ហាញរូបភាពជាបន្តបន្ទាប់ជាន់ពីលើ',
+    'Find Image Show slide show controls and timing options before starting playback.':
+        'រកឧបករណ៍បញ្ជា និងការកំណត់ពេលក្នុងផ្ទាំងបង្ហាញរូបភាព មុនចាប់ផ្ដើមចាក់។',
+    'Background > Videos': 'Background > វីដេអូ',
+    'Background > Images': 'Background > រូបភាព',
+    'Background > Filter by name': 'Background > ត្រងតាមឈ្មោះ',
+    'Background > Sort': 'Background > តម្រៀប',
+    'Background > Show path editor': 'Background > Show path editor',
+    'Presenting Flow List > Sort': 'Presenting Flow List > តម្រៀប',
+    'Presenting Flow List > Filter by name':
+        'Presenting Flow List > ត្រងតាមឈ្មោះ',
+    'Messages > Properties': 'Messages > លក្ខណសម្បត្តិ',
+    'Quick Text > Properties': 'Quick Text > លក្ខណសម្បត្តិ',
+    'Image Show > Properties': 'Image Show > លក្ខណសម្បត្តិ',
+    'Applies to each app page on the next launch.':
+        'អនុវត្តចំពោះទំព័រនីមួយៗរបស់កម្មវិធី នៅពេលបើកលើកក្រោយ។',
+    'Explore General settings': 'ស្វែងយល់ពីការកំណត់ទូទៅ',
+    'Manage Bible versions': 'គ្រប់គ្រងកំណែព្រះគម្ពីរ',
+    'Find AI and extra tools': 'ស្វែងរក AI និងឧបករណ៍បន្ថែម',
+    'Bible Note': 'កំណត់ត្រាព្រះគម្ពីរ',
+    'Web Editor': 'កម្មវិធីកែសម្រួលទំព័របណ្ដាញ',
+    'Lyric Editor': 'កម្មវិធីកែសម្រួលទំនុកច្រៀង',
+    'Local Web Share': 'ចែករំលែកតាមបណ្ដាញមូលដ្ឋាន',
+    'Explore folders, language, appearance, and automatic tips in General settings.':
+        'ស្វែងយល់អំពីថត ភាសា រូបរាង និងគន្លឹះស្វ័យប្រវត្តិ ក្នុងការកំណត់ទូទៅ។',
+    'Open Bible settings to manage the installed Bible versions.':
+        'បើកការកំណត់ព្រះគម្ពីរ ដើម្បីគ្រប់គ្រងកំណែព្រះគម្ពីរដែលបានដំឡើង។',
+    'Find AI features and extra binaries in Others settings.':
+        'ស្វែងរកមុខងារ AI និងកម្មវិធីបន្ថែម ក្នុងការកំណត់ផ្សេងៗ។',
+    'Select a slide, then select an item on its canvas to edit it.':
+        'ជ្រើសស្លាយ រួចជ្រើសធាតុនៅលើផ្ទៃស្លាយ ដើម្បីកែសម្រួល។',
+    'Review your slide edits before saving. Use Undo to reverse an edit.':
+        'ពិនិត្យការកែសម្រួលស្លាយមុនពេលរក្សាទុក។ ប្រើ មិនធ្វើវិញ ដើម្បីត្រឡប់ការកែសម្រួល។',
+    'Edit your note here, then use Save to keep your changes.':
+        'កែសម្រួលកំណត់ត្រានៅទីនេះ រួចប្រើ រក្សាទុក ដើម្បីរក្សាការផ្លាស់ប្ដូរ។',
+    'Edit the web page beside its preview and review it before saving.':
+        'កែសម្រួលទំព័របណ្ដាញនៅក្បែរការមើលជាមុន ហើយពិនិត្យមុនពេលរក្សាទុក។',
+    'Edit the song sections and check their preview before saving.':
+        'កែសម្រួលផ្នែកនៃបទចម្រៀង ហើយពិនិត្យការមើលជាមុន មុនពេលរក្សាទុក។',
+    'Start the server when you are ready to share, then use its address or QR code on the same network.':
+        'ចាប់ផ្ដើមម៉ាស៊ីនមេនៅពេលអ្នករួចរាល់ដើម្បីចែករំលែក រួចប្រើអាសយដ្ឋាន ឬកូដ QR របស់វាលើបណ្ដាញតែមួយ។',
+    // Reader demo titles and practical tips.
+    'Find and replay Reader demos': 'ស្វែងរក និងអនុវត្តការបង្ហាញអ្នកអានឡើងវិញ',
+    'Use Help > All tips, search a task, then choose Show it to practise one step at a time.':
+        'ចូល ជំនួយ > គន្លឹះទាំងអស់ ស្វែងរកកិច្ចការ រួចជ្រើសបង្ហាញ ដើម្បីអនុវត្តម្តងមួយជំហាន។',
+    'Copy only the passage reference': 'ចម្លងតែយោងបទគម្ពីរ',
+    'Use Copy Title when you need a reference for an outline without the verse text.':
+        'ប្រើ ចម្លងចំណងជើង ដើម្បីដាក់យោងក្នុងគ្រោងមេរៀន ដោយគ្មានអត្ថបទខគម្ពីរ។',
+    'Copy only the Bible words': 'ចម្លងតែអត្ថបទគម្ពីរ',
+    'Use Copy Text to paste the passage into your study notes without its title.':
+        'ប្រើ ចម្លងអត្ថបទ ដើម្បីបិទភ្ជាប់បទគម្ពីរក្នុងកំណត់ត្រា ដោយគ្មានចំណងជើង។',
+    'Copy the reference and Bible words': 'ចម្លងយោង និងអត្ថបទគម្ពីរ',
+    'Use Copy All to keep the passage reference with the text you paste.':
+        'ប្រើ ចម្លងទាំងអស់ ដើម្បីរក្សាយោងជាមួយអត្ថបទដែលអ្នកបិទភ្ជាប់។',
+    'Copy a verse key for study files':
+        'ចម្លងលេខសម្គាល់ខគម្ពីរសម្រាប់ឯកសារសិក្សា',
+    'Use Copy Verse Full Key for a stable book, chapter and verse identifier.':
+        'ប្រើ ចម្លងលេខសម្គាល់ខពេញ ដើម្បីយកលេខសម្គាល់សៀវភៅ ជំពូក និងខគម្ពីរ។',
+    'Copy a chapter key for Resources': 'ចម្លងលេខសម្គាល់ជំពូកសម្រាប់ធនធាន',
+    'Use Copy Chapter Full Key as the starting point for a chapter resource filename.':
+        'ប្រើ ចម្លងលេខសម្គាល់ជំពូកពេញ ជាចំណុចចាប់ផ្តើមនៃឈ្មោះឯកសារធនធានជំពូក។',
+    'Read the installed Bible information': 'អានព័ត៌មានគម្ពីរដែលបានដំឡើង',
+    'Clear the reference, then open Bible Information to check the translation and publisher.':
+        'សម្អាតយោង រួចបើកព័ត៌មានគម្ពីរ ដើម្បីពិនិត្យការបកប្រែ និងអ្នកបោះពុម្ព។',
+    'Adjust or stop automatic scrolling':
+        'កែតម្រូវ ឬបញ្ឈប់ការរមូរដោយស្វ័យប្រវត្តិ',
+    'Double-click the bottom chevron to speed up, right-click to slow down, or Alt+right-click to stop.':
+        'ចុចពីរដងលើព្រួញខាងក្រោមដើម្បីបង្កើនល្បឿន ចុចស្តាំដើម្បីបន្ថយ ឬ Alt+ចុចស្តាំដើម្បីបញ្ឈប់។',
+    'Remove an extra Bible version': 'ដកកំណែគម្ពីរបន្ថែមចេញ',
+    'Use the remove icon beside an extra version when you want one translation again.':
+        'ប្រើរូបតំណាងដកចេញក្បែរកំណែបន្ថែម ពេលអ្នកចង់អានការបកប្រែតែមួយវិញ។',
+    'Keep reading panes scrolling together': 'ឱ្យផ្ទាំងអានរមូរជាមួយគ្នា',
+    'Give passages the same color note to follow corresponding verses as you scroll.':
+        'ដាក់សម្គាល់ពណ៌ដូចគ្នាឱ្យបទគម្ពីរ ដើម្បីតាមខគម្ពីរដែលត្រូវគ្នាពេលរមូរ។',
+    'Split directly into another translation':
+        'បំបែកផ្ទាំងទៅការបកប្រែផ្សេងដោយផ្ទាល់',
+    'Use Split Horizontal to or Split Vertical to from a passage menu, then choose a Bible.':
+        'ក្នុងម៉ឺនុយបទគម្ពីរ ប្រើបំបែកផ្ដេកទៅ ឬបំបែកបញ្ឈរទៅ រួចជ្រើសគម្ពីរ។',
+    'Choose the Bible formatting model': 'ជ្រើសម៉ូដែលរៀបចំទម្រង់គម្ពីរ',
+    'Use Change Bible Model Info in the footer; choosing a different model reloads the Reader.':
+        'ប្រើ ប្ដូរព័ត៌មានម៉ូដែលគម្ពីរ នៅបាតផ្ទាំង។ ការជ្រើសម៉ូដែលផ្សេងនឹងផ្ទុកអ្នកអានឡើងវិញ។',
+    'Find the Reader saved-passage folder': 'រកថតបទគម្ពីរដែលអ្នកអានបានរក្សាទុក',
+    'Use Show path editor in Bibles to inspect the folder used for Reader passage lists.':
+        'ប្រើ បង្ហាញប្រអប់កែផ្លូវ នៅក្នុងគម្ពីរ ដើម្បីពិនិត្យថតបញ្ជីបទគម្ពីររបស់អ្នកអាន។',
+    'Create a saved Bible list': 'បង្កើតបញ្ជីបទគម្ពីរ',
+    'Open Bibles > More Options > New File to keep passages for a study in their own list.':
+        'បើក គម្ពីរ > ជម្រើសបន្ថែម > ឯកសារថ្មី ដើម្បីដាក់បទគម្ពីរសម្រាប់ការសិក្សាក្នុងបញ្ជីផ្ទាល់ខ្លួន។',
+    'Reopen a saved passage in the Reader': 'បើកបទគម្ពីរដែលបានរក្សាទុកឡើងវិញ',
+    'Expand a Bibles list, then double-click a passage; hold Shift to open it beside the current passage.':
+        'ពង្រីកបញ្ជីគម្ពីរ រួចចុចពីរដងលើបទគម្ពីរ។ សង្កត់ Shift ដើម្បីបើកក្បែរបទគម្ពីរបច្ចុប្បន្ន។',
+    'Arrange saved Bible passages': 'រៀបចំបទគម្ពីរដែលបានរក្សាទុក',
+    'Use a passage row menu for Duplicate, Move To, Move up or Move down, and its color circle to group it.':
+        'ប្រើម៉ឺនុយជួរបទគម្ពីរ ដើម្បីចម្លង ផ្លាស់ទីទៅ រំកិលឡើង ឬចុះ និងប្រើរង្វង់ពណ៌ដើម្បីចាត់ក្រុម។',
+    'Import or export a Bible list': 'នាំចូល ឬនាំចេញបញ្ជីគម្ពីរ',
+    'Export from a list file menu; Import or Import From URL from the Bibles panel menu.':
+        'នាំចេញតាមម៉ឺនុយឯកសារបញ្ជី ហើយនាំចូល ឬនាំចូលពី URL តាមម៉ឺនុយផ្ទាំងគម្ពីរ។',
+    'Manage saved Bible list files': 'គ្រប់គ្រងឯកសារបញ្ជីគម្ពីរ',
+    'Right-click a list file for Rename, Duplicate, Reload, Copy Path to Clipboard and file location.':
+        'ចុចស្តាំលើឯកសារបញ្ជី ដើម្បីប្ដូរឈ្មោះ ចម្លង ផ្ទុកឡើងវិញ ចម្លងផ្លូវ ឬបង្ហាញទីតាំងឯកសារ។',
+    'Find the Bible Notes folder': 'រកថតកំណត់ត្រាគម្ពីរ',
+    'Use Show path editor in Bible Notes when you need to locate or choose your note library.':
+        'ប្រើ បង្ហាញប្រអប់កែផ្លូវ ក្នុងកំណត់ត្រាគម្ពីរ ដើម្បីរក ឬជ្រើសបណ្ណាល័យកំណត់ត្រា។',
+    'Create a Bible Notes file': 'បង្កើតឯកសារកំណត់ត្រាគម្ពីរ',
+    'Use Bible Notes > More Options > New File to group notes for a topic or study.':
+        'ប្រើ កំណត់ត្រាគម្ពីរ > ជម្រើសបន្ថែម > ឯកសារថ្មី ដើម្បីចាត់ក្រុមកំណត់ត្រាតាមប្រធានបទ ឬការសិក្សា។',
+    'Add a note to the right file': 'បន្ថែមកំណត់ត្រាក្នុងឯកសារដែលត្រូវការ',
+    'Expand your chosen Bible Notes file and press its New Note Item plus button.':
+        'ពង្រីកឯកសារកំណត់ត្រាគម្ពីរដែលអ្នកជ្រើស រួចចុចប៊ូតុងបូកកំណត់ត្រាថ្មីរបស់វា។',
+    'Arrange and move Bible note items': 'រៀបចំ និងផ្លាស់ទីកំណត់ត្រាគម្ពីរ',
+    'Use a note row menu to Duplicate, Move To, Move up or Move down; drag between note files.':
+        'ប្រើម៉ឺនុយជួរកំណត់ត្រា ដើម្បីចម្លង ផ្លាស់ទីទៅ រំកិលឡើង ឬចុះ ឬអូសរវាងឯកសារកំណត់ត្រា។',
+    'Import and export Bible notes': 'នាំចូល និងនាំចេញកំណត់ត្រាគម្ពីរ',
+    'Import note files from the panel menu, import an item into a file, or Export the file or item you need.':
+        'នាំចូលឯកសារកំណត់ត្រាពីម៉ឺនុយផ្ទាំង នាំចូលកំណត់ត្រាមួយក្នុងឯកសារ ឬនាំចេញឯកសារ ឬកំណត់ត្រាដែលត្រូវការ។',
+    'Manage Bible Notes files': 'គ្រប់គ្រងឯកសារកំណត់ត្រាគម្ពីរ',
+    'Use a note file menu for Rename, Duplicate, Reload, Copy All Items and Move All Items To.':
+        'ប្រើម៉ឺនុយឯកសារកំណត់ត្រា ដើម្បីប្ដូរឈ្មោះ ចម្លង ផ្ទុកឡើងវិញ ចម្លងធាតុទាំងអស់ ឬផ្លាស់ទីទាំងអស់ទៅ។',
+    'Search for words selected in a verse':
+        'ស្វែងរកពាក្យដែលបានជ្រើសក្នុងខគម្ពីរ',
+    'Select Bible words, right-click them, then choose Search in Bible Search.':
+        'ជ្រើសពាក្យគម្ពីរ ចុចស្តាំ រួចជ្រើស ស្វែងរកក្នុងការស្វែងរកគម្ពីរ។',
+    'Choose the verse for cross references': 'ជ្រើសខគម្ពីរសម្រាប់យោងឆ្លង',
+    'Open Cross Reference, then select a verse to follow its related passages.':
+        'បើកយោងឆ្លង រួចជ្រើសខគម្ពីរ ដើម្បីតាមបទគម្ពីរដែលពាក់ព័ន្ធ។',
+    'Filter the people and places lookup': 'ត្រងមនុស្ស និងទីកន្លែងក្នុងគម្ពីរ',
+    'Switch Names or Locations, search the list, and use Filter by name type for people.':
+        'ប្ដូររវាងឈ្មោះ និងទីកន្លែង ស្វែងរកក្នុងបញ្ជី ហើយប្រើតម្រងប្រភេទឈ្មោះសម្រាប់មនុស្ស។',
+    'Read a place and open its map': 'អានអំពីទីកន្លែង និងបើកផែនទី',
+    'Choose Locations in the names lookup, open a place, then use Open in Google Maps if available.':
+        'ជ្រើសទីកន្លែងក្នុងការរកឈ្មោះ បើកទីកន្លែងមួយ រួចប្រើបើកក្នុង Google Maps បើមាន។',
+    'Find a resource by filename': 'រកធនធានតាមឈ្មោះឯកសារ',
+    'In Resources, use Search file name to narrow the files; clear the words when finished.':
+        'ក្នុងធនធាន ប្រើស្វែងរកឈ្មោះឯកសារដើម្បីត្រង ហើយសម្អាតពាក្យពេលចប់។',
+    'Show resources without chapter names': 'បង្ហាញធនធានដែលគ្មានឈ្មោះជំពូក',
+    'Toggle Others in Resources to include files that do not use a book and chapter filename.':
+        'ប្ដូរ ផ្សេងៗ ក្នុងធនធាន ដើម្បីបញ្ចូលឯកសារដែលមិនប្រើឈ្មោះសៀវភៅ និងជំពូក។',
+    'Refresh or extend the Resources library':
+        'ធ្វើបច្ចុប្បន្នភាព ឬបន្ថែមបណ្ណាល័យធនធាន',
+    'Use the Resources menu for Add Folder or Reload, and a folder menu for Refresh or Add Files.':
+        'ប្រើម៉ឺនុយធនធានសម្រាប់បន្ថែមថត ឬផ្ទុកឡើងវិញ និងម៉ឺនុយថតសម្រាប់ធ្វើឱ្យថ្មី ឬបន្ថែមឯកសារ។',
+    'Keep study resources with app data':
+        'រក្សាធនធានសិក្សាជាមួយទិន្នន័យកម្មវិធី',
+    'Use a resource folder menu > Copy to Data Directory to make a portable library copy.':
+        'ប្រើម៉ឺនុយថតធនធាន > ចម្លងទៅថតទិន្នន័យ ដើម្បីធ្វើច្បាប់ចម្លងបណ្ណាល័យដែលអាចយកតាមខ្លួន។',
+    'Show one kind of graph relationship': 'បង្ហាញទំនាក់ទំនងក្រាហ្វតែមួយប្រភេទ',
+    'In an open graph, toggle relation chips or right-click a chip to show only that relationship.':
+        'ក្នុងក្រាហ្វដែលបើក ប្ដូរប៊ូតុងប្រភេទទំនាក់ទំនង ឬចុចស្តាំលើវា ដើម្បីបង្ហាញតែទំនាក់ទំនងនោះ។',
+    'Find a connection between Bible records': 'រកទំនាក់ទំនងរវាងទិន្នន័យគម្ពីរ',
+    'Open Graph Preview, press Find Connection, choose Path to, then run the search.':
+        'បើកមើលក្រាហ្វ ចុចរកទំនាក់ទំនង ជ្រើសផ្លូវទៅ រួចដំណើរការស្វែងរក។',
+    'Fit and rearrange a connection graph':
+        'សម្រប និងរៀបចំក្រាហ្វទំនាក់ទំនងឡើងវិញ',
+    'Use Fit to view, Re-layout, Zoom, Collapse all, Undo and Redo inside the graph.':
+        'ប្រើសម្របតាមទិដ្ឋភាព រៀបចំឡើងវិញ ពង្រីកបង្រួម បង្រួមទាំងអស់ មិនធ្វើវិញ និងធ្វើឡើងវិញ ក្នុងក្រាហ្វ។',
+    'Copy or export a connection graph': 'ចម្លង ឬនាំចេញក្រាហ្វទំនាក់ទំនង',
+    'Use the graph Copy menu for Markdown or diagram text; Presets also offers Save as image and Print.':
+        'ប្រើម៉ឺនុយចម្លងក្នុងក្រាហ្វសម្រាប់ Markdown ឬអត្ថបទដ្យាក្រាម។ ម៉ឺនុយគំរូក៏មានរក្សាទុកជារូបភាព និងបោះពុម្ព។',
+    'Save and revisit a graph preset': 'រក្សាទុក និងបើកគំរូក្រាហ្វឡើងវិញ',
+    'Use Presets > Save preset to name your graph, then pick it from Presets later.':
+        'ប្រើ គំរូ > រក្សាទុកគំរូ ដើម្បីដាក់ឈ្មោះក្រាហ្វ រួចជ្រើសវាពីគំរូនៅពេលក្រោយ។',
+    'Resize or close one Reader panel': 'ប្ដូរទំហំ ឬបិទផ្ទាំងអ្នកអានមួយ',
+    'Drag a panel divider, or right-click it for Reset Size, Close First Widget and Close Second Widget.':
+        'អូសបន្ទាត់បែងចែកផ្ទាំង ឬចុចស្តាំ ដើម្បីកំណត់ទំហំឡើងវិញ បិទផ្ទាំងទីមួយ ឬបិទផ្ទាំងទីពីរ។',
     'Are you sure you want to clear all settings?':
         'តើអ្នកពិតជាចង់លុបការកំណត់ទាំងអស់ឬ?',
     'Reveal Original': 'បង្ហាញកន្លែងដើម',
@@ -68,6 +279,7 @@ const dictionary = {
     'The data directory is inside this folder':
         'ថតទិន្នន័យស្ថិតនៅក្នុងថតនេះ ដូច្នេះមិនអាចចម្លងចូលខ្លួនវាបានទេ',
     'Cannot copy folder': 'មិនអាចចម្លងថតបានទេ',
+    'In the data directory': 'នៅក្នុងថតទិន្នន័យ',
     // --- Resources: copying picked files INTO one of the user's folders.
     'Add Files': 'បន្ថែមឯកសារ',
     'file copied': 'ឯកសារត្រូវបានចម្លង',
@@ -274,6 +486,7 @@ const dictionary = {
     Previewer: 'កម្មវិធីមើលជាមុន',
     Slides: 'ស្លាយ',
     'Slide Notes': 'កំណត់ត្រាស្លាយ',
+    'Slide Document': 'ឯកសារស្លាយ',
     Canvas: 'ផ្ទាំងក្រណាត់',
     'Slide Editor Ground': 'តំបន់កែសម្រួលស្លាយ',
     'Slide Editor Canvas': 'ផ្ទាំងកែសម្រួលស្លាយ',
@@ -293,8 +506,8 @@ const dictionary = {
     'Remove Stage': 'លុបស្ទែជចេញ',
     'Base Stage': 'ស្ទែជគោល',
     'Base stage is always shown': 'ស្ទែជគោលតែងតែបង្ហាញ',
-    'Add another stage layout': 'បន្ថែមប្លង់ស្ទែជមួយទៀត',
-    'All stage layouts are shown': 'ប្លង់ស្ទែជទាំងអស់កំពុងបង្ហាញ',
+    'Choose a stage to add': 'ជ្រើសរើសស្ទែជដើម្បីបន្ថែម',
+    'Maximum stages are shown': 'បង្ហាញស្ទែជអតិបរមាហើយ',
     'Stage Style': 'រចនាប័ទ្មស្ទែជ',
     'Reset Stage Style': 'កំណត់រចនាប័ទ្មស្ទែជឡើងវិញ',
     'Applies to every song': 'អនុវត្តលើបទចម្រៀងទាំងអស់',
@@ -332,7 +545,7 @@ const dictionary = {
     'Enter your note here': 'បញ្ចូលកំណត់សម្គាល់របស់អ្នកនៅទីនេះ',
     'Slide is copied': 'ស្លាយត្រូវបានចម្លង',
     'Remove Background': 'លុបផ្ទៃខាងក្រោយ',
-    'Timezone Minute Offset': 'ការបន្ថែម/បញ្ចូលនាទីតំបន់ពេលវេលា',
+    'Timezone Hour Offset': 'ការបន្ថែម/បញ្ចូលម៉ោងតំបន់ពេលវេលា',
     'Choose Color': 'ជ្រើសរើសពណ៌',
     'Choose City': 'ជ្រើសរើសទីក្រុង',
     'New Slide': 'ស្លាយថ្មី',
@@ -352,12 +565,17 @@ const dictionary = {
     'Reveal in Finder': 'បង្ហាញនៅក្នុង Finder',
     'Preview PDF': 'មើល PDF',
     'Refresh PDF Images': 'ផ្ទុករូបភាព PDF ជាថ្មី',
+    'Exporting PDF Images': 'កំពុងបម្លែងទំព័រ PDF ទៅជារូបភាព',
+    'Please wait while the PDF pages are being exported...':
+        'សូមរង់ចាំ ខណៈពេលទំព័រ PDF កំពុងត្រូវបានបម្លែងជារូបភាព...',
+    'Preparing PDF pages...': 'កំពុងរៀបចំទំព័រ PDF...',
     'Add New Screen': 'បន្ថែមអេក្រង់ថ្មី',
     'Refresh Preview': 'ផ្ទុកមើលជាមុន',
+    'Show Monitor Wallpaper': 'បង្ហាញផ្ទាំងរូបភាពអេក្រង់',
     'The application is started first time':
         'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
     Close: 'បិទ',
-    'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់វីដេអូ',
+    'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់ផ្ទាំង',
     'Split Vertical to': 'បំបែកបញ្ឈរទៅ',
     'Split Horizontal to': 'បំបែកផ្ដេកទៅ',
     'Loading Bible Data': 'កំពុងផ្ទុកទិន្នន័យព្រះគម្ពីរ',
@@ -365,6 +583,14 @@ const dictionary = {
     'Open bible lookup popup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
     Cancel: 'បដិសេធ',
     Ok: 'យល់ព្រម',
+    'Choose File': 'ជ្រើសរើសឯកសារ',
+    'No file chosen': 'មិនទាន់បានជ្រើសរើសឯកសារ',
+    Or: 'ឬ',
+    'URL:': 'តំណ៖',
+    'Key is already taken': 'កូនសោនេះត្រូវបានប្រើរួចហើយ',
+    'File saved at:': 'ឯកសារត្រូវបានរក្សាទុកនៅ៖',
+    'Failed to save Bible data': 'បរាជ័យក្នុងការរក្សាទុកទិន្នន័យព្រះគម្ពីរ',
+    'Bible XML data not found': 'រកមិនឃើញទិន្នន័យព្រះគម្ពីរ XML',
     'Cancel selection': 'បោះបង់ការជ្រើសរើស',
     'Quick Exit': 'ចាកចេញយ៉ាងឆាប់រហ័ស',
     'Are you sure you want to quit the app?':
@@ -383,6 +609,8 @@ const dictionary = {
     'Camera Properties': 'លក្ខណៈកាមេរ៉ា',
     'Camera Device': 'ឧបករណ៍កាមេរ៉ា',
     'Camera not found': 'រកមិនឃើញកាមេរ៉ា',
+    'Camera Not Available': 'កាមេរ៉ាមិនអាចប្រើបាន',
+    'Could not open the camera': 'មិនអាចបើកកាមេរ៉ាបានទេ',
     'Start Camera': 'ចាប់ផ្តើមកាមេរ៉ា',
     'Stop Camera': 'បញ្ឈប់កាមេរ៉ា',
     Preview: 'មើលជាមុន',
@@ -406,6 +634,9 @@ const dictionary = {
     New: 'ថ្មី',
     'Slides are copied': 'ស្លាយត្រូវបានចម្លង',
     Copied: 'បានចម្លង',
+    'Copy failed': 'ការចម្លងបានបរាជ័យ',
+    'Could not copy to the clipboard. Try again.':
+        'មិនអាចចម្លងទៅក្ដារតម្បៀតខ្ទាស់បានទេ។ សូមព្យាយាមម្ដងទៀត។',
     'Canvas item copied': 'ធាតុផ្ទាំងបានចម្លង',
     'Enable Background Audio Handlers':
         'បើក/បិទ អ្នកគ្រប់គ្រងសំលេងផ្ទៃខាងក្រោយ',
@@ -432,6 +663,8 @@ const dictionary = {
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
     Exporting: 'កំពុងបំលែង',
     'Export to MS Word': 'បំលែងទៅឯកសារ MS Word',
+    'Export to PPTX': 'បំលែងទៅឯកសារ PPTX',
+    'Unable to export the document to PPTX': 'មិនអាចបំលែងឯកសារទៅជា PPTX បានទេ',
     'Exporting Fonts': 'បំលែងពុម្ពអក្សរ',
     'Would you like to export the fonts?': 'តើអ្នកចង់បំលែងពុម្ពអក្សរដែរឬទេ?',
     'Fail to Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
@@ -446,6 +679,11 @@ const dictionary = {
     Videos: 'វីដេអូ',
     Cameras: 'កាមេរ៉ា',
     Webs: 'វេបសាយ',
+    // Singular: what ONE attached background is, for the icon that says a
+    // slide carries one (`AttachBackgroundIconComp`).
+    Image: 'រូបភាព',
+    Video: 'វីដេអូ',
+    Web: 'វេបសាយ',
     Text: 'អក្សរ',
     Box: 'ប្រអប់',
     Appearance: 'រូបរាង',
@@ -465,6 +703,7 @@ const dictionary = {
     'Add Action': 'បន្ថែមសកម្មភាព',
     'Apply on Screens': 'អនុវត្តនៅលើអេក្រង់',
     'Clear Screen': 'លុបអេក្រង់',
+    'Clear FG Messages': 'លុប FG សារ',
     'Clear FG Marquee Top': 'លុប FG អក្សររត់ខាងលើ',
     'Clear FG Marquee Bottom': 'លុប FG អក្សររត់ខាងក្រោម',
     'Clear FG Quick Text': 'លុប FG អត្ថបទរហ័ស',
@@ -571,6 +810,7 @@ const dictionary = {
     'Add Extra Bible': 'បន្ថែមព្រះគម្ពីរ',
     'Add Time': 'បន្ថែមម៉ោង',
     'Advance Bible Lookup': 'ស្វែងរកព្រះគម្ពីរកម្រិតខ្ពស់',
+    'Advance Lookup': 'ស្វែងរកកម្រិតខ្ពស់',
     'Apply All Slides': 'អនុវត្តទៅកាន់គ្រប់ស្លាយ',
     'Apply changed dimension to this slide':
         'អនុវត្តទំហំដែលបានផ្លាស់ប្តូរទៅកាន់ស្លាយនេះ',
@@ -586,7 +826,6 @@ const dictionary = {
     'Auto Play Audio AI when available': 'លេងសំលេង AI ដោយស្វ័យប្រវត្តិនៅពេលមាន',
     'Backdrop Filter (PX):': 'Backdrop Filter (PX):',
     'Background Color:': 'ពណ៌ផ្ទៃខាងក្រោយ:',
-    'Background Images Slide Show': 'ការបង្ហាញស្លាយរូបភាពផ្ទៃខាងក្រោយ',
     'Bible key': 'កូនសោរព្រះគម្ពីរ',
     'Bible Lookup': 'ស្វែងរកព្រះគម្ពីរ',
     'Camera Show': 'បង្ហាញកាមេរ៉ា',
@@ -599,6 +838,35 @@ const dictionary = {
     'Clear Cache': 'លុប Cache',
     'Clear Color Note': 'លុបកំណត់សម្គាល់ពណ៌',
     'Clear Foreground': 'លុបផ្ទៃខាងមុខ',
+    // --- Messages and Mask ---
+    Messages: 'សារ',
+    'Show All Messages': 'បង្ហាញសារទាំងអស់',
+    'Hide Messages': 'លាក់សារ',
+    Message: 'សារ',
+    'Add Message': 'បន្ថែមសារ',
+    'Type in the empty message first': 'សូមវាយបញ្ចូលក្នុងសារទទេជាមុនសិន',
+    'Type a message': 'វាយសារនៅទីនេះ',
+    'No message yet': 'មិនទាន់មានសារនៅឡើយ',
+    'Show Message': 'បង្ហាញសារ',
+    'Hide Message': 'លាក់សារ',
+    'Remove Message': 'ដកសារចេញ',
+    'Remove Time': 'ដកម៉ោងចេញ',
+    Rotate: 'ផ្លាស់ប្តូរ',
+    'Show each message in turn': 'បង្ហាញសារនីមួយៗតាមវេន',
+    'Seconds each message stays before the next':
+        'វិនាទីដែលសារនីមួយៗបង្ហាញមុនបន្ទាប់',
+    'Tick a screen first, then press the key again':
+        'ជ្រើសរើសអេក្រង់ជាមុនសិន រួចចុចគ្រាប់ចុចម្តងទៀត',
+    Mask: 'របាំង',
+    'Cover from the top': 'បិទបាំងពីខាងលើ',
+    'Cover from the bottom': 'បិទបាំងពីខាងក្រោម',
+    'Cover from the left': 'បិទបាំងពីខាងឆ្វេង',
+    'Cover from the right': 'បិទបាំងពីខាងស្តាំ',
+    'Mask color': 'ពណ៌របាំង',
+    'Remove Mask': 'ដកចេញរបាំង',
+    'Clear All does not remove the mask': 'លុបទាំងអស់ មិនដកចេញរបាំងទេ',
+    'Cover the edges the projector overshoots':
+        'បិទបាំងគែមដែលម៉ាស៊ីនបញ្ចាំងលើស',
     'Clear Slide': 'លុបស្លាយ',
     Clear: 'លុប',
     'Click to change Stage Number': 'ចុចដើម្បីផ្លាស់ប្តូរលេខដំណាក់កាល',
@@ -609,6 +877,18 @@ const dictionary = {
     'Copy Text': 'ចម្លងអក្សរ',
     'Copy Title': 'ចម្លងចំណងជើង',
     'Copy Verse Full Key': 'ចម្លងកូនសោរពេញខគម្ពីរ',
+    'Generate Slides': 'បង្កើតស្លាយ',
+    'Leave empty for Auto. Text shrinks to fit.':
+        'ទុកទទេសម្រាប់ទំហំស្វ័យប្រវត្តិ។ អក្សរនឹងរួមតូចដើម្បីឱ្យសមនឹងស្លាយ។',
+    'The next verse appears quietly at the bottom right':
+        'ខបន្ទាប់បង្ហាញដោយស្រាលនៅជ្រុងខាងក្រោមស្តាំ',
+    'Choose Bible versions to include on each slide':
+        'ជ្រើសរើសកំណែព្រះគម្ពីរដែលត្រូវដាក់ក្នុងស្លាយនីមួយៗ',
+    'A title slide, then one verse per slide with all selected Bible versions':
+        'ស្លាយចំណងជើង បន្ទាប់មកមួយខក្នុងមួយស្លាយជាមួយកំណែព្រះគម្ពីរដែលបានជ្រើសរើសទាំងអស់',
+    'Bible passage is unavailable in': 'មិនមានខគម្ពីរនេះក្នុង',
+    'Unable to generate slides from this Bible item':
+        'មិនអាចបង្កើតស្លាយពីខគម្ពីរនេះបានទេ',
     Copy: 'ចម្លង',
     Countdown: 'រាប់ថយក្រោយ',
     'Create Anthropic api key': 'បង្កើត Anthropic api key',
@@ -620,6 +900,9 @@ const dictionary = {
     Delete: 'លុប',
     'Dictionary for Selected Text': 'វចនានុក្រមសម្រាប់អត្ថបទដែលបានជ្រើសរើស',
     Disable: 'បិទដំណើរការ',
+    'Discard Change': 'បោះបង់ការផ្លាស់ប្តូរ',
+    'Drop every unsaved change in this note file?':
+        'បោះបង់រាល់ការផ្លាស់ប្តូរដែលមិនទាន់រក្សាទុក ក្នុងឯកសារកំណត់ចំណាំនេះ?',
     'Discard changed': 'បោះបង់ការផ្លាស់ប្តូរ',
     'Download From URL': 'ទាញយកពី URL',
     'Import From URL': 'នាំចូលពី URL',
@@ -729,6 +1012,7 @@ const dictionary = {
     'Round (%)': 'មូល (%)',
     'Round Size %:': 'ទំហំមូល %:',
     'Round Size Pixel:': 'ទំហំមូល Pixel:',
+    'Round Size Pixel': 'ទំហំមូល Pixel',
     'Round:': 'មូល:',
     'Save bible item and show on screen':
         'រក្សាទុកធាតុព្រះគម្ពីរហើយបង្ហាញនៅលើអេក្រង់',
@@ -773,6 +1057,7 @@ const dictionary = {
     Strip: 'ដកចេញ',
     System: 'ប្រព័ន្ធ',
     'Text Color:': 'ពណ៌អក្សរ:',
+    'Text Color': 'ពណ៌អក្សរ',
     Theme: 'ស្បែក',
     'There is no parent directory selected': 'មិនមានថតមេត្រូវបានជ្រើសរើសទេ',
     'This will change all Slides': 'នេះនឹងផ្លាស់ប្តូរស្លាយទាំងអស់',
@@ -794,6 +1079,18 @@ const dictionary = {
     'Bible Reader': 'អានព្រះគម្ពីរ',
     'Add Bible Item': 'បន្ថែមខព្រះគម្ពីរ',
     'Font Size': 'ទំហំតួអក្សរ',
+    'Bulk Font': 'ពុម្ពអក្សរសម្រាប់ធាតុច្រើន',
+    'Apply to text, Bible and HTML items.':
+        'អនុវត្តលើធាតុអត្ថបទ ព្រះគម្ពីរ និង HTML។',
+    'Apply to': 'អនុវត្តលើ',
+    'All Slides': 'ស្លាយទាំងអស់',
+    'Choose slides and items': 'ជ្រើសរើសស្លាយ និងធាតុ',
+    'Apply Font Size': 'អនុវត្តទំហំតួអក្សរ',
+    'Apply Font Family': 'អនុវត្តពុម្ពអក្សរ',
+    'Include locked items': 'រួមបញ្ចូលធាតុដែលបានចាក់សោ',
+    'Failed to apply font changes': 'មិនអាចអនុវត្តការផ្លាស់ប្តូរពុម្ពអក្សរ',
+    'No items needed updating': 'គ្មានធាតុត្រូវការកែប្រែ',
+    'Updated items:': 'ធាតុដែលបានកែប្រែ៖',
     'Keep Open': 'កុំបិទ',
     'Should New Lines': 'គួរតែបង្កើតបន្ទាត់ថ្មី',
     'Use Model New Lines': 'ប្រើបន្ទាត់ថ្មីគំរូ',
@@ -829,11 +1126,14 @@ const dictionary = {
         'តើអ្នកពិតជាចង់អនុវត្តវិមាត្រនេះទៅកាន់ស្លាយទាំងអស់ឬ?',
     Auto: 'ស្វ័យប្រវត្តិ',
     'Backdrop Filter': 'តម្រងផ្ទៃខាងក្រោយ',
+    Blur: 'ព្រិល',
     'Camera Error': 'កំហុសកាមេរ៉ា',
     City: 'ទីក្រុង',
     Collapse: 'បង្រួម',
     'Corner radius in pixels (0 to use %)':
         'កាំជ្រុងគិតជាភីកសែល (0 ដើម្បីប្រើ %)',
+    'Countdown Date': 'កាលបរិច្ឆេទរាប់ថយក្រោយ',
+    'Countdown Time': 'ម៉ោងរាប់ថយក្រោយ',
     'Count down for a duration': 'រាប់ថយក្រោយតាមរយៈពេល',
     'Count down to a specific date & time':
         'រាប់ថយក្រោយទៅកាន់ថ្ងៃ និងម៉ោងជាក់លាក់',
@@ -1011,6 +1311,9 @@ const dictionary = {
     Height: 'កម្ពស់',
     'Horizontal alignment': 'ការតម្រឹមផ្ដេក',
     'Text align left': 'តម្រឹមអក្សរឆ្វេង',
+    'Text align top': 'តម្រឹមអក្សរខាងលើ',
+    'Text align middle': 'តម្រឹមអក្សរកណ្តាលបញ្ឈរ',
+    'Text align bottom': 'តម្រឹមអក្សរខាងក្រោម',
     'Text align center': 'តម្រឹមអក្សរកណ្តាល',
     'Text align right': 'តម្រឹមអក្សរស្តាំ',
     'Align left': 'តម្រឹមឆ្វេង',
@@ -1062,6 +1365,8 @@ const dictionary = {
         'សូមផ្អាកសំលេង និងវីដេអូទាំងអស់មុនពេលចាកចេញពីទំព័រ។',
     Undo: 'ត្រឡប់ក្រោយ',
     Redo: 'ធ្វើឡើងវិញ',
+    'Undo Saved Change': 'ត្រឡប់ក្រោយការផ្លាស់ប្តូរឯកសារ',
+    'Redo Saved Change': 'ធ្វើឡើងវិញការផ្លាស់ប្តូរឯកសារ',
     Help: 'ជំនួយ',
     'Bible Properties': 'លក្ខណសម្បត្តិព្រះគម្ពីរ',
     'Thumbnail View': 'ទិដ្ឋភាពរូបតូច',
@@ -1097,6 +1402,7 @@ const dictionary = {
     'Cannot source Note': 'មិនអាចទាញយកប្រភពកំណត់សម្គាល់បានទេ',
     'Canvas item not found': 'រកមិនឃើញធាតុផ្ទាំងក្រណាត់',
     'Canvas Scale': 'មាត្រដ្ឋានផ្ទាំងក្រណាត់',
+    'Center view': 'ដាក់ទិដ្ឋភាពនៅកណ្តាល',
     'Chapter data not found.': 'រកមិនឃើញទិន្នន័យជំពូក។',
     'Choose Bible Books': 'ជ្រើសរើសគម្ពីរ',
     'Choose Locale': 'ជ្រើសរើសភាសា',
@@ -1306,6 +1612,7 @@ const dictionary = {
     Locations: 'ទីកន្លែង',
     'Search names': 'ស្វែងរកឈ្មោះ',
     'Search locations': 'ស្វែងរកទីកន្លែង',
+    'Search verses': 'ស្វែងរកខគម្ពីរ',
     'Clear search': 'សម្អាតការស្វែងរក',
     'Filter by name type': 'ត្រងតាមប្រភេទឈ្មោះ',
     'Type filter applies to names only':
@@ -1352,6 +1659,7 @@ const dictionary = {
     Children: 'កូន',
     Siblings: 'បងប្អូន',
     Cousins: 'បងប្អូនជីដូនមួយ',
+    Verse: 'ខគម្ពីរ',
     Verses: 'ខគម្ពីរ',
     Links: 'តំណភ្ជាប់',
     'Modern identification': 'ការកំណត់អត្តសញ្ញាណសម័យទំនើប',
@@ -1578,10 +1886,7 @@ const dictionary = {
     // Mermaid Live Editor menu is made of; the other two carry a name because
     // the list declares one for every format. `Mindmap` is translated here and
     // in `Copy as Mermaid Mindmap` above, or one menu would name the same
-    // shape two ways. The last two are product names and stand as they are —
-    // which means neither may ever be written into the knowledge as an
-    // `[en:tran:…]` template: `tran.test.mjs` reads a translation identical to
-    // its key as no translation at all, and cannot tell the two apart.
+    // shape two ways. The last two are product names and stand as they are.
     'Mermaid (across)': 'Mermaid (ផ្ដេក)',
     'Mermaid (down)': 'Mermaid (បញ្ឈរ)',
     'Mermaid Mindmap': 'Mermaid ផែនទីគំនិត',
@@ -1666,6 +1971,607 @@ const dictionary = {
     'Open in Markdown Editor': 'បើកក្នុងកម្មវិធីកែ Markdown',
     'Open Bible Lookup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
     'Change Bible Key': 'ប្ដូរកូនសោរព្រះគម្ពីរ',
+    // --- A data folder carried between computers and operating systems
+    // (EN-22..35, 2026-09-19): file names every computer accepts, deleting on
+    // a USB stick with no Recycle Bin. Machine-authored Khmer following the
+    // dictionary's existing conventions; a native speaker should review.
+    'Please type a name.': 'សូមវាយឈ្មោះ។',
+    'A name cannot contain these characters, which some computers refuse:':
+        'ឈ្មោះមិនអាចមានតួអក្សរទាំងនេះបានទេ ព្រោះកុំព្យូទ័រខ្លះមិនទទួលយក៖',
+    'A name cannot start with a dot.': 'ឈ្មោះមិនអាចចាប់ផ្តើមដោយចំណុចបានទេ។',
+    'A name cannot end with a dot or a space.':
+        'ឈ្មោះមិនអាចបញ្ចប់ដោយចំណុច ឬដកឃ្លាបានទេ។',
+    'This name is reserved by Windows. Please choose another one.':
+        'ឈ្មោះនេះត្រូវបាន Windows បម្រុងទុក។ សូមជ្រើសរើសឈ្មោះផ្សេង។',
+    'This name is too long. Please use a shorter one.':
+        'ឈ្មោះនេះវែងពេក។ សូមប្រើឈ្មោះខ្លីជាងនេះ។',
+    'Creating File': 'កំពុងបង្កើតឯកសារ',
+    'Delete Permanently': 'លុបជាអចិន្ត្រៃយ៍',
+    'could not be moved to the Recycle Bin or Trash. A USB flash drive has none on Windows. Delete it permanently? This cannot be undone.':
+        'មិនអាចផ្លាស់ទីទៅធុងសំរាមបានទេ។ ឧបករណ៍ផ្ទុក USB គ្មានធុងសំរាមនៅលើ Windows ទេ។ លុបវាជាអចិន្ត្រៃយ៍ឬ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។',
+    'Data Folder Not Found': 'រកមិនឃើញថតទិន្នន័យ',
+    'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.':
+        'មិនអាចប្រើបានទេ។ ប្រសិនបើវានៅលើឧបករណ៍ផ្ទុក USB សូមដោតវាចូល ហើយចុច ព្យាយាមម្តងទៀត។ រហូតដល់ពេលនោះ កម្មវិធីកំពុងប្រើថតផ្ទាល់ខ្លួន ហើយទិន្នន័យរបស់អ្នកមិនត្រូវបានប៉ះពាល់ទេ។',
+    Retry: 'ព្យាយាមម្តងទៀត',
+    'Choose Another Folder': 'ជ្រើសរើសថតផ្សេង',
+    'Data Folder Found': 'បានរកឃើញថតទិន្នន័យ',
+    'Use the data folder found at': 'ប្រើថតទិន្នន័យដែលបានរកឃើញនៅ',
+    'Create and use the standard folders (Documents, Videos, Images and the rest) inside':
+        'បង្កើត និងប្រើថតស្តង់ដារ (ឯកសារ វីដេអូ រូបភាព និងផ្សេងទៀត) នៅក្នុង',
+    'Repair Links': 'ជួសជុលតំណភ្ជាប់',
+    'Point links to pictures, videos and songs that still name an old location of this data folder at where it is now':
+        'ភ្ជាប់តំណទៅរូបភាព វីដេអូ និងចម្រៀង ដែលនៅតែចង្អុលទៅទីតាំងចាស់នៃថតទិន្នន័យនេះ ទៅកាន់ទីតាំងបច្ចុប្បន្នវិញ',
+    'No links to an old location of this data folder were found.':
+        'រកមិនឃើញតំណទៅទីតាំងចាស់នៃថតទិន្នន័យនេះទេ។',
+    'Links repaired:': 'តំណដែលបានជួសជុល៖',
+    'Files changed:': 'ឯកសារដែលបានកែប្រែ៖',
+    'The app reloads to show them.':
+        'កម្មវិធីនឹងផ្ទុកឡើងវិញ ដើម្បីបង្ហាញពួកវា។',
+    // --- Page-aware Tips of the Day and their deterministic walkthroughs.
+    'Tips of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
+    'Tip of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
+    'Presenter tip': 'គន្លឹះសម្រាប់អ្នកបង្ហាញ',
+    'Reader tip': 'គន្លឹះសម្រាប់អ្នកអាន',
+    'Show it': 'បង្ហាញរបៀប',
+    'Next tip': 'គន្លឹះបន្ទាប់',
+    'All tips': 'គន្លឹះទាំងអស់',
+    'All Presenter tips': 'គន្លឹះទាំងអស់សម្រាប់អ្នកបង្ហាញ',
+    'All Reader tips': 'គន្លឹះទាំងអស់សម្រាប់អ្នកអាន',
+    'Back to tip': 'ត្រឡប់ទៅគន្លឹះ',
+    'Choose a tip to practise at your own pace.':
+        'ជ្រើសរើសគន្លឹះមួយ ដើម្បីហាត់រៀនតាមល្បឿនរបស់អ្នក។',
+    "Don't show again": 'កុំបង្ហាញម្តងទៀត',
+    'Show Tips of the Day automatically':
+        'បង្ហាញគន្លឹះប្រចាំថ្ងៃដោយស្វ័យប្រវត្តិ',
+    'Applies to the Presenter and Bible Reader on the next app launch.':
+        'អនុវត្តចំពោះទំព័រអ្នកបង្ហាញ និងទំព័រអ្នកអានព្រះគម្ពីរ នៅពេលបើកកម្មវិធីលើកក្រោយ។',
+    'Starting walkthrough…': 'កំពុងចាប់ផ្តើមការណែនាំ…',
+    'This tip closes by itself': 'គន្លឹះនេះនឹងបិទដោយខ្លួនឯង',
+    'Could not start this walkthrough.': 'មិនអាចចាប់ផ្តើមការណែនាំនេះបានទេ។',
+    'File menu': 'ម៉ឺនុយ ឯកសារ',
+    'Edit menu': 'ម៉ឺនុយ កែសម្រួល',
+    'Tools menu': 'ម៉ឺនុយ ឧបករណ៍',
+    'Window menu': 'ម៉ឺនុយ បង្អួច',
+    'Help menu': 'ម៉ឺនុយ ជំនួយ',
+    'Learn the File menu': 'រៀនអំពីម៉ឺនុយ ឯកសារ',
+    'Learn Print, Print Without Preview, Export Data, Import Data, Close, and Quit or Exit.':
+        'ស្វែងយល់អំពី Print, Print Without Preview, Export Data, Import Data, Close និង Quit ឬ Exit។',
+    'Learn the Edit menu': 'រៀនអំពីម៉ឺនុយ កែសម្រួល',
+    'Learn Undo, Redo, Cut, Copy, Paste, Paste and Match Style, Find, Delete, Select All, Settings, and Speech.':
+        'ស្វែងយល់អំពី Undo, Redo, Cut, Copy, Paste, Paste and Match Style, Find, Delete, Select All, Settings និង Speech។',
+    'Learn the Tools menu': 'រៀនអំពីម៉ឺនុយ ឧបករណ៍',
+    'Learn Copy Debug Info, Copy Full Debug Info, Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.':
+        'ស្វែងយល់អំពី Copy Debug Info, Copy Full Debug Info, Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools និង Start Controlling។',
+    'Learn the Window menu': 'រៀនអំពីម៉ឺនុយ បង្អួច',
+    'Learn Minimize, Maximize or Zoom, Close, Bring All to Front, window switching, and Reset Position and Size.':
+        'ស្វែងយល់អំពី Minimize, Maximize ឬ Zoom, Close, Bring All to Front, ការប្តូរបង្អួច និង Reset Position and Size។',
+    'Learn the Help menu': 'រៀនអំពីម៉ឺនុយ ជំនួយ',
+    'Learn Tips of the Day, All tips, App Help (Chatbot), AI Chat, Learn More, both update checks, and About.':
+        'ស្វែងយល់អំពី Tips of the Day, All tips, App Help (Chatbot), AI Chat, Learn More, ការពិនិត្យបច្ចុប្បន្នភាពទាំងពីរ និង About។',
+    'Look up a Bible passage': 'ស្វែងរកបទគម្ពីរ',
+    'Open Bible Lookup without leaving the Presenter.':
+        'បើកការស្វែងរកព្រះគម្ពីរដោយមិនចាកចេញពីទំព័រអ្នកបង្ហាញ។',
+    'Show or hide the Document List': 'បង្ហាញ ឬលាក់បញ្ជីឯកសារ',
+    'Toggle the panel that holds your slide documents.':
+        'បើក ឬបិទផ្ទាំងដែលផ្ទុកឯកសារស្លាយរបស់អ្នក។',
+    'Show or hide the Presenting Flow List': 'បង្ហាញ ឬលាក់បញ្ជីតារាងកម្មវិធី',
+    'Toggle the panel used to build and follow a service order.':
+        'បើក ឬបិទផ្ទាំងសម្រាប់រៀបចំ និងតាមដានលំដាប់កម្មវិធី។',
+    'Show or hide Bibles and Bible Notes':
+        'បង្ហាញ ឬលាក់ព្រះគម្ពីរ និងកំណត់ត្រាព្រះគម្ពីរ',
+    'Toggle the panel for saved passages and notes.':
+        'បើក ឬបិទផ្ទាំងសម្រាប់បទគម្ពីរ និងកំណត់ត្រាដែលបានរក្សាទុក។',
+    'Show or hide the Mini Screen': 'បង្ហាញ ឬលាក់អេក្រង់តូច',
+    'Toggle the panel that previews and controls audience screens.':
+        'បើក ឬបិទផ្ទាំងមើលជាមុន និងគ្រប់គ្រងអេក្រង់អ្នកទស្សនា។',
+    'Give the Presenter more room': 'ពង្រីកកន្លែងសម្រាប់ទំព័រអ្នកបង្ហាញ',
+    'Switch the Presenter between normal and full view.':
+        'ប្តូរទំព័រអ្នកបង្ហាញរវាងទិដ្ឋភាពធម្មតា និងពេញ។',
+    'Open Slide Editor in its own window':
+        'បើកកម្មវិធីកែស្លាយក្នុងបង្អួចផ្ទាល់ខ្លួន',
+    'Keep the Presenter visible while editing the selected document.':
+        'រក្សាទំព័រអ្នកបង្ហាញឱ្យនៅមើលឃើញ ខណៈកំពុងកែឯកសារដែលបានជ្រើស។',
+    'Open Bible Reader in its own window':
+        'បើកអ្នកអានព្រះគម្ពីរក្នុងបង្អួចផ្ទាល់ខ្លួន',
+    'Read or study without replacing the Presenter page.':
+        'អាន ឬសិក្សាដោយមិនជំនួសទំព័រអ្នកបង្ហាញ។',
+    'Open app Settings': 'បើកការកំណត់កម្មវិធី',
+    'Change language, theme, folders, screens, and other app options.':
+        'ប្តូរភាសា រូបរាង ថត អេក្រង់ និងជម្រើសកម្មវិធីផ្សេងៗ។',
+    'Open the Help menu': 'បើកម៉ឺនុយជំនួយ',
+    'Find app help, tips, updates, and information about the app.':
+        'ស្វែងរកជំនួយ គន្លឹះ បច្ចុប្បន្នភាព និងព័ត៌មានអំពីកម្មវិធី។',
+    'Open foreground controls': 'បើកការគ្រប់គ្រងផ្ទៃខាងមុខ',
+    'Reach countdowns, clocks, marquees, and quick text.':
+        'ប្រើការរាប់ថយក្រោយ នាឡិកា អក្សររត់ និងអត្ថបទរហ័ស។',
+    'Foreground overlays': 'ស្រទាប់ផ្ទៃខាងមុខ',
+    'Count down to the start of a service':
+        'រាប់ថយក្រោយទៅកាន់ពេលចាប់ផ្តើមពិធីថ្វាយបង្គំ',
+    'Countdown counts a number of minutes, or down to a time on the clock.':
+        'Countdown រាប់ថយក្រោយតាមចំនួននាទី ឬទៅកាន់ម៉ោងជាក់លាក់។',
+    'Time how long something is running': 'កត់ត្រារយៈពេលដែលកំពុងដំណើរការ',
+    'Stopwatch counts up from zero on the audience screen.':
+        'Stopwatch រាប់ឡើងពីសូន្យនៅលើអេក្រង់អ្នកទស្សនា។',
+    'Show the time on the audience screen': 'បង្ហាញម៉ោងនៅលើអេក្រង់អ្នកទស្សនា',
+    'Time puts one clock up, or several for different cities.':
+        'Time បង្ហាញនាឡិកាមួយ ឬច្រើនសម្រាប់ទីក្រុងផ្សេងៗ។',
+    'Scroll a line of text across the top': 'រំកិលអត្ថបទមួយជួរនៅផ្នែកខាងលើ',
+    'Marquee Top is a moving notice above everything else on the screen.':
+        'Marquee Top គឺជាសារមានចលនានៅពីលើអ្វីៗទាំងអស់នៅលើអេក្រង់។',
+    'Scroll a line of text across the bottom':
+        'រំកិលអត្ថបទមួយជួរនៅផ្នែកខាងក្រោម',
+    'Marquee Bottom is the same moving notice, along the foot of the screen.':
+        'Marquee Bottom គឺជាសារមានចលនាដដែល នៅផ្នែកខាងក្រោមអេក្រង់។',
+    'Put a short message up for a moment': 'បង្ហាញសារខ្លីមួយក្នុងរយៈពេលខ្លី',
+    'Quick Text puts a few words up that go again by themselves.':
+        'Quick Text បង្ហាញពាក្យពីរបី ដែលបាត់ទៅវិញដោយខ្លួនឯង។',
+    'Play a clip over the slide': 'ចាក់វីដេអូពីលើស្លាយ',
+    'Video Show plays a clip above the background, the slide and the passage.':
+        'Video Show ចាក់វីដេអូនៅពីលើផ្ទៃខាងក្រោយ ស្លាយ និងខគម្ពីរ។',
+    'Lay a picture over the slide': 'ដាក់រូបភាពពីលើស្លាយ',
+    'Image Show lays a logo, a frame or an announcement above everything else.':
+        'Image Show ដាក់ឡូហ្គោ ស៊ុម ឬសេចក្តីជូនដំណឹងនៅពីលើអ្វីៗទាំងអស់។',
+    'Show a camera over the slide': 'បង្ហាញកាមេរ៉ាពីលើស្លាយ',
+    'Camera Show puts a live camera picture above the slide, not behind it.':
+        'Camera Show ដាក់រូបភាពកាមេរ៉ាផ្ទាល់នៅពីលើស្លាយ មិនមែននៅពីក្រោយទេ។',
+    'Show a web page over the slide': 'បង្ហាញទំព័របណ្តាញពីលើស្លាយ',
+    'Web Show puts a page or a small web file above the slide.':
+        'Web Show ដាក់ទំព័របណ្តាញ ឬឯកសារបណ្តាញតូចនៅពីលើស្លាយ។',
+    'Place and size a foreground item': 'កំណត់ទីតាំង និងទំហំធាតុផ្ទៃខាងមុខ',
+    'Use Properties for position, size, opacity and blending.':
+        'ប្រើផ្ទាំងលក្ខណសម្បត្តិសម្រាប់ទីតាំង ទំហំ ភាពថ្លា និងការលាយពណ៌។',
+    'Keep the lines you use every week':
+        'រក្សាទុកអត្ថបទដែលអ្នកប្រើរៀងរាល់សប្តាហ៍',
+    'Save named sessions inside a foreground component.':
+        'រក្សាទុកវគ្គដែលមានឈ្មោះនៅក្នុងធាតុផ្ទៃខាងមុខ។',
+    'Take a foreground item back off': 'ដកធាតុផ្ទៃខាងមុខចេញវិញ',
+    'Hide one component, or clear the whole foreground layer.':
+        'លាក់ធាតុមួយ ឬសម្អាតស្រទាប់ផ្ទៃខាងមុខទាំងមូល។',
+    'Open background colors': 'បើកពណ៌ផ្ទៃខាងក្រោយ',
+    'Choose a solid color for the selected audience screens.':
+        'ជ្រើសពណ៌តែមួយសម្រាប់អេក្រង់អ្នកទស្សនាដែលបានជ្រើស។',
+    'Open background images': 'បើករូបភាពផ្ទៃខាងក្រោយ',
+    'Browse still pictures available for screen backgrounds.':
+        'រកមើលរូបភាពដែលមានសម្រាប់ផ្ទៃខាងក្រោយអេក្រង់។',
+    'Open background videos': 'បើកវីដេអូផ្ទៃខាងក្រោយ',
+    'Browse and control moving backgrounds.':
+        'រកមើល និងគ្រប់គ្រងផ្ទៃខាងក្រោយមានចលនា។',
+    'Open camera backgrounds': 'បើកកាមេរ៉ាជាផ្ទៃខាងក្រោយ',
+    'Choose a connected camera as a live background source.':
+        'ជ្រើសកាមេរ៉ាដែលបានភ្ជាប់ជាប្រភពផ្ទៃខាងក្រោយផ្ទាល់។',
+    'Open website backgrounds': 'បើកគេហទំព័រជាផ្ទៃខាងក្រោយ',
+    'Browse saved web pages used as screen backgrounds.':
+        'រកមើលទំព័រវេបដែលបានរក្សាទុកសម្រាប់ប្រើជាផ្ទៃខាងក្រោយ។',
+    'Open the audio library': 'បើកបណ្ណាល័យសំឡេង',
+    'Browse music and other audio used during a service.':
+        'រកមើលតន្ត្រី និងសំឡេងផ្សេងទៀតសម្រាប់ប្រើក្នុងកម្មវិធីថ្វាយបង្គំ។',
+    'Change the open document folder': 'ប្តូរថតឯកសារដែលបានបើក',
+    'Show the folder path box above the Document List.':
+        'បង្ហាញប្រអប់ផ្លូវថតនៅខាងលើបញ្ជីឯកសារ។',
+    'Find a document by name': 'ស្វែងរកឯកសារតាមឈ្មោះ',
+    'Filter a long Document List without moving or deleting anything.':
+        'ត្រងបញ្ជីឯកសារវែង ដោយមិនផ្លាស់ទី ឬលុបអ្វីឡើយ។',
+    'Sort the Document List': 'តម្រៀបបញ្ជីឯកសារ',
+    'Change how documents are ordered without changing their files.':
+        'ប្តូរលំដាប់បង្ហាញឯកសារ ដោយមិនកែប្រែឯកសារដើម។',
+    'Filter documents by type': 'ត្រងឯកសារតាមប្រភេទ',
+    'Show only slides, lyrics, PDFs, or another document kind.':
+        'បង្ហាញតែស្លាយ អត្ថបទចម្រៀង PDF ឬប្រភេទឯកសារផ្សេងទៀត។',
+    'Pin the selected document': 'ខ្ទាស់ឯកសារដែលបានជ្រើស',
+    'Keep presenting from one document while selecting another.':
+        'បន្តបង្ហាញពីឯកសារមួយ ខណៈកំពុងជ្រើសឯកសារផ្សេង។',
+    'Make slide thumbnails larger': 'ធ្វើរូបតូចស្លាយឱ្យធំជាងមុន',
+    'Increase the preview size without changing audience output.':
+        'បង្កើនទំហំមើលជាមុន ដោយមិនប្តូរអ្វីលើអេក្រង់អ្នកទស្សនា។',
+    'Fit the selected document to width': 'ដាក់ឯកសារដែលបានជ្រើសឱ្យពេញទទឹង',
+    'Toggle full-width document previews without changing the screen.':
+        'ប្តូរទិដ្ឋភាពឯកសារពេញទទឹង ដោយមិនប្តូរអេក្រង់អ្នកទស្សនា។',
+    'Write a note on a document or slide': 'សរសេរកំណត់ត្រាលើឯកសារ ឬស្លាយ',
+    'Open the Note panel under the slide previews; it starts closed.':
+        'បើកផ្ទាំងកំណត់ត្រានៅក្រោមរូបមើលជាមុនស្លាយ វាបិទតាំងពីដំបូង។',
+    'Present a slide from a document': 'បង្ហាញស្លាយពីឯកសារ',
+    'Select a document, then send one of its slide cards to the audience.':
+        'ជ្រើសឯកសារ បន្ទាប់មកផ្ញើកាតស្លាយមួយរបស់វាទៅអ្នកទស្សនា។',
+    'Auto-play slides on a timer': 'ចាក់ស្លាយដោយស្វ័យប្រវត្តិតាមម៉ោង',
+    'Set a slide duration and let the selected document advance itself.':
+        'កំណត់រយៈពេលស្លាយ ហើយឱ្យឯកសារដែលបានជ្រើសបន្តដោយខ្លួនឯង។',
+    'Present song lyrics': 'បង្ហាញអត្ថបទចម្រៀង',
+    'Choose a lyric document and present its generated stage slides.':
+        'ជ្រើសឯកសារចម្រៀង ហើយបង្ហាញស្លាយឆាកដែលបានបង្កើត។',
+    'Look up and present a Bible verse': 'ស្វែងរក និងបង្ហាញខព្រះគម្ពីរ',
+    'Choose a passage, preview it, then send it to selected screens.':
+        'ជ្រើសបទគម្ពីរ មើលជាមុន ហើយផ្ញើវាទៅអេក្រង់ដែលបានជ្រើស។',
+    'Style Bible text on screen': 'កំណត់រចនាប័ទ្មអត្ថបទព្រះគម្ពីរលើអេក្រង់',
+    'Change the Bible layer font, size, colors, spacing, and layout.':
+        'ប្តូរពុម្ពអក្សរ ទំហំ ពណ៌ គម្លាត និងប្លង់នៃស្រទាប់ព្រះគម្ពីរ។',
+    'Use a solid background color': 'ប្រើពណ៌តែមួយជាផ្ទៃខាងក្រោយ',
+    'Choose a color and apply it only after checking the selected screens.':
+        'ជ្រើសពណ៌ ហើយអនុវត្តវាបន្ទាប់ពីពិនិត្យអេក្រង់ដែលបានជ្រើស។',
+    'Use an image background': 'ប្រើរូបភាពជាផ្ទៃខាងក្រោយ',
+    'Choose a still picture and preview it before the audience sees it.':
+        'ជ្រើសរូបភាព ហើយមើលជាមុន មុនពេលអ្នកទស្សនាឃើញវា។',
+    'Use a video background': 'ប្រើវីដេអូជាផ្ទៃខាងក្រោយ',
+    'Choose a video, preview playback, and control it safely.':
+        'ជ្រើសវីដេអូ មើលការចាក់ជាមុន ហើយគ្រប់គ្រងវាដោយសុវត្ថិភាព។',
+    'Use a camera background': 'ប្រើកាមេរ៉ាជាផ្ទៃខាងក្រោយ',
+    'Choose a connected camera and check its live preview first.':
+        'ជ្រើសកាមេរ៉ាដែលបានភ្ជាប់ ហើយពិនិត្យការមើលផ្ទាល់ជាមុន។',
+    'Use a website background': 'ប្រើគេហទំព័រជាផ្ទៃខាងក្រោយ',
+    'Create or choose a saved web item and preview its captured page.':
+        'បង្កើត ឬជ្រើសធាតុវេបដែលបានរក្សាទុក ហើយមើលទំព័ររបស់វាជាមុន។',
+    'Play audio during a service': 'ចាក់សំឡេងក្នុងកម្មវិធីថ្វាយបង្គំ',
+    'Choose a saved audio file and use its playback controls.':
+        'ជ្រើសឯកសារសំឡេងដែលបានរក្សាទុក ហើយប្រើការគ្រប់គ្រងចាក់របស់វា។',
+    'Show a countdown, clock, or message': 'បង្ហាញការរាប់ថយក្រោយ នាឡិកា ឬសារ',
+    'Use Foreground for timers, marquees, and quick text overlays.':
+        'ប្រើផ្ទៃខាងមុខសម្រាប់ម៉ោង អក្សររត់ និងអត្ថបទរហ័សលើអេក្រង់។',
+    'Control what the audience sees': 'គ្រប់គ្រងអ្វីដែលអ្នកទស្សនាឃើញ',
+    'Use Mini Screen to show, hide, lock, or clear individual layers.':
+        'ប្រើអេក្រង់តូចដើម្បីបង្ហាញ លាក់ ចាក់សោ ឬសម្អាតស្រទាប់នីមួយៗ។',
+    'Use more than one audience screen': 'ប្រើអេក្រង់អ្នកទស្សនាច្រើនជាងមួយ',
+    'Add screen cards, choose displays, and decide which screens receive content.':
+        'បន្ថែមកាតអេក្រង់ ជ្រើសឧបករណ៍បង្ហាញ និងកំណត់អេក្រង់ដែលទទួលមាតិកា។',
+    'Draw or spotlight on the app': 'គូរ ឬបំភ្លឺចំណុចលើកម្មវិធី',
+    'Use Presenting Control for arrows, drawing, erasing, and focus.':
+        'ប្រើការគ្រប់គ្រងការបង្ហាញសម្រាប់ព្រួញ ការគូរ ការលុប និងការផ្តោត។',
+    'Show the keys you press': 'បង្ហាញគ្រាប់ចុចដែលអ្នកចុច',
+    'Display keyboard shortcuts while teaching or demonstrating the app.':
+        'បង្ហាញផ្លូវកាត់ក្តារចុច ខណៈកំពុងបង្រៀន ឬបង្ហាញកម្មវិធី។',
+    'Download a background video or song': 'ទាញយកវីដេអូផ្ទៃខាងក្រោយ ឬបទចម្រៀង',
+    'Use a supported public link to add video or audio to the library.':
+        'ប្រើតំណសាធារណៈដែលគាំទ្រ ដើម្បីបន្ថែមវីដេអូ ឬសំឡេងទៅបណ្ណាល័យ។',
+    'Build a service presenting flow': 'បង្កើតលំដាប់កម្មវិធីថ្វាយបង្គំ',
+    'Arrange documents, passages, actions, and cues into a running order.':
+        'រៀបចំឯកសារ បទគម្ពីរ សកម្មភាព និងសញ្ញាចូលជាលំដាប់ដំណើរការ។',
+    'Share a presenting flow': 'ចែករំលែកលំដាប់បង្ហាញ',
+    'Export a service order with the documents it references.':
+        'នាំចេញលំដាប់កម្មវិធីជាមួយឯកសារដែលវាយោង។',
+    'Import a song from SongSelect': 'នាំចូលបទចម្រៀងពី SongSelect',
+    'Sign in, search the service, and bring a licensed song into Documents.':
+        'ចូលគណនី ស្វែងរកសេវាកម្ម ហើយនាំបទចម្រៀងមានអាជ្ញាប័ណ្ណចូលឯកសារ។',
+    'Import a public-domain hymn': 'នាំចូលបទទំនុកតម្កើងសាធារណៈ',
+    'Browse the built-in hymn collection without an account.':
+        'រកមើលសំណុំបទទំនុកតម្កើងដែលមានស្រាប់ ដោយមិនត្រូវការគណនី។',
+    'Use the More Options buttons': 'ប្រើប៊ូតុងជម្រើសបន្ថែម',
+    'Open the three-dot menu on a document, slide, background, or flow item.':
+        'បើកម៉ឺនុយចំណុចបីលើឯកសារ ស្លាយ ផ្ទៃខាងក្រោយ ឬធាតុលំដាប់។',
+    'Ask the App Assistant for help': 'សុំជំនួយពីអ្នកជំនួយការកម្មវិធី',
+    'Ask about the Presenter and request a safe step-by-step walkthrough.':
+        'សួរអំពីទំព័រអ្នកបង្ហាញ និងស្នើការណែនាំម្តងមួយជំហានដោយសុវត្ថិភាព។',
+    'Open an AI chat website': 'បើកគេហទំព័រជជែក AI',
+    'Use ChatGPT, Claude, Gemini, or another supported site in a separate window.':
+        'ប្រើ ChatGPT, Claude, Gemini ឬគេហទំព័រដែលគាំទ្រផ្សេងទៀតក្នុងបង្អួចដាច់ដោយឡែក។',
+    'Find text anywhere in the app': 'ស្វែងរកអត្ថបទគ្រប់ទីកន្លែងក្នុងកម្មវិធី',
+    'Use the Find bar to locate a document, setting, or visible control.':
+        'ប្រើរបារស្វែងរកដើម្បីរកឯកសារ ការកំណត់ ឬប៊ូតុងដែលមើលឃើញ។',
+    'Reload or force-reload the Presenter': 'ផ្ទុកទំព័រអ្នកបង្ហាញឡើងវិញ',
+    'Use Reload normally; use Force Reload only to bypass cached app files.':
+        'ប្រើផ្ទុកឡើងវិញជាធម្មតា; ប្រើផ្ទុកបង្ខំតែពេលចង់រំលងឯកសារឃ្លាំងបណ្តោះអាសន្ន។',
+    'Use View > Toggle Developer Tools only for technical troubleshooting.':
+        'ប្រើ មើល > ប្តូរឧបករណ៍អ្នកអភិវឌ្ឍន៍ សម្រាប់តែការដោះស្រាយបញ្ហាបច្ចេកទេស។',
+    'Zoom the whole Presenter interface':
+        'ពង្រីកចំណុចប្រទាក់ទំព័រអ្នកបង្ហាញទាំងមូល',
+    'Use Actual Size, Zoom In, or Zoom Out for every panel and control.':
+        'ប្រើទំហំពិត ពង្រីក ឬបង្រួម សម្រាប់ផ្ទាំង និងការគ្រប់គ្រងទាំងអស់។',
+    'Make the whole Presenter full screen':
+        'ធ្វើទំព័រអ្នកបង្ហាញទាំងមូលពេញអេក្រង់',
+    'Use View > Toggle Full Screen or F11 for the entire app window.':
+        'ប្រើ មើល > ប្តូរពេញអេក្រង់ ឬ F11 សម្រាប់បង្អួចកម្មវិធីទាំងមូល។',
+    'Show or hide Presenter panels from View':
+        'បង្ហាញ ឬលាក់ផ្ទាំងអ្នកបង្ហាញពីម៉ឺនុយ មើល',
+    'Use View > Widgets to choose which Presenter panels are open.':
+        'ប្រើ មើល > Widgets ដើម្បីជ្រើសផ្ទាំងអ្នកបង្ហាញដែលត្រូវបើក។',
+    'Restore every Presenter panel layout': 'ស្តារប្លង់ផ្ទាំងអ្នកបង្ហាញទាំងអស់',
+    'Use View > Reset Widgets Size to restore defaults after confirmation.':
+        'ប្រើ មើល > កំណត់ទំហំ Widgets ឡើងវិញ ដើម្បីស្តារលំនាំដើមបន្ទាប់ពីបញ្ជាក់។',
+    'Documents and slides': 'ឯកសារ និងស្លាយ',
+    'Audience screens': 'អេក្រង់អ្នកទស្សនា',
+    'Background and media': 'ផ្ទៃខាងក្រោយ និងមេឌៀ',
+    'Service planning': 'ការរៀបចំកម្មវិធីថ្វាយបង្គំ',
+    'Make the words larger': 'ធ្វើឱ្យអក្សរធំជាងមុន',
+    'Open the hidden footer and raise Font Size.':
+        'បើកបាតទំព័រដែលលាក់ ហើយបង្កើនទំហំអក្សរ។',
+    'Find words in the Bible': 'ស្វែងរកពាក្យក្នុងព្រះគម្ពីរ',
+    'Open Bible Find, then put the caret in its search box.':
+        'បើកការស្វែងរកព្រះគម្ពីរ រួចដាក់ទស្សន៍ទ្រនិចក្នុងប្រអប់ស្វែងរក។',
+    'Look up a Bible person or place': 'ស្វែងរកបុគ្គល ឬទីកន្លែងក្នុងព្រះគម្ពីរ',
+    'Open the names and locations lookup beside the passage.':
+        'បើកការស្វែងរកឈ្មោះ និងទីកន្លែងនៅក្បែរបទគម្ពីរ។',
+    'Put two Bible versions side by side': 'ដាក់ព្រះគម្ពីរពីរកំណែនៅក្បែរគ្នា',
+    'Open the version picker for a second Bible column.':
+        'បើកឧបករណ៍ជ្រើសកំណែសម្រាប់ជួរឈរព្រះគម្ពីរទីពីរ។',
+    'Toggle distraction-free reading': 'ប្តូរទៅការអានដោយគ្មានការរំខាន',
+    'Enter or leave the full reading view.': 'ចូល ឬចាកចេញពីទិដ្ឋភាពអានពេញ។',
+    'Toggle the side panel that keeps saved passages and notes.':
+        'បើក ឬបិទផ្ទាំងចំហៀងសម្រាប់បទគម្ពីរ និងកំណត់ត្រាដែលបានរក្សាទុក។',
+    'Search tips': 'ស្វែងរកគន្លឹះ',
+    'No tips found': 'រកមិនឃើញគន្លឹះ',
+    'Getting started': 'ចាប់ផ្តើម',
+    'Reading and layout': 'ការអាន និងប្លង់',
+    'Notes and marks': 'កំណត់ត្រា និងសញ្ញាសម្គាល់',
+    'Reader shortcuts': 'ឧបករណ៍អ្នកអាន',
+    'View menu': 'ម៉ឺនុយ មើល',
+    'Study tools': 'ឧបករណ៍សិក្សា',
+    'Make the words smaller': 'ធ្វើឱ្យអក្សរតូចជាងមុន',
+    'Open the hidden footer and lower Font Size.':
+        'បើកបាតទំព័រដែលលាក់ ហើយបន្ថយទំហំអក្សរ។',
+    'Open John 3:16 with buttons': 'បើក យ៉ូហាន ៣:១៦ ដោយប៊ូតុង',
+    'Choose the book, chapter and verse without typing a reference.':
+        'ជ្រើសសៀវភៅ ជំពូក និងខ ដោយមិនចាំបាច់វាយសេចក្ដីយោង។',
+    'Go back to the previous passage': 'ត្រឡប់ទៅអត្ថបទមុន',
+    'Use the passage history without typing the reference again.':
+        'ប្រើប្រវត្តិអត្ថបទ ដោយមិនបាច់វាយសេចក្ដីយោងម្ដងទៀត។',
+    'Go forward to the next passage': 'ទៅមុខកាន់អត្ថបទបន្ទាប់',
+    'Move forward again after using passage history.':
+        'ទៅមុខម្ដងទៀត បន្ទាប់ពីប្រើប្រវត្តិអត្ថបទ។',
+    'Clear the reference box': 'សម្អាតប្រអប់សេចក្ដីយោង',
+    "Show this Bible's book buttons and start a fresh lookup.":
+        'បង្ហាញប៊ូតុងសៀវភៅរបស់ព្រះគម្ពីរ ហើយចាប់ផ្ដើមស្វែងរកថ្មី។',
+    'Change names and places language': 'ប្ដូរភាសាឈ្មោះ និងទីកន្លែង',
+    'Remove the last part of a reference': 'លុបផ្នែកចុងក្រោយនៃសេចក្ដីយោង',
+    'Keep the earlier book or chapter and correct only the last choice.':
+        'រក្សាសៀវភៅ ឬជំពូកមុន ហើយកែតែជម្រើសចុងក្រោយ។',
+    'Show or hide saved Bibles': 'បង្ហាញ ឬលាក់ព្រះគម្ពីរដែលបានរក្សាទុក',
+    'Use View > Widgets to show or hide only the saved Bibles section.':
+        'ប្រើ មើល > ធាតុក្រាហ្វិក ដើម្បីបង្ហាញ ឬលាក់តែផ្នែកព្រះគម្ពីរដែលបានរក្សាទុក។',
+    'Show or hide Bible Notes': 'បង្ហាញ ឬលាក់កំណត់ត្រាព្រះគម្ពីរ',
+    'Use View > Widgets to show or hide only the Bible Notes section.':
+        'ប្រើ មើល > ធាតុក្រាហ្វិក ដើម្បីបង្ហាញ ឬលាក់តែផ្នែកកំណត់ត្រាព្រះគម្ពីរ។',
+    'Filter Bible Notes by name': 'ត្រងកំណត់ត្រាព្រះគម្ពីរតាមឈ្មោះ',
+    'Focus Filter by name, then type part of the note you need.':
+        'ដាក់ទស្សន៍ទ្រនិចក្នុង ត្រងតាមឈ្មោះ ហើយវាយផ្នែកនៃកំណត់ត្រាដែលអ្នកត្រូវការ។',
+    'Choose how Bible Notes are sorted': 'ជ្រើសរបៀបតម្រៀបកំណត់ត្រាព្រះគម្ពីរ',
+    'Open Sort and choose one of the available list orders.':
+        'បើក តម្រៀប ហើយជ្រើសលំដាប់បញ្ជីមួយដែលមាន។',
+    'Open Reader Settings': 'បើកការកំណត់អ្នកអាន',
+    'Open Settings from the Reader header without leaving your passage.':
+        'បើកការកំណត់ពីក្បាលទំព័រអ្នកអាន ដោយមិនចាកចេញពីអត្ថបទរបស់អ្នក។',
+    'Open Reader Help': 'បើកជំនួយអ្នកអាន',
+    'Open Help for tips, updates, and information about the app.':
+        'បើកជំនួយសម្រាប់គន្លឹះ បច្ចុប្បន្នភាព និងព័ត៌មានអំពីកម្មវិធី។',
+    'Open the language picker used by the people and places tools.':
+        'បើកឧបករណ៍ជ្រើសភាសា សម្រាប់ឈ្មោះមនុស្ស និងទីកន្លែង។',
+    'Choose how to copy a passage': 'ជ្រើសរបៀបចម្លងអត្ថបទ',
+    'Open the Copy menu for the passage you are reading.':
+        'បើកម៉ឺនុយ ចម្លង សម្រាប់អត្ថបទដែលអ្នកកំពុងអាន។',
+    'Split the passage side by side': 'បំបែកអត្ថបទដាក់ក្បែរគ្នា',
+    'Make a second reading pane to the right.':
+        'បង្កើតផ្ទាំងអានទីពីរនៅខាងស្ដាំ។',
+    'Split the passage top and bottom': 'បំបែកអត្ថបទខាងលើ និងខាងក្រោម',
+    'Make a second reading pane underneath.': 'បង្កើតផ្ទាំងអានទីពីរនៅខាងក្រោម។',
+    'Save this passage in Bibles': 'រក្សាទុកអត្ថបទនេះក្នុង ព្រះគម្ពីរ',
+    'Keep the passage in your Bibles list for later.':
+        'ទុកអត្ថបទក្នុងបញ្ជីព្រះគម្ពីរ ដើម្បីអាននៅពេលក្រោយ។',
+    'Present a passage from the Reader': 'បង្ហាញអត្ថបទពីអ្នកអាន',
+    'Double-click a verse to send it to selected screens; use F9 to clear it.':
+        'ចុចពីរដងលើខ ដើម្បីផ្ញើទៅអេក្រង់ដែលបានជ្រើស; ប្រើ F9 ដើម្បីលុបវា។',
+    'Start automatic scrolling': 'ចាប់ផ្ដើមរំកិលដោយស្វ័យប្រវត្តិ',
+    'Let a long passage move down by itself.':
+        'ឱ្យអត្ថបទវែងរំកិលចុះដោយខ្លួនឯង។',
+    'Jump back to the top': 'ត្រឡប់ទៅខាងលើភ្លាមៗ',
+    'Return to the beginning of a long passage.': 'ត្រឡប់ទៅដើមនៃអត្ថបទវែង។',
+    'Toggle natural Bible line breaks': 'ប្ដូរការចុះបន្ទាត់តាមព្រះគម្ពីរ',
+    "Choose whether the passage follows the Bible's own line breaks.":
+        'ជ្រើសថាតើអត្ថបទត្រូវធ្វើតាមការចុះបន្ទាត់របស់ព្រះគម្ពីរឬអត់។',
+    'Toggle model-based line breaks': 'ប្ដូរការចុះបន្ទាត់តាមគំរូ',
+    'Choose whether supported Bibles use their formatting model.':
+        'ជ្រើសថាតើព្រះគម្ពីរដែលគាំទ្រ ត្រូវប្រើគំរូទ្រង់ទ្រាយរបស់វាឬអត់។',
+    'Open cross references': 'បើកសេចក្ដីយោងឆ្លង',
+    'See other verses connected to the passage you are reading.':
+        'មើលខផ្សេងៗដែលទាក់ទងនឹងអត្ថបទដែលអ្នកកំពុងអាន។',
+    'See people and places in this passage':
+        'មើលមនុស្ស និងទីកន្លែងក្នុងអត្ថបទនេះ',
+    'Open the names and locations found in what you are reading.':
+        'បើកឈ្មោះ និងទីកន្លែងដែលមានក្នុងអត្ថបទដែលអ្នកកំពុងអាន។',
+    'Open passage resources': 'បើកធនធានរបស់អត្ថបទ',
+    'Show study resources for the passage beside the Bible.':
+        'បង្ហាញធនធានសិក្សារបស់អត្ថបទនៅក្បែរព្រះគម្ពីរ។',
+    'Search only selected Bible books': 'ស្វែងរកតែក្នុងសៀវភៅដែលបានជ្រើស',
+    'Open the book filter used by Bible Find.':
+        'បើកតម្រងសៀវភៅ ដែលប្រើដោយការស្វែងរកព្រះគម្ពីរ។',
+    'Type a complete Bible reference': 'វាយសេចក្ដីយោងព្រះគម្ពីរពេញលេញ',
+    'Enter a reference such as John 3:16 and open it directly.':
+        'បញ្ចូលសេចក្ដីយោងដូចជា យ៉ូហាន ៣:១៦ ហើយបើកវាដោយផ្ទាល់។',
+    'Use the reference box shortcuts': 'ប្រើផ្លូវកាត់ក្នុងប្រអប់សេចក្ដីយោង',
+    'Tab completes a choice, Escape removes one part, and Ctrl+Escape clears all.':
+        'Tab បំពេញជម្រើស Escape លុបមួយផ្នែក ហើយ Ctrl+Escape សម្អាតទាំងអស់។',
+    'Reuse and arrange passage history': 'ប្រើឡើងវិញ និងរៀបចំប្រវត្តិអត្ថបទ',
+    'Open, split, drag, save, or remove references from the history row.':
+        'បើក បំបែក អូស រក្សាទុក ឬលុបសេចក្ដីយោងពីជួរប្រវត្តិ។',
+    'Change version and read Bible information':
+        'ប្ដូរកំណែ និងអានព័ត៌មានព្រះគម្ពីរ',
+    'Choose a translation, then open its publisher, language, and copyright details.':
+        'ជ្រើសកំណែប្រែ រួចបើកព័ត៌មានអ្នកបោះពុម្ព ភាសា និងសិទ្ធិអ្នកនិពន្ធ។',
+    'Choose one verse or a verse range': 'ជ្រើសខមួយ ឬចន្លោះខ',
+    'Use verse numbers to select a start, an end, or all verses in the chapter.':
+        'ប្រើលេខខ ដើម្បីជ្រើសចំណុចចាប់ផ្ដើម ចំណុចបញ្ចប់ ឬខទាំងអស់ក្នុងជំពូក។',
+    'Use dictionary and Word export': 'ប្រើវចនានុក្រម និងនាំចេញទៅ Word',
+    'Look up selected words in Wiki Dictionary or export a passage to Microsoft Word.':
+        'ស្វែងរកពាក្យដែលបានជ្រើសក្នុង Wiki Dictionary ឬនាំចេញអត្ថបទទៅ Microsoft Word។',
+    'Use Bible audio and AI reading controls':
+        'ប្រើសំឡេងព្រះគម្ពីរ និងការគ្រប់គ្រងអានដោយ AI',
+    'Enable automatic AI audio, play verse audio, repeat it, or refresh the source.':
+        'បើកសំឡេង AI ស្វ័យប្រវត្តិ ចាក់សំឡេងខ ចាក់ម្ដងទៀត ឬផ្ទុកប្រភពឡើងវិញ។',
+    'Edit and arrange reading panes': 'កែសម្រួល និងរៀបចំផ្ទាំងអាន',
+    'Rename, recolor, drag, split, replace, or close the passages in your workspace.':
+        'ប្ដូរឈ្មោះ ប្ដូរពណ៌ អូស បំបែក ជំនួស ឬបិទអត្ថបទក្នុងកន្លែងធ្វើការ។',
+    'Master Bible Find results': 'ប្រើលទ្ធផលស្វែងរកព្រះគម្ពីរឱ្យស្ទាត់',
+    'Change version, use suggestions and book filters, page through hits, then open or save one.':
+        'ប្ដូរកំណែ ប្រើសំណើ និងតម្រងសៀវភៅ មើលទំព័រលទ្ធផល រួចបើក ឬរក្សាទុកមួយ។',
+    'Explore people and place details': 'ស្វែងយល់ព័ត៌មានមនុស្ស និងទីកន្លែង',
+    'Filter records, follow references, open verses or maps, copy details, and change data language.':
+        'តម្រងកំណត់ត្រា តាមសេចក្ដីយោង បើកខ ឬផែនទី ចម្លងព័ត៌មាន និងប្ដូរភាសាទិន្នន័យ។',
+    'Explore the connection graph': 'ស្វែងយល់ក្រាបទំនាក់ទំនង',
+    'Open a graph from a record, expand relations, filter, drag, pan, zoom, and find connections.':
+        'បើកក្រាបពីកំណត់ត្រា ពង្រីកទំនាក់ទំនង តម្រង អូស រំកិល ពង្រីក និងស្វែងរកការតភ្ជាប់។',
+    'Organize and share a connection graph': 'រៀបចំ និងចែករំលែកក្រាបទំនាក់ទំនង',
+    'Re-layout, undo, set a centre or root, then copy, save, print, or open the drawn view.':
+        'រៀបប្លង់ឡើងវិញ មិនធ្វើវិញ កំណត់កណ្ដាល ឬឫស រួចចម្លង រក្សាទុក បោះពុម្ព ឬបើករូបក្រាប។',
+    'Organize passage resources by filename': 'រៀបចំធនធានតាមឈ្មោះឯកសារ',
+    'Name files by book and chapter so they appear beside the right passage.':
+        'ដាក់ឈ្មោះឯកសារតាមសៀវភៅ និងជំពូក ដើម្បីឱ្យវាបង្ហាញក្បែរអត្ថបទត្រឹមត្រូវ។',
+    'Build and use your Resources library': 'បង្កើត និងប្រើបណ្ណាល័យធនធាន',
+    'Add or drop folders, search and reload them, open files, add files, or copy them into app data.':
+        'បន្ថែម ឬទម្លាក់ថត ស្វែងរក និងផ្ទុកឡើងវិញ បើក ឬបន្ថែមឯកសារ ឬចម្លងទៅទិន្នន័យកម្មវិធី។',
+    'Highlight and comment on Bible text':
+        'រំលេច និងដាក់មតិយោបល់លើអត្ថបទព្រះគម្ពីរ',
+    'Select words in one verse to highlight, recolor, remove marks, or attach a comment.':
+        'ជ្រើសពាក្យក្នុងខមួយ ដើម្បីរំលេច ប្ដូរពណ៌ លុបសញ្ញា ឬភ្ជាប់មតិយោបល់។',
+    'Work with marked verses in Bible Notes':
+        'ធ្វើការជាមួយខដែលបានសម្គាល់ក្នុងកំណត់ត្រាព្រះគម្ពីរ',
+    'Open, recolor, edit, move, drag, add to Bibles, or delete a marked verse.':
+        'បើក ប្ដូរពណ៌ កែ ផ្លាស់ទី អូស បន្ថែមទៅព្រះគម្ពីរ ឬលុបខដែលបានសម្គាល់។',
+    'Use the Reader header tools': 'ប្រើឧបករណ៍ក្បាលទំព័រអ្នកអាន',
+    'Return to Presenter or open Settings, App Assistant, AI Chat, and Help.':
+        'ត្រឡប់ទៅអ្នកបង្ហាញ ឬបើកការកំណត់ ជំនួយការកម្មវិធី ការជជែក AI និងជំនួយ។',
+    'Reload or force-reload the Reader': 'ផ្ទុកអ្នកអានឡើងវិញ ឬបង្ខំផ្ទុកឡើងវិញ',
+    'Use Reload for a normal refresh; use Force Reload only to bypass cached app files.':
+        'ប្រើ ផ្ទុកឡើងវិញ សម្រាប់ធម្មតា; ប្រើ បង្ខំផ្ទុកឡើងវិញ តែពេលចង់រំលងឯកសារឃ្លាំងប៉ុណ្ណោះ។',
+    'Restart the whole app with Relaunch':
+        'ចាប់ផ្ដើមកម្មវិធីទាំងមូលឡើងវិញដោយ Relaunch',
+    'Use View > Relaunch when every app window needs a clean restart; the app asks first.':
+        'ប្រើ មើល > Relaunch ពេលបង្អួចទាំងអស់ត្រូវចាប់ផ្ដើមថ្មី; កម្មវិធីនឹងសួរបញ្ជាក់ជាមុន។',
+    'Open Developer Tools for diagnostics':
+        'បើកឧបករណ៍អ្នកអភិវឌ្ឍន៍សម្រាប់វិនិច្ឆ័យ',
+    'Use View > Toggle Developer Tools only when troubleshooting or collecting technical details.':
+        'ប្រើ មើល > ប្ដូរឧបករណ៍អ្នកអភិវឌ្ឍន៍ តែពេលដោះស្រាយបញ្ហា ឬប្រមូលព័ត៌មានបច្ចេកទេស។',
+    'Zoom the whole Reader interface': 'ពង្រីកចំណុចប្រទាក់អ្នកអានទាំងមូល',
+    'Use Actual Size, Zoom In, or Zoom Out for the whole window; Font Size changes Bible text only.':
+        'ប្រើ ទំហំពិត ពង្រីក ឬបង្រួម សម្រាប់បង្អួចទាំងមូល; ទំហំអក្សរ ប្ដូរតែអត្ថបទព្រះគម្ពីរ។',
+    'Make the whole app window full screen':
+        'ធ្វើឱ្យបង្អួចកម្មវិធីទាំងមូលពេញអេក្រង់',
+    'Use View > Toggle Full Screen or F11; the passage Full button is the reading-only alternative.':
+        'ប្រើ មើល > ប្ដូរពេញអេក្រង់ ឬ F11; ប៊ូតុង ពេញ ក្នុងអត្ថបទ ពង្រីកតែផ្ទៃអាន។',
+    'Show or hide Reader panels from View':
+        'បង្ហាញ ឬលាក់ផ្ទាំងអ្នកអានពីម៉ឺនុយ មើល',
+    'Use View > Widgets to check or uncheck Bible and Notes, Bibles, Bible Notes, Bible Lookup, and study panes.':
+        'ប្រើ មើល > ធាតុក្រាហ្វិក ដើម្បីបង្ហាញ ឬលាក់ ព្រះគម្ពីរ និងកំណត់ត្រា ព្រះគម្ពីរ កំណត់ត្រាព្រះគម្ពីរ ការស្វែងរក និងផ្ទាំងសិក្សា។',
+    'Restore every Reader panel layout': 'ស្ដារប្លង់ផ្ទាំងអ្នកអានទាំងអស់',
+    'Use View > Reset Widgets Size to restore defaults and reopen collapsed panels after confirmation.':
+        'ប្រើ មើល > កំណត់ទំហំធាតុក្រាហ្វិកឡើងវិញ ដើម្បីស្ដារលំនាំដើម និងបើកផ្ទាំងដែលបានបង្រួម បន្ទាប់ពីបញ្ជាក់។',
+    // --- Foreground media widgets and the blend-mode picker (2026-09-24).
+    // The blend names are the compositing senses: `Screen Blend` rather than
+    // `Screen`, which is the projector, and `Value` for CSS `luminosity`.
+    'Video Show': 'បង្ហាញវីដេអូ',
+    'Image Show': 'បង្ហាញរូបភាព',
+    'Hide Video': 'លាក់វីដេអូ',
+    'Hide Image': 'លាក់រូបភាព',
+    'Clear FG Video Show': 'សម្អាតការបង្ហាញវីដេអូខាងមុខ',
+    'Clear FG Image Show': 'សម្អាតការបង្ហាញរូបភាពខាងមុខ',
+    'Foreground Videos': 'វីដេអូខាងមុខ',
+    'Foreground Images': 'រូបភាពខាងមុខ',
+    'Blend Mode': 'របៀបលាយ',
+    'Blends this box with the items under it':
+        'លាយប្រអប់នេះជាមួយធាតុនៅខាងក្រោម',
+    Darker: 'ងងឹតជាង',
+    Darken: 'ធ្វើឱ្យងងឹត',
+    Multiply: 'គុណ',
+    'Color Burn': 'ដុតពណ៌',
+    Brighter: 'ភ្លឺជាង',
+    Lighten: 'ធ្វើឱ្យភ្លឺ',
+    'Screen Blend': 'លាយបែបស្គ្រីន',
+    'Color Dodge': 'បំភ្លឺពណ៌',
+    Add: 'បូក',
+    'Stronger Contrast': 'កម្រិតពណ៌ខ្លាំងជាង',
+    Overlay: 'ត្រួតលើ',
+    'Soft Light': 'ពន្លឺទន់',
+    'Hard Light': 'ពន្លឺរឹង',
+    Compare: 'ប្រៀបធៀប',
+    Difference: 'ភាពខុសគ្នា',
+    Exclusion: 'ការដកចេញ',
+    'Color Parts': 'ផ្នែកនៃពណ៌',
+    Hue: 'ពណ៌លាំៗ',
+    Saturation: 'ភាពតិត្ថិភាព',
+    Value: 'តម្លៃពន្លឺ',
+    // --- Canvas item shadow (2026-09-25): a box shadow is the shadow of the
+    // RECTANGLE, a drop shadow the shadow of what is painted -- the letters of
+    // a box with no backing, or a picture with a see-through edge.
+    'No Shadow': 'គ្មានស្រមោល',
+    'Box Shadow': 'ស្រមោលប្រអប់',
+    'Drop Shadow': 'ស្រមោលតាមរូបរាង',
+    'A box shadow follows the box, a drop shadow the letters or picture':
+        'ស្រមោលប្រអប់ដើរតាមប្រអប់ ស្រមោលតាមរូបរាងដើរតាមអក្សរ ឬរូបភាព',
+    'Shadow Offset X': 'ចម្ងាយស្រមោល X',
+    'Shadow Offset Y': 'ចម្ងាយស្រមោល Y',
+    'Shadow Blur': 'ភាពព្រិលនៃស្រមោល',
+    'Blur:': 'ព្រិល៖',
+    // --- Foreground media sessions: one saved set-up (folder, Properties,
+    // slide show) per session, several per widget.
+    Session: 'វគ្គ',
+    'Add Session': 'បន្ថែមវគ្គ',
+    'Please stop the audio before switching session.':
+        'សូមបញ្ចប់សំឡេង មុននឹងប្តូរវគ្គ។',
+    'Rename Session': 'ប្តូរឈ្មោះវគ្គ',
+    'Remove Session': 'លុបវគ្គ',
+    'Always on Top': 'នៅលើគេជានិច្ច',
+    'Z-Index': 'លំដាប់ស្រទាប់',
+    'Slide show is running': 'ការបង្ហាញស្លាយកំពុងដំណើរការ',
+    'Slide Show': 'ការបង្ហាញស្លាយ',
+    'Start Slide Show': 'ចាប់ផ្តើមការបង្ហាញស្លាយ',
+    'Stop Slide Show': 'បញ្ឈប់ការបង្ហាញស្លាយ',
+    'Slide Show Options': 'ជម្រើសការបង្ហាញស្លាយ',
+    'Close Slide Show Options': 'បិទជម្រើសការបង្ហាញស្លាយ',
+    'Repeat All': 'ធ្វើម្តងទៀតទាំងអស់',
+    'Jumping Step': 'ចំនួនលោតម្តង',
+    Step: 'ជំហាន',
+    'Random Up To': 'ចៃដន្យរឫូតដល់',
+    'Random Up To Seconds': 'ចៃដន្យរឫូតដល់វិនាទី',
+    'A New Wait Is Drawn For Each Slide':
+        'ចៃដន្យពេលរង់ចាំថ្មីសម្រាប់ស្លាយនីមួយៗ',
+    'The Wait Drawn For This Slide': 'ពេលរង់ចាំដែលចៃដន្យសម្រាប់ស្លាយនេះ',
+    'Wait Until The Video Ends': 'រង់ចាំរឫូតដល់វីដេអូចប់',
+    'Next When The Video Ends': 'បន្ទាប់នៅពេលវីដេអូចប់',
+    'How Long This Video Runs': 'រយៈពេលរបស់វីដេអូនេះ',
+    'Next In': 'បន្ទាប់ក្នុងរយៈពេល',
+    'Play With Sound': 'ចាក់ជាមួយសំលេង',
+    'Hide Slide Show Controls': 'លាក់ប៊ូតុងបញ្ជាការបង្ហាញស្លាយ',
+    'On Screen': 'លើអេក្រង់',
+    // --- Foreground properties: the 3x3 position pad replaces two rows of
+    // align buttons, so each cell needs a name of its own.
+    'Top left': 'ឆ្វេងខាងលើ',
+    'Top center': 'កណ្តាលខាងលើ',
+    'Top right': 'ស្តាំខាងលើ',
+    'Middle left': 'ឆ្វេងកណ្តាល',
+    'Middle center': 'កណ្តាលពិត',
+    'Middle right': 'ស្តាំកណ្តាល',
+    'Bottom left': 'ឆ្វេងខាងក្រោម',
+    'Bottom center': 'កណ្តាលខាងក្រោម',
+    'Bottom right': 'ស្តាំខាងក្រោម',
+    Position: 'ទីតាំង',
+    Round: 'ជ្រុងមូល',
+    'No Transition': 'គ្មានការផ្លាស់ប្តូរ',
+    Fade: 'រសាត់',
+    'Slide In': 'រុញចូល',
+    // --- Foreground Effects: the frame, the shadow, the room around the
+    // words and how they are set. One fold under the Properties rows.
+    Effects: 'ការតុបតែង',
+    Border: 'ស៊ុម',
+    'Border Width': 'កម្រាស់ស៊ុម',
+    'Border Color': 'ពណ៌ស៊ុម',
+    'Shadow Color': 'ពណ៌ស្រមោល',
+    Padding: 'ចន្លោះខាងក្នុង',
+    'Space inside the box, in text sizes': 'ចន្លោះខាងក្នុងប្រអប់ តាមទំហំអក្សរ',
+    'Text Align': 'ការតម្រឹមអក្សរ',
+    'Line Height': 'កម្ពស់ជួរ',
+    '0 keeps the screen line spacing': '0 រក្សាចន្លោះជួរដើមរបស់អេក្រង់',
+    'Letter Spacing': 'ចន្លោះតួអក្សរ',
+    'Text Shadow Color': 'ពណ៌ស្រមោលអក្សរ',
+    'Makes words readable over a picture or a video':
+        'ធ្វើឱ្យអក្សរអានបានច្បាស់លើរូបភាព ឬវីដេអូ',
+    'Text Style': 'រចនាបថអក្សរ',
+    Italic: 'អក្សរទ្រេត',
+    Underline: 'គូសបន្ទាត់ក្រោម',
+    Uppercase: 'អក្សរធំ',
+    None: 'គ្មាន',
+    Solid: 'បន្ទាត់ពេញ',
+    Dashed: 'បន្ទាត់ដាច់ៗ',
+    Dotted: 'បន្ទាត់ចុចៗ',
+    Double: 'បន្ទាត់ទ្វេ',
+    Soft: 'ស្រាល',
+    Medium: 'មធ្យម',
+    Strong: 'ខ្លាំង',
+    Glow: 'ពន្លឺរស្មី',
+    Outline: 'គែមអក្សរ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

@@ -73,6 +73,7 @@ vi.mock('./managers/screenManagerHooks', () => ({
 
 vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBibleManagerEvents: useScreenBibleManagerEventsMock,
+    useScreenMaskManagerEvents: vi.fn(),
 }));
 
 vi.mock('./managers/screenManagerBaseHelpers', () => ({

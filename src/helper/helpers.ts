@@ -269,7 +269,12 @@ export function checkIsSameArrays(arr1: any, arr2: any) {
         return false;
     }
     for (let i = 0; i < arr1.length; i++) {
-        if (!checkIsSameObjects(arr1[i], arr2[i])) {
+        // Elements go back through checkIsSameValues, not straight to
+        // checkIsSameObjects: the latter rejects anything that is not an
+        // Object, so an array of primitives never matched itself and every
+        // slide holding one (a bible items bibleKeys, for one) compared as
+        // changed for ever.
+        if (!checkIsSameValues(arr1[i], arr2[i])) {
             return false;
         }
     }

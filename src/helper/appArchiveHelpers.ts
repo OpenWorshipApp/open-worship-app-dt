@@ -14,10 +14,14 @@ import {
     fsDeleteDir,
     fsGetFileSize,
     fsReadFile,
+    getDataDirPath,
     getFileMD5,
     getTempPath,
     pathBasename,
     pathJoin,
+    rebaseDataDirPath,
+    toBaseNameOfAnyOs,
+    toPortableFileFullName,
 } from '../server/fileHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
 import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
@@ -34,6 +38,12 @@ import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
 export const MANIFEST_FILE_NAME = 'manifest.json';
 export const ARCHIVE_FILES_DIR = 'files';
 export const ARCHIVE_VERSION = 1;
+/**
+ * The `itemKind` a Bible Data bundle's manifest carries. Declared here rather
+ * than in `bibleXMLArchiveHelpers` so Import Data can recognise such a bundle
+ * without loading the bible XML readers behind that module.
+ */
+export const BIBLE_XML_ARCHIVE_ITEM_KIND = 'bible-xml';
 export const BACKGROUND_META_DOT_EXTENSION = '.bg.json';
 // The document kinds whose JSON holds canvas items (see
 // `src/server/mime/app-document-types.json`). Lyric, PDF, PPTX and DOCX
@@ -53,7 +63,13 @@ export type ArchiveFileKindType =
     | 'image'
     | 'video'
     | 'audio'
-    | 'web';
+    | 'web'
+    // The Foreground panel's Video Show and Image Show keep their own folders,
+    // so a foreground clip carried in a presenting flow archive has to be put
+    // back in one of THOSE -- imported as `video` it would land among the
+    // backgrounds, where the widget that referenced it does not look.
+    | 'foreground-video'
+    | 'foreground-image';
 
 export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
     document: dirSourceSettingNames.APP_DOCUMENT,
@@ -73,6 +89,8 @@ export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
     video: dirSourceSettingNames.BACKGROUND_VIDEO,
     audio: dirSourceSettingNames.BACKGROUND_AUDIO,
     web: dirSourceSettingNames.BACKGROUND_WEB,
+    'foreground-video': dirSourceSettingNames.FOREGROUND_VIDEO,
+    'foreground-image': dirSourceSettingNames.FOREGROUND_IMAGE,
 };
 
 // The kinds that are an APP ITEM rather than a media file: the ones an import
@@ -226,6 +244,11 @@ export class ArchiveFileCollector {
     // Sidecars are rewritten before archiving, so they are staged as content
     // rather than copied from disk.
     readonly extraContentByArchivePath = new Map<string, string>();
+    // What to STAGE for a file whose LIVE content is not what is on disk -- an
+    // editable item whose window keeps its unsaved text in the editing history.
+    // Keyed by the same original path, so the manifest entry, the collision
+    // rules and the whole import side are untouched: only the bytes differ.
+    readonly contentByOriginalPath = new Map<string, string>();
     // A document reached both as a slide entry and as a document entry must not
     // archive its sidecar twice.
     private readonly seenBackgroundMetaPaths = new Set<string>();
@@ -252,6 +275,22 @@ export class ArchiveFileCollector {
             archivePath: this.nextArchivePath(originalPath),
             kind,
         });
+        return true;
+    }
+
+    /**
+     * Stage `content` for an already-added file instead of copying the file.
+     *
+     * The file still has to EXIST and be added first: what this replaces is the
+     * bytes, not the entry, so a caller cannot smuggle a file into a bundle
+     * this way. Answers whether the override was taken, so a caller that
+     * resolved live content for a path nobody collected learns about it.
+     */
+    setFileContent(originalPath: string, content: string) {
+        if (!this.entryByOriginalPath.has(originalPath)) {
+            return false;
+        }
+        this.contentByOriginalPath.set(originalPath, content);
         return true;
     }
 
@@ -362,10 +401,18 @@ export async function stageArchiveFiles(
     if (hasFiles) {
         await ensureDirectory(pathJoin(stagingDir, ARCHIVE_FILES_DIR));
         for (const archiveFile of archiveFiles) {
-            await fsCloneFile(
-                archiveFile.originalPath,
-                pathJoin(stagingDir, ...archiveFile.archivePath.split('/')),
+            const targetPath = pathJoin(
+                stagingDir,
+                ...archiveFile.archivePath.split('/'),
             );
+            const liveContent = collector.contentByOriginalPath.get(
+                archiveFile.originalPath,
+            );
+            if (liveContent === undefined) {
+                await fsCloneFile(archiveFile.originalPath, targetPath);
+            } else {
+                await fsCreateFile(targetPath, liveContent, true);
+            }
         }
         for (const [
             archivePath,
@@ -394,7 +441,18 @@ export async function writeArchiveManifest(
 ) {
     await fsCreateFile(
         pathJoin(stagingDir, MANIFEST_FILE_NAME),
-        JSON.stringify(manifest, null, 2),
+        JSON.stringify(
+            {
+                ...manifest,
+                // The exporting machine's data folder. A document inside it
+                // stores that folder as `$DATA_DIR_PATH`, which on another
+                // machine expands to THAT machine's folder -- so import needs
+                // this to find a document's own media again (`importArchiveFiles`).
+                dataDirPath: getDataDirPath(),
+            },
+            null,
+            2,
+        ),
         true,
     );
 }
@@ -713,8 +771,37 @@ export async function importArchiveFiles(
     extractDir: string,
     files: ArchiveFileEntryType[],
     dirPathByKind: Map<ArchiveFileKindType, string>,
+    // The manifest's `dataDirPath`: the exporting machine's data folder, or
+    // anything at all from a bundle written before it was recorded.
+    exporterDataDirPath: unknown = null,
 ) {
     const localFilePathByOriginalPath = new Map<string, string>();
+    const importerDataDirPath = getDataDirPath();
+    const setLocalFilePath = (originalPath: string, localFilePath: string) => {
+        localFilePathByOriginalPath.set(originalPath, localFilePath);
+        if (
+            typeof exporterDataDirPath !== 'string' ||
+            importerDataDirPath === null
+        ) {
+            return;
+        }
+        // A document stores its own media as `$DATA_DIR_PATH\videos\a.mp4`,
+        // which reads back HERE as this machine's folder -- never as the
+        // exporter's path the manifest is keyed by. Without this second key
+        // nothing was re-pointed, and a slide whose video was imported as
+        // `a (1).mp4` went on playing this machine's other `a.mp4`.
+        const rebasedPath = rebaseDataDirPath(
+            originalPath,
+            exporterDataDirPath,
+            importerDataDirPath,
+        );
+        if (
+            rebasedPath !== null &&
+            !localFilePathByOriginalPath.has(rebasedPath)
+        ) {
+            localFilePathByOriginalPath.set(rebasedPath, localFilePath);
+        }
+    };
     // Only the app items this import actually WROTE may be rewritten
     // afterwards; one folded into an existing file is the operator's own and is
     // left alone, exactly as an existing `.bg.json` sidecar is.
@@ -728,17 +815,21 @@ export async function importArchiveFiles(
             throw new Error(`Archive file not found: ${file.archivePath}`);
         }
         const dirPath = dirPathByKind.get(file.kind) as string;
-        const fileFullName = FileSource.getInstance(file.originalPath).fullName;
+        // The name out of the EXPORTING machine's path, which may be another
+        // OS's: on macOS a Windows `C:\…\Song.ows` is one long name to the
+        // local path functions, and became the imported file's name. Then
+        // cleaned, since a name legal there may not be legal here.
+        const fileFullName = toPortableFileFullName(
+            toBaseNameOfAnyOs(file.originalPath),
+            toBaseNameOfAnyOs(file.archivePath),
+        );
         const existingFilePath = await findExistingLocalFile(
             getImportCollisionPolicy(kindDirSettingNameMap[file.kind]),
             extractedFilePath,
             pathJoin(dirPath, fileFullName),
         );
         if (existingFilePath !== null) {
-            localFilePathByOriginalPath.set(
-                file.originalPath,
-                existingFilePath,
-            );
+            setLocalFilePath(file.originalPath, existingFilePath);
             continue;
         }
         const importedFilePath = await fsCopyFilePathToPath(
@@ -749,7 +840,7 @@ export async function importArchiveFiles(
         if (importedFilePath === null) {
             throw new Error(`Unable to import file: ${file.archivePath}`);
         }
-        localFilePathByOriginalPath.set(file.originalPath, importedFilePath);
+        setLocalFilePath(file.originalPath, importedFilePath);
         if (ITEM_FILE_KINDS.has(file.kind)) {
             writtenItemFilePaths.push(importedFilePath);
         }
@@ -759,8 +850,11 @@ export async function importArchiveFiles(
 
 /**
  * Re-point an imported document's own canvas media at the local copies. The
- * document arrives holding the exporting machine's absolute paths, so without
- * this the slide renders an empty video box even though the file was bundled.
+ * document arrives holding either the exporting machine's absolute paths (media
+ * kept outside its data folder) or `$DATA_DIR_PATH`, which reads back as THIS
+ * machine's folder; `importArchiveFiles` keys the local copies both ways.
+ * Without this the slide renders an empty video box, or another file of the
+ * same name, even though the right one was bundled.
  */
 export async function applyImportedCanvasMedia(
     writtenItemFilePaths: string[],

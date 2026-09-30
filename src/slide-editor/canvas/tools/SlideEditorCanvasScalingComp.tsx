@@ -29,13 +29,25 @@ export default function SlideEditorCanvasScalingComp() {
             }
         >
             <div className="px-2">
-                <i
-                    className="bi bi-border-middle app-caught-hover-pointer"
+                {/* A button, not a bare icon: it had no name and could not
+                    be reached from the keyboard. */}
+                <button
+                    type="button"
+                    className="btn btn-sm btn-link p-0 text-reset"
+                    title={tran('Center view')}
+                    aria-label={tran('Center view')}
                     onClick={handleCenterView}
-                />
+                >
+                    <i className="bi bi-border-middle" />
+                </button>
             </div>
             <div className="canvas-board-size-container d-flex">
-                <span>{actualScale.toFixed(1)}x</span>
+                {/* The zoom as a percentage. The slider works in tenths, and
+                    printing that as "5.0x" read as five times the size while
+                    the slide was drawn at half. */}
+                <span title={tran('Canvas Scale')}>
+                    {Math.round(scale * 100)}%
+                </span>
                 <div style={{ maxWidth: '200px' }}>
                     <AppRangeComp
                         value={actualScale}

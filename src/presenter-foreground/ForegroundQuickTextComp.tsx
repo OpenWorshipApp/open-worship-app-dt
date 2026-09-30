@@ -1,4 +1,9 @@
-import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
+import {
+    type ChangeEvent,
+    useCallback,
+    useMemo,
+    type CSSProperties,
+} from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
@@ -15,6 +20,7 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import PropRowComp from './ForegroundPropRowComp';
 import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
@@ -23,26 +29,37 @@ import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import {
+    checkIsSessionData,
+    toSessionShowingList,
+    useForegroundSessions,
+} from './foregroundSessionHelpers';
 
-const attemptTimeout = genTimeoutAttempt(500);
+/** The keys ONE session of this panel owns beyond its Properties. */
+function genOwnSettingNames(suffix: string) {
+    return [
+        `foreground-quick-text-setting${suffix}`,
+        `foreground-quick-text-time-delay${suffix}`,
+        `foreground-quick-text-time-to-live${suffix}`,
+    ];
+}
+
 function refreshAllQuickText(
     showingScreenIds: [number, ForegroundQuickTextDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIds) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.setQuickTextData(null);
-                    screenForegroundManager.setQuickTextData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIds) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.setQuickTextData(null);
+                screenForegroundManager.setQuickTextData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function handleHiding(screenId: number) {
@@ -51,18 +68,33 @@ function handleHiding(screenId: number) {
     });
 }
 
-export default function ForegroundQuickTextComp() {
-    useScreenForegroundManagerEvents(['update']);
+/**
+ * The panel, ON ONE SESSION. Everything below reads its setting when it
+ * mounts, so the body is keyed by the session in the wrapper underneath --
+ * otherwise switching would leave the previous session's words in the box
+ * while writing them to the new session's keys.
+ */
+function QuickTextBodyComp({
+    sessionId,
+    suffix,
+    prefix,
+}: Readonly<{ sessionId: string; suffix: string; prefix: string }>) {
+    // No screen subscription of its own: the wrapper below holds one and this
+    // is its child, so a second would cost a listener for the same redraw.
+    // Per-instance: nothing here may assume this panel stays a single mount.
+    const attemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(500);
+    }, []);
     const [markdownText, setMarkdownText] = useStateSettingString<string>(
-        'foreground-quick-text-setting',
+        `foreground-quick-text-setting${suffix}`,
         '## This is Title\n\ntext **bold** and *italic*.',
     );
     const [timeSecondDelay, setTimeSecondDelay] = useStateSettingNumber(
-        'foreground-quick-text-time-delay',
+        `foreground-quick-text-time-delay${suffix}`,
         0,
     );
     const [timeSecondToLive, setTimeSecondToLive] = useStateSettingNumber(
-        'foreground-quick-text-time-to-live',
+        `foreground-quick-text-time-to-live${suffix}`,
         3,
     );
 
@@ -83,15 +115,22 @@ export default function ForegroundQuickTextComp() {
         .filter((item) => {
             return item !== null;
         });
+    const showingRef = useAppCurrentRef(showingScreenIdDataList);
     const {
         genStyle,
         fontFamily,
         fontWeight,
         element: propsSetting,
     } = useForegroundPropsSetting({
-        prefix: 'quick-text',
+        prefix,
         onChange: (extraStyle) => {
-            refreshAllQuickText(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                // THIS session's quick text only -- see the stopwatch panel.
+                refreshAllQuickText(
+                    toSessionShowingList(showingRef.current, sessionId),
+                    extraStyle,
+                );
+            });
         },
         isFontSize: true,
     });
@@ -108,9 +147,16 @@ export default function ForegroundQuickTextComp() {
                 timeSecondToLive,
                 genStyle(),
                 isForceChoosing,
+                sessionId,
             );
         },
-        [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
+        [
+            getRenderedHtml,
+            timeSecondDelay,
+            timeSecondToLive,
+            genStyle,
+            sessionId,
+        ],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -125,13 +171,22 @@ export default function ForegroundQuickTextComp() {
                 return;
             }
             screenForegroundManager.setQuickTextData({
+                // A LIVE drop from this panel is this session acting; a
+                // run-sheet row replayed weeks later carries none.
+                id: sessionId || undefined,
                 htmlText: await getRenderedHtml(),
                 timeSecondDelay,
                 timeSecondToLive,
                 extraStyle: genStyle(),
             });
         },
-        [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
+        [
+            getRenderedHtml,
+            timeSecondDelay,
+            timeSecondToLive,
+            genStyle,
+            sessionId,
+        ],
     );
     const setTimeSecondDelayRef = useAppCurrentRef(setTimeSecondDelay);
     const handleTimeSecondDelayChange = useCallback(
@@ -188,58 +243,51 @@ export default function ForegroundQuickTextComp() {
         />
     );
     return (
-        <ForegroundLayoutComp
-            target="quick-text"
-            fullChildHeaders={<h4>{tran('Quick Text')}</h4>}
-            childHeadersOnHidden={genHidingElement(true)}
-            isOnScreen={showingScreenIdDataList.length > 0}
-        >
+        <>
             {propsSetting}
-            <hr />
-            <div className="d-flex flex-column gap-2">
-                <div className="d-flex flex-wrap gap-2">
-                    <div
-                        className="input-group"
+            <div className="fg-body">
+                {/*
+                 * Two numbers that used to be two 220px input-groups of four
+                 * segments each -- an icon box, a word box, the field and a
+                 * unit box -- for one value apiece. They are rows of the same
+                 * strip the Properties panel above them is built from.
+                 */}
+                <div className="fg-props-tail fg-props-tail-plain">
+                    <PropRowComp
+                        iconClassName="bi bi-hourglass-top"
+                        label={tran('Delay')}
                         title={tran('Seconds to wait before showing the text')}
-                        style={{
-                            width: '220px',
-                        }}
+                        isEngaged={timeSecondDelay !== 0}
                     >
-                        <span className="input-group-text">
-                            <i className="bi bi-hourglass-top" />
-                        </span>
-                        <span className="input-group-text">
-                            {tran('Delay')}
-                        </span>
                         <input
-                            className="form-control"
+                            className="fg-num"
                             type="number"
                             min="0"
+                            aria-label={tran(
+                                'Seconds to wait before showing the text',
+                            )}
                             value={timeSecondDelay}
                             onChange={handleTimeSecondDelayChange}
                         />
-                        <span className="input-group-text">s</span>
-                    </div>
-                    <div
-                        className="input-group"
+                        <span className="fg-unit-static">s</span>
+                    </PropRowComp>
+                    <PropRowComp
+                        iconClassName="bi bi-clock"
+                        label={tran('Live')}
                         title={tran('Seconds the text stays on screen')}
-                        style={{
-                            width: '220px',
-                        }}
                     >
-                        <span className="input-group-text">
-                            <i className="bi bi-clock" />
-                        </span>
-                        <span className="input-group-text">{tran('Live')}</span>
                         <input
-                            className="form-control"
+                            className="fg-num"
                             type="number"
                             min="1"
+                            aria-label={tran(
+                                'Seconds the text stays on screen',
+                            )}
                             value={timeSecondToLive}
                             onChange={handleTimeSecondToLiveChange}
                         />
-                        <span className="input-group-text">s</span>
-                    </div>
+                        <span className="fg-unit-static">s</span>
+                    </PropRowComp>
                 </div>
                 <div className="d-flex">
                     <div className="ms-auto d-flex gap-2">
@@ -251,26 +299,20 @@ export default function ForegroundQuickTextComp() {
                         />
                     </div>
                 </div>
-                <div className="form-floating">
-                    <textarea
-                        id="quick-text-textarea"
-                        className="form-control"
-                        cols={150}
-                        rows={20}
-                        value={markdownText}
-                        onChange={handleMarkdownTextChange}
-                        placeholder={tran('Leave a markdown text here')}
-                        style={{
-                            fontFamily: fontFamily || undefined,
-                            fontWeight: fontWeight || undefined,
-                            height: '150px',
-                        }}
-                    />
-                    <label htmlFor="quick-text-textarea">
-                        {tran('Markdown')}
-                    </label>
-                </div>
-                <div className="d-flex">
+                <textarea
+                    id="quick-text-textarea"
+                    className="fg-text-editor"
+                    aria-label={tran('Markdown')}
+                    value={markdownText}
+                    onChange={handleMarkdownTextChange}
+                    placeholder={tran('Leave a markdown text here')}
+                    style={{
+                        fontFamily: fontFamily || undefined,
+                        fontWeight: fontWeight || undefined,
+                        height: '120px',
+                    }}
+                />
+                <div className="fg-actions">
                     <button
                         className="btn btn-primary"
                         title={tran('Show Quick Text')}
@@ -286,9 +328,69 @@ export default function ForegroundQuickTextComp() {
                         label={tran('Show on Screens')}
                         onOpening={handleContextMenuOpening}
                     />
+                    {genHidingElement(false)}
                 </div>
             </div>
-            <div>{genHidingElement(false)}</div>
+        </>
+    );
+}
+
+export default function ForegroundQuickTextComp() {
+    useScreenForegroundManagerEvents(['update']);
+    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
+        (data) => {
+            return data.quickTextData !== null;
+        },
+    )
+        .map(
+            ([screenId, data]):
+                [number, ForegroundQuickTextDataType] | null => {
+                if (data.quickTextData === null) {
+                    return null;
+                }
+                return [screenId, data.quickTextData];
+            },
+        )
+        .filter((item) => {
+            return item !== null;
+        });
+    const showingRef = useAppCurrentRef(showingScreenIdDataList);
+    // One session is one notice ready to go -- this week's announcement in
+    // one, the standing 'phones off' in another, each with its own delay,
+    // its own seconds on screen and its own look.
+    const {
+        activeId,
+        suffix,
+        prefix,
+        element: sessionsElement,
+    } = useForegroundSessions({
+        widgetKey: 'quick-text',
+        toPrefix: (sessionSuffix) => {
+            return `quick-text${sessionSuffix}`;
+        },
+        toOwnSettingNames: genOwnSettingNames,
+        checkIsOnScreen: (sessionId) => {
+            return showingScreenIdDataList.some(([, data]) => {
+                return checkIsSessionData(data, sessionId);
+            });
+        },
+        hideSession: (sessionId) => {
+            for (const [screenId, data] of showingRef.current) {
+                if (checkIsSessionData(data, sessionId)) {
+                    handleHiding(screenId);
+                }
+            }
+        },
+    });
+    return (
+        <ForegroundLayoutComp target="quick-text">
+            {sessionsElement}
+            <QuickTextBodyComp
+                key={activeId}
+                sessionId={activeId}
+                suffix={suffix}
+                prefix={prefix}
+            />
         </ForegroundLayoutComp>
     );
 }

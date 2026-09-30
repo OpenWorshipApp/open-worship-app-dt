@@ -2,15 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     handleDragStartMock: vi.fn(),
-    removeOpacityFromHexColorMock: vi.fn((color: string) => color.slice(0, 7)),
 }));
 
 vi.mock('../../helper/dragHelpers', () => ({
     handleDragStart: mocks.handleDragStartMock,
-}));
-
-vi.mock('../../server/appHelpers', () => ({
-    removeOpacityFromHexColor: mocks.removeOpacityFromHexColorMock,
 }));
 
 import { DragTypeEnum } from '../../helper/DragInf';
@@ -55,7 +50,6 @@ describe('colorHelpers', () => {
     test('compares colors ignoring opacity and preserves serialized values', () => {
         expect(compareColor('#abcdef', '#ABCDEF99')).toBe(true);
         expect(compareColor('rgb(0, 0, 0)' as any, 'white' as any)).toBe(false);
-        expect(mocks.removeOpacityFromHexColorMock).toHaveBeenCalled();
 
         expect(colorDeserialize('#123456')).toBe('#123456');
     });

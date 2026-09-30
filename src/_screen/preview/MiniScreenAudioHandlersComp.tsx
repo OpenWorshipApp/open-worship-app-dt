@@ -8,6 +8,7 @@ import {
 } from '../../helper/mediaControlHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { pressElementLikeButton } from '../../helper/helpers';
 
 export default function MiniScreenAudioHandlersComp({
     src,
@@ -40,7 +41,7 @@ export default function MiniScreenAudioHandlersComp({
         <div className="w-100">
             <hr className="w-100" />
             <div className="w-100 app-ellipsis-left overflow-hidden">
-                {fileFullName}
+                <bdi>{fileFullName}</bdi>
             </div>
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
@@ -57,15 +58,24 @@ export default function MiniScreenAudioHandlersComp({
                     {tran('Browser does not support audio.')}
                 </audio>
                 <div>
+                    {/* The name carries the track, because the Background
+                        Audio panel has a control with this same title and
+                        "Repeat this audio" twice over tells neither a person
+                        nor anything matching by words which one it means. */}
                     <i
                         className="bi bi-repeat-1 p-1"
-                        title={tran('Repeat this audio')}
+                        role="button"
+                        tabIndex={0}
+                        title={`${tran('Repeat this audio')}: ${fileFullName}`}
+                        aria-label={`${tran('Repeat this audio')}: ${fileFullName}`}
+                        aria-pressed={isRepeating}
                         style={{
                             fontSize: '1.5rem',
                             opacity: isRepeating ? 1 : 0.5,
                             color: isRepeating ? 'green' : 'inherit',
                         }}
                         onClick={handleToggleRepeating}
+                        onKeyDown={pressElementLikeButton}
                     />
                 </div>
             </div>

@@ -19,6 +19,15 @@ typechecks. This file is the how.
 - **Reload before calling something a regression.** Dev HMR leaves stale state,
   unmounts overlays and drops keyboard layers.
 - **Never touch a screen the user says is live.**
+- **The AI caution is person-only by default.** One development-only testing
+  exception exists: after the user explicitly authorizes accepting it in the
+  current conversation, and `owa_app_state` confirms `isDev: true`, automation
+  may press the exact **Open** button on the app's **Be careful with AI**
+  caution so live chatbot verification can continue. A generic “continue” is
+  not consent. Never use this exception in a packaged/production instance, for
+  **Cancel**, **Allow more**, projector confirmations, destructive prompts, or
+  any other blocking dialog. Do not weaken the MCP firewall for it; use the
+  development CDP endpoint and target that one labelled button directly.
 
 ## Reaching the app
 

@@ -2,10 +2,10 @@
 id: W-15
 title: "Create and edit slides / lyrics / web backgrounds"
 section: "Creating & editing content"
-verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
-screenshots: 5
+verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
+screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-29"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -39,7 +39,52 @@ in the same documents folder. 📸
    When you actually present the slide, the audience screen shows the **real, live
    page** — only your editing and preview views use the picture.
 
-6. Save with **Ctrl+S**.
+6. **Blend a box with the ones under it.** Select a box, and under
+   **[en:tran:Shape Properties]** in the right-hand **[en:tran:Properties]** tab pick a
+   **[en:tran:Blend Mode]** — **[en:tran:Multiply]** to darken, **[en:tran:Screen Blend]**
+   to drop black out of a clip, **[en:tran:Overlay]** for a texture over a photo. It
+   blends with the **canvas items underneath it in the same slide**, so it only shows
+   where the box overlaps another one; put a picture or video box behind, sized
+   **[en:tran:Full]**, and blend over that. It does **not** reach the background you
+   attached to the slide. **[en:tran:Normal]** turns it off again.
+7. **Give a box a shadow.** In the same **[en:tran:Shape Properties]** group, pick a
+   **[en:tran:Shadow]**. There are two kinds and they are not the same thing:
+   - **[en:tran:Box Shadow]** is the shadow of the box itself — its rectangle, with
+     whatever corner rounding you gave it. This is the one for a text box with a
+     coloured backing.
+   - **[en:tran:Drop Shadow]** is the shadow of what is actually painted, so it hugs
+     the **letters** of a box with no backing colour, and the cut-out edge of a logo
+     picture. Giving a see-through logo a box shadow draws a rectangle in mid-air
+     behind it — this is the setting that avoids that.
+
+   Three boxes then appear: **X:** and **Y:** are how far the shadow falls (either
+   way — a negative **Y:** throws it upwards), **[en:tran:Blur:]** is how soft it is,
+   and the colour row under them sets its colour and how see-through it is. Keep the
+   blur modest on an old machine: a big soft shadow is the one setting here that
+   costs the computer real work. **[en:tran:No Shadow]** takes it off again.
+
+8. **Apply a font setting to several items.** Under **[en:tran:Properties]**, expand
+   **[en:tran:Bulk Font]**. Leave **[en:tran:Apply to]** on **[en:tran:All Slides]**
+   for the whole document, or pick **[en:tran:Choose slides and items]**. Tick a
+   slide to select its text items; expand its **[en:tran:Canvas Items]** list to
+   tick individual items. You can combine items from several slides. A partially
+   selected slide shows a dash in its checkbox. Text, Bible and HTML items are
+   included; media items have no font setting. Locked items stay unchanged unless
+   you tick **[en:tran:Include locked items]**. Enter a positive **[en:tran:Font Size]**
+   in pixels and press **[en:tran:Apply Font Size]**, or choose a
+   **[en:tran:Font Family]** and press **[en:tran:Apply Font Family]**. Each button
+   applies only that property, leaving the other styles and positions intact.
+   The result reports how many items changed. Each application is one
+   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. 📸
+9. **Type an exact color.** Select a box, then click the hex value beside
+   **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
+   Type or paste a hex color, then press **Enter** or click away to apply it.
+   Three-, four-, six- and eight-digit hex values work, with or without `#`;
+   eight digits include opacity, for example `#2468AC80`. **Escape** cancels the
+   unfinished edit. Invalid or incomplete values return to the current color
+   without changing the slide. The arrow still opens the swatches and opacity
+   slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
+10. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
@@ -50,7 +95,7 @@ enter the URL and title, save, and the new item appears in the Web tab.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-45` · `ED-46` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
+`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-29).
 :::

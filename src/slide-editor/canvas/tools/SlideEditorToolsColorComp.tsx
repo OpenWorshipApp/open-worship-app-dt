@@ -6,10 +6,12 @@ import {
 
 export default function SlideEditorToolsColorComp({
     color,
+    label,
     handleNoColoring,
     handleColorChanging,
 }: Readonly<{
     color: AppColorType;
+    label: string;
     handleNoColoring?: () => void;
     handleColorChanging: (newColor: AppColorType) => void;
 }>) {
@@ -22,6 +24,7 @@ export default function SlideEditorToolsColorComp({
         >
             <ColorPickerComp
                 color={color}
+                colorInputLabel={label}
                 defaultColor={HEX_COLOR_WHITE}
                 onNoColor={handleNoColoring}
                 onColorChange={handleColorChanging}

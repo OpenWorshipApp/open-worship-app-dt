@@ -9,7 +9,11 @@ import { cloneJson } from '../../helper/helpers';
 import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
-import { genTextDefaultBoxStyle, genTextStyle } from './canvasHelpers';
+import {
+    genTextDefaultBoxStyle,
+    genTextStyle,
+    toTextDirection,
+} from './canvasHelpers';
 import CanvasItemHtml, { genHtmlDefaultProps } from './CanvasItemHtml';
 
 export type BibleRenderedVerseType = {
@@ -29,6 +33,9 @@ export type CanvasItemBiblePropsType = {
         bibleKeys: string[];
         bibleItemTarget: BibleTargetType;
         bibleRenderingList: BibleRenderedType[];
+        // Generated reading slides keep the reference subordinate to the verse.
+        isCompactTitle?: boolean;
+        isLightTheme?: boolean;
     };
 
 // A verse block is much longer than a title, so it starts smaller than a text
@@ -47,7 +54,9 @@ const TITLE_STYLE = [
 const VERSE_NUMBER_STYLE = [
     `color:${VERSE_NUMBER_COLOR}`,
     'font-size:0.6em',
-    'padding-right:0.15em',
+    // Logical, not physical: in a right-to-left Bible the number leads the
+    // verse from the right, so the gap has to follow the reading direction.
+    'padding-inline-end:0.15em',
 ].join(';');
 // Inlined because the canvas renders inside a shadow root, where the app's
 // bootstrap icon font is not reachable.
@@ -73,14 +82,17 @@ function escapeHtml(text: string) {
         .replaceAll('>', '&gt;');
 }
 
-function genVersesHtml({ text, verses }: BibleRenderedType) {
+function genVersesHtml(
+    { text, verses }: BibleRenderedType,
+    isLightTheme = false,
+) {
     if (verses === undefined || verses.length === 0) {
         return escapeHtml(text);
     }
     return verses
         .map(({ num, text }) => {
             return (
-                `<sup style="${VERSE_NUMBER_STYLE}">${escapeHtml(num)}</sup>` +
+                `<sup style="${VERSE_NUMBER_STYLE}${isLightTheme ? ';color:#496b19' : ''}">${escapeHtml(num)}</sup>` +
                 escapeHtml(text)
             );
         })
@@ -116,6 +128,10 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
             getBibleFontFamily(bibleItem.bibleKey),
         ]);
         const [title, text, verseTextList, fontFamily] = data;
+        // Which way the words read comes with them: `toVerseTextList` has
+        // already worked it out from the Bible's own `_info` locale, so this
+        // costs neither another read nor another module in the graph.
+        const isRtl = verseTextList?.[0]?.isRtl === true;
         const bibleRenderingList = [
             {
                 title,
@@ -131,11 +147,12 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
         return {
             bibleRenderingList,
             fontFamily,
+            textDirection: toTextDirection(isRtl),
         };
     }
 
     async setNewBibleItem(bibleItem: BibleItem) {
-        const { bibleRenderingList, fontFamily } =
+        const { bibleRenderingList, fontFamily, textDirection } =
             await CanvasItemBibleItem.getBibleItemProps(bibleItem);
         this.props.bibleItemTarget = bibleItem.target;
         Object.assign(this.props, {
@@ -143,6 +160,7 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
             bibleKeys: [bibleItem.bibleKey],
             bibleItemTarget: bibleItem.target,
             bibleRenderingList,
+            textDirection,
         });
     }
 
@@ -154,16 +172,20 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
         });
     }
     // `bibleRenderingList` stays the source of truth; `html` is what gets shown.
-    static genHtml(bibleRenderingList: BibleRenderedType[]) {
+    static genHtml(
+        bibleRenderingList: BibleRenderedType[],
+        isCompactTitle = false,
+        isLightTheme = false,
+    ) {
         return bibleRenderingList
             .map((bibleRendered) => {
                 const title = this.formatBibleVerseTitle(bibleRendered.title);
                 return (
                     '<div style="width:100%">' +
-                    `<div style="${TITLE_STYLE}">${BOOK_ICON_SVG}` +
+                    `<div style="${TITLE_STYLE}${isCompactTitle ? ';font-size:0.55em;opacity:0.65;margin-bottom:0.25em' : ''}">${isCompactTitle ? '' : BOOK_ICON_SVG}` +
                     `<div>${title}</div>` +
                     '</div>' +
-                    `<div style="padding: 0.3em;">${genVersesHtml(bibleRendered)}</div>` +
+                    `<div style="padding: ${isCompactTitle ? '0.05em' : '0.3em'};">${genVersesHtml(bibleRendered, isLightTheme)}</div>` +
                     '</div>'
                 );
             })
@@ -176,7 +198,11 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
             // so items saved by an older renderer pick up the current markup.
             const newJson = {
                 ...json,
-                html: CanvasItemBibleItem.genHtml(json.bibleRenderingList),
+                html: CanvasItemBibleItem.genHtml(
+                    json.bibleRenderingList,
+                    json.isCompactTitle === true,
+                    json.isLightTheme === true,
+                ),
             };
             this.validate(newJson);
             return new CanvasItemBibleItem(newJson);
@@ -195,7 +221,7 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
     }
 
     static async fromBibleItem(id: number, bibleItem: BibleItem) {
-        const { bibleRenderingList, fontFamily } =
+        const { bibleRenderingList, fontFamily, textDirection } =
             await CanvasItemBibleItem.getBibleItemProps(bibleItem);
         const newHtmlItem = this.genDefaultItem();
         const props = newHtmlItem.toJson();
@@ -205,9 +231,12 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
         const json: CanvasItemBiblePropsType = {
             ...props,
             fontSize: BIBLE_DEFAULT_FONT_SIZE,
-            // The title sits above the verses, so anchor the block top-left.
-            textHorizontalAlignment: 'left',
+            // The title sits above the verses, so anchor the block to the top
+            // and to the edge the words start from -- the right one for a
+            // right-to-left Bible, or its lines are ragged on the wrong side.
+            textHorizontalAlignment: textDirection === 'rtl' ? 'right' : 'left',
             textVerticalAlignment: 'start',
+            textDirection,
             type: 'bible',
 
             fontFamily: fontFamily || null,

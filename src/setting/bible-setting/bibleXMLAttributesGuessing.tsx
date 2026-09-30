@@ -9,6 +9,7 @@ import {
     tran,
 } from '../../lang/langHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
+import { checkIsBibleKeyTaken } from './bibleKeyHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -29,8 +30,8 @@ function BibleKeyXMLInputComp({
         (value: string) => {
             setValue(value);
             onChangeRef.current(value);
-            if (takenBibleKeysRef.current.includes(value.toLowerCase())) {
-                setInvalidMessage('Key is already taken');
+            if (checkIsBibleKeyTaken(value, takenBibleKeysRef.current)) {
+                setInvalidMessage(tran('Key is already taken'));
             } else {
                 setInvalidMessage('');
             }
@@ -47,7 +48,7 @@ function BibleKeyXMLInputComp({
         <div className="w-100 h-100">
             <div>{tran('Define a Bible key')}</div>
             <div className="input-group" title={invalidMessage}>
-                <div className="input-group-text">Key:</div>
+                <div className="input-group-text">{tran('Key')}:</div>
                 <input
                     className={
                         'form-control form-control-sm' +
@@ -64,8 +65,9 @@ function BibleKeyXMLInputComp({
                     <div>
                         {guessingKeys.map((guessingKey) => {
                             if (
-                                takenBibleKeys.includes(
-                                    guessingKey.toLowerCase(),
+                                checkIsBibleKeyTaken(
+                                    guessingKey,
+                                    takenBibleKeys,
                                 ) ||
                                 guessingKey === value
                             ) {

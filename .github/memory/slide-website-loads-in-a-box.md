@@ -1,11 +1,11 @@
 ---
 name: slide-website-loads-in-a-box
-description: "A website canvas item's address is loaded in a walled hidden window; the same-host exemption is what keeps an intranet slide working"
+description: "A website canvas item's address is loaded in a walled hidden window; the same-host exemption keeps an intranet slide working and the webs-folder rule keeps the app's own local pages working"
 metadata: 
   node_type: memory
   type: project
   originSessionId: e5ec9e8c-e9cc-4670-95e1-4aae6714bc30
-  modified: 2026-09-17T21:29:41.246Z
+  modified: 2026-09-24T21:25:01.229Z
 ---
 
 `captureWebScreenShot` (`electron/electronHelpers.ts`) renders a website canvas
@@ -31,6 +31,32 @@ page read its neighbours.
   church's own intranet notice board is a legitimate slide. A private page may
   load its own assets; a public one may reach nothing private at all. Loopback
   gets no exemption — do not add one "so the app can preview its own pages".
+- **A `file:` URL is not automatically the attack — the app makes its own
+  local pages** (2026-09-24). The Webs panel's **New File** writes an `.html`
+  into `<data folder>/webs`, and the Background **Webs** tab, every Foreground
+  **Web Show** widget and a slide's website item all put it up as
+  `file:///…/webs/x.html`. The first cut was "http(s) only", which left every
+  one of those tiles on the globe-and-url placeholder with one
+  `Only a web address can be captured` in the console per file — the remote
+  URL item beside them still had its picture, which is what the symptom looks
+  like. What separates them from `file:///C:/Users/.../setting.json` is the
+  FOLDER, not the scheme. `resolveCaptureTarget` (`webCaptureHelpers.ts`)
+  takes a `file:` URL only when it is an `.html`/`.htm` inside a folder the
+  app's Webs panel was pointed at — the `select-dir-web-bg*` directory
+  settings, `$DATA_DIR_PATH` and either OS's separator expanded, plus the
+  default `<data folder>/webs`, listed by `listWebCaptureDirPaths` in
+  `electronHelpers.ts` (5 s cache, and only ever asked for a URL that is not
+  http(s)). `..` is resolved away first and case is folded on Windows and
+  macOS only. A shared document fails the same test by naming the OTHER
+  church's folders; where the two really are the same item,
+  `$DATA_DIR_PATH` (see [[portable-data-dir-alias]]) has already rewritten it
+  into this user's own webs folder.
+- **`file:///*` is a wall pattern, not an afterthought.** Without it no `file:`
+  request is judged at all: a site's page could read the disk and a local page
+  could read the whole machine. With it, a site reads no file and a local page
+  reads only the folder it lives in. Proven live by putting a page in that
+  folder that fetches both ways — its own sibling READ, one folder up BLOCKED.
+  Anything that widens `CAPTURE_REQUEST_URL_PATTERNS` must keep it.
 - **`webSecurity: false` stays.** It may be load-bearing for a real user's
   slide and nothing has measured whether it is. The wall closes what it opens.
   Flipping it is a separate change that needs a corpus of real website items.

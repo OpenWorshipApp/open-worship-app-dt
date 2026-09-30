@@ -290,8 +290,8 @@ screenshot presenter + settings, check contrast and that no text goes invisible,
 
 ### S19 — Media download `[MD-01..06]` — **MANDATORY in every run** (needs network)
 
-The only flow that runs the external binaries (`extra-bin/yt/yt-dlp` +
-`extra-bin/ffmpeg/bin` + `extra-bin/qjs/qjs`, installed on demand -- NOT copied in by
+The only flow that runs the external binaries (`extra-bin/<platform>/yt/yt-dlp` +
+`extra-bin/<platform>/ffmpeg/bin` + `extra-bin/<platform>/qjs/qjs`, installed on demand -- NOT copied in by
 `extra-work/copy-build.mjs`). Everything else in the matrix passes with them broken.
 
 Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs`
@@ -304,7 +304,7 @@ gone. Then press **Re-extract** — it must succeed with no network, because the
 kept on disk on purpose. In dev this copies
 `extra-work/experiment-building/release/bin-<ver>.tar.gz`, built by `npm i`; if it is
 missing, the panel names the command — run it rather than filing a bug.
-0b. **MD-06 the guard** — rename `<data parent>\extra-bin\yt` aside and start MD-01's
+0b. **MD-06 the guard** — rename `<data parent>\extra-bin\<platform>\yt` aside and start MD-01's
 **Download From URL**: a **Media Tools Required** confirm must appear naming the missing
 binaries, `No` must cancel with **no second "download failed" toast**, `Yes` must open
 Settings on **Others**, and **no yt-dlp process may spawn** either way. Restore the folder
@@ -324,7 +324,7 @@ before continuing.
 3. **MD-03** — reopen the popup, enter a non-`http` string → **Ok** → toast "Invalid URL",
    no download.
 4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
-   `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
+   `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\<platform>\qjs\qjs.exe`.
 5. **MD-04 teardown (right after step 3's evidence is captured)** — for a HUMAN tester:
    🖱️R the new video row → **Move to Trash** → **Yes**; same for the new `.mp3`. The row
    must leave the tab without a manual reload (this also covers CM-06 on a background media

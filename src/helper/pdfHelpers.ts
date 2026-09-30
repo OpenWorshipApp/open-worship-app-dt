@@ -9,6 +9,17 @@ import {
 } from '../server/fileHelpers';
 import FileSource from './FileSource';
 import { appError } from './loggerHelpers';
+import { tran } from '../lang/langHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
+import {
+    finishPdfConversion,
+    startPdfConversion,
+    updatePdfConversion,
+} from './pdfConversionProgress';
 
 function toPdfImagesPreviewDirPath(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -139,7 +150,7 @@ function sortPdfImagePreviewInfo(items: PdfItemViewInfoType[]) {
     return items;
 }
 
-export async function genPdfImagesPreview(
+async function genPdfImagesPreviewImpl(
     filePath: string,
     isForce = false,
 ): Promise<PdfItemViewInfoType[] | null> {
@@ -174,15 +185,37 @@ export async function genPdfImagesPreview(
     }
     await fsDeleteDir(outDir);
     await fsCreateDir(outDir);
-    const previewData: {
+    const progressTitle = tran('Exporting PDF Images');
+    const progressBarKey = `${progressTitle}: ${FileSource.getInstance(filePath).fullName}`;
+    if (startPdfConversion(filePath)) {
+        showSimpleToast(
+            progressTitle,
+            tran('Please wait while the PDF pages are being exported...'),
+        );
+        showProgressBar(progressBarKey);
+    }
+    let previewData: {
         isSuccessful: boolean;
         message?: string;
         filePaths?: string[];
-    } = await electronSendAsync('main:app:pdf-to-images', {
-        filePath,
-        outDir,
-        isForce: true,
-    });
+    };
+    try {
+        previewData = await electronSendAsync(
+            'main:app:pdf-to-images',
+            { filePath, outDir, isForce: true },
+            (progress: { completed: number; total: number }) => {
+                updatePdfConversion(
+                    filePath,
+                    progress.completed,
+                    progress.total,
+                );
+            },
+        );
+    } finally {
+        if (finishPdfConversion(filePath)) {
+            hideProgressBar(progressBarKey);
+        }
+    }
     if (!previewData.isSuccessful || !previewData.filePaths) {
         appError('Failed to generate PDF images preview:', previewData.message);
         return null;
@@ -194,4 +227,28 @@ export async function genPdfImagesPreview(
         return null;
     }
     return sortPdfImagePreviewInfo(imageFileInfoList as PdfItemViewInfoType[]);
+}
+
+// Several mounted slide views can request the same PDF at once. Share their
+// work so a second view does not delete the first view's partial output or
+// start another conversion after it.
+const pendingPreviewMap = new Map<
+    string,
+    Promise<PdfItemViewInfoType[] | null>
+>();
+
+export function genPdfImagesPreview(filePath: string, isForce = false) {
+    const pending = pendingPreviewMap.get(filePath);
+    if (pending) {
+        return pending;
+    }
+    const promise = (async () => {
+        try {
+            return await genPdfImagesPreviewImpl(filePath, isForce);
+        } finally {
+            pendingPreviewMap.delete(filePath);
+        }
+    })();
+    pendingPreviewMap.set(filePath, promise);
+    return promise;
 }

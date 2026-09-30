@@ -244,8 +244,15 @@ export const DOM_MATCH_RUNTIME = `
             return true;
         }
         const tag = element.tagName.toLowerCase();
+        const role = element.getAttribute('role');
+        // A row of this app's own context menu is a plain div with a role, and
+        // it is the most pressable thing on the window while the menu is up.
+        // Left off this list it lost every tie to whatever container happened
+        // to share its words -- a named panel carries the component's name, so
+        // "choose Video Show" could ring the panel that name already opened
+        // instead of the menu row that opens it.
         return ['button', 'a', 'input', 'textarea', 'select', 'summary']
-            .includes(tag) || element.getAttribute('role') === 'button';
+            .includes(tag) || role === 'button' || role === 'menuitem';
     };
 
     // The most specific match wins, NOT the first one: document order sees a
@@ -344,7 +351,13 @@ export const DOM_MATCH_RUNTIME = `
         }
         const inputType = (element.getAttribute('type') ?? 'text')
             .toLowerCase();
-        return ['text', 'search', 'url', 'tel', 'password', 'email', 'number']
+        return [
+            'text', 'search', 'url', 'tel', 'password', 'email', 'number',
+            // Setting the value and dispatching input + change is also the
+            // correct programmatic form of moving a slider. It lets a guide
+            // enlarge Reader text precisely instead of clicking its label.
+            'range',
+        ]
             .includes(inputType);
     };
 
@@ -457,9 +470,19 @@ export const DOM_MATCH_RUNTIME = `
         return matchTier(lowered, parsed.text);
     };
 
+    // A scope NAMES a panel, so it has to fit one -- tier 3 ("every word of
+    // it somewhere in the label, any order") is not a name, it is a bag of
+    // words, and every panel on the way up counts as a container. Measured
+    // 2026-09-27: owa_click of "Bible Notes > More Options" pressed the BIBLES
+    // panel's button, because both panes sit inside one called "Bible and
+    // Notes" -- which holds "bible" and "notes" and so passed. The whole
+    // point of writing a scope is to say which of two look-alikes is meant,
+    // and a press on the wrong one is the one outcome it exists to prevent.
+    const SCOPE_MAX_TIER = 2;
     const checkIsInScope = (path, scope) => {
         return path.some((name) => {
-            return matchTier(name.toLowerCase(), scope) !== -1;
+            const tier = matchTier(name.toLowerCase(), scope);
+            return tier !== -1 && tier <= SCOPE_MAX_TIER;
         });
     };
 
@@ -1226,8 +1249,8 @@ export const DOM_MATCH_RUNTIME = `
 
 /** `listControls`, packaged as an expression for `evaluateInApp`. */
 export function genListUiExpression({ filter = '', limit = 100 } = {}) {
-    const cappedLimit = Math.min(Math.max(Math.trunc(limit) || 100, 1), 200);
-    return `(() => {
+  const cappedLimit = Math.min(Math.max(Math.trunc(limit) || 100, 1), 200);
+  return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
         const controls = dm.listControls(
             ${JSON.stringify(String(filter))}, ${cappedLimit},
@@ -1251,12 +1274,12 @@ export function genListUiExpression({ filter = '', limit = 100 } = {}) {
  * proof and a far better one than silence.
  */
 export function genClickExpression(
-    finds,
-    timeoutMs = 1500,
-    settleMs = 250,
-    { guard = null } = {},
+  finds,
+  timeoutMs = 1500,
+  settleMs = 250,
+  { guard = null } = {},
 ) {
-    return `(async () => {
+  return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
         const guard = ${JSON.stringify(guard)};
         const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
@@ -1403,11 +1426,11 @@ export function genClickExpression(
  * contenteditable. `submit` follows it with an Enter keydown/keyup pair.
  */
 export function genTypeExpression(
-    finds,
-    value,
-    { submit = false, timeoutMs = 1500, guard = null } = {},
+  finds,
+  value,
+  { submit = false, timeoutMs = 1500, guard = null } = {},
 ) {
-    return `(async () => {
+  return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
         const guard = ${JSON.stringify(guard)};
         const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
@@ -1555,7 +1578,7 @@ export function genTypeExpression(
  * expect to light up.
  */
 export function genHighlightSelectorExpression(selector, isHighlighting) {
-    return `(() => {
+  return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
         let element = null;
         try {
@@ -1582,7 +1605,7 @@ export function genHighlightSelectorExpression(selector, isHighlighting) {
 }
 
 export function genFindUiExpression(text, isHighlighting) {
-    return `(() => {
+  return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
         // Parsed the same way the click matcher parses it, so "Background
         // panel" and "Background > Videos" mean here what they mean there --

@@ -4,7 +4,7 @@ import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
-import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 import {
     fsCheckFileExist,
     fsDeleteFile,
@@ -14,39 +14,24 @@ import {
     isSupportedMimetype,
     pathJoin,
     pathResolve,
+    toPortableFileName,
 } from './fileHelpers';
+import { decodeHtmlEntities } from '../helper/sanitizeHelpers';
 import FileSource, { type SrcData } from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
 import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
+import { electronSendAsync } from './electronSendHelpers';
+import { writeTextToClipboard } from './clipboardHelpers';
 
-export function genReturningEventName(eventName: string) {
-    return `${eventName}-return-${crypto.randomUUID()}`;
-}
+export { readTextFromClipboard } from './clipboardHelpers';
 
-export function electronSendAsync<T>(
-    eventName: string,
-    data: AnyObjectType = {},
-) {
-    return new Promise<T>((resolve, reject) => {
-        const replyEventName = genReturningEventName(eventName);
-        appProvider.messageUtils.listenOnceForData(
-            replyEventName,
-            (_event, imageData: T) => {
-                if (imageData instanceof Error) {
-                    return reject(imageData);
-                }
-                resolve(imageData);
-            },
-        );
-        appProvider.messageUtils.sendData(eventName, {
-            ...data,
-            replyEventName,
-        });
-    });
-}
+export {
+    electronSendAsync,
+    genReturningEventName,
+} from './electronSendHelpers';
 
 export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
@@ -97,12 +82,15 @@ export function tarExtract(
 
 // `excludeNamePatterns` are regex sources matched against each path segment;
 // a matching folder (the regenerable per-document caches) is left out.
+// `excludeEntryPaths` names whole entries, for a file whose live state is
+// appended in its place.
 export function tarCreate(
     inputDir: string,
     outputFilePath: string,
     files: string[],
     isGzip = false,
     excludeNamePatterns?: string[],
+    excludeEntryPaths?: string[],
 ) {
     return electronSendAsync<void>('main:app:tar-create', {
         inputDir,
@@ -110,6 +98,7 @@ export function tarCreate(
         files,
         isGzip,
         excludeNamePatterns,
+        excludeEntryPaths,
     });
 }
 
@@ -179,8 +168,10 @@ export function checkIsEncryptedFile(filePath: string) {
  * clipboard to find out which landed. It is the TOAST's title, so it arrives
  * already translated.
  */
-export function copyToClipboard(str: string, title?: string) {
-    appProvider.systemUtils.copyToClipboard(str);
+export async function copyToClipboard(str: string, title?: string) {
+    if (!(await writeTextToClipboard(str))) {
+        return false;
+    }
     showSimpleToast(
         title ?? tran('Copy'),
         tran('Text has been copied to clip'),
@@ -227,7 +218,15 @@ export async function renameAllMaterialFiles(
         }),
     );
 }
-export async function trashAllMaterialFiles(fileSource: FileSource) {
+/**
+ * A file's side files go the way the file itself went: `delete` when the
+ * person agreed to delete it permanently, because it sat on a drive with no
+ * trash, where the side files cannot be trashed either.
+ */
+export async function trashAllMaterialFiles(
+    fileSource: FileSource,
+    permanentFallback: 'none' | 'delete' = 'none',
+) {
     await Promise.all(
         FILE_EXTENSIONS.map(async (ext) => {
             const currentPath = pathJoin(
@@ -238,7 +237,7 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
                 return;
             }
             const currentFileSource = FileSource.getInstance(currentPath);
-            await currentFileSource.trash();
+            await currentFileSource.trash(permanentFallback);
         }),
     );
 }
@@ -255,8 +254,8 @@ async function getPageTitle(url: string) {
     }
     const titleMatch = /<title>(.*?)<\/title>/.exec(rawHtml);
     if (titleMatch?.[1]) {
-        let title = titleMatch[1].trim();
-        title = decodeURIComponent(encodeURIComponent(title));
+        // As the page reads, not as its HTML is escaped: `&amp;` is `&`.
+        const title = decodeHtmlEntities(titleMatch[1]).trim();
         return title.length > 0 ? title : null;
     }
     return null;
@@ -394,7 +393,10 @@ export function downloadVideoOrAudio(
                     const fileSource = FileSource.getInstance(resolvedFilePath);
                     resolve({
                         filePath: resolvedFilePath,
-                        fileFullName: `${title || temptName}${fileSource.dotExtension}`,
+                        // A title is not a file name: `Way Maker | Live`
+                        // fails the final move on Windows and on an exFAT
+                        // stick, after the whole download.
+                        fileFullName: `${toPortableFileName(title ?? '', temptName)}${fileSource.dotExtension}`,
                     });
                 };
                 const temptName = `temp-${Date.now()}`;
@@ -532,16 +534,6 @@ export async function* readImagesFromClipboard() {
     }
 }
 
-export async function readTextFromClipboard() {
-    try {
-        const text = await navigator.clipboard.readText();
-        return text;
-    } catch (error) {
-        handleError(error);
-        return null;
-    }
-}
-
 export function removeOpacityFromHexColor(hexColor: string) {
     if (hexColor.startsWith('#')) {
         return hexColor.substring(0, 7);
@@ -552,8 +544,9 @@ export function removeOpacityFromHexColor(hexColor: string) {
 export function printHtmlText() {
     appProvider.messageUtils.sendData('all:app:print');
 }
+// Reachable from the DevTools console on purpose; the `console.log` that used
+// to announce it here ran at module load in EVERY renderer.
 (globalThis as any).printHtmlText = printHtmlText;
-console.log('printHtmlText');
 
 export function timeToTimeString(time: number) {
     const hours = Math.floor(time / 3600);

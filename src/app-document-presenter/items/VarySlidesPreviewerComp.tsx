@@ -1,5 +1,5 @@
 import type { DragEvent } from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { use, useCallback, useMemo, useRef } from 'react';
 
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import VarySlidesComp from './VarySlidesComp';
@@ -7,8 +7,14 @@ import AppDocument from '../../app-document-list/AppDocument';
 import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
-import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 import {
+    getContainerDiv,
+    SLIDE_ITEMS_CONTAINER_CLASS_NAME,
+} from './varyAppDocumentHelpers';
+import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
+import {
+    SelectedEditingSlideContext,
+    toKeyByFilePath,
     useSlideItemsControlEventContext,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
@@ -51,6 +57,9 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     await createNewSlidesFromDroppedData(appDocument, files);
 }
 
+// The document menu button's height (`--app-action-rail`, 22px) plus a gap.
+const DOCUMENT_MENU_BUTTON_ROOM = 26;
+
 export default function VarySlidesPreviewerComp() {
     const containerRef = useRef<HTMLDivElement | null>(null);
     // One per mounted previewer, so everything below can ask for ITS container
@@ -58,7 +67,14 @@ export default function VarySlidesPreviewerComp() {
     const scope = useMemo(() => {
         return genSlidesPreviewerScope(containerRef);
     }, []);
+    // The slide being edited is what this previewer opens on, and in a windowed
+    // list a card far down the document is not drawn until the list is asked
+    // for it — so the key of what to look for travels with the query.
+    const selectedSlideEditingRef = useAppCurrentRef(
+        use(SelectedEditingSlideContext)?.selectedSlideEditing ?? null,
+    );
     useAppEffect(() => {
+        const selectedSlideEditing = selectedSlideEditingRef.current;
         notifyElementHighlight(
             () => {
                 // Scoped: `notifyElementHighlight` polls every 100ms up to 30
@@ -73,11 +89,40 @@ export default function VarySlidesPreviewerComp() {
             {
                 moveToView: bringDomToCenterView,
                 type: 'warning',
+                revealKey:
+                    selectedSlideEditing === null
+                        ? undefined
+                        : toKeyByFilePath(
+                              selectedSlideEditing.filePath,
+                              selectedSlideEditing.id,
+                          ),
             },
         );
     }, []);
 
     const varyAppDocument = useVaryAppDocumentContext();
+    // Picking a document is the operator saying what they are presenting from
+    // next, and the arrows have to answer straight away. The click that picked
+    // it left DOM focus on the Documents list — a tab stop of its own — and
+    // slide navigation is gated on THIS panel holding focus, so the first press
+    // of Right did nothing at all, in silence, with a projector waiting.
+    //
+    // Only the main panel takes it (a floating preview must not pull the
+    // keyboard off the panel behind it), never out of a field being typed into
+    // (a half-typed bible reference keeps its caret), and never when the panel
+    // already has it.
+    useAppEffect(() => {
+        const element = containerRef.current;
+        if (
+            element === null ||
+            element !== getContainerDiv() ||
+            element.contains(document.activeElement) ||
+            checkIsTypingTarget(null)
+        ) {
+            return;
+        }
+        element.focus({ preventScroll: true });
+    }, [varyAppDocument.filePath]);
     const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
     const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbSizeScale, setThumbnailSizeScale] =
@@ -165,7 +210,18 @@ export default function VarySlidesPreviewerComp() {
                         onOpening={handleContextMenu}
                     />
                 </div>
-                <div>
+                <div
+                    style={{
+                        // Room for the sticky menu button above, which would
+                        // otherwise sit exactly on the first card's own `⋮`
+                        // (both are right-aligned): pressing slide 1's menu
+                        // opened the document's instead. Padding, not a row, so
+                        // it scrolls away with the list.
+                        paddingTop: isDisplayingEditingMenu
+                            ? undefined
+                            : DOCUMENT_MENU_BUTTON_ROOM,
+                    }}
+                >
                     {isDisplayingEditingMenu ? (
                         <div
                             className="w-100 app-outer-shadow"

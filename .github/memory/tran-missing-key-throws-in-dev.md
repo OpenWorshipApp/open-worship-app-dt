@@ -23,7 +23,10 @@ naming any key the `km` dictionary lacks — a literal, a `+` chain (read as ONE
 key), or a string constant. It found 5 keys on failure paths that had no Khmer
 at all. It reads the dictionary as SOURCE and evaluates the object literal, so
 unquoted identifier keys count and it has none of the false positives below.
-A new label in `src/` fails the gate until its Khmer string is added. Keep new
+A new label in `src/` fails the gate until its Khmer string is added — and its
+French one in `src/lang/data/fr/index.ts`, whose key set the same file holds
+EQUAL to Khmer's (2026-09-21), so a key the Khmer pass covers dynamically is
+covered in French too. Keep new
 keys statically readable — a literal per branch (`genCollapseTitle` in
 `FlexResizeActorComp.tsx`), not a key looked up from a table — or the test
 cannot see them.

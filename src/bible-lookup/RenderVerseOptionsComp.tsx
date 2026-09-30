@@ -229,9 +229,14 @@ export default function RenderVerseOptionsComp({
                     );
                 })}
                 {isFull ? null : (
-                    <div
+                    // A real button: it sits in the verse grid and was the one
+                    // control there with no role and no tab stop, so the only
+                    // way to take the whole chapter was the mouse.
+                    <button
+                        type="button"
                         className="item alert pointer text-center px-2"
                         title={tran('Show all verses')}
+                        aria-label={tran('Show all verses')}
                         style={{
                             color: 'var(--bs-info-text-emphasis)',
                         }}
@@ -240,7 +245,7 @@ export default function RenderVerseOptionsComp({
                         <span>
                             <i className="bi bi-arrows-expand-vertical" />
                         </span>
-                    </div>
+                    </button>
                 )}
             </div>
         </div>

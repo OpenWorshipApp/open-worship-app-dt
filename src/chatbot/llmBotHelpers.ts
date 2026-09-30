@@ -49,6 +49,7 @@ import {
     MIN_HELP_HIT_SCORE,
     genBackToPresenterRoute,
     genGuideActions,
+    genReaderButtonReferenceAnswer,
     getBotFocus,
 } from './helpBotHelpers';
 import type {
@@ -72,11 +73,7 @@ import {
     scrubAnswerRecipeIds,
     scrubAnswerToolFields,
 } from './recipeIdHelpers';
-import {
-    parseAnswerOptions,
-    parseAnswerShows,
-    parseAttachRequests,
-} from './quickReplyHelpers';
+import { parseAnswerFrames, type ShowRefType } from './quickReplyHelpers';
 import {
     describeToolStep,
     genProgressReporter,
@@ -767,6 +764,31 @@ function genSystemPrompt(focus: BotFocusType) {
               backToPresenterText +
               ', and the rest follow from there.'
             : '';
+    const readerAudienceText =
+        focus === 'reader'
+            ? `
+
+THE BIBLE READER MAY BE USED BY AN OLDER PERSON WHO IS NEW TO COMPUTERS.
+Be respectful, never childish. Lead with the easiest mouse or touch route;
+do not lead with shortcut keys unless they ask. Use familiar words such as
+"box", "button" and "list". Start with no more than THREE numbered steps,
+one action per step; reach the first small goal, then offer to continue. Say
+where the control is (for example, "at the top" or "at the bottom left").
+Explain a double-click, right-click or drag the first time you ask for one;
+for a drag, say to press and hold, move, then let go.
+For a Bible in another language, do not lead with typing an English reference.
+Prefer the visible book button, then the visible chapter button, using the exact
+localized words from \`owa_list_ui\`. Typing a full reference is only a fallback.
+Solve the problem they described, not merely a related task. If they LOST
+something, lead with the history or recovery route that does not require them
+to remember it and type it again.
+Never leave them at "it did not work", "I cannot", "try again" or an apology.
+Do not repeat a step that failed. Give the safest workable alternative, or ask
+ONE short question whose answer lets you give the next exact step.
+After steps, offer a relevant recovery choice such as "It still did not work".
+Never offer generic "No thanks" or "Yes, turn it on" choices unless your answer
+just asked that exact yes-or-no question.`
+            : '';
     return `
 You are the built-in help assistant of Open Worship App, a free desktop app
 churches use to put lyrics, Bible verses and media on a projector screen.
@@ -806,7 +828,8 @@ own plain words:
   no note about which page you read.
 - Never print the same line twice.
 - Numbered steps, one action each, starting at the first thing they have not
-  already done. Bold the words that are ON the control.
+  already done. Renumber the steps you actually give from 1; never preserve a
+  recipe's old step number. Bold the words that are ON the control.
 - Only the steps that answer what they asked. A recipe's other five steps are
   not their question.
 - If the page you found does not answer it, say that plainly instead of
@@ -817,6 +840,7 @@ LOOKING AT IT while they ask. Never tell them to open the window they are
 already in -- no "click the Bible Reader tab" when they are in the Bible
 Reader; start at the first step they have not done. \`owa_app_state\` with
 \`page: "${focus}.html"\` says what is on their screen if you are unsure.${notHereText}
+${readerAudienceText}
 
 **The window may not be showing it.** If a tool answers that the app has no
 open page matching "${focus}.html", nothing about it can be circled, clicked or
@@ -867,8 +891,9 @@ Rules:
   false, \`nearMisses\` -- the closest labels that ARE on their screen.
   Start the guide again with one of those, or look the real one up with
   \`owa_list_ui\`. Guessing the presenter's controls for the reader is the
-  usual cause: the Bible Reader has no Book/Chapter/Verse buttons, it has
-  one reference box and a version button showing the Bible key.
+  usual cause: the Bible Reader begins with one reference box and a version
+  button showing the Bible key; after that box is cleared or opened it shows
+  localized book, chapter and verse buttons. Use their exact live labels.
 - If they would rather watch than do it, start the same guide with
   \`mode: "demo"\`: the card then does each step for them, one press of **Do
   it** at a time. Say what it will do first, and NEVER demo a step that changes
@@ -883,7 +908,10 @@ Rules:
   walkthrough. So when they want it done FOR them, write the steps yourself
   and give each one a \`find\`: the exact words written on the control, not a
   shortcut and not a word from your sentence. Use \`action: "type"\` with a
-  \`value\` for a step that types. A step with nothing to press is fine as
+  \`value\` for a step that types or changes a slider. A control marked
+  \`showsOnHover\` can be targeted directly -- the guide holds it visible.
+  Use \`action: "hover"\` only when moving over one control makes a different
+  control appear. A step with nothing to press is fine as
   plain text; the card asks them to do that one themselves.
 - **You have a handful of tool calls, so spend them on doing it.** START the
   guide; do not check each step with \`owa_find_ui\` first. One check, for one
@@ -1025,10 +1053,11 @@ hiding stays something they ask for themselves.
 To let them PRESS the thing you are talking about, add a line:
 SHOWS: <control name> | file:<full path>
 A control name is rung in red in their window when they press it; a path opens
-its folder, and a picture opens big enough to read. Only for something you
-verified exists -- a control a tool answered with, a file the app told you
-about. Never write a selector or an id here unless a tool gave you one, and
-never in the answer itself.
+its folder, and a picture opens big enough to read. Use the EXACT, SINGLE label
+that \`owa_find_ui\` or \`owa_list_ui\` returned -- never a category, a plural
+guess, \`none\`, or a qualifier such as "if shown" / "on screen". If you did not
+verify it, omit SHOWS. Never write a selector or an id here unless a tool gave
+you one, and never in the answer itself.
 
 When you truly cannot answer without SEEING their window, add ONE more line
 after it:
@@ -1265,7 +1294,33 @@ type ToolWatchType = {
      * `checkIsStepsWithoutPage`.
      */
     isPageNudged: boolean;
+    /**
+     * Control labels proved against the live window during this ask. SHOWS is
+     * model output, so without this structural check a guessed category such
+     * as "Bible Version buttons" becomes a bright dead chip. Per ask only and
+     * bounded by the list tool's own result cap.
+     */
+    verifiedControlNames: Set<string>;
 };
+
+function toControlNameKey(value: string) {
+    return String(value ?? '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+export function filterVerifiedAnswerShows(
+    shows: ShowRefType[],
+    watch: ToolWatchType,
+) {
+    return shows.filter((show) => {
+        return (
+            show.kind !== 'control' ||
+            watch.verifiedControlNames.has(toControlNameKey(show.value))
+        );
+    });
+}
 
 /**
  * What the walkthrough buttons should walk through -- nothing, when the model
@@ -1288,6 +1343,7 @@ export function genToolWatch(): ToolWatchType {
         createdLyric: null,
         pageTitles: {},
         isPageNudged: false,
+        verifiedControlNames: new Set<string>(),
     };
 }
 
@@ -1372,6 +1428,30 @@ export function applyToolWatch(
     args: any,
     text: string,
 ) {
+    if (name === 'owa_find_ui' || name === 'owa_list_ui') {
+        try {
+            const result = JSON.parse(text);
+            if (
+                name === 'owa_find_ui' &&
+                typeof args?.text === 'string' &&
+                result?.shownCount > 0 &&
+                (result?.matches ?? []).some((match: any) => match?.tier === 0)
+            ) {
+                watch.verifiedControlNames.add(toControlNameKey(args.text));
+            }
+            if (name === 'owa_list_ui') {
+                for (const control of (result?.controls ?? []).slice(0, 200)) {
+                    if (typeof control?.label === 'string') {
+                        watch.verifiedControlNames.add(
+                            toControlNameKey(control.label),
+                        );
+                    }
+                }
+            }
+        } catch (_error) {
+            // Prose/refusal: no control was proven by it.
+        }
+    }
     if (name === 'owa_guide_start') {
         watch.isGuideStarted = true;
     }
@@ -2440,6 +2520,14 @@ export async function askLlmBot(
         }
         asked = ATTACHMENT_ONLY_QUESTION;
     }
+    // This one has a complete local solution and exact live-safe controls.
+    // Letting a small model improvise it was measured asking a senior to read
+    // and type back the Khmer button label -- precisely the task they could
+    // not do. It needs neither the network nor a model round.
+    const readerButtonAnswer = genReaderButtonReferenceAnswer(asked, focus);
+    if (readerButtonAnswer !== null) {
+        return readerButtonAnswer;
+    }
     // Its own step because it is the one wait that has nothing to do with the
     // question: on the first ask of a window this opens the MCP session, and a
     // machine that is busy elsewhere can sit here for a couple of seconds with
@@ -2550,23 +2638,17 @@ export async function askLlmBot(
         // sees it. Done HERE rather than in each provider so there is exactly
         // one place the frame can leak from -- and so the guide rescue, which
         // rides the same call, is cleaned too.
-        const parsed = parseAnswerOptions(answer.text);
-        answer.text = parsed.text;
-        if (parsed.options.length > 0) {
-            answer.replies = parsed.options;
+        const frames = parseAnswerFrames(answer.text);
+        answer.text = frames.text;
+        if (frames.options.length > 0) {
+            answer.replies = frames.options;
         }
-        // The other frame, taken off in the same place and for the same
-        // reason. Asked for AFTER the options so an answer carrying both comes
-        // out clean whichever order the model wrote them in.
-        const needed = parseAttachRequests(answer.text);
-        answer.text = needed.text;
-        if (needed.requests.length > 0) {
-            answer.attachRequests = needed.requests;
+        if (frames.requests.length > 0) {
+            answer.attachRequests = frames.requests;
         }
-        const shown = parseAnswerShows(answer.text);
-        answer.text = shown.text;
-        if (shown.shows.length > 0) {
-            answer.shows = shown.shows;
+        const verifiedShows = filterVerifiedAnswerShows(frames.shows, watch);
+        if (verifiedShows.length > 0) {
+            answer.shows = verifiedShows;
         }
         // And the recipe ids, which the prompt forbids and a model writes
         // anyway when it answers from a search hit without opening the page

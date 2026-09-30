@@ -2,10 +2,10 @@
 id: W-10
 title: "Control what the audience sees (mini screen + clears)"
 section: "Presenting content"
-verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
+verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-29"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
@@ -13,6 +13,13 @@ workflowsVersion: "2026-09-18"
 
 - The **mini screen** (right column, bottom) always mirrors the audience view; the
   zoom slider under it only rescales your preview, not the output. 📸
+- Behind everything the card draws sits **that monitor's own desktop wallpaper**.
+  The audience screen is a transparent window, so wherever you have put nothing
+  up this is genuinely what the room would see. Right-click an empty part of the
+  mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
+  turns it off and puts the plain checkered pattern back; **Refresh Preview** in
+  the same menu re-reads it after you change your desktop background. A machine
+  that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
   output display on or off. The icon fills in and brightens while showing. It is
@@ -39,7 +46,7 @@ workflowsVersion: "2026-09-18"
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
+`PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-29).
 :::

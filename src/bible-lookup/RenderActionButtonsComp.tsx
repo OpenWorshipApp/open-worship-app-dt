@@ -87,7 +87,7 @@ export default function RenderActionButtonsComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="btn-group mx-1">
+        <div className="btn-group">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
             <button
                 type="button"
@@ -153,12 +153,7 @@ export default function RenderActionButtonsComp({
                         aria-label={tran('Export to MS Word')}
                         onClick={handleExportToWord}
                     >
-                        <i
-                            className="bi bi-file-earmark-word"
-                            style={{
-                                color: 'blue',
-                            }}
-                        />
+                        <i className="bi bi-file-earmark-word" />
                     </button>
                 </>
             ) : null}

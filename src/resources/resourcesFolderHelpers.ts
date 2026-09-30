@@ -5,8 +5,13 @@ import {
     setSetting,
     toFilePathSettingKey,
 } from '../helper/settingHelpers';
-import { pathResolve, selectDirs } from '../server/fileHelpers';
-import appProvider from '../server/appProvider';
+import {
+    checkIsForeignAbsolutePath,
+    pathDirname,
+    pathResolve,
+    selectDirs,
+    toPathCompareKey,
+} from '../server/fileHelpers';
 
 const RESOURCES_FOLDER_LIST_SETTING_NAME = 'resources-folder-list';
 
@@ -47,7 +52,7 @@ export function toResourcesFolderExpandedSettingName(dirPath: string) {
  * path keeps the casing the picker returned, which is what the user recognises.
  */
 export function toDirPathCompareKey(dirPath: string) {
-    return appProvider.systemUtils.isLinux ? dirPath : dirPath.toLowerCase();
+    return toPathCompareKey(dirPath);
 }
 
 export function sanitizeResourcesFolderList(dirPathList: unknown): string[] {
@@ -61,8 +66,13 @@ export function sanitizeResourcesFolderList(dirPathList: unknown): string[] {
             continue;
         }
         // `pathResolve` also strips the trailing separator, so `D:\a` and
-        // `D:\a\` are one folder rather than two scans of one tree.
-        const resolved = pathResolve(dirPath.trim());
+        // `D:\a\` are one folder rather than two scans of one tree. A folder
+        // from the other OS family is kept as written: resolving it here broke
+        // it for good once the list was saved (`checkIsForeignAbsolutePath`).
+        const trimmed = dirPath.trim();
+        const resolved = checkIsForeignAbsolutePath(trimmed)
+            ? trimmed
+            : pathResolve(trimmed);
         const key = toDirPathCompareKey(resolved);
         if (seenKeys.has(key)) {
             continue;
@@ -143,6 +153,59 @@ export function addResourcesFolders(
         addedDirPaths,
         duplicatedDirPaths,
     };
+}
+
+/**
+ * The candidates the list does not already show: not on it themselves, and not
+ * within `coveredDepth` levels of a listed folder -- the scan's own depth, so
+ * that folder's box is listing their files already. Without the second half, a
+ * `<data dir>/resources` put on the list whole would have each folder in it
+ * offered again, and one press would draw every file in it twice.
+ *
+ * The depth is passed in rather than imported, so this module stays free of the
+ * scanner and the bible tables it carries.
+ */
+export function filterUnlistedResourcesFolders(
+    candidateDirPaths: string[],
+    dirPathList: string[],
+    coveredDepth: number,
+) {
+    const listedKeys = new Set(
+        sanitizeResourcesFolderList(dirPathList).map(toDirPathCompareKey),
+    );
+    return sanitizeResourcesFolderList(candidateDirPaths).filter((dirPath) => {
+        let currentDirPath = dirPath;
+        for (let depth = 0; depth <= coveredDepth; depth++) {
+            if (listedKeys.has(toDirPathCompareKey(currentDirPath))) {
+                return false;
+            }
+            const parentDirPath = pathDirname(currentDirPath);
+            // A drive root is its own parent.
+            if (parentDirPath === currentDirPath) {
+                break;
+            }
+            currentDirPath = parentDirPath;
+        }
+        return true;
+    });
+}
+
+/**
+ * Put folders on the SAVED list, for a caller that is not the panel -- File →
+ * Import Data, which brings the data directory's `resources` folder back but
+ * not this list (a setting is not data), so the files it restored would land
+ * on a machine whose panel shows none of them. Returns the folders that were
+ * new; a panel already open picks them up on its Reload.
+ */
+export function addResourcesFoldersToList(dirPaths: string[]) {
+    const { newDirPathList, addedDirPaths } = addResourcesFolders(
+        getResourcesFolderList(),
+        dirPaths,
+    );
+    if (newDirPathList !== null) {
+        setResourcesFolderList(newDirPathList);
+    }
+    return addedDirPaths;
 }
 
 /**

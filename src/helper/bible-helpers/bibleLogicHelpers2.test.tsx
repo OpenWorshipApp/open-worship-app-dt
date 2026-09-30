@@ -109,6 +109,7 @@ const mocks = vi.hoisted(() => {
         getFontFamilyByLocaleMock: vi.fn(),
         getLangDataAsyncMock: vi.fn(),
         getModelChapterCountMock: vi.fn(),
+        getModelKeyBookMapMock: vi.fn(),
         getSettingMock: vi.fn(),
         getVersesMock: vi.fn(),
         globalCacheManager10Seconds: {
@@ -199,6 +200,7 @@ vi.mock('../../bible-list/BibleItem', () => ({
 
 vi.mock('./bibleLogicHelpers1', () => ({
     getModelChapterCount: mocks.getModelChapterCountMock,
+    getModelKeyBookMap: mocks.getModelKeyBookMapMock,
 }));
 
 vi.mock('../../others/CacheManager', () => ({
@@ -331,7 +333,15 @@ describe('bibleLogicHelpers2', () => {
                 return null;
             },
         );
+        mocks.getModelKeyBookMapMock.mockReturnValue({
+            JHN: 'John',
+            JUD: 'Jude',
+            PSA: 'Psalm',
+        });
         mocks.getModelChapterCountMock.mockImplementation((bookKey: string) => {
+            if (bookKey === 'PSA') {
+                return 150;
+            }
             if (bookKey === 'JUD') {
                 return 1;
             }
@@ -569,6 +579,39 @@ describe('bibleLogicHelpers2', () => {
             verseEnd: 2,
             verseStart: 2,
         });
+    });
+
+    test('resolves a book by its model (English) name when the Bible names it otherwise', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'Psalm 3:2');
+
+        expect(extracted.result.bookKey).toBe('PSA');
+        expect(extracted.result.guessingBook).toBeNull();
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'PSA',
+            chapter: 3,
+            verseEnd: 2,
+            verseStart: 2,
+        });
+
+        const unknown = await module.extractBibleTitle('KJV', 'Psalms 3:2');
+        expect(unknown.result.bookKey).toBeNull();
+        expect(unknown.result.guessingBook).toBe('Psalms 3:2');
+    });
+
+    test('keeps the chapter and verses an unresolved book was typed with', async () => {
+        const module = await loadModule();
+
+        expect(module.toTrailingReference('Psalms 23:1')).toBe('23:1');
+        expect(module.toTrailingReference('Psalms 23:1-6')).toBe('23:1-6');
+        expect(module.toTrailingReference('Psalms 23:')).toBe('23:');
+        expect(module.toTrailingReference('Psalms 23')).toBe('23');
+        expect(module.toTrailingReference('ទំនុក ២៣:១')).toBe('២៣:១');
+        expect(module.toTrailingReference('1 Jo')).toBeNull();
+        expect(module.toTrailingReference('Psalms')).toBeNull();
+        expect(module.toTrailingReference('23:1')).toBeNull();
+        expect(module.toTrailingReference(null)).toBeNull();
     });
 
     test('creates extra bible items for broken chapter ranges', async () => {

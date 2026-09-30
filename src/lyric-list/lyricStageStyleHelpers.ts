@@ -130,13 +130,37 @@ function sanitize(parsed: any): LyricStageStyleType {
  * `basicOpenLyricOptions`, which run per slide, so re-parsing the same string
  * every time is pure waste. `getSetting` is still called on every read, so a
  * change written by another window is picked up at once — this is a parse memo,
- * not a cache with a lifetime. Bounded by the registered stage classes (two
- * today), one entry each, so it cannot grow.
+ * not a cache with a lifetime.
+ *
+ * It used to be bounded by the two registered stage classes. Stage numbers have
+ * no ceiling now (a screen's `St:` increments as far as anyone presses), so the
+ * bound is explicit: past `MAX_PARSED_STAGE_COUNT` the oldest entry goes. A
+ * dropped entry costs one `JSON.parse` of a record this small, never a wrong
+ * answer.
  */
+const MAX_PARSED_STAGE_COUNT = 16;
 const parsedByStage = new Map<
     string,
     { raw: string; style: LyricStageStyleType }
 >();
+
+function rememberParsedStage(
+    settingName: string,
+    raw: string,
+    style: LyricStageStyleType,
+) {
+    // Delete first so a re-read moves the entry to the end of the insertion
+    // order, which is what makes the eviction below least-recently-used.
+    parsedByStage.delete(settingName);
+    parsedByStage.set(settingName, { raw, style });
+    while (parsedByStage.size > MAX_PARSED_STAGE_COUNT) {
+        const oldestKey = parsedByStage.keys().next().value;
+        if (oldestKey === undefined) {
+            break;
+        }
+        parsedByStage.delete(oldestKey);
+    }
+}
 
 export function getLyricStageStyle(stage: number): LyricStageStyleType {
     const settingName = toLyricStageStyleSettingName(stage);
@@ -158,7 +182,7 @@ export function getLyricStageStyle(stage: number): LyricStageStyleType {
         // moment anyone touches it.
         style = { ...LYRIC_STAGE_STYLE_DEFAULT };
     }
-    parsedByStage.set(settingName, { raw, style });
+    rememberParsedStage(settingName, raw, style);
     return { ...style };
 }
 
@@ -166,7 +190,7 @@ export function setLyricStageStyle(stage: number, style: LyricStageStyleType) {
     const settingName = toLyricStageStyleSettingName(stage);
     const sanitized = sanitize(style);
     const raw = JSON.stringify(sanitized);
-    parsedByStage.set(settingName, { raw, style: sanitized });
+    rememberParsedStage(settingName, raw, sanitized);
     setSetting(settingName, raw);
 }
 

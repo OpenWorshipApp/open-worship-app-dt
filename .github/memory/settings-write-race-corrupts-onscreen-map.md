@@ -1,14 +1,37 @@
 ---
 name: settings-write-race-corrupts-onscreen-map
-description: "unlocking()'s lockSet is per-renderer, so presenter and screen windows race the same settings file and corrupt it — all screens blank after reload"
+description: "FIXED 2026-09-24 (EN-38): projector windows raced the Presenter on the on-screen maps; now only non-screen windows write, an unreadable map is rebuilt from the Presenter's managers, and setItem is atomic"
 metadata: 
   node_type: memory
   type: project
   originSessionId: deac06bb-7abf-4575-b053-ee4bfade133f
-  modified: 2026-08-07T19:01:41.288Z
+  modified: 2026-09-24T17:25:00.000Z
 ---
 
-**Status: OPEN bug, observed live 2026-08-07** (robot run `20260807-1412`; report and the
+**Status: FIXED 2026-09-24 (`EN-38`).** What shipped, and what must stay true:
+
+- `persistOnScreenEntry` (`src/_screen/managers/onScreenSettingPersistHelpers.ts`)
+  is the ONE save for the slide, background, Bible and foreground maps. It never
+  writes from `screen.html` (`checkIsOnScreenSettingWriter`), and neither does
+  `saveScreenManagersSetting`. A new screen layer or setter that persists a
+  whole-screens map must go through it — a bare `unlocking(...) + setSetting`
+  in a manager setter reopens this bug, because those setters also run in the
+  projector on every sync.
+- A map that reads back EMPTY while the file holds more than `{}` is rebuilt in
+  the Presenter from its live managers (`collectLive`); in any other window the
+  save is skipped. It is never saved as `{}` + one key.
+- `appLocalStorage.setItem` → `fsWriteFileAtomicSync` (hidden
+  `.<key>.<random>.tmp` + `renameSync`, 5 tries, then in-place). Windows refuses
+  the rename while another process has the target open, which is why the
+  single writer, not the rename, is the real fix.
+- Proven live: 2 screens showing, 6 presents, 0 of 5 707 watcher reads
+  unparseable, both screens kept their own slide across a real reload. Ctrl+R
+  over CDP did NOT reload the Presenter while screens were up — check
+  `performance.timeOrigin` or use `Page.reload` before calling a reload proven.
+
+The original report follows.
+
+**Was OPEN, observed live 2026-08-07** (robot run `20260807-1412`; report and the
 corrupt/repaired file pair were in `test-results/robot-test/` and have since been pruned —
 the source evidence is the in-tree code below, all still verifiable).
 

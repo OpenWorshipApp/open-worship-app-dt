@@ -259,10 +259,11 @@ describe('getVerseTextLookupLangCode', () => {
         expect(getVerseTextLookupLangCode('ពគប', 'km-KH')).toBe('km');
         // Its own package's names, whatever the bible is called.
         expect(getVerseTextLookupLangCode('គខប', 'km-KH')).toBe('km');
+        expect(getVerseTextLookupLangCode('LSG', 'fr-FR')).toBe('fr');
     });
 
     test('a language with no package is left undecorated', () => {
-        expect(getVerseTextLookupLangCode('LSG', 'fr-FR' as any)).toBeNull();
         expect(getVerseTextLookupLangCode('Greek', 'el-GR' as any)).toBeNull();
+        expect(getVerseTextLookupLangCode('RVR', 'es-ES' as any)).toBeNull();
     });
 });

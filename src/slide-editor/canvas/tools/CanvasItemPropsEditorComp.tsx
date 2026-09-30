@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
@@ -35,11 +35,20 @@ export default function CanvasItemPropsEditorComp({
         'canvas-item-props-editor',
     );
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    // Every change made inside one debounce window, in the order it was made.
+    // The timer below fires once for the whole burst, and it used to commit
+    // only the LAST change: pressing Align top then Align left, or typing X
+    // then tabbing to Y, inside half a second dropped the first one from the
+    // document while the panel showed both.
+    const pendingPropsRef = useRef<Partial<typeof props>[]>([]);
     const setProps1 = (anyProps: Partial<typeof props>) => {
         setProps((prevProps: any) => {
             return cloneJson({ ...prevProps, ...anyProps });
         });
+        pendingPropsRef.current.push(cloneJson(anyProps));
         attemptTimeout(() => {
+            const pendingPropsList = pendingPropsRef.current;
+            pendingPropsRef.current = [];
             const { canvas } = canvasController;
             // The editors are hidden while locked, but a pending debounced
             // commit could still fire after the item just got locked.
@@ -55,13 +64,19 @@ export default function CanvasItemPropsEditorComp({
                 // properties changed elsewhere (e.g. a position set by a prior
                 // drag), which made the box jump back to its old spot when
                 // only the background color was changed.
-                item.applyBoxData(
-                    {
-                        parentHeight: canvas.height,
-                        parentWidth: canvas.width,
-                    },
-                    cloneJson(anyProps),
-                );
+                //
+                // One patch at a time, in order, not merged: an alignment is
+                // worked out from the size the box has at that moment, so a
+                // width typed just before "Align right" must land first.
+                for (const pendingProps of pendingPropsList) {
+                    item.applyBoxData(
+                        {
+                            parentHeight: canvas.height,
+                            parentWidth: canvas.width,
+                        },
+                        pendingProps,
+                    );
+                }
             });
         });
     };
@@ -135,7 +150,12 @@ export default function CanvasItemPropsEditorComp({
                             </div>
                         ) : (
                             <CanvasItemContext value={canvasItem}>
-                                <div>
+                                <div
+                                    // Allowed to be narrower than its content
+                                    // so the rows inside wrap and shrink to
+                                    // the pane instead of pushing past it.
+                                    style={{ maxWidth: '100%', minWidth: 0 }}
+                                >
                                     <SlideEditorToolTitleComp
                                         title={tran('Box Properties')}
                                         isCollapsible

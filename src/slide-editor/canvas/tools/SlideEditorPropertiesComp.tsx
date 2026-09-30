@@ -2,6 +2,7 @@ import { tran } from '../../../lang/langHelpers';
 import type CanvasItem from '../CanvasItem';
 import CanvasItemPropsEditorComp from './CanvasItemPropsEditorComp';
 import SlidePropertyEditorComp from './SlidePropertyEditorComp';
+import DocumentFontEditorComp from './DocumentFontEditorComp';
 
 export default function SlideEditorPropertiesComp({
     canvasItems,
@@ -12,10 +13,14 @@ export default function SlideEditorPropertiesComp({
         <div
             className="d-flex flex-column w-100 h-100 p-1"
             style={{
-                overflowX: 'hidden',
+                // `auto`, never `hidden`: focusing a field scrolls this box
+                // sideways to show it, and with `hidden` there was no way back
+                // -- labels stayed cut off on the left until a reload.
+                overflowX: 'auto',
             }}
         >
             <SlidePropertyEditorComp />
+            <DocumentFontEditorComp />
             {canvasItems.length === 0 ? (
                 <div className="d-flex justify-content-center align-items-center h-100">
                     <div>

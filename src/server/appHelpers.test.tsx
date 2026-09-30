@@ -27,6 +27,8 @@ const {
     const sendData = vi.fn();
     const sendDataSync = vi.fn();
     const listenOnceForData = vi.fn();
+    const listenForData = vi.fn();
+    const removeListener = vi.fn();
     const copyToClipboard = vi.fn();
     const getYTHelper = vi.fn();
     const extraBinPaths = {
@@ -56,10 +58,15 @@ const {
             systemUtils: {
                 copyToClipboard,
             },
+            // Read by the real `fileHelpers` on load, which the mock below
+            // borrows its name rule from.
+            pathUtils: { sep: '/' },
             messageUtils: {
                 sendData,
                 sendDataSync,
                 listenOnceForData,
+                listenForData,
+                removeListener,
             },
             ytUtils: {
                 getYTHelper,
@@ -116,7 +123,11 @@ vi.mock('../router/routeHelpers', () => ({
     goToPath: goToPathMock,
 }));
 
-vi.mock('./fileHelpers', () => ({
+vi.mock('./fileHelpers', async (importOriginal) => ({
+    // The real rule, not a stub: what a title becomes on disk is what the
+    // download tests are about.
+    toPortableFileName: (await importOriginal<typeof import('./fileHelpers')>())
+        .toPortableFileName,
     fsCheckFileExist: fsCheckFileExistMock,
     fsCheckDirExist: vi.fn(() => Promise.resolve(false)),
     fsDeleteFile: vi.fn(() => Promise.resolve()),
@@ -285,6 +296,53 @@ describe('appHelpers', () => {
         );
     });
 
+    test('forwards progress and removes its listener after the reply', async () => {
+        const module = await loadModule();
+        const progressCallback = vi.fn();
+        let sendProgress:
+            ((event: unknown, value: unknown) => void) | undefined;
+        let sendReply: ((event: unknown, value: unknown) => void) | undefined;
+        appProviderMock.messageUtils.listenForData.mockImplementation(
+            (_name: string, callback: typeof sendProgress) => {
+                sendProgress = callback;
+            },
+        );
+        appProviderMock.messageUtils.listenOnceForData.mockImplementation(
+            (_name: string, callback: typeof sendReply) => {
+                sendReply = callback;
+            },
+        );
+
+        const promise = module.electronSendAsync(
+            'main:app:pdf-to-images',
+            { filePath: '/docs/sermon.pdf' },
+            progressCallback,
+        );
+        sendProgress?.({}, { completed: 12, total: 25 });
+        sendReply?.({}, { isSuccessful: true });
+
+        await expect(promise).resolves.toEqual({ isSuccessful: true });
+        expect(progressCallback).toHaveBeenCalledWith({
+            completed: 12,
+            total: 25,
+        });
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'main:app:pdf-to-images',
+            {
+                filePath: '/docs/sermon.pdf',
+                replyEventName: 'main:app:pdf-to-images-return-uuid-123',
+                progressEventName:
+                    'main:app:pdf-to-images-return-uuid-123-progress',
+            },
+        );
+        expect(
+            appProviderMock.messageUtils.removeListener,
+        ).toHaveBeenCalledWith(
+            'main:app:pdf-to-images-return-uuid-123-progress',
+            expect.any(Function),
+        );
+    });
+
     test('delegates explorer, PDF conversion, tar extraction, and clipboard copy', async () => {
         const module = await loadModule();
         appProviderMock.messageUtils.listenOnceForData
@@ -328,15 +386,19 @@ describe('appHelpers', () => {
                 true,
             ),
         ).resolves.toBeUndefined();
-        expect(module.copyToClipboard('lyrics')).toBe(true);
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (_channel, callback) => callback({}, true),
+        );
+        await expect(module.copyToClipboard('lyrics')).resolves.toBe(true);
 
         expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
             'main:app:reveal-path',
             '/docs',
         );
-        expect(
-            appProviderMock.systemUtils.copyToClipboard,
-        ).toHaveBeenCalledWith('lyrics');
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'main:app:write-clipboard-text',
+            expect.objectContaining({ text: 'lyrics' }),
+        );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copy',
             'Text has been copied to clip',
@@ -551,6 +613,37 @@ describe('appHelpers', () => {
         expect(showProgressBarMessageMock).toHaveBeenCalledWith('all done');
     });
 
+    test('names a download after its title in a form every OS accepts', async () => {
+        const module = await loadModule();
+        vi.spyOn(Date, 'now').mockReturnValue(444);
+        const emitter = createYtEmitter((handlers) => {
+            handlers.ytDlpEvent('Merger', 'Merging formats into "/out/v.mp4"');
+            handlers.close();
+        });
+        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
+            exec: vi.fn().mockReturnValueOnce(emitter),
+        });
+        fileSourceGetInstanceMock.mockImplementation(() => ({
+            dotExtension: '.mp4',
+        }));
+        // `|`, `:` and `/` are refused by Windows and by an exFAT stick, and
+        // the raw `<title>` still carries its HTML entities.
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                text: async () =>
+                    '<title>Way Maker | Live &amp; Loud: 10/10</title>',
+            })),
+        );
+
+        await expect(
+            module.downloadVideoOrAudio('https://video', '/out', true),
+        ).resolves.toEqual({
+            filePath: '/out/v.mp4',
+            fileFullName: 'Way Maker Live & Loud 10 10.mp4',
+        });
+    });
+
     test('points yt-dlp at the installed media pack', async () => {
         const module = await loadModule();
         appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
@@ -691,11 +784,9 @@ describe('appHelpers', () => {
             ),
         };
         const readMock = vi.fn(async () => [imageItem, textItem]);
-        const readTextMock = vi.fn(async () => 'copied text');
         vi.stubGlobal('navigator', {
             clipboard: {
                 read: readMock,
-                readText: readTextMock,
             },
         });
 
@@ -706,6 +797,9 @@ describe('appHelpers', () => {
             blobs.push(blob);
         }
         expect(blobs).toEqual([imageBlob]);
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (_channel, callback) => callback({}, 'copied text'),
+        );
         await expect(module.readTextFromClipboard()).resolves.toBe(
             'copied text',
         );
@@ -713,9 +807,10 @@ describe('appHelpers', () => {
         readMock.mockRejectedValueOnce(new Error('no access'));
         await expect(module.checkIsImagesInClipboard()).resolves.toBe(false);
 
-        readTextMock.mockRejectedValueOnce(new Error('blocked'));
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (_channel, callback) => callback({}, new Error('blocked')),
+        );
         await expect(module.readTextFromClipboard()).resolves.toBeNull();
-        expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
     });
 
     test('formats colors, printing, times, and window-on-top hook state', async () => {

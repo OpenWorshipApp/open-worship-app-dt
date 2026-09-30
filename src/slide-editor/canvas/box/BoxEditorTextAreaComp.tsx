@@ -4,6 +4,7 @@ import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import CanvasItemText from '../CanvasItemText';
 import { SCRIPT_SAFE_LINE_HEIGHT } from '../canvasHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
+import { tran } from '../../../lang/langHelpers';
 
 function calcAlignmentStyle(props: CanvasItemTextPropsType) {
     const basePadding = props.fontSize / 10;
@@ -76,6 +77,9 @@ export default function BoxEditorTextAreaComp({
                 boxSizing: 'border-box',
                 overflow: 'hidden',
             }}
+            // The only name this box can have: it is drawn over the slide
+            // with no label of its own.
+            aria-label={tran('Text')}
             value={text}
             autoFocus
             onFocus={handleTextAreaFocus}

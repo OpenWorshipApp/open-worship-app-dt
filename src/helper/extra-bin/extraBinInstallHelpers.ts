@@ -31,6 +31,7 @@ import {
     checkIsExtraBinInstalled,
     getExtraBinDirPath,
     getInstalledExtraBinVersion,
+    moveLegacyExtraBinPack,
 } from './extraBinHelpers';
 
 export type ExtraBinEntryType = {
@@ -210,6 +211,9 @@ export async function installExtraBin({
     return unlocking(INSTALL_LOCK_KEY, async () => {
         showProgressBar(PROGRESS_BAR_EVENT_KEY);
         try {
+            // An old single-folder pack for this OS is ITS pack: moved in
+            // first, so it is re-used rather than downloaded again.
+            await moveLegacyExtraBinPack();
             const dirPath = getExtraBinDirPath();
             await ensureDirectory(dirPath);
             let archiveFileFullName = await findLocalExtraBinArchive(dirPath);

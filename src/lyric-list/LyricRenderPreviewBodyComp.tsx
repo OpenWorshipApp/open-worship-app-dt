@@ -58,7 +58,7 @@ export default function LyricRenderPreviewBodyComp() {
                 />
             </div>
             <div
-                className="w-100 p-2 app-lyric-render-preview-body"
+                className="w-100 p-2 app-lyric-render-preview-body app-selectable-text"
                 ref={(el) => {
                     const openLyric = lyricManager.openLyricPreviewer;
                     if (el === null || openLyric.container === el) {

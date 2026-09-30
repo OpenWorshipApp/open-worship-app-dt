@@ -17,6 +17,8 @@ const {
     bringDomToCenterViewMock,
     checkIsVerticalAtBottomMock,
     getDefaultScreenDisplayMock,
+    getFileMD5Mock,
+    fsGetFileStampMock,
     sendDataSyncMock,
     listenForDataMock,
     unlockingMock,
@@ -41,6 +43,15 @@ const {
     getDefaultScreenDisplayMock: vi.fn(() => ({
         bounds: { width: 1280, height: 720 },
     })),
+    getFileMD5Mock: vi.fn(async (_filePath: string): Promise<string | null> => {
+        return null;
+    }),
+    fsGetFileStampMock: vi.fn(async (_filePath: string) => {
+        return { size: 1, modifiedAt: 1 } as {
+            size: number;
+            modifiedAt: number;
+        } | null;
+    }),
     sendDataSyncMock: vi.fn(),
     listenForDataMock: vi.fn((channel: string, callback: () => void) => {
         listenerRegistry[channel] = callback;
@@ -135,10 +146,18 @@ vi.mock('../others/CacheManager', () => ({
         }
 
         async get(key: string) {
+            return this.getSync(key);
+        }
+
+        getSync(key: string) {
             return this.store.get(key) ?? null;
         }
 
         async set(key: string, value: T) {
+            this.setSync(key, value);
+        }
+
+        setSync(key: string, value: T) {
             this.store.set(key, value);
         }
 
@@ -169,6 +188,18 @@ vi.mock('../server/appProvider', () => ({
 
 vi.mock('../server/unlockingHelpers', () => ({
     unlocking: unlockingMock,
+}));
+
+// `capturingHelpers` reaches these three, on demand and only for a `file:`
+// url, to key a local page's screenshot by the md5 of its own bytes. Mocked
+// whole rather than partially: nothing else in this file's graph loads that
+// module, and a real one wants an `appProvider` this test has no use for.
+vi.mock('../server/fileHelpers', () => ({
+    toFilePathFromFileUrl: (src: string) => {
+        return decodeURIComponent(new URL(src).pathname);
+    },
+    fsGetFileStamp: fsGetFileStampMock,
+    getFileMD5: getFileMD5Mock,
 }));
 
 import {
@@ -508,6 +539,45 @@ describe('domHelpers', () => {
                 delay: 3000,
             },
         );
+    });
+
+    test('keys a local page by the md5 of its own bytes', async () => {
+        const url = 'file:///webs/snow.html';
+        const options = { width: 320, height: 180, delay: 0 };
+        getFileMD5Mock.mockResolvedValue('md5-one');
+        electronSendAsyncMock.mockResolvedValue('file-image');
+
+        expect(await captureWebScreenShot(url, options)).toBe('file-image');
+        expect(await captureWebScreenShot(url, options)).toBe('file-image');
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
+        // The md5 is memoised against what a stat can see, so a panel of tiles
+        // asking about one file does not read it once per tile.
+        expect(getFileMD5Mock).toHaveBeenCalledTimes(1);
+
+        // Edited in the app's own web editor: new bytes, new key, new picture.
+        getFileMD5Mock.mockResolvedValue('md5-two');
+        fsGetFileStampMock.mockResolvedValue({ size: 2, modifiedAt: 2 });
+        electronSendAsyncMock.mockResolvedValue('edited-image');
+        expect(await captureWebScreenShot(url, options)).toBe('edited-image');
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('a page it cannot hash is cached the way a web address is', async () => {
+        const options = { width: 320, height: 180, delay: 0 };
+        electronSendAsyncMock.mockResolvedValue('remote-image');
+
+        // Nothing at that path: no md5, so no promise can be made about the
+        // bytes, and the shot falls back to the url key that expires.
+        fsGetFileStampMock.mockResolvedValue(null);
+        expect(
+            await captureWebScreenShot('file:///webs/gone.html', options),
+        ).toBe('remote-image');
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
+        expect(getFileMD5Mock).not.toHaveBeenCalled();
+
+        // And a web address never asks the disk anything at all.
+        await captureWebScreenShot('https://example.com/unhashed', options);
+        expect(fsGetFileStampMock).toHaveBeenCalledTimes(1);
     });
 
     test('skips the blocking display lookup when the caller knows its size', async () => {

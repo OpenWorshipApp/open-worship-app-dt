@@ -113,7 +113,10 @@ vi.mock('../event/VaryAppDocumentEventListener', () => ({
 }));
 
 vi.mock('../helper/DirSource', () => ({
-    default: { getInstance: dirSourceGetInstanceMock },
+    default: {
+        getInstance: dirSourceGetInstanceMock,
+        getDirPathBySettingName: () => '/docs',
+    },
 }));
 
 vi.mock('../helper/errorHelpers', () => ({ handleError: handleErrorMock }));
@@ -125,6 +128,8 @@ vi.mock('../context-menu/appContextMenuHelpers', () => ({
 vi.mock('../server/appProvider', () => ({ default: appProviderMock }));
 
 vi.mock('../server/fileHelpers', () => ({
+    fsExistSync: () => true,
+    pathJoin: (...parts: string[]) => parts.join('/'),
     fsCheckFileExist: fsCheckFileExistMock,
     fsCopyFilePathToPath: fsCopyFilePathToPathMock,
     getFileDotExtension: (fileName: string) => {
@@ -396,6 +401,8 @@ vi.mock('../helper/FileSource', () => ({
     default: { getInstance: fileSourceGetInstanceMock },
 }));
 
+vi.mock('../lyric-list/LyricAppDocument', () => ({ default: {} }));
+
 import AppDocument from './AppDocument';
 import DocxAppDocument from './DocxAppDocument';
 import PdfAppDocument from './PdfAppDocument';
@@ -417,12 +424,48 @@ function createSlide(
 }
 
 describe('appDocumentHelpers', () => {
+    test.each(['owl', 'pdf'])(
+        'injected .%s keeps its real type and never loads editable slides',
+        async (extension) => {
+            const oldUrl = location.href;
+            history.replaceState(
+                {},
+                '',
+                `/appDocumentEditor.html?file=readonly.${extension}&id=1`,
+            );
+            appProviderMock.isPageAppDocumentEditor = true;
+            vi.resetModules();
+            try {
+                const helpers = await import('./appDocumentHelpers');
+                const lyric = {
+                    filePath: '/docs/readonly.owl',
+                    isEditable: false,
+                    getSlides: vi.fn(),
+                };
+                helpers.setLyricAppDocumentGetter(() => lyric as any);
+                const selected = await helpers.getSelectedVaryAppDocument();
+                expect(selected?.filePath).toBe(`/docs/readonly.${extension}`);
+                expect(AppDocument.checkIsThisType(selected)).toBe(false);
+                const getSlides = vi.spyOn(selected!, 'getSlides');
+                await expect(
+                    helpers.getSelectedEditingSlideFilePath(),
+                ).resolves.toBeNull();
+                expect(getSlides).not.toHaveBeenCalled();
+            } finally {
+                appProviderMock.isPageAppDocumentEditor = false;
+                history.replaceState({}, '', oldUrl);
+                vi.resetModules();
+            }
+        },
+    );
+
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useRealTimers();
 
         appProviderMock.isPagePresenter = false;
         appProviderMock.isPageAppDocumentEditor = false;
+        appDocumentSetCopiedSlidesMock.mockResolvedValue(true);
         tranMock.mockImplementation((value: string) => value);
         genShowOnScreensContextMenuMock.mockImplementation(
             (handler: (event: any) => void) => {

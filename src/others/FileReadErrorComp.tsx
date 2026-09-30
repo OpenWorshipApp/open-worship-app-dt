@@ -22,7 +22,7 @@ export default function FileReadErrorComp({
     const fileSourceRef = useAppCurrentRef(fileSource);
     const handleTrash = useCallback(() => {
         if (fileSourceRef.current) {
-            fileSourceRef.current.trash();
+            fileSourceRef.current.trash('ask');
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

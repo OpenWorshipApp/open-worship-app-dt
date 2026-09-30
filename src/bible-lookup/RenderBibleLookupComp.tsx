@@ -1,4 +1,4 @@
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useMemo, useState } from 'react';
 
 import { InputTextContext } from './InputHandlerComp';
 import { SelectedBibleKeyContext } from '../bible-list/bibleHelpers';
@@ -8,7 +8,7 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
-import { useStateSettingBoolean } from '../helper/settingHelpers';
+import { getSetting } from '../helper/settingHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
 import {
     EditingResultContext,
@@ -19,6 +19,19 @@ import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import appProvider from '../server/appProvider';
 import { toWidgetLabel } from '../others/labelIconHelpers';
+import type { DataInputType } from '../resize-actor/flexSizeHelpers';
+import { getFlexSizeSetting } from '../resize-actor/flexSizeHelpers';
+import {
+    getWidgetEntries,
+    subscribeWidgetsChanged,
+    toggleWidget,
+    toWidgetId,
+} from '../resize-actor/widgetRegistry';
+import {
+    ADVANCE_LOOKUP_WIDGET_KEY,
+    genLookupFlexSizeDefault,
+    migrateLookupLayout,
+} from './lookupLayoutHelpers';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
     return import('../bible-find/BibleFindPreviewerComp');
@@ -52,16 +65,61 @@ const advanceLookupSettingKey =
     '-' +
     appProvider.currentHomePage.split('/')[0];
 
-export default function RenderBibleLookupComp() {
+export default function RenderBibleLookupComp({
+    flexSizeName = 'bible-lookup-container-body',
+    leadingWidgets,
+}: Readonly<{
+    flexSizeName?: string;
+    leadingWidgets?: DataInputType[];
+}>) {
     const viewController = useLookupBibleItemControllerContext();
-    const [isAdvanceLookupOpened, setIsAdvanceLookupOpened] =
-        useStateSettingBoolean(advanceLookupSettingKey, false);
+    const hasBibleAndNotes = !!leadingWidgets?.length;
+    const flexSizeDefault = useMemo(() => {
+        return genLookupFlexSizeDefault(hasBibleAndNotes);
+    }, [hasBibleAndNotes]);
+    const [isAdvanceLookupOpened, setAdvanceLookupVisible] = useState(() => {
+        migrateLookupLayout(
+            flexSizeName,
+            hasBibleAndNotes,
+            getSetting(advanceLookupSettingKey) === 'true',
+        );
+        return !getFlexSizeSetting(flexSizeName, flexSizeDefault)[
+            ADVANCE_LOOKUP_WIDGET_KEY
+        ][1];
+    });
+    const advanceWidgetId = toWidgetId(flexSizeName, ADVANCE_LOOKUP_WIDGET_KEY);
+    const toggleAdvanceLookup = useCallback(() => {
+        toggleWidget(advanceWidgetId);
+    }, [advanceWidgetId]);
+    useAppEffect(() => {
+        const update = () => {
+            const entry = getWidgetEntries().find(({ id }) => {
+                return id === advanceWidgetId;
+            });
+            if (entry) {
+                setAdvanceLookupVisible(!entry.isHidden);
+            }
+        };
+        update();
+        return subscribeWidgetsChanged(update);
+    }, [advanceWidgetId]);
+    const setIsAdvanceLookupOpened = useCallback(
+        (isOpen: boolean) => {
+            const entry = getWidgetEntries().find(
+                ({ id }) => id === advanceWidgetId,
+            );
+            if (entry && entry.isHidden === isOpen) {
+                toggleWidget(advanceWidgetId);
+            }
+        },
+        [advanceWidgetId],
+    );
     useAppEffect(() => {
         viewController.setIsAdvanceLookupOpened = setIsAdvanceLookupOpened;
         return () => {
             viewController.setIsAdvanceLookupOpened = (_: boolean) => {};
         };
-    }, []);
+    }, [viewController, setIsAdvanceLookupOpened]);
     const [inputText, setInputText] = useState<string>(
         viewController.inputText,
     );
@@ -87,29 +145,15 @@ export default function RenderBibleLookupComp() {
             viewController.reloadEditingResult = (_: string) => {};
         };
     }, [viewController]);
-    if (!isValidBibleKey) {
-        return (
-            <div className="card w-100 h-100">
-                <div className="card-header">
-                    <div className="float-end">
-                        <RenderExtraButtonsRightComp
-                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
-                            isAdvanceLookupOpened={isAdvanceLookupOpened}
-                        />
-                    </div>
-                </div>
-                <div className="card-body">
-                    {isValidBibleKey === undefined ? (
-                        <LoadingComp />
-                    ) : (
-                        <BibleNotAvailableComp bibleKey={bibleKey} />
-                    )}
-                </div>
-            </div>
-        );
-    }
-    const lookupBody = <BibleLookupBodyPreviewerComp />;
+    const lookupBody = isValidBibleKey ? (
+        <BibleLookupBodyPreviewerComp />
+    ) : isValidBibleKey === undefined ? (
+        <LoadingComp />
+    ) : (
+        <BibleNotAvailableComp bibleKey={bibleKey} />
+    );
     const resizeData = [
+        ...(leadingWidgets ?? []),
         {
             children: {
                 render: () => {
@@ -117,12 +161,12 @@ export default function RenderBibleLookupComp() {
                 },
             },
             key: 'h2',
-            ...toWidgetLabel('Lookup'),
+            ...toWidgetLabel('Bible Lookup'),
         },
         {
             children: LazyBibleSearchBodyPreviewerComp,
-            key: 'h1',
-            ...toWidgetLabel('Bible Online Lookup'),
+            key: ADVANCE_LOOKUP_WIDGET_KEY,
+            ...toWidgetLabel('Advance Lookup'),
         },
     ];
     return (
@@ -151,27 +195,31 @@ export default function RenderBibleLookupComp() {
                     ' card app-zero-border-radius'
                 }
             >
-                <RenderBibleLookupHeaderComp
-                    isAdvanceLookupOpened={isAdvanceLookupOpened}
-                    setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
-                />
+                {isValidBibleKey ? (
+                    <RenderBibleLookupHeaderComp
+                        isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        toggleAdvanceLookup={toggleAdvanceLookup}
+                    />
+                ) : (
+                    <div className="card-header d-flex justify-content-end">
+                        <RenderExtraButtonsRightComp
+                            toggleAdvanceLookup={toggleAdvanceLookup}
+                            isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        />
+                    </div>
+                )}
                 <div
                     className={'card-body d-flex w-100 app-overflow-hidden'}
                     style={{
                         height: 'calc(100% - 38px)',
                     }}
                 >
-                    {isAdvanceLookupOpened ? (
-                        <ResizeActorComp
-                            flexSizeName="bible-lookup-container-body"
-                            isHorizontal
-                            isDisableQuickResize
-                            flexSizeDefault={{ h1: ['1'], h2: ['3'] }}
-                            dataInput={resizeData}
-                        />
-                    ) : (
-                        lookupBody
-                    )}
+                    <ResizeActorComp
+                        flexSizeName={flexSizeName}
+                        isHorizontal
+                        flexSizeDefault={flexSizeDefault}
+                        dataInput={resizeData}
+                    />
                 </div>
             </div>
         </MultiContextRenderComp>

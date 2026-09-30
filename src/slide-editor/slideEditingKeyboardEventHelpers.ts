@@ -13,6 +13,18 @@ import Canvas from './canvas/Canvas';
 import type CanvasController from './canvas/CanvasController';
 import type CanvasItem from './canvas/CanvasItem';
 
+/**
+ * Cancels the key's default action NOW. A default can only be cancelled while
+ * the event is still being dispatched -- before the handler's first `await` --
+ * so the `preventDefault` at the end of these handlers came too late for any
+ * branch that awaits: Ctrl+A in the slide list held every slide AND ran the
+ * browser's select-all over the whole window.
+ */
+function consumeEvent(event: any) {
+    event.preventDefault();
+    event.stopPropagation();
+}
+
 function handleHistory(appDocument: AppDocument, event: any) {
     if (
         checkIsKeyboardEventMatch(
@@ -127,6 +139,7 @@ export async function onSlideItemsKeyboardEvent(
                 event,
             )
         ) {
+            consumeEvent(event);
             if (holdingSlides.length > 0) {
                 await appDocument.deleteSlides(holdingSlides);
             }
@@ -144,6 +157,7 @@ export async function onSlideItemsKeyboardEvent(
                 event,
             )
         ) {
+            consumeEvent(event);
             const slides = await appDocument.getSlides();
             setHoldingSlides(slides);
             isHandled = true;
@@ -161,8 +175,10 @@ export async function onSlideItemsKeyboardEvent(
             )
         ) {
             if (allSelectedSlides.length > 0) {
-                AppDocument.setCopiedSlides(allSelectedSlides);
-                showSimpleToast(tran('Copied'), tran('Slides are copied'));
+                consumeEvent(event);
+                if (await AppDocument.setCopiedSlides(allSelectedSlides)) {
+                    showSimpleToast(tran('Copied'), tran('Slides are copied'));
+                }
             }
             isHandled = true;
         } else if (
@@ -178,6 +194,7 @@ export async function onSlideItemsKeyboardEvent(
                 event,
             )
         ) {
+            consumeEvent(event);
             const copiedSlides = await AppDocument.getCopiedSlides();
             appDocument.addSlides(copiedSlides);
             isHandled = true;
@@ -203,8 +220,7 @@ export async function onSlideItemsKeyboardEvent(
         }
     }
     if (isHandled) {
-        event.preventDefault();
-        event.stopPropagation();
+        consumeEvent(event);
     }
 }
 
@@ -283,8 +299,10 @@ export async function onCanvasKeyboardEvent(
             event,
         )
     ) {
-        Canvas.setCopiedItems(selectedCanvasItems);
-        showSimpleToast(tran('Copied'), tran('Items are copied'));
+        consumeEvent(event);
+        if (await Canvas.setCopiedItems(selectedCanvasItems)) {
+            showSimpleToast(tran('Copied'), tran('Items are copied'));
+        }
         isHandled = true;
     } else if (
         checkIsKeyboardEventMatch(
@@ -299,6 +317,7 @@ export async function onCanvasKeyboardEvent(
             event,
         )
     ) {
+        consumeEvent(event);
         const copiedItems = await Canvas.getCopiedCanvasItems();
         if (copiedItems.length > 0) {
             canvasController.duplicateItems(copiedItems);
@@ -330,7 +349,6 @@ export async function onCanvasKeyboardEvent(
         isHandled = true;
     }
     if (isHandled) {
-        event.preventDefault();
-        event.stopPropagation();
+        consumeEvent(event);
     }
 }

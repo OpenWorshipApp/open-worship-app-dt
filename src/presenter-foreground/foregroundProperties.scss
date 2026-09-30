@@ -1,0 +1,576 @@
+// The foreground Properties panel, as a control strip rather than a form.
+//
+// It floats over the file grid the operator also needs, so every row it takes
+// is a row of pictures they lose. What it used to spend that height on:
+// nine controls each in its own rounded pill, four of them with a SECOND pill
+// inside for the slider, laid out by `flex-wrap` -- about 2 200px of content
+// reflowed into a 440px panel, five rows deep.
+//
+// Here the borders come off and ALIGNMENT does their job: one column of names
+// on the left, one column of controls ending on a shared right edge. The only
+// rule left is the hairline over the last group, and the only radius is on the
+// slider's own track.
+
+.fg-props {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 12px;
+  padding: 6px 8px;
+}
+
+// The slider column. `auto-fit` is what makes the panel worth resizing: one
+// column at 440px, two by ~700px, four in full view -- the same controls, the
+// height falling as the width grows.
+.fg-props-rows,
+.fg-props-tail,
+.fg-props-deco-rows {
+  display: grid;
+  // 250px is the width at which a name, a usable track and a typeable value
+  // all fit without any of them being cut. Below it the panel stays one
+  // column on purpose: two half-legible columns are worse than one legible.
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0 16px;
+  min-width: 0;
+}
+
+.fg-props-rows {
+  flex: 1 1 240px;
+}
+
+// Layering and type: what the overlay IS, under what it looks like.
+.fg-props-tail {
+  flex: 1 1 100%;
+  padding-top: 5px;
+  border-top: 1px solid var(--app-line);
+}
+
+// ------------------------------------------------------------ the dressing
+//
+// The frame, the shadow, the room around the words and how they are set: a
+// section of its own, folded away. These are the questions answered ONCE when
+// a look is decided; the rows above are the ones answered mid-service. Closed,
+// it is one line over a file grid that wants every row it can get.
+
+.fg-props-deco {
+  flex: 1 1 100%;
+  min-width: 0;
+  padding-top: 5px;
+  border-top: 1px solid var(--app-line);
+}
+
+.fg-props-deco-rows {
+  padding-top: 4px;
+}
+
+.fg-deco-toggle {
+  // Quieter than the Properties toggle above it: this one opens a section
+  // INSIDE a panel that is already open, and two controls shouting the same
+  // way is how a panel stops having a shape.
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 0.74rem;
+  background: none;
+
+  > i.bi-magic {
+    font-size: 0.72rem;
+    opacity: 0.7;
+  }
+}
+
+// Something in here is doing something, and the fold is hiding it. Same
+// language as `fg-prop-engaged`, which lights a row for the same reason.
+.fg-deco-toggle-engaged {
+  color: var(--bs-info);
+  border-color: rgba(var(--bs-info-rgb), 0.45);
+}
+
+.fg-deco-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--bs-info);
+  border-radius: 50%;
+}
+
+// A border style is its own picture, so the button wears one instead of a
+// word -- which is also the only way this row reads the same in Khmer.
+.fg-chip-preview {
+  display: block;
+  width: 18px;
+  height: 0;
+  margin: 0 1px;
+}
+
+.fg-prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 28px;
+}
+
+// The name never shrinks. It is the only part of the row that cannot be
+// guessed from its shape -- a slider still reads as a slider at half width,
+// but "Opac…" is not a word in any of the three languages this app is shown
+// in. The track absorbs the squeeze instead.
+.fg-prop-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  opacity: 0.72;
+}
+
+// A control at its default is quiet; a control actually doing something is
+// lit. Four sliders and two toggles look identical at rest, and the one
+// question an operator has mid-service is "what did I change?".
+.fg-prop-engaged > .fg-prop-name {
+  opacity: 1;
+  color: var(--bs-info);
+}
+
+.fg-prop-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Shared shape for every small box in the strip, so a number, a unit and a
+// picker read as one family instead of three Bootstrap widgets.
+.fg-num,
+.fg-select,
+.fg-unit > button,
+.fg-chips > button,
+.fg-prop-control .form-select,
+.fg-unit-static {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+}
+
+// ...with one exception, and it is not cosmetic. A native `select` paints its
+// OPEN list using its own `background-color`, in a popup the page does not
+// composite: the translucent tint above came out over white, so the list was
+// a pale wash and every option on it was unreadable. The control and its rows
+// are opaque and say their colours out loud -- Chromium inherits neither into
+// that popup. Engaged state moves to the border and the label, which are in
+// the page where translucency works.
+.fg-select,
+.fg-prop-control .form-select {
+  color: var(--bs-body-color);
+  background: var(--bs-body-bg);
+
+  option,
+  optgroup {
+    color: var(--bs-body-color);
+    background: var(--bs-body-bg);
+  }
+
+  optgroup {
+    font-weight: 600;
+    opacity: 0.8;
+  }
+}
+
+.fg-num {
+  width: 3.4rem;
+  padding: 1px 4px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+
+  &.fg-num-wide {
+    width: 4.2rem;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+
+  &:hover:not(:disabled),
+  &:focus {
+    background: rgba(var(--bs-info-rgb), 0.14);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+    outline: none;
+  }
+}
+
+.fg-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 11rem;
+  padding: 1px 4px;
+
+  // Border only. A background change here would follow the control into its
+  // open list, which is the whole reason that list was unreadable.
+  &:hover,
+  &:focus {
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+    outline: none;
+  }
+}
+
+.fg-unit-static {
+  padding: 1px 5px;
+  opacity: 0.7;
+}
+
+// The unit switch on Round. Two words, one of them on -- which is the whole
+// explanation the old pixel box needed a tooltip for.
+.fg-unit {
+  display: inline-flex;
+  flex: 0 0 auto;
+
+  > button {
+    padding: 1px 6px;
+    opacity: 0.6;
+    border-radius: 0;
+
+    &:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    &:last-child {
+      border-radius: 0 4px 4px 0;
+      border-left: none;
+    }
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  > button.fg-unit-on {
+    opacity: 1;
+    color: var(--bs-info);
+    background: rgba(var(--bs-info-rgb), 0.2);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+}
+
+// The font pickers come from a control shared with Settings, which dresses
+// in Bootstrap. Rather than teach that component about this panel, the strip
+// dresses it: same shape as every other select here, its utility padding
+// dropped (a `!important` utility can only be answered with one), and
+// `appearance` handed back to the platform -- Bootstrap draws its chevron as
+// a background-image, which the fill above would paint over.
+.fg-prop-control .form-select {
+  appearance: auto;
+  flex: 1 1 auto;
+  min-width: 4.5rem;
+  height: auto;
+  padding: 1px 4px;
+  background-image: none;
+
+  &:hover,
+  &:focus {
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+    outline: none;
+  }
+}
+
+.fg-prop-control > .pb-2 {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 0 !important;
+}
+
+// The presets. Same family as the unit switch, and for the same reason: a
+// value worth one press should look like one press, not like a form.
+.fg-chips {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+
+  > button {
+    padding: 1px 5px;
+    font-size: 0.72rem;
+    border-radius: 0;
+    opacity: 0.6;
+
+    & + button {
+      border-left: none;
+    }
+
+    &:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    &:last-child {
+      border-radius: 0 4px 4px 0;
+    }
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  > button.fg-chip-on {
+    opacity: 1;
+    color: var(--bs-info);
+    background: rgba(var(--bs-info-rgb), 0.2);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+}
+
+// ------------------------------------------------------------- the colours
+//
+// Two collapsible cards naming a colour became one row showing two. The
+// checkerboard is not decoration: the default background is `#000080AA` and
+// the app's own pickers hand back colours with alpha, so a swatch painted on
+// an opaque chip would report a translucent navy as a solid one.
+
+.fg-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 20px;
+  padding: 0;
+  overflow: hidden;
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, var(--app-line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--app-line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--app-line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--app-line) 75%);
+  background-size: 6px 6px;
+  background-position:
+    0 0,
+    0 3px,
+    3px -3px,
+    -3px 0;
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+
+  &:hover {
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+.fg-swatch-on {
+  border-color: var(--bs-info);
+  box-shadow: 0 0 0 1px var(--bs-info) inset;
+}
+
+.fg-swatch-fill {
+  width: 100%;
+  height: 100%;
+}
+
+// The letterform sits on the app's own surface rather than on the
+// checkerboard: a text colour is read against a page, not against nothing.
+.fg-swatch-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.8rem;
+  background: var(--app-surface, var(--bs-body-bg));
+  text-shadow: 0 0 2px rgba(128, 128, 128, 0.9);
+}
+
+// The open picker takes the whole strip. Left in the swatch's own cell it
+// would be half a 440px panel wide, which stacks the saturation square under
+// the hue slider -- the height the old cards were losing.
+.fg-prop-expand {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 4px 0 6px;
+}
+
+// ---------------------------------------------------------------- the pad
+//
+// Where the overlay sits, shown rather than described. Two three-button rows
+// and a 330px offset box became one 84px square: a compositing desk asks this
+// question with a nine-cell pad because the answer is a PLACE, and the cell
+// that is lit is where the thing will be.
+
+.fg-pad {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.fg-pad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  width: 84px;
+  height: 84px;
+  padding: 3px;
+  background: rgba(var(--bs-info-rgb), 0.05);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+}
+
+.fg-pad-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+
+  &:hover .fg-pad-dot {
+    opacity: 0.75;
+    transform: scale(1.35);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+.fg-pad-dot {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.28;
+  // The only motion here, and it answers a press: the dot the operator is
+  // about to choose grows under the pointer. Nothing moves on its own.
+  transition:
+    transform 0.12s ease,
+    opacity 0.12s ease;
+}
+
+.fg-pad-cell-active {
+  background: rgba(var(--bs-info-rgb), 0.2);
+  border-color: rgba(var(--bs-info-rgb), 0.55);
+
+  .fg-pad-dot {
+    background: var(--bs-info);
+    opacity: 1;
+    transform: scale(1.6);
+  }
+}
+
+// The nudge lives with the pad because an offset IS the position, measured
+// from the cell that is lit.
+.fg-pad-offset {
+  display: flex;
+  gap: 4px;
+  width: 84px;
+}
+
+.fg-pad-offset-axis {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.68rem;
+  opacity: 0.72;
+
+  > input {
+    width: 100%;
+    min-width: 0;
+    padding: 0 3px;
+    font-size: 0.74rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: inherit;
+    background: rgba(var(--bs-info-rgb), 0.06);
+    border: 1px solid var(--app-line);
+    border-radius: 4px;
+
+    &:hover,
+    &:focus {
+      background: rgba(var(--bs-info-rgb), 0.14);
+      border-color: rgba(var(--bs-info-rgb), 0.55);
+      outline: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-pad-dot {
+    transition: none;
+  }
+}
+
+// -------------------------------------------------------- the widget rail
+//
+// The row above the file grid used to answer "which set-up am I on and what
+// is it doing" in five visual languages -- bootstrap outline buttons, a
+// rounded pill, a bare red glyph, an input-group and a bordered box -- across
+// ~600px, so it wrapped to two lines in a 440px panel and ate a row of
+// pictures. One height, one gap, one border treatment, and the three
+// slide-show controls folded into one; it fits on a single line now. The
+// session chips themselves live in `media-sessions/mediaSessions.scss`, since
+// the Background tabs carry the same rail.
+
+.foreground-media-bar {
+  gap: 6px;
+
+  // Everything in the rail stands the same height as the session group and
+  // the slide show's own pill -- 20px, not the 26px this used to force on
+  // them: the eye still scans one line, and the widget gets the six pixels
+  // back as picture.
+  .fg-props-toggle {
+    height: 20px;
+  }
+}
+
+.fg-props-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  font-size: 0.76rem;
+  line-height: 1;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+
+  > i {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    transition: transform 0.18s ease;
+  }
+
+  &:hover {
+    background: rgba(var(--bs-info-rgb), 0.14);
+  }
+}
+
+.fg-props-toggle-on {
+  color: var(--bs-info);
+  background: rgba(var(--bs-info-rgb), 0.16);
+  border-color: rgba(var(--bs-info-rgb), 0.5);
+
+  > i {
+    transform: rotate(180deg);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-props-toggle > i {
+    transition: none;
+  }
+}

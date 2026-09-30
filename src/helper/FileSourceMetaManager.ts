@@ -2,8 +2,11 @@ import ToastEventListener from '../event/ToastEventListener';
 import appProvider from '../server/appProvider';
 import {
     checkIsAppFile,
+    checkIsNativeAbsolutePath,
+    fsCheckDirExist,
     fsCheckFileExist,
     KEY_SEPARATOR,
+    pathDirname,
 } from '../server/fileHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
@@ -184,6 +187,18 @@ export default class FileSourceMetaManager {
             }
             try {
                 if (!filePath || (await fsCheckFileExist(filePath))) {
+                    continue;
+                }
+                // Gone, or only out of reach? A file whose FOLDER is not here
+                // either -- its drive not plugged in, a path written on the
+                // other OS, the machine the data came from -- is unreachable,
+                // and its note is kept for when it is back. An unplugged
+                // drive answers ENOENT like a deleted file does, so this ran
+                // every note on it off at the next start.
+                if (
+                    !checkIsNativeAbsolutePath(filePath) ||
+                    !(await fsCheckDirExist(pathDirname(filePath)))
+                ) {
                     continue;
                 }
             } catch (error) {

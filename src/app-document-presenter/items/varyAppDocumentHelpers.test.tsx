@@ -4,6 +4,7 @@ import { beforeEach, afterEach, describe, expect, test, vi } from 'vitest';
 
 const {
     handleSlideSelectingMock,
+    getDataListMock,
     appProviderMock,
     getScreenManagerByScreenIdMock,
     slideItemSelectedMock,
@@ -13,9 +14,15 @@ const {
     pptxCheckIsThisTypeMock,
 } = vi.hoisted(() => ({
     handleSlideSelectingMock: vi.fn(),
+    getDataListMock: vi.fn(
+        (_filePath?: string, _varySlideId?: number): any[] => [],
+    ),
     appProviderMock: {
         isPageAppDocumentEditor: false,
         presenterHomePage: true,
+        // `appHooks` reads this at MODULE LOAD, and the typing-target guard
+        // reaches it through `presentingControlShortcutHelpers`.
+        systemUtils: { isDev: false },
     },
     getScreenManagerByScreenIdMock: vi.fn(),
     slideItemSelectedMock: vi.fn(),
@@ -28,6 +35,11 @@ const {
 vi.mock('../../_screen/managers/ScreenVaryAppDocumentManager', () => ({
     default: {
         handleSlideSelecting: handleSlideSelectingMock,
+        // Stepping a slide asks the LIVE managers; the persisted twin is one
+        // write behind. Both names answer from one mock so a test that sets
+        // what is on screen does not have to know which one is read.
+        getDataList: getDataListMock,
+        getPresentingDataList: getDataListMock,
     },
 }));
 
@@ -103,6 +115,7 @@ describe('varyAppDocumentHelpers', () => {
         pptxCheckIsThisTypeMock.mockImplementation(
             (value: any) => value?.isPptx === true,
         );
+        getDataListMock.mockReturnValue([]);
     });
 
     afterEach(() => {
@@ -176,6 +189,91 @@ describe('varyAppDocumentHelpers', () => {
         );
     });
 
+    test('claims an unowned keyboard and defers to whatever else holds it', async () => {
+        const {
+            handleSlideMoving: handleArrowing,
+            SLIDE_ITEMS_CONTAINER_CLASS_NAME,
+        } = await import('./varyAppDocumentHelpers');
+
+        const container = document.createElement('div');
+        container.className = SLIDE_ITEMS_CONTAINER_CLASS_NAME;
+        container.tabIndex = 0;
+        const insideButton = document.createElement('button');
+        container.appendChild(insideButton);
+        document.body.appendChild(container);
+        const outside = document.createElement('div');
+        outside.tabIndex = 0;
+        document.body.appendChild(outside);
+        const typingBox = document.createElement('input');
+        document.body.appendChild(typingBox);
+
+        const slide1 = createVarySlide(1);
+        const slide2 = createVarySlide(2);
+        const varySlides = [slide1, slide2];
+        const press = (target: Element | null) => {
+            const event = {
+                key: 'ArrowRight',
+                shiftKey: false,
+                target,
+                preventDefault: vi.fn(),
+            };
+            handleArrowing(event as any, varySlides, container);
+            return event;
+        };
+
+        // Nothing owns the keyboard. `document.activeElement` is the BODY here,
+        // never null, which is why the old `=== null` rescue never ran and the
+        // key was swallowed in silence.
+        expect(document.activeElement).toBe(document.body);
+        const focusSpy = vi.spyOn(container, 'focus');
+        expect(press(document.body).preventDefault).toHaveBeenCalledTimes(1);
+        expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+
+        // Focus INSIDE the panel is still the panel's: its own menu buttons
+        // must not disarm the arrows.
+        insideButton.focus();
+        expect(press(insideButton).preventDefault).toHaveBeenCalledTimes(1);
+
+        // Somebody else holds it -- another panel, or a field being typed in.
+        outside.focus();
+        expect(press(outside).preventDefault).not.toHaveBeenCalled();
+        typingBox.focus();
+        expect(press(typingBox).preventDefault).not.toHaveBeenCalled();
+    });
+
+    test('only the first previewer claims an unowned keyboard', async () => {
+        const {
+            handleSlideMoving: handleArrowing,
+            SLIDE_ITEMS_CONTAINER_CLASS_NAME,
+        } = await import('./varyAppDocumentHelpers');
+
+        // A floating preview and one pane per lyric stage put several of these
+        // on screen at once, and every one of them gets the key: if each
+        // claimed an unowned keyboard they would all step at the same time.
+        const first = document.createElement('div');
+        first.className = SLIDE_ITEMS_CONTAINER_CLASS_NAME;
+        first.tabIndex = 0;
+        const second = document.createElement('div');
+        second.className = SLIDE_ITEMS_CONTAINER_CLASS_NAME;
+        second.tabIndex = 0;
+        document.body.append(first, second);
+
+        const varySlides = [createVarySlide(1), createVarySlide(2)];
+        const press = (container: HTMLDivElement) => {
+            const event = {
+                key: 'ArrowRight',
+                shiftKey: false,
+                target: document.body,
+                preventDefault: vi.fn(),
+            };
+            handleArrowing(event as any, varySlides, container);
+            return event;
+        };
+
+        expect(press(second).preventDefault).not.toHaveBeenCalled();
+        expect(press(first).preventDefault).toHaveBeenCalledTimes(1);
+    });
+
     test('returns slide ids, finds the container, and scrolls a selected item into view', async () => {
         const {
             DATA_QUERY_KEY,
@@ -242,7 +340,6 @@ describe('varyAppDocumentHelpers', () => {
 
     test('moves highlighted slides across screens and responds to arrow navigation', async () => {
         const {
-            DATA_QUERY_KEY,
             handleSlideMoving: handleArrowing,
             handleNextItemSelecting,
             SLIDE_ITEMS_CONTAINER_CLASS_NAME,
@@ -273,17 +370,17 @@ describe('varyAppDocumentHelpers', () => {
         const container = document.createElement('div');
         container.className = SLIDE_ITEMS_CONTAINER_CLASS_NAME;
         container.tabIndex = 0;
-        const selected = document.createElement('div');
-        selected.setAttribute(DATA_QUERY_KEY, '1');
-        selected.className = 'app-highlight-selected';
-        const screenMarker = document.createElement('span');
-        screenMarker.dataset.screenId = '10';
-        selected.appendChild(screenMarker);
-        container.appendChild(selected);
         document.body.appendChild(container);
+        // Which slide is on which screen is asked of the manager, not of the
+        // cards: with a windowed list the card of the slide on screen need not
+        // be mounted at all.
+        getDataListMock.mockImplementation(
+            (_filePath?: string, id?: number) => {
+                return id === 1 ? [['10', { id: 1 }]] : [];
+            },
+        );
 
         handleNextItemSelecting({
-            container,
             varySlides: [slide1, slide2, slide3, pptxParent],
             isNext: true,
         });
@@ -303,7 +400,6 @@ describe('varyAppDocumentHelpers', () => {
         });
 
         handleNextItemSelecting({
-            container,
             varySlides: [slide1, slide2, slide3, pptxParent],
             isNext: false,
         });
@@ -313,6 +409,27 @@ describe('varyAppDocumentHelpers', () => {
             screenManager.screenVaryAppDocumentManager.toSlideData,
         ).toHaveBeenCalledWith('/docs/main.ows', {
             id: 5,
+            filePath: '/docs/main.ows',
+        });
+
+        // A sub-slide on screen steps like any other card: it is a cell of its
+        // own in the grid, so nothing else owns it.
+        getDataListMock.mockImplementation(
+            (_filePath?: string, id?: number) => {
+                return id === 5 ? [['10', { id: 5 }]] : [];
+            },
+        );
+        screenManager.screenVaryAppDocumentManager.toSlideData.mockClear();
+        handleNextItemSelecting({
+            varySlides: [slide1, slide2, slide3, pptxParent],
+            isNext: true,
+        });
+        vi.runAllTimers();
+
+        expect(
+            screenManager.screenVaryAppDocumentManager.toSlideData,
+        ).toHaveBeenCalledWith('/docs/main.ows', {
+            id: 1,
             filePath: '/docs/main.ows',
         });
 

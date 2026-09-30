@@ -4,14 +4,12 @@
     "window": "bibleNote.html",
     "focus": "bibleNote",
     "description": "The window a Bible note is written in. It opens on its own from the Notes list and belongs to one note file.",
-    "updated": "2026-09-02",
+    "updated": "2026-09-26",
     "sections": [
         {
             "id": "writing",
             "label": "Writing a note",
-            "recipes": [
-                "W-14"
-            ],
+            "recipes": ["W-14"],
             "questions": [
                 {
                     "id": "what-is-this",
@@ -33,13 +31,7 @@
                     "id": "save-note",
                     "text": "How do I save the note I am writing?",
                     "kind": "howto",
-                    "keywords": [
-                        "save",
-                        "keep",
-                        "ctrl s",
-                        "store",
-                        "lose"
-                    ],
+                    "keywords": ["save", "keep", "ctrl s", "store", "lose"],
                     "starter": true,
                     "starterRank": 2,
                     "resources": {
@@ -47,15 +39,30 @@
                         "shortcut": "Ctrl+S",
                         "guide": true
                     }
+                },
+                {
+                    "id": "undo-note-change",
+                    "text": "How do I get back what I typed in a note by mistake?",
+                    "kind": "howto",
+                    "keywords": [
+                        "undo",
+                        "restore",
+                        "take back",
+                        "history",
+                        "discard",
+                        "unsaved"
+                    ],
+                    "resources": {
+                        "recipe": "W-14",
+                        "find": "Undo Saved Change"
+                    }
                 }
             ]
         },
         {
             "id": "sharing",
             "label": "Taking notes elsewhere",
-            "recipes": [
-                "W-41"
-            ],
+            "recipes": ["W-41"],
             "questions": [
                 {
                     "id": "share-notes",

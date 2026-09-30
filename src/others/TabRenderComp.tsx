@@ -54,7 +54,8 @@ function RendTabComp<T>({
     setActiveTab?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
     activeTabs: T[];
 }>) {
-    const activeClass = activeTabs.includes(tab.key) ? 'active' : '';
+    const isActive = activeTabs.includes(tab.key);
+    const activeClass = isActive ? 'active' : '';
     const isOnScreen = useIsOnScreen(tab);
     const setActiveTabRef = useAppCurrentRef(setActiveTab);
     const tabRef = useAppCurrentRef(tab);
@@ -71,6 +72,10 @@ function RendTabComp<T>({
                     `btn btn-sm btn-link nav-link ${activeClass}` +
                     (isOnScreen ? ' app-on-screen' : '')
                 }
+                // The `active` class is only paint: without this a screen
+                // reader (and anything that reads a control's state) could not
+                // tell which tab is open.
+                aria-pressed={isActive}
                 onClick={handleClick}
                 onContextMenu={handleClick}
             >

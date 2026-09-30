@@ -13,7 +13,11 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
 
-// TODO: check direction rtl error with /*
+// The `direction: rtl` this label needs to keep the END of a long path also
+// makes the line RTL for the bidi algorithm, which reorders a path whose runs
+// are not all one direction (a folder named `1_cv`, a leading `/*`). The path
+// is drawn inside a `bdi` below, which takes its direction from its own first
+// strong character, so only the ellipsis side is left to `direction`.
 function cleanPath(path: string) {
     if (path.startsWith('/')) {
         path = path.substring(1);
@@ -105,7 +109,7 @@ export function PathPreviewerComp({
                 }}
                 onContextMenu={handleContextMenuOpening}
             >
-                {directoryPath}
+                <bdi>{directoryPath}</bdi>
             </div>
             {canOpenFileExplorer ? (
                 <ContextMenuDotsButtonComp

@@ -10,6 +10,7 @@ import {
 } from './appDocumentHelpers';
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
+import { fsCheckFileExist } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type ItemSourceInf from '../others/ItemSourceInf';
 import type { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
@@ -35,7 +36,21 @@ import {
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { type VaryAppDocumentType } from './appDocumentTypeHelpers';
 import appProvider from '../server/appProvider';
+import {
+    readTextFromClipboard,
+    writeTextToClipboard,
+} from '../server/clipboardHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import type { TextStylePropsType } from '../slide-editor/canvas/canvasHelpers';
+
+export type DocumentFontChangeType =
+    { fontSize: number } | { fontFamily: string | null };
+
+export type DocumentFontTargetType = {
+    slideId: number;
+    // Omitted means every text-bearing item on this slide; empty means none.
+    itemIds?: number[];
+};
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -80,6 +95,13 @@ export default class AppDocument
             if (jsonData !== null) {
                 return jsonData;
             }
+        }
+        // Missing is not corrupted. A run sheet can outlive a document it
+        // names, and resetting one that is gone toasted "Corrupted Document",
+        // failed to write it, and handed back a made-up slide that could be
+        // presented on a live screen.
+        if (!(await fsCheckFileExist(this.filePath))) {
+            return AppDocument.genNewJsonData<AppDocumentType>({ items: [] });
         }
         showSimpleToast(
             tran('Corrupted Document'),
@@ -146,6 +168,69 @@ export default class AppDocument
         await this.setJsonData(jsonData);
     }
 
+    async changeSlidesFont(
+        change: DocumentFontChangeType,
+        options: {
+            includeLocked?: boolean;
+            targets?: DocumentFontTargetType[];
+        } = {},
+    ) {
+        if (
+            !this.isEditable ||
+            ('fontSize' in change &&
+                (!Number.isFinite(change.fontSize) || change.fontSize <= 0))
+        ) {
+            return 0;
+        }
+        // Read the editing head once and write one history entry. Constructing
+        // every slide/canvas would also load Bible fonts and regenerate markup
+        // unrelated to this single-property edit.
+        const jsonData = await this.getJsonData();
+        const targets =
+            options.targets === undefined
+                ? null
+                : new Map(
+                      options.targets.map(({ slideId, itemIds }) => [
+                          slideId,
+                          itemIds === undefined ? null : new Set(itemIds),
+                      ]),
+                  );
+        let changedItems = 0;
+        for (const slide of jsonData.items) {
+            if (targets !== null && !targets.has(slide.id)) {
+                continue;
+            }
+            const itemIds = targets?.get(slide.id);
+            for (const item of slide.canvasItems) {
+                if (
+                    !['text', 'bible', 'html'].includes(item.type) ||
+                    (item.locked === true && !options.includeLocked) ||
+                    (itemIds && !itemIds.has(item.id))
+                ) {
+                    continue;
+                }
+                const textItem = item as typeof item & TextStylePropsType;
+                if ('fontSize' in change) {
+                    if (textItem.fontSize === change.fontSize) {
+                        continue;
+                    }
+                    textItem.fontSize = change.fontSize;
+                } else {
+                    const fontFamily = change.fontFamily || null;
+                    if ((textItem.fontFamily || null) === fontFamily) {
+                        continue;
+                    }
+                    textItem.fontFamily = fontFamily;
+                }
+                changedItems++;
+            }
+        }
+        if (changedItems > 0) {
+            await this.setJsonData(jsonData);
+        }
+        return changedItems;
+    }
+
     async getSlideIndex(slide: Slide) {
         const slides = await this.getSlides();
         const index = slides.findIndex((slide1) => {
@@ -154,7 +239,19 @@ export default class AppDocument
         return index;
     }
 
-    async updateSlide(slide: Slide) {
+    /**
+     * Registered as pending the moment it is called, then run.
+     *
+     * The canvas edits through here fire-and-forget — `setCanvasItems` must
+     * not stutter mid-drag waiting on a disk write — so `Ctrl+Z` pressed
+     * straight after an arrow-nudge used to reach the editing history before
+     * the nudge did and take back the edit BEFORE it instead.
+     */
+    updateSlide(slide: Slide) {
+        return this.trackPendingWrite(this.applySlideUpdate(slide));
+    }
+
+    private async applySlideUpdate(slide: Slide) {
         const index = await this.getSlideIndex(slide);
         if (index === -1) {
             return;
@@ -192,7 +289,10 @@ export default class AppDocument
         const originalSlide = jsonItems[index];
         slide.isChanged =
             originalSlide === undefined ||
-            !checkIsSameValues(slide.toJson(), originalSlide);
+            !checkIsSameValues(
+                slide.toJson(),
+                Slide.toComparableJson(originalSlide),
+            );
     }
 
     async getMaxSlideId() {
@@ -501,21 +601,12 @@ export default class AppDocument
     }
 
     static async getCopiedSlides() {
-        const clipboardSlides = await navigator.clipboard.read();
+        const text = await readTextFromClipboard();
         const copiedSlides: Slide[] = [];
-        const textPlainType = 'text/plain';
-        for (const clipboardSlide of clipboardSlides) {
-            if (clipboardSlide.types.includes(textPlainType)) {
-                const blob = await clipboardSlide.getType(textPlainType);
-                const text = await blob.text();
-                const texts = text.split('\n');
-                for (const text of texts) {
-                    const copiedSlideSlide = Slide.clipboardDeserialize(text);
-                    if (copiedSlideSlide === null) {
-                        continue;
-                    }
-                    copiedSlides.push(copiedSlideSlide);
-                }
+        for (const line of text?.split('\n') ?? []) {
+            const copiedSlide = Slide.clipboardDeserialize(line);
+            if (copiedSlide !== null) {
+                copiedSlides.push(copiedSlide);
             }
         }
         return copiedSlides;
@@ -527,7 +618,7 @@ export default class AppDocument
                 return slide.clipboardSerialize();
             })
             .join('\n');
-        navigator.clipboard.writeText(data);
+        return writeTextToClipboard(data);
     }
 
     static getInstance(filePath: string) {

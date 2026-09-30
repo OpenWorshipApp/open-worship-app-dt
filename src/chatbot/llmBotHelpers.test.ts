@@ -89,6 +89,7 @@ import {
     checkIsProviderFault,
     checkIsStepsWithoutPage,
     getStandInLlmProvider,
+    filterVerifiedAnswerShows,
     genOpenPageNudge,
     describeLlmError,
     getAvailableLlmProviders,
@@ -855,6 +856,56 @@ describe('toWatchedManualId', () => {
     });
 });
 
+describe('SHOWS controls are proved against the live window', () => {
+    const controls = [
+        { kind: 'control' as const, value: 'Font Size', name: 'Font Size' },
+        {
+            kind: 'control' as const,
+            value: 'Bible Version buttons',
+            name: 'Bible Version buttons',
+        },
+        {
+            kind: 'file' as const,
+            value: 'C:\\Pictures\\verse.png',
+            name: 'verse.png',
+        },
+    ];
+
+    test('keeps an exact owa_find_ui label and drops an invented category', () => {
+        const watch = genToolWatch();
+        applyToolWatch(
+            watch,
+            'owa_find_ui',
+            { text: 'Font Size' },
+            JSON.stringify({
+                shownCount: 1,
+                matches: [{ label: 'Font Size', tier: 0 }],
+            }),
+        );
+        expect(filterVerifiedAnswerShows(controls, watch)).toEqual([
+            controls[0],
+            controls[2],
+        ]);
+    });
+
+    test('does not trust a loose near match, refusal, or model placeholder', () => {
+        const watch = genToolWatch();
+        applyToolWatch(
+            watch,
+            'owa_find_ui',
+            { text: 'Bible Version buttons' },
+            JSON.stringify({
+                shownCount: 1,
+                matches: [{ label: 'Add Extra Bible', tier: 3 }],
+            }),
+        );
+        applyToolWatch(watch, 'owa_find_ui', { text: 'none' }, 'not found');
+        expect(filterVerifiedAnswerShows(controls, watch)).toEqual([
+            controls[2],
+        ]);
+    });
+});
+
 // A question can now carry a picture, and can be ADDED TO while it is being
 // answered. Both change the one thing this loop is careful about -- the shape
 // of `messages` -- so both are asserted on the array the SDK is actually
@@ -1325,6 +1376,47 @@ describe('the request is cache-shaped', () => {
         expect(body.system[0].text).toContain('Open Worship App');
         expect(body.system[0].cache_control).toEqual({ type: 'ephemeral' });
         expect(body.tool_choice).toBeUndefined();
+    });
+
+    test('gives Reader users short, mouse-first help without talking down to them', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return {
+                content: [{ type: 'text', text: 'Use the box at the top.' }],
+            };
+        });
+        useFakeAnthropic(createMock);
+
+        await askLlmBot(
+            'The words are too small. Help me.',
+            'reader',
+            'anthropic',
+        );
+
+        const prompt = createMock.mock.calls[0][0].system[0].text;
+        expect(prompt).toContain('AN OLDER PERSON WHO IS NEW TO COMPUTERS');
+        expect(prompt).toContain('Be respectful, never childish');
+        expect(prompt).toContain('easiest mouse or touch route');
+        expect(prompt).toContain('no more than THREE numbered steps');
+        expect(prompt).toContain('at the bottom left');
+        expect(prompt).toContain('press and hold, move, then let go');
+        expect(prompt).toContain('history or recovery route');
+        expect(prompt).toContain('Do not repeat a step that failed');
+        expect(prompt).toContain('safest workable alternative');
+        expect(prompt).toContain('relevant recovery choice');
+        expect(prompt).toContain('Never offer generic "No thanks"');
+        expect(prompt).toContain('Renumber the steps you actually give from 1');
+    });
+
+    test('does not impose the Reader-specific answer shape on the Presenter', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'Press F5.' }] };
+        });
+        useFakeAnthropic(createMock);
+
+        await askLlmBot('how do I show a screen?', 'presenter', 'anthropic');
+
+        const prompt = createMock.mock.calls[0][0].system[0].text;
+        expect(prompt).not.toContain('AN OLDER PERSON WHO IS NEW TO COMPUTERS');
     });
 
     // The last round used to drop the tool list to stop the model calling

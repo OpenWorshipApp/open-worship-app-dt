@@ -1,4 +1,4 @@
-import { type ChangeEvent, useCallback, useMemo } from 'react';
+import { type ChangeEvent, useCallback, useId, useMemo } from 'react';
 
 import {
     genFontWeightOptions,
@@ -11,16 +11,17 @@ import { tran } from '../lang/langHelpers';
 export default function FontFamilyControlComp({
     fontFamily,
     setFontFamily,
-    fontWeight,
+    fontWeight = '',
     setFontWeight,
     isShowingLabel = false,
 }: Readonly<{
     fontFamily: string;
     setFontFamily: (fontFamily: string) => void;
-    fontWeight: string;
-    setFontWeight: (fontWeight: string) => void;
+    fontWeight?: string;
+    setFontWeight?: (fontWeight: string) => void;
     isShowingLabel?: boolean;
 }>) {
+    const familyId = useId();
     const fontList = useFontList();
     const fontFamilies = useMemo(() => {
         if (!fontList) {
@@ -70,12 +71,10 @@ export default function FontFamilyControlComp({
         <div className="pb-2 d-flex flex-wrap align-items-end gap-1">
             <div>
                 {isShowingLabel && (
-                    <label htmlFor="text-font-family">
-                        {tran('Font Family')}
-                    </label>
+                    <label htmlFor={familyId}>{tran('Font Family')}</label>
                 )}
                 <select
-                    id="text-font-family"
+                    id={familyId}
                     // Named whether or not the label above is drawn. Settings
                     // hides it and titles the card instead, which nothing ties
                     // to this picker, so it was announced as an unnamed box.
@@ -97,7 +96,7 @@ export default function FontFamilyControlComp({
                     })}
                 </select>
             </div>
-            {isShowingFontWeight ? (
+            {isShowingFontWeight && setFontWeight ? (
                 <RenderFontWeightSelectComp
                     fontFamily={fontFamily}
                     fontWeight={cleanFontWeight}

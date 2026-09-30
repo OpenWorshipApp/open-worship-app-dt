@@ -90,6 +90,7 @@ function createHistoryManager() {
         }),
         save: vi.fn(async () => true),
         discard: vi.fn(),
+        deleteHistories: vi.fn(async () => {}),
         undo: vi.fn(() => 'undo-result'),
         redo: vi.fn(() => 'redo-result'),
     };
@@ -317,11 +318,64 @@ describe('AppEditableDocumentSourceAbs', () => {
 
         await documentSource.preDelete();
         expect(deleteMetaDataFileMock).toHaveBeenCalledWith(filePath);
-        expect(history.discard).toHaveBeenCalledTimes(1);
+        // The whole folder, not the Discard button: that one no-ops when there
+        // is nothing to walk back, and left the history behind for the next
+        // file of this name to inherit.
+        expect(history.deleteHistories).toHaveBeenCalledTimes(1);
+        expect(history.discard).not.toHaveBeenCalled();
 
-        expect(documentSource.historyUndo()).toBe('undo');
-        expect(documentSource.historyRedo()).toBe('redo');
-        expect(documentSource.historyDiscard()).toBe('discard');
+        // All four await the edits still in flight first, so they answer with
+        // a promise now: an undo that raced an un-awaited write used to step
+        // over the very edit it was meant to take back.
+        await expect(documentSource.historyUndo()).resolves.toBe('undo');
+        await expect(documentSource.historyRedo()).resolves.toBe('redo');
+        await expect(documentSource.historyDiscard()).resolves.toBe('discard');
         await expect(documentSource.historySave()).resolves.toBe(true);
+    });
+
+    test('an undo waits for an edit that is still on its way', async () => {
+        // The canvas edits fire-and-forget so a drag does not stutter, so
+        // `Ctrl+Z` pressed in the same breath as an arrow-nudge used to reach
+        // the editing history FIRST and take back the edit before it. Measured
+        // live 2026-09-28: the nudge stayed and the previous edit vanished.
+        const filePath = '/docs/pending.owa';
+        const history = getHistoryManager(filePath);
+        history.undo.mockReturnValue('undo');
+        const documentSource = TestDocument.getInstance(filePath);
+
+        const order: string[] = [];
+        let releaseWrite = () => {};
+        const writing = new Promise<void>((resolve) => {
+            releaseWrite = () => {
+                order.push('write landed');
+                resolve();
+            };
+        });
+        documentSource.trackPendingWrite(writing);
+
+        const undoing = documentSource.historyUndo().then((value) => {
+            order.push('undo ran');
+            return value;
+        });
+
+        // Give the undo every chance to jump the queue.
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(history.undo).not.toHaveBeenCalled();
+
+        releaseWrite();
+        await expect(undoing).resolves.toBe('undo');
+        expect(order).toEqual(['write landed', 'undo ran']);
+    });
+
+    test('a failed write does not wedge every later undo', async () => {
+        const filePath = '/docs/failed-write.owa';
+        const history = getHistoryManager(filePath);
+        history.undo.mockReturnValue('undo');
+        const documentSource = TestDocument.getInstance(filePath);
+
+        documentSource.trackPendingWrite(Promise.reject(new Error('disk')));
+
+        await expect(documentSource.historyUndo()).resolves.toBe('undo');
     });
 });

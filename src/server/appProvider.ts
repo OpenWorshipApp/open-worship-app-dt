@@ -30,10 +30,12 @@ export type FileUtilsType = {
     createWriteStream: typeof fs.createWriteStream;
     createReadStream: typeof fs.createReadStream;
     readdir: typeof fs.readdir;
+    readdirSync: typeof fs.readdirSync;
     stat: typeof fs.stat;
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
     rename: typeof fs.rename;
+    renameSync: typeof fs.renameSync;
     unlink: typeof fs.unlink;
     rmdir: typeof fs.rmdir;
     readFile: typeof fs.readFile;
@@ -253,11 +255,70 @@ document.addEventListener('mouseleave', () => {
 
 const providerSource = (globalThis as any).provider;
 
+const HOME_PAGE_KEY_PATTERN = /^(\w+)HomePage$/;
+
+/**
+ * Names the page from the renderer's OWN location. The preload names it too,
+ * once, from whatever location it saw while it ran, and a Reader once booted
+ * with every `isPage*` flag false: no way back to the Presenter, and the
+ * Presenter's Bibles list and settings read and written in its place. The
+ * page being drawn is this document, so its pathname is the truth; the
+ * `*HomePage` paths the preload publishes do not depend on the location, so
+ * they are still right to match against. A disagreement is logged, because
+ * it is the evidence of how the preload came to see another page.
+ */
+export function toPageFlags(
+    source: { [key: string]: unknown } | undefined,
+    pathname: string,
+) {
+    const flags: { [key: string]: unknown } = {};
+    if (!source || !pathname) {
+        return flags;
+    }
+    flags.currentHomePage = pathname;
+    const mismatches: string[] = [];
+    for (const [key, value] of Object.entries(source)) {
+        const match = HOME_PAGE_KEY_PATTERN.exec(key);
+        if (match === null || key === 'currentHomePage') {
+            continue;
+        }
+        if (typeof value !== 'string' || !value) {
+            continue;
+        }
+        const name = match[1];
+        const flagKey = `isPage${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+        const isCurrentPage = pathname.startsWith(value);
+        if (
+            typeof source[flagKey] === 'boolean' &&
+            source[flagKey] !== isCurrentPage
+        ) {
+            mismatches.push(flagKey);
+        }
+        flags[flagKey] = isCurrentPage;
+    }
+    if (mismatches.length > 0) {
+        console.warn(
+            `[appProvider] the preload named page "${source.currentHomePage}"` +
+                ` but this is "${pathname}"; corrected ${mismatches.join(', ')}`,
+        );
+    }
+    return flags;
+}
+
+const pageFlags = toPageFlags(
+    providerSource,
+    globalThis.location?.pathname ?? '',
+);
+
 const appProvider = {
     ...providerSource,
+    ...pageFlags,
     windowTitle: document.title,
     sessionData: { defaultStorageDirPath: null },
-    isMainPage: providerSource.isPageReader || providerSource.isPagePresenter,
+    isMainPage: Boolean(
+        (pageFlags.isPageReader ?? providerSource?.isPageReader) ||
+        (pageFlags.isPagePresenter ?? providerSource?.isPagePresenter),
+    ),
     getIsMouseOverApp: () => {
         return isMouseOverApp;
     },

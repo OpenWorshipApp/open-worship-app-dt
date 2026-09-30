@@ -42,6 +42,13 @@ export async function createNewSlidesFromDroppedData(
                 top: (slide.height - canvasItem.props.height) / 2,
             });
             const canvasItemsJson = slide.canvasItemsJson;
+            // Numbered the way `CanvasController.addNewItems` numbers a box:
+            // the item comes out of its factory with the placeholder id -1,
+            // and pushed as-is it was saved that way.
+            canvasItem.props.id =
+                canvasItemsJson.reduce((maxId, itemJson) => {
+                    return Math.max(maxId, itemJson.id);
+                }, 0) + 1;
             canvasItemsJson.push(canvasItem.toJson());
             slide.canvasItemsJson = canvasItemsJson;
             return slide;

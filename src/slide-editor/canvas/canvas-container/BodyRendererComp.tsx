@@ -304,46 +304,63 @@ export function BodyRendererComp({
         };
     }, [marquee, scale]);
     return (
+        // The transparency checkerboard sits OUTSIDE the canvas, not on it.
+        // `transform: scale(...)` makes `.slide-canvas-editor` an isolated
+        // group, so anything painted on that element is part of what a
+        // `mix-blend-mode` box blends with -- and on the projector the slide's
+        // base is transparent, not a grey check. Painting it one level up
+        // keeps the editor's composite identical to the screen's while
+        // looking exactly the same. Deliberately unpositioned: a positioned
+        // ancestor here would become the boxes' `offsetParent` and move every
+        // number the drag engine reads.
         <div
-            className="slide-canvas-editor shadow-blank-bg"
+            className="shadow-blank-bg"
             data-shadow-theme={theme}
-            ref={canvasElementRef}
             style={{
-                width: `${canvas.width}px`,
-                height: `${canvas.height}px`,
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-                // So a finger drag on the empty canvas rubber-band-selects
-                // instead of scrolling. Scoped to the canvas only — the outer
-                // `overflow: auto` workspace (and its margins) stays pannable
-                // by touch. Boxes/handles set their own `touch-action` too.
-                touchAction: 'none',
+                width: `${canvas.width * scale}px`,
+                height: `${canvas.height * scale}px`,
             }}
-            onDragOver={dragOverHandling}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onContextMenu={handleContextMenuOpening}
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
         >
-            <CanvasSnapContext value={snapContextValue}>
-                <CanvasItemsListComp canvasItems={canvasItems} />
-            </CanvasSnapContext>
-            {guides.map((guide) => (
-                <CanvasGuideLineComp
-                    key={guide.id}
-                    guide={guide}
-                    onPointerDown={(event) => {
-                        onGuidePointerDown(guide.axis, guide.id, event);
-                    }}
-                    onRemove={() => onGuideRemove(guide.id)}
+            <div
+                className="slide-canvas-editor"
+                ref={canvasElementRef}
+                style={{
+                    width: `${canvas.width}px`,
+                    height: `${canvas.height}px`,
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                    // So a finger drag on the empty canvas rubber-band-selects
+                    // instead of scrolling. Scoped to the canvas only — the outer
+                    // `overflow: auto` workspace (and its margins) stays pannable
+                    // by touch. Boxes/handles set their own `touch-action` too.
+                    touchAction: 'none',
+                }}
+                onDragOver={dragOverHandling}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onContextMenu={handleContextMenuOpening}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+            >
+                <CanvasSnapContext value={snapContextValue}>
+                    <CanvasItemsListComp canvasItems={canvasItems} />
+                </CanvasSnapContext>
+                {guides.map((guide) => (
+                    <CanvasGuideLineComp
+                        key={guide.id}
+                        guide={guide}
+                        onPointerDown={(event) => {
+                            onGuidePointerDown(guide.axis, guide.id, event);
+                        }}
+                        onRemove={() => onGuideRemove(guide.id)}
+                    />
+                ))}
+                <CanvasSnapLinesComp
+                    vertical={snapLines.vertical}
+                    horizontal={snapLines.horizontal}
                 />
-            ))}
-            <CanvasSnapLinesComp
-                vertical={snapLines.vertical}
-                horizontal={snapLines.horizontal}
-            />
-            {marqueeStyle !== null ? <div style={marqueeStyle} /> : null}
+                {marqueeStyle !== null ? <div style={marqueeStyle} /> : null}
+            </div>
         </div>
     );
 }

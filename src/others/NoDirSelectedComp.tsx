@@ -41,9 +41,21 @@ export function GotoSettingDirectoryPathComp() {
 export default function NoDirSelectedComp({
     dirSource,
     defaultFolderName,
+    isDirSettingRouteHidden = false,
 }: Readonly<{
     dirSource: DirSource;
     defaultFolderName: string;
+    /**
+     * Drop the **Go to Settings** route.
+     *
+     * It is only an answer where the folder is one the Path Settings page
+     * actually lists. A foreground media SESSION keeps its own folder under a
+     * key of its own, which that page knows nothing about -- so the button
+     * sent a volunteer out of the panel, into another window, to a list their
+     * folder is not on. The folder picker beside this empty state is the way
+     * in, and it is already here.
+     */
+    isDirSettingRouteHidden?: boolean;
 }>) {
     return (
         <div className="card p-1 w-100 app-overflow-hidden">
@@ -64,9 +76,11 @@ export default function NoDirSelectedComp({
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
-                    <div>
-                        <GotoSettingDirectoryPathComp />
-                    </div>
+                    {isDirSettingRouteHidden ? null : (
+                        <div>
+                            <GotoSettingDirectoryPathComp />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

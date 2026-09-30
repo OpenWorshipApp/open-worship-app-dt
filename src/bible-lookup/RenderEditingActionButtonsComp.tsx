@@ -141,6 +141,7 @@ export default function RenderEditingActionButtonsComp({
     useKeyboardRegistering(
         eventMaps,
         (event) => {
+            event.preventDefault();
             if (event.key.toLowerCase() === 's') {
                 viewController.addBibleItemLeft(bibleItem, bibleItem);
             } else {
@@ -188,7 +189,7 @@ export default function RenderEditingActionButtonsComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="btn-group mx-1">
+        <div className="btn-group">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
             <button
                 type="button"
@@ -238,12 +239,7 @@ export default function RenderEditingActionButtonsComp({
                         aria-label={tran('Export to MS Word')}
                         onClick={handleExportToWord}
                     >
-                        <i
-                            className="bi bi-file-earmark-word"
-                            style={{
-                                color: 'blue',
-                            }}
-                        />
+                        <i className="bi bi-file-earmark-word" />
                     </button>
                 </>
             )}

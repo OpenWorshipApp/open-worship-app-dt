@@ -222,6 +222,17 @@ $app-context-menu-dots-opacity: 0.1;
       -#{math.div($bg-width, 2)} 0px;
   }
 
+  // Keeps the END of a long path/name and puts the ellipsis on the LEFT.
+  //
+  // `direction: rtl` is what moves the ellipsis, but it also makes the line
+  // RTL for the bidi algorithm, which REORDERS content whose runs are not all
+  // one direction: `1_cv` drew as `cv_1`, because the neutral `_` between the
+  // digit run and the letter run took the line's direction. So whatever goes
+  // in here must be wrapped in `<bdi>` -- it isolates the text and takes the
+  // direction from its own first strong character, leaving `direction` with
+  // nothing to decide but the ellipsis side. Do NOT swap this for
+  // `unicode-bidi: plaintext`: that fixes the order by making the line LTR,
+  // which moves the ellipsis back to the right and loses the tail.
   .app-ellipsis-left {
     text-overflow: ellipsis;
     overflow: hidden;

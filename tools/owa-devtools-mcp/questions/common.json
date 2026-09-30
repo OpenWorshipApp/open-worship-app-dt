@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-14",
+    "updated": "2026-09-29",
     "sections": [
         {
             "id": "panels",
@@ -281,7 +281,11 @@
                         "throw away"
                     ],
                     "resources": {
-                        "tools": ["owa_lyric_file", "owa_slide_file", "owa_undo"],
+                        "tools": [
+                            "owa_lyric_file",
+                            "owa_slide_file",
+                            "owa_undo"
+                        ],
                         "related": ["W-43"]
                     }
                 },
@@ -430,8 +434,90 @@
         {
             "id": "help",
             "label": "This help window",
-            "recipes": ["W-42"],
+            "recipes": ["W-42", "W-46"],
             "questions": [
+                {
+                    "id": "tips-of-the-day",
+                    "text": "How can I browse tips and learn the page I am using?",
+                    "kind": "howto",
+                    "keywords": [
+                        "tip",
+                        "tips",
+                        "tip of the day",
+                        "all tips",
+                        "what can I do",
+                        "learn this page",
+                        "settings tips",
+                        "tips per page",
+                        "focused window",
+                        "demo target page",
+                        "presenter lessons",
+                        "background media",
+                        "service order",
+                        "self learning",
+                        "practise",
+                        "show it",
+                        "do it",
+                        "could not start walkthrough",
+                        "walkthrough",
+                        "don't show again",
+                        "help menu",
+                        "file menu",
+                        "edit menu",
+                        "view menu",
+                        "tools menu",
+                        "window menu",
+                        "menu commands",
+                        "print without preview",
+                        "debug info"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "find": "All tips"
+                    }
+                },
+                {
+                    "id": "tip-of-the-day-disappeared",
+                    "text": "Why did the Tip of the Day disappear on its own?",
+                    "kind": "why",
+                    "keywords": [
+                        "tip disappeared",
+                        "tip closed by itself",
+                        "tip went away",
+                        "tip vanished",
+                        "how long does the tip stay",
+                        "countdown",
+                        "progress bar",
+                        "one minute",
+                        "keep the tip open",
+                        "pause the tip"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "find": "Tip of the Day"
+                    }
+                },
+                {
+                    "id": "restore-tips-of-the-day",
+                    "text": "How do I show Tips of the Day automatically again?",
+                    "kind": "howto",
+                    "keywords": [
+                        "restore tips",
+                        "enable tips",
+                        "show tips again",
+                        "don't show again",
+                        "automatic tips",
+                        "tip not showing",
+                        "no tip at startup",
+                        "when does the tip appear",
+                        "five minutes",
+                        "settings"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "find": "Show Tips of the Day automatically"
+                    }
+                },
                 {
                     "id": "what-can-i-ask",
                     "text": "What can I ask you?",

@@ -99,8 +99,17 @@ export function genTrashContextMenu(
                 );
                 if (isOk) {
                     const fileSource = FileSource.getInstance(filePath);
-                    await fileSource.trash();
-                    await trashAllMaterialFiles(fileSource);
+                    // `ask`: on a drive with no trash (a USB stick on
+                    // Windows) the person is asked whether to delete it
+                    // permanently, instead of every delete failing.
+                    const result = await fileSource.trash('ask');
+                    if (result === null) {
+                        return;
+                    }
+                    await trashAllMaterialFiles(
+                        fileSource,
+                        result === 'deleted' ? 'delete' : 'none',
+                    );
                     onTrashed?.();
                 }
             },

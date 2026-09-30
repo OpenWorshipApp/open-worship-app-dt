@@ -8,6 +8,7 @@ import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import type { LocaleType } from '../lang/langHelpers';
 import {
+    quickTrimText,
     sanitizeFindingText,
     sanitizePreviewText,
     tran,
@@ -103,6 +104,37 @@ export function findPageNumber(
 export function calcPerPage(toLineNumber: number, fromLineNumber: number) {
     const perPage = toLineNumber - fromLineNumber + 1;
     return perPage;
+}
+
+/**
+ * The `LIKE` needle a find runs on, or `null` when the query holds nothing
+ * this bible's script can match.
+ *
+ * `quickTrimText` answers "is there anything of this locale in this word?", so
+ * a query typed in another script drops every part and the needle comes out as
+ * nothing but `%`. Handed to SQL that is `LIKE '%%'`, which matches EVERY row:
+ * measured 2026-09-20, a Khmer word looked up in the KJV answered
+ * **31,102 verses found** -- the whole bible, every word drawn as a match --
+ * and an English word in a Khmer bible answered 31,099. `null` says "no verse
+ * can match", which the caller answers without touching the database.
+ *
+ * The needle keeps the RAW part, not the trimmed one: trimming is the test,
+ * the untrimmed word is what the verse text is searched for.
+ */
+export function toFindWildCardText(locale: LocaleType, sText: string) {
+    const wildCardText = sText
+        .split(' ')
+        .filter((part) => quickTrimText(locale, part))
+        .filter((part) => part.length > 0)
+        .map((part) => `%${part}%`)
+        .join('')
+        .replaceAll("'", '');
+    // Also catches a query that survived the filter and then lost everything
+    // to the quote strip, which lands on the same match-everything needle.
+    if (wildCardText.replaceAll('%', '') === '') {
+        return null;
+    }
+    return wildCardText;
 }
 
 export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
@@ -307,6 +339,12 @@ export async function breakItem(
     fullVerseText = await sanitizeFindingText(locale, fullVerseText);
     fullVerseText = await sanitizePreviewText(locale, fullVerseText);
     for (const subText of sanitizedFindText.split(' ')) {
+        // An empty needle is `new RegExp('()')`, which matches between every
+        // character and wraps the whole verse in match markers -- the visible
+        // half of the match-everything bug `toFindWildCardText` closes.
+        if (subText === '') {
+            continue;
+        }
         fullVerseText = fullVerseText.replaceAll(
             new RegExp(`(${subText})`, 'ig'),
             '<span class="app-found-match">$1</span>',

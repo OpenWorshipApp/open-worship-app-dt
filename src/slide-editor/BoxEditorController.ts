@@ -260,6 +260,9 @@ export type BoxMoveType = { id: number; left: number; top: number };
 type MoveGroupMemberType = {
     id: number;
     editor: HTMLDivElement;
+    // The selection frame drawn beside (not inside) this box, so a live drag
+    // can move it with the box. Null for a member whose chrome is not mounted.
+    chrome: HTMLDivElement | null;
     isLeader: boolean;
     initX: number;
     initY: number;
@@ -272,6 +275,11 @@ export default class BoxEditorController {
     onClick: (event: any) => OptionalPromise<void> = () => {};
     editor: HTMLDivElement | null = null;
     target: HTMLDivElement | null = null;
+    // The selection chrome -- outline, resize handles, rotate arrow. It is a
+    // SIBLING of `editor` rather than a child of `target` so that a box with a
+    // `mix-blend-mode` does not composite its own handles away; everything
+    // that moves `editor` or resizes `target` has to move this too.
+    chrome: HTMLDivElement | null = null;
     minWidth = 40;
     minHeight = 40;
     snapThresholdScreenPx = 8;
@@ -361,6 +369,7 @@ export default class BoxEditorController {
         this.hideDragInfo();
         this.editor = null;
         this.target = null;
+        this.chrome = null;
     }
     // A small badge following the cursor with the live value of the
     // ongoing drag (position, size or angle). Attached to `document.body`
@@ -392,11 +401,13 @@ export default class BoxEditorController {
     }
     initEvent(
         editor: HTMLDivElement,
+        chrome: HTMLDivElement,
         onDone: (groupMoves: BoxMoveType[]) => OptionalPromise<void>,
     ) {
         this.release();
         this.onDone = onDone;
         this.editor = editor;
+        this.chrome = chrome;
         this.target = this.editor.firstChild as HTMLDivElement;
         // drag support. Pointer events (not mouse) so a finger drags the box
         // just like a cursor; a `PointerEvent` is a `MouseEvent`, so every
@@ -410,7 +421,7 @@ export default class BoxEditorController {
         });
         // handle resize
         for (const [key, value] of Object.entries(this.resizeActorList)) {
-            const ele = this.target.querySelector(`.${key}`) as HTMLDivElement;
+            const ele = chrome.querySelector(`.${key}`) as HTMLDivElement;
             this.addEvent({
                 eventName: 'pointerdown',
                 target: ele,
@@ -420,7 +431,7 @@ export default class BoxEditorController {
             });
         }
         // handle rotation
-        const rotator = this.target.querySelector(
+        const rotator = chrome.querySelector(
             `.${this.rotatorCN}`,
         ) as HTMLDivElement;
         this.addEvent({
@@ -464,6 +475,9 @@ export default class BoxEditorController {
         return {
             id,
             editor,
+            chrome: isLeader
+                ? this.chrome
+                : BoxEditorController.chromeOf(editor),
             isLeader,
             initX: editor.offsetLeft,
             initY: editor.offsetTop,
@@ -571,8 +585,16 @@ export default class BoxEditorController {
                 const centerX = member.initX + deltaX;
                 const centerY = member.initY + deltaY;
                 if (!member.isLeader) {
-                    member.editor.style.left = `${centerX}px`;
-                    member.editor.style.top = `${centerY}px`;
+                    BoxEditorController.moveAnchor(
+                        member.editor,
+                        centerX,
+                        centerY,
+                    );
+                    BoxEditorController.moveAnchor(
+                        member.chrome,
+                        centerX,
+                        centerY,
+                    );
                 }
                 // The stored position is the box center; show the top-left
                 // corner to match the props panel's X/Y fields.
@@ -637,8 +659,13 @@ export default class BoxEditorController {
         if (this.editor === null) {
             return;
         }
-        this.editor.style.left = `${x}px`;
-        this.editor.style.top = `${y}px`;
+        BoxEditorController.moveAnchor(this.editor, x, y);
+        BoxEditorController.moveAnchor(this.chrome, x, y);
+    }
+    // The chrome frame is the chrome anchor's only child, mirroring the box
+    // inside the box anchor.
+    private get chromeFrame() {
+        return (this.chrome?.firstChild as HTMLDivElement | null) ?? null;
     }
     resizeBox(width: number, height: number) {
         if (this.target === null) {
@@ -646,18 +673,42 @@ export default class BoxEditorController {
         }
         this.target.style.width = `${width}px`;
         this.target.style.height = `${height}px`;
+        const frame = this.chromeFrame;
+        if (frame !== null) {
+            frame.style.width = `${width}px`;
+            frame.style.height = `${height}px`;
+        }
     }
     rotateBox(rotationDegrees: number) {
-        if (this.editor === null) {
-            return;
-        }
-        this.editor.style.transform = `rotate(${rotationDegrees}deg)`;
+        this.applyRotation(`rotate(${rotationDegrees}deg)`);
     }
     unRotateBox() {
+        this.applyRotation('rotate(0deg)');
+    }
+    private applyRotation(transform: string) {
         if (this.editor === null) {
             return;
         }
-        this.editor.style.transform = 'rotate(0deg)';
+        this.editor.style.transform = transform;
+        if (this.chrome !== null) {
+            this.chrome.style.transform = transform;
+        }
+    }
+    static moveAnchor(anchor: HTMLDivElement | null, x: number, y: number) {
+        if (anchor === null) {
+            return;
+        }
+        anchor.style.left = `${x}px`;
+        anchor.style.top = `${y}px`;
+    }
+    // A box's chrome is rendered right after its own anchor, so it is the
+    // anchor's next sibling -- and absent for any box that is not selected.
+    static chromeOf(editor: Element | null) {
+        const next = editor?.nextElementSibling ?? null;
+        return next instanceof HTMLDivElement &&
+            next.classList.contains('editor-controller-box-chrome')
+            ? next
+            : null;
     }
     blockMouseEvent(event: MouseEvent) {
         event.preventDefault();

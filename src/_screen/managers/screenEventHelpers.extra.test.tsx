@@ -78,6 +78,16 @@ vi.mock('./ScreenFocusManager', () => ({
     },
 }));
 
+// Mocked for the same reason as every sibling above: the real module reaches
+// `toastHelpers`, which reads `appProvider.systemUtils.isDev` AT MODULE LOAD,
+// and this file's `appProvider` mock has no `systemUtils`.
+vi.mock('./ScreenMaskManager', () => ({
+    default: class ScreenMaskManager {
+        static registerEventListener = vi.fn(() => []);
+        static unregisterEventListener = vi.fn();
+    },
+}));
+
 describe('screenEventHelpers', () => {
     let container: HTMLDivElement;
     let root: Root;

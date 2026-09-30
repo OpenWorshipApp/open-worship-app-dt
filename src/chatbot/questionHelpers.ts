@@ -70,10 +70,10 @@ export const FALLBACK_STARTERS: Record<BotFocusType, StarterSourceType[]> = {
         },
     ],
     reader: [
-        'How do I look up a verse?',
-        'How do I compare Bible versions?',
-        'What are verse marks?',
-        'Where is the search button?',
+        'Where do I type John 3:16?',
+        'The words are too small. Can you help me?',
+        'I lost the passage I was reading. How do I get it back?',
+        'How do I put two Bible versions side by side?',
     ],
     appDocumentEditor: [
         'How do I add text to a slide?',

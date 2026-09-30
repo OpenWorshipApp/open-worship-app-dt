@@ -38,6 +38,7 @@ import {
     listAgentFiles,
     renameAgentFile,
     runWithAgentBackup,
+    snapshotAgentEditing,
     snapshotAgentFile,
     snapshotAgentFileForDelete,
     snapshotAgentSidecars,
@@ -65,6 +66,33 @@ const FILE_LIMIT = 30;
 const NOTE_LIMIT = 60;
 const TITLE_MAX_CHARS = 200;
 const DEFAULT_FILE_NAME = 'Default';
+/**
+ * A notes file has an EDITING HISTORY, even though `Note` is not one of the
+ * editable document classes: the note window writes its typing there and the
+ * human presses Save. Naming the kind is what makes a rename take that
+ * history along, a delete take it away, and an undo put it back.
+ */
+const NOTE_EDITABLE_KIND = 'note' as const;
+
+/**
+ * A notes file AND the editing head above it.
+ *
+ * Every write in here goes through `Note.save()`, which rebases the head onto
+ * the new file -- so a change that meant to touch only the file moves the head
+ * too, and an undo that put the file back alone would leave the note WINDOW,
+ * and an export (which reads that same head), showing the state the undo was
+ * meant to remove. A note with no history contributes nothing extra.
+ */
+async function snapshotAgentNoteFile(filePath: string) {
+    const restores = [
+        await snapshotAgentFile(filePath, NOTE_EDITABLE_KIND),
+    ] as Awaited<ReturnType<typeof snapshotAgentFileForDelete>>;
+    const editing = await snapshotAgentEditing(NOTE_EDITABLE_KIND, filePath);
+    if (editing !== null) {
+        restores.push(editing);
+    }
+    return restores;
+}
 
 function fail(reason: string): AgentResultType {
     return { isError: true, reason };
@@ -339,7 +367,7 @@ async function handleAdd(place: NotePlaceType, request: AgentNoteRequestType) {
     let restores;
     try {
         restores = found.isThere
-            ? [await snapshotAgentFile(found.filePath)]
+            ? await snapshotAgentNoteFile(found.filePath)
             : [{ type: 'file' as const, filePath: found.filePath, text: null }];
     } catch (error) {
         return fail(genNoBackupReason(error));
@@ -403,7 +431,7 @@ async function handleUpdate(
     }
     let restores;
     try {
-        restores = [await snapshotAgentFile(found.filePath)];
+        restores = await snapshotAgentNoteFile(found.filePath);
     } catch (error) {
         return fail(genNoBackupReason(error));
     }
@@ -427,6 +455,13 @@ async function handleUpdate(
                 note.updateNoteItem(fresh, true);
                 if (!(await note.save())) {
                     throw new Error('the notes file could not be saved.');
+                }
+                if (hasText) {
+                    // A note window left an editing head behind, and a Save
+                    // rebases onto it rather than over it -- so the words just
+                    // written would be what the FILE holds and not what that
+                    // window, or an export, would show.
+                    await note.syncItemEditingHistory(fresh);
                 }
             },
         );
@@ -453,7 +488,7 @@ async function handleDelete(
     let restores;
     try {
         restores = [
-            await snapshotAgentFile(found.filePath),
+            ...(await snapshotAgentNoteFile(found.filePath)),
             ...(await snapshotAgentSidecars(found.filePath)),
         ];
     } catch (error) {
@@ -565,9 +600,24 @@ async function handleRenameFile(
     try {
         const { meta } = await runWithAgentBackup(
             `Renamed the notes file “${found.name}” to “${newName}”`,
-            [{ type: 'rename', from: found.filePath, to: newPath }],
+            [
+                {
+                    type: 'rename',
+                    from: found.filePath,
+                    to: newPath,
+                    kind: NOTE_EDITABLE_KIND,
+                },
+            ],
             () => {
-                return renameAgentFile(found.filePath, newName);
+                // The kind is what takes the EDITING HISTORY along: without
+                // it the folder stayed behind under the old name, so a note
+                // window's unsaved text was lost and an orphan history sat
+                // there for a note later made under that name to inherit.
+                return renameAgentFile(
+                    found.filePath,
+                    newName,
+                    NOTE_EDITABLE_KIND,
+                );
             },
         );
         return {
@@ -601,7 +651,10 @@ async function handleDeleteFile(
     const note = await readFreshNote(place, found);
     let restores;
     try {
-        restores = await snapshotAgentFileForDelete(found.filePath);
+        restores = await snapshotAgentFileForDelete(
+            found.filePath,
+            NOTE_EDITABLE_KIND,
+        );
     } catch (error) {
         return fail(genNoBackupReason(error));
     }
@@ -610,7 +663,7 @@ async function handleDeleteFile(
             `Moved the notes file “${found.name}” to the trash`,
             restores,
             () => {
-                return trashAgentFile(found.filePath);
+                return trashAgentFile(found.filePath, NOTE_EDITABLE_KIND);
             },
         );
         return {

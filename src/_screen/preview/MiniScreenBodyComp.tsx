@@ -24,6 +24,10 @@ import {
     genColorNoteDataList,
 } from '../../helper/colorNoteHelpers';
 import { setIsBibleCustomStyleFloatingShowing } from '../../screen-setting/bibleCustomStyleFloatingHelpers';
+import {
+    getIsWallpaperBackdropEnabled,
+    setIsWallpaperBackdropEnabled,
+} from './displayWallpaperHelpers';
 
 // Also opened by the floating ⋮ that `MiniScreenComp` parks at the bottom-right
 // of the card, so the menu is reachable without a right-click.
@@ -40,6 +44,24 @@ export function openMiniScreenContextMenu(event: any) {
             childBefore: genContextMenuItemIcon('arrow-clockwise'),
             menuElement: tran('Refresh Preview'),
             onSelect() {
+                for (const screenManager of getAllScreenManagers()) {
+                    screenManager.fireRefreshEvent();
+                }
+            },
+        },
+        {
+            // The card draws each monitor's own desktop background behind
+            // everything. The way back to the plain checkered pattern -- for
+            // somebody who reads that as "nothing is on this screen" -- lives
+            // here.
+            childBefore: genContextMenuItemIcon(
+                getIsWallpaperBackdropEnabled() ? 'check-square' : 'square',
+            ),
+            menuElement: tran('Show Monitor Wallpaper'),
+            onSelect() {
+                setIsWallpaperBackdropEnabled(!getIsWallpaperBackdropEnabled());
+                // Every card re-reads the setting on a refresh, which is also
+                // what reads the wallpaper for the ones turning it back on.
                 for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();
                 }

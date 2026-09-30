@@ -2,10 +2,10 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93]
-screenshots: 14
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
+screenshots: 16
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-29"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -41,6 +41,17 @@ all count as book-level too.
    pick the folder your files are in. You can add as many as you want — the **⋮ More
    Options** button, or a right-click anywhere in the view including the empty space below
    the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
+   **Folders already in your data folder are one press away.** Everything
+   **[en:tran:Copy to Data Directory]** (step 8) makes lands in a `resources` folder inside
+   your data folder, and so does what **[en:tran:Import Data]** (W-25) brings back. Any
+   folder in there that is not on the list yet is listed at the bottom of the view under
+   **[en:tran:In the data directory]** — the first time, right under the **Add Folder**
+   button. Click one and it becomes a group straight away, with its matching files already
+   listed and no folder picker; it leaves that list as it joins the shelf, and
+   **[en:tran:Remove Folder]** puts it back. A folder you make in there while the view is
+   open appears after **[en:tran:Reload]**. Nothing is offered that the view already shows —
+   including every folder in there when the whole `resources` folder is itself on the list —
+   and the heading is not drawn at all when there is nothing to offer. 📸
    **Or drag the folder straight in.** Take it from your file manager — Explorer, Finder —
    and drop it anywhere on the Resources view: while you hold it there the view outlines
    itself and its top line reads **[en:tran:Drop folders here]** in place of the patterns,
@@ -92,9 +103,14 @@ all count as book-level too.
    Resources at the folder your material is actually in keeps the list short. Untick
    **[en:tran:Others]** to hide them again — the box stays the way you left it next time.
 6. Click a file to open it in whatever application your computer normally uses for it — a
-   PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
+   PowerPoint in PowerPoint, a picture in your picture viewer. Right-click one for **Open**,
    **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
-   Two kinds of file open **inside the app** instead:
+   Three kinds of file open **inside the app** instead:
+   - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
+     **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
+     the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **Open**
+     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
+     that window forward. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
@@ -126,11 +142,14 @@ all count as book-level too.
 
    ```json
    [
-       {
-           "title": "Overview: 1-2 Chronicles",
-           "url": "https://www.example.com/watch?v=overview-chronicles"
-       },
-       { "title": "Notes on the genealogies", "url": "https://www.example.com/notes" }
+     {
+       "title": "Overview: 1-2 Chronicles",
+       "url": "https://www.example.com/watch?v=overview-chronicles"
+     },
+     {
+       "title": "Notes on the genealogies",
+       "url": "https://www.example.com/notes"
+     }
    ]
    ```
 
@@ -156,6 +175,7 @@ all count as book-level too.
      press to show its links.
    - Right-click the `.json` row itself (or its **⋮**) for **Open** if you want to edit
      the file rather than follow a link.
+
 8. Click a group's header to fold it away; it stays folded next time. Right-click a header
    for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
    **Add Folder**, **[en:tran:Add Files]**, **Reveal in Finder**/**File Explorer**,
@@ -170,7 +190,8 @@ all count as book-level too.
    a file named after no chapter — `notes.docx` — and it is on the shelf but not in the list;
    the note says so and tells you to tick **[en:tran:Others]** (step 5) to see it. 📸
    **[en:tran:Copy to Data Directory]** brings a folder you keep somewhere else in with the rest
-   of the app's data, so it lives and moves with it. It asks first, naming the folder and where
+   of the app's data, so it lives and moves with it — **[en:tran:Export Data]** (W-25) carries
+   it in a backup, which a folder only listed here does not. It asks first, naming the folder and where
    the copy goes — a `resources` folder inside your data folder (the one Settings calls the
    parent directory). Press **Yes** and everything in the folder is copied there, sub-folders
    and all, while the progress bar runs; then the group switches to the copy, in the same place
@@ -199,7 +220,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-29).
 :::

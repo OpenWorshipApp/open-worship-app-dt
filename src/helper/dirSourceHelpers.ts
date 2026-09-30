@@ -16,21 +16,41 @@ export const FilePathLoadedContext = createContext<{
     onLoaded?: (filePaths: string[] | null) => void;
 } | null>(null);
 
+// Flashing a newly added file is for the one or two a user just dropped in.
+// Each flash polls the document every 100ms for up to 3 seconds and scrolls
+// the list to the file, so a folder that gains hundreds at once -- a copy, a
+// restored backup, an unpacked archive -- would run hundreds of polls and
+// fight the user for the scrollbar. Past this many, the list showing them is
+// notification enough.
+const MAX_NOTIFIABLE_NEW_FILE_COUNT = 20;
+
 function notifyNewFilePaths(oldFilePaths: string[], newFilePaths: string[]) {
     if (oldFilePaths.length === 0) {
         return;
     }
+    const oldFilePathSet = new Set(oldFilePaths);
     const diffFilePaths = newFilePaths.filter((filePath) => {
-        return !oldFilePaths.includes(filePath);
+        return !oldFilePathSet.has(filePath);
     });
+    if (diffFilePaths.length > MAX_NOTIFIABLE_NEW_FILE_COUNT) {
+        return;
+    }
+    const lastFilePath = diffFilePaths.at(-1);
     for (const filePath of diffFilePaths) {
         setTimeout(() => {
             const src = FileSource.getInstance(filePath).src;
-            notifyElementHighlight(() => {
-                return document.querySelector(
-                    `[data-file-item-file-src="${src}"]`,
-                );
-            });
+            notifyElementHighlight(
+                () => {
+                    return document.querySelector(
+                        `[data-file-item-file-src="${src}"]`,
+                    );
+                },
+                // A windowed list only holds the rows on screen, and a file
+                // just added is rarely one of them. Only the last one scrolls
+                // the list: each reveal centres its row, so revealing them all
+                // would jump the list once per file and land on the last.
+                filePath === lastFilePath ? { revealKey: filePath } : {},
+            );
         }, 0);
     }
 }

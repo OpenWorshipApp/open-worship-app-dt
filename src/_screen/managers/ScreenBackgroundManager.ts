@@ -4,7 +4,7 @@ import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import { getSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
 import { handleError } from '../../helper/errorHelpers';
@@ -19,7 +19,10 @@ import ScreenEventHandler, {
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';
-import { unlocking } from '../../server/unlockingHelpers';
+import {
+    collectLiveOnScreenMap,
+    persistOnScreenEntry,
+} from './onScreenSettingPersistHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import type {
     BackgroundDataType,
@@ -29,14 +32,22 @@ import type {
     ScreenMessageType,
     StyleAnimType,
 } from '../screenTypeHelpers';
-import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
+import {
+    playMediaElement,
+    releaseMediaElement,
+} from '../../helper/mediaHelpers';
 import { appLog } from '../../helper/loggerHelpers';
 
 export type ScreenBackgroundManagerEventType = 'update' | 'color-set';
 
 const FADING_DURATION_SECOND = 3;
-const FADING_DURATION_MILLISECOND = FADING_DURATION_SECOND * 1000;
+// `HAVE_CURRENT_DATA`: the element has a frame to show. The
+// end-of-clip crossfade waits for that much and no more -- anything
+// longer eats the slack the fade itself needs.
+const VIDEO_HAVE_CURRENT_DATA = 2;
+const VIDEO_NETWORK_EMPTY = 0;
+const VIDEO_LOOP_PICTURE_TIMEOUT_MILLISECOND = 1000;
 export const BACKGROUND_VIDEO_FADING_SETTING_NAME =
     dirSourceSettingNames.BACKGROUND_VIDEO + '-fading-at-end';
 
@@ -95,16 +106,23 @@ class ScreenBackgroundManager
             this.addPropEvent('color-set', backgroundSrc.src);
         }
         this.render();
-        unlocking(screenManagerSettingNames.BACKGROUND, () => {
-            const allBackgroundSrcList = getBackgroundSrcListOnScreenSetting();
-            if (backgroundSrc === null) {
-                delete allBackgroundSrcList[this.key];
-            } else {
-                allBackgroundSrcList[this.key] = backgroundSrc;
-            }
-            const str = JSON.stringify(allBackgroundSrcList);
-            setSetting(screenManagerSettingNames.BACKGROUND, str);
-            this.fireUpdateEvent();
+        persistOnScreenEntry({
+            lockKey: screenManagerSettingNames.BACKGROUND,
+            settingName: screenManagerSettingNames.BACKGROUND,
+            key: this.key,
+            value: backgroundSrc,
+            readMap: getBackgroundSrcListOnScreenSetting,
+            collectLive: () => {
+                return collectLiveOnScreenMap(
+                    ScreenBackgroundManager.getAllInstancesBase<ScreenBackgroundManager>(),
+                    (instance) => {
+                        return instance.backgroundSrc;
+                    },
+                );
+            },
+            onDone: () => {
+                this.fireUpdateEvent();
+            },
         });
         this.sendSyncScreen();
     }
@@ -371,10 +389,28 @@ class ScreenBackgroundManager
     ) {
         Promise.all(
             elements.map((element) => {
+                // The parked half of an end-of-clip crossfade is already
+                // invisible, and `animOut` puts `opacity: 1` on before it
+                // starts -- fading it out would bring a frozen first frame
+                // INTO view on its way to being hidden.
+                if (element.style.opacity === '0') {
+                    return Promise.resolve();
+                }
                 return aminData.animOut(element);
             }),
         ).then(() => {
             for (const element of elements) {
+                // Taking a media element out of the document does not hand its
+                // player back -- only the load algorithm does, and Chromium
+                // refuses to make any more once a frame holds a thousand. A
+                // fading video background holds TWO of them.
+                const videoElements =
+                    element.querySelectorAll<HTMLVideoElement>(
+                        'video[id^="video-"]',
+                    );
+                for (const videoElement of videoElements) {
+                    releaseMediaElement(videoElement);
+                }
                 element.remove();
             }
             clearTracks();
@@ -399,6 +435,12 @@ class ScreenBackgroundManager
             return;
         }
         videoElement.dataset.ignoreMediaGuarding = 'true';
+        if (getIsFadingAtTheEndSetting(videoElement.src)) {
+            // Built NOW, while the clip still has its whole length to get a
+            // first frame ready. The crossfade below has to have a picture to
+            // bring in; a copy made at the moment the fade starts is black.
+            this._ensureVideoLoopTwin(container, videoElement);
+        }
         const fadeOutListener = async () => {
             const videoId = videoElement.id;
             const currentTime = videoElement.currentTime;
@@ -428,20 +470,138 @@ class ScreenBackgroundManager
                 return;
             }
             videoElement.removeEventListener('timeupdate', fadeOutListener);
-            this.render({
-                ...this.effectManager.styleAnimList.fade,
-                animOut: async () => {
-                    const duration =
-                        FADING_DURATION_MILLISECOND +
-                        ANIM_END_DELAY_MILLISECOND;
-                    await new Promise<void>((resolve) => {
-                        setTimeout(resolve, duration);
-                    });
-                },
-                duration: FADING_DURATION_MILLISECOND,
-            });
+            await this._fadeOverVideoLoop(container, videoElement);
         };
         videoElement.addEventListener('timeupdate', fadeOutListener);
+    }
+
+    /**
+     * The other half of the end-of-clip crossfade: a second copy of the
+     * background, hidden and paused at its first frame, that the laps hand
+     * over between.
+     *
+     * Built ONCE per background and then swapped lap after lap, which is what
+     * makes the crossfade affordable. `render()` used to build a fresh
+     * `<video src=...>` for every lap, and Chromium does not cache a `file://`
+     * media resource: 37 full `range: bytes=0-` fetches of one 2.6 MB
+     * background in a few minutes, about 470 MB an hour for ONE clip on ONE
+     * screen, and a church looping a 100 MB HD background re-read it every
+     * lap for the whole service. Two elements taking turns cost two reads for
+     * the life of the background instead of one per lap.
+     */
+    _ensureVideoLoopTwin(
+        container: HTMLElement,
+        videoElement: HTMLVideoElement,
+    ) {
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null) {
+            return null;
+        }
+        for (const child of rootContainer.children) {
+            if (
+                child === container ||
+                !(child instanceof HTMLElement) ||
+                // Already claimed by a background swap in flight.
+                child.dataset.owaBackgroundRemoving === 'true'
+            ) {
+                continue;
+            }
+            const childVideo = child.querySelector<HTMLVideoElement>(
+                'video[id^="video-"]',
+            );
+            if (childVideo !== null && childVideo.src === videoElement.src) {
+                return { twin: child, twinVideo: childVideo };
+            }
+        }
+        const twin = container.cloneNode(true) as HTMLElement;
+        const twinVideo = twin.querySelector<HTMLVideoElement>(
+            'video[id^="video-"]',
+        );
+        if (twinVideo === null) {
+            return null;
+        }
+        // It waits its turn: `autoplay` would start it a whole lap early.
+        twinVideo.autoplay = false;
+        twinVideo.muted = true;
+        twinVideo.preload = 'auto';
+        twinVideo.dataset.ignoreMediaGuarding = 'true';
+        twin.style.opacity = '0';
+        // Underneath whatever is showing -- `animIn` appends, so the copy
+        // coming in is always the last child.
+        rootContainer.insertBefore(twin, rootContainer.firstChild);
+        twinVideo.pause();
+        return { twin, twinVideo };
+    }
+
+    _waitForVideoPicture(videoElement: HTMLVideoElement) {
+        if (
+            videoElement.readyState >= VIDEO_HAVE_CURRENT_DATA ||
+            // Nothing is being loaded, so there is nothing to wait for.
+            videoElement.networkState === VIDEO_NETWORK_EMPTY
+        ) {
+            return Promise.resolve();
+        }
+        return new Promise<void>((resolve) => {
+            const finish = () => {
+                clearTimeout(timeoutId);
+                videoElement.removeEventListener('loadeddata', finish);
+                resolve();
+            };
+            const timeoutId = setTimeout(
+                finish,
+                VIDEO_LOOP_PICTURE_TIMEOUT_MILLISECOND,
+            );
+            videoElement.addEventListener('loadeddata', finish);
+        });
+    }
+
+    /**
+     * The end-of-clip crossfade: the second copy starts from frame 0 and
+     * fades IN over the clip that is still playing its last seconds, so the
+     * wrap is covered and the audience never sees the screen go blank.
+     *
+     * The copy coming in is the ONLY one that moves. Stacked, what the
+     * audience sees is `new * a + old * (1 - a)`, which holds still only
+     * while `old` stays opaque: fading both at once dips through black in the
+     * middle, and fading one element out and then back in -- what this did
+     * once the re-render was taken out of it -- goes all the way to black and
+     * back, which is the blank at the end of every clip.
+     */
+    async _fadeOverVideoLoop(
+        container: HTMLElement,
+        videoElement: HTMLVideoElement,
+    ) {
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null || !container.isConnected) {
+            return;
+        }
+        const twinData = this._ensureVideoLoopTwin(container, videoElement);
+        if (twinData === null) {
+            return;
+        }
+        const { twin, twinVideo } = twinData;
+        // What the element asked for before the fade borrowed its opacity: a
+        // foreground Opacity slider writes it straight onto `style.opacity`
+        // through `extraStyle`.
+        const authoredOpacity = container.style.opacity || '1';
+        twinVideo.currentTime = 0;
+        await this._waitForVideoPicture(twinVideo);
+        if (!container.isConnected || !twin.isConnected) {
+            return;
+        }
+        await playMediaElement(twinVideo);
+        twin.style.opacity = authoredOpacity;
+        await this.effectManager.styleAnimList.fade.animIn(twin, rootContainer);
+        if (!twin.isConnected) {
+            return;
+        }
+        // The clip that just ended is covered now, so park it as the copy the
+        // NEXT lap brings in -- paused, back at its first frame, and reading
+        // nothing until then.
+        videoElement.pause();
+        videoElement.currentTime = 0;
+        container.style.opacity = '0';
+        this._handleBackgroundVideo(twin as HTMLDivElement);
     }
 
     render(overrideAnimData?: StyleAnimType) {
@@ -450,15 +610,21 @@ class ScreenBackgroundManager
             return;
         }
         const aminData = overrideAnimData ?? this.effectManager.styleAnim;
+        const childList = Array.from(rootContainer.children).filter(
+            (element) => {
+                return element instanceof HTMLElement;
+            },
+        );
+        for (const element of childList) {
+            // Claimed by this swap. A background showing a fading video holds
+            // TWO elements, so both go -- and neither may be adopted as the
+            // incoming background's second copy while it is on its way out.
+            element.dataset.owaBackgroundRemoving = 'true';
+        }
         if (this.backgroundSrc !== null) {
             const { newDiv, promise } = genHtmlBackground(
                 this.screenId,
                 this.backgroundSrc,
-            );
-            const childList = Array.from(rootContainer.children).filter(
-                (element) => {
-                    return element instanceof HTMLElement;
-                },
             );
             promise.then((clearTracks) => {
                 this._handleBackgroundVideo(newDiv);
@@ -466,9 +632,8 @@ class ScreenBackgroundManager
                 this.removeOldElements(aminData, childList, this.clearTracks);
                 this.clearTracks = clearTracks;
             });
-        } else if (rootContainer.lastChild !== null) {
-            const targetElement = rootContainer.lastChild as HTMLElement;
-            this.removeOldElements(aminData, [targetElement], this.clearTracks);
+        } else if (childList.length > 0) {
+            this.removeOldElements(aminData, childList, this.clearTracks);
         }
     }
 

@@ -41,6 +41,7 @@ const {
 
     class CanvasItemMediaMock {
         props: {
+            id?: number;
             mediaWidth: number;
             mediaHeight: number;
             width: number;
@@ -54,7 +55,7 @@ const {
             },
         );
         toJson = vi.fn(() => ({
-            id: 'canvas-item',
+            id: this.props.id,
             left: this.props.left,
             top: this.props.top,
             width: this.props.width,
@@ -373,9 +374,10 @@ describe('presenter item basic coverage', () => {
             left: 300,
             top: 250,
         });
+        // Numbered like any added box, not left at the factory's -1.
         expect(validSlide.canvasItemsJson).toEqual([
             {
-                id: 'canvas-item',
+                id: 1,
                 left: 300,
                 top: 250,
                 width: 200,

@@ -6,6 +6,7 @@ import ScreenVaryAppDocumentComp from './ScreenVaryAppDocumentComp';
 import ScreenForegroundComp from './ScreenForegroundComp';
 import ScreenDrawComp from './ScreenDrawComp';
 import ScreenFocusComp from './ScreenFocusComp';
+import ScreenMaskComp from './ScreenMaskComp';
 import ScreenBibleComp from './ScreenBibleComp';
 import { createScreenManager } from './managers/screenManagerHelpers';
 import ScreenManager from './managers/ScreenManager';
@@ -98,6 +99,13 @@ export default function ScreenAppComp() {
                     <ScreenForegroundComp />
                     <ScreenDrawComp />
                     <ScreenFocusComp />
+                    {/*
+                     * LAST, so the blanking bars cover every other layer. A
+                     * mask that a drawing or a spotlight could paint over
+                     * would stop doing the one job it has -- keeping the
+                     * picture off the wall beside the screen.
+                     */}
+                    <ScreenMaskComp />
                 </>
             )}
             <CloseButton isForceShowing={screenManager === null} />

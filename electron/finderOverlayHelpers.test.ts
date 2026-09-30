@@ -209,4 +209,38 @@ describe('finderOverlayHelpers', () => {
         }).not.toThrow();
         expect(viewWebContents.close).toHaveBeenCalledTimes(1);
     });
+
+    test('handles destroyed hosts, resize/focus events, and unknown overlays', () => {
+        const destroyedHost = createHostWindow();
+        destroyedHost.isDestroyed.mockReturnValue(true);
+        expect(checkIsFindOverlayHost(destroyedHost as any)).toBe(false);
+
+        const hostWin = createHostWindow();
+        openFindOverlay(hostWin as any);
+        const view = getLastView();
+        const resize = hostWin.on.mock.calls.find(
+            ([name]) => name === 'resize',
+        )?.[1];
+        const didFinishLoad = view.webContents.once.mock.calls.find(
+            ([name]: [string]) => name === 'did-finish-load',
+        )?.[1];
+        view.setBounds.mockClear();
+        resize();
+        didFinishLoad();
+        expect(view.setBounds).toHaveBeenCalledTimes(1);
+        expect(view.webContents.focus).toHaveBeenCalledTimes(1);
+
+        expect(getFindOverlayWebContents({ id: 999 } as any)).toBeNull();
+        const unknown = { id: 998 } as any;
+        expect(() => closeFindOverlay(unknown)).not.toThrow();
+        expect(() => startFindOverlayDragging(unknown, 2)).not.toThrow();
+        expect(() => stopFindOverlayDragging(unknown)).not.toThrow();
+
+        startFindOverlayDragging(view.webContents, 10);
+        hostWin.isDestroyed.mockReturnValue(true);
+        vi.advanceTimersByTime(20);
+        view.setBounds.mockClear();
+        vi.advanceTimersByTime(100);
+        expect(view.setBounds).not.toHaveBeenCalled();
+    });
 });

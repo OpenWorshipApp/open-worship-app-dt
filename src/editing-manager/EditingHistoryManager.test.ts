@@ -220,6 +220,9 @@ describe('EditingHistoryManager', () => {
         await expect(missingHandler.ensureHistoriesDir()).rejects.toThrow(
             'File /docs/missing.owa does not exist',
         );
+        // A run sheet naming a deleted document reads it on every load, so a
+        // folder made before the check piled up one per missing file.
+        expect(mocks.dirs.has('/docs/missing.owa.histories')).toBe(false);
     });
 
     test('adds histories, clears redo states, supports undo redo, and discards histories', async () => {
@@ -607,6 +610,31 @@ describe('EditingHistoryManager', () => {
         expect(await manager.discard()).toBe(false);
         expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
         clearSpy.mockRestore();
+    });
+
+    // A folder holding its first entry and nothing else has no step to walk
+    // back, so `discard()` -- the button a user presses -- answers true and
+    // clears NOTHING. A delete that cleaned up through it therefore left the
+    // folder on disk, where the next file of that name reads it as its own
+    // unsaved state.
+    test('deleteHistories takes the folder a discard would have left', async () => {
+        const filePath = '/docs/gone.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+        await manager.fileLineHandler.ensureHistoriesDir();
+        expect(await manager.checkHasHistories()).toBe(true);
+        expect(await manager.checkCanUndo()).toBe(false);
+        expect(await manager.checkCanRedo()).toBe(false);
+
+        expect(await manager.discard()).toBe(true);
+        expect(await manager.checkHasHistories()).toBe(true);
+
+        await manager.deleteHistories();
+        expect(await manager.checkHasHistories()).toBe(false);
     });
 
     test('save reports an unreadable history and a failed write', async () => {

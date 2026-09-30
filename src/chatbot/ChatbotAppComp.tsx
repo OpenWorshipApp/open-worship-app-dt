@@ -15,6 +15,10 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import appProvider from '../server/appProvider';
 import {
+    READER_DEMO_LIST,
+    type ReaderDemoType,
+} from '../../tools/owa-devtools-mcp/readerDemos.mjs';
+import {
     MAX_ATTACHMENT_COUNT,
     checkIsImageName,
     checkIsReadableTextFile,
@@ -63,6 +67,7 @@ import {
 import {
     checkCanAddChatSession,
     checkCanClearChatSessions,
+    applyChatLaunchFocus,
     genChatSessionTitle,
     genNewChatSession,
     loadChatSessions,
@@ -390,6 +395,59 @@ function RenderAllQuestionsComp({
                 );
             })}
         </div>
+    );
+}
+
+/**
+ * Common Reader lessons that never call a language model. The button
+ * starts the same MCP guide an answer would use, with its steps already
+ * written and checked into the app.
+ */
+function RenderReaderDemosComp({
+    isBusy,
+    onStart,
+}: Readonly<{
+    isBusy: boolean;
+    onStart: (demo: ReaderDemoType) => void;
+}>) {
+    return (
+        <section
+            className="chat-demo-block"
+            aria-labelledby="reader-demo-title"
+        >
+            <p className="chat-eyebrow" id="reader-demo-title">
+                Try a guided demo
+            </p>
+            <p className="chat-demo-note">
+                No AI model or account needed. Press one, then use <b>Do it</b>{' '}
+                in the Reader for one safe step at a time.
+            </p>
+            <div className="chat-demo-list">
+                {READER_DEMO_LIST.filter(
+                    (demo) => demo.isFeatured !== false,
+                ).map((demo) => {
+                    return (
+                        <button
+                            key={demo.id}
+                            type="button"
+                            className="chat-demo"
+                            aria-label={`${demo.label}. ${demo.detail}`}
+                            disabled={isBusy}
+                            onClick={() => {
+                                onStart(demo);
+                            }}
+                        >
+                            <span className="chat-demo-label">
+                                {demo.label}
+                            </span>
+                            <span className="chat-demo-detail">
+                                {demo.detail}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </section>
     );
 }
 
@@ -722,8 +780,9 @@ function RenderSpendGuardComp() {
 
 // One app, many windows: the same question has a presenter answer, a reader
 // answer and often none at all in the Lyric Editor, so the user says which one
-// they are asking about -- and until they do, it follows the window they opened
-// this from. The list is `botFocus.mjs`'s, which is also what the MCP tools'
+// they are asking about. Each launch starts on the page it came from; a manual
+// choice then stays with that tab until the next launch. The list is
+// `botFocus.mjs`'s, which is also what the MCP tools'
 // schemas are built from, so the picker can never offer a window the tools
 // would refuse.
 function RenderFocusSwitchComp({
@@ -738,8 +797,8 @@ function RenderFocusSwitchComp({
             className="chat-pick"
             aria-label="Which part of the app"
             title={
-                'Which window of the app you are asking about. It follows ' +
-                'the window you opened this from until you pick one yourself.'
+                'Which window of the app you are asking about. It starts on ' +
+                'the window you launch it from; your choice stays until the next launch.'
             }
             value={focus}
             onChange={(event) => {
@@ -1861,15 +1920,19 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
 }
 
 function genNewSessionDefaults() {
-    const focus = detectOpenerFocus() ?? DEFAULT_BOT_FOCUS;
+    const openerFocus = detectOpenerFocus();
+    const focus = openerFocus ?? DEFAULT_BOT_FOCUS;
     const provider = getLlmProvider();
     const model = provider === null ? '' : getLlmModel(provider);
-    return { focus, provider, model };
+    return { focus, openerFocus, provider, model };
 }
 
 function genInitialSessionState(): ChatSessionStateType {
-    const { focus, provider, model } = genNewSessionDefaults();
-    const loaded = loadChatSessions(focus, provider, model);
+    const { focus, openerFocus, provider, model } = genNewSessionDefaults();
+    const loaded = applyChatLaunchFocus(
+        loadChatSessions(focus, provider, model),
+        openerFocus,
+    );
     const availableProviders = getAvailableLlmProviders();
     return {
         ...loaded,
@@ -1942,6 +2005,28 @@ export default function ChatbotAppComp() {
     const [sessionState, setSessionState] = useState<ChatSessionStateType>(
         genInitialSessionState,
     );
+    // `window.open` brings an existing chatbot window forward instead of
+    // making a second one. That launch does not remount React, so the main
+    // process names the page that launched it. A launch starts the active tab
+    // on that page; a manual choice made afterwards still stays tab-scoped.
+    useAppEffect(() => {
+        const handleLaunchFocus = (_event: any, pathname: string) => {
+            const openerFocus = detectOpenerFocus(pathname);
+            setSessionState((oldState) => {
+                return applyChatLaunchFocus(oldState, openerFocus);
+            });
+        };
+        appProvider.messageUtils.listenForData(
+            'main:app:chatbot-launch-focus',
+            handleLaunchFocus,
+        );
+        return () => {
+            appProvider.messageUtils.removeListener(
+                'main:app:chatbot-launch-focus',
+                handleLaunchFocus,
+            );
+        };
+    }, []);
     const { sessions, activeId } = sessionState;
     // Read by the handlers that rewrite the whole strip at once. They cannot
     // use `setSessionState`'s updater form: they also WRITE the result to disk
@@ -4609,6 +4694,22 @@ export default function ChatbotAppComp() {
                                 );
                             })}
                         </div>
+                        {focus === 'reader' ? (
+                            <RenderReaderDemosComp
+                                isBusy={isBusy}
+                                onStart={(demo) => {
+                                    addMessage(activeSessionId, {
+                                        author: 'you',
+                                        text: `Guided demo: ${demo.label}`,
+                                    });
+                                    void handleActing({
+                                        label: demo.label,
+                                        toolName: 'owa_guide_start',
+                                        args: { demoId: demo.id },
+                                    });
+                                }}
+                            />
+                        ) : null}
                         {/*
                          * The four above say what to type first. This says
                          * what the window is FOR -- and a help window whose

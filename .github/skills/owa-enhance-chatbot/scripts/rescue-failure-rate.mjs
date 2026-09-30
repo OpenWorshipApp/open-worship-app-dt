@@ -34,9 +34,15 @@ const stepNumber = Number(argOf('step', 3));
 
 // The published instance file carries `mcpUrl`; the default port is a default,
 // never a promise. OWA_MCP_URL wins, for a bridged or a second instance.
-function resolveMcpUrl() {
+function resolveMcpEndpoint() {
     if (process.env.OWA_MCP_URL) {
-        return process.env.OWA_MCP_URL;
+        if (!process.env.OWA_MCP_TOKEN) {
+            throw new Error('OWA_MCP_URL also requires OWA_MCP_TOKEN.');
+        }
+        return {
+            mcpUrl: process.env.OWA_MCP_URL,
+            mcpToken: process.env.OWA_MCP_TOKEN,
+        };
     }
     const instances = readdirSync(DISCOVERY_DIR)
         .filter((name) => name.endsWith('.json'))
@@ -49,7 +55,7 @@ function resolveMcpUrl() {
                 return null;
             }
         })
-        .filter((one) => one !== null && one.mcpUrl)
+        .filter((one) => one !== null && one.mcpUrl && one.mcpToken)
         .sort((one, other) => {
             return String(other.startedAt).localeCompare(String(one.startedAt));
         });
@@ -59,10 +65,13 @@ function resolveMcpUrl() {
                 'env -u ELECTRON_RUN_AS_NODE npm run dev.',
         );
     }
-    return instances[0].mcpUrl;
+    return instances[0];
 }
 
-const MCP_URL = resolveMcpUrl();
+const { mcpUrl: MCP_URL, mcpToken: MCP_TOKEN } = resolveMcpEndpoint();
+if (!MCP_TOKEN) {
+    throw new Error('The selected MCP endpoint has no published token.');
+}
 let sessionId = null;
 let requestId = 0;
 
@@ -70,6 +79,7 @@ async function post(body) {
     const headers = {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
+        authorization: `Bearer ${MCP_TOKEN}`,
     };
     if (sessionId !== null) {
         headers['mcp-session-id'] = sessionId;
@@ -263,9 +273,11 @@ for (let at = 0; at < runs; at += 1) {
 }
 
 const failed = results.filter((one) => one.failures.length > 0);
-const seconds = results.map((one) => one.seconds).sort((one, other) => {
-    return one - other;
-});
+const seconds = results
+    .map((one) => one.seconds)
+    .sort((one, other) => {
+        return one - other;
+    });
 const byReason = {};
 for (const result of failed) {
     for (const key of result.failures) {

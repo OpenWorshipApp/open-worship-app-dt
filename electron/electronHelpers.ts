@@ -16,7 +16,7 @@ import type {
     MenuItemConstructorOptions,
 } from 'electron';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { release } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -33,9 +33,12 @@ import { htmlFiles } from './fsServe';
 // `aiHelpers`, which imports `isDev`/`toUnpackedPath` from here. Every use on
 // both sides is inside a function body.
 import {
-    checkIsCaptureUrlAllowed,
     guardCaptureWindow,
     prepareCaptureSession,
+    resolveCaptureTarget,
+    toCaptureDirPath,
+    WEB_CAPTURE_DEFAULT_DIR_NAME,
+    WEB_CAPTURE_DIR_SETTING_NAME_PREFIX,
 } from './webCaptureHelpers';
 
 export type OptionalPromise<T> = T | Promise<T>;
@@ -56,6 +59,10 @@ export type CustomMenusDataType = {
     // popups hide their menu bar, and a single owner is what keeps the click
     // routed back to the window whose widgets the items describe.
     view?: CustomMenuItemType[];
+    // Renderer-contributed Help entries. Page-scoped help belongs here so its
+    // label can be translated in the renderer and its click returns to the
+    // page that knows how to handle it.
+    help?: CustomMenuItemType[];
 };
 
 function parseEnvContent(content: string) {
@@ -153,6 +160,7 @@ export const messageChannels = {
     guideHelp: 'main:app:guide-help',
     guideHelpAnswer: 'main:app:guide-help-answer',
     chatAttach: 'main:app:chat-attach',
+    chatbotLaunchFocus: 'main:app:chatbot-launch-focus',
 };
 
 /**
@@ -176,6 +184,12 @@ export async function tarExtract(
  * keep the regenerable per-document caches (`<doc>.histories`,
  * `<doc>.pdf-images`, `<doc>.pptx-htmls`, …) out of a data archive: they are
  * rebuilt on demand and together can dwarf the documents themselves.
+ *
+ * `excludeEntryPaths` names WHOLE entries instead, exactly as they would be
+ * written. A data archive uses it for the files it is about to append a
+ * different version of -- a document whose unsaved state is what should
+ * travel -- so the archive holds one entry for that file rather than two, the
+ * stale one first.
  */
 export async function tarCreate(
     inputDir: string,
@@ -183,16 +197,21 @@ export async function tarCreate(
     files: string[],
     isGzip = false,
     excludeNamePatterns?: string[],
+    excludeEntryPaths?: string[],
 ) {
     const { c: tarC } = await import('tar');
     const excludeRegexes = (excludeNamePatterns ?? []).map((pattern) => {
         return new RegExp(pattern);
     });
+    const excludedPathSet = new Set(excludeEntryPaths ?? []);
     const filter =
-        excludeRegexes.length === 0
+        excludeRegexes.length === 0 && excludedPathSet.size === 0
             ? undefined
             : (entryPath: string) => {
                   // tar hands over `/`-separated paths on every platform.
+                  if (excludedPathSet.has(entryPath)) {
+                      return false;
+                  }
                   return !entryPath.split('/').some((segment) => {
                       return excludeRegexes.some((regex) => {
                           return regex.test(segment);
@@ -532,6 +551,46 @@ function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
     );
     urlObj.search = new URLSearchParams(sortedParams).toString();
     return urlObj.toString();
+}
+
+/**
+ * The document a Slide Editor popup is open on, or `null` for any other page.
+ *
+ * `openAppDocumentEditorExternal` adds the slide to focus as `id`, so the same
+ * document asked for from two different slides produced two different URLs --
+ * and two editor windows on one file, each with its own undo history. This is
+ * the URL with the two parameters that only say HOW to open it (`id`, `uuid`)
+ * taken off, so both requests name the same window.
+ */
+export function toEditorWindowKey(url: string) {
+    if (!URL.canParse(url)) {
+        return null;
+    }
+    const urlObj = new URL(url);
+    const pageName = urlObj.pathname.split('/').pop() ?? '';
+    if (
+        pageName !== htmlFiles.appDocumentEditor ||
+        !urlObj.searchParams.has('file')
+    ) {
+        return null;
+    }
+    urlObj.searchParams.delete('id');
+    return toUrlWithSortedParams(urlObj.toString(), true);
+}
+
+function findEditorWindowToRetarget(url: string) {
+    const editorKey = toEditorWindowKey(url);
+    if (editorKey === null) {
+        return null;
+    }
+    return (
+        BrowserWindow.getAllWindows().find((win) => {
+            return (
+                !win.isDestroyed() &&
+                toEditorWindowKey(win.webContents.getURL()) === editorKey
+            );
+        }) ?? null
+    );
 }
 
 export type PopupWindowFeaturesType = {
@@ -1190,6 +1249,15 @@ function handlePopupWindowOpen(
     const { groupWindows, selfWindows, subDisplay, featuresRecord, boundsKey } =
         getPopupWindowData(win, options);
     if (groupWindows.length > 0) {
+        if (options.url.includes(htmlFiles.chatbot)) {
+            const openerPathname = new URL(win.webContents.getURL()).pathname;
+            for (const existingWin of selfWindows) {
+                existingWin.webContents.send(
+                    messageChannels.chatbotLaunchFocus,
+                    openerPathname,
+                );
+            }
+        }
         setTimeout(() => {
             for (const win of groupWindows) {
                 if (win.isMinimized()) {
@@ -1201,6 +1269,20 @@ function handlePopupWindowOpen(
     }
     if (selfWindows.length > 0) {
         return { action: 'deny' };
+    }
+    if (groupWindows.length === 0) {
+        // The same document already has an editor window, open on another
+        // slide: move THAT window to the slide asked for. Its unsaved edits
+        // are on disk in the editing history, so the reload loses nothing.
+        const editorWin = findEditorWindowToRetarget(options.url);
+        if (editorWin !== null) {
+            editorWin.webContents.loadURL(options.url);
+            if (editorWin.isMinimized()) {
+                editorWin.restore();
+            }
+            editorWin.focus();
+            return { action: 'deny' };
+        }
     }
 
     // Where the user last left this kind of popup wins over the page's own
@@ -1424,6 +1506,63 @@ export async function printHTMLContent(htmlText: string) {
     await printWin.loadURL(pathToFileURL(contentFilePath).toString());
 }
 
+// `appLocalStorage`'s own two names. A directory setting is one file named
+// after its key under the data folder, and this is the only thing the main
+// process reads out of there -- the same shape as `checkIsAiEnabled` reading
+// `setting.json` before a renderer exists.
+const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
+const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
+// Short on purpose: it only has to spare the `readdir` while a whole panel of
+// tiles captures at once, never to hold the answer across a folder change.
+const WEB_CAPTURE_DIR_CACHE_MILLISECOND = 5000;
+let webCaptureDirCache: {
+    readAt: number;
+    dirPathList: string[];
+} | null = null;
+
+/**
+ * Where this app's OWN web pages live: the folder the Background **Webs** tab
+ * lists, plus whichever folder each Foreground **Web Show** panel was pointed
+ * at (they write `select-dir-web-bg-<session>` keys of their own). Only a page
+ * out of one of these may be captured off the disk -- see `webCaptureHelpers`.
+ */
+async function listWebCaptureDirPaths() {
+    const now = Date.now();
+    if (
+        webCaptureDirCache !== null &&
+        now - webCaptureDirCache.readAt < WEB_CAPTURE_DIR_CACHE_MILLISECOND
+    ) {
+        return webCaptureDirCache.dirPathList;
+    }
+    const dataDirPath =
+        ElectronSettingManager.getInstance().getClientSetting(
+            SELECTED_PARENT_DIR_SETTING_NAME,
+        ) || app.getPath('userData');
+    // The default stands whether or not a setting was ever written for it.
+    const dirPathList = [path.join(dataDirPath, WEB_CAPTURE_DEFAULT_DIR_NAME)];
+    const settingDirPath = path.join(dataDirPath, LOCAL_STORAGE_FOLDER_NAME);
+    try {
+        for (const fileName of await readdir(settingDirPath)) {
+            if (!fileName.startsWith(WEB_CAPTURE_DIR_SETTING_NAME_PREFIX)) {
+                continue;
+            }
+            const dirPath = toCaptureDirPath(
+                await readFile(path.join(settingDirPath, fileName), 'utf8'),
+                dataDirPath,
+            );
+            if (dirPath !== null && !dirPathList.includes(dirPath)) {
+                dirPathList.push(dirPath);
+            }
+        }
+    } catch (error) {
+        // No data folder chosen yet, or one that is not plugged in. The
+        // default above still stands and a refused capture still says so.
+        console.log('Could not read the web folders setting:', error);
+    }
+    webCaptureDirCache = { readAt: now, dirPathList };
+    return dirPathList;
+}
+
 export async function captureWebScreenShot(
     url: string,
     {
@@ -1442,17 +1581,20 @@ export async function captureWebScreenShot(
         delay,
     });
     // A website item's address comes out of a DOCUMENT, which may have been
-    // shared, so it is judged before a window exists for it: only a real web
-    // page, never `file:` reading the operator's disk through
-    // `webSecurity: false`. The wall that keeps the page off this machine and
-    // off the room's network is the session's, prepared here so it is in force
-    // before the first request. See `electron/webCaptureHelpers.ts`.
-    if (!checkIsCaptureUrlAllowed(url)) {
+    // shared, so it is judged before a window exists for it: a web address, or
+    // a page in one of this app's own Webs folders, and nothing else reading
+    // the operator's disk through `webSecurity: false`. The wall that keeps
+    // the page off this machine and off the room's network is the session's,
+    // prepared here so it is in force before the first request. See
+    // `electron/webCaptureHelpers.ts`.
+    const target = await resolveCaptureTarget(url, listWebCaptureDirPaths);
+    if (target === null) {
         throw new Error(
-            `Only a web address can be captured, not: ${url.substring(0, 100)}`,
+            'Only a web address, or a page in this app’s own Webs folder, ' +
+                `can be captured — not: ${url.substring(0, 100)}`,
         );
     }
-    const partition = await prepareCaptureSession(url);
+    const partition = await prepareCaptureSession(target);
     const captureWin = new BrowserWindow({
         show: false,
         width,
@@ -1466,7 +1608,7 @@ export async function captureWebScreenShot(
             partition,
         },
     });
-    guardCaptureWindow(captureWin);
+    guardCaptureWindow(captureWin, target);
     try {
         console.log('Loading page for capture');
         await captureWin.loadURL(url);

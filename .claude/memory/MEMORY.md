@@ -1,5 +1,7 @@
 <!-- Only what CLAUDE.md and the code do not already say. -->
 
+- [Renderer entry static closure — FIXED](renderer-entry-static-closure.md) — startup imports leaf helpers; About 1,056 KB → 236 KB
+- [Foreground Effects live in one setting](foreground-effects-one-setting.md) — border/shadow/padding/text in ONE JSON key; `em` for the type, `px` for the box; the message stack counts the box
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync-grouped screens share one foreground-data object · [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky; color-note groups go silent
 - [Screen draw feature](screen-draw-feature.md) — FreeShow-style Draw overlay · [Screen focus spotlight](screen-focus-spotlight.md) — Focusing = its own `#focus` layer/manager, NOT a draw mode
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — audit findings FIXED 2026-07-22 (since committed)
@@ -13,6 +15,7 @@
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; `tranKeyCoverage.test.ts` catches STATIC keys since 2026-09-18
 - [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md) — ConfirmPopupComp `tran()`s the button labels
 - [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node-env tests importing `appProvider` need a jsdom sibling
+- [The coverage number counts loaded files only](coverage-number-is-loaded-files-only.md) — `test:coverage` reads 78%; the honest figure is 48% with 502 files at 0%
 - [npm 12 install gotchas](npm-12-install-gotchas.md) — plain `npm i` fails on git deps and leaves electron broken
 - [open-lyric dist-repo dep](open-lyric-subtree-branch-dep.md) — a pre-built dist repo pinned to a tag
 - [Blob downloads pop a Save As dialog](blob-download-pops-save-dialog.md) — no will-download handler; orphans a .tmp
@@ -35,7 +38,7 @@
 - [Presenting Flow screen pinning](presenting-flow-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds` · [Presenting Flow screen actions](presenting-flow-screen-actions.md) — a run sheet can hold things to DO · [Presenting Flow `Screen: Show` / `Screen: Hide`](presenting-flow-screen-show-hide.md) — the only actions that NAME screens · [Presenting Flow `Slide: Media Control`](presenting-flow-media-control.md) — CC-only action, settings on the ATTACHMENT
 - [Presenting Flow auto next](presenting-flow-auto-next.md) — a cursor move restarts the timers · [Presenting Flow CC elements](presenting-flow-cc-elements.md) — followers that ride a host's present · [Presenting Flow Keyboard Event](presenting-flow-keyboard-event.md) — Ctrl/Shift only, unique per sheet
 - [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http
-- [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles whole documents behind references · [Single-item archives (`.owadoc` / `.owbible` / `.owanote`)](document-archive-owadoc.md) — one file + everything attached · [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data · [Archive password protection](archive-password-protection.md) — every export asks
+- [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles whole documents behind references · [Single-item archives (`.owadoc` / `.owbible` / `.owanote`)](document-archive-owadoc.md) — one file + everything attached · [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; carries a document's unsaved state, never its `.histories` · [Archive password protection](archive-password-protection.md) — every export asks
 - [Bible XML archive (`.owabdata`)](bible-xml-archive-owabdata.md) — import REFUSES a colliding item · [Bible XML import from a link](bible-xml-import-from-url.md) — the key is guessed from the file's attributes
 - [Presenting Flow drag & setting rules](presenting-flow-drag-and-settings-rules.md) — `presentingFlowDraggingStore` rules · [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column shared by the tree and the run player
 - [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md) — `John 3:16` renders in the modal AND the Reader
@@ -48,18 +51,21 @@
 - [`/owa-robot-test presentingFlow` is a MODE](owa-robot-test-presenting-flow-mode.md) — 11 phases over 69 run-sheet rows
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — `audio` item is preview-only
 - [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`
-- [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: non-atomic write
+- [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — FIXED (EN-38): only non-screen windows write the on-screen maps, through persistOnScreenEntry; setItem is atomic
 - [Monaco `.css` test failure — importable now](monaco-css-test-failure-local-open-lyric.md) — ONE test imports real open-lyric
+- [Bootstrap button vars are dead](bootstrap-btn-vars-are-dead.md) — `.app .btn` hardcodes `padding`, so `--bs-btn-padding-*` silently does nothing
 - [Console design system tokens](console-design-system-tokens.md) — `--app-*` tokens
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — serves an OLD module past a reload
 - [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`
 - [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — a drag surface gets no click/dblclick
-- [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen
+- [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; a local page's shot is keyed by its md5 and never expires
 - [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — test and module on different mocks
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app
+- [The previewer's Note pane ships closed](previewer-note-pane-ships-closed.md) — a changed default is invisible to anyone with a stored layout; it took a one-off migration
+- [A widget close must persist the absorbed grow](widget-close-must-persist-absorbed-grow.md) — the neighbour shrank a little on every close/reload/reopen lap
 - [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane; Reset Widgets Size
 - [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — plain assignment silently no-ops
-- [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs live in `<data parent>/extra-bin`
+- [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs live in `<data parent>/extra-bin/<platform>` (one folder per OS since EN-29)
 - [SongSelect plugin](song-select-plugin.md) — all frontend in src/plugins/song-select by user request
 - [Public Domain Songs plugin](public-domain-songs-plugin.md) — 36 embedded PD hymns, no sign-in
 - [open-lyric fence ground truth](open-lyric-fence-ground-truth.md) — probed structure codes (P not PC, IS/S split)
@@ -74,6 +80,7 @@
 - [Modal layer & above-modal widgets](modal-layer-above-modal.md) — ModalLayerContext for widgets in the modal's tree
 - [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — every writer must call `clearBibleXMLCache`
 - [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md) — build-excluded scratch harness
+- [Bible note editor writes a history](bible-note-editing-history.md) — its autosave bricked a note with a childless root; Save is a press now, and an EXPORT reads the head so unsaved typing travels
 - [Verse marks are note items](verse-marks-note-items.md) — highlights/comments live in `.note` files as a second kind
 - [Agent access & in-app chatbot](agent-access-mcp-chatbot.md) — no fixed CDP port
 - [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md) — `node extra-work/build-knowledge.mjs`
@@ -81,8 +88,12 @@
 - [MCP tool edits leave two processes out of step](mcp-tool-edit-two-processes.md) — your own tools serve STALE code
 - [DOM matcher is memoised in the page](dom-match-memoised-in-page.md) — `window.__owaDomMatch`/`__owaGuide` survive an edit
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent fires them
+- [A leaked keyboard layer kills EVERY shortcut](keyboard-layer-stack-leak.md) — an unbalanced widget `open` stuck the stack above `root`; two quick right-clicks were enough
+- [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md) — picking a document used to move focus to the list and the arrows went dead; `activeElement` is BODY, never null
+- [An undo must not overtake its own edit](document-write-then-undo-race.md) — fire-and-forget writes are tracked; register the write where it STARTS, not where it lands
 - [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS
-- [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane drew its name nowhere
+- [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane, and a FLOATING one, drew its name nowhere; a foreground tile and its Background twin rang together
+- [The mini screen draws the monitor's wallpaper](mini-screen-monitor-wallpaper.md) — the backdrop is the desktop WALLPAPER read from the OS, never a `desktopCapturer` shot: a capture holds every other window, and the card for a screen on this machine's own monitor drew the app inside itself
 - [A guide tucks the help window away](guide-tucks-help-window.md) — a walkthrough minimises the chatbot popup
 - [Hover-hidden controls](hover-hidden-controls.md) — clickable but painted only under the mouse
 - [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Bible]`
@@ -106,7 +117,7 @@
 - [Agent data tools back up first](agent-data-tools-backup-undo.md) — no backup, no change; `owa_undo` puts any change back
 - [History paths vs the read cache](history-read-cache-stale-paths.md) — a rename onto a cached path read back OLD bytes
 - [Reading a web page](mcp-read-website-tool.md) — `owa_read_website` is the only tool that reaches OUT
-- [A slide website loads in a box](slide-website-loads-in-a-box.md) — a shared document was the whole delivery; same-host exemption keeps an intranet slide working
+- [A slide website loads in a box](slide-website-loads-in-a-box.md) — a shared document was the whole delivery; same-host exemption keeps an intranet slide working, the webs-folder rule keeps the app's own `file:` pages working
 - [A CDP pin is exclusive](cdp-pin-is-exclusive.md) — a dead `OWA_CDP_PORT` used to fall through to the packaged app
 - [A preload must not eval at load](preload-must-not-eval-at-load.md) — a strict page CSP (chatbot dev, EVERY page packaged) kills the preload; the window never mounts
 - [The chatbot opens the window](chatbot-opens-the-window.md) — a walkthrough of a window that is not up opens it
@@ -137,6 +148,14 @@
 - [The AI Chat guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md) — local/private addresses are cancelled
 - [A confirm needs a popup host](confirm-needs-a-popup-host.md) — `showAppConfirm` is `false` with no host; gates FAIL OPEN · [Popup deep link rides a setting](popup-deep-link-by-setting.md) — a URL param opens a DUPLICATE window; read on mount + focus via `getSettingForce`
 - [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split repo text on `/\r?\n/`; an anchored `(.*)$` silently matches nothing
+- [Canvas item blend mode](canvas-item-blend-mode.md) — every slide box has a Blend Mode, but the slide is an isolated group: it blends with the items UNDER it, never the screen background
+- [Canvas item shadow](canvas-item-shadow.md) — a slide box casts a **Box Shadow** (the rectangle) or a **Drop Shadow** (`filter:`, follows the letters / a picture's see-through edge); it rides `genShapeBoxStyle`, so the editor, the thumbnails, the projector and the print PDF agree
+- [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — Video/Image Show blend with the layers under them; a `z-index` or `isolation` on `#foreground` makes every blend a silent no-op · each component is its own floating panel picked from a status-board menu, one sticky row per session, the show never scrolls the grid
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — an `infinite` color/border keyframe repaints a whole window at 60 fps; cap iterations; trace the Presenter with a screen SHOWING (EN-19)
+- [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md) — one element cannot crossfade with itself (a dip to black at every clip end), and a copy per lap re-reads the whole clip
 - [Own font list with weights](own-font-list-with-weights.md) — `font-list` is gone; the macOS/Linux branches never ran on a real machine
-- [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers (copy, tar, iframe) see the alias
+- [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers see the alias; a marker re-finds the folder, setting NAMES go `@data_`, Repair Links fixes old paths
+- [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule: every path/file-name helper in `src/server/fileHelpers.ts`, no ad-hoc separator splits
+- [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md) — a foreground overlay's own Always-on-Top number paints over a layer added after it
+- [A foreground camera opens its own stream per window](foreground-camera-deviceid-rotates.md) — `deviceId` rotates per document, so the screen window resolves by LABEL or the projector shows nothing, silently; `cameraHelpers` stays a leaf and reports through a callback
+- [Message editors hold their text in local state](message-editor-text-is-local-state.md) — a controlled textarea fed by the blank-line-joined session string ate every space and Enter typed at the END

@@ -136,6 +136,7 @@ export default function BibleXMLInfoComp({
                             <button
                                 className="btn btn-sm btn-warning"
                                 title={tran('Reset Bible XML')}
+                                aria-label={tran('Reset Bible XML')}
                                 onClick={handleResetting}
                             >
                                 <i className="bi bi-arrow-counterclockwise" />
@@ -148,6 +149,8 @@ export default function BibleXMLInfoComp({
                                     ? tran('Hide Editor')
                                     : tran('Show Editor')
                             }
+                            aria-label={tran('Show Editor')}
+                            aria-pressed={isShowing}
                             onClick={handleToggleShowing}
                         >
                             <i className="bi bi-pencil" />
@@ -155,6 +158,7 @@ export default function BibleXMLInfoComp({
                         <button
                             className="btn btn-sm btn-danger"
                             title={tran('Move to Trash')}
+                            aria-label={tran('Move to Trash')}
                             onClick={handleFileTrashing}
                         >
                             <i className="bi bi-trash" />

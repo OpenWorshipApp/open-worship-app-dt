@@ -4,6 +4,10 @@ import { useCallback, useState } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
+import {
+    describePortableFileNameProblem,
+    getPortableFileNameProblem,
+} from '../server/fileHelpers';
 
 export default function AskingNewNameComp({
     defaultName,
@@ -15,16 +19,32 @@ export default function AskingNewNameComp({
     applyName: (newName: string | null) => void;
 }>) {
     const [creatingNewName, setCreatingNewName] = useState(defaultName ?? '');
-    const isValid = /^[^\\\/:\*\?"<>\|]+$/.test(creatingNewName);
+    // Judged by what EVERY computer accepts, not only this one: a name made
+    // here has to open on the other machines the data folder goes to.
+    const isValid = getPortableFileNameProblem(creatingNewName) === null;
     const handleDivClick = useCallback((event: MouseEvent) => {
         event.stopPropagation();
     }, []);
     const creatingNewNameRef = useAppCurrentRef(creatingNewName);
     const applyNameRef = useAppCurrentRef(applyName);
+    // ONE gate for both ways of applying. Enter used to apply the name
+    // unchecked, so only a click on the button ever saw the check.
+    const applyCheckedName = useCallback(() => {
+        const problem = getPortableFileNameProblem(creatingNewNameRef.current);
+        if (problem !== null) {
+            showSimpleToast(
+                tran('Invalid file name'),
+                describePortableFileNameProblem(problem),
+            );
+            return;
+        }
+        applyNameRef.current(creatingNewNameRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleKeyDown = useCallback(
         (event: KeyboardEvent<HTMLInputElement>) => {
             if (event.key === 'Enter' && creatingNewNameRef.current) {
-                applyNameRef.current(creatingNewNameRef.current);
+                applyCheckedName();
             } else if (event.key === 'Escape') {
                 applyNameRef.current(null);
             }
@@ -38,19 +58,6 @@ export default function AskingNewNameComp({
         },
         [],
     );
-    const isValidRef = useAppCurrentRef(isValid);
-    const handleApplyClick = useCallback(() => {
-        if (!isValidRef.current) {
-            showSimpleToast(
-                tran('Invalid file name'),
-                'File name cannot contain any of the following ' +
-                    'characters: \\ / : * ? " < > |',
-            );
-            return;
-        }
-        applyNameRef.current(creatingNewNameRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     return (
         <div className="input-group" onClick={handleDivClick}>
             <input
@@ -68,7 +75,7 @@ export default function AskingNewNameComp({
                 id="button-addon2"
                 className={`btn btn-outline-${isValid ? 'success' : 'danger'}`}
                 type="button"
-                onClick={handleApplyClick}
+                onClick={applyCheckedName}
             >
                 {customIcon || <i className="bi bi-check" />}
             </button>

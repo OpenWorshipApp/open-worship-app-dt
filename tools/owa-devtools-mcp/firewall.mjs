@@ -745,17 +745,22 @@ export function filterToolList(toolList) {
 // through, which is why the tools that dump memory wholesale are denied
 // outright above rather than being trusted to this.
 const SECRET_PATTERNS = [
-    // Provider keys. Anthropic first: `sk-ant-` would otherwise be eaten by
-    // the generic `sk-` rule and leave the prefix showing.
-    /\bsk-ant-[A-Za-z0-9_-]{16,}/g,
-    /\bsk-[A-Za-z0-9]{20,}/g,
+    // Provider keys, hyphens and underscores included. Every current format
+    // has them -- OpenAI's `sk-proj-` / `sk-svcacct-` / `sk-admin-`,
+    // Anthropic's `sk-ant-api03-`, OpenRouter's `sk-or-v1-` -- and a body of
+    // letters and digits only stopped at the second hyphen, so the key OpenAI
+    // hands out today went through whole. Twenty characters is past any word:
+    // `sk-SK`, the Slovak locale tag, is left alone.
+    /\bsk-[A-Za-z0-9_-]{20,}/g,
     // JSON Web Tokens -- SongSelect's OAuth pair, among others.
     /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g,
     /\bBearer\s+[A-Za-z0-9._~+/-]{16,}=*/gi,
     // A named credential and whatever it was set to, in a header, a JSON blob
     // or a DOM attribute: `"apiKey": "..."`, `x-api-key: ...`, `value="..."`
-    // on a field called password.
-    /((?:api[_-]?key|apikey|x-api-key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd|secret)["']?\s*[:=]\s*["']?)[^"'\s,;}]{8,}/gi,
+    // on a field called password. Not a value an earlier rule already
+    // replaced: `[redacted` is eight characters too, and was being redacted
+    // again into a second marker.
+    /((?:api[_-]?key|apikey|x-api-key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd|secret)["']?\s*[:=]\s*["']?)(?!\[redacted )[^"'\s,;}]{8,}/gi,
 ];
 
 const REDACTED = '[redacted by the app firewall]';
@@ -767,9 +772,11 @@ export function redactSecrets(text) {
     let out = text;
     for (const pattern of SECRET_PATTERNS) {
         // A capture group means "keep the name, drop the value"; without one
-        // the whole match goes.
+        // the whole match goes. Asked by TYPE: with no group, the second
+        // argument `replace` passes is the match's OFFSET -- a number, never
+        // `undefined` -- and it was being written in front of the marker.
         out = out.replace(pattern, (match, keep) => {
-            return keep === undefined ? REDACTED : `${keep}${REDACTED}`;
+            return typeof keep === 'string' ? `${keep}${REDACTED}` : REDACTED;
         });
     }
     return out;

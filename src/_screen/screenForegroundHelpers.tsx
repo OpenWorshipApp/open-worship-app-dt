@@ -3,11 +3,14 @@ import CountdownController from './managers/CountdownController';
 import { getHTMLChild } from '../helper/helpers';
 import type ScreenManagerBase from './managers/ScreenManagerBase';
 import type {
+    ForegroundMessageDataType,
     ForegroundCountdownDataType,
+    ForegroundImageDataType,
     ForegroundMarqueeDataType,
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
     ForegroundTimeDataType,
+    ForegroundVideoDataType,
     ForegroundWebDataType,
     MarqueePositionType,
     StyleAnimType,
@@ -22,6 +25,9 @@ import StopwatchController from './managers/StopwatchController';
 import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
+import { playMediaElement, releaseMediaElement } from '../helper/mediaHelpers';
+import appProvider from '../server/appProvider';
+import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
 
@@ -185,6 +191,97 @@ export function genHtmlForegroundQuickText(
             remove();
         },
         handleRemoving: async () => {
+            await animData.animOut(element);
+        },
+    };
+}
+
+// How long one message takes to fade across to the next. A TRANSITION, not an
+// animation: it runs only when the opacity is actually changed, so between
+// swaps this element costs nothing at all.
+const MESSAGE_FADE_MILLISECOND = 400;
+
+/**
+ * Words held over whatever else is live: one message that stays put, or
+ * several that rotate. Nothing but a person takes them down.
+ *
+ * The text goes in as a React CHILD, never through `dangerouslySetInnerHTML`:
+ * `sanitizeHtml` is still a no-op placeholder and every renderer here has node
+ * integration, so the one safe way to put a user's words on a screen is to let
+ * the renderer escape them. That is also why this takes plain text rather than
+ * Quick Text's markdown.
+ *
+ * NO timer is started unless there is something to rotate TO -- a rotation
+ * that fires forever to rewrite the same string is the paint-at-rest mistake
+ * (EN-09) wearing a different hat, and this widget is mounted for a whole
+ * pre-service slot.
+ */
+export function genHtmlForegroundMessage(
+    { textList, intervalSecond, extraStyle = {} }: ForegroundMessageDataType,
+    animData: StyleAnimType,
+) {
+    const validTextList = textList.filter((text) => {
+        return text.trim() !== '';
+    });
+    const isRotating = intervalSecond !== null && validTextList.length > 1;
+    const htmlString = renderToStaticMarkup(
+        <div
+            style={{
+                whiteSpace: 'pre-wrap',
+                ...(isRotating
+                    ? {
+                          transition: `opacity ${MESSAGE_FADE_MILLISECOND}ms ease-in-out`,
+                      }
+                    : {}),
+                ...extraStyle,
+            }}
+        >
+            {/*
+             * Rotating, the list is one MESSAGE per entry and only one shows
+             * at a time. Not rotating, it is one message's own LINES and all
+             * of them show -- joined from the raw list, so a blank line the
+             * writer put inside a message survives (the filtered list drops
+             * blanks, which is right for entries and wrong for lines).
+             */}
+            {isRotating ? (validTextList[0] ?? '') : textList.join('\n')}
+        </div>,
+    );
+    const div = document.createElement('div');
+    div.innerHTML = htmlString;
+    const element = getHTMLChild<HTMLDivElement>(div, 'div');
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let fadeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    const clearTimers = () => {
+        if (intervalId !== null) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        if (fadeTimeoutId !== null) {
+            clearTimeout(fadeTimeoutId);
+            fadeTimeoutId = null;
+        }
+    };
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(element, parentContainer);
+            if (!isRotating) {
+                return;
+            }
+            let index = 0;
+            intervalId = setInterval(
+                () => {
+                    element.style.opacity = '0';
+                    fadeTimeoutId = setTimeout(() => {
+                        index = (index + 1) % validTextList.length;
+                        element.textContent = validTextList[index];
+                        element.style.opacity = '1';
+                    }, MESSAGE_FADE_MILLISECOND);
+                },
+                Math.max(1, intervalSecond as number) * 1000,
+            );
+        },
+        handleRemoving: async () => {
+            clearTimers();
             await animData.animOut(element);
         },
     };
@@ -375,24 +472,26 @@ export function genHtmlForegroundTime(
     };
 }
 
+/**
+ * A page shown OVER the slide, and the same rule a web BACKGROUND follows:
+ * LIVE only on the projected screen, a still screenshot everywhere else. The
+ * presenter's mini screen is a preview -- it redraws whenever a screen event
+ * fires and one is mounted per screen -- so a live iframe there keeps that
+ * page's scripts, timers and media running in the operator's window for as
+ * long as the overlay is up, for a picture two inches across. The shot is
+ * taken at the screen's own bounds, which is the entry the Webs panel and the
+ * web background have already populated.
+ */
 export function genHtmlForegroundWeb(
     webData: ForegroundWebDataType,
     animData: StyleAnimType,
     displayDim: { width: number; height: number },
+    isPageScreen = appProvider.isPageScreen,
 ) {
     const { filePath, extraStyle = {}, widthScale, heightScale } = webData;
     const width = Math.round(displayDim.width * widthScale);
     const height = Math.round(displayDim.height * heightScale);
     const fileSource = FileSource.getInstance(filePath);
-    const htmlString = renderToStaticMarkup(
-        <RenderBackgroundWebIframeComp
-            iframeSource={fileSource}
-            width={width}
-            height={height}
-            targetWidth={displayDim.width}
-            targetHeight={displayDim.height}
-        />,
-    );
     // extraStyle carries the widget positioning (alignment + X/Y offset via
     // left/top/transform), sizing and box styling. It must live on the element
     // that is actually mounted. The iframe already uses its own `transform` to
@@ -401,7 +500,29 @@ export function genHtmlForegroundWeb(
     // the bare iframe (as before) dropped extraStyle entirely, pinning every
     // web overlay to the top-left corner.
     const container = document.createElement('div');
-    container.innerHTML = htmlString;
+    if (isPageScreen) {
+        container.innerHTML = renderToStaticMarkup(
+            <RenderBackgroundWebIframeComp
+                iframeSource={fileSource}
+                width={width}
+                height={height}
+                targetWidth={displayDim.width}
+                targetHeight={displayDim.height}
+            />,
+        );
+    } else {
+        // The box below is `displayDim` scaled by `widthScale`, so a shot at
+        // the display's own bounds has exactly the box's aspect ratio and
+        // `cover` crops nothing -- the same picture the live iframe draws.
+        container.appendChild(
+            genWebScreenShotElement(fileSource.src, () => {
+                return {
+                    width: displayDim.width,
+                    height: displayDim.height,
+                };
+            }),
+        );
+    }
     Object.assign(container.style, extraStyle, {
         width: `${width}px`,
         height: `${Math.round(displayDim.height * widthScale)}px`,
@@ -413,6 +534,78 @@ export function genHtmlForegroundWeb(
         },
         handleRemoving: async () => {
             await animData.animOut(container);
+        },
+    };
+}
+
+/**
+ * A clip shown OVER the slide. Built by hand rather than through
+ * `renderToStaticMarkup` like its neighbours, because `muted` is a
+ * PROPERTY-only attribute that React does not write into static markup -- an
+ * SSR'd `<video muted>` arrives unmuted and Chromium refuses to autoplay it,
+ * which looks exactly like a broken file. `getCameraAndShowMedia` builds its
+ * own element for the same reason.
+ *
+ * Looping like a background video, and muted unless this session's Sound
+ * control says otherwise: an overlay is usually decoration running under
+ * whatever the service is doing, and an unmuted one would fight the song --
+ * but a clip that IS the moment needs to be heard.
+ * There is deliberately no cross-window current-time sync (the background
+ * layer's `sendSyncVideoTime`): that costs a broadcast per seek to keep a
+ * decorative loop in step between the mini preview and the output window.
+ */
+export function genHtmlForegroundVideo(
+    {
+        filePath,
+        extraStyle = {},
+        isSoundOn = false,
+        soundVolume = 100,
+    }: ForegroundVideoDataType,
+    animData: StyleAnimType,
+) {
+    const fileSource = FileSource.getInstance(filePath);
+    const element = document.createElement('video');
+    element.src = fileSource.src;
+    // Muted unless the session asked to be heard. It stays a PROPERTY rather
+    // than an attribute for the reason in the note above, and the volume is
+    // set whether or not the sound is on so that unmuting mid-clip lands at
+    // the level the operator chose rather than at full.
+    element.muted = !isSoundOn;
+    element.volume = Math.min(1, Math.max(0, soundVolume / 100));
+    element.loop = true;
+    element.autoplay = true;
+    element.playsInline = true;
+    Object.assign(element.style, { display: 'block' }, extraStyle);
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(element, parentContainer);
+            playMediaElement(element);
+        },
+        handleRemoving: async () => {
+            await animData.animOut(element);
+            // Taking it out of the document does NOT free the player, and
+            // Chromium refuses to make any more once a frame holds a thousand.
+            releaseMediaElement(element);
+        },
+    };
+}
+
+/** A picture shown OVER the slide -- the still twin of the clip above. */
+export function genHtmlForegroundImage(
+    { filePath, extraStyle = {} }: ForegroundImageDataType,
+    animData: StyleAnimType,
+) {
+    const fileSource = FileSource.getInstance(filePath);
+    const element = document.createElement('img');
+    element.src = fileSource.src;
+    element.alt = fileSource.name;
+    Object.assign(element.style, { display: 'block' }, extraStyle);
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(element, parentContainer);
+        },
+        handleRemoving: async () => {
+            await animData.animOut(element);
         },
     };
 }

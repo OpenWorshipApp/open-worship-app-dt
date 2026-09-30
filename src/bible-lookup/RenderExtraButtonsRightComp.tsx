@@ -75,6 +75,7 @@ export function AdvanceLookupHandlerComp({
             }
             title={tran('Advance Bible Lookup')}
             aria-label={tran('Advance Bible Lookup')}
+            aria-pressed={isAdvanceLookupOpened}
             onClick={handleToggleLookupOnline}
         >
             {/* Not a magnifier: the panel this toggles is a whole study
@@ -86,22 +87,14 @@ export function AdvanceLookupHandlerComp({
 }
 
 export default function RenderExtraButtonsRightComp({
-    setIsAdvanceLookupOpened,
+    toggleAdvanceLookup,
     isAdvanceLookupOpened,
     children,
 }: Readonly<{
-    setIsAdvanceLookupOpened: (isAdvanceLookupOpened: boolean) => void;
+    toggleAdvanceLookup: () => void;
     isAdvanceLookupOpened: boolean;
     children?: ReactNode;
 }>) {
-    const isAdvanceLookupOpenedRef = useAppCurrentRef(isAdvanceLookupOpened);
-    const setIsAdvanceLookupOpenedRef = useAppCurrentRef(
-        setIsAdvanceLookupOpened,
-    );
-    const handleToggleLookupOnline = useCallback(() => {
-        setIsAdvanceLookupOpenedRef.current(!isAdvanceLookupOpenedRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     return (
         <div className="d-flex align-items-center gap-1 app-scroll-x-buttons">
             {appProvider.isPagePresenter ||
@@ -115,7 +108,7 @@ export default function RenderExtraButtonsRightComp({
                 {children}
                 <AdvanceLookupHandlerComp
                     isAdvanceLookupOpened={isAdvanceLookupOpened}
-                    handleToggleLookupOnline={handleToggleLookupOnline}
+                    handleToggleLookupOnline={toggleAdvanceLookup}
                 />
                 {appProvider.isPageReader ? (
                     <>

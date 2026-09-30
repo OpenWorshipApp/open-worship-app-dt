@@ -33,12 +33,6 @@ export default class LyricAppDocumentStage0 extends LyricAppDocumentStageAbstrac
         } as Partial<OpenLyricElementMapOptions>;
     }
 
-    static getInstance(filePath: string) {
-        return this._getInstance(filePath, () => {
-            return new this(filePath);
-        });
-    }
-
     async getFirstCanvasItemProps() {
         return null;
     }

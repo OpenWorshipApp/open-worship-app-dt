@@ -208,6 +208,14 @@ describe('askAiChatMicrophone', () => {
         hostMap.clear();
     });
 
+    test('ignores malformed and unknown window answers', () => {
+        expect(() => answerAiChatMicrophoneAsk(1, null)).not.toThrow();
+        expect(() => answerAiChatMicrophoneAsk(1, {})).not.toThrow();
+        expect(() =>
+            answerAiChatMicrophoneAsk(1, { askId: 999, isAllowed: true }),
+        ).not.toThrow();
+    });
+
     test('asks the window, and only that window answers', () => {
         const { host, sentList } = genHost(1);
         const { guest } = genGuest(7, host);

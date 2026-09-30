@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: b60702cd-9c15-40fd-8f23-3d8e376f0710
-  modified: 2026-09-17T13:40:25.126Z
+  modified: 2026-09-19T17:28:00.237Z
 ---
 
 Since 2026-09-17 (user request: a data folder on a flash drive, opened on any
@@ -53,11 +53,41 @@ What is not obvious from a quick read:
   start with `-`, so `grep … *` silently reads them as options — use
   `grep -- pattern ./*`.
 
+**What the alias could not reach, added 2026-09-19 (`/owa-enhance reliability`,
+`EN-22..EN-35`, applied the same day):**
+
+- **The folder is found again.** `.owa-data-folder.json` (`{id,…}`) is written
+  into the chosen folder; the host keeps `selected-parent-dir-id` beside
+  `selected-parent-dir`. A missing folder is KEPT as the choice (it used to be
+  deleted from `setting.json`, so a stick plugged in late was forgotten for
+  good), looked for under every other mount point and adopted when the id
+  matches (`findMovedDataDirSync`), else named at start-up with Retry
+  (`useCheckSetting` in `src/others/main.tsx`). A computer with nothing chosen
+  is offered a marked folder on a drive. The scan runs ONLY in those two
+  cases, synchronously, through `readdirSync` in the preload.
+- **Names made from paths.** A setting FILE NAME cannot hold the alias, so
+  `toFilePathSettingKey` writes a file inside the folder as `@data_…`
+  (`toDataDirRelativePath`), capped at 150 bytes with a hash; old names were
+  renamed once per data folder (`settingKeyPathMigration.ts`, marker setting
+  `setting-key-path-migration`). `toAbsoluteFilePathSettingKey` is the old
+  form, kept for the older run-sheet rename migration.
+- **Stale absolute paths are repaired on request**: Settings → Path Settings →
+  **Repair Links** (`repairDataDirLinks` / `repairDataDirLinksInText`) rewrites
+  a link whose path is gone and whose file exists under this folder AS the
+  alias, in the link's own form (raw `/`, JSON `\\`, `file:///`). The read side
+  then does the rest. Never automatic: it reads every text file once.
+- **Deleting on a stick**: Windows has no Recycle Bin on a flash drive and
+  Electron's `trashItem` aborts there (`Operation was aborted`); the app asks
+  **Delete Permanently** instead of failing, except for an agent's delete.
+- The user wants every such path/name helper in `src/server/fileHelpers.ts`
+  ([[path-handling-lives-in-filehelpers]]).
+
 **Why:** the user runs the app and its data folder from a flash drive on
 different computers and operating systems.
 
 **How to apply:** when adding code that reads, writes, copies or packs text in
 the data folder, or hands such a file to something other than the app's own
-readers, decide whether it must see real paths or the alias.
+readers, decide whether it must see real paths or the alias. A NAME derived
+from a path goes through `toDataDirRelativePath`, never the absolute path.
 
-Related: [[history-read-cache-stale-paths]], [[agent-data-tools-backup-undo]], [[data-archive-owadata]], [[dev-data-dir-is-separate]].
+Related: [[history-read-cache-stale-paths]], [[agent-data-tools-backup-undo]], [[data-archive-owadata]], [[dev-data-dir-is-separate]], [[extra-bin-on-demand]].

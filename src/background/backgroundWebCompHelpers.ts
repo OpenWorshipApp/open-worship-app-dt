@@ -1,3 +1,4 @@
+import FileSource from '../helper/FileSource';
 import type { BackgroundWebUrlSource } from './backgroundWebUrlHelpers';
 import {
     genColorMap,
@@ -56,4 +57,31 @@ export function genBackgroundWebColorSections(
     }
 
     return sections;
+}
+
+/**
+ * What the Webs grid is showing, in the order it draws it, as the `src`
+ * strings a screen actually holds.
+ *
+ * This tab cannot borrow `toDisplayedFilePaths` like the Images and Videos
+ * ones: half its tiles are not files at all but saved URLs, and both kinds are
+ * grouped by colour note together -- files first inside each group, then the
+ * URLs, which is exactly how `basicRenderBody` lays them out. A slide show has
+ * to walk what the operator SEES, so it walks this.
+ */
+export function genBackgroundWebDisplayedSrcList(
+    filePaths: string[],
+    urlSources: BackgroundWebUrlSource[],
+) {
+    const sections = genBackgroundWebColorSections(filePaths, urlSources);
+    const srcList: string[] = [];
+    for (const section of sections) {
+        for (const filePath of section.filePaths) {
+            srcList.push(FileSource.getInstance(filePath).src);
+        }
+        for (const urlSource of section.urlSources) {
+            srcList.push(urlSource.src);
+        }
+    }
+    return srcList;
 }

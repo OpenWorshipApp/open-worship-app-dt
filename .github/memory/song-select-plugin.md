@@ -31,7 +31,7 @@ and BOTH tokens live in a separate encrypted store — see
 `getSongSelectSetting()` merges the two halves, so callers saw no change.
 
 **How to apply:** CCLI retired new partner signups, so the REAL sign-in +
-api.ccli.com path has never run — verified against mocks only (matrix ST-52 /
+api.ccli.com path has never run — verified against mocks only (matrix ST-57 /
 PL-103 / PL-104, workflow W-35). To re-verify in dev, do NOT hand-inject
 tokens or patch fetch: click **`(dev) Use Mock Data`** beside Sign In
 (added 2026-08-24 at the user's request) — it writes fake credentials +

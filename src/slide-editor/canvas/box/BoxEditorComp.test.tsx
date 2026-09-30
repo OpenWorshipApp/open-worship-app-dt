@@ -98,6 +98,14 @@ vi.mock('../CanvasItem', () => ({
             width: `${props.width}px`,
             height: `${props.height}px`,
         }),
+        genBlendStyle: (props: any) => {
+            return props.blendMode === undefined || props.blendMode === 'normal'
+                ? {}
+                : { mixBlendMode: props.blendMode };
+        },
+    },
+    genBoxBorderRadius: (props: any) => {
+        return props.roundSizePixel || undefined;
     },
     useCanvasItemContext: () => canvasItemState.value,
     useCanvasItemPropsContext: () => canvasItemPropsState.value,

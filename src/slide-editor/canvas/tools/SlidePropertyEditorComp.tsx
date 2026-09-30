@@ -1,6 +1,6 @@
 import './SlidePropertyEditorComp.scss';
 
-import { type ChangeEvent, useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
@@ -14,6 +14,7 @@ import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers
 import { showAppConfirm } from '../../../popup-widget/popupWidgetHelpers';
 import type Slide from '../../../app-document-list/Slide';
 import { useFileSourceEvents } from '../../../helper/dirSourceHelpers';
+import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
 import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 async function checkIsDiffOtherSlides(
@@ -85,6 +86,9 @@ function RenderDimElementComp({
             <input
                 className="form-control form-control-sm spe-dim-input"
                 type="number"
+                // The label beside it is not tied to the box, so it had no
+                // accessible name.
+                aria-label={tran(name)}
                 value={value}
                 onChange={handleChange}
             />
@@ -214,13 +218,18 @@ function RenderDimEditComp() {
 function RenderNameEditorComp() {
     const slide = useSelectedEditingSlideContext();
     const [name, setName] = useState(slide.name);
-    const hasChanged = name !== slide.name;
+    // The name as last applied. `updateSlide` does not hand this component a
+    // new slide, so comparing against `slide.name` alone left **Apply**
+    // showing after the rename had already landed.
+    const [appliedName, setAppliedName] = useState(slide.name);
+    const hasChanged = name !== appliedName;
     const slideRef = useAppCurrentRef(slide);
     const nameRef = useAppCurrentRef(name);
     const handleNameChanging = useCallback(() => {
         const appDocument = AppDocument.getInstance(slideRef.current.filePath);
         slideRef.current.name = nameRef.current;
         appDocument.updateSlide(slideRef.current);
+        setAppliedName(nameRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -258,10 +267,33 @@ export default function SlidePropertyEditorComp() {
         false,
         'slide-property-editor',
     );
-    const [index] = useAppStateAsync(() => {
+    const [index, setIndex] = useAppStateAsync(() => {
         const appDocument = AppDocument.getInstance(slide.filePath);
         return appDocument.getSlideIndex(slide);
     }, [slide]);
+    // A reorder, duplicate or delete moves this slide without replacing it,
+    // so the position is read again when the document changes. Per instance,
+    // debounced: a drag writes the document several times in a row.
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    const slideRef = useAppCurrentRef(slide);
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            attemptTimeout(async () => {
+                const currentSlide = slideRef.current;
+                const appDocument = AppDocument.getInstance(
+                    currentSlide.filePath,
+                );
+                const newIndex = await appDocument.getSlideIndex(currentSlide);
+                if (slideRef.current === currentSlide) {
+                    setIndex(newIndex);
+                }
+            });
+        },
+        [],
+        slide.filePath,
+    );
+    const isIndexKnown = typeof index === 'number' && index >= 0;
     return (
         <div className="slide-property-editor m-1 app-border-white-round">
             <div
@@ -274,11 +306,15 @@ export default function SlidePropertyEditorComp() {
                         className="spe-toggle-icon"
                     />
                     <span className="spe-title">{tran('Slide')}</span>
-                    <RenderSlideIndexComp
-                        viewIndex={index ?? -1}
-                        dataKey={toKeyByFilePath(slide.filePath, slide.id)}
-                        title={tran('Slide index')}
-                    />
+                    {isIndexKnown ? (
+                        // One-based, as every slide card counts: this badge
+                        // and the card it highlights must show the same number.
+                        <RenderSlideIndexComp
+                            viewIndex={index + 1}
+                            dataKey={toKeyByFilePath(slide.filePath, slide.id)}
+                            title={tran('Slide index')}
+                        />
+                    ) : null}
                 </div>
                 <span
                     className="spe-id badge text-bg-secondary"
@@ -289,8 +325,22 @@ export default function SlidePropertyEditorComp() {
             </div>
             {isExpanded ? (
                 <div className="d-flex flex-column gap-2 p-2">
-                    <RenderNameEditorComp />
-                    <RenderDimEditComp />
+                    {/*
+                     * Keyed by the slide (and the value it holds) so the
+                     * fields start again from THAT slide: they keep what was
+                     * typed in local state, and without a key the previous
+                     * slide's name and size stayed in them -- with an Apply
+                     * that wrote those onto the slide now selected.
+                     */}
+                    <RenderNameEditorComp
+                        key={`${slide.filePath}:${slide.id}:${slide.name}`}
+                    />
+                    <RenderDimEditComp
+                        key={
+                            `${slide.filePath}:${slide.id}:` +
+                            `${slide.metadata.width}x${slide.metadata.height}`
+                        }
+                    />
                 </div>
             ) : null}
         </div>
