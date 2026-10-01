@@ -1,4 +1,7 @@
-import type { MouseEvent as ReactMouseEventType } from 'react';
+import type {
+    DragEvent as ReactDragEventType,
+    MouseEvent as ReactMouseEventType,
+} from 'react';
 import { useRef, useState } from 'react';
 
 import { useAppEffect } from '../helper/appHooks';
@@ -30,6 +33,29 @@ type TabMenuStateType = {
     y: number;
 };
 
+// A tab being dragged out of the window, as the drag carries it.
+const TEAR_OFF_DRAG_TYPE = 'application/x-owa-drag-chat-tab';
+
+/**
+ * Whether a drag was let go outside this window. A drop inside it, even on
+ * nothing that takes it, lands within the window's own box; an Escape that
+ * cancels a drag has it end wherever the pointer was, and is only counted
+ * when that is out there too.
+ */
+function checkIsOutsideWindow(event: { screenX: number; screenY: number }) {
+    const { screenX, screenY } = event;
+    // Chromium reports a drop it could not place as 0,0 -- not a place.
+    if (screenX === 0 && screenY === 0) {
+        return false;
+    }
+    return (
+        screenX < window.screenX ||
+        screenX > window.screenX + window.outerWidth ||
+        screenY < window.screenY ||
+        screenY > window.screenY + window.outerHeight
+    );
+}
+
 // The two actions that take more than one tab at a time, held back until they
 // have been asked for twice. Everything else in the menu takes exactly the tab
 // it belongs to, and can be undone by reopening the window; these two cannot.
@@ -56,6 +82,10 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
     genTitle,
     canAdd,
     canClearAll,
+    onTearOff,
+    onOpenInNewWindow,
+    onNewWindow,
+    onReorder,
 }: Readonly<{
     sessions: T[];
     activeId: string;
@@ -72,6 +102,18 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
     onTogglingLock: (id: string) => void;
     onSolo: (id: string) => void;
     onClearAll: () => void;
+    // Given only by a window that can put a tab in a window of its own (the
+    // AI Chat window): a tab dragged and let go OUTSIDE this window is handed
+    // over, with where on the screen it was dropped. A drop inside the
+    // window does nothing.
+    onTearOff?: (id: string, screenX: number, screenY: number) => void;
+    // The same, from the tab's menu, for whoever will not think to drag it.
+    onOpenInNewWindow?: (id: string) => void;
+    // Another window of the same kind, from a button beside `+`.
+    onNewWindow?: () => void;
+    // A tab dragged along the strip and let go on another: moved to `index`
+    // in the list as it will be once the dragged tab is out of it.
+    onReorder?: (id: string, index: number) => void;
 }>) {
     // Renaming is a state OF THE STRIP, not of a session: it is over the
     // moment the box is left, and nothing about it is worth writing to disk.
@@ -159,6 +201,71 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
     const handleClosingMenu = () => {
         setMenuState(null);
     };
+    // Nothing to move a tab away FROM, or past, when it is the only one, and
+    // a tab being renamed is a text box whose words a drag should select.
+    const checkCanDrag = (sessionId: string) => {
+        return (
+            (onTearOff !== undefined || onReorder !== undefined) &&
+            sessions.length > 1 &&
+            renamingId !== sessionId
+        );
+    };
+    // The tab being dragged out of THIS strip. A drag from another window
+    // carries the same type but no tab here, and is not taken.
+    const draggingIdRef = useRef<string | null>(null);
+    // Where the dragged tab would land: beside which tab, on which side.
+    const [dropMark, setDropMark] = useState<{
+        id: string;
+        isAfter: boolean;
+    } | null>(null);
+    const handleDraggingOver = (
+        event: ReactDragEventType<HTMLElement>,
+        sessionId: string,
+    ) => {
+        const draggingId = draggingIdRef.current;
+        if (onReorder === undefined || draggingId === null) {
+            return;
+        }
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        const rect = event.currentTarget.getBoundingClientRect();
+        const isAfter = event.clientX > rect.left + rect.width / 2;
+        if (
+            sessionId === draggingId ||
+            (dropMark?.id === sessionId && dropMark.isAfter === isAfter)
+        ) {
+            if (sessionId === draggingId && dropMark !== null) {
+                setDropMark(null);
+            }
+            return;
+        }
+        setDropMark({ id: sessionId, isAfter });
+    };
+    const handleDropping = (
+        event: ReactDragEventType<HTMLElement>,
+        sessionId: string,
+    ) => {
+        const draggingId = draggingIdRef.current;
+        if (onReorder === undefined || draggingId === null) {
+            return;
+        }
+        event.preventDefault();
+        setDropMark(null);
+        if (sessionId === draggingId) {
+            return;
+        }
+        const rect = event.currentTarget.getBoundingClientRect();
+        const isAfter = event.clientX > rect.left + rect.width / 2;
+        const others = sessions.filter((session) => {
+            return session.id !== draggingId;
+        });
+        const targetIndex = others.findIndex((session) => {
+            return session.id === sessionId;
+        });
+        if (targetIndex !== -1) {
+            onReorder(draggingId, targetIndex + (isAfter ? 1 : 0));
+        }
+    };
     return (
         <>
             <div
@@ -177,10 +284,48 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             className={
                                 'chat-tab' +
                                 (isOn ? ' is-on' : '') +
-                                (isMenuOn ? ' is-menu-on' : '')
+                                (isMenuOn ? ' is-menu-on' : '') +
+                                (dropMark?.id === session.id
+                                    ? dropMark.isAfter
+                                        ? ' is-drop-after'
+                                        : ' is-drop-before'
+                                    : '')
                             }
                             onContextMenu={(event) => {
                                 handleOpeningMenu(event, session.id);
+                            }}
+                            draggable={checkCanDrag(session.id)}
+                            onDragOver={(event) => {
+                                handleDraggingOver(event, session.id);
+                            }}
+                            onDrop={(event) => {
+                                handleDropping(event, session.id);
+                            }}
+                            onDragStart={(event) => {
+                                draggingIdRef.current = session.id;
+                                // A type of its own, so a site under the
+                                // pointer -- the page below is a website --
+                                // is handed no text and no link to paste.
+                                event.dataTransfer.setData(
+                                    TEAR_OFF_DRAG_TYPE,
+                                    session.id,
+                                );
+                                event.dataTransfer.effectAllowed = 'move';
+                            }}
+                            onDragEnd={(event) => {
+                                draggingIdRef.current = null;
+                                setDropMark(null);
+                                if (
+                                    onTearOff === undefined ||
+                                    !checkIsOutsideWindow(event)
+                                ) {
+                                    return;
+                                }
+                                onTearOff(
+                                    session.id,
+                                    event.screenX,
+                                    event.screenY,
+                                );
                             }}
                         >
                             {/*
@@ -289,6 +434,17 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                 >
                     +
                 </button>
+                {onNewWindow === undefined ? null : (
+                    <button
+                        type="button"
+                        className="chat-tab-add chat-tab-window"
+                        aria-label="New window"
+                        title="New window"
+                        onClick={onNewWindow}
+                    >
+                        <i className="bi bi-window-plus" />
+                    </button>
+                )}
             </div>
             {sweep === null ? null : (
                 // Asked on a line of its own rather than inside the menu, and
@@ -404,6 +560,19 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                 ? 'Unlock this chat'
                                 : 'Lock this chat'}
                         </button>
+                        {onOpenInNewWindow === undefined ? null : (
+                            <button
+                                type="button"
+                                role="menuitem"
+                                className="chat-menu-item"
+                                onClick={() => {
+                                    handleClosingMenu();
+                                    onOpenInNewWindow(menuSession.id);
+                                }}
+                            >
+                                Open in new window
+                            </button>
+                        )}
                         {menuSession.isLocked ? null : (
                             <button
                                 type="button"

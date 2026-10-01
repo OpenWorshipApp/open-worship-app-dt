@@ -65,9 +65,13 @@ export default function InputPopupComp({
                 id="app-input-popup"
                 className="app-popup-widget card"
                 style={inputData.extraStyles}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="app-input-popup-title"
             >
                 <HeaderAlertPopupComp
                     title={inputData.title}
+                    titleId="app-input-popup-title"
                     header={
                         <>
                             <i className="app-popup-header-icon icon-input bi bi-input-cursor-text" />

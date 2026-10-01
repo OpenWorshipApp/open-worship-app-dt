@@ -246,7 +246,7 @@ closed and what it actually gained versus predicted; a memory note for any
 testing trap the next session would otherwise re-learn; **and any BUG the tests
 found reported to the user** — that is the real return on this work, and it is
 worth more than the percentage. Mirror `.claude/skills/owa-upgrade-unit-test/`
-to `.agents/skills/` and `.github/skills/`, then
+to `.agents/skills/`, then
 `node extra-work/build-knowledge.mjs` (CLAUDE.md: every `.claude/` edit, same
 change).
 

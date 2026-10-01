@@ -288,7 +288,7 @@ this repo and this app.
 memory `typescript-7-side-by-side`); `eslint.config.mjs`;
 `playwright.config.ts` and `e2e/`; packaging (`electron-builder`, `pack:*`);
 agent tooling (`.mcp.json`, `tools/owa-devtools-mcp/bin.mjs`, discovery).
-`.github/` holds the Copilot mirror and, when `triage.mjs` finds none, no CI —
+`.github/` holds no CI workflow when `triage.mjs` finds none —
 then `npm run lint` on one machine is the only gate the code ever passes.
 
 **Leads:** CI workflows; `.only` / `.skip` left in tests; dead
@@ -310,7 +310,7 @@ mirror drift and a stale knowledge index — both chores done by hand.
    `vite-caches-failed-import-resolution`, `vitest-env-leak-flakes`,
    `dont-taskkill-all-electron`, `bash-heredoc-halves-backslashes`. A trap that
    has bitten more than once and has a mechanical cure is a finding.
-4. **Chores done by hand that rot in silence** — copying the `.github` mirror,
+4. **Chores done by hand that rot in silence** — copying the Codex mirror,
    rebuilding the knowledge, bumping the question corpus's `updated` date and
    the matrix version: could a test or a check catch the miss instead of a
    reviewer's memory?
@@ -388,7 +388,7 @@ memory notes.
 **Scope:** `.claude/skills/owa-robot-test/references/user-workflows.md` (the
 source) → `docs/manual-sources/` (generated, tracked);
 `tools/owa-devtools-mcp/questions/`; `.claude/CLAUDE.md`, `.claude/memory/`,
-`.claude/skills/`; the `.github/` mirror of all three; the knowledge bundle
+`.claude/skills/`; the Codex mirror of all three (`.codex/`, `.agents/skills/`); the knowledge bundle
 (`electron-build/knowledge/`); `README.md`, `RELEASE.md`,
 `PRIVACY_POLICY.md`.
 
@@ -409,7 +409,7 @@ skill that are gone; a knowledge index older than the notes it is built from
 4. **CLAUDE.md, spot-checked** — three concrete claims (a name, a number, a
    path) against the code.
 5. **Mirror drift** — which side is newer. `.claude/` is the source of truth, so
-   a newer `.github/` file means an edit landed on the wrong side.
+   a newer `.codex/` or `.agents/` file means an edit landed on the wrong side.
 
 Never run `docs:gen` or `build-knowledge.mjs` while researching — both write.
 

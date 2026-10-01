@@ -74,6 +74,7 @@ export default function SlidesMenuComp() {
     return (
         <FileEditingMenuComp
             editableDocument={selectedVaryAppDocument}
+            isSaveShortcutGlobal
             extraChildren={
                 wrongDimension === null ? null : (
                     <CheckingDimensionComp

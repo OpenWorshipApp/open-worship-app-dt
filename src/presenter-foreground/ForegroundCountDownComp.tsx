@@ -19,6 +19,7 @@ import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { showSimpleToast } from '../toast/toastHelpers';
 import {
     checkIsSessionData,
     toSessionShowingList,
@@ -88,6 +89,24 @@ const handleByDropped = (
     });
 };
 
+/**
+ * The picker remembers its last date and time, so it reopens on yesterday's
+ * target, and starting that put a red `00:00:00` on the projector with no
+ * word to the operator. A past target is refused with a sentence instead --
+ * the same rule `owa_foreground` already kept for a past `at`.
+ */
+function checkIsPastTargetWithMessage(targetDateTime: Date) {
+    const time = targetDateTime.getTime();
+    if (Number.isFinite(time) && time > Date.now()) {
+        return false;
+    }
+    showSimpleToast(
+        tran('That date and time has already passed'),
+        tran('Pick a date and time later than now, or press Reset.'),
+    );
+    return true;
+}
+
 function CountDownOnDatetimeComp({
     genStyle,
     sessionId,
@@ -104,6 +123,9 @@ function CountDownOnDatetimeComp({
     }, [date, time]);
     const handleDateTimeShowing = useCallback(
         (event: any, isForceChoosing = false) => {
+            if (checkIsPastTargetWithMessage(getTargetDateTime())) {
+                return;
+            }
             ScreenForegroundManager.setCountdown(
                 event,
                 getTargetDateTime(),
@@ -147,6 +169,10 @@ function CountDownOnDatetimeComp({
     const sessionIdRef = useAppCurrentRef(sessionId);
     const handleDraggingStart = useCallback((event: any) => {
         const targetDateTime = getTargetDateTimeRef.current();
+        if (checkIsPastTargetWithMessage(targetDateTime)) {
+            event.preventDefault();
+            return;
+        }
         const extraStyle = genStyleRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,

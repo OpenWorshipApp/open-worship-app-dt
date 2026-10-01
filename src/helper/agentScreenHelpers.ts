@@ -60,6 +60,11 @@ export type AgentScreenSlideSummaryType = {
     kind: string;
     name: string;
     text: string | null;
+    // The number on the slide's card and the words it answers to, filled in
+    // on the Presenter (`numberScreenSlidesForAgent`). The slide's own id is
+    // NOT its card number once slides have been moved or duplicated.
+    n?: number;
+    find?: string;
 };
 
 export type AgentScreenBibleSummaryType = {

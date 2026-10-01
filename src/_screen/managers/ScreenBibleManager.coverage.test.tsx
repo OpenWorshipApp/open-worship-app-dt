@@ -533,12 +533,31 @@ describe('ScreenBibleManager coverage', () => {
             'screen-bible-style-text',
             JSON.stringify({ color: '#FFFFFF' }),
         );
+        // The readable colour goes up BEFORE the question is asked, so a
+        // showing screen is never left unreadable while it waits.
+        const fixingCallIndex = mocks.setSetting.mock.calls.findIndex(
+            ([key, value]: any[]) => {
+                return (
+                    key === 'screen-bible-style-text' &&
+                    value === JSON.stringify({ color: '#FFFFFF' })
+                );
+            },
+        );
+        expect(
+            mocks.setSetting.mock.invocationCallOrder[fixingCallIndex],
+        ).toBeLessThan(mocks.showAppConfirm.mock.invocationCallOrder[0]);
 
+        mocks.setSetting.mockClear();
         mocks.showAppConfirm.mockResolvedValue(false);
         await ScreenBibleManager.getInstance(91).reflectBackgroundColor(
             '#111111',
         );
         expect(mocks.showAppConfirm).toHaveBeenCalledTimes(2);
+        // "No" puts the operator's own colour back.
+        expect(mocks.setSetting).toHaveBeenLastCalledWith(
+            'screen-bible-style-text',
+            JSON.stringify({ color: '#000000' }),
+        );
 
         mocks.getSetting.mockImplementation((key: string) => {
             if (key === 'screen-bible-style-text') {

@@ -10,7 +10,7 @@ there, not here.
 user decides: an applied finding as `done`, with what shipped, the number
 before → after and the proof; every other finding of that report as `open`;
 and all of them on `file`. Filing is an edit under `.claude/`, so it brings the
-`.github/` mirror copy and `node extra-work/build-knowledge.mjs` with it.
+Codex mirror copy and `node extra-work/build-knowledge.mjs` with it.
 
 This file ships in plaintext inside the installer: a security finding that is
 still open is filed by its class and its location, never as a working exploit.
@@ -177,7 +177,7 @@ applied in run `20260918-1109`; closes `MC-29`.
 
 ## EN-17 · No CI: the gate runs only when and where someone remembers to run it — `open` · S3 · dev-flow
 
-**Evidence.** `.github/` holds only the Copilot mirror, with 0 workflows; the
+**Evidence.** The repo has no CI workflow (`.github/workflows` is absent); the
 remote is GitHub. CLAUDE.md records a `test:electron` failure it calls
 long-standing (fixed in `0344644c`, 2026-07-25). While it lasted, every
 `npm run lint` stopped at stage 1. CLAUDE.md now carries a standing rule for

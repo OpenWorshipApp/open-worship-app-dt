@@ -33,7 +33,11 @@ import type {
     BibleFindResultType,
     SelectedBookKeyType,
 } from './bibleFindHelpers';
-import { calcPerPage, findOnline, toFindWildCardText } from './bibleFindHelpers';
+import {
+    calcPerPage,
+    findOnline,
+    toFindWildCardText,
+} from './bibleFindHelpers';
 import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';

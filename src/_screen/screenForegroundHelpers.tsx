@@ -28,6 +28,7 @@ import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { playMediaElement, releaseMediaElement } from '../helper/mediaHelpers';
 import appProvider from '../server/appProvider';
 import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
+import { genMarqueeFontSize } from './marqueeBandHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
 
@@ -47,8 +48,7 @@ export function genHtmlForegroundMarquee(
     const duration =
         (text.length / 6) *
         (DEFAULT_MARQUEE_SPEED_PERCENTAGE / clampedSpeedPercentage);
-    const scale = screenManagerBase.height / 768;
-    const fontSize = Math.round(75 * scale);
+    const fontSize = genMarqueeFontSize(screenManagerBase.height);
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     // Keyframes are scoped per instance so a top and a bottom marquee showing
     // at the same time cannot overwrite each other's slide-in direction.

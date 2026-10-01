@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 const {
     openPopupWindowMock,
     getSettingMock,
+    getSettingForceMock,
+    removeSettingMock,
     setSettingMock,
     getFontFamilyMapByNodeFontMock,
     appProviderMock,
@@ -10,6 +12,8 @@ const {
 } = vi.hoisted(() => ({
     openPopupWindowMock: vi.fn(),
     getSettingMock: vi.fn(),
+    getSettingForceMock: vi.fn(),
+    removeSettingMock: vi.fn(),
     setSettingMock: vi.fn(),
     getFontFamilyMapByNodeFontMock: vi.fn(),
     appProviderMock: {
@@ -30,6 +34,8 @@ vi.mock('../helper/domHelpers', () => ({
 
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
+    getSettingForce: getSettingForceMock,
+    removeSetting: removeSettingMock,
     setSetting: setSettingMock,
 }));
 
@@ -57,6 +63,7 @@ describe('setting settingHelpers', () => {
         vi.resetModules();
         registeredListeners.clear();
         getSettingMock.mockReturnValue(null);
+        getSettingForceMock.mockReturnValue(null);
         getFontFamilyMapByNodeFontMock.mockResolvedValue({});
     });
 
@@ -70,11 +77,26 @@ describe('setting settingHelpers', () => {
         // The tab the "media tools are missing" dialog jumps to.
         module.openOthersSetting();
 
-        expect(setSettingMock).toHaveBeenNthCalledWith(
-            3,
+        expect(setSettingMock).toHaveBeenCalledWith(
+            module.SETTING_SETTING_NAME,
+            'g',
+        );
+        expect(setSettingMock).toHaveBeenCalledWith(
+            module.SETTING_SETTING_NAME,
+            'b',
+        );
+        expect(setSettingMock).toHaveBeenCalledWith(
             module.SETTING_SETTING_NAME,
             'o',
         );
+        const tabRequests = setSettingMock.mock.calls.filter(
+            ([key]) => key === 'setting-tab-request',
+        );
+        expect(tabRequests).toHaveLength(3);
+        expect(JSON.parse(tabRequests[2][1])).toEqual({
+            tabKey: 'o',
+            requestedAt: 12345,
+        });
 
         expect(openPopupWindowMock).toHaveBeenNthCalledWith(
             1,
@@ -83,16 +105,6 @@ describe('setting settingHelpers', () => {
             'setting',
             { appTopToMain: true },
         );
-        expect(setSettingMock).toHaveBeenNthCalledWith(
-            1,
-            module.SETTING_SETTING_NAME,
-            'g',
-        );
-        expect(setSettingMock).toHaveBeenNthCalledWith(
-            2,
-            module.SETTING_SETTING_NAME,
-            'b',
-        );
         expect(openPopupWindowMock).toHaveBeenNthCalledWith(
             3,
             '/setting.html',
@@ -100,6 +112,32 @@ describe('setting settingHelpers', () => {
             'setting',
             { appTopToMain: true },
         );
+
+        nowSpy.mockRestore();
+    });
+
+    test('consumes only fresh valid tab requests', async () => {
+        const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(50_000);
+        const module = await loadSettingHelpers();
+
+        getSettingForceMock.mockReturnValueOnce(
+            JSON.stringify({ tabKey: 'o', requestedAt: 49_000 }),
+        );
+        expect(module.takeSettingTabRequest()).toBe('o');
+        expect(removeSettingMock).toHaveBeenCalledWith('setting-tab-request');
+
+        getSettingForceMock.mockReturnValueOnce(
+            JSON.stringify({ tabKey: 'x', requestedAt: 49_000 }),
+        );
+        expect(module.takeSettingTabRequest()).toBeNull();
+
+        getSettingForceMock.mockReturnValueOnce(
+            JSON.stringify({ tabKey: 'g', requestedAt: 10_000 }),
+        );
+        expect(module.takeSettingTabRequest()).toBeNull();
+
+        getSettingForceMock.mockReturnValueOnce('{broken');
+        expect(module.takeSettingTabRequest()).toBeNull();
 
         nowSpy.mockRestore();
     });

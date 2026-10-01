@@ -29,7 +29,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// scripts -> owa-enhance-mcp -> skills -> .claude|.github -> repo root
+// scripts -> owa-enhance-mcp -> skills -> .claude|.agents -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
 const BIN_PATH = path.join(
     REPO_ROOT,

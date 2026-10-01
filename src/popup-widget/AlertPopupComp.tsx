@@ -39,9 +39,17 @@ export default function AlertPopupComp({
     );
     return (
         <PrimitiveModalComp>
-            <div id="app-alert-popup" className="app-popup-widget card">
+            <div
+                id="app-alert-popup"
+                className="app-popup-widget card"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="app-alert-popup-title"
+                aria-describedby="app-alert-popup-body"
+            >
                 <HeaderAlertPopupComp
                     title={alertData.title}
+                    titleId="app-alert-popup-title"
                     header={
                         <>
                             <i className="app-popup-header-icon icon-info bi bi-info-circle-fill" />
@@ -51,6 +59,7 @@ export default function AlertPopupComp({
                     onClose={handClose}
                 />
                 <div
+                    id="app-alert-popup-body"
                     className="app-popup-body app-selectable-text"
                     dangerouslySetInnerHTML={{
                         __html: sanitizeHtml(alertData.message),

@@ -46,6 +46,9 @@
 // hatch is an environment variable the person starting the process sets --
 // see `readFirewallMode`.
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 import {
     checkIsDestructiveLabelText,
     genDestructiveLabelRule,
@@ -832,7 +835,38 @@ function genRefusalMessage(id, reason) {
  * the stack goes. Read the field once, store the wrapper, never define a
  * getter.
  */
-export function guardToolCalls(transport, { log = defaultLog } = {}) {
+// A snapshot bigger than this is not read back -- a real one is a few hundred
+// kilobytes at most, and the send path must not stall on a huge file.
+const SNAPSHOT_FILE_BYTE_LIMIT = 8 * 1024 * 1024;
+
+/**
+ * The text of a snapshot `take_snapshot` wrote to disk instead of returning.
+ *
+ * The uid interlock learns which uids are destructive by reading the snapshot
+ * text on its way OUT, and fails open on a uid it never saw -- "a uid the
+ * model was not shown is one it cannot aim with". `take_snapshot {filePath}`
+ * broke that premise: the result said only "Saved snapshot to <path>", the
+ * caller read the file itself, and a `click` on `Discard changed` went
+ * through (found by the 2026-09-29 robot run). Reading the file here, before
+ * the result is released, closes it. Synchronous on purpose: a click sent the
+ * moment the result lands must not race the read.
+ */
+function defaultReadSnapshotFile(filePath) {
+    try {
+        const resolved = path.resolve(filePath);
+        if (fs.statSync(resolved).size > SNAPSHOT_FILE_BYTE_LIMIT) {
+            return null;
+        }
+        return fs.readFileSync(resolved, 'utf8');
+    } catch {
+        return null;
+    }
+}
+
+export function guardToolCalls(
+    transport,
+    { log = defaultLog, readSnapshotFile = defaultReadSnapshotFile } = {},
+) {
     if (transport === null || typeof transport !== 'object') {
         return transport;
     }
@@ -851,6 +885,9 @@ export function guardToolCalls(transport, { log = defaultLog } = {}) {
     const lookupUidLabel = (uid) => {
         return uidMemory.lookup(uid);
     };
+    // Request id -> the file a `take_snapshot` was told to write, read back
+    // when its result goes out (see `defaultReadSnapshotFile`).
+    const snapshotFileMap = new Map();
 
     const innerOnMessage = transport.onmessage;
     transport.onmessage = (message, extra) => {
@@ -880,6 +917,20 @@ export function guardToolCalls(transport, { log = defaultLog } = {}) {
                     // this a firewall rather than a warning.
                     transport.send?.(genRefusalMessage(id, verdict.reason));
                     return undefined;
+                }
+                const snapshotFilePath = message.params?.arguments?.filePath;
+                if (
+                    name === 'take_snapshot' &&
+                    typeof snapshotFilePath === 'string' &&
+                    snapshotFilePath.length > 0 &&
+                    id !== undefined
+                ) {
+                    if (snapshotFileMap.size >= PENDING_LIMIT) {
+                        snapshotFileMap.delete(
+                            snapshotFileMap.keys().next().value,
+                        );
+                    }
+                    snapshotFileMap.set(id, snapshotFilePath);
                 }
                 if (checkIsActingTool(name)) {
                     recordDecision({ name, rule: 'acted', isAllowed: true });
@@ -920,6 +971,16 @@ export function guardToolCalls(transport, { log = defaultLog } = {}) {
                             message.result.content,
                             uidMemory,
                         );
+                        const snapshotFilePath = snapshotFileMap.get(
+                            message.id,
+                        );
+                        if (snapshotFilePath !== undefined) {
+                            snapshotFileMap.delete(message.id);
+                            const text = readSnapshotFile(snapshotFilePath);
+                            if (typeof text === 'string') {
+                                uidMemory.remember(text);
+                            }
+                        }
                     }
                 }
             } catch (error) {

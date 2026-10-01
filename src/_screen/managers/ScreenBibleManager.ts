@@ -509,23 +509,35 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         if (isBackgroundColorDark !== isTextColorDark) {
             return;
         }
-        const isOk = await showAppConfirm(
-            tran('Background and Color'),
-            tran(
-                'The current text color may not be visible with the new ' +
-                    'background color.',
-            ) +
-                ' ' +
-                tran('Do you want to change the text color as well?'),
-        );
-        if (!isOk) {
-            return;
-        }
+        // Readable FIRST, then asked. This runs after the background is
+        // already live, and asking before fixing the text left a showing
+        // projector with white-on-white (or black-on-black) words for as long
+        // as the question stayed open -- during a service, the moment nobody
+        // is looking at the operator's screen.
+        const previousColor = ScreenBibleManager.textStyle.color;
         const contrastingColor = isBackgroundColorDark
             ? HEX_COLOR_WHITE
             : HEX_COLOR_BLACK;
         ScreenBibleManager.applyTextStyle({
             color: contrastingColor,
+        });
+        const isKept = await showAppConfirm(
+            tran('Background and Color'),
+            tran(
+                'The text color was changed so it stays visible on the new background color.',
+            ) +
+                ' ' +
+                tran('Keep the new text color?'),
+            {
+                cancelButtonLabel: 'No',
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (isKept) {
+            return;
+        }
+        ScreenBibleManager.applyTextStyle({
+            color: previousColor,
         });
     }
 

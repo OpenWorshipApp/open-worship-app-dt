@@ -15,7 +15,6 @@ Arguments: [measure | plan | <path or folder> | next | continue | fix-flaky | ga
 
 Raise the Open Worship App unit-test coverage toward 99% — measured HONESTLY against every source file, not against the ones the tests happen to load. Use when asked to improve / add / upgrade / expand unit tests, to raise or measure test coverage, to write tests for a file or a folder, to reach a coverage percentage, to find what is untested, to fix a flaky or failing vitest suite, or to make the test suite trustworthy. Covers both vitest projects — `vitest.config.ts` (src + tools/owa-devtools-mcp, node env with a per-file jsdom pragma) and `vitest.electron.config.ts` (electron main process) — and every testing idiom this repo actually uses: `vi.hoisted` mock bundles, the `// @vitest-environment jsdom` first line, `createRoot` + `act` or `renderToStaticMarkup` for components, and the batched `*.coverage.test.tsx` / `*.smoke.test.tsx` harnesses that carry many modules on one mock surface. THE MEASUREMENT RULE THAT BINDS EVERY RUN: `npm run test:coverage` reports coverage over LOADED files only and reads ~78%; the honest figure over the whole surface is ~45%, so every number this skill states comes from scripts/coverage-gap.mjs and the goal is defined against that denominator. THE TEST RULE: a test must be able to FAIL — it asserts behaviour, never merely imports a module for the line count, and coverage that came from an assertion-free render is reported as what it is. Hard constraints it must not break: there is NO shared appProvider mock and none may be re-added (the user deleted it and 65 tests with it), a missing Khmer `tran()` key throws in dev, and `npm run lint` is the gate.
 
-
 # OWA Upgrade Unit Test — toward 99%, measured honestly
 
 The goal is **99% line coverage of the app's own source**, and the first thing
@@ -258,7 +257,7 @@ closed and what it actually gained versus predicted; a memory note for any
 testing trap the next session would otherwise re-learn; **and any BUG the tests
 found reported to the user** — that is the real return on this work, and it is
 worth more than the percentage. Mirror `.claude/skills/owa-upgrade-unit-test/`
-to `.agents/skills/` and `.github/skills/`, then
+to `.agents/skills/`, then
 `node extra-work/build-knowledge.mjs` (CLAUDE.md: every `.claude/` edit, same
 change).
 

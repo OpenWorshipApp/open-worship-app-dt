@@ -1,15 +1,22 @@
 @use '../others/variables.scss' as *;
 
+// Every page puts its most-pressed controls in the top-right corner (Settings,
+// Help, the assistant; on the Reader the lookup row too). A stack pinned at
+// `top: 10px` sat over them for a toast's life and a Tip of the Day's whole
+// minute, so a volunteer's first press on the gear hit the card instead. It
+// starts below the header row now.
+$toast-stack-top: $header-height + 8px;
+
 .app-toast-stack {
   position: fixed;
   right: 10px;
-  top: 10px;
+  top: $toast-stack-top;
   z-index: $z-index-toast;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  max-height: calc(100vh - 20px);
+  max-height: calc(100vh - #{$toast-stack-top} - 10px);
   overflow: hidden;
   // let clicks pass through the gaps between stacked toasts
   pointer-events: none;
@@ -27,8 +34,8 @@
     animation: app-toast-sliding-in 150ms ease-out;
   }
 
-  // The tip card opens over the presenter's own header controls while a
-  // volunteer is setting up a service, so every row it spends has to earn its
+  // The tip card opens over the presenter's panels while a volunteer is
+  // setting up a service, so every row it spends has to earn its
   // place. It carried a full title band, 16px body type and four equally
   // weighted buttons (390x~250); it is one quiet label row, the tip, and three
   // small buttons now (320x~115). Sizes come from the console type scale --

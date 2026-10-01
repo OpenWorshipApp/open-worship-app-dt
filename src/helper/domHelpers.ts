@@ -17,6 +17,7 @@ import {
     checkIsVerticalAtBottom,
 } from './helpers';
 import appProvider from '../server/appProvider';
+import { openAiChatPage, openPopupWindow } from './popupWindowHelpers';
 
 const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
@@ -361,100 +362,12 @@ export function checkIsZoomed() {
     return zoomFactor !== 1;
 }
 
-// TODO: utilize native feature instead of app*
-export type PopupWindowFeaturesType = {
-    popup?: boolean;
-    noopener?: boolean;
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-    appFollowScale?: boolean;
-    appAlignHorizontal?: 'left' | 'center' | 'right';
-    appAlignVertical?: 'top' | 'center' | 'bottom';
-    appScale?: number;
-    appTopToMain?: boolean;
-    appShowMenuBar?: boolean;
-    appResize?: boolean;
-    // Ask the OS compositor for a translucent backdrop behind this window --
-    // frosted glass over whatever is under it, instead of a slab. Ignored
-    // where the compositor cannot do it (`systemUtils.isGlassCapable`), so a
-    // window that wants it must ALSO keep its own stylesheet readable when it
-    // does not get it.
-    appGlassy?: boolean;
-    // Names of experimental Blink runtime features to enable for this window
-    // only, e.g. `['CanvasDrawElement']`. Joined with `+` because the window
-    // features string is itself `,`/`=` delimited.
-    appBlinkFeatures?: string[];
-};
-const DEFAULT_FEATURES: PopupWindowFeaturesType = {
-    popup: true,
-};
-
-function toFeatureString(features: PopupWindowFeaturesType) {
-    const featureString = Object.entries(features)
-        .filter(([_key, value]) => {
-            return !Array.isArray(value) || value.length > 0;
-        })
-        .map(([key, value]) => {
-            if (value === true) {
-                return key;
-            }
-            if (value === false) {
-                return `${key}=false`;
-            }
-            if (Array.isArray(value)) {
-                return `${key}=${value.join('+')}`;
-            }
-            return `${key}=${value}`;
-        })
-        .join(',');
-    return featureString;
-}
-
-/**
- * Whether THIS renderer is one of the app's popup windows.
- *
- * No `isPage*` flag can answer this: a reader popup and the main window on the
- * reader route look identical to them. The frame name is the discriminator —
- * `openPopupWindow` below stamps every popup with it, while the main window is
- * loaded with `loadURL` and so has no name at all.
- */
-export function checkIsPopupWindow() {
-    return window.name.startsWith(appProvider.POPUP_FRAME_NAME_PREFIX);
-}
-
-export function openPopupWindow(
-    partialUrl: string,
-    frameUUID: string,
-    urlUUID: string,
-    features?: PopupWindowFeaturesType,
-) {
-    if (partialUrl.startsWith('/')) {
-        const urlObject = new URL(location.href);
-        partialUrl = `${urlObject.protocol}//${urlObject.host}${partialUrl}`;
-    }
-    const target = `${appProvider.POPUP_FRAME_NAME_PREFIX}_${frameUUID}`;
-    const urlObject = new URL(partialUrl);
-    urlObject.searchParams.set('uuid', urlUUID);
-    const allFeatures: PopupWindowFeaturesType = {
-        ...DEFAULT_FEATURES,
-        ...features,
-    };
-    if (allFeatures.appBlinkFeatures?.length) {
-        // Blink runtime features are per renderer *process*, and a popup that
-        // keeps its opener is put in the opener's process — where the feature
-        // is off, so `enableBlinkFeatures` on the new window is ignored.
-        // `noopener` forces a fresh process, at the cost of `window.open`
-        // returning null.
-        allFeatures.noopener = true;
-    }
-    return window.open(
-        urlObject.toString(),
-        target,
-        toFeatureString(allFeatures),
-    );
-}
+export type { PopupWindowFeaturesType } from './popupWindowHelpers';
+export {
+    checkIsPopupWindow,
+    openAiChatPage,
+    openPopupWindow,
+} from './popupWindowHelpers';
 
 function openAboutPage() {
     return openPopupWindow(
@@ -507,29 +420,6 @@ appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
     })();
 });
 
-/**
- * The AI Chat window: a company's own chat site (ChatGPT, Claude, Gemini...)
- * in a box beside the app, the way a browser's AI sidebar holds one. Opened
- * exactly as the chatbot is -- same size, same side, same glass -- so the two
- * read as one family; what is inside is `html/aichat.html` and a `<webview>`
- * guest that `electron/aiChatGuestHelpers.ts` keeps in its box.
- */
-export function openAiChatPage() {
-    return openPopupWindow(
-        appProvider.aichatHomePage,
-        `aichat_${Date.now()}`,
-        'aichat',
-        {
-            width: 460,
-            height: 640,
-            appGlassy: true,
-            appAlignHorizontal: 'right',
-            appAlignVertical: 'center',
-            appFollowScale: true,
-            appTopToMain: true,
-        },
-    );
-}
 // Help -> AI Chat, same as above.
 appProvider.messageUtils.listenForData('main:app:open-aichat-page', () => {
     void (async () => {
@@ -628,8 +518,17 @@ document.addEventListener('owa-agent-screens', (event) => {
         );
     };
     import('./agentScreenHelpers')
-        .then(({ describeScreensForAgent }) => {
-            reply(describeScreensForAgent());
+        .then(async ({ describeScreensForAgent }) => {
+            const result = describeScreensForAgent();
+            if (!result.isAuthoritative) {
+                return reply(result);
+            }
+            // The card number of each slide on a screen, which the slide's
+            // JSON alone cannot say. The presenter module is the one that
+            // already reads documents; it stays lazily imported here.
+            const { numberScreenSlidesForAgent } =
+                await import('./agentPresenterHelpers');
+            reply(await numberScreenSlidesForAgent(result));
         })
         .catch((error) => {
             reply({

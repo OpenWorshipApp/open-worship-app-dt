@@ -546,6 +546,73 @@ describe('guardToolCalls', () => {
     it('leaves a transport it cannot wrap alone', () => {
         expect(guardToolCalls(null)).toBeNull();
     });
+
+    // Found by the 2026-09-29 robot run: `take_snapshot {filePath}` returned
+    // only "Saved snapshot to <path>", the interlock learned nothing, and a
+    // `click` on the uid read out of the file pressed "Discard changed".
+    it('learns the uids of a snapshot written to a file', () => {
+        const { transport, seen, sent } = genTransport();
+        const readPaths = [];
+        guardToolCalls(transport, {
+            log: () => {},
+            readSnapshotFile: (filePath) => {
+                readPaths.push(filePath);
+                return '  uid=9_4 button "Discard changed" description="Discard changed"';
+            },
+        });
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 31,
+            method: 'tools/call',
+            params: {
+                name: 'take_snapshot',
+                arguments: { pageId: 1, filePath: 'snap.txt' },
+            },
+        });
+        transport.send({
+            jsonrpc: '2.0',
+            id: 31,
+            result: {
+                content: [{ type: 'text', text: 'Saved snapshot to snap.txt.' }],
+            },
+        });
+        expect(readPaths).toEqual(['snap.txt']);
+
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 32,
+            method: 'tools/call',
+            params: { name: 'click', arguments: { pageId: 1, uid: '9_4' } },
+        });
+        // Refused at the door: answered here, never forwarded.
+        expect(seen.map((one) => one.id)).toEqual([31]);
+        expect(sent.at(-1).id).toBe(32);
+        expect(sent.at(-1).result.isError).toBe(true);
+    });
+
+    it('does not read a file for a snapshot returned inline', () => {
+        const { transport } = genTransport();
+        const readPaths = [];
+        guardToolCalls(transport, {
+            log: () => {},
+            readSnapshotFile: (filePath) => {
+                readPaths.push(filePath);
+                return '';
+            },
+        });
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 41,
+            method: 'tools/call',
+            params: { name: 'take_snapshot', arguments: { pageId: 1 } },
+        });
+        transport.send({
+            jsonrpc: '2.0',
+            id: 41,
+            result: { content: [{ type: 'text', text: 'uid=1_0 RootWebArea' }] },
+        });
+        expect(readPaths).toEqual([]);
+    });
 });
 
 describe('the uid interlock', () => {

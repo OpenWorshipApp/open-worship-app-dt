@@ -164,6 +164,9 @@ function BackgroundAudioSwitchComp({
             onClick={handleToggleAudioHandlers}
             title={tran('Enable Background Audio Handlers')}
             aria-label={tran('Enable Background Audio Handlers')}
+            // The label reads "Enable…" in both states; this is what says
+            // whether it IS enabled, rather than the button's colour alone.
+            aria-pressed={isAudioHandlersVisible}
         >
             <i className="bi bi-soundwave" />
         </button>

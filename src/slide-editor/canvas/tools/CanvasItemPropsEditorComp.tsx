@@ -17,6 +17,8 @@ import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import { cloneJson } from '../../../helper/helpers';
 import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
+import { useAppCurrentRef, useAppEffect } from '../../../helper/appHooks';
+import { registerPendingEditFlusher } from '../../../editing-manager/pendingEditFlushHelpers';
 import { useCanvasControllerEvents } from '../canvasEventHelpers';
 
 export default function CanvasItemPropsEditorComp({
@@ -41,45 +43,65 @@ export default function CanvasItemPropsEditorComp({
     // then tabbing to Y, inside half a second dropped the first one from the
     // document while the panel showed both.
     const pendingPropsRef = useRef<Partial<typeof props>[]>([]);
+    const commitPendingProps = () => {
+        const pendingPropsList = pendingPropsRef.current;
+        pendingPropsRef.current = [];
+        if (pendingPropsList.length === 0) {
+            return;
+        }
+        const { canvas } = canvasController;
+        // The editors are hidden while locked, but a pending debounced
+        // commit could still fire after the item just got locked.
+        const latestItem = canvas.canvasItems.find((item) => {
+            return item.id === canvasItem.id;
+        });
+        if (latestItem === undefined || latestItem.isLocked) {
+            return;
+        }
+        canvasController.editCanvasItemById(canvasItem.id, (item) => {
+            // Apply only the changed fields onto the latest item state.
+            // Committing a full local snapshot here would overwrite
+            // properties changed elsewhere (e.g. a position set by a prior
+            // drag), which made the box jump back to its old spot when
+            // only the background color was changed.
+            //
+            // One patch at a time, in order, not merged: an alignment is
+            // worked out from the size the box has at that moment, so a
+            // width typed just before "Align right" must land first.
+            for (const pendingProps of pendingPropsList) {
+                item.applyBoxData(
+                    {
+                        parentHeight: canvas.height,
+                        parentWidth: canvas.width,
+                    },
+                    pendingProps,
+                );
+            }
+        });
+    };
+    const commitPendingPropsRef = useAppCurrentRef(commitPendingProps);
     const setProps1 = (anyProps: Partial<typeof props>) => {
         setProps((prevProps: any) => {
             return cloneJson({ ...prevProps, ...anyProps });
         });
         pendingPropsRef.current.push(cloneJson(anyProps));
         attemptTimeout(() => {
-            const pendingPropsList = pendingPropsRef.current;
-            pendingPropsRef.current = [];
-            const { canvas } = canvasController;
-            // The editors are hidden while locked, but a pending debounced
-            // commit could still fire after the item just got locked.
-            const latestItem = canvas.canvasItems.find((item) => {
-                return item.id === canvasItem.id;
-            });
-            if (latestItem === undefined || latestItem.isLocked) {
-                return;
-            }
-            canvasController.editCanvasItemById(canvasItem.id, (item) => {
-                // Apply only the changed fields onto the latest item state.
-                // Committing a full local snapshot here would overwrite
-                // properties changed elsewhere (e.g. a position set by a prior
-                // drag), which made the box jump back to its old spot when
-                // only the background color was changed.
-                //
-                // One patch at a time, in order, not merged: an alignment is
-                // worked out from the size the box has at that moment, so a
-                // width typed just before "Align right" must land first.
-                for (const pendingProps of pendingPropsList) {
-                    item.applyBoxData(
-                        {
-                            parentHeight: canvas.height,
-                            parentWidth: canvas.width,
-                        },
-                        pendingProps,
-                    );
-                }
-            });
+            commitPendingPropsRef.current();
         });
     };
+    // Save, undo and redo commit what this panel is still holding back first
+    // (see `pendingEditFlushHelpers`): Ctrl+S straight after typing used to
+    // save the value before the one just typed.
+    const documentFilePath = canvasController.appDocument.filePath;
+    useAppEffect(() => {
+        return registerPendingEditFlusher(documentFilePath, () => {
+            if (pendingPropsRef.current.length > 0) {
+                attemptTimeout(() => {
+                    commitPendingPropsRef.current();
+                }, true);
+            }
+        });
+    }, [documentFilePath, attemptTimeout]);
     useCanvasItemEditEvent(canvasItem, () => {
         const newProps = cloneJson(canvasItem.props);
         setProps(newProps);

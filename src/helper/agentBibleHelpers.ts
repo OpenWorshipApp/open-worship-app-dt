@@ -53,6 +53,11 @@ import {
 } from './agentScreenHelpers';
 import { getAllLocalBibleInfoList } from './bible-helpers/bibleDownloadHelpers';
 import { getVersesCount } from './bible-helpers/bibleLogicHelpers2';
+import {
+    type AgentPendingQuestionType,
+    genPendingQuestionNote,
+    waitForPendingAppQuestion,
+} from './agentPendingQuestionHelpers';
 
 export type AgentBibleRequestType = {
     action?: unknown;
@@ -88,6 +93,9 @@ export type AgentBibleResultType =
           text: string;
           screens: AgentBibleScreenType[];
           isAnyShowing: boolean;
+          // A popup the present left open for the operator -- see
+          // `agentPendingQuestionHelpers`.
+          pendingQuestion?: AgentPendingQuestionType;
           note?: string;
       };
 
@@ -378,6 +386,10 @@ export async function handleAgentBibleRequest(
                 '-- offer that, do not press it unasked.',
         );
     }
+    const pendingQuestion = await waitForPendingAppQuestion();
+    if (pendingQuestion !== null) {
+        notes.push(genPendingQuestionNote(pendingQuestion));
+    }
     return {
         isPresented: presentedOn.length > 0,
         reference: title,
@@ -385,6 +397,7 @@ export async function handleAgentBibleRequest(
         text,
         screens: after,
         isAnyShowing: isAnyShowingNow,
+        ...(pendingQuestion !== null ? { pendingQuestion } : {}),
         ...(notes.length > 0 ? { note: notes.join(' ') } : {}),
     };
 }

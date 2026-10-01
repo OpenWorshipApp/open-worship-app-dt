@@ -36,8 +36,8 @@ PREVIOUS text and the chatbot keeps answering from notes that no longer exist.
   `index.json` on every `owa_help_search` / `owa_help_page` call and caches
   nothing. (Editing the MCP `.mjs` modules themselves still needs a restart —
   see [[agent-access-mcp-chatbot]].)
-- The `.github/` mirrors (`.github/memory/`, `.github/skills/`,
-  `copilot-instructions.md`) are NOT read by the bundler — only `.claude/` is —
+- The Codex mirrors (`.codex/memory/`, `.agents/skills/`,
+  `.codex/project-instructions.md`) are NOT read by the bundler — only `.claude/` is —
   but they still have to be re-copied in the same change by the standing mirror
   rule.
 - With no `electron-build/knowledge/index.json` at all, the tools silently fall
@@ -50,6 +50,6 @@ assistant that was supposed to learn from it, and a deleted/renamed note keeps
 being quoted.
 
 **How to apply:** treat `node extra-work/build-knowledge.mjs` as part of
-finishing any `.claude/` edit — same step as copying the `.github/` mirror. Run
+finishing any `.claude/` edit — same step as copying the Codex mirror. Run
 it before `npm run lint`, and never reach for the full build just to refresh
 knowledge while the app is running.

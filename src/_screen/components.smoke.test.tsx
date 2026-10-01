@@ -97,6 +97,7 @@ const screenManagerMock: any = {
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),
+        foregroundData: { marqueeTopData: null },
     },
     screenDrawManager: {
         render: vi.fn(),

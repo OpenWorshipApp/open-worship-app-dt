@@ -277,9 +277,12 @@ Keep the main window on `presenter.html`.
   `node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=5000`
   (it discovers the published port itself — there is no fixed 9223 any more) before
   assuming a crash.
-- **Contrast-aware dialog.** Choosing a background color that may clash with text pops a
-  confirm: *"…text color may not be visible… change text color as well?"* (`Cancel`/`Ok`).
-  Handle it. (This is **good UX**, not a bug.)
+- **Contrast-aware dialog.** A background color that would clash with the Bible text
+  color (including the white background a Bible list attaches when a verse is presented)
+  now switches the text to black/white FIRST, then asks *"The text color was changed so it
+  stays visible… Keep the new text color?"* (`No`/`Yes`; `No` puts the old color back).
+  Until 2026-09-30 it asked before fixing, and a showing projector stayed unreadable
+  while the question was open. Handle it. (This is **good UX**, not a bug.)
 - **Sliders.** Presenter has two `input[type=range]`: thumbnail-size (`max="200"`) and
   mini-screen zoom (`max="30"`). To drive one programmatically: native value setter +
   `dispatchEvent(new Event('input',{bubbles:true}))` (React listens on `input`).

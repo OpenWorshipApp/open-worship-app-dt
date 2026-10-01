@@ -7,9 +7,9 @@ import {
     getAIKeyFocusRequest,
     takeAIKeyFocusRequest,
 } from '../helper/ai/aiKeyFocusHelpers';
-import { useStateSettingString } from '../helper/settingHelpers';
+import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
-import { SETTING_SETTING_NAME } from './settingHelpers';
+import { SETTING_SETTING_NAME, takeSettingTabRequest } from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
 import { toIconedLabel } from '../others/labelIconHelpers';
 import { warnIfAnyBibleEditorDirty } from './bible-setting/bibleEditorDirtyHelpers';
@@ -54,15 +54,30 @@ export default function SettingComp() {
     };
     const handleSettingTabRef = useAppCurrentRef(handleSettingTab);
     const tabKeyRef = useAppCurrentRef(tabKey);
-    // Another window can ask this one to show an AI key box (see
-    // `aiKeyFocusHelpers`). A Settings window opened for that starts on the
-    // Others tab already; one that was open all along is only RAISED, and the
-    // raise is the focus this listens for. The request is left where it is for
-    // the AI panel to take, which exists only once that tab is showing.
+    // Another window can ask this one to show a particular tab. A newly opened
+    // Settings window reads `setting-tabs` while mounting; one that was open
+    // all along is only RAISED, and the raise is the focus this listens for.
+    // AI-key requests use the same focus event, then remain stored for the AI
+    // panel itself to take once Others is showing.
     useAppEffect(() => {
         const handleFocusing = () => {
+            let currentTab = tabKeyRef.current;
+            const requestedTab = takeSettingTabRequest();
+            if (requestedTab !== null && requestedTab !== currentTab) {
+                if (!handleSettingTabRef.current(requestedTab)) {
+                    // The request was written before this already-open window
+                    // could apply its dirty-editor guard. Keep the persisted
+                    // tab aligned with the tab that safely remained visible.
+                    setSetting(SETTING_SETTING_NAME, currentTab);
+                    if (getAIKeyFocusRequest() !== null) {
+                        takeAIKeyFocusRequest();
+                    }
+                    return;
+                }
+                currentTab = requestedTab;
+            }
             if (
-                tabKeyRef.current === OTHERS_TAB_KEY ||
+                currentTab === OTHERS_TAB_KEY ||
                 getAIKeyFocusRequest() === null
             ) {
                 return;

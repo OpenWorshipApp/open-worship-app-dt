@@ -13,8 +13,7 @@ Arguments: [security | sites | tabs | perf | audit | full — or a plain descrip
 
 ### Full workflow scope (preserved from Claude)
 
-Enhance and, above all, HARDEN the Open Worship App AI Chat window — `html/aichat.html` → `src/aichat/*` and `electron/aiChatGuestHelpers.ts` — the ✨ button right of the 🤖 that holds a company's own chat site (ChatGPT, Claude, Gemini, DeepSeek, Kimi, Grok, Mistral, Perplexity, Qwen, Copilot) in a sandboxed `<webview>` guest beside the app, the way a browser's AI sidebar does. NOT the assistant: that is `owa-enhance-chatbot` (the 🤖, the MCP tools, the manual). Use when asked to enhance / improve / harden / secure / audit / fix / speed up the AI Chat window, the ai chat panel, the ✨ window, `aichat.html`, the AI chat sites list, the AI chat tabs, a site that will not load or sign in inside it (a Cloudflare "Verify you are human" loop, a Google "browser may not be secure" page), the guest, the webview, or to answer "is it safe to hold a stranger's website inside this app". THE RULE THAT BINDS EVERY CHANGE: the guest is the ONE place in this app where a page nobody here wrote runs, and every other renderer has `nodeIntegration: true` — so the guest must stay a stranger (forced sandbox preferences, one locked-down persistent session, http(s) only, popups to the system browser, no permissions, no preload, no node), the host page must stay locked down, and nothing a site can do may reach the app, the operator's files or the projector. Every run MEASURES FIRST (scripts/probe-aichat.mjs — the guest's box re-proven from inside it, plus what a bot check sees), verifies LIVE in the running window (a site that loads, a sign-in that works, three guests and not four), runs the gate LAST, and leaves the paper trail: W-44, CB-68, CLAUDE.md, references/backlog.md AC-xx ids, the `.github/` mirror.
-
+Enhance and, above all, HARDEN the Open Worship App AI Chat window — `html/aichat.html` → `src/aichat/*` and `electron/aiChatGuestHelpers.ts` — the ✨ button right of the 🤖 that holds a company's own chat site (ChatGPT, Claude, Gemini, DeepSeek, Kimi, Grok, Mistral, Perplexity, Qwen, Copilot) in a sandboxed `<webview>` guest beside the app, the way a browser's AI sidebar does. NOT the assistant: that is `owa-enhance-chatbot` (the 🤖, the MCP tools, the manual). Use when asked to enhance / improve / harden / secure / audit / fix / speed up the AI Chat window, the ai chat panel, the ✨ window, `aichat.html`, the AI chat sites list, the AI chat tabs, a site that will not load or sign in inside it (a Cloudflare "Verify you are human" loop, a Google "browser may not be secure" page), the guest, the webview, or to answer "is it safe to hold a stranger's website inside this app". THE RULE THAT BINDS EVERY CHANGE: the guest is the ONE place in this app where a page nobody here wrote runs, and every other renderer has `nodeIntegration: true` — so the guest must stay a stranger (forced sandbox preferences, one locked-down persistent session, http(s) only, popups to the system browser, no permissions, no preload, no node), the host page must stay locked down, and nothing a site can do may reach the app, the operator's files or the projector. Every run MEASURES FIRST (scripts/probe-aichat.mjs — the guest's box re-proven from inside it, plus what a bot check sees), verifies LIVE in the running window (a site that loads, a sign-in that works, three guests and not four), runs the gate LAST, and leaves the paper trail: W-44, CB-68, CLAUDE.md, references/backlog.md AC-xx ids, the Codex mirror.
 
 # OWA Enhance AI Chat — a stranger's website in a box
 
@@ -220,8 +219,9 @@ In the SAME change, whatever is true of the work:
   `node docs/scripts/build-manual.mjs`; `questions/common.json` for a
   question the assistant should now answer.
 - `.claude/memory/aichat-window.md` for anything not derivable from the code.
-- **The `.github/` mirror** (`.github/skills/`, `.github/memory/`,
-  `.github/copilot-instructions.md`): copy, never reconcile by hand.
+- **The Codex mirror** (`.agents/skills/`, `.codex/memory/`,
+  `.codex/project-instructions.md`; rules in `AGENTS.md`): copy, never
+  reconcile by hand.
 - **Any edit under `.claude/` needs `node extra-work/build-knowledge.mjs`.**
 
 ## Areas

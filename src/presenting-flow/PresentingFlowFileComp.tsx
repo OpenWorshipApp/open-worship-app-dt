@@ -9,6 +9,7 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import FileSource from '../helper/FileSource';
+import { pressElementLikeButton } from '../helper/helpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
@@ -172,7 +173,15 @@ function PresentingFlowPreviewComp({
                             : '')
                     }
                     title={tran('Preview Presenting Flow')}
+                    // It opens the run player the operator drives the whole
+                    // service from; as a bare `<i onClick>` it was absent from
+                    // the accessibility tree and unreachable by keyboard.
+                    role="button"
+                    tabIndex={0}
+                    aria-label={tran('Preview Presenting Flow')}
+                    aria-pressed={isPreviewing}
                     onClick={handlePreviewToggling}
+                    onKeyDown={pressElementLikeButton}
                 />
             </div>
             {isOpened ? (

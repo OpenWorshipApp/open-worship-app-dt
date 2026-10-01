@@ -397,3 +397,25 @@
   background-color: var(--chat-ink);
   box-shadow: -6px 0 6px -4px var(--chat-ink);
 }
+
+// Where a tab dragged along the strip would land: a bar on the side of the
+// tab it would go beside. Painted only while a drag is over it.
+.chat-tab.is-drop-before {
+  box-shadow: inset 2px 0 0 var(--chat-signal);
+}
+
+.chat-tab.is-drop-after {
+  box-shadow: inset -2px 0 0 var(--chat-signal);
+}
+
+// Another window, beside `+`. Both stay pinned to the strip's right edge
+// while the tabs scroll under them, so `+` stands one button further in.
+.chat-tab-add.chat-tab-window {
+  font-size: 12px;
+  padding: 3px 8px;
+  margin-left: 0;
+}
+
+.chat-tab-add:has(+ .chat-tab-window) {
+  right: 28px;
+}

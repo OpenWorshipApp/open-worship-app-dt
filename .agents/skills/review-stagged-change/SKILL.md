@@ -15,7 +15,6 @@ Arguments: [optional: path/glob to narrow the review, "perf"/"correctness"/"conv
 
 Exhaustively review ONLY what is currently staged in git (the index — `git diff --cached`), and report every room to improve. Use when asked to "review my staged changes", "review the staged diff", "review what I'm about to commit", "check the index before commit", or to run a pre-commit quality gate. Reviews the INDEX version of each file (`git show :path`), never the working-tree version, so unstaged edits and untracked files are deliberately excluded and partially-staged files are called out. Sweeps eight dimensions in priority order — performance/memory (this app targets very low-spec machines, so it outranks elegance), correctness, reuse & duplication, simplification, project conventions (Comp naming, useAppCurrentRef, debounced event hooks, tran() keys that THROW on a missing Khmer string), tests, security/IPC, and docs/memory drift — then adversarially verifies each candidate finding against the full file before reporting it. Findings come back ranked by severity with file:line links, a concrete failure scenario, and a suggested fix; pass "fix" to apply the accepted ones to the working tree afterwards.
 
-
 # Review staged change
 
 Review **only the staged (indexed) change** and find every legitimate room to improve.

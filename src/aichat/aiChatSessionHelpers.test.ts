@@ -4,13 +4,27 @@ const settingMap = new Map<string, string>();
 
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: (key: string) => settingMap.get(key) ?? null,
+    getSettingForce: (key: string) => settingMap.get(key) ?? null,
     setSetting: (key: string, value: string) => {
         settingMap.set(key, value);
+    },
+    removeSetting: (key: string) => {
+        settingMap.delete(key);
     },
 }));
 
 import {
     checkCanClearAiChatSessions,
+    forgetAiChatClosedTabs,
+    forgetAiChatSiteTraces,
+    genAiChatSessionsSettingName,
+    loadAiChatClosedTabs,
+    MAX_AI_CHAT_CLOSED_TAB_COUNT,
+    rememberClosedAiChatTabs,
+    takeClosedAiChatTab,
+    toAiChatSession,
+    toReopenedAiChatSession,
+    toSignedOutAiChatSessions,
     genAiChatSessionTitle,
     genNewAiChatSession,
     loadAiChatSessions,
@@ -234,5 +248,188 @@ describe('loadAiChatSessions / saveAiChatSessions', () => {
         expect(state.sessions[0].id).toBe('s3');
         // the dropped tab was the active one
         expect(state.activeId).toBe('s3');
+    });
+});
+
+describe('one set of tabs per AI Chat window', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    test('the first window keeps the key a single window always had', () => {
+        expect(genAiChatSessionsSettingName()).toBe('aichat-sessions');
+        expect(genAiChatSessionsSettingName(0)).toBe('aichat-sessions');
+        expect(genAiChatSessionsSettingName(1)).toBe('aichat-sessions-2');
+    });
+
+    test('two windows save without taking each other’s tabs', () => {
+        const first = genSession({ id: 'first' });
+        const second = genSession({ id: 'second' });
+        saveAiChatSessions({ sessions: [first], activeId: 'first' }, 0);
+        saveAiChatSessions({ sessions: [second], activeId: 'second' }, 1);
+        expect(loadAiChatSessions(0).sessions).toEqual([first]);
+        expect(loadAiChatSessions(1).sessions).toEqual([second]);
+    });
+
+    test('a tab from another window is read like one off disk', () => {
+        expect(toAiChatSession(null)).toBeNull();
+        expect(toAiChatSession({ id: '' })).toBeNull();
+        const moved = toAiChatSession({
+            id: 'moved',
+            providerKey: 'chatgpt',
+            title: 'Sermon notes',
+            pageTitle: 'Notes',
+            lastUrl: 'https://evil.example/steal',
+            isLocked: true,
+            extra: 'dropped',
+        });
+        expect(moved).toMatchObject({
+            id: 'moved',
+            providerKey: 'chatgpt',
+            title: 'Sermon notes',
+            isLocked: true,
+            // An address off the site is not kept.
+            lastUrl: null,
+        });
+        expect(moved).not.toHaveProperty('extra');
+        expect(moved!.lastUsedAt).toBeGreaterThan(0);
+    });
+
+    test('a sign-out forgets the pages, keeps the names, in every slot', () => {
+        const session = genSession({
+            id: 'kept',
+            title: 'Mine',
+            pageTitle: 'Their conversation',
+            lastUrl: 'https://chatgpt.com/c/123',
+        });
+        expect(
+            toSignedOutAiChatSessions({ sessions: [session], activeId: 'kept' })
+                .sessions[0],
+        ).toMatchObject({ title: 'Mine', pageTitle: '', lastUrl: null });
+
+        saveAiChatSessions({ sessions: [session], activeId: 'kept' }, 0);
+        saveAiChatSessions({ sessions: [session], activeId: 'kept' }, 2);
+        rememberClosedAiChatTabs([session]);
+        forgetAiChatSiteTraces(0);
+        // The window that signed out forgets its own tabs itself.
+        expect(loadAiChatSessions(0).sessions[0].lastUrl).toBe(
+            'https://chatgpt.com/c/123',
+        );
+        expect(loadAiChatSessions(2).sessions[0]).toMatchObject({
+            title: 'Mine',
+            pageTitle: '',
+            lastUrl: null,
+        });
+        // A slot nobody ever used is not written.
+        expect(settingMap.has(genAiChatSessionsSettingName(1))).toBe(false);
+        expect(loadAiChatClosedTabs()).toEqual([]);
+    });
+});
+
+describe('recently closed tabs', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    test('a closed tab is kept, newest first; a chooser tab is not', () => {
+        rememberClosedAiChatTabs([
+            genSession({ lastUrl: 'https://chatgpt.com/c/1', pageTitle: 'A' }),
+        ]);
+        rememberClosedAiChatTabs([
+            genNewAiChatSession(),
+            genSession({
+                providerKey: 'claude',
+                lastUrl: 'https://claude.ai/chat/2',
+                pageTitle: 'B',
+            }),
+        ]);
+        expect(
+            loadAiChatClosedTabs().map((tab) => {
+                return tab.pageTitle;
+            }),
+        ).toEqual(['B', 'A']);
+    });
+
+    test('the same conversation closed twice is one entry', () => {
+        const url = 'https://chatgpt.com/c/1';
+        rememberClosedAiChatTabs([genSession({ lastUrl: url, title: 'old' })]);
+        rememberClosedAiChatTabs([genSession({ lastUrl: url, title: 'new' })]);
+        const closedTabs = loadAiChatClosedTabs();
+        expect(closedTabs).toHaveLength(1);
+        expect(closedTabs[0].title).toBe('new');
+    });
+
+    test('the list is capped', () => {
+        rememberClosedAiChatTabs(
+            Array.from(
+                { length: MAX_AI_CHAT_CLOSED_TAB_COUNT + 5 },
+                (_one, index) => {
+                    return genSession({
+                        lastUrl: `https://chatgpt.com/c/${index}`,
+                    });
+                },
+            ),
+        );
+        expect(loadAiChatClosedTabs()).toHaveLength(
+            MAX_AI_CHAT_CLOSED_TAB_COUNT,
+        );
+    });
+
+    test('reopening takes the entry off and gives a fresh tab', () => {
+        rememberClosedAiChatTabs([
+            genSession({ id: 'gone', lastUrl: 'https://chatgpt.com/c/1' }),
+            genSession({
+                providerKey: 'claude',
+                title: 'Named',
+                lastUrl: 'https://claude.ai/chat/2',
+            }),
+        ]);
+        const [, second] = loadAiChatClosedTabs();
+        const taken = takeClosedAiChatTab(second.id);
+        expect(taken?.title).toBe('Named');
+        expect(takeClosedAiChatTab(second.id)).toBeNull();
+        expect(toReopenedAiChatSession(taken!)).toMatchObject({
+            providerKey: 'claude',
+            title: 'Named',
+            lastUrl: 'https://claude.ai/chat/2',
+            isLocked: false,
+        });
+        // With no id it is the newest; then nothing.
+        expect(takeClosedAiChatTab()?.lastUrl).toBe('https://chatgpt.com/c/1');
+        expect(takeClosedAiChatTab()).toBeNull();
+    });
+
+    test('a hand-edited list cannot point a tab off its site', () => {
+        settingMap.set(
+            'aichat-closed-tabs',
+            JSON.stringify([
+                {
+                    id: 'x',
+                    providerKey: 'chatgpt',
+                    lastUrl: 'https://evil.example/',
+                    closedAt: 1,
+                },
+                { id: 'y', providerKey: 'nope' },
+                'junk',
+            ]),
+        );
+        expect(loadAiChatClosedTabs()).toEqual([
+            {
+                id: 'x',
+                providerKey: 'chatgpt',
+                title: '',
+                pageTitle: '',
+                lastUrl: null,
+                closedAt: 1,
+            },
+        ]);
+        settingMap.set('aichat-closed-tabs', '{broken');
+        expect(loadAiChatClosedTabs()).toEqual([]);
+    });
+
+    test('clearing the list empties it', () => {
+        rememberClosedAiChatTabs([genSession()]);
+        forgetAiChatClosedTabs();
+        expect(loadAiChatClosedTabs()).toEqual([]);
     });
 });

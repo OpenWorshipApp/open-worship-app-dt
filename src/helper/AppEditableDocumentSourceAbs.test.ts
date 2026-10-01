@@ -47,6 +47,7 @@ import AppEditableDocumentSourceAbs, {
     AppDocumentSourceAbs,
     type AppDocumentMetadataType,
 } from './AppEditableDocumentSourceAbs';
+import { registerPendingEditFlusher } from '../editing-manager/pendingEditFlushHelpers';
 
 type TestJsonType = {
     metadata: AppDocumentMetadataType;
@@ -377,5 +378,33 @@ describe('AppEditableDocumentSourceAbs', () => {
         documentSource.trackPendingWrite(Promise.reject(new Error('disk')));
 
         await expect(documentSource.historyUndo()).resolves.toBe('undo');
+    });
+
+    test('a save first takes in what an editor is still holding back', async () => {
+        const filePath = '/docs/held-back.owa';
+        const history = getHistoryManager(filePath);
+        const documentSource = TestDocument.getInstance(filePath);
+        const order: string[] = [];
+        history.save.mockImplementation(async () => {
+            order.push('saved');
+            return true;
+        });
+        // The Properties panel batches typing for half a second; a Ctrl+S
+        // inside that half second used to save the value before the last one.
+        const unregister = registerPendingEditFlusher(filePath, () => {
+            order.push('flushed');
+            documentSource.trackPendingWrite(
+                Promise.resolve().then(() => {
+                    order.push('edit landed');
+                }),
+            );
+        });
+        await documentSource.save();
+        expect(order).toEqual(['flushed', 'edit landed', 'saved']);
+
+        unregister();
+        order.length = 0;
+        await documentSource.historyUndo();
+        expect(order).toEqual([]);
     });
 });

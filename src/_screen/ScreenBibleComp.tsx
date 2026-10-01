@@ -1,7 +1,11 @@
 import { useRef } from 'react';
 
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
-import { useScreenBibleManagerEvents } from './managers/screenEventHelpers';
+import {
+    useScreenBibleManagerEvents,
+    useScreenForegroundManagerEvents,
+} from './managers/screenEventHelpers';
+import { getMarqueeBandHeight } from './marqueeBandHelpers';
 import ScreenBibleManager from './managers/ScreenBibleManager';
 import {
     useScreenManagerContext,
@@ -140,12 +144,23 @@ export default function ScreenBibleComp() {
         screenBibleManagerRef.current.render();
     });
     useScreenBibleManagerEvents(['text-style']);
+    // Re-render when this screen's foreground changes, so a top marquee
+    // pushes the passage down (and releases it when it comes off).
+    const { screenForegroundManager } = screenManager;
+    useScreenForegroundManagerEvents(['update'], screenForegroundManager);
     const div = useRef<HTMLDivElement>(null);
     useAppEffect(() => {
         if (div.current) {
             screenBibleManager.div = div.current;
         }
     }, [screenBibleManager, div.current]);
+    const marqueeTopData =
+        screenForegroundManager.foregroundData.marqueeTopData;
+    const containerStyle = screenBibleManager.containerStyle;
+    const topInset =
+        marqueeTopData === null
+            ? 0
+            : getMarqueeBandHeight(marqueeTopData, screenManager.height);
     return (
         <>
             <style>{getStyleText(ScreenBibleManager.textStyleTextColor)}</style>
@@ -157,7 +172,15 @@ export default function ScreenBibleComp() {
             <div
                 id="bible-screen-view"
                 ref={div}
-                style={screenBibleManager.containerStyle}
+                style={
+                    topInset === 0
+                        ? containerStyle
+                        : {
+                              ...containerStyle,
+                              top: `${topInset}px`,
+                              height: `${screenManager.height - topInset}px`,
+                          }
+                }
             />
         </>
     );

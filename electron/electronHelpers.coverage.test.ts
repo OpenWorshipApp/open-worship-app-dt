@@ -441,6 +441,134 @@ describe('electronHelpers coverage', () => {
         );
     });
 
+    const AI_CHAT_FEATURES =
+        'popup,width=460,height=640,appAlignHorizontal=right,' +
+        'appAlignVertical=center,appTopToMain';
+
+    test('each AI Chat press opens another window, stepped off the others', () => {
+        vi.useFakeTimers();
+        const parentWin = createMockBrowserWindow();
+        electronMockState.browserWindows.push(parentWin);
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const open =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        // Beside the opener, as the chatbot is.
+        const first = open({
+            url: 'https://localhost:3000/aichat.html?uuid=aichat_1',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_aichat_1`,
+            features: AI_CHAT_FEATURES,
+        } as any);
+        expect(first.action).toBe('allow');
+        expect(first.overrideBrowserWindowOptions).toMatchObject({
+            x: 1210,
+            y: 100,
+            webPreferences: { webviewTag: true },
+        });
+
+        const firstWin = createWindowAt(
+            'https://localhost:3000/aichat.html?uuid=aichat_1',
+            { x: 1210, y: 100 },
+        );
+        electronMockState.browserWindows.push(firstWin);
+        const second = open({
+            url: 'https://localhost:3000/aichat.html?uuid=aichat_2',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_aichat_2`,
+            features: AI_CHAT_FEATURES,
+        } as any);
+        // A second window, not the first one focused -- and not landing
+        // exactly on it, which the right alignment alone would do.
+        expect(second.action).toBe('allow');
+        expect(second.overrideBrowserWindowOptions).toMatchObject({
+            x: 1230,
+            y: 120,
+            webPreferences: { webviewTag: true },
+        });
+        // Raising the open one on the next tick would bury the new one.
+        vi.runAllTimers();
+        expect(firstWin.focus).not.toHaveBeenCalled();
+    });
+
+    test('an AI Chat press past the cap brings the open windows forward', () => {
+        vi.useFakeTimers();
+        const openWins = [1, 2, 3].map((index) => {
+            return createWindowAt(
+                `https://localhost:3000/aichat.html?uuid=aichat_${index}`,
+                { x: 100 * index, y: 100 },
+            );
+        });
+        const parentWin = createMockBrowserWindow();
+        electronMockState.browserWindows.push(...openWins, parentWin);
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const open =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            open({
+                url: 'https://localhost:3000/aichat.html?uuid=aichat_4',
+                frameName: `${POPUP_FRAME_NAME_PREFIX}_aichat_4`,
+                features: AI_CHAT_FEATURES,
+            } as any),
+        ).toEqual({ action: 'deny' });
+        vi.runAllTimers();
+        for (const win of openWins) {
+            expect(win.focus).toHaveBeenCalledOnce();
+        }
+    });
+
+    test('a tab dragged out of AI Chat opens where it was dropped, owned by the app', () => {
+        vi.useFakeTimers();
+        const mainWin = createMockBrowserWindow();
+        const aiChatWin = createWindowAt(
+            'https://localhost:3000/aichat.html?uuid=aichat_1',
+            { x: 1210, y: 100 },
+            { getParentWindow: vi.fn(() => mainWin) },
+        );
+        electronMockState.browserWindows.push(mainWin, aiChatWin);
+        guardBrowsing(
+            aiChatWin as any,
+            {
+                preload: '/tmp/preload.js',
+                webviewTag: true,
+            } as any,
+        );
+        const open =
+            aiChatWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        const response = open({
+            url: 'https://localhost:3000/aichat.html?uuid=aichat_2',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_aichat_2`,
+            features:
+                'popup,width=460,height=640,x=400,y=300,appFollowScale,' +
+                'appTopToMain',
+        } as any);
+
+        expect(response.action).toBe('allow');
+        // Not beside the opener, not cascaded: at the drop.
+        expect(response.overrideBrowserWindowOptions).toMatchObject({
+            x: 400,
+            y: 300,
+            width: 460,
+            height: 640,
+            // The app window's child, so closing the window it came out of
+            // does not close it too.
+            parent: mainWin,
+            webPreferences: { webviewTag: true },
+        });
+        vi.runAllTimers();
+        expect(aiChatWin.focus).not.toHaveBeenCalled();
+
+        // Anything else an AI Chat window opened would NOT inherit the tag.
+        const other = open({
+            url: 'https://localhost:3000/about.html?uuid=about',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_about`,
+            features: 'popup',
+        } as any);
+        expect(other.overrideBrowserWindowOptions.webPreferences).toMatchObject(
+            { webviewTag: false },
+        );
+    });
+
     test('a non-resizable popup without a menu bar', () => {
         vi.useFakeTimers();
         const parentWin = createMockBrowserWindow();

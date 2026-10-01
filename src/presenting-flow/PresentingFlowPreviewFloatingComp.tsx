@@ -603,6 +603,7 @@ function PresentingFlowPreviewCollapsingButtonsComp({
             <button
                 type="button"
                 title={tran('Collapse All')}
+                aria-label={tran('Collapse All')}
                 disabled={collapsedCount === itemKeys.length}
                 onClick={handleCollapsingAll}
             >
@@ -611,6 +612,7 @@ function PresentingFlowPreviewCollapsingButtonsComp({
             <button
                 type="button"
                 title={tran('Expand All')}
+                aria-label={tran('Expand All')}
                 disabled={collapsedCount === 0}
                 onClick={handleExpandingAll}
             >

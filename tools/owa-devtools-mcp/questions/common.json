@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-29",
+    "updated": "2026-09-30",
     "sections": [
         {
             "id": "panels",
@@ -985,6 +985,44 @@
                     "resources": {
                         "recipe": "W-44",
                         "find": "Sign out of every site"
+                    }
+                },
+                {
+                    "id": "ai-chat-more-windows",
+                    "text": "Can I open more than one AI Chat window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another window",
+                        "new window",
+                        "second window",
+                        "two windows",
+                        "side by side",
+                        "move tab",
+                        "drag tab",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "New window"
+                    }
+                },
+                {
+                    "id": "ai-chat-reopen-closed-tab",
+                    "text": "How do I get back an AI Chat tab I closed?",
+                    "kind": "howto",
+                    "keywords": [
+                        "closed",
+                        "reopen",
+                        "undo close",
+                        "previous tab",
+                        "history",
+                        "lost tab",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "Recently closed tabs",
+                        "shortcut": "Ctrl+Shift+T"
                     }
                 },
                 {

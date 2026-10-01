@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
+import { pressElementLikeButton } from '../helper/helpers';
 import {
     PRESENTING_FLOW_CC_ROW_ATTR,
     PRESENTING_FLOW_ITEM_UUID_ATTR,
@@ -148,6 +149,10 @@ export default function PresentingFlowRowComp({
                 ? {
                       role: 'button',
                       tabIndex: 0,
+                      // Named by its label: a `role="button"` takes its name
+                      // from its content otherwise, and every row was read
+                      // out as "… More Options" off the ⋮ button inside it.
+                      'aria-label': label,
                       // ENTER alone, deliberately not Space. Space is the run's
                       // own next-key, registered on the window and gated on focus
                       // being inside the floating preview — and CC rows are drawn
@@ -192,9 +197,19 @@ export default function PresentingFlowRowComp({
                         'bi app-presenting-flow-row-chevron app-caught-hover-pointer' +
                         ` bi-chevron-${isExpanded ? 'down' : 'right'}`
                     }
+                    role="button"
+                    tabIndex={0}
+                    aria-label={tran(isExpanded ? 'Collapse' : 'Expand')}
+                    aria-expanded={isExpanded}
                     onClick={(event) => {
                         event.stopPropagation();
                         onToggleExpanding?.(event);
+                    }}
+                    onKeyDown={(event) => {
+                        // Kept off the row: its own Enter would present it.
+                        if (pressElementLikeButton(event)) {
+                            event.stopPropagation();
+                        }
                     }}
                 />
             ) : (

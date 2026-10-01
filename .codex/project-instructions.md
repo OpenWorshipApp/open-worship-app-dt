@@ -300,6 +300,20 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   window waits for focus. `demoHelpers.mjs` routes built-in demos to their
   declared page and preserves an explicit same-page URL, so Show it stays in
   the originating popup; `pickTarget` prefers an exact URL before a substring.
+  **The card takes itself off after a minute** (2026-09-29,
+  `DAILY_TIP_AUTO_CLOSE_MS`), which is the other half of not covering the
+  controls a volunteer is reaching for. It is TWO clocks held by one flag: a
+  `setTimeout` that carries its remaining time across a pause, and a 3px bar
+  along the card's bottom edge running a finite `transform: scaleX()` -- never
+  a width, a repaint or a per-second tick, which would re-render the card
+  sixty times over a busy panel. The pointer resting on the card pauses both
+  (`animation-play-state` + the effect's teardown), so leaving carries on from
+  where the bar stopped rather than granting a fresh minute; browsing All tips
+  and starting a walkthrough hold it too. Focus is deliberately NOT a second
+  hold -- a click leaves its own button focused and the card would sit there
+  for good. The bar is exempted from the global `prefers-reduced-motion` clamp
+  in `interaction.scss` for the reason the spinners are: clamped to 0.001ms it
+  empties at once and then contradicts a card that is still there.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
   `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 99
@@ -1063,7 +1077,21 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
 isLocked, lastUsedAt}`; `lastUrl` is only an https page on the site's own
     hosts (`toKeptUrl`), never a sign-in page. **Three live guests at most**
     (`toLiveSessionIds`: active + 2 most recent; the rest unmount and reload
-    later — each site is a renderer process). Hide with `visibility: hidden`,
+    later — each site is a renderer process). **Up to three WINDOWS**
+    (2026-09-30, `electron/aiChatWindowHelpers.ts`): every ✨ press opens
+    another (a fresh `uuid`; a fourth press raises the open ones), and each
+    keeps its own tabs under a SLOT the main process hands out — slot 0 is
+    the old `aichat-sessions` key, slot n `aichat-sessions-<n+1>` — because
+    two windows on one key save over each other. A tab dragged along the
+    strip reorders; dragged out of the window, or sent by **Open in new
+    window**, it is handed to the main process by a sync IPC keyed by the
+    new window's uuid and taken ONCE at module scope (a `useState`
+    initialiser runs twice under StrictMode). The new window's parent is the
+    opener's parent, and `webviewTag` is `false` on every other page, so
+    nothing an AI Chat window opens inherits the tag. A closed tab goes to
+    **Recently closed** (`aichat-closed-tabs`, 20, shared, read with
+    `getSettingForce`), reopened from the card, the 🕘 or Ctrl+Shift+T; Sign
+    out empties it and tells the other windows. Hide with `visibility: hidden`,
     never `display: none` (it re-attaches). `src` is fixed per mount; a site
     change is a new React key. `allowpopups` must be the STRING `""`
     (`GUEST_POPUP_ATTRIBUTES`; React drops a boolean on an unknown attribute),
@@ -1860,10 +1888,11 @@ same words as the panel it opened.
   `press_key`, `Delete`/`Backspace`) do NOT change the model unless the Electron
   window has genuine OS **foreground** focus. `select_page` bringToFront alone is
   not enough; if real typing is required, ask the user to click the window.
-- **Much of the UI is painted only under the mouse.** Toolbars like the six
-  icons above a bible view are laid out and clickable the whole time and
-  hidden with `visibility` (a `:hover` rule on an ancestor several levels
-  up), so `getBoundingClientRect` says they are on screen and a screenshot
+- **Much of the UI is painted only under the mouse.** Toolbars like the
+  icons in a bible view's header are laid out the whole time and painted
+  away by a `:hover` rule on an ancestor (`visibility` on most such rows;
+  that one is `opacity` + `pointer-events: none`, floated over the title's
+  end), so `getBoundingClientRect` says they are on screen and a screenshot
   says they are not. `domMatch.mjs` classifies with `checkVisibility` —
   `shown` / `hidden` (painted away, revealable) / `gone` (no box) — reports
   `showsOnHover` on a match, and FORCES the hover before ringing, clicking
@@ -2022,15 +2051,15 @@ installed app, so the second one quits silently; and
 `ELECTRON_RUN_AS_NODE` makes the packaged exe run as Node exactly as it does
 `npm run dev`. `launch` records the pid and `stop` kills that pid only.
 
-`.github/skills/owa-robot-test`, `.github/memory/` and
-`.github/copilot-instructions.md` are the Copilot MIRROR of this skill, of
-`.claude/memory/` and of this file (`.claude/CLAUDE.md`). `.claude/` is the
-source of truth: edit here first, then copy across in the SAME change. They have
-already diverged more than once (the skill mirror was several revisions and
-seven memory files behind; `copilot-instructions.md` missed two CLAUDE.md
-updates before being re-synced), so a mirror file that disagrees with its
-`.claude/` twin is stale by definition — re-copy it rather than reconciling the
-two by hand.
+`.agents/skills/owa-robot-test`, `.codex/memory/` and
+`.codex/project-instructions.md` are the Codex MIRROR of this skill, of
+`.claude/memory/` and of this file (`.claude/CLAUDE.md`); `AGENTS.md` at the
+repo root says how each is copied (a mirrored `SKILL.md` keeps its Codex
+frontmatter and usage notes, everything else is copied exactly). `.claude/` is
+the source of truth: edit here first, then copy across in the SAME change.
+Mirrors have drifted before (one fell several revisions and seven memory files
+behind), so a mirror file that disagrees with its `.claude/` twin is stale by
+definition — re-copy it rather than reconciling the two by hand.
 
 **Screen controlling & presenting testing is mandatory in every run**, whatever
 the focus area — presenting to a screen is the app's core purpose and screen-only
@@ -2127,7 +2156,7 @@ put it to the user rather than shaving another 200 tokens off a description.
   `research` runs that phase alone and ships nothing.
 - Tracked work carries stable `EC-xx` ids in the skill's `references/backlog.md`;
   add what you find there even when you don't do it.
-- Same mirror rule as owa-robot-test: `.github/skills/owa-enhance-chatbot` is a
+- Same mirror rule as owa-robot-test: `.agents/skills/owa-enhance-chatbot` is a
   copy, `.claude/` is the source of truth.
 - **A tool change is not done until it was driven against the running app.**
   Verify live first and run `npm run lint` last (it no longer builds into
@@ -2160,7 +2189,7 @@ descriptions on 2026-09-18 — two of which contradicted the chatbot's prompt),
 so a tool added without a decision cannot land quietly. Tool results are
 compact JSON (`MC-33`): a result rides every later round, and indentation was
 ~31% of it. Same mirror rule:
-`.github/skills/owa-enhance-mcp` is a copy.
+`.agents/skills/owa-enhance-mcp` is a copy.
 
 ## owa-enhance-aichat skill
 
@@ -2181,7 +2210,7 @@ tells the truth about itself: `references/threat-model.md` carries the four
 walls and the 2026-09-11 measurements (`navigator.webdriver` `true` as
 launched; a plain-Chrome user agent looping Cloudflare's box on claude.ai
 for good, Electron's own passing with no box), `references/backlog.md` the
-`AC-xx` items. Same mirror rule: `.github/skills/owa-enhance-aichat` is a copy.
+`AC-xx` items. Same mirror rule: `.agents/skills/owa-enhance-aichat` is a copy.
 
 ## owa-enhance skill
 
@@ -2206,7 +2235,7 @@ stay with their own skills; app-wide findings carry `EN-xx` ids in
 catch, true for any session driving the live app: `performance_start_trace`
 and `lighthouse_audit` both RELOAD the window they are aimed at unless told
 `reload: false` / `mode: "snapshot"`. Same mirror rule:
-`.github/skills/owa-enhance` is a copy.
+`.agents/skills/owa-enhance` is a copy.
 
 ## owa-upgrade-unit-test skill
 
@@ -2275,5 +2304,4 @@ repo's real idioms — the `// @vitest-environment jsdom` first line, `vi.hoiste
 mock bundles, `createRoot` + `act` or `renderToStaticMarkup` (there is no
 `@testing-library/react` here), the `vi.mock`-factory-survives-`resetModules`
 fork, and a table of this app's recurring defect classes as ready-made test
-targets. Same mirror rule: `.agents/skills/owa-upgrade-unit-test` and
-`.github/skills/owa-upgrade-unit-test` are copies.
+targets. Same mirror rule: `.agents/skills/owa-upgrade-unit-test` is a copy.

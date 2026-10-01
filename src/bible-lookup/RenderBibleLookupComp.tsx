@@ -1,4 +1,4 @@
-import { lazy, useCallback, useMemo, useState } from 'react';
+import { lazy, useCallback, useMemo, useRef, useState } from 'react';
 
 import { InputTextContext } from './InputHandlerComp';
 import { SelectedBibleKeyContext } from '../bible-list/bibleHelpers';
@@ -128,11 +128,23 @@ export default function RenderBibleLookupComp({
             return viewController.getEditingResult();
         }, []);
     const { isValid: isValidBibleKey, bibleKey } = useSelectedBibleKey();
+    // Every keystroke asks for a new result, and the lookups resolve in
+    // whatever order their parsing finishes -- `Psal` can land AFTER
+    // `Psalm 23:1`. Applying each one as it arrived left the editing pane
+    // frozen on a half-typed book (`Psal`, one `Psalm` button) while the box
+    // and the other view read the full reference. Only the newest request may
+    // set the result.
+    const latestReloadIdRef = useRef(0);
     useAppEffect(() => {
         viewController.reloadEditingResult = (inputText) => {
+            latestReloadIdRef.current += 1;
+            const reloadId = latestReloadIdRef.current;
             viewController
                 .getEditingResult(inputText)
                 .then((newEditingResult) => {
+                    if (reloadId !== latestReloadIdRef.current) {
+                        return;
+                    }
                     setEditingResult(newEditingResult);
                 });
         };

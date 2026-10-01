@@ -42,82 +42,60 @@ export function genLayoutTabs() {
 
     const readerTab: TabOptionType = {
         title: (
-            <>
-                <span style={{ color: 'var(--app-color-reader)' }}>
-                    📖
-                    {tran('Bible Reader') + ' '}
-                </span>
-                <span
-                    className="ms-2"
-                    style={{ color: 'var(--app-color-reader)' }}
-                    title={tran('Open Bible Reader in a new window')}
-                    onClick={async (event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        openPopupWindow(
-                            appProvider.readerHomePage,
-                            `reader_${Date.now()}`,
-                            'reader',
-                        );
-                    }}
-                >
-                    <i className="bi bi-box-arrow-up-right" />
-                </span>
-            </>
+            <span style={{ color: 'var(--app-color-reader)' }}>
+                📖
+                {tran('Bible Reader') + ' '}
+            </span>
         ),
         routePath: appProvider.readerHomePage,
+        externalOpen: {
+            title: tran('Open Bible Reader in a new window'),
+            color: 'var(--app-color-reader)',
+            onOpen: () => {
+                openPopupWindow(
+                    appProvider.readerHomePage,
+                    `reader_${Date.now()}`,
+                    'reader',
+                );
+            },
+        },
     };
 
     const experimentTab: TabOptionType = {
-        title: (
-            <span
-                onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    return openPopupWindow(
-                        appProvider.experimentHomePage,
-                        `experiment_${Date.now()}`,
-                        'experiment',
-                        {
-                            appBlinkFeatures: ['CanvasDrawElement'],
-                        },
-                    );
-                }}
-            >
-                {toTitleExternal('(dev)Experiment')}
-            </span>
-        ),
+        title: toTitleExternal('(dev)Experiment'),
         routePath: appProvider.presenterHomePage,
+        onOpen: () => {
+            openPopupWindow(
+                appProvider.experimentHomePage,
+                `experiment_${Date.now()}`,
+                'experiment',
+                {
+                    appBlinkFeatures: ['CanvasDrawElement'],
+                },
+            );
+        },
     };
 
     const editorTab: TabOptionType = {
         title: (
-            <>
-                <span>
-                    🖥️✏️
-                    {tran('Slide Editor') + ' '}
-                </span>
-                <span
-                    className="ms-2"
-                    title={tran('Open Slide Editor in a new window')}
-                    onClick={async (event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        const isSelected = await checkIsAppDocumentSelected();
-                        if (!isSelected) {
-                            return;
-                        }
-                        const varyAppDocument =
-                            await getSelectedVaryAppDocument();
-                        openAppDocumentEditorExternal(varyAppDocument!);
-                    }}
-                >
-                    <i className="bi bi-box-arrow-up-right" />
-                </span>
-            </>
+            <span>
+                🖥️✏️
+                {tran('Slide Editor') + ' '}
+            </span>
         ),
         routePath: appProvider.appDocumentEditorHomePage,
         preCheck: checkIsAppDocumentSelected,
+        externalOpen: {
+            title: tran('Open Slide Editor in a new window'),
+            onOpen: async () => {
+                const isSelected = await checkIsAppDocumentSelected();
+                if (!isSelected) {
+                    return;
+                }
+                const varyAppDocument = await getSelectedVaryAppDocument();
+                openAppDocumentEditorExternal(varyAppDocument!);
+            },
+        },
     };
     return { presenterTab, readerTab, experimentTab, editorTab };
 }

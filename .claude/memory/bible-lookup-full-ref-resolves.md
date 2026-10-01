@@ -31,7 +31,7 @@ the direction of the shared behaviour changed), and assert the **rendered verse*
 never a dropped `3:16`. Corrected in the same change: `coverage-matrix.md` RD-03
 (matrixVersion 2026-09-11e), `knowledge-base.md` §5 + §11 + §9, `test-plan.md`
 S11, `components-path.md`, `user-workflows.md` W-06/W-11 (workflowsVersion
-2026-09-11e) and the generated manual pages, plus the `.github` mirrors. The
+2026-09-11e) and the generated manual pages, plus the mirrors. The
 `coverage-expansion/discover-*.md` sweep files still carry the old row; they are
 dated research provenance, not runtime references. Related:
 [[qa-intentional-not-bugs]].

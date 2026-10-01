@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: c8d1ebea-4367-48e5-bef9-e0dd99a3f259
-  modified: 2026-09-14T17:32:50.917Z
+  modified: 2026-09-30T21:49:28.816Z
 ---
 
 Added 2026-09-11 at the user's ask (*like firefox, I want an ai chat panel …
@@ -62,6 +62,37 @@ process), one per press, and a refused one is said on the window's
 `ws://` handshake to any loopback service walked around the fifth wall until
 the filter named `ws://` and `wss://` — see
 [[aichat-guest-cannot-reach-loopback]].
+
+**Several windows, moving tabs, closed tabs (2026-09-30):** asked for in
+five messages (*open multiple instances*, *drag the tab to new window*, *a
+tab's options to open in new window and a window option to open new window*,
+*drag to reorder*, *see my previous tab*). Each ✨ press opens ANOTHER window:
+`openAiChatPage` gives every one a fresh `uuid`, and `handlePopupWindowOpen`
+lets an AI Chat page past the "already open" deny up to
+`MAX_AI_CHAT_WINDOW_COUNT` (3, `electron/aiChatWindowHelpers.ts` — a leaf,
+because `aiChatGuestHelpers` → `aiHelpers` → `electronHelpers` is a cycle),
+skips raising the open ones (the next-tick focus would bury the new one) and
+cascades it off them, since `right`/`center` alignment overwrites
+`genBoundsData`'s cascade. **Tabs are per window by SLOT**: the main process
+hands each window the lowest free number (sync `main:app:ai-chat-window-slot`,
+kept per web contents across a reload), slot 0 reads the old
+`aichat-sessions` key, slot n `aichat-sessions-<n+1>`; two windows on one key
+saved over each other. A tab moves to a new window by a sync hand-off
+(`main:app:ai-chat-hand-tab`, ONE held, 30 s, keyed by the new window's
+uuid) read once at module scope in `AiChatAppComp` (a `useState` initialiser
+runs twice under StrictMode and the second read would find it gone); it leaves
+the first strip only if `window.open` returned a window. The new window's
+parent is the OPENER's parent (as the first window's child it would close
+with it), and `webviewTag` is now spelled `false` for every other page so a
+window an AI Chat window opens cannot inherit the tag. **Recently closed** is
+ONE shared list (`aichat-closed-tabs`, 20, read with `getSettingForce` because
+another window writes it), fed by close / solo / clear-all from the ref and
+never inside a state updater. Sign out empties it, sweeps closed windows'
+slots and tells the open ones (`app:ai-chat:signed-out`). The tear-off drop is
+an OS drag CDP cannot start; reorder CAN be driven with chrome-devtools'
+`drag`. Closing or moving a site tab logs `Invalid guestInstanceId` and
+`process.listenerCount is not a function`: Electron's webview teardown
+hitting `rendererLockdown`'s process decoy, which predates this work.
 
 **Why:** the user wanted the sites themselves, with their own accounts, not
 the app's assistant — and the app runs on low-spec machines, so every open

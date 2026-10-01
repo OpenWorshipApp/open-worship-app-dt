@@ -29,6 +29,10 @@ import ElectronSettingManager, {
     type PopupWinBoundsType,
 } from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
+import {
+    checkIsAiChatPageUrl,
+    MAX_AI_CHAT_WINDOW_COUNT,
+} from './aiChatWindowHelpers';
 // Cyclic on paper for the same reason as the line above: this reaches
 // `aiHelpers`, which imports `isDev`/`toUnpackedPath` from here. Every use on
 // both sides is inside a function body.
@@ -1182,8 +1186,14 @@ function genPopupWebPreferences(
     // feature the opener could ask for: a renderer that could request the
     // tag could host a foreign page next to node integration. What the guest
     // itself may do is decided in `aiChatGuestHelpers.ts`.
-    const guestPreferences: WebPreferences =
-        boundsKey === htmlFiles.aichat ? { webviewTag: true } : {};
+    //
+    // Spelled out BOTH ways: a popup inherits its opener's preferences, and
+    // an AI Chat window opens another of itself when a tab is dragged out of
+    // it, so without the explicit `false` anything it opened would inherit
+    // the tag.
+    const guestPreferences: WebPreferences = {
+        webviewTag: boundsKey === htmlFiles.aichat,
+    };
     const blinkFeatures = featuresRecord.appBlinkFeatures;
     if (!blinkFeatures) {
         return { ...webPreferences, ...guestPreferences };
@@ -1248,7 +1258,15 @@ function handlePopupWindowOpen(
 
     const { groupWindows, selfWindows, subDisplay, featuresRecord, boundsKey } =
         getPopupWindowData(win, options);
-    if (groupWindows.length > 0) {
+    // The AI Chat window is the one popup that opens ANOTHER of itself on
+    // every press (`aiChatWindowHelpers.ts`); past the cap, the press brings
+    // the open ones forward the way a second press of any other popup does.
+    const isAiChat = boundsKey === htmlFiles.aichat;
+    const isOpeningAnotherAiChat =
+        isAiChat && groupWindows.length < MAX_AI_CHAT_WINDOW_COUNT;
+    // Not for a window about to open: raising the others on the next tick
+    // would put them over the new one, which then opens behind them.
+    if (groupWindows.length > 0 && !isOpeningAnotherAiChat) {
         if (options.url.includes(htmlFiles.chatbot)) {
             const openerPathname = new URL(win.webContents.getURL()).pathname;
             for (const existingWin of selfWindows) {
@@ -1267,7 +1285,7 @@ function handlePopupWindowOpen(
             }
         }, 0);
     }
-    if (selfWindows.length > 0) {
+    if (selfWindows.length > 0 || (isAiChat && !isOpeningAnotherAiChat)) {
         return { action: 'deny' };
     }
     if (groupWindows.length === 0) {
@@ -1298,10 +1316,41 @@ function handlePopupWindowOpen(
             Object.assign(subDisplay, genGroupCascadePosition(groupWindows));
         }
     }
+    // A popup that aligns itself beside its opener had the cascade
+    // `genBoundsData` gave it overwritten by that alignment, so a second AI
+    // Chat window would land exactly on the first. It steps off the others
+    // here instead, kept where the mouse can reach it. A window opened by a
+    // tab dragged out of another goes where the tab was DROPPED, whatever
+    // the remembered spot says, on whichever monitor that is.
+    const aiChatPlace =
+        isAiChat &&
+        featuresRecord.x !== undefined &&
+        featuresRecord.y !== undefined
+            ? { x: featuresRecord.x, y: featuresRecord.y }
+            : null;
+    if (aiChatPlace !== null) {
+        const placed = { ...subDisplay, ...aiChatPlace };
+        Object.assign(subDisplay, keepOnScreen(placed, placed));
+    } else if (isAiChat && groupWindows.length > 0) {
+        Object.assign(
+            subDisplay,
+            keepOnScreen(win.getBounds(), {
+                ...subDisplay,
+                ...genGroupCascadePosition(groupWindows),
+            }),
+        );
+    }
 
+    // An AI Chat window opened FROM an AI Chat window (a dragged-out tab)
+    // belongs to the app window the first one belongs to. As the first one's
+    // child it would close when that one closed, taking the tab with it.
+    const ownerWin =
+        isAiChat && checkIsAiChatPageUrl(win.webContents.getURL())
+            ? (win.getParentWindow() ?? win)
+            : win;
     const topToMainOptions: BrowserWindowConstructorOptions = {};
     if (featuresRecord.appTopToMain) {
-        topToMainOptions.parent = win;
+        topToMainOptions.parent = ownerWin;
     }
 
     const popupWebPreferences = genPopupWebPreferences(
@@ -1326,7 +1375,7 @@ function handlePopupWindowOpen(
             return createPopupWindow(
                 options,
                 {
-                    parentWin: win,
+                    parentWin: ownerWin,
                     webPreferences: popupWebPreferences,
                     featuresRecord,
                     boundsKey,

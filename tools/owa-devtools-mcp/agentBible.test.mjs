@@ -69,6 +69,20 @@ describe('describePresentedBible', () => {
         );
     });
 
+    it('says when the app was left asking the operator something', () => {
+        expect(
+            describePresentedBible({
+                ...presented,
+                pendingQuestion: {
+                    title: 'Background and Color',
+                    text: 'Keep the new text color?',
+                },
+            }),
+        ).toContain(
+            'The app is asking you something -- "Background and Color: Keep the new text color?".',
+        );
+    });
+
     it('says which screens are showing it', () => {
         expect(
             describePresentedBible({

@@ -442,10 +442,9 @@ const dictionary = {
     'Open BibleNote': 'បើកកំណត់ត្រាព្រះគម្ពីរ',
     'No title': 'គ្មានចំណងជើង',
     'Background and Color': 'ផ្ទៃខាងក្រោយ និងពណ៌',
-    'The current text color may not be visible with the new background color.':
-        'ពណ៌អក្សរបច្ចុប្បន្នអាចមិនមើលឃើញជាមួយពណ៌ផ្ទៃខាងក្រោយថ្មី',
-    'Do you want to change the text color as well?':
-        'តើអ្នកចង់ប្ដូរពណ៌អក្សរផងដែរ?',
+    'The text color was changed so it stays visible on the new background color.':
+        'ពណ៌អក្សរត្រូវបានប្ដូរ ដើម្បីឱ្យនៅតែមើលឃើញលើពណ៌ផ្ទៃខាងក្រោយថ្មី។',
+    'Keep the new text color?': 'រក្សាពណ៌អក្សរថ្មីឬទេ?',
     'Fail to create folder': 'មិនអាចបង្កើតថតបាន',
     'New Note Item': 'បង្កើតកំណត់ត្រាថ្មី',
     'This will select': 'នេះនឹងជ្រើសរើស',
@@ -1548,6 +1547,10 @@ const dictionary = {
     'Preview Size Scale': 'មាត្រដ្ឋានទំហំមើលជាមុន',
     Previous: 'មុន',
     'Reset Date and Time to Now': 'កំណត់កាលបរិច្ឆេទ និងម៉ោងទៅពេលឥឡូវនេះ',
+    'That date and time has already passed':
+        'កាលបរិច្ឆេទ និងម៉ោងនោះបានកន្លងផុតទៅហើយ',
+    'Pick a date and time later than now, or press Reset.':
+        'សូមជ្រើសរើសកាលបរិច្ឆេទ និងម៉ោងក្រោយពេលឥឡូវនេះ ឬចុច កំណត់ឡើងវិញ។',
     'Rotate:': 'បង្វិល៖',
     'Saving Bible Data': 'កំពុងរក្សាទុកទិន្នន័យព្រះគម្ពីរ',
     'Saving File': 'កំពុងរក្សាទុកឯកសារ',

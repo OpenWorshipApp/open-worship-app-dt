@@ -20,6 +20,15 @@ import {
     clearAiChatGuestData,
 } from './aiChatGuestHelpers';
 import {
+    AI_CHAT_HAND_TAB_CHANNEL,
+    AI_CHAT_TAKE_TAB_CHANNEL,
+    AI_CHAT_WINDOW_SLOT_CHANNEL,
+    claimAiChatWindowSlot,
+    handAiChatTab,
+    takeAiChatTab,
+    tellOtherAiChatWindowsSignedOut,
+} from './aiChatWindowHelpers';
+import {
     checkIsEncryptedFile,
     decryptFile,
     encryptFile,
@@ -177,9 +186,25 @@ export function initEventListenerApp(appController: ElectronAppController) {
     // The AI Chat window's "Sign out of every site". It is the only way in
     // the app to end a sign-in held on the guest partition, and the window
     // has already asked twice by the time it gets here.
-    onAsync(ipcMain, 'main:app:clear-ai-chat-data', async () => {
+    // Every AI Chat window shares the one partition, so the others are told
+    // and drop the pages they are still showing.
+    onAsync(ipcMain, 'main:app:clear-ai-chat-data', async (_data, event) => {
         await clearAiChatGuestData();
+        tellOtherAiChatWindowsSignedOut(event.sender);
         return true;
+    });
+
+    // Which of the open AI Chat windows this is, so each keeps its own tabs.
+    ipcMain.on(AI_CHAT_WINDOW_SLOT_CHANNEL, (event) => {
+        event.returnValue = claimAiChatWindowSlot(event.sender);
+    });
+    // A tab dragged out of one AI Chat window into a new one: held here
+    // between the two, synchronously, so it is here before the window is.
+    ipcMain.on(AI_CHAT_HAND_TAB_CHANNEL, (event, data: unknown) => {
+        event.returnValue = handAiChatTab(event.sender, data);
+    });
+    ipcMain.on(AI_CHAT_TAKE_TAB_CHANNEL, (event) => {
+        event.returnValue = takeAiChatTab(event.sender);
     });
 
     // A site in the AI Chat window asking for the microphone, answered by the

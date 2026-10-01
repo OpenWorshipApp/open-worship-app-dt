@@ -63,9 +63,14 @@ export default function ConfirmPopupComp({
                 id="app-confirm-popup"
                 className="app-popup-widget card"
                 style={confirmData.extraStyles}
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="app-confirm-popup-title"
+                aria-describedby="app-confirm-popup-body"
             >
                 <HeaderAlertPopupComp
                     title={confirmData.title}
+                    titleId="app-confirm-popup-title"
                     header={
                         <>
                             <i className="app-popup-header-icon icon-question bi bi-question-circle-fill" />
@@ -76,13 +81,16 @@ export default function ConfirmPopupComp({
                 />
                 {typeof confirmData.body === 'string' ? (
                     <div
+                        id="app-confirm-popup-body"
                         className="app-popup-body app-selectable-text"
                         dangerouslySetInnerHTML={{
                             __html: sanitizeHtml(confirmData.body),
                         }}
                     />
                 ) : (
-                    <div className="app-popup-body">{confirmData.body}</div>
+                    <div id="app-confirm-popup-body" className="app-popup-body">
+                        {confirmData.body}
+                    </div>
                 )}
                 <div className="app-popup-footer">
                     <button

@@ -6,10 +6,14 @@ import { useAppCurrentRef } from '../helper/appHooks';
 export default function HeaderAlertPopupComp({
     header,
     title,
+    titleId,
     onClose,
 }: Readonly<{
     header: ReactNode;
     title?: string;
+    // The popup root points `aria-labelledby` here, so a screen reader
+    // announces the popup by its title when it opens.
+    titleId?: string;
     onClose: () => void;
 }>) {
     const onCloseRef = useAppCurrentRef(onClose);
@@ -19,7 +23,11 @@ export default function HeaderAlertPopupComp({
     }, []);
     return (
         <div className="app-popup-header card-header">
-            <div className="app-popup-header-title app-ellipsis" title={title}>
+            <div
+                id={titleId}
+                className="app-popup-header-title app-ellipsis"
+                title={title}
+            >
                 {header}
             </div>
             <button

@@ -128,5 +128,12 @@ export function describePresentedBible(result) {
                 'off, so the projector is not showing it yet.',
         );
     }
+    const question = result.pendingQuestion;
+    if (question && typeof question === 'object') {
+        const words = [question.title, question.text]
+            .filter((part) => typeof part === 'string' && part.length > 0)
+            .join(': ');
+        parts.push(`The app is asking you something -- "${words}".`);
+    }
     return parts.join(' ');
 }

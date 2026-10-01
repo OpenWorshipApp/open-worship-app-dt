@@ -10,7 +10,10 @@ import EditingHistoryManager, {
     sanitizeForUpdatingComparison,
 } from './EditingHistoryManager';
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
-import { toShortcutKey } from '../event/KeyboardEventListener';
+import {
+    toShortcutKey,
+    useKeyboardRegistering,
+} from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
@@ -150,6 +153,7 @@ export function FileEditingMenuComp({
     editableDocument,
     undoLabel,
     redoLabel,
+    isSaveShortcutGlobal = false,
 }: Readonly<{
     extraChildren?: ReactNode | null;
     editableDocument: EditingHistoryHolderType;
@@ -161,12 +165,31 @@ export function FileEditingMenuComp({
      */
     undoLabel?: string;
     redoLabel?: string;
+    /**
+     * Make the Save button's advertised `[Ctrl+S]` work from anywhere in the
+     * window, not only while the slide list or canvas has focus. Every property
+     * edit happens in the tools panel, so the shortcut used to do nothing
+     * exactly when a user had just typed. Opt-in: the Bible note window
+     * registers the shortcut itself, and two registrations would save twice.
+     */
+    isSaveShortcutGlobal?: boolean;
 }>) {
     const { canUndo, canRedo, canSave } = useEditingHistoryStatus(
         editableDocument.filePath,
     );
     const isShowingTools = canUndo || canRedo || canSave;
     const editableDocumentRef = useAppCurrentRef(editableDocument);
+    // Not gated on `canSave`: that status trails the last edit by the 500 ms
+    // debounce above, and a press right after typing would be dropped. A save
+    // with nothing pending writes nothing (no history) or only the stamp.
+    useKeyboardRegistering(
+        isSaveShortcutGlobal ? [savingEventMapper] : [],
+        (event) => {
+            event.preventDefault();
+            editableDocumentRef.current.save();
+        },
+        [],
+    );
     const handleUndo = useCallback(() => {
         editableDocumentRef.current.historyUndo();
         // eslint-disable-next-line react-hooks/exhaustive-deps

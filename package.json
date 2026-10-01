@@ -40,7 +40,7 @@
         "vite:dev": "vite --force",
         "vite:build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
-        "lint:pre": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
+        "lint:pre": "prettier --check --end-of-line auto \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
         "lint:all:error": "tsc --noEmit --skipLibCheck && tsc -p electron.tsconfig.json --noEmit",
         "lint:es": "eslint \"src/**/*.ts*\" \"electron/**/*.ts\" --ignore-pattern \"src/**/*.test.ts*\" --ignore-pattern \"src/**/*.spec.ts*\" --max-warnings 0 --no-warn-ignored",
         "lint:build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 node extra-work/check-build.mjs",

@@ -469,6 +469,10 @@ describe('electronHelpers', () => {
             responseWithFeatures.overrideBrowserWindowOptions.webPreferences,
         ).toEqual({
             preload: '/tmp/preload.js',
+            // Only the AI Chat page gets a `<webview>` -- spelled out as
+            // `false` everywhere else, so it cannot be inherited from an
+            // opener that had it.
+            webviewTag: false,
             enableBlinkFeatures: 'CanvasDrawElement,SomethingElse',
         });
 

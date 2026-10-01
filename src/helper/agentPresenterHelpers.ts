@@ -45,6 +45,7 @@ import type { VarySlideScreenDataType } from '../_screen/screenAppDocumentTypeHe
 import {
     checkIsLyricFilePath,
     getSelectedVaryAppDocument,
+    varyAppDocumentFromFilePath,
 } from '../app-document-list/appDocumentHelpers';
 import type {
     VaryAppDocumentType,
@@ -61,7 +62,7 @@ import {
     type AgentRunSheetStateType,
     describeRunSheetsForAgent,
 } from './agentRunSheetHelpers';
-import { toSlideText } from './agentScreenHelpers';
+import { type AgentScreensResultType, toSlideText } from './agentScreenHelpers';
 
 export type AgentSlideSummaryType = {
     // The number on the card, as the user counts it (a PPTX sub-slide reads
@@ -326,6 +327,71 @@ async function toPreviewedDocument(varyAppDocument: VaryAppDocumentType) {
         0,
     );
     return stageDocument;
+}
+
+/**
+ * Give each slide on a screen the number its card shows and the words that
+ * card answers to. `describeScreensForAgent` has only the slide's JSON, so an
+ * unnamed slide was called `slide <id>` -- and a slide's id is not its place
+ * once slides are moved or duplicated: card 3 (id 2) was reported as
+ * "slide 2" while `owa_app_state` said n: 3 (found 2026-09-29). Mutates the
+ * summaries in place; a document that will not load keeps what it had.
+ */
+export async function numberScreenSlidesForAgent(
+    result: AgentScreensResultType,
+) {
+    const flatCache = new Map<
+        string,
+        Promise<{ viewIndex: number; varySlide: VarySlideType }[] | null>
+    >();
+    const getFlat = (filePath: string) => {
+        let flat = flatCache.get(filePath);
+        if (flat === undefined) {
+            flat = (async () => {
+                try {
+                    const document = await toPreviewedDocument(
+                        varyAppDocumentFromFilePath(filePath),
+                    );
+                    return flattenVarySlides(await document.getSlides());
+                } catch {
+                    return null;
+                }
+            })();
+            flatCache.set(filePath, flat);
+        }
+        return flat;
+    };
+    const screenManagerMap = new Map(
+        getAllScreenManagers().map((screenManager) => {
+            return [screenManager.screenId, screenManager];
+        }),
+    );
+    for (const screen of result.screens) {
+        const slide = screen.slide;
+        const data =
+            screenManagerMap.get(screen.screenId)?.screenVaryAppDocumentManager
+                .varySlideData ?? null;
+        if (slide === null || data === null || !data.filePath) {
+            continue;
+        }
+        const id = (data.itemJson as any)?.id;
+        const flat = await getFlat(data.filePath);
+        const found = flat?.find(({ varySlide }) => {
+            return varySlide.id === id;
+        });
+        if (found === undefined) {
+            continue;
+        }
+        slide.n = found.viewIndex;
+        slide.find = toSlideAccessibleName(
+            found.viewIndex,
+            found.varySlide.name,
+        );
+        if (slide.name === `slide ${id}`) {
+            slide.name = `slide ${found.viewIndex}`;
+        }
+    }
+    return result;
 }
 
 export async function describePresenterForAgent(): Promise<AgentPresenterStateType> {

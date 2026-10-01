@@ -81,7 +81,7 @@ function handleHistory(appDocument: AppDocument, event: any) {
             event,
         )
     ) {
-        appDocument.historySave();
+        appDocument.save();
         return true;
     }
 }

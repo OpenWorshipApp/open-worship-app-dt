@@ -143,7 +143,7 @@
 - [Provider failure comes with its door](chatbot-provider-issue-door.md) — read off the BODY; buttons carry a page NAME
 - [/lyric, and a song link drafted offline](chatbot-lyric-command.md) — `/lyric <address>` needs no model; a bot check is refused
 - [Foreground extras by their words](chatbot-foreground-door.md) — `owa_foreground` in one call; `/countdown`, `/marquee`
-- [AI Chat window](aichat-window.md) — a company's site in a sandboxed `<webview>`; Sign out empties it; the microphone is ASKED per site
+- [AI Chat window](aichat-window.md) — a company's site in a sandboxed `<webview>`; Sign out empties it; the microphone is ASKED per site; up to 3 windows, tabs per SLOT, tabs move/reorder, Recently closed
 - [A name with a twin has no selector](selector-name-with-a-twin.md) — two same-named SIBLINGS defeated `selectorOf`
 - [The AI Chat guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md) — local/private addresses are cancelled
 - [A confirm needs a popup host](confirm-needs-a-popup-host.md) — `showAppConfirm` is `false` with no host; gates FAIL OPEN · [Popup deep link rides a setting](popup-deep-link-by-setting.md) — a URL param opens a DUPLICATE window; read on mount + focus via `getSettingForce`

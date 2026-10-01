@@ -52,6 +52,9 @@ function KeepPopupOpenComp() {
             <input
                 className="form-check-input mt-0"
                 type="checkbox"
+                // The words beside it are a sibling span, not a `<label>`, so
+                // without this a screen reader announced a bare "checkbox".
+                aria-label={tran('Keep Open')}
                 checked={isKeepingPopup}
                 onChange={handleCheckboxChange}
             />

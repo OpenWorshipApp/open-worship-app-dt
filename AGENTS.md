@@ -10,7 +10,7 @@ These are repository notes, not Codex's automatic memory store.
 
 ## Skills and tools
 
-The seven project skills are in `.agents/skills/`. Invoke them with
+The project skills are in `.agents/skills/`. Invoke them with
 `$skill-name` followed by any options or request. The source spelling
 `review-stagged-change` is preserved. Slash-command examples in the copied
 instructions mean the corresponding Codex skill invocation.
@@ -31,9 +31,8 @@ load the MCP server if it is not available in the current session.
 instructions. Preserve references to it: the application's knowledge builder
 and several helper scripts read those paths directly.
 
-When changing shared guidance, edit the canonical `.claude/` file first,
-update its existing `.github/` mirror where applicable, and update these Codex
-copies in the same change:
+When changing shared guidance, edit the canonical `.claude/` file first, then
+update these Codex copies in the same change:
 
 - `.claude/CLAUDE.md` -> `.codex/project-instructions.md` (exact copy).
 - `.claude/memory/` -> `.codex/memory/` (exact copies).

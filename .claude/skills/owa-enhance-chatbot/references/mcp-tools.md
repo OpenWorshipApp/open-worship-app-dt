@@ -101,7 +101,7 @@ A tool is not "added" until every line is true.
     a model choose it.
 13. **Document it**: `tools/owa-devtools-mcp/README.md` tool table, the `owa_*`
     list in `.claude/CLAUDE.md` §_Agent access_, a `CB-xx` row if a user can
-    notice it, and the `.github/` mirror of all of the above.
+    notice it, and the Codex mirror of all of the above.
 
 ## Description voice — two readers, one string
 

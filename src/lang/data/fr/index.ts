@@ -459,10 +459,9 @@ const dictionary = {
     'Open BibleNote': 'Ouvrir BibleNote',
     'No title': 'Sans titre',
     'Background and Color': 'Arrière-plan et couleur',
-    'The current text color may not be visible with the new background color.':
-        "La couleur actuelle du texte risque de ne pas être visible avec la nouvelle couleur d'arrière-plan.",
-    'Do you want to change the text color as well?':
-        'Voulez-vous aussi changer la couleur du texte ?',
+    'The text color was changed so it stays visible on the new background color.':
+        "La couleur du texte a été changée pour rester visible sur la nouvelle couleur d'arrière-plan.",
+    'Keep the new text color?': 'Conserver la nouvelle couleur du texte ?',
     'Fail to create folder': 'Impossible de créer le dossier',
     'New Note Item': 'Nouvel élément de note',
     'This will select': 'Ceci sélectionnera',
@@ -1596,6 +1595,10 @@ const dictionary = {
     Previous: 'Précédent',
     'Reset Date and Time to Now':
         "Réinitialiser à la date et l'heure actuelles",
+    'That date and time has already passed':
+        'Cette date et cette heure sont déjà passées',
+    'Pick a date and time later than now, or press Reset.':
+        'Choisissez une date et une heure après maintenant, ou appuyez sur Réinitialiser.',
     'Rotate:': 'Rotation :',
     'Saving Bible Data': 'Enregistrement des données de la Bible',
     'Saving File': 'Enregistrement du fichier',

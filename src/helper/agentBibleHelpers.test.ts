@@ -13,6 +13,18 @@ const h = vi.hoisted(() => {
         managers: [] as any[],
         viewData: {} as Record<number, any>,
         presentCalls: [] as any[],
+        pendingQuestion: null as { title: string; text: string } | null,
+    };
+});
+
+// The real one polls the DOM for up to 600 ms after every present; here each
+// test says whether the app was left asking something.
+vi.mock('./agentPendingQuestionHelpers', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('./agentPendingQuestionHelpers')>();
+    return {
+        ...actual,
+        waitForPendingAppQuestion: vi.fn(async () => h.pendingQuestion),
     };
 });
 
@@ -126,9 +138,27 @@ beforeEach(() => {
     h.managers = [genManager(0)];
     h.viewData = {};
     h.presentCalls = [];
+    h.pendingQuestion = null;
 });
 
 describe('handleAgentBibleRequest', () => {
+    it('says so when presenting left the operator a question', async () => {
+        h.managers = [genManager(0, { isShowing: true })];
+        h.pendingQuestion = {
+            title: 'Background and Color',
+            text: 'Keep the new text color?',
+        };
+        const result = await handleAgentBibleRequest({
+            reference: 'John 3:16',
+        });
+        expect(result).toMatchObject({
+            isPresented: true,
+            pendingQuestion: h.pendingQuestion,
+        });
+        expect((result as any).note).toContain('Keep the new text color?');
+        expect((result as any).note).toContain('do not answer it for them');
+    });
+
     it('presents a reference and reads the screen back', async () => {
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',

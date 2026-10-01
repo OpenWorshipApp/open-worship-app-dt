@@ -10,6 +10,17 @@ export type TabOptionType = {
     title: ReactNode;
     routePath: string;
     preCheck?: () => OptionalPromise<boolean>;
+    // Replaces navigating to `routePath` when the tab is pressed.
+    onOpen?: () => void;
+    // The "open in a new window" icon beside the tab. Rendered as its own
+    // button NEXT to the tab, never inside it: nested in the tab's button it
+    // was invalid markup, absent from the accessibility tree and unreachable
+    // by keyboard.
+    externalOpen?: {
+        title: string;
+        color?: string;
+        onOpen: () => void;
+    };
 };
 
 export enum WindowModEnum {

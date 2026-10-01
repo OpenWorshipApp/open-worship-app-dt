@@ -8,7 +8,12 @@
 // hold: one small setting file, caps on everything, fields listed rather than
 // spread on the way back off disk.
 
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import {
+    getSetting,
+    getSettingForce,
+    removeSetting,
+    setSetting,
+} from '../helper/settingHelpers';
 import {
     genSessionId,
     toChatSessionTitle,
@@ -40,6 +45,10 @@ export type AiChatSessionStateType = {
 };
 
 const SESSIONS_SETTING_NAME = 'aichat-sessions';
+// One past the most AI Chat windows the main process lets be open at once
+// (`MAX_AI_CHAT_WINDOW_COUNT`, `electron/aiChatWindowHelpers.ts`), with room:
+// a sign-out sweeps every slot up to here.
+const MAX_WINDOW_SLOT_COUNT = 8;
 export const MAX_AI_CHAT_SESSION_COUNT = 8;
 /**
  * How many tabs keep their site LOADED at once. Every loaded site is a
@@ -165,7 +174,8 @@ export function toLiveSessionIds(
 }
 
 // Listed, never spread: this file is plain JSON on disk and a hand-edited one
-// must not be able to put an arbitrary address into a guest.
+// must not be able to put an arbitrary address into a guest. The same check
+// reads a tab dragged in from another window (`toAiChatSession`).
 function toValidSession(raw: any): AiChatSessionType | null {
     if (typeof raw !== 'object' || raw === null) {
         return null;
@@ -197,9 +207,37 @@ function toValidSession(raw: any): AiChatSessionType | null {
     };
 }
 
-/** What was on screen last time, or one tab on the chooser. */
-export function loadAiChatSessions(): AiChatSessionStateType {
-    const stored = getSetting(SESSIONS_SETTING_NAME);
+/**
+ * The key a window's tabs are kept under. Several AI Chat windows can be
+ * open at once, and each holds a SLOT (`aiChatWindowSlotHelpers.ts`); the
+ * first keeps the key a single window always had, so a window that was open
+ * before there could be more than one comes back with its tabs.
+ */
+export function genAiChatSessionsSettingName(slot = 0) {
+    return slot === 0
+        ? SESSIONS_SETTING_NAME
+        : `${SESSIONS_SETTING_NAME}-${slot + 1}`;
+}
+
+/**
+ * A tab another AI Chat window handed over when it was dragged out of it,
+ * read field by field as a tab off disk is, or null. It is in front from the
+ * moment it arrives.
+ */
+export function toAiChatSession(raw: unknown) {
+    const session = toValidSession(raw);
+    return session === null ? null : { ...session, lastUsedAt: Date.now() };
+}
+
+/** What was on screen last time in this slot, or one tab on the chooser. */
+export function loadAiChatSessions(
+    slot = 0,
+    isForced = false,
+): AiChatSessionStateType {
+    const settingName = genAiChatSessionsSettingName(slot);
+    const stored = isForced
+        ? getSettingForce(settingName)
+        : getSetting(settingName);
     let sessions: AiChatSessionType[] = [];
     let activeId = '';
     if (stored) {
@@ -231,10 +269,211 @@ export function loadAiChatSessions(): AiChatSessionStateType {
     };
 }
 
-export function saveAiChatSessions(state: AiChatSessionStateType) {
+export function saveAiChatSessions(state: AiChatSessionStateType, slot = 0) {
     const sessions = state.sessions.slice(-MAX_AI_CHAT_SESSION_COUNT);
     setSetting(
-        SESSIONS_SETTING_NAME,
+        genAiChatSessionsSettingName(slot),
         JSON.stringify({ sessions, activeId: state.activeId }),
     );
+}
+
+/**
+ * What a sign-out leaves of a window's tabs: the names the user typed stay,
+ * what came FROM the sites -- their pages and the names they gave them --
+ * goes.
+ */
+export function toSignedOutAiChatSessions(
+    state: AiChatSessionStateType,
+): AiChatSessionStateType {
+    return {
+        ...state,
+        sessions: state.sessions.map((session) => {
+            return { ...session, pageTitle: '', lastUrl: null };
+        }),
+    };
+}
+
+/**
+ * A sign-out swept through every OTHER slot's saved tabs, and the list of
+ * recently closed ones. A window that is
+ * open is told as well and does the same to its own (`AiChatAppComp`); this
+ * is for the windows that are closed, whose tabs would otherwise go on
+ * holding the previous person's conversation names in the settings file.
+ */
+export function forgetAiChatSiteTraces(exceptSlot: number) {
+    forgetAiChatClosedTabs();
+    for (let slot = 0; slot < MAX_WINDOW_SLOT_COUNT; slot++) {
+        // Past the setting store's short cache: the other windows write
+        // these, not this one.
+        if (
+            slot === exceptSlot ||
+            !getSettingForce(genAiChatSessionsSettingName(slot))
+        ) {
+            continue;
+        }
+        saveAiChatSessions(
+            toSignedOutAiChatSessions(loadAiChatSessions(slot, true)),
+            slot,
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Recently closed tabs.
+//
+// A closed tab is gone from the strip but not from the site: its conversation
+// is still there under the user's account, at the address the tab was on. So
+// what a closed tab leaves behind is that address and its names, newest
+// first, for the window to offer back -- the browser's "reopen closed tab".
+// ONE list for every AI Chat window, like the sign-ins it belongs with: a tab
+// closed in one window is reopened from another as easily. It holds what came
+// from the sites (a conversation's name, its address), so a sign-out empties
+// it along with the rest (`forgetAiChatSiteTraces`).
+
+export type AiChatClosedTabType = {
+    id: string;
+    providerKey: string;
+    title: string;
+    pageTitle: string;
+    lastUrl: string | null;
+    closedAt: number;
+};
+
+const CLOSED_TABS_SETTING_NAME = 'aichat-closed-tabs';
+export const MAX_AI_CHAT_CLOSED_TAB_COUNT = 20;
+
+// Listed, never spread, for the reason `toValidSession` gives.
+function toValidClosedTab(raw: any): AiChatClosedTabType | null {
+    if (typeof raw !== 'object' || raw === null) {
+        return null;
+    }
+    if (
+        typeof raw.id !== 'string' ||
+        raw.id.length === 0 ||
+        getAiChatProvider(raw.providerKey) === null
+    ) {
+        return null;
+    }
+    return {
+        id: raw.id,
+        providerKey: raw.providerKey,
+        title:
+            typeof raw.title === 'string' ? toChatSessionTitle(raw.title) : '',
+        pageTitle:
+            typeof raw.pageTitle === 'string' ? toPageTitle(raw.pageTitle) : '',
+        lastUrl: toKeptUrl(raw.providerKey, raw.lastUrl),
+        closedAt:
+            typeof raw.closedAt === 'number' && Number.isFinite(raw.closedAt)
+                ? raw.closedAt
+                : 0,
+    };
+}
+
+/**
+ * The list as it is on disk NOW. Read past the setting store's short cache,
+ * because another AI Chat window may have just closed a tab into it.
+ */
+export function loadAiChatClosedTabs(): AiChatClosedTabType[] {
+    const stored = getSettingForce(CLOSED_TABS_SETTING_NAME);
+    if (!stored) {
+        return [];
+    }
+    try {
+        const parsed = JSON.parse(stored);
+        return (Array.isArray(parsed) ? parsed : [])
+            .map(toValidClosedTab)
+            .filter((tab: AiChatClosedTabType | null) => {
+                return tab !== null;
+            })
+            .slice(0, MAX_AI_CHAT_CLOSED_TAB_COUNT);
+    } catch (_error) {
+        return [];
+    }
+}
+
+function saveAiChatClosedTabs(closedTabs: AiChatClosedTabType[]) {
+    setSetting(
+        CLOSED_TABS_SETTING_NAME,
+        JSON.stringify(closedTabs.slice(0, MAX_AI_CHAT_CLOSED_TAB_COUNT)),
+    );
+}
+
+/** The same conversation twice is one entry: the newer. */
+function toClosedTabKey(tab: { providerKey: string; lastUrl: string | null }) {
+    return tab.lastUrl === null ? null : `${tab.providerKey} ${tab.lastUrl}`;
+}
+
+/**
+ * Closed tabs put at the top of the list. A tab still on the chooser was
+ * never anywhere, and is not worth offering back.
+ */
+export function rememberClosedAiChatTabs(sessions: AiChatSessionType[]) {
+    const closedAt = Date.now();
+    const added: AiChatClosedTabType[] = [];
+    for (const session of sessions) {
+        if (session.providerKey === null) {
+            continue;
+        }
+        added.push({
+            id: genSessionId(),
+            providerKey: session.providerKey,
+            title: session.title,
+            pageTitle: session.pageTitle,
+            lastUrl: session.lastUrl,
+            closedAt,
+        });
+    }
+    if (added.length === 0) {
+        return;
+    }
+    const addedKeySet = new Set(
+        added.map(toClosedTabKey).filter((key) => {
+            return key !== null;
+        }),
+    );
+    saveAiChatClosedTabs([
+        ...added,
+        ...loadAiChatClosedTabs().filter((tab) => {
+            const key = toClosedTabKey(tab);
+            return key === null || !addedKeySet.has(key);
+        }),
+    ]);
+}
+
+/**
+ * Takes one entry off the list, to be reopened. The newest when no id is
+ * given (Ctrl+Shift+T). Null when it is already gone -- reopened from
+ * another window, most likely.
+ */
+export function takeClosedAiChatTab(id?: string) {
+    const closedTabs = loadAiChatClosedTabs();
+    const index =
+        id === undefined
+            ? 0
+            : closedTabs.findIndex((tab) => {
+                  return tab.id === id;
+              });
+    const closedTab = closedTabs[index];
+    if (closedTab === undefined) {
+        return null;
+    }
+    closedTabs.splice(index, 1);
+    saveAiChatClosedTabs(closedTabs);
+    return closedTab;
+}
+
+/** A closed tab, back as a tab: on its site, at its conversation. */
+export function toReopenedAiChatSession(
+    closedTab: AiChatClosedTabType,
+): AiChatSessionType {
+    return {
+        ...genNewAiChatSession(closedTab.providerKey),
+        title: closedTab.title,
+        pageTitle: closedTab.pageTitle,
+        lastUrl: closedTab.lastUrl,
+    };
+}
+
+export function forgetAiChatClosedTabs() {
+    removeSetting(CLOSED_TABS_SETTING_NAME);
 }

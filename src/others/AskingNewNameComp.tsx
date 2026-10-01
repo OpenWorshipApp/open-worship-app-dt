@@ -75,6 +75,8 @@ export default function AskingNewNameComp({
                 id="button-addon2"
                 className={`btn btn-outline-${isValid ? 'success' : 'danger'}`}
                 type="button"
+                title={tran('Apply')}
+                aria-label={tran('Apply')}
                 onClick={applyCheckedName}
             >
                 {customIcon || <i className="bi bi-check" />}

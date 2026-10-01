@@ -8,6 +8,7 @@ import {
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import type { AnyObjectType } from './typeHelpers';
+import { flushPendingEdits } from '../editing-manager/pendingEditFlushHelpers';
 
 export type AppDocumentMetadataType = {
     app: string;
@@ -256,11 +257,13 @@ export default abstract class AppEditableDocumentSourceAbs<
         return Class.toJsonString(jsonData);
     }
 
+    // The one save path -- the Save button and every Ctrl+S come here. Ctrl+S
+    // used to call `historySave()` bare, which wrote the file without the
+    // `lastEditDate` stamp the button wrote; and the button skipped waiting
+    // for in-flight edits, so a press right after typing could save the state
+    // before it.
     async save() {
-        const isSuccess = await this.editingHistoryManager.save(
-            this._sanitizeDataText.bind(this),
-        );
-        return isSuccess;
+        return this.historySave(this._sanitizeDataText.bind(this));
     }
 
     static genNewJsonData<
@@ -299,12 +302,16 @@ export default abstract class AppEditableDocumentSourceAbs<
 
     // All four wait for the in-flight edits first (see `pendingWrite`): undo,
     // redo and save all mean "of everything done so far", and a discard that
-    // raced a write would leave the write landing on top of it.
+    // raced a write would leave the write landing on top of it. Undo, redo and
+    // save first make an editor commit what it is still holding back (see
+    // `pendingEditFlushHelpers`), so "done so far" includes the last keystroke.
     async historyUndo() {
+        flushPendingEdits(this.filePath);
         await this.waitForPendingWrite();
         return this.editingHistoryManager.undo();
     }
     async historyRedo() {
+        flushPendingEdits(this.filePath);
         await this.waitForPendingWrite();
         return this.editingHistoryManager.redo();
     }
@@ -313,6 +320,7 @@ export default abstract class AppEditableDocumentSourceAbs<
         return this.editingHistoryManager.discard();
     }
     async historySave(sanitizeData?: (data: string) => string | null) {
+        flushPendingEdits(this.filePath);
         await this.waitForPendingWrite();
         return this.editingHistoryManager.save(sanitizeData);
     }

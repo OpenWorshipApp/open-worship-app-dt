@@ -3,9 +3,9 @@ id: W-44
 title: "Chat with an AI website inside the app (AI Chat)"
 section: "Configuration"
 verify: [CB-68]
-screenshots: 6
+screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-29"
+workflowsVersion: "2026-09-30"
 ---
 # W-44 — Chat with an AI website inside the app (AI Chat)
 
@@ -37,11 +37,27 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    **Lock**, **Close**, **Close other chats…** and **Clear all chats…**. Until you rename
    it, a tab is called after the page — the conversation's own name, on most of these
    sites. Tabs are kept when the window and the app close, up to eight of them, and each
-   comes back on the conversation it was on. 📸
+   comes back on the conversation it was on. 📸 **Drag a tab** along the strip to put it
+   somewhere else among the others.
+
+   **Closed one by mistake?** A closed tab is not lost: it goes to **Recently closed**,
+   listed on the card a new tab opens on and behind the **🕘** (**Recently closed tabs**) in
+   the row above the page. Click it and it opens again on the conversation it was on;
+   **Ctrl+Shift+T** brings back the last one. The list is shared by every AI Chat window,
+   keeps the last twenty, and **Clear this list** under it empties it. 📸
 5. Only three tabs keep their site loaded at once — the one in front and the two you used
    most recently. The others unload to save memory and load their last page again when
    you click them, which takes a second and loses nothing: the conversation lives on the
    site, under your account.
+
+   **More than one window.** Each press of the **✨** opens another AI Chat window, and so
+   does the **New window** button right of **+** in the strip — up to three at once; a
+   fourth press brings the open ones forward instead, because every open site takes
+   memory. Each window keeps its own tabs. To give a tab a window of its own, **drag it out**
+   of the strip and let go anywhere outside the window, or choose **Open in new window**
+   from its **⋮**: a new window opens holding that tab, on the conversation it was on, and
+   the tab leaves the first window. You stay signed in, because every window shares the
+   same sign-ins. 📸
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
    browser, never in the app — and only when you pressed something in the site just before.
    A page that tries to open one on its own is stopped, and a line under the row above the
@@ -67,9 +83,11 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    room where several people use the same machine. Click **↤** (**Sign out of every
    site**) in the row above the page, or the same words on the card in step 2, and answer
    **Sign out**. 📸 It asks first, and **Keep me signed in** is the answer already
-   selected, so a mis-click costs nothing. Your tabs stay where they are; the pages they
-   were on and the names the sites gave them are forgotten, a name you typed on a tab
-   yourself is kept, and every site asks you to sign in again. It cannot be undone.
+   selected, so a mis-click costs nothing. It signs out of every site in every AI Chat
+   window, since they all share the one sign-in. Your tabs stay where they are; the pages
+   they were on, the names the sites gave them and the **Recently closed** list are
+   forgotten, a name you typed on a tab yourself is kept, and every site asks you to sign
+   in again. It cannot be undone.
 
 **Not loading?** The window says _… could not be loaded_ with a **Try again** button when
 the site cannot be reached — check the building's internet first. A site that refuses to
@@ -80,5 +98,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-29).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-30).
 :::

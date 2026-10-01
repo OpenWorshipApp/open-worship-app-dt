@@ -22,7 +22,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// scripts -> owa-enhance-chatbot -> skills -> .claude|.github -> repo root
+// scripts -> owa-enhance-chatbot -> skills -> .claude|.agents -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
 const DISCOVERY_DIR = path.join(os.tmpdir(), 'open-worship-app-cdp');
 // Characters per token, rounded the pessimistic way. Good enough to compare

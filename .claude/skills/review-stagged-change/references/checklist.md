@@ -125,12 +125,12 @@ If the staged change alters observable behavior:
 - Both must be updated in the *same* change, with their version dates bumped, and no
   step may be published that was not observed working live.
 - `.claude/memory/*.md` — flag any note the change makes wrong.
-- **Copilot mirrors must move in the same change.** `.github/copilot-instructions.md`
-  (← `.claude/CLAUDE.md`), `.github/memory/` (← `.claude/memory/`) and
-  `.github/skills/owa-robot-test/` (← `.claude/skills/owa-robot-test/`) are verbatim
-  copies; `.claude/` is the source of truth. A staged edit to a `.claude/` knowledge
+- **Codex mirrors must move in the same change.** `.codex/project-instructions.md`
+  (← `.claude/CLAUDE.md`), `.codex/memory/` (← `.claude/memory/`) and
+  `.agents/skills/` (← `.claude/skills/`, each `SKILL.md` keeping its Codex
+  frontmatter) are copies; `.claude/` is the source of truth. A staged edit to a `.claude/` knowledge
   file without the matching mirror copy is a finding — and so is a hand-edit that
-  touches only the `.github/` side.
+  touches only the mirror side.
 
 ## §7 Verification commands
 

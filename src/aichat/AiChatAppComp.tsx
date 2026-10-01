@@ -29,7 +29,15 @@ import {
 } from './aiChatMicrophoneHelpers';
 import {
     checkCanClearAiChatSessions,
+    forgetAiChatClosedTabs,
+    forgetAiChatSiteTraces,
     genAiChatSessionTitle,
+    loadAiChatClosedTabs,
+    rememberClosedAiChatTabs,
+    takeClosedAiChatTab,
+    toAiChatSession,
+    toReopenedAiChatSession,
+    type AiChatClosedTabType,
     genNewAiChatSession,
     loadAiChatSessions,
     MAX_AI_CHAT_SESSION_COUNT,
@@ -37,9 +45,21 @@ import {
     toKeptUrl,
     toLiveSessionIds,
     toPageTitle,
+    toSignedOutAiChatSessions,
     type AiChatSessionStateType,
     type AiChatSessionType,
 } from './aiChatSessionHelpers';
+import {
+    AI_CHAT_SIGNED_OUT_CHANNEL,
+    getAiChatWindowSlot,
+    handAiChatTab,
+    takeHandedAiChatTab,
+} from './aiChatWindowSlotHelpers';
+import {
+    genAiChatWindowUuid,
+    openAiChatPage,
+} from '../helper/popupWindowHelpers';
+import RenderAiChatClosedTabsComp from './RenderAiChatClosedTabsComp';
 
 // Where a press of "Sign out of every site" has got to. `asking` is the whole
 // safety of it: the sign-ins are not this window's to spend on one press.
@@ -91,9 +111,15 @@ function RenderProviderBadgeComp({
 function RenderChooserComp({
     onChoose,
     onSignOut,
+    closedTabs,
+    onReopen,
+    onForgetClosedTabs,
 }: Readonly<{
     onChoose: (providerKey: string) => void;
     onSignOut: () => void;
+    closedTabs: AiChatClosedTabType[];
+    onReopen: (id: string) => void;
+    onForgetClosedTabs: () => void;
 }>) {
     return (
         <div
@@ -133,6 +159,22 @@ function RenderChooserComp({
                         );
                     })}
                 </div>
+                {closedTabs.length === 0 ? null : (
+                    // A new tab is where a person goes looking for the one
+                    // they closed, so the list is here as well as behind the
+                    // clock in the bar. Pressed, it opens in THIS tab.
+                    <>
+                        <p className="aichat-eyebrow aichat-closed-heading">
+                            Recently closed
+                        </p>
+                        <RenderAiChatClosedTabsComp
+                            closedTabs={closedTabs}
+                            canReopen
+                            onReopen={onReopen}
+                            onForget={onForgetClosedTabs}
+                        />
+                    </>
+                )}
                 <p className="aichat-note">
                     These are other companies&rsquo; websites. What you type
                     there leaves this computer under their terms; this app keeps
@@ -187,6 +229,58 @@ function answerMicrophoneAsk(askId: number, isAllowed: boolean) {
         askId,
         isAllowed,
     });
+}
+
+/** A tab still on the chooser, never named: nothing to lose by replacing. */
+function checkIsBlankSession(session: AiChatSessionType | undefined) {
+    return (
+        session !== undefined &&
+        session.providerKey === null &&
+        session.title.length === 0
+    );
+}
+
+/** The tabs with one taken out, and which tab is in front after it. */
+function toStateWithout(
+    state: AiChatSessionStateType,
+    id: string,
+): AiChatSessionStateType {
+    const index = state.sessions.findIndex((session) => {
+        return session.id === id;
+    });
+    if (index === -1) {
+        return state;
+    }
+    const sessions = state.sessions.filter((session) => {
+        return session.id !== id;
+    });
+    if (sessions.length === 0) {
+        // Closing the last tab lands on the chooser rather than on an empty
+        // window; closing the window is not this window's to do.
+        const session = genNewAiChatSession();
+        return { sessions: [session], activeId: session.id };
+    }
+    if (state.activeId !== id) {
+        return { sessions, activeId: state.activeId };
+    }
+    const nextSession = sessions[Math.min(index, sessions.length - 1)];
+    return { sessions, activeId: nextSession.id };
+}
+
+// What this window opens on, read ONCE per page: a tab handed over by the
+// window it was dragged out of, taken off the main process as it is read --
+// so it must not be read twice, which a `useState` initialiser is under
+// StrictMode -- else this window's own saved tabs.
+let initialSessionState: AiChatSessionStateType | null = null;
+function getInitialSessionState() {
+    if (initialSessionState === null) {
+        const handedSession = toAiChatSession(takeHandedAiChatTab());
+        initialSessionState =
+            handedSession === null
+                ? loadAiChatSessions(getAiChatWindowSlot())
+                : { sessions: [handedSession], activeId: handedSession.id };
+    }
+    return initialSessionState;
 }
 
 // The ask on the line, and the tab it was asked in.
@@ -335,8 +429,11 @@ function RenderGuestComp({
  */
 export default function AiChatAppComp() {
     const { theme } = useThemeSource();
-    const [sessionState, setSessionState] =
-        useState<AiChatSessionStateType>(loadAiChatSessions);
+    // Several AI Chat windows can be open at once; each reads and writes the
+    // tabs of its own slot (`aiChatWindowSlotHelpers.ts`), asked once.
+    const [sessionState, setSessionState] = useState<AiChatSessionStateType>(
+        getInitialSessionState,
+    );
     const sessionStateRef = useAppCurrentRef(sessionState);
     const [signOutState, setSignOutState] = useState<SignOutStateType>('idle');
     // Bumped by a sign-out, and part of every guest's key, so all of them are
@@ -440,12 +537,12 @@ export default function AiChatAppComp() {
     }, []);
     useAppEffect(() => {
         saveAttemptTimeout(() => {
-            saveAiChatSessions(sessionStateRef.current);
+            saveAiChatSessions(sessionStateRef.current, getAiChatWindowSlot());
         });
     }, [sessionState]);
     useAppEffect(() => {
         const handleUnloading = () => {
-            saveAiChatSessions(sessionStateRef.current);
+            saveAiChatSessions(sessionStateRef.current, getAiChatWindowSlot());
         };
         window.addEventListener('beforeunload', handleUnloading);
         return () => {
@@ -497,28 +594,173 @@ export default function AiChatAppComp() {
             };
         });
     }, []);
-    const handleClosingSession = useCallback((id: string) => {
-        setSessionState((oldState) => {
-            const index = oldState.sessions.findIndex((session) => {
-                return session.id === id;
+    // Recently closed tabs, shared by every AI Chat window, so re-read when
+    // this one comes to the front: another may have closed one since.
+    const [closedTabs, setClosedTabs] =
+        useState<AiChatClosedTabType[]>(loadAiChatClosedTabs);
+    const [isClosedTabsOpen, setIsClosedTabsOpen] = useState(false);
+    const refreshClosedTabs = useCallback(() => {
+        setClosedTabs(loadAiChatClosedTabs());
+    }, []);
+    useAppEffect(() => {
+        window.addEventListener('focus', refreshClosedTabs);
+        return () => {
+            window.removeEventListener('focus', refreshClosedTabs);
+        };
+    }, []);
+    // Every way a tab leaves the strip for good goes through here, so every
+    // one of them can be opened again. The tabs are read off the ref rather
+    // than inside a state updater, which StrictMode runs twice -- and a tab
+    // must not be put in the list twice.
+    const rememberClosing = useCallback(
+        (closingSessions: AiChatSessionType[]) => {
+            rememberClosedAiChatTabs(closingSessions);
+            refreshClosedTabs();
+        },
+        [refreshClosedTabs],
+    );
+    const handleClosingSession = useCallback(
+        (id: string) => {
+            const oldState = sessionStateRef.current;
+            const session = oldState.sessions.find((one) => {
+                return one.id === id;
             });
-            if (index === -1 || oldState.sessions[index].isLocked) {
+            if (session === undefined || session.isLocked) {
+                return;
+            }
+            rememberClosing([session]);
+            setSessionState(toStateWithout(oldState, id));
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [rememberClosing],
+    );
+    // A closed tab back in the strip: in the tab in front when that one is
+    // still an empty chooser, else as a tab of its own. Not at all when the
+    // strip is full -- the list keeps it rather than lose it.
+    const checkCanReopen = (state: AiChatSessionStateType) => {
+        const activeOne = state.sessions.find((session) => {
+            return session.id === state.activeId;
+        });
+        return (
+            checkIsBlankSession(activeOne) ||
+            checkCanAddChatSession(state.sessions, MAX_AI_CHAT_SESSION_COUNT)
+        );
+    };
+    const handleReopeningClosedTab = useCallback(
+        (closedTabId?: string) => {
+            const oldState = sessionStateRef.current;
+            if (!checkCanReopen(oldState)) {
+                return;
+            }
+            const isReplacing = checkIsBlankSession(
+                oldState.sessions.find((session) => {
+                    return session.id === oldState.activeId;
+                }),
+            );
+            const closedTab = takeClosedAiChatTab(closedTabId);
+            refreshClosedTabs();
+            if (closedTab === null) {
+                return;
+            }
+            const session = toReopenedAiChatSession(closedTab);
+            setSessionState({
+                sessions: isReplacing
+                    ? oldState.sessions.map((one) => {
+                          return one.id === oldState.activeId ? session : one;
+                      })
+                    : [...oldState.sessions, session],
+                activeId: session.id,
+            });
+            setIsClosedTabsOpen(false);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [refreshClosedTabs],
+    );
+    const handleForgettingClosedTabs = useCallback(() => {
+        forgetAiChatClosedTabs();
+        refreshClosedTabs();
+    }, [refreshClosedTabs]);
+    // The browser's own shortcut for it.
+    useAppEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (
+                (event.ctrlKey || event.metaKey) &&
+                event.shiftKey &&
+                !event.altKey &&
+                event.key.toLowerCase() === 't'
+            ) {
+                event.preventDefault();
+                handleReopeningClosedTab();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+    // A tab moved into a window of its own -- dragged out of the strip, or
+    // from its menu. The tab is handed to the main process first, for the
+    // new window to take as it starts, and leaves this strip only once that
+    // window is really opening: past the cap it is not, and the tab stays.
+    const handleMovingToNewWindow = useCallback(
+        (id: string, place?: { x: number; y: number }) => {
+            const session = sessionStateRef.current.sessions.find((one) => {
+                return one.id === id;
+            });
+            if (session === undefined) {
+                return;
+            }
+            const uuid = genAiChatWindowUuid();
+            if (!handAiChatTab(uuid, session)) {
+                return;
+            }
+            if (openAiChatPage(uuid, place) === null) {
+                return;
+            }
+            const state = toStateWithout(sessionStateRef.current, id);
+            saveAiChatSessions(state, getAiChatWindowSlot());
+            setSessionState(state);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleTearingOff = useCallback(
+        (id: string, screenX: number, screenY: number) => {
+            // The new window's strip sits under its title bar: put it where
+            // the tab was let go, with the pointer over its tab.
+            handleMovingToNewWindow(id, {
+                x: screenX - 90,
+                y: screenY - 50,
+            });
+        },
+        [handleMovingToNewWindow],
+    );
+    const handleOpeningInNewWindow = useCallback(
+        (id: string) => {
+            handleMovingToNewWindow(id);
+        },
+        [handleMovingToNewWindow],
+    );
+    const handleOpeningNewWindow = useCallback(() => {
+        openAiChatPage();
+    }, []);
+    const handleReordering = useCallback((id: string, index: number) => {
+        setSessionState((oldState) => {
+            const session = oldState.sessions.find((one) => {
+                return one.id === id;
+            });
+            if (session === undefined) {
                 return oldState;
             }
-            const sessions = oldState.sessions.filter((session) => {
-                return session.id !== id;
+            const sessions = oldState.sessions.filter((one) => {
+                return one.id !== id;
             });
-            if (sessions.length === 0) {
-                // Closing the last tab lands on the chooser rather than on an
-                // empty window; closing the window is not this window's to do.
-                const session = genNewAiChatSession();
-                return { sessions: [session], activeId: session.id };
-            }
-            if (oldState.activeId !== id) {
-                return { sessions, activeId: oldState.activeId };
-            }
-            const nextSession = sessions[Math.min(index, sessions.length - 1)];
-            return { sessions, activeId: nextSession.id };
+            sessions.splice(
+                Math.max(0, Math.min(index, sessions.length)),
+                0,
+                session,
+            );
+            return { ...oldState, sessions };
         });
     }, []);
     const handleRenamingSession = useCallback(
@@ -548,8 +790,13 @@ export default function AiChatAppComp() {
         if (sessions.length === oldState.sessions.length) {
             return;
         }
+        rememberClosing(
+            oldState.sessions.filter((session) => {
+                return !sessions.includes(session);
+            }),
+        );
         const state = { sessions, activeId: id };
-        saveAiChatSessions(state);
+        saveAiChatSessions(state, getAiChatWindowSlot());
         setSessionState(state);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -558,6 +805,11 @@ export default function AiChatAppComp() {
         const keptSessions = oldState.sessions.filter((session) => {
             return session.isLocked;
         });
+        rememberClosing(
+            oldState.sessions.filter((session) => {
+                return !session.isLocked;
+            }),
+        );
         const sessions =
             keptSessions.length > 0 ? keptSessions : [genNewAiChatSession()];
         const isActiveKept = sessions.some((session) => {
@@ -567,7 +819,7 @@ export default function AiChatAppComp() {
             sessions,
             activeId: isActiveKept ? oldState.activeId : sessions[0].id,
         };
-        saveAiChatSessions(state);
+        saveAiChatSessions(state, getAiChatWindowSlot());
         setSessionState(state);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -600,27 +852,42 @@ export default function AiChatAppComp() {
     // what stays is the name the user typed on a tab, which is theirs. Every
     // guest is then remounted, because a page already loaded goes on showing
     // a conversation whose cookie has just been thrown away.
+    //
+    // The partition is shared by every AI Chat window, so the sign-out is
+    // theirs too: an open one is told by the main process and forgets the
+    // same way (below), and a closed one's saved tabs are swept here.
+    const forgetSiteTraces = useCallback(() => {
+        setSessionState(toSignedOutAiChatSessions);
+        setGuestEpoch((epoch) => {
+            return epoch + 1;
+        });
+    }, []);
     const handleSigningOut = useCallback(() => {
         setSignOutState('working');
         clearAiChatSiteData().then(
             () => {
-                setSessionState((oldState) => {
-                    return {
-                        ...oldState,
-                        sessions: oldState.sessions.map((session) => {
-                            return { ...session, pageTitle: '', lastUrl: null };
-                        }),
-                    };
-                });
-                setGuestEpoch((epoch) => {
-                    return epoch + 1;
-                });
+                forgetAiChatSiteTraces(getAiChatWindowSlot());
+                forgetSiteTraces();
+                refreshClosedTabs();
                 setSignOutState('idle');
             },
             () => {
                 setSignOutState('failed');
             },
         );
+    }, [forgetSiteTraces, refreshClosedTabs]);
+    useAppEffect(() => {
+        const { messageUtils } = appProvider;
+        messageUtils.listenForData(
+            AI_CHAT_SIGNED_OUT_CHANNEL,
+            forgetSiteTraces,
+        );
+        return () => {
+            messageUtils.removeListener(
+                AI_CHAT_SIGNED_OUT_CHANNEL,
+                forgetSiteTraces,
+            );
+        };
     }, []);
     const handleRegistering = useCallback(
         (sessionId: string, guest: AiChatGuestElementType | null) => {
@@ -720,6 +987,10 @@ export default function AiChatAppComp() {
                 onTogglingLock={handleTogglingSessionLock}
                 onSolo={handleSoloingSession}
                 onClearAll={handleClearingSessions}
+                onTearOff={handleTearingOff}
+                onOpenInNewWindow={handleOpeningInNewWindow}
+                onNewWindow={handleOpeningNewWindow}
+                onReorder={handleReordering}
             />
             {activeProvider === null ? null : (
                 <header className="aichat-head">
@@ -770,6 +1041,23 @@ export default function AiChatAppComp() {
                     >
                         <i className="bi bi-box-arrow-up-right" />
                     </button>
+                    <button
+                        type="button"
+                        className={
+                            'aichat-tool' + (isClosedTabsOpen ? ' is-on' : '')
+                        }
+                        title="Recently closed tabs (Ctrl+Shift+T opens the last)"
+                        aria-label="Recently closed tabs"
+                        aria-expanded={isClosedTabsOpen}
+                        onClick={() => {
+                            refreshClosedTabs();
+                            setIsClosedTabsOpen((isOpen) => {
+                                return !isOpen;
+                            });
+                        }}
+                    >
+                        <i className="bi bi-clock-history" />
+                    </button>
                     {/*
                      * Here as well as on the chooser card because the card is
                      * behind a new tab, and a window with all eight tabs on a
@@ -788,6 +1076,28 @@ export default function AiChatAppComp() {
                     </button>
                 </header>
             )}
+            {isClosedTabsOpen && activeProvider !== null ? (
+                // On a line under the bar like the window's other questions,
+                // rather than floated over the page: the page is a website,
+                // and a panel over it would sit on whatever it drew there.
+                <div
+                    className="aichat-closed-panel"
+                    role="region"
+                    aria-label="Recently closed tabs"
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                            setIsClosedTabsOpen(false);
+                        }
+                    }}
+                >
+                    <RenderAiChatClosedTabsComp
+                        closedTabs={closedTabs}
+                        canReopen={checkCanReopen(sessionState)}
+                        onReopen={handleReopeningClosedTab}
+                        onForget={handleForgettingClosedTabs}
+                    />
+                </div>
+            ) : null}
             {signOutState === 'idle' ? null : (
                 // The tab strip's own idiom, on a line of its own and never
                 // done on the first press: a sign-in is not this window's to
@@ -807,10 +1117,11 @@ export default function AiChatAppComp() {
                         {signOutState === 'failed'
                             ? 'Signing out did not finish, so nothing was ' +
                               'changed. Try again.'
-                            : 'Sign out of every site in this window? The ' +
-                              'tabs stay, but the pages they were on are ' +
-                              'forgotten and every site will ask you to sign ' +
-                              'in again. This cannot be undone.'}
+                            : 'Sign out of every site, in every AI Chat ' +
+                              'window? The tabs stay, but the pages they ' +
+                              'were on and the recently closed list are ' +
+                              'forgotten, and every site will ask you to ' +
+                              'sign in again. This cannot be undone.'}
                     </span>
                     <button
                         type="button"
@@ -894,6 +1205,9 @@ export default function AiChatAppComp() {
                         onSignOut={() => {
                             setSignOutState('asking');
                         }}
+                        closedTabs={closedTabs}
+                        onReopen={handleReopeningClosedTab}
+                        onForgetClosedTabs={handleForgettingClosedTabs}
                     />
                 ) : null}
                 {sessions.map((session) => {

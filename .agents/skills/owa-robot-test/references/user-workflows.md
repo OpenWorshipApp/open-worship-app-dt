@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-29** (**W-46 — the Tip of the Day card takes itself off after one minute, and says so while it is there.** A 3px bar along the card's bottom edge drains left to right over that minute; resting the mouse pointer on the card freezes the bar and the minute with it, and moving away carries on from where it stopped rather than granting a fresh minute. **Next tip** starts the minute again, **All tips** holds it while the list is open, and the card is still closed at once by **×**. Verified live on the dev Reader and Slide Editor 2026-09-29.)
+**workflowsVersion: 2026-09-30** (**W-44 steps 4, 5 and 7 — more than one AI Chat window, tabs that move, and tabs that come back.** Asked for by the user: _I want the ai chat can be open multiple instances_, _drag the tab to new window_, _a tab's options to open in new window and a window option to open new window_, _a tab should be able to drag and move to reorder_, and _I want to see my previous tab_. Every press of the **✨** now opens another AI Chat window, up to three at once (each keeps its own tabs); a tab is dragged along the strip to reorder it, dragged out of the window or sent with **Open in new window** from its **⋮** to become a window of its own, and the new **New window** button beside **+** opens one more; a closed tab goes to **Recently closed** — on the card and behind the clock in the row above the page, **Ctrl+Shift+T** for the last — and comes back on its conversation. Sign out empties that list too. Verified live on the dev window 2026-09-30: the menu route moved a signed-in Claude conversation into a new window, a fourth window was refused, a closed tab came back from the card, and a drag reordered two tabs; the drop OUTSIDE the window is an OS drag CDP cannot make, so it is unit-tested only.)
+
+Previous: **workflowsVersion: 2026-09-29** (**W-46 — the Tip of the Day card takes itself off after one minute, and says so while it is there.** A 3px bar along the card's bottom edge drains left to right over that minute; resting the mouse pointer on the card freezes the bar and the minute with it, and moving away carries on from where it stopped rather than granting a fresh minute. **Next tip** starts the minute again, **All tips** holds it while the list is open, and the card is still closed at once by **×**. Verified live on the dev Reader and Slide Editor 2026-09-29.)
 
 Previous: **workflowsVersion: 2026-09-28f** (**W-46 — the Tip of the Day card is compact.** The card is 320x100 instead of 390x169: the title band is a quiet label row (no page name beside "Tip of the Day"), **Don't show again** moved into that row beside a red close mark, and **Show it / Next tip / All tips** are one small segmented group. In **All tips** the topic is a word leading each lesson's line rather than a bordered badge on a line of its own. Verified live on the dev presenter 2026-09-28.)
 
@@ -3172,11 +3174,27 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    **Lock**, **Close**, **Close other chats…** and **Clear all chats…**. Until you rename
    it, a tab is called after the page — the conversation's own name, on most of these
    sites. Tabs are kept when the window and the app close, up to eight of them, and each
-   comes back on the conversation it was on. 📸
+   comes back on the conversation it was on. 📸 **Drag a tab** along the strip to put it
+   somewhere else among the others.
+
+   **Closed one by mistake?** A closed tab is not lost: it goes to **Recently closed**,
+   listed on the card a new tab opens on and behind the **🕘** (**Recently closed tabs**) in
+   the row above the page. Click it and it opens again on the conversation it was on;
+   **Ctrl+Shift+T** brings back the last one. The list is shared by every AI Chat window,
+   keeps the last twenty, and **Clear this list** under it empties it. 📸
 5. Only three tabs keep their site loaded at once — the one in front and the two you used
    most recently. The others unload to save memory and load their last page again when
    you click them, which takes a second and loses nothing: the conversation lives on the
    site, under your account.
+
+   **More than one window.** Each press of the **✨** opens another AI Chat window, and so
+   does the **New window** button right of **+** in the strip — up to three at once; a
+   fourth press brings the open ones forward instead, because every open site takes
+   memory. Each window keeps its own tabs. To give a tab a window of its own, **drag it out**
+   of the strip and let go anywhere outside the window, or choose **Open in new window**
+   from its **⋮**: a new window opens holding that tab, on the conversation it was on, and
+   the tab leaves the first window. You stay signed in, because every window shares the
+   same sign-ins. 📸
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
    browser, never in the app — and only when you pressed something in the site just before.
    A page that tries to open one on its own is stopped, and a line under the row above the
@@ -3202,9 +3220,11 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    room where several people use the same machine. Click **↤** (**Sign out of every
    site**) in the row above the page, or the same words on the card in step 2, and answer
    **Sign out**. 📸 It asks first, and **Keep me signed in** is the answer already
-   selected, so a mis-click costs nothing. Your tabs stay where they are; the pages they
-   were on and the names the sites gave them are forgotten, a name you typed on a tab
-   yourself is kept, and every site asks you to sign in again. It cannot be undone.
+   selected, so a mis-click costs nothing. It signs out of every site in every AI Chat
+   window, since they all share the one sign-in. Your tabs stay where they are; the pages
+   they were on, the names the sites gave them and the **Recently closed** list are
+   forgotten, a name you typed on a tab yourself is kept, and every site asks you to sign
+   in again. It cannot be undone.
 
 **Not loading?** The window says _… could not be loaded_ with a **Try again** button when
 the site cannot be reached — check the building's internet first. A site that refuses to

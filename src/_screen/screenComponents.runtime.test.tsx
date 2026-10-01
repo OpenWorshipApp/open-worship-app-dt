@@ -73,6 +73,7 @@ vi.mock('./managers/screenManagerHooks', () => ({
 
 vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBibleManagerEvents: useScreenBibleManagerEventsMock,
+    useScreenForegroundManagerEvents: vi.fn(),
     useScreenMaskManagerEvents: vi.fn(),
 }));
 
@@ -165,6 +166,7 @@ function createScreenManagerStub() {
                 width: '100%',
                 height: '100%',
             },
+            foregroundData: { marqueeTopData: null },
         },
         screenDrawManager: {
             render: vi.fn(),
