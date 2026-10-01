@@ -207,6 +207,14 @@ npm run pack:linux
 ```
 
 On Fedora-based systems, this also generates an RPM artifact in `release/`.
+Building the Fedora release requires these packages first:
+
+```bash
+sudo dnf install gawk
+sudo dnf install libxcrypt-compat
+sudo dnf install binutils
+sudo dnf install rpm-build
+```
 
 ---
 
@@ -244,6 +252,14 @@ npm run dc:err
 
 ```bash
 sudo dnf install libxcrypt-compat
+```
+
+For building the Fedora release (`npm run pack:linux`), also install:
+
+```bash
+sudo dnf install gawk
+sudo dnf install binutils
+sudo dnf install rpm-build
 ```
 
 </details>
