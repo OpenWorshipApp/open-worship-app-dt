@@ -8,7 +8,8 @@
 #   npm run release:dry-run  -- same packs, but git is left alone and the push
 #                               writes into `extra-work/fake-s3` instead.
 #                               `RELEASE_SKIP_INSTALL=true` additionally skips the
-#                               (slow) dependency reinstall -- dry runs only.
+#                               (slow) dependency reinstall -- dry runs and
+#                               mac-intel hosts only.
 set -euo pipefail
 
 current_script_dir=$(dirname "$0")
@@ -28,6 +29,12 @@ extra_bin_src_dir="./extra-work/experiment-building/release"
 
 is_dry_run=${RELEASE_DRY_RUN:-false}
 is_skipping_install=${RELEASE_SKIP_INSTALL:-false}
+# A mac-intel host reinstalls natively-built dependencies far too slowly to pay
+# for it on every pack, so it honors RELEASE_SKIP_INSTALL the way a dry run does.
+is_mac_intel=false
+if [[ "$OSTYPE" == "darwin"* && "$(uname -m)" != "arm64" ]]; then
+    is_mac_intel=true
+fi
 start_seconds=$SECONDS
 # Filled in by `start_prep`, one entry per platform prefix, printed at the end.
 staged_dir_list=()
@@ -160,13 +167,13 @@ reset_to_release_tag() {
 install_dependencies() {
     log_step "Installing dependencies"
     if [[ "$is_skipping_install" == "true" ]]; then
-        if [[ "$is_dry_run" == "true" ]]; then
+        if [[ "$is_dry_run" == "true" || "$is_mac_intel" == "true" ]]; then
             echo "Skipping \`npm run i:d\` (RELEASE_SKIP_INSTALL=true)."
             return
         fi
         # A published build has to come out of a clean install, whatever the
         # environment says.
-        echo "WARNING: RELEASE_SKIP_INSTALL is honored on a dry run only; installing anyway."
+        echo "WARNING: RELEASE_SKIP_INSTALL is honored on a dry run or a mac-intel host only; installing anyway."
     fi
     npm run i:d
 }
