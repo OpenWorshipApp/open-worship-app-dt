@@ -743,7 +743,7 @@ describe('CanvasController', () => {
         expect(mocks.showSimpleToastMock).not.toHaveBeenCalled();
     });
 
-    test('adds a default text item with the next id', () => {
+    test('adds a default text item with the next id, centred on the slide', () => {
         const existingItem = createCanvasItem({ id: 4 });
         const newTextItem = createCanvasItem({ id: -1 });
         const { canvas, controller } = createController([existingItem]);
@@ -754,6 +754,9 @@ describe('CanvasController', () => {
         expect(mocks.genDefaultItemMock).toHaveBeenCalledTimes(1);
         expect(newTextItem.props.id).toBe(5);
         expect(canvas.canvasItems).toEqual([existingItem, newTextItem]);
+        // A 200x100 box on the 1280x720 canvas, not wherever the default
+        // style happened to put it.
+        expect(newTextItem.props).toMatchObject({ left: 540, top: 310 });
     });
 
     test('creates a color box item at the cursor and reports failures', () => {
