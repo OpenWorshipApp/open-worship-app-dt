@@ -1017,6 +1017,10 @@ describe('electronEventListener handlers', () => {
         expect(appController.sendMessageToAll).toHaveBeenCalledWith(
             'main:app:extra-bin-changed',
         );
+        findOnHandler('all:app:bible-list-changed')({});
+        expect(appController.sendMessageToAll).toHaveBeenCalledWith(
+            'main:app:bible-list-changed',
+        );
 
         await call('main:app:read-web-page', {
             url: 'https://example.com',

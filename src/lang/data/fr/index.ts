@@ -1146,6 +1146,8 @@ const dictionary = {
     'Canvas Items': 'Éléments du canevas',
     'Please change bible key here': 'Veuillez modifier la clé de la Bible ici',
     'Not available': 'Non disponible',
+    'is not available!': "n'est pas disponible !",
+    'Choose a folder': 'Choisir un dossier',
     'Moving File to Trash': 'Déplacement du fichier vers la corbeille',
     'Are you sure you want to move': 'Voulez-vous vraiment déplacer',
     'to trash?': 'vers la corbeille ?',

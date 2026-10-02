@@ -268,6 +268,24 @@ export function genTextDefaultBoxStyle(
     };
 }
 
+/**
+ * `left`/`top` that center a box on a slide. The default box's own
+ * `left: 356, top: 279` centers 700 × 400 only on a 1412 × 958 slide, and a new
+ * document's slide takes the screen's size: on a 1920 × 1080 or 2561 × 1440
+ * projector the first box of every new document sat in the upper-left quarter.
+ */
+export function genCenteredBoxPosition(
+    boxWidth: number,
+    boxHeight: number,
+    slideWidth: number,
+    slideHeight: number,
+) {
+    return {
+        left: Math.round((slideWidth - boxWidth) / 2),
+        top: Math.round((slideHeight - boxHeight) / 2),
+    };
+}
+
 export function genMediaDefaultBoxStyle(width?: number, height?: number) {
     return {
         ...genTextDefaultBoxStyle(width, height),

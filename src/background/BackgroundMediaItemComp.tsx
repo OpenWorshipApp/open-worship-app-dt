@@ -17,7 +17,9 @@ import type {
 } from './backgroundHelpers';
 import { genBackgroundMediaItemDataByFilePath } from './backgroundHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
-import BackgroundListItemComp from './BackgroundListItemComp';
+import BackgroundListItemComp, {
+    handleBackgroundTileKeyDown,
+} from './BackgroundListItemComp';
 import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 
 function genFileNameElement(fileName: string) {
@@ -151,6 +153,12 @@ function BackgroundMediaItemComp({
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
             title={title}
+            // A div you could only click: the tile was no node at all to the
+            // accessibility tree -- only its caption was -- so no keyboard
+            // reached a file and nothing named the thing to press.
+            role="button"
+            tabIndex={0}
+            aria-label={fileSource.fullName}
             style={{
                 width: `${thumbnailWidth}px`,
             }}
@@ -159,6 +167,7 @@ function BackgroundMediaItemComp({
             onDragStart={handleMediaDragStart}
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
+            onKeyDown={handleBackgroundTileKeyDown}
         >
             {isNameOnTop && (
                 <div className="app-ellipsis-left pe-4">

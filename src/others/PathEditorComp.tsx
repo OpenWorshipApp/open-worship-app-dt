@@ -95,6 +95,10 @@ export default function PathEditorComp({
                 <button
                     className="btn btn-secondary"
                     type="button"
+                    // Both buttons here are a bare icon: without a name a
+                    // screen reader read them as "button" and nothing else.
+                    title={tran('Reload')}
+                    aria-label={tran('Reload')}
                     onClick={handleReload}
                 >
                     <i className="bi bi-arrow-clockwise" />
@@ -113,6 +117,8 @@ export default function PathEditorComp({
             <button
                 className="btn btn-secondary"
                 type="button"
+                title={tran('Choose a folder')}
+                aria-label={tran('Choose a folder')}
                 onClick={handleDirSelecting}
             >
                 <i className="bi bi-folder2-open" />

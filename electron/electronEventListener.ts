@@ -755,6 +755,12 @@ export function initEventOther(appController: ElectronAppController) {
         appController.sendMessageToAll('main:app:extra-bin-changed');
     });
 
+    // A bible was created, imported, reset or removed in one renderer; a
+    // window still answering "not available" for its key asks again.
+    ipcMain.on('all:app:bible-list-changed', () => {
+        appController.sendMessageToAll('main:app:bible-list-changed');
+    });
+
     ipcMain.on('all:app:print', (event, htmlText?: string) => {
         if (typeof htmlText === 'string') {
             void printHTMLContent(htmlText).catch((error) => {

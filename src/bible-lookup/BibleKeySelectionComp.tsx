@@ -1,6 +1,11 @@
 import './BibleKeySelectionComp.scss';
 
-import { useCallback, type MouseEvent, type CSSProperties } from 'react';
+import {
+    useCallback,
+    type MouseEvent,
+    type KeyboardEvent,
+    type CSSProperties,
+} from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -16,6 +21,7 @@ import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { openBibleSetting } from '../setting/settingHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+import { pressElementLikeButton } from '../helper/helpers';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -234,6 +240,23 @@ export function BibleKeySelectionMiniComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const hasContextMenu = isHandleClickEvent && contextMenuTitle !== undefined;
+    // A span you could only click: the chip was a bare `generic` to the
+    // accessibility tree, so no keyboard reached it and nothing named it --
+    // on the "is not available!" card it is the ONE way forward.
+    const buttonProps = isHandleClickEvent
+        ? {
+              role: 'button',
+              tabIndex: 0,
+              'aria-haspopup': 'menu' as const,
+              'aria-label': `${tran('Change Bible Key')}: ${bibleKey}`,
+              onKeyDown: (event: KeyboardEvent<HTMLSpanElement>) => {
+                  // Not a key meant for the ⋮ button inside the chip.
+                  if (event.target === event.currentTarget) {
+                      pressElementLikeButton(event);
+                  }
+              },
+          }
+        : {};
     return (
         <span
             className={
@@ -245,6 +268,7 @@ export function BibleKeySelectionMiniComp({
                 padding: '1px 2px',
                 ...extraStyle,
             }}
+            {...buttonProps}
             onClick={isHandleClickEvent ? handleClickEvent : undefined}
             onContextMenu={
                 isHandleClickEvent ? handleContextMenuEvent : undefined

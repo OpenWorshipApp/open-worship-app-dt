@@ -13,6 +13,7 @@ import type BibleItem from '../../bible-list/BibleItem';
 import type { AppColorType } from '../../others/color/colorHelpers';
 import {
     checkIsMediaCanvasItemType,
+    genCenteredBoxPosition,
     getRemoteMediaMimetypeName,
     type CanvasItemMediaDimPropsType,
     type CanvasControllerEventType,
@@ -195,6 +196,14 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     addNewTextItem() {
         const newItem = CanvasItemText.genDefaultItem();
+        newItem.applyProps(
+            genCenteredBoxPosition(
+                newItem.props.width,
+                newItem.props.height,
+                this.canvas.width,
+                this.canvas.height,
+            ),
+        );
         this.addNewItems([newItem]);
     }
 

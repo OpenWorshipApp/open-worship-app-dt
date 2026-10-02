@@ -13,6 +13,10 @@ export default function PublicDomainSongItemComp({
     onDownload: () => void;
 }>) {
     const firstLine = song.verses[0]?.split('\n')[0] ?? '';
+    // The song's title in the name: thirty-six buttons all called "Download"
+    // left a screen reader, and anything finding a control by its words, no
+    // way to tell which song a press would import.
+    const downloadLabel = `${tran('Download')}: ${song.title}`;
     return (
         <li className="list-group-item p-2">
             <div
@@ -37,8 +41,8 @@ export default function PublicDomainSongItemComp({
                 <button
                     className="btn btn-sm btn-outline-info"
                     type="button"
-                    title={tran('Download')}
-                    aria-label={tran('Download')}
+                    title={downloadLabel}
+                    aria-label={downloadLabel}
                     disabled={isDownloading || isDownloadDisabled}
                     onClick={onDownload}
                 >

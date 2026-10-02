@@ -19,6 +19,7 @@ import {
 } from '../../server/fileHelpers';
 import { tran } from '../../lang/langHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
+import { notifyBibleListChanged } from '../../helper/bible-helpers/bibleListChangeHelpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
@@ -319,14 +320,16 @@ export async function ensureBibleXMLCachedBasePath(bibleKey: string) {
 export async function clearBibleXMLCache(bibleKey: string) {
     await bibleJSONCacheManager.delete(bibleKey);
     const basePath = await getBibleXMLCachedBasePath(bibleKey);
-    if (basePath === null) {
-        return;
+    if (basePath !== null) {
+        try {
+            await fsDeleteDir(basePath);
+        } catch (error) {
+            handleError(error);
+        }
     }
-    try {
-        await fsDeleteDir(basePath);
-    } catch (error) {
-        handleError(error);
-    }
+    // Every other window answered for this key before the change, and a
+    // window saying "not available" never asks again on its own.
+    notifyBibleListChanged();
 }
 
 async function getBackupBibleXMLData(

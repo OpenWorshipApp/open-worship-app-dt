@@ -259,6 +259,40 @@ export function resizeWidgetRect(
     return clampWidgetRect({ left, top, ...size }, options);
 }
 
+// The panel showing what is LIVE. A widget's first-ever spot is the window's
+// top-right corner, which in the Presenter is this panel's column: a Countdown
+// or a song import opened over it, and the person starting it lost sight of
+// the output. `data-fs` is only on an OPEN pane — a collapsed one is a strip
+// that carries the same name and shows nothing worth keeping clear.
+const KEEP_CLEAR_PANE_SELECTOR = '[data-fs][data-widget-name="Mini Screen"]';
+const KEEP_CLEAR_GAP = 16;
+
+function getKeepClearRect() {
+    const element = globalThis.document?.querySelector(
+        KEEP_CLEAR_PANE_SELECTOR,
+    );
+    if (!element) {
+        return null;
+    }
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+        return null;
+    }
+    return rect;
+}
+
+function checkIsOverlapping(
+    rect: WidgetRect,
+    other: { left: number; top: number; right: number; bottom: number },
+) {
+    return (
+        rect.left < other.right &&
+        rect.left + rect.width > other.left &&
+        rect.top < other.bottom &&
+        rect.top + rect.height > other.top
+    );
+}
+
 export function getInitialWidgetRect(options: FloatingWidgetOptions) {
     const size = getConstrainedSize(
         options.width ?? DEFAULT_WIDTH,
@@ -268,7 +302,7 @@ export function getInitialWidgetRect(options: FloatingWidgetOptions) {
     const viewportSize = getViewportSize();
     const initialOffset = options.initialOffset ?? 0;
 
-    return clampWidgetRect(
+    const rect = clampWidgetRect(
         {
             left: viewportSize.width - size.width - 24 - initialOffset,
             top: 64 + initialOffset,
@@ -276,6 +310,18 @@ export function getInitialWidgetRect(options: FloatingWidgetOptions) {
         },
         options,
     );
+    const keepClearRect = getKeepClearRect();
+    if (keepClearRect === null || !checkIsOverlapping(rect, keepClearRect)) {
+        return rect;
+    }
+    const besideLeft =
+        keepClearRect.left - rect.width - KEEP_CLEAR_GAP - initialOffset;
+    // No room beside it: a widget over the preview beats one pushed partly
+    // off the window, and it can still be dragged away.
+    if (besideLeft < VIEWPORT_PADDING) {
+        return rect;
+    }
+    return clampWidgetRect({ ...rect, left: besideLeft }, options);
 }
 
 // "Maximized" is the whole viewport minus the same padding every other rect is

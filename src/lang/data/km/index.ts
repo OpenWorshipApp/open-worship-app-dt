@@ -1115,6 +1115,8 @@ const dictionary = {
     'Canvas Items': 'ធាតុផ្ទាំង',
     'Please change bible key here': 'សូមផ្លាស់ប្តូរកូនសោរព្រះគម្ពីរនៅទីនេះ',
     'Not available': 'មិនមាន',
+    'is not available!': 'មិនមានទេ!',
+    'Choose a folder': 'ជ្រើសរើសថត',
     'Moving File to Trash': 'កំពុងផ្លាស់ទីឯកសារទៅធុងសំរាម',
     'Are you sure you want to move': 'តើអ្នកពិតជាចង់ផ្លាស់ទី',
     'to trash?': 'ទៅធុងសំរាម?',

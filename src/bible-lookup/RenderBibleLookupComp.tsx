@@ -17,6 +17,7 @@ import {
 import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import { registerBibleListChangedListener } from '../helper/bible-helpers/bibleListChangeHelpers';
 import appProvider from '../server/appProvider';
 import { toWidgetLabel } from '../others/labelIconHelpers';
 import type { DataInputType } from '../resize-actor/flexSizeHelpers';
@@ -44,7 +45,7 @@ export function useSelectedBibleKey() {
     const [bibleKey, setBibleKey] = useState<string>(
         viewController.selectedBibleItem.bibleKey,
     );
-    const [bibleInfo] = useAppStateAsync(() => {
+    const [bibleInfo, setBibleInfo] = useAppStateAsync(() => {
         return getBibleInfo(bibleKey);
     }, [bibleKey]);
     useAppEffect(() => {
@@ -55,6 +56,31 @@ export function useSelectedBibleKey() {
             viewController.setBibleKey = (_: string) => {};
         };
     }, []);
+    const isUnavailable = bibleInfo === null;
+    useAppEffect(() => {
+        if (!isUnavailable) {
+            return;
+        }
+        // The answer above is kept, so "not available" would stand even after
+        // the bible is created in Settings (its key picker leaves the current
+        // key out, so it cannot be re-picked either). Ask again when another
+        // window changes the installed bibles, and when this window is come
+        // back to — the second covers a file copied in by hand.
+        let isActive = true;
+        const recheck = async () => {
+            const newBibleInfo = await getBibleInfo(bibleKey, true);
+            if (isActive && newBibleInfo !== null) {
+                setBibleInfo(newBibleInfo);
+            }
+        };
+        const unregister = registerBibleListChangedListener(recheck);
+        globalThis.addEventListener('focus', recheck);
+        return () => {
+            isActive = false;
+            unregister();
+            globalThis.removeEventListener('focus', recheck);
+        };
+    }, [isUnavailable, bibleKey]);
     if (bibleInfo === undefined) {
         return { bibleKey };
     }

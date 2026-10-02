@@ -118,8 +118,8 @@ export function BibleNotAvailableComp({
             <div className="body card-body w-100 p-3">
                 <h2>
                     {tran('Bible key ')}
-                    <span style={{ fontFamily }}>"{bibleKey}"</span>
-                    {' is not available!'}
+                    <span style={{ fontFamily }}>"{bibleKey}"</span>{' '}
+                    {tran('is not available!')}
                 </h2>
                 <div className="d-flex">
                     <h4

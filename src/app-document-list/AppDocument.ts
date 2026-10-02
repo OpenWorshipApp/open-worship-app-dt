@@ -41,7 +41,10 @@ import {
     writeTextToClipboard,
 } from '../server/clipboardHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import type { TextStylePropsType } from '../slide-editor/canvas/canvasHelpers';
+import {
+    genCenteredBoxPosition,
+    type TextStylePropsType,
+} from '../slide-editor/canvas/canvasHelpers';
 
 export type DocumentFontChangeType =
     { fontSize: number } | { fontFamily: string | null };
@@ -78,6 +81,15 @@ export default class AppDocument
     static genNewExtraJsonData() {
         const newCanvasItem = CanvasItemText.genDefaultItem();
         const appDocumentJson = Slide.defaultSlideData(0);
+        const { width, height } = appDocumentJson.metadata;
+        newCanvasItem.applyProps(
+            genCenteredBoxPosition(
+                newCanvasItem.props.width,
+                newCanvasItem.props.height,
+                width,
+                height,
+            ),
+        );
         appDocumentJson.canvasItems.push(newCanvasItem.toJson());
         const jsonData = {
             items: [appDocumentJson],
