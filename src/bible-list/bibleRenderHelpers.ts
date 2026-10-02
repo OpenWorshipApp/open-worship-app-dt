@@ -302,9 +302,13 @@ class BibleRenderHelper {
                 ? 1
                 : getModelChapterCount(bookKeysOrder[nextBookIndex]);
         }
-        const verses = await getVerses(bibleKey, bookKey, nextChapter);
+        // The verse count belongs to the chapter being jumped TO: across a book
+        // boundary that is another book, and counting the old book's chapter
+        // cut Obadiah 1 to 17 verses and asked for Revelation 22:1-24.
+        const nextBookKey = bookKeysOrder[nextBookIndex];
+        const verses = await getVerses(bibleKey, nextBookKey, nextChapter);
         return {
-            bookKey: bookKeysOrder[nextBookIndex],
+            bookKey: nextBookKey,
             chapter: nextChapter,
             verseStart: 1,
             verseEnd: verses ? Object.keys(verses).length : 1,

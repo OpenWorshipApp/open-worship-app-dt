@@ -11,6 +11,7 @@ import {
     revealBibleNoteRefs,
     useShortBibleNoteVerses,
 } from '../../bible-list/note/bibleNoteShortVerseHelpers';
+import { tran } from '../../lang/langHelpers';
 
 // The verse number carries BOTH gestures — one click reveals the verse's bible
 // notes, two selects the verse — so the reveal has to wait out the double-click
@@ -116,8 +117,9 @@ export default function RenderVerseTextComp({
                     (isExtraVerses ? ' extra-verses' : '')
                 }
                 title={
-                    'Click to reveal the bible notes of this verse,' +
-                    ` double click to select verse ${verseInfo.localeVerse}`
+                    tran(
+                        'Click to reveal the bible notes of this verse, double click to select verse',
+                    ) + ` ${verseInfo.localeVerse}`
                 }
                 onDoubleClick={handleDoubleClick}
             >

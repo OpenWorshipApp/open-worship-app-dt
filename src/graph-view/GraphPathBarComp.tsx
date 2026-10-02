@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -7,11 +7,28 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { GraphNodeRefType, GraphSourceType, GraphViewType } from './core';
-import { GRAPH_GEOMETRY } from './core';
+import { GRAPH_GEOMETRY, GRAPH_MAX_PATH_HOP } from './core';
 import { getGraphEngine } from './graphViewStore';
+import { fitGraphOnScreen } from './graphFitHelpers';
 
 const SEARCH_DEBOUNCE_MILLISECOND = 300;
 const SEARCH_RESULT_LIMIT = 8;
+
+/**
+ * What a search that came back empty says.
+ *
+ * The walk gives up past `GRAPH_MAX_PATH_HOP` steps, so "no connection" alone
+ * claimed more than it knew: two records further apart than that ARE
+ * connected, and the user had no way to tell that from two that are not. A
+ * `{count}` placeholder rather than a number glued onto the sentence, because
+ * where the count sits is the translation's to decide.
+ */
+export function genNoConnectionMessage() {
+    return tran('No connection found within {count} steps').replace(
+        '{count}',
+        `${GRAPH_MAX_PATH_HOP}`,
+    );
+}
 
 /**
  * A record's name, with its English one beside it.
@@ -63,12 +80,14 @@ function RenderNodePickerComp<TContext>({
     context,
     selected,
     onSelect,
+    inputRef,
 }: Readonly<{
     label: string;
     source: GraphSourceType<TContext>;
     context: TContext;
     selected: GraphNodeRefType | null;
     onSelect: (node: GraphNodeRefType | null) => void;
+    inputRef: RefObject<HTMLInputElement | null>;
 }>) {
     const [query, setQuery] = useState('');
     const [resultList, setResultList] = useState<GraphNodeRefType[]>([]);
@@ -105,6 +124,7 @@ function RenderNodePickerComp<TContext>({
     return (
         <span className="graph-view__picker">
             <input
+                ref={inputRef}
                 type="text"
                 className="form-control form-control-sm"
                 placeholder={label}
@@ -186,6 +206,37 @@ export default function GraphPathBarComp<TContext>({
     const [toNode, setToNode] = useState<GraphNodeRefType | null>(null);
     const [message, setMessage] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const pickerInputRef = useRef<HTMLInputElement>(null);
+    const findButtonRef = useRef<HTMLButtonElement>(null);
+    const focusAfterPickRef = useRef<'find' | 'picker' | null>(null);
+
+    /**
+     * Picking a record removes the row that was pressed, and clearing it
+     * removes the chip's ✕ — either drops focus to `<body>`, where Ctrl+Z is
+     * the browser's undo of whatever was typed last. So focus moves on to what
+     * comes next: Find after a pick, the search box after a clear, and the
+     * canvas when Find cannot be pressed (the same record twice).
+     */
+    const handleToNodeSelect = (node: GraphNodeRefType | null) => {
+        focusAfterPickRef.current = node === null ? 'picker' : 'find';
+        setToNode(node);
+    };
+    useEffect(() => {
+        const focusAfterPick = focusAfterPickRef.current;
+        focusAfterPickRef.current = null;
+        if (focusAfterPick === null) {
+            return;
+        }
+        const target =
+            focusAfterPick === 'find'
+                ? findButtonRef.current
+                : pickerInputRef.current;
+        if (target === null || target.disabled) {
+            viewportRef.current?.focus({ preventScroll: true });
+            return;
+        }
+        target.focus();
+    }, [toNode, viewportRef]);
 
     const rootNode = graph.nodeList.find((node) => {
         return node.key === graph.rootKey;
@@ -204,6 +255,9 @@ export default function GraphPathBarComp<TContext>({
         ) {
             return;
         }
+        // Find is disabled while it searches, and a found path re-roots the
+        // graph — the canvas is where the next Ctrl+Z belongs.
+        viewportRef.current?.focus({ preventScroll: true });
         setIsSearching(true);
         setMessage('');
         // A macrotask so the button paints its busy state before the walk over
@@ -218,10 +272,11 @@ export default function GraphPathBarComp<TContext>({
                 if (refList === null || refList.length === 0) {
                     // Disconnected records are common here, so this reads as
                     // an answer rather than an error: no red, no icon.
-                    setMessage(tran('No connection found'));
+                    const noConnectionMessage = genNoConnectionMessage();
+                    setMessage(noConnectionMessage);
                     showSimpleToast(
                         tran('Find Connection'),
-                        tran('No connection found'),
+                        noConnectionMessage,
                     );
                     return;
                 }
@@ -239,6 +294,10 @@ export default function GraphPathBarComp<TContext>({
                     pathFromId: rootNode.recordId,
                     pathToId: toNode.recordId,
                 });
+                // The path is laid out where it lands, and at the old zoom
+                // half of it sat off-screen until Fit to view was pressed.
+                // Not a history step of its own: it belongs to the path.
+                fitGraphOnScreen(graph.key, viewport, undefined, false);
             } catch (error) {
                 handleError(error);
             } finally {
@@ -281,9 +340,11 @@ export default function GraphPathBarComp<TContext>({
                 source={source}
                 context={context}
                 selected={toNode}
-                onSelect={setToNode}
+                onSelect={handleToNodeSelect}
+                inputRef={pickerInputRef}
             />
             <button
+                ref={findButtonRef}
                 type="button"
                 className="btn btn-sm btn-outline-secondary"
                 // Same-record and empty pickers are simply not askable, which

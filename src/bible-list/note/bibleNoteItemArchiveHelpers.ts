@@ -373,9 +373,9 @@ export async function importBibleNoteItemArchive(
 export async function exportBibleNoteItem(noteItem: NoteItem) {
     // One dialog, always — an empty answer writes exactly the bundle this
     // export has always written; cancelling backs out of the whole thing.
-    const password = await askForNewArchivePassword(
-        tran('Export Bible Note Item'),
-    );
+    // The KEY, not its translation: the dialog translates its own title, and
+    // a Khmer title fed back into `tran()` is not a key -- it threw in dev.
+    const password = await askForNewArchivePassword('Export Bible Note Item');
     if (password === null) {
         return null;
     }

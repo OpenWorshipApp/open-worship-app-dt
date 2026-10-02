@@ -1,6 +1,9 @@
 import { tran } from '../lang/langHelpers';
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
-import { saveBibleItem } from '../bible-list/bibleHelpers';
+import {
+    exportToWordDocument,
+    saveBibleItem,
+} from '../bible-list/bibleHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import type BibleItem from '../bible-list/BibleItem';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -71,13 +74,25 @@ export function genFoundBibleItemContextMenu(
                 }
             },
         },
+        {
+            // Also on the header's hover strip; in the menu too, like that
+            // strip's other actions, for a pane too narrow to show them all.
+            childBefore: genContextMenuItemIcon('file-earmark-word'),
+            menuElement: tran('Export to MS Word'),
+            onSelect: () => {
+                exportToWordDocument([bibleItem]);
+            },
+        },
         ...(verseKey === null || appProvider.isPageAppDocumentEditor
             ? []
             : [
                   {
                       childBefore: genContextMenuItemIcon('link-45deg'),
+                      // No `title`: the verse key is the app's own handle
+                      // (`(KJV) GEN 22:1`), and as a tooltip it became part of
+                      // the item's spoken name. The panel this opens names the
+                      // verse in the reader's language.
                       menuElement: tran('Open in Cross Reference'),
-                      title: verseKey,
                       onSelect: () => {
                           viewController.selectedVerseKey = verseKey;
                           viewController.openBibleSearch('c');

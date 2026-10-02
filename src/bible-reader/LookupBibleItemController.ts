@@ -207,8 +207,13 @@ class LookupBibleItemController extends BibleItemsViewController {
 
     protected syncTargetByColorNote(bibleItem: ReadIdOnlyBibleItem) {
         if (this.checkIsBibleItemSelected(bibleItem)) {
-            this.getEditingResult().then(({ result }) => {
-                if (result.bibleItem === null) {
+            const inputText = this.inputText;
+            this.getEditingResult(inputText).then(({ result }) => {
+                // Only while the box still holds the text this answered. Every
+                // keystroke is looked up and the lookups finish in any order:
+                // a slow `Mark 4:3` landing after `Mark 4:39` left every pane
+                // in the colour group on verse 3 beside the box's verse 39.
+                if (result.bibleItem === null || inputText !== this.inputText) {
                     return;
                 }
                 super.syncTargetByColorNote(result.bibleItem);
@@ -250,14 +255,16 @@ class LookupBibleItemController extends BibleItemsViewController {
             inputText,
             this.inputTextTime,
         ).then(async (editingResult) => {
-            const { bibleKey, oldInputText, time } = editingResult;
+            const { bibleKey, oldInputText } = editingResult;
             if (bibleKey !== this.selectedBibleItem.bibleKey) {
                 await this.setEditingData(editingResult.bibleKey, null, true);
             }
-            if (
-                time === this.inputTextTime &&
-                oldInputText !== this.inputText
-            ) {
+            // Only while the box still holds the text this answered. The guard
+            // was the `Date.now()` stamp, which two keystrokes inside one
+            // millisecond share -- scripted typing does it -- so the answer to
+            // a half-typed `Genesis 1:1-3` landing after the full reference
+            // wrote the box back to it.
+            if (inputText === this.inputText && oldInputText !== inputText) {
                 this.inputText = oldInputText;
             }
         });
@@ -301,6 +308,13 @@ class LookupBibleItemController extends BibleItemsViewController {
                         isAudioEnabled: this.selectedBibleItem.isAudioEnabled,
                     }));
                 newFoundBibleItem.toTitle().then((title) => {
+                    // Only a passage the box still holds. Every keystroke is
+                    // looked up, and the lookups finish in any order, so the
+                    // half-typed `Genesis 1:1-3` of a fast `Genesis 1:1-31`
+                    // could be the last to land and became the history entry.
+                    if (inputText !== this.inputText) {
+                        return;
+                    }
                     attemptAddingHistory(newFoundBibleItem.bibleKey, title);
                 });
             }
@@ -492,8 +506,12 @@ class LookupBibleItemController extends BibleItemsViewController {
         const nextTarget = await foundBibleItem.getJumpingChapter(isNext);
         if (nextTarget === null) {
             showSimpleToast(
-                `Try ${isNext ? 'Next' : 'Previous'} Chapter`,
-                `Unable to find ${isNext ? 'next' : 'previous'} chapter`,
+                isNext
+                    ? tran('Try Next Chapter')
+                    : tran('Try Previous Chapter'),
+                isNext
+                    ? tran('Unable to find next chapter')
+                    : tran('Unable to find previous chapter'),
             );
             return;
         }

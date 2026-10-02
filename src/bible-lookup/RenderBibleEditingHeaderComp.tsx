@@ -11,6 +11,10 @@ import {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { RenderTitleMaterialComp } from '../bible-reader/view-extra/RenderTitleMaterialComp';
+import {
+    applyHorizontalWheelScroll,
+    BibleViewTitleMaterialContext,
+} from '../bible-reader/view-extra/viewExtraHelpers';
 import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -19,6 +23,7 @@ export default function RenderBibleEditingHeaderComp() {
     const viewController = useLookupBibleItemControllerContext();
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
+    const actionElement = use(BibleViewTitleMaterialContext)?.actionElement;
     const viewControllerRef = useAppCurrentRef(viewController);
     const handleBibleKeyChange = useCallback(
         (isContextMenu: boolean, _oldBibleKey: string, newBibleKey: string) => {
@@ -43,6 +48,7 @@ export default function RenderBibleEditingHeaderComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isClosable = !viewController.isAlone;
+    const hasActions = foundBibleItem !== null || isClosable || !!actionElement;
     return (
         <div
             className="bg-transparent app-border-bottom-white-round"
@@ -52,31 +58,37 @@ export default function RenderBibleEditingHeaderComp() {
                 <RenderTitleMaterialComp
                     bibleItem={viewController.selectedBibleItem}
                     onBibleKeyChange={handleBibleKeyChange}
+                    actionsElement={
+                        hasActions ? (
+                            // Floats over the passage's end while the header
+                            // is hovered, so it takes no room from the
+                            // passage at rest.
+                            <div
+                                className="bible-view-header-actions"
+                                ref={applyHorizontalWheelScroll}
+                            >
+                                {actionElement}
+                                {foundBibleItem === null ? null : (
+                                    <RenderEditingActionButtonsComp
+                                        bibleItem={foundBibleItem}
+                                    />
+                                )}
+                                {isClosable ? (
+                                    <button
+                                        type="button"
+                                        className="bible-view-header-close"
+                                        title={`${tran('Close')} [${toShortcutKey(closeEventMapper)}]`}
+                                        aria-label={tran('Close')}
+                                        onClick={handleClose}
+                                    >
+                                        <i className="bi bi-x-lg" />
+                                    </button>
+                                ) : null}
+                            </div>
+                        ) : null
+                    }
                 />
                 <div className="bible-view-header-end">
-                    {foundBibleItem !== null || isClosable ? (
-                        // Floats over the title's end while the header is
-                        // hovered, so it takes no room from the passage at
-                        // rest.
-                        <div className="bible-view-header-actions">
-                            {foundBibleItem === null ? null : (
-                                <RenderEditingActionButtonsComp
-                                    bibleItem={foundBibleItem}
-                                />
-                            )}
-                            {isClosable ? (
-                                <button
-                                    type="button"
-                                    className="bible-view-header-close"
-                                    title={`${tran('Close')} [${toShortcutKey(closeEventMapper)}]`}
-                                    aria-label={tran('Close')}
-                                    onClick={handleClose}
-                                >
-                                    <i className="bi bi-x-lg" />
-                                </button>
-                            ) : null}
-                        </div>
-                    ) : null}
                     {foundBibleItem === null ? (
                         // Nothing resolved yet, so the verse actions have
                         // nothing to act on. Offer the translation's

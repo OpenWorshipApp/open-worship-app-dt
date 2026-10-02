@@ -102,6 +102,10 @@ export function NoteTitleEditorComp({
                 placeholder={tran('Enter your note here') + '...'}
                 isResizable
                 isInput
+                // Opened from the menu's Edit Title: without the focus the
+                // first Escape went to the Bible reference box instead and
+                // the field stayed open.
+                isAutoFocus
                 onEscape={onEscape}
                 onBlur={onBlur}
                 onEnter={onEnter}

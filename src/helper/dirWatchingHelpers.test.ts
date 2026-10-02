@@ -493,6 +493,11 @@ describe('dirWatchingHelpers', () => {
         await flushDebounce();
 
         expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(1);
+        // ...but nothing is told to re-read a file that is no longer there:
+        // a renamed Bibles list logged an ENOENT for its old name.
+        expect(fileSourceGetInstanceMock).not.toHaveBeenCalledWith(
+            '/data/docs/a.owa',
+        );
     });
 
     test('an unnamed change reconciles every mounted list', async () => {

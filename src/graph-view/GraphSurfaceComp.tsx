@@ -17,7 +17,10 @@ import { openDetailPanel } from '../location-name-lookup/detailPanelHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    APP_CONTEXT_MENU_ID,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -33,9 +36,7 @@ import type {
 import {
     GRAPH_GEOMETRY,
     GRAPH_LARGE_FANOUT,
-    GRAPH_ZOOM_RANGE,
     centreGraphInViewport,
-    fitGraphToViewport,
     getEdgeBowIndexMap,
     getEdgeDrawing,
     getEdgeLabelPoint,
@@ -52,10 +53,13 @@ import GraphEdgeLayerComp from './GraphEdgeLayerComp';
 import GraphNodeBoxComp from './GraphNodeBoxComp';
 import type { GraphNodeCallbacksType } from './GraphNodeBoxComp';
 import GraphDockComp from './GraphDockComp';
+import { fitGraphOnScreen } from './graphFitHelpers';
 import GraphToolbarComp from './GraphToolbarComp';
 import {
     buildGraphSvg,
     COPY_MARKDOWN_LABEL,
+    genCanvasTextMeasure,
+    loadGraphExportFonts,
     PRINT_PALETTE,
     printGraph,
     saveGraphImage,
@@ -72,6 +76,53 @@ import type {
 import { getGraphEngine } from './graphViewStore';
 
 type GraphPointListType = readonly { x: number; y: number }[];
+
+type GraphHistoryStepType = 'undo' | 'redo';
+
+/** Ctrl/Cmd+Z undoes; Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y redo. */
+function getGraphHistoryStep(
+    event: Pick<KeyboardEvent, 'ctrlKey' | 'metaKey' | 'shiftKey' | 'key'>,
+): GraphHistoryStepType | null {
+    if (!event.ctrlKey && !event.metaKey) {
+        return null;
+    }
+    const key = event.key.toLowerCase();
+    if (key === 'y') {
+        return 'redo';
+    }
+    if (key === 'z') {
+        return event.shiftKey ? 'redo' : 'undo';
+    }
+    return null;
+}
+
+const TEXT_ENTRY_INPUT_TYPE_SET = new Set([
+    'text',
+    'search',
+    'url',
+    'email',
+    'tel',
+    'password',
+    'number',
+]);
+
+/**
+ * A box the user types into keeps its own Ctrl+Z — the path picker's search
+ * is one. A range slider or a button has no text to undo, so the keys there
+ * belong to the graph.
+ */
+function checkIsTextEntry(target: EventTarget | null) {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+    if (target.isContentEditable || target instanceof HTMLTextAreaElement) {
+        return true;
+    }
+    return (
+        target instanceof HTMLInputElement &&
+        TEXT_ENTRY_INPUT_TYPE_SET.has(target.type)
+    );
+}
 
 // Below this the labels are a few pixels tall and read as noise, and dropping
 // them from paint is the biggest single win when surveying a large graph.
@@ -203,6 +254,7 @@ export default function GraphSurfaceComp<TContext>({
     translate: (key: string) => string;
 }>) {
     const engine = getGraphEngine();
+    const rootRef = useRef<HTMLDivElement>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
     const worldRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -718,29 +770,29 @@ export default function GraphSurfaceComp<TContext>({
      */
     const handleFitToView = useCallback(
         (nodeList?: GraphPointListType, isUserMove = true) => {
-            const viewport = viewportRef.current;
-            const currentGraph = graphRef.current;
-            // The VISIBLE nodes, not every node: fitting to boxes a relation
-            // filter has hidden would leave the graph zoomed out around empty
-            // space the user cannot see.
             // `Array.isArray` rather than a null check: this is a public-ish
             // callback, and passing it straight to an `onClick` would hand it a
             // MouseEvent, which is not iterable and took the whole app down with
             // "Reload is needed".
-            const fitNodeList = Array.isArray(nodeList)
-                ? nodeList
-                : getVisibleGraph(currentGraph).nodeList;
-            if (viewport === null || fitNodeList.length === 0) {
+            fitGraphOnScreen(
+                graphRef.current.key,
+                viewportRef.current,
+                Array.isArray(nodeList) ? nodeList : undefined,
+                isUserMove,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
+    const applyHistoryStep = useCallback(
+        (step: GraphHistoryStepType) => {
+            const graphKey = graphRef.current.key;
+            if (step === 'redo') {
+                getGraphEngine().redo(graphKey);
                 return;
             }
-            const next = fitGraphToViewport({
-                nodeList: fitNodeList,
-                viewportWidth: viewport.clientWidth,
-                viewportHeight: viewport.clientHeight,
-                minZoomPercent: GRAPH_ZOOM_RANGE.min,
-                maxZoomPercent: GRAPH_ZOOM_RANGE.max,
-            });
-            getGraphEngine().setViewport(currentGraph.key, next, isUserMove);
+            getGraphEngine().undo(graphKey);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -750,31 +802,114 @@ export default function GraphSurfaceComp<TContext>({
      * Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, on the panel rather than on the window.
      *
      * Several graphs can be open at once, so the keys have to reach the one
-     * the user is working in — which is what focus already means. The viewport
-     * takes focus on any press inside it, and the event is stopped here so it
-     * never reaches a window-level undo belonging to something else.
+     * the user is working in — which is what focus already means. On the
+     * WHOLE panel, not only the canvas: with a toolbar chip or a dock button
+     * focused the keys used to fall through to the browser's own undo, which
+     * steps back whatever was typed last — the Reader's reference box. The
+     * event is stopped here so it never reaches a window-level undo belonging
+     * to something else.
      */
     const handleKeyDown = useCallback(
         (event: ReactKeyboardEvent<HTMLDivElement>) => {
-            if (!event.ctrlKey && !event.metaKey) {
+            if (checkIsTextEntry(event.target)) {
                 return;
             }
-            const key = event.key.toLowerCase();
-            if (key !== 'z' && key !== 'y') {
+            const step = getGraphHistoryStep(event);
+            if (step === null) {
                 return;
             }
             event.preventDefault();
             event.stopPropagation();
-            const graphKey = graphRef.current.key;
-            if (key === 'y' || event.shiftKey) {
-                getGraphEngine().redo(graphKey);
+            applyHistoryStep(step);
+        },
+        [applyHistoryStep],
+    );
+
+    /**
+     * Puts focus back on the canvas before a change that takes away the
+     * control that was pressed.
+     *
+     * Collapse is gone once its box collapses, Remove takes the whole box, an
+     * expansion disables its button while it works and Undo greys out at the
+     * end of the history — and a focused element that is removed or disabled
+     * drops focus to `<body>`, where the panel's keys cannot hear Ctrl+Z.
+     */
+    const keepFocusInGraph = useCallback(() => {
+        viewportRef.current?.focus({ preventScroll: true });
+    }, []);
+
+    /**
+     * The safety net under `keepFocusInGraph`: focus that fell to `<body>`
+     * while the user was working in THIS panel.
+     *
+     * Any menu closing, a popup closing or a control nobody thought of can
+     * still leave focus nowhere, and Ctrl+Z there is the browser's undo of
+     * whatever was typed last — measured: the Reader's passage stepped back
+     * while the graph stayed collapsed. So the last press or focus decides:
+     * inside this panel's floating widget (or in a context menu, which this
+     * panel may have opened) keeps the keys here; anywhere else gives them up.
+     * Three capture listeners per open graph, and only a containment check
+     * per press.
+     */
+    useEffect(() => {
+        const ownerDocument = globalThis.document;
+        let isWorkingHere = false;
+        const handleWorkingTarget = (event: Event) => {
+            const target = event.target;
+            const root = rootRef.current;
+            if (
+                target instanceof Element &&
+                target.closest(`#${APP_CONTEXT_MENU_ID}`) !== null
+            ) {
                 return;
             }
-            getGraphEngine().undo(graphKey);
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
+            isWorkingHere =
+                root !== null &&
+                target instanceof Node &&
+                (root.closest('.floating-widget') ?? root).contains(target);
+        };
+        const handleDocumentKeyDown = (event: KeyboardEvent) => {
+            const activeElement = ownerDocument.activeElement;
+            if (
+                !isWorkingHere ||
+                (activeElement !== null && activeElement !== ownerDocument.body)
+            ) {
+                return;
+            }
+            const step = getGraphHistoryStep(event);
+            if (step === null) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            applyHistoryStep(step);
+            keepFocusInGraph();
+        };
+        ownerDocument.addEventListener(
+            'pointerdown',
+            handleWorkingTarget,
+            true,
+        );
+        ownerDocument.addEventListener('focusin', handleWorkingTarget, true);
+        ownerDocument.addEventListener('keydown', handleDocumentKeyDown, true);
+        return () => {
+            ownerDocument.removeEventListener(
+                'pointerdown',
+                handleWorkingTarget,
+                true,
+            );
+            ownerDocument.removeEventListener(
+                'focusin',
+                handleWorkingTarget,
+                true,
+            );
+            ownerDocument.removeEventListener(
+                'keydown',
+                handleDocumentKeyDown,
+                true,
+            );
+        };
+    }, [applyHistoryStep, keepFocusInGraph]);
 
     /** The viewport width in GRAPH units; it is CSS-zoomed, so scale it back. */
     const getAvailableWidth = useCallback(() => {
@@ -832,12 +967,21 @@ export default function GraphSurfaceComp<TContext>({
     }, [fitAfterChange, getAvailableWidth]);
 
     const handleUndo = useCallback(() => {
-        getGraphEngine().undo(graphRef.current.key);
+        const graphKey = graphRef.current.key;
+        getGraphEngine().undo(graphKey);
+        // The dock's Undo is about to grey out under the focus.
+        if (!getGraphEngine().canUndo(graphKey)) {
+            keepFocusInGraph();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleRedo = useCallback(() => {
-        getGraphEngine().redo(graphRef.current.key);
+        const graphKey = graphRef.current.key;
+        getGraphEngine().redo(graphKey);
+        if (!getGraphEngine().canRedo(graphKey)) {
+            keepFocusInGraph();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -846,6 +990,8 @@ export default function GraphSurfaceComp<TContext>({
      */
     const commitNeighbours = useCallback(
         (nodeKey: string, neighbourList: readonly GraphNeighbourType[]) => {
+            // Picked from a menu, which leaves focus nowhere as it closes.
+            keepFocusInGraph();
             const result = getGraphEngine().addNeighbours(
                 graphRef.current.key,
                 {
@@ -871,7 +1017,7 @@ export default function GraphSurfaceComp<TContext>({
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [handleFitToView],
+        [handleFitToView, keepFocusInGraph],
     );
 
     /**
@@ -892,6 +1038,8 @@ export default function GraphSurfaceComp<TContext>({
             if (node === undefined) {
                 return;
             }
+            // The badge is disabled while the box is busy.
+            keepFocusInGraph();
             setBusyNodeKey(nodeKey);
             // Deferred a macrotask so the spinner paints before a location's scan
             // over every name record blocks the thread.
@@ -964,7 +1112,7 @@ export default function GraphSurfaceComp<TContext>({
                 showAppContextMenu(event, itemList);
             }, 0);
         },
-        [commitNeighbours, contextRef, graphRef, sourceRef],
+        [commitNeighbours, contextRef, graphRef, sourceRef, keepFocusInGraph],
     );
 
     const nodeCallbacks: GraphNodeCallbacksType = useMemo(() => {
@@ -975,7 +1123,12 @@ export default function GraphSurfaceComp<TContext>({
                 }) ?? null
             );
         };
+        // Every action below takes away the control that asked for it — the
+        // box's own button, the whole box, or the menu it was picked from —
+        // so focus moves to the canvas FIRST, while there is still somewhere
+        // to move it from.
         const toggleCollapsed = (nodeKey: string) => {
+            keepFocusInGraph();
             const node = findNode(nodeKey);
             getGraphEngine().setNodeCollapsed(
                 graphRef.current.key,
@@ -997,9 +1150,11 @@ export default function GraphSurfaceComp<TContext>({
             });
         };
         const removeNode = (nodeKey: string) => {
+            keepFocusInGraph();
             getGraphEngine().removeNode(graphRef.current.key, nodeKey);
         };
         const reRoot = (nodeKey: string) => {
+            keepFocusInGraph();
             const graphKey = graphRef.current.key;
             const engineNow = getGraphEngine();
             engineNow.reRoot(
@@ -1011,6 +1166,7 @@ export default function GraphSurfaceComp<TContext>({
             fitAfterChange(graphKey);
         };
         const resetToNode = (nodeKey: string) => {
+            keepFocusInGraph();
             const graphKey = graphRef.current.key;
             getGraphEngine().resetToNode(graphKey, nodeKey);
             fitAfterChange(graphKey);
@@ -1276,6 +1432,7 @@ export default function GraphSurfaceComp<TContext>({
      * The palette is read off the live element so the picture matches what is
      * on screen in whichever theme the user is in.
      */
+    const exportFontFamily = fontFamily ?? 'sans-serif';
     const buildExportSvg = useCallback(
         (isForPrint = false) => {
             const { currentGraph, nodeList, edgeList, readColor } =
@@ -1296,10 +1453,13 @@ export default function GraphSurfaceComp<TContext>({
                           line: readColor('--app-line', '#6c757d'),
                           accent: readColor('--app-accent', '#6ea8fe'),
                       },
-                fontFamily: fontFamily ?? 'sans-serif',
+                fontFamily: exportFontFamily,
+                // Each line is cut to the box by its drawn width, in the
+                // font the picture is drawn in.
+                measureText: genCanvasTextMeasure(exportFontFamily),
             });
         },
-        [readExportModel, resolveExportEdge, fontFamily],
+        [readExportModel, resolveExportEdge, exportFontFamily],
     );
 
     /** The same graph as words, for a note or somebody else's tool. */
@@ -1318,14 +1478,24 @@ export default function GraphSurfaceComp<TContext>({
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [readExportModel, resolveExportEdge, translate]);
 
+    // The faces are loaded first so the lines are measured in them rather
+    // than in a fallback, and the saved picture carries them inside it.
     const handleSaveImage = useCallback(() => {
-        saveGraphImage(buildExportSvg()).catch(handleError);
-    }, [buildExportSvg]);
+        loadGraphExportFonts(exportFontFamily)
+            .then(() => {
+                return saveGraphImage(buildExportSvg(), exportFontFamily);
+            })
+            .catch(handleError);
+    }, [buildExportSvg, exportFontFamily]);
 
     const handlePrint = useCallback(() => {
-        printGraph(buildExportSvg(true), graphRef.current.title);
+        loadGraphExportFonts(exportFontFamily)
+            .then(() => {
+                printGraph(buildExportSvg(true), graphRef.current.title);
+            })
+            .catch(handleError);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [buildExportSvg]);
+    }, [buildExportSvg, exportFontFamily]);
 
     // The toast is titled with the FORMAT: six rows sit on one menu, and a
     // confirmation reading `Copy` for any of them leaves the user checking
@@ -1375,7 +1545,12 @@ export default function GraphSurfaceComp<TContext>({
         // record's language, and one root declaration beats setting it on each
         // of them. What sits OUTSIDE this element still needs its own — the
         // widget's title bar (chrome) and any context menu (a portal).
-        <div className="graph-view" style={{ fontFamily }}>
+        <div
+            ref={rootRef}
+            className="graph-view"
+            style={{ fontFamily }}
+            onKeyDown={handleKeyDown}
+        >
             <GraphToolbarComp
                 graph={graph}
                 source={source}
@@ -1398,7 +1573,6 @@ export default function GraphSurfaceComp<TContext>({
                 // in; the focus ring is suppressed in the stylesheet, since
                 // this is a canvas rather than a control.
                 tabIndex={0}
-                onKeyDown={handleKeyDown}
                 onPointerDown={handleViewportPointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={finishDrag}

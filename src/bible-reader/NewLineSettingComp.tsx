@@ -53,12 +53,13 @@ export default function NewLineSettingComp() {
                     'form-label mb-0 text-nowrap app-caught-hover-pointer ' +
                     'd-flex align-items-center gap-1'
                 }
-                title={`${tran('Should New Lines')} — break lines following bible info`}
+                title={`${tran('Should New Lines')} — ${tran('Break lines following bible info')}`}
             >
                 <input
                     className="form-check-input mt-0 app-caught-hover-pointer"
                     type="checkbox"
                     id="new-line-setting"
+                    aria-label={tran('Should New Lines')}
                     checked={shouldNewLine}
                     onChange={handleNewLineChange}
                 />
@@ -79,6 +80,7 @@ export default function NewLineSettingComp() {
                     className="form-check-input mt-0 app-caught-hover-pointer"
                     type="checkbox"
                     id="use-model-new-line-setting"
+                    aria-label={tran('Break lines following model formatting')}
                     disabled={!shouldNewLine}
                     checked={useModelNewLine}
                     onChange={handleModelNewLineChange}

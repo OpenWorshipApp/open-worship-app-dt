@@ -142,6 +142,14 @@ export default class Note
         const noteItems = this.items;
         const newItem = noteItems[index].clone();
         newItem.id = this.maxItemId + 1;
+        // A copy is a new item, dated when it was made -- it used to carry its
+        // source's dates, created and last edited alike.
+        const now = new Date();
+        newItem.metadata = {
+            ...newItem.metadata,
+            createdAt: now,
+            updatedAt: now,
+        };
         noteItems.splice(index + 1, 0, newItem);
         this.items = noteItems;
     }

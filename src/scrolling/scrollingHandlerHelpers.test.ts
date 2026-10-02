@@ -2,6 +2,8 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+
 import {
     applyPlayToBottom,
     applyToTheTop,

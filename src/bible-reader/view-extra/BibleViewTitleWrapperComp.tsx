@@ -8,6 +8,7 @@ import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { handleDragStart } from '../../helper/dragHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 function toggleParentReceiveDrop(element: HTMLElement, isDraggable: boolean) {
@@ -38,10 +39,14 @@ export default function BibleViewTitleWrapperComp({
                 return;
             }
             toggleParentReceiveDrop(event.currentTarget, false);
-            const draggingData = bibleItemRef.current.dragSerialize(
+            // Through the shared helper like every other drag in the app, so
+            // it carries its kind's mime type beside the payload -- the one
+            // thing a drop target can read while the drag is still hovering.
+            handleDragStart(
+                event,
+                bibleItemRef.current,
                 DragTypeEnum.BIBLE_ITEM_TARGET_ONLY,
             );
-            event.dataTransfer.setData('text', JSON.stringify(draggingData));
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],

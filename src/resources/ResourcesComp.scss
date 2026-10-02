@@ -63,8 +63,12 @@
     border-bottom: 1px solid var(--app-line);
   }
 
+  // WRAPS rather than shrinking the chips: in the panel's usual 350px the two
+  // chips were squeezed to 'GEN....' each, so the patterns being searched for
+  // -- the one thing this row is for -- could not be read.
   .app-resources-patterns {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem;
     flex: 1 1 auto;
@@ -95,8 +99,9 @@
   // The thesis of the whole panel, so it is set to be READ -- it used to be the
   // most informative string on screen and the faintest thing on it.
   .app-resources-pattern {
-    flex: 0 1 auto;
-    min-width: 0;
+    flex: 0 0 auto;
+    // Only a pattern wider than the whole row is still clipped.
+    max-width: 100%;
     padding: 0 0.35rem;
     border: 1px solid transparent;
     border-radius: 3px;
@@ -270,8 +275,18 @@
   // listed when I am on chapter 1?".
   // Against the name it belongs to, not pinned to the far edge -- out there it
   // read as a column of its own with no relationship to the row.
+  //
+  // It gives way BEFORE the name does. Fixed at full width, a narrow panel
+  // took the whole squeeze out of the name -- `GE… .json Introduction` -- when
+  // the name is what the row is for. A shrink weight a hundred times the
+  // stem's takes the room out of the tag first, down to a letter and an
+  // ellipsis (its `title` still explains it), and only then out of the name.
   .app-resources-file-tag {
-    flex: 0 0 auto;
+    flex: 0 100 auto;
+    min-width: 2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     margin-left: 0.45rem;
     padding: 0 0.25rem;
     border: 1px dashed var(--app-line);

@@ -87,6 +87,80 @@ export function getNameTypeSingularLabel(
     return NAME_TYPE_SINGULAR_LABEL[normalizeNameType(type)];
 }
 
+// A name record's `gender`. The datasets keep it in English whatever language
+// the record is in, and it is a closed set (`male`, `female`, `unknown` across
+// every package), so it is a key to translate, exactly like `type`. Bare English
+// literals for the same reason as the maps above.
+export const GENDER_LABEL: { [gender: string]: string } = {
+    male: 'Male',
+    female: 'Female',
+};
+
+// A location record's `type`: also English in every package, and also a
+// closed set -- these 31 words are every value the shipped datasets use. A
+// value a newer dataset adds is shown as written until it is listed here.
+// `height` is a hill, not a measurement, so it does not borrow the `Height` key
+// the rest of the app already translates as a dimension.
+export const LOCATION_TYPE_LABEL: { [type: string]: string } = {
+    battlefield: 'Battlefield',
+    camp: 'Camp',
+    cape: 'Cape',
+    city: 'City',
+    cliff: 'Cliff',
+    encampment: 'Encampment',
+    gate: 'Gate',
+    height: 'Heights',
+    island: 'Island',
+    landmark: 'Landmark',
+    'memorial place': 'Memorial place',
+    mountain: 'Mountain',
+    place: 'Place',
+    plain: 'Plain',
+    pool: 'Pool',
+    region: 'Region',
+    river: 'River',
+    road: 'Road',
+    sea: 'Sea',
+    settlement: 'Settlement',
+    site: 'Site',
+    spring: 'Spring',
+    street: 'Street',
+    stronghold: 'Stronghold',
+    territory: 'Territory',
+    tower: 'Tower',
+    town: 'Town',
+    valley: 'Valley',
+    waterbody: 'Body of water',
+    well: 'Well',
+    wilderness: 'Wilderness',
+};
+
+/**
+ * A record's enum field (`gender`, a location's `type`) as a label in the
+ * lookup language.
+ *
+ * Decided on the ENGLISH value and only then translated, for the reason the
+ * name type is: `unknown` is dropped by comparing the string, and a translated
+ * `មិនស្គាល់` would no longer be recognized as one. A value missing from the
+ * map is shown as the dataset wrote it -- never handed to `translate`, where it
+ * could collide with an unrelated key of the app's dictionary.
+ */
+export function toRecordEnumLabel(
+    value: string | null | undefined,
+    labelMap: Readonly<{ [key: string]: string }>,
+    translate: (text: string) => string,
+): string {
+    const trimmedValue = (value ?? '').trim();
+    const key = trimmedValue.toLowerCase();
+    if (key === '' || key === 'unknown') {
+        return '';
+    }
+    // Own keys only: `constructor` is a word, too.
+    return Object.hasOwn(labelMap, key)
+        ? translate(labelMap[key])
+        : trimmedValue;
+}
+
 /**
  * Every inline reference scheme the datasets emit.
  *

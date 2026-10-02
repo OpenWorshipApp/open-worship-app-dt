@@ -57,10 +57,12 @@ export default function RenderLookupSuggestionComp({
             onClick={handleFocusing}
         >
             <div
-                className={
-                    'w-100  d-flex flex-wrap align-items-center ' +
-                    'justify-content-center'
-                }
+                className="w-100 d-flex flex-wrap align-items-center"
+                // `safe`: a row wider than the pane starts at its left edge
+                // instead of overflowing both ways. Plain `center` hung a book
+                // option off the LEFT edge in a narrow pane, where no scroll
+                // reaches -- four panes side by side read 'enesis', 'xodus'.
+                style={{ justifyContent: 'safe center' }}
             >
                 {bookKey === null ? (
                     <RenderBookOptionsComp

@@ -1,5 +1,9 @@
 @use '../others/variables.scss' as *;
 
+// The fade at the start of a pane header's hover actions. In px, not rem: the
+// narrow-pane thresholds on those actions are sums of it.
+$bible-view-actions-fade: 20px;
+
 // A verse a bible note talks about, calling for the eye across a wall of text.
 //
 // A cycling underline colour rather than a cycling text colour: the number keeps
@@ -65,8 +69,8 @@
     }
 
     // What stays in the row at the right: the ⋮, and whatever else must be
-    // pressable at rest. The actions hang off its LEFT edge, so they can never
-    // cover one of these, however many there are.
+    // pressable at rest. The actions float inside the reference box (below),
+    // so they can never cover one of these, however many there are.
     > .bible-view-header-end {
       position: relative;
       display: flex;
@@ -79,6 +83,9 @@
     // passage ellipsizes rather than scrolling sideways out of sight.
     .bible-view-title-material {
       flex: 1 1 auto;
+      // Full row height, down to the reference box: the actions take their
+      // height from it.
+      align-self: stretch;
       min-width: 0;
       overflow: hidden;
 
@@ -88,6 +95,7 @@
     }
 
     .bible-view-title-content {
+      align-self: stretch;
       min-width: 0;
 
       > .bible-view-title-keys {
@@ -97,52 +105,75 @@
 
     // Down from `.app-flex-item`'s 120px, which in a narrow pane clipped the
     // reference on the right with no ellipsis to say so.
+    // `.app-flex-item` already makes it a positioned, clipped flex box, which
+    // is what the actions below are anchored in.
     .bible-view-reference {
       flex: 1 1 auto;
       min-width: 0;
+      align-items: center;
     }
 
     .bible-view-header-actions {
       position: absolute;
       top: 0;
       bottom: 0;
-      right: 100%;
+      right: 0;
       z-index: 2;
       display: flex;
       align-items: center;
       gap: 2px;
-      // Measured against the bible view (`container-type` above), since the
-      // containing block here is only the end group. Short of the full width
-      // by the end group at its widest, so it never spills out of the pane.
-      max-width: calc(100cqw - 3.5rem);
+      // Anchored in the REFERENCE box, so it can only ever cover the passage
+      // text. Hung off the end group with a pane-wide width it reached back
+      // over the version pill, its ⋮ and the extra-bible chips in a narrow
+      // pane, and a press meant for those landed on Copy; the pencil at the
+      // title's end sat under Close, and a press on it closed the pane.
+      max-width: 100%;
       // Room for the fade below, so the title runs out under it instead of
-      // being cut mid-letter by a hard edge.
-      padding: 0 2px 0 1.25rem;
-      // Only a pane narrower than every action at once ever scrolls this, and
-      // a focused button is scrolled into view by the browser.
+      // being cut mid-letter by a hard edge. A transparent BORDER, not
+      // padding: a scroll container clips its content at the padding edge,
+      // so a button scrolled left stops where the fade begins. Padding
+      // scrolls with the buttons, and the first one then sat in the fade on
+      // top of the title's letters.
+      border-left: $bible-view-actions-fade solid transparent;
+      padding: 0 2px 0 0;
+      // A pane too narrow for every action scrolls this sideways: the wheel
+      // does it (`applyHorizontalWheelScroll`), a focused button is scrolled
+      // into view by the browser, and a slim bar says there is more. With the
+      // bar hidden there was no way to reach the last buttons by mouse.
       overflow-x: auto;
       overflow-y: hidden;
-      scrollbar-width: none;
+
+      // The header row is 34px against 26px buttons, so the app-wide 7px bar
+      // would not fit underneath them -- the same bar `.app-scroll-x-buttons`
+      // uses.
+      &::-webkit-scrollbar {
+        height: 4px;
+      }
+      // The ground the buttons stand on is the strip's OWN background, never a
+      // positioned `::before`: an absolutely placed ground scrolls away with
+      // the content of a scrolled strip, and the passage then showed straight
+      // through the last buttons. A box's own background -- and its mask --
+      // stay put while its content scrolls. Two layers, because the header's
+      // wash is translucent: a ground made of it alone lets the title show
+      // through. The mask fades that ground in over the border, so the title
+      // runs out under the strip.
+      background:
+        linear-gradient(
+          var(--app-bible-view-header-wash),
+          var(--app-bible-view-header-wash)
+        ),
+        var(--bs-card-bg, var(--bs-body-bg));
+      mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 $bible-view-actions-fade
+      );
       // Opacity, not `visibility`: a hidden control cannot take focus, and a
       // keyboard has to be able to reach these (`:focus-visible` below reveals
       // them). A compositor-only fade, finite -- never a paint loop.
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.12s ease-out;
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        background:
-          linear-gradient(
-            var(--app-bible-view-header-wash),
-            var(--app-bible-view-header-wash)
-          ),
-          var(--bs-card-bg, var(--bs-body-bg));
-        mask-image: linear-gradient(to right, transparent, #000 1.25rem);
-      }
 
       // Header chrome, not a row of filled buttons: at rest these were painted
       // at a tenth of their strength, and at full strength a green-cyan-blue
@@ -155,6 +186,7 @@
       }
 
       .btn-group > .btn,
+      > .bible-view-header-edit,
       > .bible-view-header-close {
         display: inline-flex;
         align-items: center;
@@ -205,8 +237,12 @@
       }
     }
 
+    // Revealed by focus INSIDE the strip only. The title's book, chapter and
+    // verse are keyboard controls too, and the strip sits over the end of the
+    // title: revealed by any focus in the header, it covered the very part
+    // the keyboard had just reached.
     &:hover .bible-view-header-actions,
-    &:has(:focus-visible) .bible-view-header-actions {
+    .bible-view-header-actions:has(:focus-visible) {
       opacity: 1;
       pointer-events: auto;
     }

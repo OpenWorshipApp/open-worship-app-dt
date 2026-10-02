@@ -128,9 +128,13 @@ vi.mock('../helper/timeoutHelpers', () => ({
 vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     getLangDataFromBibleKey: h.getLangDataFromBibleKeyMock,
 }));
+vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
+    getBibleModelInfo: () => ({ bookKeysOrder: ['GEN', 'EXO', 'DEU', 'PSA'] }),
+}));
 
 import BibleItemsViewController, {
     BibleItemsViewControllerContext,
+    compareBibleItemsInBibleOrder,
     applyBibleItemHistoryPendingText,
     attemptAddingHistory,
     bibleHistoryStore,
@@ -686,6 +690,70 @@ describe('bible-reader BibleItemsViewController', () => {
             ];
             const items = await ctl.getBibleItemsForExportingMSWord();
             expect(items).toHaveLength(2);
+        });
+
+        // The export used to sort `DEU 24:21,KJV`-style strings: Deuteronomy
+        // came before Genesis and chapter 10 before chapter 2.
+        test('the Word export follows the order of a printed Bible', async () => {
+            const genTargetItem = (
+                id: number,
+                bibleKey: string,
+                bookKey: string,
+                chapter: number,
+                verseStart = 1,
+            ) => {
+                return FakeItem.fromJson({
+                    id,
+                    bibleKey,
+                    target: {
+                        bookKey,
+                        chapter,
+                        verseStart,
+                        verseEnd: verseStart,
+                    },
+                }) as any;
+            };
+            const ctl = genController();
+            ctl.nestedBibleItems = [
+                genTargetItem(1, 'KJV', 'PSA', 23),
+                genTargetItem(2, 'KJV', 'GEN', 10),
+                genTargetItem(3, 'KJV', 'DEU', 24, 21),
+                genTargetItem(4, 'NIV', 'GEN', 2),
+                genTargetItem(5, 'KJV', 'GEN', 2),
+            ];
+            const originalImplementation =
+                h.bibleItemFromVerseKeyMock.getMockImplementation()!;
+            h.bibleItemFromVerseKeyMock.mockImplementation(
+                async (bibleKey: string, verseKey?: string) =>
+                    ({ bibleKey, verseKey }) as any,
+            );
+            const items = (await ctl
+                .getBibleItemsForExportingMSWord()
+                .finally(() => {
+                    h.bibleItemFromVerseKeyMock.mockImplementation(
+                        originalImplementation,
+                    );
+                })) as any[];
+            expect(items.map((item) => item.verseKey)).toEqual([
+                'VK-5',
+                'VK-4',
+                'VK-2',
+                'VK-3',
+                'VK-1',
+            ]);
+            expect(items[0].bibleKey).toBe('KJV');
+            expect(items[1].bibleKey).toBe('NIV');
+        });
+
+        test('a book the model does not list sorts last', () => {
+            const order = ['GEN', 'EXO'];
+            const item = (bookKey: string) => ({
+                bibleKey: 'KJV',
+                target: { bookKey, chapter: 1, verseStart: 1, verseEnd: 1 },
+            });
+            expect(
+                compareBibleItemsInBibleOrder(item('XYZ'), item('EXO'), order),
+            ).toBeGreaterThan(0);
         });
 
         test('finalRenderer throws when not implemented', () => {

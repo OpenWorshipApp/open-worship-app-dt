@@ -171,16 +171,6 @@ function blurInputText() {
     }
 }
 
-function checkIsInputTextFocused() {
-    const inputText = document.querySelector<HTMLInputElement>(
-        `.${INPUT_TEXT_CLASS}`,
-    );
-    if (inputText) {
-        return document.activeElement === inputText;
-    }
-    return false;
-}
-
 export function focusRenderFound() {
     const dive = document.querySelector<HTMLDivElement>(
         `.${RENDER_FOUND_CLASS}`,
@@ -239,7 +229,12 @@ export function userEnteringSelected(
     useKeyboardRegistering(
         [{ key: 'Enter' }],
         () => {
-            if (!checkIsRenderFoundFocused() && !checkIsInputTextFocused()) {
+            // Only a press made IN the list. Enter in the reference box is the
+            // lookup body's (`genLookupEnterPick`): it acts on the text the box
+            // holds, and the list on screen can still be the previous text's
+            // -- a fast `Genesis 1:1-31` + Enter from Luke's chapter list
+            // pressed Luke's chapter 1 here, and the box became `Luke 1:`.
+            if (!checkIsRenderFoundFocused()) {
                 return;
             }
             const selectedElement = getSelectedElement(

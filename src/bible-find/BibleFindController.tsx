@@ -36,6 +36,7 @@ import type {
 import {
     calcPerPage,
     findOnline,
+    rankSuggestionWords,
     toFindWildCardText,
 } from './bibleFindHelpers';
 import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
@@ -259,10 +260,12 @@ class DatabaseFindingHandler {
                 return false;
             });
         }
-        result = result.slice(0, limit);
-        const mappedResult = result.map(({ text }) => {
-            return text.split(' ').join('');
-        });
+        const mappedResult = rankSuggestionWords(
+            result.map(({ text }) => {
+                return text.split(' ').join('');
+            }),
+            attemptingWord,
+        ).slice(0, limit);
         if (mappedResult.includes(attemptingWord)) {
             mappedResult.splice(mappedResult.indexOf(attemptingWord), 1);
             mappedResult.unshift(attemptingWord);

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-30"
+workflowsVersion: "2026-10-01"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -90,14 +90,15 @@ your Bible reading.
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 
-**A note on what is not translated:** a person's **Gender** and **Age**, and a place's
-**Type**, are shown exactly as the dataset wrote them. Only a person's kind is one of a
-fixed set of nine, so only that one can be said in another language.
+**A note on what is translated:** a person's kind and **Gender** and a place's **Type**
+come in the lookup language — Jacob is **ប្រុស**, the Pool of Siloam a **ស្រះ** — because each
+is one word out of a short, fixed list. A person's **Age** is shown exactly as the
+dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-30).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
 :::

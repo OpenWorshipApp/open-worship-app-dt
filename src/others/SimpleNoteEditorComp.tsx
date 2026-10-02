@@ -32,6 +32,7 @@ export default function SimpleNoteEditorComp({
     placeholder,
     isResizable,
     isInput,
+    isAutoFocus,
     onEscape,
     onBlur,
     onEnter,
@@ -40,6 +41,9 @@ export default function SimpleNoteEditorComp({
     placeholder?: string;
     isResizable?: boolean;
     isInput?: boolean;
+    // Opened by a deliberate action (a menu's Edit Title), so the typing that
+    // follows belongs here -- not in whatever field had the focus before.
+    isAutoFocus?: boolean;
     onEscape?: () => void;
     onBlur?: () => void;
     onEnter?: () => void;
@@ -151,6 +155,20 @@ export default function SimpleNoteEditorComp({
         onBlurRef.current?.();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const isAutoFocusRef = useAppCurrentRef(isAutoFocus);
+    // A callback ref, so it runs once, as the field mounts: selecting on every
+    // focus would throw away a caret the user placed with a click.
+    const handleFieldMounting = useCallback(
+        (element: HTMLInputElement | HTMLTextAreaElement | null) => {
+            if (element === null || !isAutoFocusRef.current) {
+                return;
+            }
+            element.focus();
+            element.select();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const style: CSSProperties = {
         outline: 'none',
         boxSizing: 'border-box',
@@ -164,6 +182,7 @@ export default function SimpleNoteEditorComp({
     if (isInput) {
         return (
             <input
+                ref={handleFieldMounting}
                 readOnly={isReadOnly}
                 className="w-100 h-100 m-0"
                 placeholder={shownPlaceholder}
@@ -177,6 +196,7 @@ export default function SimpleNoteEditorComp({
     }
     return (
         <textarea
+            ref={handleFieldMounting}
             readOnly={isReadOnly}
             className="w-100 h-100 m-0"
             placeholder={shownPlaceholder}

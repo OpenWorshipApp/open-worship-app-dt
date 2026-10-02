@@ -195,7 +195,10 @@ import LookupBibleItemController, {
     ctrlShiftMetaKeys,
     useLookupBibleItemControllerContext,
 } from './LookupBibleItemController';
-import { BibleItemsViewControllerContext } from './BibleItemsViewController';
+import {
+    BibleItemsViewControllerContext,
+    bibleHistoryStore,
+} from './BibleItemsViewController';
 
 const { FakeReadItem } = h;
 
@@ -222,6 +225,12 @@ async function flush() {
     await act(async () => {
         await new Promise((r) => setTimeout(r, 5));
     });
+}
+
+// A fresh controller's first selection titles the box itself, a moment later.
+async function settleFirstSelection(ctl: LookupBibleItemController) {
+    ctl.selectedBibleItem;
+    await flush();
 }
 
 describe('bible-reader LookupBibleItemController', () => {
@@ -624,6 +633,142 @@ describe('bible-reader LookupBibleItemController', () => {
         ctl.inputText = 'Exodus 1:1';
         await flush();
         expect(h.bibleRenderToTitleMock).toHaveBeenCalled();
+    });
+
+    // Every keystroke is looked up, and the lookups finish in any order: the
+    // half-typed `Genesis 1:1-3` of a fast `Genesis 1:1-31` landing last
+    // became the reader's history entry.
+    test('a lookup that lands after the box moved on adds no history', async () => {
+        const addBibleItemHistory = vi.fn();
+        const originalAdd = bibleHistoryStore.addBibleItemHistory;
+        bibleHistoryStore.addBibleItemHistory = addBibleItemHistory;
+        try {
+            const ctl = genController();
+            await settleFirstSelection(ctl);
+            ctl.inputText = 'Genesis 1:1-31';
+            await flush();
+            // The box's own passage is still recorded.
+            expect(addBibleItemHistory).toHaveBeenCalledWith('(KJV) KJV title');
+            addBibleItemHistory.mockClear();
+
+            await ctl.getEditingResult('Genesis 1:1-3');
+            await flush();
+
+            expect(addBibleItemHistory).not.toHaveBeenCalled();
+        } finally {
+            bibleHistoryStore.addBibleItemHistory = originalAdd;
+        }
+    });
+
+    // The rewrite was guarded by a `Date.now()` stamp, which two keystrokes
+    // inside one millisecond share -- scripted typing does it -- so the answer
+    // to the half-typed text, landing after the full one, wrote the box back.
+    test('a late answer for a half-typed text never writes the box back', async () => {
+        const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(1000);
+        const resolverList: (() => void)[] = [];
+        h.extractBibleTitleMock.mockImplementation(
+            async (bibleKey: string, inputText: string, time?: number) => {
+                if (inputText === 'Genesis 1:1-3') {
+                    await new Promise<void>((resolve) => {
+                        resolverList.push(resolve);
+                    });
+                }
+                return {
+                    result: {
+                        bibleItem: h.makeFound(bibleKey),
+                        bookKey: 'GEN',
+                        chapter: 1,
+                    },
+                    bibleKey,
+                    oldInputText: inputText,
+                    time: time ?? Date.now(),
+                };
+            },
+        );
+        try {
+            const ctl = genController();
+            await settleFirstSelection(ctl);
+            ctl.inputText = 'Genesis 1:1-3';
+            ctl.inputText = 'Genesis 1:1-31';
+            await flush();
+            for (const resolve of resolverList) {
+                resolve();
+            }
+            await flush();
+
+            expect(ctl.inputText).toBe('Genesis 1:1-31');
+        } finally {
+            dateNowSpy.mockRestore();
+        }
+    });
+
+    // The colour group follows the box through one lookup per keystroke, and
+    // the lookups finish in any order: a slow `Mark 4:3` landing after
+    // `Mark 4:39` left every synced pane on verse 3 beside the box's verse 39
+    // (F1 of robot run 20261001-1646).
+    test('a synced pane follows the box, not a late half-typed lookup', async () => {
+        const resolverList: (() => void)[] = [];
+        h.extractBibleTitleMock.mockImplementation(
+            async (bibleKey: string, inputText: string, time?: number) => {
+                if (inputText === 'Mark 4:3') {
+                    await new Promise<void>((resolve) => {
+                        resolverList.push(resolve);
+                    });
+                }
+                const verse = Number.parseInt(inputText.split(':')[1] ?? '1');
+                return {
+                    result: {
+                        bibleItem: new FakeReadItem({
+                            id: -99,
+                            bibleKey,
+                            target: {
+                                bookKey: 'MRK',
+                                chapter: 4,
+                                verseStart: verse,
+                                verseEnd: verse,
+                            },
+                        }),
+                        bookKey: 'MRK',
+                        chapter: 4,
+                    },
+                    bibleKey,
+                    oldInputText: inputText,
+                    time: time ?? Date.now(),
+                };
+            },
+        );
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const syncedBibleItem = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 1357,
+                bibleKey: 'KJV',
+                target: { bookKey: 'GEN', chapter: 1 },
+            }) as any,
+        );
+        ctl.setColorNote(syncedBibleItem as any, 'red');
+        ctl.setColorNote(ctl.selectedBibleItem, 'red');
+        await flush();
+        const applySpy = vi.spyOn(ctl, 'applyTargetOrBibleKey');
+
+        ctl.inputText = 'Mark 4:3';
+        ctl.inputText = 'Mark 4:39';
+        await flush();
+        for (const resolve of resolverList) {
+            resolve();
+        }
+        await flush();
+
+        const syncedVerses = applySpy.mock.calls
+            .filter(([bibleItem]) => {
+                return bibleItem.id === syncedBibleItem.id;
+            })
+            .map(([, { target }]) => {
+                return target?.verseStart;
+            });
+        expect(syncedVerses).toContain(39);
+        expect(syncedVerses.at(-1)).toBe(39);
+        expect(syncedVerses).not.toContain(3);
     });
 
     test('tryJumpingChapter resets scroll containers', async () => {

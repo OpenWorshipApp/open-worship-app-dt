@@ -401,7 +401,7 @@ describe('appHelpers', () => {
         );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copy',
-            'Text has been copied to clip',
+            'Text has been copied to clipboard',
         );
     });
 

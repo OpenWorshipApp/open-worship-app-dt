@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, type ReactNode } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { BibleKeySelectionMiniComp } from '../../bible-lookup/BibleKeySelectionComp';
@@ -9,6 +9,7 @@ import { AudioAIEnablingComp } from '../AudioAIEnablingComp';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { pressElementLikeButton } from '../../helper/helpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 function RenderBibleKeyComp({
@@ -28,10 +29,17 @@ function RenderBibleKeyComp({
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const label = `${tran('Click to remove extra Bible')} ${bibleKey}`;
     return (
         <span
             className="bible-extra-key bg-primary small app-caught-hover-pointer"
-            title={`${tran('Click to remove extra Bible')} ${bibleKey}`}
+            title={label}
+            // A bare span you could only click: no keyboard reached it and a
+            // screen reader read it as the version name alone.
+            role="button"
+            tabIndex={0}
+            aria-label={label}
+            onKeyDown={pressElementLikeButton}
             key={bibleKey}
             style={{
                 borderRadius: '8px',
@@ -51,6 +59,7 @@ function RenderBibleKeyComp({
 export function RenderTitleMaterialComp({
     bibleItem,
     onBibleKeyChange,
+    actionsElement,
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
     onBibleKeyChange?: (
@@ -58,6 +67,13 @@ export function RenderTitleMaterialComp({
         oldBibleKey: string,
         newBibleKey: string,
     ) => void;
+    /**
+     * The header's hover actions. They are drawn INSIDE the reference box so
+     * they can only ever cover the passage text: hung off the end group, they
+     * reached back over the version pill, its ⋮ and the extra-bible chips in
+     * a narrow pane, and a click meant for those opened the Copy menu.
+     */
+    actionsElement?: ReactNode;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
     const materialContext = useBibleViewTitleMaterialContext();
@@ -98,6 +114,7 @@ export function RenderTitleMaterialComp({
                 </div>
                 <div className="bible-view-reference app-flex-item">
                     {materialContext.titleElement}
+                    {actionsElement}
                 </div>
             </div>
         </div>

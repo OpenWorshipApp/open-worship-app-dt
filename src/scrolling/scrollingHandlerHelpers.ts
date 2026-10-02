@@ -1,3 +1,5 @@
+import { tran } from '../lang/langHelpers';
+
 export const TO_THE_TOP_CLASSNAME = 'app-to-the-top';
 export const PLAY_TO_BOTTOM_CLASSNAME = 'play-to-bottom';
 export const PLAY_TO_BOTTOM_MENU_CLASSNAME = 'play-to-bottom-menu';
@@ -118,7 +120,9 @@ export function applyToTheTop(
     // by measuring, so it is found even while the list is still empty.
     scrollingContainerSelector?: string,
 ) {
-    element.title = 'Click or Double Click to scroll to the top';
+    // Translated at the call, never at module scope: this is the tooltip in
+    // every list of every window, and it used to stay English in Khmer.
+    element.title = tran('Click or Double Click to scroll to the top');
     const parent = scrollingContainerSelector
         ? element.closest<HTMLElement>(scrollingContainerSelector)
         : element.parentElement;
@@ -259,9 +263,14 @@ export type MoveCheckType = {
     threshold: number;
 };
 
-const INIT_TITLE =
-    'Click to scroll to the bottom, double click to speed up, ' +
-    'right click to slow down, Alt + right click to stop';
+// A function, not a constant: `tran()` must run when the title is set, in the
+// language the window is showing then.
+function genPlayToBottomTitle() {
+    return tran(
+        'Click to scroll to the bottom, double click to speed up, ' +
+            'right click to slow down, Alt + right click to stop',
+    );
+}
 const speedOffset = 0.07;
 export function applyPlayToBottom(
     element: HTMLElement,
@@ -278,7 +287,8 @@ export function applyPlayToBottom(
         // Standing still, the tooltip is the only place the gestures are
         // written down; running, the menu button below says them instead and
         // the number is the one thing it cannot show at a glance.
-        element.title = store.speed === 0 ? INIT_TITLE : store.speed.toFixed(2);
+        element.title =
+            store.speed === 0 ? genPlayToBottomTitle() : store.speed.toFixed(2);
         start();
     };
     const setSpeed = (newSpeed: number) => {
@@ -309,7 +319,7 @@ export function applyPlayToBottom(
             onStop: () => {
                 store.isRunning = false;
                 setSpeed(0);
-                element.title = INIT_TITLE;
+                element.title = genPlayToBottomTitle();
             },
         });
     };

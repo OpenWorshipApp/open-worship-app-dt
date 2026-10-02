@@ -31,6 +31,7 @@ import {
     MAX_SCAN_DEPTH,
     MAX_SEARCH_MATCHES,
     normalizeResourceSearchText,
+    toResourceSearchWords,
     scanResourceFiles,
     toResourceIcon,
     toResourceMatchPatterns,
@@ -472,6 +473,14 @@ describe('normalizeResourceSearchText', () => {
         ['*', ''],
     ])('%s -> %s', (input, expected) => {
         expect(normalizeResourceSearchText(input)).toBe(expected);
+    });
+});
+
+describe('toResourceSearchWords', () => {
+    test('drops the stars the search drops, and keeps the case typed', () => {
+        // The heading wraps it in its own stars: `family*` read `*family**`.
+        expect(toResourceSearchWords(' Family* ')).toBe('Family');
+        expect(toResourceSearchWords('a*c')).toBe('a*c');
     });
 });
 

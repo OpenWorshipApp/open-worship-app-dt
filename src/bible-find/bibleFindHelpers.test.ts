@@ -7,8 +7,7 @@ const {
     bibleItemFromJsonMock,
     genCopyingMenuMock,
     quickTrimTextMock,
-    sanitizeFindingTextMock,
-    sanitizePreviewTextMock,
+    getLangDataAsyncMock,
     tranMock,
     showAppContextMenuMock,
     saveBibleItemMock,
@@ -25,12 +24,16 @@ const {
     })),
     genCopyingMenuMock: vi.fn(() => [{ menuElement: 'copy' }]),
     quickTrimTextMock: vi.fn((_locale: string, text: string) => text),
-    sanitizeFindingTextMock: vi.fn(
-        async (_locale: string, text: string) => text,
-    ),
-    sanitizePreviewTextMock: vi.fn(
-        async (_locale: string, text: string) => text,
-    ),
+    // The English finding form, as `src/lang/data/en` writes it.
+    getLangDataAsyncMock: vi.fn(async (_locale: string): Promise<any> => ({
+        sanitizeFindingText: (text: string) => {
+            return text
+                .toLowerCase()
+                .replaceAll(/[^a-z0-9 ]/g, ' ')
+                .replaceAll(/\s+/g, ' ')
+                .trim();
+        },
+    })),
     tranMock: vi.fn((key: string) => key),
     showAppContextMenuMock: vi.fn(),
     saveBibleItemMock: vi.fn(),
@@ -51,9 +54,9 @@ vi.mock('../bible-list/bibleItemHelpers', () => ({
     genBibleItemCopyingContextMenu: genCopyingMenuMock,
 }));
 vi.mock('../lang/langHelpers', () => ({
+    DEFAULT_LOCALE: 'en-US',
+    getLangDataAsync: getLangDataAsyncMock,
     quickTrimText: quickTrimTextMock,
-    sanitizeFindingText: sanitizeFindingTextMock,
-    sanitizePreviewText: sanitizePreviewTextMock,
     tran: tranMock,
 }));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
@@ -78,6 +81,8 @@ import {
     checkIsCurrentPage,
     doFinding,
     findOnline,
+    highlightFoundWords,
+    rankSuggestionWords,
     findPageNumber,
     openContextMenu,
     openInBibleLookup,
@@ -170,7 +175,9 @@ describe('bible-find bibleFindHelpers', () => {
             'gen.1:1:In the beginning',
             'KJV',
         );
-        expect(result.newItem).toContain('app-found-match');
+        expect(result.newItem).toBe(
+            'In the <span class="app-found-match">beginning</span>',
+        );
         expect(result.kjvVerseKey).toBe('KJV-KEY');
         expect(bibleItemFromJsonMock).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -185,8 +192,157 @@ describe('bible-find bibleFindHelpers', () => {
         );
     });
 
-    test('breakItem handles verse ranges and falsy sanitize result', async () => {
-        sanitizeFindingTextMock.mockResolvedValueOnce(null as any);
+    test('rankSuggestionWords puts words starting with the letters first', () => {
+        // The spell index matches the letters in ANY order.
+        expect(
+            rankSuggestionWords(
+                ['hophra', 'pharaohhophra', 'apharao', 'Pharaoh'],
+                'pharao',
+            ),
+        ).toEqual(['Pharaoh', 'pharaohhophra', 'apharao', 'hophra']);
+    });
+
+    test('rankSuggestionWords completes to the shortest word that starts so', () => {
+        // Tab takes the top one: bm25 ranked the one-verse `pharaohhophra`
+        // above `pharaoh`, so `pharao` + Tab completed to it.
+        const ranked = rankSuggestionWords(
+            ['pharaohhophra', 'pharaohnecho', 'pharaohnechoh', 'pharaoh'],
+            'pharao',
+        );
+        expect(ranked[0]).toBe('pharaoh');
+        // Two of one length keep the index's own order between them.
+        expect(ranked).toEqual([
+            'pharaoh',
+            'pharaohnecho',
+            'pharaohhophra',
+            'pharaohnechoh',
+        ]);
+        // Words of one length keep the index's own order.
+        expect(rankSuggestionWords(['abd', 'abc', 'xab'], 'ab')).toEqual([
+            'abd',
+            'abc',
+            'xab',
+        ]);
+    });
+
+    // As the English language data writes it.
+    const toEnglishFindingText = (text: string) => {
+        return text
+            .toLowerCase()
+            .replaceAll(/[^a-z0-9 ]/g, ' ')
+            .replaceAll(/\s+/g, ' ')
+            .trim();
+    };
+    const toLowerCaseText = (text: string) => text.toLowerCase();
+    const mark = (text: string) => {
+        return `<span class="app-found-match">${text}</span>`;
+    };
+
+    test('highlightFoundWords never matches inside its own markup', () => {
+        // One replace per word used to run each over the previous output, so
+        // `class`/`span` matched the inserted span and the row showed raw HTML.
+        expect(
+            highlightFoundWords(
+                'Jesus wept',
+                'wept class span found match',
+                toLowerCaseText,
+            ),
+        ).toBe(`Jesus ${mark('wept')}`);
+        // A one-letter query on its own is still marked, every time.
+        expect(highlightFoundWords('Jesus wept', 's', toLowerCaseText)).toBe(
+            `Je${mark('s')}u${mark('s')} wept`,
+        );
+        // A regex character is text: `.` matches a dot, never any letter. The
+        // two parts run together are found as one stretch, space and all.
+        expect(
+            highlightFoundWords('a (b) c.d cxd', '(b) c.d', toLowerCaseText),
+        ).toBe(`a ${mark('(b) c.d')} cxd`);
+        // The longest word wins where several start.
+        expect(
+            highlightFoundWords(
+                'a beginning',
+                'begin beginning',
+                toLowerCaseText,
+            ),
+        ).toBe(`a ${mark('beginning')}`);
+        expect(highlightFoundWords('text', '  ', toLowerCaseText)).toBe('text');
+    });
+
+    test('highlightFoundWords keeps the verse as the bible prints it', () => {
+        // The row used to show the finding form: no capitals, no punctuation.
+        expect(
+            highlightFoundWords(
+                'And the LORD God formed man of the dust of the ground,',
+                'lord god',
+                toEnglishFindingText,
+            ),
+        ).toBe(
+            `And the ${mark('LORD God')} formed man of the dust of the ground,`,
+        );
+    });
+
+    test('highlightFoundWords marks a word with an apostrophe whole', () => {
+        // `son's` is `son` + `s` in the finding form; `s` on its own marked
+        // every s in the verse ("hi<s>s</s>").
+        expect(
+            highlightFoundWords(
+                "Lot the son of Haran his son's son",
+                "son's",
+                toEnglishFindingText,
+            ),
+        ).toBe(
+            `Lot the ${mark('son')} of Haran his ${mark("son's")} ` +
+                `${mark('son')}`,
+        );
+    });
+
+    test('highlightFoundWords escapes the verse, so only markers are markup', () => {
+        expect(
+            highlightFoundWords(
+                'a <b onclick="x"> & god',
+                'god',
+                toLowerCaseText,
+            ),
+        ).toBe(`a &lt;b onclick=&quot;x&quot;&gt; &amp; ${mark('god')}`);
+    });
+
+    test('highlightFoundWords matches across what the finding form drops', () => {
+        // The Khmer finding form keeps Khmer letters only, so the zero-width
+        // non-joiner inside a word is not there to match -- the marker goes
+        // round it, and round the whole word.
+        const toKhmerFindingText = (text: string) => {
+            return text
+                .replaceAll(/[^ក-៓០-៩]/g, ' ')
+                .replaceAll(/\s+/g, ' ')
+                .trim();
+        };
+        const word = 'ព្រះ‌យេហូវ៉ា';
+        expect(
+            highlightFoundWords(
+                `${word}​ទ្រង់`,
+                'ព្រះយេហូវ៉ា',
+                toKhmerFindingText,
+            ),
+        ).toBe(`${mark(word)}​ទ្រង់`);
+        // A conjunct is never split: `ស្រី` segments as `ស្` + `រី`.
+        expect(highlightFoundWords('ស្រី', 'ស', toKhmerFindingText)).toBe(
+            mark('ស្រី'),
+        );
+    });
+
+    test('breakItem falls back to the default locale data', async () => {
+        getLangDataAsyncMock.mockResolvedValueOnce(null);
+        const result = await breakItem(
+            'xx' as any,
+            'GOD',
+            'gen.1:1:In the beginning God',
+            'KJV',
+        );
+        expect(getLangDataAsyncMock).toHaveBeenLastCalledWith('en-US');
+        expect(result.newItem).toBe(`In the beginning ${mark('God')}`);
+    });
+
+    test('breakItem handles verse ranges', async () => {
         const result = await breakItem(
             'en' as any,
             'word',

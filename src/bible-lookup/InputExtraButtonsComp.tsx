@@ -70,8 +70,8 @@ function useTabAvailable(
 }
 
 const escapeEventMap: KeyboardEventMapper = { key: 'Escape' };
-const ctrlEscapeEventMap: KeyboardEventMapper = {
-    allControlKey: ['Ctrl'],
+const removeAllEventMap: KeyboardEventMapper = {
+    allControlKey: ['Shift'],
     key: 'Escape',
 };
 const tabEventMap: KeyboardEventMapper = { key: 'Tab' };
@@ -180,7 +180,7 @@ export default function InputExtraButtonsComp() {
         [],
     );
     useKeyboardRegistering(
-        [ctrlEscapeEventMap],
+        [removeAllEventMap],
         () => {
             removeInputText();
         },
@@ -223,7 +223,7 @@ export default function InputExtraButtonsComp() {
                 iconClassName="bi bi-x"
                 label={
                     tran('Clear input') +
-                    ` [${toShortcutKey(ctrlEscapeEventMap)}]`
+                    ` [${toShortcutKey(removeAllEventMap)}]`
                 }
                 color="red"
                 isDisabled={isInputEmpty}

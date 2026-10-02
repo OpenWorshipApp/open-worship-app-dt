@@ -6,7 +6,10 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
-import { getMenuTitleRevealFile } from '../helper/helpers';
+import {
+    getMenuTitleRevealFile,
+    pressElementLikeButton,
+} from '../helper/helpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
@@ -34,6 +37,7 @@ import {
     groupResourceFiles,
     invalidateResourcesScanCache,
     scanResourceFiles,
+    toResourceSearchWords,
 } from './resourcesScanHelpers';
 
 /**
@@ -251,7 +255,19 @@ export default function ResourcesDirBoxComp({
                     'app-resources-group-header app-caught-hover-pointer'
                 }
                 title={dirPath}
+                // A div you could only click: no keyboard reached the folder
+                // and nothing said whether it was open.
+                role="button"
+                tabIndex={0}
+                aria-expanded={isShowing}
+                aria-label={pathBasename(dirPath)}
                 onClick={handleToggleShowing}
+                onKeyDown={(event) => {
+                    // Not a key meant for the ⋮ button inside the header.
+                    if (event.target === event.currentTarget) {
+                        pressElementLikeButton(event);
+                    }
+                }}
                 onContextMenu={handleContextMenuOpening}
             >
                 <i
@@ -432,7 +448,7 @@ function ResourcesDirBoxBodyComp({
                     >
                         <i className="bi bi-search" />
                         <span className="app-ellipsis app-data">
-                            {`*${searchText}*`}
+                            {`*${toResourceSearchWords(searchText)}*`}
                         </span>
                     </div>
                     {searchedFilePaths.map((filePath) => {

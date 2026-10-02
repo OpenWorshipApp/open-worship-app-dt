@@ -82,6 +82,10 @@ export default function ItemColorNoteComp({
         item.setColorNote(colorNote);
         onChange?.(colorNote);
     };
+    // Says what the control IS before which colour it holds. The colour alone
+    // -- `magenta`, a CSS keyword the menu lists as written -- said nothing
+    // of what a press does, and in a Khmer window it was the row's one
+    // English word.
     const title = useMemo(() => {
         const reverseColorMap: Record<string, string> = Object.entries({
             ...colorList.main,
@@ -93,7 +97,8 @@ export default function ItemColorNoteComp({
             },
             {} as Record<string, string>,
         );
-        return reverseColorMap[colorNote ?? ''] ?? tran('No Color');
+        const colorName = reverseColorMap[colorNote ?? ''] ?? tran('No Color');
+        return `${tran('Color Note')}: ${colorName}`;
     }, [colorNote]);
 
     const handleChoosing = chooseColorNote.bind(null, colorNote, setColorNote1);

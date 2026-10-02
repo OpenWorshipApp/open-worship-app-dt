@@ -10,10 +10,13 @@ import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItem
 // every theme, in every locale -- including on an English bible, where nothing
 // had been translated at all and the mark was simply untrue.
 function genGoogleTranslated(titleEn: string) {
+    // Both sentences translated: the caution was English in every language.
     const label =
         tran('Generated using Google Translate.') +
-        ' Results may vary and may not be ' +
-        'accurate. Please use with caution.';
+        ' ' +
+        tran(
+            'Results may vary and may not be accurate. Please use with caution.',
+        );
     return (
         <button
             type="button"
@@ -41,15 +44,21 @@ export default function RenderAIBibleCrossReferenceComp({
     const isTranslated = !!titleEn && titleEn !== title;
     return (
         <div className="app-xref-theme">
-            <h4
-                className="app-xref-theme-title app-selectable-text"
-                style={{ fontFamily }}
-            >
-                <span
+            {/*
+              The note sits BESIDE the heading, not in it. A heading is named
+              by everything inside it, so every translated theme was announced
+              with the whole caution after its title -- and a heading holding a
+              control drops out of the tools that list headings (the robot
+              test found a heading in English and plain text in Khmer).
+            */}
+            <div className="app-xref-theme-head">
+                <h4
+                    className="app-xref-theme-title app-selectable-text"
+                    style={{ fontFamily }}
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }}
                 />
                 {isTranslated ? genGoogleTranslated(titleEn) : null}
-            </h4>
+            </div>
             <div className="app-xref-verses">
                 {verses.map((item, i) => {
                     return (

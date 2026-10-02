@@ -24,9 +24,21 @@ $book-subtype-colors: (
   'prophecyRevelation': $book-subtype-color-prophecyRevelation,
 );
 
+// A pane narrower than one option -- four panes side by side -- shrinks it
+// to fit, and the name ends in an ellipsis (the button's `title` keeps the
+// whole name) rather than running past the pane's edge.
 .book-option {
   margin: 2px;
+  max-width: calc(100% - 4px);
   button {
+    max-width: 100%;
+
+    .book-option-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .book-option-index {
       content: attr(data-book-index);
       clear: both;
@@ -54,4 +66,5 @@ $book-subtype-colors: (
 .book-option-ghost {
   visibility: hidden;
   margin: 2px;
+  max-width: calc(100% - 4px);
 }

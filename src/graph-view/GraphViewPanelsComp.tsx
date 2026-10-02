@@ -91,6 +91,7 @@ const RenderGraphPanelComp = memo(function RenderGraphPanelComp({
 }: Readonly<{ graph: GraphViewType; index: number }>) {
     return (
         <FloatingWidgetComp
+            widgetName="Graph Preview"
             title={
                 graph.sourceId === LOOKUP_GRAPH_SOURCE_ID ? (
                     <RenderLookupGraphTitleComp graph={graph} />

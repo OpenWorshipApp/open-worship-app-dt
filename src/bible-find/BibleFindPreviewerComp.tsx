@@ -80,7 +80,7 @@ export default function BibleFindPreviewerComp() {
             >
                 {genLabelIcon(activeLabelKey, 'pe-1')}
                 <select
-                    className="form-select form-select-sm"
+                    className="form-select form-select-sm app-caught-hover-pointer"
                     value={tabKey}
                     title={tran(activeLabelKey)}
                     aria-label={tran('Bible Online Lookup')}

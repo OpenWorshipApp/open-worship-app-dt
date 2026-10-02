@@ -1,8 +1,8 @@
 import { createContext, use, useSyncExternalStore } from 'react';
 
 import appProvider from '../server/appProvider';
-import { fontSizeSettingNames } from './constants';
-import { getSetting, setSetting } from './settingHelpers';
+import { fontSizeSettingNames, legacyFontSizeSettingNames } from './constants';
+import { getSetting, removeSetting, setSetting } from './settingHelpers';
 
 export const BIBLE_VIEW_TEXT_CLASS = 'bible-view-text';
 export const VERSE_TEXT_CLASS = 'verse-text';
@@ -24,6 +24,26 @@ function getFontSizeSettingName() {
         : fontSizeSettingNames.BIBLE_PRESENTER;
 }
 
+// The size as saved, moving it off its old `:`-named key the first time (see
+// `fontSizeSettingNames`). Only ever runs on a cache miss.
+function readFontSizeSetting() {
+    const settingName = getFontSizeSettingName();
+    const value = getSetting(settingName);
+    if (value) {
+        return value;
+    }
+    const legacySettingName = appProvider.isPageReader
+        ? legacyFontSizeSettingNames.BIBLE_READING
+        : legacyFontSizeSettingNames.BIBLE_PRESENTER;
+    const legacyValue = getSetting(legacySettingName);
+    if (!legacyValue) {
+        return value;
+    }
+    setSetting(settingName, legacyValue);
+    removeSetting(legacySettingName);
+    return legacyValue;
+}
+
 // A shared store, because the size is set by the previewer's zoom control but
 // read by UI outside it (the names & locations panels). Settings are FILE
 // backed, so the value is held in memory here: `useSyncExternalStore` calls its
@@ -34,10 +54,7 @@ const listeners = new Set<() => void>();
 
 export function getBibleViewFontSize() {
     if (cachedFontSize === null) {
-        const parsed = Number.parseInt(
-            getSetting(getFontSizeSettingName()) ?? '',
-            10,
-        );
+        const parsed = Number.parseInt(readFontSizeSetting() ?? '', 10);
         cachedFontSize = Number.isNaN(parsed)
             ? DEFAULT_BIBLE_TEXT_FONT_SIZE
             : parsed;

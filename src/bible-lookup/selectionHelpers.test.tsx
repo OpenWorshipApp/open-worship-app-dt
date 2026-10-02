@@ -199,7 +199,9 @@ describe('bible-lookup selectionHelpers', () => {
         expect(clickSpy).toHaveBeenCalled();
     });
 
-    test('userEnteringSelected clicks when the input text is focused', () => {
+    // Enter in the reference box is the lookup body's: the list on screen can
+    // still be the previous text's (RenderBibleLookupBodyComp.test.tsx).
+    test('userEnteringSelected leaves Enter in the reference box alone', () => {
         const input = document.createElement('input');
         input.className = INPUT_TEXT_CLASS;
         input.tabIndex = 0;
@@ -209,7 +211,7 @@ describe('bible-lookup selectionHelpers', () => {
         const clickSpy = vi.spyOn(selected, 'click');
         userEnteringSelected(OPTION_CLASS, SELECTED_CLASS);
         captured.cb();
-        expect(clickSpy).toHaveBeenCalled();
+        expect(clickSpy).not.toHaveBeenCalled();
     });
 
     test('userEnteringSelected no-ops when nothing is focused', () => {

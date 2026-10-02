@@ -249,21 +249,28 @@ function RenderSelectionToolbarComp({
                 );
             })}
             <span className="app-verse-selection-toolbar__divider" />
+            {/*
+             * Named outright: an icon font's glyph is CSS content, which a
+             * button takes its name from before it ever reads a title -- so
+             * these two were announced as an unreadable private-use character.
+             */}
             <button
                 type="button"
                 className="app-verse-selection-toolbar__button"
                 title={tran('Add Comment')}
+                aria-label={tran('Add Comment')}
                 onClick={onComment}
             >
-                <i className="bi bi-chat-left-text" />
+                <i className="bi bi-chat-left-text" aria-hidden="true" />
             </button>
             <button
                 type="button"
                 className="app-verse-selection-toolbar__button"
                 title={tran('Remove Marks')}
+                aria-label={tran('Remove Marks')}
                 onClick={onErase}
             >
-                <i className="bi bi-eraser" />
+                <i className="bi bi-eraser" aria-hidden="true" />
             </button>
         </div>,
         document.body,

@@ -243,6 +243,9 @@ function RenderDetailPanelComp({
     };
     return (
         <FloatingWidgetComp
+            // One name for every record's panel: the title bar already says
+            // WHICH record, and a matcher needs to know what KIND of panel.
+            widgetName="Lookup Detail"
             title={
                 <span
                     className={
@@ -374,6 +377,7 @@ export default function LocationNameDetailPanelsComp() {
             {managers == null ? (
                 <FloatingWidgetComp
                     title={tran('Loading lookup data')}
+                    widgetName="Lookup Detail"
                     onClose={() => {
                         closeDetailPanel(openPanels[0].key);
                     }}

@@ -28,8 +28,15 @@ vi.mock('./RenderEditingActionButtonsComp', () => ({
     default: () => <div className="btn-group" />,
 }));
 vi.mock('../bible-reader/view-extra/RenderTitleMaterialComp', () => ({
-    RenderTitleMaterialComp: () => (
-        <div className="bible-view-title-material" />
+    RenderTitleMaterialComp: ({
+        actionsElement,
+    }: {
+        actionsElement?: React.ReactNode;
+    }) => (
+        <div className="bible-view-title-material">
+            <div className="bible-view-title-keys" />
+            <div className="bible-view-reference">{actionsElement}</div>
+        </div>
     ),
 }));
 vi.mock('../bible-reader/readBibleHelpers', () => ({
@@ -44,24 +51,32 @@ vi.mock('../helper/appHooks', () => ({
     useAppCurrentRef: (current: unknown) => ({ current }),
 }));
 
+import type React from 'react';
+
 import { EditingResultContext } from '../bible-reader/LookupBibleItemController';
+import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
 import RenderBibleEditingHeaderComp from './RenderBibleEditingHeaderComp';
 
-function renderHeader(isFound: boolean) {
+function renderHeader(isFound: boolean, actionElement?: React.ReactNode) {
     const editingResult = isFound
         ? { result: { bibleItem: { id: 'found' } } }
         : { result: { bibleItem: null } };
     const host = document.createElement('div');
     host.innerHTML = renderToStaticMarkup(
-        <EditingResultContext value={editingResult as any}>
-            <RenderBibleEditingHeaderComp />
-        </EditingResultContext>,
+        <BibleViewTitleMaterialContext
+            value={{ titleElement: null, actionElement }}
+        >
+            <EditingResultContext value={editingResult as any}>
+                <RenderBibleEditingHeaderComp />
+            </EditingResultContext>
+        </BibleViewTitleMaterialContext>,
     );
     const header = host.querySelector('.bible-view-header')!;
     return {
         actions: header.querySelector('.bible-view-header-actions'),
         info: header.querySelector('.bible-info'),
         end: header.querySelector(':scope > .bible-view-header-end'),
+        keys: header.querySelector('.bible-view-title-keys'),
     };
 }
 
@@ -69,20 +84,34 @@ beforeEach(() => {
     controller.isAlone = true;
 });
 
-// The overlay hangs off the end group's left edge and covers whatever is
-// under it while the header is hovered, so a control that has to stay
-// pressable must sit in the end group BESIDE it, never under or inside it.
-// Anchored a fixed ⋮-width from the right, the ✕ once landed on the (i).
-test('the translation info stays in the row beside the hover actions', () => {
+// The overlay covers whatever is under it while the header is hovered, so it
+// lives INSIDE the reference box: it may cover the passage text and nothing
+// else. Hung off the end group with a pane-wide width it reached back over
+// the version pill and its ⋮, and a click meant for them opened Copy. A
+// control that has to stay pressable sits in the end group beside it.
+test('the hover actions live in the reference box, beside the info', () => {
     controller.isAlone = false;
-    const { actions, info, end } = renderHeader(false);
+    const { actions, info, end, keys } = renderHeader(false);
 
     expect(info).not.toBeNull();
     expect(actions).not.toBeNull();
     expect(actions!.contains(info)).toBe(false);
     expect(info!.closest('.bible-view-header-end')).toBe(end);
-    expect(actions!.parentElement).toBe(end);
+    expect(end!.contains(actions)).toBe(false);
+    expect(actions!.parentElement!.classList).toContain('bible-view-reference');
+    expect(keys!.contains(actions)).toBe(false);
     expect(actions!.querySelector('.bible-view-header-close')).not.toBeNull();
+});
+
+test('the pencil is one of the actions, first in the row', () => {
+    const { actions } = renderHeader(
+        true,
+        <button type="button" className="bible-view-header-edit" />,
+    );
+
+    expect(actions!.firstElementChild!.classList).toContain(
+        'bible-view-header-edit',
+    );
 });
 
 test('nothing to act on and nothing to close draws no empty overlay', () => {

@@ -172,7 +172,8 @@ export default function RenderChapterOptionsComp({
             return match.chapter === 0;
         }) ?? null;
     // chapter 0 is the synthetic "Introduction" entry, it is rendered by
-    // `RenderChapterZeroComp`, exclude it so `i === 0` is the first option
+    // `RenderChapterZeroComp`, exclude it so `i === 0` is the first option --
+    // the one Enter in the reference box picks (`genLookupEnterPick`)
     const chapterOptions = matchedChapters.filter((match) => {
         return match.chapter !== 0;
     });

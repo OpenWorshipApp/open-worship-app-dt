@@ -36,7 +36,16 @@ const fileExtraSuffixes = [HISTORY_DIR_NAME_SUFFIX, '-htmls', '-images'];
  */
 // TODO: support other events: 'rename', 'unlink', 'add'
 async function alertFileChanging(filePath: string) {
-    FileSource.getInstance(filePath).fireUpdateEvent();
+    // A rename or a delete reports the OLD path too, and every `update`
+    // listener re-reads its file: a Bibles list renamed in the app logged an
+    // ENOENT per event. A path that is gone has no content to update; the
+    // directory reconcile is what takes it off the list.
+    if (
+        (await fsCheckFileExist(filePath)) ||
+        (await fsCheckDirExist(filePath))
+    ) {
+        FileSource.getInstance(filePath).fireUpdateEvent();
+    }
     const sidecarSuffix = fileExtraSuffixes.find((suffix) => {
         return filePath.includes(suffix);
     });

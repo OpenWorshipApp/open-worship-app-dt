@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
     saveBibleItemMock: vi.fn(),
+    exportToWordDocumentMock: vi.fn(),
     handleSelectingMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
     insertBibleItemMock: vi.fn(),
@@ -16,6 +17,7 @@ const h = vi.hoisted(() => ({
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 vi.mock('../bible-list/bibleHelpers', () => ({
     saveBibleItem: h.saveBibleItemMock,
+    exportToWordDocument: h.exportToWordDocumentMock,
 }));
 vi.mock('../_screen/managers/ScreenBibleManager', () => ({
     default: { handleBibleItemSelecting: h.handleSelectingMock },
@@ -94,6 +96,22 @@ describe('bible-lookup bibleActionHelpers', () => {
         expect(h.showSimpleToastMock).toHaveBeenCalled();
     });
 
+    // Every other action on the header's hover strip is in the pane menu too;
+    // Export was the one a narrow pane could only reach by scrolling.
+    test('genFoundBibleItemContextMenu exports the passage to Word', () => {
+        const bibleItem = { id: 1 } as any;
+        const menu = genFoundBibleItemContextMenu(
+            { target: document.createElement('div') },
+            genController(),
+            bibleItem,
+        );
+        const exportItem = menu.find(
+            (m) => m.menuElement === 'Export to MS Word',
+        )!;
+        exportItem.onSelect!({} as any);
+        expect(h.exportToWordDocumentMock).toHaveBeenCalledWith([bibleItem]);
+    });
+
     test('genFoundBibleItemContextMenu adds cross reference when verse key present', () => {
         const target = document.createElement('div');
         target.dataset.verseKey = '(KJV) GEN 1:1';
@@ -105,6 +123,9 @@ describe('bible-lookup bibleActionHelpers', () => {
             (m) => m.menuElement === 'Open in Cross Reference',
         )!;
         expect(crossRef).toBeDefined();
+        // The key is the app's handle, not words: as a tooltip it was read
+        // out as part of the item's name.
+        expect(crossRef.title).toBeUndefined();
         crossRef.onSelect!({} as any);
         expect(ctl.selectedVerseKey).toBe('(KJV) GEN 1:1');
         expect(ctl.openBibleSearch).toHaveBeenCalledWith('c');

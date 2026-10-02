@@ -372,6 +372,11 @@ describe('bibleRenderHelper', () => {
             verseEnd: 3,
             verseStart: 1,
         });
+        // Across a book boundary the verse count is read from the book jumped
+        // TO, never the one left behind (Obadiah 1 came out as 1-17).
+        mocks.getVersesMock.mockClear();
+        await bibleRenderHelper.getJumpingChapter('KJV', target, false);
+        expect(mocks.getVersesMock).toHaveBeenLastCalledWith('KJV', 'REV', 2);
 
         const toVerseTextListSpy = vi.spyOn(
             bibleRenderHelper,

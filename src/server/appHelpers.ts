@@ -174,7 +174,7 @@ export async function copyToClipboard(str: string, title?: string) {
     }
     showSimpleToast(
         title ?? tran('Copy'),
-        tran('Text has been copied to clip'),
+        tran('Text has been copied to clipboard'),
     );
     return true;
 }

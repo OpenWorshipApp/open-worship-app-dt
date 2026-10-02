@@ -66,15 +66,13 @@ export default function BibleNoteItemRenderComp({
     const noteItemRef = useAppCurrentRef(noteItem);
     const filePathRef = useAppCurrentRef(filePath);
     const indexRef = useAppCurrentRef(index);
-    const setIsEditingTitle1 = useCallback(
-        (isOpened: boolean) => {
-            setIsEditingTitle(isOpened);
-            noteItemRef.current.isOpened = isOpened;
-            noteRef.current.updateAndSaveNoteItem(noteItemRef.current, true);
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
+    // Window state only. It used to be written into the note item and SAVED on
+    // both opening and closing the editor, so Edit Title then Escape rewrote
+    // the file (and its history) with nothing changed. The title editor's own
+    // store saves the title, and only when it differs.
+    const setIsEditingTitle1 = useCallback((isEditing: boolean) => {
+        setIsEditingTitle(isEditing);
+    }, []);
     const handleContextMenuOpening = useCallback(
         async (event: MouseEvent<any>) => {
             const menuItems: ContextMenuItemType[] = [

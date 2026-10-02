@@ -935,6 +935,30 @@ export function checkIsRtl(locale: LocaleType) {
     return rtlLangs.includes(langCode as any);
 }
 
+// Built on first use: only a code the table above does not list needs it.
+let fallbackLanguageNames: Intl.DisplayNames | null = null;
+/**
+ * A language the table above does not list, named by the platform -- in English,
+ * like the table. A bible file can carry an ISO 639-2/3 code such as `arc`
+ * (Aramaic), and the version menu headed that group `Unknown <arc>`.
+ */
+function getFallbackLanguageName(code: string): string | null {
+    if (code === '') {
+        return null;
+    }
+    try {
+        fallbackLanguageNames ??= new Intl.DisplayNames(['en'], {
+            type: 'language',
+        });
+        const name = fallbackLanguageNames.of(code);
+        // A code the platform does not know either comes back as itself.
+        return name && name !== code ? name : null;
+    } catch {
+        // Not a well-formed language tag.
+        return null;
+    }
+}
+
 export function getLanguageTitle(
     { locale, langCode }: { locale?: LocaleType; langCode?: string | null },
     isWithLocale = false,
@@ -944,10 +968,11 @@ export function getLanguageTitle(
     }
     langCode ??= getLangCode(locale as LocaleType);
     let languageName: string;
-    if (langCode === null || !(langCode in languageNameMap)) {
-        languageName = 'Unknown';
-    } else {
+    if (langCode !== null && langCode in languageNameMap) {
         languageName = languageNameMap[langCode];
+    } else {
+        languageName =
+            getFallbackLanguageName(langCode ?? locale ?? '') ?? 'Unknown';
     }
     if (locale !== undefined) {
         languageName += isWithLocale ? ` <${locale}>` : '';

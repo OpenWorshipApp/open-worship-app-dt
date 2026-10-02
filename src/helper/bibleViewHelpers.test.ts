@@ -21,6 +21,9 @@ vi.mock('./settingHelpers', () => ({
     setSetting: (key: string, value: string) => {
         h.settings.set(key, value);
     },
+    removeSetting: (key: string) => {
+        h.settings.delete(key);
+    },
 }));
 vi.mock('react', async (importOriginal) => {
     const actual = await importOriginal<typeof import('react')>();
@@ -43,7 +46,7 @@ import {
     useBibleViewFontSize,
     useBibleViewTextScale,
 } from './bibleViewHelpers';
-import { fontSizeSettingNames } from './constants';
+import { fontSizeSettingNames, legacyFontSizeSettingNames } from './constants';
 
 function subscribe(listener: () => void) {
     useBibleViewFontSize();
@@ -61,6 +64,42 @@ beforeEach(() => {
     h.settings.clear();
     h.isPageReader = false;
     resetStore();
+});
+
+// A setting is a file named after its key; on Windows a `:` in it made the
+// size a hidden NTFS stream that a copy of the data folder drops.
+describe('the setting names are plain file names', () => {
+    test('no key carries a character a file name cannot', () => {
+        for (const key of Object.values(fontSizeSettingNames)) {
+            expect(key).not.toMatch(/[\\/:*?"<>|]/);
+        }
+    });
+
+    test("a size saved under the old ':' key is kept and moved", () => {
+        h.isPageReader = true;
+        h.settings.set(legacyFontSizeSettingNames.BIBLE_READING, '23');
+        h.settings.set(legacyFontSizeSettingNames.BIBLE_PRESENTER, '17');
+
+        expect(getBibleViewFontSize()).toBe(23);
+        expect(h.settings.get(fontSizeSettingNames.BIBLE_READING)).toBe('23');
+        expect(h.settings.has(legacyFontSizeSettingNames.BIBLE_READING)).toBe(
+            false,
+        );
+        // The presenter's old size is left for the presenter to move.
+        expect(h.settings.get(legacyFontSizeSettingNames.BIBLE_PRESENTER)).toBe(
+            '17',
+        );
+        expect(h.settings.has(fontSizeSettingNames.BIBLE_PRESENTER)).toBe(
+            false,
+        );
+    });
+
+    test('a size under the new key wins over a leftover old one', () => {
+        h.settings.set(fontSizeSettingNames.BIBLE_PRESENTER, '40');
+        h.settings.set(legacyFontSizeSettingNames.BIBLE_PRESENTER, '17');
+
+        expect(getBibleViewFontSize()).toBe(40);
+    });
 });
 
 describe('which setting the size is read from', () => {

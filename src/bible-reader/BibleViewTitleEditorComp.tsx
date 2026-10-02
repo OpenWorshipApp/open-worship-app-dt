@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, KeyboardEvent } from 'react';
 import { useMemo } from 'react';
 
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
@@ -19,6 +19,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { tran } from '../lang/langHelpers';
 
 function chose<T>(
     event: any,
@@ -92,7 +93,7 @@ async function choseChapter(
             return getNumItem(bibleKey, i + 1);
         }),
     );
-    chapterList.unshift([0, 'Chapter', 'Chapter']);
+    chapterList.unshift([0, tran('Chapter'), tran('Chapter')]);
     return await chose(event, isAllowAll, chapter, chapterList, {
         fontFamily: fontFamily ?? '',
     });
@@ -134,7 +135,7 @@ async function handleContextMenu(
         if (bookKVList === null) {
             return;
         }
-        bookKVList.unshift(['', 'Book', 'Book']);
+        bookKVList.unshift(['', tran('Book'), tran('Book')]);
         newBook = await chose(event, false, target.bookKey, bookKVList, {
             fontFamily: fontFamily ?? '',
         });
@@ -178,7 +179,7 @@ async function handleContextMenu(
             newBook,
             newChapter,
             target.verseStart,
-            'Verse Start',
+            tran('Verse Start'),
             fontFamily,
         );
         if (newVerseStart === null) {
@@ -202,7 +203,7 @@ async function handleContextMenu(
         newBook,
         newChapter,
         target.verseEnd,
-        'Verse End',
+        tran('Verse End'),
         fontFamily,
         (verse: [number]) => {
             return verse[0] >= newVerseStart;
@@ -293,11 +294,51 @@ export default function BibleViewTitleEditorComp({
     }
     const genEditor = (
         text: string,
+        label: string,
         onClick: (event: any) => OptionalPromise<void>,
     ) => {
+        // The keyboard's door to the same picker (RD-33): the parts answered a
+        // right-click only, so a keyboard could not change the passage from its
+        // title at all. Not where `withCtrl` asks for Ctrl+right-click -- those
+        // titles sit in Bibles list rows, and three or four tab stops a row
+        // would bury the list itself.
+        const keyboardProps = withCtrl
+            ? {}
+            : {
+                  role: 'button',
+                  tabIndex: 0,
+                  'aria-haspopup': 'menu' as const,
+                  'aria-label': `${label}: ${text}`,
+                  onKeyDown: (event: KeyboardEvent<HTMLSpanElement>) => {
+                      const isMenuKey =
+                          event.key === 'ContextMenu' ||
+                          (event.shiftKey && event.key === 'F10');
+                      if (
+                          (event.key !== 'Enter' &&
+                              event.key !== ' ' &&
+                              !isMenuKey) ||
+                          event.repeat
+                      ) {
+                          return;
+                      }
+                      event.preventDefault();
+                      event.stopPropagation();
+                      // The picker opens under the part, where a right-click
+                      // on it would have opened it.
+                      const rect = event.currentTarget.getBoundingClientRect();
+                      onClick(
+                          new MouseEvent('contextmenu', {
+                              cancelable: true,
+                              clientX: rect.left,
+                              clientY: rect.bottom,
+                          }),
+                      );
+                  },
+              };
         return (
             <span
                 className="app-caught-hover-pointer"
+                {...keyboardProps}
                 onContextMenu={(event) => {
                     if (withCtrl && !event.ctrlKey) {
                         return;
@@ -334,17 +375,17 @@ export default function BibleViewTitleEditorComp({
     };
     return (
         <span>
-            {genEditor(book, (event) => {
+            {genEditor(book, tran('Book'), (event) => {
                 handleContextMenu(event, params);
             })}{' '}
-            {genEditor(localeChapter, async (event) => {
+            {genEditor(localeChapter, tran('Chapter'), async (event) => {
                 handleContextMenu(event, {
                     ...params,
                     book: target.bookKey,
                 });
             })}
             {':'}
-            {genEditor(localeVerseStart, (event) => {
+            {genEditor(localeVerseStart, tran('Verse Start'), (event) => {
                 handleContextMenu(event, {
                     ...params,
                     book: target.bookKey,
@@ -353,14 +394,18 @@ export default function BibleViewTitleEditorComp({
             })}
             {!isOneVerse && localeVerseEnd ? '-' : ''}
             {!isOneVerse && localeVerseEnd
-                ? genEditor(localeVerseEnd, async (event) => {
-                      handleContextMenu(event, {
-                          ...params,
-                          book: target.bookKey,
-                          chapter: target.chapter,
-                          verseStart: target.verseStart,
-                      });
-                  })
+                ? genEditor(
+                      localeVerseEnd,
+                      tran('Verse End'),
+                      async (event) => {
+                          handleContextMenu(event, {
+                              ...params,
+                              book: target.bookKey,
+                              chapter: target.chapter,
+                              verseStart: target.verseStart,
+                          });
+                      },
+                  )
                 : null}
         </span>
     );

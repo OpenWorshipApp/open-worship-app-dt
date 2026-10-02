@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-30** (**W-44 steps 4, 5 and 7 — more than one AI Chat window, tabs that move, and tabs that come back.** Asked for by the user: _I want the ai chat can be open multiple instances_, _drag the tab to new window_, _a tab's options to open in new window and a window option to open new window_, _a tab should be able to drag and move to reorder_, and _I want to see my previous tab_. Every press of the **✨** now opens another AI Chat window, up to three at once (each keeps its own tabs); a tab is dragged along the strip to reorder it, dragged out of the window or sent with **Open in new window** from its **⋮** to become a window of its own, and the new **New window** button beside **+** opens one more; a closed tab goes to **Recently closed** — on the card and behind the clock in the row above the page, **Ctrl+Shift+T** for the last — and comes back on its conversation. Sign out empties that list too. Verified live on the dev window 2026-09-30: the menu route moved a signed-in Claude conversation into a new window, a fourth window was refused, a closed tab came back from the card, and a drag reordered two tabs; the drop OUTSIDE the window is an OS drag CDP cannot make, so it is unit-tested only.)
+**workflowsVersion: 2026-10-01** (**W-29's translation note and W-38 step 8 — fixes from the reader-only robot run 20261001-1149.** Asked for by the user ("fix all findings"). A name's **Gender** and a place's **Type** are now said in the lookup language, like a person's kind (W-29 said they were not); and a path search that finds nothing says how far it looked — **No connection found within 30 steps** (W-38). W-38 step 3's counts follow the dataset, which grew: Jacob's badge reads **47**, his children **16**. Verified live on the dev Reader 2026-10-01: Jacob's detail panel reads **ប្រុស** in its chip and its Gender row, Siloam's reads **ស្រះ** for its Type, and Jacob → Jesus answers **No connection found within 30 steps**, inline and as a toast.)
+
+Previous: **workflowsVersion: 2026-09-30** (**W-44 steps 4, 5 and 7 — more than one AI Chat window, tabs that move, and tabs that come back.** Asked for by the user: _I want the ai chat can be open multiple instances_, _drag the tab to new window_, _a tab's options to open in new window and a window option to open new window_, _a tab should be able to drag and move to reorder_, and _I want to see my previous tab_. Every press of the **✨** now opens another AI Chat window, up to three at once (each keeps its own tabs); a tab is dragged along the strip to reorder it, dragged out of the window or sent with **Open in new window** from its **⋮** to become a window of its own, and the new **New window** button beside **+** opens one more; a closed tab goes to **Recently closed** — on the card and behind the clock in the row above the page, **Ctrl+Shift+T** for the last — and comes back on its conversation. Sign out empties that list too. Verified live on the dev window 2026-09-30: the menu route moved a signed-in Claude conversation into a new window, a fourth window was refused, a closed tab came back from the card, and a drag reordered two tabs; the drop OUTSIDE the window is an OS drag CDP cannot make, so it is unit-tested only.)
 
 Previous: **workflowsVersion: 2026-09-29** (**W-46 — the Tip of the Day card takes itself off after one minute, and says so while it is there.** A 3px bar along the card's bottom edge drains left to right over that minute; resting the mouse pointer on the card freezes the bar and the minute with it, and moving away carries on from where it stopped rather than granting a fresh minute. **Next tip** starts the minute again, **All tips** holds it while the list is open, and the card is still closed at once by **×**. Verified live on the dev Reader and Slide Editor 2026-09-29.)
 
@@ -3079,9 +3081,10 @@ your Bible reading.
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 
-**A note on what is not translated:** a person's **Gender** and **Age**, and a place's
-**Type**, are shown exactly as the dataset wrote them. Only a person's kind is one of a
-fixed set of nine, so only that one can be said in another language.
+**A note on what is translated:** a person's kind and **Gender** and a place's **Type**
+come in the lookup language — Jacob is **ប្រុស**, the Pool of Siloam a **ស្រះ** — because each
+is one word out of a short, fixed list. A person's **Age** is shown exactly as the
+dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
 RD-64, RD-80, RD-91, PM-126._
@@ -3933,9 +3936,9 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > which is where you would go looking for it; a record window also has a `⛶`-style
    > graph icon beside its title.
 3. Each box shows a number next to a small diagram icon — that is how many related
-   records it has. **Click the number.** A menu opens listing **All (44)** first, then
+   records it has. **Click the number.** A menu opens listing **All (47)** first, then
    only the kinds this record actually has: _Parents (2)_, _Spouses (4)_, _Siblings (2)_,
-   _Children (13)_, _Cousins (22)_, _Locations (1)_. 📸
+   _Children (16)_, _Cousins (22)_, _Locations (1)_. 📸
 4. Pick one kind — say **Children** — and just those boxes appear, ringed around the
    person and joined by curved lines. Each line is labelled with the relationship as you
    would say it: _son_, _daughter_, _wife_, _father_, _located at_.
@@ -3976,8 +3979,10 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > becomes the graph's new centre.
    > Paths run through people only. A place like Jerusalem touches almost everyone, so
    > allowing places as stepping stones would "connect" any two people meaninglessly.
-   > If there is genuinely no link you will see **No connection found** — that is an
-   > answer, not an error.
+   > If there is no link within 30 steps you will see **No connection found within 30
+   > steps** — that is an answer, not an error. The search stops there, so two people
+   > further apart than that (Jacob and Jesus are about forty generations apart) are not
+   > shown as connected even though they are.
 9. Keep it: the `⋯` menu at the top right offers **Save as image** (a PNG saved to your
    Downloads folder and revealed for you), **Print** (which prints on white paper
    whatever theme the app is using), and **Save preset** to name an arrangement and come

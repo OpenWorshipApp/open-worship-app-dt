@@ -61,6 +61,7 @@ export default function VerseCommentEditorComp({
                 </span>
             }
             onClose={onClose}
+            widgetName="Verse Comment"
             persistKey="verse-comment-editor"
             options={{
                 width: 360,

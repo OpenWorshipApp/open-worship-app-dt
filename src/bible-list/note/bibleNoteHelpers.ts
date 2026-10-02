@@ -31,6 +31,10 @@ import {
     tran,
 } from '../../lang/langHelpers';
 import { getBibleNotePreviewFilePath } from './bibleNotePreviewHelpers';
+import {
+    genPreviewSettingStore,
+    lockBibleNoteReadOnly,
+} from './bibleNoteReadOnlyHelpers';
 import { acquireLookupData } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
@@ -431,7 +435,10 @@ export async function initBibleNote({
             pendingHistoryItem = noteItem;
             historyAttemptTimeout(writeEditingHistory);
         },
-        storageManager: storageManager as any,
+        // A preview's lock is the host's, never the user's preference.
+        storageManager: (isReadOnly
+            ? genPreviewSettingStore(storageManager)
+            : storageManager) as any,
         stickyNoteExtraFontFamilies,
         resolveFilePath: resolveLocalFilePath as FilePathResolver,
         revealFile,
@@ -449,7 +456,7 @@ export async function initBibleNote({
     if (isReadOnly) {
         // Set by the host, which the editor shows as LOCKED: its own read-only
         // toggle cannot be flipped back from inside the window.
-        bibleNote.isReadOnly = true;
+        lockBibleNoteReadOnly(bibleNote);
     }
 
     // per-note: a module-level shared timer would drop note A's reload when

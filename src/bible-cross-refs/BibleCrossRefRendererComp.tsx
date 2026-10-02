@@ -27,10 +27,13 @@ import appProvider from '../server/appProvider';
 // means for accuracy. `bi-cpu` rather than the lightbulb it shared with the
 // translation note: one glyph cannot carry two different claims.
 function genAiVigilant() {
+    // Both sentences translated: the caution was English in every language.
     const label =
         tran('Generated using AI technology.') +
-        ' Results may vary and may not be ' +
-        'accurate. Please use with caution.';
+        ' ' +
+        tran(
+            'Results may vary and may not be accurate. Please use with caution.',
+        );
     return (
         <button
             type="button"

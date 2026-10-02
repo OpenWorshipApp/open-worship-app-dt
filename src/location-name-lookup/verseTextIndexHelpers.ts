@@ -43,9 +43,50 @@ const MAXIMUM_PHRASE_WORD_COUNT = 4;
 // Biblical names are always capitalized in scripture, so requiring an uppercase
 // first letter costs nothing and removes the false positives that short entries
 // ("Amos", "Abba", "Ben") would otherwise produce against ordinary prose.
-const TOKEN_PATTERN = /[A-Za-z][A-Za-z'’-]*/g;
+//
+// The ligatures are part of a word: the KJV's words-of-Christ verses spell
+// `Cæsar`, `Galilæans` and `Zacchæus` with them, and an ASCII-only pattern cut
+// `Galilæans` into `Galil` + `ans`, so Luke 13:2 was left undecorated while
+// 13:1, spelling it `Galilaeans`, was underlined.
+const TOKEN_PATTERN = /[A-Za-zÆæŒœ][A-Za-zÆæŒœ'’-]*/g;
 
 const POSSESSIVE_PATTERN = /['’]s?$/;
+
+// The dataset spells every name with `ae`/`oe`, so the ligatures are folded in
+// the KEY only — offsets stay those of the text as written.
+function toNeedle(rawText: string) {
+    return rawText
+        .toLowerCase()
+        .replace(POSSESSIVE_PATTERN, '')
+        .replaceAll('æ', 'ae')
+        .replaceAll('œ', 'oe');
+}
+
+// "Lot the son of Haran" names a PERSON, whatever else "Haran" is. When the
+// verse evidence resolves such a form to a PLACE, the kinship phrase in front of
+// it says the evidence is not about this occurrence -- the dataset attests the
+// city in Genesis 11:31 but not Lot's father, so the city used to be underlined
+// in his place. Which person it is cannot be told either, so the occurrence is
+// left plain: the rule that never guesses a record also never guesses a kind.
+// Only one-to-one kinship words: `daughter of Zion`, `children of Judah`,
+// `sons of Zion` name a city or a land's people, and stay linked to it.
+// Measured over the whole KJV against the real index, it changes exactly three
+// occurrences, all of them people: Haran (Gen 11:31) and "Hamor the father of
+// Shechem" (Josh 24:32, Judg 9:28).
+const KINSHIP_CONTEXT_PATTERN =
+    /\b(?:son|father|mother|brother|sister|wife|husband)\s+of\s+$/i;
+
+// Enough text in front of a token to hold the longest kinship phrase above.
+const KINSHIP_CONTEXT_LOOKBEHIND = 24;
+
+function checkIsKinshipContext(text: string, tokenStart: number) {
+    return KINSHIP_CONTEXT_PATTERN.test(
+        text.slice(
+            Math.max(0, tokenStart - KINSHIP_CONTEXT_LOOKBEHIND),
+            tokenStart,
+        ),
+    );
+}
 
 /**
  * The index, or null while it is still loading. Subscribing is what triggers the
@@ -202,17 +243,23 @@ export function findLookupTextMatches(
                 token.start,
                 lastToken.start + lastToken.text.length,
             );
-            const needle = rawText
-                .toLowerCase()
-                .replace(POSSESSIVE_PATTERN, '');
+            const needle = toNeedle(rawText);
+            const nameCandidateList = index.names[needle];
             const resolved = resolveNeedle(
-                index.names[needle],
+                nameCandidateList,
                 index.locations[needle],
                 verseNameIndexSet,
                 verseLocationIndexSet,
             );
             if (resolved === null) {
                 continue;
+            }
+            if (
+                resolved.kind === 'location' &&
+                nameCandidateList !== undefined &&
+                checkIsKinshipContext(text, token.start)
+            ) {
+                return null;
             }
             // The possessive belongs to the sentence, not to the name: highlight
             // "Abram" in "Abram's", not "Abram's".

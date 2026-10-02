@@ -121,13 +121,19 @@ function RenderHoverToolComp({
             onMouseEnter={cancelHoveredCommentClearing}
             onMouseLeave={scheduleHoveredCommentClearing}
         >
+            {/*
+             * Each button is named outright, for the reason the selection
+             * toolbar's are: an icon font's glyph is CSS content, which a
+             * button takes its name from before it reads a title.
+             */}
             <button
                 type="button"
                 className="app-verse-comment-hover__close"
                 title={tran('Close')}
+                aria-label={tran('Close')}
                 onClick={clearHoveredComment}
             >
-                <i className="bi bi-x-lg" />
+                <i className="bi bi-x-lg" aria-hidden="true" />
             </button>
             <div
                 className="app-verse-comment-hover__text"
@@ -146,17 +152,19 @@ function RenderHoverToolComp({
                     type="button"
                     className="app-verse-comment-hover__button"
                     title={tran('Edit Comment')}
+                    aria-label={tran('Edit Comment')}
                     onClick={onEdit}
                 >
-                    <i className="bi bi-pencil-square" />
+                    <i className="bi bi-pencil-square" aria-hidden="true" />
                 </button>
                 <button
                     type="button"
                     className="app-verse-comment-hover__button"
                     title={tran('Delete Comment')}
+                    aria-label={tran('Delete Comment')}
                     onClick={onRemove}
                 >
-                    <i className="bi bi-trash3" />
+                    <i className="bi bi-trash3" aria-hidden="true" />
                 </button>
             </div>
         </div>,

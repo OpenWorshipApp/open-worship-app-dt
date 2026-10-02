@@ -2,7 +2,10 @@
 name: dev-hmr-stale-state-qa
 description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays — re-verify after a full reload before calling it a regression
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
+  modified: 2026-10-01T21:52:45.370Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -21,6 +24,14 @@ and `No VaryAppDocumentContext found`). Introspecting the module via
 Vite hands back a *different* module instance with an empty listener map and
 `_layers: ['root']`, which reads as false evidence that the layer was never
 claimed.
+
+**Any write counts, not only the edit under review** (2026-10-01): a
+`prettier --write` over five files the Reader imports raised, in the same
+second, `useBibleItemViewControllerUpdateEvent must be used within a
+BibleItemViewControllerContext` from `<BibleItemRenderComp>`, the _Reload is
+needed_ path and a page reload — a context module replaced mid-render. Before
+filing a "must be used within" error, compare its time with `date -r` on the
+files written around it (the app's `error-datetime-setting` holds the epoch).
 
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent

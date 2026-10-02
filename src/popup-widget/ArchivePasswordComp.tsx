@@ -51,6 +51,9 @@ function PasswordFieldComp({
             <input
                 className="form-control form-control-sm"
                 type={isRevealed ? 'text' : 'password'}
+                // The label is a styled box beside it, not a `<label>`, so the
+                // two boxes were both just "password field" to a screen reader.
+                aria-label={tran(label)}
                 value={value}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     onChange(event.target.value);

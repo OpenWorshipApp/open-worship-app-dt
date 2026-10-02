@@ -211,6 +211,9 @@ function appKeyUpDown(isUp: boolean) {
     let { index } = domData;
     index += (isUp ? -1 : 1) + allChildren.length;
     index %= allChildren.length;
+    highlightDomItem(allChildren, index);
+}
+function highlightDomItem(allChildren: HTMLDivElement[], index: number) {
     for (const item of allChildren) {
         item.classList.remove(highlightClass);
     }
@@ -299,8 +302,15 @@ export const escapeChars = [
     'capslock',
     'contextmenu',
 ];
-let oldElement: HTMLElement | null = null;
-function listener(event: KeyboardEvent) {
+/**
+ * A letter jumps to the next item starting with it, and HIGHLIGHTS it, so
+ * Enter chooses it — the way a native menu's typeahead works.
+ *
+ * It used to compare the raw `textContent`, which starts with the gap before
+ * every label, so no letter ever matched; and a match was only scrolled to,
+ * never highlighted, so Enter chose whatever the arrows had left.
+ */
+export function handleMenuTypeahead(event: KeyboardEvent) {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
         return;
     }
@@ -308,18 +318,19 @@ function listener(event: KeyboardEvent) {
     if (!key || escapeChars.includes(key)) {
         return;
     }
-    const { allChildren } = getDomItems();
-    const targetElements = allChildren.filter((element) => {
-        return element.textContent?.toLowerCase().startsWith(key);
-    });
-    let index = targetElements.indexOf(oldElement as any);
-    index = (index + 1 + targetElements.length) % targetElements.length;
-    const foundElement = targetElements[index];
-    if (foundElement === undefined) {
-        return;
+    const { allChildren, index } = getDomItems();
+    const count = allChildren.length;
+    // From the item after the highlighted one, so pressing the same letter
+    // again walks every item that starts with it, wrapping round.
+    for (let step = 1; step <= count; step++) {
+        const candidateIndex = (index + step + count) % count;
+        const text = allChildren[candidateIndex].textContent ?? '';
+        if (text.trim().toLowerCase().startsWith(key)) {
+            event.preventDefault();
+            highlightDomItem(allChildren, candidateIndex);
+            return;
+        }
     }
-    foundElement.scrollIntoView();
-    oldElement = foundElement;
 }
 
 export function useAppContextMenuData() {
@@ -354,11 +365,11 @@ export function useAppContextMenuData() {
         }
         const shouldKeystroke = !data.options?.noKeystroke;
         if (shouldKeystroke) {
-            document.addEventListener('keydown', listener);
+            document.addEventListener('keydown', handleMenuTypeahead);
         }
         return () => {
             if (shouldKeystroke) {
-                document.removeEventListener('keydown', listener);
+                document.removeEventListener('keydown', handleMenuTypeahead);
             }
             contextControl.setDataDelegator = null;
         };

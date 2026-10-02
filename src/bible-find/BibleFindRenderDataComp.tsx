@@ -53,7 +53,13 @@ function RenderFooterComp({
             <span className="app-find-count app-ellipsis app-data">
                 {verseCount === null
                     ? null
-                    : `${verseCount.toLocaleString()} ${tran('verses found')}`}
+                    : // Its own key for one, not an English `s` dropped off
+                      // the end: the plural is the language's to decide.
+                      `${verseCount.toLocaleString()} ${
+                          verseCount === 1
+                              ? tran('verse found')
+                              : tran('verses found')
+                      }`}
             </span>
             <nav className="app-find-pages" aria-label={tran('Find')}>
                 {windowedPages.map((item) => {

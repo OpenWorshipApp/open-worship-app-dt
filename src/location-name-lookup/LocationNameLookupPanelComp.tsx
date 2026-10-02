@@ -1,6 +1,6 @@
 import './LocationNameLookupPanelComp.scss';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { MentionNameType } from 'bible-note';
 
 import { useAppEffect } from '../helper/appHooks';
@@ -53,7 +53,24 @@ function RenderResultListComp({
     // and clamping all happen in there.
     search: (query: string, page: number) => LookupPageType;
 }>) {
-    const [page, setPage] = useState(1);
+    // The page belongs to ONE query and type filter, and a new one starts on
+    // page 1. The manager only CLAMPS the page it is handed, it never resets
+    // it, so searching from page 12 of the unfiltered list used to land on
+    // page 12 of the matches and hide every best-ranked result. It was a reset
+    // EFFECT, which the clamp effect below then overwrote in the same commit
+    // (the clamped old page won); deciding it here, in render, has no race.
+    // `search` changes identity with the type filter, so it covers that too.
+    const [pageState, setPageState] = useState({ search, query, page: 1 });
+    const page =
+        pageState.search === search && pageState.query === query
+            ? pageState.page
+            : 1;
+    const setPage = useCallback(
+        (newPage: number) => {
+            setPageState({ search, query, page: newPage });
+        },
+        [search, query],
+    );
     // The records track the BIBLE TEXT's size (a step under it — see
     // `useBibleViewTextScale`): this list is what names the record a detail
     // panel then shows, and that panel has always been zoomed, so at a large
@@ -71,21 +88,13 @@ function RenderResultListComp({
     const { totalPages, totalRecords } = result;
     // The manager clamps out-of-range pages, so its answer is authoritative.
     const safePage = result.page;
-    // A new query or type filter starts again at the first page. The manager
-    // only CLAMPS the page it is handed (`Math.min(totalPages, ...)`), it never
-    // resets it — so without this, searching from page 12 of the unfiltered
-    // list lands on page 12 of the matches and hides every best-ranked result.
-    // `search` changes identity with the type filter, so it covers that too.
-    useAppEffect(() => {
-        setPage(1);
-    }, [search, query]);
     // Clamping still has to be mirrored back: the manager reporting a different
     // page than asked means the result set shrank under the current page.
     useAppEffect(() => {
         if (page !== safePage) {
             setPage(safePage);
         }
-    }, [page, safePage]);
+    }, [page, safePage, setPage]);
     if (totalRecords === 0) {
         return (
             <div

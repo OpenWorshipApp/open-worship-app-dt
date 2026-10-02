@@ -5,7 +5,7 @@
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync-grouped screens share one foreground-data object · [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky; color-note groups go silent
 - [Screen draw feature](screen-draw-feature.md) — FreeShow-style Draw overlay · [Screen focus spotlight](screen-focus-spotlight.md) — Focusing = its own `#focus` layer/manager, NOT a draw mode
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — audit findings FIXED 2026-07-22 (since committed)
-- [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — an HMR reload kills keyboard layers
+- [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — an HMR reload kills keyboard layers; ANY file write (a formatter too) can throw a one-off "must be used within" context error
 - [`build` kills the running dev app](build-kills-running-dev-app.md) — `electron:build` rm -rf's `electron-build/`; `npm run lint` only checks now and is safe beside the app
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in evaluate_script
 - [Bible Note popup CDP mechanics](bible-note-floating-toolbar-width.md) — plain textarea now, no Lexical popup

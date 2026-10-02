@@ -429,12 +429,16 @@ const regexTitleMap: [
             if (book === null) {
                 return null;
             }
+            // One verse, like "1 John 1:1" above: with no end the passage ran
+            // to the chapter's last verse, so a copied full key (`MRK 4:39`)
+            // pasted back into the box read as Mark 4:39-41.
+            const verseEnd = verseStart;
             return transformExtracted(
                 bibleKey,
                 book,
                 chapter,
                 verseStart,
-                null,
+                verseEnd,
             );
         },
     ],

@@ -5,7 +5,9 @@ import { describe, expect, test } from 'vitest';
 // so nothing here may pull that package in.
 import {
     ALL_TYPES,
+    GENDER_LABEL,
     LOCATION_ICON_CLASS,
+    LOCATION_TYPE_LABEL,
     NAME_TYPE_LABEL,
     NAME_TYPE_SINGULAR_LABEL,
     PAGE_SIZE,
@@ -14,7 +16,51 @@ import {
     getPlainReferenceText,
     getRecordDisplayName,
     getRecordKjvName,
+    toRecordEnumLabel,
 } from './lookupPresentationHelpers';
+
+// Stands in for the lookup language's dictionary.
+const toKhmer = (text: string) => `km:${text}`;
+
+describe('record enum labels (gender, location type)', () => {
+    // The datasets store these in English in every package, so a Khmer record
+    // read `Male` and `Pool` beside a translated type chip.
+    test('translates a known value through the lookup language', () => {
+        expect(toRecordEnumLabel('male', GENDER_LABEL, toKhmer)).toBe(
+            'km:Male',
+        );
+        expect(toRecordEnumLabel(' Pool ', LOCATION_TYPE_LABEL, toKhmer)).toBe(
+            'km:Pool',
+        );
+        expect(
+            toRecordEnumLabel('memorial place', LOCATION_TYPE_LABEL, toKhmer),
+        ).toBe('km:Memorial place');
+    });
+
+    // Decided on the English value: a translated "unknown" could no longer be
+    // recognized and dropped, and the record would grow a chip it does not have.
+    test('drops unknown and empty values before translating', () => {
+        for (const value of ['unknown', 'UNKNOWN', '', '  ', null, undefined]) {
+            expect(toRecordEnumLabel(value, GENDER_LABEL, toKhmer)).toBe('');
+        }
+    });
+
+    // A word a newer dataset adds is not a key of this dictionary, and handed
+    // to `translate` it could match an unrelated app label instead.
+    test('shows a value the list does not know as written, untranslated', () => {
+        expect(
+            toRecordEnumLabel('fortress', LOCATION_TYPE_LABEL, toKhmer),
+        ).toBe('fortress');
+        expect(
+            toRecordEnumLabel('constructor', LOCATION_TYPE_LABEL, toKhmer),
+        ).toBe('constructor');
+    });
+
+    // `height` is a hill. `Height` is already the app's word for a dimension.
+    test('labels a height as a place, not as a measurement', () => {
+        expect(LOCATION_TYPE_LABEL.height).toBe('Heights');
+    });
+});
 
 describe('name-type presentation', () => {
     test('maps every known type to its own icon', () => {

@@ -1,9 +1,11 @@
 import {
     lazy,
     useCallback,
+    useId,
     useState,
     type MouseEvent,
     type DragEvent,
+    type KeyboardEvent,
 } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -70,7 +72,13 @@ function handleOpening(
                     false,
                 );
             } else {
-                viewController.addBibleItemRight(lastBibleItem, bibleItem);
+                // No colour note: joining the neighbour's sync group would
+                // re-target this passage to the lookup's.
+                viewController.addBibleItemRight(
+                    lastBibleItem,
+                    bibleItem,
+                    true,
+                );
             }
             return;
         }
@@ -79,6 +87,7 @@ function handleOpening(
             viewController.addBibleItemRight(
                 lookupController.selectedBibleItem,
                 bibleItem,
+                true,
             );
         } else {
             lookupController.setLookupContentFromBibleItem(bibleItem);
@@ -221,6 +230,26 @@ export default function BibleItemRenderComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+    const handlePassageKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLSpanElement>) => {
+            if ((event.key !== 'Enter' && event.key !== ' ') || event.repeat) {
+                return;
+            }
+            // Otherwise Space scrolls the list, and Enter also reaches the
+            // window's own Enter handlers (the lookup box's).
+            event.preventDefault();
+            event.stopPropagation();
+            handleOpening(
+                event,
+                viewControllerRef.current,
+                bibleItemRef.current,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const openingPrefixId = useId();
+    const passageId = useId();
 
     if (bibleItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
@@ -267,24 +296,38 @@ export default function BibleItemRenderComp({
                                 isMinimal
                             />
                         </div>
+                        {/* The row's keyboard door. It opened on a double-click
+                        only and nothing in it was a named tab stop, so a
+                        keyboard reached its colour dot and ⋮ but never the
+                        passage. Named by the passage it already shows, through
+                        `aria-labelledby` -- no second title lookup per row. */}
                         <span
                             className="app-ellipsis"
                             style={{
                                 fontFamily,
                             }}
+                            role="button"
+                            tabIndex={0}
+                            aria-labelledby={`${openingPrefixId} ${passageId}`}
+                            onKeyDown={handlePassageKeyDown}
                         >
-                            <BibleViewTitleEditorComp
-                                bibleItem={bibleItem}
-                                withCtrl
-                                onTargetChange={async (newBibleTarget) => {
-                                    const bible = await getBible(bibleItem);
-                                    if (bible === null) {
-                                        return;
-                                    }
-                                    bibleItem.target = newBibleTarget;
-                                    bibleItem.save(bible);
-                                }}
-                            />
+                            <span id={openingPrefixId} hidden>
+                                {`${tran('Open')} (${bibleItem.bibleKey})`}
+                            </span>
+                            <span id={passageId}>
+                                <BibleViewTitleEditorComp
+                                    bibleItem={bibleItem}
+                                    withCtrl
+                                    onTargetChange={async (newBibleTarget) => {
+                                        const bible = await getBible(bibleItem);
+                                        if (bible === null) {
+                                            return;
+                                        }
+                                        bibleItem.target = newBibleTarget;
+                                        bibleItem.save(bible);
+                                    }}
+                                />
+                            </span>
                         </span>
                         {warningMessage && (
                             <span className="float-end" title={warningMessage}>

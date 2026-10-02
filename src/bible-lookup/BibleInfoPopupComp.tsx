@@ -1,6 +1,6 @@
 import '../popup-widget/popupWidget.scss';
 
-import { Fragment, useCallback, type MouseEvent } from 'react';
+import { Fragment, useCallback, useId, type MouseEvent } from 'react';
 
 import appProvider from '../server/appProvider';
 import { MODAL_KEYBOARD_LAYER, ModalComp } from '../app-modal/ModalComp';
@@ -165,6 +165,9 @@ export default function BibleInfoPopupComp({
         MODAL_KEYBOARD_LAYER,
     );
     const title = tran('Bible Information');
+    // Named by its own header, like the app's input popup: without the role a
+    // screen reader met a run of label/value text with no edge and no name.
+    const titleId = useId();
     return (
         <ModalComp>
             <div
@@ -173,9 +176,13 @@ export default function BibleInfoPopupComp({
                     width: 'min(560px, calc(100vw - 20px))',
                     maxHeight: 'calc(100vh - 20px)',
                 }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
             >
                 <HeaderAlertPopupComp
                     title={title}
+                    titleId={titleId}
                     header={
                         <>
                             <i className="app-popup-header-icon icon-info bi bi-info-circle-fill" />

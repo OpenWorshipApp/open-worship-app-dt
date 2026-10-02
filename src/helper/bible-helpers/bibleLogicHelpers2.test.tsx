@@ -548,6 +548,31 @@ describe('bibleLogicHelpers2', () => {
         expect(unknown.inputText).toBe('');
     });
 
+    // The book-KEY form is what Copy Verse Full Key puts on the clipboard, and
+    // `MRK 4:39` read as Mark 4:39-41 -- to the end of the chapter -- while
+    // `Mark 4:39` names the one verse (F4 of robot run 20261001-1646). `JUD`
+    // is a key only `keyToBook` knows here, so the key patterns are the ones
+    // that answer.
+    test('a book-key reference names one verse, as a book name does', async () => {
+        const module = await loadModule();
+
+        const single = await module.extractBibleTitle('KJV', 'JUD 1:2');
+        expect(single.result.bibleItem?.target).toEqual({
+            bookKey: 'JUD',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 2,
+        });
+
+        const range = await module.extractBibleTitle('KJV', 'JUD 1:1-2');
+        expect(range.result.bibleItem?.target).toEqual({
+            bookKey: 'JUD',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 2,
+        });
+    });
+
     test('falls back to transformed bible book name candidates', async () => {
         const module = await loadModule();
 

@@ -301,6 +301,7 @@ const dictionary = {
     'Open in Default App': 'បើកក្នុងកម្មវិធីលំនាំដើម',
     // --- Bible Find: the results list and its chunk footer.
     'verses found': 'ខគម្ពីរដែលរកឃើញ',
+    'verse found': 'ខគម្ពីរដែលរកឃើញ',
     Results: 'លទ្ធផល',
     'Go to results': 'ទៅកាន់លទ្ធផល',
     'Load more results': 'ផ្ទុកលទ្ធផលបន្ថែម',
@@ -922,6 +923,9 @@ const dictionary = {
     Full: 'ពេញ',
     'Generated using AI technology.': 'បង្កើតដោយប្រើបច្ចេកវិទ្យា AI',
     'Generated using Google Translate.': 'បង្កើតដោយប្រើ Google Translate',
+    // Follows either of the two lines above, on the cross-reference notes.
+    'Results may vary and may not be accurate. Please use with caution.':
+        'លទ្ធផលអាចប្រែប្រួល ហើយប្រហែលជាមិនត្រឹមត្រូវ។ សូមប្រើដោយប្រុងប្រយ័ត្ន។',
     'Go Back to Presenter': 'ត្រឡប់ទៅកម្មវិធីបង្ហាញ',
     'Go to Bible Setting': 'ទៅកាន់ការកំណត់ព្រះគម្ពីរ',
     'Or add bible ': 'ឬបន្ថែមព្រះគម្ពីរ',
@@ -1092,6 +1096,7 @@ const dictionary = {
     'Updated items:': 'ធាតុដែលបានកែប្រែ៖',
     'Keep Open': 'កុំបិទ',
     'Should New Lines': 'គួរតែបង្កើតបន្ទាត់ថ្មី',
+    'Break lines following bible info': 'បំបែកបន្ទាត់តាមព័ត៌មានព្រះគម្ពីរ',
     'Use Model New Lines': 'ប្រើបន្ទាត់ថ្មីគំរូ',
     'Break lines following model formatting': 'បំបែកបន្ទាត់តាមរចនាប័ទ្មគំរូ',
     '(dev)Experiment': '(dev)ការសាកល្បង',
@@ -1392,6 +1397,11 @@ const dictionary = {
     'Bible Reference': 'ការយោងព្រះគម្ពីរ',
     'Bible Text to Speech': 'ព្រះគម្ពីរបំលែងអក្សរទៅជាសំលេង',
     'Book Chapter': 'ជំពូកគម្ពីរ',
+    // A pane title's parts and the pickers they open.
+    Book: 'កណ្ឌ',
+    Chapter: 'ជំពូក',
+    'Verse Start': 'ខចាប់ផ្ដើម',
+    'Verse End': 'ខបញ្ចប់',
     'Books map': 'ផែនទីគម្ពីរ',
     'Box Alignment': 'ការតម្រឹមប្រអប់',
     'Box Properties': 'លក្ខណសម្បត្តិប្រអប់',
@@ -1407,6 +1417,8 @@ const dictionary = {
     'Choose Locale': 'ជ្រើសរើសភាសា',
     'Clear url': 'សម្អាត URL',
     'Click to edit this section': 'ចុចដើម្បីកែសម្រួលផ្នែកនេះ',
+    'Click to reveal the bible notes of this verse, double click to select verse':
+        'ចុចដើម្បីបង្ហាញកំណត់ចំណាំព្រះគម្ពីរនៃខនេះ ចុចពីរដងដើម្បីជ្រើសរើសខ',
     'Color Note': 'ចំណាំពណ៌',
     'Converting to PDF': 'កំពុងបំលែងទៅជា PDF',
     'Copy Color': 'ចម្លងពណ៌',
@@ -1505,6 +1517,10 @@ const dictionary = {
     'Invalid URL': 'URL មិនត្រឹមត្រូវ',
     'Item ID:': 'លេខសម្គាល់ធាតុ៖',
     'Jumping Chapter': 'កំពុងលោតទៅជំពូក',
+    'Try Next Chapter': 'សាកល្បងជំពូកបន្ទាប់',
+    'Try Previous Chapter': 'សាកល្បងជំពូកមុន',
+    'Unable to find next chapter': 'រកមិនឃើញជំពូកបន្ទាប់',
+    'Unable to find previous chapter': 'រកមិនឃើញជំពូកមុន',
     'Leave a markdown text here': 'សរសេរអក្សរ markdown នៅទីនេះ',
     'Leave a marquee bottom text here': 'សរសេរអត្ថបទអក្សររត់ខាងក្រោមនៅទីនេះ',
     'Leave a marquee top text here': 'សរសេរអត្ថបទអក្សររត់ខាងលើនៅទីនេះ',
@@ -1539,6 +1555,7 @@ const dictionary = {
     'Pasting Image': 'កំពុងបិទភ្ជាប់រូបភាព',
     'PDF Document': 'ឯកសារ PDF',
     'Play to bottom': 'ចាក់ទៅបាត',
+    'Toggle Bible Audio': 'បិទ ឬបើកសំលេងព្រះគម្ពីរ',
     'Please open a folder first': 'សូមបើកថតជាមុនសិន',
     'Please select an Open Worship slide first':
         'សូមជ្រើសរើសស្លាយ Open Worship ជាមុនសិន',
@@ -1555,6 +1572,10 @@ const dictionary = {
     'Saving Bible Data': 'កំពុងរក្សាទុកទិន្នន័យព្រះគម្ពីរ',
     'Saving File': 'កំពុងរក្សាទុកឯកសារ',
     'Scroll to the top': 'រំកិលទៅលើគេ',
+    'Click or Double Click to scroll to the top':
+        'ចុច ឬចុចពីរដង ដើម្បីរំកិលទៅលើគេ',
+    'Click to scroll to the bottom, double click to speed up, right click to slow down, Alt + right click to stop':
+        'ចុចដើម្បីរំកិលទៅបាត ចុចពីរដងដើម្បីបង្កើនល្បឿន ចុចខាងស្ដាំដើម្បីបន្ថយល្បឿន Alt + ចុចខាងស្ដាំដើម្បីបញ្ឈប់',
     'Auto Scroll Options': 'ជម្រើសរំកិលដោយស្វ័យប្រវត្តិ',
     'Auto Scroll Speed': 'ល្បឿនរំកិលដោយស្វ័យប្រវត្តិ',
     'Speed Up': 'បង្កើនល្បឿន',
@@ -1576,7 +1597,8 @@ const dictionary = {
     'Target bible not found': 'រកមិនឃើញព្រះគម្ពីរគោលដៅ',
     'Target note not found': 'រកមិនឃើញកំណត់សម្គាល់គោលដៅ',
     'Text Alignment': 'ការតម្រឹមអក្សរ',
-    'Text has been copied to clip': 'អក្សរត្រូវបានចម្លងទៅក្ដារតម្បៀតខ្ទាស់',
+    'Text has been copied to clipboard':
+        'អក្សរត្រូវបានចម្លងទៅក្ដារតម្បៀតខ្ទាស់',
     'Text Properties': 'លក្ខណសម្បត្តិអក្សរ',
     'Text to Speech': 'បំលែងអក្សរទៅជាសំលេង',
     'This bible is already in XML': 'ព្រះគម្ពីរនេះមានក្នុង XML រួចហើយ',
@@ -1648,6 +1670,40 @@ const dictionary = {
     Month: 'ខែ',
     Person: 'មនុស្ស',
     Place: 'ទីកន្លែង',
+    // A name's `gender` and a location's `type`: both kept in English by every
+    // dataset (`GENDER_LABEL`, `LOCATION_TYPE_LABEL`). `City` and `Place`
+    // already exist and are not repeated — a duplicate throws on module load.
+    Male: 'ប្រុស',
+    Female: 'ស្រី',
+    Battlefield: 'សមរភូមិ',
+    Camp: 'ជំរំ',
+    Cape: 'ជ្រោយ',
+    Cliff: 'ច្រាំងថ្មចោទ',
+    Encampment: 'ទីតាំងបោះជំរំ',
+    Gate: 'ទ្វារក្រុង',
+    Heights: 'ទីទួលខ្ពស់',
+    Island: 'កោះ',
+    Landmark: 'ទីសម្គាល់',
+    'Memorial place': 'ទីរំលឹក',
+    Mountain: 'ភ្នំ',
+    Plain: 'វាលទំនាប',
+    Pool: 'ស្រះ',
+    Region: 'តំបន់',
+    River: 'ទន្លេ',
+    Road: 'ផ្លូវ',
+    Sea: 'សមុទ្រ',
+    Settlement: 'ភូមិ',
+    Site: 'ទីតាំង',
+    Spring: 'ប្រភពទឹក',
+    Street: 'វិថី',
+    Stronghold: 'បន្ទាយ',
+    Territory: 'ទឹកដី',
+    Tower: 'ប៉ម',
+    Town: 'ទីប្រជុំជន',
+    Valley: 'ជ្រលងភ្នំ',
+    'Body of water': 'ផ្ទៃទឹក',
+    Well: 'អណ្ដូង',
+    Wilderness: 'ទីរហោស្ថាន',
     // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
     // above and resolve after key sanitization, so they are not repeated here —
     // a duplicate would throw when this module loads.
@@ -1862,7 +1918,10 @@ const dictionary = {
     'Path to': 'ទៅ',
     Swap: 'ដូរ',
     'Find Connection': 'រកទំនាក់ទំនង',
-    'No connection found': 'រកមិនឃើញទំនាក់ទំនង',
+    // `{count}` is the walk's step limit, put in by the caller: where the
+    // number sits is the translation's to decide.
+    'No connection found within {count} steps':
+        'រកមិនឃើញទំនាក់ទំនងក្នុងចម្ងាយ {count} ជំហាន',
     'A location cannot be a path endpoint':
         'ទីតាំងមិនអាចជាចំណុចចាប់ផ្តើម ឬចុងបញ្ចប់បានទេ',
     'Mentioned by': 'បានរៀបរាប់ដោយ',

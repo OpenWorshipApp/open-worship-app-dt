@@ -312,6 +312,7 @@ const dictionary = {
     'Open in Default App': "Ouvrir dans l'application par défaut",
     // --- Bible Find: the results list and its chunk footer.
     'verses found': 'versets trouvés',
+    'verse found': 'verset trouvé',
     Results: 'Résultats',
     'Go to results': 'Aller aux résultats',
     'Load more results': 'Charger plus de résultats',
@@ -951,6 +952,9 @@ const dictionary = {
     'Generated using AI technology.': "Généré à l'aide de l'IA.",
     'Generated using Google Translate.':
         "Généré à l'aide de Google Traduction.",
+    // Follows either of the two lines above, on the cross-reference notes.
+    'Results may vary and may not be accurate. Please use with caution.':
+        'Les résultats peuvent varier et ne pas être exacts. À utiliser avec prudence.',
     'Go Back to Presenter': 'Retour au Présentateur',
     'Go to Bible Setting': 'Aller aux paramètres de la Bible',
     'Or add bible ': 'Ou ajouter une Bible ',
@@ -1121,6 +1125,8 @@ const dictionary = {
     'Updated items:': 'Éléments modifiés :',
     'Keep Open': 'Garder ouvert',
     'Should New Lines': 'Retours à la ligne',
+    'Break lines following bible info':
+        'Couper les lignes selon les informations de la Bible',
     'Use Model New Lines': 'Utiliser les retours à la ligne du modèle',
     'Break lines following model formatting':
         'Couper les lignes selon la mise en forme du modèle',
@@ -1426,6 +1432,11 @@ const dictionary = {
     'Bible Reference': 'Référence biblique',
     'Bible Text to Speech': 'Synthèse vocale de la Bible',
     'Book Chapter': 'Chapitre du livre',
+    // A pane title's parts and the pickers they open.
+    Book: 'Livre',
+    Chapter: 'Chapitre',
+    'Verse Start': 'Verset de début',
+    'Verse End': 'Verset de fin',
     'Books map': 'Correspondance des livres',
     'Box Alignment': 'Alignement de la zone',
     'Box Properties': 'Propriétés de la zone',
@@ -1441,6 +1452,8 @@ const dictionary = {
     'Choose Locale': 'Choisir la langue',
     'Clear url': "Effacer l'URL",
     'Click to edit this section': 'Cliquez pour modifier cette section',
+    'Click to reveal the bible notes of this verse, double click to select verse':
+        'Cliquez pour afficher les notes bibliques de ce verset, double-cliquez pour sélectionner le verset',
     'Color Note': 'Note de couleur',
     'Converting to PDF': 'Conversion en PDF',
     'Copy Color': 'Copier la couleur',
@@ -1548,6 +1561,11 @@ const dictionary = {
     'Invalid URL': 'URL invalide',
     'Item ID:': "ID de l'élément :",
     'Jumping Chapter': 'Passage au chapitre',
+    'Try Next Chapter': 'Essayer le chapitre suivant',
+    'Try Previous Chapter': 'Essayer le chapitre précédent',
+    'Unable to find next chapter': 'Impossible de trouver le chapitre suivant',
+    'Unable to find previous chapter':
+        'Impossible de trouver le chapitre précédent',
     'Leave a markdown text here': 'Saisissez du texte Markdown ici',
     'Leave a marquee bottom text here':
         'Saisissez ici le texte du bandeau défilant bas',
@@ -1586,6 +1604,7 @@ const dictionary = {
     'Pasting Image': "Collage de l'image",
     'PDF Document': 'Document PDF',
     'Play to bottom': "Défiler jusqu'en bas",
+    'Toggle Bible Audio': 'Activer ou désactiver l’audio de la Bible',
     'Please open a folder first': "Veuillez d'abord ouvrir un dossier",
     'Please select an Open Worship slide first':
         "Veuillez d'abord sélectionner une diapositive Open Worship",
@@ -1603,6 +1622,10 @@ const dictionary = {
     'Saving Bible Data': 'Enregistrement des données de la Bible',
     'Saving File': 'Enregistrement du fichier',
     'Scroll to the top': 'Revenir en haut',
+    'Click or Double Click to scroll to the top':
+        'Cliquez ou double-cliquez pour revenir en haut',
+    'Click to scroll to the bottom, double click to speed up, right click to slow down, Alt + right click to stop':
+        "Cliquez pour défiler jusqu'en bas, double-cliquez pour accélérer, clic droit pour ralentir, Alt + clic droit pour arrêter",
     'Auto Scroll Options': 'Options de défilement automatique',
     'Auto Scroll Speed': 'Vitesse de défilement automatique',
     'Speed Up': 'Accélérer',
@@ -1624,7 +1647,7 @@ const dictionary = {
     'Target bible not found': 'Bible cible introuvable',
     'Target note not found': 'Note cible introuvable',
     'Text Alignment': 'Alignement du texte',
-    'Text has been copied to clip':
+    'Text has been copied to clipboard':
         'Le texte a été copié dans le presse-papiers',
     'Text Properties': 'Propriétés du texte',
     'Text to Speech': 'Synthèse vocale',
@@ -1701,6 +1724,40 @@ const dictionary = {
     Month: 'Mois',
     Person: 'Personne',
     Place: 'Lieu',
+    // A name's `gender` and a location's `type`: both kept in English by every
+    // dataset (`GENDER_LABEL`, `LOCATION_TYPE_LABEL`). `City` and `Place`
+    // already exist and are not repeated — a duplicate throws on module load.
+    Male: 'Homme',
+    Female: 'Femme',
+    Battlefield: 'Champ de bataille',
+    Camp: 'Camp',
+    Cape: 'Cap',
+    Cliff: 'Falaise',
+    Encampment: 'Campement',
+    Gate: 'Porte',
+    Heights: 'Hauteurs',
+    Island: 'Île',
+    Landmark: 'Repère',
+    'Memorial place': 'Lieu commémoratif',
+    Mountain: 'Montagne',
+    Plain: 'Plaine',
+    Pool: 'Bassin',
+    Region: 'Région',
+    River: 'Rivière',
+    Road: 'Route',
+    Sea: 'Mer',
+    Settlement: 'Localité',
+    Site: 'Site',
+    Spring: 'Source',
+    Street: 'Rue',
+    Stronghold: 'Forteresse',
+    Territory: 'Territoire',
+    Tower: 'Tour',
+    Town: 'Bourg',
+    Valley: 'Vallée',
+    'Body of water': "Étendue d'eau",
+    Well: 'Puits',
+    Wilderness: 'Désert',
     // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
     // above and resolve after key sanitization, so they are not repeated here —
     // a duplicate would throw when this module loads.
@@ -1915,7 +1972,10 @@ const dictionary = {
     'Path to': 'Chemin vers',
     Swap: 'Inverser',
     'Find Connection': 'Trouver le lien',
-    'No connection found': 'Aucun lien trouvé',
+    // `{count}` is the walk's step limit, put in by the caller: where the
+    // number sits is the translation's to decide.
+    'No connection found within {count} steps':
+        'Aucun lien trouvé en {count} étapes ou moins',
     'A location cannot be a path endpoint':
         'Un lieu ne peut pas être une extrémité du chemin',
     'Mentioned by': 'Mentionné par',

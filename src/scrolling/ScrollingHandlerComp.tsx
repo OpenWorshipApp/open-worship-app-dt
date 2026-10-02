@@ -13,6 +13,7 @@ import {
 import { showPlayToBottomContextMenu } from './playToBottomMenuHelpers';
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
+import { pressElementLikeButton } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
 
 export default function ScrollingHandlerComp({
@@ -51,6 +52,12 @@ export default function ScrollingHandlerComp({
                         ' app-caught-hover-pointer' +
                         ` ${HoverMotionHandler.lowVisibleClassname}-1`
                     }
+                    // The gestures are listeners on the element itself, so a
+                    // key press delivered as a click takes the mouse's path.
+                    role="button"
+                    tabIndex={0}
+                    aria-label={tran('Play to bottom')}
+                    onKeyDown={pressElementLikeButton}
                     style={{
                         width: '45px',
                         height: '45px',
@@ -101,6 +108,10 @@ export default function ScrollingHandlerComp({
                     `${HoverMotionHandler.lowVisibleClassname}-1`
                 }
                 title={tran('Scroll to the top')}
+                role="button"
+                tabIndex={0}
+                aria-label={tran('Scroll to the top')}
+                onKeyDown={pressElementLikeButton}
                 style={{
                     width: '45px',
                     height: '45px',

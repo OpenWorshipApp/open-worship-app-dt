@@ -114,9 +114,12 @@ function genContextMenuItems(
             onSelect:
                 onSelect ??
                 (() => {
+                    // Its own passage: kept out of the neighbour's colour-note
+                    // sync group, which would re-target it to the lookup's.
                     bibleItemViewController.addBibleItemRight(
                         bibleItem,
                         targetBibleItem,
+                        true,
                     );
                 }),
         },
@@ -173,6 +176,7 @@ async function handleCustomTitleVerseClicking(
                           bibleItemViewController.addBibleItemRight(
                               bibleItem,
                               bibleItem,
+                              true,
                           );
                           setTimeout(() => {
                               (

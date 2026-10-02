@@ -76,7 +76,16 @@ export const appManagedDataDirNames = {
 export const PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME =
     'presenting-flow-rename-migrated';
 
+// A setting is a FILE named after its key, so a key must be a plain file name.
+// These were `bible-preview-font-size:presenter` / `:reader` -- on Windows
+// that is a hidden NTFS stream of one empty file, which a copy of the data
+// folder to a USB stick (FAT/exFAT), a zip or a cloud sync drops in silence.
 export const fontSizeSettingNames = {
+    BIBLE_PRESENTER: 'bible-preview-font-size-presenter',
+    BIBLE_READING: 'bible-preview-font-size-reader',
+};
+// The keys they replace, read once so nobody's size resets on upgrade.
+export const legacyFontSizeSettingNames = {
     BIBLE_PRESENTER: 'bible-preview-font-size:presenter',
     BIBLE_READING: 'bible-preview-font-size:reader',
 };

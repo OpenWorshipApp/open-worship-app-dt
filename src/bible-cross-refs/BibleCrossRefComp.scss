@@ -134,11 +134,18 @@
   // The sentence -- the one piece of prose in the panel, and the thing being
   // scanned for. Flush left, overhanging its own evidence, so the eye can run
   // down the headings alone and ignore everything indented.
-  .app-xref-theme-title {
+  // The title and its translation note side by side; the note is kept out
+  // of the heading itself (see `RenderAIBibleCrossReferenceComp`).
+  .app-xref-theme-head {
     display: flex;
     align-items: baseline;
     gap: 0.3rem;
     margin: 0 0 0.35rem;
+  }
+
+  .app-xref-theme-title {
+    min-width: 0;
+    margin: 0;
     font-size: 0.92rem;
     font-weight: 600;
     line-height: 1.3;

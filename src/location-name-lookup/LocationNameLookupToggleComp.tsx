@@ -58,6 +58,7 @@ export default function LocationNameLookupToggleComp() {
                       >
                           <FloatingWidgetComp
                               title={label}
+                              widgetName="Names and locations lookup"
                               persistKey="floating-widget-rect-location-name-lookup"
                               onClose={() => {
                                   setIsShowing(false);

@@ -10,9 +10,12 @@ import { useAppEffect } from '../helper/appHooks';
 import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
-import { tran } from '../lang/langHelpers';
+import { DEFAULT_LANG_CODE, tran } from '../lang/langHelpers';
 import { toLookupVerseBibleKey } from '../location-name-lookup/bibleVerseHelpers';
-import { useLookupLangPresentation } from '../location-name-lookup/lookupLangHelpers';
+import {
+    useLookupLangPresentation,
+    useSelectedLookupLangCode,
+} from '../location-name-lookup/lookupLangHelpers';
 import RenderLookupRecordItemComp from '../location-name-lookup/RenderLookupRecordItemComp';
 import type { VerseRecordType } from '../location-name-lookup/verseRecordListHelpers';
 import {
@@ -136,13 +139,9 @@ export default function BibleLocationNamePreviewerComp() {
     const index = useLookupTextIndex();
     const recordLabels = useLookupRecordLabels();
     const { fontFamily } = useLookupLangPresentation();
-    // Which bible NAMES the passage — KJV under an English lookup language,
-    // otherwise the reader's own, so the heading reads in the same script as the
-    // rows under it. `useBibleItemViewControllerUpdateEvent` above already
-    // re-renders this component when the reader's bible key changes.
-    const verseBibleKey = toLookupVerseBibleKey(
-        viewController.selectedBibleItem.bibleKey,
-    );
+    // Which bible names each heading depends on it (see the loop below), so a
+    // change of lookup language re-titles the list.
+    const lookupLangCode = useSelectedLookupLangCode();
     const [groupList, setGroupList] = useState<BibleItemGroupType[] | null>(
         null,
     );
@@ -193,11 +192,17 @@ export default function BibleLocationNamePreviewerComp() {
                     target,
                     kjvVerseMap,
                 );
+                // Which bible NAMES the passage — KJV under an English lookup
+                // language, otherwise the pane's OWN bible, so the heading reads
+                // in the same script as the rows under it. Per pane: the
+                // reader's selected bible used to title every section, so a
+                // ពគប pane's reading was headed `(NIV) Genesis 3:20`.
+                const groupBibleKey = toLookupVerseBibleKey(bibleItem.bibleKey);
                 // The TITLE only. The chapter read above stays KJV whatever
                 // this says — the scan needs the KJV's wording — so this
                 // renames the passage without changing what is found in it.
                 const title = await bibleRenderHelper.toTitle(
-                    verseBibleKey,
+                    groupBibleKey,
                     target,
                 );
                 newGroupList.push({
@@ -207,7 +212,7 @@ export default function BibleLocationNamePreviewerComp() {
                     key: targetKey,
                     // `(KJV) Genesis 29:1-35`, the way the Bibles list names
                     // a reading, so a section can be matched to its pane.
-                    title: `(${verseBibleKey}) ${title}`,
+                    title: `(${groupBibleKey}) ${title}`,
                     chapter: target.chapter,
                     names,
                     locations,
@@ -218,7 +223,7 @@ export default function BibleLocationNamePreviewerComp() {
         return () => {
             isCancelled = true;
         };
-    }, [index, recordLabels, foundBibleItem, nestedBibleItems, verseBibleKey]);
+    }, [index, recordLabels, foundBibleItem, nestedBibleItems, lookupLangCode]);
 
     if (index === null || recordLabels === null || groupList === null) {
         return <LoadingComp message={tran('Loading lookup data')} />;
@@ -238,12 +243,14 @@ export default function BibleLocationNamePreviewerComp() {
                 <i className="bi bi-geo-alt-fill" />
                 {` ${tran('Names and locations in your reading')}`}
                 {/*
-                 * Only while the passage below is actually NAMED in the KJV.
-                 * Once a non-English lookup language re-titles it in the
-                 * reader's own bible, the suffix would be claiming a
-                 * translation that is no longer on screen.
+                 * Only while every passage below is actually NAMED in the KJV.
+                 * Once a non-English lookup language re-titles each one in its
+                 * own pane's bible, the suffix would be claiming a translation
+                 * that is no longer on screen.
                  */}
-                {verseBibleKey === BIBLE_KJV_KEY ? ` (${BIBLE_KJV_KEY})` : ''}
+                {lookupLangCode === DEFAULT_LANG_CODE
+                    ? ` (${BIBLE_KJV_KEY})`
+                    : ''}
             </div>
             <div className="flex-fill overflow-y-auto">
                 {groupList.map((group) => {

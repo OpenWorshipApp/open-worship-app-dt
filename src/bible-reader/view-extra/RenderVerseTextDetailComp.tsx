@@ -95,17 +95,20 @@ export default function RenderVerseTextDetailComp({
         loadAudioRef.current();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // A double-click on verse text is the browser selecting a WORD, and the
+    // word must survive it. Its first click already toggled the verse, so this
+    // only makes sure the verse ends up selected: it used to clear the text
+    // selection and toggle the verse straight back off (and scroll it to the
+    // top, under the word being picked).
     const handleVerseDBClicking = useCallback((event: any) => {
         event.stopPropagation();
-        event.preventDefault();
-        const selection = globalThis.getSelection();
-        if (selection !== null && selection.rangeCount > 0) {
-            selection.removeAllRanges();
+        if (event.currentTarget.classList.contains('selected')) {
+            return;
         }
         viewControllerRef.current.handleVersesSelecting(
             event.currentTarget,
+            event.altKey,
             true,
-            false,
             bibleItemRef.current,
         );
         loadAudioRef.current();

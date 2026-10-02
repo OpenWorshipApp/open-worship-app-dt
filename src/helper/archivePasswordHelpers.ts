@@ -24,7 +24,11 @@ import { fsDeleteFile, pathJoin } from '../server/fileHelpers';
  */
 const MAX_PASSWORD_ATTEMPTS = 3;
 
-/** Ask what to protect an export with; `''` is "no password", `null` cancels. */
+/**
+ * Ask what to protect an export with; `''` is "no password", `null` cancels.
+ * `title` is a `tran()` KEY: the dialog translates it, so a caller that
+ * translates it first hands `tran()` a translation, which throws in dev.
+ */
 export async function askForNewArchivePassword(title: string) {
     const { askForNewArchivePassword: ask } =
         await import('../popup-widget/ArchivePasswordComp');

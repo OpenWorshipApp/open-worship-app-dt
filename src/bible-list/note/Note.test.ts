@@ -277,6 +277,37 @@ describe('bible-list/note Note editing history', () => {
         expect(h.historySaveMock).toHaveBeenCalled();
     });
 
+    // RD found the copy (id 10) carrying the source's (id 9) dates to the
+    // millisecond, as if it had been written at the same moment.
+    test('a duplicate is dated when it is made, its source left alone', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-01T12:00:00.000Z'));
+        try {
+            const note = genNote([genItem(9, 'source text')]);
+
+            note.duplicate(0);
+
+            const [source, copy] = note.items;
+            expect(copy.id).toBe(10);
+            expect(copy.content).toBe('source text');
+            expect(copy.metadata.createdAt.toISOString()).toBe(
+                '2026-10-01T12:00:00.000Z',
+            );
+            expect(copy.metadata.updatedAt.toISOString()).toBe(
+                '2026-10-01T12:00:00.000Z',
+            );
+            expect(source.id).toBe(9);
+            expect(source.metadata.createdAt.toISOString()).toBe(
+                '2026-01-01T00:00:00.000Z',
+            );
+            expect(source.metadata.updatedAt.toISOString()).toBe(
+                '2026-01-01T00:00:00.000Z',
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test('reloadEditing takes the head, reload takes the file', async () => {
         const note = genNote([genItem(1, 'start')]);
         h.getCurrentHistoryMock.mockResolvedValue(

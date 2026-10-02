@@ -37,6 +37,9 @@ const MARY_MAGDALENE = 'id-mary-magdalene';
 const MARY = 'id-mary';
 const HARAN_SON = 'id-haran-son';
 const HARAN_OTHER = 'id-haran-other';
+const LOT = 'id-lot';
+const GALILAEANS = 'id-galilaeans';
+const ZION = 'id-zion';
 
 function genIndex(): LookupTextIndexType {
     const ids = [
@@ -48,6 +51,9 @@ function genIndex(): LookupTextIndexType {
         MARY,
         HARAN_SON,
         HARAN_OTHER,
+        LOT,
+        GALILAEANS,
+        ZION,
     ];
     return {
         version: LOOKUP_TEXT_INDEX_VERSION,
@@ -59,9 +65,12 @@ function genIndex(): LookupTextIndexType {
             mary: [5],
             // Borne by people AND by a city — the hard case.
             haran: [6, 7],
+            lot: [8],
+            galilaeans: [9],
         },
         locations: {
             haran: [3],
+            zion: [10],
         },
         verseNames: {
             // Only the patriarch is attested here, so `Joseph` is resolvable.
@@ -69,7 +78,9 @@ function genIndex(): LookupTextIndexType {
             // Both Josephs are attested, so `Joseph` must stay ambiguous.
             'MAT 1:16': [1, 2],
             'JHN 20:1': [4, 5],
-            'GEN 11:27': [6],
+            'GEN 11:27': [6, 8],
+            // The real dataset's shape: Lot is attested, his father is not.
+            'GEN 11:31': [8],
         },
         verseLocations: {
             'GEN 11:31': [3],
@@ -142,8 +153,8 @@ describe('findLookupTextMatches', () => {
             'and Haran begat Lot.',
             'GEN 11:27',
         );
-        expect(matchList).toHaveLength(1);
         expect(matchList[0]).toMatchObject({
+            text: 'Haran',
             kind: 'name',
             recordId: HARAN_SON,
         });
@@ -195,6 +206,83 @@ describe('findLookupTextMatches', () => {
         expect(
             findLookupTextMatches(genIndex(), 'In the beginning.', 'GEN 1:1'),
         ).toEqual([]);
+    });
+
+    // Genesis 11:31 attests the CITY of Haran and not Lot's father, so the city
+    // used to be underlined -- and opened -- for "the son of Haran" too.
+    test('a kinship phrase keeps a person from being linked as the place', () => {
+        const text =
+            'And Terah took Abram his son, and Lot the son of Haran his ' +
+            "son's son, and they came unto Haran, and dwelt there.";
+        const matchList = findLookupTextMatches(genIndex(), text, 'GEN 11:31');
+        const haranList = matchList.filter((match) => match.text === 'Haran');
+        expect(haranList).toHaveLength(1);
+        expect(haranList[0]).toMatchObject({
+            kind: 'location',
+            recordId: HARAN_PLACE,
+            start: text.lastIndexOf('Haran'),
+        });
+        // Everything else in the verse is still found.
+        expect(matchList.map((match) => match.text)).toEqual([
+            'Abram',
+            'Lot',
+            'Haran',
+        ]);
+    });
+
+    test('a person the verse attests is still linked in a kinship phrase', () => {
+        // Genesis 11:27 names Haran the person twice; the guard is about
+        // places, so both stay linked to him.
+        const text =
+            'Terah begat Abram, Nahor, and Haran; and Haran begat Lot.';
+        const matchList = findLookupTextMatches(genIndex(), text, 'GEN 11:27');
+        expect(
+            matchList
+                .filter((match) => match.text === 'Haran')
+                .map((match) => match.recordId),
+        ).toEqual([HARAN_SON, HARAN_SON]);
+    });
+
+    test('a place no person shares stays linked after "daughter of"', () => {
+        // `daughter of Zion` is the city's people, not anybody's child.
+        const matchList = findLookupTextMatches(
+            genIndex(),
+            'Rejoice greatly, O daughter of Zion.',
+            'ZEC 9:9',
+        );
+        expect(matchList).toHaveLength(1);
+        expect(matchList[0]).toMatchObject({
+            kind: 'location',
+            recordId: ZION,
+        });
+    });
+
+    // The KJV's words-of-Christ verses spell some names with the ligature; the
+    // dataset spells them with `ae`.
+    test('matches a name written with the ae ligature', () => {
+        const text =
+            'Suppose ye that these Galilæans were sinners above all the ' +
+            'Galilæans?';
+        const matchList = findLookupTextMatches(genIndex(), text, 'LUK 13:2');
+        expect(matchList).toHaveLength(2);
+        for (const match of matchList) {
+            expect(match).toMatchObject({
+                text: 'Galilæans',
+                kind: 'name',
+                recordId: GALILAEANS,
+            });
+            // Offsets are the text's own, ligature included.
+            expect(text.slice(match.start, match.end)).toBe('Galilæans');
+        }
+    });
+
+    test('keeps a ligature name whole around a possessive', () => {
+        const text = "Abram's and the Galilæans' sins.";
+        const matchList = findLookupTextMatches(genIndex(), text, 'LUK 13:2');
+        expect(matchList.map((match) => match.text)).toEqual([
+            'Abram',
+            'Galilæans',
+        ]);
     });
 });
 

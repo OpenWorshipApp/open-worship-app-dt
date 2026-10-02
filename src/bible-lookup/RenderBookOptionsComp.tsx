@@ -27,6 +27,7 @@ import {
     kjvBibleModelInfo,
 } from '../helper/bible-helpers/bibleModelHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { findDefaultBookIndex } from './lookupEnterHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
@@ -50,6 +51,7 @@ function genBookOption({
     book,
     modelBook,
     isAvailable,
+    isActive,
     fontFamily,
 }: {
     onSelect: SelectBookType;
@@ -58,9 +60,10 @@ function genBookOption({
     book: string;
     modelBook: string;
     isAvailable: boolean;
+    isActive: boolean;
     fontFamily?: string;
 }) {
-    const activeClass = index === 0 && isAvailable ? OPTION_SELECTED_CLASS : '';
+    const activeClass = isActive ? OPTION_SELECTED_CLASS : '';
     const isOldTestament = checkIsOldTestament(bookKey);
     const isApocrypha = checkIsApocrypha(bookKey);
     let borderColor = '#a415d85a';
@@ -101,7 +104,7 @@ function genBookOption({
             >
                 <div className="book-option-index">{index + 1}</div>
                 <div
-                    className="flex-fill"
+                    className="flex-fill book-option-name"
                     style={{ fontFamily, paddingLeft: '0.5em' }}
                 >
                     {book}
@@ -153,6 +156,9 @@ export default function RenderBookOptionsComp({
     if (!matchedBooks?.length) {
         return <div>{tran('No book options available')}</div>;
     }
+    // The same rule Enter in the reference box picks by, so the highlighted
+    // book is the one it takes.
+    const activeIndex = findDefaultBookIndex(matchedBooks);
     return (
         <>
             {matchedBooks.map((matchBook, i) => {
@@ -166,6 +172,7 @@ export default function RenderBookOptionsComp({
                             onSelect,
                             index: i,
                             isAvailable,
+                            isActive: i === activeIndex,
                             fontFamily,
                         })}
                     </Fragment>

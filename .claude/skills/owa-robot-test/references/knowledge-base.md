@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-09-26
+docVersion: 2026-10-01
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -190,8 +190,18 @@ Forcing the main window to `setting.html` (e.g. `navigate_page → setting.html`
 ### ✅ Correct way to test Settings/About/etc.
 1. Click the gear (Settings) / relevant button in the app — it opens a **new popup target**.
 2. `mcp__owa-devtools__list_pages` → find the `setting.html` target → `select_page` it.
-3. Test it, then `close_page` the popup (or leave it; it's a separate window).
+3. Test it, then close the popup with its OWN ✕ (or leave it; it's a separate window).
 Keep the main window on `presenter.html`.
+
+### ❌ Never `close_page` a popup that shares the opener's renderer
+A `window.open` that keeps its opener is put in the OPENER's process
+(`popupWindowHelpers.ts`) — Resources → **Preview PDF** is one. On 2026-10-01 a
+`close_page` on that popup froze the Reader for ~11 minutes: _Debugger paused in another
+tab_, every page evaluation timed out, no other target listed. A diagnostic
+`Runtime.runIfWaitingForDebugger` then CRASHED the renderer, and the app's
+`render-process-gone` handler reloaded it with its state (so recovery works). The Markdown
+Preview, Bible Note and Settings popups of the same process, closed natively like their
+✕ (a `WM_CLOSE`), left the Reader responsive every time.
 
 ---
 
@@ -455,6 +465,29 @@ Keep the main window on `presenter.html`.
 - **An empty slide draws nothing on the output, and that is correct.** `Peaching` slide 1
   has `items: []` and only an attached background; `owa_slide_file action:"slides"` is the
   cheap way to tell an empty slide from a slide that failed to render.
+- **Never `drag` an HTML5-draggable element over CDP on Windows** (2026-10-01). A
+  chrome-devtools `drag` on a Reader pane title failed and left the virtual left button
+  HELD; the next pointer move started a native OLE drag loop that blocked every CDP input
+  and accessibility call until the workstation locked (~11 minutes). Nothing was dropped.
+  Prove drops the synthetic way (CLAUDE.md, _Verifying file-drop features_) and never
+  inject Escape to break the loop — the foreground window is the agent's terminal.
+- **A toggle can read back before it re-renders.** `owa_click` reported "no change" on
+  `RD-08`'s switch when the change had happened; confirm with a snapshot. Also seen:
+  `fill('')` on the Find box did not reach React state, and `owa_click "Apply Settings"`
+  found nothing once a pending language had relabelled the button — use its new words.
+- **A source edit hot-reloads the window you are testing** (2026-10-01). A
+  `prettier --write` over five files the Reader imports raised, in the same second, one
+  `useBibleItemViewControllerUpdateEvent must be used within a
+  BibleItemViewControllerContext` thrown from `<BibleItemRenderComp>`, the _Reload is
+  needed_ path, and a page reload. A module that defines a context, replaced mid-render,
+  throws exactly this — dev only. Before filing a "must be used within" error, compare
+  its time with `date -r` on the files changed around it.
+- **The pane header's hover strip** (`RD-26`) is painted only under the mouse or while a
+  button INSIDE it has keyboard focus. `owa_highlight_selector
+  ".bible-view-header-actions"` holds the first pane's strip up for four seconds — long
+  enough for a raw CDP `Input.dispatchMouseEvent` `mouseWheel` over it and a clipped
+  `Page.captureScreenshot`. A person moving the real mouse over the window makes it
+  flicker; that is not a bug.
 
 ---
 

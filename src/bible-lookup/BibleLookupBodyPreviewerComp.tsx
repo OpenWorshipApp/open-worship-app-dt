@@ -15,7 +15,6 @@ import { setBibleLookupInputFocus } from './selectionHelpers';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
 import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitleWrapperComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
-import { HoverMotionHandler } from '../helper/domHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 
@@ -56,23 +55,25 @@ function RenderBodyEditingComp() {
                         <BibleViewTitleEditingComp
                             bibleItem={foundBibleItem}
                             onTargetChange={handleTargetChange}
+                        />
+                    ),
+                // With the header's other actions, not at the end of the
+                // title where those actions float over it.
+                actionElement:
+                    foundBibleItem === null ? null : (
+                        <button
+                            type="button"
+                            className="bible-view-header-edit"
+                            title={tran(
+                                'Hit "Escape" to jump back to editing input',
+                            )}
+                            aria-label={tran(
+                                'Hit "Escape" to jump back to editing input',
+                            )}
+                            onClick={handleFocusInput}
                         >
-                            <span
-                                className="app-caught-hover-pointer app-opacity-hover"
-                                title={tran(
-                                    'Hit "Escape" to jump back to editing input',
-                                )}
-                                data-opacity-hover="0.2"
-                                onClick={handleFocusInput}
-                            >
-                                <i
-                                    className={
-                                        'bi bi-pencil-fill highlight-color ' +
-                                        'app-pencil-bible-lookup'
-                                    }
-                                />
-                            </span>
-                        </BibleViewTitleEditingComp>
+                            <i className="bi bi-pencil-fill highlight-color" />
+                        </button>
                     ),
             }}
         >
@@ -106,22 +107,21 @@ function RenderBodyComp({
                     <BibleViewTitleEditingComp
                         bibleItem={bibleItem}
                         onTargetChange={handleTargetChange}
+                    />
+                ),
+                // One of the header's actions. At the end of the title it sat
+                // under whichever action floated over it on hover -- in a
+                // three-pane Reader a press on the pencil CLOSED the pane.
+                actionElement: (
+                    <button
+                        type="button"
+                        className="bible-view-header-edit"
+                        title={tran('Click to edit this section')}
+                        aria-label={tran('Click to edit this section')}
+                        onClick={handleEditBibleItem}
                     >
-                        <span
-                            className={
-                                `pointer ${HoverMotionHandler.lowVisibleClassname}-0 ` +
-                                'app-caught-hover-pointer app-opacity-hover'
-                            }
-                            title={tran('Click to edit this section')}
-                            data-opacity-hover="0.2"
-                            onClick={handleEditBibleItem}
-                        >
-                            <i
-                                style={{ color: 'green' }}
-                                className="bi bi-pencil"
-                            />
-                        </span>
-                    </BibleViewTitleEditingComp>
+                        <i className="bi bi-pencil" />
+                    </button>
                 ),
             }}
         >

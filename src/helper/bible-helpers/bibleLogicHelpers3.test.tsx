@@ -326,6 +326,7 @@ describe('bibleLogicHelpers3', () => {
         expect(viewController.addBibleItemRight).toHaveBeenCalledWith(
             currentBibleItem,
             mocks.verseKeyMap.get('KJV:GEN 1:1'),
+            true,
         );
 
         items[2]?.onSelect?.();
@@ -376,6 +377,7 @@ describe('bibleLogicHelpers3', () => {
         expect(lookupController.addBibleItemRight).toHaveBeenCalledWith(
             currentBibleItem,
             currentBibleItem,
+            true,
         );
         expect(lookupController.inputText).toBe('Genesis 1:1-2:3');
         vi.useRealTimers();

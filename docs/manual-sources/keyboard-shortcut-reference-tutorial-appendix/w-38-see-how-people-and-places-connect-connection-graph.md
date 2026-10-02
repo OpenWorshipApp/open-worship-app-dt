@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101, RD-102, RD-103, RD-104, RD-105, RD-106, RD-121]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-30"
+workflowsVersion: "2026-10-01"
 ---
 # W-38 — See how people and places connect (Connection Graph)
 
@@ -23,9 +23,9 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > which is where you would go looking for it; a record window also has a `⛶`-style
    > graph icon beside its title.
 3. Each box shows a number next to a small diagram icon — that is how many related
-   records it has. **Click the number.** A menu opens listing **All (44)** first, then
+   records it has. **Click the number.** A menu opens listing **All (47)** first, then
    only the kinds this record actually has: _Parents (2)_, _Spouses (4)_, _Siblings (2)_,
-   _Children (13)_, _Cousins (22)_, _Locations (1)_. 📸
+   _Children (16)_, _Cousins (22)_, _Locations (1)_. 📸
 4. Pick one kind — say **Children** — and just those boxes appear, ringed around the
    person and joined by curved lines. Each line is labelled with the relationship as you
    would say it: _son_, _daughter_, _wife_, _father_, _located at_.
@@ -66,8 +66,10 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > becomes the graph's new centre.
    > Paths run through people only. A place like Jerusalem touches almost everyone, so
    > allowing places as stepping stones would "connect" any two people meaninglessly.
-   > If there is genuinely no link you will see **No connection found** — that is an
-   > answer, not an error.
+   > If there is no link within 30 steps you will see **No connection found within 30
+   > steps** — that is an answer, not an error. The search stops there, so two people
+   > further apart than that (Jacob and Jesus are about forty generations apart) are not
+   > shown as connected even though they are.
 9. Keep it: the `⋯` menu at the top right offers **Save as image** (a PNG saved to your
    Downloads folder and revealed for you), **Print** (which prints on white paper
    whatever theme the app is using), and **Save preset** to name an arrangement and come
@@ -120,5 +122,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-92` · `RD-93` · `RD-94` · `RD-95` · `RD-96` · `RD-97` · `RD-98` · `RD-99` · `RD-100` · `RD-101` · `RD-102` · `RD-103` · `RD-104` · `RD-105` · `RD-106` · `RD-121`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-30).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
 :::

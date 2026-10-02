@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useId } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
@@ -13,6 +13,7 @@ import {
     openContextMenu,
     openInBibleLookup,
 } from './bibleFindHelpers';
+import { pressElementLikeButton } from '../helper/helpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function RenderFoundItemComp({
@@ -25,6 +26,7 @@ export default function RenderFoundItemComp({
     bibleKey: string;
 }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
+    const idPrefix = useId();
     const viewController = useLookupBibleItemControllerContext();
     const bibleFindController = useBibleFindController();
     const [data] = useAppStateAsync(() => {
@@ -66,9 +68,25 @@ export default function RenderFoundItemComp({
             onDragStart={handleDragStart}
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
+            // A div you could only click: no keyboard reached a result.
+            role="button"
+            tabIndex={0}
+            // Its name is its own words -- the reference and the verse --
+            // named outright: worked out from the content, it also took in the
+            // ⋮ button inside the row ("Genesis 2:7 More Options And ...").
+            aria-labelledby={`${idPrefix}-title ${idPrefix}-text`}
+            onKeyDown={(event) => {
+                // Not a key meant for the ⋮ button inside the row.
+                if (event.target === event.currentTarget) {
+                    pressElementLikeButton(event);
+                }
+            }}
         >
             <div className="d-flex align-items-start">
-                <div className="flex-fill app-overflow-hidden">
+                <div
+                    id={`${idPrefix}-title`}
+                    className="flex-fill app-overflow-hidden"
+                >
                     <BibleDirectViewTitleComp bibleItem={bibleItem} />
                 </div>
                 <ContextMenuDotsButtonComp
@@ -76,6 +94,7 @@ export default function RenderFoundItemComp({
                 />
             </div>
             <span
+                id={`${idPrefix}-text`}
                 className="app-find-text"
                 style={{ fontFamily }}
                 dangerouslySetInnerHTML={{

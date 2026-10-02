@@ -331,6 +331,32 @@ describe('Khmer translation coverage', () => {
         expect(packSource).toContain('return key.trim().toLowerCase();');
     });
 
+    // These translate their own text, so a caller that translates it first
+    // hands `tran()` a Khmer string, which is not a key -- it threw in dev and
+    // the Khmer note-item export never opened its password dialog. The key
+    // check above cannot see this: the key exists; the bug is the second call.
+    test('nothing hands a self-translating helper a translation', () => {
+        const selfTranslatingCallPattern =
+            /(?:askForNewArchivePassword|askForArchivePassword)\(\s*tran\(|(?:confirmButtonLabel|cancelButtonLabel)\s*:\s*tran\(/g;
+        const offenders: string[] = [];
+        for (const filePath of listSourceFiles(SRC_DIR)) {
+            const text = readFileSync(filePath, 'utf-8');
+            for (const match of text.matchAll(selfTranslatingCallPattern)) {
+                offenders.push(
+                    `${path.relative(REPO_DIR, filePath)}:` +
+                        `${toLineNumber(text, match.index)}`,
+                );
+            }
+        }
+        expect(offenders).toEqual([]);
+        // The pattern has to be able to see the shape it forbids.
+        expect(
+            "askForNewArchivePassword(\n    tran('Export'),\n)".match(
+                selfTranslatingCallPattern,
+            ),
+        ).not.toBeNull();
+    });
+
     test('reads a key the way tran() receives it', () => {
         const text = [
             "tran('Plain');",

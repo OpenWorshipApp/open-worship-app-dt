@@ -36,6 +36,7 @@ import {
 import BibleItem from '../bible-list/BibleItem';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
+import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -894,26 +895,50 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
 
     async getBibleItemsForExportingMSWord() {
         const bibleItems = await this.getStraightBibleItemsForExportingMSWord();
+        const { bookKeysOrder } = getBibleModelInfo();
         const newBibleItems = await Promise.all(
-            bibleItems
-                .map((bibleItem) => {
-                    return `${bibleItem.toVerseFullKey()},${bibleItem.bibleKey}`;
-                })
+            [...bibleItems]
                 .sort((a, b) => {
-                    if (a === b) {
-                        return 0;
-                    }
-                    return a < b ? -1 : 1;
+                    return compareBibleItemsInBibleOrder(a, b, bookKeysOrder);
                 })
-                .map((item) => {
-                    const [verseFullKey, bibleKey] = item.split(',');
-                    return BibleItem.fromVerseKey(bibleKey, verseFullKey);
+                .map((bibleItem) => {
+                    return BibleItem.fromVerseKey(
+                        bibleItem.bibleKey,
+                        bibleItem.toVerseFullKey(),
+                    );
                 }),
         );
         return newBibleItems.filter((item): item is BibleItem => {
             return item !== null;
         });
     }
+}
+
+/**
+ * The order a printed Bible has: book as the model orders them, chapter and
+ * verses as NUMBERS, then the version, so one passage in several versions
+ * stays together. Sorting `GEN 10:1,KJV`-style strings put Deuteronomy
+ * before Genesis and chapter 10 before chapter 2 in the Word export.
+ */
+export function compareBibleItemsInBibleOrder(
+    bibleItem1: { bibleKey: string; target: BibleTargetType },
+    bibleItem2: { bibleKey: string; target: BibleTargetType },
+    bookKeysOrder: string[],
+) {
+    const toBookIndex = (bookKey: string) => {
+        const index = bookKeysOrder.indexOf(bookKey);
+        // A book the model does not list goes last rather than first.
+        return index === -1 ? bookKeysOrder.length : index;
+    };
+    const target1 = bibleItem1.target;
+    const target2 = bibleItem2.target;
+    return (
+        toBookIndex(target1.bookKey) - toBookIndex(target2.bookKey) ||
+        target1.chapter - target2.chapter ||
+        target1.verseStart - target2.verseStart ||
+        target1.verseEnd - target2.verseEnd ||
+        bibleItem1.bibleKey.localeCompare(bibleItem2.bibleKey)
+    );
 }
 
 export const BibleItemsViewControllerContext =
@@ -935,10 +960,16 @@ export function useBibleItemViewControllerUpdateEvent(callback?: () => void) {
     const [nestedBibleItems, setNestedBibleItems] = useState(
         viewController.nestedBibleItems,
     );
+    // An update that leaves the items alone — the new-lines switches — hands
+    // React the SAME array, which it bails out on, so the open passage kept
+    // its old line breaks until something else re-rendered it. Every other
+    // update already brings a new array, so this costs those nothing extra.
+    const [, setUpdateCount] = useState(0);
     useAppEffect(() => {
         const update = () => {
             callback?.();
             setNestedBibleItems(viewController.nestedBibleItems);
+            setUpdateCount((count) => count + 1);
         };
         const instanceEvents = viewController.registerEventListener(
             ['update'],

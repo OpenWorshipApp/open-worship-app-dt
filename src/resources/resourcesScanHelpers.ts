@@ -203,11 +203,19 @@ export function checkIsMatchedName(
  * meaning to lose. Lowercased once here rather than per entry.
  */
 export function normalizeResourceSearchText(searchText: string) {
+    return toResourceSearchWords(searchText).toLowerCase();
+}
+
+/**
+ * The words searched for, as the user typed them but without the stars: the
+ * heading over the found files drew `*${text}*` around the RAW text, so
+ * `family*` read `*family**` -- a star the search had already dropped.
+ */
+export function toResourceSearchWords(searchText: string) {
     return searchText
         .trim()
         .replace(/^\*+|\*+$/g, '')
-        .trim()
-        .toLowerCase();
+        .trim();
 }
 
 /**

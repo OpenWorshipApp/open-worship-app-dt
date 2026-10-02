@@ -8,11 +8,12 @@ import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import type { LocaleType } from '../lang/langHelpers';
 import {
+    DEFAULT_LOCALE,
+    getLangDataAsync,
     quickTrimText,
-    sanitizeFindingText,
-    sanitizePreviewText,
     tran,
 } from '../lang/langHelpers';
+import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -322,6 +323,196 @@ export function toFindPageWindow(
     return windowed;
 }
 
+/**
+ * Words that START with what was typed come first, then words holding it
+ * anywhere, then the rest, each group in the index's own (bm25) order.
+ *
+ * The spell index stores a word as its letters, so a MATCH finds every word
+ * holding those letters in ANY order: `pharao` + Tab offered
+ * `pharaohhophra` and never `pharaoh`.
+ *
+ * Among the words that start with it, the shortest -- the fewest letters
+ * added -- comes first, since Tab takes the top one: bm25 put `pharaohhophra`
+ * (one verse) above `pharaoh` (hundreds), and Tab completed `pharao` to it.
+ */
+export function rankSuggestionWords(words: string[], attemptingWord: string) {
+    const needle = attemptingWord.toLowerCase();
+    const rankOf = (word: string) => {
+        const lowerWord = word.toLowerCase();
+        if (lowerWord.startsWith(needle)) {
+            return 0;
+        }
+        return lowerWord.includes(needle) ? 1 : 2;
+    };
+    return words
+        .map((word, index) => ({ word, index, rank: rankOf(word) }))
+        .sort((a, b) => {
+            if (a.rank !== b.rank) {
+                return a.rank - b.rank;
+            }
+            if (a.rank === 0 && a.word.length !== b.word.length) {
+                return a.word.length - b.word.length;
+            }
+            return a.index - b.index;
+        })
+        .map(({ word }) => word);
+}
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, {
+    granularity: 'grapheme',
+});
+
+const KHMER_COENG = '្';
+
+/**
+ * A verse's grapheme clusters, so a letter and the marks on it move as one.
+ * One repair, the one `pptxFontHelpers` makes: Unicode has no conjunct rule for
+ * Khmer, so `ស្រី` segments as `ស្` + `រី`, and a match marker dropped between
+ * the two would break the subscript off its consonant. A cluster that ends in a
+ * coeng is kept with what follows it.
+ */
+function toTextClusters(text: string) {
+    const clusters: string[] = [];
+    for (const { segment } of graphemeSegmenter.segment(text)) {
+        const lastIndex = clusters.length - 1;
+        if (lastIndex >= 0 && clusters[lastIndex].endsWith(KHMER_COENG)) {
+            clusters[lastIndex] += segment;
+        } else {
+            clusters.push(segment);
+        }
+    }
+    return clusters;
+}
+
+/**
+ * What a row marks: every part of the query in its finding form, plus the
+ * parts run together -- the find itself matches `%lord%s%` against a verse
+ * whose spaces and apostrophes are gone, so `lord's` should mark `LORD's`
+ * whole. A one-letter part is left out when there are longer ones: `lord's`
+ * splits into `lord` + `s`, and `s` on its own marked every s in the verse.
+ * Longest first, so `beginning` wins over `begin` where both start.
+ */
+function toFindNeedles(
+    findText: string,
+    toFindingText: (text: string) => string,
+) {
+    // An empty needle would match between every character and wrap the whole
+    // verse in markers -- the visible half of the match-everything bug
+    // `toFindWildCardText` closes.
+    const parts = toFindingText(findText)
+        .split(/\s+/)
+        .filter((part) => part !== '');
+    const hasLongPart = parts.some((part) => part.length > 1);
+    const needles = new Set(
+        parts.filter((part) => !hasLongPart || part.length > 1),
+    );
+    if (parts.length > 1) {
+        needles.add(parts.join(''));
+    }
+    return [...needles].sort((a, b) => b.length - a.length);
+}
+
+const FOUND_MATCH_OPEN = '<span class="app-found-match">';
+const FOUND_MATCH_CLOSE = '</span>';
+
+/**
+ * The verse as the bible prints it -- its own capitals and punctuation --
+ * HTML-escaped, with every searched word wrapped in a match marker.
+ *
+ * The row used to show the verse in its FINDING form, "and the lord god formed
+ * man", because that is the form the words were found in. They still are:
+ * `toFindingText` (the locale's `sanitizeFindingText`) is run over the verse
+ * cluster by cluster, so every character of the finding form still knows
+ * which cluster it came from, and the markers go around those ORIGINAL
+ * clusters. A match may run over what the finding form drops -- a space, an
+ * apostrophe, a Khmer zero-width break -- exactly as the find's own `LIKE`
+ * does.
+ *
+ * Everything the verse holds is escaped here, so the markers are the only
+ * markup that can come out: the row renders this as HTML. One left-to-right
+ * pass, never a replace per word: replacing word by word matched a later word
+ * inside the markup an earlier one had inserted, and the row showed raw
+ * `<span class=…>` text.
+ */
+export function highlightFoundWords(
+    text: string,
+    findText: string,
+    toFindingText: (text: string) => string,
+) {
+    const clusters = toTextClusters(text);
+    const needles = toFindNeedles(findText, toFindingText);
+    // The verse in its finding form, run together the way the find stores it,
+    // and for each of its code units the cluster it came from. A verse repeats
+    // its letters, so each distinct cluster is converted once.
+    let findingText = '';
+    const clusterIndexes: number[] = [];
+    const findingClusterMap = new Map<string, string>();
+    clusters.forEach((cluster, clusterIndex) => {
+        let findingCluster = findingClusterMap.get(cluster);
+        if (findingCluster === undefined) {
+            findingCluster = toFindingText(cluster).replaceAll(/\s+/g, '');
+            findingClusterMap.set(cluster, findingCluster);
+        }
+        findingText += findingCluster;
+        for (let i = 0; i < findingCluster.length; i++) {
+            clusterIndexes.push(clusterIndex);
+        }
+    });
+    // Left to right, the longest needle first at each position, never
+    // overlapping -- what one alternation over the text did -- and the matched
+    // stretch widened to whole clusters. Two matches sharing a cluster merge.
+    const ranges: [number, number][] = [];
+    let position = 0;
+    while (needles.length > 0 && position < findingText.length) {
+        const needle = needles.find((word) => {
+            return findingText.startsWith(word, position);
+        });
+        if (needle === undefined) {
+            position += 1;
+            continue;
+        }
+        const fromCluster = clusterIndexes[position];
+        const toCluster = clusterIndexes[position + needle.length - 1];
+        const lastRange = ranges.at(-1);
+        if (lastRange !== undefined && fromCluster <= lastRange[1]) {
+            lastRange[1] = Math.max(lastRange[1], toCluster);
+        } else {
+            ranges.push([fromCluster, toCluster]);
+        }
+        position += needle.length;
+    }
+    let html = '';
+    let rangeIndex = 0;
+    clusters.forEach((cluster, clusterIndex) => {
+        const range = ranges[rangeIndex];
+        if (range?.[0] === clusterIndex) {
+            html += FOUND_MATCH_OPEN;
+        }
+        html += escapeHtmlText(cluster);
+        if (range?.[1] === clusterIndex) {
+            html += FOUND_MATCH_CLOSE;
+            rangeIndex += 1;
+        }
+    });
+    return html;
+}
+
+/**
+ * The locale's finding form -- what the find matches on, `sanitizeFindingText`
+ * -- as a plain function, so a verse can go through it cluster by cluster
+ * without an `await` per cluster. A locale with no language data falls back to
+ * the default's, as `sanitizeFindingText` itself does.
+ */
+async function getFindingTextConverter(locale: LocaleType) {
+    const langData =
+        (await getLangDataAsync(locale)) ??
+        (await getLangDataAsync(DEFAULT_LOCALE));
+    if (langData === null) {
+        return (text: string) => text.toLowerCase();
+    }
+    return (text: string) => langData.sanitizeFindingText(text);
+}
+
 export async function breakItem(
     locale: LocaleType,
     text: string,
@@ -332,24 +523,10 @@ export async function breakItem(
     bibleItem: BibleItem;
     kjvVerseKey: string;
 }> {
-    // TODO: use fuse.js to highlight
-    const sanitizedFindText = (await sanitizeFindingText(locale, text)) ?? text;
+    const toFindingText = await getFindingTextConverter(locale);
     const [bookKeyChapter, verse, ...newItems] = item.split(':');
-    let fullVerseText = newItems.join(':');
-    fullVerseText = await sanitizeFindingText(locale, fullVerseText);
-    fullVerseText = await sanitizePreviewText(locale, fullVerseText);
-    for (const subText of sanitizedFindText.split(' ')) {
-        // An empty needle is `new RegExp('()')`, which matches between every
-        // character and wraps the whole verse in match markers -- the visible
-        // half of the match-everything bug `toFindWildCardText` closes.
-        if (subText === '') {
-            continue;
-        }
-        fullVerseText = fullVerseText.replaceAll(
-            new RegExp(`(${subText})`, 'ig'),
-            '<span class="app-found-match">$1</span>',
-        );
-    }
+    const verseText = newItems.join(':');
+    const newItem = highlightFoundWords(verseText, text, toFindingText);
     const [bookKey, chapter] = bookKeyChapter.split('.');
     const splitVerse = verse.split('-');
     const target = {
@@ -366,7 +543,7 @@ export async function breakItem(
     };
     const bibleItem = BibleItem.fromJson(bibleItemJson);
     const kjvVerseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
-    return { newItem: fullVerseText, bibleItem, kjvVerseKey };
+    return { newItem, bibleItem, kjvVerseKey };
 }
 
 export function pageNumberToReqData(pagingData: PagingDataTye, page: string) {
