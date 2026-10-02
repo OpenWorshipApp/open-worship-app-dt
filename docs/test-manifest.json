@@ -157,7 +157,7 @@
       "steps": [
         "Press Ctrl+B (or click [en:tran:Bible Lookup] in the header). The lookup opens as a popup dialog.",
         "The input is a step-by-step picker. Click the empty box to see the book grid, then click the book, the chapter and the verse. These buttons use the names and numbers of the Bible version you chose, so this is the preferred route for a non-English Bible.",
-        "The verse renders in the preview panel. Double-click it to present.",
+        "The verse renders in the preview panel. To present it, point at the passage's title (_John 3:16_) — its buttons appear over the end of the title — and click [en:tran:Save bible item and show on screen] (the cast icon), or just press Ctrl+Shift+Enter. The passage is saved to the Bibles list as it goes up. Double-clicking a verse only brings it into view; it does not present.",
         "Close the dialog with the red ✕ button or Ctrl+Q.",
         "Press F9 ([en:tran:Clear Bible]) to take the verse off screen.",
         "The presented verse also appears in the Bibles tab (middle column) and the Bibles list (right column) for re-presenting later.",

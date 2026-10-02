@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-28",
+    "updated": "2026-10-01",
     "sections": [
         {
             "id": "orientation",
@@ -983,7 +983,9 @@
                         "passage",
                         "reading",
                         "project bible",
-                        "show verse"
+                        "show verse",
+                        "show on screen",
+                        "ctrl shift enter"
                     ],
                     "starter": true,
                     "resources": {

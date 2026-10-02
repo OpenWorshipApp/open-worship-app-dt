@@ -17,7 +17,10 @@ export default function SettingGeneralComp() {
                 it, and in Khmer, whose headings are wider, the switch back to
                 English fell off the first screen. The paths ellipsize from the
                 left (`PathPreviewerComp`), so the column can give way. */}
-            <div className="m-1" style={{ minWidth: '600px', flex: '1 1 600px' }}>
+            <div
+                className="m-1"
+                style={{ minWidth: '600px', flex: '1 1 600px' }}
+            >
                 <SettingGeneralPath />
             </div>
             <div

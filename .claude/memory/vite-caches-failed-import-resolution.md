@@ -57,6 +57,14 @@ Confirm from inside the page rather than with curl (no cert hassle):
 symbol you expect. A cache-busting query busts the BROWSER cache only, so a hit
 here really is what the server holds.
 
+**Sibling case (2026-10-01): two edits to one file in quick succession.** A call to
+`pressElementLikeButton` added in one edit and its import in the next left the dev server
+serving the in-between version: the press threw `ReferenceError: pressElementLikeButton is not
+defined` (shown as the app's _Reload is needed_ dialog) while the file on disk was complete and
+every test passed — and a second Electron started minutes later got the same stale module.
+`touch`ing the file cleared it at once. Put an import in the same edit as its first use, or touch
+every file edited that way before a live check.
+
 **Why:** it looks like a code bug and sends you auditing a correct file — or, in
 the silent variant, like an unimplemented feature.
 

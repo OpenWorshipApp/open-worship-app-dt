@@ -39,14 +39,15 @@ describe('bibleListChangeHelpers', () => {
             'main:app:bible-list-changed',
             handler,
         );
-        expect(appProviderMock.messageUtils.removeListener).not.toHaveBeenCalled();
+        expect(
+            appProviderMock.messageUtils.removeListener,
+        ).not.toHaveBeenCalled();
 
         unregister();
 
         // The SAME function, or the IPC listener would never come off.
-        expect(appProviderMock.messageUtils.removeListener).toHaveBeenCalledWith(
-            'main:app:bible-list-changed',
-            handler,
-        );
+        expect(
+            appProviderMock.messageUtils.removeListener,
+        ).toHaveBeenCalledWith('main:app:bible-list-changed', handler);
     });
 });

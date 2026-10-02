@@ -20,7 +20,11 @@ workflowsVersion: "2026-10-01"
    > Tip: typing the first letters or a full reference such as `John 3:16` is a shortcut
    > when that Bible recognizes what you type. **Tab** completes the current part;
    > **Escape** clears it. The **Bible Reader** page works the same way.
-3. The verse renders in the preview panel. **Double-click** it to present. 📸
+3. The verse renders in the preview panel. To present it, point at the passage's
+   title (_John 3:16_) — its buttons appear over the end of the title — and click
+   **[en:tran:Save bible item and show on screen]** (the cast icon), or just press
+   **Ctrl+Shift+Enter**. The passage is saved to the **Bibles** list as it goes up.
+   Double-clicking a verse only brings it into view; it does not present. 📸
 4. Close the dialog with the red ✕ button or **Ctrl+Q**.
 5. Press **F9** ([en:tran:Clear Bible]) to take the verse off screen.
 6. The presented verse also appears in the **Bibles** tab (middle column) and the

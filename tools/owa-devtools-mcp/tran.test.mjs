@@ -186,10 +186,7 @@ describe('the knowledge corpus', () => {
         // The templates exist at all: a corpus that lost them would pass the
         // check above by having nothing to check.
         expect(total).toBeGreaterThan(100);
-        // It reads the whole manual and every dictionary: ~3 s alone, 16 s
-        // beside the rest of `test:all` on a busy machine, past the 10 s
-        // default (robot run 2026-10-01).
-    }, 60000);
+    });
 
     it('names app labels through a template, not a hand-copied twin', () => {
         // What the templates replaced: `**Bible Lookup** (ស្វែងរកព្រះគម្ពីរ)`,

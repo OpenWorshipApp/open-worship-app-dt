@@ -7,6 +7,7 @@
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — fixed 2026-07-22
 - [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — any file write can throw a one-off "must be used within"
 - [`build` kills the running dev app](build-kills-running-dev-app.md) — rm -rf's `electron-build/`; `npm run lint` is check-only
+- [Scratch dev instance beside the user's app](scratch-dev-instance-beside-user-app.md) — a 2nd `electron .` on `OWA_USER_DATA_PATH` against the same Vite; never `electron:build`
 - [Pack a release from a snapshot](pack-release-from-snapshot.md) — junctioned node_modules; unlink before delete; no `.git` → test build only
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in a page script
 - [Bible Note popup CDP mechanics](bible-note-floating-toolbar-width.md) — plain textarea, no Lexical popup
