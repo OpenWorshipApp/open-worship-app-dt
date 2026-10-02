@@ -83,6 +83,7 @@ const mocks = vi.hoisted(() => {
         infoValidateMock: vi.fn(),
         initHttpRequestMock: vi.fn(),
         jsonToXMLTextMock: vi.fn(),
+        notifyBibleListChangedMock: vi.fn(),
         pathJoinMock: vi.fn((...parts: string[]) => parts.join('/')),
         readFileDataMock: vi.fn(
             async (filePath: string) => files.get(filePath) ?? null,
@@ -125,6 +126,10 @@ vi.mock('../../server/appProvider', () => ({
             resolve: (...parts: string[]) => parts.join('/'),
         },
     },
+}));
+
+vi.mock('../../helper/bible-helpers/bibleListChangeHelpers', () => ({
+    notifyBibleListChanged: mocks.notifyBibleListChangedMock,
 }));
 
 vi.mock('../../helper/bible-helpers/downloadHelpers', () => ({
@@ -494,6 +499,9 @@ describe('bibleXMLHelpers', () => {
         // the row's OWN file, not `<dir>/KJV.xml`
         expect(mocks.files.get('/bibles/my-kjv.xml')).toBe('<kjv />');
         expect(mocks.files.has('/bibles/KJV.xml.cache/all')).toBe(false);
+        // Every other window is told: a Reader still saying "KJV is not
+        // available!" asks again instead of waiting for a reload.
+        expect(mocks.notifyBibleListChangedMock).toHaveBeenCalledTimes(1);
 
         mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'RESET' } });
         expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
@@ -510,6 +518,8 @@ describe('bibleXMLHelpers', () => {
             'Reset Bible XML',
             'Failed to convert KJV Bible data to XML text.',
         );
+        // Nothing changed, so nobody is told it did.
+        expect(mocks.notifyBibleListChangedMock).toHaveBeenCalledTimes(1);
     });
 
     test('uses backup and fresh cache paths when reading cached XML data and chapter data', async () => {

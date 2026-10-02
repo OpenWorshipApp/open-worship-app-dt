@@ -21,6 +21,7 @@ import {
     checkIsSupportCanvasMediaType,
     checkIsSupportMediaType,
     cleanupProps,
+    genCenteredBoxPosition,
     getRemoteMediaMimetypeName,
     genTextDefaultBoxStyle,
     hAlignmentList,
@@ -274,5 +275,22 @@ describe('canvasHelpers', () => {
         // Ceilinged at the insert scale: a full-slide box (a lyric audio
         // attachment) must not grow a monstrous player.
         expect(calcAudioControlScale(1920, 1080)).toBe(AUDIO_EMBED_SCALE);
+    });
+
+    test('centres a box on the slide it is added to', () => {
+        // The default 700x400 text box on the slide sizes people project at.
+        expect(genCenteredBoxPosition(700, 400, 1920, 1080)).toEqual({
+            left: 610,
+            top: 340,
+        });
+        expect(genCenteredBoxPosition(700, 400, 2561, 1440)).toEqual({
+            left: 931,
+            top: 520,
+        });
+        // A box larger than the slide hangs over every edge evenly.
+        expect(genCenteredBoxPosition(700, 400, 640, 360)).toEqual({
+            left: -30,
+            top: -20,
+        });
     });
 });

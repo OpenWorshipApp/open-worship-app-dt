@@ -53,7 +53,11 @@ vi.mock('../lang/langHelpers', () => ({
 
 vi.mock('./Slide', () => ({
     default: {
-        defaultSlideData: (id: number) => ({ id, canvasItems: [] as any[] }),
+        defaultSlideData: (id: number) => ({
+            id,
+            metadata: { width: 1920, height: 1080 },
+            canvasItems: [] as any[],
+        }),
         fromJson: (json: { id: number }) => ({
             id: json.id,
             getBibleKeys: () => [],
@@ -65,7 +69,24 @@ vi.mock('./Slide', () => ({
 
 vi.mock('../slide-editor/canvas/CanvasItemText', () => ({
     default: {
-        genDefaultItem: () => ({ toJson: () => ({ type: 'text' }) }),
+        // The real default box: 700x400 at a fixed spot that centres on no
+        // slide size anyone projects at.
+        genDefaultItem: () => {
+            const props = {
+                type: 'text',
+                left: 356,
+                top: 279,
+                width: 700,
+                height: 400,
+            };
+            return {
+                props,
+                applyProps: (newProps: object) => {
+                    Object.assign(props, newProps);
+                },
+                toJson: () => ({ ...props }),
+            };
+        },
     },
 }));
 
@@ -267,6 +288,23 @@ describe('AppDocument.changeSlidesFont', () => {
         expect(
             mocks.setJsonDataMock.mock.calls[0][0].items[0].canvasItems[0],
         ).toEqual(text(1, { fontFamily: null }));
+    });
+});
+
+describe('AppDocument.genNewExtraJsonData', () => {
+    test("a new document's text box sits in the middle of its slide", () => {
+        const jsonData = AppDocument.genNewExtraJsonData();
+
+        // Was left 356 / top 279 whatever the slide: on a 1920x1080 projector
+        // the box hung in the upper-left quadrant.
+        expect(jsonData.items[0].canvasItems).toEqual([
+            expect.objectContaining({
+                left: 610,
+                top: 340,
+                width: 700,
+                height: 400,
+            }),
+        ]);
     });
 });
 
