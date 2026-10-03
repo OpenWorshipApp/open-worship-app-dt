@@ -28,6 +28,10 @@ import { getLyricStageStyle } from './lyricStageStyleHelpers';
 import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import Lyric from './Lyric';
+import {
+    genLyricPlaySteps,
+    type LyricRepeatType,
+} from './lyricStructureHelpers';
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
 export const OPEN_LYRIC_FIRST_KEY = 'First';
@@ -132,15 +136,16 @@ export default class LyricAppDocument extends AppDocument {
 
     // Single construction point for every LyricSlide. `displayDim` hits
     // `getDefaultScreenDisplay()` on each read, so callers building a whole song
-    // pass it in once instead of paying for it per slide. `openLyricIndex` is
-    // last because only the slides that stand for a verse of the song have one
-    // — everything else takes the `-1` default.
+    // pass it in once instead of paying for it per slide. `openLyricIndex` and
+    // `openLyricRepeat` are last because only the slides that stand for a verse
+    // of the song have them — everything else takes the defaults.
     genLyricSlide(
         id: number,
         openLyricKey: string,
         canvasItems: CanvasItemPropsType[],
         displayDim = this.displayDim,
         openLyricIndex = -1,
+        openLyricRepeat: LyricRepeatType | null = null,
     ) {
         return new LyricSlide(
             this.filePath,
@@ -156,6 +161,7 @@ export default class LyricAppDocument extends AppDocument {
             },
             openLyricKey,
             openLyricIndex,
+            openLyricRepeat,
         );
     }
 
@@ -165,6 +171,7 @@ export default class LyricAppDocument extends AppDocument {
         dataMap: Record<string, string>,
         displayDim = this.displayDim,
         openLyricIndex = -1,
+        openLyricRepeat: LyricRepeatType | null = null,
     ) {
         const srcData = dataMap[key];
         const canvasItemProps = this.genCanvasItemHtmlProps(
@@ -177,6 +184,7 @@ export default class LyricAppDocument extends AppDocument {
             [canvasItemProps],
             displayDim,
             openLyricIndex,
+            openLyricRepeat,
         );
     }
 
@@ -225,12 +233,21 @@ export default class LyricAppDocument extends AppDocument {
         return openLyric;
     }
 
+    // Must list the same slides, in the same order, as the stage's full
+    // `getStageSlides`: ids are positions, and `getSlideById` and the lyric
+    // editor's `?id=` both turn an id into a part through this list.
     async getSlidesQuick() {
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
-        const structure = openLyricPreviewer.getStructure();
         const displayDim = this.displayDim;
-        const slides = structure.map((key, i) => {
-            return this.genLyricSlide(i, key, [], displayDim, i);
+        const slides = genLyricPlaySteps(openLyricPreviewer).map((step, i) => {
+            return this.genLyricSlide(
+                i,
+                step.key,
+                [],
+                displayDim,
+                step.structureIndex,
+                step.repeat,
+            );
         });
         return this.extendExtraSlide(slides, {});
     }

@@ -23,6 +23,7 @@ import CanvasItemVideo from '../slide-editor/canvas/CanvasItemVideo';
 import CanvasItemAudio from '../slide-editor/canvas/CanvasItemAudio';
 import CanvasItemWebsite from '../slide-editor/canvas/CanvasItemWebsite';
 import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
+import { genLyricPlaySteps } from './lyricStructureHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(10);
@@ -343,15 +344,24 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         }
 
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
-        const structure = openLyricPreviewer.getStructure();
+        // A repeated step (`Cx3`) is that many slides in a row — the same list
+        // `getSlidesQuick` builds, which ids are resolved against.
+        const playSteps = genLyricPlaySteps(openLyricPreviewer);
 
         const [firstCanvasItemProps, dataMap] = await Promise.all([
             this.getFirstCanvasItemProps(),
             this.getElementMap(this.allOpenLyricOptions),
         ]);
         const displayDim = this.displayDim;
-        const slides = structure.map((key, i) => {
-            return this.genSlide(key, i, dataMap, displayDim, i);
+        const slides = playSteps.map((step, i) => {
+            return this.genSlide(
+                step.key,
+                i,
+                dataMap,
+                displayDim,
+                step.structureIndex,
+                step.repeat,
+            );
         });
         const newSlides = this.extendExtraSlide(
             slides,
