@@ -600,12 +600,12 @@ describe('the offline bot writes a pasted song out itself', () => {
         '',
         'Valid Open Lyric. No problems found.',
         '',
-        'Song: "Amazing Grace" by Unknown Artist — key C, 120bpm, 4/4',
+        'Song: "Amazing Grace"',
         'Sections (1): Verse 1 (4 lines)',
         'Play order: Verse 1',
         '',
         'Guessed, and worth telling them:',
-        '- the text gave no key, tempo, time -- used C, 120bpm, 4/4',
+        '- the text gave no key, tempo, time, so the song has none set -- worth adding by hand if the band needs it',
         '',
         'The song itself is below. Do NOT paste it into your answer.',
         '# Amazing Grace',
@@ -628,7 +628,7 @@ describe('the offline bot writes a pasted song out itself', () => {
             mode: 'draft',
         });
         expect(answer.text).toContain('Song: "Amazing Grace"');
-        expect(answer.text).toContain('used C, 120bpm, 4/4');
+        expect(answer.text).toContain('so the song has none set');
         // Never the notation itself: that is what the preview box is for.
         expect(answer.text).not.toContain('```ol:');
         expect(answer.actions?.map((one) => one.label)).toEqual([

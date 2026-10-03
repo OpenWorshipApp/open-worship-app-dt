@@ -249,7 +249,7 @@ export function readSongLinkAsk(text: string): string | null {
 }
 
 export type DraftReportType = {
-    /** `Song: "Title" by Artist — key C, 120bpm, 4/4` */
+    /** `Song: "Title" by Artist — key C, 120bpm, 4/4`, each part only when set */
     song: string | null;
     /** `Sections (3): Verse 1 (4 lines), …` */
     sections: string | null;

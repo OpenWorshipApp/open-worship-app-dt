@@ -173,15 +173,7 @@ export const OPEN_LYRIC_CONFIG_FIELD_LIST = [
     'Strumming Patterns',
 ];
 
-export const OPEN_LYRIC_REQUIRED_CONFIG_FIELD_LIST = [
-    'Title',
-    'Artist',
-    'Copyright',
-    'Key',
-    'Tempo',
-    'Time',
-    'Structure',
-];
+export const OPEN_LYRIC_REQUIRED_CONFIG_FIELD_LIST = ['Title', 'Structure'];
 
 /** The three fields an indented continuation line may belong to. */
 export const OPEN_LYRIC_MULTILINE_CONFIG_FIELD_LIST = [
@@ -1145,8 +1137,8 @@ export function validateOpenLyric(text) {
         addProblem(
             { number: 1, line: lines[0], part: null },
             'Missing required ol part. Add ol:Config.',
-            'A song starts with an ol:Config block naming its Title, Artist, ' +
-                'Copyright, Key, Tempo, Time and Structure.',
+            'A song starts with an ol:Config block naming its Title and ' +
+                'Structure.',
         );
     } else {
         configFields = parseConfigFence(configFence.bodyLines, addProblem);

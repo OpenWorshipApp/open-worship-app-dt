@@ -14,8 +14,11 @@ produces documents `checkMarkdown` rejects.
   Note N, Pre-Chorus **P** (not PC), Chorus C, Post-Chorus X,
   Final-Chorus F⟂, Bridge B, Instrumental **IS**, Interlude L, Breakdown D,
   Refrain R, Tag T, Turnaround TU, Vamp A⟂, **Solo S**, Outro O⟂.
-- `ol:Config` REQUIRES Title, Artist, Copyright, Key (enum, `C` ok),
-  Tempo (`/^[1-9]\d*bpm$/`), Time (enum, `4/4` ok), Structure.
+- `ol:Config` REQUIRES only Title and Structure (open-lyric bump,
+  2026-10-03; it used to require Artist, Copyright, Key, Tempo, Time too).
+  Optional: Key (enum), Tempo (`/^[1-9]\d*bpm$/`), Time (enum). The
+  drafter (`openLyricDraft.mjs`) writes an optional field ONLY when the text
+  gave it — never `Unknown`/`C`/`120bpm`/`4/4` placeholders.
 - Invalid: empty Structure; Structure referencing an undeclared part; a
   numbered code on a ⟂ part (`O1`); duplicate part names; unmatched `[`/`]`
   in a LYRIC fence. Valid: declared-but-unreferenced parts; `# Title` heading

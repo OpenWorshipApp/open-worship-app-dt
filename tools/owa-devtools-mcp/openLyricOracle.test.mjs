@@ -169,7 +169,14 @@ const CASE_LIST = [
     ],
 
     // -- Config -----------------------------------------------------------
-    ['missing Artist', genLyricDoc('hi').replace('- Artist: A\n', ''), false],
+    ['missing Artist', genLyricDoc('hi').replace('- Artist: A\n', ''), true],
+    [
+        'only Title and Structure',
+        ['```ol:Config', '- Title: T', '- Structure: V1', '```'].join('\n') +
+            '\n```ol:Verse 1\nhi\n```',
+        true,
+    ],
+    ['missing Title', genLyricDoc('hi').replace('- Title: T\n', ''), false],
     ['missing Structure', genDoc([], ['```ol:Verse 1', 'hi', '```']), false],
     ['empty Title', genLyricDoc('hi').replace('- Title: T', '- Title:'), false],
     [

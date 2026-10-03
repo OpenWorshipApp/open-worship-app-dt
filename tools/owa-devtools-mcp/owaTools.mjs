@@ -1215,8 +1215,9 @@ export function registerOwaTools(server) {
       contentText:
         'For `create` and `update`, `content` is the Open Lyric ' +
         'document itself: Markdown with an ```ol:Config fence ' +
-        'carrying Title, Artist, Copyright, Key, Tempo (120bpm), ' +
-        'Time (4/4) and Structure, then one fence per section ' +
+        'carrying Title and Structure (required); Artist, ' +
+        'Copyright, Key, Tempo (120bpm) and Time (4/4) only when ' +
+        'known, never a placeholder. Then one fence per section ' +
         '(```ol:Verse 1, ```ol:Chorus). It is checked by Open ' +
         'Lyric before anything is written and refused with the ' +
         'reason if it does not parse.',

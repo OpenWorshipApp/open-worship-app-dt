@@ -144,12 +144,12 @@ const DRAFT_RESULT = [
     '',
     'Valid Open Lyric. No problems found.',
     '',
-    'Song: "Amazing Grace" by Unknown Artist — key C, 120bpm, 4/4',
+    'Song: "Amazing Grace"',
     'Sections (2): Verse 1 (4 lines), Chorus (2 lines)',
     'Play order: Verse 1 → Chorus',
     '',
     'Guessed, and worth telling them:',
-    '- the text gave no key, tempo, time -- used C, 120bpm, 4/4',
+    '- the text gave no key, tempo, time, so the song has none set -- worth adding by hand if the band needs it',
     '- nobody is named as the artist',
     '',
     'The song itself is below. Do NOT paste it into your answer -- the buttons under your answer create the file and copy the text.',
@@ -157,7 +157,7 @@ const DRAFT_RESULT = [
     '',
     '```ol:Config',
     '- Title: Amazing Grace',
-    '- Artist: Unknown Artist',
+    '- Structure: V1',
     '```',
     '',
     '```ol:Verse 1',
@@ -168,15 +168,13 @@ const DRAFT_RESULT = [
 describe('readDraftReport', () => {
     it('lifts the lines a person is told, in the drafter’s own words', () => {
         const report = readDraftReport(DRAFT_RESULT);
-        expect(report.song).toBe(
-            'Song: "Amazing Grace" by Unknown Artist — key C, 120bpm, 4/4',
-        );
+        expect(report.song).toBe('Song: "Amazing Grace"');
         expect(report.sections).toBe(
             'Sections (2): Verse 1 (4 lines), Chorus (2 lines)',
         );
         expect(report.playOrder).toBe('Play order: Verse 1 → Chorus');
         expect(report.guessed).toEqual([
-            'the text gave no key, tempo, time -- used C, 120bpm, 4/4',
+            'the text gave no key, tempo, time, so the song has none set -- worth adding by hand if the band needs it',
             'nobody is named as the artist',
         ]);
     });
@@ -189,7 +187,7 @@ describe('readDraftReport', () => {
         // `- Title:` inside the Config fence is a bullet too.
         const report = readDraftReport(
             DRAFT_RESULT.replace(
-                'Guessed, and worth telling them:\n- the text gave no key, tempo, time -- used C, 120bpm, 4/4\n- nobody is named as the artist\n\n',
+                'Guessed, and worth telling them:\n- the text gave no key, tempo, time, so the song has none set -- worth adding by hand if the band needs it\n- nobody is named as the artist\n\n',
                 '',
             ),
         );

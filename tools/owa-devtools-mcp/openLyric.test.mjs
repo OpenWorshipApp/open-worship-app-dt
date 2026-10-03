@@ -319,8 +319,7 @@ describe('what a problem says', () => {
             ['```ol:Config', '- Title: T', '```'].join('\n'),
         );
         expect(messages).toContain(
-            'Missing required config fields: Artist, Copyright, Key, Tempo, ' +
-                'Time, Structure.',
+            'Missing required config fields: Structure.',
         );
     });
 

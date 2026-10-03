@@ -58,14 +58,16 @@ const MAX_TITLE_LENGTH = 80;
 const MAX_LABEL_LENGTH = 40;
 /** Below this there is no song here, whatever the words are. */
 const MIN_SONG_LINES = 2;
-/** What open-lyric's own plain-text import fills in, and both app importers. */
-const DEFAULT_CONFIG = {
-    Artist: 'Unknown Artist',
-    Copyright: 'Unknown',
-    Key: 'C',
-    Tempo: '120bpm',
-    Time: '4/4',
-};
+// open-lyric requires only `Title` and `Structure` in `ol:Config`; every other
+// field is written only when the text actually gave it. A placeholder such as
+// `Copyright: Unknown` or a made-up `Key: C` reads as a fact in the editor.
+const OPTIONAL_CONFIG_FIELD_LIST = [
+    'Artist',
+    'Copyright',
+    'Key',
+    'Tempo',
+    'Time',
+];
 const FENCE_MARKER = '```';
 /** Long enough for any real address, short enough not to be a payload. */
 const MAX_SOURCE_URL_LENGTH = 300;
@@ -750,15 +752,10 @@ function genMarkdown(config, parts, playCodes) {
     lines.push(`${FENCE_MARKER}ol:Config`);
     // The leading `- ` is required on every one of these, and leaving it off is
     // the first mistake everything that writes this format makes.
-    for (const field of [
-        'Title',
-        'Artist',
-        'Copyright',
-        'Key',
-        'Tempo',
-        'Time',
-    ]) {
-        lines.push(`- ${field}: ${config[field]}`);
+    for (const field of ['Title', ...OPTIONAL_CONFIG_FIELD_LIST]) {
+        if (config[field]) {
+            lines.push(`- ${field}: ${config[field]}`);
+        }
     }
     lines.push(`- Structure: ${toStructureText(playCodes)}`);
     if (config.Attachments) {
@@ -1169,12 +1166,11 @@ export function draftOpenLyric(rawText, known = {}) {
     }
     const config = { Title: title === '' ? 'Untitled' : title };
     const refused = [];
-    // What the text actually SAID, rather than what happens to equal the
-    // default. A page that prints "Time: 4/4" was reported back as having
-    // given no time, because 4/4 is also what is used when nothing is given --
-    // an honest report that says the opposite of the truth.
-    const defaulted = [];
-    for (const field of ['Artist', 'Copyright', 'Key', 'Tempo', 'Time']) {
+    // What the text actually SAID. Only `Title` and `Structure` are required,
+    // so a field the text did not give is left out of the song rather than
+    // filled with a placeholder that would read as a fact.
+    const missing = [];
+    for (const field of OPTIONAL_CONFIG_FIELD_LIST) {
         const said =
             (field === 'Artist' ? toSafeConfigValue(known.artist) : '') ||
             // What the caller was told outright beats what it copied: a
@@ -1191,9 +1187,11 @@ export function draftOpenLyric(rawText, known = {}) {
         if (said !== '' && given === '') {
             refused.push(field);
         } else if (said === '' && ['Key', 'Tempo', 'Time'].includes(field)) {
-            defaulted.push(field);
+            missing.push(field);
         }
-        config[field] = given === '' ? DEFAULT_CONFIG[field] : given;
+        if (given !== '') {
+            config[field] = given;
+        }
     }
     if (page.source) {
         config.Attachments = page.source;
@@ -1203,35 +1201,27 @@ export function draftOpenLyric(rawText, known = {}) {
                 'came from',
         );
     }
-    if (defaulted.length > 0) {
+    const toFieldNames = (fieldList) => {
+        return fieldList
+            .map((field) => {
+                return field.toLowerCase();
+            })
+            .join(', ');
+    };
+    if (missing.length > 0) {
         guessed.push(
-            'the text gave no ' +
-                defaulted
-                    .map((field) => {
-                        return field.toLowerCase();
-                    })
-                    .join(', ') +
-                ' -- used ' +
-                defaulted
-                    .map((field) => {
-                        return DEFAULT_CONFIG[field];
-                    })
-                    .join(', '),
+            `the text gave no ${toFieldNames(missing)}, so the song has ` +
+                'none set -- worth adding by hand if the band needs it',
         );
     }
     if (refused.length > 0) {
         guessed.push(
-            'the ' +
-                refused
-                    .map((field) => {
-                        return field.toLowerCase();
-                    })
-                    .join(', ') +
-                ' the text gave is not one open-lyric has a name for, so the ' +
-                'usual value was used instead -- worth setting by hand',
+            `the ${toFieldNames(refused)} the text gave is not one ` +
+                'open-lyric has a name for, so it was left out -- worth ' +
+                'setting by hand',
         );
     }
-    if (config.Artist === DEFAULT_CONFIG.Artist) {
+    if (!config.Artist) {
         guessed.push('nobody was named as the author');
     }
     guessed.push(...genPageGuesses(page.notes));
