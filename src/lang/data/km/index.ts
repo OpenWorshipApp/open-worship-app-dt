@@ -1571,6 +1571,9 @@ const dictionary = {
     'Position & Size': 'ទីតាំង និងទំហំ',
     'PowerPoint Document': 'ឯកសារ PowerPoint',
     'Preview Size Scale': 'មាត្រដ្ឋានទំហំមើលជាមុន',
+    'Stop rendering preview': 'ឈប់បង្ហាញការមើលជាមុន',
+    'Resume rendering preview': 'បន្តបង្ហាញការមើលជាមុន',
+    'No rendering': 'មិនបង្ហាញ',
     Previous: 'មុន',
     'Reset Date and Time to Now': 'កំណត់កាលបរិច្ឆេទ និងម៉ោងទៅពេលឥឡូវនេះ',
     'That date and time has already passed':

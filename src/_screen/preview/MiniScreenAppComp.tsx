@@ -19,6 +19,7 @@ import { checkIsDarkMode } from '../../others/themeHelpers';
 import ScreenDrawComp from '../ScreenDrawComp';
 import ScreenFocusComp from '../ScreenFocusComp';
 import ScreenMaskComp from '../ScreenMaskComp';
+import { useIsMiniScreenNoRendering } from './miniScreenRenderingHelpers';
 
 const genBGBlank = () => {
     const isDarkMode = checkIsDarkMode();
@@ -124,6 +125,7 @@ export default function MiniScreenAppComp({
 }: Readonly<{
     screenId: number;
 }>) {
+    const [isNoRendering] = useIsMiniScreenNoRendering(screenId);
     const screenManager = getScreenManagerByScreenId(screenId);
     if (screenManager === null) {
         return null;
@@ -133,21 +135,32 @@ export default function MiniScreenAppComp({
         backgroundEffectManager,
         foregroundEffectManager,
     } = screenManager;
+    // With rendering off, every layer that only DRAWS unmounts, and each lets
+    // go of its manager's root on the way out so nothing keeps running in a
+    // detached div. The slide layer is the exception: a slide's video, audio
+    // or YouTube clip plays its sound HERE (the projected copy is a muted
+    // follower), and a run sheet's `Slide: Media Control` drives this element,
+    // so it stays mounted -- unpainted -- and the screen's media behave
+    // exactly as they do with the preview on. Every slot keeps its place, so
+    // flipping the toggle never remounts the slide (a playing clip carries on).
+    const isRendering = !isNoRendering;
     return (
         <ScreenManagerBaseContext value={screenManager}>
-            {genStyleRendering(backgroundEffectManager)}
+            {isRendering && genStyleRendering(backgroundEffectManager)}
             {genStyleRendering(varyAppDocumentEffectManager)}
-            {genStyleRendering(foregroundEffectManager)}
-            <RenderBackdropComp screenManagerBase={screenManager} />
-            <ScreenBackgroundComp />
-            <ScreenForegroundComp isBehind />
-            <ScreenVaryAppDocumentComp />
-            <ScreenBibleComp />
-            <ScreenForegroundComp />
-            <ScreenDrawComp />
-            <ScreenFocusComp />
+            {isRendering && genStyleRendering(foregroundEffectManager)}
+            {isRendering && (
+                <RenderBackdropComp screenManagerBase={screenManager} />
+            )}
+            {isRendering && <ScreenBackgroundComp />}
+            {isRendering && <ScreenForegroundComp isBehind />}
+            <ScreenVaryAppDocumentComp isUnpainted={isNoRendering} />
+            {isRendering && <ScreenBibleComp />}
+            {isRendering && <ScreenForegroundComp />}
+            {isRendering && <ScreenDrawComp />}
+            {isRendering && <ScreenFocusComp />}
             {/* Last, for the reason given in `ScreenAppComp`. */}
-            <ScreenMaskComp />
+            {isRendering && <ScreenMaskComp />}
         </ScreenManagerBaseContext>
     );
 }

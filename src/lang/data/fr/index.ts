@@ -1622,6 +1622,9 @@ const dictionary = {
     'Position & Size': 'Position et taille',
     'PowerPoint Document': 'Document PowerPoint',
     'Preview Size Scale': "Échelle de l'aperçu",
+    'Stop rendering preview': "Arrêter le rendu de l'aperçu",
+    'Resume rendering preview': "Reprendre le rendu de l'aperçu",
+    'No rendering': 'Aucun rendu',
     Previous: 'Précédent',
     'Reset Date and Time to Now':
         "Réinitialiser à la date et l'heure actuelles",

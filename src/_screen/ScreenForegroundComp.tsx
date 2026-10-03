@@ -1,5 +1,7 @@
 import './ScreenForegroundComp.scss';
 
+import { useCallback } from 'react';
+
 import { useAppCurrentRef } from '../helper/appHooks';
 
 import {
@@ -26,19 +28,30 @@ export default function ScreenForegroundComp({
     useScreenManagerEvents(['refresh'], screenManager, () => {
         screenForegroundManagerRef.current.render(isBehindRef.current);
     });
+    // Stable on purpose: a ref callback that is new on every render is
+    // cleaned up and re-attached on every render, and the event hook above
+    // re-renders this on each refresh -- every widget would be torn down and
+    // rebuilt each time.
+    const assignRootContainer = useCallback(
+        (div: HTMLDivElement | null) => {
+            if (div === null) {
+                return;
+            }
+            if (isBehind) {
+                screenForegroundManager.rootContainerBehind = div;
+            } else {
+                screenForegroundManager.rootContainer = div;
+            }
+            return () => {
+                screenForegroundManager.releaseRootContainer(div, isBehind);
+            };
+        },
+        [screenForegroundManager, isBehind],
+    );
     return (
         <div
             id={isBehind ? 'foreground-behind' : 'foreground'}
-            ref={(div) => {
-                if (div === null) {
-                    return;
-                }
-                if (isBehind) {
-                    screenForegroundManager.rootContainerBehind = div;
-                } else {
-                    screenForegroundManager.rootContainer = div;
-                }
-            }}
+            ref={assignRootContainer}
             style={screenForegroundManager.containerStyle}
         />
     );

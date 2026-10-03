@@ -239,6 +239,19 @@ export default class ScreenFocusManager
         this.render();
     }
 
+    /**
+     * Let go of the mini preview's div when it unmounts -- its rendering was
+     * turned off, or its panel closed -- taking its pointer listeners with it.
+     * Only if it is still the div this manager holds (see
+     * `ScreenDrawManager.releaseDiv`), and never on the projected screen.
+     */
+    releaseDiv(div: HTMLDivElement) {
+        if (appProvider.isPageScreen || this._div !== div) {
+            return;
+        }
+        this.div = null;
+    }
+
     private setupContainer() {
         const div = this._div;
         if (div === null) {

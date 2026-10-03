@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-02c** (**W-22 — the Add Action menu counted right.** **Other Clear FG Items** holds ELEVEN per-widget clears (Messages, Video Show and Image Show joined the eight), and the run family under **Screen: Hide** is FIVE lines, **Next: Clear Interval** included. Read off the live menu in English and Khmer on the dev presenter, robot run 20261002-1644.)
+**workflowsVersion: 2026-10-02d** (**W-10 — a card can stop drawing its screen.** Asked for by the user: _for performance sake, I want to be able to toggle to disable mini-screen rendering_ — a low-spec computer drawing only `screen.html`, with every control the same. The eye right after **FG** in each card's header (**[en:tran:Stop rendering preview]**) turns that card's body into a striped **[en:tran:No rendering]** face; the audience screen, the clear buttons, presenting and every other control carry on. A slide's video or audio keeps its sound — only its play button, which is part of the picture, needs rendering back on. Remembered per screen. Verified live on the dev presenter 2026-10-02: with the card off, Slide 3 went to screen 0 and `screen.html` drew the background, the slide and the foreground clip; turning it back on showed the same; the presenter renderer fell from 7.7% to 1.7% CPU with both cards off.)
+
+Previous: **workflowsVersion: 2026-10-02c** (**W-22 — the Add Action menu counted right.** **Other Clear FG Items** holds ELEVEN per-widget clears (Messages, Video Show and Image Show joined the eight), and the run family under **Screen: Hide** is FIVE lines, **Next: Clear Interval** included. Read off the live menu in English and Khmer on the dev presenter, robot run 20261002-1644.)
 
 Previous: **workflowsVersion: 2026-10-02b** (**W-09 — a session's Hide row is that session's own.** Reported with a picture of the **[en:tran:Marquee Bottom]** panel on Session 2 offering **[en:tran:Hide Marquee Bottom]** for screen 0 while the scroll on that screen was Default's: _"the Session 2 is not showing but it have screen status"_. The Hide row listed every overlay of that kind whoever put it up, so the session in front read as live. It now lists only that session's — on all five single-slot panels and on Messages — and the on-screen dot on the owning session's button is where the other one is taken down. An overlay whose session is gone (a no-session one after **Default** was removed) belongs to the first session button, so none is left reachable only by **Clear Foreground**. Verified live on the dev presenter 2026-10-02: with Default's Khmer scroll on screen 0, Default's panel showed **Hide Marquee Bottom 0** and Session 2's showed none.)
 
@@ -1688,7 +1690,7 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, KB-03,
 
 **Goal:** manage the live output from the screen preview card.
 
-- The **mini screen** (right column, bottom) always mirrors the audience view; the
+- The **mini screen** (right column, bottom) mirrors the audience view; the
   zoom slider under it only rescales your preview, not the output. 📸
 - Behind everything the card draws sits **that monitor's own desktop wallpaper**.
   The audience screen is a transparent window, so wherever you have put nothing
@@ -1707,6 +1709,18 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, KB-03,
   **Clear All `F6` / BG `F7` / SL `F8` / BB `F9` / FG `F10`**
   ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Bible] / [en:tran:Clear Foreground]).
   A button is only lit while its layer has something to clear.
+- **Stop drawing the preview** (header, the eye right after **FG** —
+  **[en:tran:Stop rendering preview]**): for a slow computer. Click it and that card
+  stops drawing: its body turns into a striped pattern that says
+  **[en:tran:No rendering]**, while the audience screen goes on showing everything.
+  Every other button on the card still works, the clear buttons still light up, and
+  whatever you present from the lists still goes to the screen — only the picture
+  of it here is gone, and with it the work of drawing it twice. A slide's video or
+  audio still plays its sound as before, but its play button is part of the picture:
+  click the slashed eye (**[en:tran:Resume rendering preview]**) to bring the
+  picture back and start one by hand — the card picks up exactly what is on the
+  screen, and a clip that was playing carries on. The card remembers the choice for
+  that screen, even after a restart. 📸
 - **Lock** (header, the padlock): when locked (red), the screen refuses slide changes —
   handy during a live moment; click again (green) to unlock.
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
@@ -1720,7 +1734,7 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, KB-03,
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–4, or increment/decrement) for stage-view setups.
 
-_Verify: PR-04..07, SP-01..09, SP-23, KB-03..07, KB-13._
+_Verify: PR-04..07, SP-01..09, SP-23, SP-24, KB-03..07, KB-13._
 
 ---
 

@@ -10,6 +10,8 @@ const sendScreenMessageMock = vi.fn();
 const showAppContextMenuMock = vi.fn();
 const createRootRenderMock = vi.fn();
 const getSettingMock = vi.fn();
+// The preview card's "No rendering" toggle; off unless a test says otherwise.
+const useStateSettingBooleanSyncedMock = vi.fn(() => [false, vi.fn()]);
 const sendDataSyncMock = vi.fn((channel: string) => {
     if (channel === 'main:app:get-displays') {
         return {
@@ -66,6 +68,7 @@ const screenManagerMock: any = {
     screenBackgroundManager: {
         render: vi.fn(),
         rootContainer: null,
+        releaseRootContainer: vi.fn(),
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         backgroundSrc: { type: 'video', src: '/video.mp4' },
         isShowing: true,
@@ -82,6 +85,7 @@ const screenManagerMock: any = {
     screenBibleManager: {
         render: vi.fn(),
         div: null,
+        releaseDiv: vi.fn(),
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),
@@ -95,6 +99,7 @@ const screenManagerMock: any = {
         render: vi.fn(),
         rootContainer: null,
         rootContainerBehind: null,
+        releaseRootContainer: vi.fn(),
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),
@@ -110,6 +115,7 @@ const screenManagerMock: any = {
     screenFocusManager: {
         render: vi.fn(),
         div: null,
+        releaseDiv: vi.fn(),
         isShowing: false,
         clear: vi.fn(),
     },
@@ -149,6 +155,7 @@ vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     useStateSettingNumber: vi.fn(() => [9, setPreviewScaleMock]),
     useStateSettingString: vi.fn(() => ['paint', vi.fn()]),
+    useStateSettingBooleanSynced: useStateSettingBooleanSyncedMock,
 }));
 
 vi.mock('../helper/domHelpers', () => ({
@@ -593,6 +600,74 @@ describe('screen component smoke tests', () => {
                 },
             },
         });
+    });
+
+    test('a card with rendering off draws its pattern and keeps only the slide, unpainted', async () => {
+        const { default: MiniScreenAppComp } =
+            await import('./preview/MiniScreenAppComp');
+        const { default: ScreenPreviewerItemComp } =
+            await import('./preview/ScreenPreviewerItemComp');
+        const { default: ScreenPreviewerHeaderComp } =
+            await import('./preview/ScreenPreviewerHeaderComp');
+        const renderHeader = () => {
+            return renderToStaticMarkup(
+                <ScreenPreviewerHeaderComp
+                    isFullView={false}
+                    setIsFullView={() => {}}
+                />,
+            );
+        };
+
+        const renderingHeader = renderHeader();
+        expect(renderingHeader).toContain('Stop rendering preview');
+        expect(renderingHeader).toContain('bi-eye ');
+        expect(
+            renderToStaticMarkup(<ScreenPreviewerItemComp width={200} />),
+        ).not.toContain('mini-screen-no-rendering');
+
+        useStateSettingBooleanSyncedMock.mockImplementation(() => [
+            true,
+            vi.fn(),
+        ]);
+        try {
+            const header = renderHeader();
+            expect(header).toContain('Resume rendering preview');
+            expect(header).toContain('bi-eye-slash');
+            expect(header).toContain('aria-pressed="true"');
+
+            const card = renderToStaticMarkup(
+                <ScreenPreviewerItemComp width={200} />,
+            );
+            expect(card).toContain('mini-screen-no-rendering');
+            expect(card).toContain('No rendering');
+            // Still mounted: the slide layer inside it plays a slide's sound.
+            expect(card).toContain('mini-screen-previewer-custom-html');
+
+            const preview = renderToStaticMarkup(
+                <MiniScreenAppComp screenId={1} />,
+            );
+            // Every layer that only draws is gone, the desktop backdrop too...
+            for (const id of [
+                'background',
+                'foreground-behind',
+                'bible-screen-view',
+                'foreground',
+                'draw',
+                'focus',
+                'mask',
+            ]) {
+                expect(preview).not.toContain(`id="${id}"`);
+            }
+            expect(preview).not.toContain('background-image');
+            // ...and the slide stays in the document, skipped by the renderer.
+            expect(preview).toMatch(/id="slide"[^>]*content-visibility:hidden/);
+            expect(preview).toContain('.fade{}');
+        } finally {
+            useStateSettingBooleanSyncedMock.mockImplementation(() => [
+                false,
+                vi.fn(),
+            ]);
+        }
     });
 
     test('mounts the custom preview element into shadow DOM', async () => {

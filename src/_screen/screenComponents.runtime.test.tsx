@@ -152,6 +152,7 @@ function createScreenManagerStub() {
         screenBackgroundManager: {
             render: vi.fn(),
             rootContainer: null,
+            releaseRootContainer: vi.fn(),
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -162,6 +163,7 @@ function createScreenManagerStub() {
             render: vi.fn(),
             rootContainer: null,
             rootContainerBehind: null,
+            releaseRootContainer: vi.fn(),
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -181,6 +183,7 @@ function createScreenManagerStub() {
         screenFocusManager: {
             render: vi.fn(),
             div: null,
+            releaseDiv: vi.fn(),
         },
         screenVaryAppDocumentManager: {
             render: vi.fn(),
@@ -195,6 +198,7 @@ function createScreenManagerStub() {
         screenBibleManager: {
             render: vi.fn(),
             div: null,
+            releaseDiv: vi.fn(),
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -371,6 +375,52 @@ describe('screen component runtime behavior', () => {
         );
 
         tracked.remove();
+        root = createRoot(container);
+    });
+
+    test('each drawing layer hands its own element back when it unmounts, and not on a re-render', async () => {
+        const { default: ScreenAppComp } = await import('./ScreenAppComp');
+
+        await act(async () => {
+            root.render(<ScreenAppComp />);
+        });
+        const background = container.querySelector('#background');
+        const bible = container.querySelector('#bible-screen-view');
+        const foreground = container.querySelector('#foreground');
+        const foregroundBehind = container.querySelector('#foreground-behind');
+        const focus = container.querySelector('#focus');
+        const {
+            screenBackgroundManager,
+            screenBibleManager,
+            screenForegroundManager,
+            screenFocusManager,
+        } = screenManager;
+
+        // A re-render must not let go: these layers re-render on every refresh
+        // event, and a release there would tear every overlay down and rebuild
+        // it each time.
+        await act(async () => {
+            root.render(<ScreenAppComp />);
+        });
+        expect(screenForegroundManager.releaseRootContainer).not.toBeCalled();
+        expect(screenFocusManager.releaseDiv).not.toBeCalled();
+
+        await act(async () => {
+            root.unmount();
+        });
+        expect(screenBackgroundManager.releaseRootContainer).toBeCalledWith(
+            background,
+        );
+        expect(screenBibleManager.releaseDiv).toBeCalledWith(bible);
+        expect(screenForegroundManager.releaseRootContainer).toBeCalledWith(
+            foreground,
+            false,
+        );
+        expect(screenForegroundManager.releaseRootContainer).toBeCalledWith(
+            foregroundBehind,
+            true,
+        );
+        expect(screenFocusManager.releaseDiv).toBeCalledWith(focus);
         root = createRoot(container);
     });
 

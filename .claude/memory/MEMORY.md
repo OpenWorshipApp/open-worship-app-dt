@@ -159,3 +159,4 @@
 - [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md)
 - [A foreground camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label
 - [Message editors hold local text](message-editor-text-is-local-state.md)
+- [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there; drawing layers release on unmount

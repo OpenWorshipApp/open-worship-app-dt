@@ -15,10 +15,13 @@ export const DRAW_PAINT_SIZE_SETTING_PREFIX = 'draw-paint-size-';
 export const DRAW_PAINT_STRAIGHT_SETTING_PREFIX = 'draw-paint-straight-';
 export const DRAW_PAINT_3D_SETTING_PREFIX = 'draw-paint-3d-';
 export const DRAW_PAINT_DOTS_SETTING_PREFIX = 'draw-paint-dots-';
+// The preview card's "No rendering" toggle (`miniScreenRenderingHelpers`).
+export const MINI_SCREEN_NO_RENDERING_SETTING_PREFIX =
+    'mini-screen-no-rendering-';
 
 // Every prefix above. Add new per-screen previewer settings to BOTH the export
 // above and this list, or deleting a screen will leave them behind.
-export const drawPanelSettingPrefixList = [
+export const previewerSettingPrefixList = [
     DRAW_MODE_SETTING_PREFIX,
     DRAW_PAINT_COLOR_SETTING_PREFIX,
     DRAW_PAINT_ALPHA_SETTING_PREFIX,
@@ -26,4 +29,5 @@ export const drawPanelSettingPrefixList = [
     DRAW_PAINT_STRAIGHT_SETTING_PREFIX,
     DRAW_PAINT_3D_SETTING_PREFIX,
     DRAW_PAINT_DOTS_SETTING_PREFIX,
+    MINI_SCREEN_NO_RENDERING_SETTING_PREFIX,
 ];

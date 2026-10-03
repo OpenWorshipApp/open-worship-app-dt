@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { useAppCurrentRef } from '../helper/appHooks';
 
 import {
@@ -16,14 +18,19 @@ export default function ScreenMaskComp() {
     useScreenManagerEvents(['refresh'], screenManager, () => {
         screenMaskManagerRef.current?.render();
     });
-    return (
-        <div
-            id="mask"
-            ref={(div) => {
-                if (div !== null && screenMaskManager !== undefined) {
-                    screenMaskManager.div = div;
-                }
-            }}
-        />
+    // Stable, so a re-render (each refresh event) does not detach and
+    // re-attach the mask; the cleanup runs only on unmount.
+    const assignDiv = useCallback(
+        (div: HTMLDivElement | null) => {
+            if (div === null || screenMaskManager === undefined) {
+                return;
+            }
+            screenMaskManager.div = div;
+            return () => {
+                screenMaskManager.releaseDiv(div);
+            };
+        },
+        [screenMaskManager],
     );
+    return <div id="mask" ref={assignDiv} />;
 }

@@ -150,9 +150,14 @@ export default function ScreenBibleComp() {
     useScreenForegroundManagerEvents(['update'], screenForegroundManager);
     const div = useRef<HTMLDivElement>(null);
     useAppEffect(() => {
-        if (div.current) {
-            screenBibleManager.div = div.current;
+        const element = div.current;
+        if (element === null) {
+            return;
         }
+        screenBibleManager.div = element;
+        return () => {
+            screenBibleManager.releaseDiv(element);
+        };
     }, [screenBibleManager, div.current]);
     const marqueeTopData =
         screenForegroundManager.foregroundData.marqueeTopData;

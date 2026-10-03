@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-09-27",
+    "updated": "2026-10-02",
     "sections": [
         {
             "id": "screens",
@@ -90,6 +90,25 @@
                         "tools": [
                             "owa_hide_screens"
                         ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "stop-preview-rendering",
+                    "text": "How do I stop the mini screen drawing so a slow computer runs faster?",
+                    "kind": "howto",
+                    "keywords": [
+                        "no rendering",
+                        "slow computer",
+                        "low spec",
+                        "lag",
+                        "performance",
+                        "turn off preview",
+                        "disable mini screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "find": "Stop rendering preview",
                         "guide": true
                     }
                 },

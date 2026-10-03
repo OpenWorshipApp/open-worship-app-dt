@@ -7,7 +7,7 @@ import {
 } from '../../helper/settingHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { SCREEN_MANAGER_SETTING_NAME } from './screenHelpers';
-import { drawPanelSettingPrefixList } from './screenSettingKeyHelpers';
+import { previewerSettingPrefixList } from './screenSettingKeyHelpers';
 
 // A deleted screen's id is REUSED: `genNewScreenManagerBase` hands out the
 // lowest free id, so the next screen the user adds after deleting screen 1 IS
@@ -66,12 +66,12 @@ function removeScreenEntryFromOnScreenSetting(
 }
 
 // Per-screen keys that no manager owns: the display assignment (written by
-// `ScreenManagerBase`'s displayId setter) and the previewer draw-panel
+// `ScreenManagerBase`'s displayId setter) and the previewer card's own
 // settings. Managers drop their own keys in their `delete()`.
 function getUnownedPerScreenSettingKeys(screenId: number) {
     return [
         `${SCREEN_MANAGER_SETTING_NAME}-pid-${screenId}`,
-        ...drawPanelSettingPrefixList.map((prefix) => {
+        ...previewerSettingPrefixList.map((prefix) => {
             return `${prefix}${screenId}`;
         }),
     ];

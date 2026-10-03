@@ -155,18 +155,34 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const foregroundData = allForegroundDataList[this.key] ?? {};
         this.foregroundData =
             ScreenForegroundManager.parseAllForegroundData(foregroundData);
+        // Each renderer runs only while its root is mounted. Drawn with no root,
+        // a widget still RUNS inside a throwaway div nobody sees -- a
+        // countdown's animation frames, a camera's open tracks, a looping clip
+        // -- which is all a mini preview with its rendering turned off (or its
+        // panel closed) would cost. Attaching a root renders everything it
+        // should hold, so nothing is lost by waiting.
+        const whenMounted = (render: (data: any) => void) => {
+            return (data: any) => {
+                if (this.getMountedRoot(data?.isBehind === true) !== null) {
+                    render(data);
+                }
+            };
+        };
         this.rendererMap = new Map<string, (data: any) => void>([
-            ['messageDataList', this.renderMessage.bind(this)],
-            ['countdownData', this.renderCountdown.bind(this)],
-            ['stopwatchData', this.renderStopwatch.bind(this)],
-            ['timeDataList', this.renderTime.bind(this)],
-            ['marqueeTopData', this.renderMarqueeTop.bind(this)],
-            ['marqueeBottomData', this.renderMarqueeBottom.bind(this)],
-            ['quickTextData', this.renderQuickText.bind(this)],
-            ['cameraDataList', this.renderCamera.bind(this)],
-            ['webDataList', this.renderWeb.bind(this)],
-            ['videoDataList', this.renderVideo.bind(this)],
-            ['imageDataList', this.renderImage.bind(this)],
+            ['messageDataList', whenMounted(this.renderMessage.bind(this))],
+            ['countdownData', whenMounted(this.renderCountdown.bind(this))],
+            ['stopwatchData', whenMounted(this.renderStopwatch.bind(this))],
+            ['timeDataList', whenMounted(this.renderTime.bind(this))],
+            ['marqueeTopData', whenMounted(this.renderMarqueeTop.bind(this))],
+            [
+                'marqueeBottomData',
+                whenMounted(this.renderMarqueeBottom.bind(this)),
+            ],
+            ['quickTextData', whenMounted(this.renderQuickText.bind(this))],
+            ['cameraDataList', whenMounted(this.renderCamera.bind(this))],
+            ['webDataList', whenMounted(this.renderWeb.bind(this))],
+            ['videoDataList', whenMounted(this.renderVideo.bind(this))],
+            ['imageDataList', whenMounted(this.renderImage.bind(this))],
         ]);
         this.setterMap = new Map<
             string,
@@ -285,6 +301,46 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         }
         this._rootContainer = rootContainer;
         this.render(false);
+    }
+
+    private getMountedRoot(isBehind: boolean) {
+        return isBehind ? this._rootContainerBehind : this._rootContainer;
+    }
+
+    /**
+     * Let go of one of the mini preview's roots when it unmounts -- its
+     * rendering was turned off, or its panel closed. Removing the widgets runs
+     * each one's own remove handler, which is what stops a countdown's frames,
+     * a camera's tracks and a clip's player; `foregroundData` stays, and the
+     * next root renders it again.
+     *
+     * Only if it is still the root this manager holds: a card remounted for a
+     * colour-note change attaches its new root first, and that render has
+     * already moved the widgets (see `ScreenDrawManager.releaseDiv`). Never on
+     * the projected screen, whose layers are the window itself.
+     */
+    releaseRootContainer(rootContainer: HTMLDivElement, isBehind: boolean) {
+        if (
+            appProvider.isPageScreen ||
+            this.getMountedRoot(isBehind) !== rootContainer
+        ) {
+            return;
+        }
+        for (const [key, data] of Object.entries(this.foregroundData)) {
+            if (data === null || !this.rendererMap.has(key)) {
+                continue;
+            }
+            for (const item of Array.isArray(data) ? data : [data]) {
+                if ((item?.isBehind === true) === isBehind) {
+                    this.removeDivContainer(item);
+                }
+            }
+        }
+        if (isBehind) {
+            this._rootContainerBehind = null;
+        } else {
+            this._rootContainer = null;
+        }
     }
 
     removeDivContainer(data: any) {

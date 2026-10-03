@@ -183,6 +183,21 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         this.render();
     }
 
+    /**
+     * Let go of the mini preview's div when it unmounts -- its rendering was
+     * turned off, or its panel closed -- so a passage presented meanwhile is
+     * not still laid out into a detached div. The data stays; the next div
+     * renders it. Only if it is still the div this manager holds (a card
+     * remounted for a colour-note change attaches its new one first, see
+     * `ScreenDrawManager.releaseDiv`), and never on the projected screen.
+     */
+    releaseDiv(div: HTMLDivElement) {
+        if (appProvider.isPageScreen || this._div !== div) {
+            return;
+        }
+        this._div = null;
+    }
+
     get screenViewData() {
         return this._screenViewData;
     }

@@ -90,6 +90,37 @@ class ScreenBackgroundManager
         this.render();
     }
 
+    /**
+     * Let go of the mini preview's root when it unmounts -- its rendering was
+     * turned off, or its panel closed. Dropping the reference alone would
+     * leave what it holds RUNNING in a detached div: a looping clip still
+     * decoding and firing `timeupdate`, a camera still open. So it is torn
+     * down here; `backgroundSrc` stays, and the next root renders it again.
+     *
+     * The root's content goes whichever root it is -- it is leaving the
+     * document either way. The reference and the camera go only if it is
+     * still the root this manager holds: a card remounted for a colour-note
+     * change attaches its new root before the old one's cleanup runs (see
+     * `ScreenDrawManager.releaseDiv`), and that render has already stopped the
+     * old camera. Never on the projected screen, whose layers are the window
+     * itself.
+     */
+    releaseRootContainer(rootContainer: HTMLDivElement) {
+        if (appProvider.isPageScreen) {
+            return;
+        }
+        for (const videoElement of rootContainer.querySelectorAll('video')) {
+            releaseMediaElement(videoElement);
+        }
+        rootContainer.replaceChildren();
+        if (this._rootContainer !== rootContainer) {
+            return;
+        }
+        this._rootContainer = null;
+        this.clearTracks();
+        this.clearTracks = () => {};
+    }
+
     get backgroundSrc() {
         return this._backgroundSrc;
     }
@@ -627,6 +658,13 @@ class ScreenBackgroundManager
                 this.backgroundSrc,
             );
             promise.then((clearTracks) => {
+                if (this.rootContainer !== rootContainer) {
+                    // Let go of (or replaced) while a camera was opening: the
+                    // root it was meant for is gone, and whatever holds the
+                    // background now has rendered it itself.
+                    clearTracks();
+                    return;
+                }
                 this._handleBackgroundVideo(newDiv);
                 aminData.animIn(newDiv, rootContainer);
                 this.removeOldElements(aminData, childList, this.clearTracks);

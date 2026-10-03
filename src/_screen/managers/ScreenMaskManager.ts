@@ -131,6 +131,19 @@ export default class ScreenMaskManager
         this.render();
     }
 
+    /**
+     * Let go of the mini preview's div when it unmounts -- its rendering was
+     * turned off, or its panel closed. Only if it is still the div this
+     * manager holds (see `ScreenDrawManager.releaseDiv`), and never on the
+     * projected screen.
+     */
+    releaseDiv(div: HTMLDivElement) {
+        if (appProvider.isPageScreen || this._div !== div) {
+            return;
+        }
+        this.div = null;
+    }
+
     setMaskData(data: MaskDataType, isNoSyncGroup = false) {
         if (this.screenManagerBase.checkIsLockedWithMessage()) {
             return;
