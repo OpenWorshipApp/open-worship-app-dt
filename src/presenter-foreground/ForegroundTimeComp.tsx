@@ -19,7 +19,10 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import type { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
+import {
+    type ForegroundTimeDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
@@ -100,10 +103,12 @@ function getHourOffsetFromCity(event: any) {
 function TimeInSetComp({
     id,
     genStyle,
+    getIsBehind,
     showingScreenIdDataList,
 }: Readonly<{
     id: string;
     genStyle: () => CSSProperties;
+    getIsBehind: () => boolean;
     showingScreenIdDataList: [number, ForegroundTimeDataType][];
 }>) {
     const [cityName, setCityName] = useStateSettingString<string>(
@@ -121,15 +126,25 @@ function TimeInSetComp({
     );
     const genTimeData = useCallback(
         (newIs24HourFormat = is24HourFormat): ForegroundTimeDataType => {
-            return {
-                id,
-                timezoneMinuteOffset,
-                title: cityName || null,
-                is24HourFormat: newIs24HourFormat,
-                extraStyle: genStyle(),
-            };
+            return withForegroundLayer(
+                {
+                    id,
+                    timezoneMinuteOffset,
+                    title: cityName || null,
+                    is24HourFormat: newIs24HourFormat,
+                    extraStyle: genStyle(),
+                },
+                getIsBehind(),
+            );
         },
-        [id, timezoneMinuteOffset, cityName, is24HourFormat, genStyle],
+        [
+            id,
+            timezoneMinuteOffset,
+            cityName,
+            is24HourFormat,
+            genStyle,
+            getIsBehind,
+        ],
     );
     const isAmPmFormat = !is24HourFormat;
     const handleShowing = useCallback(
@@ -363,15 +378,19 @@ function ForegroundTimeItemComp({
     );
     // per-instance: one item per time widget id
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
-    const { genStyle, element: propsSetting } = useForegroundPropsSetting({
+    const {
+        genStyle,
+        getIsBehind,
+        element: propsSetting,
+    } = useForegroundPropsSetting({
         prefix: 'time-' + id,
-        onChange: (extraStyle) => {
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 refreshAllTimes(showingScreenIdDataList, (timeData) => {
-                    return {
-                        ...timeData,
-                        extraStyle,
-                    };
+                    return withForegroundLayer(
+                        { ...timeData, extraStyle },
+                        isBehind,
+                    );
                 });
             });
         },
@@ -414,6 +433,7 @@ function ForegroundTimeItemComp({
             <div className="fg-body">
                 <TimeInSetComp
                     genStyle={genStyle}
+                    getIsBehind={getIsBehind}
                     id={id}
                     showingScreenIdDataList={showingScreenIdDataList}
                 />

@@ -10,6 +10,7 @@ import {
     genForegroundDragInf,
     toForegroundDragIconName,
     toForegroundDragLabel,
+    toForegroundRowKey,
 } from './foregroundDragHelpers';
 
 function genManager() {
@@ -105,5 +106,35 @@ describe('foreground drag helpers', () => {
             }),
         );
         expect(manager.addVideoData).toHaveBeenCalledWith({ id: 'v' });
+    });
+
+    test('stamps the row that put a slot widget up, so the run sheet can tell rows apart', async () => {
+        const manager = genManager();
+        const fiveMinutes = { durationSecond: 300 };
+        await applyForegroundDragData(manager as any, {
+            target: 'countdown',
+            data: fiveMinutes,
+        });
+        await applyForegroundDragData(manager as any, {
+            target: 'stopwatch',
+            data: {},
+        });
+        await applyForegroundDragData(manager as any, {
+            target: 'quick-text',
+            data: { markdownText: 'Hi' },
+        });
+        expect(manager.setCountdownData.mock.calls[0][0].rowKey).toBe(
+            toForegroundRowKey(fiveMinutes),
+        );
+        expect(manager.setStopwatchData.mock.calls[0][0].rowKey).toBe(
+            toForegroundRowKey({}),
+        );
+        expect(manager.setQuickTextData.mock.calls[0][0].rowKey).toBe(
+            toForegroundRowKey({ markdownText: 'Hi' }),
+        );
+        // Two rows that differ only in their numbers are two different keys.
+        expect(toForegroundRowKey({ durationSecond: 300 })).not.toBe(
+            toForegroundRowKey({ durationSecond: 600 }),
+        );
     });
 });

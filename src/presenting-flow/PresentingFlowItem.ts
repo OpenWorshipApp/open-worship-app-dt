@@ -6,7 +6,6 @@ import { deserializeDragData } from '../helper/dragHelpers';
 import FileSource from '../helper/FileSource';
 import { cloneJson } from '../helper/helpers';
 import { handleError } from '../helper/errorHelpers';
-import * as loggerHelpers from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     toForegroundDragIconName,
@@ -1202,7 +1201,6 @@ export default class PresentingFlowItem {
             // that quietly does nothing when the operator presses it mid-service.
             const action = findPresentingFlowAction(json.data);
             if (action === null) {
-                loggerHelpers.appError(json);
                 throw new Error('Invalid presenting flow action id');
             }
             // A run action armed with a NUMBER is that number — one carrying
@@ -1227,7 +1225,6 @@ export default class PresentingFlowItem {
                     !Number.isFinite(json.actionNumber) ||
                     json.actionNumber <= 0)
             ) {
-                loggerHelpers.appError(json);
                 throw new Error('Invalid presenting flow action number');
             }
             return;
@@ -1241,7 +1238,6 @@ export default class PresentingFlowItem {
                 (typeof json.filePath !== 'string' ||
                     typeof json.id !== 'number'))
         ) {
-            loggerHelpers.appError(json);
             throw new Error('Invalid presenting flow item data');
         }
     }

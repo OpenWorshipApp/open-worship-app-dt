@@ -75,6 +75,7 @@ import {
     setSetting,
     toFilePathSettingKey,
     useStateSettingBoolean,
+    useStateSettingBooleanSynced,
     useStateSettingNumber,
     useStateSettingString,
     useWatchStateSettingString,
@@ -224,6 +225,57 @@ describe('helper settingHelpers', () => {
         await probe.update((prevValue) => !prevValue);
         expect(probe.value).toBe(true);
         expect(setItemMock).toHaveBeenLastCalledWith('bool-setting', 'true');
+    });
+
+    test('a synced boolean setting is drawn by every instance holding its key', async () => {
+        const seen: Record<string, boolean> = {};
+        const setters: Record<
+            string,
+            Dispatch<SetStateAction<boolean>> | undefined
+        > = {};
+        function Probe({
+            id,
+            settingName,
+        }: {
+            id: string;
+            settingName: string;
+        }) {
+            const [value, setValue] = useStateSettingBooleanSynced(
+                settingName,
+                true,
+            );
+            seen[id] = value;
+            setters[id] = setValue;
+            return null;
+        }
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(
+                <>
+                    <Probe id="a" settingName="expanded-doc" />
+                    <Probe id="b" settingName="expanded-doc" />
+                    <Probe id="other" settingName="expanded-other" />
+                </>,
+            );
+        });
+        expect(seen).toEqual({ a: true, b: true, other: true });
+
+        await act(async () => {
+            setters.a?.(false);
+        });
+        // Both entries of the shared key fold together; the other key is left.
+        expect(seen).toEqual({ a: false, b: false, other: true });
+        // Written once, not once per instance.
+        expect(
+            setItemMock.mock.calls.filter(([key]) => {
+                return key === 'expanded-doc';
+            }),
+        ).toEqual([['expanded-doc', 'false']]);
+
+        await act(async () => {
+            setters.b?.((previous) => !previous);
+        });
+        expect(seen).toEqual({ a: true, b: true, other: true });
     });
 
     test('hydrates stored boolean, string and number settings', async () => {

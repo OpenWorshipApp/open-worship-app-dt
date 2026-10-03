@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-01b** (**W-06 step 3 — a verse goes up with its button, not a double-click — from the release robot run 20261001-1953.** Asked for by the user ("fix all findings"). The step said to double-click the verse in the lookup's preview to present it; there a double-click selects a word, opens the verse-mark toolbar and brings the verse into view, and presents nothing. It now names the control that does it — **Save bible item and show on screen**, in the passage's title row while the mouse is over it — and its shortcut **Ctrl+Shift+Enter**, and says the passage is saved to the **Bibles** list as it goes up. Verified live on the dev Presenter 2026-10-01: **Ctrl+Shift+Enter** in the lookup put Genesis 1:1 (KJV) on screen 0 and added it to the **Bibles** list, and **Clear Bible** took it off.)
+**workflowsVersion: 2026-10-02c** (**W-22 — the Add Action menu counted right.** **Other Clear FG Items** holds ELEVEN per-widget clears (Messages, Video Show and Image Show joined the eight), and the run family under **Screen: Hide** is FIVE lines, **Next: Clear Interval** included. Read off the live menu in English and Khmer on the dev presenter, robot run 20261002-1644.)
+
+Previous: **workflowsVersion: 2026-10-02b** (**W-09 — a session's Hide row is that session's own.** Reported with a picture of the **[en:tran:Marquee Bottom]** panel on Session 2 offering **[en:tran:Hide Marquee Bottom]** for screen 0 while the scroll on that screen was Default's: _"the Session 2 is not showing but it have screen status"_. The Hide row listed every overlay of that kind whoever put it up, so the session in front read as live. It now lists only that session's — on all five single-slot panels and on Messages — and the on-screen dot on the owning session's button is where the other one is taken down. An overlay whose session is gone (a no-session one after **Default** was removed) belongs to the first session button, so none is left reachable only by **Clear Foreground**. Verified live on the dev presenter 2026-10-02: with Default's Khmer scroll on screen 0, Default's panel showed **Hide Marquee Bottom 0** and Session 2's showed none.)
+
+Previous: **workflowsVersion: 2026-10-02** (**W-09 — every foreground component gained _Behind Slide_.** Asked for by the user: _as a user I want to be able to render foreground behind bible/slide_. A checkbox in each component's **Properties**, right above **Always on Top**, puts that session's item behind the slide and the Bible text and over the background; ticking it on an item already up moves it at once, and **Always on Top** greys out while it is ticked. Verified live on the dev presenter 2026-10-02: a Marquee Bottom on screen 0 disappeared behind a full-screen slide in the Mini Screen when ticked, and was back over the slide's last line when unticked.)
+
+Previous: **workflowsVersion: 2026-10-01b** (**W-06 step 3 — a verse goes up with its button, not a double-click — from the release robot run 20261001-1953.** Asked for by the user ("fix all findings"). The step said to double-click the verse in the lookup's preview to present it; there a double-click selects a word, opens the verse-mark toolbar and brings the verse into view, and presents nothing. It now names the control that does it — **Save bible item and show on screen**, in the passage's title row while the mouse is over it — and its shortcut **Ctrl+Shift+Enter**, and says the passage is saved to the **Bibles** list as it goes up. Verified live on the dev Presenter 2026-10-01: **Ctrl+Shift+Enter** in the lookup put Genesis 1:1 (KJV) on screen 0 and added it to the **Bibles** list, and **Clear Bible** took it off.)
 
 Previous: **workflowsVersion: 2026-10-01** (**W-29's translation note and W-38 step 8 — fixes from the reader-only robot run 20261001-1149.** Asked for by the user ("fix all findings"). A name's **Gender** and a place's **Type** are now said in the lookup language, like a person's kind (W-29 said they were not); and a path search that finds nothing says how far it looked — **No connection found within 30 steps** (W-38). W-38 step 3's counts follow the dataset, which grew: Jacob's badge reads **47**, his children **16**. Verified live on the dev Reader 2026-10-01: Jacob's detail panel reads **ប្រុស** in its chip and its Gender row, Siloam's reads **ស្រះ** for its Type, and Jacob → Jesus answers **No connection found within 30 steps**, inline and as a toast.)
 
@@ -1611,14 +1617,16 @@ button:
   that dot is the only sign of something live belonging to a session you are not
   looking at. Removing a session **takes what it put up off the screens first**, so
   nothing is left behind with no button to hide it.
-- A session's _Properties_ act on **that session's own overlay and nothing else**.
-  The Hide row still reaches whatever is live, whichever session put it there —
-  there must always be a way to take something off a projector — but changing
-  size, colour or place while you are on another session no longer re-dresses
-  the overlay somebody else's session has on the wall.
+- A session's _Properties_ and its Hide row act on **that session's own overlay and
+  nothing else**. Changing size, colour or place on one session never re-dresses
+  what another session has on the wall, and a session with nothing up shows no
+  Hide button at all. To take down what another session put up, press the session
+  button carrying the on-screen dot and use the Hide button there. Something that
+  went up with no session (a dragged run-sheet row, the assistant) belongs to the
+  first session button, which is **Default** unless Default was removed.
 - **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
   (several message editors, several clocks), so two sessions can each have something
-  up at once and both stay listed on the Hide row. **[en:tran:Countdown]**,
+  up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
   thing on a screen, so showing from another session replaces what was there and the
   on-screen dot moves to the session that now owns it.
@@ -1629,6 +1637,13 @@ button:
 - **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
+- **[en:tran:Behind Slide]** (every foreground component, right above _Always on
+  Top_) puts that session's item **behind** the slide and the Bible text — over the
+  background, under the words — so a logo, a clock or a falling-snow clip never covers
+  the lyrics. Tick it while the item is up and it moves at once; untick it and it comes
+  back over the slide. A slide that fills the whole screen with its own picture hides
+  it completely, which is the point. While it is ticked, _Always on Top_ is greyed out:
+  an item behind the slide stays behind it, whatever its number.
 - The **stopwatch** button in that same row opens the slide show:
   **[en:tran:Start Slide Show]** and the seconds beside it. It keeps running while you
   are looking at another session, or with the whole Foreground panel closed, and stops
@@ -1667,7 +1682,7 @@ show button is offered, never pressed unasked. **/countdown 5**, **/countdown
 10:30** and **/marquee Please silence your phones** do the same with no assistant,
 and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6).
 
-_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, KB-03, KB-07, CB-67._
+_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, KB-03, KB-07, CB-67._
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 
@@ -2210,11 +2225,7 @@ thing to another machine.
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
-   marquee running: **Clear FG
-   Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown**
-   (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Camera Show** (`CM`) and **Web Show**
-   (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel
-   does; the `Time`, `Camera Show` and `Web Show` ones clear all of their items at once.
+   marquee running: **Clear FG Messages** (`MS`), **Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown** (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Video Show** (`VD`), **Image Show** (`IM`), **Camera Show** (`CM`) and **Web Show** (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show` and `Web Show` ones clear all of their items at once.
    The panel's **Background Images Slide Show** has no action of its own — it is a
    _background_ despite sitting in that panel, so **Clear Background** is what stops it.
 
@@ -2353,8 +2364,7 @@ thing to another machine.
 
    **Where the actions live in the menu.** **Add Action** opens with **Clear Screen** —
    one row that adds nothing and opens the five clears, with **Other Clear FG Items**
-   under them for the eight per-widget foreground clears — then **Screen: Show** /
-   **Screen: Hide**, then the four that drive the run.
+   under them for the eleven per-widget foreground clears — then **Screen: Show** / **Screen: Hide**, then the five that drive the run.
 
 3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to

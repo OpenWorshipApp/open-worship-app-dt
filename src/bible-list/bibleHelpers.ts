@@ -296,9 +296,19 @@ export async function openBibleItemContextMenu(
     showAppContextMenu(event, [...extraMenuItems, ...menuItem]);
 }
 
+/**
+ * A passage AND the version it is in. The title alone ("John 3:16") is the
+ * same in every version of one language, so matching on it lit a saved KJV
+ * row while NIV was on the screen.
+ */
+function toOnScreenBibleKey(bibleKey: string, title: string) {
+    return `${bibleKey}|${title}`;
+}
+
+/** `toOnScreenBibleKey` of every version of every passage on a screen. */
 export async function getOnScreenBibleItems() {
     const allScreenManager = getAllScreenManagers();
-    let titleList: string[] = [];
+    const keySet = new Set<string>();
     for (const screenManager of allScreenManager) {
         for (const bibleItemDataList of Object.values(
             screenManager.screenBibleManager.screenViewData?.bibleItemData ??
@@ -306,27 +316,37 @@ export async function getOnScreenBibleItems() {
         )) {
             if (Array.isArray(bibleItemDataList)) {
                 for (const bibleItemData of bibleItemDataList) {
-                    titleList.push(bibleItemData.title);
+                    keySet.add(
+                        toOnScreenBibleKey(
+                            bibleItemData.bibleKey,
+                            bibleItemData.title,
+                        ),
+                    );
                 }
             } else {
-                titleList.push(
-                    await bibleRenderHelper.toTitle(
+                keySet.add(
+                    toOnScreenBibleKey(
                         bibleItemDataList.bibleKey,
-                        bibleItemDataList.target,
+                        await bibleRenderHelper.toTitle(
+                            bibleItemDataList.bibleKey,
+                            bibleItemDataList.target,
+                        ),
                     ),
                 );
             }
         }
     }
-    titleList = Array.from(new Set(titleList));
-    return titleList;
+    return Array.from(keySet);
 }
 
 export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
-    const titleList = await getOnScreenBibleItems();
+    const keyList = await getOnScreenBibleItems();
+    if (keyList.length === 0) {
+        return false;
+    }
     for (const bibleItem of items) {
         const title = await bibleItem.toTitle();
-        if (titleList.includes(title)) {
+        if (keyList.includes(toOnScreenBibleKey(bibleItem.bibleKey, title))) {
             return true;
         }
     }

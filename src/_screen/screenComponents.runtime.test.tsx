@@ -160,7 +160,8 @@ function createScreenManagerStub() {
         },
         screenForegroundManager: {
             render: vi.fn(),
-            div: null,
+            rootContainer: null,
+            rootContainerBehind: null,
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -294,9 +295,16 @@ describe('screen component runtime behavior', () => {
             screenManager.screenVaryAppDocumentManager.render,
         ).toHaveBeenCalledOnce();
         expect(screenManager.screenBibleManager.render).toHaveBeenCalledOnce();
+        // Two foreground roots, each re-rendering only its OWN overlays.
         expect(
             screenManager.screenForegroundManager.render,
-        ).toHaveBeenCalledOnce();
+        ).toHaveBeenCalledTimes(2);
+        expect(
+            screenManager.screenForegroundManager.render,
+        ).toHaveBeenCalledWith(true);
+        expect(
+            screenManager.screenForegroundManager.render,
+        ).toHaveBeenCalledWith(false);
         expect(screenManager.screenDrawManager.render).toHaveBeenCalledOnce();
         expect(screenManager.screenBackgroundManager.rootContainer).toBe(
             container.querySelector('#background'),
@@ -307,9 +315,29 @@ describe('screen component runtime behavior', () => {
         expect(screenManager.screenBibleManager.div).toBe(
             container.querySelector('#bible-screen-view'),
         );
-        expect(screenManager.screenForegroundManager.div).toBe(
+        expect(screenManager.screenForegroundManager.rootContainer).toBe(
             container.querySelector('#foreground'),
         );
+        expect(screenManager.screenForegroundManager.rootContainerBehind).toBe(
+            container.querySelector('#foreground-behind'),
+        );
+        // The behind root is what puts an overlay UNDER the words: it has to
+        // sit after the background and before the slide and the Bible view.
+        const layerIdList = Array.from(
+            container.querySelectorAll(
+                '#background, #foreground-behind, #slide, ' +
+                    '#bible-screen-view, #foreground',
+            ),
+        ).map((element) => {
+            return element.id;
+        });
+        expect(layerIdList).toEqual([
+            'background',
+            'foreground-behind',
+            'slide',
+            'bible-screen-view',
+            'foreground',
+        ]);
         expect(screenManager.screenDrawManager.div).toBe(
             container.querySelector('#draw'),
         );

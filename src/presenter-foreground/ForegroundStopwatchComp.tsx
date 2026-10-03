@@ -11,7 +11,10 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import type { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
+import {
+    type ForegroundStopwatchDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
@@ -26,16 +29,16 @@ import {
 function refreshAllStopwatches(
     showingScreenIds: [number, ForegroundStopwatchDataType][],
     extraStyle: CSSProperties,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIds) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
                 screenForegroundManager.setStopwatchData(null);
-                screenForegroundManager.setStopwatchData({
-                    ...data,
-                    extraStyle,
-                });
+                screenForegroundManager.setStopwatchData(
+                    withForegroundLayer({ ...data, extraStyle }, isBehind),
+                );
             },
         );
     }
@@ -79,6 +82,7 @@ export default function ForegroundStopwatchComp() {
     // the small corner one behind a testimony.
     const {
         activeId,
+        sessionIds,
         prefix,
         element: sessionsElement,
     } = useForegroundSessions({
@@ -86,30 +90,45 @@ export default function ForegroundStopwatchComp() {
         toPrefix: (suffix) => {
             return `stopwatch${suffix}`;
         },
-        checkIsOnScreen: (sessionId) => {
+        checkIsOnScreen: (sessionId, _suffix, idList) => {
             return showingScreenIdDataList.some(([, data]) => {
-                return checkIsSessionData(data, sessionId);
+                return checkIsSessionData(data, sessionId, idList);
             });
         },
-        hideSession: (sessionId) => {
+        hideSession: (sessionId, _suffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
-                if (checkIsSessionData(data, sessionId)) {
+                if (checkIsSessionData(data, sessionId, idList)) {
                     handleHiding(screenId);
                 }
             }
         },
     });
-    const { genStyle, element: propsSetting } = useForegroundPropsSetting({
+    // The Hide row is THIS session's too -- see `toSessionShowingList`.
+    const sessionShowingList = toSessionShowingList(
+        showingScreenIdDataList,
+        activeId,
+        sessionIds,
+    );
+    const {
+        genStyle,
+        getIsBehind,
+        element: propsSetting,
+    } = useForegroundPropsSetting({
         prefix,
-        onChange: (extraStyle) => {
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 // THIS session's stopwatch only. `activeId` is read from the
                 // render the control was touched in, not at fire time: the
                 // change belongs to the session it was made on even if the
                 // strip is switched inside the half-second.
                 refreshAllStopwatches(
-                    toSessionShowingList(showingRef.current, activeId),
+                    toSessionShowingList(
+                        showingRef.current,
+                        activeId,
+                        sessionIds,
+                    ),
                     extraStyle,
+                    isBehind,
                 );
             });
         },
@@ -117,7 +136,7 @@ export default function ForegroundStopwatchComp() {
     });
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
-            showingScreenIdDataList={showingScreenIdDataList}
+            showingScreenIdDataList={sessionShowingList}
             buttonText={tran('Hide Stopwatch')}
             handleForegroundHiding={handleHiding}
             isMini={isMini}
@@ -131,9 +150,10 @@ export default function ForegroundStopwatchComp() {
                 genStyle(),
                 isForceChoosing,
                 activeId,
+                getIsBehind(),
             );
         },
-        [genStyle, activeId],
+        [genStyle, getIsBehind, activeId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -147,25 +167,35 @@ export default function ForegroundStopwatchComp() {
             if (screenForegroundManager === null) {
                 return;
             }
-            screenForegroundManager.setStopwatchData({
-                // The session rides a LIVE drop from this panel, which is this
-                // session acting. A run-sheet row replayed weeks later carries
-                // none -- see `applyForegroundDragData`.
-                id: activeId || undefined,
-                dateTime: new Date(),
-                extraStyle: genStyle(),
-            });
+            screenForegroundManager.setStopwatchData(
+                withForegroundLayer(
+                    {
+                        // The session rides a LIVE drop from this panel,
+                        // which is this session acting. A run-sheet row
+                        // replayed weeks later carries none -- see
+                        // `applyForegroundDragData`.
+                        id: activeId || undefined,
+                        dateTime: new Date(),
+                        extraStyle: genStyle(),
+                    },
+                    getIsBehind(),
+                ),
+            );
         },
-        [genStyle, activeId],
+        [genStyle, getIsBehind, activeId],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const genStyleRef = useAppCurrentRef(genStyle);
+    const getIsBehindRef = useAppCurrentRef(getIsBehind);
     const handleDraggingStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
         handleDragStart(
             event,
             genForegroundDragInf('stopwatch', () => {
-                return { extraStyle: genStyleRef.current() };
+                return withForegroundLayer(
+                    { extraStyle: genStyleRef.current() },
+                    getIsBehindRef.current(),
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps

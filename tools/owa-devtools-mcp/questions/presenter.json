@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-01",
+    "updated": "2026-10-02",
     "sections": [
         {
             "id": "orientation",
@@ -1784,6 +1784,25 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Always on Top",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-behind-slide",
+                    "text": "How do I put a foreground item behind the lyrics?",
+                    "kind": "howto",
+                    "keywords": [
+                        "behind slide",
+                        "behind the lyrics",
+                        "behind the words",
+                        "behind the bible",
+                        "under the text",
+                        "logo behind",
+                        "snow behind"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Behind Slide",
                         "guide": true
                     }
                 },

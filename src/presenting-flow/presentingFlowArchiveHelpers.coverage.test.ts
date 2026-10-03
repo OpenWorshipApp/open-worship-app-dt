@@ -10,6 +10,7 @@ const { state, mocks } = vi.hoisted(() => ({
         selected: [] as string[],
         password: '' as string | null,
         url: null as string | null,
+        requestError: null as Error | null,
         appFilePath: null as string | null,
         copyPath: '/copied/archive' as string | null,
         bibleItem: null as any,
@@ -81,10 +82,16 @@ vi.mock('../helper/localFileHelpers', () => ({
     getAppFilePathFromFile: () => state.appFilePath,
 }));
 vi.mock('../helper/bible-helpers/downloadHelpers', () => ({
-    initHttpRequest: async () => ({ body: true }),
+    initHttpRequest: async () => {
+        if (state.requestError !== null) {
+            throw state.requestError;
+        }
+        return { body: true };
+    },
 }));
 vi.mock('../background/downloadHelper', () => ({
     askForURL: async () => state.url,
+    describeDownloadError: (error: any) => `described: ${error?.message}`,
     messageCallback: vi.fn(),
     streamDownloadFile: mocks.stream,
 }));
@@ -435,14 +442,28 @@ describe('presenting-flow archives', () => {
             askAndImportPresentingFlowArchiveFromUrl(),
         ).resolves.toBeTruthy();
         expect(mocks.stream).toHaveBeenCalled();
+        // A failed download was already toasted by `streamDownloadFile`, in
+        // words: the import must not say it a second time.
+        mocks.toast.mockClear();
         mocks.stream.mockRejectedValueOnce(new Error('download failed'));
+        await expect(
+            askAndImportPresentingFlowArchiveFromUrl(),
+        ).resolves.toBeNull();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        // An address never reached has no download toast, so it gets one --
+        // described, never the raw socket error.
+        state.requestError = Object.assign(
+            new Error('connect ECONNREFUSED 127.0.0.1:1'),
+            { code: 'ECONNREFUSED' },
+        );
         await expect(
             askAndImportPresentingFlowArchiveFromUrl(),
         ).resolves.toBeNull();
         expect(mocks.toast).toHaveBeenCalledWith(
             'Import Presenting Flow',
-            'download failed',
+            'described: connect ECONNREFUSED 127.0.0.1:1',
         );
+        state.requestError = null;
 
         await expect(
             importDroppedPresentingFlowArchive('/local/archive'),

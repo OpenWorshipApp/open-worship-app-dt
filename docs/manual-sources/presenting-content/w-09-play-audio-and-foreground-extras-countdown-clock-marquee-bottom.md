@@ -2,10 +2,10 @@
 id: W-09
 title: "Play audio, and foreground extras (countdown, clock, marquee bottom…)"
 section: "Presenting content"
-verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, KB-03, KB-07, CB-67]
+verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, KB-03, KB-07, CB-67]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-02"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -61,14 +61,16 @@ button:
   that dot is the only sign of something live belonging to a session you are not
   looking at. Removing a session **takes what it put up off the screens first**, so
   nothing is left behind with no button to hide it.
-- A session's _Properties_ act on **that session's own overlay and nothing else**.
-  The Hide row still reaches whatever is live, whichever session put it there —
-  there must always be a way to take something off a projector — but changing
-  size, colour or place while you are on another session no longer re-dresses
-  the overlay somebody else's session has on the wall.
+- A session's _Properties_ and its Hide row act on **that session's own overlay and
+  nothing else**. Changing size, colour or place on one session never re-dresses
+  what another session has on the wall, and a session with nothing up shows no
+  Hide button at all. To take down what another session put up, press the session
+  button carrying the on-screen dot and use the Hide button there. Something that
+  went up with no session (a dragged run-sheet row, the assistant) belongs to the
+  first session button, which is **Default** unless Default was removed.
 - **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
   (several message editors, several clocks), so two sessions can each have something
-  up at once and both stay listed on the Hide row. **[en:tran:Countdown]**,
+  up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
   thing on a screen, so showing from another session replaces what was there and the
   on-screen dot moves to the session that now owns it.
@@ -79,6 +81,13 @@ button:
 - **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
+- **[en:tran:Behind Slide]** (every foreground component, right above _Always on
+  Top_) puts that session's item **behind** the slide and the Bible text — over the
+  background, under the words — so a logo, a clock or a falling-snow clip never covers
+  the lyrics. Tick it while the item is up and it moves at once; untick it and it comes
+  back over the slide. A slide that fills the whole screen with its own picture hides
+  it completely, which is the point. While it is ticked, _Always on Top_ is greyed out:
+  an item behind the slide stays behind it, whatever its number.
 - The **stopwatch** button in that same row opens the slide show:
   **[en:tran:Start Slide Show]** and the seconds beside it. It keeps running while you
   are looking at another session, or with the whole Foreground panel closed, and stops
@@ -120,7 +129,7 @@ and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `KB-03` · `KB-07` · `CB-67`
+`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-02).
 :::

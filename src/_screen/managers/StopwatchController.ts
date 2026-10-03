@@ -1,3 +1,5 @@
+import { setClockText } from './clockTextHelpers';
+
 export default class StopwatchController {
     readonly divContainer: HTMLDivElement;
     readonly targetDateTime: Date;
@@ -75,9 +77,9 @@ export default class StopwatchController {
     }
 
     setHtml(isReset: boolean) {
-        this.divHour.innerHTML = isReset ? '00' : this.hourStr;
-        this.divMinute.innerHTML = isReset ? '00' : this.minuteStr;
-        this.divSecond.innerHTML = isReset ? '00' : this.secondStr;
+        setClockText(this.divHour, isReset ? '00' : this.hourStr);
+        setClockText(this.divMinute, isReset ? '00' : this.minuteStr);
+        setClockText(this.divSecond, isReset ? '00' : this.secondStr);
     }
 
     pause() {

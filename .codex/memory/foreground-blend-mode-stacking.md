@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 709cd00f-9374-4a37-9a3a-80dbd06b55b5
-  modified: 2026-09-24T18:15:00.000Z
+  modified: 2026-10-02T16:56:15.894Z
 ---
 
 **Video Show** and **Image Show** (2026-09-24) put a clip or a picture on the
@@ -138,6 +138,36 @@ Other rules that fell out of building it:
 
 Verified live on the real `screen.html?screenId=1` output: the clip's band let
 the slide's text show through, lightened, instead of covering it.
+
+**There are TWO foreground roots** (2026-10-02, the user's ask: _render
+foreground behind bible/slide_). `ScreenAppComp` / `MiniScreenAppComp` mount
+`<ScreenForegroundComp isBehind />` as `#foreground-behind` between
+`#background` and `#slide`, and the ordinary `#foreground` after the Bible
+view. Every widget's Properties has **Behind Slide**; `createDivContainer`
+picks the root from the DATUM's `isBehind`. Rules that fell out:
+
+- **The flag rides the datum, never `extraStyle`.** `extraStyle` is
+  `Object.assign`ed / rendered straight onto DOM elements. Build it with
+  `withForegroundLayer(data, isBehind)` (`screenTypeHelpers.ts`), which
+  writes NO key when false -- `checkAreObjectsEqual` counts keys, so an
+  `isBehind: false` would tear down every overlay restored from disk. Its
+  generic is `T extends object`: `ForegroundLayerDataType` is all-optional (a
+  weak type), and constraining to it made TypeScript drop every literal back
+  to the bare constraint.
+- **Every path that builds a datum must carry it** -- the Show press, the
+  drop on a screen (`dragStore.onDropped`), the drag PAYLOAD a run sheet
+  stores, the live Properties refresh (`onChange(style, isBehind)`), and the
+  four targets `applyForegroundDragData` rebuilds field by field (message,
+  countdown, stopwatch, quick text). Missing one puts the same widget in
+  front by one route and behind by another.
+- **A behind overlay carries no `z-index`.** `#foreground-behind` makes no
+  stacking context (so it still blends with the background), which means an
+  Always-on-Top number competes in the ROOT context with `#slide` and wins --
+  straight back over the words. `genForegroundExtraStyle` skips it and the
+  panel greys Always on Top out while Behind Slide is ticked.
+- Each root re-renders only its own overlays (`render(isBehind)`), on mount
+  and on `refresh`; two roots each re-rendering everything replayed every
+  entrance twice.
 
 Related: [[infinite-paint-animation-at-rest]], [[panel-name-in-dom]],
 [[portable-data-dir-alias]].

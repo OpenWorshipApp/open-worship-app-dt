@@ -445,7 +445,14 @@ const dictionary = {
     'Background and Color': 'ផ្ទៃខាងក្រោយ និងពណ៌',
     'The text color was changed so it stays visible on the new background color.':
         'ពណ៌អក្សរត្រូវបានប្ដូរ ដើម្បីឱ្យនៅតែមើលឃើញលើពណ៌ផ្ទៃខាងក្រោយថ្មី។',
-    'Keep the new text color?': 'រក្សាពណ៌អក្សរថ្មីឬទេ?',
+    'The file was not found at that address.': 'រកមិនឃើញឯកសារនៅអាសយដ្ឋាននោះទេ។',
+    'The server refused the download.': 'ម៉ាស៊ីនមេបានបដិសេធការទាញយក។',
+    'Could not reach that address. Check the link and the internet connection.':
+        'មិនអាចភ្ជាប់ទៅអាសយដ្ឋាននោះបានទេ។ សូមពិនិត្យតំណភ្ជាប់ និងការតភ្ជាប់អ៊ីនធឺណិត។',
+    Display: 'ម៉ូនីទ័រ',
+    'Display id': 'លេខសម្គាល់ម៉ូនីទ័រ',
+    'Screen id': 'លេខសម្គាល់អេក្រង់',
+    primary: 'ចម្បង',
     'Fail to create folder': 'មិនអាចបង្កើតថតបាន',
     'New Note Item': 'បង្កើតកំណត់ត្រាថ្មី',
     'This will select': 'នេះនឹងជ្រើសរើស',
@@ -2569,6 +2576,11 @@ const dictionary = {
     'Remove Session': 'លុបវគ្គ',
     'Always on Top': 'នៅលើគេជានិច្ច',
     'Z-Index': 'លំដាប់ស្រទាប់',
+    'Behind Slide': 'នៅពីក្រោយស្លាយ',
+    'Show behind the slide and the Bible text, over the background':
+        'បង្ហាញនៅពីក្រោយស្លាយ និងអត្ថបទព្រះគម្ពីរ ពីលើផ្ទៃខាងក្រោយ',
+    'Always on Top does not apply while it is behind the slide':
+        'នៅលើគេជានិច្ច មិនអនុវត្តទេ ពេលវានៅពីក្រោយស្លាយ',
     'Slide show is running': 'ការបង្ហាញស្លាយកំពុងដំណើរការ',
     'Slide Show': 'ការបង្ហាញស្លាយ',
     'Start Slide Show': 'ចាប់ផ្តើមការបង្ហាញស្លាយ',

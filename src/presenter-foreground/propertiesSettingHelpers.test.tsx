@@ -40,6 +40,7 @@ vi.mock('./foregroundDecorationHelpers', () => ({
 import {
     genForegroundExtraStyle,
     genPropsSettingNames,
+    getForegroundIsBehind,
     getForegroundTransition,
     getForegroundWidthScale,
 } from './propertiesSettingHelpers';
@@ -89,4 +90,27 @@ test('builds geometry from bounded settings and keeps a pinned overlay above nor
         zIndex: 7,
         fontSize: '100px',
     });
+});
+
+test('drops Always on Top from an overlay put behind the slide', () => {
+    settings.clear();
+    settings.set('logo-setting-show-widget-always-on-top', 'true');
+    settings.set('logo-setting-show-widget-z-index', '7');
+    const option = {
+        isFontSize: false,
+        isGeometry: true,
+        isCommonStyle: false,
+        isBlendMode: false,
+    };
+    expect(getForegroundIsBehind('logo')).toBe(false);
+    expect(genForegroundExtraStyle('logo', option)).toMatchObject({
+        zIndex: 7,
+    });
+    // Its root makes no stacking context, so a z-index would lift it back
+    // over the slide and the Bible text it was put behind.
+    settings.set('logo-setting-show-widget-is-behind', 'true');
+    expect(getForegroundIsBehind('logo')).toBe(true);
+    expect(genForegroundExtraStyle('logo', option)).not.toHaveProperty(
+        'zIndex',
+    );
 });

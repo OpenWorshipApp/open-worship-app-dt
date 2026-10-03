@@ -24,6 +24,7 @@ import { getAppFilePathFromFile } from '../helper/localFileHelpers';
 import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
 import {
     askForURL,
+    describeDownloadError,
     messageCallback,
     streamDownloadFile,
 } from '../background/downloadHelper';
@@ -568,19 +569,24 @@ export async function askAndImportPresentingFlowArchiveFromUrl() {
             ),
         );
         const response = await initHttpRequest(new URL(url));
-        await streamDownloadFile(
-            archiveFilePath,
-            response,
-            messageCallback,
-            true,
-        );
+        try {
+            await streamDownloadFile(
+                archiveFilePath,
+                response,
+                messageCallback,
+                true,
+            );
+        } catch (error) {
+            // `streamDownloadFile` has already said why, in words: a second
+            // toast here repeated it as the raw message.
+            handleError(error);
+            return null;
+        }
         return await runPresentingFlowArchiveImport(archiveFilePath);
     } catch (error: any) {
+        // The request itself failed -- the address was never reached.
         handleError(error);
-        showSimpleToast(
-            tran(IMPORT_TITLE),
-            error?.message ?? 'Unable to import the presenting flow',
-        );
+        showSimpleToast(tran(IMPORT_TITLE), describeDownloadError(error));
         return null;
     } finally {
         await safeDeleteDir(workDirPath);

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-10, PL-29, PL-32, PL-33, PL-34, PL-35, PL-36, PL-37, PL-38, PL-39, PL-40, PL-41, PL-42, PL-43, PL-44, PL-45, PL-46, PL-47, PL-48, PL-49, PL-50, PL-51, PL-52, PL-53, PL-54, PL-55, PL-56, PL-57, PL-58, PL-59, PL-60, PL-61, PL-62, PL-63, PL-64, PL-65, PL-66, PL-67, PL-68, PL-69, PL-70, PL-71, PL-72, PL-73, PL-74, PL-75, PL-76, PL-81, PL-82, PL-83, PL-84, PL-85, PL-86, PL-87, PL-88, PL-89, PL-90, PL-91, PL-92, PL-93, PL-94, PL-95, PL-96, PL-101]
 screenshots: 27
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-02"
 ---
 # W-22 — Build a service presenting flow (and share it)
 
@@ -38,11 +38,7 @@ thing to another machine.
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
-   marquee running: **Clear FG
-   Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown**
-   (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Camera Show** (`CM`) and **Web Show**
-   (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel
-   does; the `Time`, `Camera Show` and `Web Show` ones clear all of their items at once.
+   marquee running: **Clear FG Messages** (`MS`), **Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown** (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Video Show** (`VD`), **Image Show** (`IM`), **Camera Show** (`CM`) and **Web Show** (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show` and `Web Show` ones clear all of their items at once.
    The panel's **Background Images Slide Show** has no action of its own — it is a
    _background_ despite sitting in that panel, so **Clear Background** is what stops it.
 
@@ -181,8 +177,7 @@ thing to another machine.
 
    **Where the actions live in the menu.** **Add Action** opens with **Clear Screen** —
    one row that adds nothing and opens the five clears, with **Other Clear FG Items**
-   under them for the eight per-widget foreground clears — then **Screen: Show** /
-   **Screen: Hide**, then the four that drive the run.
+   under them for the eleven per-widget foreground clears — then **Screen: Show** / **Screen: Hide**, then the five that drive the run.
 
 3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to
@@ -503,5 +498,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-10` · `PL-29` · `PL-32` · `PL-33` · `PL-34` · `PL-35` · `PL-36` · `PL-37` · `PL-38` · `PL-39` · `PL-40` · `PL-41` · `PL-42` · `PL-43` · `PL-44` · `PL-45` · `PL-46` · `PL-47` · `PL-48` · `PL-49` · `PL-50` · `PL-51` · `PL-52` · `PL-53` · `PL-54` · `PL-55` · `PL-56` · `PL-57` · `PL-58` · `PL-59` · `PL-60` · `PL-61` · `PL-62` · `PL-63` · `PL-64` · `PL-65` · `PL-66` · `PL-67` · `PL-68` · `PL-69` · `PL-70` · `PL-71` · `PL-72` · `PL-73` · `PL-74` · `PL-75` · `PL-76` · `PL-81` · `PL-82` · `PL-83` · `PL-84` · `PL-85` · `PL-86` · `PL-87` · `PL-88` · `PL-89` · `PL-90` · `PL-91` · `PL-92` · `PL-93` · `PL-94` · `PL-95` · `PL-96` · `PL-101`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-02).
 :::

@@ -93,7 +93,8 @@ const screenManagerMock: any = {
     },
     screenForegroundManager: {
         render: vi.fn(),
-        div: null,
+        rootContainer: null,
+        rootContainerBehind: null,
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),

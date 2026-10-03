@@ -5,7 +5,7 @@ import {
 } from '../app-document-list/appDocumentHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
-import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
+import { checkIsBibleItemOnScreen } from '../bible-list/bibleHelpers';
 
 export const PRESENT_TAB_SETTING_NAME = 'presenter-tab';
 export const PRESENT_FOREGROUND_FLOATING_SETTING_NAME =
@@ -38,14 +38,10 @@ export async function checkIsOnScreen<T>(
             return screenManager.screenForegroundManager.isShowing;
         });
     } else if (targeKey === 'b') {
-        const titleList = await getOnScreenBibleItems();
-        const bibleItems = viewController.straightBibleItems;
-        for (const bibleItem of bibleItems) {
-            const title = await bibleItem.toTitle();
-            if (titleList.includes(title)) {
-                return true;
-            }
-        }
+        // Passage AND version -- see `getOnScreenBibleItems`.
+        return await checkIsBibleItemOnScreen(
+            viewController.straightBibleItems,
+        );
     }
     return false;
 }

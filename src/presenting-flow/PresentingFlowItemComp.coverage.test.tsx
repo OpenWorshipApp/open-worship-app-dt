@@ -40,7 +40,7 @@ vi.mock('../helper/dragHelpers', () => ({
 vi.mock('../helper/settingHelpers', async () => {
     const React = await import('react');
     return {
-        useStateSettingBoolean: (_key: string, initial: boolean) =>
+        useStateSettingBooleanSynced: (_key: string, initial: boolean) =>
             React.useState(initial),
     };
 });

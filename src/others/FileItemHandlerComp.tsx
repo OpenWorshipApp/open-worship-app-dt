@@ -272,7 +272,13 @@ export default function FileItemHandlerComp({
         <li
             className={
                 `list-group-item ${moreClassName} app-overflow-hidden` +
-                ' app-has-action-rail' +
+                // As wide as the rail really is: the ⋮ AND the colour note.
+                // Reserving one button's width let the rail's second half sit
+                // over the row's own content -- on a presenting flow card that
+                // was the ⋮ of its FIRST line, which took no click at all.
+                (isDisabledColorNote
+                    ? ' app-has-action-rail'
+                    : ' app-has-action-rail-2') +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}

@@ -480,13 +480,17 @@ describe('bible-list bibleHelpers', () => {
         await target.onSelect();
     });
 
-    test('getOnScreenBibleItems collects titles from screen managers', async () => {
+    test('getOnScreenBibleItems collects each version of each passage from screen managers', async () => {
         h.getAllScreenManagersMock.mockReturnValue([
             {
                 screenBibleManager: {
                     screenViewData: {
                         bibleItemData: {
-                            a: [{ title: 'T1' }, { title: 'T1' }],
+                            a: [
+                                { bibleKey: 'kjv', title: 'T1' },
+                                { bibleKey: 'kjv', title: 'T1' },
+                                { bibleKey: 'niv', title: 'T1' },
+                            ],
                             b: { bibleKey: 'kjv', target: {} },
                         },
                     },
@@ -496,31 +500,41 @@ describe('bible-list bibleHelpers', () => {
                 screenBibleManager: { screenViewData: undefined },
             },
         ]);
-        const titles = await getOnScreenBibleItems();
-        expect(titles).toContain('T1');
-        expect(titles).toContain('rendered-title');
+        const keys = await getOnScreenBibleItems();
+        expect(keys).toContain('kjv|T1');
+        expect(keys).toContain('niv|T1');
+        expect(keys).toContain('kjv|rendered-title');
         // deduped
-        expect(titles.filter((t) => t === 'T1')).toHaveLength(1);
+        expect(keys.filter((key) => key === 'kjv|T1')).toHaveLength(1);
     });
 
-    test('checkIsBibleItemOnScreen matches item titles', async () => {
+    test('checkIsBibleItemOnScreen matches the passage AND its version', async () => {
         h.getAllScreenManagersMock.mockReturnValue([
             {
                 screenBibleManager: {
                     screenViewData: {
-                        bibleItemData: { a: [{ title: 'Match' }] },
+                        bibleItemData: {
+                            a: [{ bibleKey: 'niv', title: 'Match' }],
+                        },
                     },
                 },
             },
         ]);
         expect(
             await checkIsBibleItemOnScreen([
-                { toTitle: async () => 'Match' } as any,
+                { bibleKey: 'niv', toTitle: async () => 'Match' } as any,
             ]),
         ).toBe(true);
         expect(
             await checkIsBibleItemOnScreen([
-                { toTitle: async () => 'Nope' } as any,
+                { bibleKey: 'niv', toTitle: async () => 'Nope' } as any,
+            ]),
+        ).toBe(false);
+        // The same reference in another version of the same language reads
+        // the same title, and is NOT the one on the screen.
+        expect(
+            await checkIsBibleItemOnScreen([
+                { bibleKey: 'kjv', toTitle: async () => 'Match' } as any,
             ]),
         ).toBe(false);
     });
@@ -530,12 +544,16 @@ describe('bible-list bibleHelpers', () => {
             {
                 screenBibleManager: {
                     screenViewData: {
-                        bibleItemData: { a: [{ title: 'Match' }] },
+                        bibleItemData: {
+                            a: [{ bibleKey: 'kjv', title: 'Match' }],
+                        },
                     },
                 },
             },
         ]);
-        const items = [{ toTitle: async () => 'Match' } as any];
+        const items = [
+            { bibleKey: 'kjv', toTitle: async () => 'Match' } as any,
+        ];
         let value = true;
         function Probe() {
             value = useIsOnScreen(items);

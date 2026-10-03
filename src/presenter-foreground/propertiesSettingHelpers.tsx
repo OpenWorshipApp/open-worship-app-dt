@@ -118,7 +118,18 @@ export function genPropsSettingNames(prefix: string) {
         isAlwaysOnTop: `${prefix}-setting-show-widget-always-on-top`,
         zIndex: `${prefix}-setting-show-widget-z-index`,
         transitionEffect: `${prefix}-setting-show-widget-transition`,
+        isBehind: `${prefix}-setting-show-widget-is-behind`,
     };
+}
+
+/**
+ * Whether this session's overlay goes BEHIND the slide and the Bible text.
+ * Read straight from the setting like the transition, so a caller that is not
+ * rendering the panel gets the current answer. It travels on the DATUM, not in
+ * `extraStyle` -- see `ForegroundLayerDataType`.
+ */
+export function getForegroundIsBehind(prefix: string) {
+    return getSetting(genPropsSettingNames(prefix).isBehind) === 'true';
 }
 
 /**
@@ -379,11 +390,17 @@ export function genForegroundExtraStyle(
     if (isFontSize) {
         Object.assign(style, getFontSizeStyle(names.fontSize));
     }
-    // Every foreground widget can be pinned on top, geometry or not.
-    Object.assign(
-        style,
-        genZIndexExtraStyle(names.isAlwaysOnTop, names.zIndex),
-    );
+    // Every foreground widget can be pinned on top, geometry or not -- except
+    // one BEHIND the slide. Its root makes no stacking context (that is what
+    // lets it blend with the background), so a `z-index` there competes with
+    // the slide and the Bible view in the ROOT stacking context and wins: the
+    // overlay would leap back over the words it was put behind.
+    if (!getForegroundIsBehind(prefix)) {
+        Object.assign(
+            style,
+            genZIndexExtraStyle(names.isAlwaysOnTop, names.zIndex),
+        );
+    }
     if (isBlending) {
         // Blends with whatever is painted UNDER `#foreground` -- the
         // background, the slide and the bible view -- because nothing between
@@ -598,16 +615,65 @@ function BlendModePropComp({
     );
 }
 
+/**
+ * Put this session's overlay BEHIND the slide and the Bible text -- over the
+ * background, under the words. See `ForegroundLayerDataType`.
+ */
+function BehindPropComp({
+    isBehind,
+    setIsBehind,
+}: Readonly<{
+    isBehind: boolean;
+    setIsBehind: (value: boolean) => void;
+}>) {
+    const setIsBehindRef = useAppCurrentRef(setIsBehind);
+    const handleToggle = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setIsBehindRef.current(event.target.checked);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const label = tran('Behind Slide');
+    const title = tran(
+        'Show behind the slide and the Bible text, over the background',
+    );
+    return (
+        <PropRowComp
+            iconClassName="bi bi-layer-backward"
+            label={label}
+            title={title}
+            isEngaged={isBehind}
+        >
+            <input
+                className="form-check-input mt-0"
+                type="checkbox"
+                checked={isBehind}
+                title={title}
+                aria-label={label}
+                onChange={handleToggle}
+            />
+        </PropRowComp>
+    );
+}
+
 function AlwaysOnTopPropComp({
     isAlwaysOnTop,
     setIsAlwaysOnTop,
     zIndex,
     setZIndex,
+    isBehind,
 }: Readonly<{
     isAlwaysOnTop: boolean;
     setIsAlwaysOnTop: (value: boolean) => void;
     zIndex: number;
     setZIndex: (value: number) => void;
+    /**
+     * Behind the slide, Always on Top is not applied at all -- see
+     * `genForegroundExtraStyle` -- so its controls say so rather than taking
+     * a number that does nothing.
+     */
+    isBehind: boolean;
 }>) {
     const setIsAlwaysOnTopRef = useAppCurrentRef(setIsAlwaysOnTop);
     const handleToggle = useCallback(
@@ -627,18 +693,23 @@ function AlwaysOnTopPropComp({
     );
     const label = tran('Always on Top');
     const zIndexLabel = tran('Z-Index');
+    const disabledTitle = isBehind
+        ? tran('Always on Top does not apply while it is behind the slide')
+        : undefined;
     return (
         <PropRowComp
             iconClassName="bi bi-layers"
             label={label}
-            isEngaged={isAlwaysOnTop}
+            title={disabledTitle}
+            isEngaged={isAlwaysOnTop && !isBehind}
         >
             <input
                 className="form-check-input mt-0"
                 type="checkbox"
                 checked={isAlwaysOnTop}
-                title={label}
+                title={disabledTitle ?? label}
                 aria-label={label}
+                disabled={isBehind}
                 onChange={handleToggle}
             />
             <input
@@ -652,7 +723,7 @@ function AlwaysOnTopPropComp({
                 title={zIndexLabel}
                 aria-label={zIndexLabel}
                 value={zIndex}
-                disabled={!isAlwaysOnTop}
+                disabled={!isAlwaysOnTop || isBehind}
                 onChange={handleZIndexChange}
             />
         </PropRowComp>
@@ -752,6 +823,10 @@ function PropertiesSettingBodyComp({
     const [zIndex, setZIndex] = useStateSettingNumber(
         names.zIndex,
         DEFAULT_Z_INDEX,
+    );
+    const [isBehind, setIsBehind] = useStateSettingBoolean(
+        names.isBehind,
+        false,
     );
     const [textColor, setTextColor] = useStateSettingString(
         commonNames.color,
@@ -882,11 +957,16 @@ function PropertiesSettingBodyComp({
                  * rows, four scroll-lengths down a panel that opens closed.
                  */}
                 {extraControls}
+                <BehindPropComp
+                    isBehind={isBehind}
+                    setIsBehind={wrapSetter(setIsBehind, onChange)}
+                />
                 <AlwaysOnTopPropComp
                     isAlwaysOnTop={isAlwaysOnTop}
                     setIsAlwaysOnTop={wrapSetter(setIsAlwaysOnTop, onChange)}
                     zIndex={zIndex}
                     setZIndex={wrapSetter(setZIndex, onChange)}
+                    isBehind={isBehind}
                 />
                 {isBlendMode ? (
                     <BlendModePropComp
@@ -1029,7 +1109,12 @@ export function useForegroundPropsSetting({
     extraControls,
 }: Readonly<{
     prefix: string;
-    onChange: (style: CSSProperties) => void;
+    /**
+     * A control changed. `isBehind` comes beside the style rather than inside
+     * it: it picks the overlay's LAYER, so a refresh writes it onto the datum
+     * (`withForegroundLayer`) and the screen moves the overlay to that root.
+     */
+    onChange: (style: CSSProperties, isBehind: boolean) => void;
     isFontSize?: boolean;
     isGeometry?: boolean;
     isCommonStyle?: boolean;
@@ -1058,8 +1143,11 @@ export function useForegroundPropsSetting({
         // never shows one must not start carrying a choice on its datum.
         return isTransition ? getForegroundTransition(prefix) : undefined;
     };
+    const getIsBehind = () => {
+        return getForegroundIsBehind(prefix);
+    };
     const onChange1 = () => {
-        onChange(genStyle());
+        onChange(genStyle(), getIsBehind());
     };
     // These two alone stay OUT of the panel body: the marquee and the quick
     // text draw their own preview with them, so a change has to re-render the
@@ -1076,6 +1164,7 @@ export function useForegroundPropsSetting({
     return {
         genStyle,
         getTransition,
+        getIsBehind,
         fontFamily,
         fontWeight,
         getWidthScale: () => {

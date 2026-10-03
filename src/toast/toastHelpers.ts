@@ -3,8 +3,21 @@ import { type JSX } from 'react';
 import ToastEventListener from '../event/ToastEventListener';
 import appProvider from '../server/appProvider';
 
-export function showSimpleToast(title: string, message: string | JSX.Element) {
-    ToastEventListener.showSimpleToast({ title, message });
+/**
+ * `timeout` is for a toast that carries a control of its own (an Undo): the
+ * default four seconds is not enough time to reach it. Hovering still holds any
+ * toast open.
+ */
+export function showSimpleToast(
+    title: string,
+    message: string | JSX.Element,
+    timeout?: number,
+) {
+    ToastEventListener.showSimpleToast(
+        timeout === undefined
+            ? { title, message }
+            : { title, message, timeout },
+    );
 }
 
 if (appProvider.systemUtils.isDev) {

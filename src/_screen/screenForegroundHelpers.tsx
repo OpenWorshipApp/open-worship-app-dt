@@ -291,6 +291,11 @@ export function genHtmlForegroundCountdown(
     { dateTime, extraStyle }: ForegroundCountdownDataType,
     animData: StyleAnimType,
 ) {
+    // The "time is up" flash runs five times and then RESTS red (`forwards`),
+    // never `infinite`: a finished countdown can stay up for the rest of the
+    // service, and a looping colour animation repaints it every frame for as
+    // long as it does (memory `infinite-paint-animation-at-rest`). `nowrap`
+    // keeps the digits on one line in any font the widget is given.
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
@@ -306,6 +311,7 @@ export function genHtmlForegroundCountdown(
                 .${uniqueClassname} {
                     display: flex;
                     justify-content: center;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname} div {
                     text-align: center;
@@ -316,7 +322,8 @@ export function genHtmlForegroundCountdown(
                     text-align: left;
                 }
                 .${uniqueClassname}[data-time-diff="0"] {
-                    animation: anim-${uniqueClassname}-alerting 2s ease-in infinite;
+                    animation: anim-${uniqueClassname}-alerting 2s ease-in 5
+                        forwards;
                 }
                 @keyframes anim-${uniqueClassname}-alerting {
                     0% { color: red; }
@@ -366,6 +373,7 @@ export function genHtmlForegroundStopwatch(
                 .${uniqueClassname} {
                     display: flex;
                     justify-content: center;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname} div {
                     text-align: center;
@@ -421,6 +429,7 @@ export function genHtmlForegroundTime(
                 .${uniqueClassname} {
                     display: flex;
                     justify-content: center;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname} div {
                     text-align: center;

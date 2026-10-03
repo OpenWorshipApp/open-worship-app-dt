@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { dragStore } from '../helper/dragHelpers';
-import { useStateSettingBoolean } from '../helper/settingHelpers';
+import { useStateSettingBooleanSynced } from '../helper/settingHelpers';
 import type PresentingFlow from './PresentingFlow';
 import type PresentingFlowItem from './PresentingFlowItem';
 import PresentingFlowCcRowsComp from './PresentingFlowCcRowsComp';
@@ -49,7 +49,7 @@ export default function PresentingFlowItemComp({
     const isDocument = presentingFlowItem.isAppDocument;
     // Keyed by the referenced document, not by the row index, so reordering the
     // presenting flow does not shuffle which rows are open.
-    const [isExpanded, setIsExpanded] = useStateSettingBoolean(
+    const [isExpanded, setIsExpanded] = useStateSettingBooleanSynced(
         toPresentingFlowSettingName(
             'presenting-flow-item-expanded',
             presentingFlow.filePath,

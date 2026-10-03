@@ -462,7 +462,16 @@ const dictionary = {
     'Background and Color': 'Arrière-plan et couleur',
     'The text color was changed so it stays visible on the new background color.':
         "La couleur du texte a été changée pour rester visible sur la nouvelle couleur d'arrière-plan.",
-    'Keep the new text color?': 'Conserver la nouvelle couleur du texte ?',
+    'The file was not found at that address.':
+        'Le fichier est introuvable à cette adresse.',
+    'The server refused the download.':
+        'Le serveur a refusé le téléchargement.',
+    'Could not reach that address. Check the link and the internet connection.':
+        'Impossible de joindre cette adresse. Vérifiez le lien et la connexion Internet.',
+    Display: 'Moniteur',
+    'Display id': 'ID du moniteur',
+    'Screen id': "ID de l'écran",
+    primary: 'principal',
     'Fail to create folder': 'Impossible de créer le dossier',
     'New Note Item': 'Nouvel élément de note',
     'This will select': 'Ceci sélectionnera',
@@ -2669,6 +2678,11 @@ const dictionary = {
     'Remove Session': 'Supprimer la session',
     'Always on Top': 'Toujours au premier plan',
     'Z-Index': 'Ordre de superposition',
+    'Behind Slide': 'Derrière la diapositive',
+    'Show behind the slide and the Bible text, over the background':
+        'Afficher derrière la diapositive et le texte biblique, au-dessus de l’arrière-plan',
+    'Always on Top does not apply while it is behind the slide':
+        'Toujours au premier plan ne s’applique pas tant qu’il est derrière la diapositive',
     'Slide show is running': 'Le diaporama est en cours',
     'Slide Show': 'Diaporama',
     'Start Slide Show': 'Démarrer le diaporama',

@@ -695,7 +695,7 @@ describe('non-Bible manager coverage', () => {
         const effect = createEffectManager();
         const manager = new ScreenForegroundManager(base, effect);
         const host = document.createElement('div');
-        manager.div = host;
+        manager.rootContainer = host;
 
         expect(manager.foregroundData.countdownData?.dateTime).toBeInstanceOf(
             Date,
@@ -711,6 +711,9 @@ describe('non-Bible manager coverage', () => {
             height: '720px',
             overflow: 'hidden',
             lineHeight: 'normal',
+            // The screen window's own stack, not whatever the host page
+            // inherits into the mini preview's shadow root.
+            fontFamily: expect.stringMatching(/^system-ui, .*sans-serif/),
         });
 
         const timeA = {

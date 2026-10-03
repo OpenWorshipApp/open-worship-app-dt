@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-10-01
+docVersion: 2026-10-02
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -287,12 +287,8 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   `node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=5000`
   (it discovers the published port itself — there is no fixed 9223 any more) before
   assuming a crash.
-- **Contrast-aware dialog.** A background color that would clash with the Bible text
-  color (including the white background a Bible list attaches when a verse is presented)
-  now switches the text to black/white FIRST, then asks *"The text color was changed so it
-  stays visible… Keep the new text color?"* (`No`/`Yes`; `No` puts the old color back).
-  Until 2026-09-30 it asked before fixing, and a showing projector stayed unreadable
-  while the question was open. Handle it. (This is **good UX**, not a bug.)
+- **Contrast-aware text colour — a TOAST with Undo, not a question** (2026-10-02, robot run 20261002-1644 F-4). A background color that would clash with the Bible text color (including the white background a Bible list attaches when a verse is presented) switches the text to black/white FIRST, then says so in a toast — **Background and Color** / *"The text color was changed so it stays visible on the new background color."* — with an **Undo** button that puts the old colour back (10 s, held while hovered). It used to be a blocking Yes/No, which stopped a run sheet walking onto a colour line until somebody answered, and left the keyboard on the page body so the run player dropped the next press. Nothing to answer now; to restore a user's colour after a test, press Undo or put the old background back. Remember the colour is GLOBAL (`screen-bible--style-text`), so a clash on a scratch screen changes the user's Bible text everywhere until undone.
+- **The Background › Colors panel edits the screen ALREADY SHOWING a colour, not the selected screen.** Once any screen holds a colour background the panel draws one picker PER SCREEN, each with that screen's id badge (`0`); a swatch pressed there recolours THAT screen whatever the screen selection says. To put a colour on a scratch screen while the user's screen shows one, drag a run-sheet colour line onto the scratch mini screen instead (run 20261002-1644 recoloured the user's hidden screen 0 this way and had to put its white back — stored then as `#FFFFFFFF`, the same white).
 - **Sliders.** Presenter has two `input[type=range]`: thumbnail-size (`max="200"`) and
   mini-screen zoom (`max="30"`). To drive one programmatically: native value setter +
   `dispatchEvent(new Event('input',{bubbles:true}))` (React listens on `input`).
@@ -1006,9 +1002,8 @@ This panel is where a careless change becomes a visible stall on the target hard
 - **Icons come from the file extension**, never from instantiating the document
   (`toDocumentIcon`), and the on-screen check for a document matches on `filePath` only —
   never `getSlides()`.
-- **Clicks stop propagating** so they never reach the enclosing `FileItemHandlerComp`
-  `<li>`, whose click fires the one UNSCOPED FileSource `select` in the app and re-renders
-  every file row in the window. PL-63.
+- **Clicks stop propagating** so they never reach the enclosing `FileItemHandlerComp` `<li>`, whose click fires the one UNSCOPED FileSource `select` in the app and re-renders every file row in the window. PL-63.
+- **The tree is a `VirtualListComp`.** Lines outside the panel's viewport are not in the DOM — nor in a snapshot, nor findable by `owa_find_ui` — until scrolled to. A sheet in a short panel looks like it lost rows 10–12; drag the Documents / Presenting Flows divider up (and **Reset Size** it afterwards) or scroll before calling a row missing (run 20261002-1644). An EXPANDED document mounts all its slide rows; that is PL-70's 200-slide case.
 
 ### 14.4 Drag rules (the source of most "it did nothing" reports)
 
@@ -1125,9 +1120,7 @@ an old file, not a new bug.
 
 ### 14.8 Failure surfaces that are easy to miss
 
-- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the
-  presenting flow must still render, and the bad entry must survive a later write of the file
-  (PL-51).
+- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the presenting flow must still render, and the bad entry must survive a later write of the file (PL-51). The toast and the log line come ONCE per entry per minute (`checkShouldNoticeInvalidItem`), not on every re-read and once per surface: a re-read after a write, or the run player opening, says nothing new. The log names the file and prints the entry as JSON text. A second toast for the same entry within the minute is a regression (it was thirteen in run 20261002-1644).
 - `tran()` throws in dev on a missing Khmer key and blanks the page, so the locale pass
   (§6d / LT-01) MUST cover the presenting flow strings: `Drop items here`,
   `No items in this presentingFlow`, `No slides`, `Not Supported Item Type`, `Preview PresentingFlow`,
@@ -1161,8 +1154,7 @@ and `acceptedDragTypeList` must keep refusing it.
 
 Two families, split by a `target` discriminant — the difference decides the whole menu:
 
-- **`target: 'screen'` (15)** — `apply(screenManager)`. Five mirror the mini screen's
-  clear bar; eight are per-foreground-widget clears derived from `foregroundClearMap`
+- **`target: 'screen'` (18 in Add Action, plus the attached-only `Slide: Media Control`)** — `apply(screenManager)`. Five mirror the mini screen's clear bar; ELEVEN are per-foreground-widget clears derived from `foregroundClearMap` (Messages, Marquee Top/Bottom, Quick Text, Countdown, Stopwatch, Time, Video/Image/Camera/Web Show — badges `MS`/`M↑`/`M↓`/`QT`/`CD`/`SW`/`TM`/`VD`/`IM`/`CM`/`WB`)
   (keyed by the widget type, so a new widget without a clear is a compile error). They
   behave like content for every purpose except being shown: clickable, draggable onto a
   mini screen, pinnable. The Foreground panel's **Background Images Slide Show** has no
@@ -1176,9 +1168,7 @@ Two families, split by a `target` discriminant — the difference decides the wh
   deliberately do (§14.10).
 
 **The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
-**Clear Screen** row with a chevron, and inside it the eight per-widget FG clears fold again
-behind **Other Clear FG Items** (thirteen of the twenty entries clear something, so inline
-they were the menu). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
+**Clear Screen** row with a chevron, and inside it the ELEVEN per-widget FG clears fold again behind **Other Clear FG Items** (sixteen of the twenty-three entries clear something, so inline they were the menu; the count was eight until the Messages, Video Show and Image Show clears joined — corrected 2026-10-02). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
 ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
 resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
 it recursively, so a family added later folds itself away. The stored ids did not change. The
@@ -1187,8 +1177,7 @@ rows in that order (corrected 2026-08-13 — this said seven, which predates `Ne
 Interval`/PL-101 joining the run family): `Clear Screen`, `Screen: Show`, `Screen: Hide`,
 `Next: Interval`, `Next: Clear Interval`, `Next: Timeout`, `Jump to`, `Keyboard Event`.
 **Clear Screen** opens the five whole-layer clears in the mini screen bar's own order plus the
-**Other Clear FG Items** row, which in turn holds the eight per-widget FG clears — all
-verified rendering non-blank in Khmer on 2026-08-13.
+**Other Clear FG Items** row, which in turn holds the eleven per-widget FG clears — all verified rendering non-blank in Khmer on 2026-08-13 (the six top rows of **Clear Screen** and the eight of **Add Action** again on 2026-10-02).
 
 **Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
 case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new

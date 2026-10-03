@@ -459,7 +459,8 @@ describe('PresentingFlowItem data model', () => {
                 data: '#000',
             }),
         ).not.toThrow();
-        expect(mocks.appError).toHaveBeenCalled();
+        // Rejecting is all it does: the reader logs the entry, once.
+        expect(mocks.appError).not.toHaveBeenCalled();
     });
 
     test('builds stored rows from every supported dropped-data family', async () => {

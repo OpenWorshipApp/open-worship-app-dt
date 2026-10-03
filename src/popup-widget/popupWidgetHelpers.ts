@@ -71,6 +71,41 @@ export const popupWidgetManager: {
     openAlert: null,
 };
 
+/**
+ * A popup takes the keyboard while it is open; give it back to whatever held it
+ * when the popup closes. Without this a question asked in the middle of a run
+ * left focus on the page body, and the run sheet's player -- whose keys answer
+ * only while focus is inside it -- dropped the operator's next press. Only when
+ * nothing else has claimed focus by then: an answer that moves the caret into a
+ * field of its own keeps it there.
+ */
+function returnFocusAfter<T>(openPopup: () => Promise<T>): Promise<T> {
+    // Read BEFORE the popup opens: a host that mounts it synchronously has
+    // already moved focus by the time the promise exists.
+    const previousElement =
+        typeof document === 'undefined' ? null : document.activeElement;
+    const promise = openPopup();
+    if (
+        !(previousElement instanceof HTMLElement) ||
+        previousElement === document.body
+    ) {
+        return promise;
+    }
+    return promise.then((result) => {
+        // After the popup has unmounted, which happens after it resolves.
+        setTimeout(() => {
+            const activeElement = document.activeElement;
+            if (
+                previousElement.isConnected &&
+                (activeElement === null || activeElement === document.body)
+            ) {
+                previousElement.focus({ preventScroll: true });
+            }
+        }, 0);
+        return result;
+    });
+}
+
 export function showAppConfirm(
     title: string,
     body: string,
@@ -86,14 +121,16 @@ export function showAppConfirm(
     if (openConfirm === null) {
         return Promise.resolve(false);
     }
-    return new Promise<boolean>((resolve) => {
-        openConfirm({
-            title,
-            body,
-            onConfirm: (isOk) => {
-                resolve(isOk);
-            },
-            ...options,
+    return returnFocusAfter(() => {
+        return new Promise<boolean>((resolve) => {
+            openConfirm({
+                title,
+                body,
+                onConfirm: (isOk) => {
+                    resolve(isOk);
+                },
+                ...options,
+            });
         });
     });
 }
@@ -112,14 +149,16 @@ export function showAppInput(
     if (openInput === null) {
         return Promise.resolve(false);
     }
-    return new Promise<boolean>((resolve) => {
-        openInput({
-            title,
-            body,
-            onConfirm: (isOk) => {
-                resolve(isOk);
-            },
-            ...options,
+    return returnFocusAfter(() => {
+        return new Promise<boolean>((resolve) => {
+            openInput({
+                title,
+                body,
+                onConfirm: (isOk) => {
+                    resolve(isOk);
+                },
+                ...options,
+            });
         });
     });
 }
@@ -129,13 +168,15 @@ export function showAppAlert(title: string, message: string) {
     if (openAlert === null) {
         return Promise.resolve();
     }
-    return new Promise<void>((resolve) => {
-        openAlert({
-            title,
-            message,
-            onClose: () => {
-                resolve();
-            },
+    return returnFocusAfter(() => {
+        return new Promise<void>((resolve) => {
+            openAlert({
+                title,
+                message,
+                onClose: () => {
+                    resolve();
+                },
+            });
         });
     });
 }

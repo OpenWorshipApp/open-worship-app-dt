@@ -1,3 +1,6 @@
+// `SCREEN_FONT_FAMILY` in `managers/ScreenForegroundManager.ts` repeats this
+// stack for the foreground layer, which the presenter's mini preview also
+// mounts. Change both together.
 body {
   font-family:
     system-ui,

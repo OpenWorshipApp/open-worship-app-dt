@@ -55,7 +55,7 @@ import {
     checkIsColorDark,
     HEX_COLOR_WHITE,
 } from '../../others/color/colorHelpers';
-import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
+import { showBibleTextColorChangedToast } from './bibleTextColorToastHelpers';
 import { tran } from '../../lang/langHelpers';
 
 const textStyleSettingManager = new SettingManager<AnyObjectType>({
@@ -501,7 +501,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
     }
 
-    async reflectBackgroundColor(backgroundColor: string) {
+    reflectBackgroundColor(backgroundColor: string) {
         const isBackgroundColorDark = checkIsColorDark(backgroundColor);
         const isTextColorDark = checkIsColorDark(
             ScreenBibleManager.textStyleTextColor,
@@ -509,11 +509,13 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         if (isBackgroundColorDark !== isTextColorDark) {
             return;
         }
-        // Readable FIRST, then asked. This runs after the background is
+        // Readable FIRST, then said. This runs after the background is
         // already live, and asking before fixing the text left a showing
         // projector with white-on-white (or black-on-black) words for as long
         // as the question stayed open -- during a service, the moment nobody
-        // is looking at the operator's screen.
+        // is looking at the operator's screen. And it is SAID, with an Undo,
+        // not asked: a blocking question here stopped a run sheet walking onto
+        // a colour line until somebody answered it.
         const previousColor = ScreenBibleManager.textStyle.color;
         const contrastingColor = isBackgroundColorDark
             ? HEX_COLOR_WHITE
@@ -521,23 +523,10 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         ScreenBibleManager.applyTextStyle({
             color: contrastingColor,
         });
-        const isKept = await showAppConfirm(
-            tran('Background and Color'),
-            tran(
-                'The text color was changed so it stays visible on the new background color.',
-            ) +
-                ' ' +
-                tran('Keep the new text color?'),
-            {
-                cancelButtonLabel: 'No',
-                confirmButtonLabel: 'Yes',
-            },
-        );
-        if (isKept) {
-            return;
-        }
-        ScreenBibleManager.applyTextStyle({
-            color: previousColor,
+        showBibleTextColorChangedToast(() => {
+            ScreenBibleManager.applyTextStyle({
+                color: previousColor,
+            });
         });
     }
 

@@ -1,3 +1,5 @@
+import { setClockDataset, setClockText } from './clockTextHelpers';
+
 export default class CountdownController {
     readonly divContainer: HTMLDivElement;
     readonly targetDateTime: Date;
@@ -81,10 +83,17 @@ export default class CountdownController {
     }
 
     setHtml(isReset: boolean) {
-        this.divBox.dataset.timeDiff = Math.max(0, this.timeDiff).toString();
-        this.divHour.innerHTML = isReset ? '00' : this.hourStr;
-        this.divMinute.innerHTML = isReset ? '00' : this.minuteStr;
-        this.divSecond.innerHTML = isReset ? '00' : this.secondStr;
+        // Whole seconds, not milliseconds: the only reader is the CSS rule for
+        // "0" (the alert), and a millisecond value rewrote the attribute -- and
+        // re-ran that selector -- on every frame.
+        setClockDataset(
+            this.divBox,
+            'timeDiff',
+            Math.ceil(this.timeDiff / 1000).toString(),
+        );
+        setClockText(this.divHour, isReset ? '00' : this.hourStr);
+        setClockText(this.divMinute, isReset ? '00' : this.minuteStr);
+        setClockText(this.divSecond, isReset ? '00' : this.secondStr);
     }
 
     pause() {

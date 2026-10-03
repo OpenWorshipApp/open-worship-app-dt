@@ -94,6 +94,7 @@ export default function ScreenAppComp() {
                     {genStyleRendering(screenManager.backgroundEffectManager)}
                     {genStyleRendering(screenManager.foregroundEffectManager)}
                     <ScreenBackgroundComp />
+                    <ScreenForegroundComp isBehind />
                     <ScreenVaryAppDocumentComp />
                     <ScreenBibleComp />
                     <ScreenForegroundComp />

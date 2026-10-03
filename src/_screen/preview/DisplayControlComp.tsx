@@ -1,11 +1,22 @@
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { tran } from '../../lang/langHelpers';
 import { getAllDisplays } from '../managers/screenHelpers';
 import type ScreenManagerBase from '../managers/ScreenManagerBase';
 import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
+
+// The name the OS gives a display -- often EMPTY on Windows, which left the
+// button's tooltip reading `Display:, screen id:1`.
+function getRawDisplayLabel(display: unknown) {
+    return (display as { label?: string } | undefined)?.label?.trim() ?? '';
+}
+
+function toDisplayLabel(display: unknown) {
+    return getRawDisplayLabel(display) || tran('Unknown');
+}
 
 function handleDisplayChoosing(
     screenManagerBase: ScreenManagerBase,
@@ -14,7 +25,7 @@ function handleDisplayChoosing(
 ) {
     const { primaryDisplay, displays } = getAllDisplays();
     const contextMenuItems: ContextMenuItemType[] = displays.map((display) => {
-        const label = (display as any).label ?? 'Unknown';
+        const label = toDisplayLabel(display);
         const bounds = display.bounds;
         const isPrimary = display.id === primaryDisplay.id;
         const isSelected = display.id === displayId;
@@ -22,7 +33,7 @@ function handleDisplayChoosing(
             (isSelected ? '*' : '') +
             `${label}(${display.id}): ` +
             `${bounds.width}x${bounds.height}` +
-            (isPrimary ? ' (primary)' : '');
+            (isPrimary ? ` (${tran('primary')})` : '');
         return {
             menuElement,
             onSelect: () => {
@@ -42,16 +53,14 @@ export default function DisplayControlComp() {
     const currentDisplay = displays.find((display) => {
         return display.id === displayId;
     });
-    const currentDisplayLabel = currentDisplay
-        ? (currentDisplay as any).label
-        : 'Unknown';
+    const currentDisplayLabel = toDisplayLabel(currentDisplay);
     return (
         <button
             className="btn btn-sm btn-outline-secondary app-ellipsis app-data"
             title={
-                `Display:${currentDisplayLabel}, ` +
-                `screen id:${screenManagerBase.screenId}` +
-                `, display id:${displayId}`
+                `${tran('Display')}: ${currentDisplayLabel}, ` +
+                `${tran('Screen id')}: ${screenManagerBase.screenId}, ` +
+                `${tran('Display id')}: ${displayId}`
             }
             onClick={handleDisplayChoosing.bind(
                 null,
@@ -61,7 +70,9 @@ export default function DisplayControlComp() {
             style={{ maxWidth: '80px' }}
         >
             <i className="bi bi-display" />
-            {currentDisplayLabel}({screenManagerBase.screenId}):{displayId}
+            {/* The raw name: an 80px button has no room for "Unknown". */}
+            {getRawDisplayLabel(currentDisplay)}({screenManagerBase.screenId}):
+            {displayId}
         </button>
     );
 }

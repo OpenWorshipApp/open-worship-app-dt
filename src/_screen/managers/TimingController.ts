@@ -1,3 +1,5 @@
+import { setClockText } from './clockTextHelpers';
+
 export default class TimingController {
     readonly divContainer: HTMLDivElement;
     readonly timezoneMinuteOffset: number;
@@ -93,12 +95,10 @@ export default class TimingController {
     }
 
     setHtml(isReset: boolean) {
-        this.divHour.innerHTML = isReset ? '00' : this.hourStr;
-        this.divMinute.innerHTML = isReset ? '00' : this.minuteStr;
-        this.divSecond.innerHTML = isReset ? '00' : this.secondStr;
-        if (this.divAmPm !== null) {
-            this.divAmPm.innerHTML = isReset ? '' : this.periodStr;
-        }
+        setClockText(this.divHour, isReset ? '00' : this.hourStr);
+        setClockText(this.divMinute, isReset ? '00' : this.minuteStr);
+        setClockText(this.divSecond, isReset ? '00' : this.secondStr);
+        setClockText(this.divAmPm, isReset ? '' : this.periodStr);
     }
 
     pause() {

@@ -29,6 +29,36 @@ export type PresentingFlowType = {
     metadata: AppDocumentMetadataType;
 };
 
+// A damaged entry is read again after every write of its file and once for
+// each surface showing it -- the tree and the run player -- so its toast and
+// its log line repeated a dozen times in one session. Once per entry per minute
+// says it; the error row stays on screen for good. Pruned on every call, so it
+// only ever holds the last minute's notices.
+const INVALID_ITEM_NOTICE_MILLISECOND = 60e3;
+const invalidItemNoticeMap = new Map<string, number>();
+function checkShouldNoticeInvalidItem(filePath: string, json: unknown) {
+    const now = Date.now();
+    for (const [key, noticedAt] of invalidItemNoticeMap) {
+        if (now - noticedAt > INVALID_ITEM_NOTICE_MILLISECOND) {
+            invalidItemNoticeMap.delete(key);
+        }
+    }
+    const key = `${filePath}\n${safeStringifyEntry(json)}`;
+    if (invalidItemNoticeMap.has(key)) {
+        return false;
+    }
+    invalidItemNoticeMap.set(key, now);
+    return true;
+}
+
+function safeStringifyEntry(json: unknown) {
+    try {
+        return JSON.stringify(json);
+    } catch {
+        return String(json);
+    }
+}
+
 /**
  * Whether a keyboard shortcut is still FREE in this sheet — the one uniqueness
  * rule a presenting flow has.
@@ -170,15 +200,22 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                 try {
                     return PresentingFlowItem.fromJson(this.filePath, json);
                 } catch (error: any) {
-                    // The thrown message names which validator rejected it and
-                    // belongs in the log beside the entry itself, which
-                    // `validate` has already written. What the operator is told
-                    // is the same phrase the row they are about to see reads.
-                    loggerHelpers.appError(error);
-                    showSimpleToast(
-                        tran('Instantiating Presenting Flow Item'),
-                        tran('Invalid item'),
-                    );
+                    // The thrown message names which validator rejected it, and
+                    // belongs in the log beside the entry itself -- as text, so
+                    // a forwarded log reads it rather than `[object Object]`.
+                    // What the operator is told is the same phrase the row they
+                    // are about to see reads.
+                    if (checkShouldNoticeInvalidItem(this.filePath, json)) {
+                        loggerHelpers.appError(
+                            error,
+                            `in ${this.filePath}:`,
+                            safeStringifyEntry(json),
+                        );
+                        showSimpleToast(
+                            tran('Instantiating Presenting Flow Item'),
+                            tran('Invalid item'),
+                        );
+                    }
                 }
                 return PresentingFlowItem.fromJsonError(this.filePath, json);
             }),

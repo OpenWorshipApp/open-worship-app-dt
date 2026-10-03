@@ -54,6 +54,13 @@ vi.mock('../server/appProvider', () => ({
 }));
 
 vi.mock('../helper/bible-helpers/downloadHelpers', () => ({
+    DownloadHttpError: class DownloadHttpError extends Error {
+        readonly statusCode: number;
+        constructor(statusCode: number) {
+            super(`The server answered ${statusCode}`);
+            this.statusCode = statusCode;
+        }
+    },
     writeStreamToFile: writeStreamToFileMock,
 }));
 
@@ -61,8 +68,10 @@ vi.mock('../progress-bar/progressBarHelpers', () => ({
     showProgressBarMessage: showProgressBarMessageMock,
 }));
 
+import { DownloadHttpError } from '../helper/bible-helpers/downloadHelpers';
 import {
     askForURL,
+    describeDownloadError,
     genDownloadContextMenuItems,
     getOpenSharedLinkMenuItem,
     messageCallback,
@@ -70,6 +79,32 @@ import {
     toDownloadFailureMessage,
     toDownloadFailureReason,
 } from './downloadHelper';
+
+describe('describeDownloadError', () => {
+    test('says a wrong link is a wrong link', () => {
+        expect(describeDownloadError(new DownloadHttpError(404))).toBe(
+            'The file was not found at that address. (HTTP 404)',
+        );
+        expect(describeDownloadError(new DownloadHttpError(500))).toBe(
+            'The server refused the download. (HTTP 500)',
+        );
+    });
+
+    test('says an unreachable address in words, not as a socket error', () => {
+        const error = Object.assign(
+            new Error('connect ECONNREFUSED 127.0.0.1:1'),
+            { code: 'ECONNREFUSED' },
+        );
+        expect(describeDownloadError(error)).toBe(
+            'Could not reach that address. Check the link and the internet connection.',
+        );
+    });
+
+    test('keeps any other failure in its own words', () => {
+        expect(describeDownloadError(new Error('boom'))).toBe('boom');
+        expect(describeDownloadError('plain')).toBe('plain');
+    });
+});
 
 describe('toDownloadFailureReason', () => {
     // The real rejection observed from a blocked run: yt-dlp emits its retry
@@ -459,9 +494,10 @@ describe('downloadHelper', () => {
         await expect(
             streamDownloadFile('/downloads/file.zip', {}, vi.fn()),
         ).rejects.toMatchObject({ message: 'boom' });
+        // The error's own words, once -- it was `Error: Error: boom`.
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Download Error',
-            'Error: Error: boom',
+            'boom',
         );
     });
 

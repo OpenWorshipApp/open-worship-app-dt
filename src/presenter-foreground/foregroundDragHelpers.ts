@@ -1,6 +1,7 @@
 import type ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
+import { withForegroundLayer } from '../_screen/screenTypeHelpers';
 
 // Foregrounds used to travel to a screen ONLY through `dragStore.onDropped` — a
 // live closure that dies with the drag. That is enough to drop one on a screen,
@@ -153,31 +154,66 @@ function toCountdownDateTime(data: any) {
     return new Date(data.dateTime);
 }
 
+/**
+ * Which stored row put a countdown, a stopwatch or a quick text up.
+ *
+ * Those three keep nothing of the row on the screen to compare against: a
+ * countdown's time is worked out when it is SHOWN, and a quick text holds the
+ * rendered html rather than its markdown. So the run sheet marked every such
+ * row live while ANY one of that kind was up -- the panel's own included.
+ * `applyForegroundDragData` stamps this key, read off the row's own payload,
+ * on what it puts up, and `presentingFlowOnScreenHelpers` matches on it. A
+ * short hash rather than the payload itself, because the screen data is
+ * saved whole into the on-screen setting.
+ */
+export function toForegroundRowKey(data: unknown) {
+    const text = JSON.stringify(data ?? null);
+    let hash = 5381;
+    for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
+    }
+    return `${text.length.toString(36)}-${(hash >>> 0).toString(36)}`;
+}
+
 export async function applyForegroundDragData(
     screenForegroundManager: ScreenForegroundManager,
     { target, data }: ForegroundDragDataType,
 ) {
     const { extraStyle } = data;
+    // The four rebuilt below are built field by field, so the layer has to be
+    // carried across by hand; the rest replay `data` whole and keep it.
+    const isBehind = data.isBehind === true;
+    const rowKey = toForegroundRowKey(data);
     if (target === 'message') {
-        screenForegroundManager.addMessageData({
-            // A stored run-sheet row replays the whole SESSION, so it lands
-            // under the same reserved id the panel's own "show all" uses --
-            // replaying twice must not stack two copies on the screen.
-            id: 'message-all',
-            textList: data.textList ?? [],
-            intervalSecond: data.intervalSecond ?? null,
-            extraStyle,
-        });
+        screenForegroundManager.addMessageData(
+            withForegroundLayer(
+                {
+                    // A stored run-sheet row replays the whole SESSION, so it
+                    // lands under the same reserved id the panel's own "show
+                    // all" uses -- replaying twice must not stack two copies
+                    // on the screen.
+                    id: 'message-all',
+                    textList: data.textList ?? [],
+                    intervalSecond: data.intervalSecond ?? null,
+                    extraStyle,
+                },
+                isBehind,
+            ),
+        );
     } else if (target === 'countdown') {
-        screenForegroundManager.setCountdownData({
-            dateTime: toCountdownDateTime(data),
-            extraStyle,
-        });
+        screenForegroundManager.setCountdownData(
+            withForegroundLayer(
+                { dateTime: toCountdownDateTime(data), extraStyle, rowKey },
+                isBehind,
+            ),
+        );
     } else if (target === 'stopwatch') {
-        screenForegroundManager.setStopwatchData({
-            dateTime: new Date(),
-            extraStyle,
-        });
+        screenForegroundManager.setStopwatchData(
+            withForegroundLayer(
+                { dateTime: new Date(), extraStyle, rowKey },
+                isBehind,
+            ),
+        );
     } else if (target === 'time') {
         screenForegroundManager.addTimeData(data);
     } else if (target === 'marquee-top') {
@@ -191,12 +227,18 @@ export async function applyForegroundDragData(
         const { renderMarkdown } =
             await import('../lyric-list/markdownHelpers');
         const { html } = await renderMarkdown(data.markdownText ?? '');
-        screenForegroundManager.setQuickTextData({
-            htmlText: html,
-            timeSecondDelay: data.timeSecondDelay,
-            timeSecondToLive: data.timeSecondToLive,
-            extraStyle,
-        });
+        screenForegroundManager.setQuickTextData(
+            withForegroundLayer(
+                {
+                    htmlText: html,
+                    timeSecondDelay: data.timeSecondDelay,
+                    timeSecondToLive: data.timeSecondToLive,
+                    extraStyle,
+                    rowKey,
+                },
+                isBehind,
+            ),
+        );
     } else if (target === 'camera') {
         screenForegroundManager.addCameraData(data);
     } else if (target === 'web') {

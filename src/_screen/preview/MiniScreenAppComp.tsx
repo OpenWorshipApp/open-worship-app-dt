@@ -140,6 +140,7 @@ export default function MiniScreenAppComp({
             {genStyleRendering(foregroundEffectManager)}
             <RenderBackdropComp screenManagerBase={screenManager} />
             <ScreenBackgroundComp />
+            <ScreenForegroundComp isBehind />
             <ScreenVaryAppDocumentComp />
             <ScreenBibleComp />
             <ScreenForegroundComp />

@@ -292,7 +292,7 @@ describe('non-Bible screen managers', () => {
             screenManagerBase,
             effectManager,
         );
-        manager.div = document.createElement('div');
+        manager.rootContainer = document.createElement('div');
 
         const timeData = {
             id: 'tokyo',
@@ -339,6 +339,76 @@ describe('non-Bible screen managers', () => {
         expect(manager.isShowing).toBe(false);
         expect(setSettingMock).toHaveBeenCalled();
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalled();
+    });
+
+    test('mounts a behind overlay under the slide and moves it when its layer changes', async () => {
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
+        const { withForegroundLayer } = await import('../screenTypeHelpers');
+
+        const screenManagerBase = {
+            screenId: 23,
+            width: 1280,
+            height: 720,
+            noSyncGroupMap: new Map<string, boolean>(),
+            checkIsLockedWithMessage: vi.fn(() => false),
+            sendScreenMessage: vi.fn(),
+            createScreenManagerBaseGhost: vi.fn(),
+        } as any;
+        const effectManager = {
+            styleAnimList: {
+                fade: {},
+            },
+        } as any;
+        const manager = new ScreenForegroundManager(
+            screenManagerBase,
+            effectManager,
+        );
+        const behindRoot = document.createElement('div');
+        const frontRoot = document.createElement('div');
+        manager.rootContainerBehind = behindRoot;
+        manager.rootContainer = frontRoot;
+
+        // In front, the datum carries NO layer key: an overlay restored from
+        // disk has none, and a `false` would make the two compare unequal.
+        const frontData = withForegroundLayer(
+            { id: 'front', textList: ['Car lights on'], intervalSecond: null },
+            false,
+        );
+        expect(frontData).not.toHaveProperty('isBehind');
+        const behindData = withForegroundLayer(
+            { id: 'logo', textList: ['Logo'], intervalSecond: null },
+            true,
+        );
+        expect(behindData.isBehind).toBe(true);
+
+        manager.setMessageDataList([frontData, behindData]);
+        expect(frontRoot.children).toHaveLength(1);
+        expect(behindRoot.children).toHaveLength(1);
+
+        // Re-mounting ONE root re-renders that root's overlays only.
+        renderForegroundHelperMock.mockClear();
+        manager.render(true);
+        expect(renderForegroundHelperMock).toHaveBeenCalledOnce();
+        expect(renderForegroundHelperMock).toHaveBeenCalledWith(
+            behindData,
+            expect.anything(),
+        );
+        // The replaced container leaves after its exit, one tick later.
+        await vi.waitFor(() => {
+            expect(behindRoot.children).toHaveLength(1);
+        });
+        expect(frontRoot.children).toHaveLength(1);
+
+        // Unticking Behind Slide sends the overlay back over the slide.
+        manager.setMessageDataList([
+            frontData,
+            withForegroundLayer(behindData, false),
+        ]);
+        await vi.waitFor(() => {
+            expect(behindRoot.children).toHaveLength(0);
+        });
+        expect(frontRoot.children).toHaveLength(2);
     });
 
     test('deduplicates and removes camera overlays', async () => {

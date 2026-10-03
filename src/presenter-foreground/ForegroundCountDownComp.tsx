@@ -13,7 +13,10 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import type { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
+import {
+    type ForegroundCountdownDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
@@ -74,19 +77,26 @@ const handleByDropped = (
     sessionId: string,
     dateTime: Date,
     extraStyle: CSSProperties,
+    isBehind: boolean,
     event: any,
 ) => {
     const screenForegroundManager = getScreenForegroundManagerByDropped(event);
     if (screenForegroundManager === null) {
         return;
     }
-    screenForegroundManager.setCountdownData({
-        // A LIVE drop from this panel is this session acting; a run-sheet row
-        // replayed weeks later carries none -- see `applyForegroundDragData`.
-        id: sessionId || undefined,
-        dateTime,
-        extraStyle,
-    });
+    screenForegroundManager.setCountdownData(
+        withForegroundLayer(
+            {
+                // A LIVE drop from this panel is this session acting; a
+                // run-sheet row replayed weeks later carries none -- see
+                // `applyForegroundDragData`.
+                id: sessionId || undefined,
+                dateTime,
+                extraStyle,
+            },
+            isBehind,
+        ),
+    );
 };
 
 /**
@@ -109,10 +119,12 @@ function checkIsPastTargetWithMessage(targetDateTime: Date) {
 
 function CountDownOnDatetimeComp({
     genStyle,
+    getIsBehind,
     sessionId,
     suffix,
 }: Readonly<{
     genStyle: () => CSSProperties;
+    getIsBehind: () => boolean;
     sessionId: string;
     suffix: string;
 }>) {
@@ -132,9 +144,10 @@ function CountDownOnDatetimeComp({
                 genStyle(),
                 isForceChoosing,
                 sessionId,
+                getIsBehind(),
             );
         },
-        [getTargetDateTime, genStyle, sessionId],
+        [getTargetDateTime, genStyle, getIsBehind, sessionId],
     );
     const setDateRef = useAppCurrentRef(setDate);
     const setTimeRef = useAppCurrentRef(setTime);
@@ -166,6 +179,7 @@ function CountDownOnDatetimeComp({
     );
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
     const genStyleRef = useAppCurrentRef(genStyle);
+    const getIsBehindRef = useAppCurrentRef(getIsBehind);
     const sessionIdRef = useAppCurrentRef(sessionId);
     const handleDraggingStart = useCallback((event: any) => {
         const targetDateTime = getTargetDateTimeRef.current();
@@ -174,19 +188,24 @@ function CountDownOnDatetimeComp({
             return;
         }
         const extraStyle = genStyleRef.current();
+        const isBehind = getIsBehindRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
             sessionIdRef.current,
             targetDateTime,
             extraStyle,
+            isBehind,
         );
         handleDragStart(
             event,
             genForegroundDragInf('countdown', () => {
-                return {
-                    dateTime: targetDateTime.toJSON(),
-                    extraStyle,
-                };
+                return withForegroundLayer(
+                    {
+                        dateTime: targetDateTime.toJSON(),
+                        extraStyle,
+                    },
+                    isBehind,
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -251,10 +270,12 @@ function CountDownOnDatetimeComp({
 
 function CountDownInSetComp({
     genStyle,
+    getIsBehind,
     sessionId,
     suffix,
 }: Readonly<{
     genStyle: () => CSSProperties;
+    getIsBehind: () => boolean;
     sessionId: string;
     suffix: string;
 }>) {
@@ -288,9 +309,10 @@ function CountDownInSetComp({
                 style,
                 isForceChoosing,
                 sessionId,
+                getIsBehind(),
             );
         },
-        [getTargetDateTime, genStyle, sessionId],
+        [getTargetDateTime, genStyle, getIsBehind, sessionId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -316,24 +338,30 @@ function CountDownInSetComp({
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
     const getDurationSecondRef = useAppCurrentRef(getDurationSecond);
     const genStyleRef = useAppCurrentRef(genStyle);
+    const getIsBehindRef = useAppCurrentRef(getIsBehind);
     const sessionIdRef = useAppCurrentRef(sessionId);
     const handleInSetDragStart = useCallback((event: any) => {
         const extraStyle = genStyleRef.current();
+        const isBehind = getIsBehindRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
             sessionIdRef.current,
             getTargetDateTimeRef.current(),
             extraStyle,
+            isBehind,
         );
         // A duration countdown must restart from the moment it lands on a
         // screen, so the duration travels rather than the resolved date.
         handleDragStart(
             event,
             genForegroundDragInf('countdown', () => {
-                return {
-                    durationSecond: getDurationSecondRef.current(),
-                    extraStyle,
-                };
+                return withForegroundLayer(
+                    {
+                        durationSecond: getDurationSecondRef.current(),
+                        extraStyle,
+                    },
+                    isBehind,
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,16 +421,16 @@ function CountDownInSetComp({
 function refreshAllCountdowns(
     showingScreenIds: [number, ForegroundCountdownDataType][],
     extraStyle: CSSProperties,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIds) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
                 screenForegroundManager.setCountdownData(null);
-                screenForegroundManager.setCountdownData({
-                    ...data,
-                    extraStyle,
-                });
+                screenForegroundManager.setCountdownData(
+                    withForegroundLayer({ ...data, extraStyle }, isBehind),
+                );
             },
         );
     }
@@ -443,6 +471,7 @@ export default function ForegroundCountDownComp() {
     // Each keeps its own numbers and its own size, place and colours.
     const {
         activeId,
+        sessionIds,
         suffix,
         prefix,
         element: sessionsElement,
@@ -452,27 +481,42 @@ export default function ForegroundCountDownComp() {
             return `countdown${sessionSuffix}`;
         },
         toOwnSettingNames: genOwnSettingNames,
-        checkIsOnScreen: (sessionId) => {
+        checkIsOnScreen: (sessionId, _sessionSuffix, idList) => {
             return showingScreenIdDataList.some(([, data]) => {
-                return checkIsSessionData(data, sessionId);
+                return checkIsSessionData(data, sessionId, idList);
             });
         },
-        hideSession: (sessionId) => {
+        hideSession: (sessionId, _sessionSuffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
-                if (checkIsSessionData(data, sessionId)) {
+                if (checkIsSessionData(data, sessionId, idList)) {
                     handleCountdownHiding(screenId);
                 }
             }
         },
     });
-    const { genStyle, element: propsSetting } = useForegroundPropsSetting({
+    // The Hide row is THIS session's too -- see `toSessionShowingList`.
+    const sessionShowingList = toSessionShowingList(
+        showingScreenIdDataList,
+        activeId,
+        sessionIds,
+    );
+    const {
+        genStyle,
+        getIsBehind,
+        element: propsSetting,
+    } = useForegroundPropsSetting({
         prefix,
-        onChange: (extraStyle) => {
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 // THIS session's countdown only -- see the stopwatch panel.
                 refreshAllCountdowns(
-                    toSessionShowingList(showingRef.current, activeId),
+                    toSessionShowingList(
+                        showingRef.current,
+                        activeId,
+                        sessionIds,
+                    ),
                     extraStyle,
+                    isBehind,
                 );
             });
         },
@@ -480,7 +524,7 @@ export default function ForegroundCountDownComp() {
     });
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
-            showingScreenIdDataList={showingScreenIdDataList}
+            showingScreenIdDataList={sessionShowingList}
             buttonText={tran('Hide Countdown')}
             handleForegroundHiding={handleCountdownHiding}
             isMini={isMini}
@@ -500,12 +544,14 @@ export default function ForegroundCountDownComp() {
                 <CountDownOnDatetimeComp
                     key={`date-${activeId}`}
                     genStyle={genStyle}
+                    getIsBehind={getIsBehind}
                     sessionId={activeId}
                     suffix={suffix}
                 />
                 <CountDownInSetComp
                     key={`duration-${activeId}`}
                     genStyle={genStyle}
+                    getIsBehind={getIsBehind}
                     sessionId={activeId}
                     suffix={suffix}
                 />
@@ -514,7 +560,7 @@ export default function ForegroundCountDownComp() {
                  * a countdown -- there is only ever one countdown up, and two
                  * bordered boxes saying so was the panel repeating itself.
                  */}
-                {showingScreenIdDataList.length > 0 ? (
+                {sessionShowingList.length > 0 ? (
                     <div className="fg-actions">{genHidingElement(false)}</div>
                 ) : null}
             </div>

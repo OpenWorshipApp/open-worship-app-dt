@@ -150,7 +150,7 @@
 - [A confirm needs a popup host](confirm-needs-a-popup-host.md) — fails open · [Popup deep link rides a setting](popup-deep-link-by-setting.md) — read on mount + focus
 - [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split on `/\r?\n/`
 - [Canvas item blend mode](canvas-item-blend-mode.md) · [Canvas item shadow](canvas-item-shadow.md)
-- [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — no z-index/isolation on `#foreground`
+- [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — no z-index/isolation on `#foreground`; `#foreground-behind` sits under the slide
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19
 - [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md)
 - [Own font list with weights](own-font-list-with-weights.md)

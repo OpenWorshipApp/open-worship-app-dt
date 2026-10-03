@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import MediaSessionsComp, {
+    DEFAULT_SESSION_ID,
     toSessionSuffix,
     useMediaSessions,
 } from '../media-sessions/MediaSessionsComp';
@@ -63,14 +64,23 @@ export type ForegroundSessionsPropsType = {
      * Whether that session has something on a screen. Only one session is
      * rendered at a time, so without this the strip is the one place a live
      * overlay belonging to a session nobody is looking at leaves a mark.
+     * `sessionIds` is the strip as it stands, for `checkIsSessionData`.
      */
-    checkIsOnScreen: (sessionId: string, suffix: string) => boolean;
+    checkIsOnScreen: (
+        sessionId: string,
+        suffix: string,
+        sessionIds: string[],
+    ) => boolean;
     /**
      * Take that session's overlay OFF every screen. Called before the session
      * is removed: once it is gone, nothing knows which entry was its, and the
      * words sit on the projector with no way back off but Clear Foreground.
      */
-    hideSession: (sessionId: string, suffix: string) => void;
+    hideSession: (
+        sessionId: string,
+        suffix: string,
+        sessionIds: string[],
+    ) => void;
 };
 
 export function useForegroundSessions(props: ForegroundSessionsPropsType) {
@@ -84,11 +94,21 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
         removeSession,
     } = useMediaSessions(target);
     const suffix = toSessionSuffix(activeId);
+    const sessionIds = sessions.map((session) => {
+        return session.id;
+    });
     const propsRef = useAppCurrentRef(props);
+    const sessionIdsRef = useAppCurrentRef(sessionIds);
     const removeSessionRef = useAppCurrentRef(removeSession);
     const handleSessionRemoving = useCallback((sessionId: string) => {
         const currentProps = propsRef.current;
-        currentProps.hideSession(sessionId, toSessionSuffix(sessionId));
+        // The strip BEFORE the removal: an overlay that falls to the first
+        // session (see `toOwnerSessionId`) goes down with that session.
+        currentProps.hideSession(
+            sessionId,
+            toSessionSuffix(sessionId),
+            sessionIdsRef.current,
+        );
         removeSessionRef.current(sessionId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -106,6 +126,7 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
     }, []);
     return {
         activeId,
+        sessionIds,
         suffix,
         prefix: props.toPrefix?.(suffix) ?? '',
         element: (
@@ -123,6 +144,7 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
                         isOnScreen: props.checkIsOnScreen(
                             sessionId,
                             toSessionSuffix(sessionId),
+                            sessionIds,
                         ),
                         // None of these widgets runs a slide show: a countdown
                         // and a marquee are one item that stays up.
@@ -143,26 +165,46 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
  * was put there by a drag, a run-sheet row or the assistant, none of which
  * knows about sessions, and Default is where the panel's own controls for it
  * live.
+ *
+ * Default can be removed, though, and an id can name a session that is gone.
+ * Such an entry belongs to the FIRST session in `sessionIds`, the one the
+ * strip itself falls back to: every overlay has exactly one tab marking it
+ * and one Hide row that takes it down, and none is left reachable only by
+ * Clear Foreground.
  */
-export function checkIsSessionData(data: { id?: string }, sessionId: string) {
-    return (data.id ?? '') === sessionId;
+export function toOwnerSessionId(data: { id?: string }, sessionIds: string[]) {
+    const sessionId = data.id ?? DEFAULT_SESSION_ID;
+    if (sessionIds.length === 0 || sessionIds.includes(sessionId)) {
+        return sessionId;
+    }
+    return sessionIds[0];
+}
+
+export function checkIsSessionData(
+    data: { id?: string },
+    sessionId: string,
+    sessionIds: string[],
+) {
+    return toOwnerSessionId(data, sessionIds) === sessionId;
 }
 
 /**
  * What ONE session of a single-slot widget has on the screens.
  *
- * This is what a Properties change acts on. The panel's own list is every
- * entry of that KIND, whoever put it there -- deliberately, so the Hide row
- * can always take a live overlay down from whichever session is in front --
- * but a style belongs to the session it was set on: restyling from here
- * without this filter handed Session 2's size and colours to the overlay
- * Default had put on the wall.
+ * Both the panel's Hide row and a Properties change act on this list, never
+ * on every entry of that KIND. The Hide row once listed every one, so
+ * Session 2's panel offered `Hide Marquee Bottom` beside a scroll Default had
+ * put up, and read as though Session 2 were on the wall. The tab that IS on
+ * screen carries the strip's on-screen mark, and its own panel takes it down.
+ * Restyling from the unfiltered list handed Session 2's size and colours to
+ * Default's overlay.
  */
 export function toSessionShowingList<DataType extends { id?: string }>(
     showingScreenIdDataList: [number, DataType][],
     sessionId: string,
+    sessionIds: string[],
 ) {
     return showingScreenIdDataList.filter(([, data]) => {
-        return checkIsSessionData(data, sessionId);
+        return checkIsSessionData(data, sessionId, sessionIds);
     });
 }

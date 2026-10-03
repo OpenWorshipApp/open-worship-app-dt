@@ -877,13 +877,10 @@ than the position (PL-53).
 #### P3 — Actions, both families (PL-71..PL-74, PL-95, PL-96, PL-97)
 
 The **Add Action** menu is four levels now: every clear folds behind **Clear Screen**, and
-the eight per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
+the eleven per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
 Two families, and the difference is the whole point:
 
-- **Screen actions** (14) — `apply(screenManager, presentingFlowItem)`. **Fire every one of
-  them at least once against a real, showing screen** (PL-72, PL-74). They are the only
-  presenting flow rows that write to a screen while carrying no content; a mis-wired clear is
-  invisible in the tree. The fourteenth, `Slide: Media Control` (PL-102), is the odd one:
+- **Screen actions** (19: the 18 in **Add Action** — five clears, eleven per-widget foreground clears, **Screen: Show** / **Screen: Hide** — plus one more) — `apply(screenManager, presentingFlowItem)`. **Fire every one of them at least once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows that write to a screen while carrying no content; a mis-wired clear is invisible in the tree. **Clear All** cannot be added by an agent at all — the MCP firewall refuses its label even in this menu — so say so rather than counting it, and a per-widget clear with nothing of its kind up proves only that it does no harm. The nineteenth, `Slide: Media Control` (PL-102), is the odd one:
   it is NOT in the `Add Action` menu at all — it is attached to a slide from that slide's
   own menu (**Add Media Control**), its settings live on the attachment, and its pin
   NARROWS the host's screens rather than replacing them.
@@ -1041,8 +1038,7 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
 - In **presenting flow deep mode** (§6f) the report MUST additionally carry: the per-phase table
   (P0..P10 → status), the coverage summary over the 69-row scope set, the fixture's name
   and **what was torn down vs. left behind**, and — because they are the rows most easily
-  faked — an explicit line each for the **13 screen actions fired against a showing
-  screen** (PL-72/74), the **folded-sheet walk** (PL-99) and the **performance
+  faked — an explicit line each for the **screen actions fired against a showing screen** (PL-72/74: each one named, and every one of the 18 in **Add Action** not fired named with its reason), the **folded-sheet walk** (PL-99) and the **performance
   measurements** (PL-63/70) with their numbers.
 - In **prod mode** (§2b) the report MUST open with the **Build under test** block
   (version, commit + dirty flag, exe path and `builtAt`, the pack artefacts written to

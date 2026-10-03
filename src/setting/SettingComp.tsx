@@ -24,10 +24,13 @@ const LazySettingOthersComp = lazy(() => {
     return import('./SettingOthersComp');
 });
 
+// Label KEYS, translated in render: `toIconedLabel` calls `tran()`, and
+// called here at import it froze the tabs in whatever language was in force
+// when this module first loaded (and throws in dev before language data is in).
 const tabTypeList = [
-    ['g', toIconedLabel('General'), LazySettingGeneralComp],
-    ['b', toIconedLabel('Bible'), LazySettingBibleComp],
-    ['o', toIconedLabel('Others'), LazySettingOthersComp],
+    ['g', 'General', LazySettingGeneralComp],
+    ['b', 'Bible', LazySettingBibleComp],
+    ['o', 'Others', LazySettingOthersComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 // The tab holding the AI keys.
@@ -103,10 +106,10 @@ export default function SettingComp() {
                 <TabRenderComp<TabKeyType>
                     isVertical
                     className="app-setting-nav flex-grow-1"
-                    tabs={tabTypeList.map(([key, name]) => {
+                    tabs={tabTypeList.map(([key, labelKey]) => {
                         return {
                             key,
-                            title: name,
+                            title: toIconedLabel(labelKey),
                         };
                     })}
                     activeTabs={[tabKey]}

@@ -40,6 +40,7 @@ import { getAppFilePathFromFile } from './localFileHelpers';
 import { initHttpRequest } from './bible-helpers/downloadHelpers';
 import {
     askForURL,
+    describeDownloadError,
     messageCallback,
     streamDownloadFile,
 } from '../background/downloadHelper';
@@ -522,20 +523,26 @@ export async function askAndImportSingleItemArchiveFromUrl(
             ),
         );
         const response = await initHttpRequest(new URL(url));
-        await streamDownloadFile(
-            archiveFilePath,
-            response,
-            messageCallback,
-            true,
-        );
+        try {
+            await streamDownloadFile(
+                archiveFilePath,
+                response,
+                messageCallback,
+                true,
+            );
+        } catch (error) {
+            // `streamDownloadFile` has already said why, in words: a second
+            // toast here repeated it as the raw message.
+            handleError(error);
+            return null;
+        }
         return await runSingleItemArchiveImport(archiveFilePath, config);
     } catch (error: any) {
-        return reportArchiveFailure(
-            config.importTitle,
-            'import',
-            config,
-            error,
-        );
+        // The request itself failed -- the address was never reached -- or
+        // the import did, whose own message `describeDownloadError` keeps.
+        handleError(error);
+        showSimpleToast(tran(config.importTitle), describeDownloadError(error));
+        return null;
     } finally {
         await safeDeleteDir(workDirPath);
     }

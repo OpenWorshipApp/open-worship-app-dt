@@ -78,7 +78,48 @@ export type BackgroundSrcListType = {
     [key: string]: BackgroundSrcType;
 };
 
-export type ForegroundCountdownDataType = {
+/**
+ * Which of the two foreground layers ONE overlay is drawn in.
+ *
+ * Every foreground widget can sit BEHIND the slide and the Bible text -- over
+ * the background, under the words -- which is what a logo, a falling-snow clip
+ * or a clock on a lyric slide wants: the words stay readable on top of it. The
+ * screen mounts a second `#foreground-behind` root for those, between the
+ * background and the slide (`ScreenForegroundManager.createDivContainer` picks
+ * the root by this flag).
+ *
+ * It is per OVERLAY, not per screen: the Properties panel of each widget
+ * session carries its own checkbox, and a behind logo and an in-front alert
+ * are on the same screen at once. Written only when true -- see
+ * `withForegroundLayer`.
+ */
+export type ForegroundLayerDataType = {
+    isBehind?: boolean;
+};
+
+/**
+ * The datum with its layer set, and with NO `isBehind` key at all when it is in
+ * front. An overlay restored from disk has no such key, and
+ * `checkAreObjectsEqual` counts keys -- writing `isBehind: false` would tear
+ * every one of them down and rebuild it on the first update after a restore.
+ *
+ * `T extends object`, not `T extends ForegroundLayerDataType`: that type is all
+ * optional (a "weak" type), so a datum literal with no `isBehind` of its own
+ * fails it and TypeScript falls back to the bare constraint.
+ */
+export function withForegroundLayer<T extends object>(
+    data: T,
+    isBehind: boolean,
+): T & ForegroundLayerDataType {
+    const newData = { ...data } as T & ForegroundLayerDataType;
+    delete newData.isBehind;
+    if (isBehind) {
+        newData.isBehind = true;
+    }
+    return newData;
+}
+
+export type ForegroundCountdownDataType = ForegroundLayerDataType & {
     /**
      * Which SESSION of the widget put this up. A session is one saved set-up of
      * the panel -- its own words or numbers and its own Properties -- and it is
@@ -87,16 +128,23 @@ export type ForegroundCountdownDataType = {
      * whichever session owned it; an entry with no id is the Default session's.
      */
     id?: string;
+    /**
+     * The stored run-sheet row that put this up, as `toForegroundRowKey`. Only
+     * a row sets it, and the run sheet marks a row live by it.
+     */
+    rowKey?: string;
     dateTime: Date;
     extraStyle?: CSSProperties;
 };
-export type ForegroundStopwatchDataType = {
+export type ForegroundStopwatchDataType = ForegroundLayerDataType & {
     /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
     id?: string;
+    /** The run-sheet row that put this up -- see `ForegroundCountdownDataType`. */
+    rowKey?: string;
     dateTime: Date;
     extraStyle?: CSSProperties;
 };
-export type ForegroundTimeDataType = {
+export type ForegroundTimeDataType = ForegroundLayerDataType & {
     id: string;
     timezoneMinuteOffset: number;
     title: string | null;
@@ -109,7 +157,7 @@ export type MarqueePositionType = (typeof marqueePositionList)[number];
 export const DEFAULT_MARQUEE_SPEED_PERCENTAGE = 100;
 export const MIN_MARQUEE_SPEED_PERCENTAGE = 10;
 export const MAX_MARQUEE_SPEED_PERCENTAGE = 1000;
-export type ForegroundMarqueeDataType = {
+export type ForegroundMarqueeDataType = ForegroundLayerDataType & {
     /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
     id?: string;
     text: string;
@@ -147,7 +195,7 @@ export type ForegroundMarqueeDataType = {
  * passes through `sanitizeHtml`, which is still a no-op placeholder in a
  * renderer that has node integration.
  */
-export type ForegroundMessageDataType = {
+export type ForegroundMessageDataType = ForegroundLayerDataType & {
     /**
      * Which EDITOR in the panel put this up. A session holds several message
      * editors, each with its own Show button, so several messages can be on a
@@ -178,15 +226,17 @@ export type ForegroundMessageDataType = {
     extraStyle?: CSSProperties;
 };
 
-export type ForegroundQuickTextDataType = {
+export type ForegroundQuickTextDataType = ForegroundLayerDataType & {
     /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
     id?: string;
+    /** The run-sheet row that put this up -- see `ForegroundCountdownDataType`. */
+    rowKey?: string;
     htmlText: string;
     timeSecondDelay: number;
     timeSecondToLive: number;
     extraStyle?: CSSProperties;
 };
-export type ForegroundCameraDataType = {
+export type ForegroundCameraDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -207,7 +257,7 @@ export type ForegroundCameraDataType = {
     label?: string;
     extraStyle?: CSSProperties;
 };
-export type ForegroundWebDataType = {
+export type ForegroundWebDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -229,7 +279,7 @@ export type ForegroundWebDataType = {
  * blend mode rides, so there is no `scaleType` here: a background fills the
  * screen, an overlay is aimed by hand.
  */
-export type ForegroundVideoDataType = {
+export type ForegroundVideoDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -256,7 +306,7 @@ export type ForegroundVideoDataType = {
     /** 0-100, the clip's own level. Only meaningful with `isSoundOn`. */
     soundVolume?: number;
 };
-export type ForegroundImageDataType = {
+export type ForegroundImageDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one

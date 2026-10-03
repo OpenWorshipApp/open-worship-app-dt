@@ -325,6 +325,12 @@ describe('CC menus and rows', () => {
         const icons = container.querySelectorAll(
             '.app-presenting-flow-row-settings-icon',
         );
+        // Real buttons with a name, so a keyboard and a screen reader reach
+        // them -- they were bare <i>s.
+        for (const icon of icons) {
+            expect(icon.tagName).toBe('BUTTON');
+            expect(icon.getAttribute('aria-label')).toBeTruthy();
+        }
         (icons[0] as HTMLElement).click();
         (icons[1] as HTMLElement).click();
         props.onDragOver(clickEvent);

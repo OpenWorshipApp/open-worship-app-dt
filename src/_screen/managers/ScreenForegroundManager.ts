@@ -37,7 +37,10 @@ import type {
     ForegroundVideoDataType,
     ForegroundWebDataType,
 } from '../screenTypeHelpers';
-import { DEFAULT_MARQUEE_SPEED_PERCENTAGE } from '../screenTypeHelpers';
+import {
+    DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+    withForegroundLayer,
+} from '../screenTypeHelpers';
 import {
     checkAreObjectsEqual,
     checkIsItemInArray,
@@ -47,6 +50,14 @@ import type ScreenEffectManager from './ScreenEffectManager';
 import type { TransitionEffectType } from '../transitionEffectHelpers';
 import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 import appProvider from '../../server/appProvider';
+
+// The font stack `screen.scss` gives the screen window's `body`, written out
+// again for `containerStyle`. Keep the two the same: it is what makes the mini
+// preview's foreground read like the projector's.
+const SCREEN_FONT_FAMILY =
+    "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue'," +
+    " 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji'," +
+    " 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'";
 
 export type ScreenForegroundEventType = 'update';
 
@@ -116,7 +127,8 @@ function toMessageDataList(foregroundData: any): any[] {
 
 export default class ScreenForegroundManager extends ScreenEventHandler<ScreenForegroundEventType> {
     static readonly eventNamePrefix: string = 'screen-foreground-m';
-    private _div: HTMLDivElement | null = null;
+    private _rootContainerBehind: HTMLDivElement | null = null;
+    private _rootContainer: HTMLDivElement | null = null;
     // Per-instance: sync-grouped screens share the SAME foreground-data object
     // references, so a module-level map keyed by data would let one screen's
     // render evict another screen's container. Each screen owns its containers.
@@ -245,16 +257,34 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         });
     }
 
-    get div(): HTMLDivElement {
-        return this._div ?? document.createElement('div');
+    /**
+     * The root the overlays marked `isBehind` are mounted into: a second
+     * foreground root, `#foreground-behind`, between the background and the
+     * slide, so the slide and the Bible text paint over them. See
+     * `ForegroundLayerDataType`.
+     */
+    get rootContainerBehind(): HTMLDivElement {
+        return this._rootContainerBehind ?? document.createElement('div');
     }
 
-    set div(div: HTMLDivElement | null) {
-        if (this._div === div) {
+    set rootContainerBehind(rootContainerBehind: HTMLDivElement | null) {
+        if (this._rootContainerBehind === rootContainerBehind) {
             return;
         }
-        this._div = div;
-        this.render();
+        this._rootContainerBehind = rootContainerBehind;
+        this.render(true);
+    }
+
+    get rootContainer(): HTMLDivElement {
+        return this._rootContainer ?? document.createElement('div');
+    }
+
+    set rootContainer(rootContainer: HTMLDivElement | null) {
+        if (this._rootContainer === rootContainer) {
+            return;
+        }
+        this._rootContainer = rootContainer;
+        this.render(false);
     }
 
     removeDivContainer(data: any) {
@@ -274,6 +304,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * `#foreground` makes one. Giving it a `z-index`, `isolation`, `opacity`
      * below 1, a `filter`, a `transform` or `will-change` would turn every
      * blend mode into a silent no-op.
+     *
+     * The datum decides WHICH root: an overlay marked `isBehind` goes into the
+     * root under the slide, where it still blends with the background.
      */
     createDivContainer(
         data: any,
@@ -288,7 +321,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 container.remove();
             },
         });
-        this.div.appendChild(container);
+        const rootContainer =
+            data?.isBehind === true
+                ? this.rootContainerBehind
+                : this.rootContainer;
+        rootContainer.appendChild(container);
         return container;
     }
 
@@ -488,7 +525,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * `sessionId` rides LAST and optional on purpose: the panel passes which of
      * its sessions is putting this up, and everything else that starts a
      * countdown -- a dropped run-sheet row, the assistant -- carries no session
-     * at all and must keep the call it already makes.
+     * at all and must keep the call it already makes. `isBehind` comes after it
+     * for the same reason -- see `ForegroundLayerDataType`.
      */
     static async setCountdown(
         event: MouseEvent,
@@ -496,12 +534,20 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
     ) {
         this.setData(
             event,
             (screenForegroundManager) => {
                 const data = dateTime
-                    ? { ...toSessionIdPart(sessionId), dateTime, extraStyle }
+                    ? withForegroundLayer(
+                          {
+                              ...toSessionIdPart(sessionId),
+                              dateTime,
+                              extraStyle,
+                          },
+                          isBehind,
+                      )
                     : null;
                 screenForegroundManager.setCountdownData(data);
             },
@@ -529,13 +575,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setStopwatch(
         event: MouseEvent,
         dateTime: Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
     ) {
         this.setData(
             event,
@@ -543,11 +590,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const stopwatchData =
                     dateTime === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              dateTime,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  dateTime,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setStopwatchData(stopwatchData);
             },
             isForceChoosing,
@@ -663,7 +713,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setMarqueeTop(
         event: MouseEvent,
         text: string | null,
@@ -671,6 +721,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
     ) {
         this.setData(
             event,
@@ -678,18 +729,21 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const marqueeTopData =
                     text === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              text,
-                              speedPercentage,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  text,
+                                  speedPercentage,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setMarqueeTopData(marqueeTopData);
             },
             isForceChoosing,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setMarqueeBottom(
         event: MouseEvent,
         text: string | null,
@@ -697,6 +751,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
     ) {
         this.setData(
             event,
@@ -704,12 +759,15 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const marqueeBottomData =
                     text === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              text,
-                              speedPercentage,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  text,
+                                  speedPercentage,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setMarqueeBottomData(marqueeBottomData);
             },
             isForceChoosing,
@@ -739,7 +797,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setQuickText(
         event: MouseEvent,
         htmlText: string | null,
@@ -748,6 +806,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
     ) {
         this.setData(
             event,
@@ -755,13 +814,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const quickTextData =
                     htmlText === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              htmlText,
-                              timeSecondDelay,
-                              timeSecondToLive,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  htmlText,
+                                  timeSecondDelay,
+                                  timeSecondToLive,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setQuickTextData(quickTextData);
             },
             isForceChoosing,
@@ -1041,7 +1103,17 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.fireUpdateEvent();
     }
 
-    render() {
+    /**
+     * Mount every overlay again. `isBehind` narrows it to ONE root's overlays:
+     * the two roots mount (and refresh) separately, and each re-rendering the
+     * other's items as well would replay every overlay's entrance twice.
+     */
+    render(isBehind?: boolean) {
+        const checkIsInRoot = (data: any) => {
+            return (
+                isBehind === undefined || (data.isBehind === true) === isBehind
+            );
+        };
         for (const [key, render] of this.rendererMap.entries()) {
             const data = this.foregroundData[key as keyof ForegroundDataType];
             if (data === null) {
@@ -1049,9 +1121,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             }
             if (Array.isArray(data)) {
                 for (const item of data) {
-                    render(item);
+                    if (checkIsInRoot(item)) {
+                        render(item);
+                    }
                 }
-            } else {
+            } else if (checkIsInRoot(data)) {
                 render(data);
             }
         }
@@ -1111,7 +1185,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.foregroundData = ScreenForegroundManager.parseAllForegroundData(
             {},
         );
-        this._div = null;
+        this._rootContainerBehind = null;
+        this._rootContainer = null;
         super.delete();
     }
 
@@ -1139,6 +1214,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             // 1.5 is too tight for Khmer, whose stacked subscripts overflow the
             // line box and get cut by the `overflow: hidden` above.
             lineHeight: 'normal',
+            // Pinned for the same reason. Inherited through the shadow root,
+            // the presenter's own app font reached every widget in the mini
+            // preview: with Battambang chosen, a countdown read serif there and
+            // its wider digits broke `00:04:40` over two lines, while the real
+            // screen showed one sans-serif line. A widget's own font
+            // (Properties) is set on the widget, so it still wins.
+            fontFamily: SCREEN_FONT_FAMILY,
         };
     }
 

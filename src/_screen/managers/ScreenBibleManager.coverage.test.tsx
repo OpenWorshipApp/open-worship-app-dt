@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => ({
     registerScrollingSyncEvent: vi.fn(),
     checkIsColorDark: vi.fn((_value: string) => false),
     showAppConfirm: vi.fn(async () => true),
+    showColorToast: vi.fn((_onUndo: () => void) => {}),
     tran: vi.fn((value: string) => value),
     removeClassName: vi.fn((root: ParentNode, className: string) => {
         for (const element of root.querySelectorAll(`.${className}`)) {
@@ -166,6 +167,10 @@ vi.mock('../../others/color/colorHelpers', () => ({
 
 vi.mock('../../popup-widget/popupWidgetHelpers', () => ({
     showAppConfirm: mocks.showAppConfirm,
+}));
+
+vi.mock('./bibleTextColorToastHelpers', () => ({
+    showBibleTextColorChangedToast: mocks.showColorToast,
 }));
 
 vi.mock('../../lang/langHelpers', () => ({
@@ -525,16 +530,16 @@ describe('ScreenBibleManager coverage', () => {
         mocks.checkIsColorDark.mockImplementation((value: string) => {
             return value === '#000000' || value === '#111111';
         });
-        await ScreenBibleManager.getInstance(91).reflectBackgroundColor(
-            '#111111',
-        );
-        expect(mocks.showAppConfirm).toHaveBeenCalledOnce();
+        ScreenBibleManager.getInstance(91).reflectBackgroundColor('#111111');
+        expect(mocks.showColorToast).toHaveBeenCalledOnce();
+        // Said, never asked: nothing blocks while the run goes on.
+        expect(mocks.showAppConfirm).not.toHaveBeenCalled();
         expect(mocks.setSetting).toHaveBeenCalledWith(
             'screen-bible-style-text',
             JSON.stringify({ color: '#FFFFFF' }),
         );
-        // The readable colour goes up BEFORE the question is asked, so a
-        // showing screen is never left unreadable while it waits.
+        // The readable colour goes up BEFORE the toast, so a showing screen is
+        // never left unreadable.
         const fixingCallIndex = mocks.setSetting.mock.calls.findIndex(
             ([key, value]: any[]) => {
                 return (
@@ -545,15 +550,12 @@ describe('ScreenBibleManager coverage', () => {
         );
         expect(
             mocks.setSetting.mock.invocationCallOrder[fixingCallIndex],
-        ).toBeLessThan(mocks.showAppConfirm.mock.invocationCallOrder[0]);
+        ).toBeLessThan(mocks.showColorToast.mock.invocationCallOrder[0]);
 
+        // Undo puts the operator's own colour back.
         mocks.setSetting.mockClear();
-        mocks.showAppConfirm.mockResolvedValue(false);
-        await ScreenBibleManager.getInstance(91).reflectBackgroundColor(
-            '#111111',
-        );
-        expect(mocks.showAppConfirm).toHaveBeenCalledTimes(2);
-        // "No" puts the operator's own colour back.
+        const onUndo = mocks.showColorToast.mock.calls[0][0];
+        onUndo();
         expect(mocks.setSetting).toHaveBeenLastCalledWith(
             'screen-bible-style-text',
             JSON.stringify({ color: '#000000' }),
@@ -568,9 +570,8 @@ describe('ScreenBibleManager coverage', () => {
         mocks.checkIsColorDark.mockImplementation(
             (value: string) => value === '#111111',
         );
-        await ScreenBibleManager.getInstance(91).reflectBackgroundColor(
-            '#ffffff',
-        );
-        expect(mocks.showAppConfirm).toHaveBeenCalledTimes(2);
+        ScreenBibleManager.getInstance(91).reflectBackgroundColor('#ffffff');
+        // No clash, nothing changed, nothing said.
+        expect(mocks.showColorToast).toHaveBeenCalledOnce();
     });
 });

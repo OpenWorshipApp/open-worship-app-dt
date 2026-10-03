@@ -14,10 +14,14 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import {
+    getForegroundIsBehind,
     getForegroundTransition,
     useForegroundPropsSetting,
 } from './propertiesSettingHelpers';
-import type { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
+import {
+    type ForegroundCameraDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
@@ -56,14 +60,17 @@ function RenderCameraInfoComp({
         (event: any, isForceChoosing = false) => {
             ScreenForegroundManager.addCameraData(
                 event,
-                {
-                    id: cameraInfo.deviceId,
-                    label: cameraInfo.label,
-                    extraStyle: genStyle(),
-                    transitionEffect: getForegroundTransition(
-                        `camera-${cameraInfo.deviceId}`,
-                    ),
-                },
+                withForegroundLayer(
+                    {
+                        id: cameraInfo.deviceId,
+                        label: cameraInfo.label,
+                        extraStyle: genStyle(),
+                        transitionEffect: getForegroundTransition(
+                            `camera-${cameraInfo.deviceId}`,
+                        ),
+                    },
+                    getForegroundIsBehind(`camera-${cameraInfo.deviceId}`),
+                ),
                 isForceChoosing,
             );
         },
@@ -81,14 +88,19 @@ function RenderCameraInfoComp({
             if (screenForegroundManager === null) {
                 return;
             }
-            screenForegroundManager.addCameraData({
-                id: cameraInfo.deviceId,
-                label: cameraInfo.label,
-                extraStyle: genStyle(),
-                transitionEffect: getForegroundTransition(
-                    `camera-${cameraInfo.deviceId}`,
+            screenForegroundManager.addCameraData(
+                withForegroundLayer(
+                    {
+                        id: cameraInfo.deviceId,
+                        label: cameraInfo.label,
+                        extraStyle: genStyle(),
+                        transitionEffect: getForegroundTransition(
+                            `camera-${cameraInfo.deviceId}`,
+                        ),
+                    },
+                    getForegroundIsBehind(`camera-${cameraInfo.deviceId}`),
                 ),
-            });
+            );
         },
         [cameraInfo, genStyle],
     );
@@ -100,14 +112,16 @@ function RenderCameraInfoComp({
         handleDragStart(
             event,
             genForegroundDragInf('camera', () => {
-                return {
-                    id: cameraInfoRef.current.deviceId,
-                    label: cameraInfoRef.current.label,
-                    extraStyle: genStyleRef.current(),
-                    transitionEffect: getForegroundTransition(
-                        `camera-${cameraInfoRef.current.deviceId}`,
-                    ),
-                };
+                const prefix = `camera-${cameraInfoRef.current.deviceId}`;
+                return withForegroundLayer(
+                    {
+                        id: cameraInfoRef.current.deviceId,
+                        label: cameraInfoRef.current.label,
+                        extraStyle: genStyleRef.current(),
+                        transitionEffect: getForegroundTransition(prefix),
+                    },
+                    getForegroundIsBehind(prefix),
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,16 +179,16 @@ function getAllShowingScreenIdDataList() {
 function refreshAllCameras(
     showingScreenIdDataList: [number, ForegroundCameraDataType][],
     extraStyle: CSSProperties,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIdDataList) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
                 screenForegroundManager.removeCameraData(data);
-                screenForegroundManager.addCameraData({
-                    ...data,
-                    extraStyle,
-                });
+                screenForegroundManager.addCameraData(
+                    withForegroundLayer({ ...data, extraStyle }, isBehind),
+                );
             },
         );
     }
@@ -203,9 +217,13 @@ function ForegroundCameraItemComp({
         prefix,
         isBlendMode: true,
         isTransition: true,
-        onChange: (extraStyle) => {
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
-                refreshAllCameras(showingScreenIdDataList, extraStyle);
+                refreshAllCameras(
+                    showingScreenIdDataList,
+                    extraStyle,
+                    isBehind,
+                );
             });
         },
     });

@@ -20,6 +20,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 import { deserializeDragData } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import type { ForegroundDragTargetType } from '../presenter-foreground/foregroundDragHelpers';
+import { toForegroundRowKey } from '../presenter-foreground/foregroundDragHelpers';
 import PresentingFlow from './PresentingFlow';
 import type PresentingFlowItem from './PresentingFlowItem';
 
@@ -79,8 +80,10 @@ function checkIsBackgroundOnScreen(presentingFlowItem: PresentingFlowItem) {
 /**
  * Foreground presets have no id of their own, so they are matched on whatever
  * identifies them cheaply: the marquee text, the time/camera id, the web file.
- * A countdown, stopwatch or quick text can only be matched by "that slot is
- * occupied" — they carry nothing stable to compare.
+ * A countdown, stopwatch or quick text carries nothing of the row on the
+ * screen, so the replay stamps the row's key on it (`toForegroundRowKey`).
+ * Matching those three on "that slot is occupied" lit every countdown row in
+ * the sheet while ANY countdown was up, the panel's own included.
  *
  * Keyed by `ForegroundDragTargetType` rather than `string`, so a new foreground
  * widget is a compile error here instead of a row that silently never marks
@@ -94,34 +97,39 @@ const foregroundOnScreenMatcherMap: Record<
     // different messages are two different run-sheet rows, and only the one
     // whose text is up should mark itself live. The whole list, so a row
     // carrying this week's notices does not light up on last week's.
+    // Every message up is compared, not the first of the same length: two
+    // messages of one line each are the common case, and stopping at the first
+    // left the row for the second one dark while it was on the screen.
     message: (foregroundData, data) => {
         const rowTextList: string[] = data?.textList;
-        const showing: string[] | undefined = (
-            foregroundData.messageDataList ?? []
-        ).find((item: any) => {
-            return (
-                Array.isArray(item?.textList) &&
-                item.textList.length === (rowTextList ?? []).length
-            );
-        })?.textList;
-        if (!Array.isArray(showing) || !Array.isArray(rowTextList)) {
+        if (!Array.isArray(rowTextList)) {
             return false;
         }
+        return (foregroundData.messageDataList ?? []).some((item: any) => {
+            const showing = item?.textList;
+            return (
+                Array.isArray(showing) &&
+                showing.length === rowTextList.length &&
+                showing.every((text: string, index: number) => {
+                    return text === rowTextList[index];
+                })
+            );
+        });
+    },
+    countdown: (foregroundData, data) => {
         return (
-            showing.length === rowTextList.length &&
-            showing.every((text, index) => {
-                return text === rowTextList[index];
-            })
+            foregroundData.countdownData?.rowKey === toForegroundRowKey(data)
         );
     },
-    countdown: (foregroundData) => {
-        return foregroundData.countdownData != null;
+    stopwatch: (foregroundData, data) => {
+        return (
+            foregroundData.stopwatchData?.rowKey === toForegroundRowKey(data)
+        );
     },
-    stopwatch: (foregroundData) => {
-        return foregroundData.stopwatchData != null;
-    },
-    'quick-text': (foregroundData) => {
-        return foregroundData.quickTextData != null;
+    'quick-text': (foregroundData, data) => {
+        return (
+            foregroundData.quickTextData?.rowKey === toForegroundRowKey(data)
+        );
     },
     'marquee-top': (foregroundData, data) => {
         return foregroundData.marqueeTopData?.text === data?.text;

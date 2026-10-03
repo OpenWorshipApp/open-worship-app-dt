@@ -83,6 +83,7 @@ vi.mock('./PresentingFlow', () => ({
 }));
 
 import { DragTypeEnum } from '../helper/DragInf';
+import { toForegroundRowKey } from '../presenter-foreground/foregroundDragHelpers';
 import {
     checkIsAnyPresentingFlowOnScreen,
     checkIsAnythingOnScreen,
@@ -196,9 +197,9 @@ describe('presenting-flow on-screen matching', () => {
     test('matches every foreground family by its stable data', async () => {
         const foregroundData = {
             messageDataList: [{ textList: ['a', 'b'] }],
-            countdownData: {},
-            stopwatchData: {},
-            quickTextData: {},
+            countdownData: { rowKey: toForegroundRowKey({}) },
+            stopwatchData: { rowKey: toForegroundRowKey({}) },
+            quickTextData: { rowKey: toForegroundRowKey({}) },
             marqueeTopData: { text: 'top' },
             marqueeBottomData: { text: 'bottom' },
             timeDataList: [{ id: 1 }],
@@ -251,6 +252,49 @@ describe('presenting-flow on-screen matching', () => {
                 }),
             ),
         ).toBe(false);
+    });
+
+    test('a slot row is live only while ITS OWN replay is up', async () => {
+        const fiveMinutes = { durationSecond: 300 };
+        const tenMinutes = { durationSecond: 600 };
+        const countdownRow = (data: unknown) => {
+            return item({
+                isForeground: true,
+                data: { target: 'countdown', data },
+            });
+        };
+        // Started from the panel: no row put it there.
+        state.foregrounds = { one: { countdownData: { dateTime: 'x' } } };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(countdownRow(fiveMinutes)),
+        ).toBe(false);
+        state.foregrounds = {
+            one: {
+                countdownData: { rowKey: toForegroundRowKey(fiveMinutes) },
+            },
+        };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(countdownRow(fiveMinutes)),
+        ).toBe(true);
+        expect(
+            await checkIsPresentingFlowItemOnScreen(countdownRow(tenMinutes)),
+        ).toBe(false);
+    });
+
+    test('a message row is live when ANY message up has its words', async () => {
+        state.foregrounds = {
+            one: {
+                messageDataList: [{ textList: ['first'] }, { textList: ['b'] }],
+            },
+        };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                item({
+                    isForeground: true,
+                    data: { target: 'message', data: { textList: ['b'] } },
+                }),
+            ),
+        ).toBe(true);
     });
 
     test('deserializes bible rows and rejects unsupported entries', async () => {

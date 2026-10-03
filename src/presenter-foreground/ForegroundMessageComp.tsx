@@ -27,7 +27,10 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import PropRowComp from './ForegroundPropRowComp';
-import type { ForegroundMessageDataType } from '../_screen/screenTypeHelpers';
+import {
+    type ForegroundMessageDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
@@ -35,7 +38,10 @@ import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
-import { useForegroundSessions } from './foregroundSessionHelpers';
+import {
+    checkIsSessionData,
+    useForegroundSessions,
+} from './foregroundSessionHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
     DEFAULT_MESSAGE_LINE_HEIGHT,
@@ -100,6 +106,18 @@ function genOwnSettingNames(suffix: string) {
 const MESSAGE_ID_REGEX = /^message-(?:\d+|all)(?:-(.+))?$/;
 export function toMessageSessionId(id: string) {
     return MESSAGE_ID_REGEX.exec(id)?.[1] ?? '';
+}
+/** `checkIsSessionData` for a message: one whose session is gone included. */
+function checkIsSessionMessage(
+    data: ForegroundMessageDataType,
+    sessionId: string,
+    sessionIds: string[],
+) {
+    return checkIsSessionData(
+        { id: toMessageSessionId(data.id) },
+        sessionId,
+        sessionIds,
+    );
 }
 export function toMessageAllId(suffix: string) {
     return `${MESSAGE_ALL_ID}${suffix}`;
@@ -225,12 +243,16 @@ function withStackOffset(
  * each datum with the new `extraStyle` spread over it, which threw the
  * `marginTop` away -- so touching any control while two messages were up
  * dropped them back on top of each other.
+ *
+ * `isBehind` is handed IN like the style rather than read here: the whole
+ * stack goes to one layer, and both callers already hold the answer.
  */
 export function genStackedMessageDataList(
     messageList: MessageEditorType[],
     shownIdList: string[],
     extraStyle: CSSProperties,
     prefix: string,
+    isBehind = false,
 ) {
     const shownIdSet = new Set(shownIdList);
     const decoration = getForegroundDecoration(prefix, true);
@@ -245,16 +267,21 @@ export function genStackedMessageDataList(
         if (textList.length === 0) {
             continue;
         }
-        dataList.push({
-            id: message.id,
-            textList,
-            intervalSecond: null,
-            extraStyle: withStackOffset(extraStyle, {
-                lineCountAbove,
-                messageCountAbove,
-                decoration,
-            }),
-        });
+        dataList.push(
+            withForegroundLayer(
+                {
+                    id: message.id,
+                    textList,
+                    intervalSecond: null,
+                    extraStyle: withStackOffset(extraStyle, {
+                        lineCountAbove,
+                        messageCountAbove,
+                        decoration,
+                    }),
+                },
+                isBehind,
+            ),
+        );
         lineCountAbove += textList.length;
         messageCountAbove += 1;
     }
@@ -277,7 +304,18 @@ export function checkIsShowingId(
 function MessageBodyComp({
     suffix,
     prefix,
-}: Readonly<{ suffix: string; prefix: string }>) {
+    sessionShowingList,
+}: Readonly<{
+    suffix: string;
+    prefix: string;
+    /**
+     * THIS session's messages, for the Hide row alone -- see
+     * `toSessionShowingList`. Everything else here reads every screen's
+     * list, because a Properties change rewrites the whole stack and has to
+     * hand another session's messages back untouched.
+     */
+    sessionShowingList: [number, ForegroundMessageDataType][];
+}>) {
     // This session's editors, as one setting. Kept as text rather than JSON
     // so a saved session stays something a person can read.
     const [storedText, setStoredText] = useStateSettingString<string>(
@@ -350,12 +388,13 @@ function MessageBodyComp({
 
     const {
         genStyle,
+        getIsBehind,
         fontFamily,
         fontWeight,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
-        onChange: (extraStyle: CSSProperties) => {
+        onChange: (extraStyle: CSSProperties, isBehind: boolean) => {
             attemptTimeout(() => {
                 const screenIdSet = new Set(
                     showingScreenIdDataListRef.current.map(([screenId]) => {
@@ -404,10 +443,16 @@ function MessageBodyComp({
                             shownIdList,
                             extraStyle,
                             prefixRef.current,
+                            isBehind,
                         ),
                     ];
                     if (allData !== undefined) {
-                        dataList.push({ ...allData, extraStyle });
+                        dataList.push(
+                            withForegroundLayer(
+                                { ...allData, extraStyle },
+                                isBehind,
+                            ),
+                        );
                     }
                     getScreenForegroundManagerInstances(
                         screenId,
@@ -423,6 +468,7 @@ function MessageBodyComp({
         isFontSize: true,
     });
     const genStyleRef = useAppCurrentRef(genStyle);
+    const getIsBehindRef = useAppCurrentRef(getIsBehind);
     const suffixRef = useAppCurrentRef(suffix);
     const prefixRef = useAppCurrentRef(prefix);
     const messageAllIdRef = useAppCurrentRef(messageAllId);
@@ -532,6 +578,7 @@ function MessageBodyComp({
                     }),
                     genStyleRef.current(),
                     prefixRef.current,
+                    getIsBehindRef.current(),
                 ),
             ]);
         },
@@ -550,14 +597,17 @@ function MessageBodyComp({
             if (textList.length === 0) {
                 return null;
             }
-            return {
-                id: messageAllIdRef.current,
-                textList,
-                intervalSecond: isRotatingRef.current
-                    ? intervalSecondRef.current
-                    : null,
-                extraStyle: genStyleRef.current(),
-            };
+            return withForegroundLayer(
+                {
+                    id: messageAllIdRef.current,
+                    textList,
+                    intervalSecond: isRotatingRef.current
+                        ? intervalSecondRef.current
+                        : null,
+                    extraStyle: genStyleRef.current(),
+                },
+                getIsBehindRef.current(),
+            );
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
@@ -679,11 +729,14 @@ function MessageBodyComp({
             event,
             genForegroundDragInf('message', () => {
                 const data = genAllMessageData();
-                return {
-                    textList: data?.textList ?? [],
-                    intervalSecond: data?.intervalSecond ?? null,
-                    extraStyle: genStyleRef.current(),
-                };
+                return withForegroundLayer(
+                    {
+                        textList: data?.textList ?? [],
+                        intervalSecond: data?.intervalSecond ?? null,
+                        extraStyle: genStyleRef.current(),
+                    },
+                    getIsBehindRef.current(),
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -920,7 +973,7 @@ function MessageBodyComp({
                         onOpening={handleShowingAll}
                     />
                     <ScreensRendererComp
-                        showingScreenIdDataList={showingScreenIdDataList}
+                        showingScreenIdDataList={sessionShowingList}
                         genTitle={(data: ForegroundMessageDataType) => {
                             return data.textList[0] ?? '';
                         }}
@@ -959,6 +1012,7 @@ export default function ForegroundMessageComp() {
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
     const {
         activeId,
+        sessionIds,
         suffix,
         prefix,
         element: sessionsElement,
@@ -966,14 +1020,14 @@ export default function ForegroundMessageComp() {
         widgetKey: 'message',
         toPrefix: toMessagePrefix,
         toOwnSettingNames: genOwnSettingNames,
-        checkIsOnScreen: (sessionId) => {
+        checkIsOnScreen: (sessionId, _sessionSuffix, idList) => {
             return showingScreenIdDataList.some(([, data]) => {
-                return toMessageSessionId(data.id) === sessionId;
+                return checkIsSessionMessage(data, sessionId, idList);
             });
         },
-        hideSession: (sessionId) => {
+        hideSession: (sessionId, _sessionSuffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
-                if (toMessageSessionId(data.id) !== sessionId) {
+                if (!checkIsSessionMessage(data, sessionId, idList)) {
                     continue;
                 }
                 getScreenForegroundManagerInstances(
@@ -990,7 +1044,20 @@ export default function ForegroundMessageComp() {
             {sessionsElement}
             {/* Keyed by the session: every field below reads its setting
                 once, when it mounts. */}
-            <MessageBodyComp key={activeId} suffix={suffix} prefix={prefix} />
+            <MessageBodyComp
+                key={activeId}
+                suffix={suffix}
+                prefix={prefix}
+                sessionShowingList={showingScreenIdDataList.filter(
+                    ([, data]) => {
+                        return checkIsSessionMessage(
+                            data,
+                            activeId,
+                            sessionIds,
+                        );
+                    },
+                )}
+            />
         </ForegroundLayoutComp>
     );
 }
