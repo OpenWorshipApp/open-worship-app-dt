@@ -187,7 +187,7 @@
         "moment-timezone": "^0.6.2",
         "monaco-editor": "^0.56.0",
         "nodemon": "^3.1.14",
-        "open-lyric": "https://github.com/raksa/open-lyric-dist#0.1.69",
+        "open-lyric": "https://github.com/raksa/open-lyric-dist#0.1.71",
         "open-lyric-plugin-km-kh": "https://github.com/raksa/open-lyric-plugin-km-kh-dist#0.1.10",
         "open-lyric-plugin-player": "https://github.com/raksa/open-lyric-plugin-player-dist#0.1.5",
         "openai": "^7.8.0",
