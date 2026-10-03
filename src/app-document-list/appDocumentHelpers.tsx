@@ -657,20 +657,39 @@ export async function toSlideFromKey(key: string) {
     return await varyAppDocument.getItemById(id);
 }
 
+function getInjectedAppDocumentFileFullName() {
+    // Only the app-document editor is opened with an app document injected
+    // through `?file=` (`openAppDocumentEditorExternal`). The bible-note,
+    // lyric-editor and web-editor popups reuse the SAME `?file=` param for
+    // their own files, which live in other directories — without this gate
+    // every one of those windows resolved `<documents>/<their file>`, missed,
+    // and logged "App document file not found" on load. Worse, a documents
+    // file that happened to share the name would have made those popups
+    // believe they host an injected app document.
+    if (!appProvider.isPageAppDocumentEditor) {
+        return null;
+    }
+    return getParamFileFullName(globalThis.location.href);
+}
+
+// The URL alone, so it is safe at module load.
+export const isInjectedAppDocumentFilePath =
+    getInjectedAppDocumentFileFullName() !== null;
+
+// Resolved on first use, NEVER at module load: this module is evaluated
+// before `init()` names the data folder, and until then a setting reads back
+// with `$DATA_DIR_PATH` still in it. A packaged build keeps the documents
+// folder as `$DATA_DIR_PATH\documents`, so the editor window used to miss the
+// injected file, cache the unexpanded folder, and then judge the folder
+// missing and blank the SHARED document selection — every window then said
+// "No slide selected".
+let injectedAppDocumentFilePath: string | null = null;
 function getInjectedAppDocumentFilePath(): string | null {
+    if (injectedAppDocumentFilePath !== null) {
+        return injectedAppDocumentFilePath;
+    }
     try {
-        // Only the app-document editor is opened with an app document injected
-        // through `?file=` (`openAppDocumentEditorExternal`). The bible-note,
-        // lyric-editor and web-editor popups reuse the SAME `?file=` param for
-        // their own files, which live in other directories — without this gate
-        // every one of those windows resolved `<documents>/<their file>`, missed,
-        // and logged "App document file not found" on load. Worse, a documents
-        // file that happened to share the name would have made those popups
-        // believe they host an injected app document.
-        if (!appProvider.isPageAppDocumentEditor) {
-            return null;
-        }
-        const fileFullName = getParamFileFullName(globalThis.location.href);
+        const fileFullName = getInjectedAppDocumentFileFullName();
         if (fileFullName === null) {
             return null;
         }
@@ -684,6 +703,7 @@ function getInjectedAppDocumentFilePath(): string | null {
         if (fsExistSync(filePath) === false) {
             throw new Error(`App document file not found: ${fileFullName}`);
         }
+        injectedAppDocumentFilePath = filePath;
         return filePath;
     } catch (error) {
         handleError(error);
@@ -691,14 +711,11 @@ function getInjectedAppDocumentFilePath(): string | null {
     return null;
 }
 
-const injectedAppDocumentFilePath = getInjectedAppDocumentFilePath();
-export const isInjectedAppDocumentFilePath =
-    injectedAppDocumentFilePath !== null;
-
 const SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME =
     SELECTED_APP_DOCUMENT_SETTING_NAME + '-item';
 
 export async function getSelectedVaryAppDocument() {
+    const injectedAppDocumentFilePath = getInjectedAppDocumentFilePath();
     if (injectedAppDocumentFilePath !== null) {
         const fileSource = FileSource.getInstance(injectedAppDocumentFilePath);
         document.title = `${appProvider.windowTitle} - ${fileSource.name}`;
@@ -728,6 +745,7 @@ export async function getSelectedEditingSlideFilePath(): Promise<{
     filePath: string;
     id: number;
 } | null> {
+    const injectedAppDocumentFilePath = getInjectedAppDocumentFilePath();
     if (injectedAppDocumentFilePath !== null) {
         const appDocument = await getSelectedVaryAppDocument();
         // Resolve the real document kind before reading slides. A lyric/PDF

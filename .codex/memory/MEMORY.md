@@ -98,55 +98,26 @@
 - [A guide tucks the help window away](guide-tucks-help-window.md)
 - [Hover-hidden controls](hover-hidden-controls.md) — painted only under the mouse
 - [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Bible]`
-- [Chatbot question corpus](question-corpus-maintenance.md)
-- [Stuck guide step asks the chatbot](guide-stuck-step-rescue.md)
-- [Window tools on every page](app-window-tools-everywhere.md)
-- [Chatbot answer options](chatbot-answer-options.md) · [Stop aborts on the wire](chatbot-stop-answer.md)
-- [Kimi provider](kimi-third-llm-provider.md) · [Kimi free tier ~3 rounds/min](kimi-free-tier-round-budget.md)
-- [Manual search read a word as a prefix](help-search-prefix-overmatch.md)
-- [Walkthrough followed the first search](chatbot-walkthrough-follows-first-search.md)
-- [Chatbot attachments](chatbot-attachments.md) — every asset opens one preview
-- [Adding to an answer in flight](chatbot-mid-flight-additions.md)
-- [Free keyless provider](free-keyless-chatbot-provider.md) — Kilo Code only
-- [Chatbot Report button](chatbot-report-button.md)
-- [The wait says what it is doing](chatbot-progress-log.md) · [Ask history & tips](chatbot-ask-history-and-tips.md)
-- [MCP uid interlock](mcp-uid-interlock.md)
-- [Tools the model never sees](mcp-model-hidden-tools.md)
-- [Chatbot cost measured on the wire](chatbot-cost-measured-on-the-wire.md)
-- [Writing songs and slide documents](mcp-document-write-tools.md) — delete goes to the trash
-- [The interlock reads the control](mcp-interlock-reads-the-control.md) — in every language
-- [Agent data tools back up first](agent-data-tools-backup-undo.md)
-- [History paths vs the read cache](history-read-cache-stale-paths.md)
-- [Reading a web page](mcp-read-website-tool.md) — the only tool that reaches out
-- [A slide website loads in a box](slide-website-loads-in-a-box.md)
-- [A CDP pin is exclusive](cdp-pin-is-exclusive.md)
-- [A preload must not eval at load](preload-must-not-eval-at-load.md)
-- [The chatbot opens the window](chatbot-opens-the-window.md)
-- [A press says what it CHANGED](click-reports-effect-not-action.md)
-- [An exact label beats everything](dom-match-exact-label-beats-everything.md)
-- [Checking a song](open-lyric-validator-in-mcp.md)
-- [A model cannot write Open Lyric](model-cannot-write-open-lyric.md)
-- [Chatbot built-in commands](chatbot-builtin-commands.md) — run with no model
-- [Driving the chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen`
-- [A supported question is a label](help-search-known-question.md)
+- [Chatbot question corpus](question-corpus-maintenance.md) · [A supported question is a label](help-search-known-question.md) · [Manual search prefix overmatch](help-search-prefix-overmatch.md)
+- [Stuck guide step asks the chatbot](guide-stuck-step-rescue.md) · [Guide press safety & covers](guide-press-safety-and-covers.md) · [Walkthrough followed the first search](chatbot-walkthrough-follows-first-search.md)
+- [Window tools on every page](app-window-tools-everywhere.md) · [The chatbot opens the window](chatbot-opens-the-window.md)
+- [Chatbot answer options](chatbot-answer-options.md) · [Stop aborts on the wire](chatbot-stop-answer.md) · [Adding to an answer in flight](chatbot-mid-flight-additions.md) · [Recipe ids scrubbed in code](chatbot-recipe-id-scrub.md)
+- [Kimi provider](kimi-third-llm-provider.md) · [Kimi free tier ~3 rounds/min](kimi-free-tier-round-budget.md) · [Free keyless provider](free-keyless-chatbot-provider.md) — Kilo Code only
+- [Chatbot attachments](chatbot-attachments.md) — every asset opens one preview · [Report button](chatbot-report-button.md)
+- [The wait says what it is doing](chatbot-progress-log.md) · [Ask history & tips](chatbot-ask-history-and-tips.md) · [Built-in commands](chatbot-builtin-commands.md) — no model
+- [Chatbot cost on the wire](chatbot-cost-measured-on-the-wire.md) · [Spend guard](chatbot-spend-guard.md) · [Provider failure comes with its door](chatbot-provider-issue-door.md)
+- [MCP uid interlock](mcp-uid-interlock.md) · [The interlock reads the control](mcp-interlock-reads-the-control.md) — every language · [Tools the model never sees](mcp-model-hidden-tools.md)
+- [Writing songs and slide documents](mcp-document-write-tools.md) — trash on delete · [Agent data tools back up first](agent-data-tools-backup-undo.md) · [History paths vs the read cache](history-read-cache-stale-paths.md)
+- [Reading a web page](mcp-read-website-tool.md) — the only tool that reaches out · [A slide website loads in a box](slide-website-loads-in-a-box.md)
+- [A CDP pin is exclusive](cdp-pin-is-exclusive.md) · [A preload must not eval at load](preload-must-not-eval-at-load.md)
+- [A press says what it CHANGED](click-reports-effect-not-action.md) · [An exact label beats everything](dom-match-exact-label-beats-everything.md) · [Kind noun trimmed off an exact name](dom-match-kind-noun-exact.md) · [A name with a twin has no selector](selector-name-with-a-twin.md)
+- [Checking a song](open-lyric-validator-in-mcp.md) · [A model cannot write Open Lyric](model-cannot-write-open-lyric.md) · [A song page goes in as a URL](song-page-goes-in-as-url.md) · [/lyric offline](chatbot-lyric-command.md)
+- [Driving the chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen` · [Bash halves backslashes](bash-heredoc-halves-backslashes.md)
 - [No user-entered references in notes](no-user-specific-references-in-notes.md)
-- [Recipe ids scrubbed in code](chatbot-recipe-id-scrub.md)
-- [Bash commands halve backslashes](bash-heredoc-halves-backslashes.md)
-- [Guide press safety & covers](guide-press-safety-and-covers.md)
-- [A song page goes in as a URL](song-page-goes-in-as-url.md)
-- [Grade the panic shapes in both screen states](chatbot-grade-panic-in-both-states.md)
-- [What the user is in the middle of](chatbot-in-the-middle-of.md)
-- [Kind noun trimmed off an exact name](dom-match-kind-noun-exact.md)
-- [Wrong-window route is a page fact](chatbot-wrong-window-route-is-a-page-fact.md)
-- [Grade on the window's own default](chatbot-grade-on-the-window-default.md)
-- [A verse is presented by its reference](chatbot-verse-by-reference.md)
-- [Chatbot spend guard](chatbot-spend-guard.md)
-- [Provider failure comes with its door](chatbot-provider-issue-door.md)
-- [/lyric and song links offline](chatbot-lyric-command.md)
-- [Foreground extras by their words](chatbot-foreground-door.md)
-- [AI Chat window](aichat-window.md) — sandboxed `<webview>`, up to 3 windows
-- [A name with a twin has no selector](selector-name-with-a-twin.md)
-- [AI Chat guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md)
+- Grading: [panic shapes in both screen states](chatbot-grade-panic-in-both-states.md) · [on the window's own default](chatbot-grade-on-the-window-default.md)
+- [What the user is in the middle of](chatbot-in-the-middle-of.md) · [Wrong-window route is a page fact](chatbot-wrong-window-route-is-a-page-fact.md)
+- [A verse by its reference](chatbot-verse-by-reference.md) · [Foreground extras by their words](chatbot-foreground-door.md)
+- [AI Chat window](aichat-window.md) — sandboxed `<webview>`, up to 3 windows · [Guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md)
 - [A confirm needs a popup host](confirm-needs-a-popup-host.md) — fails open · [Popup deep link rides a setting](popup-deep-link-by-setting.md) — read on mount + focus
 - [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split on `/\r?\n/`
 - [Canvas item blend mode](canvas-item-blend-mode.md) · [Canvas item shadow](canvas-item-shadow.md)
@@ -154,7 +125,7 @@
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19
 - [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md)
 - [Own font list with weights](own-font-list-with-weights.md)
-- [Data folder path is aliased in files](portable-data-dir-alias.md) — `$DATA_DIR_PATH`
+- [Data folder path is aliased in files](portable-data-dir-alias.md) — `$DATA_DIR_PATH` · [Module-scope setting read before init](module-scope-setting-read-before-init.md) — alias unexpanded, packaged-only
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule
 - [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md)
 - [A foreground camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label
