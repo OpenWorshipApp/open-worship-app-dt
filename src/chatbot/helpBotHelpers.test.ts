@@ -693,6 +693,48 @@ describe('the offline bot writes a pasted song out itself', () => {
         ]);
     });
 
+    // Reported 2026-10-03 with a picture: a song asked for by its NAME. The
+    // app's own starter is the first ask below.
+    test('a song title is looked up by the app, never searched for', async () => {
+        callTool.mockResolvedValue(
+            DRAFT.replace(
+                'from the text.',
+                "from the app's own public-domain hymn collection.",
+            ),
+        );
+        const answer = await askHelpBot(
+            'Create a lyric file for song "Amazing Grace"',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(callTool).toHaveBeenCalledWith('owa_lyric_validate', {
+            mode: 'find',
+            title: 'Amazing Grace',
+        });
+        expect(answer.text).toContain('public-domain hymns');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create "Amazing Grace"',
+            'Copy song text',
+        ]);
+    });
+
+    test('a title nothing holds is said so, and never made up', async () => {
+        callTool.mockResolvedValue(
+            'No song called "Way Maker" is in the app’s public-domain hymn ' +
+                'collection (36 classic hymns, offline).\n' +
+                'Already in their songs: "Way Maker". Tell them it is ' +
+                'already in their Documents list and ask before making a ' +
+                'second copy.',
+        );
+        const answer = await askHelpBot(
+            'Create a lyric file for song "Way Maker"',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(answer.text).toContain('You already have **Way Maker**');
+        expect(answer.actions ?? []).toEqual([]);
+    });
+
     test('a page with no song on it is said so, not searched for', async () => {
         callTool.mockResolvedValue(
             'That does not look like the words of a song.',

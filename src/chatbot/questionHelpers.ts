@@ -65,7 +65,7 @@ export const FALLBACK_STARTERS: Record<BotFocusType, StarterSourceType[]> = {
         'How do I add a background?',
         'Can you make a song from words I paste in?',
         {
-            text: 'Create a lyric file from https://example.com/lyric/amazing_grace',
+            text: 'Create a lyric file for song "Amazing Grace"',
             isTemplate: true,
         },
     ],

@@ -4682,7 +4682,7 @@ export default function ChatbotAppComp() {
                                         className="chat-starter"
                                         title={
                                             starter.isTemplate
-                                                ? 'Press to put this in the box, then replace the address with yours'
+                                                ? 'Press to put this in the box, then change the example to yours'
                                                 : undefined
                                         }
                                         onClick={() => {

@@ -948,6 +948,17 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   A mode, not a tool: +61 tokens a round against ~450. **The model may not
   write Open Lyric, and the prompt says so** — even a careful attempt fails
   invisibly (`CC` where `Cx2` is required, free text inside `Instrumental`).
+  - **A song NAME goes in as `mode: "find"` + `title`** (2026-10-03,
+    `songLookup.mjs`; the user's ask): the user's own songs, then the
+    Public Domain Songs plugin's 36 hymns, asked of the app over the
+    `owa-agent-file` relay (`action: "find"` → `publicDomainSongsLookupHelpers`,
+    imported lazily) because the catalog is in the renderer bundle, not in
+    this package. A find is formatted as a draft whose first line still
+    starts "Drafted a song", so the window draws Create; nothing found is
+    said so, and the model never writes a song from memory. `/lyric <title>`
+    and the offline bot (`readSongTitleAsk`) do it with no model. A web
+    title search was NOT built: lyric sites are mostly copyrighted texts and
+    bot-walled, and the one public-domain library tried refused connections.
   - **A song PAGE goes in as `url`**, never as text the model copied (Sonnet 5
     retyped a Khmer chord page and lost all 36 chords). The tool reads the page
     itself through `owa_read_website`'s expression and locked-down window, and

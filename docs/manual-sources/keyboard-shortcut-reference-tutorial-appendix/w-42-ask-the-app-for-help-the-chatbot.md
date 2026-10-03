@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71]
 screenshots: 41
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-02"
+workflowsVersion: "2026-10-03"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -213,9 +213,15 @@ it is describing.
    song is and the two buttons — **Create "…"** and **Copy song text** — and
    the song text as it will be saved drawn above them, and NOTHING is saved
    until you press Create (a _page on hymnary.org was read_ notice appears in
-   the app window while the page is read). Asking in words does the same
-   without an assistant — _Create a lyric file from https://…_ is answered by
-   the built-in guide with the same buttons when no assistant can answer;
+   the app window while the page is read). **/lyric Amazing Grace** — a song's
+   NAME on one line — looks it up instead: in your own songs, and in the
+   app's collection of public-domain hymns (the ones **Import From Public
+   Domain Songs** brings in), and offers it under the same two buttons; a song
+   that is in neither is said so, with a request for its words or a page,
+   because the help window never writes a song out from memory. Asking in
+   words does the same without an assistant — _Create a lyric file from
+   https://…_ and _Create a lyric file for song "Amazing Grace"_ are answered
+   by the built-in guide with the same buttons when no assistant can answer;
    **/commands**
    lists them all. The square buttons under a command's answer are
    commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
@@ -480,13 +486,22 @@ it is describing.
     written out by the app itself in a second or two, under a note that reads
     _I wrote the song out myself instead_ — with the same **Create** and **Copy
     song text** buttons, and nothing searched in this guide for the words. 📸
-19. **Give it the address of a song page and it reads the page for you.** The fourth
-    **Try asking** chip is not a question but the start of one:
-    _Create a lyric file from https://example.com/lyric/amazing_grace_. Pressing it
-    does not ask anything — it drops the sentence into the box with the cursor in it,
-    so you can swap that example address for the one you actually have and press
-    **Ctrl+Enter**. 📸 A banner appears in the app window naming the site while it
-    reads.
+19. **Name a song, or give the address of a song page, and it is written out for
+    you.** The fourth **Try asking** chip is not a question but the start of one:
+    _Create a lyric file for song "Amazing Grace"_. Pressing it does not ask
+    anything — it drops the sentence into the box with the cursor in it, so you can
+    press **Ctrl+Enter** as it stands or swap the title for the song you want. 📸
+    A song asked for by its NAME is looked up, never remembered: first in your own
+    songs (if you already have it, the answer says so before making a second copy),
+    then in the app's collection of public-domain hymns — the same texts, with the
+    same link back to where they were transcribed from, that **Import From Public
+    Domain Songs** brings in. A song that is in neither — most songs written in the
+    last seventy years — is said so plainly, with the nearest hymn titles when there
+    are any, and a request for its words or for the address of a page with it on.
+    The address is the other way in: _Create a lyric file from
+    https://example.com/lyric/amazing_grace_ is in **More…**, and works the same
+    way — swap the example address for the one you have. A banner appears in the
+    app window naming the site while it reads.
     A song page is never just the song: there is a toolbar above it, a strumming
     diagram, a fretboard chart at the bottom, a row of related songs and the site's
     own footer — and the words themselves are laid out in columns, with the chords
@@ -540,5 +555,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-03).
 :::

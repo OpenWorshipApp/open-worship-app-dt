@@ -94,6 +94,7 @@ export type AgentFileActionType =
     | 'update'
     | 'rename'
     | 'delete'
+    | 'find'
     | AgentSlideActionType;
 
 /**
@@ -415,6 +416,58 @@ async function handleList(dirPath: string, kind: AgentFileKindType) {
             return FileSourceClass.getInstance(one).name;
         }),
         isTruncated: filePathList.length > 60,
+    };
+}
+
+/**
+ * A song asked for by its NAME: the user's own songs that answer to it, and
+ * the hymn the app's public-domain collection holds under it.
+ *
+ * Both halves, because "Create a lyric file from 'Amazing Grace'" from someone
+ * who already has an Amazing Grace is usually somebody who could not find it,
+ * and a second copy is the last thing they need. The collection is imported
+ * here, on the ask, so neither its 36 hymns nor the plugin load in a window
+ * that never asks for a song by name.
+ */
+async function handleFind(
+    dirPath: string,
+    kind: AgentFileKindType,
+    title: string,
+) {
+    const [
+        { publicDomainSongCatalog },
+        { lookupPublicDomainSong, toComparableSongTitle },
+    ] = await Promise.all([
+        import('../plugins/public-domain-songs/publicDomainSongsData'),
+        import('../plugins/public-domain-songs/publicDomainSongsLookupHelpers'),
+    ]);
+    const asked = toComparableSongTitle(title);
+    const filePathList =
+        (await fsListFilesWithMimetype(dirPath, kind.mimetypeName)) ?? [];
+    const FileSourceClass = await getFileSourceClass();
+    const yours = filePathList
+        .map((one) => {
+            return FileSourceClass.getInstance(one).name;
+        })
+        .filter((name) => {
+            const comparable = toComparableSongTitle(name);
+            return (
+                comparable !== '' &&
+                (comparable === asked ||
+                    (asked.length >= 6 && comparable.includes(asked)))
+            );
+        })
+        .slice(0, 5);
+    const { found, nearest } = lookupPublicDomainSong(
+        publicDomainSongCatalog,
+        title,
+    );
+    return {
+        asked: title,
+        yours,
+        found,
+        nearest,
+        collectionSize: publicDomainSongCatalog.length,
     };
 }
 
@@ -829,6 +882,16 @@ export async function handleAgentFileRequest(
         }
         if (action === 'list') {
             return await handleList(dirPath, kind);
+        }
+        if (action === 'find') {
+            if (kindName !== 'lyric') {
+                return fail('Only a song can be found by its title.');
+            }
+            const title = typeof name === 'string' ? name.trim() : '';
+            if (title === '' || title.length > 120) {
+                return fail('Give the title of the song to find.');
+            }
+            return await handleFind(dirPath, kind, title);
         }
         const nameReason = checkAgentFileName(name);
         if (nameReason !== null) {

@@ -176,7 +176,14 @@ export default class LyricAppDocument extends AppDocument {
         const srcData = dataMap[key];
         const canvasItemProps = this.genCanvasItemHtmlProps(
             i,
-            typeof srcData === 'string' ? srcData : '',
+            typeof srcData === 'string'
+                ? this.genSlideHtml(
+                      srcData,
+                      key,
+                      openLyricIndex,
+                      openLyricRepeat,
+                  )
+                : '',
         );
         return this.genLyricSlide(
             i,
@@ -186,6 +193,18 @@ export default class LyricAppDocument extends AppDocument {
             openLyricIndex,
             openLyricRepeat,
         );
+    }
+
+    // The part's markup as ONE slide shows it. `dataMap` is the cached
+    // whole-song render shared by every play of a part, so anything that differs
+    // per slide (a repeat's `(2/3)`) is added here, never written into the map.
+    genSlideHtml(
+        html: string,
+        _openLyricKey: string,
+        _openLyricIndex: number,
+        _openLyricRepeat: LyricRepeatType | null,
+    ) {
+        return html;
     }
 
     extendExtraSlide(

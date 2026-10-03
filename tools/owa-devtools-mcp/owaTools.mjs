@@ -48,6 +48,7 @@ import {
 import { readHelpPage, scrubRecipeIds, searchHelp } from './help.mjs';
 import { checkOpenLyricText, validateOpenLyric } from './openLyric.mjs';
 import { draftOpenLyricText } from './openLyricDraft.mjs';
+import { formatSongLookup } from './songLookup.mjs';
 import {
   genPickerReadExpression,
   genPickerStartExpression,
@@ -1063,8 +1064,9 @@ export function registerOwaTools(server) {
         'notation yourself. For a song on a web page pass its `url` ' +
         'and no `text`: the page is read here, whole, with every ' +
         'chord written in where it lands (a copy you type has none), ' +
-        'and the answer says which part of the page it used. Needs ' +
-        'nothing open.',
+        'and the answer says which part of the page it used. A song ' +
+        'by NAME only: `mode: "find"` + `title` -- looked up in their ' +
+        'songs and the app’s public-domain hymns.',
       inputSchema: {
         text: z
           .string()
@@ -1078,13 +1080,13 @@ export function registerOwaTools(server) {
           .optional()
           .describe('draft: the https address of a song page.'),
         mode: z
-          .enum(['check', 'draft'])
+          .enum(['check', 'draft', 'find'])
           .optional()
           .describe(
             'Left out, notation (```ol: fences) is checked and ' +
               'anything else is drafted.',
           ),
-        title: z.string().optional().describe('draft: its title'),
+        title: z.string().optional().describe('draft, find: its title'),
         artist: z.string().optional().describe('draft: who it is by'),
         copyright: z
           .string()
@@ -1106,6 +1108,28 @@ export function registerOwaTools(server) {
     },
     async ({ text, mode, title, artist, copyright, from, to, url }) => {
       return await attempt(async () => {
+        if (mode === 'find') {
+          // The words come from the APP: the user's own songs and the
+          // public-domain collection live in the renderer bundle, which
+          // this package may not import -- so it is asked over the same
+          // relay `owa_lyric_file` uses (`songLookup.mjs`).
+          const asked = typeof title === 'string' ? title.trim() : '';
+          if (asked === '') {
+            throw new Error('Give the song’s `title` to find it.');
+          }
+          const { value } = await evaluateInApp(
+            genAgentFileExpression({
+              kind: 'lyric',
+              action: 'find',
+              name: asked,
+            }),
+          );
+          const formatted = formatAgentFileResult(value);
+          if (formatted.isError) {
+            throw new Error(formatted.text);
+          }
+          return formatSongLookup(value);
+        }
         const known = { title, artist, copyright, from, to };
         const address = typeof url === 'string' ? url.trim() : '';
         if (address !== '') {

@@ -17,6 +17,21 @@ export type LyricRepeatType = {
     count: number;
 };
 
+// The ` (2/3)` a repeated step's slide carries after its part name — on the
+// card, and (stage 1 and up) in the slide's own corner badge.
+export function genLyricRepeatSuffix(openLyricRepeat: LyricRepeatType | null) {
+    return openLyricRepeat === null
+        ? ''
+        : ` (${openLyricRepeat.index + 1}/${openLyricRepeat.count})`;
+}
+
+// Where a single slide sits in the play order — what a slide built from one
+// part needs to be named and badged like its twin in the whole deck.
+export type LyricStepRefType = {
+    openLyricIndex: number;
+    openLyricRepeat: LyricRepeatType | null;
+};
+
 /**
  * One slide's worth of the song's play order: a part, the Structure step it
  * belongs to, and — when that step repeats — which play it is.

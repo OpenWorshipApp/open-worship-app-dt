@@ -395,6 +395,13 @@ export function describeToolStep(name: string, args: any): string {
             if (site !== null) {
                 return `Reading ${site} and writing the song out`;
             }
+            if (args?.mode === 'find') {
+                return toQuotedStep(
+                    'Looking up the song',
+                    args?.title,
+                    'Looking up the song',
+                );
+            }
             return args?.mode === 'draft'
                 ? 'Writing the song out'
                 : 'Checking the song over';

@@ -2,12 +2,22 @@ import { describe, expect, it } from 'vitest';
 
 import { BROWSER_CHECK_TEXT } from '../../tools/owa-devtools-mcp/openLyricDraft.mjs';
 import {
+    formatSongLookup,
+    SONG_NOT_FOUND_PREFIX as LOOKUP_NOT_FOUND_PREFIX,
+    SONG_YOURS_PREFIX as LOOKUP_YOURS_PREFIX,
+} from '../../tools/owa-devtools-mcp/songLookup.mjs';
+import {
     checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
     readDraftedLyric,
     readDraftReport,
     readSongAddress,
     readSongLinkAsk,
+    readSongLookupYours,
+    readSongTitleArgument,
+    readSongTitleAsk,
+    SONG_NOT_FOUND_PREFIX,
+    SONG_YOURS_PREFIX,
     toDraftedLyricName,
 } from './lyricDraftHelpers';
 
@@ -200,5 +210,82 @@ describe('readDraftedLyric and the file name', () => {
         const content = readDraftedLyric(DRAFT_RESULT);
         expect(content?.startsWith('```ol:Config')).toBe(true);
         expect(toDraftedLyricName(content ?? '')).toBe('Amazing Grace');
+    });
+});
+
+describe('readSongTitleAsk', () => {
+    it("reads the app's own starter chip", () => {
+        expect(
+            readSongTitleAsk('Create a lyric file for song "Amazing Grace"'),
+        ).toBe('Amazing Grace');
+    });
+
+    it('reads the ask in the shapes people type it', () => {
+        expect(
+            readSongTitleAsk('Create a lyric file from "Amazing Grace"'),
+        ).toBe('Amazing Grace');
+        expect(readSongTitleAsk('make a song called “Be Thou My Vision”')).toBe(
+            'Be Thou My Vision',
+        );
+        expect(
+            readSongTitleAsk('Create a lyric file for song Amazing Grace'),
+        ).toBe('Amazing Grace');
+        expect(
+            readSongTitleAsk('add the lyrics of It Is Well with My Soul.'),
+        ).toBe('It Is Well with My Soul');
+    });
+
+    it('leaves alone what names no song', () => {
+        expect(
+            readSongTitleAsk('Can you make a song from words I paste in?'),
+        ).toBe(null);
+        expect(readSongTitleAsk('make a song from words I paste in')).toBe(
+            null,
+        );
+        expect(readSongTitleAsk('Create a lyric file from this')).toBe(null);
+        expect(readSongTitleAsk('How do I make a new song?')).toBe(null);
+        expect(readSongTitleAsk(`Create a lyric file from ${SONG_PAGE}`)).toBe(
+            null,
+        );
+        expect(readSongTitleAsk('/lyric Amazing Grace')).toBe(null);
+        // A quoted phrase with no song word and no making verb.
+        expect(readSongTitleAsk('What does "Clear All" do')).toBe(null);
+    });
+});
+
+describe('readSongTitleArgument', () => {
+    it('takes one short line as a title, quotes off', () => {
+        expect(readSongTitleArgument('Amazing Grace')).toBe('Amazing Grace');
+        expect(readSongTitleArgument('"Amazing Grace"')).toBe('Amazing Grace');
+    });
+
+    it('leaves addresses and pasted verses to the other paths', () => {
+        expect(readSongTitleArgument(SONG_PAGE)).toBe(null);
+        expect(readSongTitleArgument('line one\nline two')).toBe(null);
+        expect(readSongTitleArgument('')).toBe(null);
+    });
+});
+
+describe('the song lookup prefixes', () => {
+    it("are pinned to the lookup's own words", () => {
+        expect(SONG_NOT_FOUND_PREFIX).toBe(LOOKUP_NOT_FOUND_PREFIX);
+        expect(SONG_YOURS_PREFIX).toBe(LOOKUP_YOURS_PREFIX);
+    });
+
+    it("reads the user's own songs off a lookup", () => {
+        const raw = formatSongLookup({
+            asked: 'Way Maker',
+            yours: ['Way Maker', 'Way Maker (acoustic)'],
+            found: null,
+            nearest: [],
+            collectionSize: 36,
+        });
+        expect(readSongLookupYours(raw)).toEqual([
+            'Way Maker',
+            'Way Maker (acoustic)',
+        ]);
+        expect(readSongLookupYours('Drafted a song from the text.')).toEqual(
+            [],
+        );
     });
 });

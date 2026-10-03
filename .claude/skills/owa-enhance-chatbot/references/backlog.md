@@ -13,6 +13,46 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-193 · A song asked for by its NAME had nowhere to go — `done` 2026-10-03
+
+Reported by the user with a picture: _Create a lyric file from "Amazing
+Grace"_ typed under the app's own _Create a lyric file from https://…_ chip.
+Every song path took words or a page address; a title alone left the model
+two bad choices — write the hymn from memory (routinely a verse short or a
+line off, and for a modern song somebody's copyright written out from memory)
+or say it could not — and the offline guide searched the manual for it.
+`owa_lyric_validate` gained `mode: "find"` + `title`: the app (over the
+`owa-agent-file` relay, `action: "find"`) answers with the user's own songs
+that carry the name and the hymn the Public Domain Songs plugin holds under
+it — exact title, a shortened one (_Holy Holy Holy_), the first line or a
+bracketed part, a trailing _by John Newton_ tried away; a tie is NOT a find.
+`songLookup.mjs` formats a find as a draft (first line "Drafted a song",
+validated), so the window's Create / Copy / preview come for free; nothing
+found says so with the nearest titles and "never from memory". The window:
+`applyToolWatch` lifts a draft off ANY `owa_lyric_validate` result (it used
+to need `mode: "draft"`, missing a model's mode-less draft too), the prompt
+routes a title to it, `/lyric <title>` and `readSongTitleAsk` →
+`answerLyricTitle` do it with no model, and the fourth Presenter starter is
+_Create a lyric file for song "Amazing Grace"_ (the user's wording; a
+template, the link chip moved to More…). Live: `/lyric Amazing Grace` ~1 s,
+no model; the chip on GPT-5 (Claude's key was refused that minute) found and
+created it, $0.03; _Way Maker_ → not found. +~40 tokens a round (7,444 of
+the 7,450 ceiling measured before a final trim). **Open:** only 36 hymns are
+findable; a modern song still needs its words or a page. Growing the
+plugin's catalog is the cheap lever (`EC-194`).
+
+## EC-194 · Only 36 hymns can be found by name — `idea`
+
+`mode: "find"` reads the Public Domain Songs catalog, 36 classic hymns. A
+bigger public-domain catalog (hymnary.org / Cyber Hymnal texts, each with its
+source link, through the plugin's own test that runs every record through
+open-lyric) grows what a title finds with no network and no copyright
+question. A web title search was considered and not built: lyric sites are
+mostly copyrighted texts, hymnary.org bot-walls repeat reads, and
+library.timelesstruths.org refused the connection on 2026-10-03.
+
+---
+
 ## EC-192 · Tips and demos follow the operator window — `done` 2026-09-28
 
 Before: Settings had no tip catalog and DailyTipComp refused popup listeners.

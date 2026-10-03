@@ -231,3 +231,33 @@ describe('LyricAppDocumentStageAbstract custom css', () => {
         expect(options.css).toContain('.a { color: red }');
     });
 });
+
+describe('LyricAppDocumentStage1.genSlideHtml', () => {
+    const badge =
+        '<span class="ol-song-view__section-index" style="width: 9px">2/7</span>';
+
+    test('names the part and the play of a repeat in the corner', async () => {
+        const { default: LyricAppDocumentStage1 } =
+            await import('./LyricAppDocumentStage1');
+        const html = LyricAppDocumentStage1.prototype.genSlideHtml(
+            badge,
+            'Chorus',
+            6,
+            { index: 1, count: 3 },
+        );
+        // Step 7, not the `2` open-lyric stamped on the part's one render.
+        expect(html).toContain('>Chorus (2/3) · 7/7</span>');
+    });
+
+    test('a part played once carries its name alone', async () => {
+        const { default: LyricAppDocumentStage1 } =
+            await import('./LyricAppDocumentStage1');
+        const html = LyricAppDocumentStage1.prototype.genSlideHtml(
+            badge,
+            'Verse 1',
+            1,
+            null,
+        );
+        expect(html).toContain('>Verse 1 · 2/7</span>');
+    });
+});

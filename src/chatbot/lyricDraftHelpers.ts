@@ -297,3 +297,112 @@ export function readDraftReport(text: string): DraftReportType {
         guessed,
     };
 }
+
+// ---------------------------------------------------------------------------
+// A song, named by its title
+// ---------------------------------------------------------------------------
+
+// What a person does to a song when they want one made: "Create a lyric file
+// from 'Amazing Grace'", "make a song for Amazing Grace", "add the hymn …".
+const SONG_MAKE_VERB_PATTERN =
+    /\b(?:create|make|add|write|draft|import|get|find|look\s*up|need)\b/i;
+// Straight, curly and guillemet quotes around the title.
+const QUOTED_TITLE_PATTERN = /["“”«»]([^"“”«»\n]{2,80})["“”«»]/;
+// A title said after the word that introduces it, to the end of the line.
+const TRAILING_TITLE_PATTERN =
+    /\b(?:songs?|lyrics?|hymns?|lyric\s+files?|song\s+files?)\s+(?:files?\s+)?(?:from|for|of|called|named|titled)\s+(?:the\s+)?(?:(?:song|hymn)\s+(?:called\s+|named\s+|titled\s+)?)?(.{2,80})$/i;
+// Words that make the "title" an ask about something else: the starter chip
+// "Can you make a song from words I paste in?", a song from "a file".
+// Read from the START of the title only, so "It Is Well with My Soul" is
+// still a title while "it" alone is not.
+const NOT_A_TITLE_PATTERN =
+    /^(?:(?:a|an|the|my|our|your|this|these|that|those|some)\s+)*(?:(?:words?|text|lyrics?|paste[ds]?|pasting|clipboard|files?|links?|pages?|sites?|websites?|address|url|scratch|attachments?)\b|(?:this|these|that|those|it|them|below|above)$)/i;
+const MAX_SONG_TITLE_ASK_WORDS = 16;
+
+/**
+ * The title in "Create a lyric file from 'Amazing Grace'", or null.
+ *
+ * The app's own starter is *Create a lyric file for song "Amazing Grace"*.
+ * Reported 2026-10-03 with a picture of exactly that ask typed into the box
+ * under the app's own *Create a lyric file from https://…* chip. A title is
+ * asked of the app (`owa_lyric_validate` with `mode: "find"`), which looks in
+ * the user's own songs and the public-domain hymn collection -- no model, no
+ * network -- so with the assistant paused the offline bot can still do it.
+ *
+ * Narrow on purpose: a song word, a making verb, and the title either QUOTED
+ * or said after *from / for / called* at the end. A question mark, an
+ * address, a paste or notation is somebody else's job; "a song from words I
+ * paste in" names no song.
+ */
+export function readSongTitleAsk(text: string): string | null {
+    const trimmed = String(text ?? '').trim();
+    if (
+        trimmed === '' ||
+        trimmed.startsWith('/') ||
+        trimmed.endsWith('?') ||
+        trimmed.includes('```') ||
+        trimmed.includes('\n') ||
+        /https?:\/\//i.test(trimmed)
+    ) {
+        return null;
+    }
+    const wordCount = trimmed.split(/\s+/).length;
+    if (
+        wordCount > MAX_SONG_TITLE_ASK_WORDS ||
+        !SONG_WORD_PATTERN.test(trimmed) ||
+        !SONG_MAKE_VERB_PATTERN.test(trimmed)
+    ) {
+        return null;
+    }
+    const quoted = QUOTED_TITLE_PATTERN.exec(trimmed)?.[1];
+    const title = (quoted ?? TRAILING_TITLE_PATTERN.exec(trimmed)?.[1] ?? '')
+        .replace(/[.!,;:]+$/, '')
+        .trim();
+    if (
+        title.length < 2 ||
+        (quoted === undefined && NOT_A_TITLE_PATTERN.test(title))
+    ) {
+        return null;
+    }
+    return title;
+}
+
+/**
+ * A title the user typed after `/lyric` -- one short line that is neither an
+ * address nor the words of a song. Quotes around it are taken off.
+ */
+export function readSongTitleArgument(text: string): string | null {
+    const trimmed = String(text ?? '').trim();
+    if (
+        trimmed === '' ||
+        trimmed.includes('\n') ||
+        trimmed.length > 80 ||
+        /https?:\/\//i.test(trimmed)
+    ) {
+        return null;
+    }
+    const title = trimmed.replace(/^["“”'«»]+|["“”'«»]+$/g, '').trim();
+    return title.length >= 2 ? title : null;
+}
+
+// The first words of `songLookup.mjs`'s two lines a person is told about. A
+// prefix rather than an import, as with the browser check: the renderer has
+// no other use for that module, and `lyricDraftHelpers.test.ts` holds the two
+// together.
+export const SONG_NOT_FOUND_PREFIX = 'No song called';
+export const SONG_YOURS_PREFIX = 'Already in their songs:';
+
+/** The user's own song names off a lookup's `Already in their songs:` line. */
+export function readSongLookupYours(raw: string): string[] {
+    const line = String(raw ?? '')
+        .split(/\r?\n/)
+        .find((one) => {
+            return one.startsWith(SONG_YOURS_PREFIX);
+        });
+    if (line === undefined) {
+        return [];
+    }
+    return Array.from(line.matchAll(/"([^"]+)"/g), (match) => {
+        return match[1];
+    });
+}

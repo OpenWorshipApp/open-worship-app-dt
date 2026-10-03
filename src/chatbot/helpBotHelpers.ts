@@ -37,6 +37,8 @@ import {
     readDraftedLyric,
     readDraftReport,
     readSongLinkAsk,
+    readSongLookupYours,
+    readSongTitleAsk,
 } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
 import { toSiteName } from './progressHelpers';
@@ -874,6 +876,82 @@ export async function answerLyricLink(url: string): Promise<BotAnswerType> {
 }
 
 /**
+ * A song asked for by its NAME, with no model: the app looks in the user's
+ * own songs and its public-domain hymn collection (`owa_lyric_validate` with
+ * `mode: "find"`). A find is drafted under the same two buttons as a page or
+ * a paste; anything else says plainly what to bring instead, because the one
+ * thing the offline bot must never do is make a song up.
+ */
+export async function answerLyricTitle(title: string): Promise<BotAnswerType> {
+    let raw: string;
+    try {
+        raw = await callTool('owa_lyric_validate', { mode: 'find', title });
+    } catch (error) {
+        appError(error, 'offline song title');
+        return {
+            text:
+                `I could not look up "${title}" just now. Paste its words ` +
+                'here, or send me the address of a page with the song on ' +
+                'it, and I will write it out.',
+        };
+    }
+    const yours = readSongLookupYours(raw);
+    const yoursLine =
+        yours.length > 0
+            ? `You already have ${yours
+                  .map((name) => {
+                      return `**${name}**`;
+                  })
+                  .join(', ')} in your Documents list.`
+            : null;
+    const answer = genLyricDraftAnswer(
+        raw,
+        [
+            `I found "${title}" in the app's collection of public-domain ` +
+                'hymns and wrote it out for the Lyric Editor, with a link ' +
+                'back to where the words came from.',
+            yoursLine,
+        ]
+            .filter(Boolean)
+            .join(' '),
+    );
+    if (answer !== null) {
+        return answer;
+    }
+    const nearest = Array.from(
+        (/^Nearest in the collection: (.*)$/m.exec(raw)?.[1] ?? '').matchAll(
+            /"([^"]+)"/g,
+        ),
+        (match) => {
+            return match[1];
+        },
+    );
+    const lines = [
+        yoursLine ??
+            `I could not find "${title}" in your songs or in the app's ` +
+                'collection of public-domain hymns.',
+    ];
+    if (yoursLine === null && nearest.length > 0) {
+        lines.push(
+            'Did you mean ' +
+                nearest
+                    .map((name) => {
+                        return `**${name}**`;
+                    })
+                    .join(', ') +
+                '? Ask again with that name.',
+        );
+    }
+    lines.push(
+        'For any other song, paste its words here, or send me the address ' +
+            'of a page with the song on it, and I will write it out. I do ' +
+            'not write songs out from memory -- a remembered song is often ' +
+            'wrong.',
+    );
+    return { text: lines.join('\n\n') };
+}
+
+/**
  * The answer under a drafted song: what it is, what had to be guessed, and
  * the two buttons -- the SAME two the model's answer carries, through the same
  * pseudo tools, so the hardened create path (a free name, nothing overwritten,
@@ -1040,6 +1118,12 @@ export async function askHelpBot(
     const songLink = readSongLinkAsk(trimmedQuestion);
     if (songLink !== null) {
         return await answerLyricLink(songLink);
+    }
+    // A song named by its TITLE -- *Create a lyric file for song "Amazing
+    // Grace"*, the starter beside the link one. Same reason, same place.
+    const songTitle = readSongTitleAsk(trimmedQuestion);
+    if (songTitle !== null) {
+        return await answerLyricTitle(songTitle);
     }
     // Several short lines and no question in them are the words of a song,
     // and a song is a thing to write out, not a thing to look up. First,

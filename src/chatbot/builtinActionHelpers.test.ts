@@ -916,12 +916,44 @@ describe('/lyric', () => {
         callTool.mockResolvedValue(
             'That does not look like the words of a song.',
         );
-        let answer = await runBuiltinCommand('/lyric hello there', 'presenter');
+        // Two lines: one line is a TITLE now (`/lyric Amazing Grace`).
+        let answer = await runBuiltinCommand(
+            '/lyric hello there\nhow are you',
+            'presenter',
+        );
         expect(answer.text).toContain('did not read as the words of a song');
         callTool.mockRejectedValue(new Error('Refused: address budget spent'));
         answer = await runBuiltinCommand(`/lyric ${PAGE}`, 'presenter');
         expect(answer.text).toContain('I could not read hymnary.example');
         expect(answer.text).not.toContain('budget');
+    });
+
+    test('one line is a title, looked up rather than drafted', async () => {
+        callTool.mockResolvedValue(DRAFT);
+        const answer = await runBuiltinCommand(
+            '/lyric "Amazing Grace"',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenLastCalledWith('owa_lyric_validate', {
+            mode: 'find',
+            title: 'Amazing Grace',
+        });
+        expect(
+            answer.actions?.some((action) => {
+                return action.label.startsWith('Create');
+            }),
+        ).toBe(true);
+    });
+
+    test('a title nothing holds says what to bring instead', async () => {
+        callTool.mockResolvedValue(
+            'No song called "Way Maker" is in the app’s public-domain ' +
+                'hymn collection (36 classic hymns, offline).',
+        );
+        const answer = await runBuiltinCommand('/lyric Way Maker', 'presenter');
+        expect(answer.text).toContain('I could not find "Way Maker"');
+        expect(answer.text).toContain('paste its words');
+        expect(answer.actions ?? []).toEqual([]);
     });
 
     test('progress names the site while the page is read', async () => {

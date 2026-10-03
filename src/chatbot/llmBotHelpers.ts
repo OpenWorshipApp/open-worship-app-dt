@@ -1022,6 +1022,10 @@ Rules:
   finds the song among the menus and charts and tells you which part of the
   page it used. Read that line: if it took in the site's own furniture or
   stopped before the last verse, say \`from\` and \`to\` and call it again.
+  A song asked for by its NAME and nothing else ("make a lyric file for
+  Amazing Grace"): \`mode: "find"\` with its \`title\`. It looks in their own
+  songs and the app's public-domain hymns; if it finds nothing, say so and ask
+  for the words or a page address -- never write a song out from memory.
   Never write that notation yourself and never paste it into your answer --
   buttons appear under you that create the file and copy the text. Say what
   the song came out as, and say plainly what it guessed.
@@ -1470,9 +1474,12 @@ export function applyToolWatch(
         watch.isActedOn = true;
     }
     learnPageTitles(watch.pageTitles, name, args, text);
-    if (name === 'owa_lyric_validate' && args?.mode === 'draft') {
+    if (name === 'owa_lyric_validate') {
         // Last one wins, like `readId`: a model that drafts twice has been
-        // told the first one was wrong.
+        // told the first one was wrong. Any mode: `readDraftedLyric` keys on
+        // the drafter's own first line, which a check never writes -- and a
+        // draft the model sent with NO mode (plain words default to one) or
+        // a song found by its title (`mode: "find"`) is a draft all the same.
         watch.draftedLyric = readDraftedLyric(text) ?? watch.draftedLyric;
     }
     if (name === 'owa_lyric_file' && args?.action === 'create') {

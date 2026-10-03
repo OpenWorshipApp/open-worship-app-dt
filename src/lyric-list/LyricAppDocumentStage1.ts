@@ -1,6 +1,11 @@
 import { type OpenLyricElementMapOptions } from 'open-lyric';
 import LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { type SrcData } from '../helper/FileSource';
+import { addTitleToSectionIndex } from './lyricSectionIndexHelpers';
+import {
+    genLyricRepeatSuffix,
+    type LyricRepeatType,
+} from './lyricStructureHelpers';
 
 export default class LyricAppDocumentStage1 extends LyricAppDocumentStageAbstract {
     stage = 1;
@@ -43,6 +48,21 @@ export default class LyricAppDocumentStage1 extends LyricAppDocumentStageAbstrac
             wholeImage as SrcData,
         );
         return canvasItemProps;
+    }
+
+    // A singer reading a back-stage screen wants WHICH part is up, not only how
+    // far into the song it is: `Chorus (2/3) · 7/7` in the corner.
+    genSlideHtml(
+        html: string,
+        openLyricKey: string,
+        openLyricIndex: number,
+        openLyricRepeat: LyricRepeatType | null,
+    ) {
+        return addTitleToSectionIndex(
+            html,
+            `${openLyricKey}${genLyricRepeatSuffix(openLyricRepeat)}`,
+            openLyricIndex + 1,
+        );
     }
 
     cleanDataMap() {}

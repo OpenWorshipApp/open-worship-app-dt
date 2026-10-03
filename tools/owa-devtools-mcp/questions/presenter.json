@@ -4,16 +4,12 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-02",
+    "updated": "2026-10-03",
     "sections": [
         {
             "id": "orientation",
             "label": "Finding your way around",
-            "recipes": [
-                "W-01",
-                "W-01b",
-                "W-02"
-            ],
+            "recipes": ["W-01", "W-01b", "W-02"],
             "questions": [
                 {
                     "id": "window-parts",
@@ -32,10 +28,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-01",
-                        "related": [
-                            "W-02",
-                            "W-31"
-                        ],
+                        "related": ["W-02", "W-31"],
                         "guide": true
                     },
                     "starterRank": 9
@@ -89,9 +82,7 @@
                     "resources": {
                         "recipe": "W-02",
                         "find": "Bible Reader",
-                        "tools": [
-                            "owa_goto_page"
-                        ],
+                        "tools": ["owa_goto_page"],
                         "guide": true
                     }
                 },
@@ -126,9 +117,7 @@
                     "resources": {
                         "recipe": "W-02",
                         "find": "Presenter",
-                        "tools": [
-                            "owa_goto_page"
-                        ],
+                        "tools": ["owa_goto_page"],
                         "guide": true
                     }
                 },
@@ -146,9 +135,7 @@
                     ],
                     "resources": {
                         "recipe": "W-01",
-                        "related": [
-                            "W-31"
-                        ]
+                        "related": ["W-31"]
                     }
                 },
                 {
@@ -174,9 +161,7 @@
             "id": "making",
             "label": "Making a new file",
             "panel": "Documents",
-            "recipes": [
-                "W-15"
-            ],
+            "recipes": ["W-15"],
             "questions": [
                 {
                     "id": "new-document",
@@ -232,13 +217,33 @@
                     "starter": true,
                     "starterRank": 3,
                     "resources": {
-                        "tools": [
-                            "owa_lyric_validate",
-                            "owa_lyric_file"
-                        ],
-                        "related": [
-                            "W-15"
-                        ]
+                        "tools": ["owa_lyric_validate", "owa_lyric_file"],
+                        "related": ["W-15"]
+                    }
+                },
+                {
+                    "id": "song-from-title",
+                    "text": "Create a lyric file for song \"Amazing Grace\"",
+                    "kind": "howto",
+                    "keywords": [
+                        "song by its name",
+                        "song from a title",
+                        "lyrics of a hymn",
+                        "find a hymn",
+                        "look up a song",
+                        "public domain hymn",
+                        "hymn by name",
+                        "create lyric from a title",
+                        "/lyric",
+                        "lyric command",
+                        "without an assistant"
+                    ],
+                    "starter": true,
+                    "starterRank": 4,
+                    "template": true,
+                    "resources": {
+                        "tools": ["owa_lyric_validate", "owa_lyric_file"],
+                        "related": ["W-15", "W-36"]
                     }
                 },
                 {
@@ -259,16 +264,11 @@
                         "without an assistant"
                     ],
                     "starter": true,
-                    "starterRank": 4,
+                    "starterRank": 16,
                     "template": true,
                     "resources": {
-                        "tools": [
-                            "owa_lyric_validate",
-                            "owa_lyric_file"
-                        ],
-                        "related": [
-                            "W-15"
-                        ]
+                        "tools": ["owa_lyric_validate", "owa_lyric_file"],
+                        "related": ["W-15"]
                     }
                 },
                 {
@@ -284,9 +284,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-02"
-                        ],
+                        "related": ["W-02"],
                         "find": "Slide Editor",
                         "guide": true
                     }
@@ -321,9 +319,7 @@
                     ],
                     "resources": {
                         "recipe": "W-01b",
-                        "related": [
-                            "W-15"
-                        ],
+                        "related": ["W-15"],
                         "guide": true
                     }
                 },
@@ -356,9 +352,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-05"
-                        ],
+                        "related": ["W-05"],
                         "guide": true
                     }
                 }
@@ -368,13 +362,7 @@
             "id": "documents",
             "label": "Documents & slides",
             "panel": "Documents",
-            "recipes": [
-                "W-03",
-                "W-04",
-                "W-26",
-                "W-27",
-                "W-45"
-            ],
+            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45"],
             "questions": [
                 {
                     "id": "present-slide",
@@ -391,9 +379,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-03",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "find": "Documents",
                         "guide": true
                     },
@@ -431,9 +417,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "tools": [
-                            "owa_app_state"
-                        ]
+                        "tools": ["owa_app_state"]
                     }
                 },
                 {
@@ -450,10 +434,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "tools": [
-                            "owa_app_state",
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_app_state", "owa_list_screens"]
                     }
                 },
                 {
@@ -525,9 +506,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "shortcut": "F8",
                         "guide": true
                     }
@@ -547,9 +526,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "related": [
-                            "W-23"
-                        ],
+                        "related": ["W-23"],
                         "find": "Documents",
                         "guide": true
                     }
@@ -710,9 +687,7 @@
                     ],
                     "resources": {
                         "recipe": "W-43",
-                        "related": [
-                            "W-01b"
-                        ],
+                        "related": ["W-01b"],
                         "find": "Documents",
                         "guide": true
                     }
@@ -748,9 +723,7 @@
                     ],
                     "resources": {
                         "recipe": "W-45",
-                        "related": [
-                            "W-23"
-                        ],
+                        "related": ["W-23"],
                         "find": "Documents",
                         "guide": true
                     }
@@ -761,12 +734,7 @@
             "id": "lyrics",
             "label": "Songs & lyrics",
             "panel": "Documents",
-            "recipes": [
-                "W-05",
-                "W-35",
-                "W-36",
-                "W-45"
-            ],
+            "recipes": ["W-05", "W-35", "W-36", "W-45"],
             "questions": [
                 {
                     "id": "present-lyrics",
@@ -784,9 +752,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-05",
-                        "related": [
-                            "W-03"
-                        ],
+                        "related": ["W-03"],
                         "find": "Documents",
                         "guide": true
                     },
@@ -806,9 +772,7 @@
                     ],
                     "resources": {
                         "recipe": "W-45",
-                        "related": [
-                            "W-05"
-                        ],
+                        "related": ["W-05"],
                         "find": "Stage Previewer",
                         "guide": true
                     }
@@ -826,9 +790,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
-                        "related": [
-                            "W-16"
-                        ],
+                        "related": ["W-16"],
                         "find": "Documents"
                     }
                 },
@@ -846,9 +808,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
-                        "related": [
-                            "W-15"
-                        ],
+                        "related": ["W-15"],
                         "guide": true
                     }
                 },
@@ -937,9 +897,7 @@
                     ],
                     "resources": {
                         "recipe": "W-35",
-                        "related": [
-                            "W-16"
-                        ],
+                        "related": ["W-16"],
                         "find": "Import From SongSelect",
                         "guide": true
                     }
@@ -968,10 +926,7 @@
             "id": "bible",
             "label": "Bible verses on screen",
             "panel": "Bible Lookup",
-            "recipes": [
-                "W-06",
-                "W-07"
-            ],
+            "recipes": ["W-06", "W-07"],
             "questions": [
                 {
                     "id": "present-verse",
@@ -990,10 +945,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-07",
-                            "W-11"
-                        ],
+                        "related": ["W-07", "W-11"],
                         "find": "Bible Lookup",
                         "shortcut": "Ctrl+B",
                         "guide": true
@@ -1038,10 +990,7 @@
                     "template": true,
                     "resources": {
                         "recipe": "W-06",
-                        "tools": [
-                            "owa_present_bible",
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_present_bible", "owa_list_screens"]
                     }
                 },
                 {
@@ -1094,10 +1043,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-32",
-                            "W-34"
-                        ],
+                        "related": ["W-32", "W-34"],
                         "guide": true
                     }
                 },
@@ -1114,9 +1060,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-11"
-                        ],
+                        "related": ["W-11"],
                         "guide": true
                     }
                 },
@@ -1150,9 +1094,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "shortcut": "F9",
                         "guide": true
                     }
@@ -1206,10 +1148,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-24",
-                            "W-40"
-                        ],
+                        "related": ["W-24", "W-40"],
                         "guide": true
                     }
                 }
@@ -1219,11 +1158,7 @@
             "id": "background",
             "label": "Backgrounds",
             "panel": "Background",
-            "recipes": [
-                "W-08",
-                "W-21",
-                "W-28"
-            ],
+            "recipes": ["W-08", "W-21", "W-28"],
             "questions": [
                 {
                     "id": "add-background",
@@ -1277,9 +1212,7 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
-                        "related": [
-                            "W-16"
-                        ],
+                        "related": ["W-16"],
                         "find": "Background > Images",
                         "guide": true
                     }
@@ -1384,9 +1317,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-08"
-                        ],
+                        "related": ["W-08"],
                         "shortcut": "F7",
                         "guide": true
                     }
@@ -1405,9 +1336,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": [
-                            "W-08"
-                        ],
+                        "related": ["W-08"],
                         "guide": true
                     }
                 },
@@ -1426,9 +1355,7 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
-                        "related": [
-                            "W-16"
-                        ],
+                        "related": ["W-16"],
                         "find": "Background > Images",
                         "guide": true
                     }
@@ -1461,9 +1388,7 @@
                     ],
                     "resources": {
                         "recipe": "W-28",
-                        "related": [
-                            "W-15"
-                        ],
+                        "related": ["W-15"],
                         "guide": true
                     }
                 },
@@ -1480,9 +1405,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-08"
-                        ],
+                        "related": ["W-08"],
                         "find": "Background > Webs",
                         "guide": true
                     }
@@ -1493,9 +1416,7 @@
             "id": "foreground",
             "label": "Foreground extras & audio",
             "panel": "Foreground",
-            "recipes": [
-                "W-09"
-            ],
+            "recipes": ["W-09"],
             "questions": [
                 {
                     "id": "foreground-what",
@@ -1530,9 +1451,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1550,9 +1469,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1570,9 +1487,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1590,9 +1505,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1611,9 +1524,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1631,9 +1542,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1686,9 +1595,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "related": [
-                            "W-22"
-                        ],
+                        "related": ["W-22"],
                         "guide": true
                     }
                 },
@@ -1704,14 +1611,10 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-09"
-                        ],
+                        "related": ["W-09"],
                         "shortcut": "F10",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1895,9 +1798,7 @@
                     ],
                     "resources": {
                         "recipe": "W-46",
-                        "related": [
-                            "W-09"
-                        ],
+                        "related": ["W-09"],
                         "menu": "Help → All tips",
                         "guide": true
                     }
@@ -1907,10 +1808,7 @@
         {
             "id": "control",
             "label": "Drawing & spotlight on the app",
-            "recipes": [
-                "W-19",
-                "W-20"
-            ],
+            "recipes": ["W-19", "W-20"],
             "questions": [
                 {
                     "id": "draw-on-app",

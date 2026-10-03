@@ -23,7 +23,10 @@ import CanvasItemVideo from '../slide-editor/canvas/CanvasItemVideo';
 import CanvasItemAudio from '../slide-editor/canvas/CanvasItemAudio';
 import CanvasItemWebsite from '../slide-editor/canvas/CanvasItemWebsite';
 import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
-import { genLyricPlaySteps } from './lyricStructureHelpers';
+import {
+    genLyricPlaySteps,
+    type LyricStepRefType,
+} from './lyricStructureHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(10);
@@ -317,7 +320,9 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         return slides;
     }
 
-    async getStageSlides(key?: string) {
+    // `step` is the play-order place a single-key slide stands for, so its
+    // name and corner badge carry the same `(n)` and `(2/3)` as the whole deck.
+    async getStageSlides(key?: string, step?: LyricStepRefType) {
         // Only the whole-song branch below needs the previewer instance; the
         // single-key branch is served from the element-map cache, so resolving
         // it up front would re-read the file for nothing.
@@ -339,7 +344,14 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
                 ...this.allOpenLyricOptions,
                 key,
             });
-            const slide = this.genSlide(key, -1, dataMap);
+            const slide = this.genSlide(
+                key,
+                -1,
+                dataMap,
+                undefined,
+                step?.openLyricIndex,
+                step?.openLyricRepeat,
+            );
             return [slide];
         }
 
@@ -378,8 +390,8 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         return newSlides;
     }
 
-    async getSlides(key?: string) {
-        return this.getStageSlides(key);
+    async getSlides(key?: string, step?: LyricStepRefType) {
+        return this.getStageSlides(key, step);
     }
 
     private async getSlideByIdSlow(id: number) {
@@ -402,7 +414,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             return await this.getSlideByIdSlow(id);
         }
         const key = slideQuick.openLyricKey;
-        const slides = await this.getSlides(key);
+        const slides = await this.getSlides(key, slideQuick);
         const slide =
             slides.find((slide) => slide.openLyricKey === key) ?? null;
         if (slide === null) {

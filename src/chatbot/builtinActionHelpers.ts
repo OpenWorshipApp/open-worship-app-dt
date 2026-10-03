@@ -39,11 +39,12 @@ import {
     answerFromManual,
     answerLyricLink,
     answerLyricPaste,
+    answerLyricTitle,
     answerWhereIs,
     type BotActionType,
     type BotAnswerType,
 } from './helpBotHelpers';
-import { readSongAddress } from './lyricDraftHelpers';
+import { readSongAddress, readSongTitleArgument } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
 import {
     genProgressReporter,
@@ -1010,7 +1011,8 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
     if (words.length === 0) {
         return {
             text:
-                '**Give me the song** -- the address of the page it is on ' +
+                '**Give me the song** -- its title (`/lyric Amazing ' +
+                'Grace`), the address of the page it is on ' +
                 '(`/lyric https://…`), or paste its words after the ' +
                 'command. I will write it out for the Lyric Editor and ' +
                 'offer a button that saves it; nothing is saved until you ' +
@@ -1025,6 +1027,17 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
             return await answerLyricLink(address);
         } finally {
             finish();
+        }
+    }
+    // One short line is a TITLE: `/lyric Amazing Grace`. A song's words are
+    // never one line, so nothing a paste could mean is taken from it.
+    const title = readSongTitleArgument(words);
+    if (title !== null) {
+        const finishLookup = report(`Looking up “${title}”`);
+        try {
+            return await answerLyricTitle(title);
+        } finally {
+            finishLookup();
         }
     }
     const finish = report('Writing the song out');
@@ -1242,7 +1255,7 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         // `song` is what `/selected` answers to: WHICH song is up.
         name: 'lyric',
         aliases: ['lyrics', 'hymn', 'song-from', 'new-song'],
-        hint: 'Write a song out from a web page, or from pasted words',
+        hint: 'Write a song out from its title, a web page, or pasted words',
         takesArgument: true,
         // It reaches OUT (the page is read, rationed and announced in the app
         // window by the firewall) and it never touches the projector; what

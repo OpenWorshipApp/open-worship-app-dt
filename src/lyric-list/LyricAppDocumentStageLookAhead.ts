@@ -10,6 +10,7 @@ import {
     type LookAheadArrangementType,
 } from './lyricLookAheadHelpers';
 import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import { type LyricStepRefType } from './lyricStructureHelpers';
 
 const EXTRA_SLIDE_KEYS = [
     OPEN_LYRIC_FIRST_KEY,
@@ -80,8 +81,8 @@ export function withLyricLookAhead<TBase extends StageClassType>(
     arrangement: LookAheadArrangementType,
 ) {
     abstract class LyricAppDocumentStageLookAhead extends Base {
-        async getStageSlides(key?: string) {
-            const slides = await super.getStageSlides(key);
+        async getStageSlides(key?: string, step?: LyricStepRefType) {
+            const slides = await super.getStageSlides(key, step);
             if (key === undefined) {
                 applyLookAhead(this, slides, arrangement);
             }

@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-02d** (**W-10 — a card can stop drawing its screen.** Asked for by the user: _for performance sake, I want to be able to toggle to disable mini-screen rendering_ — a low-spec computer drawing only `screen.html`, with every control the same. The eye right after **FG** in each card's header (**[en:tran:Stop rendering preview]**) turns that card's body into a striped **[en:tran:No rendering]** face; the audience screen, the clear buttons, presenting and every other control carry on. A slide's video or audio keeps its sound — only its play button, which is part of the picture, needs rendering back on. Remembered per screen. Verified live on the dev presenter 2026-10-02: with the card off, Slide 3 went to screen 0 and `screen.html` drew the background, the slide and the foreground clip; turning it back on showed the same; the presenter renderer fell from 7.7% to 1.7% CPU with both cards off.)
+**workflowsVersion: 2026-10-03a** (**W-42 steps 6 and 19 — a song by its NAME.** Asked for by the user with a picture of _Create a lyric file from "Amazing Grace"_ typed into the box: the fourth **Try asking** chip is now _Create a lyric file for song "Amazing Grace"_, and the help window looks a song up by its title — in your own songs first, then in the app's collection of public-domain hymns, the same texts **Import From Public Domain Songs** brings in — and never writes one out from memory; **/lyric Amazing Grace** does it with no assistant. The link chip moved into **More…**. Verified live on the dev window 2026-10-03: **/lyric Amazing Grace** → John Newton's four verses, the preview and **Create "Amazing Grace"** / **Copy song text** in about a second with no model; the chip's words on GPT-5 → the same hymn, created, with **Show it in the list**; _Way Maker_ → not in the collection, asked for the words or a page instead.)
+
+Previous: **workflowsVersion: 2026-10-02d** (**W-10 — a card can stop drawing its screen.** Asked for by the user: _for performance sake, I want to be able to toggle to disable mini-screen rendering_ — a low-spec computer drawing only `screen.html`, with every control the same. The eye right after **FG** in each card's header (**[en:tran:Stop rendering preview]**) turns that card's body into a striped **[en:tran:No rendering]** face; the audience screen, the clear buttons, presenting and every other control carry on. A slide's video or audio keeps its sound — only its play button, which is part of the picture, needs rendering back on. Remembered per screen. Verified live on the dev presenter 2026-10-02: with the card off, Slide 3 went to screen 0 and `screen.html` drew the background, the slide and the foreground clip; turning it back on showed the same; the presenter renderer fell from 7.7% to 1.7% CPU with both cards off.)
 
 Previous: **workflowsVersion: 2026-10-02c** (**W-22 — the Add Action menu counted right.** **Other Clear FG Items** holds ELEVEN per-widget clears (Messages, Video Show and Image Show joined the eight), and the run family under **Screen: Hide** is FIVE lines, **Next: Clear Interval** included. Read off the live menu in English and Khmer on the dev presenter, robot run 20261002-1644.)
 
@@ -4403,9 +4405,15 @@ it is describing.
    song is and the two buttons — **Create "…"** and **Copy song text** — and
    the song text as it will be saved drawn above them, and NOTHING is saved
    until you press Create (a _page on hymnary.org was read_ notice appears in
-   the app window while the page is read). Asking in words does the same
-   without an assistant — _Create a lyric file from https://…_ is answered by
-   the built-in guide with the same buttons when no assistant can answer;
+   the app window while the page is read). **/lyric Amazing Grace** — a song's
+   NAME on one line — looks it up instead: in your own songs, and in the
+   app's collection of public-domain hymns (the ones **Import From Public
+   Domain Songs** brings in), and offers it under the same two buttons; a song
+   that is in neither is said so, with a request for its words or a page,
+   because the help window never writes a song out from memory. Asking in
+   words does the same without an assistant — _Create a lyric file from
+   https://…_ and _Create a lyric file for song "Amazing Grace"_ are answered
+   by the built-in guide with the same buttons when no assistant can answer;
    **/commands**
    lists them all. The square buttons under a command's answer are
    commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
@@ -4670,13 +4678,22 @@ it is describing.
     written out by the app itself in a second or two, under a note that reads
     _I wrote the song out myself instead_ — with the same **Create** and **Copy
     song text** buttons, and nothing searched in this guide for the words. 📸
-19. **Give it the address of a song page and it reads the page for you.** The fourth
-    **Try asking** chip is not a question but the start of one:
-    _Create a lyric file from https://example.com/lyric/amazing_grace_. Pressing it
-    does not ask anything — it drops the sentence into the box with the cursor in it,
-    so you can swap that example address for the one you actually have and press
-    **Ctrl+Enter**. 📸 A banner appears in the app window naming the site while it
-    reads.
+19. **Name a song, or give the address of a song page, and it is written out for
+    you.** The fourth **Try asking** chip is not a question but the start of one:
+    _Create a lyric file for song "Amazing Grace"_. Pressing it does not ask
+    anything — it drops the sentence into the box with the cursor in it, so you can
+    press **Ctrl+Enter** as it stands or swap the title for the song you want. 📸
+    A song asked for by its NAME is looked up, never remembered: first in your own
+    songs (if you already have it, the answer says so before making a second copy),
+    then in the app's collection of public-domain hymns — the same texts, with the
+    same link back to where they were transcribed from, that **Import From Public
+    Domain Songs** brings in. A song that is in neither — most songs written in the
+    last seventy years — is said so plainly, with the nearest hymn titles when there
+    are any, and a request for its words or for the address of a page with it on.
+    The address is the other way in: _Create a lyric file from
+    https://example.com/lyric/amazing_grace_ is in **More…**, and works the same
+    way — swap the example address for the one you have. A banner appears in the
+    app window naming the site while it reads.
     A song page is never just the song: there is a toolbar above it, a strumming
     diagram, a fretboard chart at the bottom, a row of related songs and the site's
     own footer — and the words themselves are laid out in columns, with the chords
