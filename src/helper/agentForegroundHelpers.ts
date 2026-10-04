@@ -46,6 +46,7 @@ import type ScreenManager from '../_screen/managers/ScreenManager';
 import { DEFAULT_MARQUEE_SPEED_PERCENTAGE } from '../_screen/screenTypeHelpers';
 import appProvider from '../server/appProvider';
 import { toForegroundSummary } from './agentScreenHelpers';
+import { genCountdownTiming } from '../_screen/managers/timerStateHelpers';
 
 export type AgentForegroundRequestType = {
     action?: unknown;
@@ -221,6 +222,7 @@ async function planStart(
             }
             let target: Date;
             let detail: string;
+            let durationMillisecond: number | undefined;
             if (hasMinutes) {
                 const minutes = request.minutes as number;
                 if (
@@ -232,11 +234,15 @@ async function planStart(
                             `hours; ${minutes} minutes is outside that.`,
                     );
                 }
-                // The widget's own arithmetic: one second on top so the
-                // display starts on the whole minute rather than one below.
-                target = new Date(
-                    now.getTime() + (Math.round(minutes * 60) + 1) * 1000,
+                // Asked to START one, so it runs at once; its length rides
+                // along so the panel can still pause and reset it.
+                const timing = genCountdownTiming(
+                    Math.round(minutes * 60),
+                    true,
+                    now.getTime(),
                 );
+                target = timing.dateTime;
+                durationMillisecond = timing.durationMillisecond;
                 detail = `a ${toMinutesLabel(minutes)} countdown, ending at ${toTimeLabel(target)}`;
             } else {
                 const parsed = parseClockTimeToday(at, now);
@@ -257,6 +263,9 @@ async function planStart(
                 apply: (screenManager) => {
                     screenManager.screenForegroundManager.setCountdownData({
                         dateTime: target,
+                        ...(durationMillisecond === undefined
+                            ? {}
+                            : { durationMillisecond }),
                         extraStyle: {},
                     });
                 },

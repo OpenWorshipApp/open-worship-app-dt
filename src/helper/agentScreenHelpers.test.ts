@@ -218,7 +218,7 @@ describe('toForegroundSummary', () => {
         const items = toForegroundSummary({
             messageDataList: [],
             countdownData: null,
-            stopwatchData: { dateTime: new Date() },
+            stopwatchData: { dateTime: new Date(Date.now() - 65_000) },
             timeDataList: [
                 {
                     id: 'a',
@@ -235,11 +235,38 @@ describe('toForegroundSummary', () => {
             imageDataList: [{ filePath: '/media/logo.png' }],
         });
         expect(items).toEqual([
-            'stopwatch',
+            'stopwatch at 00:01:05, running',
             'clock "Phnom Penh"',
             'marquee at the top: "Welcome <b>everyone</b>"',
             'video snow.mp4',
             'picture logo.png',
+        ]);
+    });
+
+    it('says a countdown past its target is counting the time over', () => {
+        const genCountdownData = (dateTime: Date) => {
+            return {
+                messageDataList: [],
+                countdownData: { dateTime },
+                stopwatchData: null,
+                timeDataList: [],
+                marqueeTopData: null,
+                marqueeBottomData: null,
+                quickTextData: null,
+                cameraDataList: [],
+                webDataList: [],
+                videoDataList: [],
+                imageDataList: [],
+            } as any;
+        };
+        const future = new Date(Date.now() + 60_000);
+        const past = new Date(Date.now() - 60_000);
+        expect(toForegroundSummary(genCountdownData(future))).toEqual([
+            `countdown to ${future.toLocaleTimeString()}`,
+        ]);
+        expect(toForegroundSummary(genCountdownData(past))).toEqual([
+            `countdown to ${past.toLocaleTimeString()} ` +
+                '(time is up, now counting the time over)',
         ]);
     });
 });

@@ -3,7 +3,10 @@ import { useCallback, useMemo } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
-import { useStateSettingString } from '../helper/settingHelpers';
+import {
+    useStateSettingBoolean,
+    useStateSettingString,
+} from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
@@ -19,7 +22,10 @@ import {
 } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
-import { genForegroundDragInf } from './foregroundDragHelpers';
+import {
+    COUNTDOWN_LEAD_SECOND,
+    genForegroundDragInf,
+} from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -28,10 +34,26 @@ import {
     toSessionShowingList,
     useForegroundSessions,
 } from './foregroundSessionHelpers';
+import {
+    genCountdownTiming,
+    getCountdownState,
+    toPausedCountdownData,
+    toResetCountdownData,
+    toStartedCountdownData,
+} from '../_screen/managers/timerStateHelpers';
+import ForegroundTimerControlsComp, {
+    ForegroundAutoStartSwitchComp,
+} from './ForegroundTimerControlsComp';
+
+type CountdownTimingType = Pick<
+    ForegroundCountdownDataType,
+    'dateTime' | 'durationMillisecond' | 'pausedMillisecond'
+>;
 
 /**
  * The keys ONE session of this panel owns beyond its Properties -- the target
- * date and time of the first form, the hours and minutes of the second.
+ * date and time of the first form, the hours, minutes and seconds of the
+ * second and whether it starts the moment it is shown.
  *
  * Their names are the ones this widget has always written (`foreground-date`,
  * not `foreground-countdown-date`), because the Default session's suffix is
@@ -44,7 +66,15 @@ function genOwnSettingNames(suffix: string) {
         `foreground-time-setting${suffix}`,
         `foreground-hours-setting${suffix}`,
         `foreground-minutes-setting${suffix}`,
+        `foreground-seconds-setting${suffix}`,
+        `foreground-countdown-auto-start-setting${suffix}`,
     ];
+}
+
+/** A box's whole number; an emptied, negative or unreadable box counts as 0. */
+function toWholeNumber(value: string) {
+    const number = Number.parseInt(value);
+    return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
 function useTiming(suffix: string) {
@@ -73,9 +103,11 @@ function useTiming(suffix: string) {
     return { date, setDate, time, setTime, nowString, todayString };
 }
 
+// `genTiming` is asked at the DROP, not when the drag began, so a countdown
+// that starts as it lands has not already lost the seconds spent dragging.
 const handleByDropped = (
     sessionId: string,
-    dateTime: Date,
+    genTiming: () => CountdownTimingType,
     extraStyle: CSSProperties,
     isBehind: boolean,
     event: any,
@@ -91,7 +123,7 @@ const handleByDropped = (
                 // run-sheet row replayed weeks later carries none -- see
                 // `applyForegroundDragData`.
                 id: sessionId || undefined,
-                dateTime,
+                ...genTiming(),
                 extraStyle,
             },
             isBehind,
@@ -192,7 +224,9 @@ function CountDownOnDatetimeComp({
         dragStore.onDropped = handleByDropped.bind(
             null,
             sessionIdRef.current,
-            targetDateTime,
+            () => {
+                return { dateTime: targetDateTime };
+            },
             extraStyle,
             isBehind,
         );
@@ -287,32 +321,38 @@ function CountDownInSetComp({
         `foreground-minutes-setting${suffix}`,
         '5',
     );
+    const [seconds, setSeconds] = useStateSettingString<string>(
+        `foreground-seconds-setting${suffix}`,
+        '0',
+    );
+    // Off by default: a countdown goes up on its full length and waits for
+    // Start, so it can be put up ahead of time and started on the cue.
+    const [isAutoStart, setIsAutoStart] = useStateSettingBoolean(
+        `foreground-countdown-auto-start-setting${suffix}`,
+        false,
+    );
     const getDurationSecond = useCallback(() => {
         return (
-            60 * Number.parseInt(minutes) + 3600 * Number.parseInt(hours) + 1
+            toWholeNumber(seconds) +
+            60 * toWholeNumber(minutes) +
+            3600 * toWholeNumber(hours)
         );
-    }, [minutes, hours]);
-    const getTargetDateTime = useCallback(() => {
-        const targetDatetime = new Date();
-        targetDatetime.setSeconds(
-            targetDatetime.getSeconds() + getDurationSecond(),
-        );
-        return targetDatetime;
-    }, [getDurationSecond]);
+    }, [seconds, minutes, hours]);
+    const genTiming = useCallback(() => {
+        return genCountdownTiming(getDurationSecond(), isAutoStart);
+    }, [getDurationSecond, isAutoStart]);
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
-            const targetDateTime = getTargetDateTime();
-            const style = genStyle();
             ScreenForegroundManager.setCountdown(
                 event,
-                targetDateTime,
-                style,
+                genTiming(),
+                genStyle(),
                 isForceChoosing,
                 sessionId,
                 getIsBehind(),
             );
         },
-        [getTargetDateTime, genStyle, getIsBehind, sessionId],
+        [genTiming, genStyle, getIsBehind, sessionId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -335,8 +375,17 @@ function CountDownInSetComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
-    const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
+    const setSecondsRef = useAppCurrentRef(setSeconds);
+    const handleSecondsChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setSecondsRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const genTimingRef = useAppCurrentRef(genTiming);
     const getDurationSecondRef = useAppCurrentRef(getDurationSecond);
+    const isAutoStartRef = useAppCurrentRef(isAutoStart);
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
     const sessionIdRef = useAppCurrentRef(sessionId);
@@ -346,18 +395,23 @@ function CountDownInSetComp({
         dragStore.onDropped = handleByDropped.bind(
             null,
             sessionIdRef.current,
-            getTargetDateTimeRef.current(),
+            genTimingRef.current,
             extraStyle,
             isBehind,
         );
         // A duration countdown must restart from the moment it lands on a
-        // screen, so the duration travels rather than the resolved date.
+        // screen, so the duration travels rather than the resolved date --
+        // with the lead every stored row carries (`COUNTDOWN_LEAD_SECOND`),
+        // and whether it starts as it lands.
         handleDragStart(
             event,
             genForegroundDragInf('countdown', () => {
                 return withForegroundLayer(
                     {
-                        durationSecond: getDurationSecondRef.current(),
+                        durationSecond:
+                            getDurationSecondRef.current() +
+                            COUNTDOWN_LEAD_SECOND,
+                        isAutoStart: isAutoStartRef.current,
                         extraStyle,
                     },
                     isBehind,
@@ -366,6 +420,9 @@ function CountDownInSetComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const showingLabel = isAutoStart
+        ? tran('Start Countdown')
+        : tran('Show Countdown');
     return (
         <div className="fg-group">
             <span className="fg-group-name">
@@ -397,17 +454,36 @@ function CountDownInSetComp({
                     />
                     <span className="fg-unit-static">m</span>
                 </label>
+                <label className="fg-field" title={tran('Seconds')}>
+                    <input
+                        className="fg-num"
+                        type="number"
+                        aria-label={tran('Seconds')}
+                        value={seconds}
+                        onChange={handleSecondsChange}
+                        min="0"
+                        max="59"
+                    />
+                    <span className="fg-unit-static">s</span>
+                </label>
+                <ForegroundAutoStartSwitchComp
+                    isAutoStart={isAutoStart}
+                    setIsAutoStart={setIsAutoStart}
+                />
             </div>
             <div className="fg-actions">
                 <button
                     className="btn btn-primary"
-                    title={tran('Start Countdown')}
+                    title={showingLabel}
                     onClick={handleShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
                     onDragStart={handleInSetDragStart}
                 >
-                    <i className="bi bi-play-fill" /> {tran('Start Countdown')}
+                    <i
+                        className={`bi ${isAutoStart ? 'bi-play-fill' : 'bi-display'}`}
+                    />{' '}
+                    {showingLabel}
                 </button>
                 <ContextMenuDotsButtonComp
                     label={tran('Show on Screens')}
@@ -440,6 +516,29 @@ function handleCountdownHiding(screenId: number) {
     getScreenForegroundManagerInstances(screenId, (screenForegroundManager) => {
         screenForegroundManager.setCountdownData(null);
     });
+}
+
+/**
+ * A Start / Pause / Resume / Reset press, on every screen THIS session's
+ * duration countdown is up on, all from the one moment -- so two screens
+ * showing it stay on the same second.
+ */
+function applyToCountdowns(
+    showingList: [number, ForegroundCountdownDataType][],
+    toNewData: (
+        data: ForegroundCountdownDataType,
+        now: number,
+    ) => ForegroundCountdownDataType,
+) {
+    const now = Date.now();
+    for (const [screenId, data] of showingList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.setCountdownData(toNewData(data, now));
+            },
+        );
+    }
 }
 
 export default function ForegroundCountDownComp() {
@@ -522,6 +621,27 @@ export default function ForegroundCountDownComp() {
         },
         isFontSize: true,
     });
+    // Only a DURATION countdown has controls; one to a date & time always runs.
+    const controllableList = sessionShowingList.filter(([, data]) => {
+        return getCountdownState(data) !== 'fixed';
+    });
+    const controllableRef = useAppCurrentRef(controllableList);
+    const controlState =
+        controllableList.length > 0
+            ? getCountdownState(controllableList[0][1])
+            : 'fixed';
+    const handleTimerStarting = useCallback(() => {
+        applyToCountdowns(controllableRef.current, toStartedCountdownData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleTimerPausing = useCallback(() => {
+        applyToCountdowns(controllableRef.current, toPausedCountdownData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleTimerResetting = useCallback(() => {
+        applyToCountdowns(controllableRef.current, toResetCountdownData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={sessionShowingList}
@@ -560,6 +680,15 @@ export default function ForegroundCountDownComp() {
                  * a countdown -- there is only ever one countdown up, and two
                  * bordered boxes saying so was the panel repeating itself.
                  */}
+                {controlState !== 'fixed' ? (
+                    <ForegroundTimerControlsComp
+                        state={controlState}
+                        resetTitle={tran('Reset to the full duration')}
+                        onStart={handleTimerStarting}
+                        onPause={handleTimerPausing}
+                        onReset={handleTimerResetting}
+                    />
+                ) : null}
                 {sessionShowingList.length > 0 ? (
                     <div className="fg-actions">{genHidingElement(false)}</div>
                 ) : null}

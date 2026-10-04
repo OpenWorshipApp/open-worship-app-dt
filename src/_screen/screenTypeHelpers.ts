@@ -133,7 +133,21 @@ export type ForegroundCountdownDataType = ForegroundLayerDataType & {
      * a row sets it, and the run sheet marks a row live by it.
      */
     rowKey?: string;
+    /** While running, the moment it reaches zero (and starts counting over). */
     dateTime: Date;
+    /**
+     * A DURATION countdown's full length, which Reset winds back to. Only a
+     * duration countdown can be started, paused and reset; one counting to a
+     * date & time has no length of its own and always runs.
+     */
+    durationMillisecond?: number;
+    /**
+     * Set while the countdown is STOPPED -- shown but not started yet, or
+     * paused: the time it reads, in milliseconds, negative once over. Absent
+     * while it runs, which is when `dateTime` counts. See
+     * `timerStateHelpers`.
+     */
+    pausedMillisecond?: number;
     extraStyle?: CSSProperties;
 };
 export type ForegroundStopwatchDataType = ForegroundLayerDataType & {
@@ -141,7 +155,13 @@ export type ForegroundStopwatchDataType = ForegroundLayerDataType & {
     id?: string;
     /** The run-sheet row that put this up -- see `ForegroundCountdownDataType`. */
     rowKey?: string;
+    /** While running, the moment it counts from. */
     dateTime: Date;
+    /**
+     * Set while the stopwatch is STOPPED -- shown but not started yet (0), or
+     * paused: the time it reads, in milliseconds. See `timerStateHelpers`.
+     */
+    pausedMillisecond?: number;
     extraStyle?: CSSProperties;
 };
 export type ForegroundTimeDataType = ForegroundLayerDataType & {

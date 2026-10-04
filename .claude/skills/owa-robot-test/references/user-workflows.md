@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-03a** (**W-42 steps 6 and 19 — a song by its NAME.** Asked for by the user with a picture of _Create a lyric file from "Amazing Grace"_ typed into the box: the fourth **Try asking** chip is now _Create a lyric file for song "Amazing Grace"_, and the help window looks a song up by its title — in your own songs first, then in the app's collection of public-domain hymns, the same texts **Import From Public Domain Songs** brings in — and never writes one out from memory; **/lyric Amazing Grace** does it with no assistant. The link chip moved into **More…**. Verified live on the dev window 2026-10-03: **/lyric Amazing Grace** → John Newton's four verses, the preview and **Create "Amazing Grace"** / **Copy song text** in about a second with no model; the chip's words on GPT-5 → the same hymn, created, with **Show it in the list**; _Way Maker_ → not in the collection, asked for the words or a page instead.)
+**workflowsVersion: 2026-10-04b** (**W-09 — the stopwatch keeps a history of the times it was reset from.** Asked for by the user with a picture of the Stopwatch panel, the space under **[en:tran:Resume]** / **[en:tran:Reset]** circled: _"stopwatch should have history, when reset then save the current timed"_. **[en:tran:Reset]** saves the reading into a **[en:tran:History]** list there — newest first, numbered, with the time of day — per session, the last 20, and **[en:tran:Clear]** empties it after a confirm. Verified live 2026-10-04 on the presenter: a paused `00:00:04` reset into entry 1, a running `00:00:05` reset into entry 2 on top, Session 2 showing no list and Default keeping both. PM-153.)
+
+Previous: **workflowsVersion: 2026-10-04a** (**W-09 — the countdown and the stopwatch go up stopped and are started, paused, resumed and reset from their panels.** Asked for by the user straight after the overtime count-up: _"I want to be able to control like pause reset resume start... so when show it should not start yet, but should have option for auto-start"_, then _"then apply to stopwatch as well"_. A duration countdown's button reads **[en:tran:Show Countdown]** and puts it up on its full length, not counting; **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]** sit under it with the state in a word, and the **[en:tran:Auto-start]** switch (off by default, kept per session) brings back starting the moment it is shown. The stopwatch has the same row and switch. A countdown to a date & time still starts at once — it is tied to a clock time. The screen shows only the digits, and a press is applied to the clock already up, with no fade. Run-sheet rows saved before this start at once as they did; new rows remember the switch. The assistant's _start a 5 minute countdown_ still starts it, and it says when a clock is paused or not started. Verified live 2026-10-04 on the presenter: shown at `00:00:07` not started, started, paused at `+00:00:05` and held, reset to `00:00:07`; the stopwatch started, paused at `00:00:05`, reset to `00:00:00`; Auto-start on read **[en:tran:Start Countdown]** and ran at once. PM-152.)
+
+Previous: **workflowsVersion: 2026-10-03b** (**W-09 — a countdown takes seconds, and counts the time over once it is up.** Asked for by the user with a picture of the Countdown panel, the space after the **m** box circled: _"I want second option, and when time out I want it start counting up so I can know how long it over"_. The _for a duration_ form has an **s** box after **h** and **m** (saved per session like the other two). At zero the countdown still flashes red five times, then rests red and counts UP behind a **+** — `+00:00:01`, `+00:00:02` … — until it is hidden; this is true of both forms and of a countdown started from a run sheet or by the assistant, and the help window describes it as counting the time over. A run-sheet row for a duration countdown is now titled with its seconds too (_Countdown: 1m 30s_). Verified live 2026-10-03 on the presenter: 0 h 0 m 7 s read `00:00:07` on the Mini Screen and `+00:00:03` in red a few seconds after zero. PM-151.)
+
+Previous: **workflowsVersion: 2026-10-03a** (**W-42 steps 6 and 19 — a song by its NAME.** Asked for by the user with a picture of _Create a lyric file from "Amazing Grace"_ typed into the box: the fourth **Try asking** chip is now _Create a lyric file for song "Amazing Grace"_, and the help window looks a song up by its title — in your own songs first, then in the app's collection of public-domain hymns, the same texts **Import From Public Domain Songs** brings in — and never writes one out from memory; **/lyric Amazing Grace** does it with no assistant. The link chip moved into **More…**. Verified live on the dev window 2026-10-03: **/lyric Amazing Grace** → John Newton's four verses, the preview and **Create "Amazing Grace"** / **Copy song text** in about a second with no model; the chip's words on GPT-5 → the same hymn, created, with **Show it in the list**; _Way Maker_ → not in the collection, asked for the words or a page instead.)
 
 Previous: **workflowsVersion: 2026-10-02d** (**W-10 — a card can stop drawing its screen.** Asked for by the user: _for performance sake, I want to be able to toggle to disable mini-screen rendering_ — a low-spec computer drawing only `screen.html`, with every control the same. The eye right after **FG** in each card's header (**[en:tran:Stop rendering preview]**) turns that card's body into a striped **[en:tran:No rendering]** face; the audience screen, the clear buttons, presenting and every other control carry on. A slide's video or audio keeps its sound — only its play button, which is part of the picture, needs rendering back on. Remembered per screen. Verified live on the dev presenter 2026-10-02: with the card off, Slide 3 went to screen 0 and `screen.html` drew the background, the slide and the foreground clip; turning it back on showed the same; the presenter renderer fell from 7.7% to 1.7% CPU with both cards off.)
 
@@ -1593,9 +1599,28 @@ button:
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **Quick Text:** type a short message, click Show.
-- **Countdown:** two modes — _to a date/time_ (set date + time, press Start) or _for a
-  duration_ (set hours/minutes, press Start). Hide with its Hide button. 📸
-- **Stopwatch**, **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
+  **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
+  clock time. _For a duration_: set the **h**, **m** and **s** boxes and press
+  **[en:tran:Show Countdown]** — it goes up STOPPED on its full length (`00:05:00`), so it
+  can be put up early and started on the cue. While it is on a screen,
+  **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]**
+  (back to the full length, stopped) sit under the button, with a word saying whether it
+  is _[en:tran:Not started]_, _[en:tran:Running]_ or _[en:tran:Paused]_. Turn on
+  **[en:tran:Auto-start]** and the button reads **[en:tran:Start Countdown]** and it counts
+  the moment it is shown. When it reaches zero it flashes red, holds `00:00:00` for one
+  second, then stays red and counts the time OVER behind a **+** (`+00:01:23`) until you
+  hide it. The audience sees only the digits — a paused countdown simply stops. Hide
+  with its Hide button. 📸
+- **[en:tran:Stopwatch]:** the same controls. **[en:tran:Show Stopwatch]** puts it up on
+  `00:00:00`, stopped (running at once with **[en:tran:Auto-start]**), then
+  **[en:tran:Start]** / **[en:tran:Pause]** / **[en:tran:Resume]** / **[en:tran:Reset]**
+  (back to zero). **[en:tran:Reset]** first SAVES the time it read into a
+  **[en:tran:History]** list under the buttons — newest on top, numbered, with the time
+  of day it was reset — so the 7:42 a testimony ran is not lost with the zero. Each
+  session keeps its own list (the last 20; a reset under one second is not kept), and
+  **[en:tran:Clear]** beside it empties it after a confirm.
+- **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
 - **[en:tran:Video Show]**, **[en:tran:Image Show]** and **[en:tran:Web Show]:** a clip,
   a picture or a web page shown _over_ the slide instead of behind it. Each lists a
   folder the same way the Background tabs do — only the rows on screen are built, so a
@@ -1686,7 +1711,7 @@ show button is offered, never pressed unasked. **/countdown 5**, **/countdown
 10:30** and **/marquee Please silence your phones** do the same with no assistant,
 and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6).
 
-_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, KB-03, KB-07, CB-67._
+_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, KB-03, KB-07, CB-67._
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 

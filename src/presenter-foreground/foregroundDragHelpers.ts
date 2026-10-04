@@ -2,6 +2,10 @@ import type ScreenForegroundManager from '../_screen/managers/ScreenForegroundMa
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 import { withForegroundLayer } from '../_screen/screenTypeHelpers';
+import {
+    genCountdownTiming,
+    genStopwatchTiming,
+} from '../_screen/managers/timerStateHelpers';
 
 // Foregrounds used to travel to a screen ONLY through `dragStore.onDropped` — a
 // live closure that dies with the drag. That is enough to drop one on a screen,
@@ -99,6 +103,33 @@ export function toForegroundDragIconName(target: ForegroundDragTargetType) {
 }
 
 /**
+ * The second a stored run-sheet row's `durationSecond` carries beyond what was
+ * typed. The countdown once added it so its display (rounded down) opened on
+ * `05:00` rather than `04:59`; it rounds UP now and needs none, but every row
+ * already saved has it, so a row still WRITES it and every reader of a row
+ * takes it back off -- one rule for old rows and new.
+ */
+export const COUNTDOWN_LEAD_SECOND = 1;
+
+/** `1h 5m`, `5m`, `1m 30s`, `45s` -- only the parts that are not zero. */
+function toDurationLabel(totalSecond: number) {
+    const second = Math.max(0, Math.round(totalSecond));
+    const unitList: [number, string][] = [
+        [Math.floor(second / 3600), 'h'],
+        [Math.floor((second % 3600) / 60), 'm'],
+        [second % 60, 's'],
+    ];
+    const parts = unitList
+        .filter(([value]) => {
+            return value !== 0;
+        })
+        .map(([value, unit]) => {
+            return `${value}${unit}`;
+        });
+    return parts.length > 0 ? parts.join(' ') : '0s';
+}
+
+/**
  * `translate` is passed IN rather than `tran` being imported here: this module
  * is on the screen path, and `langHelpers` pulls `appHooks` (and React) behind
  * it. Left out, the label comes back in English — which is what the presenting
@@ -136,7 +167,9 @@ export function toForegroundDragLabel(
     }
     if (target === 'countdown') {
         if (typeof data.durationSecond === 'number') {
-            return `${label}: ${Math.round(data.durationSecond / 60)}m`;
+            return `${label}: ${toDurationLabel(
+                data.durationSecond - COUNTDOWN_LEAD_SECOND,
+            )}`;
         }
         return `${label}: ${data.dateTime ?? ''}`;
     }
@@ -147,11 +180,17 @@ export function toForegroundDragLabel(
 // SHOWN, not from the moment it was dragged — otherwise replaying it out of a
 // presenting flow next Sunday would start already expired. The absolute-date form keeps
 // its date, which is exactly what that form means.
-function toCountdownDateTime(data: any) {
+//
+// A row's `isAutoStart` is the panel's switch when it was dragged; a row saved
+// before the switch existed has none, and starts at once as it always did.
+function toCountdownTiming(data: any) {
     if (typeof data.durationSecond === 'number') {
-        return new Date(Date.now() + data.durationSecond * 1000);
+        return genCountdownTiming(
+            data.durationSecond - COUNTDOWN_LEAD_SECOND,
+            data.isAutoStart !== false,
+        );
     }
-    return new Date(data.dateTime);
+    return { dateTime: new Date(data.dateTime) };
 }
 
 /**
@@ -203,14 +242,19 @@ export async function applyForegroundDragData(
     } else if (target === 'countdown') {
         screenForegroundManager.setCountdownData(
             withForegroundLayer(
-                { dateTime: toCountdownDateTime(data), extraStyle, rowKey },
+                { ...toCountdownTiming(data), extraStyle, rowKey },
                 isBehind,
             ),
         );
     } else if (target === 'stopwatch') {
+        // `isAutoStart` as for the countdown above.
         screenForegroundManager.setStopwatchData(
             withForegroundLayer(
-                { dateTime: new Date(), extraStyle, rowKey },
+                {
+                    ...genStopwatchTiming(data.isAutoStart !== false),
+                    extraStyle,
+                    rowKey,
+                },
                 isBehind,
             ),
         );

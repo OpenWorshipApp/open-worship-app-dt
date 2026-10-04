@@ -54,12 +54,32 @@ describe('foreground drag helpers', () => {
                 data: { textList: ['Hello'] },
             }),
         ).toBe('Messages: Hello');
+        // `durationSecond` carries the panel's one-second lead, which a row
+        // saved before seconds existed has too -- `301` still reads `5m`.
         expect(
             toForegroundDragLabel({
                 target: 'countdown',
-                data: { durationSecond: 90 },
+                data: { durationSecond: 91 },
             }),
-        ).toBe('Countdown: 2m');
+        ).toBe('Countdown: 1m 30s');
+        expect(
+            toForegroundDragLabel({
+                target: 'countdown',
+                data: { durationSecond: 301 },
+            }),
+        ).toBe('Countdown: 5m');
+        expect(
+            toForegroundDragLabel({
+                target: 'countdown',
+                data: { durationSecond: 3946 },
+            }),
+        ).toBe('Countdown: 1h 5m 45s');
+        expect(
+            toForegroundDragLabel({
+                target: 'countdown',
+                data: { durationSecond: 1 },
+            }),
+        ).toBe('Countdown: 0s');
         expect(
             toForegroundDragLabel(
                 { target: 'quick-text', data: { markdownText: 'Hi' } },
@@ -99,6 +119,17 @@ describe('foreground drag helpers', () => {
         expect(
             manager.setStopwatchData.mock.calls[0][0].dateTime,
         ).toBeInstanceOf(Date);
+        // A row saved before Auto-start existed starts at once, as it always
+        // did -- and a stored row's lead second comes back off its length.
+        expect(manager.setCountdownData.mock.calls[0][0]).toMatchObject({
+            durationMillisecond: 59_000,
+        });
+        expect(
+            manager.setCountdownData.mock.calls[0][0].pausedMillisecond,
+        ).toBeUndefined();
+        expect(
+            manager.setStopwatchData.mock.calls[0][0].pausedMillisecond,
+        ).toBeUndefined();
         expect(manager.setQuickTextData).toHaveBeenCalledWith(
             expect.objectContaining({
                 htmlText: '<p>Bold</p>',
@@ -106,6 +137,25 @@ describe('foreground drag helpers', () => {
             }),
         );
         expect(manager.addVideoData).toHaveBeenCalledWith({ id: 'v' });
+    });
+
+    test('a row dragged with Auto-start off goes up stopped', async () => {
+        const manager = genManager();
+        await applyForegroundDragData(manager as any, {
+            target: 'countdown',
+            data: { durationSecond: 301, isAutoStart: false },
+        });
+        await applyForegroundDragData(manager as any, {
+            target: 'stopwatch',
+            data: { isAutoStart: false },
+        });
+        expect(manager.setCountdownData.mock.calls[0][0]).toMatchObject({
+            durationMillisecond: 300_000,
+            pausedMillisecond: 300_000,
+        });
+        expect(manager.setStopwatchData.mock.calls[0][0]).toMatchObject({
+            pausedMillisecond: 0,
+        });
     });
 
     test('stamps the row that put a slot widget up, so the run sheet can tell rows apart', async () => {

@@ -163,10 +163,17 @@ describe('handleAgentForegroundRequest', () => {
         );
         const manager = h.managers[0].screenForegroundManager;
         expect(manager.calls).toEqual(['countdownData']);
-        // The widget's own arithmetic: five minutes and one second on.
+        // Asked to START: running at once, five minutes on, with its length
+        // kept so the panel can still pause and reset it.
         expect(manager.foregroundData.countdownData.dateTime.getTime()).toBe(
-            NOW.getTime() + (5 * 60 + 1) * 1000,
+            NOW.getTime() + 5 * 60 * 1000,
         );
+        expect(manager.foregroundData.countdownData.durationMillisecond).toBe(
+            5 * 60 * 1000,
+        );
+        expect(
+            manager.foregroundData.countdownData.pausedMillisecond,
+        ).toBeUndefined();
         expect((result as any).screens[0].foreground[0]).toMatch(
             /^countdown to /,
         );

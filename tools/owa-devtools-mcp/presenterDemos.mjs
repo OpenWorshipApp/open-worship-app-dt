@@ -184,7 +184,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Choose "Count down for a duration" and set the hours and minutes, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Start Countdown. This lesson will not start it for you.',
+        text: 'Choose "Count down for a duration" and set the hours, minutes and seconds, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Show Countdown: a duration countdown goes up stopped on its full length, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown). Once the time is up it counts the time over. This lesson will not start it for you.',
       },
     ],
   },
@@ -208,7 +208,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Start Stopwatch counts up from zero; Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
+        text: 'Show Stopwatch puts it up on zero, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown); Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
       },
     ],
   },

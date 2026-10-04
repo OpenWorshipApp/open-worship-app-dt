@@ -136,6 +136,7 @@ $resize-corner-size: 16px;
 }
 
 .floating-widget__content {
+  padding-left: 7px;
   flex: 1 1 auto;
   min-height: 0;
   // The edge handles are drawn ON TOP of the body — they have to be, since the

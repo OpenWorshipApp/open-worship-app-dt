@@ -1,97 +1,33 @@
-import { setClockText } from './clockTextHelpers';
+import TimerClockController, {
+    type TimerClockTimingType,
+} from './TimerClockController';
+import {
+    toStopwatchElapsedMillisecond,
+    toStopwatchMillisecondToNextChange,
+} from './timerStateHelpers';
 
-export default class StopwatchController {
-    readonly divContainer: HTMLDivElement;
-    readonly targetDateTime: Date;
-    isRunning = true;
-
-    constructor(divContainer: HTMLDivElement, targetDateTime: Date) {
-        this.divContainer = divContainer;
-        this.targetDateTime = targetDateTime;
-        this.setHtml(false);
+/** Counts up from zero; see `TimerClockController` for start / pause. */
+export default class StopwatchController extends TimerClockController {
+    get elapsedMillisecond() {
+        return toStopwatchElapsedMillisecond(this.timing);
     }
 
-    get timeDiff() {
-        return Date.now() - this.targetDateTime.getTime();
+    get shownSecond() {
+        return Math.floor(this.elapsedMillisecond / 1000);
     }
 
-    get hours() {
-        return Math.floor(
-            (this.timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-        );
+    get millisecondToNextChange() {
+        return toStopwatchMillisecondToNextChange(this.elapsedMillisecond);
     }
 
-    get minutes() {
-        return Math.floor((this.timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    protected setExtraHtml() {
+        // Nothing beyond the digits.
     }
 
-    get seconds() {
-        return Math.floor((this.timeDiff % (1000 * 60)) / 1000);
-    }
-
-    getDivChild(divId: string) {
-        return this.divContainer.querySelector(`#${divId}`) as HTMLDivElement;
-    }
-
-    get divHour() {
-        return this.getDivChild('hour');
-    }
-
-    get divMinute() {
-        return this.getDivChild('minute');
-    }
-
-    get divSecond() {
-        return this.getDivChild('second');
-    }
-
-    toTimeString(n: number) {
-        return ('0' + n.toString()).slice(-2);
-    }
-
-    get hourStr() {
-        return this.toTimeString(this.hours);
-    }
-
-    get minuteStr() {
-        return this.toTimeString(this.minutes);
-    }
-
-    get secondStr() {
-        return this.toTimeString(this.seconds);
-    }
-
-    start() {
-        const update = () => {
-            if (!this.isRunning) {
-                return;
-            }
-            if (this.timeDiff > 0) {
-                this.setHtml(false);
-                requestAnimationFrame(update);
-            } else {
-                this.stop();
-            }
-        };
-        requestAnimationFrame(update);
-    }
-
-    setHtml(isReset: boolean) {
-        setClockText(this.divHour, isReset ? '00' : this.hourStr);
-        setClockText(this.divMinute, isReset ? '00' : this.minuteStr);
-        setClockText(this.divSecond, isReset ? '00' : this.secondStr);
-    }
-
-    pause() {
-        this.isRunning = false;
-    }
-
-    stop() {
-        this.pause();
-        this.setHtml(true);
-    }
-
-    static init(divContainer: HTMLDivElement, targetDate: Date) {
-        return new this(divContainer, targetDate);
+    static init(
+        divContainer: HTMLDivElement,
+        timing: TimerClockTimingType | Date,
+    ) {
+        return new this(divContainer, timing);
     }
 }

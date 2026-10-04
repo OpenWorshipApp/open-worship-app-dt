@@ -125,6 +125,15 @@ function toMessageDataList(foregroundData: any): any[] {
     return [];
 }
 
+type CountdownSetTimingType = Pick<
+    ForegroundCountdownDataType,
+    'dateTime' | 'durationMillisecond' | 'pausedMillisecond'
+>;
+type StopwatchSetTimingType = Pick<
+    ForegroundStopwatchDataType,
+    'dateTime' | 'pausedMillisecond'
+>;
+
 export default class ScreenForegroundManager extends ScreenEventHandler<ScreenForegroundEventType> {
     static readonly eventNamePrefix: string = 'screen-foreground-m';
     private _rootContainerBehind: HTMLDivElement | null = null;
@@ -137,6 +146,12 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         {
             container: HTMLElement;
             removeHandler: () => OptionalPromise<void>;
+            /**
+             * Take a changed datum in place, answering false when it is not
+             * a change this widget can apply without being remounted. See
+             * `compareAndRender`.
+             */
+            updateHandler?: (newData: any) => boolean;
         }
     >();
     foregroundData: ForegroundDataType;
@@ -367,6 +382,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     createDivContainer(
         data: any,
         removingHandler?: (container: HTMLElement) => Promise<void> | void,
+        updateHandler?: (newData: any) => boolean,
     ): HTMLElement | null {
         const container = document.createElement('div');
         this.removeDivContainer(data);
@@ -376,6 +392,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 await removingHandler?.(container);
                 container.remove();
             },
+            updateHandler,
         });
         const rootContainer =
             data?.isBehind === true
@@ -414,7 +431,34 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             toRenderDataList,
         };
     }
+    /**
+     * Hand a changed datum to the widget already on the screen when it can
+     * take it there -- a countdown or stopwatch started, paused, resumed or
+     * reset. Remounting it instead would fade the clock out and back in on
+     * the wall at every press.
+     */
+    private updateInPlace(oldData: any, newData: any) {
+        if (
+            oldData === null ||
+            newData === null ||
+            oldData === newData ||
+            Array.isArray(oldData) ||
+            Array.isArray(newData)
+        ) {
+            return false;
+        }
+        const entry = this.containerMapper.get(oldData);
+        if (entry?.updateHandler?.(newData) !== true) {
+            return false;
+        }
+        this.containerMapper.delete(oldData);
+        this.containerMapper.set(newData, entry);
+        return true;
+    }
     compareAndRender(oldData: any, newData: any, render: (data: any) => void) {
+        if (this.updateInPlace(oldData, newData)) {
+            return newData;
+        }
         const { toRemoveDataList, toRenderDataList } = this._getDiff(
             oldData,
             newData,
@@ -558,11 +602,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     renderCountdown(data: ForegroundCountdownDataType) {
-        const { handleAdding, handleRemoving } = genHtmlForegroundCountdown(
+        const { handleAdding, handleRemoving, handleUpdating } =
+            genHtmlForegroundCountdown(data, this.styleAnimFade);
+        const divContainer = this.createDivContainer(
             data,
-            this.styleAnimFade,
+            handleRemoving,
+            handleUpdating,
         );
-        const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
     setCountdownData(
@@ -583,10 +629,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * countdown -- a dropped run-sheet row, the assistant -- carries no session
      * at all and must keep the call it already makes. `isBehind` comes after it
      * for the same reason -- see `ForegroundLayerDataType`.
+     *
+     * `timing` is a bare target `Date` for a countdown that runs at once, or
+     * the whole timing of one that can be started and paused
+     * (`genCountdownTiming`).
      */
     static async setCountdown(
         event: MouseEvent,
-        dateTime: Date | null,
+        timing: CountdownSetTimingType | Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
@@ -595,11 +645,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.setData(
             event,
             (screenForegroundManager) => {
-                const data = dateTime
+                const data = timing
                     ? withForegroundLayer(
                           {
                               ...toSessionIdPart(sessionId),
-                              dateTime,
+                              ...(timing instanceof Date
+                                  ? { dateTime: timing }
+                                  : timing),
                               extraStyle,
                           },
                           isBehind,
@@ -612,11 +664,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     renderStopwatch(data: ForegroundStopwatchDataType) {
-        const { handleAdding, handleRemoving } = genHtmlForegroundStopwatch(
+        const { handleAdding, handleRemoving, handleUpdating } =
+            genHtmlForegroundStopwatch(data, this.styleAnimFade);
+        const divContainer = this.createDivContainer(
             data,
-            this.styleAnimFade,
+            handleRemoving,
+            handleUpdating,
         );
-        const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
     setStopwatchData(
@@ -631,10 +685,10 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` and `isBehind` -- see `setCountdown`. */
+    /** `sessionId`, `isBehind` and `timing` -- see `setCountdown`. */
     static async setStopwatch(
         event: MouseEvent,
-        dateTime: Date | null,
+        timing: StopwatchSetTimingType | Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
@@ -644,12 +698,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             event,
             (screenForegroundManager) => {
                 const stopwatchData =
-                    dateTime === null
+                    timing === null
                         ? null
                         : withForegroundLayer(
                               {
                                   ...toSessionIdPart(sessionId),
-                                  dateTime,
+                                  ...(timing instanceof Date
+                                      ? { dateTime: timing }
+                                      : timing),
                                   extraStyle,
                               },
                               isBehind,

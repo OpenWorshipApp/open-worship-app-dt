@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-03",
+    "updated": "2026-10-04",
     "sections": [
         {
             "id": "orientation",
@@ -1470,6 +1470,82 @@
                     "resources": {
                         "recipe": "W-09",
                         "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "countdown-overtime",
+                    "text": "Can the countdown show how long we went over?",
+                    "kind": "what",
+                    "keywords": [
+                        "over time",
+                        "overtime",
+                        "count up",
+                        "time is up",
+                        "went over",
+                        "plus sign",
+                        "seconds",
+                        "sermon timer"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "countdown-show-not-started",
+                    "text": "Can I put the countdown up now and start it later?",
+                    "kind": "howto",
+                    "keywords": [
+                        "show without starting",
+                        "start later",
+                        "not started",
+                        "auto-start",
+                        "auto start",
+                        "start on cue",
+                        "show countdown"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "stopwatch-history",
+                    "text": "Where can I see how long the stopwatch ran before I reset it?",
+                    "kind": "where",
+                    "keywords": [
+                        "stopwatch history",
+                        "saved times",
+                        "previous time",
+                        "last time",
+                        "lap",
+                        "how long it ran",
+                        "after reset"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Stopwatch"
+                    }
+                },
+                {
+                    "id": "timer-pause-reset",
+                    "text": "How do I pause or reset the countdown or the stopwatch?",
+                    "kind": "howto",
+                    "keywords": [
+                        "pause",
+                        "resume",
+                        "reset",
+                        "stop the timer",
+                        "pause the stopwatch",
+                        "restart countdown",
+                        "hold the clock"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "guide": true
                     }
                 },
                 {

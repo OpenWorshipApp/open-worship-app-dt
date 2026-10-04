@@ -49,6 +49,10 @@ import type {
 import type { VarySlideScreenDataType } from '../_screen/screenAppDocumentTypeHelpers';
 import appProvider from '../server/appProvider';
 import { getFileName, pathBasename } from '../server/fileHelpers';
+import {
+    describeCountdown,
+    describeStopwatch,
+} from '../_screen/managers/timerStateHelpers';
 
 export type AgentScreenBackgroundSummaryType = {
     kind: string;
@@ -255,7 +259,7 @@ export function toBibleSummary(
 /**
  * The foreground widgets by name, with the one thing each is showing: a
  * marquee's words, a quick text's words, a clock's title. A countdown's target
- * time is a `Date` and is said as the local time it counts to.
+ * and a stopwatch say what they read (`describeCountdown`, `describeStopwatch`).
  */
 export function toForegroundSummary(
     foregroundData: ForegroundDataType | null | undefined,
@@ -277,16 +281,13 @@ export function toForegroundSummary(
                 : `message: ${first}`,
         );
     }
+    // What each clock READS -- paused, not started, counting the time over --
+    // because "a countdown" alone describes a wall the room is not looking at.
     if (foregroundData.countdownData) {
-        const target = foregroundData.countdownData.dateTime;
-        const when =
-            target instanceof Date && !Number.isNaN(target.getTime())
-                ? ` to ${target.toLocaleTimeString()}`
-                : '';
-        items.push(`countdown${when}`);
+        items.push(describeCountdown(foregroundData.countdownData));
     }
     if (foregroundData.stopwatchData) {
-        items.push('stopwatch');
+        items.push(describeStopwatch(foregroundData.stopwatchData));
     }
     for (const time of foregroundData.timeDataList ?? []) {
         items.push(time.title ? `clock "${time.title}"` : 'clock');

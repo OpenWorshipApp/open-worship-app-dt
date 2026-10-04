@@ -687,6 +687,26 @@ const dictionary = {
     'Show Quick Text': 'Afficher le texte rapide',
     'Start Stopwatch': 'Démarrer le chronomètre',
     'Show Time': "Afficher l'heure",
+    'Show Countdown': 'Afficher le compte à rebours',
+    'Show Stopwatch': 'Afficher le chronomètre',
+    'Auto-start': 'Démarrage auto',
+    'Start counting as soon as it is shown':
+        "Commencer à compter dès qu'il est affiché",
+    Start: 'Démarrer',
+    Resume: 'Reprendre',
+    'Start counting': 'Commencer à compter',
+    'Pause counting': 'Mettre le décompte en pause',
+    'Resume counting': 'Reprendre le décompte',
+    'Reset to the full duration': 'Revenir à la durée complète',
+    'Reset to zero and save the time':
+        'Remettre à zéro et enregistrer le temps',
+    History: 'Historique',
+    'Clear stopwatch history': "Effacer l'historique du chronomètre",
+    'Remove the saved times of this session?':
+        'Supprimer les temps enregistrés de cette session ?',
+    Running: 'En cours',
+    Paused: 'En pause',
+    'Not started': 'Pas démarré',
     Loading: 'Chargement',
     'Reload is needed': 'Rechargement nécessaire',
     'Sorry, an internal process error occurred. Please refresh the app.':

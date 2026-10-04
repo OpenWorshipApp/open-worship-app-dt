@@ -2,10 +2,10 @@
 id: W-09
 title: "Play audio, and foreground extras (countdown, clock, marquee bottom…)"
 section: "Presenting content"
-verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, KB-03, KB-07, CB-67]
+verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, KB-03, KB-07, CB-67]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-03"
+workflowsVersion: "2026-10-04"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -33,9 +33,28 @@ button:
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **Quick Text:** type a short message, click Show.
-- **Countdown:** two modes — _to a date/time_ (set date + time, press Start) or _for a
-  duration_ (set hours/minutes, press Start). Hide with its Hide button. 📸
-- **Stopwatch**, **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
+  **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
+  clock time. _For a duration_: set the **h**, **m** and **s** boxes and press
+  **[en:tran:Show Countdown]** — it goes up STOPPED on its full length (`00:05:00`), so it
+  can be put up early and started on the cue. While it is on a screen,
+  **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]**
+  (back to the full length, stopped) sit under the button, with a word saying whether it
+  is _[en:tran:Not started]_, _[en:tran:Running]_ or _[en:tran:Paused]_. Turn on
+  **[en:tran:Auto-start]** and the button reads **[en:tran:Start Countdown]** and it counts
+  the moment it is shown. When it reaches zero it flashes red, holds `00:00:00` for one
+  second, then stays red and counts the time OVER behind a **+** (`+00:01:23`) until you
+  hide it. The audience sees only the digits — a paused countdown simply stops. Hide
+  with its Hide button. 📸
+- **[en:tran:Stopwatch]:** the same controls. **[en:tran:Show Stopwatch]** puts it up on
+  `00:00:00`, stopped (running at once with **[en:tran:Auto-start]**), then
+  **[en:tran:Start]** / **[en:tran:Pause]** / **[en:tran:Resume]** / **[en:tran:Reset]**
+  (back to zero). **[en:tran:Reset]** first SAVES the time it read into a
+  **[en:tran:History]** list under the buttons — newest on top, numbered, with the time
+  of day it was reset — so the 7:42 a testimony ran is not lost with the zero. Each
+  session keeps its own list (the last 20; a reset under one second is not kept), and
+  **[en:tran:Clear]** beside it empties it after a confirm.
+- **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
 - **[en:tran:Video Show]**, **[en:tran:Image Show]** and **[en:tran:Web Show]:** a clip,
   a picture or a web page shown _over_ the slide instead of behind it. Each lists a
   folder the same way the Background tabs do — only the rows on screen are built, so a
@@ -129,7 +148,7 @@ and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `KB-03` · `KB-07` · `CB-67`
+`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-03).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-04).
 :::

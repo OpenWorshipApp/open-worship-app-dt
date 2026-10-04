@@ -22,6 +22,7 @@ import {
 } from './screenTypeHelpers';
 import TimingController from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
+import { checkIsSameTimerExceptTiming } from './managers/timerStateHelpers';
 import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
@@ -288,14 +289,17 @@ export function genHtmlForegroundMessage(
 }
 
 export function genHtmlForegroundCountdown(
-    { dateTime, extraStyle }: ForegroundCountdownDataType,
+    data: ForegroundCountdownDataType,
     animData: StyleAnimType,
 ) {
+    const { extraStyle } = data;
     // The "time is up" flash runs five times and then RESTS red (`forwards`),
     // never `infinite`: a finished countdown can stay up for the rest of the
     // service, and a looping colour animation repaints it every frame for as
-    // long as it does (memory `infinite-paint-animation-at-rest`). `nowrap`
-    // keeps the digits on one line in any font the widget is given.
+    // long as it does (memory `infinite-paint-animation-at-rest`). Resting red,
+    // it counts the time OVER behind a `+` (`CountdownController`). The sign is
+    // a SPAN so the digit rule's `min-width` leaves no gap while it is empty.
+    // `nowrap` keeps the digits on one line in any font the widget is given.
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
@@ -333,6 +337,7 @@ export function genHtmlForegroundCountdown(
             `}</style>
             <div className={uniqueClassname}>
                 <span style={{ marginRight: '25px' }}>⏳</span>
+                <span id="sign" />
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -341,23 +346,35 @@ export function genHtmlForegroundCountdown(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const countDownHandler = CountdownController.init(element, dateTime);
+    const countDownHandler = CountdownController.init(element, data);
+    let currentData = data;
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             countDownHandler.start();
             await animData.animIn(element, parentContainer);
         },
         handleRemoving: async () => {
-            countDownHandler.pause();
+            countDownHandler.dispose();
             await animData.animOut(element);
+        },
+        // A start, pause, resume or reset moves only the timing, and is
+        // applied to the clock already up -- no fade out and back in.
+        handleUpdating: (newData: ForegroundCountdownDataType) => {
+            if (!checkIsSameTimerExceptTiming(currentData, newData)) {
+                return false;
+            }
+            currentData = newData;
+            countDownHandler.update(newData);
+            return true;
         },
     };
 }
 
 export function genHtmlForegroundStopwatch(
-    { dateTime, extraStyle }: ForegroundStopwatchDataType,
+    data: ForegroundStopwatchDataType,
     animData: StyleAnimType,
 ) {
+    const { extraStyle } = data;
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
@@ -394,15 +411,26 @@ export function genHtmlForegroundStopwatch(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const stopwatchHandler = StopwatchController.init(element, dateTime);
+    const stopwatchHandler = StopwatchController.init(element, data);
+    let currentData = data;
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             stopwatchHandler.start();
             await animData.animIn(element, parentContainer);
         },
         handleRemoving: async () => {
-            stopwatchHandler.pause();
+            stopwatchHandler.dispose();
             await animData.animOut(element);
+        },
+        // See the countdown's: a start, pause, resume or reset is applied to
+        // the stopwatch already up.
+        handleUpdating: (newData: ForegroundStopwatchDataType) => {
+            if (!checkIsSameTimerExceptTiming(currentData, newData)) {
+                return false;
+            }
+            currentData = newData;
+            stopwatchHandler.update(newData);
+            return true;
         },
     };
 }

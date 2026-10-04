@@ -3,6 +3,7 @@
 - [Renderer entry static closure — FIXED](renderer-entry-static-closure.md) — startup imports leaf helpers only
 - [Foreground Effects in one setting](foreground-effects-one-setting.md) — one JSON key; `em` for type, `px` for the box
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync groups share one data object · [Sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky
+- [Countdown/stopwatch state in the datum](foreground-timer-state-in-datum.md) — start/pause/reset updates the clock in place, no remount
 - [Screen draw](screen-draw-feature.md) — FreeShow-style overlay · [Focus spotlight](screen-focus-spotlight.md) — its own `#focus` layer, not a draw mode
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — fixed 2026-07-22
 - [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — any file write can throw a one-off "must be used within"
