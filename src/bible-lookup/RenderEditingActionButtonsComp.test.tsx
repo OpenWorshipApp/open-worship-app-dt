@@ -25,7 +25,9 @@ vi.mock('../event/KeyboardEventListener', () => ({
     },
 }));
 vi.mock('../bible-reader/LookupBibleItemController', () => ({
-    ctrlShiftMetaKeys: { allControlKey: ['Ctrl', 'Shift'] },
+    splitEventMappers: [],
+    splitHorizontalEventMapper: { key: 's' },
+    splitVerticalEventMapper: { key: 'v' },
     useLookupBibleItemControllerContext: () => controller,
 }));
 vi.mock('../helper/appHooks', () => ({

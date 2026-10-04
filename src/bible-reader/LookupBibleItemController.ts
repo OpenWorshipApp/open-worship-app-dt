@@ -19,7 +19,10 @@ import BibleItemsViewController, {
 import { setBibleLookupInputFocus } from '../bible-lookup/selectionHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
-import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    extractBibleTitle,
+    getVersesCount,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import CacheManager from '../others/CacheManager';
@@ -43,6 +46,20 @@ export const ctrlShiftMetaKeys: any = {
     lControlKey: ['Ctrl', 'Shift'],
     mControlKey: ['Meta', 'Shift'],
 };
+
+export const splitHorizontalEventMapper: EventMapperType = {
+    ...ctrlShiftMetaKeys,
+    key: 's',
+};
+export const splitVerticalEventMapper: EventMapperType = {
+    ...ctrlShiftMetaKeys,
+    key: 'v',
+};
+// One array for the registrations, so its identity never re-registers them.
+export const splitEventMappers = [
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
+];
 
 class EditingBibleItem extends ReadIdOnlyBibleItem {
     get metadata() {
@@ -504,6 +521,127 @@ class LookupBibleItemController extends BibleItemsViewController {
         }
     }
 
+    /**
+     * A passage for a split made while the selected view shows the book or
+     * chapter grid, where there is no passage to copy: the picked book's
+     * chapter 1, or Genesis 1 before a book is picked. The whole chapter, as
+     * typing `Genesis 1:` shows it.
+     */
+    async genFirstChapterBibleItem(bookKey: string | null, bibleKey?: string) {
+        // `toJson`, not `target`: the selected item is an `EditingBibleItem`,
+        // whose `target` throws. The version, extra versions and audio come
+        // with it.
+        const json = this.selectedBibleItem.toJson();
+        const targetBibleKey = bibleKey ?? json.bibleKey;
+        const targetBookKey = bookKey ?? 'GEN';
+        const verseCount = await getVersesCount(
+            targetBibleKey,
+            targetBookKey,
+            1,
+        );
+        return ReadIdOnlyBibleItem.fromJson({
+            ...json,
+            bibleKey: targetBibleKey,
+            target: {
+                bookKey: targetBookKey,
+                chapter: 1,
+                verseStart: 1,
+                verseEnd: verseCount ?? 1,
+            },
+        });
+    }
+
+    /**
+     * Split the selected view while it has no passage yet. The new view takes
+     * `genFirstChapterBibleItem`; the selected one stays selected, still on
+     * its grid -- the same source a Shift+click on a history entry splits.
+     */
+    async splitWithoutPassage(
+        bookKey: string | null,
+        isHorizontal: boolean,
+        bibleKey?: string,
+    ) {
+        const newBibleItem = await this.genFirstChapterBibleItem(
+            bookKey,
+            bibleKey,
+        );
+        const selectedBibleItem = this.selectedBibleItem;
+        if (isHorizontal) {
+            this.addBibleItemLeft(selectedBibleItem, newBibleItem);
+        } else {
+            this.addBibleItemBottom(selectedBibleItem, newBibleItem);
+        }
+    }
+
+    private applySplitShortcutKeys(menuItems: ContextMenuItemType[]) {
+        for (const menuItem of menuItems) {
+            if (menuItem.id === splitHorizontalId) {
+                menuItem.childAfter = genContextMenuItemShortcutKey(
+                    splitHorizontalEventMapper,
+                );
+            } else if (menuItem.id === splitVerticalId) {
+                menuItem.childAfter = genContextMenuItemShortcutKey(
+                    splitVerticalEventMapper,
+                );
+            }
+        }
+    }
+
+    private genCloseContextMenu(
+        bibleItem: ReadIdOnlyBibleItem,
+        isBibleItemSelected: boolean,
+    ): ContextMenuItemType[] {
+        if (this.isAlone) {
+            return [];
+        }
+        return [
+            {
+                menuElement: elementDivider,
+            },
+            {
+                childBefore: genContextMenuItemIcon('x-lg', {
+                    color: 'var(--bs-danger-text-emphasis)',
+                }),
+                menuElement: tran('Close'),
+                keyboardShortcut: isBibleItemSelected
+                    ? closeEventMapper
+                    : undefined,
+                onSelect: () => {
+                    if (this.checkIsBibleItemSelected(bibleItem)) {
+                        closeCurrentEditingBibleItem(this);
+                    } else {
+                        this.deleteBibleItem(bibleItem);
+                    }
+                },
+            },
+        ];
+    }
+
+    /**
+     * The menu of the selected view while it shows the book or chapter grid:
+     * only what needs no passage -- the splits, full view and close.
+     */
+    genNoPassageContextMenu(
+        bookKey: string | null,
+        uuid: string,
+    ): ContextMenuItemType[] {
+        const splitMenuItems = this.genSplitContextMenu(
+            (isHorizontal, newBibleKey) => {
+                this.splitWithoutPassage(
+                    bookKey,
+                    isHorizontal,
+                    newBibleKey ?? undefined,
+                );
+            },
+        );
+        this.applySplitShortcutKeys(splitMenuItems);
+        return [
+            ...splitMenuItems,
+            this.genFullViewContextMenuItem(uuid),
+            ...this.genCloseContextMenu(this.selectedBibleItem, true),
+        ];
+    }
+
     async genContextMenu(
         event: any,
         bibleItem: ReadIdOnlyBibleItem,
@@ -518,24 +656,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         );
         const menus2 = await super.genContextMenu(event, bibleItem, uuid);
         if (isBibleItemSelected) {
-            const menu2IdMap: { [key: string]: ContextMenuItemType } =
-                Object.fromEntries(
-                    menus2.map((menuItem) => [menuItem.id, menuItem]),
-                );
-            if (menu2IdMap[splitHorizontalId]) {
-                menu2IdMap[splitHorizontalId].childAfter =
-                    genContextMenuItemShortcutKey({
-                        ...ctrlShiftMetaKeys,
-                        key: 's',
-                    });
-            }
-            if (menu2IdMap[splitVerticalId]) {
-                menu2IdMap[splitVerticalId].childAfter =
-                    genContextMenuItemShortcutKey({
-                        ...ctrlShiftMetaKeys,
-                        key: 'v',
-                    });
-            }
+            this.applySplitShortcutKeys(menus2);
         } else {
             menus2.push({
                 childBefore: genContextMenuItemIcon('pencil-square'),
@@ -546,29 +667,7 @@ class LookupBibleItemController extends BibleItemsViewController {
                 },
             });
         }
-        const menu3: ContextMenuItemType[] = this.isAlone
-            ? []
-            : [
-                  {
-                      menuElement: elementDivider,
-                  },
-                  {
-                      childBefore: genContextMenuItemIcon('x-lg', {
-                          color: 'var(--bs-danger-text-emphasis)',
-                      }),
-                      menuElement: tran('Close'),
-                      keyboardShortcut: isBibleItemSelected
-                          ? closeEventMapper
-                          : undefined,
-                      onSelect: () => {
-                          if (this.checkIsBibleItemSelected(bibleItem)) {
-                              closeCurrentEditingBibleItem(this);
-                          } else {
-                              this.deleteBibleItem(bibleItem);
-                          }
-                      },
-                  },
-              ];
+        const menu3 = this.genCloseContextMenu(bibleItem, isBibleItemSelected);
         return [...menu1, ...menus2, ...menu3];
     }
 

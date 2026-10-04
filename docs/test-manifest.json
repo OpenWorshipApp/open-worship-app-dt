@@ -957,9 +957,12 @@
         "RD-77",
         "RD-78",
         "RD-11",
-        "LT-01"
+        "LT-01",
+        "KB-25",
+        "KB-26",
+        "CM-79"
       ],
-      "screenshots": 3,
+      "screenshots": 4,
       "steps": [
         "Open Bible Reader (see W-11) and make sure the lookup box at the top is empty, so the pane shows the grid of book names (លោកុប្បត្តិ (Genesis), និក្ខមនំ (Exodus), …).",
         "Look at the top-right corner of that pane, on the same line as the small version badge (e.g. ពគប). There is a round ⓘ button — hover it and the tip reads [en:tran:Bible Information].",
@@ -967,6 +970,7 @@
         "If any of those lines mentions a web address — publishers often put their site in the copyright or legal note — it is shown as a link. Click it and the page opens in your normal web browser; the app itself stays where it is.",
         "You can select and copy any of it — handy when a copyright line has to go on a printed order of service.",
         "Close it with the ✕ in its corner, or press Escape. You come straight back to the book grid exactly as you left it.",
+        "Left of the ⓘ sit the two split buttons, [en:tran:Split horizontal] and [en:tran:Split vertical] (also Ctrl+Shift+S / Ctrl+Shift+V, and in the ⋮ or right-click menu). A view always holds a passage, so the new one opens the book you picked at chapter 1 — or Genesis 1 if no book is picked yet — while the view you are typing in keeps its grid.",
         "Pick a book, then a chapter. As soon as the verses appear, the ⓘ is gone and the verse buttons (copy, split, save, present…) take its place. Clear the box again and it returns."
       ]
     },

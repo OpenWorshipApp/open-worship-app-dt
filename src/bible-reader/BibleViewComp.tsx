@@ -13,8 +13,9 @@ import {
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
-import type LookupBibleItemController from './LookupBibleItemController';
-import { useEditingResult } from './LookupBibleItemController';
+import LookupBibleItemController, {
+    useEditingResult,
+} from './LookupBibleItemController';
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
@@ -190,8 +191,26 @@ export default function BibleViewComp({
     );
     const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
     const uuidRef = useAppCurrentRef(uuid);
+    const isEditingRef = useAppCurrentRef(isEditing);
+    const bookKeyRef = useAppCurrentRef(editingResult?.result.bookKey ?? null);
     const handleContextMenu = useCallback((event: any) => {
         if (foundBibleItemRef.current === null) {
+            // The view being edited on its book or chapter grid: nothing to
+            // copy or save yet, but it can still be split, shown full or
+            // closed -- and its ⋮ must not be a dead button.
+            const viewController = viewControllerRef.current;
+            if (
+                isEditingRef.current &&
+                viewController instanceof LookupBibleItemController
+            ) {
+                showAppContextMenu(
+                    event,
+                    viewController.genNoPassageContextMenu(
+                        bookKeyRef.current,
+                        uuidRef.current,
+                    ),
+                );
+            }
             return;
         }
         openContextMenu(event, {

@@ -4,6 +4,7 @@ import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonC
 import BibleInfoButtonComp from '../../bible-lookup/BibleInfoButtonComp';
 import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp';
 import RenderEditingActionButtonsComp from '../../bible-lookup/RenderEditingActionButtonsComp';
+import RenderLookupSplitButtonsComp from '../../bible-lookup/RenderLookupSplitButtonsComp';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import type LookupBibleItemController from '../LookupBibleItemController';
 import {
@@ -137,11 +138,16 @@ export default function BibleViewHeaderComp({
             <div className="bible-view-header-end">
                 {isEditing && foundBibleItem === null ? (
                     // Nothing resolved yet, so the verse actions have nothing
-                    // to act on. Offer the translation's information here
-                    // instead of sending the user to Settings -> Bible just
-                    // to read it. In the row, not on hover: it is the one
-                    // thing here to press.
-                    <div className="d-flex align-items-center px-1">
+                    // to act on. The view can still be split -- the new view
+                    // opens the picked book's chapter 1 -- and the
+                    // translation's information is offered here instead of
+                    // sending the user to Settings -> Bible just to read it.
+                    // In the row, not on hover: they are the only things here
+                    // to press.
+                    <div className="d-flex align-items-center gap-1 px-1">
+                        <RenderLookupSplitButtonsComp
+                            bookKey={editingResult?.result.bookKey ?? null}
+                        />
                         <BibleInfoButtonComp bibleKey={bibleItem.bibleKey} />
                     </div>
                 ) : null}

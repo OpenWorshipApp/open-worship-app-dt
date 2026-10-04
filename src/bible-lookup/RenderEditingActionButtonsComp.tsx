@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 
 import {
     toShortcutKey,
@@ -11,7 +11,9 @@ import {
 import type BibleItem from '../bible-list/BibleItem';
 import appProvider from '../server/appProvider';
 import {
-    ctrlShiftMetaKeys,
+    splitEventMappers,
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import {
@@ -132,14 +134,9 @@ function InsertBibleItemToSlideButtonComp({
 export default function RenderEditingActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
-    const eventMaps = useMemo(() => {
-        return ['s', 'v'].map((key) => {
-            return { ...ctrlShiftMetaKeys, key };
-        });
-    }, []);
     const viewController = useLookupBibleItemControllerContext();
     useKeyboardRegistering(
-        eventMaps,
+        splitEventMappers,
         (event) => {
             event.preventDefault();
             if (event.key.toLowerCase() === 's') {
@@ -196,7 +193,7 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 title={
                     tran('Split horizontal') +
-                    ` [${toShortcutKey(eventMaps[0])}]`
+                    ` [${toShortcutKey(splitHorizontalEventMapper)}]`
                 }
                 aria-label={tran('Split horizontal')}
                 onClick={handleSplitHorizontal}
@@ -207,7 +204,8 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={
-                    tran('Split vertical') + ` [${toShortcutKey(eventMaps[1])}]`
+                    tran('Split vertical') +
+                    ` [${toShortcutKey(splitVerticalEventMapper)}]`
                 }
                 aria-label={tran('Split vertical')}
                 onClick={handleSplitVertical}

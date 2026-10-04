@@ -37,6 +37,11 @@ vi.mock('../../bible-lookup/RenderEditingActionButtonsComp', () => ({
 vi.mock('../../bible-lookup/RenderActionButtonsComp', () => ({
     default: () => <div className="btn-group view-actions" />,
 }));
+vi.mock('../../bible-lookup/RenderLookupSplitButtonsComp', () => ({
+    default: ({ bookKey }: { bookKey: string | null }) => (
+        <div className="btn-group lookup-split" data-book-key={bookKey ?? ''} />
+    ),
+}));
 vi.mock('./RenderTitleMaterialComp', () => ({
     RenderTitleMaterialComp: ({
         actionsElement,
@@ -77,8 +82,8 @@ function genHeader(
     actionElement?: React.ReactNode,
 ) {
     const editingResult = isFound
-        ? { result: { bibleItem: { id: 'found' } } }
-        : { result: { bibleItem: null } };
+        ? { result: { bibleItem: { id: 'found' }, bookKey: 'GEN' } }
+        : { result: { bibleItem: null, bookKey: 'EXO' } };
     return (
         <BibleViewTitleMaterialContext
             value={{ titleElement: null, actionElement }}
@@ -107,6 +112,7 @@ function renderHeader(
         header,
         actions: header.querySelector('.bible-view-header-actions'),
         info: header.querySelector('.bible-info'),
+        split: header.querySelector('.lookup-split'),
         end: header.querySelector(':scope > .bible-view-header-end'),
         keys: header.querySelector('.bible-view-title-keys'),
     };
@@ -154,11 +160,25 @@ test('nothing to act on and nothing to close draws no empty overlay', () => {
     expect(info).not.toBeNull();
 });
 
+// The book and chapter grids have no passage to act on, but the view can
+// still be split: the buttons sit at rest beside the info, where the user
+// looks for them, never in the hover overlay.
+test('the grids keep their split buttons at rest, before the info', () => {
+    const { actions, split, info, end } = renderHeader(false);
+
+    expect(actions).toBeNull();
+    expect(split).not.toBeNull();
+    expect(split!.closest('.bible-view-header-end')).toBe(end);
+    expect(split!.nextElementSibling).toBe(info);
+    expect(split!.getAttribute('data-book-key')).toBe('EXO');
+});
+
 test('a resolved passage puts its actions and the close in the overlay', () => {
     controller.isAlone = false;
-    const { actions, info } = renderHeader(true);
+    const { actions, info, split } = renderHeader(true);
 
     expect(info).toBeNull();
+    expect(split).toBeNull();
     expect(actions!.querySelector(':scope > .editing-actions')).not.toBeNull();
     const close = actions!.querySelector('.bible-view-header-close');
     expect(close?.getAttribute('title')).toBe('Close [Ctrl+W]');
@@ -172,7 +192,7 @@ test('the only view in the lookup cannot be closed from its header', () => {
 });
 
 test('a plain view is a card header with its own actions and a close', () => {
-    const { header, actions, info } = renderHeader(
+    const { header, actions, info, split } = renderHeader(
         false,
         <button type="button" className="bible-view-header-edit" />,
         false,
@@ -181,6 +201,7 @@ test('a plain view is a card header with its own actions and a close', () => {
     expect(header.classList).toContain('card-header');
     expect(header.getAttribute('title')).toBeNull();
     expect(info).toBeNull();
+    expect(split).toBeNull();
     expect(actions!.firstElementChild!.classList).toContain(
         'bible-view-header-edit',
     );

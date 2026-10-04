@@ -713,6 +713,66 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         this.addBibleItem(bibleItem, newBibleItem, false, false, isNoColorNote);
     }
 
+    /**
+     * The four split items. `split` gets `null` for the same version and the
+     * chosen key for a "… to" item, so a pane with no passage of its own (the
+     * lookup's book and chapter grids) can offer the same menu.
+     */
+    protected genSplitContextMenu(
+        split: (isHorizontal: boolean, newBibleKey: string | null) => void,
+    ): ContextMenuItemType[] {
+        return [
+            {
+                childBefore: genContextMenuItemIcon('vr'),
+                menuElement: tran('Split Horizontal'),
+                onSelect: () => {
+                    split(true, null);
+                },
+                id: splitHorizontalId,
+            },
+            {
+                childBefore: genContextMenuItemIcon('vr'),
+                childAfter: genContextMenuItemIcon('translate'),
+                menuElement: tran('Split Horizontal to'),
+                onSelect: (event1: any) => {
+                    showBibleKeyOption(event1, (newBibleKey: string) => {
+                        split(true, newBibleKey);
+                    });
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('hr'),
+                menuElement: tran('Split Vertical'),
+                onSelect: () => {
+                    split(false, null);
+                },
+                id: splitVerticalId,
+            },
+            {
+                childBefore: genContextMenuItemIcon('hr'),
+                childAfter: genContextMenuItemIcon('translate'),
+                menuElement: tran('Split Vertical to'),
+                onSelect: (event2: any) => {
+                    showBibleKeyOption(event2, (newBibleKey: string) => {
+                        split(false, newBibleKey);
+                    });
+                },
+            },
+        ];
+    }
+
+    protected genFullViewContextMenuItem(uuid: string): ContextMenuItemType {
+        return {
+            childBefore: genContextMenuItemIcon('arrows-fullscreen'),
+            menuElement: tran('Toggle Widget Full View'),
+            onSelect: () => {
+                document
+                    .querySelector(`#uuid-${uuid}`)
+                    ?.classList.toggle(APP_FULL_VIEW_CLASSNAME);
+            },
+        };
+    }
+
     async genContextMenu(
         _event: any,
         bibleItem: ReadIdOnlyBibleItem,
@@ -723,62 +783,24 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             {
                 menuElement: elementDivider,
             },
-            {
-                childBefore: genContextMenuItemIcon('vr'),
-                menuElement: tran('Split Horizontal'),
-                onSelect: () => {
-                    this.addBibleItemLeft(bibleItem, bibleItem);
-                },
-                id: splitHorizontalId,
-            },
-            {
-                childBefore: genContextMenuItemIcon('vr'),
-                childAfter: genContextMenuItemIcon('translate'),
-                menuElement: tran('Split Horizontal to'),
-                onSelect: (event1: any) => {
-                    showBibleKeyOption(event1, (newBibleKey: string) => {
-                        const newBibleItem = ReadIdOnlyBibleItem.fromJson(
-                            bibleItem.toJson(),
-                        );
-                        newBibleItem.bibleKey = newBibleKey;
-                        this.addBibleItemLeft(bibleItem, newBibleItem);
-                    });
-                },
-            },
-            {
-                childBefore: genContextMenuItemIcon('hr'),
-                menuElement: tran('Split Vertical'),
-                onSelect: () => {
-                    this.addBibleItemBottom(bibleItem, bibleItem);
-                },
-                id: splitVerticalId,
-            },
-            {
-                childBefore: genContextMenuItemIcon('hr'),
-                childAfter: genContextMenuItemIcon('translate'),
-                menuElement: tran('Split Vertical to'),
-                onSelect: (event2: any) => {
-                    showBibleKeyOption(event2, (newBibleKey: string) => {
-                        const newBibleItem = ReadIdOnlyBibleItem.fromJson(
-                            bibleItem.toJson(),
-                        );
-                        newBibleItem.bibleKey = newBibleKey;
-                        this.addBibleItemBottom(bibleItem, newBibleItem);
-                    });
-                },
-            },
+            ...this.genSplitContextMenu((isHorizontal, newBibleKey) => {
+                let newBibleItem = bibleItem;
+                if (newBibleKey !== null) {
+                    newBibleItem = ReadIdOnlyBibleItem.fromJson(
+                        bibleItem.toJson(),
+                    );
+                    newBibleItem.bibleKey = newBibleKey;
+                }
+                if (isHorizontal) {
+                    this.addBibleItemLeft(bibleItem, newBibleItem);
+                } else {
+                    this.addBibleItemBottom(bibleItem, newBibleItem);
+                }
+            }),
             ...(langData
                 ? langData.extraBibleContextMenuItems(bibleItem, appProvider)
                 : []),
-            {
-                childBefore: genContextMenuItemIcon('arrows-fullscreen'),
-                menuElement: tran('Toggle Widget Full View'),
-                onSelect: () => {
-                    document
-                        .querySelector(`#uuid-${uuid}`)
-                        ?.classList.toggle(APP_FULL_VIEW_CLASSNAME);
-                },
-            },
+            this.genFullViewContextMenuItem(uuid),
         ];
     }
 

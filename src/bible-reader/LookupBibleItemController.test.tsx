@@ -91,6 +91,8 @@ const h = vi.hoisted(() => {
         setShouldModelNewLineMock: vi.fn(),
         genTimeoutAttemptMock: vi.fn(() => (fn: any) => fn()),
         getLangDataFromBibleKeyMock: vi.fn(async () => null),
+        getVersesCountMock: vi.fn(async (): Promise<number | null> => 31),
+        showBibleKeyOptionMock: vi.fn(),
         cacheStore: new Map<string, any>(),
     };
 });
@@ -114,7 +116,7 @@ vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: h.showSimpleToastMock,
 }));
 vi.mock('../bible-lookup/BibleKeySelectionComp', () => ({
-    showBibleKeyOption: vi.fn(),
+    showBibleKeyOption: h.showBibleKeyOptionMock,
 }));
 vi.mock('../server/appProvider', () => ({ default: { isDev: false } }));
 vi.mock('../helper/helpers', () => ({
@@ -131,6 +133,7 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
     getShouldModelNewLine: h.getShouldModelNewLineMock,
     setShouldModelNewLine: h.setShouldModelNewLineMock,
     extractBibleTitle: h.extractBibleTitleMock,
+    getVersesCount: h.getVersesCountMock,
 }));
 vi.mock('../context-menu/AppContextMenuComp', () => ({
     elementDivider: h.elementDivider,
@@ -241,6 +244,7 @@ describe('bible-reader LookupBibleItemController', () => {
         vi.clearAllMocks();
         h.getShouldModelNewLineMock.mockReturnValue(true);
         h.unlockingMock.mockImplementation(async (_k: string, cb: any) => cb());
+        h.getVersesCountMock.mockResolvedValue(31);
         setDefaultExtract();
     });
 
@@ -619,6 +623,120 @@ describe('bible-reader LookupBibleItemController', () => {
         close.onSelect!({} as any);
         expect(deleteSpy).toHaveBeenCalled();
         await flush();
+    });
+
+    // `toJson`: the selected view is an `EditingBibleItem`, whose `target`
+    // throws.
+    function toTargets(ctl: LookupBibleItemController) {
+        return ctl.straightBibleItems.map((item) => {
+            const { id, bibleKey, target } = item.toJson();
+            return { id, bibleKey, target };
+        });
+    }
+
+    test('a split from the chapter grid opens that book, chapter 1, on the left', async () => {
+        h.getVersesCountMock.mockResolvedValue(22);
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const selectedId = ctl.selectedBibleItem.id;
+
+        await ctl.splitWithoutPassage('EXO', true);
+
+        const [newItem, oldItem] = toTargets(ctl);
+        expect(oldItem.id).toBe(selectedId);
+        expect(newItem.id).not.toBe(selectedId);
+        expect(newItem.bibleKey).toBe('KJV');
+        expect(newItem.target).toEqual({
+            bookKey: 'EXO',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 22,
+        });
+        expect(h.getVersesCountMock).toHaveBeenCalledWith('KJV', 'EXO', 1);
+        // The view being typed in keeps the box and stays the selected one.
+        expect(ctl.selectedBibleItem.id).toBe(selectedId);
+    });
+
+    test('a split from the book grid opens Genesis 1 below', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const selectedId = ctl.selectedBibleItem.id;
+
+        await ctl.splitWithoutPassage(null, false);
+
+        const [oldItem, newItem] = toTargets(ctl);
+        expect(oldItem.id).toBe(selectedId);
+        expect(newItem.target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 31,
+        });
+        expect(Array.isArray(ctl.nestedBibleItems)).toBe(true);
+        expect(ctl.selectedBibleItem.id).toBe(selectedId);
+    });
+
+    test('a split to another version reads that version, a missing chapter one verse', async () => {
+        h.getVersesCountMock.mockResolvedValue(null);
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+
+        await ctl.splitWithoutPassage('MAT', true, 'NIV');
+
+        const [newItem] = toTargets(ctl);
+        expect(newItem.bibleKey).toBe('NIV');
+        expect(newItem.target).toEqual({
+            bookKey: 'MAT',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        expect(h.getVersesCountMock).toHaveBeenCalledWith('NIV', 'MAT', 1);
+    });
+
+    test('the grid view menu offers the splits with their keys, and no close alone', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+
+        const menu = ctl.genNoPassageContextMenu('EXO', 'uuid3');
+
+        expect(menu.map((m) => m.menuElement)).toEqual([
+            'Split Horizontal',
+            'Split Horizontal to',
+            'Split Vertical',
+            'Split Vertical to',
+            'Toggle Widget Full View',
+        ]);
+        expect(menu[0].childAfter).toBe('shortcut');
+        expect(menu[2].childAfter).toBe('shortcut');
+        menu[0].onSelect!({} as any);
+        expect(splitSpy).toHaveBeenLastCalledWith('EXO', true, undefined);
+        menu[2].onSelect!({} as any);
+        expect(splitSpy).toHaveBeenLastCalledWith('EXO', false, undefined);
+        menu[3].onSelect!({} as any);
+        const [, onBibleKey] = h.showBibleKeyOptionMock.mock.calls[0];
+        onBibleKey('NIV');
+        expect(splitSpy).toHaveBeenLastCalledWith('EXO', false, 'NIV');
+    });
+
+    test('the grid view menu closes the view when it is not alone', () => {
+        const ctl = genController();
+        ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 777,
+                bibleKey: 'KJV',
+                target: { chapter: 1 },
+            }) as any,
+        );
+
+        const menu = ctl.genNoPassageContextMenu(null, 'uuid4');
+
+        const close = menu.find((m) => m.menuElement === 'Close')!;
+        expect(close.keyboardShortcut).toBe(closeEventMapper);
+        close.onSelect!({} as any);
+        expect(h.closeCurrentEditingBibleItemMock).toHaveBeenCalledWith(ctl);
     });
 
     test('tryJumpingChapter jumps to the next chapter', async () => {

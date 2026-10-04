@@ -2,8 +2,8 @@
 id: W-32
 title: "See who published a Bible translation (and its copyright)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-77, RD-78, RD-11, LT-01]
-screenshots: 3
+verify: [RD-77, RD-78, RD-11, LT-01, KB-25, KB-26, CM-79]
+screenshots: 4
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-10-04"
 ---
@@ -40,7 +40,12 @@ space to the verse buttons instead.
    printed order of service.
 6. Close it with the **✕** in its corner, or press **Escape**. You come straight back
    to the book grid exactly as you left it.
-7. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
+7. Left of the **ⓘ** sit the two split buttons, **[en:tran:Split horizontal]** and
+   **[en:tran:Split vertical]** (also **Ctrl+Shift+S** / **Ctrl+Shift+V**, and in the
+   **⋮** or right-click menu). A view always holds a passage, so the new one opens the
+   book you picked at chapter 1 — or Genesis 1 if no book is picked yet — while the
+   view you are typing in keeps its grid. 📸
+8. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
    verse buttons (copy, split, save, present…) take its place. Clear the box again and
    it returns.
 
@@ -50,7 +55,7 @@ space to the verse buttons instead.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-77` · `RD-78` · `RD-11` · `LT-01`
+`RD-77` · `RD-78` · `RD-11` · `LT-01` · `KB-25` · `KB-26` · `CM-79`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-10-04).
 :::

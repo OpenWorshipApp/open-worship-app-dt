@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-04c** (**new W-48 — a slides preview, a slide, a Background tab, one background, a foreground component or one of its sessions can have its OWN transition.** Asked for by the user with a picture of the Mini Screen's **Slide:** button and the slides preview's ⋮ circled: _"I want to have transition per slides preview and per slide … let put an enabling checkbox … if disabled then it will depend on screen transition. when enabled then override. this should have for all (background, foreground components, foreground component's section, slides preview, slide)"_ — the "section" being the session tabs. Every level is the same **[en:tran:Own transition]** checkbox and picker; unticked it says what it follows. The Tr row gained **[en:tran:Foreground]:**. Each item now leaves the way it came in, and **[en:tran:No Transition]** is a cut both ways. Verified live 2026-10-04 on the dev presenter: a song set to **[en:tran:Zoom]** zoomed its chorus in, a slide of it set to **[en:tran:No Transition]** cut in while the zoomed one zoomed out; the **[en:tran:Images]** tab on Zoom zoomed a picture in and one picture set to No Transition cut in; a Quick Text session on Zoom came and went with it; unticking every level removed its setting and the song's sidecar. PM-154..PM-156.)
+**workflowsVersion: 2026-10-04d** (**W-32 — the book and chapter grids keep their split buttons.** Asked for by the user with a picture of a Khmer chapter grid, the empty space left of the **ⓘ** circled: _"in bible reader I want to be able to split view (vertical, horizontal) for non verse as well. should support both top header icons and contentmenu"_. Until a verse resolved, the view being typed in had no split at all — no icons, no Ctrl+Shift+S / V, and its ⋮ and right-click opened nothing. Now **[en:tran:Split horizontal]** / **[en:tran:Split vertical]** sit at rest left of the **ⓘ**, the keys work, and the ⋮ / right-click menu offers the four splits, **[en:tran:Toggle Widget Full View]** and **[en:tran:Close]**. A view can only hold a passage, so the new one opens the picked book's chapter 1 (the whole chapter), or Genesis 1 before a book is picked — decided with the user; the view being typed in keeps its grid and stays selected. Verified live 2026-10-04 on the dev Reader: `Exodus` → split horizontal → `Exodus 1:1-22` on the left; unknown text → Ctrl+Shift+V → `Genesis 1:1-31` below; ⋮ → **[en:tran:Split Horizontal to]** → NIV → an NIV Genesis 1; with a verse showing, Ctrl+Shift+S still adds exactly one copy. RD-77, KB-25, KB-26, CM-79.)
+
+Previous: **workflowsVersion: 2026-10-04c** (**new W-48 — a slides preview, a slide, a Background tab, one background, a foreground component or one of its sessions can have its OWN transition.** Asked for by the user with a picture of the Mini Screen's **Slide:** button and the slides preview's ⋮ circled: _"I want to have transition per slides preview and per slide … let put an enabling checkbox … if disabled then it will depend on screen transition. when enabled then override. this should have for all (background, foreground components, foreground component's section, slides preview, slide)"_ — the "section" being the session tabs. Every level is the same **[en:tran:Own transition]** checkbox and picker; unticked it says what it follows. The Tr row gained **[en:tran:Foreground]:**. Each item now leaves the way it came in, and **[en:tran:No Transition]** is a cut both ways. Verified live 2026-10-04 on the dev presenter: a song set to **[en:tran:Zoom]** zoomed its chorus in, a slide of it set to **[en:tran:No Transition]** cut in while the zoomed one zoomed out; the **[en:tran:Images]** tab on Zoom zoomed a picture in and one picture set to No Transition cut in; a Quick Text session on Zoom came and went with it; unticking every level removed its setting and the song's sidecar. PM-154..PM-156.)
 
 Previous: **workflowsVersion: 2026-10-04b** (**W-09 — the stopwatch keeps a history of the times it was reset from.** Asked for by the user with a picture of the Stopwatch panel, the space under **[en:tran:Resume]** / **[en:tran:Reset]** circled: _"stopwatch should have history, when reset then save the current timed"_. **[en:tran:Reset]** saves the reading into a **[en:tran:History]** list there — newest first, numbered, with the time of day — per session, the last 20, and **[en:tran:Clear]** empties it after a confirm. Verified live 2026-10-04 on the presenter: a paused `00:00:04` reset into entry 1, a running `00:00:05` reset into entry 2 on top, Session 2 showing no list and Default keeping both. PM-153.)
 
@@ -3525,14 +3527,19 @@ space to the verse buttons instead.
    printed order of service.
 6. Close it with the **✕** in its corner, or press **Escape**. You come straight back
    to the book grid exactly as you left it.
-7. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
+7. Left of the **ⓘ** sit the two split buttons, **[en:tran:Split horizontal]** and
+   **[en:tran:Split vertical]** (also **Ctrl+Shift+S** / **Ctrl+Shift+V**, and in the
+   **⋮** or right-click menu). A view always holds a passage, so the new one opens the
+   book you picked at chapter 1 — or Genesis 1 if no book is picked yet — while the
+   view you are typing in keeps its grid. 📸
+8. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
    verse buttons (copy, split, save, present…) take its place. Clear the box again and
    it returns.
 
 > Want to change any of this rather than just read it? That is still
 > **Settings → Bible**, the pencil next to the translation, then the **Info** tab.
 
-_Verify: RD-77, RD-78, RD-11, LT-01._
+_Verify: RD-77, RD-78, RD-11, LT-01, KB-25, KB-26, CM-79._
 
 ---
 
