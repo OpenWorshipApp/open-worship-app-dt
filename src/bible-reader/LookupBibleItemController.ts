@@ -1,4 +1,4 @@
-import { createContext, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -89,6 +89,14 @@ class LookupBibleItemController extends BibleItemsViewController {
     onLookupSaveBibleItem = () => {};
     setIsAdvanceLookupOpened = (_isLookupOnline: boolean) => {};
     openBibleSearch = setBibleSearchingTabType;
+    // What the box held when another view was selected. Until a result for
+    // some other text is applied, a result that still answers it belongs to
+    // the view selected BEFORE: it is looked up again for the new id the
+    // moment the selection changes, while the box still holds the old text,
+    // and `syncFoundBibleItem` stamps it with the new view's id. Shown as it
+    // was, the newly selected view painted the previous one's passage until
+    // its own title had been worked out and looked up (`toCurrentEditingResult`).
+    private inputTextBeforeSelecting: string | null = null;
 
     constructor(settingNameSuffix = '') {
         super('lookup' + settingNameSuffix);
@@ -129,6 +137,9 @@ class LookupBibleItemController extends BibleItemsViewController {
     }
 
     setSelectedBibleItem(bibleItemId: number) {
+        if (bibleItemId !== this.getSavedBibleId()) {
+            this.inputTextBeforeSelecting = this.inputText;
+        }
         setSetting(
             this.toSettingName('-selected-bible-item'),
             bibleItemId.toString(),
@@ -195,7 +206,76 @@ class LookupBibleItemController extends BibleItemsViewController {
         this.fireUpdateEvent();
     }
 
+    // Called with every result the lookup is about to show.
+    settleEditingResult(editingResult: EditingResultType) {
+        if (
+            this.inputTextBeforeSelecting !== null &&
+            editingResult.oldInputText !== this.inputTextBeforeSelecting
+        ) {
+            this.inputTextBeforeSelecting = null;
+        }
+    }
+
+    /**
+     * The result the selected view should show: the one given, unless it
+     * still answers the text the box held for the view selected before --
+     * then the selected view's own passage, which is what the box is about
+     * to be set to.
+     */
+    toCurrentEditingResult(
+        editingResult: EditingResultType | null,
+    ): EditingResultType | null {
+        if (
+            editingResult === null ||
+            this.inputTextBeforeSelecting === null ||
+            editingResult.oldInputText !== this.inputTextBeforeSelecting
+        ) {
+            return editingResult;
+        }
+        // `toJson`, not `target`: the selected item is an
+        // `EditingBibleItem`, whose `target` throws.
+        const selectedJson = this.selectedBibleItem.toJson();
+        const foundBibleItem = editingResult.result.bibleItem;
+        // Two views titled alike: the result already is this view's passage,
+        // with any further ranges it carries, so it stands as it is.
+        const selectedTarget = selectedJson.target;
+        if (
+            foundBibleItem !== null &&
+            foundBibleItem.bibleKey === selectedJson.bibleKey &&
+            foundBibleItem.target.bookKey === selectedTarget.bookKey &&
+            foundBibleItem.target.chapter === selectedTarget.chapter &&
+            foundBibleItem.target.verseStart === selectedTarget.verseStart &&
+            foundBibleItem.target.verseEnd === selectedTarget.verseEnd
+        ) {
+            return editingResult;
+        }
+        return {
+            ...editingResult,
+            bibleKey: selectedJson.bibleKey,
+            result: {
+                ...editingResult.result,
+                bookKey: selectedJson.target.bookKey,
+                chapter: selectedJson.target.chapter,
+                bibleItem: FoundBibleItem.fromJson(selectedJson),
+                extraBibleItems: undefined,
+            },
+        };
+    }
+
     checkIsBibleItemSelected(bibleItem: ReadIdOnlyBibleItem) {
+        // Asked once per view on every render of the views: the saved id
+        // answers it, without building the selected item each time. Only a
+        // saved id no view carries goes through the getter, which selects
+        // the first view.
+        const savedId = this.getSavedBibleId();
+        if (
+            savedId !== -1 &&
+            this.straightBibleItems.some((item) => {
+                return item.id === savedId;
+            })
+        ) {
+            return bibleItem.id === savedId;
+        }
         return bibleItem.id === this.selectedBibleItem.id;
     }
 
@@ -404,17 +484,23 @@ class LookupBibleItemController extends BibleItemsViewController {
             return;
         }
         const foundBibleItem = (await this.getEditingResult()).result.bibleItem;
+        // Worked out BEFORE the selection moves: awaited between the move and
+        // writing the found passage into the view left behind, it let that
+        // view render once with the passage it had when it was selected --
+        // its title flicked back to it for a moment.
+        const foundTitle =
+            foundBibleItem === null ? null : await foundBibleItem.toTitle();
         const oldSelectedBibleItem = this.selectedBibleItem;
         this.selectedBibleItem = bibleItem;
         if (foundBibleItem === null) {
             this.deleteBibleItem(oldSelectedBibleItem);
         } else {
+            this.applyTargetOrBibleKey(oldSelectedBibleItem, foundBibleItem);
             attemptAddingHistory(
                 foundBibleItem.bibleKey,
-                await foundBibleItem.toTitle(),
+                foundTitle ?? '',
                 true,
             );
-            this.applyTargetOrBibleKey(oldSelectedBibleItem, foundBibleItem);
         }
     }
 
@@ -568,3 +654,17 @@ export function getCurrentLookupBibleItemController() {
 export const EditingResultContext = createContext<EditingResultType | null>(
     null,
 );
+
+/**
+ * The lookup result as the bible views should show it. The provider does not
+ * re-render when another view is selected; the views do, so the check that a
+ * result belongs to the view selected before runs here.
+ */
+export function useEditingResult() {
+    const editingResult = use(EditingResultContext);
+    const viewController = useBibleItemsViewControllerContext();
+    if (!(viewController instanceof LookupBibleItemController)) {
+        return editingResult;
+    }
+    return viewController.toCurrentEditingResult(editingResult);
+}

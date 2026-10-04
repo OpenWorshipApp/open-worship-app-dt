@@ -171,6 +171,7 @@ export default function RenderBibleLookupComp({
                     if (reloadId !== latestReloadIdRef.current) {
                         return;
                     }
+                    viewController.settleEditingResult(newEditingResult);
                     setEditingResult(newEditingResult);
                 });
         };

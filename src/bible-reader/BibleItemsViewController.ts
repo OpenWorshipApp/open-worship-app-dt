@@ -76,7 +76,7 @@ export function attemptAddingHistory(
     });
 }
 
-function toStraightItems(
+export function toStraightItems(
     nestedBibleItems: NestedBibleItemsType,
 ): ReadIdOnlyBibleItem[] {
     const traverse = (items: any): any => {
@@ -103,6 +103,22 @@ function deepSanitizeNestedItems(nestedBibleItems: NestedBibleItemsType): {
         ) {
             return {
                 nestedBibleItems: nestedBibleItems[0],
+                isFoundError: true,
+            };
+        }
+        // A split holding only a split holding only a split: each one-child
+        // level flips the orientation for the level under it, so two of them
+        // cancel and the innermost split lays out exactly as it did. Closing
+        // views left `[[[a, b, c]]]` behind, each level one more renderer.
+        const onlyChild = nestedBibleItems[0];
+        if (
+            nestedBibleItems.length === 1 &&
+            Array.isArray(onlyChild) &&
+            onlyChild.length === 1 &&
+            Array.isArray(onlyChild[0])
+        ) {
+            return {
+                nestedBibleItems: onlyChild[0],
                 isFoundError: true,
             };
         }

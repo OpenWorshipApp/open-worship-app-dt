@@ -448,6 +448,100 @@ describe('bible-reader LookupBibleItemController', () => {
         expect(ctl.selectedBibleItem.id).toBe(extra.id);
     });
 
+    // Measured live: moving the editor to another view painted the PREVIOUS
+    // view's passage there for ~0.6 s -- the lookup answers the box's old
+    // text again for the new id before the box is retitled.
+    test('a result for the text the box held before a selection shows the selected view', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Old Text';
+        await flush();
+        const other = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 777,
+                bibleKey: 'NIV',
+                target: {
+                    bookKey: 'JHN',
+                    chapter: 3,
+                    verseStart: 16,
+                    verseEnd: 16,
+                },
+            }) as any,
+        );
+        const staleResult = {
+            result: {
+                bibleItem: h.makeFound('KJV'),
+                bookKey: 'GEN',
+                chapter: 1,
+            },
+            bibleKey: 'KJV',
+            inputText: 'Old Text',
+            oldInputText: 'Old Text',
+            time: 0,
+        } as any;
+        expect(ctl.toCurrentEditingResult(staleResult)).toBe(staleResult);
+
+        ctl.selectedBibleItem = other;
+        const shown = ctl.toCurrentEditingResult(staleResult)!;
+        expect(shown).not.toBe(staleResult);
+        expect(shown.bibleKey).toBe('NIV');
+        expect(shown.result.bibleItem!.id).toBe(other.id);
+        expect(shown.result.bibleItem!.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 16,
+        });
+        expect(shown.result.bookKey).toBe('JHN');
+
+        // A result for any other text means the box has moved on.
+        ctl.settleEditingResult({ ...staleResult, oldInputText: 'John 3:16' });
+        expect(ctl.toCurrentEditingResult(staleResult)).toBe(staleResult);
+        await flush();
+    });
+
+    test('a result already showing the passage of the selected view stands', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Same Title';
+        await flush();
+        const other = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 778,
+                bibleKey: 'KJV',
+                target: { chapter: 1 },
+            }) as any,
+        );
+        // `makeFound('KJV')` is KJV, chapter 1: the selected view's passage.
+        const result = {
+            result: { bibleItem: h.makeFound('KJV'), extraBibleItems: [{}] },
+            bibleKey: 'KJV',
+            inputText: 'Same Title',
+            oldInputText: 'Same Title',
+            time: 0,
+        } as any;
+        ctl.selectedBibleItem = other;
+        expect(ctl.toCurrentEditingResult(result)).toBe(result);
+        await flush();
+    });
+
+    test('typing without a selection change shows each result as it is', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Gen';
+        const result = {
+            result: { bibleItem: null, bookKey: 'GEN', chapter: null },
+            bibleKey: 'KJV',
+            inputText: 'Gen',
+            oldInputText: 'Gen',
+            time: 0,
+        } as any;
+        ctl.settleEditingResult(result);
+        expect(ctl.toCurrentEditingResult(result)).toBe(result);
+        expect(ctl.toCurrentEditingResult(null)).toBeNull();
+        await flush();
+    });
+
     test('editBibleItem no-ops when already selected', async () => {
         const ctl = genController();
         const selected = ctl.selectedBibleItem;

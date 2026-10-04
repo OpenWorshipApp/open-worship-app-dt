@@ -1,6 +1,6 @@
 import './BibleViewComp.scss';
 
-import { use, useCallback, type DragEvent as ReactDragEvent } from 'react';
+import { useCallback, useState, type DragEvent as ReactDragEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type BibleItemsViewController from './BibleItemsViewController';
@@ -12,10 +12,9 @@ import {
 } from './readBibleHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
-import RenderBibleEditingHeaderComp from '../bible-lookup/RenderBibleEditingHeaderComp';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
 import type LookupBibleItemController from './LookupBibleItemController';
-import { EditingResultContext } from './LookupBibleItemController';
+import { useEditingResult } from './LookupBibleItemController';
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
@@ -29,7 +28,7 @@ import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
-import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
+import BibleViewHeaderComp from './view-extra/BibleViewHeaderComp';
 import { useAppCurrentRef } from '../helper/appHooks';
 
 function checkIsParentPlayToBottom(verseElement: HTMLElement) {
@@ -144,10 +143,14 @@ export default function BibleViewComp({
     bibleItem: ReadIdOnlyBibleItem;
     isEditing?: boolean;
 }>) {
-    const uuid = crypto.randomUUID();
+    // Once per view, not per render: a fresh one each render rewrote the
+    // card's `id` and scroll attribute on every re-render of every pane.
+    const [uuid] = useState(() => {
+        return crypto.randomUUID();
+    });
     const id = `uuid-${uuid}`;
     const viewController = useBibleItemsViewControllerContext();
-    const editingResult = use(EditingResultContext);
+    const editingResult = useEditingResult();
     const textViewFontSize = useBibleViewFontSizeContext();
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
@@ -211,11 +214,7 @@ export default function BibleViewComp({
             onDrop={handleDropping}
             onContextMenu={handleContextMenu}
         >
-            {isEditing ? (
-                <RenderBibleEditingHeaderComp />
-            ) : (
-                <BibleViewRenderHeaderComp bibleItem={bibleItem} />
-            )}
+            <BibleViewHeaderComp bibleItem={bibleItem} isEditing={isEditing} />
             <div
                 className="card-body app-top-hover-motion-1"
                 data-scroll-on-next-chapter={isEditing ? '1' : '0'}
@@ -227,10 +226,22 @@ export default function BibleViewComp({
                             : '60px',
                 }}
             >
-                {isEditing ? (
-                    <RenderBibleLookupBodyComp />
-                ) : (
-                    <BibleViewTextComp bibleItem={bibleItem} />
+                {/* The lookup's own rows -- the verse picker above a found
+                    passage, the book and chapter lists before one is -- in
+                    a slot of their own, so the passage below keeps its
+                    position whether this view is the one being edited or
+                    not. It used to be drawn inside the lookup body, one
+                    level down, and every switch rebuilt the verses. */}
+                {isEditing ? <RenderBibleLookupBodyComp /> : null}
+                {foundBibleItem === null ? null : (
+                    <BibleViewTextComp
+                        bibleItem={foundBibleItem}
+                        extraBibleItems={
+                            isEditing
+                                ? editingResult?.result.extraBibleItems
+                                : undefined
+                        }
+                    />
                 )}
                 <ScrollingHandlerComp
                     // Both buttons stack in the bottom-right corner, 30px

@@ -194,6 +194,17 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(sanitizeNestedItems([[], a])).toEqual([a]);
         });
 
+        // Each one-child level flips the orientation of the one under it, so
+        // two of them cancel; one alone does not and must stay.
+        test('sanitizeNestedItems drops one-child splits in pairs only', () => {
+            const a = genItem(1);
+            const b = genItem(2);
+            const c = genItem(3);
+            expect(sanitizeNestedItems([[[a, b, c]]])).toEqual([a, b, c]);
+            expect(sanitizeNestedItems([[a, b]])).toEqual([[a, b]]);
+            expect(sanitizeNestedItems([a, [[[b, c]]]])).toEqual([a, [b, c]]);
+        });
+
         test('stringifyNestedBibleItem serializes recursively', () => {
             const a = genItem(1);
             const result = stringifyNestedBibleItem([a, [genItem(2)]]);

@@ -263,8 +263,12 @@ function checkIsHiddenWidget(
     index: number,
 ) {
     const preKey = dataInput[index]['key'];
+    // A pane the actor's size state has not met yet -- its key is new this
+    // render, and the actor's effect adds it right after -- is not hidden.
+    // Keyed by item, a split can rename a pane in place (the bible views key
+    // a split by its first view), so this is not only the last pane any more.
     const preFlexSizeValue = flexSize[preKey];
-    return !!preFlexSizeValue[1];
+    return !!preFlexSizeValue?.[1];
 }
 
 export function checkIsThereNotHiddenWidget(

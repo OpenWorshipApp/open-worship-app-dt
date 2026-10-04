@@ -81,8 +81,34 @@ describe('BibleViewRendererComp', () => {
             );
         });
         const [{ flexSizeDefault, dataInputKeys }] = h.resizeActorProps;
-        expect(dataInputKeys).toEqual(['h1', 'h2']);
+        expect(dataInputKeys).toEqual(['i1', 'i2']);
         expect(Object.keys(flexSizeDefault)).toEqual(dataInputKeys);
+    });
+
+    // Keyed by the first view's id alone, splitting a group's first view
+    // renamed the group, rebuilt its resize container and reset its sizes.
+    test('splitting the first view of a group keeps the group key', () => {
+        act(() => {
+            root.render(
+                <BibleViewRendererComp
+                    nestedBibleItems={[genItem(1), [genItem(2), genItem(3)]]}
+                />,
+            );
+        });
+        expect(h.resizeActorProps[0].dataInputKeys).toEqual(['i1', 'g2']);
+        h.resizeActorProps.length = 0;
+        act(() => {
+            root.render(
+                <BibleViewRendererComp
+                    nestedBibleItems={[
+                        genItem(1),
+                        [[genItem(4), genItem(2)], genItem(3)],
+                    ]}
+                />,
+            );
+        });
+        expect(h.resizeActorProps[0].dataInputKeys).toEqual(['i1', 'g2']);
+        expect(h.resizeActorProps[1].dataInputKeys).toEqual(['i2', 'i3']);
     });
 
     // The view controller mutates its nested arrays IN PLACE
@@ -99,7 +125,8 @@ describe('BibleViewRendererComp', () => {
                 <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />,
             );
         });
-        expect(h.resizeActorProps[1].dataInputKeys).toEqual(['v1', 'v2']);
+        expect(h.resizeActorProps[0].dataInputKeys).toEqual(['i1', 'g2']);
+        expect(h.resizeActorProps[1].dataInputKeys).toEqual(['i2', 'i3']);
         verticalItems.splice(2, 0, genItem(4));
         h.resizeActorProps.length = 0;
         act(() => {
@@ -108,7 +135,7 @@ describe('BibleViewRendererComp', () => {
             );
         });
         const vertical = h.resizeActorProps[1];
-        expect(vertical.dataInputKeys).toEqual(['v1', 'v2', 'v3']);
+        expect(vertical.dataInputKeys).toEqual(['i2', 'i3', 'i4']);
         expect(Object.keys(vertical.flexSizeDefault)).toEqual(
             vertical.dataInputKeys,
         );

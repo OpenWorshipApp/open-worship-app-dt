@@ -1,16 +1,15 @@
-import { use, useCallback, type MouseEvent } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
 import { BibleKeySelectionMiniComp } from './BibleKeySelectionComp';
 import { RENDER_FOUND_CLASS } from './selectionHelpers';
 import {
-    EditingResultContext,
+    useEditingResult,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { openBibleSetting } from '../setting/settingHelpers';
-import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 import RenderBookOptionsComp from './RenderBookOptionsComp';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -22,7 +21,7 @@ export default function RenderLookupSuggestionComp({
     applyChapterSelection: (newChapter: number) => void;
     applyBookSelection: (newBookKey: string, newBook: string) => void;
 }>) {
-    const editingResult = use(EditingResultContext);
+    const editingResult = useEditingResult();
     const handleFocusing = useCallback((event: MouseEvent<HTMLDivElement>) => {
         event.currentTarget.focus();
     }, []);
@@ -35,19 +34,12 @@ export default function RenderLookupSuggestionComp({
         chapter,
         guessingChapter,
         bibleItem: foundBibleItem,
-        extraBibleItems,
     } = editingResult.result;
 
     if (foundBibleItem !== null) {
-        return (
-            <>
-                <RenderVerseOptionsComp bibleItem={foundBibleItem} />
-                <BibleViewTextComp
-                    bibleItem={foundBibleItem}
-                    extraBibleItems={extraBibleItems}
-                />
-            </>
-        );
+        // The passage itself is drawn by the bible view, right after this,
+        // at the position it holds when the view is not being edited too.
+        return <RenderVerseOptionsComp bibleItem={foundBibleItem} />;
     }
     return (
         <div
