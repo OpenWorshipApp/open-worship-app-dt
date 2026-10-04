@@ -453,7 +453,6 @@ export type LanguageDataType = {
     version: string;
     locale: LocaleType;
     langCode: string;
-    customMenusData?: CustomMenusDataType;
     editorLink?: string;
     bibleBooks: BibleBookType[];
     checkIsThisLang: (text: string) => boolean;
@@ -542,7 +541,7 @@ export type LanguageDataType = {
 type CustomMenuItemType = {
     label: string;
     // Optional because a submenu PARENT is not clickable — it only groups the
-    // items under it (see the Khmer Tools entry in `data/km`). Matches the
+    // items under it (see the Khmer Tools entry in `data/km/appMenus.ts`). Matches the
     // electron-side `CustomMenuItemType`, which also has it optional.
     clickData?: AnyObjectType;
     accelerator?: string;
@@ -1090,11 +1089,21 @@ export function registerLangAppMenuClicked() {
     return registerAppMenuClicked(handleLangAppMenusClick);
 }
 
+// A language's menu items live in their own `data/<code>/appMenus.ts`, NOT in
+// its package: this runs on every page of the main window, and the packages
+// are hundreds of KB each (Khmer's also brings the open-lyric plugin).
+const LANG_APP_MENUS_LOADER_MAP = import.meta.glob<{
+    default: CustomMenusDataType;
+}>('./data/*/appMenus.ts');
+
 export async function initLangAppMenu() {
     const menusData: AnyObjectType = {};
-    const langDataList = await getAllLangsAsync();
-    for (const langData of langDataList) {
-        const customMenusData = langData.customMenusData ?? {};
+    const customMenusDataList = await Promise.all(
+        Object.values(LANG_APP_MENUS_LOADER_MAP).map(async (loader) => {
+            return (await loader()).default;
+        }),
+    );
+    for (const customMenusData of customMenusDataList) {
         Object.entries(customMenusData).forEach(([key, value]) => {
             menusData[key] ??= [];
             menusData[key] = menusData[key].concat(value);

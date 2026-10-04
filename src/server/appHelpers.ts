@@ -577,13 +577,7 @@ export function useIsOnTop() {
     return [isOnTop, setIsOnTop1] as const;
 }
 
-export function checkIsMainWindow() {
-    return (
-        appProvider.messageUtils.sendDataSync(
-            'all:app:check-is-main-window',
-        ) === true
-    );
-}
+export { checkIsMainWindow } from './mainWindowHelpers';
 
 export function getHelpPageUrl() {
     return `${appProvider.appInfo.homepage}/help`;

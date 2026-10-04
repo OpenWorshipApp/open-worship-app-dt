@@ -10,11 +10,7 @@ import BibleViewComp from '../bible-reader/BibleViewComp';
 import type BibleItem from '../bible-list/BibleItem';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
-import { useAppEffect } from '../helper/appHooks';
-import {
-    initLangAppMenu,
-    registerLangAppMenuClicked,
-} from '../lang/langHelpers';
+import LangAppMenuComp from '../lang/LangAppMenuComp';
 import { toWidgetLabel } from '../others/labelIconHelpers';
 import DataArchiveAppMenuComp from '../setting/data-archive/DataArchiveAppMenuComp';
 
@@ -29,11 +25,6 @@ const LazyAppPresenterRightComp = lazy(() => {
 });
 
 export default function AppPresenterComp() {
-    useAppEffect(() => {
-        const unregister = registerLangAppMenuClicked();
-        initLangAppMenu();
-        return unregister;
-    }, []);
     const viewController = useMemo(() => {
         const newViewController = new BibleItemsViewController('presenter');
         newViewController.finalRenderer = (bibleItem: BibleItem) => {
@@ -90,6 +81,7 @@ export default function AppPresenterComp() {
             <BibleCustomStyleFloatingComp />
             {/* File → Export/Import Data, shared with the Reader page. */}
             <DataArchiveAppMenuComp />
+            <LangAppMenuComp />
         </BibleItemsViewControllerContext>
     );
 }
