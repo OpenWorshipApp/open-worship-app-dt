@@ -14,6 +14,10 @@ import {
     getUserWritablePath,
     pathJoin,
 } from '../../server/storageFileHelpers';
+import {
+    addParentDirHistory,
+    replaceParentDirHistory,
+} from './parentDirHistoryHelpers';
 
 export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
 // The chosen folder's marker id (`ensureDataDirMarkerIdSync`), kept beside its
@@ -58,6 +62,7 @@ function resolveSelectedParentDir() {
     );
     if (movedDirPath !== null) {
         appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, movedDirPath);
+        replaceParentDirHistory(selectedParentDir, movedDirPath);
         missingParentDirPath = null;
         return movedDirPath;
     }
@@ -155,6 +160,12 @@ class AppLocalStorage {
         // asks about -- went into the OLD folder's settings.
         cache.deleteSync(LOCAL_STORAGE_FOLDER_NAME);
         missingParentDirPath = null;
+        // The folder being left is recorded too: one chosen before the list
+        // existed is then on it from the first switch away.
+        addParentDirHistory(
+            appHomeStorage.getItem(SELECTED_PARENT_DIR_SETTING_NAME),
+            dirPath,
+        );
         appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
         if (dirPath) {
             checkedMarkerDirPath = null;

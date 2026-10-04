@@ -2118,6 +2118,13 @@ const dictionary = {
     'Files changed:': 'ឯកសារដែលបានកែប្រែ៖',
     'The app reloads to show them.':
         'កម្មវិធីនឹងផ្ទុកឡើងវិញ ដើម្បីបង្ហាញពួកវា។',
+    'Recent Folders': 'ថតដែលបានប្រើថ្មីៗ',
+    Switch: 'ប្តូរ',
+    'Switch Data Folder': 'ប្តូរថតទិន្នន័យ',
+    'Switch to the data folder': 'ប្តូរទៅថតទិន្នន័យ',
+    'Every open window reloads.': 'រាល់បង្អួចដែលកំពុងបើកនឹងផ្ទុកឡើងវិញ។',
+    'Remove from Recent Folders': 'ដកចេញពីថតដែលបានប្រើថ្មីៗ',
+    'This folder is not there any more.': 'ថតនេះលែងមាននៅទីនោះទៀតហើយ។',
     // --- Page-aware Tips of the Day and their deterministic walkthroughs.
     'Tips of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
     'Tip of the Day': 'គន្លឹះប្រចាំថ្ងៃ',

@@ -55,6 +55,12 @@ vi.mock('../../server/storageFileHelpers', () => ({
     pathJoin: (...parts: string[]) => {
         return parts.join('/');
     },
+    pathResolve: (filePath: string) => {
+        return filePath.replace(/[\\/]+$/, '');
+    },
+    toPathCompareKey: (filePath: string) => {
+        return filePath.toLowerCase();
+    },
     fsMkDirSync: () => {},
     fsReadSync: () => '',
     fsUnlinkSync: () => {},
@@ -134,5 +140,49 @@ describe('where the data folder is, as a window starts', () => {
         const { appLocalStorage } = await loadAppLocalStorage();
         expect(appLocalStorage.defaultStorageDirPath).toBe('/app-data');
         expect(appLocalStorage.missingParentDirPath).toBeNull();
+    });
+});
+
+describe('the folders used before', () => {
+    const HISTORY_KEY = 'selected-parent-dir-history';
+
+    function readHistory() {
+        return JSON.parse(h.homeItems.get(HISTORY_KEY) ?? '[]');
+    }
+
+    test('a switch remembers the folder left and the one chosen, newest first', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadAppLocalStorage();
+        // Chosen before the list existed: it is remembered on the way out.
+        h.homeItems.set(SELECTED_PARENT_DIR_SETTING_NAME, 'E:\\old');
+
+        await appLocalStorage.setSelectedParentDirectory('E:\\new');
+
+        expect(readHistory()).toEqual(['E:\\new', 'E:\\old']);
+        expect(h.fileHelpersLoaded).toBe(false);
+    });
+
+    test('unsetting the folder keeps it on the list', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadAppLocalStorage();
+        h.homeItems.set(SELECTED_PARENT_DIR_SETTING_NAME, 'E:\\data');
+
+        await appLocalStorage.setSelectedParentDirectory('');
+
+        expect(readHistory()).toEqual(['E:\\data']);
+    });
+
+    test('a folder found on another drive takes over its entry', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadAppLocalStorage();
+        h.homeItems.set(SELECTED_PARENT_DIR_SETTING_NAME, 'E:\\data');
+        h.homeItems.set(
+            HISTORY_KEY,
+            JSON.stringify(['D:\\other', 'E:\\data', 'C:\\first']),
+        );
+        h.movedDirPath = 'F:\\data';
+
+        expect(appLocalStorage.defaultStorageDirPath).toBe('F:\\data');
+        expect(readHistory()).toEqual(['D:\\other', 'F:\\data', 'C:\\first']);
     });
 });

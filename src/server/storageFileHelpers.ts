@@ -23,6 +23,14 @@ export function pathJoin(...paths: string[]): string {
     return appProvider.pathUtils.join(...paths);
 }
 
+export function pathResolve(...paths: string[]): string {
+    const path = appProvider.pathUtils.resolve(...paths);
+    if (path.endsWith(pathSeparator)) {
+        return path.slice(0, -1);
+    }
+    return path;
+}
+
 /** The active data folder, or null before window startup has selected one. */
 export function getDataDirPath(): string | null {
     return appProvider.sessionData?.defaultStorageDirPath ?? null;

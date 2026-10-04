@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-04d** (**W-32 — the book and chapter grids keep their split buttons.** Asked for by the user with a picture of a Khmer chapter grid, the empty space left of the **ⓘ** circled: _"in bible reader I want to be able to split view (vertical, horizontal) for non verse as well. should support both top header icons and contentmenu"_. Until a verse resolved, the view being typed in had no split at all — no icons, no Ctrl+Shift+S / V, and its ⋮ and right-click opened nothing. Now **[en:tran:Split horizontal]** / **[en:tran:Split vertical]** sit at rest left of the **ⓘ**, the keys work, and the ⋮ / right-click menu offers the four splits, **[en:tran:Toggle Widget Full View]** and **[en:tran:Close]**. A view can only hold a passage, so the new one opens the picked book's chapter 1 (the whole chapter), or Genesis 1 before a book is picked — decided with the user; the view being typed in keeps its grid and stays selected. Verified live 2026-10-04 on the dev Reader: `Exodus` → split horizontal → `Exodus 1:1-22` on the left; unknown text → Ctrl+Shift+V → `Genesis 1:1-31` below; ⋮ → **[en:tran:Split Horizontal to]** → NIV → an NIV Genesis 1; with a verse showing, Ctrl+Shift+S still adds exactly one copy. RD-77, KB-25, KB-26, CM-79.)
+**workflowsVersion: 2026-10-04e** (**W-16 — Path Settings remembers the data folders used before.** Asked for by the user with a picture of the Parent Directory card: _"in setting parent directory selection should keep history so I can like switching easily to directories I used to work with"_. A **[en:tran:Recent Folders]** list under the path names every folder this computer used, newest first, each with **[en:tran:Switch]** — which asks first, since every window reloads — and **✕**; a folder not there reads **[en:tran:Missing]**. Verified live 2026-10-04 on a scratch dev instance: typing folder B, then C, listed B over A; A renamed away read Missing with Switch disabled, and a Switch pressed on it before the list redrew answered with a toast instead of the confirm; Switch on B raised **Switch Data Folder**; the list read in Khmer and French. ST-58.)
+
+Previous: **workflowsVersion: 2026-10-04d** (**W-32 — the book and chapter grids keep their split buttons.** Asked for by the user with a picture of a Khmer chapter grid, the empty space left of the **ⓘ** circled: _"in bible reader I want to be able to split view (vertical, horizontal) for non verse as well. should support both top header icons and contentmenu"_. Until a verse resolved, the view being typed in had no split at all — no icons, no Ctrl+Shift+S / V, and its ⋮ and right-click opened nothing. Now **[en:tran:Split horizontal]** / **[en:tran:Split vertical]** sit at rest left of the **ⓘ**, the keys work, and the ⋮ / right-click menu offers the four splits, **[en:tran:Toggle Widget Full View]** and **[en:tran:Close]**. A view can only hold a passage, so the new one opens the picked book's chapter 1 (the whole chapter), or Genesis 1 before a book is picked — decided with the user; the view being typed in keeps its grid and stays selected. Verified live 2026-10-04 on the dev Reader: `Exodus` → split horizontal → `Exodus 1:1-22` on the left; unknown text → Ctrl+Shift+V → `Genesis 1:1-31` below; ⋮ → **[en:tran:Split Horizontal to]** → NIV → an NIV Genesis 1; with a verse showing, Ctrl+Shift+S still adds exactly one copy. RD-77, KB-25, KB-26, CM-79.)
 
 Previous: **workflowsVersion: 2026-10-04c** (**new W-48 — a slides preview, a slide, a Background tab, one background, a foreground component or one of its sessions can have its OWN transition.** Asked for by the user with a picture of the Mini Screen's **Slide:** button and the slides preview's ⋮ circled: _"I want to have transition per slides preview and per slide … let put an enabling checkbox … if disabled then it will depend on screen transition. when enabled then override. this should have for all (background, foreground components, foreground component's section, slides preview, slide)"_ — the "section" being the session tabs. Every level is the same **[en:tran:Own transition]** checkbox and picker; unticked it says what it follows. The Tr row gained **[en:tran:Foreground]:**. Each item now leaves the way it came in, and **[en:tran:No Transition]** is a cut both ways. Verified live 2026-10-04 on the dev presenter: a song set to **[en:tran:Zoom]** zoomed its chorus in, a slide of it set to **[en:tran:No Transition]** cut in while the zoomed one zoomed out; the **[en:tran:Images]** tab on Zoom zoomed a picture in and one picture set to No Transition cut in; a Quick Text session on Zoom came and went with it; unticking every level removed its setting and the song's sidecar. PM-154..PM-156.)
 
@@ -2047,6 +2049,13 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
+   - **[en:tran:Recent Folders]** (under **Parent Directory:**): every data folder
+     this computer has used is listed there, newest first — not the one in use. Press
+     **[en:tran:Switch]** beside one to go back to it: the app asks first, because every
+     open window reloads onto that folder. A folder that is not there (a stick that is
+     not plugged in) reads **[en:tran:Missing]** and cannot be switched to. **✕** takes
+     a folder off the list; the folder itself is not touched. The list keeps the last
+     10 and appears once a second folder has been used. 📸
    - **[en:tran:Repair Links]** (beside **Reset All Child Directories**): after you
      bring the data folder from another computer — a USB stick, a copied folder — press
      it once. Pictures, videos and songs still pointing at where the folder USED to be
@@ -2062,7 +2071,7 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
    development-only and can be unavailable. 📸
 4. Click **Apply Settings** (bottom-left) to apply — the app windows reload.
 
-_Verify: ST-01..ST-09, ST-22, ST-52, LT-02..04._
+_Verify: ST-01..ST-09, ST-22, ST-52, ST-58, LT-02..04._
 
 ### W-17 — Find text anywhere (Find bar) & About
 

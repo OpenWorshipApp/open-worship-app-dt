@@ -37,6 +37,7 @@ import { unwatchDataDir, watchDataDir } from '../../helper/dirWatchingHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { type OptionalPromise } from '../../helper/typeHelpers';
 import SettingCardHeaderComp from '../SettingCardHeaderComp';
+import RenderParentDirHistoryComp from './RenderParentDirHistoryComp';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;
@@ -143,6 +144,7 @@ function RenderParentDirectoryComp({
                         placeholder={defaultPath}
                     />
                 </div>
+                <RenderParentDirHistoryComp dirSource={dirSource} />
             </div>
             {dirSource.dirPath ? null : (
                 <div>

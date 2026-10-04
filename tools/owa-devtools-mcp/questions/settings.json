@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-09-19",
+    "updated": "2026-10-04",
     "sections": [
         {
             "id": "general",
@@ -124,6 +124,26 @@
                             "W-25"
                         ],
                         "find": "Repair Links"
+                    }
+                },
+                {
+                    "id": "switch-data-folder",
+                    "text": "How do I switch back to a data folder I used before?",
+                    "kind": "howto",
+                    "keywords": [
+                        "recent folders",
+                        "switch folder",
+                        "previous folder",
+                        "other data folder",
+                        "parent directory",
+                        "history"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Recent Folders"
                     }
                 },
                 {

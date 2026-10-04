@@ -2176,6 +2176,13 @@ const dictionary = {
     'Files changed:': 'Fichiers modifiés :',
     'The app reloads to show them.':
         "L'application se recharge pour les afficher.",
+    'Recent Folders': 'Dossiers récents',
+    Switch: 'Basculer',
+    'Switch Data Folder': 'Changer de dossier de données',
+    'Switch to the data folder': 'Basculer vers le dossier de données',
+    'Every open window reloads.': 'Toutes les fenêtres ouvertes se rechargent.',
+    'Remove from Recent Folders': 'Retirer des dossiers récents',
+    'This folder is not there any more.': "Ce dossier n'existe plus.",
     // --- Page-aware Tips of the Day and their deterministic walkthroughs.
     'Tips of the Day': 'Astuces du jour',
     'Tip of the Day': 'Astuce du jour',
