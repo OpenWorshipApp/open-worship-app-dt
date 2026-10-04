@@ -47,6 +47,8 @@ import {
     toSessionShowingList,
     useForegroundSessions,
 } from './foregroundSessionHelpers';
+import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 
 const FONT_SIZE_PRESETS = [0, 50, 75, 100, 150];
 const SPEED_PERCENTAGE_PRESETS = [50, 75, 100, 150, 200];
@@ -80,6 +82,7 @@ type MarqueeConfigType = {
         isForceChoosing: boolean,
         sessionId: string,
         isBehind: boolean,
+        transitionEffect?: TransitionEffectType,
     ) => void;
 };
 
@@ -114,6 +117,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
             isForceChoosing,
             sessionId,
             isBehind,
+            transitionEffect,
         ) => {
             ScreenForegroundManager.setMarqueeTop(
                 event,
@@ -123,6 +127,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
                 isForceChoosing,
                 sessionId,
                 isBehind,
+                transitionEffect,
             );
         },
     },
@@ -156,6 +161,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
             isForceChoosing,
             sessionId,
             isBehind,
+            transitionEffect,
         ) => {
             ScreenForegroundManager.setMarqueeBottom(
                 event,
@@ -165,6 +171,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
                 isForceChoosing,
                 sessionId,
                 isBehind,
+                transitionEffect,
             );
         },
     },
@@ -284,11 +291,13 @@ function MarqueeBodyComp({
     const {
         genStyle,
         getIsBehind,
+        getTransition,
         element: propsSetting,
         fontFamily,
         fontWeight,
     } = useForegroundPropsSetting({
         prefix,
+        widgetKey: config.target,
         isGeometry: false,
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
@@ -379,9 +388,18 @@ function MarqueeBodyComp({
                 isForceChoosing,
                 sessionId,
                 getIsBehind(),
+                getTransition(),
             );
         },
-        [config, text, genExtraStyle, getIsBehind, speedPercentage, sessionId],
+        [
+            config,
+            text,
+            genExtraStyle,
+            getIsBehind,
+            getTransition,
+            speedPercentage,
+            sessionId,
+        ],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -402,6 +420,7 @@ function MarqueeBodyComp({
                         // A LIVE drop from this panel is this session acting;
                         // a run-sheet row replayed weeks later carries none.
                         id: sessionId || undefined,
+                        ...toTransitionPart(getTransition()),
                         text,
                         speedPercentage,
                         extraStyle: genExtraStyle(),
@@ -410,7 +429,15 @@ function MarqueeBodyComp({
                 ),
             );
         },
-        [config, text, genExtraStyle, getIsBehind, speedPercentage, sessionId],
+        [
+            config,
+            text,
+            genExtraStyle,
+            getIsBehind,
+            getTransition,
+            speedPercentage,
+            sessionId,
+        ],
     );
     const handleHiding = useCallback(
         (screenId: number) => {
@@ -455,6 +482,7 @@ function MarqueeBodyComp({
     const speedPercentageRef = useAppCurrentRef(speedPercentage);
     const genExtraStyleRef = useAppCurrentRef(genExtraStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const configRef = useAppCurrentRef(config);
     const handleMarqueeDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
@@ -465,6 +493,7 @@ function MarqueeBodyComp({
                 () => {
                     return withForegroundLayer(
                         {
+                            ...toTransitionPart(getTransitionRef.current()),
                             text: textRef.current,
                             speedPercentage: speedPercentageRef.current,
                             extraStyle: genExtraStyleRef.current(),

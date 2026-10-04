@@ -33,6 +33,12 @@ import type {
     StyleAnimType,
 } from '../screenTypeHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
+import { stampBackgroundTransition } from '../../background/backgroundTransitionHelpers';
+import {
+    getStyleAnimForNode,
+    TRANSITION_DATASET_KEY,
+    type TransitionEffectType,
+} from '../transitionEffectHelpers';
 import {
     playMediaElement,
     releaseMediaElement,
@@ -125,7 +131,18 @@ class ScreenBackgroundManager
         return this._backgroundSrc;
     }
 
-    set backgroundSrc(backgroundSrc: BackgroundSrcType | null) {
+    set backgroundSrc(targetBackgroundSrc: BackgroundSrcType | null) {
+        // Every way a background goes up meets here -- a tile, Show on
+        // Screens, a colour, a drop, a run sheet row, a slide's attached
+        // background, a background slide show, a sync group -- so this is
+        // where its own transition (else its tab's) is put on it, on the
+        // presenter, BEFORE the equality check: stamped, it compares equal to
+        // the same background already up. The screen window keeps the one it
+        // was handed.
+        const backgroundSrc =
+            targetBackgroundSrc !== null && !appProvider.isPageScreen
+                ? stampBackgroundTransition(targetBackgroundSrc)
+                : targetBackgroundSrc;
         if (
             this.screenManagerBase.checkIsLockedWithMessage() ||
             checkAreObjectsEqual(this._backgroundSrc, backgroundSrc)
@@ -427,7 +444,13 @@ class ScreenBackgroundManager
                 if (element.style.opacity === '0') {
                     return Promise.resolve();
                 }
-                return aminData.animOut(element);
+                // It leaves the way it came in (see `TRANSITION_DATASET_KEY`);
+                // `aminData` only for a node nothing tagged.
+                return getStyleAnimForNode(
+                    element,
+                    this.effectManager.styleAnimList,
+                    aminData,
+                ).animOut(element);
             }),
         ).then(() => {
             for (const element of elements) {
@@ -528,9 +551,15 @@ class ScreenBackgroundManager
         if (rootContainer === null) {
             return null;
         }
+        // The node `animIn` put in the root: `container` itself, or the
+        // `.zoom-container` a zoom transition wrapped it in. Comparing with
+        // `container` alone adopted that wrapper -- the clip still playing --
+        // as its own twin, and the second lap faded in a node whose picture
+        // had been parked at opacity 0: a blank background.
+        const ownNode = this._toRootLevelNode(container);
         for (const child of rootContainer.children) {
             if (
-                child === container ||
+                child === ownNode ||
                 !(child instanceof HTMLElement) ||
                 // Already claimed by a background swap in flight.
                 child.dataset.owaBackgroundRemoving === 'true'
@@ -611,28 +640,76 @@ class ScreenBackgroundManager
             return;
         }
         const { twin, twinVideo } = twinData;
+        // Parked and brought back as the node in the ROOT -- the zoom wrapper
+        // when the background zoomed in -- so the picture inside it is never
+        // the thing left at opacity 0.
+        const outgoingNode = this._toRootLevelNode(container);
         // What the element asked for before the fade borrowed its opacity: a
         // foreground Opacity slider writes it straight onto `style.opacity`
-        // through `extraStyle`.
-        const authoredOpacity = container.style.opacity || '1';
+        // through `extraStyle`. A node parked by an earlier lap remembers its
+        // own (a zoom wrapper rests at none at all).
+        const restOpacity =
+            twin.dataset.owaRestOpacity ?? (container.style.opacity || '1');
         twinVideo.currentTime = 0;
         await this._waitForVideoPicture(twinVideo);
         if (!container.isConnected || !twin.isConnected) {
             return;
         }
         await playMediaElement(twinVideo);
-        twin.style.opacity = authoredOpacity;
+        twin.style.opacity = restOpacity;
         await this.effectManager.styleAnimList.fade.animIn(twin, rootContainer);
         if (!twin.isConnected) {
             return;
+        }
+        // The lap is a crossfade whatever the background came in with, but
+        // the background still LEAVES the way it came in: the twin takes the
+        // outgoing node's tag -- unless that was a zoom and the twin is a
+        // plain copy with no wrapper to zoom.
+        const enteredWith = outgoingNode.dataset[TRANSITION_DATASET_KEY];
+        if (
+            enteredWith !== undefined &&
+            (enteredWith !== 'zoom' ||
+                twin.classList.contains('zoom-container'))
+        ) {
+            twin.dataset[TRANSITION_DATASET_KEY] = enteredWith;
         }
         // The clip that just ended is covered now, so park it as the copy the
         // NEXT lap brings in -- paused, back at its first frame, and reading
         // nothing until then.
         videoElement.pause();
         videoElement.currentTime = 0;
-        container.style.opacity = '0';
+        outgoingNode.dataset.owaRestOpacity = outgoingNode.style.opacity;
+        outgoingNode.style.opacity = '0';
         this._handleBackgroundVideo(twin as HTMLDivElement);
+    }
+
+    /**
+     * `node`, or the ancestor of it that is a direct child of the root -- the
+     * thing a transition appended and the thing that is swapped out.
+     */
+    _toRootLevelNode(node: HTMLElement): HTMLElement {
+        const rootContainer = this.rootContainer;
+        let current = node;
+        while (
+            current.parentElement !== null &&
+            current.parentElement !== rootContainer
+        ) {
+            current = current.parentElement;
+        }
+        return current.parentElement === rootContainer ? current : node;
+    }
+
+    /**
+     * The background's own transition when it carries one (it or its tab
+     * overrides the screen), else the screen's `Background:` effect.
+     */
+    genStyleAnimFor(transitionEffect?: TransitionEffectType) {
+        return (
+            (transitionEffect === undefined
+                ? undefined
+                : this.effectManager.styleAnimList[transitionEffect]) ??
+            this.effectManager.styleAnim
+        );
     }
 
     render(overrideAnimData?: StyleAnimType) {
@@ -640,7 +717,9 @@ class ScreenBackgroundManager
         if (rootContainer === null) {
             return;
         }
-        const aminData = overrideAnimData ?? this.effectManager.styleAnim;
+        const aminData =
+            overrideAnimData ??
+            this.genStyleAnimFor(this.backgroundSrc?.transitionEffect);
         const childList = Array.from(rootContainer.children).filter(
             (element) => {
                 return element instanceof HTMLElement;

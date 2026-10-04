@@ -12,6 +12,12 @@ import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEven
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import { ColorSwatchExtraMenuContext } from '../others/color/colorSwatchMenuHelpers';
+import { genBackgroundItemTransitionMenuItems } from './backgroundTransitionMenuHelpers';
+
+function genColorTransitionMenuItems(color: AppColorType) {
+    return genBackgroundItemTransitionMenuItems('color', color);
+}
 
 // How long after a swatch press its focus may still be put back. The press and
 // the re-render it causes are milliseconds apart; anything later is some other
@@ -144,29 +150,33 @@ export default function BackgroundColorsComp() {
             }}
             onClickCapture={handleSwatchPressing}
         >
-            {selectedBackgroundSrcList.length === 0 ? (
-                <ColorPicker
-                    color={null}
-                    defaultColor={HEX_COLOR_BLACK}
-                    onColorChange={handleBackgroundSelecting}
-                    isNoImmediate={true}
-                />
-            ) : (
-                selectedBackgroundSrcList.map(([key, backgroundSrc]) => {
-                    const screenId = Number.parseInt(key);
-                    return (
-                        <RenderColorPickerPerScreenComp
-                            // Keyed by the SCREEN. The colour used to be part
-                            // of the key, so every colour change threw the
-                            // whole picker away -- and the keyboard focus with
-                            // it -- only to build the same picker again.
-                            key={key}
-                            screenId={screenId}
-                            backgroundSrc={backgroundSrc}
-                        />
-                    );
-                })
-            )}
+            {/* Only here is a swatch a BACKGROUND, so only here does its
+                right-click offer the colour's own transition. */}
+            <ColorSwatchExtraMenuContext value={genColorTransitionMenuItems}>
+                {selectedBackgroundSrcList.length === 0 ? (
+                    <ColorPicker
+                        color={null}
+                        defaultColor={HEX_COLOR_BLACK}
+                        onColorChange={handleBackgroundSelecting}
+                        isNoImmediate={true}
+                    />
+                ) : (
+                    selectedBackgroundSrcList.map(([key, backgroundSrc]) => {
+                        const screenId = Number.parseInt(key);
+                        return (
+                            <RenderColorPickerPerScreenComp
+                                // Keyed by the SCREEN. The colour used to be part
+                                // of the key, so every colour change threw the
+                                // whole picker away -- and the keyboard focus with
+                                // it -- only to build the same picker again.
+                                key={key}
+                                screenId={screenId}
+                                backgroundSrc={backgroundSrc}
+                            />
+                        );
+                    })
+                )}
+            </ColorSwatchExtraMenuContext>
         </div>
     );
 }

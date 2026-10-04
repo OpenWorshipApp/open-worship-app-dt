@@ -124,6 +124,7 @@
 - [Canvas item blend mode](canvas-item-blend-mode.md) · [Canvas item shadow](canvas-item-shadow.md)
 - [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — no z-index/isolation on `#foreground`; `#foreground-behind` sits under the slide
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19
+- [Transition overrides](transition-overrides.md) — slides preview / slide / background tab / item / foreground component / session; present = ticked
 - [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md)
 - [Own font list with weights](own-font-list-with-weights.md)
 - [Data folder path is aliased in files](portable-data-dir-alias.md) — `$DATA_DIR_PATH` · [Module-scope setting read before init](module-scope-setting-read-before-init.md) — alias unexpanded, packaged-only

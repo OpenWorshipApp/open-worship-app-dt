@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-02",
+    "updated": "2026-10-04",
     "sections": [
         {
             "id": "screens",
@@ -258,6 +258,74 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
+                        "related": [
+                            "W-48"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "transition-per-slide",
+                    "text": "Can one song or one slide have its own transition?",
+                    "kind": "howto",
+                    "keywords": [
+                        "transition",
+                        "per slide",
+                        "per document",
+                        "slides preview",
+                        "own transition",
+                        "override",
+                        "different transition",
+                        "zoom",
+                        "cut"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "related": [
+                            "W-10"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "transition-per-background",
+                    "text": "How do I make pictures fade but videos zoom in?",
+                    "kind": "howto",
+                    "keywords": [
+                        "background transition",
+                        "images tab",
+                        "videos tab",
+                        "one background",
+                        "own transition",
+                        "zoom",
+                        "fade"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "related": [
+                            "W-08"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "transition-per-overlay",
+                    "text": "How do I give the countdown a different transition from the slides?",
+                    "kind": "howto",
+                    "keywords": [
+                        "foreground transition",
+                        "countdown",
+                        "quick text",
+                        "overlay",
+                        "session",
+                        "own transition",
+                        "properties"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "related": [
+                            "W-09"
+                        ],
                         "guide": true
                     }
                 },

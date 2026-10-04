@@ -274,11 +274,15 @@ export default class LyricAppDocument extends AppDocument {
         return this.getSlidesQuick();
     }
 
-    async showContextMenu(event: any) {
+    async showContextMenu(
+        event: any,
+        extraMenuItems: ContextMenuItemType[] = [],
+    ) {
         const menuItems: ContextMenuItemType[] = [
             genLyricReloadContextMenuItem(() => {
                 this.fileSource.fireUpdateEvent();
             }),
+            ...extraMenuItems,
         ];
         showAppContextMenu(event, menuItems);
     }

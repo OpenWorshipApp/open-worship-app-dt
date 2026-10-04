@@ -16,6 +16,8 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import {
     type ForegroundCountdownDataType,
     withForegroundLayer,
@@ -110,6 +112,7 @@ const handleByDropped = (
     genTiming: () => CountdownTimingType,
     extraStyle: CSSProperties,
     isBehind: boolean,
+    transitionEffect: TransitionEffectType | undefined,
     event: any,
 ) => {
     const screenForegroundManager = getScreenForegroundManagerByDropped(event);
@@ -123,6 +126,7 @@ const handleByDropped = (
                 // run-sheet row replayed weeks later carries none -- see
                 // `applyForegroundDragData`.
                 id: sessionId || undefined,
+                ...toTransitionPart(transitionEffect),
                 ...genTiming(),
                 extraStyle,
             },
@@ -152,11 +156,14 @@ function checkIsPastTargetWithMessage(targetDateTime: Date) {
 function CountDownOnDatetimeComp({
     genStyle,
     getIsBehind,
+    getTransition,
     sessionId,
     suffix,
 }: Readonly<{
     genStyle: () => CSSProperties;
     getIsBehind: () => boolean;
+    /** This session's own transition, else the component's -- or none. */
+    getTransition: () => TransitionEffectType | undefined;
     sessionId: string;
     suffix: string;
 }>) {
@@ -177,9 +184,10 @@ function CountDownOnDatetimeComp({
                 isForceChoosing,
                 sessionId,
                 getIsBehind(),
+                getTransition(),
             );
         },
-        [getTargetDateTime, genStyle, getIsBehind, sessionId],
+        [getTargetDateTime, genStyle, getIsBehind, getTransition, sessionId],
     );
     const setDateRef = useAppCurrentRef(setDate);
     const setTimeRef = useAppCurrentRef(setTime);
@@ -212,6 +220,7 @@ function CountDownOnDatetimeComp({
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const sessionIdRef = useAppCurrentRef(sessionId);
     const handleDraggingStart = useCallback((event: any) => {
         const targetDateTime = getTargetDateTimeRef.current();
@@ -221,6 +230,7 @@ function CountDownOnDatetimeComp({
         }
         const extraStyle = genStyleRef.current();
         const isBehind = getIsBehindRef.current();
+        const transitionEffect = getTransitionRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
             sessionIdRef.current,
@@ -229,12 +239,14 @@ function CountDownOnDatetimeComp({
             },
             extraStyle,
             isBehind,
+            transitionEffect,
         );
         handleDragStart(
             event,
             genForegroundDragInf('countdown', () => {
                 return withForegroundLayer(
                     {
+                        ...toTransitionPart(transitionEffect),
                         dateTime: targetDateTime.toJSON(),
                         extraStyle,
                     },
@@ -305,11 +317,14 @@ function CountDownOnDatetimeComp({
 function CountDownInSetComp({
     genStyle,
     getIsBehind,
+    getTransition,
     sessionId,
     suffix,
 }: Readonly<{
     genStyle: () => CSSProperties;
     getIsBehind: () => boolean;
+    /** This session's own transition, else the component's -- or none. */
+    getTransition: () => TransitionEffectType | undefined;
     sessionId: string;
     suffix: string;
 }>) {
@@ -350,9 +365,10 @@ function CountDownInSetComp({
                 isForceChoosing,
                 sessionId,
                 getIsBehind(),
+                getTransition(),
             );
         },
-        [genTiming, genStyle, getIsBehind, sessionId],
+        [genTiming, genStyle, getIsBehind, getTransition, sessionId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -388,16 +404,19 @@ function CountDownInSetComp({
     const isAutoStartRef = useAppCurrentRef(isAutoStart);
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const sessionIdRef = useAppCurrentRef(sessionId);
     const handleInSetDragStart = useCallback((event: any) => {
         const extraStyle = genStyleRef.current();
         const isBehind = getIsBehindRef.current();
+        const transitionEffect = getTransitionRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
             sessionIdRef.current,
             genTimingRef.current,
             extraStyle,
             isBehind,
+            transitionEffect,
         );
         // A duration countdown must restart from the moment it lands on a
         // screen, so the duration travels rather than the resolved date --
@@ -408,6 +427,7 @@ function CountDownInSetComp({
             genForegroundDragInf('countdown', () => {
                 return withForegroundLayer(
                     {
+                        ...toTransitionPart(transitionEffect),
                         durationSecond:
                             getDurationSecondRef.current() +
                             COUNTDOWN_LEAD_SECOND,
@@ -602,9 +622,11 @@ export default function ForegroundCountDownComp() {
     const {
         genStyle,
         getIsBehind,
+        getTransition,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
+        widgetKey: 'countdown',
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 // THIS session's countdown only -- see the stopwatch panel.
@@ -665,6 +687,7 @@ export default function ForegroundCountDownComp() {
                     key={`date-${activeId}`}
                     genStyle={genStyle}
                     getIsBehind={getIsBehind}
+                    getTransition={getTransition}
                     sessionId={activeId}
                     suffix={suffix}
                 />
@@ -672,6 +695,7 @@ export default function ForegroundCountDownComp() {
                     key={`duration-${activeId}`}
                     genStyle={genStyle}
                     getIsBehind={getIsBehind}
+                    getTransition={getTransition}
                     sessionId={activeId}
                     suffix={suffix}
                 />

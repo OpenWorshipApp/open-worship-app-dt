@@ -86,9 +86,10 @@ import { useAppEffect } from '../helper/appHooks';
 import {
     genForegroundExtraStyle,
     getForegroundIsBehind,
-    getForegroundTransition,
     getForegroundWidthScale,
 } from './propertiesSettingHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 
 /**
  * Video Show and Image Show put a FILE on the foreground layer, above the
@@ -507,7 +508,11 @@ function genMediaData(
             // it is the current answer even when the panel is not mounted,
             // which is how a slide show running behind a closed panel gets it
             // too. The layer is read the same way, for the same reason.
-            transitionEffect: getForegroundTransition(prefix),
+            // The session's own transition, else the component's -- and no
+            // key at all when it follows the screen's `Foreground:` effect.
+            ...toTransitionPart(
+                resolveForegroundTransition(config.kind, prefix),
+            ),
             ...(config.kind === 'video' ? getForegroundSoundData(prefix) : {}),
             ...(config.genExtraData?.(getWidthScale) ?? {}),
         },
@@ -938,7 +943,7 @@ export default function ForegroundMediaComp({
         // would only be in the way; the blend mode is the point of the widget.
         isCommonStyle: false,
         isBlendMode: true,
-        isTransition: true,
+        widgetKey: kind,
         extraControls:
             kind === 'video' ? (
                 <ForegroundSoundControlComp

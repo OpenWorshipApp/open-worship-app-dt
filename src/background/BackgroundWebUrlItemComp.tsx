@@ -16,6 +16,7 @@ import { RenderWebChildComp } from './BackgroundWebChildComp';
 import { useAppCurrentRef } from '../helper/appHooks';
 import BackgroundListItemComp from './BackgroundListItemComp';
 import type { BackgroundViewModeType } from './BackgroundViewModeComp';
+import { genBackgroundItemTransitionMenuItems } from './backgroundTransitionMenuHelpers';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -78,6 +79,10 @@ export default function BackgroundWebUrlItemComp({
             ...genShowOnScreensContextMenu((event) => {
                 handleSelectingRef.current(event, true);
             }),
+            ...genBackgroundItemTransitionMenuItems(
+                'web',
+                urlSourceRef.current.src,
+            ),
             ...(isInScreenRef.current
                 ? []
                 : [

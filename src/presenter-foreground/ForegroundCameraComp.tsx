@@ -15,9 +15,10 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import {
     getForegroundIsBehind,
-    getForegroundTransition,
     useForegroundPropsSetting,
 } from './propertiesSettingHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import {
     type ForegroundCameraDataType,
     withForegroundLayer,
@@ -65,8 +66,11 @@ function RenderCameraInfoComp({
                         id: cameraInfo.deviceId,
                         label: cameraInfo.label,
                         extraStyle: genStyle(),
-                        transitionEffect: getForegroundTransition(
-                            `camera-${cameraInfo.deviceId}`,
+                        ...toTransitionPart(
+                            resolveForegroundTransition(
+                                'camera',
+                                `camera-${cameraInfo.deviceId}`,
+                            ),
                         ),
                     },
                     getForegroundIsBehind(`camera-${cameraInfo.deviceId}`),
@@ -94,8 +98,11 @@ function RenderCameraInfoComp({
                         id: cameraInfo.deviceId,
                         label: cameraInfo.label,
                         extraStyle: genStyle(),
-                        transitionEffect: getForegroundTransition(
-                            `camera-${cameraInfo.deviceId}`,
+                        ...toTransitionPart(
+                            resolveForegroundTransition(
+                                'camera',
+                                `camera-${cameraInfo.deviceId}`,
+                            ),
                         ),
                     },
                     getForegroundIsBehind(`camera-${cameraInfo.deviceId}`),
@@ -118,7 +125,9 @@ function RenderCameraInfoComp({
                         id: cameraInfoRef.current.deviceId,
                         label: cameraInfoRef.current.label,
                         extraStyle: genStyleRef.current(),
-                        transitionEffect: getForegroundTransition(prefix),
+                        ...toTransitionPart(
+                            resolveForegroundTransition('camera', prefix),
+                        ),
                     },
                     getForegroundIsBehind(prefix),
                 );
@@ -216,7 +225,9 @@ function ForegroundCameraItemComp({
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix,
         isBlendMode: true,
-        isTransition: true,
+        // A camera's Properties are the device's own, so its transition row
+        // is the device's.
+        widgetKey: 'camera',
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 refreshAllCameras(

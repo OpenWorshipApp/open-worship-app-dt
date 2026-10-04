@@ -544,7 +544,10 @@ export default class AppDocument
         showAppContextMenu(event, contextMenuItems);
     }
 
-    async showContextMenu(event: any) {
+    async showContextMenu(
+        event: any,
+        extraMenuItems: ContextMenuItemType[] = [],
+    ) {
         const isClipboardHasImage = await checkIsImagesInClipboard();
         const copiedSlides = await AppDocument.getCopiedSlides();
         const contextMenuItems: ContextMenuItemType[] = [
@@ -587,6 +590,7 @@ export default class AppDocument
                 },
             });
         }
+        contextMenuItems.push(...extraMenuItems);
         showAppContextMenu(event, contextMenuItems);
     }
 

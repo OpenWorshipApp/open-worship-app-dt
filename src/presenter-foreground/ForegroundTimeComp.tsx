@@ -34,6 +34,8 @@ import {
     genForegroundPropsSettingNames,
     useForegroundSessions,
 } from './foregroundSessionHelpers';
+import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 
 /** Every setting ONE clock owns, whichever session holds it. */
 function genClockSettingNames(id: string) {
@@ -104,11 +106,14 @@ function TimeInSetComp({
     id,
     genStyle,
     getIsBehind,
+    getTransition,
     showingScreenIdDataList,
 }: Readonly<{
     id: string;
     genStyle: () => CSSProperties;
     getIsBehind: () => boolean;
+    /** This clock's own transition, else the Time component's -- or none. */
+    getTransition: () => TransitionEffectType | undefined;
     showingScreenIdDataList: [number, ForegroundTimeDataType][];
 }>) {
     const [cityName, setCityName] = useStateSettingString<string>(
@@ -129,6 +134,7 @@ function TimeInSetComp({
             return withForegroundLayer(
                 {
                     id,
+                    ...toTransitionPart(getTransition()),
                     timezoneMinuteOffset,
                     title: cityName || null,
                     is24HourFormat: newIs24HourFormat,
@@ -144,6 +150,7 @@ function TimeInSetComp({
             is24HourFormat,
             genStyle,
             getIsBehind,
+            getTransition,
         ],
     );
     const isAmPmFormat = !is24HourFormat;
@@ -381,9 +388,13 @@ function ForegroundTimeItemComp({
     const {
         genStyle,
         getIsBehind,
+        getTransition,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix: 'time-' + id,
+        // A clock's Properties are its own (the panel files them under the
+        // clock, not the session), so its transition row is the clock's.
+        widgetKey: 'time',
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 refreshAllTimes(showingScreenIdDataList, (timeData) => {
@@ -434,6 +445,7 @@ function ForegroundTimeItemComp({
                 <TimeInSetComp
                     genStyle={genStyle}
                     getIsBehind={getIsBehind}
+                    getTransition={getTransition}
                     id={id}
                     showingScreenIdDataList={showingScreenIdDataList}
                 />

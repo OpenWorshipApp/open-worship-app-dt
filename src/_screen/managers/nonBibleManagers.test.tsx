@@ -36,6 +36,11 @@ const appProviderMock = {
     },
 };
 
+// A slide's own transition is read from a sidecar beside its document on
+// the presenter; none here, so every slide follows the screen's effect.
+vi.mock('./screenSlideTransitionHelpers', () => ({
+    resolveSlideTransitionEffect: async () => undefined,
+}));
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,

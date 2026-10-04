@@ -53,7 +53,10 @@ export default class PptxAppDocument
         return showStaticSlideContextMenu(event, item, extraMenuItems);
     }
 
-    async showContextMenu(event: any) {
+    async showContextMenu(
+        event: any,
+        extraMenuItems: ContextMenuItemType[] = [],
+    ) {
         const contextMenuItems: ContextMenuItemType[] = [
             {
                 childBefore: genContextMenuItemIcon('arrow-clockwise'),
@@ -62,6 +65,7 @@ export default class PptxAppDocument
                     this.fileSource.fireUpdateEvent();
                 },
             },
+            ...extraMenuItems,
         ];
         showAppContextMenu(event, contextMenuItems);
     }

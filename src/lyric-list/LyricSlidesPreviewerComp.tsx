@@ -35,6 +35,7 @@ import {
 } from './lyricStageStyleFloatingHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { exportLyricStagesToPptx } from './lyricPptxExportHelpers';
+import { genDocumentTransitionMenuItems } from '../others/slideTransitionMenuHelpers';
 
 function getLyricAppDocuments(
     stageSetting: string,
@@ -327,7 +328,12 @@ export default function LyricSlidesPreviewerComp() {
     // from the header: nothing on a pane says the menu is there, and one
     // `fireUpdateEvent` on the lyric's own file source refreshes EVERY pane at
     // once - so it belongs to the previewer rather than to any one stage.
-    const handleMoreOptions = useCallback((event: any) => {
+    const handleMoreOptions = useCallback(async (event: any) => {
+        // The song's own transition, the same row each stage pane's ⋮ offers:
+        // it is one per song, whichever stage it is shown on.
+        const transitionMenuItems = await genDocumentTransitionMenuItems(
+            lyricManagerRef.current.fileSource.filePath,
+        );
         showAppContextMenu(event, [
             genLyricReloadContextMenuItem(() => {
                 lyricManagerRef.current.fileSource.fireUpdateEvent();
@@ -341,6 +347,7 @@ export default function LyricSlidesPreviewerComp() {
                     );
                 },
             },
+            ...transitionMenuItems,
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

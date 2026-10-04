@@ -55,6 +55,7 @@ import {
     genNextArchiveFilePath,
     importArchiveFiles,
     importBackgroundMetas,
+    importTransitionMetas,
     readArchiveManifest,
     resolveKindDirPaths,
     safeDeleteDir,
@@ -84,6 +85,9 @@ type ArchiveManifestType = {
     presentingFlow: string;
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
+    // Each document's own transitions; absent from a bundle written before
+    // they existed, or one with none.
+    transitionMetas?: ArchiveBackgroundMetaType[];
     // The exporting machine's data folder (`writeArchiveManifest`); absent
     // from a bundle written before it was recorded.
     dataDirPath?: string | null;
@@ -237,6 +241,9 @@ async function writeArchiveFiles(
         presentingFlow: PRESENTING_FLOW_FILE_NAME,
         files: archiveFiles,
         backgroundMetas: collector.backgroundMetas,
+        ...(collector.transitionMetas.length > 0
+            ? { transitionMetas: collector.transitionMetas }
+            : {}),
     };
     await writeArchiveManifest(stagingDir, manifest);
     return archiveEntries;
@@ -339,6 +346,9 @@ function validateManifest(jsonData: unknown): ArchiveManifestType {
         ),
         backgroundMetas: validateArchiveBackgroundMetas(
             manifest.backgroundMetas,
+        ),
+        transitionMetas: validateArchiveBackgroundMetas(
+            manifest.transitionMetas,
         ),
         dataDirPath:
             typeof manifest.dataDirPath === 'string'
@@ -467,6 +477,11 @@ export async function importPresentingFlowArchive(archiveFilePath: string) {
         await importBackgroundMetas(
             extractDir,
             manifest.backgroundMetas,
+            localFilePathByOriginalPath,
+        );
+        await importTransitionMetas(
+            extractDir,
+            manifest.transitionMetas ?? [],
             localFilePathByOriginalPath,
         );
         const archiveFileName = toArchiveBaseName(

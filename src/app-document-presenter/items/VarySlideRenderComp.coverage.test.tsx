@@ -25,6 +25,7 @@ const {
     useThemeSourceMock,
     screenVaryAppDocumentManagerGetInstanceMock,
     screenVaryAppDocumentManagerClearMock,
+    genSlideTransitionMenuItemsMock,
 } = vi.hoisted(() => ({
     useVarySlideOnScreenListMock: vi.fn(),
     genRemovingAttachedBackgroundMenuMock: vi.fn(),
@@ -60,6 +61,17 @@ const {
     useThemeSourceMock: vi.fn(),
     screenVaryAppDocumentManagerGetInstanceMock: vi.fn(),
     screenVaryAppDocumentManagerClearMock: vi.fn(),
+    genSlideTransitionMenuItemsMock: vi.fn(() => {
+        return [{ menuElement: 'Transition' }];
+    }),
+}));
+
+// A slide's own transition lives in a sidecar beside its document; the card
+// reads it for its badge and adds its row to the slide's menu.
+vi.mock('../../others/slideTransitionMenuHelpers', () => ({
+    useSlideTransition: () => ({ own: undefined, documentOwn: undefined }),
+    genSlideTransitionMenuItems: genSlideTransitionMenuItemsMock,
+    SlideTransitionIconComp: () => null,
 }));
 
 // The slide's ONE screen subscription. It replaces the old blanket
@@ -370,7 +382,13 @@ describe('VarySlideRenderComp', () => {
         expect(onContextMenu).toHaveBeenCalledWith(expect.any(Object), [
             { menuElement: 'Remove Background' },
             { menuElement: 'Choose Color' },
+            { menuElement: 'Transition' },
         ]);
+        expect(genSlideTransitionMenuItemsMock).toHaveBeenCalledWith(
+            varySlide.filePath,
+            varySlide.id,
+            { own: undefined, documentOwn: undefined },
+        );
         expect(handleDragStartMock).toHaveBeenCalledWith(
             expect.anything(),
             varySlide,
@@ -540,6 +558,7 @@ describe('VarySlideRenderComp', () => {
 
         expect(onContextMenu).toHaveBeenCalledWith(expect.any(Object), [
             { menuElement: 'Choose Color' },
+            { menuElement: 'Transition' },
         ]);
     });
 

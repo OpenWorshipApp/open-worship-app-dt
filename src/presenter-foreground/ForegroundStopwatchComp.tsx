@@ -16,6 +16,8 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import {
     type ForegroundStopwatchDataType,
     withForegroundLayer,
@@ -113,12 +115,15 @@ function applyToStopwatches(
 function StopwatchShowingComp({
     genStyle,
     getIsBehind,
+    getTransition,
     sessionId,
     suffix,
     children,
 }: Readonly<{
     genStyle: () => CSSProperties;
     getIsBehind: () => boolean;
+    /** This session's own transition, else the component's -- or none. */
+    getTransition: () => TransitionEffectType | undefined;
     sessionId: string;
     suffix: string;
     children: ReactNode;
@@ -137,9 +142,10 @@ function StopwatchShowingComp({
                 isForceChoosing,
                 sessionId,
                 getIsBehind(),
+                getTransition(),
             );
         },
-        [genStyle, getIsBehind, sessionId, isAutoStart],
+        [genStyle, getIsBehind, getTransition, sessionId, isAutoStart],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -161,6 +167,7 @@ function StopwatchShowingComp({
                         // replayed weeks later carries none -- see
                         // `applyForegroundDragData`.
                         id: sessionId || undefined,
+                        ...toTransitionPart(getTransition()),
                         ...genStopwatchTiming(isAutoStart),
                         extraStyle: genStyle(),
                     },
@@ -168,11 +175,12 @@ function StopwatchShowingComp({
                 ),
             );
         },
-        [genStyle, getIsBehind, sessionId, isAutoStart],
+        [genStyle, getIsBehind, getTransition, sessionId, isAutoStart],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const isAutoStartRef = useAppCurrentRef(isAutoStart);
     const handleDraggingStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
@@ -181,6 +189,7 @@ function StopwatchShowingComp({
             genForegroundDragInf('stopwatch', () => {
                 return withForegroundLayer(
                     {
+                        ...toTransitionPart(getTransitionRef.current()),
                         isAutoStart: isAutoStartRef.current,
                         extraStyle: genStyleRef.current(),
                     },
@@ -425,9 +434,11 @@ export default function ForegroundStopwatchComp() {
     const {
         genStyle,
         getIsBehind,
+        getTransition,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
+        widgetKey: 'stopwatch',
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 // THIS session's stopwatch only. `activeId` is read from the
@@ -473,6 +484,7 @@ export default function ForegroundStopwatchComp() {
                     key={activeId}
                     genStyle={genStyle}
                     getIsBehind={getIsBehind}
+                    getTransition={getTransition}
                     sessionId={activeId}
                     suffix={suffix}
                 >

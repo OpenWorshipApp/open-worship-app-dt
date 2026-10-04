@@ -15,6 +15,7 @@ const { state, mocks } = vi.hoisted(() => ({
         trashAllMaterialFiles: vi.fn(),
         renameAllMaterialFiles: vi.fn(),
         deleteMetaDataFile: vi.fn(),
+        deleteTransitionMetaDataFile: vi.fn(),
         moveFilePath: vi.fn(),
         preDelete: vi.fn(),
         fireUpdateEvent: vi.fn(),
@@ -69,6 +70,11 @@ vi.mock('../server/appHelpers', () => ({
     trashAllMaterialFiles: mocks.trashAllMaterialFiles,
     renameAllMaterialFiles: mocks.renameAllMaterialFiles,
 }));
+vi.mock('../others/SlideTransitionManager', () => ({
+    slideTransitionManager: {
+        deleteMetaDataFile: mocks.deleteTransitionMetaDataFile,
+    },
+}));
 vi.mock('../others/AttachBackgroundManager', () => ({
     attachBackgroundManager: { deleteMetaDataFile: mocks.deleteMetaDataFile },
 }));
@@ -121,6 +127,7 @@ describe('agent backup public contracts', () => {
         expect(AGENT_SIDECAR_EXTENSIONS).toEqual([
             '.bg.json',
             '.preview.bg.json',
+            '.transition.json',
         ]);
     });
 
@@ -270,6 +277,9 @@ describe('agent backup public contracts', () => {
 
         expect(mocks.trashAllMaterialFiles).toHaveBeenCalledOnce();
         expect(mocks.deleteMetaDataFile).toHaveBeenCalledWith('/songs/One.owl');
+        expect(mocks.deleteTransitionMetaDataFile).toHaveBeenCalledWith(
+            '/songs/One.owl',
+        );
     });
 
     test('refuses a delete that the OS trash leaves in place', async () => {

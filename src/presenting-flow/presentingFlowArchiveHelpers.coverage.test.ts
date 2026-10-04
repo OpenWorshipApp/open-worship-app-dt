@@ -122,6 +122,7 @@ vi.mock('../helper/appArchiveHelpers', () => ({
     ARCHIVE_VERSION: 3,
     ArchiveFileCollector: class {
         backgroundMetas = [{ filePath: '/bg' }];
+        transitionMetas = [];
         async addDocument(path: string | null) {
             state.collectorAdds.push(['document', path]);
         }
@@ -143,6 +144,7 @@ vi.mock('../helper/appArchiveHelpers', () => ({
         `${dir}/${name}`,
     importArchiveFiles: (...args: any[]) => mocks.importFiles(...args),
     importBackgroundMetas: mocks.backgrounds,
+    importTransitionMetas: vi.fn(),
     readArchiveManifest: async () => state.manifest,
     resolveKindDirPaths: () => new Map(),
     safeDeleteDir: mocks.safeDelete,

@@ -26,6 +26,8 @@ import { getSelectedScreenManagerBases } from '../_screen/managers/screenManager
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import PropRowComp from './ForegroundPropRowComp';
 import {
     type ForegroundMessageDataType,
@@ -245,7 +247,9 @@ function withStackOffset(
  * dropped them back on top of each other.
  *
  * `isBehind` is handed IN like the style rather than read here: the whole
- * stack goes to one layer, and both callers already hold the answer.
+ * stack goes to one layer, and both callers already hold the answer. So is
+ * `transitionEffect`, the session's own (else the component's), for the same
+ * reason.
  */
 export function genStackedMessageDataList(
     messageList: MessageEditorType[],
@@ -253,6 +257,7 @@ export function genStackedMessageDataList(
     extraStyle: CSSProperties,
     prefix: string,
     isBehind = false,
+    transitionEffect?: TransitionEffectType,
 ) {
     const shownIdSet = new Set(shownIdList);
     const decoration = getForegroundDecoration(prefix, true);
@@ -271,6 +276,7 @@ export function genStackedMessageDataList(
             withForegroundLayer(
                 {
                     id: message.id,
+                    ...toTransitionPart(transitionEffect),
                     textList,
                     intervalSecond: null,
                     extraStyle: withStackOffset(extraStyle, {
@@ -389,11 +395,13 @@ function MessageBodyComp({
     const {
         genStyle,
         getIsBehind,
+        getTransition,
         fontFamily,
         fontWeight,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
+        widgetKey: 'message',
         onChange: (extraStyle: CSSProperties, isBehind: boolean) => {
             attemptTimeout(() => {
                 const screenIdSet = new Set(
@@ -444,6 +452,7 @@ function MessageBodyComp({
                             extraStyle,
                             prefixRef.current,
                             isBehind,
+                            getTransitionRef.current(),
                         ),
                     ];
                     if (allData !== undefined) {
@@ -469,6 +478,7 @@ function MessageBodyComp({
     });
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const suffixRef = useAppCurrentRef(suffix);
     const prefixRef = useAppCurrentRef(prefix);
     const messageAllIdRef = useAppCurrentRef(messageAllId);
@@ -579,6 +589,7 @@ function MessageBodyComp({
                     genStyleRef.current(),
                     prefixRef.current,
                     getIsBehindRef.current(),
+                    getTransitionRef.current(),
                 ),
             ]);
         },
@@ -600,6 +611,7 @@ function MessageBodyComp({
             return withForegroundLayer(
                 {
                     id: messageAllIdRef.current,
+                    ...toTransitionPart(getTransitionRef.current()),
                     textList,
                     intervalSecond: isRotatingRef.current
                         ? intervalSecondRef.current
@@ -731,6 +743,7 @@ function MessageBodyComp({
                 const data = genAllMessageData();
                 return withForegroundLayer(
                     {
+                        ...toTransitionPart(getTransitionRef.current()),
                         textList: data?.textList ?? [],
                         intervalSecond: data?.intervalSecond ?? null,
                         extraStyle: genStyleRef.current(),

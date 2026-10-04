@@ -1168,6 +1168,25 @@ const dictionary = {
     Background: 'Arrière-plan',
     'Slide transition': 'Transition de diapositive',
     'Background transition': "Transition d'arrière-plan",
+    // --- Transition overrides: a slides preview, a slide, a Background tab,
+    // one background, a foreground component or one of its sessions can come
+    // in with its own transition instead of the screen's.
+    'Foreground transition': 'Transition de premier plan',
+    'Own transition': 'Transition propre',
+    Follows: 'Suit',
+    'Varies by screen': "Varie selon l'écran",
+    'Screen setting': "Réglage de l'écran",
+    'Slides preview': 'Aperçu des diapositives',
+    'Slides preview transition': "Transition de l'aperçu des diapositives",
+    'Every slide of this document comes in with it, unless the slide has its own.':
+        'Chaque diapositive de ce document apparaît avec elle, sauf si la diapositive a la sienne.',
+    'Every background from this tab comes in with it, unless the background has its own.':
+        "Chaque arrière-plan de cet onglet apparaît avec elle, sauf si l'arrière-plan a la sienne.",
+    'Marquee default': 'Par défaut du bandeau',
+    'All sessions': 'Toutes les sessions',
+    'Transition for all sessions': 'Transition pour toutes les sessions',
+    'Every session of this panel comes in with it, unless the session has its own in Properties.':
+        'Chaque session de ce panneau apparaît avec elle, sauf si la session a la sienne dans Propriétés.',
     'Clear input': 'Effacer la saisie',
     'Clear input chunk': 'Effacer une partie de la saisie',
     'Keep popup modal open when adding a bible item, useful in presenter mode':

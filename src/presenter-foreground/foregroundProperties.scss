@@ -204,11 +204,24 @@
   }
 }
 
+// The Transition row's "Own transition" checkbox: the strip's own small type,
+// not Bootstrap's body size, which made it the loudest words in the panel.
+.fg-prop-control .form-check-label {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
 .fg-select {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 11rem;
   padding: 1px 4px;
+
+  // Unticked, the Transition picker shows what the session FOLLOWS; it has to
+  // read as not-chosen.
+  &:disabled {
+    opacity: 0.55;
+  }
 
   // Border only. A background change here would follow the control into its
   // open list, which is the whole reason that list was unreadable.

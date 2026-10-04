@@ -42,6 +42,7 @@ import type {
 } from '../resize-actor/flexSizeHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import VaryAppDocumentPinComp from './VaryAppDocumentPinComp';
+import { ForegroundComponentTransitionButtonComp } from '../presenter-foreground/ForegroundTransitionControlsComp';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -77,6 +78,14 @@ function ForegroundWidgetPanelComp({
             // at one of them: `Video Show > snow.mp4` rather than both.
             widgetName={widget.labelKey}
             onClose={onClose}
+            // The transition of the WHOLE component -- every session at once;
+            // a session's own row in its Properties still wins over it.
+            extraActionButtons={
+                <ForegroundComponentTransitionButtonComp
+                    widgetKey={widget.key}
+                    widgetLabel={widget.labelKey}
+                />
+            }
             options={{
                 width: 460,
                 height: 520,

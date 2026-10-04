@@ -117,6 +117,11 @@ const mocks = vi.hoisted(() => {
     };
 });
 
+// A slide's own transition is read from a sidecar beside its document on
+// the presenter; none here, so every slide follows the screen's effect.
+vi.mock('./screenSlideTransitionHelpers', () => ({
+    resolveSlideTransitionEffect: async () => undefined,
+}));
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
     setSetting: mocks.setSetting,
@@ -1444,6 +1449,9 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             },
             isRenderFullWidth: false,
         };
+        // The setter is not awaitable (the slide's own transition is looked
+        // up first), so let it land before rendering again.
+        await flushVarySlideData();
         await manager.render();
         const [player] = mocks.FakeSlideYouTubePlayer.instances;
         expect(player).toBeDefined();

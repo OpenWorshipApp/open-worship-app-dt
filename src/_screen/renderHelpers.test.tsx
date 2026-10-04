@@ -426,6 +426,49 @@ describe('screen render helpers', () => {
         ]);
     });
 
+    test('a marquee keeps its edge slide unless it carries its own transition', async () => {
+        const { genHtmlForegroundMarquee, genMarqueeTransitionCss } =
+            await import('./screenForegroundHelpers');
+        // No transition of its own: the band slides in from its edge -- NOT
+        // the screen's Foreground effect -- and "Slide In" is the same slide.
+        const edge = genMarqueeTransitionCss(undefined, '-100%');
+        expect(edge.base).toBe('transform: translateY(-100%);');
+        expect(genMarqueeTransitionCss('move', '-100%')).toEqual(edge);
+        expect(genMarqueeTransitionCss('fade', '100%').base).toBe(
+            'opacity: 0;',
+        );
+        expect(genMarqueeTransitionCss('zoom', '100%').inFrames).toContain(
+            'scale(1)',
+        );
+        // A cut: nothing hidden, nothing animated, nothing to wait for.
+        expect(genMarqueeTransitionCss('none', '100%')).toEqual({
+            base: '',
+            inFrames: '',
+            outFrames: '',
+            millisecond: 0,
+        });
+
+        const fading = genHtmlForegroundMarquee(
+            { text: 'Hello there', extraStyle: {}, transitionEffect: 'fade' },
+            { height: 768 } as any,
+            'bottom',
+        );
+        const fadingCss = fading.element.querySelector('style')?.textContent;
+        expect(fadingCss).toContain('opacity: 0;');
+        expect(fadingCss).not.toContain('translateY');
+
+        const cut = genHtmlForegroundMarquee(
+            { text: 'Hello there', extraStyle: {}, transitionEffect: 'none' },
+            { height: 768 } as any,
+            'top',
+        );
+        vi.useFakeTimers();
+        const removing = cut.handleRemoving();
+        await vi.advanceTimersByTimeAsync(0);
+        await removing;
+        vi.useRealTimers();
+    });
+
     test('renders marquee bottom and quick text foreground DOM helpers', async () => {
         vi.useFakeTimers();
 

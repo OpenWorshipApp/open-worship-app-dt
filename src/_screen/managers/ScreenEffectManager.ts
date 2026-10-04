@@ -18,6 +18,18 @@ import {
 import type ScreenManagerBase from './ScreenManagerBase';
 
 const cache = new Map<string, ScreenEffectManager>();
+
+/**
+ * Fired when a screen's transition for any layer is created, changed or
+ * removed: what an override's checkbox says it falls back to
+ * (`getCommonEffectType`) has to follow, and a panel restored open on
+ * start-up asks before any screen exists.
+ */
+export const SCREEN_EFFECT_CHANGED_EVENT = 'screen-effect-changed';
+
+function fireScreenEffectChanged() {
+    EventHandler.addPropEvent(SCREEN_EFFECT_CHANGED_EVENT);
+}
 class ScreenEffectManager extends EventHandler<PTFEventType> {
     screenManagerBase: ScreenManagerBase;
     readonly target: string;
@@ -38,6 +50,7 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
             ? (effectType as TransitionEffectType)
             : 'fade';
         cache.set(this.toCacheKey(), this);
+        fireScreenEffectChanged();
     }
 
     protected toCacheKey() {
@@ -60,6 +73,7 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
         setSetting(this.settingName, value);
         this.sendSyncScreen();
         this.addPropEvent('update');
+        fireScreenEffectChanged();
     }
     get styleAnim() {
         return this.styleAnimList[this.effectType];
@@ -93,11 +107,34 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
 
     delete() {
         cache.delete(this.toCacheKey());
+        fireScreenEffectChanged();
         // This instance owns `pt-effect-<screenId>-<target>`, and screen ids are
         // reused, so the chosen transition has to go with the screen.
         removeSetting(this.settingName);
         this.screenManagerBase =
             this.screenManagerBase.createScreenManagerBaseGhost(this.screenId);
+    }
+
+    /**
+     * The transition every screen uses for `target`, or `null` when the
+     * screens do not agree (or there are none). An override's checkbox shows
+     * this while unticked, as what the item will fall back to.
+     */
+    static getCommonEffectType(target: string): TransitionEffectType | null {
+        let commonEffectType: TransitionEffectType | null = null;
+        for (const instance of cache.values()) {
+            if (instance.target !== target) {
+                continue;
+            }
+            if (
+                commonEffectType !== null &&
+                commonEffectType !== instance.effectType
+            ) {
+                return null;
+            }
+            commonEffectType = instance.effectType;
+        }
+        return commonEffectType;
     }
 
     static getInstance(screenId: number, target: string) {

@@ -75,6 +75,12 @@ import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers
 import { cloneJson } from '../../helper/helpers';
 import { handleError } from '../../helper/errorHelpers';
 import { getTargetLyricSlideItemData } from '../../lyric-list/lyricSlideScreenHelpers';
+import { resolveSlideTransitionEffect } from './screenSlideTransitionHelpers';
+import { withTransitionEffect } from '../transitionOverrideHelpers';
+import {
+    getStyleAnimForNode,
+    type TransitionEffectType,
+} from '../transitionEffectHelpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
     const results = Array.from(root.querySelectorAll(selector));
@@ -297,19 +303,37 @@ class ScreenVaryAppDocumentManager
             await this.set_varySlideData(targetVarySlideData);
             return;
         }
-        const targetItemJson = await getTargetLyricSlideItemData(
-            targetVarySlideData.filePath,
-            targetVarySlideData.itemJson as any,
-            this.screenManagerBase.stage,
-        );
+        const [targetItemJson, transitionEffect] = await Promise.all([
+            getTargetLyricSlideItemData(
+                targetVarySlideData.filePath,
+                targetVarySlideData.itemJson as any,
+                this.screenManagerBase.stage,
+            ),
+            // The one place every way of putting a slide up meets -- a click,
+            // the arrow keys, a run sheet row, a drop, a stage re-apply, a
+            // sync group -- so the slide's own transition (else its slides
+            // preview's) is read here, on the presenter. The screen window is
+            // handed it in the sync and keeps what it was given.
+            appProvider.isPageScreen
+                ? Promise.resolve(targetVarySlideData.transitionEffect)
+                : resolveSlideTransitionEffect(
+                      targetVarySlideData.filePath,
+                      targetVarySlideData.itemJson.id,
+                  ),
+        ]);
         // A new object rather than writing `itemJson` back onto the argument:
         // the argument can be an entry of the memoized on-screen map (the
         // constructor seeds `_varySlideData` from it), and mutating it would
         // change what every later reader of that map sees.
-        await this.set_varySlideData({
-            ...targetVarySlideData,
-            itemJson: targetItemJson,
-        });
+        await this.set_varySlideData(
+            withTransitionEffect(
+                {
+                    ...targetVarySlideData,
+                    itemJson: targetItemJson,
+                },
+                transitionEffect,
+            ),
+        );
     }
 
     set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
@@ -1188,7 +1212,8 @@ class ScreenVaryAppDocumentManager
             return;
         }
         const targetDiv = div.lastChild as HTMLDivElement;
-        await this.effectManager.styleAnim.animOut(targetDiv);
+        // It leaves the way it came in (`TRANSITION_DATASET_KEY`).
+        await this.genStyleAnimForNode(targetDiv).animOut(targetDiv);
         targetDiv.remove();
     }
 
@@ -1252,7 +1277,10 @@ class ScreenVaryAppDocumentManager
             return;
         }
         for (const child of Array.from(div.children)) {
-            this.effectManager.styleAnim
+            // Each slide leaves the way it came in, whatever the next one
+            // comes in with: a slide that zoomed in zooms out under a slide
+            // that fades in (`TRANSITION_DATASET_KEY`).
+            this.genStyleAnimForNode(child)
                 .animOut(child as HTMLDivElement)
                 .then(() => {
                     child.remove();
@@ -1265,7 +1293,31 @@ class ScreenVaryAppDocumentManager
             height: `${this.screenManagerBase.height}px`,
             transform: `scale(${target.scale},${target.scale}) translate(50%, 50%)`,
         });
-        this.effectManager.styleAnim.animIn(divContainer, div);
+        this.genStyleAnimFor(this.varySlideData.transitionEffect).animIn(
+            divContainer,
+            div,
+        );
+    }
+
+    /**
+     * The slide's own transition when it carries one (it or its slides
+     * preview overrides the screen), else the screen's `Slide:` effect.
+     */
+    genStyleAnimFor(transitionEffect?: TransitionEffectType) {
+        return (
+            (transitionEffect === undefined
+                ? undefined
+                : this.effectManager.styleAnimList[transitionEffect]) ??
+            this.effectManager.styleAnim
+        );
+    }
+
+    genStyleAnimForNode(node: Element) {
+        return getStyleAnimForNode(
+            node,
+            this.effectManager.styleAnimList,
+            this.effectManager.styleAnim,
+        );
     }
 
     get containerStyle(): CSSProperties {

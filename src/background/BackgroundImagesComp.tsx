@@ -35,6 +35,10 @@ import {
 import { handleError } from '../helper/errorHelpers';
 import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { useBackgroundSessions } from './backgroundSessionHelpers';
+import {
+    BackgroundTransitionTileBadgeComp,
+    genBackgroundItemTransitionMenuItems,
+} from './backgroundTransitionMenuHelpers';
 
 function rendChild(
     filePath: string,
@@ -69,8 +73,19 @@ function rendChild(
                     pointerEvents: 'none',
                 }}
             />
+            <BackgroundTransitionTileBadgeComp
+                backgroundType="image"
+                src={fileSource.src}
+            />
             {extraChild}
         </div>
+    );
+}
+
+function genExtraItemContextMenuItems(filePath: string) {
+    return genBackgroundItemTransitionMenuItems(
+        'image',
+        FileSource.getInstance(filePath).src,
     );
 }
 
@@ -198,6 +213,7 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={session.dirSourceSettingName}
             genContextMenuItems={genContextMenuItems}
+            genExtraItemContextMenuItems={genExtraItemContextMenuItems}
         />
     );
 }

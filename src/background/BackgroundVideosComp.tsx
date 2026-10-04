@@ -37,6 +37,10 @@ import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { useBackgroundSessions } from './backgroundSessionHelpers';
 import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    BackgroundTransitionTileBadgeComp,
+    genBackgroundItemTransitionMenuItems,
+} from './backgroundTransitionMenuHelpers';
 
 function RendBodyComp({
     filePath,
@@ -130,6 +134,10 @@ function RendBodyComp({
                     />
                 ) : null}
             </div>
+            <BackgroundTransitionTileBadgeComp
+                backgroundType="video"
+                src={fileSource.src}
+            />
             {extraChild}
         </div>
     );
@@ -225,6 +233,10 @@ function genExtraItemContextMenuItems(filePath: string) {
                 setIsFadingAtTheEndSetting(fileSource.src, isFadingAtTheEnd);
             },
         },
+        ...genBackgroundItemTransitionMenuItems(
+            'video',
+            FileSource.getInstance(filePath).src,
+        ),
     ];
 }
 

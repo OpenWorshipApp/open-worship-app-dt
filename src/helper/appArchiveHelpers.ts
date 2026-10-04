@@ -25,6 +25,10 @@ import {
 } from '../server/fileHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
 import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
+import {
+    TRANSITION_META_DOT_EXTENSION,
+    toValidTransitionEffect,
+} from '../_screen/transitionOverrideHelpers';
 
 /**
  * The machinery shared by every "bundle this thing with everything it needs"
@@ -241,6 +245,10 @@ async function readCanvasDocumentJson(filePath: string) {
 export class ArchiveFileCollector {
     readonly entryByOriginalPath = new Map<string, ArchiveFileEntryType>();
     readonly backgroundMetas: ArchiveBackgroundMetaType[] = [];
+    // A document's `.transition.json` (its slides preview's and its slides'
+    // own transitions). Same shape as a background meta, but carried verbatim:
+    // it names no file.
+    readonly transitionMetas: ArchiveBackgroundMetaType[] = [];
     // Sidecars are rewritten before archiving, so they are staged as content
     // rather than copied from disk.
     readonly extraContentByArchivePath = new Map<string, string>();
@@ -252,6 +260,7 @@ export class ArchiveFileCollector {
     // A document reached both as a slide entry and as a document entry must not
     // archive its sidecar twice.
     private readonly seenBackgroundMetaPaths = new Set<string>();
+    private readonly seenTransitionMetaPaths = new Set<string>();
     private readonly seenCanvasDocumentPaths = new Set<string>();
 
     private nextArchivePath(originalPath: string) {
@@ -348,6 +357,33 @@ export class ArchiveFileCollector {
     }
 
     /**
+     * Pull in a document's own transitions, keeping only the entries that are
+     * a transition at all.
+     */
+    async addTransitionMeta(documentOriginalPath: string) {
+        if (this.seenTransitionMetaPaths.has(documentOriginalPath)) {
+            return;
+        }
+        this.seenTransitionMetaPaths.add(documentOriginalPath);
+        const metaFilePath = `${documentOriginalPath}${TRANSITION_META_DOT_EXTENSION}`;
+        if (!(await fsCheckFileExist(metaFilePath))) {
+            return;
+        }
+        const metaData = toValidTransitionMetaData(
+            parseJsonSafely(await fsReadFile(metaFilePath), true),
+        );
+        if (metaData === null) {
+            return;
+        }
+        const archivePath = this.nextArchivePath(metaFilePath);
+        this.extraContentByArchivePath.set(
+            archivePath,
+            JSON.stringify(metaData),
+        );
+        this.transitionMetas.push({ documentOriginalPath, archivePath });
+    }
+
+    /**
      * Pull in the media a document's own canvas points at. The files ride in
      * `manifest.files` like any other, keyed by the absolute path the document
      * holds — which is exactly what import looks the local copy up by, so no
@@ -380,6 +416,7 @@ export class ArchiveFileCollector {
         }
         const filePath = documentOriginalPath as string;
         await this.addBackgroundMeta(filePath);
+        await this.addTransitionMeta(filePath);
         await this.addCanvasDocumentMedia(filePath);
         return true;
     }
@@ -511,6 +548,26 @@ export function validateArchiveBackgroundMetas(
             typeof backgroundMeta?.archivePath === 'string'
         );
     });
+}
+
+/**
+ * A `.transition.json` map with only its valid entries, or `null` when none
+ * is left -- the same check the app applies when it reads the sidecar.
+ */
+export function toValidTransitionMetaData(
+    metaData: unknown,
+): { [key: string]: string } | null {
+    if (metaData === null || typeof metaData !== 'object') {
+        return null;
+    }
+    const validData: { [key: string]: string } = {};
+    for (const [key, value] of Object.entries(metaData)) {
+        const effect = toValidTransitionEffect(value);
+        if (effect !== undefined) {
+            validData[key] = effect;
+        }
+    }
+    return Object.keys(validData).length > 0 ? validData : null;
 }
 
 export function toExtractedArchivePath(
@@ -939,6 +996,44 @@ export async function importBackgroundMetas(
                     kindDirSettingNameMap[kind],
                     localFilePath,
                 ).fileFullNameOrFilePath ?? localFilePath;
+        }
+        await fsCreateFile(metaFilePath, JSON.stringify(metaData), true);
+        FileSource.getInstance(metaFilePath).fireUpdateEvent();
+    }
+}
+
+/**
+ * Put back the transitions bundled with a document, beside the document as it
+ * was imported. Like the background sidecar, an existing one is left alone.
+ */
+export async function importTransitionMetas(
+    extractDir: string,
+    transitionMetas: ArchiveBackgroundMetaType[],
+    localFilePathByOriginalPath: Map<string, string>,
+) {
+    for (const transitionMeta of transitionMetas) {
+        const documentFilePath = localFilePathByOriginalPath.get(
+            transitionMeta.documentOriginalPath,
+        );
+        if (documentFilePath === undefined) {
+            continue;
+        }
+        const metaFilePath = `${documentFilePath}${TRANSITION_META_DOT_EXTENSION}`;
+        if (await fsCheckFileExist(metaFilePath)) {
+            continue;
+        }
+        const extractedFilePath = toExtractedArchivePath(
+            extractDir,
+            transitionMeta.archivePath,
+        );
+        if (!(await fsCheckFileExist(extractedFilePath))) {
+            continue;
+        }
+        const metaData = toValidTransitionMetaData(
+            parseJsonSafely(await fsReadFile(extractedFilePath), true),
+        );
+        if (metaData === null) {
+            continue;
         }
         await fsCreateFile(metaFilePath, JSON.stringify(metaData), true);
         FileSource.getInstance(metaFilePath).fireUpdateEvent();

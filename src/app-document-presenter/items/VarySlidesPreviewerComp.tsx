@@ -41,6 +41,7 @@ import {
     SlidesPreviewerScopeContext,
     useThumbnailScaleSettingOptions,
 } from './slidesPreviewerScopeHelpers';
+import { genDocumentTransitionMenuItems } from '../../others/slideTransitionMenuHelpers';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -144,8 +145,14 @@ export default function VarySlidesPreviewerComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
-    const handleContextMenu = useCallback((event: any) => {
-        varyAppDocumentRef.current.showContextMenu(event);
+    const handleContextMenu = useCallback(async (event: any) => {
+        const varyAppDocument = varyAppDocumentRef.current;
+        // The slides preview's own transition, for every kind of document --
+        // read through the short-lived cache so the row can say what it does.
+        const extraMenuItems = await genDocumentTransitionMenuItems(
+            varyAppDocument.filePath,
+        );
+        varyAppDocument.showContextMenu(event, extraMenuItems);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleDragOver = useCallback((event: any) => {

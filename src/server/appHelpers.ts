@@ -32,6 +32,7 @@ export {
     electronSendAsync,
     genReturningEventName,
 } from './electronSendHelpers';
+import { TRANSITION_META_DOT_EXTENSION } from '../_screen/transitionOverrideHelpers';
 
 export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
@@ -195,7 +196,13 @@ export function pasteTextToInput(inputElement: HTMLInputElement, text: string) {
     );
 }
 
-const FILE_EXTENSIONS = ['.bg.json', '.preview.bg.json'];
+// A document's side files: its attached backgrounds, the preview's, and its
+// slides' own transitions -- renamed and trashed with it.
+const FILE_EXTENSIONS = [
+    '.bg.json',
+    '.preview.bg.json',
+    TRANSITION_META_DOT_EXTENSION,
+];
 export async function renameAllMaterialFiles(
     oldFileSource: FileSource,
     newBaseFileName: string,

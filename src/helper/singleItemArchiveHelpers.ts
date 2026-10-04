@@ -13,6 +13,7 @@ import {
     genNextArchiveFilePath,
     importArchiveFiles,
     importBackgroundMetas,
+    importTransitionMetas,
     readArchiveManifest,
     resolveKindDirPaths,
     safeDeleteDir,
@@ -153,6 +154,9 @@ type ArchiveManifestType = {
     item: string;
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
+    // A document's own transitions; absent from a bundle written before they
+    // existed, or one with none.
+    transitionMetas?: ArchiveBackgroundMetaType[];
     colorNotes: { [key: string]: string };
     // The exporting machine's data folder (`writeArchiveManifest`); absent
     // from a bundle written before it was recorded.
@@ -209,6 +213,9 @@ export async function createSingleItemArchive(
             item: filePath,
             files: archiveFiles,
             backgroundMetas: collector.backgroundMetas,
+            ...(collector.transitionMetas.length > 0
+                ? { transitionMetas: collector.transitionMetas }
+                : {}),
             // A non-app file (PDF/PPTX/DOCX) keeps its own color note in the
             // settings rather than inside the file, and EVERY document keeps
             // its per-slide notes there — none of that travels with the file
@@ -344,6 +351,9 @@ function validateManifest(
         backgroundMetas: validateArchiveBackgroundMetas(
             manifest.backgroundMetas,
         ),
+        transitionMetas: validateArchiveBackgroundMetas(
+            manifest.transitionMetas,
+        ),
         // Every value is re-checked by `setColorNoteFilePathSettings`, so a
         // hand-edited manifest cannot push a non-color into the settings.
         colorNotes:
@@ -431,6 +441,11 @@ export async function importSingleItemArchive(
         await importBackgroundMetas(
             extractDir,
             manifest.backgroundMetas,
+            localFilePathByOriginalPath,
+        );
+        await importTransitionMetas(
+            extractDir,
+            manifest.transitionMetas ?? [],
             localFilePathByOriginalPath,
         );
         // Only onto an item this import WROTE. A reused one is the operator's

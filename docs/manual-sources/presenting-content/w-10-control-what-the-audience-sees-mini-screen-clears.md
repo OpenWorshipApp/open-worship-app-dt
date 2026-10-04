@@ -47,8 +47,11 @@ workflowsVersion: "2026-10-04"
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
-- **Transitions** (footer, `Tr:`): the **Slide:** and **Background:** buttons choose the
-  change animation — **none / fade / move / zoom**. 📸
+- **Transitions** (footer, `Tr:`): the **Slide:**, **Background:** and
+  **[en:tran:Foreground]:** buttons choose the change animation for that screen —
+  **none / fade / move / zoom**. They are the fallback: a document, a slide, a
+  Background tab, one background, a foreground panel or one of its sessions can
+  carry its own transition instead (W-48). 📸
 - **Background audio** (footer, the soundwave icon — appears while a video background
   is live): opens a small player per video to play/pause its audio in sync; the
   repeat icon loops it. The app refuses to close the player while audio is playing.

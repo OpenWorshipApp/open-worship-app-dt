@@ -6,6 +6,10 @@ import {
     genCountdownTiming,
     genStopwatchTiming,
 } from '../_screen/managers/timerStateHelpers';
+import {
+    toTransitionPart,
+    toValidTransitionEffect,
+} from '../_screen/transitionOverrideHelpers';
 
 // Foregrounds used to travel to a screen ONLY through `dragStore.onDropped` — a
 // live closure that dies with the drag. That is enough to drop one on a screen,
@@ -222,6 +226,12 @@ export async function applyForegroundDragData(
     // The four rebuilt below are built field by field, so the layer has to be
     // carried across by hand; the rest replay `data` whole and keep it.
     const isBehind = data.isBehind === true;
+    // So is its own transition, when the row was made by a session or a
+    // component that had one -- only ever a valid effect, never the key with
+    // nothing in it.
+    const transitionPart = toTransitionPart(
+        toValidTransitionEffect(data.transitionEffect),
+    );
     const rowKey = toForegroundRowKey(data);
     if (target === 'message') {
         screenForegroundManager.addMessageData(
@@ -232,6 +242,7 @@ export async function applyForegroundDragData(
                     // all" uses -- replaying twice must not stack two copies
                     // on the screen.
                     id: 'message-all',
+                    ...transitionPart,
                     textList: data.textList ?? [],
                     intervalSecond: data.intervalSecond ?? null,
                     extraStyle,
@@ -242,7 +253,12 @@ export async function applyForegroundDragData(
     } else if (target === 'countdown') {
         screenForegroundManager.setCountdownData(
             withForegroundLayer(
-                { ...toCountdownTiming(data), extraStyle, rowKey },
+                {
+                    ...transitionPart,
+                    ...toCountdownTiming(data),
+                    extraStyle,
+                    rowKey,
+                },
                 isBehind,
             ),
         );
@@ -251,6 +267,7 @@ export async function applyForegroundDragData(
         screenForegroundManager.setStopwatchData(
             withForegroundLayer(
                 {
+                    ...transitionPart,
                     ...genStopwatchTiming(data.isAutoStart !== false),
                     extraStyle,
                     rowKey,
@@ -274,6 +291,7 @@ export async function applyForegroundDragData(
         screenForegroundManager.setQuickTextData(
             withForegroundLayer(
                 {
+                    ...transitionPart,
                     htmlText: html,
                     timeSecondDelay: data.timeSecondDelay,
                     timeSecondToLive: data.timeSecondToLive,

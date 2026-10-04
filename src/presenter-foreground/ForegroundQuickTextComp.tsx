@@ -20,6 +20,7 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import PropRowComp from './ForegroundPropRowComp';
 import {
     type ForegroundQuickTextDataType,
@@ -112,11 +113,13 @@ function QuickTextBodyComp({
     const {
         genStyle,
         getIsBehind,
+        getTransition,
         fontFamily,
         fontWeight,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
+        widgetKey: 'quick-text',
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 refreshAllQuickText(showingRef.current, extraStyle, isBehind);
@@ -139,6 +142,7 @@ function QuickTextBodyComp({
                 isForceChoosing,
                 sessionId,
                 getIsBehind(),
+                getTransition(),
             );
         },
         [
@@ -147,6 +151,7 @@ function QuickTextBodyComp({
             timeSecondToLive,
             genStyle,
             getIsBehind,
+            getTransition,
             sessionId,
         ],
     );
@@ -168,6 +173,7 @@ function QuickTextBodyComp({
                         // A LIVE drop from this panel is this session acting;
                         // a run-sheet row replayed weeks later carries none.
                         id: sessionId || undefined,
+                        ...toTransitionPart(getTransition()),
                         htmlText: await getRenderedHtml(),
                         timeSecondDelay,
                         timeSecondToLive,
@@ -183,6 +189,7 @@ function QuickTextBodyComp({
             timeSecondToLive,
             genStyle,
             getIsBehind,
+            getTransition,
             sessionId,
         ],
     );
@@ -216,6 +223,7 @@ function QuickTextBodyComp({
     const timeSecondToLiveRef = useAppCurrentRef(timeSecondToLive);
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const handleQuickTextDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
         // The markdown source travels, not the rendered html: rendering is
@@ -225,6 +233,7 @@ function QuickTextBodyComp({
             genForegroundDragInf('quick-text', () => {
                 return withForegroundLayer(
                     {
+                        ...toTransitionPart(getTransitionRef.current()),
                         markdownText: markdownTextRef.current,
                         timeSecondDelay: timeSecondDelayRef.current,
                         timeSecondToLive: timeSecondToLiveRef.current,

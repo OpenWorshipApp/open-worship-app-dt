@@ -425,10 +425,14 @@ describe('appHelpers', () => {
         const module = await loadModule();
         const renameToMock = vi.fn(async () => undefined);
         const trashMock = vi.fn(async () => undefined);
+        // Three side files per document: `.bg.json`, `.preview.bg.json` and
+        // `.transition.json`, asked in that order by each of the two calls.
         fsCheckFileExistMock
             .mockResolvedValueOnce(true)
             .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(true)
+            .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(false);
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
             if (filePath.endsWith('.bg.json')) {
@@ -456,6 +460,12 @@ describe('appHelpers', () => {
 
         expect(renameToMock).toHaveBeenCalledWith('New Song');
         expect(trashMock).toHaveBeenCalledTimes(1);
+        // A document's own transitions go with it too.
+        expect(
+            fsCheckFileExistMock.mock.calls.some(([filePath]) => {
+                return String(filePath).endsWith('Old Song.transition.json');
+            }),
+        ).toBe(true);
     });
 
     test('downloads images and reports each failure mode', async () => {

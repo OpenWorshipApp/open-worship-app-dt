@@ -48,6 +48,7 @@ import {
 import type { OptionalPromise } from '../../helper/typeHelpers';
 import type ScreenEffectManager from './ScreenEffectManager';
 import type { TransitionEffectType } from '../transitionEffectHelpers';
+import { toTransitionPart } from '../transitionOverrideHelpers';
 import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 import appProvider from '../../server/appProvider';
 
@@ -217,17 +218,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         ]);
     }
 
-    get styleAnimFade() {
-        return this.effectManager.styleAnimList.fade;
-    }
-
     /**
      * The animation ONE overlay comes in with.
      *
-     * The media widgets each choose their own per session, so this reads the
-     * datum first; anything without a choice falls back to the layer's own
-     * effect, and that to `fade`, which is what every foreground item used to
-     * be hardcoded to.
+     * Its own when its session, or its whole component, chose one (stamped on
+     * the datum on the presenter); otherwise the screen's `Foreground:` effect
+     * -- on the screen window, that window's own copy, synced by
+     * `ScreenManager.sendSyncScreen` -- and that to `fade`, which is what
+     * every text and timer overlay used to be hardcoded to.
      */
     styleAnimFor(data: { transitionEffect?: TransitionEffectType } | null) {
         const chosen = data?.transitionEffect ?? this.effectManager.effectType;
@@ -539,7 +537,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderMessage(data: ForegroundMessageDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundMessage(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
@@ -603,7 +601,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
 
     renderCountdown(data: ForegroundCountdownDataType) {
         const { handleAdding, handleRemoving, handleUpdating } =
-            genHtmlForegroundCountdown(data, this.styleAnimFade);
+            genHtmlForegroundCountdown(data, this.styleAnimFor(data));
         const divContainer = this.createDivContainer(
             data,
             handleRemoving,
@@ -628,7 +626,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * its sessions is putting this up, and everything else that starts a
      * countdown -- a dropped run-sheet row, the assistant -- carries no session
      * at all and must keep the call it already makes. `isBehind` comes after it
-     * for the same reason -- see `ForegroundLayerDataType`.
+     * for the same reason -- see `ForegroundLayerDataType` -- and then
+     * `transitionEffect`, the session's or the component's own transition.
      *
      * `timing` is a bare target `Date` for a countdown that runs at once, or
      * the whole timing of one that can be started and paused
@@ -641,6 +640,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         isForceChoosing = false,
         sessionId?: string,
         isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -649,6 +649,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                     ? withForegroundLayer(
                           {
                               ...toSessionIdPart(sessionId),
+                              ...toTransitionPart(transitionEffect),
                               ...(timing instanceof Date
                                   ? { dateTime: timing }
                                   : timing),
@@ -665,7 +666,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
 
     renderStopwatch(data: ForegroundStopwatchDataType) {
         const { handleAdding, handleRemoving, handleUpdating } =
-            genHtmlForegroundStopwatch(data, this.styleAnimFade);
+            genHtmlForegroundStopwatch(data, this.styleAnimFor(data));
         const divContainer = this.createDivContainer(
             data,
             handleRemoving,
@@ -693,6 +694,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         isForceChoosing = false,
         sessionId?: string,
         isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -703,6 +705,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                         : withForegroundLayer(
                               {
                                   ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
                                   ...(timing instanceof Date
                                       ? { dateTime: timing }
                                       : timing),
@@ -719,7 +722,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderTime(data: ForegroundTimeDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundTime(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
@@ -834,6 +837,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         isForceChoosing = false,
         sessionId?: string,
         isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -844,6 +848,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                         : withForegroundLayer(
                               {
                                   ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
                                   text,
                                   speedPercentage,
                                   extraStyle,
@@ -864,6 +869,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         isForceChoosing = false,
         sessionId?: string,
         isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -874,6 +880,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                         : withForegroundLayer(
                               {
                                   ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
                                   text,
                                   speedPercentage,
                                   extraStyle,
@@ -889,7 +896,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderQuickText(data: ForegroundQuickTextDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundQuickText(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
             () => {
                 this.setQuickTextData(null);
             },
@@ -919,6 +926,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         isForceChoosing = false,
         sessionId?: string,
         isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -929,6 +937,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                         : withForegroundLayer(
                               {
                                   ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
                                   htmlText,
                                   timeSecondDelay,
                                   timeSecondToLive,

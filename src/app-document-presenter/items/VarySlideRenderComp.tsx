@@ -44,6 +44,12 @@ import { toSlideAccessibleName } from './slideAccessibleNameHelpers';
 import { useSlidesPreviewerScope } from './slidesPreviewerScopeHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import {
+    genSlideTransitionMenuItems,
+    SlideTransitionIconComp,
+    useSlideTransition,
+} from '../../others/slideTransitionMenuHelpers';
+import type { TransitionEffectType } from '../../_screen/transitionEffectHelpers';
 
 function RenderScreenInfoComp({
     onScreenList,
@@ -82,11 +88,13 @@ function VarySlideHeaderComp({
     viewIndex,
     name,
     onScreenList,
+    ownTransition,
 }: Readonly<{
     varySlide: VarySlideType;
     viewIndex: number;
     name?: string;
     onScreenList: OnScreenListType;
+    ownTransition?: TransitionEffectType;
 }>) {
     const isChanged =
         Slide.checkIsThisType(varySlide) && (varySlide as Slide).isChanged;
@@ -122,6 +130,11 @@ function VarySlideHeaderComp({
                     <AttachBackgroundIconComp
                         filePath={varySlide.filePath}
                         id={varySlide.id}
+                    />
+                    <SlideTransitionIconComp
+                        filePath={varySlide.filePath}
+                        id={varySlide.id}
+                        effect={ownTransition}
                     />
                     <span
                         title={
@@ -272,6 +285,11 @@ export default function VarySlideRenderComp({
         varySlide.filePath,
         varySlide.id,
     );
+    const slideTransition = useSlideTransition(
+        varySlide.filePath,
+        varySlide.id,
+    );
+    const slideTransitionRef = useAppCurrentRef(slideTransition);
     const varySlideRef = useAppCurrentRef(varySlide);
     const handleDataDropping = useCallback(async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
@@ -327,6 +345,14 @@ export default function VarySlideRenderComp({
             ...genChooseColorNoteOption(
                 varySlideRef.current.filePath,
                 varySlideRef.current.id,
+            ),
+            // Every kind of slide appends these extra rows to its own menu, so
+            // this one row reaches a slide document, a song, a PDF and a
+            // PowerPoint file alike.
+            ...genSlideTransitionMenuItems(
+                varySlideRef.current.filePath,
+                varySlideRef.current.id,
+                slideTransitionRef.current,
             ),
         );
         onContextMenuRef.current(event, menuItems);
@@ -396,6 +422,7 @@ export default function VarySlideRenderComp({
                 viewIndex={index + 1}
                 name={varySlide.name}
                 onScreenList={onScreenList}
+                ownTransition={slideTransition.own}
             />
             <div className="card-body app-overflow-hidden w-100 p-0 m-0">
                 <ShadowingFillParentWidthComp width={width}>

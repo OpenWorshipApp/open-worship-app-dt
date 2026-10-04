@@ -1133,6 +1133,25 @@ const dictionary = {
     Background: 'ផ្ទៃខាងក្រោយ',
     'Slide transition': 'ការផ្លាស់ប្តូរស្លាយ',
     'Background transition': 'ការផ្លាស់ប្តូរផ្ទៃខាងក្រោយ',
+    // --- Transition overrides: a slides preview, a slide, a Background tab,
+    // one background, a foreground component or one of its sessions can come
+    // in with its own transition instead of the screen's.
+    'Foreground transition': 'ការផ្លាស់ប្តូរផ្ទៃខាងមុខ',
+    'Own transition': 'ការផ្លាស់ប្តូរផ្ទាល់ខ្លួន',
+    Follows: 'តាម',
+    'Varies by screen': 'ខុសគ្នាតាមអេក្រង់',
+    'Screen setting': 'ការកំណត់អេក្រង់',
+    'Slides preview': 'ការមើលស្លាយជាមុន',
+    'Slides preview transition': 'ការផ្លាស់ប្តូរនៃការមើលស្លាយជាមុន',
+    'Every slide of this document comes in with it, unless the slide has its own.':
+        'ស្លាយនីមួយៗនៃឯកសារនេះនឹងបង្ហាញមកជាមួយវា លើកលែងតែស្លាយនោះមានការផ្លាស់ប្តូរផ្ទាល់ខ្លួន។',
+    'Every background from this tab comes in with it, unless the background has its own.':
+        'ផ្ទៃខាងក្រោយនីមួយៗពីផ្ទាំងនេះនឹងបង្ហាញមកជាមួយវា លើកលែងតែផ្ទៃខាងក្រោយនោះមានការផ្លាស់ប្តូរផ្ទាល់ខ្លួន។',
+    'Marquee default': 'លំនាំដើមនៃអក្សររត់',
+    'All sessions': 'វគ្គទាំងអស់',
+    'Transition for all sessions': 'ការផ្លាស់ប្តូរសម្រាប់វគ្គទាំងអស់',
+    'Every session of this panel comes in with it, unless the session has its own in Properties.':
+        'វគ្គនីមួយៗនៃផ្ទាំងនេះនឹងបង្ហាញមកជាមួយវា លើកលែងតែវគ្គនោះមានការផ្លាស់ប្តូរផ្ទាល់ខ្លួននៅក្នុងលក្ខណសម្បត្តិ។',
     'Clear input': 'លុបទិន្នន័យកំពុងបញ្ចូល',
     'Clear input chunk': 'លុបផ្នែកទិន្នន័យកំពុងបញ្ចូល',
     'Keep popup modal open when adding a bible item, useful in presenter mode':

@@ -23,6 +23,14 @@ export default function ScreenEffectControlComp() {
                 domTitle={tran('Background transition')}
                 screenEffectManager={screenManager.backgroundEffectManager}
             />
+            {/* What a foreground overlay comes in and goes out with when
+                neither its session nor its component chose one. It had no
+                button: every text and timer overlay was hardcoded to fade. */}
+            <RenderTransitionEffectComp
+                title={tran('Foreground') + ':'}
+                domTitle={tran('Foreground transition')}
+                screenEffectManager={screenManager.foregroundEffectManager}
+            />
         </div>
     );
 }

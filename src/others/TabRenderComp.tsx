@@ -14,6 +14,12 @@ export type TabHeaderPropsType<T> = {
     title: ReactNode;
     className?: string;
     checkIsOnScreen?: (key: T) => OptionalPromise<boolean>;
+    /**
+     * A right-click that does more than open the tab: it still opens it, then
+     * hands over to this (a Background tab's own transition). Without one a
+     * right-click is just a click.
+     */
+    onContextMenu?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
 };
 
 function useIsOnScreen<T>(tab: TabHeaderPropsType<T>) {
@@ -63,6 +69,18 @@ function RendTabComp<T>({
         setActiveTabRef.current?.(tabRef.current.key, event);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleContextMenu = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+            setActiveTabRef.current?.(tabRef.current.key, event);
+            const onContextMenu = tabRef.current.onContextMenu;
+            if (onContextMenu !== undefined) {
+                event.preventDefault();
+                onContextMenu(tabRef.current.key, event);
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     return (
         // No `key` here: this `li` is the root of `RendTabComp`, which is the
         // mapped element and already carries `key={tab.key}`.
@@ -77,7 +95,7 @@ function RendTabComp<T>({
                 // tell which tab is open.
                 aria-pressed={isActive}
                 onClick={handleClick}
-                onContextMenu={handleClick}
+                onContextMenu={handleContextMenu}
             >
                 {tab.title}
             </button>

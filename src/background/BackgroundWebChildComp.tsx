@@ -12,6 +12,7 @@ import RenderBackgroundWebIframeComp, {
 } from './RenderBackgroundWebIframeComp';
 import { type BackgroundWebUrlSource } from './backgroundWebUrlHelpers';
 import { genBackgroundWebExtraItemContextMenuItems } from './backgroundWebHelpers';
+import { genBackgroundItemTransitionMenuItems } from './backgroundTransitionMenuHelpers';
 import { useWebCapturing } from '../helper/capturingHelpers';
 import BackgroundWebUrlItemComp from './BackgroundWebUrlItemComp';
 import { genColorBar } from '../helper/colorNoteHelpers';
@@ -105,6 +106,17 @@ function rendChild(
     );
 }
 
+/** A web file's own rows: Edit, and its own transition as a background. */
+function genWebFileExtraItemContextMenuItems(filePath: string) {
+    return [
+        ...genBackgroundWebExtraItemContextMenuItems(filePath),
+        ...genBackgroundItemTransitionMenuItems(
+            'web',
+            FileSource.getInstance(filePath).src,
+        ),
+    ];
+}
+
 export function basicRenderBody(
     urlSources: BackgroundWebUrlSource[],
     thumbnailWidth: number,
@@ -143,7 +155,7 @@ export function basicRenderBody(
                                         key={filePath}
                                         rendChild={rendChild}
                                         genExtraItemContextMenuItems={
-                                            genBackgroundWebExtraItemContextMenuItems
+                                            genWebFileExtraItemContextMenuItems
                                         }
                                         dragType={DragTypeEnum.BACKGROUND_WEB}
                                         onClick={undefined}

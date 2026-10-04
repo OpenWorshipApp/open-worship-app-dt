@@ -83,9 +83,15 @@ export function genNoBackupReason(error: unknown) {
     );
 }
 
-// The files every document drags along: its attached background and the
-// preview of it. Trashed with it, renamed with it, and backed up with it.
-export const AGENT_SIDECAR_EXTENSIONS = ['.bg.json', '.preview.bg.json'];
+// The files every document drags along: its attached background, the
+// preview of it and its slides' own transitions. Trashed with it, renamed with
+// it, and backed up with it. (Literal rather than imported: this module is
+// reached from the agent relay and keeps its imports lazy.)
+export const AGENT_SIDECAR_EXTENSIONS = [
+    '.bg.json',
+    '.preview.bg.json',
+    '.transition.json',
+];
 
 async function getFileSourceClass() {
     const { default: FileSourceClass } = await import('./FileSource');
@@ -406,6 +412,9 @@ export async function trashAgentFile(
         const { attachBackgroundManager } =
             await import('../others/AttachBackgroundManager');
         await attachBackgroundManager.deleteMetaDataFile(filePath);
+        const { slideTransitionManager } =
+            await import('../others/SlideTransitionManager');
+        await slideTransitionManager.deleteMetaDataFile(filePath);
     }
 }
 

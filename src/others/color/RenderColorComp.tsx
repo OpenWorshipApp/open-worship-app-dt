@@ -1,4 +1,4 @@
-import { useCallback, type DragEvent, type MouseEvent } from 'react';
+import { use, useCallback, type DragEvent, type MouseEvent } from 'react';
 
 import { copyToClipboard } from '../../server/appHelpers';
 import type { AppColorType } from './colorHelpers';
@@ -13,8 +13,13 @@ import {
     pressElementLikeButton,
 } from '../../helper/helpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { ColorSwatchExtraMenuContext } from './colorSwatchMenuHelpers';
 
-function showContextMenu(event: any, color: AppColorType) {
+function showContextMenu(
+    event: any,
+    color: AppColorType,
+    extraMenuItems: ContextMenuItemType[] = [],
+) {
     const menuItems: ContextMenuItemType[] = [
         {
             childBefore: genContextMenuItemIcon('clipboard', { color }),
@@ -31,6 +36,7 @@ function showContextMenu(event: any, color: AppColorType) {
                 true,
             );
         }),
+        ...extraMenuItems,
     ];
     showAppContextMenu(event, menuItems);
 }
@@ -46,12 +52,18 @@ export default function RenderColorComp({
     onClick?: (event: MouseEvent, color: AppColorType) => void;
 }>) {
     const colorRef = useAppCurrentRef(color);
+    const genExtraMenuItems = use(ColorSwatchExtraMenuContext);
+    const genExtraMenuItemsRef = useAppCurrentRef(genExtraMenuItems);
     const handleDragStart = useCallback((event: DragEvent) => {
         serializeForDragging(event, colorRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleContextMenu = useCallback((event: MouseEvent) => {
-        showContextMenu(event, colorRef.current);
+        showContextMenu(
+            event,
+            colorRef.current,
+            genExtraMenuItemsRef.current?.(colorRef.current),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const onClickRef = useAppCurrentRef(onClick);

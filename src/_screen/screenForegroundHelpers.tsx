@@ -15,6 +15,7 @@ import type {
     MarqueePositionType,
     StyleAnimType,
 } from './screenTypeHelpers';
+import type { TransitionEffectType } from './transitionEffectHelpers';
 import {
     DEFAULT_MARQUEE_SPEED_PERCENTAGE,
     MAX_MARQUEE_SPEED_PERCENTAGE,
@@ -32,12 +33,61 @@ import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
 import { genMarqueeFontSize } from './marqueeBandHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
+const MARQUEE_FADE_MILLISECOND = 1000;
+
+/**
+ * How a marquee band comes in and goes out. A band is anchored to an edge, so
+ * with no transition of its own it slides in from that edge -- deliberately
+ * NOT the screen's `Foreground:` effect, which is what every other overlay
+ * falls back to. Its session or its component can still choose one: "Slide
+ * In" is that same edge slide, the others are the usual fade, zoom and cut.
+ * Pure CSS on the band itself, like the slide always was.
+ */
+export function genMarqueeTransitionCss(
+    transitionEffect: TransitionEffectType | undefined,
+    hiddenTranslateY: string,
+) {
+    if (transitionEffect === 'none') {
+        return { base: '', inFrames: '', outFrames: '', millisecond: 0 };
+    }
+    if (transitionEffect === 'fade') {
+        return {
+            base: 'opacity: 0;',
+            inFrames: '0% { opacity: 0; } 100% { opacity: 1; }',
+            outFrames: '0% { opacity: 1; } 100% { opacity: 0; }',
+            millisecond: MARQUEE_FADE_MILLISECOND,
+        };
+    }
+    if (transitionEffect === 'zoom') {
+        return {
+            base: 'opacity: 0; transform: scale(0.1);',
+            inFrames:
+                '0% { opacity: 0; transform: scale(0.1); }' +
+                ' 100% { opacity: 1; transform: scale(1); }',
+            outFrames:
+                '0% { opacity: 1; transform: scale(1); }' +
+                ' 100% { opacity: 0; transform: scale(0.1); }',
+            millisecond: MARQUEE_SLIDE_MILLISECOND,
+        };
+    }
+    return {
+        base: `transform: translateY(${hiddenTranslateY});`,
+        inFrames:
+            `0% { transform: translateY(${hiddenTranslateY}); }` +
+            ' 100% { transform: translateY(0); }',
+        outFrames:
+            '0% { transform: translateY(0); }' +
+            ` 100% { transform: translateY(${hiddenTranslateY}); }`,
+        millisecond: MARQUEE_SLIDE_MILLISECOND,
+    };
+}
 
 export function genHtmlForegroundMarquee(
     {
         text,
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         extraStyle = {},
+        transitionEffect,
     }: ForegroundMarqueeDataType,
     screenManagerBase: ScreenManagerBase,
     position: MarqueePositionType,
@@ -57,6 +107,18 @@ export function genHtmlForegroundMarquee(
     const inKeyframe = `anim-${uniqueClassname}-in`;
     const outKeyframe = `anim-${uniqueClassname}-out`;
     const hiddenTranslateY = position === 'top' ? '-100%' : '100%';
+    const transitionCss = genMarqueeTransitionCss(
+        transitionEffect,
+        hiddenTranslateY,
+    );
+    const inAnimation =
+        transitionCss.millisecond > 0
+            ? `animation: ${inKeyframe} ${transitionCss.millisecond}ms ease-in forwards;`
+            : '';
+    const outAnimation =
+        transitionCss.millisecond > 0
+            ? `animation: ${outKeyframe} ${transitionCss.millisecond}ms ease-out forwards;`
+            : '';
     const htmlString = renderToStaticMarkup(
         <div
             style={{
@@ -76,12 +138,12 @@ export function genHtmlForegroundMarquee(
                     font-size: ${fontSize}px;
                     box-shadow: inset 0 0 10px lightblue;
                     will-change: transform;
-                    transform: translateY(${hiddenTranslateY});
-                    animation: ${inKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-in forwards;
+                    ${transitionCss.base}
+                    ${inAnimation}
                     white-space: nowrap;
                 }
                 .${uniqueClassname}.out {
-                    animation: ${outKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-out forwards;
+                    ${outAnimation}
                 }
                 .${uniqueClassname} span {
                     display: inline-block;
@@ -107,12 +169,10 @@ export function genHtmlForegroundMarquee(
                     100% { transform: translateX(-100%); }
                 }
                 @keyframes ${inKeyframe} {
-                    0% { transform: translateY(${hiddenTranslateY}); }
-                    100% { transform: translateY(0); }
+                    ${transitionCss.inFrames}
                 }
                 @keyframes ${outKeyframe} {
-                    0% { transform: translateY(0); }
-                    100% { transform: translateY(${hiddenTranslateY}); }
+                    ${transitionCss.outFrames}
                 }
             `}</style>
             <p className={uniqueClassname} style={extraStyle}>
@@ -143,10 +203,10 @@ export function genHtmlForegroundMarquee(
                 )) {
                     (element as any).classList.add('out');
                 }
-                // Only the slide-out has to finish before the node is dropped;
+                // Only the way out has to finish before the node is dropped;
                 // tying this to `duration` would keep a hidden marquee around
                 // for minutes at the slowest scroll speeds.
-                setTimeout(resolve, MARQUEE_SLIDE_MILLISECOND);
+                setTimeout(resolve, transitionCss.millisecond);
             });
         },
     };

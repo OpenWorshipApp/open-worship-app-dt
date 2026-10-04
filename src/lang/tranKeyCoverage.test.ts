@@ -281,18 +281,14 @@ describe('Khmer translation coverage', () => {
         ).toEqual([]);
     });
 
-    // The transition picker names its effects through a dynamic
+    // The transition override names its effects through a dynamic
     // `tran(TRANSITION_LABEL_MAP[effect])`, for the same reason the pad does:
     // the screen's own menu shows bare identifiers, and a volunteer's panel
     // must not.
     test('every transition label has a Khmer string', () => {
         const { keySet } = readKhmerKeys();
         const source = readFileSync(
-            path.join(
-                SRC_DIR,
-                'presenter-foreground',
-                'propertiesSettingHelpers.tsx',
-            ),
+            path.join(SRC_DIR, 'others', 'TransitionOverrideComp.tsx'),
             'utf-8',
         );
         const start = source.indexOf('const TRANSITION_LABEL_MAP');

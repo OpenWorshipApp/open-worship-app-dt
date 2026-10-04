@@ -1,5 +1,6 @@
 import './BackgroundComp.scss';
 
+import type { MouseEvent } from 'react';
 import { lazy, useCallback, useMemo, useState } from 'react';
 
 import {
@@ -24,6 +25,11 @@ import type {
 } from '../_screen/screenTypeHelpers';
 import EventHandler from '../event/EventHandler';
 import { OPEN_BACKGROUND_AUDIO_TAB_EVENT } from './backgroundAudioTabHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    BackgroundTransitionBadgeComp,
+    genBackgroundTabTransitionMenuItems,
+} from './backgroundTransitionMenuHelpers';
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -154,11 +160,32 @@ export default function BackgroundComp() {
         return tabTypeList.map(([key, name]) => {
             return {
                 key,
-                title: name,
+                title: (
+                    <>
+                        {name}
+                        {/* While the tab has its OWN transition. */}
+                        <BackgroundTransitionBadgeComp backgroundType={key} />
+                    </>
+                ),
                 checkIsOnScreen: (targeKey: TabKeyType) => {
                     const backgroundSrcList =
                         getBackgroundSrcListOnScreenSetting();
                     return genIsSelected(backgroundSrcList, targeKey);
+                },
+                // Every background from this tab can come in with the tab's
+                // own transition instead of the screen's.
+                onContextMenu: (
+                    targetKey: TabKeyType,
+                    event: MouseEvent<HTMLButtonElement>,
+                ) => {
+                    if (targetKey === 'audio') {
+                        return;
+                    }
+                    const menuItems =
+                        genBackgroundTabTransitionMenuItems(targetKey);
+                    if (menuItems.length > 0) {
+                        showAppContextMenu(event as any, menuItems);
+                    }
                 },
             };
         });

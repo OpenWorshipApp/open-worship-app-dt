@@ -37,13 +37,16 @@ vi.mock('./foregroundDecorationHelpers', () => ({
     genForegroundDecorationStyle: () => ({}),
     getForegroundDecoration: () => ({}),
 }));
+vi.mock('./ForegroundTransitionControlsComp', () => ({
+    ForegroundTransitionPropComp: () => null,
+}));
 import {
     genForegroundExtraStyle,
     genPropsSettingNames,
     getForegroundIsBehind,
-    getForegroundTransition,
     getForegroundWidthScale,
 } from './propertiesSettingHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
 
 test('reads presentation-only width and transition settings with safe defaults', () => {
     expect(genPropsSettingNames('video').widthPercentage).toBe(
@@ -52,9 +55,23 @@ test('reads presentation-only width and transition settings with safe defaults',
     expect(getForegroundWidthScale('video')).toBe(50);
     settings.set('video-setting-show-widget-width-percentage', '180');
     expect(getForegroundWidthScale('video')).toBe(100);
-    expect(getForegroundTransition('video')).toBe('fade');
+    // No transition of its own and none for the component: the datum carries
+    // nothing and the screen's `Foreground:` effect applies.
+    expect(resolveForegroundTransition('video', 'video')).toBeUndefined();
+    settings.set('foreground-component-transition-video', 'fade');
+    expect(resolveForegroundTransition('video', 'video')).toBe('fade');
+    // The session's own wins over the component's -- and is the key the old
+    // Transition picker always wrote, so an earlier choice still counts.
+    expect(genPropsSettingNames('video').transitionEffect).toBe(
+        'video-setting-show-widget-transition',
+    );
     settings.set('video-setting-show-widget-transition', 'zoom');
-    expect(getForegroundTransition('video')).toBe('zoom');
+    expect(resolveForegroundTransition('video', 'video')).toBe('zoom');
+    // Anything that is not an effect is no override at all.
+    settings.set('video-setting-show-widget-transition', 'sparkle');
+    expect(resolveForegroundTransition('video', 'video')).toBe('fade');
+    settings.delete('video-setting-show-widget-transition');
+    settings.delete('foreground-component-transition-video');
 });
 
 test('builds geometry from bounded settings and keeps a pinned overlay above normal paint order', () => {

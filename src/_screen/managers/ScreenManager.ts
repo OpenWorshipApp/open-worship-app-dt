@@ -272,6 +272,9 @@ export default class ScreenManager extends ScreenManagerBase {
         ScreenBibleManager.sendSynTextStyle();
         this.backgroundEffectManager.sendSyncScreen();
         this.screenBackgroundManager.sendSyncScreen();
+        // Before the foreground itself: an overlay with no transition of its
+        // own comes in with this one.
+        this.foregroundEffectManager.sendSyncScreen();
         this.screenForegroundManager.sendSyncScreen();
         this.screenVaryAppDocumentManager.sendSyncScreen();
         this.varyAppDocumentEffectManager.sendSyncScreen();

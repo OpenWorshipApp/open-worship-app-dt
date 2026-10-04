@@ -73,6 +73,13 @@ export type BackgroundSrcType = {
     height?: number;
     scaleType?: ImageScaleType;
     extraStyle?: CSSProperties;
+    /**
+     * This background's own transition, else its Background tab's, stamped
+     * on the presenter by the `backgroundSrc` setter from
+     * `backgroundTransitionHelpers`. Absent (never `undefined`) means the
+     * screen's `Background:` effect.
+     */
+    transitionEffect?: TransitionEffectType;
 };
 export type BackgroundSrcListType = {
     [key: string]: BackgroundSrcType;
@@ -95,6 +102,13 @@ export type BackgroundSrcListType = {
  */
 export type ForegroundLayerDataType = {
     isBehind?: boolean;
+    /**
+     * How this overlay comes in and goes out when its session, or its whole
+     * component, overrides the screen's `Foreground:` effect
+     * (`foregroundTransitionHelpers`). Absent -- the key itself, never
+     * `undefined` -- means the screen's.
+     */
+    transitionEffect?: TransitionEffectType;
 };
 
 /**
