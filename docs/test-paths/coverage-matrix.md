@@ -13,7 +13,9 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-10-05i** (SP-25: hosting is off by default — loopback-only, no discovery, guests refused — until [en:tran:Let other computers connect] is turned on in the panel; on rebinds to every network on the same port. Verified live on the dev presenter and in `screenMirrorService.test.ts`.)
+**matrixVersion: 2026-10-05j** (SP-25..27 run across two real computers on one LAN — hpw11 host, DESKTOP-BUS45KP guest on 0c025e47, the guest driven by its own Claude session over Remote Control: discovery, auto-fill, approval, a1 prefix, host name kept across a page reload, output on the guest monitor in front of the guest's app window, hide closes it, disconnect clears the host header. Physical-camera streaming across the two machines is still unrun.)
+
+Previous: **matrixVersion: 2026-10-05i** (SP-25: hosting is off by default — loopback-only, no discovery, guests refused — until [en:tran:Let other computers connect] is turned on in the panel; on rebinds to every network on the same port. Verified live on the dev presenter and in `screenMirrorService.test.ts`.)
 
 Previous: **matrixVersion: 2026-10-05h** (SP-26: the guest page is a minimal console — no app header, one [en:tran:Presenter] button — that scans for hosts on opening, lists each once on its best address (LAN before virtual adapter or loopback), fills the first into the address form, and shows host, link and this computer's monitors with the host-given prefix. Verified live on a scratch dev guest.)
 

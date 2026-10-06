@@ -135,3 +135,4 @@
 - [A foreground camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label
 - [Message editors hold local text](message-editor-text-is-local-state.md)
 - [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there; drawing layers release on unmount
+- [Screen Mirror across two machines](screen-mirror-cross-machine-test.md) — hosting is opt-in; peers need /remote-control here; newest-instance tools

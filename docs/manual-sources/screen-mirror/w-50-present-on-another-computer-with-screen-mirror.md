@@ -41,7 +41,8 @@ app version and a reachable network connection.
    click its header button to open the connection panel.
 4. Choose the guest's prefixed monitor in the screen card's display picker.
    Present a slide and a background image, then use the card's show control
-   (F5). The guest opens the presentation output on that monitor. Images and
+   (F5). The guest opens the presentation output on that monitor, in front
+   of its own app window. Images and
    other host files load through the host's HTTP service; the guest does not
    need its own copy of them.
 5. Close the floating panel with its **✕**, or toggle
