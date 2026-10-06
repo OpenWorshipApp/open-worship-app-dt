@@ -43,6 +43,7 @@ export default class ScreenManagerBase
     isDeleted: boolean;
     width = 1;
     height = 1;
+    private isDimMeasured = false;
     _isSelected: boolean = false;
     _isLocked: boolean = false;
     _stage: number = 0;
@@ -198,8 +199,22 @@ export default class ScreenManagerBase
         const dim = appProvider.isPageScreen
             ? getWindowDim()
             : this.display.bounds;
+        const isResized =
+            this.isDimMeasured &&
+            (dim.width !== this.width || dim.height !== this.height);
+        this.isDimMeasured = true;
         this.width = dim.width;
         this.height = dim.height;
+        // A display of the same shape but another size -- a guest's monitor
+        // coming back in place of the 1920x1080 stand-in, or one 16:9 monitor
+        // for another -- leaves the preview card's box as it was, so nothing
+        // asks the previewer to rescale and it keeps the old pixel size around
+        // content drawn at the new one. Never on the first measurement: the
+        // static event handler is itself a `new ScreenManagerBase`, so firing
+        // from the constructor recursed until the stack ran out.
+        if (isResized) {
+            this.fireScaleEvent();
+        }
     }
 
     async getColorNote() {

@@ -129,6 +129,25 @@ describe('ScreenManagerBase', () => {
         mocks.getWindowDim.mockReturnValue({ width: 1440, height: 900 });
     });
 
+    test('a display of the same shape but another size asks for a rescale', async () => {
+        const manager = new TestScreenManagerBase(1);
+        const onScale = vi.fn();
+        manager.registerEventListener(['scale'], onScale);
+        // Same size again: the preview card's box is right, nothing to do.
+        manager.updateDim();
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        expect(onScale).not.toHaveBeenCalled();
+        // A guest's 1536x864 monitor replacing the 1920x1080 stand-in: the
+        // card keeps its 16:9 box, so only this event rescales the preview.
+        mocks.getDisplayByScreenId.mockReturnValueOnce({
+            id: 101,
+            bounds: { x: 0, y: 0, width: 1536, height: 864 },
+        });
+        manager.updateDim();
+        expect(manager.width).toBe(1536);
+        await vi.waitFor(() => expect(onScale).toHaveBeenCalledTimes(1));
+    });
+
     test('parses keys, derives dimensions, and toggles visibility', () => {
         const manager = new TestScreenManagerBase(1);
 
