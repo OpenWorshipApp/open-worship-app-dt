@@ -126,7 +126,8 @@ If the staged change alters observable behavior:
   step may be published that was not observed working live.
 - `.claude/memory/*.md` — flag any note the change makes wrong.
 - **Codex mirrors must move in the same change.** `.codex/project-instructions.md`
-  (← `.claude/CLAUDE.md`), `.codex/memory/` (← `.claude/memory/`) and
+  (← `.claude/CLAUDE.md`), `.codex/instructions/` (← `.claude/rules/`),
+  `.codex/memory/` (← `.claude/memory/`) and
   `.agents/skills/` (← `.claude/skills/`, each `SKILL.md` keeping its Codex
   frontmatter) are copies; `.claude/` is the source of truth. A staged edit to a `.claude/` knowledge
   file without the matching mirror copy is a finding — and so is a hand-edit that

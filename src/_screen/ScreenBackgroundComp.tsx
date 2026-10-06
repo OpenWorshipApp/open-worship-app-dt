@@ -20,6 +20,7 @@ import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import { genWebBackgroundElement } from './managers/screenWebsiteHelpers';
+import { releaseMirrorCameraStream } from '../screen-mirror/mirrorCameraTransport';
 
 export function genHtmlBackground(
     screenId: number,
@@ -40,6 +41,7 @@ export function genHtmlBackground(
                 .then((mediaStream) => {
                     video.srcObject = mediaStream;
                     const clearTracks = () => {
+                        releaseMirrorCameraStream(mediaStream);
                         const tracks = mediaStream.getTracks();
                         for (const track of tracks) {
                             track.stop();

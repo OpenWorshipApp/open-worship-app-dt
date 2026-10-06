@@ -228,6 +228,20 @@
       {
         "text": "W-48 — Give a slide, a song, a background or an overlay its own transition",
         "link": "/keyboard-shortcut-reference-tutorial-appendix/w-48-give-a-slide-a-song-a-background-or-an-overlay-its-own-transition"
+      },
+      {
+        "text": "W-49 — See every keyboard shortcut for this page (Help → Keyboard Shortcuts)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-49-see-every-keyboard-shortcut-for-this-page-help-keyboard-shortcuts"
+      }
+    ]
+  },
+  {
+    "text": "Screen Mirror",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-50 — Present on another computer with Screen Mirror",
+        "link": "/screen-mirror/w-50-present-on-another-computer-with-screen-mirror"
       }
     ]
   }

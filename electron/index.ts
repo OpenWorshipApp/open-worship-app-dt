@@ -25,6 +25,7 @@ import {
 import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 import { initDisplayMediaHandler } from './displayMediaHelpers';
+import { initScreenMirror } from './screenMirrorService';
 import {
     findUserDataPathArg,
     initAppUserModelId,
@@ -88,6 +89,7 @@ async function main() {
     // The AI Chat window's guest session, locked down before any guest
     // can exist: the window is opened by a renderer, not by code here.
     initAiChatGuestGuard();
+    await initScreenMirror();
     const appController = ElectronAppController.getInstance();
     initSecondInstance(appController);
     initUserTasks();

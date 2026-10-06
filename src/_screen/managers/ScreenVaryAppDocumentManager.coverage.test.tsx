@@ -1476,6 +1476,64 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         manager.div = null;
     });
 
+    test('native item transitions use an unanimated slide host and clear through the items', async () => {
+        detachAllManagerDivs();
+        const effect = createEffectManager();
+        const none = {
+            duration: 0,
+            animIn: vi.fn((node: HTMLElement, parent: HTMLElement) =>
+                parent.append(node),
+            ),
+            animOut: vi.fn(async () => {}),
+        };
+        effect.effectType = 'fade';
+        effect.styleAnim.duration = 500;
+        effect.styleAnimList = { none, fade: effect.styleAnim };
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(84),
+            effect,
+        );
+        const animate = vi.fn(
+            () =>
+                ({
+                    finished: Promise.resolve(),
+                    cancel: vi.fn(),
+                }) as unknown as Animation,
+        );
+        mocks.genSlideHtml.mockImplementation(() => {
+            const content = document.createElement('div');
+            const item = document.createElement('div');
+            item.dataset.canvasItemUuid = crypto.randomUUID();
+            item.dataset.canvasItemTransition = 'fade';
+            item.animate = animate;
+            content.append(item);
+            return content;
+        });
+        const host = document.createElement('div');
+        manager.div = host;
+        manager.varySlideData = {
+            filePath: '/slides/items.ows',
+            itemJson: {
+                id: 1,
+                type: 'slide',
+                canvasItems: [],
+                metadata: { width: 640, height: 360 },
+            },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        await manager.render();
+        expect(none.animIn).toHaveBeenCalled();
+        expect(effect.styleAnim.animIn).not.toHaveBeenCalled();
+        const hostCount = host.children.length;
+        const animationCount = animate.mock.calls.length;
+        await manager.clearJunk(host);
+        expect(animate.mock.calls.length).toBeGreaterThan(animationCount);
+        expect(host.children.length).toBeLessThan(hostCount);
+        expect(none.animOut).not.toHaveBeenCalled();
+        manager.div = null;
+    });
+
     test('render bails out when the slide produces no content', async () => {
         detachAllManagerDivs();
         const effect = createEffectManager();

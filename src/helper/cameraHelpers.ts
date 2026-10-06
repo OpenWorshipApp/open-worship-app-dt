@@ -8,6 +8,11 @@ import type {
     StyleAnimType,
 } from '../_screen/screenTypeHelpers';
 import { electronSendAsync } from '../server/appHelpers';
+import appProvider from '../server/appProvider';
+import {
+    getMirrorCameraStream,
+    releaseMirrorCameraStream,
+} from '../screen-mirror/mirrorCameraTransport';
 
 export type CameraInfoType = {
     deviceId: string;
@@ -16,6 +21,10 @@ export type CameraInfoType = {
 };
 
 const { mediaDevices } = navigator;
+function getRemoteCameras(): CameraInfoType[] {
+    const cameras = appProvider.messageUtils?.sendDataSync?.('mirror:cameras');
+    return Array.isArray(cameras) ? cameras : [];
+}
 
 export async function requestCameraAccess() {
     const canAccess = await electronSendAsync<boolean>(
@@ -24,10 +33,10 @@ export async function requestCameraAccess() {
     return canAccess;
 }
 
-export async function getAllCameraDevices() {
+export async function getAllCameraDevices(): Promise<CameraInfoType[]> {
     const canAccess = await requestCameraAccess();
     if (!canAccess) {
-        return [];
+        return getRemoteCameras();
     }
     const devices = await mediaDevices.enumerateDevices();
     const cameraList: CameraInfoType[] = [];
@@ -36,7 +45,15 @@ export async function getAllCameraDevices() {
             cameraList.push(device);
         }
     }
-    return cameraList;
+    appProvider.messageUtils?.sendData?.(
+        'mirror:physical-cameras',
+        cameraList.map(({ deviceId, label, groupId }) => ({
+            deviceId,
+            label,
+            groupId,
+        })),
+    );
+    return [...cameraList, ...getRemoteCameras()];
 }
 
 export function useCameraInfoList() {
@@ -49,10 +66,52 @@ export function useCameraInfoList() {
         [],
         { setCameraInfoList },
     );
+    useAppEffectAsync(async () => {
+        const refresh = () => {
+            void getAllCameraDevices().then(setCameraInfoList, handleError);
+        };
+        appProvider.messageUtils?.listenForData?.(
+            'mirror:devices-changed',
+            refresh,
+        );
+        navigator.mediaDevices?.addEventListener('devicechange', refresh);
+        return () => {
+            appProvider.messageUtils?.removeListener?.(
+                'mirror:devices-changed',
+                refresh,
+            );
+            navigator.mediaDevices?.removeEventListener(
+                'devicechange',
+                refresh,
+            );
+        };
+    }, []);
     return cameraInfoList;
 }
 
 export async function getCameraStream(cameraId: string) {
+    if (cameraId.startsWith('mirror-camera:')) {
+        const camera = getRemoteCameras().find(
+            (item) => item.deviceId === cameraId,
+        );
+        const state = appProvider.messageUtils?.sendDataSync?.('mirror:state');
+        if (state?.id && cameraId.startsWith(`mirror-camera:${state.id}:`)) {
+            const devices = await mediaDevices.enumerateDevices();
+            const device = devices.find(
+                (item) =>
+                    item.kind === 'videoinput' &&
+                    (item.deviceId ===
+                        cameraId.slice(`mirror-camera:${state.id}:`.length) ||
+                        item.label === camera?.label?.replace(/^a\d+: /, '')),
+            );
+            if (!device) throw new Error('Camera is unavailable');
+            cameraId = device.deviceId;
+        } else
+            return await getMirrorCameraStream(
+                cameraId,
+                camera?.label.replace(/^a\d+: /, '') ?? '',
+            );
+    }
     const canAccess = await requestCameraAccess();
     if (!canAccess) {
         throw new Error('Camera access denied');
@@ -155,6 +214,7 @@ export function releaseCameraStream(cameraId: string) {
         }
         slot.promise
             .then((mediaStream) => {
+                releaseMirrorCameraStream(mediaStream);
                 for (const track of mediaStream.getTracks()) {
                     track.stop();
                 }

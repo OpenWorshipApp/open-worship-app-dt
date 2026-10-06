@@ -1,5 +1,6 @@
 import { getSetting } from '../../helper/settingHelpers';
 import appProvider from '../../server/appProvider';
+import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
 import { type AllDisplayType } from '../screenTypeHelpers';
 
 export const SCREEN_MANAGER_SETTING_NAME = 'screen-display-';
@@ -60,6 +61,8 @@ export function getDisplayIdByScreenId(screenId: number) {
         return defaultDisplay.id;
     }
     const id = Number.parseInt(str);
+    // A remote selection is retained while unplugged, never redirected locally.
+    if (id <= MIRROR_REMOTE_DISPLAY_FIRST) return id;
     const { displays } = getAllDisplays();
     return (
         displays.find((display) => {

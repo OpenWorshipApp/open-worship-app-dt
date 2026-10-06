@@ -1,6 +1,6 @@
 ---
 name: claude-dir-edits-need-knowledge-rebuild
-description: "Editing anything under .claude/ (CLAUDE.md, memory/, skills/) leaves the chatbot's bundled knowledge stale until the knowledge build is re-run — do it in the same change"
+description: "Editing anything under .claude/ (CLAUDE.md, rules/, memory/, skills/) leaves the chatbot's bundled knowledge stale until the knowledge build is re-run — do it in the same change"
 metadata: 
   node_type: memory
   type: feedback
@@ -8,16 +8,16 @@ metadata:
   modified: 2026-09-14T17:48:11.678Z
 ---
 
-Every change to `.claude/CLAUDE.md`, `.claude/memory/**` or `.claude/skills/**`
-must be followed, in the SAME change, by:
+Every change to `.claude/CLAUDE.md`, `.claude/rules/**`, `.claude/memory/**` or
+`.claude/skills/**` must be followed, in the SAME change, by:
 
 ```
 node extra-work/build-knowledge.mjs
 ```
 
 That is the `internal` half of the corpus the in-app chatbot answers from
-(`extra-work/build-knowledge.mjs`, allowlist `CLAUDE.md` + `memory/` +
-`skills/`). Until it is re-run, `electron-build/knowledge/` still holds the
+(`extra-work/build-knowledge.mjs`, allowlist `CLAUDE.md` + `rules/` +
+`memory/` + `skills/`). Until it is re-run, `electron-build/knowledge/` still holds the
 PREVIOUS text and the chatbot keeps answering from notes that no longer exist.
 
 - Run the script **on its own**, not `npm run build` / `npm run electron:build`,
@@ -37,7 +37,7 @@ PREVIOUS text and the chatbot keeps answering from notes that no longer exist.
   nothing. (Editing the MCP `.mjs` modules themselves still needs a restart —
   see [[agent-access-mcp-chatbot]].)
 - The Codex mirrors (`.codex/memory/`, `.agents/skills/`,
-  `.codex/project-instructions.md`) are NOT read by the bundler — only `.claude/` is —
+  `.codex/instructions/`, `.codex/project-instructions.md`) are NOT read by the bundler — only `.claude/` is —
   but they still have to be re-copied in the same change by the standing mirror
   rule.
 - With no `electron-build/knowledge/index.json` at all, the tools silently fall

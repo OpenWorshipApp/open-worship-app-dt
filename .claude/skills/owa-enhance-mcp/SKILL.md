@@ -156,15 +156,16 @@ body, not the exit code. It only checks, so it is safe beside the running app
 In the SAME change, whatever is true of the work:
 
 - `tools/owa-devtools-mcp/README.md` — the tool table, for any tool change.
-- `.claude/CLAUDE.md` §*Agent access* — anything structural: a door, a policy,
-  the master switch, the tool list.
+- `.claude/rules/agent-access.md` / `agent-tools.md` — anything structural: a
+  door, a policy, the master switch, the tool list; and `.claude/CLAUDE.md`
+  §*Agent access* when it changes a rule that holds everywhere.
 - [references/backlog.md](./references/backlog.md) — `MC-xx` status, plus
   everything you found and did NOT do.
 - `docs/test-paths/coverage-matrix.md` — the `CB-xx` rows, if user-visible.
 - A memory file under `.claude/memory/` for anything not derivable from the
   code, plus its `MEMORY.md` line.
-- **The Codex mirror.** `.agents/skills/`, `.codex/memory/` and
-  `.codex/project-instructions.md` mirror `.claude/`. `.claude/` is the source
+- **The Codex mirror.** `.agents/skills/`, `.codex/memory/`,
+  `.codex/instructions/` and `.codex/project-instructions.md` mirror `.claude/`. `.claude/` is the source
   of truth: edit here, then COPY across in the same change. A mirror that
   disagrees is stale by definition — re-copy, do not reconcile by hand.
 - **Any edit under `.claude/` needs `node extra-work/build-knowledge.mjs` in

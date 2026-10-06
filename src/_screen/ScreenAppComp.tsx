@@ -10,6 +10,7 @@ import ScreenMaskComp from './ScreenMaskComp';
 import ScreenBibleComp from './ScreenBibleComp';
 import { createScreenManager } from './managers/screenManagerHelpers';
 import ScreenManager from './managers/ScreenManager';
+import type { ScreenMessageType } from './screenTypeHelpers';
 import { ScreenManagerBaseContext } from './managers/screenManagerHooks';
 import appProvider from '../server/appProvider';
 import { genStyleRendering } from './preview/MiniScreenAppComp';
@@ -31,12 +32,20 @@ function useScreenManager() {
         }
         document.title = `${appProvider.windowTitle} - ${screenId}`;
         const screenManager = createScreenManager(screenId);
+        const context = appProvider.screenUtils?.getContext();
+        if (context) screenManager._stage = context.stage;
         return screenManager;
     }, []);
     useAppEffect(() => {
         // effect, not render-phase: sending during render fires on every
         // re-render (doubled under StrictMode)
         if (screenManager !== null && appProvider.isPageScreen) {
+            const context = appProvider.screenUtils?.getContext();
+            for (const message of context?.messages ?? []) {
+                ScreenManager.applyScreenManagerSyncScreen(
+                    message as ScreenMessageType,
+                );
+            }
             screenManager.sendScreenMessage(
                 {
                     screenId: screenManager.screenId,

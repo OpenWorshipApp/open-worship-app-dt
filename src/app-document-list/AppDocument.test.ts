@@ -25,6 +25,9 @@ vi.mock('../helper/AppEditableDocumentSourceAbs', () => {
         async save() {
             return mocks.saveMock();
         }
+        static toJsonString(jsonData: object) {
+            return JSON.stringify(jsonData, null, 2);
+        }
         static genNewJsonData(extraData: object = {}) {
             return {
                 metadata: {
@@ -61,8 +64,9 @@ vi.mock('./Slide', () => ({
         fromJson: (json: { id: number }) => ({
             id: json.id,
             getBibleKeys: () => [],
-            toJson: () => json,
+            toJson: () => ({ ...json, type: 'slide' }),
         }),
+        toComparableJson: (json: object) => ({ ...json, type: 'slide' }),
         fromJsonError: (json: { id: number }) => ({ id: json.id }),
     },
 }));
@@ -97,7 +101,8 @@ vi.mock('./appDocumentHelpers', () => ({
 }));
 
 vi.mock('../helper/helpers', () => ({
-    checkIsSameValues: vi.fn(() => true),
+    checkIsSameValues: (a: unknown, b: unknown) =>
+        JSON.stringify(a) === JSON.stringify(b),
     toMaxId: vi.fn(),
 }));
 
@@ -153,35 +158,45 @@ describe('AppDocument.changeSlidesFont', () => {
         color: '#ffffff',
         ...extra,
     });
-    const fixture = () => ({
-        metadata: { note: 'Keep the document note' },
-        items: [
-            {
-                id: 10,
-                name: 'First',
-                metadata: { width: 1920, height: 1080 },
-                canvasItems: [
-                    text(1),
-                    text(2, {
-                        type: 'bible',
-                        bibleRenderingList: [
-                            { title: 'A verse', text: 'Verse words' },
-                        ],
-                    }),
-                    text(3, { locked: true }),
-                    { id: 4, type: 'image', src: 'image.png' },
-                ],
-            },
-            {
-                id: 20,
-                isDisabled: true,
-                canvasItems: [
-                    text(1, { type: 'html', html: '<p>Hello</p>' }),
-                    text(2),
-                ],
-            },
-        ],
-    });
+    const fixture = () => {
+        const data = {
+            metadata: { note: 'Keep the document note' },
+            items: [
+                {
+                    id: 10,
+                    name: 'First',
+                    metadata: { width: 1920, height: 1080 },
+                    canvasItems: [
+                        text(1),
+                        text(2, {
+                            type: 'bible',
+                            bibleRenderingList: [
+                                { title: 'A verse', text: 'Verse words' },
+                            ],
+                        }),
+                        text(3, { locked: true }),
+                        { id: 4, type: 'image', src: 'image.png' },
+                    ],
+                },
+                {
+                    id: 20,
+                    isDisabled: true,
+                    canvasItems: [
+                        text(1, { type: 'html', html: '<p>Hello</p>' }),
+                        text(2),
+                    ],
+                },
+            ],
+        };
+        for (const slide of data.items) {
+            for (const item of slide.canvasItems) {
+                Object.assign(item, {
+                    uuid: `10000000-0000-4000-8000-${slide.id.toString(16).padStart(6, '0')}${item.id.toString(16).padStart(6, '0')}`,
+                });
+            }
+        }
+        return data;
+    };
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -287,7 +302,7 @@ describe('AppDocument.changeSlidesFont', () => {
         expect(await doc.changeSlidesFont({ fontFamily: '' })).toBe(4);
         expect(
             mocks.setJsonDataMock.mock.calls[0][0].items[0].canvasItems[0],
-        ).toEqual(text(1, { fontFamily: null }));
+        ).toMatchObject(text(1, { fontFamily: null }));
     });
 });
 
@@ -338,6 +353,86 @@ describe('AppDocument.getJsonData', () => {
         // Was the reset's made-up default slide, listed under the run sheet's
         // row and presentable on a live screen.
         expect(await appDocument.getSlides()).toEqual([]);
+    });
+
+    test('legacy items are unique throughout the file without a read writing history, and edits persist them', async () => {
+        const existing = crypto.randomUUID();
+        const raw: any = {
+            metadata: {},
+            items: [
+                { id: 1, canvasItems: [{ id: 1, uuid: existing }, { id: 2 }] },
+                { id: 2, canvasItems: [{ id: 1, uuid: existing }, { id: 2 }] },
+            ],
+        };
+        mocks.baseGetJsonDataMock.mockResolvedValue(raw);
+        const doc = new AppDocument('/docs/legacy.ows');
+        const current = await doc.getJsonData();
+        const original = await doc.getJsonData(true);
+        const ids = current.items.flatMap((slide) =>
+            slide.canvasItems.map((item) => item.uuid),
+        );
+        expect(new Set(ids).size).toBe(4);
+        expect(ids[0]).toBe(existing);
+        expect(current).toEqual(original);
+        expect(raw.items[0].canvasItems[1]).not.toHaveProperty('uuid');
+        expect(raw.items[1].canvasItems[0].uuid).toBe(existing);
+        expect(mocks.setJsonDataMock).not.toHaveBeenCalled();
+        expect(mocks.saveMock).not.toHaveBeenCalled();
+        const slides = await doc.getSlides();
+        expect(slides.every((slide) => !slide.isChanged)).toBe(true);
+
+        const written = JSON.parse(AppDocument.toJsonString(raw));
+        expect(written).toEqual(current);
+        const reordered = { ...written, items: [...written.items].reverse() };
+        expect(JSON.parse(AppDocument.toJsonString(reordered))).toEqual(
+            reordered,
+        );
+    });
+
+    test('duplicating and pasting slides renews item UUIDs without changing the source or its transitions', async () => {
+        const uuid = crypto.randomUUID();
+        const makeSlide = (json: any): any => ({
+            id: json.id,
+            filePath: '/docs/source.ows',
+            canvasItemsJson: json.canvasItems,
+            clone: () => makeSlide(structuredClone(json)),
+            toJson() {
+                return {
+                    ...json,
+                    id: this.id,
+                    canvasItems: this.canvasItemsJson,
+                };
+            },
+        });
+        const raw: any = {
+            metadata: {},
+            items: [
+                {
+                    id: 1,
+                    canvasItems: [{ id: 1, uuid, transitionEffect: 'zoom' }],
+                },
+            ],
+        };
+        const source = makeSlide(raw.items[0]);
+        mocks.baseGetJsonDataMock.mockResolvedValue(raw);
+        const doc = new AppDocument('/docs/source.ows');
+        vi.spyOn(doc, 'getSlides').mockImplementation(async () => [source]);
+        vi.spyOn(doc, 'getSlideIndex').mockResolvedValue(0);
+        vi.spyOn(doc, 'getMaxSlideId').mockResolvedValue(1);
+        vi.spyOn(doc, 'notifyNewSlidesAdded').mockImplementation(() => {});
+        await doc.duplicateSlides([source]);
+        const duplicated = mocks.setJsonDataMock.mock.lastCall![0].items;
+        expect(duplicated[0].canvasItems[0].uuid).toBe(uuid);
+        expect(duplicated[1].canvasItems[0].uuid).not.toBe(uuid);
+        expect(duplicated[1].canvasItems[0].transitionEffect).toBe('zoom');
+
+        await doc.addSlides([makeSlide(structuredClone(raw.items[0]))]);
+        const pasted = mocks.setJsonDataMock.mock.lastCall![0].items;
+        expect(pasted[1].canvasItems[0].uuid).not.toBe(uuid);
+        expect(pasted[1].canvasItems[0].uuid).not.toBe(
+            duplicated[1].canvasItems[0].uuid,
+        );
+        expect(source.canvasItemsJson[0].uuid).toBe(uuid);
     });
 
     test('a document on disk that cannot be read is still reset', async () => {

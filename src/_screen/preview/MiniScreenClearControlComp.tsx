@@ -10,6 +10,13 @@ import {
     useScreenManagerContext,
     useScreenUpdateEvents,
 } from '../managers/screenManagerHooks';
+import {
+    clearAllEventMapper,
+    clearBackgroundEventMapper,
+    clearBibleEventMapper,
+    clearForegroundEventMapper,
+    clearSlideEventMapper,
+} from '../../keyboard-shortcut/appShortcutMappers';
 
 function RenderButtonComp({
     btnMaps,
@@ -68,7 +75,7 @@ function genBtnMaps(screenManager: ScreenManager) {
             title: tran('Clear All'),
             btnType: 'danger',
             isEnabled: isShowing,
-            eventMap: { key: 'F6' },
+            eventMap: clearAllEventMapper,
             onClick: () => {
                 screenManager.clear();
             },
@@ -78,7 +85,7 @@ function genBtnMaps(screenManager: ScreenManager) {
             title: tran('Clear Background'),
             btnType: 'secondary',
             isEnabled: isShowingBackground,
-            eventMap: { key: 'F7' },
+            eventMap: clearBackgroundEventMapper,
             onClick: () => {
                 screenBackgroundManager.clear();
             },
@@ -88,7 +95,7 @@ function genBtnMaps(screenManager: ScreenManager) {
             title: tran('Clear Slide'),
             btnType: 'info',
             isEnabled: isShowingSlide,
-            eventMap: { key: 'F8' },
+            eventMap: clearSlideEventMapper,
             onClick: () => {
                 screenVaryAppDocumentManager.clear();
             },
@@ -98,7 +105,7 @@ function genBtnMaps(screenManager: ScreenManager) {
             title: tran('Clear Bible'),
             btnType: 'primary',
             isEnabled: isShowingBible,
-            eventMap: { key: 'F9' },
+            eventMap: clearBibleEventMapper,
             onClick: () => {
                 screenBibleManager.clear();
             },
@@ -108,7 +115,7 @@ function genBtnMaps(screenManager: ScreenManager) {
             title: tran('Clear Foreground'),
             btnType: 'secondary',
             isEnabled: isShowingForeground,
-            eventMap: { key: 'F10' },
+            eventMap: clearForegroundEventMapper,
             onClick: () => {
                 screenForegroundManager.clear();
             },

@@ -9,8 +9,8 @@
 //   manual/   docs/manual-sources/** -- the user-facing manual, generated from
 //             the live-verified workflow recipes. What a user asking "how do I
 //             ...?" should be answered from.
-//   internal/ .claude/** -- CLAUDE.md, the memories and the robot-test skill's
-//             references. Deep, accurate, and written for whoever is building
+//   internal/ .claude/** -- CLAUDE.md, its path-scoped rules, the memories and
+//             the skills. Deep, accurate, and written for whoever is building
 //             the app; the chatbot ranks it BELOW the manual and labels it, so
 //             an answer from here is never mistaken for a user instruction.
 //
@@ -67,7 +67,7 @@ const SOURCES = [
         // somebody remembered to exclude. A new note dropped anywhere else
         // under `.claude/` (a scratch file, a worktree, a session log, an
         // agent's own settings) must not ship because nobody updated a list.
-        includeDirNames: ['memory', 'skills'],
+        includeDirNames: ['rules', 'memory', 'skills'],
         includeFileNames: ['CLAUDE.md'],
     },
 ];

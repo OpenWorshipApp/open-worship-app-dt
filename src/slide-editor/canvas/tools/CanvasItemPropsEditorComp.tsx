@@ -20,6 +20,7 @@ import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
 import { useAppCurrentRef, useAppEffect } from '../../../helper/appHooks';
 import { registerPendingEditFlusher } from '../../../editing-manager/pendingEditFlushHelpers';
 import { useCanvasControllerEvents } from '../canvasEventHelpers';
+import CanvasItemTransitionComp from './CanvasItemTransitionComp';
 
 export default function CanvasItemPropsEditorComp({
     canvasItem,
@@ -172,6 +173,9 @@ export default function CanvasItemPropsEditorComp({
                             </div>
                         ) : (
                             <CanvasItemContext value={canvasItem}>
+                                <div style={{ flexBasis: '100%', minWidth: 0 }}>
+                                    <CanvasItemTransitionComp />
+                                </div>
                                 <div
                                     // Allowed to be narrower than its content
                                     // so the rows inside wrap and shrink to

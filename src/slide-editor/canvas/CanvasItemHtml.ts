@@ -28,7 +28,7 @@ export type HtmlPropsType = TextStylePropsType & {
 export type CanvasItemHtmlPropsType = { type: 'html' } & CanvasItemPropsType &
     HtmlPropsType;
 
-// Markup rendered as-is; unlike a text item it is never edited in place.
+// Markup sanitized at the render boundary; never edited in place like text.
 class CanvasItemHtml extends CanvasItem<CanvasItemHtmlPropsType> {
     static genStyle(props: CanvasItemHtmlPropsType) {
         return genTextStyle(props);

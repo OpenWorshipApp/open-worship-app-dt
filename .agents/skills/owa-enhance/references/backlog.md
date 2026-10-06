@@ -30,6 +30,30 @@ because `scripts/triage.mjs` reads it from there:
 
 ---
 
+## EN-39 · Document HTML reached Node-integrated windows without sanitization — `done` · S1 · security
+
+**Evidence.** `sanitizeHtml` returned its input, and the direct HTML/Bible canvas
+renderers bypassed it. **Shipped.** Lazy DOMPurify policies at the item boundary
+and shared slide serialization boundary; plain Text is escaped. Raw document
+HTML cannot carry scripts, event handlers, embedded documents or website/camera
+hydration markers. Composed slides preserve typed media markers and sandboxed
+HTTPS YouTube embeds. Local media sources, styles, SVG, Bible attributes and
+legacy `htmlText` remain supported. Sanitization is memoized per mounted item
+by content, with no document history cache.
+
+**Before → after.** 14 executable-content/direct-renderer regression cases
+failed before the fix; the four focused suites now pass 78 tests. Live scratch
+Presenter and Slide Editor: execution marker unset, zero unsafe attributes,
+rich Khmer/French text and loaded local image preserved. The real Print flow
+produced four PDF pages with rich/legacy HTML, literal Text and local media.
+An Open Lyric fixture generated seven stage slides and rendered its verse in
+the Presenter and Mini Screen with no console error.
+The shared screen/print serializer uses the real sanitizer in its regression
+test. Physical projector output and packaged execution were not tested.
+**Proof.** `sanitizeHelpers.test.ts`, `BoxEditorNormalViews.coverage.test.tsx`,
+`basicItems.coverage.test.tsx`; screenshots and final gate log under
+`test-results/owa-enhance/`. Found in run `20261005-1320`, applied 2026-10-05.
+
 ## EN-09 · A noted verse number kept the Reader repainting the whole chapter at 60 fps — `done` · S2 · performance
 
 **Evidence.** `.verse-number-text[data-bible-id]` ran `app-bible-note-verse-hint`

@@ -3,6 +3,7 @@ import type fs from 'node:fs';
 import type zlip from 'node:zlib';
 import type path from 'node:path';
 import type * as nodeCrypto from 'node:crypto';
+import type { MirrorScreenContext } from '../../electron/screenMirrorProtocol';
 
 export type MessageEventType = {
     returnValue: any;
@@ -117,6 +118,8 @@ export enum AppTypeEnum {
 }
 
 export type PagePropsType = {
+    isPageScreenMirror: boolean;
+    screenMirrorHomePage: string;
     isPageFinder: boolean;
     finderHomePage: string;
     isPagePresenter: boolean;
@@ -207,6 +210,9 @@ export type AppProviderType = Readonly<
             openExternalURL: (url: string) => void;
         };
         messageUtils: MessageUtilsType;
+        screenUtils?: {
+            getContext: () => MirrorScreenContext | null;
+        };
         httpUtils: {
             request: typeof http.request;
             requestHttp: typeof http.request;

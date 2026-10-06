@@ -555,14 +555,12 @@ describe('bible-reader LookupBibleItemController', () => {
         await flush();
     });
 
-    test('editBibleItem deletes old selection when no found item', async () => {
-        h.extractBibleTitleMock.mockResolvedValue({
-            result: { bibleItem: null },
-            bibleKey: 'KJV',
-            oldInputText: '',
-            time: Date.now(),
-        });
+    // A view left on its book or chapter grid used to be closed when the
+    // editing moved to another view.
+    async function editAwayFromGrid(bookKey: string | null) {
         const ctl = genController();
+        await settleFirstSelection(ctl);
+        const oldId = ctl.selectedBibleItem.id;
         const extra = ctl.appendBibleItem(
             new FakeReadItem({
                 id: 321,
@@ -570,10 +568,44 @@ describe('bible-reader LookupBibleItemController', () => {
                 target: { chapter: 1 },
             }) as any,
         );
+        h.extractBibleTitleMock.mockResolvedValue({
+            result: { bibleItem: null, bookKey, chapter: null },
+            bibleKey: 'KJV',
+            oldInputText: '',
+            time: Date.now(),
+        });
+        h.cacheStore.clear();
         const deleteSpy = vi.spyOn(ctl, 'deleteBibleItem');
         await ctl.editBibleItem(extra as any);
         await flush();
-        expect(deleteSpy).toHaveBeenCalled();
+        expect(deleteSpy).not.toHaveBeenCalled();
+        expect(ctl.selectedBibleItem.id).toBe(extra.id);
+        const oldItem = toTargets(ctl).find((item) => item.id === oldId)!;
+        return { ctl, oldItem };
+    }
+
+    test('editing away from the chapter grid keeps that book, chapter 1', async () => {
+        h.getVersesCountMock.mockResolvedValue(22);
+        const { ctl, oldItem } = await editAwayFromGrid('EXO');
+        expect(ctl.straightBibleItems).toHaveLength(2);
+        expect(oldItem.target).toEqual({
+            bookKey: 'EXO',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 22,
+        });
+        expect(h.getVersesCountMock).toHaveBeenCalledWith('KJV', 'EXO', 1);
+    });
+
+    test('editing away from the book grid keeps Genesis 1', async () => {
+        const { ctl, oldItem } = await editAwayFromGrid(null);
+        expect(ctl.straightBibleItems).toHaveLength(2);
+        expect(oldItem.target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 31,
+        });
     });
 
     test('deleteBibleItem respects the isAlone guard', () => {

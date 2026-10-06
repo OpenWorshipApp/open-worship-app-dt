@@ -1233,6 +1233,12 @@ export async function fsDeleteDir(dirPath: string) {
 }
 
 export async function fsReadFile(filePath: string) {
+    if (appProvider.screenUtils) {
+        const response = await fetch(toScreenFileURL(filePath));
+        if (!response.ok)
+            throw new Error('Presentation resource is unavailable');
+        return await response.text();
+    }
     let text = await _fsReadFile(filePath, 'utf8');
     // remove `\uFEFF`
     text = text.replace(/^\uFEFF/, '');
@@ -1249,7 +1255,19 @@ export function fsReadFileBase64Sync(filePath: string) {
 // package. Deliberately not through `_fsReadFile`, whose portable-path
 // rewriting is for text.
 export function fsReadFileBytes(filePath: string) {
+    if (appProvider.screenUtils) {
+        return fetch(toScreenFileURL(filePath)).then(async (response) => {
+            if (!response.ok)
+                throw new Error('Presentation resource is unavailable');
+            return new Uint8Array(await response.arrayBuffer());
+        });
+    }
     return fsFilePromise<Uint8Array>(appProvider.fileUtils.readFile, filePath);
+}
+
+/** The screen preload resolves paths against the publishing host, never its own disk. */
+export function toScreenFileURL(filePath: string) {
+    return appProvider.browserUtils.pathToFileURL(filePath);
 }
 
 export async function fsCopyFilePathToPath(

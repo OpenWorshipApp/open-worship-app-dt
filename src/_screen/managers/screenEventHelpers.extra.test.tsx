@@ -337,7 +337,7 @@ describe('screenEventHelpers', () => {
         root = createRoot(container);
     });
 
-    test('blocks inactive wheel scrolling and reports normalized scroll positions', async () => {
+    test('never cancels a wheel and says which scrolls followed one', async () => {
         const { registerScrollingSyncEvent } =
             await import('./screenEventHelpers');
 
@@ -359,50 +359,47 @@ describe('screenEventHelpers', () => {
             clientHeight: { configurable: true, value: 25 },
         });
         const onScroll = vi.fn();
+        const nowSpy = vi.spyOn(performance, 'now');
+        try {
+            registerScrollingSyncEvent(target, onScroll);
 
-        registerScrollingSyncEvent(target, onScroll);
+            // a scroll no wheel drove: a scrollbar drag, a key, a program
+            nowSpy.mockReturnValue(1000);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.25 },
+                false,
+            );
 
-        appProviderMock.getIsMouseOverApp.mockReturnValue(false);
-        appProviderMock.getIsWindowFocused.mockReturnValue(true);
-        const inactiveWheel = new Event('wheel', {
-            bubbles: true,
-            cancelable: true,
-        });
-        const inactivePreventDefault = vi.fn();
-        Object.defineProperty(inactiveWheel, 'preventDefault', {
-            configurable: true,
-            value: inactivePreventDefault,
-        });
-        target.dispatchEvent(inactiveWheel);
-        expect(inactivePreventDefault).toHaveBeenCalledOnce();
+            // Right after a reload, with the pointer resting on the mini screen
+            // and the window not focused, both window-level flags are false.
+            // The wheel is still the operator's and must scroll.
+            appProviderMock.getIsMouseOverApp.mockReturnValue(false);
+            appProviderMock.getIsWindowFocused.mockReturnValue(false);
+            const wheel = new Event('wheel', {
+                bubbles: true,
+                cancelable: true,
+            });
+            target.dispatchEvent(wheel);
+            expect(wheel.defaultPrevented).toBe(false);
 
-        appProviderMock.getIsMouseOverApp.mockReturnValue(true);
-        appProviderMock.getIsWindowFocused.mockReturnValue(true);
-        const activeWheel = new Event('wheel', {
-            bubbles: true,
-            cancelable: true,
-        });
-        const activePreventDefault = vi.fn();
-        Object.defineProperty(activeWheel, 'preventDefault', {
-            configurable: true,
-            value: activePreventDefault,
-        });
-        target.dispatchEvent(activeWheel);
-        expect(activePreventDefault).not.toHaveBeenCalled();
+            nowSpy.mockReturnValue(1500);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.25 },
+                true,
+            );
 
-        const scrollEvent = new Event('scroll', {
-            bubbles: true,
-            cancelable: true,
-        });
-        const scrollPreventDefault = vi.fn();
-        Object.defineProperty(scrollEvent, 'preventDefault', {
-            configurable: true,
-            value: scrollPreventDefault,
-        });
-        target.dispatchEvent(scrollEvent);
-
-        expect(scrollPreventDefault).toHaveBeenCalledOnce();
-        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+            // long after the wheel, a scroll is no longer the wheel's
+            nowSpy.mockReturnValue(2500);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.25 },
+                false,
+            );
+        } finally {
+            nowSpy.mockRestore();
+        }
     });
 
     test('swallows the one scroll event a remote sync applied', async () => {
@@ -436,12 +433,12 @@ describe('screenEventHelpers', () => {
         // differs, so the event goes through (and the stamp is consumed).
         (target as any)._remoteAppliedScroll = { left: 0, top: 100 };
         target.dispatchEvent(new Event('scroll', { bubbles: true }));
-        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 }, false);
         expect((target as any)._remoteAppliedScroll).toBeUndefined();
 
         // With no stamp at all, scrolls flow as before.
         onScroll.mockClear();
         target.dispatchEvent(new Event('scroll', { bubbles: true }));
-        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 }, false);
     });
 });

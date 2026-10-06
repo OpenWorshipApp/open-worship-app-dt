@@ -10,7 +10,6 @@ const {
     useShadowingParentWidthMock,
     canvasItemFromJsonMock,
     genBoxStyleMock,
-    sanitizeHtmlMock,
     getHTMLChildMock,
     scaleCanvasItemToSizeMock,
     genMediaItemFromFileMock,
@@ -23,7 +22,6 @@ const {
     const useShadowingParentWidthMock = vi.fn();
     const canvasItemFromJsonMock = vi.fn();
     const genBoxStyleMock = vi.fn();
-    const sanitizeHtmlMock = vi.fn((html: string) => html);
     const getHTMLChildMock = vi.fn(
         (element: HTMLDivElement) => element.firstElementChild,
     );
@@ -84,7 +82,6 @@ const {
         useShadowingParentWidthMock,
         canvasItemFromJsonMock,
         genBoxStyleMock,
-        sanitizeHtmlMock,
         getHTMLChildMock,
         scaleCanvasItemToSizeMock,
         genMediaItemFromFileMock,
@@ -104,20 +101,42 @@ vi.mock('../../others/ShadowingFillParentWidthComp', () => ({
     useShadowingParentWidth: useShadowingParentWidthMock,
 }));
 
-vi.mock('../../slide-editor/CanvasItemRendererComp', () => ({
-    default: () => <div data-testid="canvas-item-renderer" />,
-}));
+vi.mock('../../slide-editor/CanvasItemRendererComp', async () => {
+    const { use } = await import('react');
+    const { CanvasItemContext } =
+        await import('../../slide-editor/canvas/CanvasItem');
+    const { BoxEditorNormalHtmlRenderComp } =
+        await import('../../slide-editor/canvas/box/BoxEditorNormalViewHtmlModeComp');
+    return {
+        default: function CanvasItemRendererMockComp() {
+            const item = use(CanvasItemContext) as any;
+            return item?.type === 'html' ? (
+                <BoxEditorNormalHtmlRenderComp />
+            ) : (
+                <div data-testid="canvas-item-renderer" />
+            );
+        },
+    };
+});
 
 vi.mock('../../slide-editor/canvas/CanvasItem', async () => {
-    const { createContext } = await import('react');
+    const { createContext, use } = await import('react');
+    const CanvasItemContext = createContext<any>(null);
 
     return {
         default: {
             genBoxStyle: genBoxStyleMock,
         },
-        CanvasItemContext: createContext(null),
+        CanvasItemContext,
+        useCanvasItemPropsContext: () => use(CanvasItemContext)?.props,
     };
 });
+vi.mock('../../slide-editor/canvas/CanvasItemHtml', () => ({
+    default: { validate: () => {}, genStyle: () => ({}) },
+}));
+vi.mock('../../slide-editor/canvas/box/BoxEditorNormalViewErrorComp', () => ({
+    BoxEditorNormalViewErrorRenderComp: () => <div>Error</div>,
+}));
 
 vi.mock('../../slide-editor/canvas/Canvas', () => ({
     default: {
@@ -128,10 +147,6 @@ vi.mock('../../slide-editor/canvas/Canvas', () => ({
 vi.mock('../../helper/helpers', () => ({
     getHTMLChild: getHTMLChildMock,
     freezeObject: (obj: any) => obj,
-}));
-
-vi.mock('../../helper/sanitizeHelpers', () => ({
-    sanitizeHtml: sanitizeHtmlMock,
 }));
 
 vi.mock('../../app-document-list/Slide', () => ({
@@ -181,6 +196,7 @@ describe('presenter item basic coverage', () => {
         useShadowingParentWidthMock.mockReturnValue(null);
         canvasItemFromJsonMock.mockImplementation((canvasItemJson) => ({
             ...canvasItemJson,
+            props: canvasItemJson,
             rendered: true,
         }));
         genBoxStyleMock.mockImplementation((canvasItemJson) => ({
@@ -317,17 +333,37 @@ describe('presenter item basic coverage', () => {
             { id: 'item-2' },
         ] as any);
 
-        expect(sanitizeHtmlMock).toHaveBeenCalledTimes(1);
         expect(getHTMLChildMock).toHaveBeenCalledWith(
             expect.any(HTMLDivElement),
             'div',
         );
         expect(canvasItemFromJsonMock).toHaveBeenCalledTimes(2);
-        expect(genBoxStyleMock).toHaveBeenCalledWith({ id: 'item-1' });
-        expect(genBoxStyleMock).toHaveBeenCalledWith({ id: 'item-2' });
+        expect(genBoxStyleMock).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 'item-1', uuid: expect.any(String) }),
+        );
+        expect(genBoxStyleMock).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 'item-2', uuid: expect.any(String) }),
+        );
         expect(
             generated?.querySelectorAll('[data-testid="canvas-item-renderer"]'),
         ).toHaveLength(2);
+    });
+
+    test('screen and print serialization use the real HTML render guard', async () => {
+        const { genSlideHtml } = await import('./SlideRendererComp');
+        const generated = genSlideHtml([
+            {
+                id: 1,
+                type: 'html',
+                html: '<strong>Printable Khmer ក</strong><svg onload="globalThis.__en39Marker=true"></svg><iframe srcdoc="embedded"></iframe><div data-website-item data-website-url="https://example.org"></div>',
+            },
+        ] as any);
+        expect(generated.querySelector('strong')?.textContent).toBe(
+            'Printable Khmer ក',
+        );
+        expect(
+            generated.querySelector('[onload],iframe,[data-website-item]'),
+        ).toBeNull();
     });
 
     test('creates centered slides from dropped media and skips invalid items', async () => {

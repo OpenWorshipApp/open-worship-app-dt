@@ -290,12 +290,15 @@ In the SAME change, whatever is true of the work:
   `docs/manual-sources/.../w-42-*.md` — only for user-visible behaviour, and only
   steps you watched work.
 - `tools/owa-devtools-mcp/README.md` — the tool table, for any tool change.
-- `.claude/CLAUDE.md` §*Agent access* — for anything structural (a door, the
-  master switch, the knowledge bundle, the tool list).
+- `.claude/rules/` (`agent-*.md`, `chatbot-*.md`) — for anything structural
+  (a door, the master switch, the knowledge bundle, the tool list); and
+  `.claude/CLAUDE.md` §*Agent access* when it changes a rule that holds
+  everywhere.
 - `references/backlog.md` here — status of what you did, plus anything you found
   and did not do.
 - **The Codex mirror.** `.agents/skills/owa-enhance-chatbot/`,
-  `.codex/memory/` and `.codex/project-instructions.md` mirror `.claude/`.
+  `.codex/memory/`, `.codex/instructions/` and `.codex/project-instructions.md`
+  mirror `.claude/`.
   `.claude/` is the source of truth: edit here, then COPY across in the same
   change. A mirror that disagrees is stale by definition — re-copy, do not
   reconcile by hand.
@@ -363,7 +366,7 @@ long because every paragraph in it was earned by a bad answer. Rules:
 Answers come from `electron-build/knowledge/`, built by
 `extra-work/build-knowledge.mjs` from two corpora: `manual`
 (`docs/manual-sources/**`, weight 1.5) and `internal` (`.claude/CLAUDE.md`,
-`memory/`, `skills/`, weight 1.0).
+`rules/`, `memory/`, `skills/`, weight 1.0).
 
 - The manual is generated from `user-workflows.md`. Fix the workflow recipe, run
   `npm run docs:gen`, then rebuild the knowledge bundle — do not hand-edit the

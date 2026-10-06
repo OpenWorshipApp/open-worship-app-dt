@@ -47,9 +47,10 @@ camera item's contract (`CAMERA_ITEM_ATTR`) applied to the web.
   it. A static import blows up several screen suites at module load and bloats every
   screen window. Consequence for tests: the shot lands a **macrotask** later, so
   `await Promise.resolve()` twice is not enough — use `setTimeout(…, 25)`.
-- **`sanitizeHtml` is still a no-op stub.** When a real one lands it MUST allowlist
-  `data-website-*` and `data-camera-*`, or both item kinds silently stop hydrating with no
-  error anywhere.
+- **Sanitization uses two policies** (EN-39, 2026-10-05). `sanitizeSlideHtml` keeps
+  typed `data-website-*` and `data-camera-*` in composed slides so hydration works;
+  `sanitizeHtml` removes them from raw document HTML so it cannot impersonate a
+  website/camera item. See [[document-html-sanitization]].
 - A REMOTE screenshot never self-invalidates — a clock page stays frozen. The only escape
   is the website box's **Refresh Preview** context item (`refreshWebCapturing`), which is
   website-only (a youtube item shares the `url` prop but renders a real embed). A `file:`

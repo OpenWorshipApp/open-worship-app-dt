@@ -276,6 +276,49 @@ describe('dropStepsAlreadyDone', () => {
     ).toHaveLength(1);
   });
 
+  // 2026-10-04: three built-in Presenter tips started a step too far on in
+  // the Presenter -- "Open Bible Lookup at the top of the Presenter." names
+  // this window and goes nowhere; it presses Bible Lookup IN it, so the card
+  // opened on a step inside a popup nobody had opened.
+  it('keeps an opening step that presses a control of this window', () => {
+    const next = { text: 'Type a reference.', finds: [] };
+    // A built-in lesson carries `find` and `finds`; a model-written step
+    // carries `find` alone.
+    for (const opening of [
+      {
+        text: 'Open Bible Lookup at the top of the Presenter.',
+        find: 'Bible Lookup',
+        finds: ['Bible Lookup'],
+      },
+      { text: 'Open Bible Lookup in the Presenter.', find: 'Bible Lookup' },
+      {
+        text: 'Select a document in the Document List so its slide cards appear in the Presenter.',
+        finds: ['Documents'],
+      },
+    ]) {
+      expect(dropStepsAlreadyDone([opening, next], '/presenter.html')).toEqual([
+        opening,
+        next,
+      ]);
+    }
+    // A step that names this window AND does something else in it is not
+    // only the trip -- W-34's "Open Settings ... and pick the Bible tab".
+    const settingsStep = {
+      text: 'Open Settings (Tools → Settings, or the ⚙ button) and pick the Bible tab.',
+      finds: ['Settings', 'Bible'],
+    };
+    expect(
+      dropStepsAlreadyDone([settingsStep, next], '/setting.html'),
+    ).toHaveLength(2);
+    // Every control it names being this window is still the trip alone.
+    expect(
+      dropStepsAlreadyDone(
+        [{ text: 'Open Settings.', finds: ['Settings'] }, next],
+        '/setting.html',
+      ),
+    ).toEqual([next]);
+  });
+
   it('leaves a step alone in a window nothing declares', () => {
     const steps = [
       { text: 'Click the Bible Reader tab.', finds: ['Bible Reader'] },

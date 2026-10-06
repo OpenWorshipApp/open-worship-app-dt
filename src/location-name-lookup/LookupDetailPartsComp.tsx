@@ -19,6 +19,7 @@ import type { DetailPanelKindType } from './detailPanelHelpers';
 import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
+import { useLookupLangCode } from './lookupLangHelpers';
 import {
     getPlainReferenceText,
     getRecordKjvName,
@@ -82,6 +83,7 @@ function RenderReferenceButtonComp({
     name: string;
     target: string;
 }>) {
+    const langCode = useLookupLangCode();
     return (
         <button
             className="location-name-lookup__ref-link"
@@ -89,7 +91,7 @@ function RenderReferenceButtonComp({
             onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                openDetailPanel({ kind, target, name });
+                openDetailPanel({ kind, target, name, langCode });
             }}
             onContextMenu={(event) => {
                 showGraphPreviewContextMenu(event.nativeEvent, {
@@ -413,6 +415,7 @@ export function OptionalNameListRowComp({
     label,
 }: Readonly<{ ids: string[]; label: string }>) {
     const { namesLookupManager } = useLookupManagersContext();
+    const langCode = useLookupLangCode();
     if (ids.length === 0) {
         return null;
     }
@@ -438,6 +441,7 @@ export function OptionalNameListRowComp({
                                         kind: 'name',
                                         target: record.id,
                                         name: record.name,
+                                        langCode,
                                     });
                                 }}
                                 onContextMenu={(event) => {
@@ -467,6 +471,7 @@ export function OptionalLocationListRowComp({
     values,
 }: Readonly<{ label: string; values: string[] }>) {
     const { locationsLookupManager } = useLookupManagersContext();
+    const langCode = useLookupLangCode();
     if (values.length === 0) {
         return null;
     }
@@ -495,6 +500,7 @@ export function OptionalLocationListRowComp({
                                         kind: 'location',
                                         target: record.id,
                                         name: record.name,
+                                        langCode,
                                     });
                                 }}
                                 onContextMenu={(event) => {

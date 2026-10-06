@@ -109,26 +109,19 @@ export async function getLookupDataCached(
 // copies resident and a multi-second freeze mid-service. Holding the single
 // resolved value while ANY consumer is mounted removes both. The value is
 // dropped the moment the last one unmounts, so nothing outlives the UI.
-let heldManagers: LookupManagersType | null = null;
-let heldLangCode: string | null = null;
-let pendingManagers: Promise<LookupManagersType> | null = null;
-let holderCount = 0;
-// Bumped whenever what is in flight stops being what is wanted, so a load that
-// was already running cannot install itself as the held value afterwards.
-let loadGeneration = 0;
+type LookupHolderType = {
+    managers: LookupManagersType | null;
+    pending: Promise<LookupManagersType> | null;
+    count: number;
+};
 
-function dropHeldManagers() {
-    heldManagers = null;
-    heldLangCode = null;
-    pendingManagers = null;
-    loadGeneration += 1;
-}
+// Only languages with mounted consumers live here. Different-language details
+// can coexist, while every panel of one language shares the same dataset.
+const holders = new Map<string, LookupHolderType>();
 
-function dropEveryLanguage() {
-    dropHeldManagers();
-    // Not just the holder: the 10s window behind it would otherwise keep the
-    // previous language's ~34MB resident right while the new one is being
-    // built, which is the one moment the app can least afford a second copy.
+function dropCachedLanguages() {
+    // Mounted details still need their fixed-language managers. Only evict the
+    // short reopen cache when the global selection changes.
     globalCacheManager10Seconds.deleteMatchedSync((key) => {
         return key.startsWith(LOOKUP_DATA_CACHE_KEY_PREFIX);
     });
@@ -139,58 +132,47 @@ function dropEveryLanguage() {
 // to be driven by the CHANGE rather than by the next `acquireLookupData`,
 // because between the two there may be no consumer left to ask, and the copy
 // would sit in the cache regardless.
-subscribeLookupLangCode(dropEveryLanguage);
+subscribeLookupLangCode(dropCachedLanguages);
 
-export function acquireLookupData(): Promise<LookupManagersType> {
-    const langCode = getSelectedLookupLangCode();
-    holderCount += 1;
-    // Belt and braces for a selection that changed before this module was even
-    // loaded, and therefore before the subscription above existed.
-    if (heldLangCode !== null && heldLangCode !== langCode) {
-        dropEveryLanguage();
+export function acquireLookupData(
+    langCode = getSelectedLookupLangCode(),
+): Promise<LookupManagersType> {
+    let holder = holders.get(langCode);
+    if (holder === undefined) {
+        holder = { managers: null, pending: null, count: 0 };
+        holders.set(langCode, holder);
     }
-    if (heldManagers !== null) {
-        return Promise.resolve(heldManagers);
+    const currentHolder = holder;
+    currentHolder.count += 1;
+    if (currentHolder.managers !== null) {
+        return Promise.resolve(currentHolder.managers);
     }
-    if (pendingManagers === null) {
-        const generation = loadGeneration;
-        heldLangCode = langCode;
-        pendingManagers = getLookupDataCached(langCode)
+    if (currentHolder.pending === null) {
+        currentHolder.pending = getLookupDataCached(langCode)
             .then((data) => {
-                // Superseded by a language change while this was in flight: the
-                // consumers have already asked again for the new one, and this
-                // must not overwrite it.
-                if (generation !== loadGeneration) {
-                    return data;
-                }
-                pendingManagers = null;
-                // Everyone may have unmounted while this was in flight; then
-                // there is nothing to hold it for and it must not be retained.
-                if (holderCount > 0) {
-                    heldManagers = data;
+                currentHolder.pending = null;
+                // A released holder cannot reinstall itself after a late load.
+                if (currentHolder.count > 0) {
+                    currentHolder.managers = data;
                 }
                 return data;
             })
             .catch((error) => {
-                if (generation === loadGeneration) {
-                    pendingManagers = null;
-                    heldLangCode = null;
-                }
+                currentHolder.pending = null;
                 throw error;
             });
     }
-    return pendingManagers;
+    return currentHolder.pending;
 }
 
-export function releaseLookupData() {
-    holderCount = Math.max(0, holderCount - 1);
-    if (holderCount === 0) {
-        heldManagers = null;
-        // Only when nothing is in flight: while a load is still running this
-        // names ITS language, and clearing it would hide a language change from
-        // the next acquire, which would then join a load for the old one.
-        if (pendingManagers === null) {
-            heldLangCode = null;
-        }
+export function releaseLookupData(langCode = getSelectedLookupLangCode()) {
+    const holder = holders.get(langCode);
+    if (holder === undefined) {
+        return;
+    }
+    holder.count = Math.max(0, holder.count - 1);
+    if (holder.count === 0) {
+        holder.managers = null;
+        holders.delete(langCode);
     }
 }

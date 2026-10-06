@@ -11,6 +11,69 @@ const numList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 // `tranKeyCoverage.test.ts` holds this file to. Machine-translated
 // (2026-09-21); a native speaker should review the phrasing.
 const dictionary = {
+    'Screen Mirror': 'Écran miroir',
+    'Connection code is incorrect': 'Le code de connexion est incorrect',
+    'Disconnected by host': 'Déconnecté par l’hôte',
+    'Incompatible or duplicate connection':
+        'Connexion incompatible ou en double',
+    'Screen Mirror Connection': 'Connexion écran miroir',
+    'Screen mirror server is unavailable':
+        'Le serveur écran miroir est indisponible',
+    'Connect to host': 'Se connecter à l’hôte',
+    Rescan: 'Rechercher à nouveau',
+    'Host address': 'Adresse de l’hôte',
+    Port: 'Port',
+    'Connection code': 'Code de connexion',
+    Connect: 'Connecter',
+    Disconnect: 'Déconnecter',
+    'Connection status': 'État de connexion',
+    Connected: 'Connecté',
+    Disconnected: 'Déconnecté',
+    Connecting: 'Connexion en cours',
+    'Waiting for host approval': 'En attente de l’autorisation de l’hôte',
+    'Connection failed': 'Échec de connexion',
+    'Connected guests': 'Invités connectés',
+    'No connected guests': 'Aucun invité connecté',
+    'Connection request': 'Demande de connexion',
+    'Allow connection': 'Autoriser la connexion',
+    'Reject connection': 'Refuser la connexion',
+    'Host addresses': 'Adresses de l’hôte',
+    'Guest access': 'Accès des invités',
+    'Approve each connection': 'Autoriser chaque connexion',
+    'Require connection code': 'Exiger un code de connexion',
+    'Code is set': 'Code défini',
+    'Set connection code': 'Définir le code de connexion',
+    'Custom port (next launch)': 'Port personnalisé (prochain démarrage)',
+    'Save port': 'Enregistrer le port',
+    Host: 'Hôte',
+    'This computer': 'Cet ordinateur',
+    'Choose a host below': 'Choisissez un hôte ci-dessous',
+    'On the host, click Allow connection.':
+        'Sur l’hôte, cliquez sur « Autoriser la connexion ».',
+    'The host can now show its screens on these monitors.':
+        'L’hôte peut maintenant afficher ses écrans sur ces moniteurs.',
+    'Hosts on this network': 'Hôtes sur ce réseau',
+    'Looking for hosts…': 'Recherche des hôtes…',
+    'No host found. Open the app on the host and check that both computers are on the same network.':
+        'Aucun hôte trouvé. Ouvrez l’application sur l’hôte et vérifiez que les deux ordinateurs sont sur le même réseau.',
+    'Connect by address': 'Se connecter par adresse',
+    'Leave empty unless the host uses a code.':
+        'Laissez vide sauf si l’hôte utilise un code.',
+    'HTML-in-Canvas': 'HTML-in-Canvas',
+    'PDF.js': 'PDF.js',
+    'Interactive text': 'Texte interactif',
+    'Mozilla viewer': 'Visionneuse Mozilla',
+    'Messy text': 'Texte varié',
+    'Hover for a title; click or right-click a text range to call the app.':
+        'Survolez pour voir le titre ; cliquez ou faites un clic droit sur une plage de texte pour appeler l’application.',
+    'Extracted PDF text': 'Texte extrait du PDF',
+    'Text range source': 'Source des plages de texte',
+    'Hover over text for its title; click a Bible reference for a verse.':
+        'Survolez le texte pour afficher son titre ; cliquez sur une référence biblique pour voir le verset.',
+    'Choose PDF': 'Choisir un PDF',
+    'Selected text': 'Texte sélectionné',
+    'No matching Bible verse found':
+        'Aucun verset biblique correspondant trouvé',
     // Presenter-only practice lessons.
     'Type a complete reference in Bible Lookup':
         'Saisir une référence complète dans la recherche biblique',
@@ -149,6 +212,14 @@ const dictionary = {
         'Diviser directement vers une autre traduction',
     'Use Split Horizontal to or Split Vertical to from a passage menu, then choose a Bible.':
         'Dans le menu du passage, utilisez Diviser horizontalement vers ou Diviser verticalement vers, puis choisissez une Bible.',
+    'Move between split passages with the keyboard':
+        'Passer d’un passage divisé à l’autre au clavier',
+    'Press Ctrl+Shift with an arrow key to work in the passage on that side.':
+        'Appuyez sur Ctrl+Maj avec une flèche pour travailler dans le passage de ce côté.',
+    'Move between split passages in Bible Lookup':
+        'Passer d’un passage divisé à l’autre dans la recherche biblique',
+    'Split a passage, then press Ctrl+Shift with an arrow key to work in the passage on that side.':
+        'Divisez un passage, puis appuyez sur Ctrl+Maj avec une flèche pour travailler dans le passage de ce côté.',
     'Choose the Bible formatting model':
         'Choisir le modèle de mise en forme biblique',
     'Use Change Bible Model Info in the footer; choosing a different model reloads the Reader.':
@@ -1173,6 +1244,8 @@ const dictionary = {
     // in with its own transition instead of the screen's.
     'Foreground transition': 'Transition de premier plan',
     'Own transition': 'Transition propre',
+    'Canvas item transition': 'Transition de l’élément du canevas',
+    'Used when changing slides.': 'Utilisée lors du changement de diapositive.',
     Follows: 'Suit',
     'Varies by screen': "Varie selon l'écran",
     'Screen setting': "Réglage de l'écran",
@@ -2801,6 +2874,75 @@ const dictionary = {
     Strong: 'Forte',
     Glow: 'Halo',
     Outline: 'Contour',
+    // Help -> Keyboard Shortcuts (src/keyboard-shortcut).
+    'Keyboard Shortcuts': 'Raccourcis clavier',
+    'Search shortcuts': 'Rechercher des raccourcis',
+    'No shortcuts found': 'Aucun raccourci trouvé',
+    'Start or stop Presenting Control':
+        'Démarrer ou arrêter le contrôle de présentation',
+    'Every window': 'Toutes les fenêtres',
+    'Dialogs and menus': 'Boîtes de dialogue et menus',
+    'Confirm the dialog': 'Valider la boîte de dialogue',
+    'Cancel the dialog': 'Annuler la boîte de dialogue',
+    'Move through the right-click menu': 'Parcourir le menu du clic droit',
+    'Choose the highlighted menu item':
+        "Choisir l'élément de menu en surbrillance",
+    'Jump to a menu item by its first letter':
+        'Aller à un élément de menu par sa première lettre',
+    Screens: 'Écrans',
+    'Show or hide the screen': "Afficher ou masquer l'écran",
+    'Show or take down Messages': 'Afficher ou retirer les messages',
+    'While the Messages panel is open': 'Quand le panneau Messages est ouvert',
+    'Next slide': 'Diapositive suivante',
+    'Previous slide': 'Diapositive précédente',
+    'Select all slides': 'Sélectionner toutes les diapositives',
+    'Copy the selected slides': 'Copier les diapositives sélectionnées',
+    'Paste slides': 'Coller des diapositives',
+    'Duplicate the selected slides': 'Dupliquer les diapositives sélectionnées',
+    'Delete the selected slides': 'Supprimer les diapositives sélectionnées',
+    'Clear the slide selection': 'Effacer la sélection de diapositives',
+    'While the slides panel has focus':
+        'Quand le panneau des diapositives a le focus',
+    'While a Presenting Flow preview has focus':
+        "Quand l'aperçu d'un déroulé a le focus",
+    'Go to the next item': "Passer à l'élément suivant",
+    "While a mini screen's Drawing panel has focus":
+        "Quand le panneau Dessin d'un mini-écran a le focus",
+    'Back to painting': 'Revenir au pinceau',
+    "While a mini screen's Focusing panel has focus":
+        "Quand le panneau Focalisation d'un mini-écran a le focus",
+    'While Presenting Control is open':
+        'Quand le contrôle de présentation est ouvert',
+    'Back to using the app': "Revenir à l'utilisation de l'application",
+    'While a drawing tool is in use': 'Quand un outil de dessin est actif',
+    'Close the Bible Lookup popup': 'Fermer la fenêtre de recherche biblique',
+    'Open the typed reference': 'Ouvrir la référence saisie',
+    'Complete the typed reference': 'Compléter la référence saisie',
+    'Remove the last part of the reference':
+        'Retirer la dernière partie de la référence',
+    'Clear the reference': 'Effacer la référence',
+    'Move through the books and chapters':
+        'Parcourir les livres et les chapitres',
+    'Move between split passages': "Passer d'un passage divisé à l'autre",
+    'Close the selected split passage': 'Fermer le passage divisé sélectionné',
+    'Focus the slide canvas': 'Activer le canevas de la diapositive',
+    'While the slide canvas has focus':
+        'Quand le canevas de la diapositive a le focus',
+    'Deselect the boxes': 'Désélectionner les zones',
+    'Select the next box': 'Sélectionner la zone suivante',
+    'Select the previous box': 'Sélectionner la zone précédente',
+    'Move the selected box': 'Déplacer la zone sélectionnée',
+    'Hold Shift to move further, Ctrl to move less':
+        'Maintenez Maj pour aller plus loin, Ctrl pour aller moins loin',
+    'Copy the selected boxes': 'Copier les zones sélectionnées',
+    'Paste boxes or a copied Bible passage':
+        'Coller des zones ou un passage biblique copié',
+    'Duplicate the selected boxes': 'Dupliquer les zones sélectionnées',
+    'Delete the selected boxes': 'Supprimer les zones sélectionnées',
+    'Finish editing the text': 'Terminer la modification du texte',
+    'While typing in a text box': 'Pendant la saisie dans une zone de texte',
+    'Cancel editing the text': 'Annuler la modification du texte',
+    'While the Bible Lookup is open': 'Quand la recherche biblique est ouverte',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

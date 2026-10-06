@@ -10,8 +10,9 @@ import {
 } from '../managers/screenManagerHooks';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { tran } from '../../lang/langHelpers';
+import { toggleScreenEventMapper } from '../../keyboard-shortcut/appShortcutMappers';
 
-const showingScreenEventMap = { key: 'F5' };
+const showingScreenEventMap = toggleScreenEventMapper;
 export default function ShowHideScreenComp() {
     const screenManagerBase = useScreenManagerBaseContext();
     useKeyboardRegistering(

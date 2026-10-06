@@ -4,16 +4,13 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-04",
+    "updated": "2026-10-05",
     "sections": [
         {
             "id": "screens",
             "label": "The screen the audience sees",
             "panel": "Mini Screen",
-            "recipes": [
-                "W-10",
-                "W-18"
-            ],
+            "recipes": ["W-10", "W-18"],
             "questions": [
                 {
                     "id": "is-anything-showing",
@@ -30,9 +27,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-10",
-                        "tools": [
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_list_screens"]
                     },
                     "starterRank": 14
                 },
@@ -87,9 +82,7 @@
                         "recipe": "W-10",
                         "find": "Toggle showing screen",
                         "shortcut": "F5",
-                        "tools": [
-                            "owa_hide_screens"
-                        ],
+                        "tools": ["owa_hide_screens"],
                         "guide": true
                     }
                 },
@@ -125,9 +118,7 @@
                     "resources": {
                         "recipe": "W-10",
                         "shortcut": "F5",
-                        "tools": [
-                            "owa_hide_screens"
-                        ]
+                        "tools": ["owa_hide_screens"]
                     }
                 },
                 {
@@ -143,9 +134,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-01"
-                        ],
+                        "related": ["W-01"],
                         "guide": true
                     }
                 },
@@ -181,12 +170,8 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-18"
-                        ],
-                        "tools": [
-                            "owa_list_screens"
-                        ],
+                        "related": ["W-18"],
+                        "tools": ["owa_list_screens"],
                         "guide": true
                     }
                 },
@@ -203,9 +188,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "tools": [
-                            "owa_list_screens"
-                        ],
+                        "tools": ["owa_list_screens"],
                         "guide": true
                     }
                 },
@@ -238,9 +221,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "related": [
-                            "W-22"
-                        ],
+                        "related": ["W-22"],
                         "guide": true
                     }
                 },
@@ -258,9 +239,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-48"
-                        ],
+                        "related": ["W-48"],
                         "guide": true
                     }
                 },
@@ -281,9 +260,7 @@
                     ],
                     "resources": {
                         "recipe": "W-48",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "guide": true
                     }
                 },
@@ -302,9 +279,7 @@
                     ],
                     "resources": {
                         "recipe": "W-48",
-                        "related": [
-                            "W-08"
-                        ],
+                        "related": ["W-08"],
                         "guide": true
                     }
                 },
@@ -323,9 +298,7 @@
                     ],
                     "resources": {
                         "recipe": "W-48",
-                        "related": [
-                            "W-09"
-                        ],
+                        "related": ["W-09"],
                         "guide": true
                     }
                 },
@@ -389,9 +362,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "tools": [
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_list_screens"]
                     }
                 },
                 {
@@ -419,9 +390,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "related": [
-                            "W-06"
-                        ]
+                        "related": ["W-06"]
                     }
                 },
                 {
@@ -435,9 +404,69 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "related": [
-                            "W-03"
-                        ]
+                        "related": ["W-03"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "screen-mirror",
+            "label": "Screen Mirror",
+            "panel": "Mini Screen",
+            "recipes": ["W-50"],
+            "questions": [
+                {
+                    "id": "connect-guest-computer",
+                    "text": "How do I show the screen on another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen mirror",
+                        "guest",
+                        "network",
+                        "host",
+                        "connect",
+                        "remote monitor",
+                        "rescan",
+                        "host address",
+                        "this computer"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Screen Mirror Connection",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "connected-guests-header",
+                    "text": "Where can I see which guest computers are connected?",
+                    "kind": "where",
+                    "keywords": [
+                        "connected guests",
+                        "a1",
+                        "a2",
+                        "mini screen",
+                        "header"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Connected guests"
+                    }
+                },
+                {
+                    "id": "guest-camera-stream",
+                    "text": "How do I use a camera from a connected guest computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remote camera",
+                        "guest camera",
+                        "webcam",
+                        "stream"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "related": ["W-08"],
+                        "find": "Cameras",
+                        "guide": true
                     }
                 }
             ]

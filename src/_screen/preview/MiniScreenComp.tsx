@@ -13,9 +13,15 @@ import MiniScreenBodyComp, {
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { pressElementLikeButton } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
+import ScreenMirrorFloatingComp from '../../screen-mirror/ScreenMirrorFloatingComp';
+import {
+    useMirrorState,
+    setMirrorPanelShowing,
+} from '../../screen-mirror/mirrorConnectionHelpers';
 
 ScreenManager.initReceiveScreenMessage();
 export default function MiniScreenComp() {
+    const mirror = useMirrorState();
     const [previewScale, setPreviewScale] = useStateSettingNumber(
         'mini-screen-previewer',
         defaultRangeSize.size,
@@ -41,7 +47,26 @@ export default function MiniScreenComp() {
             className="card w-100 h-100 app-zero-border-radius"
             ref={containerRef}
         >
+            {!!mirror?.guests.length && (
+                <div
+                    className="card-header d-flex flex-wrap align-items-center gap-2 py-1"
+                    aria-label={tran('Connected guests')}
+                >
+                    <span className="small">{tran('Connected guests')}</span>
+                    {mirror.guests.map((guest) => (
+                        <button
+                            key={guest.id}
+                            className="btn btn-sm btn-outline-info py-0"
+                            onClick={() => setMirrorPanelShowing(true)}
+                        >
+                            <i className="bi bi-pc-display me-1" />
+                            {guest.prefix}: {guest.name}
+                        </button>
+                    ))}
+                </div>
+            )}
             <MiniScreenBodyComp previewScale={previewScale} />
+            <ScreenMirrorFloatingComp />
             {/* This is the only route to `Add New Screen` that is not a
                 right-click, so it has to be operable without a mouse: as a
                 bare <i> it was out of the accessibility tree, unreachable by

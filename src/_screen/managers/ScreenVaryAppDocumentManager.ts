@@ -77,6 +77,7 @@ import { handleError } from '../../helper/errorHelpers';
 import { getTargetLyricSlideItemData } from '../../lyric-list/lyricSlideScreenHelpers';
 import { resolveSlideTransitionEffect } from './screenSlideTransitionHelpers';
 import { withTransitionEffect } from '../transitionOverrideHelpers';
+import { CanvasItemTransitions } from './canvasItemTransitionHelpers';
 import {
     getStyleAnimForNode,
     type TransitionEffectType,
@@ -154,6 +155,8 @@ class ScreenVaryAppDocumentManager
     static readonly eventNamePrefix: string = 'screen-vary-app-document-m';
     private _varySlideData: VarySlideScreenDataType | null = null;
     private _div: HTMLDivElement | null = null;
+    private readonly canvasItemTransitions = new CanvasItemTransitions();
+    private renderRevision = 0;
     private readonly syncAdjustedMediaElements =
         new WeakSet<HTMLMediaElement>();
     // Live YouTube embeds in the currently-rendered slide. Rebuilt on every
@@ -186,6 +189,9 @@ class ScreenVaryAppDocumentManager
     }
 
     set div(div: HTMLDivElement | null) {
+        if (div !== this._div) {
+            this.canvasItemTransitions.dispose();
+        }
         this._div = div;
         this.render();
     }
@@ -1184,7 +1190,7 @@ class ScreenVaryAppDocumentManager
                 bibleKeys.add(bibleKey);
             }
         }
-        if (bibleKeys.size > 0) {
+        if (bibleKeys.size > 0 && !appProvider.screenUtils) {
             await Promise.all(
                 Array.from(bibleKeys).map((bibleKey) => {
                     return getBibleFontFamily(bibleKey);
@@ -1192,7 +1198,6 @@ class ScreenVaryAppDocumentManager
             );
         }
         const content = genSlideHtml(itemJson.canvasItems);
-        this.cleanupSlideContent(content);
         const { width, height } = itemJson.metadata;
         Object.assign(divHaftScale.style, {
             width: `${width}px`,
@@ -1213,11 +1218,18 @@ class ScreenVaryAppDocumentManager
         }
         const targetDiv = div.lastChild as HTMLDivElement;
         // It leaves the way it came in (`TRANSITION_DATASET_KEY`).
-        await this.genStyleAnimForNode(targetDiv).animOut(targetDiv);
+        await this.animateSlideOut(targetDiv);
         targetDiv.remove();
     }
 
+    private animateSlideOut(node: HTMLDivElement) {
+        return this.canvasItemTransitions.has(node)
+            ? this.canvasItemTransitions.exit(node)
+            : this.genStyleAnimForNode(node).animOut(node);
+    }
+
     async render() {
+        const revision = ++this.renderRevision;
         // ABOVE the null guard, unlike `destroyYouTubePlayers` below: `set div`
         // calls `render()`, so a mini-screen host unmounting comes through here
         // with `div` already null and takes that early return. A camera left
@@ -1231,7 +1243,8 @@ class ScreenVaryAppDocumentManager
         // registers fresh ones in `cleanupSlideContent`.
         this.destroyYouTubePlayers();
         const div = this.div;
-        if (this.varySlideData === null) {
+        const slideData = this.varySlideData;
+        if (slideData === null) {
             this.clearJunk(div);
             return;
         }
@@ -1239,12 +1252,16 @@ class ScreenVaryAppDocumentManager
         const divHaftScale = document.createElement('div');
         divHaftScale.classList.add('half-scale-container');
         divContainer.appendChild(divHaftScale);
-        registerScrollingSyncEvent(divHaftScale, (scroll) => {
-            this.sendSyncScrollPercentage('.half-scale-container', scroll);
+        registerScrollingSyncEvent(divHaftScale, (scroll, isFromWheel) => {
+            this.sendSyncScrollPercentage(
+                '.half-scale-container',
+                scroll,
+                isFromWheel,
+            );
         });
 
         const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
-            this.varySlideData;
+            slideData;
         const backgroundColor = virtualBackgroundColor ?? null;
 
         let target;
@@ -1273,18 +1290,25 @@ class ScreenVaryAppDocumentManager
                 itemJson as SlidePropsType,
             );
         }
-        if (target === null) {
+        if (
+            target === null ||
+            revision !== this.renderRevision ||
+            div !== this.div
+        ) {
             return;
+        }
+        if (Array.isArray((itemJson as SlidePropsType).canvasItems)) {
+            // Native slides can await Bible fonts. Attach media only after the
+            // revision check, so an older slide cannot reopen a camera/player.
+            this.cleanupSlideContent(target.content);
         }
         for (const child of Array.from(div.children)) {
             // Each slide leaves the way it came in, whatever the next one
             // comes in with: a slide that zoomed in zooms out under a slide
             // that fades in (`TRANSITION_DATASET_KEY`).
-            this.genStyleAnimForNode(child)
-                .animOut(child as HTMLDivElement)
-                .then(() => {
-                    child.remove();
-                });
+            this.animateSlideOut(child as HTMLDivElement).then(() => {
+                child.remove();
+            });
         }
         divHaftScale.appendChild(target.content);
         Object.assign(divContainer.style, {
@@ -1293,10 +1317,18 @@ class ScreenVaryAppDocumentManager
             height: `${this.screenManagerBase.height}px`,
             transform: `scale(${target.scale},${target.scale}) translate(50%, 50%)`,
         });
-        this.genStyleAnimFor(this.varySlideData.transitionEffect).animIn(
-            divContainer,
-            div,
-        );
+        div.appendChild(divContainer);
+        const hasItemTransitions =
+            Array.isArray((itemJson as SlidePropsType).canvasItems) &&
+            this.canvasItemTransitions.enter(
+                divContainer,
+                target.content,
+                slideData.transitionEffect ?? this.effectManager.effectType,
+                (effect) => this.genStyleAnimFor(effect).duration,
+            );
+        this.genStyleAnimFor(
+            hasItemTransitions ? 'none' : slideData.transitionEffect,
+        ).animIn(divContainer, div);
     }
 
     /**
@@ -1362,6 +1394,8 @@ class ScreenVaryAppDocumentManager
     }
 
     delete() {
+        ++this.renderRevision;
+        this.canvasItemTransitions.dispose();
         // Local teardown only — deliberately NOT clear(). clear() goes through
         // the varySlideData setter, which broadcasts to every screen sharing
         // this one's color note (deleting one screen blanked the group's slide)

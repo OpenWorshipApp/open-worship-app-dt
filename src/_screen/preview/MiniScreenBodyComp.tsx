@@ -19,6 +19,11 @@ import type { BibleItemDataType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { Fragment, useCallback, useMemo } from 'react';
 import {
+    getMirrorState,
+    getMirrorPanelShowing,
+    setMirrorPanelShowing,
+} from '../../screen-mirror/mirrorConnectionHelpers';
+import {
     genColorBar,
     genColorMap,
     genColorNoteDataList,
@@ -33,6 +38,22 @@ import {
 // of the card, so the menu is reachable without a right-click.
 export function openMiniScreenContextMenu(event: any) {
     showAppContextMenu(event, [
+        ...(getMirrorState()?.guests ?? []).map((guest) => ({
+            childBefore: genContextMenuItemIcon('pc-display'),
+            menuElement: `${guest.prefix}: ${guest.name}`,
+            onSelect() {
+                setMirrorPanelShowing(true);
+            },
+        })),
+        {
+            childBefore: genContextMenuItemIcon(
+                getMirrorPanelShowing() ? 'check-square' : 'square',
+            ),
+            menuElement: tran('Screen Mirror Connection'),
+            onSelect() {
+                setMirrorPanelShowing(!getMirrorPanelShowing());
+            },
+        },
         {
             childBefore: genContextMenuItemIcon('window-plus'),
             menuElement: tran('Add New Screen'),

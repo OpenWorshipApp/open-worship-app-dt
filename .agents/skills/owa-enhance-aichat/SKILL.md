@@ -210,8 +210,9 @@ watched file if it does not come back.
 
 In the SAME change, whatever is true of the work:
 
-- `.claude/CLAUDE.md` §*Agent access* → the AI Chat bullet — anything
-  structural: a preference, a policy, the session, the cap.
+- `.claude/rules/aichat.md` — anything structural: a preference, a policy,
+  the session, the cap (and `.claude/CLAUDE.md` §*Agent access* when it changes
+  a rule that holds everywhere).
 - [references/backlog.md](./references/backlog.md) — `AC-xx` status, plus
   everything found and NOT done.
 - `.claude/skills/owa-robot-test/references/user-workflows.md` **W-44** and
@@ -220,7 +221,8 @@ In the SAME change, whatever is true of the work:
   question the assistant should now answer.
 - `.claude/memory/aichat-window.md` for anything not derivable from the code.
 - **The Codex mirror** (`.agents/skills/`, `.codex/memory/`,
-  `.codex/project-instructions.md`; rules in `AGENTS.md`): copy, never
+  `.codex/instructions/`, `.codex/project-instructions.md`; rules in
+  `AGENTS.md`): copy, never
   reconcile by hand.
 - **Any edit under `.claude/` needs `node extra-work/build-knowledge.mjs`.**
 

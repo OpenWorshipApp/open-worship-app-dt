@@ -721,6 +721,41 @@ describe('screen infrastructure', () => {
             true,
         );
 
+        // Pointer not seen entering yet (just reloaded), window not focused:
+        // a scroll no wheel drove stays local, a wheel's goes out regardless.
+        appProviderMock.getIsMouseOverApp = () => false;
+        appProviderMock.getIsWindowFocused = () => false;
+        try {
+            base.sendScreenMessage.mockClear();
+            handler.sendSyncScrollPercentage('.scroll-target', {
+                x: 0,
+                y: 0.75,
+            });
+            await vi.runAllTimersAsync();
+            expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+            handler.sendSyncScrollPercentage(
+                '.scroll-target',
+                { x: 0, y: 0.75 },
+                true,
+            );
+            await vi.runAllTimersAsync();
+            expect(base.sendScreenMessage).toHaveBeenCalledWith(
+                {
+                    screenId: 3,
+                    type: 'sync-scroll-percentage',
+                    data: {
+                        domSelector: '.scroll-target',
+                        scroll: { x: 0, y: 0.75 },
+                    },
+                },
+                true,
+            );
+        } finally {
+            appProviderMock.getIsMouseOverApp = () => true;
+            appProviderMock.getIsWindowFocused = () => true;
+        }
+
         const scroller = document.createElement('div');
         Object.defineProperties(scroller, {
             scrollWidth: { value: 300, configurable: true },

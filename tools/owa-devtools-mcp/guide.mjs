@@ -2196,11 +2196,40 @@ export function dropStepsAlreadyDone(steps, pathname = '') {
       return lowered.includes(name);
     });
   };
+  // ...and the words alone cannot say WHAT is opened there. "Open Bible
+  // Lookup at the top of the Presenter." names this window and goes nowhere:
+  // it presses Bible Lookup IN it, and dropping it started two Presenter tips
+  // on a step inside a popup nobody had opened. So a step that names a control
+  // is a trip to this window only when every control it names IS this window
+  // ("Bible Reader", "Setting", "Slide Editor"); a step naming none is still
+  // read by its words alone, as before.
+  const checkIsWindowName = (control) => {
+    const lowered = control.trim().toLowerCase();
+    return (
+      lowered.length > 0 &&
+      hereNames.some((name) => {
+        return name.includes(lowered) || lowered.includes(name);
+      })
+    );
+  };
+  const checkPressesSomethingHere = (step) => {
+    const controls = [
+      ...(step.finds ?? []),
+      ...(typeof step.find === 'string' ? [step.find] : []),
+    ];
+    return (
+      controls.length > 0 &&
+      !controls.every((control) => {
+        return checkIsWindowName(String(control));
+      })
+    );
+  };
   const goingPattern = /^(click|open|go to|switch to|choose|select)\b/i;
   while (
     kept.length > 1 &&
     goingPattern.test(kept[0].text) &&
-    checkIsHere(kept[0].text)
+    checkIsHere(kept[0].text) &&
+    !checkPressesSomethingHere(kept[0])
   ) {
     kept.shift();
   }

@@ -21,6 +21,7 @@ const initUserTasks = vi.fn();
 const enableRemoteDebugging = vi.fn();
 const initAi = vi.fn();
 const initAiChatGuestGuard = vi.fn();
+const initScreenMirror = vi.fn(async () => {});
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
 
 vi.mock('./fsServe', () => ({
@@ -45,6 +46,7 @@ vi.mock('./taskbarHelpers', () => ({
 
 vi.mock('./aiHelpers', () => ({ enableRemoteDebugging, initAi }));
 vi.mock('./aiChatGuestHelpers', () => ({ initAiChatGuestGuard }));
+vi.mock('./screenMirrorService', () => ({ initScreenMirror }));
 vi.mock('./electronMenu', () => ({ initMenu }));
 vi.mock('./devtools', () => ({ initDevtools }));
 vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));
@@ -80,6 +82,7 @@ describe('electron index', () => {
         initUserTasks.mockClear();
         enableRemoteDebugging.mockClear();
         initAi.mockClear();
+        initScreenMirror.mockClear();
         getInstance.mockClear();
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
@@ -126,6 +129,10 @@ describe('electron index', () => {
         expect(initUserTasks).toHaveBeenCalledTimes(1);
         expect(enableRemoteDebugging).toHaveBeenCalledTimes(1);
         expect(initAi).toHaveBeenCalledTimes(1);
+        expect(initScreenMirror).toHaveBeenCalledTimes(1);
+        expect(initScreenMirror.mock.invocationCallOrder[0]).toBeLessThan(
+            getInstance.mock.invocationCallOrder[0],
+        );
     });
 
     test('the agent doors are opened before ready, never without the lock', async () => {
@@ -163,5 +170,6 @@ describe('electron index', () => {
         // the whole point of taking the lock before `whenReady()`
         expect(electronMockState.app.whenReady).not.toHaveBeenCalled();
         expect(getInstance).not.toHaveBeenCalled();
+        expect(initScreenMirror).not.toHaveBeenCalled();
     });
 });

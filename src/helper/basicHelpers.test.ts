@@ -1,13 +1,28 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { sanitizeCssValue, sanitizeHtml } from './sanitizeHelpers';
+import {
+    sanitizeCssValue,
+    escapeHtmlText,
+    sanitizeHtml,
+    sanitizeSlideHtml,
+} from './sanitizeHelpers';
 import { genTimeoutAttempt } from './timeoutHelpers';
 
 describe('sanitizeHelpers', () => {
-    test('sanitizeHtml returns the original markup', () => {
-        const dirty = '<div onclick="alert(1)">Hello</div>';
+    test.each([sanitizeHtml, sanitizeSlideHtml])(
+        'imports safely in Node but refuses HTML without a DOM: %s',
+        (sanitize) => {
+            expect(sanitize('')).toBe('');
+            expect(() => sanitize('<img onerror="unsafe()">')).toThrow(
+                'HTML sanitization requires a DOM',
+            );
+        },
+    );
 
-        expect(sanitizeHtml(dirty)).toBe(dirty);
+    test('escapes plain text before composing markup', () => {
+        expect(escapeHtmlText('<b>"Text" & more</b>')).toBe(
+            '&lt;b&gt;&quot;Text&quot; &amp; more&lt;/b&gt;',
+        );
     });
 
     test('sanitizeCssValue strips CSS-breaking characters', () => {

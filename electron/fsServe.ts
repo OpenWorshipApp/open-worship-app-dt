@@ -8,6 +8,8 @@ export const htmlFiles = {
     appDocumentEditor: 'appDocumentEditor.html',
     presenter: 'presenter.html',
     screen: 'screen.html',
+    screenMirror: 'screen-mirror.html',
+    cameraBroker: 'camera-broker.html',
     reader: 'reader.html',
     setting: 'setting.html',
     finder: 'finder.html',
@@ -243,6 +245,7 @@ export function getCurrent(webContents: WebContents) {
     const htmlFileFullName =
         url.pathname.substring(1).split('.html')[0] + '.html';
     const validHtmlFiles = [
+        htmlFiles.screenMirror,
         htmlFiles.appDocumentEditor,
         htmlFiles.presenter,
         htmlFiles.reader,

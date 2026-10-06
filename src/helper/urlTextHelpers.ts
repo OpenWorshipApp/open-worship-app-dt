@@ -51,7 +51,7 @@ function trimUrlTail(rawUrl: string) {
 /**
  * Split prose into plain-text and URL runs so a renderer can turn the URL runs
  * into links WITHOUT injecting the source string as markup — these strings come
- * from imported bible files, and `sanitizeHtml` is still a no-op placeholder.
+ * from imported bible files and are prose rather than HTML.
  * Text with no URL comes back as a single text-only segment.
  */
 export function splitTextByUrl(text: string): TextSegmentType[] {

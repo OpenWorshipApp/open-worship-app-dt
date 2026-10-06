@@ -267,10 +267,8 @@ const MESSAGE_FADE_MILLISECOND = 400;
  * several that rotate. Nothing but a person takes them down.
  *
  * The text goes in as a React CHILD, never through `dangerouslySetInnerHTML`:
- * `sanitizeHtml` is still a no-op placeholder and every renderer here has node
- * integration, so the one safe way to put a user's words on a screen is to let
- * the renderer escape them. That is also why this takes plain text rather than
- * Quick Text's markdown.
+ * the renderer escapes the user's words without parsing markup. That is also
+ * why this takes plain text rather than Quick Text's markdown.
  *
  * NO timer is started unless there is something to rotate TO -- a rotation
  * that fires forever to rewrite the same string is the paint-at-rest mistake

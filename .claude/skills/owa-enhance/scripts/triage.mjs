@@ -701,8 +701,9 @@ function readCodeHealthSignals() {
 
 /**
  * `.claude/` is the source of truth and the Codex mirror its copy (`AGENTS.md`
- * says how): `CLAUDE.md` -> `.codex/project-instructions.md`, `memory/` ->
- * `.codex/memory/`, `skills/` -> `.agents/skills/`. A mirrored `SKILL.md`
+ * says how): `CLAUDE.md` -> `.codex/project-instructions.md`, `rules/` ->
+ * `.codex/instructions/`, `memory/` -> `.codex/memory/`, `skills/` ->
+ * `.agents/skills/`. A mirrored `SKILL.md`
  * keeps Codex frontmatter and usage notes by design, so it is held to
  * existing, not to its bytes; every other file is an exact copy.
  */
@@ -738,6 +739,7 @@ function readMirrorDrift() {
             }
         }
     };
+    compareDirs('rules', path.join(codexDirPath, 'instructions'));
     compareDirs('memory', path.join(codexDirPath, 'memory'));
     const agentsSkillsPath = path.join(REPO_ROOT, '.agents', 'skills');
     const skillNameSet = new Set([
@@ -759,7 +761,7 @@ function listNoteFilePaths() {
     const claudeDirPath = path.join(REPO_ROOT, '.claude');
     return [
         path.join(claudeDirPath, 'CLAUDE.md'),
-        ...['memory', 'skills'].flatMap((subName) => {
+        ...['rules', 'memory', 'skills'].flatMap((subName) => {
             const dirPath = path.join(claudeDirPath, subName);
             return listFilesUnder(dirPath)
                 .filter((relPath) => relPath.endsWith('.md'))

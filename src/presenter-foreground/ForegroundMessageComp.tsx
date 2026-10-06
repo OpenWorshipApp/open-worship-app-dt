@@ -40,6 +40,7 @@ import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { toggleMessagesEventMapper } from '../keyboard-shortcut/appShortcutMappers';
 import {
     checkIsSessionData,
     useForegroundSessions,
@@ -77,7 +78,7 @@ import {
 // The message key. It sits one below `F5` (show/hide the screen) and above the
 // `F6`-`F10` clear block, so the whole "put something on the wall / get it off
 // again" row is in one place under the operator's hand.
-const MESSAGE_EVENT_MAP = { key: 'F4' };
+const MESSAGE_EVENT_MAP = toggleMessagesEventMapper;
 // The settings prefix this widget's Properties are filed under, per session.
 // Named because the stacking below has to read the same dressing the style
 // was built from.

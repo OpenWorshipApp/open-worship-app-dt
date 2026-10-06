@@ -86,6 +86,7 @@ function rememberDataDirMarker(dirPath: string) {
 
 class AppLocalStorage {
     get defaultStorageDirPath() {
+        if (appProvider.screenUtils) return '';
         const cachedDefaultStorage = cache.getSync(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
@@ -184,6 +185,8 @@ class AppLocalStorage {
     }
 
     getItem(key: string): string | null {
+        if (appProvider.screenUtils)
+            return appProvider.screenUtils.getContext()?.settings[key] ?? null;
         const fullPath = this.toFullPath(key);
         const cachedValue = cache.getSync(fullPath);
         if (cachedValue !== null) {
@@ -212,6 +215,7 @@ class AppLocalStorage {
     }
 
     getItemForce(key: string): string | null {
+        if (appProvider.screenUtils) return this.getItem(key);
         const fullPath = this.toFullPath(key);
         cache.deleteSync(fullPath);
         absentCache.deleteSync(fullPath);
@@ -219,6 +223,7 @@ class AppLocalStorage {
     }
 
     setItem(key: string, value: string): void {
+        if (appProvider.screenUtils) return;
         const fullPath = this.toFullPath(key);
         // Atomic: every window reads these files, and a half-written one read
         // as broken JSON (`fsWriteFileAtomicSync`).
@@ -230,6 +235,7 @@ class AppLocalStorage {
     }
 
     removeItem(key: string): void {
+        if (appProvider.screenUtils) return;
         const fullPath = this.toFullPath(key);
         // Drop the in-memory entry too. getItem answers from this cache before
         // touching disk, so a removal that left it behind kept handing back the

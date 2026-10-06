@@ -56,13 +56,19 @@ export default abstract class ScreenEventHandler<
         );
     }
 
+    // `isFromWheel`: the scroll followed a wheel on that very element, which
+    // proves the operator made it (`registerScrollingSyncEvent`). Any other
+    // scroll -- a scrollbar drag, a key -- has only the window-level flags to
+    // tell it from a programmatic one.
     sendSyncScrollPercentage(
         domSelector: string,
         scroll: { x: number; y: number },
+        isFromWheel = false,
     ) {
         if (
-            !appProvider.getIsMouseOverApp() ||
-            !appProvider.getIsWindowFocused()
+            !isFromWheel &&
+            (!appProvider.getIsMouseOverApp() ||
+                !appProvider.getIsWindowFocused())
         ) {
             return;
         }

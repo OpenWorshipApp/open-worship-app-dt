@@ -1,11 +1,5 @@
-import type {
-    EventMapperType,
-    KeyboardType,
-} from '../../event/KeyboardEventListener';
-import {
-    allArrows,
-    useKeyboardRegistering,
-} from '../../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
+import { slideMovingEventMappers } from '../../keyboard-shortcut/appShortcutMappers';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import {
     handleSlideMoving,
@@ -61,14 +55,7 @@ import {
 } from './slidesPreviewerScopeHelpers';
 import PdfConversionProgressComp from './PdfConversionProgressComp';
 
-const movingKeys: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
-const eventMaps: EventMapperType[] = movingKeys.map((key) => {
-    return { key };
-});
-eventMaps.push({
-    allControlKey: ['Shift'],
-    key: ' ',
-});
+const eventMaps = slideMovingEventMappers;
 function useVarySlidesData() {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     // MUST be per-instance: the Lyric Stage Previewer mounts one

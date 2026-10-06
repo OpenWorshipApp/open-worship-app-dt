@@ -4,7 +4,7 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-09-28",
+    "updated": "2026-10-05",
     "sections": [
         {
             "id": "slides",
@@ -139,8 +139,42 @@
             "id": "canvas",
             "label": "The slide canvas",
             "panel": "Canvas",
-            "recipes": ["W-15", "W-28"],
+            "recipes": ["W-15", "W-28", "W-48"],
             "questions": [
+                {
+                    "id": "canvas-item-transition",
+                    "text": "How do I give one canvas item its own slide transition?",
+                    "kind": "howto",
+                    "keywords": [
+                        "canvas item",
+                        "transition",
+                        "own transition",
+                        "fade",
+                        "slide in",
+                        "zoom",
+                        "animation",
+                        "changing slides"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "find": "Canvas item transition",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "imported-html-scripts",
+                    "text": "Why do scripts or embedded pages disappear from imported slide HTML?",
+                    "kind": "howto",
+                    "keywords": [
+                        "html",
+                        "scripts",
+                        "iframe",
+                        "embedded page",
+                        "sanitization",
+                        "literal text"
+                    ],
+                    "resources": { "recipe": "W-15" }
+                },
                 {
                     "id": "add-text",
                     "text": "How do I add text to a slide?",

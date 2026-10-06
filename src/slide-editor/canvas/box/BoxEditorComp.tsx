@@ -224,6 +224,7 @@ export function BoxEditorComp() {
                 <div
                     className={boxClassName}
                     data-app-box-editor-id={canvasItem.id}
+                    data-canvas-item-uuid={canvasItem.uuid}
                     onClick={handleClick}
                     onDoubleClick={handleDoubleClick}
                     // While editing, the textarea's own wrapper commits the

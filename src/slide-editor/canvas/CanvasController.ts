@@ -153,9 +153,11 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     }
 
     duplicateItems(canvasItems: CanvasItem<any>[]) {
-        const newCanvasItems = this.canvas.canvasItems;
-        for (const canvasItem of canvasItems) {
-            canvasItem.props.id = this.canvas.maxItemId + 1;
+        const newCanvasItems = [...this.canvas.canvasItems];
+        let nextId = this.canvas.maxItemId + 1;
+        for (const sourceItem of canvasItems) {
+            const canvasItem = sourceItem.clone();
+            canvasItem.props.id = nextId++;
             canvasItem.props.top += this.MOVING_OFFSET;
             canvasItem.props.left += this.MOVING_OFFSET;
             newCanvasItems.push(canvasItem);
@@ -186,9 +188,11 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     }
 
     addNewItems(canvasItems: CanvasItem<any>[]) {
-        const newCanvasItems = this.canvas.canvasItems;
+        const newCanvasItems = [...this.canvas.canvasItems];
+        let nextId = this.canvas.maxItemId + 1;
         for (const canvasItem of canvasItems) {
-            canvasItem.props.id = this.canvas.maxItemId + 1;
+            canvasItem.props.id = nextId++;
+            canvasItem.props.uuid = crypto.randomUUID();
             newCanvasItems.push(canvasItem);
         }
         this.setCanvasItems(newCanvasItems);

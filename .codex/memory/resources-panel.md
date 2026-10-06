@@ -134,8 +134,8 @@ new box mounts (it reads the setting once), and the original's settings and
 cache are dropped. Since 2026-09-19 (the user's ask) `resources/` IS in
 `dataDirectories.ts`, whole, so File → Export Data carries it — see
 [[data-archive-owadata]]; a folder only LISTED from elsewhere is not carried.
-The confirm body is HTML and `sanitizeHelpers.sanitizeHtml` is a no-op: paths
-go through `escapeHtmlText` (Remove Folder's confirm too). `owa_click` cannot
+The confirm body is HTML: paths go through `escapeHtmlText` before the composed
+body is sanitized (Remove Folder's confirm too). `owa_click` cannot
 press the confirm's Yes (firewall `question-press`), so a live check needs a
 person at the window. Matrix `RD-117`, W-37 step 8.
 

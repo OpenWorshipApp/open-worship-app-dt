@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-04",
+    "updated": "2026-10-05",
     "sections": [
         {
             "id": "orientation",
@@ -307,6 +307,20 @@
                     }
                 },
                 {
+                    "id": "reserved-document-name",
+                    "text": "Why is a document name such as NUL.old refused?",
+                    "kind": "fix",
+                    "keywords": [
+                        "reserved name",
+                        "CON.backup",
+                        "device name",
+                        "invalid file name"
+                    ],
+                    "resources": {
+                        "tools": ["owa_slide_file", "owa_lyric_file"]
+                    }
+                },
+                {
                     "id": "rename-document",
                     "text": "How do I rename a document or a song?",
                     "kind": "howto",
@@ -362,8 +376,28 @@
             "id": "documents",
             "label": "Documents & slides",
             "panel": "Documents",
-            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45"],
+            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45", "W-48"],
             "questions": [
+                {
+                    "id": "document-transition",
+                    "text": "How do I change a document's or a slide's own transition?",
+                    "kind": "howto",
+                    "keywords": [
+                        "own transition",
+                        "fade",
+                        "zoom",
+                        "slide in",
+                        "no transition",
+                        "cyan transition icon",
+                        "transition icon buttons",
+                        "background attachment icon"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "find": "Transition",
+                        "guide": true
+                    }
+                },
                 {
                     "id": "present-slide",
                     "text": "How do I put a slide on the screen?",

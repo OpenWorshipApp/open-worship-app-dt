@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-04e** (**W-16 — Path Settings remembers the data folders used before.** Asked for by the user with a picture of the Parent Directory card: _"in setting parent directory selection should keep history so I can like switching easily to directories I used to work with"_. A **[en:tran:Recent Folders]** list under the path names every folder this computer used, newest first, each with **[en:tran:Switch]** — which asks first, since every window reloads — and **✕**; a folder not there reads **[en:tran:Missing]**. Verified live 2026-10-04 on a scratch dev instance: typing folder B, then C, listed B over A; A renamed away read Missing with Switch disabled, and a Switch pressed on it before the list redrew answered with a toast instead of the confirm; Switch on B raised **Switch Data Folder**; the list read in Khmer and French. ST-58.)
+**workflowsVersion: 2026-10-05g** (W-50 steps 2 and 3 — the guest's **[en:tran:Screen Mirror]** page is a minimal console. Asked for by the user: _"it should be very minimal, give only button to turn back to presenter"_. The app header is gone; **[en:tran:Presenter]** is its one way out. The page looks for hosts as it opens and fills in the first one it reached, on its LAN address rather than a virtual adapter or loopback (asked for by the user: _"after scan it try each network with each port and auto fill for the one available"_); it shows the host, the link and this computer's monitors in one panel, and names the prefix the host gives this computer. Verified live 2026-10-05 on a scratch dev guest: three hosts listed on opening, all on 192.168.1.5 where the previous scan had shown 172.20.240.1 and 127.0.0.1, the first filled in as 192.168.1.5 / 39241, a picked host filled the address and port, a refused address read **[en:tran:Connection failed]**, **[en:tran:Presenter]** went back; an existing guest connection read **[en:tran:Connected]** with a1 beside its monitor.)
+
+Previous: **workflowsVersion: 2026-10-05f** (New W-50 / SP-25..27: Screen Mirror Connection panel, connected guests above the Mini Screen previews, guest displays, host HTTP resources and shared guest cameras. Verified with isolated development host and guest instances on this computer.)
+
+Previous: **workflowsVersion: 2026-10-05e** (W-48 / PM-154: enabled document and slide transitions have cyan effect icons with translated tooltips, distinct from attached backgrounds; all transition selectors show the same four effect icons with a highlighted choice. ED-54: canvas UUIDs are unique across the document file and persisted during edits; copied slides receive fresh identities. Verified live in an isolated dev instance.) (W-48 / ED-54: visible canvas item transitions, inherited slide/document/screen choices, independently projected enter/exit effects. Verified live with Save, Undo/Redo and Khmer labels.) (W-15: sanitized document HTML and literal Text, EN-39; W-29: name and location detail headers open or focus one panel per record and language; existing details keep their language. Verified live with Moses and Egypt in English and Khmer.)
+
+Previous: **workflowsVersion: 2026-10-05** (**new W-49 — Help → Keyboard Shortcuts lists every key of the page in front, in a floating panel with a search box.** Asked for by the user with a picture of the All Reader tips card: _"like tips but I want for keyboard shortcut listing. for each page I want to open a floating panel see and search for keybaord shortcuts. in in `Help` menubar"_ — a draggable panel and the menu only, no key of its own, both decided with the user. The list is written once per page (`src/keyboard-shortcut/keyboardShortcutCatalog.ts`) and imports the very key objects the features bind (`appShortcutMappers.ts`), so it cannot drift the way the appendix table below had: that table said `Ctrl+Escape` for the key bound to `Shift+Escape`, called `Ctrl+Shift+P` open-only and `Space` a toggle — all three rows are corrected. Then, from the user: _"in presenter the shortcut panel shuld be over bible lookup, and in panel title should change to for the biible lookup … when the biible lookup open"_ — while the Bible Lookup popup is open the panel stacks over it, its title reads **Keyboard Shortcuts · Bible Lookup** and it lists only the keys that work inside the popup; closing the lookup puts the page's list back. KB-61..KB-65.)
+
+Previous: **workflowsVersion: 2026-10-04f** (**W-32 — a view left on its book or chapter grid stays open.** Asked for by the user with a picture of an empty editing view beside Genesis 1: _"when a section is empty then I switch the editing it will close the empty one. I want to keep it and if book selected then selected-book + chapter 1 else genesis chapter 1"_. Moving the editing away used to close a view that had no passage yet; it now keeps it, on the picked book's chapter 1 (the whole chapter) or Genesis 1 — the passage a split from the grid opens. Verified live 2026-10-04 on the dev Reader: empty box → the other view's pencil → `Genesis 1:1-31`; `Exodus` → Ctrl+Shift+→ → `Exodus 1:1-22`. RD-26.)
+
+Previous: **workflowsVersion: 2026-10-04e** (**W-16 — Path Settings remembers the data folders used before.** Asked for by the user with a picture of the Parent Directory card: _"in setting parent directory selection should keep history so I can like switching easily to directories I used to work with"_. A **[en:tran:Recent Folders]** list under the path names every folder this computer used, newest first, each with **[en:tran:Switch]** — which asks first, since every window reloads — and **✕**; a folder not there reads **[en:tran:Missing]**. Verified live 2026-10-04 on a scratch dev instance: typing folder B, then C, listed B over A; A renamed away read Missing with Switch disabled, and a Switch pressed on it before the list redrew answered with a toast instead of the confirm; Switch on B raised **Switch Data Folder**; the list read in Khmer and French. ST-58.)
 
 Previous: **workflowsVersion: 2026-10-04d** (**W-32 — the book and chapter grids keep their split buttons.** Asked for by the user with a picture of a Khmer chapter grid, the empty space left of the **ⓘ** circled: _"in bible reader I want to be able to split view (vertical, horizontal) for non verse as well. should support both top header icons and contentmenu"_. Until a verse resolved, the view being typed in had no split at all — no icons, no Ctrl+Shift+S / V, and its ⋮ and right-click opened nothing. Now **[en:tran:Split horizontal]** / **[en:tran:Split vertical]** sit at rest left of the **ⓘ**, the keys work, and the ⋮ / right-click menu offers the four splits, **[en:tran:Toggle Widget Full View]** and **[en:tran:Close]**. A view can only hold a passage, so the new one opens the picked book's chapter 1 (the whole chapter), or Genesis 1 before a book is picked — decided with the user; the view being typed in keeps its grid and stays selected. Verified live 2026-10-04 on the dev Reader: `Exodus` → split horizontal → `Exodus 1:1-22` on the left; unknown text → Ctrl+Shift+V → `Genesis 1:1-31` below; ⋮ → **[en:tran:Split Horizontal to]** → NIV → an NIV Genesis 1; with a verse showing, Ctrl+Shift+S still adds exactly one copy. RD-77, KB-25, KB-26, CM-79.)
 
@@ -1991,13 +2001,19 @@ in the same documents folder. 📸
    slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
 10. Save with **Ctrl+S**.
 
+**HTML and plain text:** imported HTML keeps its formatting, but scripts, event
+handlers and embedded pages are removed in the editor, previews, screen rendering
+and print. Use **[en:tran:Insert Website]** or **[en:tran:Insert YouTube]** for a
+page or video embed. A **Text** box displays markup literally and keeps line breaks;
+use an HTML box for rich formatting. Existing files are kept as saved.
+
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
 enter the URL and title, save, and the new item appears in the Web tab.
 
-_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -3086,8 +3102,9 @@ your Bible reading.
    it was. 📸
 2. The small **language code** beside that button (`en`) is the language the names and
    places themselves are written in. Click it and pick another — `km - Khmer
-(ភាសាខ្មែរ)` — and every list, every record window already open, and the
-   "in your reading" panel switch to it at once, with nothing to reload. The choice is
+(ភាសាខ្មែរ)` — and the lookup list and the
+   "in your reading" panel switch to it at once, with nothing to reload.
+   Person and location windows already open keep their own language. The choice is
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
    verse references a record cites are read back in **the Bible you are reading**, so
@@ -3118,6 +3135,11 @@ your Bible reading.
    record it is — a person, a place, a book for a verse — then a short description, then
    a **[en:tran:Details]** section with things like **Also called**, **Type**,
    **Gender**, **Parents**, **Children** and **[en:tran:Verses]**. 📸
+   The language code in its header, **[en:tran:Names and locations language]**,
+   opens the same language menu. Pick another language to open that same record
+   in a second window while keeping the first one open. If that record is
+   already open in the chosen language, its window comes to the front. This
+   choice leaves the language beside the person-and-pin button unchanged.
    > Every row in the list — and in the **names and locations in your reading** panel —
    > also carries a **⋮** button at its right end. It opens the same short menu that
    > right-clicking the row gives you, so you never need a right mouse button
@@ -3127,11 +3149,12 @@ your Bible reading.
    titles like _Joshua 10:1-43_.
 8. Any underlined name or place — in the description or in a list — opens as another
    small window **beside** the one you are reading, so you can follow a family or a
-   journey without losing your place. Clicking the same entry twice just brings its
-   window back to the front.
+   journey without losing your place. Person and place links use the language
+   of the window you followed them from. Clicking the same entry twice in the
+   same language just brings its window back to the front.
    Where a description names a book, a chapter or a single verse — _Acts_,
    _Genesis 14_, _Acts 28:15_ — it is written the way **your own Bible** writes it
-   once you have picked a language other than English in step 2, so a Khmer sentence
+   when the record window's language is other than English, so a Khmer sentence
    reads _លោកុប្បត្តិ ១៤_ instead of stranding one English name in the middle of it. A
    book or a chapter is simply part of the sentence; a single verse is underlined and
    opens like any other reference.
@@ -3416,6 +3439,8 @@ _Verify: GL-25._
 
 ## Keyboard shortcut reference (tutorial appendix)
 
+Every page lists its own keys, searchable, under **Help → [en:tran:Keyboard Shortcuts]** (W-49). This table is the short version.
+
 | Keys                                 | Does                                                                    | Where                                                                 |
 | ------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `Ctrl+B`                             | Open Bible Lookup                                                       | Presenter / Editor                                                    |
@@ -3423,12 +3448,12 @@ _Verify: GL-25._
 | `F5`                                 | Show / hide the presentation screen                                     | Presenter                                                             |
 | `F6` / `F7` / `F8` / `F9` / `F10`    | Clear All / Background / Slide / Bible / Foreground                     | Presenter                                                             |
 | `Ctrl/Alt+ArrowLeft/Right`           | Previous / next Bible verse                                             | the output screen                                                     |
-| Arrows, `PageUp`/`PageDown`, `Space` | Move through slides / toggle                                            | slide thumbnails focused                                              |
-| `Tab` / `Escape` / `Ctrl+Escape`     | Complete / clear / clear-part in bible input                            | lookup & reader                                                       |
+| Arrows, `PageUp`/`PageDown`, `Space` | Next / previous slide (`Shift+Space` goes back)                         | slide thumbnails focused                                              |
+| `Tab` / `Escape` / `Shift+Escape`    | Complete the reference / remove its last part / clear it                | lookup & reader                                                       |
 | `Ctrl+Enter`                         | Focus the editing canvas                                                | Slide Editor                                                          |
 | `Ctrl+S`                             | Save                                                                    | all editors                                                           |
 | `Enter` / `Escape`                   | Confirm / cancel                                                        | confirmation dialogs                                                  |
-| `Ctrl+Shift+P`                       | Open Presenting Control (draw & spotlight on the app); close with its ✕ | Presenter                                                             |
+| `Ctrl+Shift+P`                       | Start or stop Presenting Control (draw & spotlight on the app)          | every window                                                          |
 | `V` / `B` / `E` / `F`                | Arrow / brush / eraser / spotlight                                      | Presenting Control open (not while typing)                            |
 | `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo the drawing                                                 | Presenting Control **armed** (buttons work in any tool)               |
 | `C`                                  | Clear the drawing (one Undo brings it back)                             | Presenting Control **armed** (button works in any tool)               |
@@ -3541,6 +3566,9 @@ space to the verse buttons instead.
    **⋮** or right-click menu). A view always holds a passage, so the new one opens the
    book you picked at chapter 1 — or Genesis 1 if no book is picked yet — while the
    view you are typing in keeps its grid. 📸
+   Moving the editing to another view (its pencil, **Ctrl+Shift+arrow**, or
+   **[en:tran:Edit]** in its menu) does the same to the view you leave: it stays
+   open on the book you picked at chapter 1, or on Genesis 1. 📸
 8. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
    verse buttons (copy, split, save, present…) take its place. Clear the box again and
    it returns.
@@ -3548,7 +3576,7 @@ space to the verse buttons instead.
 > Want to change any of this rather than just read it? That is still
 > **Settings → Bible**, the pencil next to the translation, then the **Info** tab.
 
-_Verify: RD-77, RD-78, RD-11, LT-01, KB-25, KB-26, CM-79._
+_Verify: RD-77, RD-78, RD-11, RD-26, LT-01, KB-25, KB-26, CM-79._
 
 ---
 
@@ -4853,15 +4881,22 @@ _Verify: PM-134, PM-135, PM-136._
 
 ### W-48 — Give a slide, a song, a background or an overlay its own transition
 
-**Goal:** have one song zoom in, one slide cut in, the pictures fade and the
-countdown slide in — instead of everything changing the same way.
+**Goal:** have one song zoom in, one slide cut in, one canvas item fade, the
+pictures fade and the countdown slide in — instead of everything changing the
+same way.
 
 How it works everywhere: the screen's **Tr:** row (W-10) is the fallback. Any
 of the levels below can tick **[en:tran:Own transition]** and pick
 **[en:tran:No Transition]**, **[en:tran:Fade]**, **[en:tran:Slide In]** or
-**[en:tran:Zoom]**; the most specific ticked level wins. Unticked, the picker
-is greyed and says what it **follows** — the screen, the document, the tab or
-the whole panel — so you can always see what will happen.
+**[en:tran:Zoom]**; the most specific ticked level wins. Every override selector
+shows four icon buttons: a ban sign for **[en:tran:No Transition]**, shading
+for **[en:tran:Fade]**, a slide against an edge for **[en:tran:Slide In]**, and
+outward arrows for **[en:tran:Zoom]**. Hover an icon to
+read its translated name; the selected one is highlighted. Unticked, the
+buttons are disabled and show the inherited choice and what it **follows** —
+the screen, the document, the tab or
+the whole panel — so you can always see what will happen. A canvas item follows
+its slide, then its document, then the screen when its own choice is unticked.
 
 1. **A whole song or slide document.** In the slides preview, press the ⋮ at
    its top right (for a song, the ⋮ in the Stage Previewer header works too)
@@ -4869,12 +4904,18 @@ the whole panel — so you can always see what will happen.
    _Transition: Fade (Screen setting)_. In the box that opens tick
    **[en:tran:Own transition]**, pick **[en:tran:Zoom]** and press
    **[en:tran:Ok]**. Every slide of that document now comes in zooming, on
-   every screen. 📸
+   every screen. A cyan round button with the effect's icon appears beside
+   the preview's top-right ⋮. Its tooltip names the effect. Press it to change
+   or untick the document's choice. It disappears when the document follows
+   the screen
+   again. 📸
 2. **One slide.** Press the ⋮ on that slide's card (or right-click it) and
    choose **[en:tran:Transition]** — it reads _Zoom (Slides preview)_, because
    it follows its document. Tick **[en:tran:Own transition]**, pick
-   **[en:tran:No Transition]**, press **[en:tran:Ok]**. A small icon appears in
-   the card's header; press it to change or untick the slide's choice. 📸
+   **[en:tran:No Transition]**, press **[en:tran:Ok]**. The same cyan effect
+   icon appears in the card's header; press it to change or untick the
+   slide's choice. Background attachments keep their separate grey icons.
+   Tooltips show the full effect name, including on small cards. 📸
 3. Present the slides. Each slide leaves the way it came in: going from a
    zoomed slide to the cut-in slide, the new one is there at once while the old
    one zooms away.
@@ -4902,5 +4943,122 @@ the whole panel — so you can always see what will happen.
    **[en:tran:Own transition]**. Nothing is kept once every level is unticked.
 10. The choices travel with the document: renaming it, moving it to the trash,
     and sharing it as an archive take its transitions along.
+11. **One canvas item.** Open the document in the **[en:tran:Slide Editor]**,
+    select an item on the canvas or in **[en:tran:Canvas Items]**, and open
+    **[en:tran:Properties]**. **[en:tran:Canvas item transition]** is visible
+    above **[en:tran:Box Properties]**, even when that group is collapsed.
+    Tick **[en:tran:Own transition]** and pick **[en:tran:Fade]**,
+    **[en:tran:Slide In]**, **[en:tran:Zoom]** or **[en:tran:No Transition]**.
+    Untick it to follow the slide's choice again. **[en:tran:Undo]** and
+    **[en:tran:Redo]** restore the choice; **[en:tran:Save]** keeps it in the
+    document. 📸
+12. Present that slide, then another. Each item enters and leaves with its
+    own effect; items without a choice follow the slide, document or screen.
+    **[en:tran:No Transition]** cuts immediately. Rotation and position stay
+    as authored. These effects run when changing slides, including clearing
+    the current slide. A slide with no item overrides keeps its whole-slide
+    transition.
 
-_Verify: PM-154, PM-155, PM-156, SP-06._
+_Verify: PM-154, PM-155, PM-156, SP-06, ED-54._
+
+---
+
+### W-49 — See every keyboard shortcut for this page (Help → Keyboard Shortcuts)
+
+**Goal:** find the key for something without hunting through tooltips, and
+learn the keys of the page you are on.
+
+1. On the menu bar, open **Help → [en:tran:Keyboard Shortcuts]**. It sits
+   under **[en:tran:Tips of the Day]** and **[en:tran:All tips]**.
+2. A floating panel opens titled **[en:tran:Keyboard Shortcuts] ·** and the
+   page you are on — **[en:tran:Presenter]**, **[en:tran:Bible Reader]** or
+   **[en:tran:Slide Editor]**. The cursor is already in
+   **[en:tran:Search shortcuts]**. Each row says what a key does on the left
+   and shows the key on the right; a key with two spellings shows both
+   (**[en:tran:Redo]** is `Ctrl+Shift+Z` and `Ctrl+Y`). A grey line under a
+   heading or a row says when the key works — for example
+   **[en:tran:While the slides panel has focus]**: the slide arrows only move
+   the slides after you click into the slides panel.
+3. Each page lists its own keys. The Presenter starts with
+   **[en:tran:Screens]** (`F5` shows or hides the screen, `F6`–`F10` clear it,
+   `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
+   **[en:tran:Presenting Flow]** and the mini screen's
+   **[en:tran:Drawing]** and **[en:tran:Focusing]** keys. The Bible Reader
+   lists the lookup and split keys, and the Slide Editor the canvas keys.
+   Every page ends with **[en:tran:Every window]**,
+   **[en:tran:Presenting Control]** and **[en:tran:Dialogs and menus]**. On a
+   Mac the keys are shown the Mac way (`⌘⇧ S`).
+4. Type a word or a key — `clear`, `split`, `f5` — and the list narrows to
+   the rows that match; the counter beside the box shows how many of the
+   page's keys matched. **[en:tran:No shortcuts found]** means nothing did.
+5. **Esc** in the box empties it; a second **Esc** closes the panel, and so
+   does its **✕**. Drag the title bar to move the panel, drag an edge to
+   resize it, and use the chevron to roll it up to its title. It opens again
+   where you left it.
+6. The panel does not take the keyboard away from the app: with it open,
+   every key it lists still works, so you can read a key and try it. Only
+   typing in its own search box stays in the box — Enter, Tab and the arrows
+   there do not reach the page behind it, while a function key such as `F5`
+   or a `Ctrl` key still does.
+7. **With the Bible Lookup open.** In the Presenter or the Slide Editor,
+   open **[en:tran:Bible Lookup]** (`Ctrl+B`) and then **Help →
+   [en:tran:Keyboard Shortcuts]** — or open the lookup while the panel is
+   already up. The panel sits over the lookup popup, its title changes to
+   **[en:tran:Keyboard Shortcuts] · [en:tran:Bible Lookup]**, and it lists
+   only the keys that work inside the lookup: typing a reference, completing
+   it, splitting, saving, **[en:tran:Close the Bible Lookup popup]**
+   (`Ctrl+Q`) and the dialog keys. The page's own keys (`F5`–`F10`, the
+   slide arrows) do nothing while the lookup is open, so they are left out.
+   Close the lookup and the panel goes back to the page's list.
+
+_Verify: KB-61, KB-62, KB-63, KB-64, KB-65._
+
+## Screen Mirror
+
+### W-50 — Present on another computer with Screen Mirror
+
+Use one app as the host and another as the guest. Both computers need the same
+app version and a reachable network connection.
+
+1. On the host's Presenter, open the Mini Screen list's bottom **⋮** and
+   click **[en:tran:Screen Mirror Connection]**. The floating panel shows
+   **[en:tran:Host addresses]** and **[en:tran:Port]**. The app starts its
+   HTTP and WebSocket service at launch, choosing an available port from
+   39240–39259.
+2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
+   header — its one button, **[en:tran:Presenter]**, goes back — and it looks
+   for hosts as it opens, listing them under
+   **[en:tran:Hosts on this network]**; **[en:tran:Rescan]** looks again.
+   The scan asks on every network this computer is on, at every port from
+   39240 to 39259; a host that answers on several networks is listed once,
+   on its best address (a real LAN before a virtual adapter or loopback), and
+   the first host is filled into **[en:tran:Host address]** and
+   **[en:tran:Port]** under **[en:tran:Connect by address]** — never over
+   an address you typed or a host you picked. Pick another host or type an
+   address if needed, then click **[en:tran:Connect]**. In approval mode the guest reads
+   **[en:tran:Waiting for host approval]** while the host clicks
+   **[en:tran:Allow connection]** in the floating panel.
+3. The guest reads **[en:tran:Connected]**, and under
+   **[en:tran:This computer]** its monitors carry the prefix the host knows
+   it by, such as a1 — the name to pick in the host's display picker. The
+   host lists it under
+   **[en:tran:Connected guests]** above the Mini Screen previews and at the
+   top of their list menu. Each guest has a stable prefix such as a1 or a2;
+   click its header button to open the connection panel.
+4. Choose the guest's prefixed monitor in the screen card's display picker.
+   Present a slide and a background image, then use the card's show control
+   (F5). The guest opens the presentation output on that monitor. Images and
+   other host files load through the host's HTTP service; the guest does not
+   need its own copy of them.
+5. Close the floating panel with its **✕**, or toggle
+   **[en:tran:Screen Mirror Connection]** again. The connection and its
+   header entry stay active. To end the connection, use
+   **[en:tran:Disconnect]**. The guest output closes and its entry leaves
+   the host's connected-guest header.
+6. In **[en:tran:Background]** → **[en:tran:Cameras]**, the host also lists
+   connected guests' cameras with their prefixes. Selecting a camera streams
+   it to the host preview and to the selected guest output. Selecting an
+   image instead releases the camera stream. Camera access must be available
+   on the computer providing it.
+
+_Verify: SP-25, SP-26, SP-27._

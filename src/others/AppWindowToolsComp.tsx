@@ -7,6 +7,7 @@ import './theme-override-dark.scss';
 import './theme-override-light.scss';
 
 import AppAssistantComp from './AppAssistantComp';
+import KeyboardShortcutsComp from '../keyboard-shortcut/KeyboardShortcutsComp';
 import PresentingControlComp from '../presenting-control/PresentingControlComp';
 import { useThemeSource } from './themeHelpers';
 import ToastComp from '../toast/ToastComp';
@@ -15,11 +16,12 @@ import appProvider from '../server/appProvider';
 /**
  * What every window of the app gets, declared once.
  *
- * Both of these are window-level tools that draw nothing until they are asked
- * for -- the annotation overlay and the way into the assistant -- and both used
- * to be present on some pages and missing from others for no reason other than
- * which entry file happened to import them. One component so that "what a
- * window carries" is a single line to read and a single line to change.
+ * All three are window-level tools that draw nothing until they are asked for
+ * -- the annotation overlay, the way into the assistant and the Help ->
+ * Keyboard Shortcuts list -- and the first two used to be present on some pages
+ * and missing from others for no reason other than which entry file happened
+ * to import them. One component so that "what a window carries" is a single
+ * line to read and a single line to change.
  *
  * Mount it on every entry EXCEPT `about`, `chatbot`, `finder` and `screen`:
  * the first three are one-purpose popups, and the screen is the projector --
@@ -41,6 +43,7 @@ export default function AppWindowToolsComp() {
         >
             <PresentingControlComp />
             <AppAssistantComp />
+            <KeyboardShortcutsComp />
             {/* These entries have no app/popup layout to host their toasts. */}
             {appProvider.isPageLyricEditor || appProvider.isPageLWShare ? (
                 <ToastComp />

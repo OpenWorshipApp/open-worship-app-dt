@@ -121,7 +121,6 @@ export function ForegroundTransitionPropComp({
                 value={own}
                 inherited={inherited}
                 onChange={handleChange}
-                selectClassName="fg-select"
                 isCompact
             />
         </PropRowComp>

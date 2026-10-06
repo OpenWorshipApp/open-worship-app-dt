@@ -1,5 +1,6 @@
 <!-- Only what CLAUDE.md and the code do not already say. One line per entry; detail lives in the topic file. -->
 
+- [Document HTML sanitization — FIXED](document-html-sanitization.md) — raw item policy before composed-slide policy; preserve typed media hydration
 - [Renderer entry static closure — FIXED](renderer-entry-static-closure.md) — startup imports leaf helpers only
 - [Foreground Effects in one setting](foreground-effects-one-setting.md) — one JSON key; `em` for type, `px` for the box
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync groups share one data object · [Sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky
@@ -90,6 +91,7 @@
 - [MCP tool edits: two processes](mcp-tool-edit-two-processes.md) — your own tools serve stale code
 - [DOM matcher memoised in the page](dom-match-memoised-in-page.md)
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md)
+- [Help → Keyboard Shortcuts](keyboard-shortcuts-panel.md) — written per-page catalog importing the bound keys; a new key needs a row
 - [A leaked keyboard layer kills every shortcut](keyboard-layer-stack-leak.md)
 - [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md)
 - [An undo must not overtake its edit](document-write-then-undo-race.md) — register the write where it starts

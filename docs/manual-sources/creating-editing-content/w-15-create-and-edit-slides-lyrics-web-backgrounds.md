@@ -2,10 +2,10 @@
 id: W-15
 title: "Create and edit slides / lyrics / web backgrounds"
 section: "Creating & editing content"
-verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
+verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-04"
+workflowsVersion: "2026-10-05"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -86,6 +86,12 @@ in the same documents folder. 📸
    slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
 10. Save with **Ctrl+S**.
 
+**HTML and plain text:** imported HTML keeps its formatting, but scripts, event
+handlers and embedded pages are removed in the editor, previews, screen rendering
+and print. Use **[en:tran:Insert Website]** or **[en:tran:Insert YouTube]** for a
+page or video embed. A **Text** box displays markup literally and keeps line breaks;
+use an HTML box for rich formatting. Existing files are kept as saved.
+
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 
@@ -95,7 +101,7 @@ enter the URL and title, save, and the new item appears in the Web tab.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
+`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-04).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-05).
 :::

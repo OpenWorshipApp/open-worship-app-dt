@@ -13,13 +13,15 @@
 //    because that is what actually writes and a check further out is one a
 //    later caller can forget.
 //
-// It matters because nothing downstream is looking: `createNewFileDetail` in
-// `src/server/fileHelpers.ts` still carries a `// TODO: verify file name
-// before create`, so a separator or a `..` lands wherever it points.
+// Keep the model's refusal ahead of content validation and disk access; the
+// app also checks portable names when a person creates a file.
 
 // Reserved on Windows whatever the extension, so such a file can be neither
 // created nor opened. Refusing early beats the failure that would follow.
-const RESERVED_NAME_PATTERN = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+// Match the device stem before the FIRST dot, including Windows' superscript
+// digits. Keep the app's conservative COM0/LPT0 refusal too.
+const RESERVED_NAME_PATTERN =
+    /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)/i;
 
 const NAME_MAX_LENGTH = 120;
 

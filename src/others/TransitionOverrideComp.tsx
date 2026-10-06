@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, MouseEvent } from 'react';
 import { useCallback, useId, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -47,8 +47,8 @@ export function toTransitionLabel(effect: TransitionEffectType | null) {
 
 /**
  * The override control every level shares: a checkbox saying whether this
- * item has its OWN transition, and the transition. Unticked, the picker is
- * greyed and shows what the item follows instead, so the checkbox never hides
+ * item has its OWN transition, and icon buttons for each effect. Unticked, the
+ * buttons are disabled and show what the item follows, so the checkbox never hides
  * what will actually happen; ticking it starts from that same effect.
  *
  * Controlled: `value` present means ticked.
@@ -57,13 +57,13 @@ export default function TransitionOverrideComp({
     value,
     inherited,
     onChange,
-    selectClassName = 'form-select form-select-sm w-auto',
+    choicesClassName = '',
     isCompact = false,
 }: Readonly<{
     value: TransitionEffectType | undefined;
     inherited: TransitionInheritedType;
     onChange: (value: TransitionEffectType | undefined) => void;
-    selectClassName?: string;
+    choicesClassName?: string;
     /**
      * For a row too narrow for the "Follows: …" line; the row says it in its
      * own tooltip instead.
@@ -87,11 +87,13 @@ export default function TransitionOverrideComp({
         [],
     );
     const handleChoosing = useCallback(
-        (event: ChangeEvent<HTMLSelectElement>) => {
+        (event: MouseEvent<HTMLButtonElement>) => {
             if (valueRef.current === undefined) {
                 return;
             }
-            onChangeRef.current(event.target.value as TransitionEffectType);
+            onChangeRef.current(
+                event.currentTarget.value as TransitionEffectType,
+            );
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -111,24 +113,50 @@ export default function TransitionOverrideComp({
                     {tran('Own transition')}
                 </label>
             </span>
-            <select
-                className={selectClassName}
+            {!isEnabled && inherited.effect === null ? (
+                <span
+                    className="d-inline-flex align-items-center px-1 text-muted"
+                    title={toTransitionLabel(null)}
+                    aria-label={toTransitionLabel(null)}
+                >
+                    <i className="bi bi-question-circle" aria-hidden="true" />
+                </span>
+            ) : null}
+            <span
+                className={`btn-group ${choicesClassName}`}
+                role="group"
                 aria-label={label}
-                disabled={!isEnabled}
-                value={isEnabled ? value : (inherited.effect ?? '')}
-                onChange={handleChoosing}
+                title={
+                    isEnabled
+                        ? label
+                        : `${tran('Follows')}: ${inherited.sourceLabel} (${toTransitionLabel(inherited.effect)})`
+                }
             >
-                {!isEnabled && inherited.effect === null ? (
-                    <option value="">{toTransitionLabel(null)}</option>
-                ) : null}
                 {TRANSITION_EFFECT_LIST.map((effect) => {
+                    const isSelected =
+                        effect === (isEnabled ? value : inherited.effect);
+                    const effectLabel = toTransitionLabel(effect);
                     return (
-                        <option key={effect} value={effect}>
-                            {toTransitionLabel(effect)}
-                        </option>
+                        <button
+                            key={effect}
+                            type="button"
+                            className={`btn btn-sm ${isSelected ? 'btn-info' : 'btn-outline-info'}`}
+                            style={{ minWidth: '1.5rem' }}
+                            value={effect}
+                            disabled={!isEnabled}
+                            aria-pressed={isSelected}
+                            aria-label={effectLabel}
+                            title={effectLabel}
+                            onClick={handleChoosing}
+                        >
+                            <i
+                                className={`bi bi-${getTransitionIconName(effect)}`}
+                                aria-hidden="true"
+                            />
+                        </button>
                     );
                 })}
-            </select>
+            </span>
             {isEnabled || isCompact ? null : (
                 <small className="text-muted">
                     {tran('Follows')}: {inherited.sourceLabel}

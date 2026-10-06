@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-04"
+workflowsVersion: "2026-10-05"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -22,8 +22,9 @@ your Bible reading.
    it was. 📸
 2. The small **language code** beside that button (`en`) is the language the names and
    places themselves are written in. Click it and pick another — `km - Khmer
-(ភាសាខ្មែរ)` — and every list, every record window already open, and the
-   "in your reading" panel switch to it at once, with nothing to reload. The choice is
+(ភាសាខ្មែរ)` — and the lookup list and the
+   "in your reading" panel switch to it at once, with nothing to reload.
+   Person and location windows already open keep their own language. The choice is
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
    verse references a record cites are read back in **the Bible you are reading**, so
@@ -54,6 +55,11 @@ your Bible reading.
    record it is — a person, a place, a book for a verse — then a short description, then
    a **[en:tran:Details]** section with things like **Also called**, **Type**,
    **Gender**, **Parents**, **Children** and **[en:tran:Verses]**. 📸
+   The language code in its header, **[en:tran:Names and locations language]**,
+   opens the same language menu. Pick another language to open that same record
+   in a second window while keeping the first one open. If that record is
+   already open in the chosen language, its window comes to the front. This
+   choice leaves the language beside the person-and-pin button unchanged.
    > Every row in the list — and in the **names and locations in your reading** panel —
    > also carries a **⋮** button at its right end. It opens the same short menu that
    > right-clicking the row gives you, so you never need a right mouse button
@@ -63,11 +69,12 @@ your Bible reading.
    titles like _Joshua 10:1-43_.
 8. Any underlined name or place — in the description or in a list — opens as another
    small window **beside** the one you are reading, so you can follow a family or a
-   journey without losing your place. Clicking the same entry twice just brings its
-   window back to the front.
+   journey without losing your place. Person and place links use the language
+   of the window you followed them from. Clicking the same entry twice in the
+   same language just brings its window back to the front.
    Where a description names a book, a chapter or a single verse — _Acts_,
    _Genesis 14_, _Acts 28:15_ — it is written the way **your own Bible** writes it
-   once you have picked a language other than English in step 2, so a Khmer sentence
+   when the record window's language is other than English, so a Khmer sentence
    reads _លោកុប្បត្តិ ១៤_ instead of stranding one English name in the middle of it. A
    book or a chapter is simply part of the sentence; a single verse is underlined and
    opens like any other reference.
@@ -100,5 +107,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-04).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-05).
 :::

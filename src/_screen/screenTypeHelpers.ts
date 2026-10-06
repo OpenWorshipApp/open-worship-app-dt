@@ -210,8 +210,7 @@ export type ForegroundMarqueeDataType = ForegroundLayerDataType & {
  *
  * The text is PLAIN, and that is a safety property as much as a speed one:
  * it is rendered as a React text child, so the markup is escaped by the
- * renderer and never passes through `sanitizeHtml`, which is still a no-op
- * placeholder in a renderer that has node integration.
+ * renderer without parsing HTML.
  */
 /**
  * Words put over whatever else is live, and left there until somebody takes
@@ -225,9 +224,8 @@ export type ForegroundMarqueeDataType = ForegroundLayerDataType & {
  * operator must never be racing a countdown they cannot see.
  *
  * The text is PLAIN, and that is a safety property as much as a speed one: it
- * is rendered as a React text child, so the renderer escapes it and it never
- * passes through `sanitizeHtml`, which is still a no-op placeholder in a
- * renderer that has node integration.
+ * is rendered as a React text child, so the renderer escapes it without
+ * parsing HTML.
  */
 export type ForegroundMessageDataType = ForegroundLayerDataType & {
     /**

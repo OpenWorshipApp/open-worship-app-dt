@@ -114,18 +114,26 @@ function VarySlideHeaderComp({
             }}
         >
             <div className="d-flex w-100 overflow-hidden">
-                <div className="d-flex overflow-hidden flex-grow-1">
-                    <RenderSlideIndexComp
-                        viewIndex={viewIndex}
-                        isInSlide
-                        dataKey={toKeyByFilePath(
-                            varySlide.filePath,
-                            varySlide.id,
-                        )}
-                    />
+                <div
+                    className="d-flex overflow-hidden flex-grow-1"
+                    style={{ minWidth: '1.5rem', flexBasis: 0 }}
+                >
+                    <div className="d-flex flex-shrink-0">
+                        <RenderSlideIndexComp
+                            viewIndex={viewIndex}
+                            isInSlide
+                            dataKey={toKeyByFilePath(
+                                varySlide.filePath,
+                                varySlide.id,
+                            )}
+                        />
+                    </div>
                     <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
-                <div className="d-flex justify-content-end">
+                <div
+                    className="d-flex justify-content-end overflow-hidden"
+                    style={{ minWidth: 0 }}
+                >
                     <RenderScreenInfoComp onScreenList={onScreenList} />
                     <AttachBackgroundIconComp
                         filePath={varySlide.filePath}

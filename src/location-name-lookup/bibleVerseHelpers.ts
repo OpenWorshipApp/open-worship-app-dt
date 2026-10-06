@@ -14,7 +14,7 @@ import { cloneJson } from '../helper/helpers';
 import { DEFAULT_LANG_CODE } from '../lang/langHelpers';
 import {
     getSelectedLookupLangCode,
-    useSelectedLookupLangCode,
+    useLookupLangCode,
 } from './lookupLangHelpers';
 
 export type VerseDataType = {
@@ -54,8 +54,11 @@ export function toVerseFullTitle({
  * anything. The KJV text is still what the in-verse scan reads — see
  * `checkCanLookupVerseText`.
  */
-export function toLookupVerseBibleKey(currentBibleKey: string | null) {
-    if (getSelectedLookupLangCode() === DEFAULT_LANG_CODE) {
+export function toLookupVerseBibleKey(
+    currentBibleKey: string | null,
+    langCode = getSelectedLookupLangCode(),
+) {
+    if (langCode === DEFAULT_LANG_CODE) {
         return BIBLE_KJV_KEY;
     }
     return currentBibleKey ?? BIBLE_KJV_KEY;
@@ -67,10 +70,11 @@ export function toLookupVerseBibleKey(currentBibleKey: string | null) {
  * The hook below is the one a panel wants; this is for one-shot reads outside
  * React, such as labelling a context menu the moment it opens.
  */
-export function getLookupVerseBibleKey() {
+export function getLookupVerseBibleKey(langCode = getSelectedLookupLangCode()) {
     const viewController = getCurrentLookupBibleItemController();
     return toLookupVerseBibleKey(
         viewController?.selectedBibleItem.bibleKey ?? null,
+        langCode,
     );
 }
 
@@ -84,10 +88,12 @@ export function getLookupVerseBibleKey() {
  * listener, not one per reference in a record that lists hundreds.
  */
 export function useLookupVerseBibleKey() {
-    const langCode = useSelectedLookupLangCode();
-    const [bibleKey, setBibleKey] = useState(getLookupVerseBibleKey);
+    const langCode = useLookupLangCode();
+    const [bibleKey, setBibleKey] = useState(() => {
+        return getLookupVerseBibleKey(langCode);
+    });
     useAppEffect(() => {
-        setBibleKey(getLookupVerseBibleKey());
+        setBibleKey(getLookupVerseBibleKey(langCode));
         const viewController = getCurrentLookupBibleItemController();
         if (viewController === null) {
             return;
@@ -95,7 +101,7 @@ export function useLookupVerseBibleKey() {
         const instanceEvents = viewController.registerEventListener(
             ['update'],
             () => {
-                setBibleKey(getLookupVerseBibleKey());
+                setBibleKey(getLookupVerseBibleKey(langCode));
             },
         );
         return () => {

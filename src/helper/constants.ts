@@ -137,10 +137,9 @@ export const CAMERA_DEVICE_LABEL_ATTR = 'data-camera-device-label';
  * — it is a `PREVIEW_ONLY_ATTR` child that the hydration hides, so a page with
  * a transparent body does not show the stale shot through.
  *
- * NOTE: `sanitizeHtml` (`./sanitizeHelpers.ts`) is still a no-op stub. When a
- * real sanitizer lands it MUST allowlist `data-website-*` and `data-camera-*`,
- * or both item kinds silently stop hydrating on the screen with no error
- * anywhere.
+ * `sanitizeSlideHtml` preserves these typed website/camera attributes after
+ * composition. `sanitizeHtml` removes them from document-controlled HTML so
+ * a raw HTML box cannot impersonate a live media item.
  *
  * The editor additionally swaps the screenshot for a live iframe on hover; that
  * path is pure React and needs no attribute.

@@ -12,6 +12,7 @@ const sendDataMock = vi.fn();
 
 const appProviderMock = {
     isPageScreen: false,
+    isPagePresenter: false,
     messageUtils: {
         messageChannels: {
             screenMessage: 'screen-message-channel',
@@ -310,6 +311,7 @@ describe('ScreenManager runtime orchestration', () => {
         vi.clearAllMocks();
         baseInstances.clear();
         appProviderMock.isPageScreen = false;
+        appProviderMock.isPagePresenter = false;
     });
 
     test('routes dropped content to the correct sub-manager', async () => {
@@ -485,6 +487,7 @@ describe('ScreenManager runtime orchestration', () => {
         );
         expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
             screenId: 3,
+            stage: 0,
             type: 'foreground',
             data: { marqueeBottomData: { text: 'hello' } },
             isScreen: false,
@@ -700,6 +703,7 @@ describe('ScreenManager runtime orchestration', () => {
         );
         expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
             screenId: 7,
+            stage: 0,
             type: 'foreground',
             data: { quickTextData: { text: 'Forced' } },
             isScreen: true,
@@ -805,6 +809,102 @@ describe('ScreenManager runtime orchestration', () => {
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).toHaveBeenCalledTimes(
             1,
+        );
+    });
+
+    test('a scroll on one mini screen moves every colour-note member', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(30);
+        const shownSibling = new ScreenManager(31);
+        const hiddenSibling = new ScreenManager(32);
+        const outsider = new ScreenManager(33);
+        for (const instance of [screenManager, shownSibling, hiddenSibling]) {
+            instance.colorNote = 'purple';
+            baseInstances.set(instance.screenId, instance);
+        }
+        outsider.colorNote = 'green';
+        baseInstances.set(33, outsider);
+        shownSibling.isShowing = true;
+        // The layer echo guard is sticky; a scroll must not consult it, or
+        // the group would follow only the first screen that ever scrolled.
+        (screenManager.checkIsSyncGroupEnabled as any).mockReturnValue(false);
+
+        const data = {
+            domSelector: '.screen-bible-container-scroll',
+            scroll: { x: 0, y: 0.4 },
+        };
+        screenManager.sendScreenMessage(
+            { screenId: 30, type: 'sync-scroll-percentage', data },
+            true,
+        );
+        await vi.waitFor(() => {
+            expect(hiddenSibling.syncScrollPercentage).toHaveBeenCalled();
+        });
+
+        // the scrolled screen's own window, and the shown member's window
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 30,
+            stage: 0,
+            type: 'sync-scroll-percentage',
+            data,
+            isScreen: false,
+        });
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 31,
+            stage: 0,
+            type: 'sync-scroll-percentage',
+            data,
+            isScreen: false,
+        });
+        // a hidden member has no window to tell
+        expect(sendDataMock).toHaveBeenCalledTimes(2);
+        // both members' mini screens follow; the scrolled one and the
+        // outsider do not
+        expect(shownSibling.syncScrollPercentage).toHaveBeenCalledWith(data);
+        expect(hiddenSibling.syncScrollPercentage).toHaveBeenCalledWith(data);
+        expect(screenManager.syncScrollPercentage).not.toHaveBeenCalled();
+        expect(outsider.syncScrollPercentage).not.toHaveBeenCalled();
+        expect(shownSibling.noSyncGroupMap.size).toBe(0);
+    });
+
+    test('a scroll made on the projector reaches the group through the presenter only', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(40);
+        const sibling = new ScreenManager(41);
+        screenManager.colorNote = 'purple';
+        sibling.colorNote = 'purple';
+        baseInstances.set(40, screenManager);
+        baseInstances.set(41, sibling);
+        const message = {
+            screenId: 40,
+            type: 'sync-scroll-percentage',
+            data: {
+                domSelector: '.half-scale-container',
+                scroll: { x: 0, y: 1 },
+            },
+        } as const;
+
+        // a screen window is told by the presenter; it relays nothing
+        ScreenManager.applyScreenManagerSyncScreen(message);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(screenManager.syncScrollPercentage).toHaveBeenCalledWith(
+            message.data,
+        );
+        expect(sibling.syncScrollPercentage).not.toHaveBeenCalled();
+
+        appProviderMock.isPagePresenter = true;
+        ScreenManager.applyScreenManagerSyncScreen(message);
+        await vi.waitFor(() => {
+            expect(sibling.syncScrollPercentage).toHaveBeenCalledWith(
+                message.data,
+            );
+        });
+        // the presenter never posts a projector's own scroll back to it
+        expect(sendDataMock).not.toHaveBeenCalledWith(
+            'screen-message-channel',
+            expect.objectContaining({ screenId: 40 }),
         );
     });
 

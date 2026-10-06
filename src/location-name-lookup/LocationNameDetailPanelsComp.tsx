@@ -22,9 +22,17 @@ import {
     useLookupVerseFontFamily,
 } from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
-import { closeDetailPanel, useOpenDetailPanels } from './detailPanelHelpers';
+import {
+    closeDetailPanel,
+    openDetailPanel,
+    useOpenDetailPanels,
+} from './detailPanelHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
-import { useLookupLangPresentation } from './lookupLangHelpers';
+import {
+    LookupLangContext,
+    useLookupLangPresentation,
+} from './lookupLangHelpers';
+import LookupLangCodeButtonComp from './LookupLangCodeButtonComp';
 import {
     LookupManagersContext,
     useLookupManagers,
@@ -328,7 +336,24 @@ function RenderDetailPanelComp({
                 // click just asked for.
                 isAboveModal: true,
             }}
-            extraActionButtons={<RenderCopyButtonComp onCopy={handleCopy} />}
+            extraActionButtons={
+                <>
+                    {panel.kind === 'verse' ? null : (
+                        <LookupLangCodeButtonComp
+                            isDetailHeader
+                            onSelect={(langCode) => {
+                                openDetailPanel({
+                                    kind: panel.kind,
+                                    target: panel.target,
+                                    name: title,
+                                    langCode,
+                                });
+                            }}
+                        />
+                    )}
+                    <RenderCopyButtonComp onCopy={handleCopy} />
+                </>
+            }
         >
             {/* Tracks the bible text zoom. `zoom` rather than
                 `transform: scale` so the body keeps a real layout box and
@@ -361,44 +386,67 @@ function RenderDetailPanelComp({
     );
 }
 
+function LoadDetailPanelComp({
+    panel,
+    index,
+}: Readonly<{ panel: DetailPanelType; index: number }>) {
+    const managers = useLookupManagers();
+    if (managers == null) {
+        return (
+            <FloatingWidgetComp
+                title={panel.name}
+                widgetName="Lookup Detail"
+                onClose={() => {
+                    closeDetailPanel(panel.key);
+                }}
+                raiseToken={panel.raiseCount}
+                options={{
+                    width: DETAIL_PANEL_WIDTH,
+                    height: 420,
+                    initialOffset:
+                        DETAIL_PANEL_BASE_OFFSET + index * CASCADE_STEP,
+                    isAboveModal: true,
+                }}
+            >
+                {managers === null ? (
+                    <div className="text-danger p-2">
+                        {tran('Failed to load lookup data')}
+                    </div>
+                ) : (
+                    <LoadingComp message={tran('Loading lookup data')} />
+                )}
+            </FloatingWidgetComp>
+        );
+    }
+    return (
+        <LookupManagersContext value={managers}>
+            <RenderDetailPanelComp
+                index={index}
+                managers={managers}
+                panel={panel}
+            />
+        </LookupManagersContext>
+    );
+}
+
 export default function LocationNameDetailPanelsComp() {
     const openPanels = useOpenDetailPanels();
     const { theme } = useThemeSource();
-    // The SAME instance the lookup panel holds, whenever that is open: the hook
-    // reference-counts one shared value rather than each tree loading its own
-    // ~34MB copy. The panels can still outlive the lookup, which is why they
-    // take a reference of their own instead of reading one out of a context.
-    const managers = useLookupManagers();
     if (openPanels.length === 0) {
         return null;
     }
     return createPortal(
         <div className="app app-floating-widget-portal" data-bs-theme={theme}>
-            {managers == null ? (
-                <FloatingWidgetComp
-                    title={tran('Loading lookup data')}
-                    widgetName="Lookup Detail"
-                    onClose={() => {
-                        closeDetailPanel(openPanels[0].key);
-                    }}
-                    options={{ width: 300, height: 160, isAboveModal: true }}
-                >
-                    <LoadingComp />
-                </FloatingWidgetComp>
-            ) : (
-                <LookupManagersContext value={managers}>
-                    {openPanels.map((panel, index) => {
-                        return (
-                            <RenderDetailPanelComp
-                                key={panel.key}
-                                index={index}
-                                managers={managers}
-                                panel={panel}
-                            />
-                        );
-                    })}
-                </LookupManagersContext>
-            )}
+            {openPanels.map((panel, index) => {
+                return (
+                    <LookupLangContext
+                        key={panel.key}
+                        value={panel.langCode ?? null}
+                    >
+                        <LoadDetailPanelComp index={index} panel={panel} />
+                    </LookupLangContext>
+                );
+            })}
         </div>,
         document.body,
     );

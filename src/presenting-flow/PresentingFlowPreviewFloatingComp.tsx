@@ -5,8 +5,8 @@ import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../app-document-list/appDocumentTypeHelpers';
 import { defaultRangeSize } from '../app-document-presenter/items/AppDocumentPreviewerFooterComp';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
-import type { EventMapperType } from '../event/KeyboardEventListener';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { presentingFlowNextEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { useVarySlideThumbnailSizeScale } from '../event/VaryAppDocumentEventListener';
 import AppRangeComp, { useZoomingRegistering } from '../others/AppRangeComp';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
@@ -80,12 +80,7 @@ const COLLAPSED_ITEM_HEIGHT = 34;
 
 // The same keys that advance the presenter's own slide list, forward only —
 // a run sheet is walked from where it is to its end.
-const nextEventMaps: EventMapperType[] = [
-    { key: ' ' },
-    { key: 'ArrowDown' },
-    { key: 'ArrowRight' },
-    { key: 'PageDown' },
-];
+const nextEventMaps = presentingFlowNextEventMappers;
 
 function toElementBox(container: HTMLDivElement, index: number) {
     return container.querySelector(

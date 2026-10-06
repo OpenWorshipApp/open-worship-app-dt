@@ -170,6 +170,22 @@ export async function genDocumentTransitionMenuItems(
     ];
 }
 
+/** The document's enabled override, always visible beside its menu. */
+export function DocumentTransitionIconComp({
+    filePath,
+}: Readonly<{ filePath: string }>) {
+    const data = useSlideTransitionMap(filePath);
+    if (!appProvider.isPagePresenter) {
+        return null;
+    }
+    return (
+        <SlideTransitionIconComp
+            filePath={filePath}
+            effect={data?.[slideTransitionManager.toKey()]}
+        />
+    );
+}
+
 /**
  * The badge in a slide card's header while that slide has its OWN transition;
  * pressing it opens the same checkbox the menu row does.
@@ -180,7 +196,7 @@ export function SlideTransitionIconComp({
     effect,
 }: Readonly<{
     filePath: string;
-    id: string | number;
+    id?: string | number;
     effect: TransitionEffectType | undefined;
 }>) {
     const filePathRef = useAppCurrentRef(filePath);
@@ -195,17 +211,26 @@ export function SlideTransitionIconComp({
     if (effect === undefined) {
         return null;
     }
-    const title = `${tran('Transition')}: ${toTransitionLabel(effect)}`;
+    const title = `${id === undefined ? tran('Slides preview transition') : tran('Slide transition')}: ${toTransitionLabel(effect)}`;
     return (
         <button
             type="button"
-            className="btn btn-secondary btn-sm p-0 mx-1"
+            className="btn btn-outline-info btn-sm rounded-pill d-inline-flex align-items-center justify-content-center px-1 mx-1"
+            style={{
+                fontSize: '0.7rem',
+                minWidth: '1.5rem',
+                flexShrink: 0,
+                borderColor: 'var(--bs-info)',
+            }}
             title={title}
             aria-label={title}
             onClick={handleClicking}
             onContextMenu={handleClicking}
         >
-            <i className={`bi bi-${getTransitionIconName(effect)}`} />
+            <i
+                className={`bi bi-${getTransitionIconName(effect)}`}
+                aria-hidden="true"
+            />
         </button>
     );
 }

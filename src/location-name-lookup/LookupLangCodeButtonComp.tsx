@@ -3,7 +3,7 @@ import { getLanguageTitle, tran } from '../lang/langHelpers';
 import {
     getLookupLangCodeListAsync,
     setSelectedLookupLangCode,
-    useSelectedLookupLangCode,
+    useLookupLangCode,
 } from './lookupLangHelpers';
 
 /**
@@ -17,13 +17,23 @@ import {
  * every shipped language module, and this button is in the bible lookup header,
  * which mounts far more often than anyone opens this menu.
  */
-export default function LookupLangCodeButtonComp() {
-    const langCode = useSelectedLookupLangCode();
+export default function LookupLangCodeButtonComp({
+    onSelect = setSelectedLookupLangCode,
+    isDetailHeader = false,
+}: Readonly<{
+    onSelect?: (langCode: string) => void;
+    isDetailHeader?: boolean;
+}>) {
+    const langCode = useLookupLangCode();
     const label = tran('Names and locations language');
     return (
         <button
             type="button"
-            className="btn btn-sm btn-outline-secondary px-1 font-monospace"
+            className={
+                isDetailHeader
+                    ? 'floating-widget__button font-monospace'
+                    : 'btn btn-sm btn-outline-secondary px-1 font-monospace'
+            }
             title={`${label} (${getLanguageTitle({ langCode })})`}
             aria-label={label}
             onClick={async (event) => {
@@ -47,7 +57,7 @@ export default function LookupLangCodeButtonComp() {
                                     <i className="bi bi-check-lg me-1" />
                                 ) : undefined,
                             onSelect: () => {
-                                setSelectedLookupLangCode(itemLangCode);
+                                onSelect(itemLangCode);
                             },
                         };
                     }),

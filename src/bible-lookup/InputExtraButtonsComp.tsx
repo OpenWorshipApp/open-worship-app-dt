@@ -13,11 +13,15 @@ import {
 } from '../helper/appHooks';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
-import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
+import {
+    lookupEscapeEventMapper,
+    lookupRemoveAllEventMapper,
+    lookupTabEventMapper,
+} from '../keyboard-shortcut/appShortcutMappers';
 import { useInputTextContext } from './InputHandlerComp';
 import { parseChapterFromGuessing } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { tran } from '../lang/langHelpers';
@@ -69,12 +73,9 @@ function useTabAvailable(
     return isTabAvailable;
 }
 
-const escapeEventMap: KeyboardEventMapper = { key: 'Escape' };
-const removeAllEventMap: KeyboardEventMapper = {
-    allControlKey: ['Shift'],
-    key: 'Escape',
-};
-const tabEventMap: KeyboardEventMapper = { key: 'Tab' };
+const escapeEventMap = lookupEscapeEventMapper;
+const removeAllEventMap = lookupRemoveAllEventMapper;
+const tabEventMap = lookupTabEventMapper;
 
 function genAvailableStyle(isDisabled: boolean): CSSProperties {
     if (!isDisabled) {

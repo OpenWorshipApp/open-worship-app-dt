@@ -95,7 +95,7 @@ bundles two corpora into `electron-build/knowledge/` with a search index:
 | kind | source | weight |
 | --- | --- | ---: |
 | `manual` | `docs/manual-sources/**` (generated from `user-workflows.md`) | 1.5 |
-| `internal` | `.claude/CLAUDE.md`, `.claude/memory/`, `.claude/skills/` | 1.0 |
+| `internal` | `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/`, `.claude/skills/` | 1.0 |
 
 The main process passes the location in through `OWA_KNOWLEDGE_DIR`.
 

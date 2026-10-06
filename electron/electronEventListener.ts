@@ -67,6 +67,7 @@ import {
     stopFindOverlayDragging,
 } from './finderOverlayHelpers';
 import ElectronScreenController from './ElectronScreenController';
+import { getScreenMirror } from './screenMirrorService';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
 import {
@@ -91,6 +92,7 @@ export type AnyObjectType = {
 };
 
 export type ScreenMessageType = {
+    stage?: number;
     screenId: number;
     type: string;
     data: AnyObjectType;
@@ -309,15 +311,25 @@ function onAsync<T1, T2>(
 }
 
 export function initEventScreen(appController: ElectronAppController) {
+    const mirror = getScreenMirror();
+    mirror?.configure(appController.mainWin.webContents);
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
             primaryDisplay: appController.settingManager.primaryDisplay,
-            displays: appController.settingManager.allDisplays,
+            displays: [
+                ...appController.settingManager.allDisplays,
+                ...(mirror?.displays() ?? []),
+            ],
         };
     });
 
     ipcMain.on('main:app:get-screens', (event) => {
-        event.returnValue = ElectronScreenController.getAllIds();
+        event.returnValue = [
+            ...new Set([
+                ...ElectronScreenController.getAllIds(),
+                ...(mirror?.showingIds() ?? []),
+            ]),
+        ];
     });
 
     // TODO: use shareProps.mainWin.on or shareProps.screenWin.on
@@ -325,6 +337,11 @@ export function initEventScreen(appController: ElectronAppController) {
         ipcMain,
         'main:app:show-screen',
         async (data: ShowScreenDataType) => {
+            if (
+                mirror &&
+                (await mirror.prepareOutput(data.screenId, data.displayId))
+            )
+                return;
             const isNewInstance =
                 ElectronScreenController.getInstance(data.screenId) === null;
             const screenController = ElectronScreenController.createInstance(
@@ -342,6 +359,7 @@ export function initEventScreen(appController: ElectronAppController) {
             // and stacking a listener per show call duplicates the notify.
             if (isNewInstance) {
                 screenController.win.on('close', () => {
+                    mirror?.hide(data.screenId);
                     screenController.destroyInstance();
                     appController.mainController.sendNotifyInvisibility(
                         data.screenId,
@@ -352,6 +370,7 @@ export function initEventScreen(appController: ElectronAppController) {
     );
 
     ipcMain.on('app:hide-screen', (_, screenId: number) => {
+        mirror?.hide(screenId);
         const screenController = ElectronScreenController.getInstance(screenId);
         if (screenController === null) {
             return;
@@ -360,6 +379,7 @@ export function initEventScreen(appController: ElectronAppController) {
         screenController.destroyInstance();
     });
     ipcMain.on('app:hide-all-screens', () => {
+        for (const id of mirror?.showingIds() ?? []) mirror?.hide(id);
         ElectronScreenController.closeAll();
     });
 
@@ -375,6 +395,29 @@ export function initEventScreen(appController: ElectronAppController) {
                 displayId: number;
             },
         ) => {
+            if (
+                mirror?.showingIds().includes(screenId) &&
+                (mirror.isRemoteDisplay(displayId) ||
+                    ElectronScreenController.getInstance(screenId) === null)
+            ) {
+                ElectronScreenController.getInstance(screenId)?.close();
+                void mirror
+                    .prepareOutput(screenId, displayId)
+                    .then((isRemote) => {
+                        if (!isRemote) {
+                            const targetDisplay =
+                                appController.settingManager.getDisplayById(
+                                    displayId,
+                                );
+                            if (targetDisplay)
+                                ElectronScreenController.createInstance(
+                                    screenId,
+                                ).setDisplay(targetDisplay);
+                        }
+                    })
+                    .catch((error) => console.error(error.message));
+                return;
+            }
             const display =
                 appController.settingManager.getDisplayById(displayId);
             const screenController =
@@ -394,19 +437,29 @@ export function initEventScreen(appController: ElectronAppController) {
                 screenId,
                 isScreen,
                 data,
+                stage,
             }: ScreenMessageType & { isScreen: boolean },
         ) => {
             if (isScreen) {
+                if (mirror?.sendFeedback({ screenId, type, data })) return;
                 appController.mainController.sendScreenMessage({
                     screenId,
                     type,
                     data,
                 });
             } else {
+                if (mirror?.sendScreenMessage({ screenId, type, data, stage }))
+                    return;
                 const screenController =
                     ElectronScreenController.getInstance(screenId);
                 if (screenController !== null) {
-                    screenController.sendMessage(type, data);
+                    const message = mirror?.localMessage({
+                        screenId,
+                        type,
+                        data,
+                        stage,
+                    });
+                    screenController.sendMessage(type, message?.data ?? data);
                 }
             }
             event.returnValue = true;
@@ -416,6 +469,7 @@ export function initEventScreen(appController: ElectronAppController) {
     ipcMain.on(
         'screen:app:change-bible',
         (_, data: { screenId: number; isNext: boolean }) => {
+            if (mirror?.stepBible(data)) return;
             appController.mainController.changeBible(data);
         },
     );

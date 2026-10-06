@@ -99,8 +99,8 @@ A tool is not "added" until every line is true.
 12. **Verify live**: audit shows it → call it through the MCP → the app reacts →
     the banner appears if it acts → the chatbot can be asked a question that makes
     a model choose it.
-13. **Document it**: `tools/owa-devtools-mcp/README.md` tool table, the `owa_*`
-    list in `.claude/CLAUDE.md` §_Agent access_, a `CB-xx` row if a user can
+13. **Document it**: `tools/owa-devtools-mcp/README.md` tool table, the tool's
+    bullet in `.claude/rules/agent-tools.md`, a `CB-xx` row if a user can
     notice it, and the Codex mirror of all of the above.
 
 ## Description voice — two readers, one string

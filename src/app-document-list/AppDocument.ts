@@ -45,6 +45,10 @@ import {
     genCenteredBoxPosition,
     type TextStylePropsType,
 } from '../slide-editor/canvas/canvasHelpers';
+import {
+    ensureDocumentCanvasItemUuids,
+    renewCanvasItemUuids,
+} from '../slide-editor/canvas/canvasItemIdentityHelpers';
 
 export type DocumentFontChangeType =
     { fontSize: number } | { fontFamily: string | null };
@@ -100,7 +104,7 @@ export default class AppDocument
     async getJsonData(isOriginal = false): Promise<AppDocumentType> {
         let jsonData = await super.getJsonData(isOriginal);
         if (jsonData !== null) {
-            return jsonData;
+            return AppDocument.normalizeCanvasItemUuids(jsonData);
         }
         if (!isOriginal) {
             jsonData = await this.getJsonData(true);
@@ -128,6 +132,17 @@ export default class AppDocument
         await this.setJsonData(newJsonData);
         await this.save();
         return newJsonData;
+    }
+
+    private static normalizeCanvasItemUuids(jsonData: AppDocumentType) {
+        const items = ensureDocumentCanvasItemUuids(jsonData.items);
+        return items === jsonData.items ? jsonData : { ...jsonData, items };
+    }
+
+    static toJsonString(jsonData: AppDocumentType) {
+        // Every editing-history write and Save passes here. Missing IDs are
+        // persisted with the edit; reading an old file alone writes nothing.
+        return super.toJsonString(this.normalizeCanvasItemUuids(jsonData));
     }
 
     async getSlides() {
@@ -340,6 +355,9 @@ export default class AppDocument
         const maxSlideId = await this.getMaxSlideId();
         const newSlides = targetSlides.map((slide, i) => {
             const newSlide = slide.clone(true);
+            newSlide.canvasItemsJson = renewCanvasItemUuids(
+                newSlide.canvasItemsJson,
+            );
             newSlide.id = maxSlideId + i + 1;
             newSlide.filePath = this.filePath;
             return newSlide;
@@ -376,6 +394,9 @@ export default class AppDocument
         const slides = await this.getSlides();
         for (let i = 0; i < newSlides.length; i++) {
             const newSlide = newSlides[i];
+            newSlide.canvasItemsJson = renewCanvasItemUuids(
+                newSlide.canvasItemsJson,
+            );
             const maxSlideId = (await this.getMaxSlideId()) + i;
             newSlide.id = maxSlideId + 1;
             this.notifyNewSlidesAdded([newSlide.id]);

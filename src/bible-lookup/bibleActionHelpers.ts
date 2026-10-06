@@ -1,5 +1,4 @@
 import { tran } from '../lang/langHelpers';
-import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import {
     exportToWordDocument,
     saveBibleItem,
@@ -14,15 +13,13 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
-export const ctrlShiftEnterEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl', 'Shift'],
-    key: 'Enter',
-};
+import {
+    ctrlEnterEventMapper,
+    ctrlShiftEnterEventMapper,
+} from '../keyboard-shortcut/appShortcutMappers';
 
-export const ctrlEnterEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl'],
-    key: 'Enter',
-};
+// Declared with every other shortcut so Help -> Keyboard Shortcuts lists them.
+export { ctrlEnterEventMapper, ctrlShiftEnterEventMapper };
 
 export function showAddingBibleItemFail() {
     showSimpleToast(tran('Adding Bible Item'), tran('Fail to add bible item'));

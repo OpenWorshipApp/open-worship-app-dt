@@ -3,6 +3,7 @@ import { BrowserWindow } from 'electron';
 import { type AnyObjectType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
+import { screenMirrorRuntime } from './screenMirrorRuntime';
 import {
     applyRendererRecovery,
     attemptClosing,
@@ -35,10 +36,15 @@ export default class ElectronScreenController {
         });
         guardBrowsing(win, webPreferences);
         const query = `?screenId=${this.screenId}`;
+        const loadScreen = () => {
+            const httpUrl = screenMirrorRuntime.screenUrl?.(this.screenId);
+            if (httpUrl) void win.loadURL(httpUrl);
+            else routeProps.loadURL(win, query);
+        };
         applyRendererRecovery(win, () => {
-            routeProps.loadURL(win, query);
+            loadScreen();
         });
-        routeProps.loadURL(win, query);
+        loadScreen();
         if (isScreenCanFullScreen) {
             win.setFullScreen(true);
         }
@@ -49,6 +55,8 @@ export default class ElectronScreenController {
     }
 
     listenLoading() {
+        if (this.win.webContents.isLoading?.() === false)
+            return Promise.resolve();
         return new Promise<void>((resolve) => {
             this.win.webContents.once('did-finish-load', () => {
                 resolve();

@@ -187,6 +187,14 @@ function createCanvasItem({
             return item.props.id === (targetItem.props?.id ?? targetItem.id);
         },
         fireEditEvent: vi.fn(),
+        clone: () => {
+            const copy = createCanvasItem({ ...item.props });
+            copy.props = {
+                ...structuredClone(item.props),
+                uuid: crypto.randomUUID(),
+            };
+            return copy;
+        },
     };
 
     Object.defineProperty(item, 'id', {
@@ -352,9 +360,14 @@ describe('CanvasController', () => {
         controller.applyOrderingData(newItem as any, true);
         controller.deleteItems([secondItem as any]);
 
-        expect(duplicateItem.props.id).toBe(3);
-        expect(duplicateItem.props.top).toBe(25);
-        expect(duplicateItem.props.left).toBe(27);
+        expect(duplicateItem.props.id).toBe(50);
+        expect(duplicateItem.props.top).toBe(5);
+        expect(duplicateItem.props.left).toBe(7);
+        expect(canvas.canvasItems[2].props).toMatchObject({
+            id: 3,
+            top: 25,
+            left: 27,
+        });
         expect(newItem.props.id).toBe(4);
         expect(canvas.canvasItems.map((item: any) => item.props.id)).toEqual([
             1, 4, 3,
@@ -366,6 +379,28 @@ describe('CanvasController', () => {
         expect(controller.matchEvent({ key: 'Enter' } as KeyboardEvent)).toBe(
             false,
         );
+    });
+
+    test('batch paste and duplication assign distinct IDs and UUIDs without changing the originals', () => {
+        const originals = [
+            createCanvasItem({ id: 1 }),
+            createCanvasItem({ id: 2 }),
+        ];
+        const { canvas, controller } = createController(originals);
+        controller.duplicateItems(originals);
+        controller.addNewItems([
+            createCanvasItem({ id: -1 }),
+            createCanvasItem({ id: -1 }),
+        ]);
+        expect(canvas.canvasItems.map((item: any) => item.id)).toEqual([
+            1, 2, 3, 4, 5, 6,
+        ]);
+        const created = canvas.canvasItems.slice(2);
+        expect(new Set(created.map((item: any) => item.props.uuid)).size).toBe(
+            4,
+        );
+        expect(originals.map((item) => item.id)).toEqual([1, 2]);
+        expect(originals[0].props.left).toBe(10);
     });
 
     test('refuses to delete locked items until they are unlocked', () => {

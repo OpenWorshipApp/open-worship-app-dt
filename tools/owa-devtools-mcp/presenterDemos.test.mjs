@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 89 Presenter lessons with stable unique ids', () => {
+  it('offers 90 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -81,6 +81,7 @@ describe('Presenter demos', () => {
       'presenter-lookup-keep-open',
       'presenter-lookup-history',
       'presenter-lookup-study-tools',
+      'presenter-lookup-switch-split',
       'presenter-background-filter',
       'presenter-background-sort',
       'presenter-background-folder',
@@ -100,7 +101,7 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(89);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(90);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );
@@ -231,5 +232,20 @@ describe('Presenter demos', () => {
         ).toBe(true);
       }
     }
+  });
+
+  it('opens Bible Lookup before pressing the split-passage keys', () => {
+    const demo = getPresenterDemo('presenter-lookup-switch-split');
+    expect(
+      demo.steps.map((step) => step.find ?? step.press ?? step.kind),
+    ).toEqual([
+      'Bible Lookup',
+      'Ctrl+Shift+S',
+      'Ctrl+Shift+Left',
+      'Ctrl+Shift+Right',
+      'look',
+    ]);
+    expect(demo.steps[0].skipIfVisible).toBe('Bible Reference');
+    expect(demo.steps.at(-1).text).toContain('Command+Shift');
   });
 });

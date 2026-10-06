@@ -12,6 +12,7 @@ import {
 import { use, useCallback } from 'react';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { lookupEnterEventMapper } from '../keyboard-shortcut/appShortcutMappers';
 import {
     checkIsBibleLookupInputFocused,
     getBibleLookupInputText,
@@ -109,7 +110,7 @@ export default function RenderBibleLookupBodyComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
-    useKeyboardRegistering([{ key: 'Enter' }], handleInputEntering, []);
+    useKeyboardRegistering([lookupEnterEventMapper], handleInputEntering, []);
     return (
         <RenderLookupSuggestionComp
             applyChapterSelection={handleChapterSelecting}

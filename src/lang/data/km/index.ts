@@ -29,6 +29,67 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Screen Mirror': 'ការឆ្លុះអេក្រង់',
+    'Connection code is incorrect': 'លេខកូដតភ្ជាប់មិនត្រឹមត្រូវ',
+    'Disconnected by host': 'ម៉ាស៊ីនមេបានផ្តាច់ការតភ្ជាប់',
+    'Incompatible or duplicate connection': 'ការតភ្ជាប់មិនត្រូវគ្នា ឬស្ទួន',
+    'Screen Mirror Connection': 'ការតភ្ជាប់អេក្រង់ឆ្លុះ',
+    'Screen mirror server is unavailable':
+        'ម៉ាស៊ីនបម្រើអេក្រង់ឆ្លុះមិនអាចប្រើបាន',
+    'Connect to host': 'តភ្ជាប់ទៅម៉ាស៊ីនមេ',
+    Rescan: 'ស្វែងរកឡើងវិញ',
+    'Host address': 'អាសយដ្ឋានម៉ាស៊ីនមេ',
+    Port: 'ច្រក',
+    'Connection code': 'លេខកូដតភ្ជាប់',
+    Connect: 'តភ្ជាប់',
+    Disconnect: 'ផ្តាច់ការតភ្ជាប់',
+    'Connection status': 'ស្ថានភាពតភ្ជាប់',
+    Connected: 'បានតភ្ជាប់',
+    Disconnected: 'បានផ្តាច់ការតភ្ជាប់',
+    Connecting: 'កំពុងតភ្ជាប់',
+    'Waiting for host approval': 'កំពុងរង់ចាំការអនុញ្ញាតពីម៉ាស៊ីនមេ',
+    'Connection failed': 'ការតភ្ជាប់បានបរាជ័យ',
+    'Connected guests': 'ម៉ាស៊ីនភ្ញៀវដែលបានតភ្ជាប់',
+    'No connected guests': 'គ្មានម៉ាស៊ីនភ្ញៀវបានតភ្ជាប់',
+    'Connection request': 'សំណើតភ្ជាប់',
+    'Allow connection': 'អនុញ្ញាតការតភ្ជាប់',
+    'Reject connection': 'បដិសេធការតភ្ជាប់',
+    'Host addresses': 'អាសយដ្ឋានម៉ាស៊ីនមេ',
+    'Guest access': 'ការចូលប្រើរបស់ភ្ញៀវ',
+    'Approve each connection': 'អនុញ្ញាតការតភ្ជាប់នីមួយៗ',
+    'Require connection code': 'ទាមទារលេខកូដតភ្ជាប់',
+    'Code is set': 'បានកំណត់លេខកូដ',
+    'Set connection code': 'កំណត់លេខកូដតភ្ជាប់',
+    'Custom port (next launch)': 'ច្រកផ្ទាល់ខ្លួន (ពេលបើកកម្មវិធីលើកក្រោយ)',
+    'Save port': 'រក្សាទុកច្រក',
+    Host: 'ម៉ាស៊ីនមេ',
+    'This computer': 'កុំព្យូទ័រនេះ',
+    'Choose a host below': 'ជ្រើសរើសម៉ាស៊ីនមេខាងក្រោម',
+    'On the host, click Allow connection.':
+        'នៅលើម៉ាស៊ីនមេ សូមចុច «អនុញ្ញាតការតភ្ជាប់»។',
+    'The host can now show its screens on these monitors.':
+        'ឥឡូវនេះ ម៉ាស៊ីនមេអាចបង្ហាញអេក្រង់របស់វានៅលើម៉ូនីទ័រទាំងនេះ។',
+    'Hosts on this network': 'ម៉ាស៊ីនមេនៅលើបណ្ដាញនេះ',
+    'Looking for hosts…': 'កំពុងស្វែងរកម៉ាស៊ីនមេ…',
+    'No host found. Open the app on the host and check that both computers are on the same network.':
+        'រកមិនឃើញម៉ាស៊ីនមេទេ។ សូមបើកកម្មវិធីនៅលើម៉ាស៊ីនមេ ហើយពិនិត្យថាកុំព្យូទ័រទាំងពីរនៅលើបណ្ដាញតែមួយ។',
+    'Connect by address': 'តភ្ជាប់តាមអាសយដ្ឋាន',
+    'Leave empty unless the host uses a code.':
+        'ទុកឲ្យទទេ លុះត្រាតែម៉ាស៊ីនមេប្រើលេខកូដ។',
+    'HTML-in-Canvas': 'HTML-in-Canvas',
+    'PDF.js': 'PDF.js',
+    'Interactive text': 'អត្ថបទអន្តរកម្ម',
+    'Mozilla viewer': 'កម្មវិធីមើល Mozilla',
+    'Messy text': 'អត្ថបទចម្រុះ',
+    'Hover for a title; click or right-click a text range to call the app.':
+        'ដាក់កណ្ដុរដើម្បីមើលចំណងជើង ចុច ឬចុចស្ដាំលើចន្លោះអត្ថបទដើម្បីបញ្ជូនទៅកម្មវិធី។',
+    'Extracted PDF text': 'អត្ថបទដែលបានស្រង់ពី PDF',
+    'Text range source': 'ប្រភពចន្លោះអត្ថបទ',
+    'Hover over text for its title; click a Bible reference for a verse.':
+        'ដាក់កណ្ដុរលើអត្ថបទដើម្បីមើលចំណងជើង រួចចុចឯកសារយោងព្រះគម្ពីរដើម្បីមើលខ។',
+    'Choose PDF': 'ជ្រើសរើស PDF',
+    'Selected text': 'អត្ថបទដែលបានជ្រើសរើស',
+    'No matching Bible verse found': 'រកមិនឃើញខគម្ពីរដែលត្រូវគ្នា',
     // Presenter-only practice lessons.
     'Type a complete reference in Bible Lookup':
         'វាយឯកសារយោងពេញលេញក្នុងការស្វែងរកព្រះគម្ពីរ',
@@ -155,6 +216,14 @@ const dictionary = {
         'បំបែកផ្ទាំងទៅការបកប្រែផ្សេងដោយផ្ទាល់',
     'Use Split Horizontal to or Split Vertical to from a passage menu, then choose a Bible.':
         'ក្នុងម៉ឺនុយបទគម្ពីរ ប្រើបំបែកផ្ដេកទៅ ឬបំបែកបញ្ឈរទៅ រួចជ្រើសគម្ពីរ។',
+    'Move between split passages with the keyboard':
+        'ប្ដូររវាងបទគម្ពីរដែលបានបំបែក ដោយប្រើក្ដារចុច',
+    'Press Ctrl+Shift with an arrow key to work in the passage on that side.':
+        'ចុច Ctrl+Shift ជាមួយគ្រាប់ចុចព្រួញ ដើម្បីធ្វើការលើបទគម្ពីរនៅខាងនោះ។',
+    'Move between split passages in Bible Lookup':
+        'ប្ដូររវាងបទគម្ពីរដែលបានបំបែក ក្នុងការស្វែងរកព្រះគម្ពីរ',
+    'Split a passage, then press Ctrl+Shift with an arrow key to work in the passage on that side.':
+        'បំបែកបទគម្ពីរ រួចចុច Ctrl+Shift ជាមួយគ្រាប់ចុចព្រួញ ដើម្បីធ្វើការលើបទគម្ពីរនៅខាងនោះ។',
     'Choose the Bible formatting model': 'ជ្រើសម៉ូដែលរៀបចំទម្រង់គម្ពីរ',
     'Use Change Bible Model Info in the footer; choosing a different model reloads the Reader.':
         'ប្រើ ប្ដូរព័ត៌មានម៉ូដែលគម្ពីរ នៅបាតផ្ទាំង។ ការជ្រើសម៉ូដែលផ្សេងនឹងផ្ទុកអ្នកអានឡើងវិញ។',
@@ -1138,6 +1207,8 @@ const dictionary = {
     // in with its own transition instead of the screen's.
     'Foreground transition': 'ការផ្លាស់ប្តូរផ្ទៃខាងមុខ',
     'Own transition': 'ការផ្លាស់ប្តូរផ្ទាល់ខ្លួន',
+    'Canvas item transition': 'ការផ្លាស់ប្តូរធាតុលើផ្ទាំង',
+    'Used when changing slides.': 'ប្រើនៅពេលប្តូរស្លាយ។',
     Follows: 'តាម',
     'Varies by screen': 'ខុសគ្នាតាមអេក្រង់',
     'Screen setting': 'ការកំណត់អេក្រង់',
@@ -2695,6 +2766,68 @@ const dictionary = {
     Strong: 'ខ្លាំង',
     Glow: 'ពន្លឺរស្មី',
     Outline: 'គែមអក្សរ',
+    // Help -> Keyboard Shortcuts (src/keyboard-shortcut).
+    'Keyboard Shortcuts': 'ផ្លូវកាត់ក្ដារចុច',
+    'Search shortcuts': 'ស្វែងរកផ្លូវកាត់',
+    'No shortcuts found': 'រកមិនឃើញផ្លូវកាត់ទេ',
+    'Start or stop Presenting Control':
+        'ចាប់ផ្ដើម ឬបញ្ឈប់ការគ្រប់គ្រងការបង្ហាញ',
+    'Every window': 'គ្រប់ផ្ទាំងវីនដូ',
+    'Dialogs and menus': 'ប្រអប់ និងម៉ឺនុយ',
+    'Confirm the dialog': 'យល់ព្រមលើប្រអប់',
+    'Cancel the dialog': 'បោះបង់ប្រអប់',
+    'Move through the right-click menu': 'ផ្លាស់ទីក្នុងម៉ឺនុយចុចស្ដាំ',
+    'Choose the highlighted menu item': 'ជ្រើសធាតុម៉ឺនុយដែលបានរំលេច',
+    'Jump to a menu item by its first letter': 'លោតទៅធាតុម៉ឺនុយតាមអក្សរដំបូង',
+    Screens: 'អេក្រង់បង្ហាញ',
+    'Show or hide the screen': 'បង្ហាញ ឬលាក់អេក្រង់',
+    'Show or take down Messages': 'បង្ហាញ ឬដកសារចេញ',
+    'While the Messages panel is open': 'ពេលផ្ទាំងសារកំពុងបើក',
+    'Next slide': 'ស្លាយបន្ទាប់',
+    'Previous slide': 'ស្លាយមុន',
+    'Select all slides': 'ជ្រើសរើសស្លាយទាំងអស់',
+    'Copy the selected slides': 'ចម្លងស្លាយដែលបានជ្រើស',
+    'Paste slides': 'បិទភ្ជាប់ស្លាយ',
+    'Duplicate the selected slides': 'ស្ទួនស្លាយដែលបានជ្រើស',
+    'Delete the selected slides': 'លុបស្លាយដែលបានជ្រើស',
+    'Clear the slide selection': 'បោះបង់ការជ្រើសស្លាយ',
+    'While the slides panel has focus': 'ពេលផ្ទាំងស្លាយកំពុងសកម្ម',
+    'While a Presenting Flow preview has focus':
+        'ពេលផ្ទាំងមើលតារាងកម្មវិធីកំពុងសកម្ម',
+    'Go to the next item': 'ទៅធាតុបន្ទាប់',
+    "While a mini screen's Drawing panel has focus":
+        'ពេលផ្ទាំងគូររបស់អេក្រង់តូចកំពុងសកម្ម',
+    'Back to painting': 'ត្រឡប់ទៅគូរវិញ',
+    "While a mini screen's Focusing panel has focus":
+        'ពេលផ្ទាំងផ្តោតរបស់អេក្រង់តូចកំពុងសកម្ម',
+    'While Presenting Control is open': 'ពេលការគ្រប់គ្រងការបង្ហាញកំពុងបើក',
+    'Back to using the app': 'ត្រឡប់ទៅប្រើកម្មវិធីវិញ',
+    'While a drawing tool is in use': 'ពេលកំពុងប្រើឧបករណ៍គូរ',
+    'Close the Bible Lookup popup': 'បិទផ្ទាំងស្វែងរកព្រះគម្ពីរ',
+    'Open the typed reference': 'បើកវគ្គដែលបានវាយ',
+    'Complete the typed reference': 'បំពេញវគ្គដែលបានវាយ',
+    'Remove the last part of the reference': 'លុបផ្នែកចុងក្រោយនៃវគ្គ',
+    'Clear the reference': 'សម្អាតវគ្គ',
+    'Move through the books and chapters': 'ផ្លាស់ទីក្នុងគម្ពីរ និងជំពូក',
+    'Move between split passages': 'ផ្លាស់ទីរវាងវគ្គដែលបានបំបែក',
+    'Close the selected split passage': 'បិទវគ្គបំបែកដែលបានជ្រើស',
+    'Focus the slide canvas': 'ផ្ដោតលើផ្ទាំងក្រណាត់ស្លាយ',
+    'While the slide canvas has focus': 'ពេលផ្ទាំងក្រណាត់ស្លាយកំពុងសកម្ម',
+    'Deselect the boxes': 'បោះបង់ការជ្រើសប្រអប់',
+    'Select the next box': 'ជ្រើសប្រអប់បន្ទាប់',
+    'Select the previous box': 'ជ្រើសប្រអប់មុន',
+    'Move the selected box': 'ផ្លាស់ទីប្រអប់ដែលបានជ្រើស',
+    'Hold Shift to move further, Ctrl to move less':
+        'សង្កត់ Shift ដើម្បីផ្លាស់ទីឆ្ងាយជាង ឬ Ctrl ដើម្បីផ្លាស់ទីតិចជាង',
+    'Copy the selected boxes': 'ចម្លងប្រអប់ដែលបានជ្រើស',
+    'Paste boxes or a copied Bible passage':
+        'បិទភ្ជាប់ប្រអប់ ឬវគ្គព្រះគម្ពីរដែលបានចម្លង',
+    'Duplicate the selected boxes': 'ស្ទួនប្រអប់ដែលបានជ្រើស',
+    'Delete the selected boxes': 'លុបប្រអប់ដែលបានជ្រើស',
+    'Finish editing the text': 'បញ្ចប់ការកែអត្ថបទ',
+    'While typing in a text box': 'ពេលកំពុងវាយក្នុងប្រអប់អត្ថបទ',
+    'Cancel editing the text': 'បោះបង់ការកែអត្ថបទ',
+    'While the Bible Lookup is open': 'ពេលផ្ទាំងស្វែងរកព្រះគម្ពីរកំពុងបើក',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

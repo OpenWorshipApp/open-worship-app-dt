@@ -281,6 +281,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBibleManager.sendSyncScreen();
         this.screenDrawManager.sendSyncScreen();
         this.screenFocusManager.sendSyncScreen();
+        this.screenMaskManager.sendSyncScreen();
     }
 
     clear() {
@@ -425,6 +426,9 @@ export default class ScreenManager extends ScreenManagerBase {
     }
 
     static applyScreenManagerSyncScreen(message: ScreenMessageType) {
+        const context = appProvider.screenUtils?.getContext();
+        const manager = getScreenManagerBase(message.screenId);
+        if (context && manager) manager._stage = context.stage;
         const ScreenHandler = this.getSyncGroupScreenEventHandler(message);
         if (ScreenHandler !== null) {
             ScreenHandler.receiveSyncScreen(message);
@@ -456,6 +460,11 @@ export default class ScreenManager extends ScreenManagerBase {
             ScreenVaryAppDocumentManager.receiveSyncVideoTime(message);
         } else if (type === 'sync-scroll-percentage') {
             screenManagerBase.syncScrollPercentage(data);
+            // Scrolled on the projector itself. Only the presenter knows the
+            // colour-note group, so it carries the scroll on to the members.
+            if (appProvider.isPagePresenter) {
+                this.syncScreenManagerGroup(message);
+            }
         } else {
             appLog(message);
         }
@@ -468,6 +477,30 @@ export default class ScreenManager extends ScreenManagerBase {
             this.applyScreenManagerSyncScreen(message);
         });
         initScreenBibleStepping();
+        if (!appProvider.isPageScreen) {
+            messageUtils.listenForData(
+                'mirror:bootstrap-request',
+                async (_, { requestId, screenId }) => {
+                    const manager = getScreenManagerBase(screenId);
+                    if (manager instanceof ScreenManager) {
+                        const { getMirrorBootstrap } =
+                            await import('../../screen-mirror/screenBootstrapHelpers');
+                        const bootstrap = await getMirrorBootstrap(manager);
+                        messageUtils.sendData('mirror:bootstrap', {
+                            ...bootstrap,
+                            requestId,
+                        });
+                    }
+                },
+            );
+            messageUtils.listenForData('mirror:devices-changed', () => {
+                for (const manager of getAllScreenManagerBases()) {
+                    manager.updateDim();
+                    manager.fireRefreshEvent();
+                    manager.addPropEvent('display-id');
+                }
+            });
+        }
     }
 
     static async getGroupScreenManagers(
@@ -505,6 +538,10 @@ export default class ScreenManager extends ScreenManagerBase {
                 ...message,
                 screenId: screenManagerBase.screenId,
             };
+            if (newMessage.type === 'sync-scroll-percentage') {
+                this.relayScrollToMember(screenManagerBase, newMessage);
+                continue;
+            }
             const ScreenHandler =
                 this.getSyncGroupScreenEventHandler(newMessage);
             if (ScreenHandler !== null) {
@@ -522,18 +559,44 @@ export default class ScreenManager extends ScreenManagerBase {
         }
     }
 
-    sendScreenMessage(message: ScreenMessageType, isForce: boolean) {
-        if (appProvider.isPageScreen && !isForce) {
-            return;
+    // A scroll position belongs to no layer, so no handler above takes it and
+    // the group never followed: scrolling one mini screen moved its own
+    // projector and left every member where it was. Applied here to the
+    // member's mini screen and posted to the member's own window. NOT gated by
+    // `noSyncGroupMap` -- that guard is sticky and would leave the group
+    // one-way after the first scroll; the `_remoteAppliedScroll` stamp
+    // `syncScrollPercentage` leaves is what stops the member's own scroll
+    // event from broadcasting it back.
+    private static relayScrollToMember(
+        screenManagerBase: ScreenManagerBase,
+        message: ScreenMessageType,
+    ) {
+        screenManagerBase.syncScrollPercentage(message.data);
+        // A scroll fires every frame; a hidden member has no window to tell.
+        if (screenManagerBase.isShowing) {
+            this.postScreenMessage(message);
         }
+    }
+
+    // To the window projecting `message.screenId` (from a screen window, to
+    // the presenter) and nowhere else: no group relay.
+    private static postScreenMessage(message: ScreenMessageType) {
         const { messageUtils } = appProvider;
         const channel = messageUtils.messageChannels.screenMessage;
         // async send — sendDataSync blocks the renderer on a main-process
         // round-trip for every message (paid every 60ms mid draw-stroke)
         messageUtils.sendData(channel, {
             ...message,
+            stage: getScreenManagerBase(message.screenId)?.stage,
             isScreen: appProvider.isPageScreen,
         });
+    }
+
+    sendScreenMessage(message: ScreenMessageType, isForce: boolean) {
+        if (appProvider.isPageScreen && !isForce) {
+            return;
+        }
+        ScreenManager.postScreenMessage(message);
         ScreenManager.syncScreenManagerGroup(message);
     }
 

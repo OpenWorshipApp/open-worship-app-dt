@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from 'react';
 
+import { getSelectedLookupLangCode } from './lookupLangHelpers';
+
 export type DetailPanelKindType = 'name' | 'location' | 'verse';
 
 export type DetailPanelType = {
-    // `kind:target`, so opening the same record twice raises the existing panel
+    // `kind:target:language`, so opening the same record twice raises the existing panel
     // instead of stacking a duplicate on top of it.
     key: string;
     kind: DetailPanelKindType;
@@ -11,6 +13,9 @@ export type DetailPanelType = {
     target: string;
     // What to show in the title bar until the record resolves.
     name: string;
+    // Name/location details keep the language they opened in. Verse panels
+    // retain their existing behavior of following the lookup setting.
+    langCode?: string;
     // Bumped every time an already-open record is opened again, which is what
     // the widget watches to pull itself back to the front. Deduplicating alone
     // was not enough: panels cascade only 28px apart, so an earlier one sits
@@ -34,7 +39,13 @@ function notify() {
 export function openDetailPanel(
     panel: Omit<DetailPanelType, 'key' | 'raiseCount'>,
 ) {
-    const key = `${panel.kind}:${panel.target}`;
+    const langCode =
+        panel.kind === 'verse'
+            ? undefined
+            : (panel.langCode ?? getSelectedLookupLangCode());
+    const key =
+        `${panel.kind}:${panel.target}` +
+        (langCode === undefined ? '' : `:${langCode}`);
     if (openPanels.some((item) => item.key === key)) {
         // Keep the position — only ask the existing widget to come forward, so
         // following a reference back to a record already on screen shows it
@@ -47,7 +58,7 @@ export function openDetailPanel(
         notify();
         return;
     }
-    openPanels = [...openPanels, { ...panel, key, raiseCount: 0 }];
+    openPanels = [...openPanels, { ...panel, langCode, key, raiseCount: 0 }];
     notify();
 }
 

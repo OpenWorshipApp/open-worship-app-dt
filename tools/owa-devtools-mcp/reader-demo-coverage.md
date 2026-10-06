@@ -3,9 +3,9 @@
 Scope: `html/reader.html` → `src/reader.tsx`, including its study sidebar,
 floating record/graph panels, saved passages, notes, header and native menus.
 The separate note editor, Settings, Presenter and AI Chat contents are outside
-this catalog. Updated 2026-09-28: **99 lessons**, **49 with actions**, **50
+this catalog. Updated 2026-10-04: **100 lessons**, **50 with actions**, **50
 self-guided**. The assistant's featured shelf remains 30 small starter lessons;
-**Help → All tips** exposes all 99 without a model call.
+**Help → All tips** exposes all 100 without a model call.
 
 ## Using the lessons
 
@@ -34,7 +34,7 @@ can choose a person's files, translation, text selection or records.
 | Reference picker                          | `open-john-3-16`, `type-reference`, `clear-reference`, `clear-reference-part`, `reference-shortcuts`, `verse-ranges`                                                                                                                                               |
 | Passage history                           | `previous-passage`, `next-passage`, `history-chips` (reopen, split, drag, save, remove)                                                                                                                                                                            |
 | Bible versions and metadata               | `version-info`, `bible-information`, `add-bible`, `remove-extra-version`, `split-translation`                                                                                                                                                                      |
-| Reading layout                            | `font-larger`, `font-smaller`, `full-view`, `split-side-by-side`, `split-stacked`, `edit-arrange-passages`, `sync-panes`, `divider-menu`                                                                                                                           |
+| Reading layout                            | `font-larger`, `font-smaller`, `full-view`, `split-side-by-side`, `split-stacked`, `edit-arrange-passages`, `switch-split-pane` (Ctrl+Shift+Arrow between panes), `sync-panes`, `divider-menu`                                                                     |
 | Formatting and scrolling                  | `bible-line-breaks`, `model-line-breaks`, `model-info`, `auto-scroll`, `scroll-top`, `scroll-speed`                                                                                                                                                                |
 | Passage copying                           | `copy-passage`, `copy-title`, `copy-text`, `copy-all`, `copy-verse-key`, `copy-chapter-key`                                                                                                                                                                        |
 | Passage export, dictionary, audio, output | `extra-passage-actions`, `ai-audio`, `save-passage`, `present-passage`; audience output and export remain personal actions                                                                                                                                         |

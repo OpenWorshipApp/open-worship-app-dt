@@ -1,9 +1,13 @@
 # Codex project instructions
 
 Read `.codex/project-instructions.md` before working on this repository. It is
-an unabridged copy of `.claude/CLAUDE.md`; read it in chunks if tool output is
-truncated. It is kept separately because it exceeds Codex's default automatic
-project-instruction size limit.
+an exact copy of `.claude/CLAUDE.md`; read it in chunks if tool output is
+truncated. It is kept separately so this entrypoint stays small.
+
+The detailed notes it indexes are in `.codex/instructions/` (exact copies of
+`.claude/rules/`). Each file starts with a `paths:` list of the files it
+covers; before working on a matching file, read that instruction file whole.
+Claude Code loads them automatically, Codex does not.
 
 Read `.codex/memory/MEMORY.md` and the linked notes relevant to the task.
 These are repository notes, not Codex's automatic memory store.
@@ -35,6 +39,7 @@ When changing shared guidance, edit the canonical `.claude/` file first, then
 update these Codex copies in the same change:
 
 - `.claude/CLAUDE.md` -> `.codex/project-instructions.md` (exact copy).
+- `.claude/rules/` -> `.codex/instructions/` (exact copies).
 - `.claude/memory/` -> `.codex/memory/` (exact copies).
 - `.claude/skills/` -> `.agents/skills/` (copy resources exactly; retain Codex
   adaptations in each `SKILL.md`: concise discovery description, full original

@@ -19,6 +19,7 @@ const allowedMainHtmlFiles = new Set([
     htmlFiles.presenter,
     htmlFiles.reader,
     htmlFiles.appDocumentEditor,
+    htmlFiles.screenMirror,
 ]);
 
 function toAllowedMainHtmlPath(mainHtmlPath: string) {

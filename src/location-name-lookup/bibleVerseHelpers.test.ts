@@ -64,7 +64,7 @@ vi.mock('../helper/helpers', () => ({ cloneJson: (value: any) => value }));
 vi.mock('../lang/langHelpers', () => ({ DEFAULT_LANG_CODE: 'en' }));
 vi.mock('./lookupLangHelpers', () => ({
     getSelectedLookupLangCode: () => h.langCode,
-    useSelectedLookupLangCode: () => h.langCode,
+    useLookupLangCode: () => h.langCode,
 }));
 
 import {

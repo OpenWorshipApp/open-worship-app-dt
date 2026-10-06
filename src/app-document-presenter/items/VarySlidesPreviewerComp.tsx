@@ -41,7 +41,10 @@ import {
     SlidesPreviewerScopeContext,
     useThumbnailScaleSettingOptions,
 } from './slidesPreviewerScopeHelpers';
-import { genDocumentTransitionMenuItems } from '../../others/slideTransitionMenuHelpers';
+import {
+    DocumentTransitionIconComp,
+    genDocumentTransitionMenuItems,
+} from '../../others/slideTransitionMenuHelpers';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -209,9 +212,13 @@ export default function VarySlidesPreviewerComp() {
                         height: 0,
                         zIndex: 3,
                         display: 'flex',
+                        alignItems: 'flex-start',
                         justifyContent: 'flex-end',
                     }}
                 >
+                    <DocumentTransitionIconComp
+                        filePath={varyAppDocument.filePath}
+                    />
                     <ContextMenuDotsButtonComp
                         className="me-2"
                         onOpening={handleContextMenu}

@@ -62,7 +62,7 @@ function RenderInfoValueComp({ value }: Readonly<{ value: string }>) {
     // Bible copyright / legal-note fields routinely carry the publisher's site
     // as bare text. Only the detected URL runs become anchors — the rest stays
     // a plain text node, so nothing from the bible file is ever injected as
-    // markup (`sanitizeHtml` is still a no-op placeholder).
+    // markup.
     return splitTextByUrl(value).map((segment, index) => {
         if (segment.url === null) {
             return <Fragment key={index}>{segment.text}</Fragment>;

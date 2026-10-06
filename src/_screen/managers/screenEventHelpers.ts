@@ -16,7 +16,6 @@ import type { ScreenFocusEventType } from './ScreenFocusManager';
 import ScreenFocusManager from './ScreenFocusManager';
 import type { ScreenMaskEventType } from './ScreenMaskManager';
 import ScreenMaskManager from './ScreenMaskManager';
-import appProvider from '../../server/appProvider';
 import { type ListenerType } from '../../event/EventHandler';
 
 export function useScreenEvents<T extends string>(
@@ -138,18 +137,32 @@ export function useScreenMaskManagerEvents(
     );
 }
 
+// How long after a wheel on a container its scroll events still count as the
+// operator's: Chrome animates a wheel notch over ~200ms and a touchpad's
+// momentum arrives as more wheels; the rest is headroom for a slow machine,
+// whose frames -- and so whose scroll events -- run late.
+const WHEEL_SCROLL_WINDOW_MS = 1000;
+
 export function registerScrollingSyncEvent(
     divHaftScale: HTMLElement,
-    callback: (scroll: { x: number; y: number }) => void,
+    callback: (scroll: { x: number; y: number }, isFromWheel: boolean) => void,
 ) {
-    divHaftScale.addEventListener('wheel', (event) => {
-        if (
-            !appProvider.getIsMouseOverApp() ||
-            !appProvider.getIsWindowFocused()
-        ) {
-            event.preventDefault();
-        }
-    });
+    // A wheel only reaches this element from a pointer over it, so the scroll
+    // it drives is the operator's. It used to be cancelled unless
+    // `getIsMouseOverApp()` and `getIsWindowFocused()` agreed, and neither
+    // does when it matters: the first waits for a mouse MOVE after a (re)load,
+    // so a pointer already resting on a mini screen scrolled nothing, and the
+    // second is false for a window the pointer only hovers (the OS wheels the
+    // window under the pointer), so the mini screen was dead until clicked.
+    // Passive now, which also lets the browser scroll off the main thread.
+    let lastWheelAt = Number.NEGATIVE_INFINITY;
+    divHaftScale.addEventListener(
+        'wheel',
+        () => {
+            lastWheelAt = performance.now();
+        },
+        { passive: true },
+    );
     divHaftScale.addEventListener('scroll', (event) => {
         event.preventDefault();
         // A scroll applied FROM a sync message (`syncScrollPercentage` stamps
@@ -167,13 +180,16 @@ export function registerScrollingSyncEvent(
                 return;
             }
         }
-        callback({
-            x:
-                divHaftScale.scrollLeft /
-                (divHaftScale.scrollWidth - divHaftScale.clientWidth),
-            y:
-                divHaftScale.scrollTop /
-                (divHaftScale.scrollHeight - divHaftScale.clientHeight),
-        });
+        callback(
+            {
+                x:
+                    divHaftScale.scrollLeft /
+                    (divHaftScale.scrollWidth - divHaftScale.clientWidth),
+                y:
+                    divHaftScale.scrollTop /
+                    (divHaftScale.scrollHeight - divHaftScale.clientHeight),
+            },
+            performance.now() - lastWheelAt < WHEEL_SCROLL_WINDOW_MS,
+        );
     });
 }

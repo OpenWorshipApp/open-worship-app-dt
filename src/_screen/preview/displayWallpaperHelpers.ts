@@ -84,6 +84,7 @@ async function readWallpaper(
     state: WallpaperStateType,
     isForced = false,
 ) {
+    if (displayId <= -1000000) return;
     if (state.isReading) {
         return;
     }

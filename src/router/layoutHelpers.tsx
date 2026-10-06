@@ -110,6 +110,11 @@ export function genTabs() {
         newTabs.push(editorTab);
     }
     newTabs.push(readerTab);
+    if (!appProvider.isPageScreenMirror)
+        newTabs.push({
+            title: tran('Screen Mirror'),
+            routePath: appProvider.screenMirrorHomePage,
+        });
     if (appProvider.systemUtils.isDev) {
         newTabs.push(experimentTab);
     }

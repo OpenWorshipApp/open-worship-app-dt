@@ -7,7 +7,8 @@ import CanvasItem, {
 } from '../../slide-editor/canvas/CanvasItem';
 import { getHTMLChild } from '../../helper/helpers';
 import Canvas from '../../slide-editor/canvas/Canvas';
-import { sanitizeHtml } from '../../helper/sanitizeHelpers';
+import { sanitizeSlideHtml } from '../../helper/sanitizeHelpers';
+import { ensureCanvasItemUuids } from '../../slide-editor/canvas/canvasItemIdentityHelpers';
 
 export function genSlideHtml(canvasItemsJson: CanvasItemPropsType[]) {
     const htmlString = renderToStaticMarkup(
@@ -18,7 +19,7 @@ export function genSlideHtml(canvasItemsJson: CanvasItemPropsType[]) {
         />,
     );
     const div = document.createElement('div');
-    div.innerHTML = sanitizeHtml(htmlString);
+    div.innerHTML = sanitizeSlideHtml(htmlString);
     return getHTMLChild<HTMLDivElement>(div, 'div');
 }
 
@@ -38,19 +39,28 @@ export default function SlideRendererComp({
                 height,
             }}
         >
-            {canvasItemsJson.map((canvasItemJson: any) => {
-                const canvasItem = Canvas.canvasItemFromJson(canvasItemJson);
-                return (
-                    <div
-                        key={canvasItemJson.id}
-                        style={CanvasItem.genBoxStyle(canvasItemJson)}
-                    >
-                        <CanvasItemContext value={canvasItem}>
-                            <CanvasItemRendererComp />
-                        </CanvasItemContext>
-                    </div>
-                );
-            })}
+            {ensureCanvasItemUuids(canvasItemsJson).map(
+                (canvasItemJson: any) => {
+                    const canvasItem =
+                        Canvas.canvasItemFromJson(canvasItemJson);
+                    return (
+                        <div
+                            key={canvasItemJson.id}
+                            data-canvas-item-uuid={
+                                canvasItemJson.uuid ?? canvasItem.uuid
+                            }
+                            data-canvas-item-transition={
+                                canvasItem.props.transitionEffect
+                            }
+                            style={CanvasItem.genBoxStyle(canvasItemJson)}
+                        >
+                            <CanvasItemContext value={canvasItem}>
+                                <CanvasItemRendererComp />
+                            </CanvasItemContext>
+                        </div>
+                    );
+                },
+            )}
         </div>
     );
 }

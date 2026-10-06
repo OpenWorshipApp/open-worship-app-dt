@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 
-import {
-    type EventMapperType,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { appAssistantEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { askAiCaution } from '../helper/ai/aiCautionHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppEffect } from '../helper/appHooks';
@@ -17,17 +15,10 @@ import appProvider from '../server/appProvider';
 
 // Module-level so the mapper array keeps one identity for the life of the
 // process -- this component is mounted in every window for the whole session.
-// Every platform is spelled out because `toShortcutKey` THROWS on a mapper that
-// carries another platform's control keys and none of its own, and that throw
-// would happen during this component's render, in every window.
-const keyboardEventMappers: EventMapperType[] = [
-    {
-        key: 'A',
-        mControlKey: ['Meta', 'Shift'],
-        wControlKey: ['Ctrl', 'Shift'],
-        lControlKey: ['Ctrl', 'Shift'],
-    },
-];
+// Declared with every other shortcut, which spells out every platform: a
+// mapper carrying only another platform's control keys makes `toShortcutKey`
+// THROW, here during render, in every window.
+const keyboardEventMappers = appAssistantEventMappers;
 
 const MENU_KEY = 'chatbot-assistant';
 

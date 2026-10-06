@@ -28,9 +28,14 @@ import { useAppEffect } from '../../helper/appHooks';
 import { useProgressBarComp } from '../../progress-bar/ProgressBarComp';
 import type { ClipboardInf } from '../../server/appHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
+import type { TransitionEffectType } from '../../_screen/transitionEffectHelpers';
+import { toValidTransitionEffect } from '../../_screen/transitionOverrideHelpers';
+import { toCanvasItemUuid } from './canvasItemIdentityHelpers';
 
 export type CanvasItemPropsType = {
     id: number;
+    uuid?: string;
+    transitionEffect?: TransitionEffectType;
     top: number;
     left: number;
     rotate: number;
@@ -103,6 +108,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
         super();
         this.props = {
             ...props,
+            uuid: toCanvasItemUuid(props.uuid) ?? crypto.randomUUID(),
             top: props.top ?? 0,
             left: props.left ?? 0,
             rotate: props.rotate ?? 0,
@@ -116,6 +122,20 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
         cleanupProps(this.props);
         cleanupBlendMode(this.props);
         cleanupCanvasShadow(this.props);
+        this.cleanupTransition();
+    }
+
+    get uuid(): string {
+        return this.props.uuid!;
+    }
+
+    private cleanupTransition() {
+        const effect = toValidTransitionEffect(this.props.transitionEffect);
+        if (effect === undefined) {
+            delete this.props.transitionEffect;
+        } else {
+            this.props.transitionEffect = effect;
+        }
     }
 
     get id() {
@@ -234,6 +254,9 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
     applyProps(props: AnyObjectType) {
         const propsAny = this.props as any;
         for (const [key, value] of Object.entries(props)) {
+            if (key === 'uuid') {
+                continue;
+            }
             propsAny[key] = value;
         }
         cleanupProps(props);
@@ -243,6 +266,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
         // shadow's `No Shadow` works the same way.
         cleanupBlendMode(propsAny);
         cleanupCanvasShadow(propsAny);
+        this.cleanupTransition();
     }
 
     clone() {
@@ -250,6 +274,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             this.toJson(),
         );
         newItem.props.id = -1;
+        newItem.props.uuid = crypto.randomUUID();
         return newItem;
     }
 

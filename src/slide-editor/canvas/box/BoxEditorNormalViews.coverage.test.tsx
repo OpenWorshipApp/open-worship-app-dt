@@ -3,6 +3,7 @@
 import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as sanitizeHelpers from '../../../helper/sanitizeHelpers';
 
 const {
     bibleGenStyleMock,
@@ -391,6 +392,73 @@ describe('BoxEditor normal view components', () => {
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
+    });
+
+    test('sanitizes imported Bible HTML on the direct React canvas path', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            html: '<span data-bible-key="NIV">Verse</span><img onerror="globalThis.__en39Marker=true">',
+        };
+        await render(<BoxEditorNormalBibleRender />);
+        expect(container?.querySelector('[data-bible-key]')?.textContent).toBe(
+            'Verse',
+        );
+        expect(container?.querySelector('[onerror]')).toBeNull();
+    });
+
+    test('renders text literally, including markup, with line breaks', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            text: '<strong>Literal</strong> & text\n<img onerror="globalThis.__en39Marker=true">',
+        };
+        await render(<BoxEditorNormalTextRender />);
+        expect(container?.querySelector('strong,img')).toBeNull();
+        expect(container?.textContent).toContain(
+            '<strong>Literal</strong> & text',
+        );
+        expect(container?.querySelector('br')).not.toBeNull();
+    });
+
+    test('sanitizes HTML on the direct React canvas path and updates it on edits', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            html: '<strong>Safe</strong><img src="missing" onerror="globalThis.__en39Marker=true"><iframe srcdoc="embedded"></iframe>',
+        };
+        await render(<BoxEditorNormalHtmlRenderComp />);
+        expect(container?.querySelector('strong')?.textContent).toBe('Safe');
+        expect(container?.querySelector('[onerror],iframe')).toBeNull();
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            html: '<em>Updated</em><svg onload="globalThis.__en39Marker=true"></svg>',
+        };
+        await render(<BoxEditorNormalHtmlRenderComp />);
+        expect(container?.querySelector('em')?.textContent).toBe('Updated');
+        expect(container?.querySelector('[onload],strong')).toBeNull();
+    });
+
+    test('reuses sanitized HTML during layout changes and refreshes it on content edits', async () => {
+        const sanitizeSpy = vi.spyOn(sanitizeHelpers, 'sanitizeHtml');
+        try {
+            await render(<BoxEditorNormalHtmlRenderComp />);
+            canvasItemPropsState.value = {
+                ...canvasItemPropsState.value,
+                left: 50,
+                width: 300,
+            };
+            await render(<BoxEditorNormalHtmlRenderComp />);
+            expect(sanitizeSpy).toHaveBeenCalledTimes(1);
+            canvasItemPropsState.value = {
+                ...canvasItemPropsState.value,
+                html: '<em>New content</em>',
+            };
+            await render(<BoxEditorNormalHtmlRenderComp />);
+            expect(sanitizeSpy).toHaveBeenCalledTimes(2);
+            expect(container?.querySelector('em')?.textContent).toBe(
+                'New content',
+            );
+        } finally {
+            sanitizeSpy.mockRestore();
+        }
     });
 
     test('renders text content with line breaks and HTML content separately', async () => {

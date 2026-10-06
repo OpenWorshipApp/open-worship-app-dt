@@ -2,7 +2,6 @@ import { createContext, use, useCallback, useMemo } from 'react';
 
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import KeyboardEventListener, {
-    PlatformEnum,
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
@@ -10,6 +9,7 @@ import { askAiCaution } from '../helper/ai/aiCautionHelpers';
 import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { openBibleLookupEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
@@ -157,17 +157,9 @@ export const BibleLookupTogglePopupContext = createContext<{
     setIsShowing: (isShowing: boolean) => void;
 } | null>(null);
 const openBibleEventMaps: EventMapperType[] =
-    KeyboardEventListener.filterEventMappersByPlatform([
-        {
-            allControlKey: ['Ctrl'],
-            key: 'b',
-        },
-        {
-            platform: PlatformEnum.MacOS,
-            mControlKey: ['Meta'],
-            key: 'b',
-        },
-    ]);
+    KeyboardEventListener.filterEventMappersByPlatform(
+        openBibleLookupEventMappers,
+    );
 
 export function useIsBibleLookupShowingContext() {
     const context = use(BibleLookupTogglePopupContext);

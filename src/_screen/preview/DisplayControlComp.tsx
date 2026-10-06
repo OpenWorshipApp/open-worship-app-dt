@@ -27,11 +27,15 @@ function handleDisplayChoosing(
     const contextMenuItems: ContextMenuItemType[] = displays.map((display) => {
         const label = toDisplayLabel(display);
         const bounds = display.bounds;
-        const isPrimary = display.id === primaryDisplay.id;
+        const isPrimary =
+            display.id === primaryDisplay.id ||
+            (display as { isPrimary?: boolean }).isPrimary === true;
         const isSelected = display.id === displayId;
         const menuElement =
             (isSelected ? '*' : '') +
-            `${label}(${display.id}): ` +
+            ((display as { guestId?: string }).guestId
+                ? `${label}: `
+                : `${label}(${display.id}): `) +
             `${bounds.width}x${bounds.height}` +
             (isPrimary ? ` (${tran('primary')})` : '');
         return {
@@ -54,6 +58,8 @@ export default function DisplayControlComp() {
         return display.id === displayId;
     });
     const currentDisplayLabel = toDisplayLabel(currentDisplay);
+    const isGuest = !!(currentDisplay as { guestId?: string } | undefined)
+        ?.guestId;
     return (
         <button
             className="btn btn-sm btn-outline-secondary app-ellipsis app-data"
@@ -71,8 +77,14 @@ export default function DisplayControlComp() {
         >
             <i className="bi bi-display" />
             {/* The raw name: an 80px button has no room for "Unknown". */}
-            {getRawDisplayLabel(currentDisplay)}({screenManagerBase.screenId}):
-            {displayId}
+            {isGuest ? (
+                `${currentDisplayLabel}: ${currentDisplay!.bounds.width}x${currentDisplay!.bounds.height}`
+            ) : (
+                <>
+                    {getRawDisplayLabel(currentDisplay)}(
+                    {screenManagerBase.screenId}):{displayId}
+                </>
+            )}
         </button>
     );
 }

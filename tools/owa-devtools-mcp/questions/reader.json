@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-09-28",
+    "updated": "2026-10-05",
     "sections": [
         {
             "id": "reading",
@@ -84,6 +84,24 @@
                         "recipe": "W-11",
                         "related": ["W-34"],
                         "guide": true
+                    }
+                },
+                {
+                    "id": "leave-empty-view",
+                    "text": "What happens to a view with no passage yet when I edit another one?",
+                    "kind": "what",
+                    "keywords": [
+                        "empty view",
+                        "book grid",
+                        "split",
+                        "switch view",
+                        "edit another",
+                        "closed"
+                    ],
+                    "resources": {
+                        "recipe": "W-32",
+                        "related": ["W-11"],
+                        "shortcut": "Ctrl+Shift+arrow moves the editing to the next view"
                     }
                 },
                 {
@@ -688,6 +706,22 @@
                         "location",
                         "geography",
                         "where"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "detail-language",
+                    "text": "How do I open the same person or place in two languages?",
+                    "kind": "howto",
+                    "keywords": [
+                        "detail language",
+                        "compare languages",
+                        "English and Khmer",
+                        "person panel",
+                        "location panel"
                     ],
                     "resources": {
                         "recipe": "W-29",

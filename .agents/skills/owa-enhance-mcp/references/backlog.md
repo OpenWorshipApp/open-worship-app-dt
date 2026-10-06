@@ -650,18 +650,38 @@ start, the way help pages are. It needs dictionary keys first — `km` has
 `Next` and `Back`, not `Done`, `Step`, `Do it` or `Skip` — and a missing key
 THROWS in dev, so it is a change to `src/lang` as much as to this package.
 
-### `MC-37` — `checkAgentFileName` passes a Windows device name with an extension · open
+### `MC-37` — `checkAgentFileName` passes a Windows device name with an extension · done 2026-10-05
 
-`RESERVED_NAME_PATTERN` in `agentFileName.mjs` matches the WHOLE name, so
-`nul.old` and `CON.backup` pass — and Windows reserves them whatever follows
-the first dot, so such a file cannot be created or opened there. The app's own
-rule for names a person types has had this since `EN-35` (2026-09-19,
-`getPortableFileNameProblem` in `src/server/fileHelpers.ts`), and
-`createNewFileDetail` now refuses such a name at the disk boundary, so an
-agent's `create` fails there rather than making the file — but it fails with
-the app's toast, not with this module's sentence for the model. Fix: match
-`/^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)/i`, and add `nul.old` to
-`agentFileName.test.mjs`.
+The old pattern matched the whole name, so `nul.old`, `CON.backup`,
+`COM¹.old` and `LPT³.backup` passed. Live baseline calls through a fresh
+server returned missing-file or malformed-content errors, hiding the actual
+name problem. The shared validator now matches the device stem before the
+first dot, including superscript digits, and preserves the app's conservative
+COM0/LPT0 refusal. Tests check exact refusal text for bare names and single
+and multiple extensions, plus nearby valid names that must remain usable.
+
+Both document tools now refuse invalid source names and rename destinations
+before content validation or disk access, using the same rule at the renderer
+boundary. No tool, schema, retained state or firewall relaxation is added.
+The tradeoff is intentionally refusing these nonportable names on every OS;
+both developer and volunteer callers get the reason directly.
+
+Live verification: sixteen filename checks and two ordinary file lists passed
+through each of fresh stdio and restarted HTTP servers, including Bible-list
+and note-file names. The renderer boundary also refused `nul.old` for both
+document kinds. Baseline policy probe: 25/25; before and after, 53 host tools /
+24 model tools and ~13,043 host / ~7,433 model schema tokens per round, within
+the 7,450 ratchet. Full lint gate passed, including 4,905 tests. Transcripts
+are in `test-results/mcp-filename-*-before.json` and `*-after.json`.
+Chatbot-window verification is pending the user's explicit authorization to
+accept the development AI caution; the server checks do not stand in for it.
+
+### `MC-47` — corpus tests do not enforce the question-kind enum · open
+
+While adding the MC-37 question, `questions.test.mjs` passed with
+`kind: "troubleshoot"`, although `questions/schema.json` permits only
+`howto`, `where`, `what`, `state` and `fix`. The new entry was corrected to
+`fix`; adding enum validation to the corpus regression checks is deferred.
 
 ### `MC-38` — a broad recipe's demo started at the wrong task and could not hover or move a slider · done 2026-09-22
 

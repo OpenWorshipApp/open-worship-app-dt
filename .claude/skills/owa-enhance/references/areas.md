@@ -387,12 +387,13 @@ memory notes.
 
 **Scope:** `.claude/skills/owa-robot-test/references/user-workflows.md` (the
 source) → `docs/manual-sources/` (generated, tracked);
-`tools/owa-devtools-mcp/questions/`; `.claude/CLAUDE.md`, `.claude/memory/`,
-`.claude/skills/`; the Codex mirror of all three (`.codex/`, `.agents/skills/`); the knowledge bundle
+`tools/owa-devtools-mcp/questions/`; `.claude/CLAUDE.md`, `.claude/rules/`,
+`.claude/memory/`, `.claude/skills/`; the Codex mirror of all four (`.codex/`,
+`.agents/skills/`); the knowledge bundle
 (`electron-build/knowledge/`); `README.md`, `RELEASE.md`,
 `PRIVACY_POLICY.md`.
 
-**Leads:** mirror drift; repo paths named in CLAUDE.md, a memory note or a
+**Leads:** mirror drift; repo paths named in CLAUDE.md, a rule file, a memory note or a
 skill that are gone; a knowledge index older than the notes it is built from
 (`triage.mjs`).
 

@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-30",
+    "updated": "2026-10-05",
     "sections": [
         {
             "id": "panels",
@@ -434,7 +434,7 @@
         {
             "id": "help",
             "label": "This help window",
-            "recipes": ["W-42", "W-46"],
+            "recipes": ["W-42", "W-46", "W-49"],
             "questions": [
                 {
                     "id": "tips-of-the-day",
@@ -838,8 +838,25 @@
                         "faster"
                     ],
                     "resources": {
-                        "recipe": "W-42",
+                        "recipe": "W-49",
+                        "menu": "Help → Keyboard Shortcuts",
                         "related": ["W-10", "W-06"]
+                    }
+                },
+                {
+                    "id": "shortcuts-search",
+                    "text": "Where can I see the keyboard shortcuts for this page?",
+                    "kind": "where",
+                    "keywords": [
+                        "keyboard shortcuts",
+                        "shortcut list",
+                        "which key",
+                        "hotkey",
+                        "search shortcuts"
+                    ],
+                    "resources": {
+                        "recipe": "W-49",
+                        "menu": "Help → Keyboard Shortcuts"
                     }
                 },
                 {

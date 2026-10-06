@@ -63,6 +63,32 @@ function createSlideJson(id: number) {
 }
 
 describe('slide models', () => {
+    test('upgrades legacy item UUIDs without dirtying slides and preserves them in history and clipboard', () => {
+        const json: any = {
+            ...createSlideJson(1),
+            canvasItems: [
+                { id: 1, type: 'text' },
+                { id: 2, type: 'text' },
+            ],
+        };
+        const slide = new Slide('/docs/legacy.ows', json);
+        expect(slide.toJson()).toEqual(Slide.toComparableJson(json));
+        expect(slide.isChanged).toBe(false);
+        expect(json.canvasItems[0].uuid).toBeUndefined();
+        const uuids = slide.canvasItemsJson.map((item) => item.uuid);
+        expect(new Set(uuids).size).toBe(2);
+        slide.canvasItemsJson = [...slide.canvasItemsJson].reverse();
+        expect(slide.canvasItemsJson.map((item) => item.uuid)).toEqual(
+            [...uuids].reverse(),
+        );
+        expect(slide.clone(true).canvasItemsJson).toEqual(
+            slide.canvasItemsJson,
+        );
+        expect(
+            Slide.clipboardDeserialize(slide.clipboardSerialize())
+                ?.canvasItemsJson,
+        ).toEqual(slide.canvasItemsJson);
+    });
     test('bundled Bible fonts loaded in the renderer are available to text boxes', async () => {
         getFontFamiliesMock.mockResolvedValue([]);
         vi.stubGlobal('document', {

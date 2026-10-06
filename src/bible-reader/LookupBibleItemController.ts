@@ -3,7 +3,6 @@ import { createContext, use, type ReactNode } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { closeCurrentEditingBibleItem } from './readBibleHelpers';
-import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     elementDivider,
     genContextMenuItemShortcutKey,
@@ -34,27 +33,22 @@ import { setBibleSearchingTabType } from '../bible-find/bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 
-export const closeEventMapper: EventMapperType = {
-    wControlKey: ['Ctrl'],
-    lControlKey: ['Ctrl'],
-    mControlKey: ['Meta'],
-    key: 'w',
+import {
+    closeEventMapper,
+    ctrlShiftMetaKeys,
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
+} from '../keyboard-shortcut/appShortcutMappers';
+
+// Declared beside every other shortcut so Help -> Keyboard Shortcuts lists the
+// keys this controller binds; re-exported for the existing callers.
+export {
+    closeEventMapper,
+    ctrlShiftMetaKeys,
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
 };
 
-export const ctrlShiftMetaKeys: any = {
-    wControlKey: ['Ctrl', 'Shift'],
-    lControlKey: ['Ctrl', 'Shift'],
-    mControlKey: ['Meta', 'Shift'],
-};
-
-export const splitHorizontalEventMapper: EventMapperType = {
-    ...ctrlShiftMetaKeys,
-    key: 's',
-};
-export const splitVerticalEventMapper: EventMapperType = {
-    ...ctrlShiftMetaKeys,
-    key: 'v',
-};
 // One array for the registrations, so its identity never re-registers them.
 export const splitEventMappers = [
     splitHorizontalEventMapper,
@@ -500,32 +494,34 @@ class LookupBibleItemController extends BibleItemsViewController {
         if (this.checkIsBibleItemSelected(bibleItem)) {
             return;
         }
-        const foundBibleItem = (await this.getEditingResult()).result.bibleItem;
+        const { result } = await this.getEditingResult();
         // Worked out BEFORE the selection moves: awaited between the move and
-        // writing the found passage into the view left behind, it let that
-        // view render once with the passage it had when it was selected --
-        // its title flicked back to it for a moment.
+        // writing the passage into the view left behind, it let that view
+        // render once with the passage it had when it was selected -- its
+        // title flicked back to it for a moment.
         const foundTitle =
-            foundBibleItem === null ? null : await foundBibleItem.toTitle();
+            result.bibleItem === null ? null : await result.bibleItem.toTitle();
+        // A view left on its book or chapter grid has no passage to keep. It
+        // used to be closed; it stays, on the picked book's chapter 1, or
+        // Genesis 1 before a book is picked -- what a split from the grid
+        // opens. Not a lookup, so no history entry.
+        const passageBibleItem =
+            result.bibleItem ??
+            (await this.genFirstChapterBibleItem(result.bookKey));
         const oldSelectedBibleItem = this.selectedBibleItem;
         this.selectedBibleItem = bibleItem;
-        if (foundBibleItem === null) {
-            this.deleteBibleItem(oldSelectedBibleItem);
-        } else {
-            this.applyTargetOrBibleKey(oldSelectedBibleItem, foundBibleItem);
-            attemptAddingHistory(
-                foundBibleItem.bibleKey,
-                foundTitle ?? '',
-                true,
-            );
+        this.applyTargetOrBibleKey(oldSelectedBibleItem, passageBibleItem);
+        if (foundTitle !== null) {
+            attemptAddingHistory(passageBibleItem.bibleKey, foundTitle, true);
         }
     }
 
     /**
-     * A passage for a split made while the selected view shows the book or
-     * chapter grid, where there is no passage to copy: the picked book's
-     * chapter 1, or Genesis 1 before a book is picked. The whole chapter, as
-     * typing `Genesis 1:` shows it.
+     * A passage for the selected view while it shows the book or chapter
+     * grid, where there is no passage to copy -- for a split made from it,
+     * and for the view itself when the editing moves away from it: the
+     * picked book's chapter 1, or Genesis 1 before a book is picked. The
+     * whole chapter, as typing `Genesis 1:` shows it.
      */
     async genFirstChapterBibleItem(bookKey: string | null, bibleKey?: string) {
         // `toJson`, not `target`: the selected item is an `EditingBibleItem`,

@@ -171,10 +171,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 this.applyHeaderEffectOnScroll(div);
             });
             div.classList.add('screen-bible-container-scroll');
-            registerScrollingSyncEvent(div, (scroll) => {
+            registerScrollingSyncEvent(div, (scroll, isFromWheel) => {
                 this.sendSyncScrollPercentage(
                     '.screen-bible-container-scroll',
                     scroll,
+                    isFromWheel,
                 );
             });
             this.applyHeaderEffectOnScroll(div);

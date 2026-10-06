@@ -5,6 +5,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 // way React drives it, with no renderer for what is plain store logic.
 const h = vi.hoisted(() => ({
     capturedSubscribe: null as null | ((listener: () => void) => () => void),
+    langCode: 'en',
+}));
+vi.mock('./lookupLangHelpers', () => ({
+    getSelectedLookupLangCode: () => h.langCode,
 }));
 vi.mock('react', async (importOriginal) => {
     const actual = await importOriginal<typeof import('react')>();
@@ -40,15 +44,51 @@ function subscribe(listener: () => void) {
 // them — so every test has to hand it back empty.
 afterEach(() => {
     closeAllDetailPanels();
+    h.langCode = 'en';
 });
 
 describe('opening a detail panel', () => {
+    test.each(['name', 'location'] as const)(
+        '%s details are unique per language and keep their original language',
+        (kind) => {
+            openDetailPanel({ kind, target: 'x', name: 'English' });
+            h.langCode = 'km';
+            openDetailPanel({ kind, target: 'x', name: 'Khmer' });
+            openDetailPanel({
+                kind,
+                target: 'x',
+                name: 'English',
+                langCode: 'en',
+            });
+
+            expect(
+                readPanels().map(({ langCode, raiseCount }) => ({
+                    langCode,
+                    raiseCount,
+                })),
+            ).toEqual([
+                { langCode: 'en', raiseCount: 1 },
+                { langCode: 'km', raiseCount: 0 },
+            ]);
+            closeDetailPanel(`${kind}:x:en`);
+            expect(readPanels().map((panel) => panel.langCode)).toEqual(['km']);
+        },
+    );
+
+    test('verse panels keep their existing identity across language changes', () => {
+        openDetailPanel({ kind: 'verse', target: 'EXO 6:23', name: 'Exodus' });
+        h.langCode = 'km';
+        openDetailPanel({ kind: 'verse', target: 'EXO 6:23', name: 'Exodus' });
+        expect(readPanels()).toHaveLength(1);
+        expect(readPanels()[0].key).toBe('verse:EXO 6:23');
+    });
+
     test('raises the existing panel instead of stacking a duplicate', () => {
         openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
         // The same record again — followed from a reference in another panel.
         openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
 
-        expect(readPanels().map((panel) => panel.key)).toEqual(['name:n-1']);
+        expect(readPanels().map((panel) => panel.key)).toEqual(['name:n-1:en']);
         // Deduplicating alone left the widget wherever it was in the stack,
         // which for a cascade only 28px apart meant re-opening a record looked
         // like a dead click. The bump is what the widget watches.
@@ -76,8 +116,8 @@ describe('opening a detail panel', () => {
         openDetailPanel({ kind: 'location', target: 'x', name: 'A place' });
 
         expect(readPanels().map((panel) => panel.key)).toEqual([
-            'name:x',
-            'location:x',
+            'name:x:en',
+            'location:x:en',
         ]);
     });
 
@@ -126,9 +166,9 @@ describe('closing detail panels', () => {
         openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
         openDetailPanel({ kind: 'name', target: 'n-2', name: 'Aaron' });
 
-        closeDetailPanel('name:n-1');
+        closeDetailPanel('name:n-1:en');
 
-        expect(readPanels().map((panel) => panel.key)).toEqual(['name:n-2']);
+        expect(readPanels().map((panel) => panel.key)).toEqual(['name:n-2:en']);
     });
 
     // A no-op notify would re-render every open widget for nothing.

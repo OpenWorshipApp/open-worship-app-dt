@@ -1249,6 +1249,44 @@ export const PRESENTER_DEMO_LIST = [
       },
     ],
   },
+  // Ctrl+Shift+Arrow appears on no button and in no tooltip, so this lesson is
+  // the only place to learn it. The split is PRESSED, not clicked: every
+  // passage's hover toolbar has a "Split horizontal" button and an exact label
+  // outranks the selected one's, so a click can split another passage. The key
+  // always splits the selected one, opens the copy on its LEFT and keeps it
+  // selected -- so Left is next.
+  {
+    id: 'presenter-lookup-switch-split',
+    label: 'Move between split passages in Bible Lookup',
+    detail:
+      'Split a passage, then press Ctrl+Shift with an arrow key to work in the passage on that side.',
+    title: 'Move between split passages in Bible Lookup',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Bible Lookup at the top of the Presenter.',
+        find: 'Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Reference',
+      },
+      {
+        text: 'With a passage open, press Ctrl+Shift+S to split it. The copy opens on the left, and you keep working in the passage on the right.',
+        press: 'Ctrl+Shift+S',
+      },
+      {
+        text: 'Press Ctrl+Shift+Left to work in the passage on the left. Its outline lights up, and the reference box now changes that passage.',
+        press: 'Ctrl+Shift+Left',
+      },
+      {
+        text: 'Press Ctrl+Shift+Right to go back. Ctrl+Shift+Up and Ctrl+Shift+Down move to a passage above or below.',
+        press: 'Ctrl+Shift+Right',
+      },
+      {
+        text: 'On a Mac, hold Command+Shift with the arrow keys instead. A passage with no reference typed in closes when you move away from it. Nothing reaches a screen until you choose Show Bible Item.',
+      },
+    ],
+  },
   {
     id: 'presenter-background-filter',
     label: 'Find media by its file name',

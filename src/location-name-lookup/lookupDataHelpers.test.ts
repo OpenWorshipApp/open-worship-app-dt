@@ -102,9 +102,11 @@ beforeEach(async () => {
     };
     // Both the 60s cache and the holder are module-level.
     globalCacheManager10Seconds.clear();
-    releaseLookupData();
-    releaseLookupData();
-    releaseLookupData();
+    for (const langCode of ['en', 'km']) {
+        for (let index = 0; index < 5; index += 1) {
+            releaseLookupData(langCode);
+        }
+    }
 });
 
 describe('loading the dataset', () => {
@@ -169,6 +171,26 @@ describe('loading the dataset', () => {
 });
 
 describe('the shared reference', () => {
+    test('different languages coexist and release independently', async () => {
+        const english = await acquireLookupData('en');
+        const khmer = await acquireLookupData('km');
+        globalCacheManager10Seconds.clear();
+        selectLangCode('km');
+        expect(await acquireLookupData('en')).toBe(english);
+        expect(await acquireLookupData('km')).toBe(khmer);
+        expect(english).not.toBe(khmer);
+        expect(h.loadCount).toBe(2);
+
+        releaseLookupData('en');
+        releaseLookupData('en');
+        expect(await acquireLookupData('km')).toBe(khmer);
+        expect(await acquireLookupData('en')).not.toBe(english);
+        expect(h.loadCount).toBe(3);
+        releaseLookupData('en');
+        releaseLookupData('km');
+        releaseLookupData('km');
+        releaseLookupData('km');
+    });
     // The regression this exists for: the lookup panel and the detail widgets
     // are separate React trees and each used to ask for the dataset on its own.
     // Past the 60s cache window that meant a SECOND ~34MB fetch and
@@ -259,7 +281,7 @@ describe('the shared reference', () => {
 describe('changing the lookup language', () => {
     // The held copy is ~34MB of the language the user just switched away from.
     // Serving it on would leave every lookup surface in the previous language.
-    test('drops the held instance and reloads in the new language', async () => {
+    test('loads the selected language while an English detail stays mounted', async () => {
         const forEnglish = await acquireLookupData();
         expect(h.lastDataMapKeys).toStrictEqual(['en']);
 
@@ -269,8 +291,8 @@ describe('changing the lookup language', () => {
         expect(forKhmer).not.toBe(forEnglish);
         expect(h.lastDataMapKeys).toStrictEqual(['km']);
 
-        releaseLookupData();
-        releaseLookupData();
+        releaseLookupData('en');
+        releaseLookupData('km');
     });
 
     // The short cache sits behind the holder, so leaving it alone would keep the
@@ -313,8 +335,8 @@ describe('changing the lookup language', () => {
         const forKhmer = await acquireLookupData();
 
         expect(forKhmer).toBe(await pendingKhmer);
-        releaseLookupData();
-        releaseLookupData();
-        releaseLookupData();
+        releaseLookupData('en');
+        releaseLookupData('km');
+        releaseLookupData('km');
     });
 });

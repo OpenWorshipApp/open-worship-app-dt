@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { toKeystroke } from './guide.mjs';
 import {
   getReaderDemo,
   READER_DEMO_IDS,
@@ -7,7 +8,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('keeps the existing ids while expanding to 99 Reader lessons', () => {
+  it('keeps the existing ids while expanding to 100 Reader lessons', () => {
     expect(READER_DEMO_IDS).toEqual(
       expect.arrayContaining([
         'reader-font-larger',
@@ -71,10 +72,11 @@ describe('Reader demos', () => {
         'reader-view-fullscreen',
         'reader-view-widgets',
         'reader-view-reset-widgets',
+        'reader-switch-split-pane',
       ]),
     );
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(99);
+    expect(READER_DEMO_LIST).toHaveLength(100);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
@@ -212,5 +214,37 @@ describe('Reader demos', () => {
         text: 'View > Relaunch restarts the whole Open Worship app, not just the Reader. A confirmation protects against an accidental click.',
       },
     ]);
+  });
+
+  it('presses the real keys that split and move between passages', () => {
+    const demo = getReaderDemo('reader-switch-split-pane');
+    expect(demo.category).toBe('Reader shortcuts');
+    // A click on "Split horizontal" can split a passage that is not the
+    // selected one; the key always splits the selected one and keeps it
+    // selected on the right, so Left must come next.
+    expect(demo.steps.map((step) => step.press ?? step.kind)).toEqual([
+      'Ctrl+Shift+S',
+      'Ctrl+Shift+Left',
+      'Ctrl+Shift+Right',
+      'look',
+    ]);
+    expect(demo.steps.some((step) => step.find !== undefined)).toBe(false);
+    const keys = demo.steps
+      .filter((step) => step.press)
+      .map((step) => toKeystroke(step.press));
+    expect(keys.map(({ key }) => key)).toEqual([
+      'S',
+      'ArrowLeft',
+      'ArrowRight',
+    ]);
+    for (const keystroke of keys) {
+      expect(keystroke).toMatchObject({
+        ctrlKey: true,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+      });
+    }
+    expect(demo.steps.at(-1).text).toContain('Command+Shift');
   });
 });
