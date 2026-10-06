@@ -37,6 +37,9 @@ export type MirrorState = {
     port: number;
     // Whether this computer accepts guests; off until turned on in its panel.
     hostEnabled: boolean;
+    // Counts this computer's monitor changes, so a page drawing them knows
+    // when to read them again without asking on every render.
+    displayRevision: number;
     addresses: string[];
     error: string | null;
     approvalMode: 'approve' | 'code';

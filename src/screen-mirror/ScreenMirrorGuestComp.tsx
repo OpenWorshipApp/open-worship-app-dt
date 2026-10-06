@@ -131,7 +131,8 @@ function readOwnMonitorLayout() {
 }
 
 // Memoised so typing in the address form does not re-ask the main process for
-// the monitors on every key; they are read again when the link changes.
+// the monitors on every key; they are read again when the link changes, and
+// remounted (keyed on `displayRevision`) when a monitor is added or removed.
 const MirrorThisComputerNodeComp = memo(function MirrorThisComputerNodeComp({
     prefix,
     isLinked,
@@ -363,6 +364,7 @@ function ScreenMirrorGuestBodyComp({
                     )}
                 </div>
                 <MirrorThisComputerNodeComp
+                    key={state.displayRevision}
                     prefix={isIdle ? '' : connection.prefix}
                     isLinked={connection.status === 'connected'}
                 />

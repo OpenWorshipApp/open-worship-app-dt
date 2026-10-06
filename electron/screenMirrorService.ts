@@ -145,6 +145,7 @@ export class ScreenMirrorService {
         { prefix: string; displays: Record<string, number> }
     >;
     private scan?: { close: () => void };
+    private displayRevision = 0;
 
     constructor() {
         let id = this.settings.getClientSetting(`${KEY}identity`);
@@ -198,6 +199,7 @@ export class ScreenMirrorService {
             id: this.id,
             port: this.port,
             hostEnabled: this.isHostEnabled,
+            displayRevision: this.displayRevision,
             addresses: localAddresses().map(
                 (nic) => `http://${nic.address}:${this.port}`,
             ),
@@ -265,6 +267,7 @@ export class ScreenMirrorService {
         screenMirrorRuntime.context = (screenId) =>
             this.incoming.get(screenId) ?? this.outputs.get(screenId)?.context;
         const displayChanged = () => {
+            this.displayRevision++;
             this.sendInventory();
             this.notify();
         };
@@ -1314,7 +1317,14 @@ export class ScreenMirrorService {
         // under the focused main window -- on a one-monitor guest, out of
         // sight. The output is what this computer is for while it is up.
         if (!controller.win.isDestroyed()) {
+            // Through the always-on-top band and straight back out: `moveTop`
+            // alone loses to another app's focused window (Windows' foreground
+            // lock), which left an output moved onto the primary monitor behind
+            // a main window. It ends in front, but not pinned there -- a click
+            // on the main window still brings that forward.
+            controller.win.setAlwaysOnTop(true);
             controller.win.moveTop();
+            controller.win.setAlwaysOnTop(false);
             controller.win.focus();
         }
     }
