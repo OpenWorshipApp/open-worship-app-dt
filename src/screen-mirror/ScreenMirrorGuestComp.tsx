@@ -329,7 +329,7 @@ function ScreenMirrorGuestBodyComp({
                 aria-label={tran('Connection status')}
             >
                 <MirrorHostNodeComp
-                    name={knownHost?.name ?? ''}
+                    name={knownHost?.name ?? (isIdle ? '' : connection.name)}
                     address={linkHost ? `${linkHost}:${linkPort}` : ''}
                 />
                 <p role="status" className="app-mirror-cable-status">
@@ -512,6 +512,8 @@ function ScreenMirrorGuestBodyComp({
 
 // The guest's side of Screen Mirror: this computer offers its monitors to a
 // host on the same network. The host's side is `ScreenMirrorConnectionComp`.
+// What it shows of a live link comes from the main process, which outlives
+// this page: a page opened onto a connection has scanned nothing.
 export default function ScreenMirrorGuestComp() {
     const state = useMirrorState();
     if (state === null) {

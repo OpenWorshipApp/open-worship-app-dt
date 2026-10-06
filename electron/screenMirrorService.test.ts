@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import WebSocket from 'ws';
@@ -295,6 +296,13 @@ test('a superseded initialization cannot revoke the replacement output', async (
 test('hosting is off until switched on, and switching it off ends guests', async () => {
     service.stop();
     fixture.client.delete('screen-mirror-host');
+    // A port of its own: keeping the port across the switch is only possible
+    // when no other app on this machine has taken it in between.
+    const probe = net.createServer();
+    await new Promise<void>((resolve) => probe.listen(0, '0.0.0.0', resolve));
+    const freePort = (probe.address() as net.AddressInfo).port;
+    await new Promise<void>((resolve) => probe.close(() => resolve()));
+    fixture.client.set('screen-mirror-port', String(freePort));
     service = new ScreenMirrorService();
     await service.start();
     expect(service.state().hostEnabled).toBe(false);

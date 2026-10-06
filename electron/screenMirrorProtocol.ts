@@ -54,6 +54,9 @@ export type MirrorState = {
             | 'error';
         host: string;
         port: number;
+        // The host's own name, read from it when connecting, so a guest page
+        // opened (or reopened) on a live connection can still say who it is.
+        name: string;
         prefix: string;
         error: string | null;
     };

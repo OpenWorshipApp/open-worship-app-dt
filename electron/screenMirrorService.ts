@@ -68,6 +68,7 @@ const emptyConnection = (): MirrorState['connection'] => ({
     status: 'disconnected',
     host: '',
     port: 0,
+    name: '',
     prefix: '',
     error: null,
 });
@@ -116,6 +117,7 @@ export class ScreenMirrorService {
     private connectOptions?: {
         host: string;
         port: number;
+        name?: string;
         code: string;
         resume?: string;
     };
@@ -1067,7 +1069,7 @@ export class ScreenMirrorService {
             /[\s/\\?#@]/.test(options.host)
         )
             throw new Error('Invalid host or port');
-        await new Promise<void>((resolve, reject) => {
+        const name = await new Promise<string>((resolve, reject) => {
             const request = http.get(
                 `http://${options.host}:${options.port}/discovery`,
                 { timeout: 5000 },
@@ -1093,7 +1095,11 @@ export class ScreenMirrorService {
                                 throw new Error(
                                     'Incompatible or duplicate connection',
                                 );
-                            resolve();
+                            resolve(
+                                typeof host.name === 'string'
+                                    ? host.name.slice(0, 256)
+                                    : '',
+                            );
                         } catch {
                             reject(
                                 new Error(
@@ -1110,7 +1116,7 @@ export class ScreenMirrorService {
             request.on('error', () => reject(new Error('Connection failed')));
         });
         this.disconnect();
-        this.connectOptions = options;
+        this.connectOptions = { ...options, name };
         this.openUpstream();
     }
     private openUpstream() {
@@ -1120,6 +1126,7 @@ export class ScreenMirrorService {
             status: this.reconnectAttempt ? 'reconnecting' : 'connecting',
             host: options.host,
             port: options.port,
+            name: options.name ?? '',
             prefix: this.connection.prefix,
             error: null,
         };
@@ -1303,6 +1310,13 @@ export class ScreenMirrorService {
         });
         controller.setDisplay(display);
         await controller.listenLoading();
+        // It opens from a network message, not a click, so Windows leaves it
+        // under the focused main window -- on a one-monitor guest, out of
+        // sight. The output is what this computer is for while it is up.
+        if (!controller.win.isDestroyed()) {
+            controller.win.moveTop();
+            controller.win.focus();
+        }
     }
     private sendIncomingInvisible(screenId: number) {
         if (this.upstream)
