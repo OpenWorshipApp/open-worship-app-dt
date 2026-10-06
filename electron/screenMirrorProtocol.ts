@@ -35,6 +35,8 @@ export type MirrorGuest = {
 export type MirrorState = {
     id: string;
     port: number;
+    // Whether this computer accepts guests; off until turned on in its panel.
+    hostEnabled: boolean;
     addresses: string[];
     error: string | null;
     approvalMode: 'approve' | 'code';

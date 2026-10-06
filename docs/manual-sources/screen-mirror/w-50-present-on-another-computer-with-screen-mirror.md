@@ -13,10 +13,12 @@ Use one app as the host and another as the guest. Both computers need the same
 app version and a reachable network connection.
 
 1. On the host's Presenter, open the Mini Screen list's bottom **⋮** and
-   click **[en:tran:Screen Mirror Connection]**. The floating panel shows
-   **[en:tran:Host addresses]** and **[en:tran:Port]**. The app starts its
-   HTTP and WebSocket service at launch, choosing an available port from
-   39240–39259.
+   click **[en:tran:Screen Mirror Connection]**. Hosting is off until you
+   turn on **[en:tran:Let other computers connect]** at the top of the
+   floating panel — until then no other computer can find or join this one.
+   Once it is on, the panel shows **[en:tran:Host addresses]** and
+   **[en:tran:Port]**: the app serves HTTP and WebSocket on an available port
+   from 39240–39259, and the switch stays on for the next launch.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
    header — its one button, **[en:tran:Presenter]**, goes back — and it looks
    for hosts as it opens, listing them under

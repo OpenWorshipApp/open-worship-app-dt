@@ -45,6 +45,10 @@ const dictionary = {
     'Set connection code': 'Définir le code de connexion',
     'Custom port (next launch)': 'Port personnalisé (prochain démarrage)',
     'Save port': 'Enregistrer le port',
+    'Let other computers connect':
+        'Autoriser d’autres ordinateurs à se connecter',
+    'Turn this on to use other computers on this network as extra screens.':
+        'Activez ceci pour utiliser d’autres ordinateurs de ce réseau comme écrans supplémentaires.',
     Host: 'Hôte',
     'This computer': 'Cet ordinateur',
     'Choose a host below': 'Choisissez un hôte ci-dessous',

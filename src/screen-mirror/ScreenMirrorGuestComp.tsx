@@ -97,12 +97,11 @@ function useHostScan(
     const scan = async () => {
         const scanId = ++scanIdRef.current;
         setScanState('scanning');
-        let found: MirrorDiscovery[] = [];
-        try {
-            found = await mirrorCommand<MirrorDiscovery[]>('scan');
-        } catch {
-            found = [];
-        }
+        const found = await mirrorCommand<MirrorDiscovery[]>('scan').catch(
+            () => {
+                return [] as MirrorDiscovery[];
+            },
+        );
         if (scanId !== scanIdRef.current) {
             return;
         }

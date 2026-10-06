@@ -437,6 +437,22 @@
                     }
                 },
                 {
+                    "id": "enable-screen-mirror-host",
+                    "text": "How do I let another computer connect to this one?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen mirror",
+                        "host",
+                        "turn on",
+                        "allow",
+                        "let other computers connect"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Let other computers connect"
+                    }
+                },
+                {
                     "id": "connected-guests-header",
                     "text": "Where can I see which guest computers are connected?",
                     "kind": "where",

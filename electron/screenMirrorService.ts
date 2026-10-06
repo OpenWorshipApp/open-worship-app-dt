@@ -3,6 +3,7 @@ import https from 'node:https';
 import dgram from 'node:dgram';
 import os from 'node:os';
 import path from 'node:path';
+import type { Duplex } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import {
@@ -166,6 +167,14 @@ export class ScreenMirrorService {
             ? 'code'
             : 'approve';
     }
+    // Hosting is OFF until the operator turns it on in the Screen Mirror
+    // Connection panel. Until then the server is this computer's own -- its
+    // guest output windows load through it -- bound to loopback, silent to a
+    // scan and closed to guests, so a computer that never hosts never shows
+    // up as a host and never raises the firewall's incoming-connection prompt.
+    get isHostEnabled() {
+        return this.settings.getClientSetting(`${KEY}host`) === 'true';
+    }
     get customPort() {
         const port = Number(this.settings.getClientSetting(`${KEY}port`));
         return Number.isInteger(port) && port > 0 && port <= 65535
@@ -186,6 +195,7 @@ export class ScreenMirrorService {
         return {
             id: this.id,
             port: this.port,
+            hostEnabled: this.isHostEnabled,
             addresses: localAddresses().map(
                 (nic) => `http://${nic.address}:${this.port}`,
             ),
@@ -232,127 +242,13 @@ export class ScreenMirrorService {
     }
     async start() {
         this.initIpc();
-        const server = http.createServer((req, res) => {
-            void this.handleHttp(req, res);
-        });
-        this.server = server;
-        const ports = this.customPort
-            ? [this.customPort]
-            : [
-                  ...Array.from(
-                      { length: MIRROR_PORT_LAST - MIRROR_PORT_FIRST + 1 },
-                      (_, i) => MIRROR_PORT_FIRST + i,
-                  ),
-                  0,
-              ];
-        for (const port of ports) {
-            try {
-                await new Promise<void>((resolve, reject) => {
-                    const fail = (error: Error) => {
-                        server.off('listening', done);
-                        reject(error);
-                    };
-                    const done = () => {
-                        server.off('error', fail);
-                        resolve();
-                    };
-                    server.once('error', fail);
-                    server.once('listening', done);
-                    server.listen(port, '0.0.0.0');
-                });
-                const address = server.address();
-                this.port =
-                    typeof address === 'object' && address ? address.port : 0;
-                break;
-            } catch (error: any) {
-                if (
-                    this.customPort ||
-                    !['EADDRINUSE', 'EACCES'].includes(error.code)
-                ) {
-                    this.error = 'Unable to start screen mirror server';
-                    return;
-                }
-            }
-        }
-        server.on('error', () => {
-            this.error = 'Unable to start screen mirror server';
-            this.notify();
-        });
+        if (!(await this.listen())) return;
         this.wss = new WebSocketServer({
             noServer: true,
             perMessageDeflate: false,
             maxPayload: MIRROR_MAX_MESSAGE,
         });
-        server.on('upgrade', (req, socket, head) => {
-            const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(
-                req.socket.remoteAddress ?? '',
-            );
-            if (isDev && local && req.url?.startsWith('/?token=')) {
-                // Keep HTTP-loaded development screens on the existing Vite HMR server.
-                this.wss!.handleUpgrade(req, socket, head, (client) => {
-                    const vite = new WebSocket(
-                        `wss://localhost:3000${req.url}`,
-                        'vite-hmr',
-                        {
-                            rejectUnauthorized: false,
-                            origin: 'https://localhost:3000',
-                        },
-                    );
-                    const pending: Array<{ bytes: Buffer; binary: boolean }> =
-                        [];
-                    client.on('message', (bytes, binary) => {
-                        if (vite.readyState === WebSocket.OPEN)
-                            vite.send(bytes, { binary });
-                        else if (pending.length < 8)
-                            pending.push({ bytes: bytes as Buffer, binary });
-                    });
-                    vite.on('open', () => {
-                        for (const item of pending.splice(0))
-                            vite.send(item.bytes, { binary: item.binary });
-                    });
-                    vite.on('message', (bytes, binary) => {
-                        if (client.readyState === WebSocket.OPEN)
-                            client.send(bytes, { binary });
-                    });
-                    client.on('close', () => vite.close());
-                    client.on('error', () => vite.terminate());
-                    vite.on('close', () => client.close());
-                    vite.on('error', () => client.close(1011));
-                });
-                return;
-            }
-            // Browser pages must not initiate guest connections. Installed clients
-            // connect from main, which sends no Origin header.
-            if (
-                req.url !== '/mirror' ||
-                req.headers.origin ||
-                this.peers.size >= 32
-            ) {
-                socket.destroy();
-                return;
-            }
-            this.wss!.handleUpgrade(req, socket, head, (ws) =>
-                this.acceptSocket(ws, req.socket.remoteAddress ?? ''),
-            );
-        });
-        this.udp = dgram.createSocket('udp4');
-        this.udp.on('error', () => {
-            this.udp?.close();
-            this.udp = undefined;
-        });
-        this.udp.on('message', (message, rinfo) => {
-            if (
-                message.length < 128 &&
-                message.toString() === 'owa-screen-mirror-discover-v1'
-            ) {
-                this.udp?.send(
-                    JSON.stringify(this.discovery()),
-                    rinfo.port,
-                    rinfo.address,
-                );
-            }
-        });
-        this.udp.bind(this.port);
+        if (this.isHostEnabled) this.openDiscovery();
         this.heartbeat = setInterval(() => {
             for (const peer of this.peers.values()) {
                 if (!peer.alive) peer.socket.terminate();
@@ -374,6 +270,181 @@ export class ScreenMirrorService {
         screen.on('display-removed', displayChanged);
         screen.on('display-metrics-changed', displayChanged);
         app.once('will-quit', () => this.stop());
+    }
+    private createServer() {
+        const server = http.createServer((req, res) => {
+            void this.handleHttp(req, res);
+        });
+        server.on('upgrade', (req, socket, head) =>
+            this.handleUpgrade(req, socket, head),
+        );
+        return server;
+    }
+    // Loopback while hosting is off, every network while it is on. A rebind
+    // asks for the port it had first, so windows already loaded from it keep
+    // their origin.
+    private async listen(preferredPort?: number) {
+        const server = this.createServer();
+        const host = this.isHostEnabled ? '0.0.0.0' : '127.0.0.1';
+        const ports = this.customPort
+            ? [this.customPort]
+            : [
+                  ...new Set([
+                      ...(preferredPort ? [preferredPort] : []),
+                      ...Array.from(
+                          { length: MIRROR_PORT_LAST - MIRROR_PORT_FIRST + 1 },
+                          (_, i) => MIRROR_PORT_FIRST + i,
+                      ),
+                      0,
+                  ]),
+              ];
+        for (const port of ports) {
+            try {
+                await new Promise<void>((resolve, reject) => {
+                    const fail = (error: Error) => {
+                        server.off('listening', done);
+                        reject(error);
+                    };
+                    const done = () => {
+                        server.off('error', fail);
+                        resolve();
+                    };
+                    server.once('error', fail);
+                    server.once('listening', done);
+                    server.listen(port, host);
+                });
+                const address = server.address();
+                this.port =
+                    typeof address === 'object' && address ? address.port : 0;
+                break;
+            } catch (error: any) {
+                if (
+                    this.customPort ||
+                    !['EADDRINUSE', 'EACCES'].includes(error.code)
+                ) {
+                    this.error = 'Unable to start screen mirror server';
+                    return false;
+                }
+            }
+        }
+        server.on('error', () => {
+            this.error = 'Unable to start screen mirror server';
+            this.notify();
+        });
+        this.server = server;
+        this.error = null;
+        return true;
+    }
+    private handleUpgrade(
+        req: http.IncomingMessage,
+        socket: Duplex,
+        head: Buffer,
+    ) {
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(
+            req.socket.remoteAddress ?? '',
+        );
+        if (isDev && local && req.url?.startsWith('/?token=')) {
+            // Keep HTTP-loaded development screens on the existing Vite HMR server.
+            this.wss!.handleUpgrade(req, socket, head, (client) => {
+                const vite = new WebSocket(
+                    `wss://localhost:3000${req.url}`,
+                    'vite-hmr',
+                    {
+                        rejectUnauthorized: false,
+                        origin: 'https://localhost:3000',
+                    },
+                );
+                const pending: Array<{ bytes: Buffer; binary: boolean }> = [];
+                client.on('message', (bytes, binary) => {
+                    if (vite.readyState === WebSocket.OPEN)
+                        vite.send(bytes, { binary });
+                    else if (pending.length < 8)
+                        pending.push({ bytes: bytes as Buffer, binary });
+                });
+                vite.on('open', () => {
+                    for (const item of pending.splice(0))
+                        vite.send(item.bytes, { binary: item.binary });
+                });
+                vite.on('message', (bytes, binary) => {
+                    if (client.readyState === WebSocket.OPEN)
+                        client.send(bytes, { binary });
+                });
+                client.on('close', () => vite.close());
+                client.on('error', () => vite.terminate());
+                vite.on('close', () => client.close());
+                vite.on('error', () => client.close(1011));
+            });
+            return;
+        }
+        // Browser pages must not initiate guest connections. Installed clients
+        // connect from main, which sends no Origin header.
+        if (
+            !this.isHostEnabled ||
+            req.url !== '/mirror' ||
+            req.headers.origin ||
+            this.peers.size >= 32
+        ) {
+            socket.destroy();
+            return;
+        }
+        this.wss!.handleUpgrade(req, socket, head, (ws) =>
+            this.acceptSocket(ws, req.socket.remoteAddress ?? ''),
+        );
+    }
+    private openDiscovery() {
+        if (this.udp) return;
+        const udp = dgram.createSocket('udp4');
+        this.udp = udp;
+        udp.on('error', () => {
+            try {
+                udp.close();
+            } catch {}
+            if (this.udp === udp) this.udp = undefined;
+        });
+        udp.on('message', (message, rinfo) => {
+            if (
+                message.length < 128 &&
+                message.toString() === 'owa-screen-mirror-discover-v1'
+            ) {
+                udp.send(
+                    JSON.stringify(this.discovery()),
+                    rinfo.port,
+                    rinfo.address,
+                );
+            }
+        });
+        udp.bind(this.port);
+    }
+    private closeDiscovery() {
+        try {
+            this.udp?.close();
+        } catch {}
+        this.udp = undefined;
+    }
+    // Turning hosting off ends every guest's connection the way the panel's
+    // own Disconnect does; either way the server rebinds on the same port.
+    async setHostEnabled(isEnabled: boolean) {
+        if (isEnabled === this.isHostEnabled) return;
+        this.settings.setClientSetting(`${KEY}host`, isEnabled ? 'true' : '');
+        this.closeDiscovery();
+        if (!isEnabled) {
+            for (const [id, peer] of this.peers) {
+                this.resumptions.delete(id);
+                socketSend(peer.socket, 'error', {
+                    error: 'Disconnected by host',
+                });
+                peer.socket.close();
+            }
+        }
+        const previous = this.server;
+        if (previous) {
+            await new Promise<void>((resolve) => {
+                previous.close(() => resolve());
+                previous.closeAllConnections();
+            });
+        }
+        if ((await this.listen(this.port)) && isEnabled) this.openDiscovery();
+        this.notify();
     }
     stop() {
         clearInterval(this.heartbeat);
@@ -402,6 +473,10 @@ export class ScreenMirrorService {
                 return;
             }
             const url = new URL(req.url ?? '/', this.baseUrl);
+            if (url.pathname === '/discovery' && !this.isHostEnabled) {
+                res.writeHead(404).end();
+                return;
+            }
             if (url.pathname === '/discovery') {
                 res.writeHead(200, {
                     'Content-Type': 'application/json',
@@ -1549,6 +1624,8 @@ export class ScreenMirrorService {
                         code: typeof data.code === 'string' ? data.code : '',
                     });
                 else if (data.action === 'disconnect') this.disconnect();
+                else if (data.action === 'host')
+                    await this.setHostEnabled(data.enabled === true);
                 else if (data.action === 'approve') this.approve(data.id);
                 else if (
                     data.action === 'reject' ||

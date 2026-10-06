@@ -56,6 +56,8 @@ beforeEach(async () => {
     fixture.secure.clear();
     fixture.ipc.clear();
     directory = await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-service-'));
+    // Hosting is off by default; these tests are about a host.
+    fixture.client.set('screen-mirror-host', 'true');
     service = new ScreenMirrorService();
     await service.start();
 });
@@ -288,4 +290,49 @@ test('a superseded initialization cannot revoke the replacement output', async (
     respond(0);
     expect(await first).toBeInstanceOf(Error);
     expect(service.showingIds()).toEqual([0]);
+});
+
+test('hosting is off until switched on, and switching it off ends guests', async () => {
+    service.stop();
+    fixture.client.delete('screen-mirror-host');
+    service = new ScreenMirrorService();
+    await service.start();
+    expect(service.state().hostEnabled).toBe(false);
+    const discoveryUrl = () => `${service.baseUrl}/discovery`;
+    // Off: the server is loopback-only, answers no discovery and takes no guest.
+    expect((await fetch(discoveryUrl())).status).toBe(404);
+    const refused = new WebSocket(
+        `${service.baseUrl.replace('http:', 'ws:')}/mirror`,
+    );
+    sockets.push(refused);
+    await new Promise<void>((resolve) =>
+        refused.once('error', () => resolve()),
+    );
+    const port = service.port;
+    fixture.ipc.get('mirror:command')!(
+        {
+            sender: {
+                getURL: () => 'owa://local/presenter.html',
+                isDestroyed: () => false,
+                send: vi.fn(),
+            },
+        },
+        { action: 'host', enabled: true },
+    );
+    await vi.waitFor(() => expect(service.state().hostEnabled).toBe(true));
+    await vi.waitFor(async () =>
+        expect((await fetch(discoveryUrl())).status).toBe(200),
+    );
+    expect(service.port).toBe(port);
+    const client = await guest();
+    await vi.waitFor(() => expect(service.state().pending).toHaveLength(1));
+    await service.setHostEnabled(false);
+    expect(service.state().hostEnabled).toBe(false);
+    await vi.waitFor(() =>
+        expect(
+            client.packets.find((packet) => packet.type === 'error'),
+        ).toMatchObject({ error: 'Disconnected by host' }),
+    );
+    await vi.waitFor(() => expect(service.state().pending).toHaveLength(0));
+    expect((await fetch(discoveryUrl())).status).toBe(404);
 });

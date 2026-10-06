@@ -62,6 +62,9 @@ const dictionary = {
     'Set connection code': 'កំណត់លេខកូដតភ្ជាប់',
     'Custom port (next launch)': 'ច្រកផ្ទាល់ខ្លួន (ពេលបើកកម្មវិធីលើកក្រោយ)',
     'Save port': 'រក្សាទុកច្រក',
+    'Let other computers connect': 'អនុញ្ញាតឲ្យកុំព្យូទ័រផ្សេងតភ្ជាប់',
+    'Turn this on to use other computers on this network as extra screens.':
+        'បើកវាដើម្បីប្រើកុំព្យូទ័រផ្សេងទៀតនៅលើបណ្ដាញនេះជាអេក្រង់បន្ថែម។',
     Host: 'ម៉ាស៊ីនមេ',
     'This computer': 'កុំព្យូទ័រនេះ',
     'Choose a host below': 'ជ្រើសរើសម៉ាស៊ីនមេខាងក្រោម',

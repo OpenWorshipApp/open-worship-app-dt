@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-05g** (W-50 steps 2 and 3 — the guest's **[en:tran:Screen Mirror]** page is a minimal console. Asked for by the user: _"it should be very minimal, give only button to turn back to presenter"_. The app header is gone; **[en:tran:Presenter]** is its one way out. The page looks for hosts as it opens and fills in the first one it reached, on its LAN address rather than a virtual adapter or loopback (asked for by the user: _"after scan it try each network with each port and auto fill for the one available"_); it shows the host, the link and this computer's monitors in one panel, and names the prefix the host gives this computer. Verified live 2026-10-05 on a scratch dev guest: three hosts listed on opening, all on 192.168.1.5 where the previous scan had shown 172.20.240.1 and 127.0.0.1, the first filled in as 192.168.1.5 / 39241, a picked host filled the address and port, a refused address read **[en:tran:Connection failed]**, **[en:tran:Presenter]** went back; an existing guest connection read **[en:tran:Connected]** with a1 beside its monitor.)
+**workflowsVersion: 2026-10-05h** (W-50 step 1 — hosting is OFF until **[en:tran:Let other computers connect]** is turned on at the top of the **[en:tran:Screen Mirror Connection]** panel. Asked for by the user: _"mirror-screen host should not be enabled by default, should have a toggle switch in the panel"_. Off, the app's mirror server listens on loopback only, answers no scan and refuses guests; on, it rebinds to every network on the same port and answers scans; the switch is remembered. Verified live 2026-10-05 on the dev presenter: off at launch with only `127.0.0.1:39240` open, the panel showing the switch and one line; on moved it to `0.0.0.0:39240` with discovery answering, and a scan from this computer listed it beside the other computer on the network, DESKTOP-BUS45KP at 192.168.1.14:39240.)
+
+Previous: **workflowsVersion: 2026-10-05g** (W-50 steps 2 and 3 — the guest's **[en:tran:Screen Mirror]** page is a minimal console. Asked for by the user: _"it should be very minimal, give only button to turn back to presenter"_. The app header is gone; **[en:tran:Presenter]** is its one way out. The page looks for hosts as it opens and fills in the first one it reached, on its LAN address rather than a virtual adapter or loopback (asked for by the user: _"after scan it try each network with each port and auto fill for the one available"_); it shows the host, the link and this computer's monitors in one panel, and names the prefix the host gives this computer. Verified live 2026-10-05 on a scratch dev guest: three hosts listed on opening, all on 192.168.1.5 where the previous scan had shown 172.20.240.1 and 127.0.0.1, the first filled in as 192.168.1.5 / 39241, a picked host filled the address and port, a refused address read **[en:tran:Connection failed]**, **[en:tran:Presenter]** went back; an existing guest connection read **[en:tran:Connected]** with a1 beside its monitor.)
 
 Previous: **workflowsVersion: 2026-10-05f** (New W-50 / SP-25..27: Screen Mirror Connection panel, connected guests above the Mini Screen previews, guest displays, host HTTP resources and shared guest cameras. Verified with isolated development host and guest instances on this computer.)
 
@@ -5021,10 +5023,12 @@ Use one app as the host and another as the guest. Both computers need the same
 app version and a reachable network connection.
 
 1. On the host's Presenter, open the Mini Screen list's bottom **⋮** and
-   click **[en:tran:Screen Mirror Connection]**. The floating panel shows
-   **[en:tran:Host addresses]** and **[en:tran:Port]**. The app starts its
-   HTTP and WebSocket service at launch, choosing an available port from
-   39240–39259.
+   click **[en:tran:Screen Mirror Connection]**. Hosting is off until you
+   turn on **[en:tran:Let other computers connect]** at the top of the
+   floating panel — until then no other computer can find or join this one.
+   Once it is on, the panel shows **[en:tran:Host addresses]** and
+   **[en:tran:Port]**: the app serves HTTP and WebSocket on an available port
+   from 39240–39259, and the switch stays on for the next launch.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
    header — its one button, **[en:tran:Presenter]**, goes back — and it looks
    for hosts as it opens, listing them under
