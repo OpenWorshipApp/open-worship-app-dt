@@ -176,7 +176,7 @@ const MirrorThisComputerNodeComp = memo(function MirrorThisComputerNodeComp({
                             >
                                 <span
                                     className={
-                                        box.width < 64 ? 'visually-hidden' : ''
+                                        box.width < 56 ? 'visually-hidden' : ''
                                     }
                                 >
                                     {box.resolution}
