@@ -18,7 +18,6 @@ import {
 import { checkIsDarkMode } from '../../others/themeHelpers';
 import ScreenDrawComp from '../ScreenDrawComp';
 import ScreenFocusComp from '../ScreenFocusComp';
-import ScreenMaskComp from '../ScreenMaskComp';
 import { useIsMiniScreenNoRendering } from './miniScreenRenderingHelpers';
 
 const genBGBlank = () => {
@@ -159,8 +158,6 @@ export default function MiniScreenAppComp({
             {isRendering && <ScreenForegroundComp />}
             {isRendering && <ScreenDrawComp />}
             {isRendering && <ScreenFocusComp />}
-            {/* Last, for the reason given in `ScreenAppComp`. */}
-            {isRendering && <ScreenMaskComp />}
         </ScreenManagerBaseContext>
     );
 }

@@ -14,12 +14,14 @@ Top** number — `zIndex` in the item's `extraStyle`, 7 by default — and `#for
 deliberately makes no stacking context, so that number competes directly with the
 new layer in the ROOT stacking context. A layer with `z-index: auto` loses to it.
 
-Measured 2026-09-25 while adding the Mask layer: the blanking bars were rendering
+Measured 2026-09-25 while adding the edge Mask layer: its bars were rendering
 correctly, persisted correctly and synced correctly, and were invisible on the real
 output the whole time because a full-screen **Video Show** at `z-index: 7` was
 painted over them. It looked exactly like a layer that was not rendering at all —
-three reloads and a settings hunt went past it. `ScreenMaskManager.render()` now
-pins `zIndex: '2147483000'`.
+three reloads and a settings hunt went past it. The fix was pinning
+`zIndex: '2147483000'` on the layer. The Mask itself was removed on 2026-10-06 at
+the user's request, so no current layer carries that pin; the trap is still there
+for the next layer added after `#foreground`.
 
 **Why: this does not contradict the foreground blend-mode rule** ([[foreground-blend-mode-stacking]]).
 That rule forbids a `z-index` on `#foreground` ITSELF, because one there would cut

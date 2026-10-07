@@ -90,7 +90,6 @@ export const MIRROR_SCREEN_TYPES = new Set([
     'foreground',
     'draw',
     'focus',
-    'mask',
     'effect',
     'bible-screen-view-selected-index',
     'bible-screen-view-text-style',

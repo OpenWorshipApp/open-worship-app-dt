@@ -28,6 +28,7 @@ import {
     writePersistedRect,
 } from './floatingWidgetHelpers';
 import { useIsInModalLayer } from './modalLayerContext';
+import { WidgetMenuExcludedContext } from '../resize-actor/widgetMenuContext';
 import type {
     FloatingWidgetOptions,
     InteractionMode,
@@ -590,7 +591,9 @@ export default function FloatingWidgetComp({
                     title == null || options.isBodyDraggable ? 'false' : 'true'
                 }
             >
-                {isHeaderOnly ? collapsedChildren : children}
+                <WidgetMenuExcludedContext value={true}>
+                    {isHeaderOnly ? collapsedChildren : children}
+                </WidgetMenuExcludedContext>
             </div>
             {!isHeaderOnly &&
                 RESIZE_HANDLES.map((handle) => (

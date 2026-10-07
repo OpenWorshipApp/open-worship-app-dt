@@ -302,9 +302,12 @@ export function toForegroundSummary(
             `marquee at the bottom: "${cutText(toPlainText(foregroundData.marqueeBottomData.text ?? ''))}"`,
         );
     }
+    // A quick text is MARKUP (its editor writes `<p>…</p>`), unlike a message
+    // or a marquee, so it is read for its words -- it was handed to the model
+    // as `quick text: "<p>zz robot test</p>"`.
     if (foregroundData.quickTextData) {
         items.push(
-            `quick text: "${cutText(toPlainText(foregroundData.quickTextData.htmlText ?? ''))}"`,
+            `quick text: "${cutText(toSungText(foregroundData.quickTextData.htmlText ?? ''))}"`,
         );
     }
     for (const _camera of foregroundData.cameraDataList ?? []) {

@@ -1,4 +1,6 @@
-.lyric-slides-previewer {
+// The Stage Previewer of a song (`LyricSlidesPreviewerComp`) and of any
+// other document (`DocumentStagePreviewerComp`): one look for both.
+.stage-previewer {
   & > .card-header {
     display: flex;
     align-items: center;
@@ -11,8 +13,17 @@
     // give way when space runs out.
     white-space: nowrap;
     overflow: hidden;
+    // The header's own width decides how much of it folds (below), not the
+    // window's: a pane is half the previewer once a stage is added, and less
+    // again beside the Bibles tab.
+    container-type: inline-size;
 
+    // Gives way FIRST. With the default shrink factor the label and the chips
+    // shrank together, so in a narrow pane the Stage 3 chip and its x were
+    // scrolled out of sight behind Add Stage while half the label still
+    // showed (2026-10-06).
     .stage-previewer-label {
+      flex: 0 1000 auto;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -21,6 +32,10 @@
     // The chips may outgrow the header once a few stages exist. Scroll them
     // instead of pushing the Add button out of reach - the button is the only
     // way to get a stage back, so it must never be the thing that disappears.
+    // The scrollbar stays hidden: shown, a sub-pixel overflow of a row that
+    // fits drew one, which shortened the row and drew a vertical one too.
+    // What keeps the chips in view is the label giving way first and Add
+    // Stage folding to its `+`, below.
     .stage-previewer-stages {
       display: flex;
       align-items: center;
@@ -31,6 +46,15 @@
       scrollbar-width: none;
 
       &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    // A narrow header keeps Add Stage's `+` and drops its words, which is
+    // room for about one more chip. The button keeps its name (aria-label)
+    // and its title.
+    @container (max-width: 420px) {
+      .stage-previewer-add-label {
         display: none;
       }
     }

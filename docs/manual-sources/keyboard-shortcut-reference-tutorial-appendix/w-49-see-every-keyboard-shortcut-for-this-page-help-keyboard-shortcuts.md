@@ -24,7 +24,7 @@ learn the keys of the page you are on.
    **[en:tran:While the slides panel has focus]**: the slide arrows only move
    the slides after you click into the slides panel.
 3. Each page lists its own keys. The Presenter starts with
-   **[en:tran:Screens]** (`F5` shows or hides the screen, `F6`–`F10` clear it,
+   **[en:tran:Screens]** (`F5` shows or hides the selected screens, `F6`–`F10` clear them,
    `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
    **[en:tran:Presenting Flow]** and the mini screen's
    **[en:tran:Drawing]** and **[en:tran:Focusing]** keys. The Bible Reader

@@ -1,6 +1,15 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { describeToolCall, watchToolCalls } from './notify.mjs';
+import {
+  describeToolCall,
+  describeToolNotice,
+  genNoticeExpression,
+  genNoticeWords,
+  listNoticeTranKeys,
+  watchToolCalls,
+} from './notify.mjs';
+import { loadTranBundle } from './tran.mjs';
 
 // No banner is drawn here: the app may not be running, and a test must not
 // reach out to it. The transport seam is what matters.
@@ -281,4 +290,171 @@ describe('the data tools name what they changed', () => {
         );
         expect(describeToolCall('owa_undo', { action: 'list' })).toBeNull();
     });
+});
+
+// Reported 2026-10-06: the banner stayed English in a Khmer window. It is said
+// in the language the app is DISPLAYING now, through the app's own dictionary,
+// and a phrase the dictionary does not have yet is said in English WHOLE.
+describe('the banner speaks the language the app is shown in', () => {
+  // A dictionary as `tran.mjs` hands it over: sanitized keys.
+  const dictionaries = {
+    km: {
+      'app assistant': 'ជំនួយការកម្មវិធី',
+      'clicked something': 'បានចុចអ្វីមួយ',
+      'took a foreground extra off the screen': 'បានដកធាតុផ្ទៃខាងមុខ',
+      countdown: 'រាប់ថយក្រោយ',
+      'read a website': 'បានអានគេហទំព័រ',
+    },
+    fr: { assistant: 'Assistant', 'app assistant': "Assistant de l'application" },
+  };
+
+  it('carries a name-free key and the names apart from it', () => {
+    expect(
+      describeToolNotice('owa_read_website', {
+        url: 'https://en.wikipedia.org/wiki/KJV',
+      }),
+    ).toEqual({
+      text: 'read a page on en.wikipedia.org',
+      key: 'read a website',
+      detail: ['en.wikipedia.org'],
+    });
+    expect(
+      describeToolNotice('owa_slide_file', {
+        action: 'update-slide',
+        name: 'Sunday',
+        slide: 3,
+      }),
+    ).toEqual({
+      text: 'changed slide 3 of "Sunday"',
+      key: 'changed a slide',
+      detail: ['"Sunday"', '#3'],
+    });
+    // No name given: the detail is empty rather than English filler.
+    expect(describeToolNotice('owa_lyric_file', { action: 'delete' })).toEqual(
+      {
+        text: 'moved a song to the trash',
+        key: 'moved a song to the trash',
+        detail: [],
+      },
+    );
+  });
+
+  it('translates the phrase, who is acting, and a detail word the dictionary has', () => {
+    const words = genNoticeWords(
+      describeToolNotice('owa_click', {}),
+      dictionaries,
+    );
+    expect(words.en).toEqual({ who: 'Assistant', what: 'clicked something' });
+    // `Assistant` is not in the Khmer dictionary yet: the app's own name for
+    // the assistant stands in.
+    expect(words.km).toEqual({
+      who: 'ជំនួយការកម្មវិធី',
+      what: 'បានចុចអ្វីមួយ',
+    });
+    const stopped = genNoticeWords(
+      describeToolNotice('owa_foreground', {
+        action: 'stop',
+        widget: 'countdown',
+      }),
+      dictionaries,
+    );
+    expect(stopped.km.what).toBe('បានដកធាតុផ្ទៃខាងមុខ · រាប់ថយក្រោយ');
+    // A site is a site in every language.
+    const read = genNoticeWords(
+      describeToolNotice('owa_read_website', { url: 'https://example.com/x' }),
+      dictionaries,
+    );
+    expect(read.km.what).toBe('បានអានគេហទំព័រ · example.com');
+  });
+
+  it('leaves a language out, never half-translated, when it lacks the phrase', () => {
+    const words = genNoticeWords(
+      describeToolNotice('owa_click', {}),
+      dictionaries,
+    );
+    // French has who is acting but not "clicked something".
+    expect(words.fr).toBeUndefined();
+    expect(Object.keys(words).sort()).toEqual(['en', 'km']);
+  });
+
+  // The keys only `tools/` asks for are added to `src/lang/data/km` and
+  // `fr` by hand. Half a pair is the mistake that would go unnoticed: a
+  // French window keeps its English banner and nothing fails.
+  it('finds every banner key translated in both km and fr, or in neither', () => {
+    const bundle = loadTranBundle();
+    const km = bundle.dictionaries.km ?? {};
+    const fr = bundle.dictionaries.fr ?? {};
+    const halfDone = listNoticeTranKeys().filter((key) => {
+      const lowered = key.trim().toLowerCase();
+      return (km[lowered] === undefined) !== (fr[lowered] === undefined);
+    });
+    expect(halfDone).toEqual([]);
+  });
+});
+
+// The pill itself, evaluated the way the page gets it.
+describe('the banner in the page', () => {
+  beforeEach(() => {
+    delete window.__owaAgentNotice;
+    document.getElementById('owa-agent-notice-host')?.remove();
+    document.documentElement.lang = 'en';
+  });
+
+  function show(words) {
+    return new Function(`return (${genNoticeExpression(words)})`)();
+  }
+
+  function readPill() {
+    const root = document.getElementById('owa-agent-notice-host').shadowRoot;
+    return {
+      who: root.querySelector('.who').textContent,
+      what: root.querySelector('.what').textContent,
+      lang: root.querySelector('.pill').lang,
+      css: root.querySelector('style').textContent,
+    };
+  }
+
+  const words = {
+    en: { who: 'Assistant', what: 'clicked something' },
+    km: { who: 'ជំនួយការ', what: 'បានចុចអ្វីមួយ' },
+  };
+
+  it('picks the words for the language the window is displaying', () => {
+    document.documentElement.lang = 'km';
+    expect(show(words)).toBe(true);
+    expect(readPill()).toMatchObject({
+      who: 'ជំនួយការ',
+      what: 'បានចុចអ្វីមួយ',
+      lang: 'km',
+    });
+  });
+
+  it('falls back to English for a language it has no words for', () => {
+    document.documentElement.lang = 'fr';
+    show(words);
+    expect(readPill()).toMatchObject({
+      who: 'Assistant',
+      what: 'clicked something',
+      lang: 'en',
+    });
+  });
+
+  // At the top centre it covered the header's Bible Lookup button and the
+  // title of every app dialog (2026-10-06).
+  it('sits at the bottom centre, clear of the header and dialog titles', () => {
+    show(words);
+    const pillRule = /\.pill \{([^}]*)\}/.exec(readPill().css)[1];
+    expect(pillRule).toContain('bottom: 14px');
+    expect(pillRule).not.toMatch(/\btop:/);
+  });
+
+  it('replaces a banner an older server left in the page', () => {
+    window.__owaAgentNotice = {
+      show() {
+        return 'old';
+      },
+    };
+    expect(show(words)).toBe(true);
+    expect(window.__owaAgentNotice.version).toBeGreaterThan(1);
+  });
 });

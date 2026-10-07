@@ -27,7 +27,6 @@ export async function getMirrorBootstrap(
         manager.screenBibleManager,
         manager.screenDrawManager,
         manager.screenFocusManager,
-        manager.screenMaskManager,
     ];
     const messages: MirrorScreenMessage[] = handlers.map((handler) => ({
         ...handler.toSyncMessage(),

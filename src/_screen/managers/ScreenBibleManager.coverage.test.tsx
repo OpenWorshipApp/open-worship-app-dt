@@ -279,6 +279,8 @@ describe('ScreenBibleManager coverage', () => {
             ScreenBibleManager,
             'changeTextStyleTextFontSize',
         );
+        const registerCount =
+            mocks.registerScrollingSyncEvent.mock.calls.length;
         manager.div = host;
         expect(host.classList.contains('screen-bible-container-scroll')).toBe(
             true,
@@ -286,6 +288,12 @@ describe('ScreenBibleManager coverage', () => {
         expect(mocks.registerScrollingSyncEvent).toHaveBeenCalledWith(
             host,
             expect.any(Function),
+        );
+        // `ScreenBibleComp` hands the same div over on every effect re-run:
+        // one set of listeners, however often.
+        manager.div = host;
+        expect(mocks.registerScrollingSyncEvent).toHaveBeenCalledTimes(
+            registerCount + 1,
         );
 
         host.dispatchEvent(
@@ -296,6 +304,7 @@ describe('ScreenBibleManager coverage', () => {
                 deltaY: -1,
             }),
         );
+        expect(fontSizeSpy).toHaveBeenCalledOnce();
         expect(fontSizeSpy).toHaveBeenCalledWith(true);
 
         host.dispatchEvent(new Event('scroll'));

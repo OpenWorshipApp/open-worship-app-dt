@@ -3,6 +3,7 @@ import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { tran } from '../../lang/langHelpers';
 import { getAllDisplays } from '../managers/screenHelpers';
 import type ScreenManagerBase from '../managers/ScreenManagerBase';
+import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
 import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
@@ -14,8 +15,24 @@ function getRawDisplayLabel(display: unknown) {
     return (display as { label?: string } | undefined)?.label?.trim() ?? '';
 }
 
-function toDisplayLabel(display: unknown) {
-    return getRawDisplayLabel(display) || tran('Unknown');
+// What to call a display when the OS gives it no name. "Unknown" said
+// nothing: it was what the built-in screen of every laptop read, and also
+// what a screen kept on a Screen Mirror guest that is not connected read --
+// the one case where pressing show cannot work.
+function toDisplayLabel(
+    display: unknown,
+    { displayId, isPrimary }: { displayId: number; isPrimary: boolean },
+) {
+    const label = getRawDisplayLabel(display);
+    if (label) {
+        return label;
+    }
+    if (display === undefined) {
+        return displayId <= MIRROR_REMOTE_DISPLAY_FIRST
+            ? tran('Guest display, not connected')
+            : tran('Not connected');
+    }
+    return isPrimary ? tran('Primary display') : tran('Unnamed display');
 }
 
 function handleDisplayChoosing(
@@ -25,11 +42,17 @@ function handleDisplayChoosing(
 ) {
     const { primaryDisplay, displays } = getAllDisplays();
     const contextMenuItems: ContextMenuItemType[] = displays.map((display) => {
-        const label = toDisplayLabel(display);
         const bounds = display.bounds;
         const isPrimary =
             display.id === primaryDisplay.id ||
             (display as { isPrimary?: boolean }).isPrimary === true;
+        const label =
+            getRawDisplayLabel(display) ||
+            // "(primary)" follows on that row already.
+            toDisplayLabel(display, {
+                displayId: display.id,
+                isPrimary: false,
+            });
         const isSelected = display.id === displayId;
         const menuElement =
             (isSelected ? '*' : '') +
@@ -53,11 +76,18 @@ export default function DisplayControlComp() {
     const { displayId } = screenManagerBase;
     useScreenManagerEvents(['display-id'], screenManagerBase);
 
-    const { displays } = getAllDisplays();
+    const { primaryDisplay, displays } = getAllDisplays();
     const currentDisplay = displays.find((display) => {
         return display.id === displayId;
     });
-    const currentDisplayLabel = toDisplayLabel(currentDisplay);
+    const currentDisplayLabel = toDisplayLabel(currentDisplay, {
+        displayId,
+        isPrimary:
+            displayId === primaryDisplay.id ||
+            (currentDisplay as { isPrimary?: boolean } | undefined)
+                ?.isPrimary === true,
+    });
+    const isMissing = currentDisplay === undefined;
     const isGuest = !!(currentDisplay as { guestId?: string } | undefined)
         ?.guestId;
     return (
@@ -75,7 +105,15 @@ export default function DisplayControlComp() {
             )}
             style={{ maxWidth: '80px' }}
         >
-            <i className="bi bi-display" />
+            {/* Shown before it is pressed: a screen whose display is gone
+                cannot be shown, and the toggle says so only afterwards. */}
+            <i
+                className={
+                    isMissing
+                        ? 'bi bi-exclamation-triangle text-warning'
+                        : 'bi bi-display'
+                }
+            />
             {/* The raw name: an 80px button has no room for "Unknown". */}
             {isGuest ? (
                 `${currentDisplayLabel}: ${currentDisplay!.bounds.width}x${currentDisplay!.bounds.height}`

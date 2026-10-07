@@ -177,14 +177,24 @@ function FilePreviewAppDocumentNormalComp({
 }: Readonly<{ varyAppDocument: AppDocumentSourceAbs }>) {
     const fileSource = FileSource.getInstance(varyAppDocument.filePath);
     const { canSave } = useEditingHistoryStatus(varyAppDocument.filePath);
+    // The name gives way, the unsaved `*` never does: inside one ellipsis box
+    // it was the first thing a long name cut off, so "Amazing Grace (Offer…" hid
+    // that it had changes to save.
     return (
-        <div className="w-100 h-100 app-ellipsis">
+        <div
+            className="w-100 h-100 d-flex align-items-center app-overflow-hidden"
+            style={{ minWidth: 0 }}
+        >
             <i
-                className="bi bi-file-earmark-slides"
+                className="bi bi-file-earmark-slides flex-shrink-0"
                 title={tran('Slide Document')}
             />
-            {fileSource.name}
-            {canSave && <span style={{ color: 'red' }}>*</span>}
+            <span className="app-ellipsis">{fileSource.name}</span>
+            {canSave && (
+                <span className="flex-shrink-0" style={{ color: 'red' }}>
+                    *
+                </span>
+            )}
         </div>
     );
 }

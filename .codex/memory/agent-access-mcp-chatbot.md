@@ -144,7 +144,11 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   The ask text is shown in the chat as the user's own message: no tool
   names (the markdown renderer eats the underscores) and no jargon.
 - **Every acting tool call announces itself in the window** (`notify.mjs`):
-  a pill at the top saying "Assistant clicked something", 2.6s, its own
+  a pill at the BOTTOM centre (top centre covered the header's Bible Lookup
+  and every dialog's title, 2026-10-06), in the language the window is
+  DISPLAYING (`<html lang>`, words from the app's dictionary via `tran.json`;
+  a phrase a language lacks falls back to the whole English sentence),
+  saying "Assistant clicked something", 2.6s, its own
   shadow root, `OWA_MCP_NOTICE=0` to silence it. Reads (snapshot,
   screenshot, `owa_app_state`) stay quiet -- a banner per read would cry
   wolf and photograph itself. It hangs off `server.connect`, wrapping the

@@ -18,9 +18,11 @@ import {
     useMirrorState,
     setMirrorPanelShowing,
 } from '../../screen-mirror/mirrorConnectionHelpers';
+import { useToggleScreensShowingKey } from './ShowHideScreen';
 
 ScreenManager.initReceiveScreenMessage();
 export default function MiniScreenComp() {
+    useToggleScreensShowingKey();
     const mirror = useMirrorState();
     const [previewScale, setPreviewScale] = useStateSettingNumber(
         'mini-screen-previewer',

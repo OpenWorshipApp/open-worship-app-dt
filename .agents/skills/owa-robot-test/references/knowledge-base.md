@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-10-02
+docVersion: 2026-10-06b
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -449,6 +449,25 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   (`src/others/appInit.scss`). `take_snapshot` shows it in the accessible name
   (`button "●Videos"`); `owa_list_ui` strips it. The matrix's `PM-27` said `*` until
   2026-09-26.
+- **Electron cannot format a date in Khmer.** It ships Chromium's trimmed ICU data:
+  `Intl.DateTimeFormat.supportedLocalesOf(['km-KH'])` is `[]` in the app, and asked
+  for `km-KH`, `toLocaleDateString` answers in ENGLISH without a word. Node (vitest)
+  has full ICU, so a test passes where the app does not — the stopwatch history's
+  dates first shipped that way. Khmer dates are numbers only now (`04/10 07:57`); see
+  memory `electron-icu-has-no-khmer`.
+- **A divider takes the keyboard** (2026-10-06): Tab reaches it (an info-blue
+  outline), the `ContextMenu` key / Shift+F10 opens its Reset Size / Close First /
+  Close Second Widget menu, and ←→ (↑↓ on a top/bottom divider) move it 20 px (Shift
+  100), never past a pane's minimum. An agent gets focus onto one without a mouse by
+  `fill`ing the control just before it with its CURRENT value (the presenter's
+  `Slide Thumbnail Size Scale` slider at 72 for the Presenter/Background divider),
+  then `press_key Tab` until the snapshot says the separator is `focused` — a mouse
+  press on a divider never focuses it (the drag cancels its mousedown).
+- **Verifying an edited `domMatch.mjs` through a fresh server:** reload the page
+  FIRST and let only the fresh server touch it. The page keeps whichever matcher
+  reached it first (`window.__owaDomMatch`), and this session's own, stale tools
+  reaching it after a relaunch is enough to make a fix read as not working
+  (memory `dom-match-memoised-in-page`).
 - **Scope the thumbnail slider.** `owa_type "Thumbnail Size"` unscoped matches the
   **Presenter's** `Slide Thumbnail Size Scale` (max 200), not the Background footer's
   `Thumbnail Size` (max 500) — it silently resizes the wrong panel. Use
@@ -495,7 +514,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 
 ### Screen window CDP visibility (verified, corrected 2026-07-08)
 - While a screen is **SHOWING** (toggle `ShowHideScreen` / `F5`), it **is** a normal CDP
-  target: `https://localhost:3000/screen.html?screenId=N` in `list_pages` — fully
+  target: `http://127.0.0.1:<port>/screen.html?screenId=N` (every screen window loads from the Screen Mirror server, ports 39240-39259 -- `screenMirrorRuntime.screenUrl`; `https://localhost:3000/screen.html` only when that server did not start) in `list_pages` — fully
   drivable (`take_snapshot` / `click` / `take_screenshot`; the ❌ `#close` button has
   been clicked via MCP and it hid the screen).
 - The target **vanishes the moment the screen hides** — an earlier session concluded it
@@ -510,6 +529,57 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 - Presenting a slide is a **single click, not a toggle** (§5) — present, verify, then
   clear with `F6`–`F10` (a second click on the same card only re-applies it); end with the
   screen hidden unless it started showing.
+
+### 6.0 Multi-screen facts from the 2026-10-06 presenter run
+
+- **A colour-note group shares more than content.** Presenting to one screen of a
+  group puts it on every member — and replaces what they held (a solo-selected
+  scratch screen 1 took screen 0's Bible passage with it). The lock is shared too:
+  one click on a member's lock locks them all, so clicking each member's lock in
+  turn locks and then UNLOCKS the group. Plan a screen test on a screen with its
+  own colour note, or restore every member afterwards.
+- **F5 follows the selection** (fixed 2026-10-06): it acts on the selected screens,
+  every screen when none is selected, and shows them only when all of them are
+  hidden — otherwise it hides them all. Before, each card took the key itself, so
+  one press flipped every screen on its own. The card's own toggle still turns only
+  its screen.
+- **A screen kept on a Screen Mirror guest display that is not connected** (display
+  id `-1000000` and below; its display button reads **Guest display, not connected**
+  with a warning icon) cannot be shown. Pressing show answers with the toast
+  **Screen not shown** and the toggle comes back off. Before the fix it raised the
+  blocking **Reload is needed** dialog and left the toggle on with no window.
+- **The lock refusal is one toast per press with its own Unlock.** It opens over the
+  first card's lock icon; its **Unlock** frees every screen that refused AND closes
+  the toast (since 2026-10-06 — before, it stayed up saying "locked", held open by the
+  hover of the pointer that pressed it; the Background and Color toast's Undo closes
+  its toast the same way). A toast lives 4 s, so drive that button from a snapshot
+  saved to a file (new nodes get ids from `<n>_0`, the Unlock was `<n>_4`), not from a
+  press's inline snapshot — reading that one outlasted the toast. What lands every
+  time: `press_key F6`, `take_snapshot` to a file and `click` on the PREDICTED uid
+  `<next snapshot number>_4`, all three in ONE batch of calls (2026-10-06).
+- **A CDP capture right after a screen shows can be pure white** (2026-10-06, the
+  first `take_screenshot` of `screen.html?screenId=0` straight after F5; the next one,
+  a second later, was correct, transparent parts black). The window is
+  `transparent: true` with a transparent body, so the projector should show the
+  desktop, not white, before the first paint — but CDP cannot see what the projector
+  composites. An OS capture (`Graphics.CopyFromScreen`) can, and only in an UNLOCKED
+  session: with the workstation locked (`LogonUI` running) every frame comes back
+  solid black, which proves nothing either way. Unresolved; measure it with the
+  session unlocked before changing how the screen window shows.
+- **Screens can come back holding different content after a relaunch — seen twice
+  on 2026-10-06, cause NOT established.** The morning run's helper closed the
+  Presenter and both hidden screens came back on slide 2 instead of the Bible
+  passage. The evening run left them on slide 2 with no background; after an MCP
+  edit relaunched the dev app they were on slide 3 with a video background — but
+  that document's attached background (`<file>.bg.json`) had been written mid-run
+  by ANOTHER agent session sharing the data folder, which may explain all of it.
+  Before filing anything that rides on screen content after a relaunch, record
+  `owa_list_screens` just before and just after, note the mtimes of the selected
+  document's `.bg.json`, and confirm no other session is driving the app
+  (`ListAgents`).
+- **A card's Solo / Select / Delete menu is a right-click with no tool for it**:
+  click any button INSIDE the card (its stage `St:` button, then `Escape` to close
+  that menu) so focus sits in the card, and press `Shift+F10`.
 
 ### 6.1 What the MCP firewall will not do for you (verified 2026-09-15)
 

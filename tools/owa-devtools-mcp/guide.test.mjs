@@ -1756,3 +1756,27 @@ describe('a control inside a floating panel', () => {
     expect(clicked).toEqual(['show']);
   });
 });
+
+// The Foreground lessons' first Do it presses the Foreground tab, which opens
+// the launcher as a CONTEXT MENU -- placed at the press's coordinates. A bare
+// `element.click()` carries 0,0 and put the menu in the window's top-left
+// corner (2026-10-06), so the card presses where the control is.
+describe('Do it presses at the control', () => {
+  it('clicks at the centre of the control the step names', async () => {
+    document.body.innerHTML = '<button id="tab">Foreground</button>';
+    // An earlier test stubs hit-testing onto an element of its own page.
+    delete document.elementsFromPoint;
+    const seen = [];
+    document.getElementById('tab').addEventListener('click', (event) => {
+      seen.push([event.clientX, event.clientY]);
+    });
+    startGuide({
+      mode: 'demo',
+      steps: [{ text: 'Click Foreground.', finds: ['Foreground'] }, { text: 'Done.' }],
+    });
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult).toMatchObject({ done: true, did: 'clicked' });
+    // The stubbed box is x 10, y 10, 40 wide, 20 high.
+    expect(seen).toEqual([[30, 20]]);
+  });
+});

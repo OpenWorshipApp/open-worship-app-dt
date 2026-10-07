@@ -105,4 +105,11 @@ Things that bite:
   one chorus slide). That comes from `open-lyric`, not this repo — see
   [[open-lyric-subtree-branch-dep]] for how to change that dependency.
 
+Every other document kind has stages too, drawn at render time instead of
+rewriting slides; the Stage Previewer header is shared
+(`StagePreviewerHeaderComp`) -- see [[document-stage-previewer]]. Since
+2026-10-06 the look-ahead stages (2-5) draw the coming verse at full opacity and
+lay their boxes over the whole slide (`displayDim`), not inside
+`canvasItemBounds`, so there is no margin around them.
+
 Related: [[tran-missing-key-throws-in-dev]], [[dev-data-dir-is-separate]].

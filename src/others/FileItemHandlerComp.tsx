@@ -282,6 +282,10 @@ export default function FileItemHandlerComp({
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}
+            // The selected row, said where a screen reader and the app's own
+            // tools can read it: the `active` class alone left a press that
+            // opened a document reporting it had changed nothing.
+            aria-current={isSelected ? 'true' : 'false'}
             data-index={index + 1}
             data-file-item-file-src={fileSource.src}
             title={fileSource.fullName}

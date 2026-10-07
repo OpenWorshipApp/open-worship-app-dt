@@ -13,8 +13,10 @@ import {
   evaluateInTarget,
   listTargets,
   requireLivePort,
+  waitForNewAppPage,
 } from './cdp.mjs';
 import {
+  addOpenedWindow,
   genClickExpression,
   genFindUiExpression,
   genHighlightSelectorExpression,
@@ -1818,14 +1820,14 @@ export function registerOwaTools(server) {
         'with the closest labels it did find, so retry with one of ' +
         'those instead of giving up. Write "Panel > Control" to mean ' +
         'the one inside that panel ("Background > Videos"), which is ' +
-        'how a word that several panels share picks out the right ' +
-        'one. The answer says what was pressed AND what the press ' +
-        'did: `didChange`, `isOnNow` for a control with an on/off ' +
-        'state, and `unverified` when the control came out of it ' +
-        'unchanged. Pressing something is not the same as the thing ' +
-        'happening -- when the answer says `unverified`, check ' +
-        '(`owa_list_screens`, `owa_app_state`, `owa_find_ui`) before ' +
-        'telling the user it worked. Anything that changes what the ' +
+        'how a word several panels share picks the right one. The ' +
+        'answer says what was pressed AND what the press did: ' +
+        '`didChange`, `isOnNow` for a control with an on/off state, ' +
+        '`opened` (menu, dialog, panel or window) for what it brought ' +
+        'up, and `unverified` when nothing changed. Pressing ' +
+        'something is not the thing happening -- on `unverified`, ' +
+        'check (`owa_list_screens`, `owa_app_state`, `owa_find_ui`) ' +
+        'before telling the user it worked. Anything that changes what the ' +
         'congregation sees -- presenting, clearing, hiding a screen ' +
         '-- must be offered to the user first, never done unasked.',
       inputSchema: {
@@ -1844,7 +1846,7 @@ export function registerOwaTools(server) {
         if (finds.length === 0) {
           throw new Error('Pass the label of the control to click.');
         }
-        const { value } = await evaluateInApp(
+        const evaluated = await evaluateInApp(
           genClickExpression(
             withTranslations(finds, await readAppLanguage(page)),
             undefined,
@@ -1853,13 +1855,14 @@ export function registerOwaTools(server) {
           ),
           { match: page },
         );
+        const { value } = evaluated;
         // Refused in the page, off the control itself: said the way
         // the firewall says it, and logged beside its refusals.
         if (typeof value?.refused === 'string') {
           recordPressRefusal('owa_click', value);
           throw new Error(genPressRefusalReason(value));
         }
-        return value;
+        return await addOpenedWindow(value, evaluated, waitForNewAppPage);
       });
     },
   );

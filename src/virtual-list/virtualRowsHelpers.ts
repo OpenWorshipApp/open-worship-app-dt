@@ -100,6 +100,25 @@ export function toColumnCount(
 }
 
 /**
+ * The width a cell really gets. A row is `columns` cells wide and never wider
+ * than the grid (`maxWidth: 100%`), so in a pane narrower than one item the
+ * item is SQUEEZED -- and a card whose body fills its own width is then
+ * shorter than `itemWidth` says. Reading the height off `itemWidth` there left
+ * an empty band under every card, ~130px at the default slide zoom once a
+ * Stage Previewer pane halved the width, ~325px with the zoom raised.
+ */
+export function toCellWidth(
+    itemWidth: number,
+    availableWidth: number,
+    columns: number,
+) {
+    if (availableWidth <= 0 || columns <= 0) {
+        return itemWidth;
+    }
+    return Math.min(itemWidth, availableWidth / columns);
+}
+
+/**
  * The rows overlapping `[visibleTop, visibleBottom]`, both measured from the
  * TOP OF THE LIST, widened by `overscan` rows on each side. VS Code can render
  * the visible rows and nothing more because it moves the rows itself in the

@@ -45,6 +45,7 @@ import {
     DocumentTransitionIconComp,
     genDocumentTransitionMenuItems,
 } from '../../others/slideTransitionMenuHelpers';
+import { useSlideStage } from '../stage/documentStageContexts';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -63,6 +64,9 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
 
 // The document menu button's height (`--app-action-rail`, 22px) plus a gap.
 const DOCUMENT_MENU_BUTTON_ROOM = 26;
+// The width the sticky row's transition icon and `⋮` take at the right edge
+// (measured 62px), kept clear by the editing menu beside them.
+const DOCUMENT_MENU_ROW_WIDTH = 64;
 
 export default function VarySlidesPreviewerComp() {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -131,8 +135,13 @@ export default function VarySlidesPreviewerComp() {
     const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbSizeScale, setThumbnailSizeScale] =
         useVarySlideThumbnailSizeScale(thumbnailScaleSettingOptions);
+    // A Stage Previewer pane of stage 1 or up shows the same document again;
+    // its Save, Discard and Undo belong to the stage 0 pane beside it only.
+    const slideStage = useSlideStage();
     const isDisplayingEditingMenu =
-        appProvider.isPagePresenter && varyAppDocument.isEditable;
+        appProvider.isPagePresenter &&
+        varyAppDocument.isEditable &&
+        slideStage === 0;
     const onSlideItemsKeyboardEventRef = useAppCurrentRef(
         onSlideItemsKeyboardEvent,
     );
@@ -244,13 +253,24 @@ export default function VarySlidesPreviewerComp() {
                             }}
                         >
                             <div
-                                className="w-100 app-outer-shadow"
+                                className="app-outer-shadow"
                                 style={{
                                     overflowX: 'auto',
                                     overflowY: 'hidden',
                                     position: 'absolute',
                                     top: 0,
                                     left: 0,
+                                    // Ends where the sticky row's transition
+                                    // icon and `⋮` begin: full width, a narrow
+                                    // pane put that icon on top of Save.
+                                    right: DOCUMENT_MENU_ROW_WIDTH,
+                                    // Pinned while the cards scroll under it.
+                                    // With no stacking of its own the cards
+                                    // (positioned, later in the page) painted
+                                    // OVER it: one scroll and Save, Discard
+                                    // and Redo were hidden under slide 1.
+                                    zIndex: 2,
+                                    backgroundColor: 'var(--app-surface)',
                                 }}
                             >
                                 <SlidesMenuComp />

@@ -33,6 +33,16 @@ vi.mock('./VarySlidesPreviewerComp', () => ({
     default: () => <div data-testid="vary-slides-previewer" />,
 }));
 
+// The presenter's slide list sits inside the document Stage Previewer.
+vi.mock('../stage/DocumentStagePreviewerComp', () => ({
+    default: ({ flexSizeNamePrefix }: any) => (
+        <div
+            data-testid="document-stage-previewer"
+            data-prefix={flexSizeNamePrefix}
+        />
+    ),
+}));
+
 vi.mock('./AppDocumentPreviewerFooterComp', () => ({
     default: () => <div data-testid="app-document-footer" />,
 }));

@@ -40,9 +40,14 @@ function applyLookAhead(
         firstAttachmentIndex < 0
             ? slides
             : slides.slice(0, firstAttachmentIndex);
+    // Laid out over the WHOLE slide, not inside the stage's padding: each box
+    // is the whole slide shrunk -- its own padding included -- so the current
+    // one sits flush in the top left corner and the next one flush left, with
+    // no margin around them (asked for: "save space + full opacity").
+    const { width, height } = lyricAppDocument.displayDim;
     const itemsList = genLookAheadItemsList(
         lyricSlides.map((slide) => slide.canvasItemsJson),
-        lyricAppDocument.canvasItemBounds,
+        { x: 0, y: 0, width, height },
         arrangement,
         (box, html): CanvasItemPropsType => {
             return {

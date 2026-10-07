@@ -72,8 +72,24 @@ export function toSessionSuffix(sessionId: string) {
     return sessionId === DEFAULT_SESSION_ID ? '' : `-${sessionId}`;
 }
 
+// Stored as data, in English, the day the list is first written.
+const DEFAULT_SESSION_NAME = 'Default';
+
 function toDefaultList(): MediaSessionType[] {
-    return [{ id: DEFAULT_SESSION_ID, name: 'Default' }];
+    return [{ id: DEFAULT_SESSION_ID, name: DEFAULT_SESSION_NAME }];
+}
+
+// What a session is called on screen. The built-in one is read through
+// `tran()` while it still carries the name the app gave it, so a Khmer window
+// does not show "Default"; a name the user typed is shown as typed.
+export function toSessionLabel(session: MediaSessionType) {
+    if (
+        session.id === DEFAULT_SESSION_ID &&
+        session.name === DEFAULT_SESSION_NAME
+    ) {
+        return tran('Default');
+    }
+    return session.name;
 }
 
 export function readSessions(target: string): MediaSessionType[] {
@@ -234,7 +250,7 @@ export default function MediaSessionsComp({
                     childBefore: genContextMenuItemIcon('pencil-square'),
                     menuElement: tran('Rename Session'),
                     onSelect: async () => {
-                        let name = session.name;
+                        let name = toSessionLabel(session);
                         const isOk = await showAppInput(
                             tran('Rename Session'),
                             genSessionNameInput(name, (newName) => {
@@ -256,7 +272,7 @@ export default function MediaSessionsComp({
                               onSelect: async () => {
                                   const isOk = await showAppConfirm(
                                       tran('Remove Session'),
-                                      `${tran('Remove')} "${session.name}"?`,
+                                      `${tran('Remove')} "${toSessionLabel(session)}"?`,
                                   );
                                   if (!isOk) {
                                       return;
@@ -293,7 +309,7 @@ export default function MediaSessionsComp({
                     session.id,
                 );
                 const stateWords = [
-                    session.name,
+                    toSessionLabel(session),
                     isOnScreen ? tran('On Screen') : null,
                     isAutoPlaying ? tran('Slide show is running') : null,
                 ]
@@ -320,7 +336,7 @@ export default function MediaSessionsComp({
                         }}
                     >
                         <span className={isOnScreen ? 'app-on-screen' : ''}>
-                            {session.name}
+                            {toSessionLabel(session)}
                         </span>
                         {isAutoPlaying ? (
                             <i className="bi bi-play-fill text-info" />

@@ -23,6 +23,12 @@ type VirtualRowType = {
     height: number;
 };
 
+export type ScrollToRowType = (
+    index: number,
+    align?: 'nearest' | 'center',
+    behavior?: ScrollBehavior,
+) => boolean;
+
 export type UseVirtualRowsOptionsType = {
     /** Must stay mounted for the list's whole life, even while it is empty. */
     containerRef: RefObject<HTMLElement | null>;
@@ -163,8 +169,8 @@ export function useVirtualRows({
             });
     }, [metrics, range, isEnabled, pinnedIndexes]);
 
-    const scrollToRow = useCallback(
-        (index: number, align: 'nearest' | 'center' = 'nearest') => {
+    const scrollToRow = useCallback<ScrollToRowType>(
+        (index, align = 'nearest', behavior = 'auto') => {
             const container = containerRef.current;
             if (container === null) {
                 return false;
@@ -181,6 +187,7 @@ export function useVirtualRows({
                 },
                 height: currentMetrics.heightOf(index),
                 align,
+                behavior,
             });
             // The range is read from the DOM, and the scroll event that would
             // do it arrives a frame later -- a caller that scrolls and then

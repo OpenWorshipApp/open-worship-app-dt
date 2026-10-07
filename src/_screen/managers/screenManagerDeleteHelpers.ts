@@ -77,6 +77,18 @@ function getUnownedPerScreenSettingKeys(screenId: number) {
     ];
 }
 
+// Per-screen keys of features that no longer exist. The edge Mask (releases
+// 2026.09.29 to 2026.10.01) was removed; a screen whose mask was ever set kept
+// `screen-mask-<id>`, which nothing reads now. A key that is already gone
+// costs one existence check.
+const retiredPerScreenSettingPrefixList = ['screen-mask-'];
+
+export function removeRetiredScreenSettings(screenId: number) {
+    for (const prefix of retiredPerScreenSettingPrefixList) {
+        removeSetting(`${prefix}${screenId}`);
+    }
+}
+
 export async function deleteScreenPersistedData(screenId: number) {
     for (const key of getUnownedPerScreenSettingKeys(screenId)) {
         removeSetting(key);

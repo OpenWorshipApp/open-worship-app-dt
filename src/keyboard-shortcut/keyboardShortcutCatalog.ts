@@ -254,7 +254,7 @@ function genScreenGroup(): KeyboardShortcutGroupType {
             {
                 id: 'screen-toggle',
                 keys: [toggleScreenEventMapper],
-                label: tran('Show or hide the screen'),
+                label: tran('Show or hide the selected screens'),
             },
             {
                 id: 'screen-clear-all',

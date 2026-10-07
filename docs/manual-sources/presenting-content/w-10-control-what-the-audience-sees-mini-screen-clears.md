@@ -22,7 +22,10 @@ workflowsVersion: "2026-10-06"
   that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
-  output display on or off. The icon fills in and brightens while showing. It is
+  output display on or off. The toggle acts on its own screen; **F5** acts on the
+  **selected** screens (every screen when none is selected) and turns them all the
+  same way: on only when all of them are off, otherwise all off — so with any of
+  them showing, **F5** hides them. The icon fills in and brightens while showing. It is
   the control named **[en:tran:Toggle showing screen]** — say those words when
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
@@ -43,7 +46,9 @@ workflowsVersion: "2026-10-06"
   screen, and a clip that was playing carries on. The card remembers the choice for
   that screen, even after a restart. 📸
 - **Lock** (header, the padlock): when locked (red), the screen refuses slide changes —
-  handy during a live moment; click again (green) to unlock.
+  handy during a live moment; click again (green) to unlock. A change it refuses says
+  _Screen Manager is locked_ in a message with its own **[en:tran:Unlock]**: pressing it
+  unlocks the screens and closes the message.
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.

@@ -66,6 +66,12 @@ in a popup window:
    shipped with. Double-clicking the divider does the same. The View menu's
    `Reset Widgets Size` (step 5) is the version for every panel at once.
 
+**With the keyboard:** press **Tab** until a divider shows a blue outline. The **Menu**
+key (or **Shift+F10**) opens the same menu as the right-click, and the arrow keys move
+the divider — **←/→** for one between side-by-side panels, **↑/↓** for one between an
+upper and a lower panel, **Shift** for bigger steps. The arrows never collapse a panel;
+the menu does that.
+
 > This used to be a button in Settings → General, where it did nothing until you also
 > clicked **Apply Settings** and the app reloaded. It is on the View menu now and takes
 > effect at once.

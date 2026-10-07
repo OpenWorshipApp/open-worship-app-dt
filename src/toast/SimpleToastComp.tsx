@@ -3,6 +3,7 @@ import { type JSX, useCallback, useRef } from 'react';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
+import { ToastCloseContext } from './toastCloseContext';
 
 export type SimpleToastType = {
     title: string;
@@ -80,7 +81,11 @@ export default function SimpleToastComp({
                     }}
                 />
             ) : (
-                <div className="toast-body app-selectable-text">{message}</div>
+                <div className="toast-body app-selectable-text">
+                    <ToastCloseContext value={onClose}>
+                        {message}
+                    </ToastCloseContext>
+                </div>
             )}
         </div>
     );

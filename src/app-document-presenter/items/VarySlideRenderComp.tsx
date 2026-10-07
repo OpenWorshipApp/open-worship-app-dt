@@ -1,7 +1,7 @@
 import './VarySlideComp.scss';
 
 import type { CSSProperties, ReactNode, MouseEvent } from 'react';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
@@ -50,6 +50,14 @@ import {
     useSlideTransition,
 } from '../../others/slideTransitionMenuHelpers';
 import type { TransitionEffectType } from '../../_screen/transitionEffectHelpers';
+import { useSlideStageView } from '../stage/documentStageContexts';
+
+// Only a Stage Previewer pane of stage 1 or up draws it, and it draws the
+// slides around a slide with every kind of slide renderer -- none of which a
+// plain slide list, the slide editor or a run sheet preview should load.
+const LazyStageLookAheadComp = lazy(() => {
+    return import('../stage/StageLookAheadComp');
+});
 
 function RenderScreenInfoComp({
     onScreenList,
@@ -275,6 +283,10 @@ export default function VarySlideRenderComp({
     // slide now wakes that slide and the one it replaced — not every preview in
     // the window.
     const onScreenList = useVarySlideOnScreenList(varySlide);
+    // `null` unless this card sits in a document's Stage Previewer pane of
+    // stage 1 or up -- and read HERE, because the body below renders into a
+    // React root of its own that no context reaches.
+    const stageView = useSlideStageView(varySlide);
     // A touch drag autoscrolls the container named here. Without the scope it
     // named the first previewer in the document, so dragging inside a floating
     // preview scrolled the main panel behind it.
@@ -436,7 +448,21 @@ export default function VarySlideRenderComp({
                 <ShadowingFillParentWidthComp width={width}>
                     <VarySlideBodyRenderComp varySlideData={varySlide}>
                         {getSlideItemShadowingStyle()}
-                        {children}
+                        {stageView === null ? (
+                            children
+                        ) : (
+                            // The slide alone while the layout loads, rather
+                            // than an empty card.
+                            <Suspense fallback={children}>
+                                <LazyStageLookAheadComp
+                                    width={varySlide.width}
+                                    height={varySlide.height}
+                                    view={stageView}
+                                >
+                                    {children}
+                                </LazyStageLookAheadComp>
+                            </Suspense>
+                        )}
                     </VarySlideBodyRenderComp>
                 </ShadowingFillParentWidthComp>
             </div>

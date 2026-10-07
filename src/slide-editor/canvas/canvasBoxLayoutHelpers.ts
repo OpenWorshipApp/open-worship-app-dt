@@ -1,4 +1,5 @@
 import { SCRIPT_SAFE_LINE_HEIGHT } from './canvasHelpers';
+import { SCREEN_FONT_FAMILY } from '../../_screen/screenFontFamily';
 
 export type BoxLayoutType = {
     left: number;
@@ -42,7 +43,8 @@ function createMeasuringElement({
     element.style.padding = `${fontSize / 10}px`;
     element.style.fontSize = `${fontSize}px`;
     element.style.lineHeight = `${SCRIPT_SAFE_LINE_HEIGHT}`;
-    element.style.fontFamily = fontFamily ?? '';
+    // Measured in the font it will be drawn in (`genTextStyle`).
+    element.style.fontFamily = fontFamily || SCREEN_FONT_FAMILY;
     element.innerHTML = html;
     return element;
 }

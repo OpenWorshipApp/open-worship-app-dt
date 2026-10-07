@@ -296,7 +296,6 @@ vi.mock('./managers/screenEventHelpers', () => ({
     useScreenForegroundManagerEvents: vi.fn(),
     useScreenDrawManagerEvents: vi.fn(),
     useScreenEvents: vi.fn(),
-    useScreenMaskManagerEvents: vi.fn(),
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
 }));
 
@@ -654,7 +653,6 @@ describe('screen component smoke tests', () => {
                 'foreground',
                 'draw',
                 'focus',
-                'mask',
             ]) {
                 expect(preview).not.toContain(`id="${id}"`);
             }

@@ -15,7 +15,7 @@ Each mini-screen card's header has an eye toggle (**Stop rendering preview**, 20
 **Why:** "everything working the same except no content drawing" — the user's words.
 
 **How to apply:**
-- A layer that only draws (background, both foreground roots, bible, focus, mask, draw) hands its root back on unmount via `releaseRootContainer` / `releaseDiv` — identity-guarded (a colour-note remount attaches the new root first, see `ScreenDrawManager.releaseDiv`) and skipped when `isPageScreen`. Before this, an unmounted mini screen (panel closed too) left managers rendering into detached divs: clips decoding, cameras open, countdown frames.
+- A layer that only draws (background, both foreground roots, bible, focus, draw) hands its root back on unmount via `releaseRootContainer` / `releaseDiv` — identity-guarded (a colour-note remount attaches the new root first, see `ScreenDrawManager.releaseDiv`) and skipped when `isPageScreen`. Before this, an unmounted mini screen (panel closed too) left managers rendering into detached divs: clips decoding, cameras open, countdown frames.
 - `ScreenForegroundManager` renderers run only with a mounted root (`whenMounted`); attaching a root re-renders all of `foregroundData`.
 - A ref callback that returns a cleanup must be STABLE (`useCallback`): these layers re-render on every `refresh` event, and React 19 runs an inline ref's cleanup on each render — every overlay would be torn down and rebuilt.
 - Measured 2026-10-02: presenter renderer 7.7% → 1.7% CPU with both cards off. The GPU process sat at ~35% CPU either way — something else in the presenter, not investigated.

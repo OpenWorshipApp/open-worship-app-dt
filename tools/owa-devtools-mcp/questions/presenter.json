@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-05",
+    "updated": "2026-10-06",
     "sections": [
         {
             "id": "orientation",
@@ -502,7 +502,10 @@
                         "arrow keys",
                         "page down",
                         "space",
-                        "continue"
+                        "continue",
+                        "scroll into view",
+                        "smooth scrolling",
+                        "selected slide off screen"
                     ],
                     "resources": {
                         "recipe": "W-03",
@@ -562,6 +565,27 @@
                         "recipe": "W-03",
                         "related": ["W-23"],
                         "find": "Documents",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "document-stage-monitor",
+                    "text": "How do I show the singer on stage what slide comes next?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stage monitor",
+                        "confidence monitor",
+                        "upcoming slide",
+                        "what is coming",
+                        "slide count",
+                        "lead singer",
+                        "worship leader",
+                        "St:"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": ["W-05"],
+                        "find": "Add Stage",
                         "guide": true
                     }
                 },
@@ -881,6 +905,25 @@
                         "recipe": "W-05",
                         "find": "Add Stage",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "stage-pane-hide",
+                    "text": "How do I take a stage away from the Stage Previewer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "hide stage",
+                        "remove stage",
+                        "close stage",
+                        "too many stages",
+                        "x on the stage",
+                        "stage pane",
+                        "get rid of stage"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": ["W-05"],
+                        "find": "Hide Stage"
                     }
                 },
                 {

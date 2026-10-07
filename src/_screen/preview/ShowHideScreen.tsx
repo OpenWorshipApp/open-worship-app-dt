@@ -11,17 +11,44 @@ import {
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { tran } from '../../lang/langHelpers';
 import { toggleScreenEventMapper } from '../../keyboard-shortcut/appShortcutMappers';
+import { getAllScreenManagers } from '../managers/screenManagerHelpers';
 
 const showingScreenEventMap = toggleScreenEventMapper;
+
+// F5 is ONE key for the whole Mini Screen panel. Every card's toggle used to
+// register it, so one press flipped each screen on its own: with two screens
+// it showed both whatever was selected, and with one of them up it hid that
+// one and showed the other. It now acts on the selected screens -- every
+// screen when none is selected, as with a single screen -- and brings them all
+// to ONE state. It shows them only when every one is hidden; with any of them
+// up it hides them all, so the key an operator reaches for in a hurry never
+// puts a second screen up while taking one down.
+export function toggleScreensShowing() {
+    const screenManagers = getAllScreenManagers();
+    const selectedScreenManagers = screenManagers.filter((screenManager) => {
+        return screenManager.isSelected;
+    });
+    const targets =
+        selectedScreenManagers.length > 0
+            ? selectedScreenManagers
+            : screenManagers;
+    const isShowing = targets.every((screenManager) => {
+        return !screenManager.isShowing;
+    });
+    for (const screenManager of targets) {
+        if (screenManager.isShowing !== isShowing) {
+            screenManager.isShowing = isShowing;
+        }
+    }
+}
+
+// Mounted once, by the Mini Screen panel -- not by each card's toggle.
+export function useToggleScreensShowingKey() {
+    useKeyboardRegistering([showingScreenEventMap], toggleScreensShowing, []);
+}
+
 export default function ShowHideScreenComp() {
     const screenManagerBase = useScreenManagerBaseContext();
-    useKeyboardRegistering(
-        [showingScreenEventMap],
-        () => {
-            screenManagerBase.isShowing = !screenManagerBase.isShowing;
-        },
-        [screenManagerBase],
-    );
     const isShowing = screenManagerBase.isShowing;
     useScreenManagerEvents(['visible'], screenManagerBase);
     const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);

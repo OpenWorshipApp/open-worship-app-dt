@@ -2,6 +2,8 @@
 
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { getScrollSyncState } from './screenScrollSyncHelpers';
+
 const mocks = vi.hoisted(() => ({
     getWindowDim: vi.fn(() => ({ width: 1440, height: 900 })),
     getSetting: vi.fn(),
@@ -180,18 +182,19 @@ describe('ScreenManagerBase', () => {
         const text = document.createElement('div');
         target.append(text);
         scrollToMock.mockClear();
+        const nowSpy = vi.spyOn(performance, 'now').mockReturnValue(4321);
         manager.syncScrollPercentage({
             domSelector: '.sync-target',
             scroll: { x: 0.25, y: 0.5012 },
             isSubPixel: true,
         });
+        nowSpy.mockRestore();
         expect(scrollToMock).not.toHaveBeenCalled();
         expect(target.scrollTop).toBe(200);
         expect(text.style.translate).toBe('0 -0.480px');
-        expect((target as any)._remoteAppliedScroll).toEqual({
-            left: 100,
-            top: 200,
-        });
+        // Marked as remote-applied like a whole-pixel one, so the frame's
+        // scroll events are not sent back to the preview driving it.
+        expect(getScrollSyncState(target).remoteAt).toBe(4321);
         // The last one lets go, back to a plain scroll.
         manager.syncScrollPercentage({
             domSelector: '.sync-target',
@@ -208,6 +211,56 @@ describe('ScreenManagerBase', () => {
             displayId: 101,
         });
         expect(mocks.hideScreen).toHaveBeenCalledWith(1);
+    });
+
+    test('a screen main cannot show is switched back off with a message, not left on', async () => {
+        // Screen 0 kept on a Screen Mirror guest display that is unplugged:
+        // main refuses the show. This used to be an unhandled rejection --
+        // the app's "Reload is needed" dialog -- with the toggle left on.
+        mocks.getDisplayIdByScreenId.mockReturnValue(-1000000);
+        mocks.showScreen.mockRejectedValueOnce(
+            new Error('Guest display is disconnected'),
+        );
+        mocks.getAllShowingScreenIds.mockReturnValue([]);
+        const manager = new TestScreenManagerBase(0);
+        const onVisible = vi.fn();
+        manager.registerEventListener(['visible'], onVisible);
+
+        manager.isShowing = true;
+        expect(manager.isShowing).toBe(true);
+
+        await vi.waitFor(() => expect(manager.isShowing).toBe(false));
+        expect(mocks.hideScreen).toHaveBeenCalledWith(0);
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Screen not shown',
+            'Its Screen Mirror display is not connected. Connect that computer, or choose another display for this screen.',
+        );
+        await vi.waitFor(() => expect(onVisible).toHaveBeenCalledTimes(2));
+        mocks.getDisplayIdByScreenId.mockImplementation(
+            (screenId: number) => screenId + 100,
+        );
+    });
+
+    test('a refusal that comes back after a later show leaves that show alone', async () => {
+        let rejectFirst: (error: Error) => void = () => {};
+        mocks.showScreen.mockImplementationOnce(
+            () =>
+                new Promise((_resolve, reject) => {
+                    rejectFirst = reject;
+                }),
+        );
+        mocks.showScreen.mockResolvedValueOnce(undefined);
+        mocks.getAllShowingScreenIds.mockReturnValue([]);
+        const manager = new TestScreenManagerBase(5);
+
+        manager.isShowing = true;
+        manager.isShowing = false;
+        manager.isShowing = true;
+        rejectFirst(new Error('late refusal'));
+        await new Promise((resolve) => setTimeout(resolve, 25));
+
+        expect(manager.isShowing).toBe(true);
+        expect(mocks.showSimpleToast).not.toHaveBeenCalled();
     });
 
     test('uses window dimensions on screen pages and reports locked state', () => {
@@ -239,6 +292,38 @@ describe('ScreenManagerBase', () => {
         // A separate press a moment later is told again.
         nowSpy.mockReturnValue(51_500);
         expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledTimes(2);
+        nowSpy.mockRestore();
+    });
+
+    test('one refusal for every locked screen a press reaches, and its Unlock frees them all', () => {
+        const nowSpy = vi.spyOn(Date, 'now');
+        const screen0 = new TestScreenManagerBase(10);
+        const screen1 = new TestScreenManagerBase(11);
+        screen0.isLocked = true;
+        screen1.isLocked = true;
+        // F6 with a locked colour group: each screen refuses the same press.
+        nowSpy.mockReturnValue(90_000);
+        expect(screen0.checkIsLockedWithMessage()).toBe(true);
+        expect(screen1.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+
+        // The toast's own Unlock -- it covers the header's lock icon.
+        const [, message] = mocks.showSimpleToast.mock.calls[0];
+        message.props.onUnlock();
+        expect(screen0.isLocked).toBe(false);
+        expect(screen1.isLocked).toBe(false);
+        nowSpy.mockRestore();
+    });
+
+    test('a clock set back does not silence the lock refusal', () => {
+        const nowSpy = vi.spyOn(Date, 'now');
+        const manager = new TestScreenManagerBase(12);
+        manager.isLocked = true;
+        nowSpy.mockReturnValue(5_000_000);
+        manager.checkIsLockedWithMessage();
+        nowSpy.mockReturnValue(1_000);
+        manager.checkIsLockedWithMessage();
         expect(mocks.showSimpleToast).toHaveBeenCalledTimes(2);
         nowSpy.mockRestore();
     });

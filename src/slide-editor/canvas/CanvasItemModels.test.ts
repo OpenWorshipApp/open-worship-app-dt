@@ -155,6 +155,7 @@ import {
     getCanvasItemsInRect,
     mergeCanvasItemSelection,
 } from './canvasSelectionHelpers';
+import { SCREEN_FONT_FAMILY } from '../../_screen/screenFontFamily';
 
 function createBaseBox(type: string) {
     return {
@@ -207,7 +208,8 @@ describe('CanvasItem models', () => {
             expect.objectContaining({
                 display: 'flex',
                 fontSize: '60px',
-                fontFamily: '',
+                // No font of its own: the screen window's, not the app font.
+                fontFamily: SCREEN_FONT_FAMILY,
                 fontWeight: '',
                 color: HEX_COLOR_WHITE,
                 alignItems: 'center',

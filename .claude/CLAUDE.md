@@ -261,7 +261,10 @@ that OPENS a panel carries the same words as the panel it opened.
 - **Screen output window.** The presentation screen is a separate Electron
   `BrowserWindow` (`screen.tsx` / `ScreenAppComp`, `appProvider.isPageScreen`).
   While it is SHOWING it appears on the CDP endpoint as its own `list_pages`
-  target (`https://localhost:3000/screen.html?screenId=N`) and is fully drivable
+  target, `http://127.0.0.1:<port>/screen.html?screenId=N` -- every screen
+  window loads from the Screen Mirror server (ports 39240-39259,
+  `screenMirrorRuntime.screenUrl`), and from `https://localhost:3000` only
+  when that server did not start. It is fully drivable
   (snapshot/click/screenshot the target itself); the target vanishes the moment
   the screen hides. When hidden or during early mount, its console is forwarded:
   `loggerHelpers.callConsole` → `appProvider.messageUtils.sendData('all:app:log', …)`

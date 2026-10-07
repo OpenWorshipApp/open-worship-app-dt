@@ -27,6 +27,7 @@
 - [TypeScript 7 side-by-side](typescript-7-side-by-side.md) — `tsc` is `@typescript/native`
 - [Dev data dir is separate](dev-data-dir-is-separate.md) — only `userData` gets `-dev`
 - [Lyric subsystem architecture](lyric-subsystem-architecture.md) — slides are HTML from `open-lyric`
+- [Document stages](document-stage-previewer.md) — every non-song doc has a Stage Previewer and honours St:; drawn at render time, base slide untouched
 - [On-screen check must not parse](onscreen-check-must-not-parse.md) — runs per row per screen event
 - [QA: intentional, not bugs](qa-intentional-not-bugs.md) — blank slide0; a bible present swaps BG and clears the slide
 - [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — `rtl` shows `12_cv.mp4` as `cv_12`
@@ -136,3 +137,4 @@
 - [Message editors hold local text](message-editor-text-is-local-state.md)
 - [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there; drawing layers release on unmount
 - [Screen Mirror across two machines](screen-mirror-cross-machine-test.md) — hosting is opt-in; peers need /remote-control here; newest-instance tools
+- [Electron has no Khmer dates](electron-icu-has-no-khmer.md) — Intl answers km-KH in English; vitest (Node) does not

@@ -110,7 +110,7 @@ function DocxSlideIframeContentComp(
     );
 }
 
-function DocxSlideRenderContentComp(
+export function DocxSlideRenderContentComp(
     props: Readonly<{
         html?: string;
         htmlFilePath: string;

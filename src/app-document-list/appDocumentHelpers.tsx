@@ -80,8 +80,10 @@ import {
     setParamIdNum,
 } from '../helper/domHelpers';
 
-export const BLANK_HTML_SLIDE_SRC = '/assets/slide0.html';
-export const BLANK_IMAGE_SLIDE_SRC = '/assets/blank.png';
+export {
+    BLANK_HTML_SLIDE_SRC,
+    BLANK_IMAGE_SLIDE_SRC,
+} from './blankSlideConstants';
 
 export async function showStaticSlideContextMenu(
     event: any,

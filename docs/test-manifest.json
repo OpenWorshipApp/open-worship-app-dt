@@ -69,15 +69,17 @@
         "PM-08",
         "PM-09",
         "PM-149",
+        "PM-157",
         "KB-05",
         "KB-08"
       ],
-      "screenshots": 2,
+      "screenshots": 3,
       "steps": [
         "In the left column, click a document in the [en:tran:Documents] list. It highlights, and its slides appear as thumbnails in the middle Documents tab.",
         "Double-click a slide thumbnail. The slide goes live: it appears on the mini screen, and the live item is marked highlighted (on-screen indicator).",
-        "To step through slides with the keyboard, click once in the thumbnail area, then use Arrow keys / PageUp / PageDown; Space toggles the focused slide.",
-        "To remove the slide from the screen, press F8 ([en:tran:Clear Slide]) or click the matching clear button under the mini screen."
+        "To step through slides with the keyboard, click once in the thumbnail area, then use Arrow keys / PageUp / PageDown; Space advances and Shift+Space goes back. The preview scrolls smoothly to the selected slide, including after several quick Next presses or wrapping from the last slide to the first.",
+        "To remove the slide from the screen, press F8 ([en:tran:Clear Slide]) or click the matching clear button under the mini screen.",
+        "Show the person on the stage what comes next. A screen's St: number (the badge at the right of its mini screen's footer) decides how a slide is drawn on it, for every kind of document — a slide document, a PDF, a PowerPoint or a Word file — just as it does for a song (W-05): - Stage 0 — the slide exactly as it is. - Stage 1 — the slide, with its place in the document in the bottom-right corner (3/12, or Welcome · 3/12 when the slide has a name). - Stage 2 — the slide at the top, the next slide smaller under it — at full brightness, not faded — and the count. The pair grows to fill the screen's height whatever shape the slides are, flush with its top left corner, no margin, and the slides touch — no gap between them, only each one's frame. - Stage 3 — the same with the next two slides. - Stage 4 — the next slide under it, without the count. - Stage 5 — the previous slide top left, the slide, and the next slide bottom right. As on a song's stages (W-05), the slides around the current one are never faded. On every stage that shows a count, each slide on the screen carries its own — the coming ones too (2/7, 3/7) — in a large figure on a half-transparent dark pill. Set a stage monitor's St: to 2 and the singer always sees what is coming. To see it here first, click [en:tran:Add Stage] in the [en:tran:Stage Previewer] header above the slides and pick a stage: it arrives as its own chip and its own pane, side by side with Stage 0, which always stays. The × on a chip ([en:tran:Hide Stage] 2) takes that pane away again, and [en:tran:Add Stage] brings it straight back. In a narrow pane — beside the Bibles tab, say — the header's title gives way first and [en:tran:Add Stage] folds to its +, so every chip stays in view. There is nothing to set on a document's stage — unlike a song's, its chips have no ⚙. Clicking a slide in any pane presents the same slide; each screen draws it at its own St:."
       ]
     },
     {
@@ -125,9 +127,9 @@
         "Press F8 / the clear button to take it down.",
         "If the song's ol:Config block lists an - Attachments: field — one link per line — each link also becomes its own slide at the end of the Stage Previewer, named after the link. A YouTube link becomes a playable video, an image / video / audio link becomes that media, and any other web address becomes the page itself; each fills the whole slide. Present one the same way you present a verse. A link to a file on this computer works too (written file:///C:/…), which is how a chart or a backing track travels with the song.",
         "Links the app cannot show — a PDF, or a line that is not a web address — still get their named slide, just an empty one.",
-        "One song can be previewed at several stages at once. [en:tran:Add Stage] in the Stage Previewer header opens the same menu the mini screen's St: badge does: Stage 0 to Stage 4 — a stage already on screen is listed but greyed out — and Increment · Stage N at the foot, which adds one past the highest stage you have. Increment is how you get past Stage 4, and it is what matches a screen whose St: number you have already pushed up there. Each stage arrives as its own chip and its own pane, in its own colour; the × on a chip takes that stage away again, and the padlocked Stage 0 stays.",
+        "One song can be previewed at several stages at once. [en:tran:Add Stage] in the Stage Previewer header opens the same menu the mini screen's St: badge does: Stage 0 to Stage 4 — a stage already on screen is listed but greyed out — and Increment · Stage N at the foot, which adds one past the highest stage you have. Increment is how you get past Stage 4, and it is what matches a screen whose St: number you have already pushed up there. Each stage arrives as its own chip and its own pane, in its own colour; the × on a chip ([en:tran:Hide Stage] N) hides that stage's pane again — its look under ⚙ is kept for when you add it back — and the padlocked Stage 0 stays.",
         "To change how a stage's slides look, click the ⚙ on that stage's chip (Stage 0, Stage 3, …) in the Stage Previewer header. A small Stage Style window opens — drag it anywhere, it remembers where you left it. It sets Slide Padding, Background Opacity, Extra Font Size, a Light/Dark theme, and a Custom CSS box for anything else.",
-        "These settings belong to the stage, not to the song — every song you open uses them, which is why the panel says _Applies to every song_. Every stage number keeps its own settings, so you can leave the projected stage plain, make the chord stage larger, and give a third stage a dark theme for the person on the sound desk. Stage 0 is the plain lyrics-only look; every stage from 1 up starts from the chord-and-notes look and differs only by what you set here. Custom CSS is added to the stage's built-in look rather than replacing it, so stage 0 keeps hiding its chords whatever you type.",
+        "These settings belong to the stage, not to the song — every song you open uses them, which is why the panel says _Applies to every song_. Every stage number keeps its own settings, so you can leave the projected stage plain, make the chord stage larger, and give a third stage a dark theme for the person on the sound desk. Stage 0 is the plain lyrics-only look; every stage from 1 up starts from the chord-and-notes look and differs only by what you set here. Custom CSS is added to the stage's built-in look rather than replacing it, so stage 0 keeps hiding its chords whatever you type. Stages 2 to 5 show what comes next around the verse being sung: 2 the next verse under it, 3 the next two, 4 like 2 in the plain look, 5 the previous one top left and the next one bottom right. The coming verse is at full brightness, not faded, and the verse sits flush in the screen's top left corner with the next one flush left under it, touching it — no margin around them and no gap between them, whatever Slide Padding says (the padding stays inside each verse's own box).",
         "Reset puts that stage back to the defaults.",
         "A screen already showing a slide keeps it — present the slide again to push the new look out to it.",
         "Edit the words while the song is open and the verses follow by themselves. Change the song in the Lyric Editor (right-click the song → edit) — or in any other window — and within a second or two the rendered song and every Stage Previewer pane show the new words. You do not have to re-pick the song, and you do not have to save first: the editor keeps your unsaved work on disk, and that is what the verses render.",
@@ -1304,14 +1306,13 @@
     },
     {
       "id": "W-47",
-      "title": "Put messages on the screen, and blank the edges of the picture",
+      "title": "Put messages on the screen",
       "section": "Keyboard shortcut reference (tutorial appendix)",
-      "page": "manual-sources/keyboard-shortcut-reference-tutorial-appendix/w-47-put-messages-on-the-screen-and-blank-the-edges-of-the-picture.md",
-      "url": "/keyboard-shortcut-reference-tutorial-appendix/w-47-put-messages-on-the-screen-and-blank-the-edges-of-the-picture",
+      "page": "manual-sources/keyboard-shortcut-reference-tutorial-appendix/w-47-put-messages-on-the-screen.md",
+      "url": "/keyboard-shortcut-reference-tutorial-appendix/w-47-put-messages-on-the-screen",
       "verify": [
         "PM-134",
-        "PM-135",
-        "PM-136"
+        "PM-135"
       ],
       "screenshots": 1,
       "steps": [
@@ -1322,10 +1323,7 @@
         "The whole set. [en:tran:Show All Messages] puts every message up at once as one block. Tick [en:tran:Rotate] first and a seconds box appears: now the same button shows them one at a time, cycling until you hide it. That is the notice board before a service.",
         "Make it look like a notice. Open [en:tran:Properties], then the [en:tran:Effects] fold under it. [en:tran:Padding] is the room between your words and the edge of the coloured box behind them — it starts at a quarter of a text size, and because it is measured in text sizes the box keeps its shape when you change [en:tran:Font Size]. Add a [en:tran:Border] to frame it, a [en:tran:Shadow] to lift it off the picture, [en:tran:Text Align] to centre it, and a [en:tran:Text Shadow] of [en:tran:Outline] when the message has to be read over a busy photograph or a moving video. Changing any of them while messages are showing restyles them where they stand and keeps them stacked.",
         "F4 is the shortcut: with a screen ticked it puts the session up, and pressing it again takes everything down. If no screen is ticked it tells you so rather than guessing.",
-        "The text is plain. Typing <b>loud</b> puts those angle brackets on the screen exactly as you typed them; a message is never treated as formatting. Use the save buttons at the top to keep a whole session — every message in it — and pick it back next week.",
-        "Blanking the edges. If the projector's picture runs past your screen — onto the wall, over an organ pipe, or below a screen that only comes half way down — find the [en:tran:Mask] button in the [en:tran:Mini Screen] footer, just right of the drawing button. Press it to open four sliders.",
-        "Drag [en:tran:Cover from the top], [en:tran:Cover from the bottom], [en:tran:Cover from the left] and [en:tran:Cover from the right] until the picture stops where your screen does. The bars are solid and sit over everything, including a video overlay. You can change the colour if black is not the right answer for your room.",
-        "The mask is not content, and it behaves differently on purpose. It is measured once for the room and then left alone: it survives closing the panel, it survives restarting the app, and [en:tran:Clear All] (F6) does not remove it. That is deliberate — the panic key must never hand you a picture spilling onto the wall. The only thing that removes it is [en:tran:Remove Mask] in that same panel."
+        "The text is plain. Typing <b>loud</b> puts those angle brackets on the screen exactly as you typed them; a message is never treated as formatting. Use the save buttons at the top to keep a whole session — every message in it — and pick it back next week."
       ]
     },
     {
@@ -1374,7 +1372,7 @@
       "steps": [
         "On the menu bar, open Help → [en:tran:Keyboard Shortcuts]. It sits under [en:tran:Tips of the Day] and [en:tran:All tips].",
         "A floating panel opens titled [en:tran:Keyboard Shortcuts] · and the page you are on — [en:tran:Presenter], [en:tran:Bible Reader] or [en:tran:Slide Editor]. The cursor is already in [en:tran:Search shortcuts]. Each row says what a key does on the left and shows the key on the right; a key with two spellings shows both ([en:tran:Redo] is Ctrl+Shift+Z and Ctrl+Y). A grey line under a heading or a row says when the key works — for example [en:tran:While the slides panel has focus]: the slide arrows only move the slides after you click into the slides panel.",
-        "Each page lists its own keys. The Presenter starts with [en:tran:Screens] (F5 shows or hides the screen, F6–F10 clear it, F4 the messages), then [en:tran:Slides], [en:tran:Bible Lookup], [en:tran:Presenting Flow] and the mini screen's [en:tran:Drawing] and [en:tran:Focusing] keys. The Bible Reader lists the lookup and split keys, and the Slide Editor the canvas keys. Every page ends with [en:tran:Every window], [en:tran:Presenting Control] and [en:tran:Dialogs and menus]. On a Mac the keys are shown the Mac way (⌘⇧ S).",
+        "Each page lists its own keys. The Presenter starts with [en:tran:Screens] (F5 shows or hides the selected screens, F6–F10 clear them, F4 the messages), then [en:tran:Slides], [en:tran:Bible Lookup], [en:tran:Presenting Flow] and the mini screen's [en:tran:Drawing] and [en:tran:Focusing] keys. The Bible Reader lists the lookup and split keys, and the Slide Editor the canvas keys. Every page ends with [en:tran:Every window], [en:tran:Presenting Control] and [en:tran:Dialogs and menus]. On a Mac the keys are shown the Mac way (⌘⇧ S).",
         "Type a word or a key — clear, split, f5 — and the list narrows to the rows that match; the counter beside the box shows how many of the page's keys matched. [en:tran:No shortcuts found] means nothing did.",
         "Esc in the box empties it; a second Esc closes the panel, and so does its ✕. Drag the title bar to move the panel, drag an edge to resize it, and use the chevron to roll it up to its title. It opens again where you left it.",
         "The panel does not take the keyboard away from the app: with it open, every key it lists still works, so you can read a key and try it. Only typing in its own search box stays in the box — Enter, Tab and the arrows there do not reach the page behind it, while a function key such as F5 or a Ctrl key still does.",

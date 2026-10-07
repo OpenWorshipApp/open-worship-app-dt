@@ -60,15 +60,24 @@ function genContextMenuItems(
 function LyricFilePreviewComp({ lyric }: Readonly<{ lyric: Lyric }>) {
     const fileSource = FileSource.getInstance(lyric.filePath);
     const { canSave } = useEditingHistoryStatus(lyric.filePath);
+    // The name gives way, the unsaved `*` never does (see the same row in
+    // `VaryAppDocumentFileComp`).
     return (
-        <div className="w-100 h-100 app-ellipsis">
+        <div
+            className="w-100 h-100 d-flex align-items-center app-overflow-hidden"
+            style={{ minWidth: 0 }}
+        >
             <i
-                className="bi bi-music-note"
+                className="bi bi-music-note flex-shrink-0"
                 title={tran('Lyric')}
                 style={{ color: 'var(--bs-info)' }}
             />
-            {fileSource.name}
-            {canSave && <span style={{ color: 'red' }}>*</span>}
+            <span className="app-ellipsis">{fileSource.name}</span>
+            {canSave && (
+                <span className="flex-shrink-0" style={{ color: 'red' }}>
+                    *
+                </span>
+            )}
         </div>
     );
 }

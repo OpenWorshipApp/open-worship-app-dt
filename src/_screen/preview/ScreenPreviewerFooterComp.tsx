@@ -23,7 +23,6 @@ import {
     getStageAccentColor,
     STAGE_NUMBER_CHOICE_COUNT,
 } from '../screenHelpers';
-import { useScreenMaskManagerEvents } from '../managers/screenEventHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
@@ -36,57 +35,6 @@ const LazyMiniScreenDrawHandlersComp = lazy(() => {
 const LazyMiniScreenFocusHandlersComp = lazy(() => {
     return import('./MiniScreenFocusHandlersComp');
 });
-
-const LazyMiniScreenMaskHandlersComp = lazy(() => {
-    return import('./MiniScreenMaskHandlersComp');
-});
-
-/**
- * The blanking switch, deliberately a button of its OWN rather than a third
- * entry in the Drawing/Focusing picker beside it.
- *
- * Those two are alternatives -- one pointer, one overlay, the picker choosing
- * which the button drives. A mask is not an alternative to either: it is room
- * geometry that stays up while an operator draws and spotlights over it, so
- * folding it into that picker would have made setting a mask turn drawing off.
- *
- * Its dot stays lit while a mask is set, because a mask is invisible in a
- * closed panel and an operator needs to be able to see that the black bar at
- * the top of the picture is deliberate.
- */
-function MaskSwitchComp({
-    isMaskHandlersVisible,
-    setIsMaskHandlersVisible,
-}: Readonly<{
-    isMaskHandlersVisible: boolean;
-    setIsMaskHandlersVisible: (isVisible: boolean) => void;
-}>) {
-    const { screenMaskManager } = useScreenManagerContext();
-    useScreenMaskManagerEvents(['update']);
-    const isMasking = screenMaskManager?.isShowing ?? false;
-    const title = `${tran(isMaskHandlersVisible ? 'Disable' : 'Enable')} ${tran(
-        'Mask',
-    )}`;
-    return (
-        <button
-            className={
-                'btn btn-sm btn-' +
-                (isMaskHandlersVisible || isMasking
-                    ? 'primary'
-                    : 'outline-secondary')
-            }
-            style={{ width: 25 }}
-            onClick={() => {
-                setIsMaskHandlersVisible(!isMaskHandlersVisible);
-            }}
-            title={title}
-            aria-label={title}
-            aria-pressed={isMaskHandlersVisible}
-        >
-            <i className="bi bi-square-half" />
-        </button>
-    );
-}
 
 function getNewStageNumber(
     event: any,
@@ -314,7 +262,6 @@ function DrawSwitchComp({
 
 export default function ScreenPreviewerFooterComp() {
     const [isAudioHandlersVisible, setIsAudioHandlersVisible] = useState(false);
-    const [isMaskHandlersVisible, setIsMaskHandlersVisible] = useState(false);
     const screenManager = useScreenManagerContext();
     // Restore the draw panel's on/off state persisted for this screen.
     // Which overlay control the panel shows. Persisted per screen so the
@@ -394,12 +341,6 @@ export default function ScreenPreviewerFooterComp() {
                             setDrawMode={setDrawMode}
                         />
                     </div>
-                    <div className="ms-1">
-                        <MaskSwitchComp
-                            isMaskHandlersVisible={isMaskHandlersVisible}
-                            setIsMaskHandlersVisible={setIsMaskHandlersVisible}
-                        />
-                    </div>
                 </div>
                 <div className="flex-grow-1 d-flex justify-content-end">
                     {/* Role, focus and the key press belong on the one element
@@ -463,11 +404,6 @@ export default function ScreenPreviewerFooterComp() {
                     ) : (
                         <LazyMiniScreenDrawHandlersComp />
                     )}
-                </AppSuspenseComp>
-            ) : null}
-            {isMaskHandlersVisible ? (
-                <AppSuspenseComp>
-                    <LazyMiniScreenMaskHandlersComp />
                 </AppSuspenseComp>
             ) : null}
         </div>

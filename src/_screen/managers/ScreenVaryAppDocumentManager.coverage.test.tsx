@@ -1559,6 +1559,98 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         manager.div = null;
     });
 
+    test('a stage screen draws a PowerPoint slide in its stage layout, Full Width on', async () => {
+        detachAllManagerDivs();
+        // The window that is handed the look-ahead, rather than working it out.
+        mocks.appProvider.isPageScreen = true;
+        // The real Word schema accepts a PowerPoint slide too; the stage
+        // layout must not be decided by it.
+        mocks.docxTryValidate.mockImplementation((item: any) => {
+            return item?.kind === 'docx' || item?.kind === 'pptx';
+        });
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(84),
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        manager.div = host;
+        manager.varySlideData = {
+            filePath: '/slides/deck.pptx',
+            itemJson: {
+                id: 2,
+                kind: 'pptx',
+                metadata: { width: 1280, height: 720 },
+            } as any,
+            isRenderFullWidth: true,
+            stageLookAhead: { stage: 2, label: '1/7', sideList: [null] },
+        };
+        await flushVarySlideData();
+        await manager.render();
+
+        expect(host.querySelector('.stage-look-ahead-index')?.textContent).toBe(
+            '1/7',
+        );
+        manager.div = null;
+    });
+
+    test('a stage screen fits a full-width PDF page so the next one has room', async () => {
+        detachAllManagerDivs();
+        mocks.appProvider.isPageScreen = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(85),
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        manager.div = host;
+        manager.varySlideData = {
+            filePath: '/slides/talk.pdf',
+            itemJson: {
+                id: 1,
+                kind: 'pdf',
+                imagePreviewSrc: '/page-1.png',
+                metadata: { width: 800, height: 600 },
+            } as any,
+            isRenderFullWidth: true,
+            stageLookAhead: { stage: 1, label: '1/3', sideList: [] },
+        };
+        await flushVarySlideData();
+        await manager.render();
+
+        expect(mocks.genPdfSlide).toHaveBeenLastCalledWith(
+            '/page-1.png',
+            false,
+        );
+        expect(host.querySelector('.stage-look-ahead-index')).not.toBeNull();
+        manager.div = null;
+    });
+
+    test('with no look-ahead a full-width PDF page stays full width', async () => {
+        detachAllManagerDivs();
+        mocks.appProvider.isPageScreen = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(86),
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        manager.div = host;
+        manager.varySlideData = {
+            filePath: '/slides/talk.pdf',
+            itemJson: {
+                id: 1,
+                kind: 'pdf',
+                imagePreviewSrc: '/page-1.png',
+                metadata: { width: 800, height: 600 },
+            } as any,
+            isRenderFullWidth: true,
+        };
+        await flushVarySlideData();
+        await manager.render();
+
+        expect(mocks.genPdfSlide).toHaveBeenLastCalledWith('/page-1.png', true);
+        expect(host.querySelector('.stage-look-ahead-index')).toBeNull();
+        manager.div = null;
+    });
+
     test('containerStyle matches the screen size', () => {
         const manager = new ScreenVaryAppDocumentManager(
             createScreenManagerBase(83),

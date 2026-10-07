@@ -14,9 +14,8 @@ import type { ScreenDrawEventType } from './ScreenDrawManager';
 import ScreenDrawManager from './ScreenDrawManager';
 import type { ScreenFocusEventType } from './ScreenFocusManager';
 import ScreenFocusManager from './ScreenFocusManager';
-import type { ScreenMaskEventType } from './ScreenMaskManager';
-import ScreenMaskManager from './ScreenMaskManager';
 import { type ListenerType } from '../../event/EventHandler';
+import { getScrollSyncState } from './screenScrollSyncHelpers';
 import { checkIsSubPixelScrolling } from '../../scrolling/subPixelScrollHelpers';
 
 export function useScreenEvents<T extends string>(
@@ -125,29 +124,33 @@ export function useScreenFocusManagerEvents(
     );
 }
 
-export function useScreenMaskManagerEvents(
-    events: ScreenMaskEventType[],
-    screenMaskManager?: ScreenMaskManager,
-    callback?: ListenerType<void>,
-) {
-    useScreenEvents(
-        events,
-        ScreenMaskManager as any,
-        screenMaskManager,
-        callback,
-    );
-}
-
 // How long after a wheel on a container its scroll events still count as the
 // operator's: Chrome animates a wheel notch over ~200ms and a touchpad's
 // momentum arrives as more wheels; the rest is headroom for a slow machine,
 // whose frames -- and so whose scroll events -- run late.
 const WHEEL_SCROLL_WINDOW_MS = 1000;
 
+// How long after a sync message scrolled a container the scroll events it
+// fires are still that message's, unless the operator touched the container
+// since. A remote scroll is never just the one event its `scrollTo` fires: the
+// bible view's header shrinks over the first 118px and reflows the table, the
+// browser's scroll anchoring and clamping answer that a frame or more later,
+// and a slow machine is later still.
+const REMOTE_SCROLL_QUIET_MS = 1000;
+
 export function registerScrollingSyncEvent(
     divHaftScale: HTMLElement,
     callback: (scroll: { x: number; y: number }, isFromWheel: boolean) => void,
 ) {
+    // Once per element, the latest callback answering. The bible view is
+    // handed the same div again every time its host's effect re-runs, and
+    // each pass used to stack another pair of listeners.
+    const state = getScrollSyncState(divHaftScale);
+    const isRegistered = state.callback !== null;
+    state.callback = callback;
+    if (isRegistered) {
+        return;
+    }
     // A wheel only reaches this element from a pointer over it, so the scroll
     // it drives is the operator's. It used to be cancelled unless
     // `getIsMouseOverApp()` and `getIsWindowFocused()` agreed, and neither
@@ -156,44 +159,50 @@ export function registerScrollingSyncEvent(
     // second is false for a window the pointer only hovers (the OS wheels the
     // window under the pointer), so the mini screen was dead until clicked.
     // Passive now, which also lets the browser scroll off the main thread.
-    let lastWheelAt = Number.NEGATIVE_INFINITY;
     divHaftScale.addEventListener(
         'wheel',
         () => {
-            lastWheelAt = performance.now();
+            state.wheelAt = state.inputAt = performance.now();
+        },
+        { passive: true },
+    );
+    divHaftScale.addEventListener(
+        'pointerdown',
+        () => {
+            state.inputAt = performance.now();
         },
         { passive: true },
     );
     divHaftScale.addEventListener('scroll', (event) => {
         event.preventDefault();
+        const now = performance.now();
         const isFromWheel =
-            performance.now() - lastWheelAt < WHEEL_SCROLL_WINDOW_MS;
+            state.wheelAt > state.remoteAt &&
+            now - state.wheelAt < WHEEL_SCROLL_WINDOW_MS;
         // Sliding by fractions of a pixel means an auto-scroll is driving it
         // -- this window's own, or a mini preview's sent frame by frame -- and
         // its driver broadcasts the exact position itself. Its offsets,
         // rounded to a pixel, used to echo back and knock the preview it came
-        // from off its slide every few frames: the preview shook. Whatever
-        // else is listening (a second listener stamped no message for), only
-        // a wheel speaks for it.
+        // from off its slide every few frames: the preview shook. Only a
+        // wheel speaks for it.
         if (checkIsSubPixelScrolling(divHaftScale) && !isFromWheel) {
             return;
         }
-        // A scroll applied FROM a sync message (`syncScrollPercentage` stamps
-        // the element) must not be broadcast back, or two windows echo each
-        // other's scroll forever. Only the one event the remote scrollTo fires
-        // is swallowed: a genuine user scroll lands on a different position,
-        // fails the tolerance check and goes through.
-        const remoteApplied = (divHaftScale as any)._remoteAppliedScroll;
-        if (remoteApplied !== undefined) {
-            delete (divHaftScale as any)._remoteAppliedScroll;
-            if (
-                Math.abs(divHaftScale.scrollLeft - remoteApplied.left) < 2 &&
-                Math.abs(divHaftScale.scrollTop - remoteApplied.top) < 2
-            ) {
-                return;
-            }
+        // A scroll a sync message set off (`applyRemoteScrollPercentage`)
+        // must not be broadcast back, or two windows -- or two grouped mini
+        // screens -- echo each other's scroll forever. It used to be a stamp
+        // that the first scroll event matched and CONSUMED, so a second
+        // listener on the same div, or the reflow's follow-up event, found it
+        // gone and sent the remote position straight back out. Now every
+        // event inside the quiet window is swallowed, unless the operator
+        // wheeled or pressed this container after the remote scroll landed.
+        if (
+            state.inputAt < state.remoteAt &&
+            now - state.remoteAt < REMOTE_SCROLL_QUIET_MS
+        ) {
+            return;
         }
-        callback(
+        state.callback?.(
             {
                 x:
                     divHaftScale.scrollLeft /

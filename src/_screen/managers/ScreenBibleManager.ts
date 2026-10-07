@@ -73,6 +73,12 @@ const textStyleSettingManager = new SettingManager<AnyObjectType>({
     deserialize: (jsonString) => JSON.parse(jsonString),
 });
 
+// Weak: a div is dropped with the card that rendered it (`releaseDiv`).
+const wiredDivMap = new WeakMap<
+    HTMLDivElement,
+    { manager: ScreenBibleManager; abortController: AbortController }
+>();
+
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
     private _screenViewData: BibleItemDataType | null = null;
@@ -156,7 +162,31 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     set div(div: HTMLDivElement | null) {
         this._div = div;
         if (div !== null) {
-            div.addEventListener('wheel', (event) => {
+            this.wireDiv(div);
+            this.applyHeaderEffectOnScroll(div);
+        }
+
+        this.render();
+    }
+
+    // Once per div and manager. `ScreenBibleComp` hands the same div over
+    // again whenever its effect re-runs -- `div.current` is in its deps, and
+    // StrictMode runs it twice more -- and each pass used to add another set
+    // of listeners: Ctrl+wheel stepped the font size once per copy, and two
+    // scroll-sync listeners on one div is what let a remote scroll bounce
+    // between grouped mini screens for ever.
+    private wireDiv(div: HTMLDivElement) {
+        const wired = wiredDivMap.get(div);
+        if (wired?.manager === this) {
+            return;
+        }
+        wired?.abortController.abort();
+        const abortController = new AbortController();
+        wiredDivMap.set(div, { manager: this, abortController });
+        const { signal } = abortController;
+        div.addEventListener(
+            'wheel',
+            (event) => {
                 if (!event.ctrlKey) {
                     return;
                 }
@@ -164,24 +194,26 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 event.stopPropagation();
                 const isUp = event.deltaY < 0;
                 ScreenBibleManager.changeTextStyleTextFontSize(isUp);
-            });
-            div.addEventListener('scroll', () => {
+            },
+            { signal },
+        );
+        div.addEventListener(
+            'scroll',
+            () => {
                 this.scroll =
                     div.scrollTop / (div.scrollHeight - div.clientHeight);
                 this.applyHeaderEffectOnScroll(div);
-            });
-            div.classList.add('screen-bible-container-scroll');
-            registerScrollingSyncEvent(div, (scroll, isFromWheel) => {
-                this.sendSyncScrollPercentage(
-                    '.screen-bible-container-scroll',
-                    scroll,
-                    isFromWheel,
-                );
-            });
-            this.applyHeaderEffectOnScroll(div);
-        }
-
-        this.render();
+            },
+            { signal },
+        );
+        div.classList.add('screen-bible-container-scroll');
+        registerScrollingSyncEvent(div, (scroll, isFromWheel) => {
+            this.sendSyncScrollPercentage(
+                '.screen-bible-container-scroll',
+                scroll,
+                isFromWheel,
+            );
+        });
     }
 
     /**

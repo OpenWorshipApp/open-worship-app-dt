@@ -859,8 +859,8 @@ function PresentingFlowDocumentItemPreviewComp({
         return genSlideHeightGetter(thumbnailWidth);
     }, [thumbnailWidth]);
     const getGridItemHeight = useMemo(() => {
-        return (gridItem: VarySlideGridItemType) => {
-            return getSlideHeight(gridItem.varySlide);
+        return (gridItem: VarySlideGridItemType, cellWidth?: number) => {
+            return getSlideHeight(gridItem.varySlide, cellWidth);
         };
     }, [getSlideHeight]);
     // A card per cell: a PPTX slide's sub-slides are cells of their own.

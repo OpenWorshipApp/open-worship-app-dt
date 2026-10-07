@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { findClippingAncestors } from './virtualScrollHelpers';
+import {
+    findClippingAncestors,
+    scrollBandIntoView,
+} from './virtualScrollHelpers';
 
 function genElement(style: string, tagName = 'div') {
     const element = document.createElement(tagName);
@@ -20,6 +23,62 @@ function genNested(elementList: HTMLElement[]) {
 
 afterEach(() => {
     document.body.innerHTML = '';
+});
+
+describe('scrollBandIntoView', () => {
+    function genScroller() {
+        const scroller = document.createElement('div');
+        Object.defineProperties(scroller, {
+            clientHeight: { value: 400 },
+            scrollHeight: { value: 4000 },
+        });
+        scroller.scrollTo = vi.fn();
+        return scroller;
+    }
+
+    it('smoothly retargets repeated reveals without jumping scrollTop', () => {
+        const scroller = genScroller();
+        scroller.scrollTop = 100;
+        for (const top of [800, 1200, 1600]) {
+            expect(
+                scrollBandIntoView({
+                    clippingAncestorList: [scroller],
+                    toBandTop: () => top,
+                    height: 200,
+                    align: 'center',
+                    behavior: 'smooth',
+                }),
+            ).toBe(true);
+        }
+        expect(scroller.scrollTo).toHaveBeenNthCalledWith(1, {
+            top: 700,
+            behavior: 'smooth',
+        });
+        expect(scroller.scrollTo).toHaveBeenLastCalledWith({
+            top: 1500,
+            behavior: 'smooth',
+        });
+        expect(scroller.scrollTop).toBe(100);
+    });
+
+    it('keeps immediate reveals and already-visible nearest rows unchanged', () => {
+        const scroller = genScroller();
+        scrollBandIntoView({
+            clippingAncestorList: [scroller],
+            toBandTop: () => 800,
+            height: 200,
+            align: 'center',
+        });
+        expect(scroller.scrollTop).toBe(700);
+        scrollBandIntoView({
+            clippingAncestorList: [scroller],
+            toBandTop: () => 800,
+            height: 200,
+            behavior: 'smooth',
+        });
+        expect(scroller.scrollTo).not.toHaveBeenCalled();
+        expect(scroller.scrollTop).toBe(700);
+    });
 });
 
 describe('findClippingAncestors', () => {

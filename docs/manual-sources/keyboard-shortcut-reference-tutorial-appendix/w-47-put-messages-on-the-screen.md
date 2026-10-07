@@ -1,17 +1,16 @@
 ---
 id: W-47
-title: "Put messages on the screen, and blank the edges of the picture"
+title: "Put messages on the screen"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [PM-134, PM-135, PM-136]
+verify: [PM-134, PM-135]
 screenshots: 1
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-10-06"
 ---
-# W-47 — Put messages on the screen, and blank the edges of the picture
+# W-47 — Put messages on the screen
 
-**Goal:** handle the two things that come up around a service and are not
-slides — words everyone needs to read, and a projector whose picture spills off
-the screen.
+**Goal:** put up the words everyone needs to read around a service that are not
+slides — a parking notice, an offering notice, a call for the next speaker.
 
 1. Open the **[en:tran:Foreground]** tab. The launcher that opens is a menu of
    components, and the first row in it is **[en:tran:Messages]** — it is first
@@ -50,26 +49,11 @@ the screen.
    screen exactly as you typed them; a message is never treated as formatting.
    Use the save buttons at the top to keep a whole session — every message in it
    — and pick it back next week.
-9. **Blanking the edges.** If the projector's picture runs past your screen —
-   onto the wall, over an organ pipe, or below a screen that only comes half way
-   down — find the **[en:tran:Mask]** button in the **[en:tran:Mini Screen]**
-   footer, just right of the drawing button. Press it to open four sliders.
-10. Drag **[en:tran:Cover from the top]**, **[en:tran:Cover from the bottom]**,
-    **[en:tran:Cover from the left]** and **[en:tran:Cover from the right]** until
-    the picture stops where your screen does. The bars are solid and sit over
-    everything, including a video overlay. You can change the colour if black is
-    not the right answer for your room.
-11. **The mask is not content, and it behaves differently on purpose.** It is
-    measured once for the room and then left alone: it survives closing the
-    panel, it survives restarting the app, and **[en:tran:Clear All]** (F6) does
-    **not** remove it. That is deliberate — the panic key must never hand you a
-    picture spilling onto the wall. The only thing that removes it is
-    **[en:tran:Remove Mask]** in that same panel.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-134` · `PM-135` · `PM-136`
+`PM-134` · `PM-135`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-10-06).
 :::

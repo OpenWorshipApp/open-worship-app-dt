@@ -1,6 +1,6 @@
 import './FlexResizeActorComp.scss';
 
-import type { RefObject } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from 'react';
 import { Component, createRef } from 'react';
 
 import type { DisabledType, CloseType } from './flexSizeHelpers';
@@ -56,6 +56,57 @@ function genCollapseTitle(direction: CloseType) {
 
 type PointerLikeEvent = MouseEvent | TouchEvent;
 
+// How far one arrow press moves the divider, and with Shift held.
+export const KEYBOARD_RESIZE_STEP = 20;
+export const KEYBOARD_RESIZE_BIG_STEP = 100;
+
+/**
+ * The step an arrow key moves the divider by, signed toward the SECOND pane
+ * (right, down), or null for any other key. A divider between left and right
+ * panes answers Left/Right, one between top and bottom answers Up/Down; the
+ * other pair is left alone so it still scrolls whatever has the keyboard.
+ */
+export function toKeyboardResizeStep(
+    type: ResizeKindType,
+    key: string,
+    isShiftKey: boolean,
+) {
+    const [backKey, forwardKey] =
+        type === 'v' ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
+    const step = isShiftKey ? KEYBOARD_RESIZE_BIG_STEP : KEYBOARD_RESIZE_STEP;
+    if (key === backKey) {
+        return -step;
+    }
+    if (key === forwardKey) {
+        return step;
+    }
+    return null;
+}
+
+/**
+ * How far a keyboard step may really go: never past either pane's minimum, so
+ * the keyboard resizes and never collapses -- collapsing is the divider's menu,
+ * Close First / Second Widget, which says so in words.
+ */
+export function clampKeyboardResizeStep({
+    step,
+    preSize,
+    nextSize,
+    preMinSize,
+    nextMinSize,
+}: {
+    step: number;
+    preSize: number;
+    nextSize: number;
+    preMinSize: number;
+    nextMinSize: number;
+}) {
+    if (step < 0) {
+        return Math.min(0, Math.max(step, preMinSize - preSize));
+    }
+    return Math.max(0, Math.min(step, nextSize - nextMinSize));
+}
+
 export type ResizeKindType = 'v' | 'h';
 export interface Props {
     type: ResizeKindType;
@@ -80,6 +131,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     touchMoveListener: (event: TouchEvent) => void;
     touchEndListener: (event: TouchEvent) => void;
     attemptTimeout: (func: () => void, isImmediate?: boolean) => void;
+    // The size is SAVED once the keys stop: a held arrow repeats ~30 times a
+    // second, and every save writes the layout setting.
+    keyboardSavingAttempt: (func: () => void, isImmediate?: boolean) => void;
 
     constructor(props: Props) {
         super(props);
@@ -97,6 +151,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             this.onMouseUp(event);
         };
         this.attemptTimeout = genTimeoutAttempt(100);
+        this.keyboardSavingAttempt = genTimeoutAttempt(300);
     }
 
     private get currentNode() {
@@ -140,6 +195,31 @@ export default class FlexResizeActorComp extends Component<Props, object> {
 
     getOffsetSize(div: HTMLDivElement) {
         return this.isVertical ? div.offsetHeight : div.offsetWidth;
+    }
+
+    // `.mover` is `position: fixed`, which places it against the VIEWPORT only
+    // while no ancestor has a transform, filter or backdrop-filter. A floating
+    // widget's backdrop blur makes the widget its containing block, so the
+    // cursor's viewport coordinate drew the arrows a widget's offset away from
+    // the cursor. The origin is measured once per hover (one write, one read)
+    // and reused for every move after it.
+    moverOrigin: number | null = null;
+
+    placeMover(clientPos: number) {
+        const mover = this.currentNode.querySelector(
+            '.mover',
+        ) as HTMLDivElement;
+        const side = this.isVertical ? 'left' : 'top';
+        if (this.moverOrigin === null) {
+            mover.style[side] = '0px';
+            const rect = mover.getBoundingClientRect();
+            // The stylesheet's translate(-45%, -45%) moves the box by part of
+            // its own size, which is not part of the containing block's place.
+            this.moverOrigin = this.isVertical
+                ? rect.left + rect.width * 0.45
+                : rect.top + rect.height * 0.45;
+        }
+        mover.style[side] = `${clientPos - this.moverOrigin}px`;
     }
 
     setActive() {
@@ -346,6 +426,87 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.props.checkSize();
     }
 
+    // The divider is a window splitter for a keyboard too (the WAI-ARIA
+    // pattern): it takes focus, an arrow moves it, and the context-menu key or
+    // Shift+F10 opens the same Reset Size / Close First / Close Second Widget
+    // menu a right-click does -- Chromium sends those keys to the focused
+    // element as a `contextmenu` event, which `onContextMenu` already
+    // answers. Before, it took no focus at all, so the only way to collapse a
+    // panel opened by mistake was a mouse.
+    resizeByKeyboard(step: number) {
+        if (this.myRef.current === null) {
+            return;
+        }
+        this.init();
+        this.setInactive();
+        const posDiff = clampKeyboardResizeStep({
+            step,
+            preSize: this.preSize,
+            nextSize: this.nextSize,
+            preMinSize: Number.isNaN(this.previousMinSize)
+                ? 0
+                : this.previousMinSize,
+            nextMinSize: Number.isNaN(this.nextMinSize) ? 0 : this.nextMinSize,
+        });
+        if (posDiff === 0 || this.sumSize <= 0) {
+            return;
+        }
+        this.preSize += posDiff;
+        this.nextSize -= posDiff;
+        this.preNode.style.flexGrow = `${
+            this.sumGrow * (this.preSize / this.sumSize)
+        }`;
+        this.nextNode.style.flexGrow = `${
+            this.sumGrow * (this.nextSize / this.sumSize)
+        }`;
+        this.stampValueNow();
+        this.keyboardSavingAttempt(() => {
+            this.props.checkSize();
+        });
+    }
+
+    handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+        const step = toKeyboardResizeStep(
+            this.props.type,
+            event.key,
+            event.shiftKey,
+        );
+        if (step === null || event.ctrlKey || event.altKey || event.metaKey) {
+            return;
+        }
+        // Kept from the page's own shortcuts: an arrow on a focused divider
+        // is a resize, not the next slide.
+        event.preventDefault();
+        event.stopPropagation();
+        this.resizeByKeyboard(step);
+    }
+
+    // A focusable separator says where it sits, as a share of the two panes:
+    // 0 is all the second pane, 100 all the first.
+    stampValueNow() {
+        const node = this.myRef.current;
+        if (node === null) {
+            return;
+        }
+        try {
+            const preSize = this.getOffsetSize(this.preNode);
+            const nextSize = this.getOffsetSize(this.nextNode);
+            if (preSize + nextSize <= 0) {
+                return;
+            }
+            node.setAttribute(
+                'aria-valuenow',
+                `${Math.round((100 * preSize) / (preSize + nextSize))}`,
+            );
+        } catch (error) {
+            // A divider at the very edge has no neighbour to measure.
+            console.warn(error);
+        }
+    }
+
     handleContextMenuOpening(event: any) {
         const menuItems: ContextMenuItemType[] = [
             {
@@ -394,6 +555,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             'aria-orientation',
             this.isVertical ? 'horizontal' : 'vertical',
         );
+        // Focusable, so it is a window splitter, which carries a value.
+        node.setAttribute('aria-valuemin', '0');
+        node.setAttribute('aria-valuemax', '100');
         // Not the `preNode`/`nextNode` getters: those step OVER a collapsed
         // strip (and throw on the edge of the container), where the strip
         // is exactly the neighbour wanted here -- it carries the same name
@@ -477,6 +641,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                     });
                 }}
                 onMouseLeave={() => {
+                    this.moverOrigin = null;
                     this.attemptTimeout(() => {
                         this.currentNode.classList.remove('attempt');
                     }, true);
@@ -485,17 +650,15 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                     if (event.target !== this.currentNode) {
                         return;
                     }
-                    const mover = this.currentNode.querySelector(
-                        '.mover',
-                    ) as HTMLDivElement;
-                    if (type === 'v') {
-                        mover.style.left = `${event.pageX}px`;
-                    } else if (type === 'h') {
-                        mover.style.top = `${event.pageY}px`;
-                    }
+                    this.placeMover(
+                        this.isVertical ? event.clientX : event.clientY,
+                    );
                 }}
                 onDoubleClick={this.resetSize.bind(this)}
                 onContextMenu={this.handleContextMenuOpening.bind(this)}
+                tabIndex={0}
+                onKeyDown={this.handleKeyDown.bind(this)}
+                onFocus={this.stampValueNow.bind(this)}
                 ref={this.myRef}
             >
                 <div

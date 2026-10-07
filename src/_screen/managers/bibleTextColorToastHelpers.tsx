@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { useToastClose } from '../../toast/toastCloseContext';
 
 // Long enough to reach the button; the toast also holds while hovered.
 const UNDO_TOAST_TIMEOUT = 10e3;
@@ -10,6 +11,9 @@ function TextColorChangedToastComp({
     onUndo,
 }: Readonly<{ onUndo: () => void }>) {
     const [isUndone, setIsUndone] = useState(false);
+    // Undone is done: the toast goes with it instead of announcing a change
+    // that was just taken back, held up by the pointer that pressed Undo.
+    const closeToast = useToastClose();
     return (
         <div className="d-flex align-items-center gap-2">
             <span>
@@ -24,6 +28,7 @@ function TextColorChangedToastComp({
                 onClick={() => {
                     setIsUndone(true);
                     onUndo();
+                    closeToast();
                 }}
             >
                 {tran('Undo')}

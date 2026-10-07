@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import {
     addStopwatchHistoryEntry,
@@ -102,5 +102,48 @@ describe('stopwatch history', () => {
         const yesterday = toStopwatchHistoryWhenText(NOW - 86_400_000, NOW);
         expect(yesterday.endsWith(`, ${yesterdayTime}`)).toBe(true);
         expect(yesterday.length).toBeGreaterThan(yesterdayTime.length + 2);
+    });
+
+    // In the app's language, not the system's: a Khmer panel read
+    // "Oct 4, 7:57 AM" on an English Windows (2026-10-06).
+    test('is written in the locale it is given', () => {
+        const when = NOW - 86_400_000;
+        const options = { hour: 'numeric', minute: '2-digit' } as const;
+        const french = toStopwatchHistoryWhenText(when, NOW, 'fr-FR');
+        expect(french).toBe(
+            `${new Date(when).toLocaleDateString('fr-FR', {
+                month: 'short',
+                day: 'numeric',
+            })}, ${new Date(when).toLocaleTimeString('fr-FR', options)}`,
+        );
+        const english = toStopwatchHistoryWhenText(when, NOW, 'en-US');
+        expect(english).toBe(
+            `Oct 3, ${new Date(when).toLocaleTimeString('en-US', options)}`,
+        );
+        expect(french).not.toBe(english);
+    });
+
+    // Electron's ICU has no Khmer, and `Intl` answers a `km-KH` request in
+    // English without a word -- which is how the fix above first shipped
+    // still reading "Oct 4, 7:57 AM" in the app while this file passed under
+    // Node. Mocked here to be Electron.
+    test('falls back to numbers for a locale Intl cannot format', () => {
+        const spy = vi
+            .spyOn(Intl.DateTimeFormat, 'supportedLocalesOf')
+            .mockReturnValue([]);
+        try {
+            expect(toStopwatchHistoryWhenText(NOW - 60_000, NOW, 'km-KH')).toBe(
+                '10:41',
+            );
+            expect(
+                toStopwatchHistoryWhenText(
+                    NOW - 86_400_000 + 7_200_000,
+                    NOW,
+                    'km-KH',
+                ),
+            ).toBe('03/10 12:42');
+        } finally {
+            spy.mockRestore();
+        }
     });
 });

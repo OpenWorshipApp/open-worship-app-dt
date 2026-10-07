@@ -51,7 +51,7 @@ button:
   **[en:tran:Start]** / **[en:tran:Pause]** / **[en:tran:Resume]** / **[en:tran:Reset]**
   (back to zero). **[en:tran:Reset]** first SAVES the time it read into a
   **[en:tran:History]** list under the buttons — newest on top, numbered, with the time
-  of day it was reset — so the 7:42 a testimony ran is not lost with the zero. Each
+  of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
 - **Clock**, **Camera Show**: same pattern — configure, Show, Hide.

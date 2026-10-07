@@ -69,17 +69,54 @@ export function addStopwatchHistoryEntry(
     return [entry, ...list].slice(0, STOPWATCH_HISTORY_LIMIT);
 }
 
-/** `10:42 AM` today, `Oct 3, 10:42 AM` on another day. */
-export function toStopwatchHistoryWhenText(endedAt: number, now = Date.now()) {
+function checkCanFormatDates(locale: string) {
+    try {
+        return Intl.DateTimeFormat.supportedLocalesOf([locale]).length > 0;
+    } catch (_error) {
+        return false;
+    }
+}
+
+function padTwo(value: number) {
+    return String(value).padStart(2, '0');
+}
+
+/**
+ * `10:42 AM` today, `Oct 3, 10:42 AM` on another day -- in `locale`, the
+ * app's own language. Left to the system (`[]`), a Khmer panel read
+ * "Oct 4, 7:57 AM" under Khmer headings, because the system is English on
+ * most of the machines it runs on. A taken param, not read here, so this file
+ * stays free of the language module and its settings store.
+ *
+ * A locale `Intl` cannot format gets NUMBERS only -- `07:57` today,
+ * `04/10 07:57` on another day, day first and a 24-hour clock -- which read
+ * the same in any language. That is Khmer in the app: Electron ships
+ * Chromium's trimmed ICU data, which has none, and asked for `km-KH` it
+ * quietly answers in English (Node, which runs the tests, has it all).
+ */
+export function toStopwatchHistoryWhenText(
+    endedAt: number,
+    now = Date.now(),
+    locale?: string,
+) {
     const date = new Date(endedAt);
-    const time = date.toLocaleTimeString([], {
+    const isToday = date.toDateString() === new Date(now).toDateString();
+    if (locale !== undefined && !checkCanFormatDates(locale)) {
+        const time = `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}`;
+        if (isToday) {
+            return time;
+        }
+        return `${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)} ${time}`;
+    }
+    const locales = locale === undefined ? [] : [locale];
+    const time = date.toLocaleTimeString(locales, {
         hour: 'numeric',
         minute: '2-digit',
     });
-    if (date.toDateString() === new Date(now).toDateString()) {
+    if (isToday) {
         return time;
     }
-    return `${date.toLocaleDateString([], {
+    return `${date.toLocaleDateString(locales, {
         month: 'short',
         day: 'numeric',
     })}, ${time}`;

@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { useVirtualRows } from './useVirtualRows';
+import { useVirtualRows, type ScrollToRowType } from './useVirtualRows';
 import {
     useMeasuredRowHeights,
     VIRTUAL_ROW_KEY,
@@ -58,12 +58,13 @@ export default function VirtualListComp<T>({
         },
         [rowKeys],
     );
-    const scrollToRowRef = useRef<
-        (index: number, align?: 'nearest' | 'center') => boolean
-    >(() => {
+    const scrollToRowRef = useRef<ScrollToRowType>(() => {
         return false;
     });
-    const pinnedIndexes = useRevealPin({ findIndex, scrollToRowRef });
+    const { pinnedIndexes, behaviorRef } = useRevealPin({
+        findIndex,
+        scrollToRowRef,
+    });
 
     const { rows, totalHeight, scrollToRow } = useVirtualRows({
         containerRef,
@@ -74,7 +75,12 @@ export default function VirtualListComp<T>({
         isEnabled,
     });
     scrollToRowRef.current = scrollToRow;
-    useKeepPinnedRowInView({ pinnedIndexes, totalHeight, scrollToRow });
+    useKeepPinnedRowInView({
+        pinnedIndexes,
+        totalHeight,
+        scrollToRow,
+        behaviorRef,
+    });
 
     return (
         <div

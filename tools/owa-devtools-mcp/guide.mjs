@@ -20,7 +20,7 @@
 
 import { BOT_FOCUS_LIST, detectBotFocus, getBotFocus } from './botFocus.mjs';
 import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
-import { DOM_MATCH_RUNTIME } from './domMatch.mjs';
+import { DOM_MATCH_RUNTIME, PRESS_AT_CENTRE_SOURCE } from './domMatch.mjs';
 import { toEnglishOnly } from './help.mjs';
 
 const MAX_STEPS = 20;
@@ -1587,7 +1587,10 @@ const GUIDE_RUNTIME = `
                 const at = dm.openContextMenu(target);
                 return await withMore({ done: true, did: 'right-clicked', at });
             }
-            target.click();
+            // At the control's centre, as owa_click presses: the app opens
+            // its menus from the event's coordinates, and the Foreground
+            // lessons' first press opens the launcher menu.
+            (${PRESS_AT_CENTRE_SOURCE})(target);
             return await withMore({ done: true, did: 'clicked',
                 label: (target.textContent ||
                     target.getAttribute('title') || '').trim().slice(0, 40) });

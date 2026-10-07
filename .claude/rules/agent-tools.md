@@ -37,6 +37,23 @@ The doors and the firewall: `agent-access.md`.
   control answered to nothing in a Khmer window), and `owa_list_screens` gained
   `isAnyShowing` and stopped returning Electron's whole `Display` object twice —
   ~2 800 characters to answer "no" is what makes a model skip the check.
+- **A press lands where the control is, and says what it OPENED** (2026-10-06,
+  `domMatch.mjs` `PRESS_AT_CENTRE_SOURCE` / `addOpenedWindow`, `cdp.mjs`
+  `waitForNewAppPage`). `element.click()` carries clientX/clientY 0,0 and the
+  app places a context menu at the event's coordinates (`setPositionMenu`), so
+  `owa_click "Foreground"` opened the launcher in the window's top-left corner.
+  Every `owa_click` and every **Do it** now sends a bubbling, composed `click` at
+  the control's centre, as `pressElementLikeButton` does; a disabled control
+  still gets `click()`, and the press is kept out of the memoised
+  `__owaDomMatch` runtime. Presses that plainly worked used to answer
+  `unverified` (the Foreground menu, the Bible Lookup popup, the Settings
+  window): the result now carries `opened` -- `dialog` / `panel` / `menu` for
+  a layer shown after the press that was not shown before it (identity +
+  `checkVisibility`), and `window` + `page` for a new app page target. The
+  window check polls up to 1 s only when nothing else changed; the capture and
+  read-website windows never count. Any of them means `didChange: true` and no
+  `unverified`. A projector change still needs `owa_list_screens`. +2 tokens a
+  round.
 - **The walkthrough card presses only what the step NAMES, and only what is
   REACHABLE** (2026-09-08, `guide.mjs` + `domMatch.mjs`, measured by
   `.claude/skills/owa-enhance-chatbot/scripts/demo-failure-rate.mjs`, which

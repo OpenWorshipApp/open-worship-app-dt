@@ -5,6 +5,22 @@
     height: $header-height;
   }
 
+  // Too narrow for every tab's words (`useIsTabRowCompact`): the tabs that are
+  // not open keep their icon and fold the words away. Visually hidden, not
+  // `display: none`, so each tab is still named for a screen reader and for
+  // the app's own tools.
+  & > .header.is-compact .nav-link:not(.active) .background-tab-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
   & > .body {
     overflow-y: auto;
     padding: 1px;

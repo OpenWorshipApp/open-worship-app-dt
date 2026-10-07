@@ -183,6 +183,12 @@ The list is `ACTING_TOOLS` in `notify.mjs`; `watchToolCalls(transport)` is wired
 in `server.mjs` **after** `server.connect`, because the SDK chains whatever handler
 it finds. `OWA_MCP_NOTICE=0` runs without it.
 
+It sits at the bottom centre. Each banner is `{text, key, detail}`
+(`describeToolNotice`); `genNoticeWords` sends every language's words and the
+page picks by `<html lang>`. The keys (`listNoticeTranKeys()`) live in
+`src/lang/data/km` and `fr`, and `notify.test.mjs` fails on a half pair. The
+in-page runtime is versioned (`NOTICE_RUNTIME_VERSION`).
+
 ## Host limits
 
 | Limit | Value | Why it matters |

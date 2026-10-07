@@ -61,7 +61,10 @@ import type {
     BasicScreenMessageType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
-import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
+import type {
+    StageLookAheadDataType,
+    VarySlideScreenDataType,
+} from '../screenAppDocumentTypeHelpers';
 import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 import {
@@ -75,6 +78,11 @@ import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers
 import { cloneJson } from '../../helper/helpers';
 import { handleError } from '../../helper/errorHelpers';
 import { getTargetLyricSlideItemData } from '../../lyric-list/lyricSlideScreenHelpers';
+import {
+    checkStageLookAheadData,
+    genStageLookAheadData,
+} from './screenStageLookAheadHelpers';
+import { wrapWithStageLookAhead } from '../stageLookAheadDomHelpers';
 import { resolveSlideTransitionEffect } from './screenSlideTransitionHelpers';
 import { withTransitionEffect } from '../transitionOverrideHelpers';
 import { CanvasItemTransitions } from './canvasItemTransitionHelpers';
@@ -309,33 +317,56 @@ class ScreenVaryAppDocumentManager
             await this.set_varySlideData(targetVarySlideData);
             return;
         }
-        const [targetItemJson, transitionEffect] = await Promise.all([
-            getTargetLyricSlideItemData(
-                targetVarySlideData.filePath,
-                targetVarySlideData.itemJson as any,
-                this.screenManagerBase.stage,
-            ),
-            // The one place every way of putting a slide up meets -- a click,
-            // the arrow keys, a run sheet row, a drop, a stage re-apply, a
-            // sync group -- so the slide's own transition (else its slides
-            // preview's) is read here, on the presenter. The screen window is
-            // handed it in the sync and keeps what it was given.
-            appProvider.isPageScreen
-                ? Promise.resolve(targetVarySlideData.transitionEffect)
-                : resolveSlideTransitionEffect(
-                      targetVarySlideData.filePath,
-                      targetVarySlideData.itemJson.id,
-                  ),
-        ]);
+        const [targetItemJson, transitionEffect, stageLookAhead] =
+            await Promise.all([
+                getTargetLyricSlideItemData(
+                    targetVarySlideData.filePath,
+                    targetVarySlideData.itemJson as any,
+                    this.screenManagerBase.stage,
+                ),
+                // The one place every way of putting a slide up meets -- a
+                // click, the arrow keys, a run sheet row, a drop, a stage
+                // re-apply, a sync group -- so the slide's own transition
+                // (else its slides preview's) is read here, on the presenter.
+                // The screen window is handed it in the sync and keeps what it
+                // was given.
+                appProvider.isPageScreen
+                    ? Promise.resolve(targetVarySlideData.transitionEffect)
+                    : resolveSlideTransitionEffect(
+                          targetVarySlideData.filePath,
+                          targetVarySlideData.itemJson.id,
+                      ),
+                // Same place, same split, for what a stage screen draws around
+                // a document's slide: the presenter has the document open, the
+                // screen window keeps what it was handed. Worked out again for
+                // THIS screen's stage, so a sync group member on another stage
+                // never draws the layout of the screen it followed. Settles to
+                // nothing on stage 0 without reading anything.
+                appProvider.isPageScreen
+                    ? Promise.resolve(targetVarySlideData.stageLookAhead)
+                    : genStageLookAheadData(
+                          targetVarySlideData.filePath,
+                          targetVarySlideData.itemJson,
+                          this.screenManagerBase.stage,
+                      ).catch((error) => {
+                          // A stage screen with no look-ahead still shows
+                          // the slide; failing here must not keep it off.
+                          handleError(error);
+                          return undefined;
+                      }),
+            ]);
         // A new object rather than writing `itemJson` back onto the argument:
         // the argument can be an entry of the memoized on-screen map (the
         // constructor seeds `_varySlideData` from it), and mutating it would
         // change what every later reader of that map sees.
+        const { stageLookAhead: _previousStageLookAhead, ...restData } =
+            targetVarySlideData;
         await this.set_varySlideData(
             withTransitionEffect(
                 {
-                    ...targetVarySlideData,
+                    ...restData,
                     itemJson: targetItemJson,
+                    ...(stageLookAhead === undefined ? {} : { stageLookAhead }),
                 },
                 transitionEffect,
             ),
@@ -1212,6 +1243,25 @@ class ScreenVaryAppDocumentManager
         return { content, scale };
     }
 
+    // Every kind of slide carries its size in `metadata`. Not decided by
+    // `tryValidate`: the Word schema accepts a PowerPoint slide too, which
+    // once made every PowerPoint slide on a stage screen draw plain.
+    private genStageContent(
+        content: HTMLDivElement,
+        itemJson: VarySlideDataType,
+        stageLookAhead: StageLookAheadDataType,
+    ): HTMLDivElement | null {
+        const { width, height } = (itemJson as SlidePropsType).metadata;
+        return wrapWithStageLookAhead(
+            content,
+            width,
+            height,
+            stageLookAhead,
+            this.screenManagerBase.width,
+            this.screenManagerBase.height,
+        );
+    }
+
     async clearJunk(div: HTMLDivElement) {
         if (div.lastChild === null) {
             return;
@@ -1263,13 +1313,22 @@ class ScreenVaryAppDocumentManager
         const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
             slideData;
         const backgroundColor = virtualBackgroundColor ?? null;
+        // A stage screen (St: 1 and up) shares the screen between the page
+        // and what comes after it, so a PDF or Word page is fitted there even
+        // when pages are shown full width: a page that fills the width and
+        // scrolls has no room for the next one, and seeing the next one is
+        // what the stage screen is for.
+        const stageLookAhead = checkStageLookAheadData(
+            slideData.stageLookAhead,
+        );
+        const isFullWidth = isRenderFullWidth && stageLookAhead === null;
 
         let target;
         if (PdfSlide.tryValidate(itemJson)) {
             target = this.renderPdf(
                 divHaftScale,
                 itemJson as PdfSlidePropsType,
-                isRenderFullWidth,
+                isFullWidth,
                 backgroundColor,
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
@@ -1281,7 +1340,7 @@ class ScreenVaryAppDocumentManager
             target = this.renderDocx(
                 divHaftScale,
                 itemJson as DocxSlidePropsType,
-                isRenderFullWidth,
+                isFullWidth,
                 backgroundColor,
             );
         } else {
@@ -1302,6 +1361,33 @@ class ScreenVaryAppDocumentManager
             // revision check, so an older slide cannot reopen a camera/player.
             this.cleanupSlideContent(target.content);
         }
+        // A stage screen sets the slide into its stage's layout -- the slide
+        // smaller with the next one under it, the corner count. The slide's
+        // own content is wired up above first, so its media, camera and item
+        // transitions behave as on any screen.
+        const stageContent =
+            stageLookAhead === null
+                ? null
+                : this.genStageContent(
+                      target.content,
+                      itemJson,
+                      stageLookAhead,
+                  );
+        let slideContent = target.content;
+        let scale = target.scale;
+        if (stageContent !== null) {
+            // The stage layout is laid over the whole screen, not over the
+            // slide's own box fitted into it: a slide of another shape than
+            // the screen left a band above it and one under the next slide.
+            slideContent = stageContent;
+            scale = 1;
+            Object.assign(divHaftScale.style, {
+                width: `${this.screenManagerBase.width}px`,
+                height: `${this.screenManagerBase.height}px`,
+                overflow: 'hidden',
+                transform: 'translate(-50%, -50%)',
+            });
+        }
         for (const child of Array.from(div.children)) {
             // Each slide leaves the way it came in, whatever the next one
             // comes in with: a slide that zoomed in zooms out under a slide
@@ -1310,12 +1396,12 @@ class ScreenVaryAppDocumentManager
                 child.remove();
             });
         }
-        divHaftScale.appendChild(target.content);
+        divHaftScale.appendChild(slideContent);
         Object.assign(divContainer.style, {
             position: 'absolute',
             width: `${this.screenManagerBase.width}px`,
             height: `${this.screenManagerBase.height}px`,
-            transform: `scale(${target.scale},${target.scale}) translate(50%, 50%)`,
+            transform: `scale(${scale},${scale}) translate(50%, 50%)`,
         });
         div.appendChild(divContainer);
         const hasItemTransitions =

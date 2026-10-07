@@ -1,6 +1,7 @@
-// `SCREEN_FONT_FAMILY` in `managers/ScreenForegroundManager.ts` repeats this
-// stack for the foreground layer, which the presenter's mini preview also
-// mounts. Change both together.
+// `SCREEN_FONT_FAMILY` in `screenFontFamily.ts` repeats this stack for the
+// foreground layer and for slide text with no font of its own, which the
+// presenter's mini preview, the thumbnails and the editor also draw. Change
+// both together.
 body {
   font-family:
     system-ui,

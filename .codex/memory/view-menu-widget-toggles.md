@@ -1,8 +1,11 @@
 ---
 name: view-menu-widget-toggles
-description: View → Widgets toggles each resizable pane and Reset Widgets Size applies live; the `view` menu bucket, the registry, and why the DOM styles must be blanked
+description: "View → Widgets toggles each resizable pane and Reset Widgets Size applies live; the `view` menu bucket, the registry, and why the DOM styles must be blanked"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 904ed1de-7b3e-4246-b322-bd51dd94e00d
+  modified: 2026-10-06T19:19:59.967Z
 ---
 
 Added 2026-08-09. The native **View** menu grew a renderer-contributed tail:
@@ -29,6 +32,13 @@ a **Widgets** submenu with a checkbox per collapsible pane, and
 - **`isDisableQuickResize` actors are excluded** — they cannot collapse at all, so
   the background media/audio split, the presenter control-center, the bible
   previewer, the lyric stage previewer and the bible-lookup body never appear.
+- **Panes inside a floating panel are excluded too** (2026-10-06):
+  `FloatingWidgetComp` wraps its content in `WidgetMenuExcludedContext`
+  (`src/resize-actor/widgetMenuContext.ts`), read by `RenderResizeActorItemComp`.
+  A floating `Slides: Still` preview handed the menu a second "Slides" beside the
+  main panel's (`checkAreNamesUnique` fired), and there can be several floating
+  previews at once, so per-instance tran-key labels cannot fix it. The panes
+  still collapse and reopen by their own strips inside the panel.
 - **The reset MUST blank `style.flexGrow` before re-rendering.** A drag writes
   `flexGrow` straight onto the pane without telling React
   (`FlexResizeActorComp.onMouseMove`), so re-rendering the same `flex` string

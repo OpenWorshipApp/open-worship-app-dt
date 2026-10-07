@@ -51,14 +51,7 @@ import type { TransitionEffectType } from '../transitionEffectHelpers';
 import { toTransitionPart } from '../transitionOverrideHelpers';
 import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 import appProvider from '../../server/appProvider';
-
-// The font stack `screen.scss` gives the screen window's `body`, written out
-// again for `containerStyle`. Keep the two the same: it is what makes the mini
-// preview's foreground read like the projector's.
-const SCREEN_FONT_FAMILY =
-    "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue'," +
-    " 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji'," +
-    " 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'";
+import { SCREEN_FONT_FAMILY } from '../screenFontFamily';
 
 export type ScreenForegroundEventType = 'update';
 

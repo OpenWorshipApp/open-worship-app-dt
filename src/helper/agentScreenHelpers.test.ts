@@ -243,6 +243,27 @@ describe('toForegroundSummary', () => {
         ]);
     });
 
+    // A quick text is markup from its editor; it reached the model as
+    // `quick text: "<p>zz robot test</p>"` (2026-10-06).
+    it('reads a quick text for its words, not its markup', () => {
+        const items = toForegroundSummary({
+            messageDataList: [],
+            countdownData: null,
+            stopwatchData: null,
+            timeDataList: [],
+            marqueeTopData: null,
+            marqueeBottomData: null,
+            quickTextData: {
+                htmlText: '<p>zz robot <b>test</b></p><p>second line</p>',
+            },
+            cameraDataList: [],
+            webDataList: [],
+            videoDataList: [],
+            imageDataList: [],
+        } as any);
+        expect(items).toEqual(['quick text: "zz robot test second line"']);
+    });
+
     it('says a countdown past its target is counting the time over', () => {
         const genCountdownData = (dateTime: Date) => {
             return {

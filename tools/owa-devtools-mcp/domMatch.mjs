@@ -25,6 +25,38 @@ import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
 // the user must be able to count what the answer says on their screen.
 const MAX_FIND_UI_MATCHES = 20;
 
+// A press made the way the app's own keyboard helper makes one
+// (`pressElementLikeButton`, src/helper/helpers.ts): a click AT the control's
+// centre. The app opens its context menus from the event's coordinates
+// (`setPositionMenu`), and `element.click()` carries none -- 0,0 -- so on
+// 2026-10-06 `owa_click "Foreground"` brought the launcher menu up pinned to
+// the window's top-left corner, nowhere near the tab that opened it, while a
+// real mouse click opened it under the pointer. Kept OUT of the memoised
+// runtime on purpose: a page first driven by an older server keeps that
+// server's runtime (memory `dom-match-memoised-in-page`), and a press must not
+// depend on a function that runtime never had. Returns where it pressed, or
+// null for a disabled form control, which takes no click by the method or by
+// a dispatched event alike -- `click()` is kept there for its own early return.
+export const PRESS_AT_CENTRE_SOURCE = `((element) => {
+    if (typeof element.matches === 'function' && element.matches(':disabled')) {
+        element.click();
+        return null;
+    }
+    const rect = element.getBoundingClientRect();
+    const x = Math.round(rect.left + rect.width / 2);
+    const y = Math.round(rect.top + rect.height / 2);
+    // No 'view' member, as pressElementLikeButton passes none: a realm
+    // other than the element's own can refuse it, and nothing reads it.
+    const view = element.ownerDocument.defaultView ?? window;
+    element.dispatchEvent(new MouseEvent('click', {
+        bubbles: true, cancelable: true, composed: true,
+        detail: 1, button: 0,
+        clientX: x, clientY: y,
+        screenX: (view.screenX || 0) + x, screenY: (view.screenY || 0) + y,
+    }));
+    return { x, y };
+})`;
+
 export const DOM_MATCH_RUNTIME = `
 (() => {
     if (window.__owaDomMatch !== undefined) {
@@ -144,13 +176,19 @@ export const DOM_MATCH_RUNTIME = `
     // formatting" for "Follow", "Add Bible Item" for "Add", and opened the
     // help window for "ASSISTANT" -- every one a tier-1 or looser match
     // taken as the thing itself.
+    // A trailing \`*\` is decoration too: it is the unsaved-changes mark a
+    // document, song or run sheet row draws right after its name, and with
+    // it glued on, "Amazing Grace" pressed nothing while its row read
+    // "Amazing Grace*" -- the one row with work in it was the one an assistant
+    // could not open by name (2026-10-06).
     const normaliseLabelPart = (part) => {
         return String(part)
             .toLowerCase()
             .replace(/\\[[^\\]]*\\]/g, ' ')
             .replace(/^[^\\p{L}\\p{N}]+/u, '')
             .replace(/\\s+/g, ' ')
-            .trim();
+            .trim()
+            .replace(/\\s*\\*+$/, '');
     };
     // The NEEDLE loses the same decoration: the words a tool hands back
     // carry the shortcut -- owa_list_screens says "Clear Bible [F9]", the
@@ -1295,6 +1333,14 @@ export function genClickExpression(
                     return value === 'true';
                 }
             }
+            // The row a list has open: a document, a song, a run sheet. Any
+            // value but 'false' means current ('page', 'step' and the rest
+            // are kinds of current). Without it, the press that opened a
+            // document reported it had changed nothing (2026-10-06).
+            const current = element.getAttribute('aria-current');
+            if (current !== null) {
+                return current !== 'false';
+            }
             // This app's panel tabs (Documents / Bibles / Foreground, the
             // Background tabs) are Bootstrap nav-links whose state is the
             // 'active' class and nothing in the accessibility tree, and a
@@ -1310,6 +1356,28 @@ export function genClickExpression(
                 ? element.checked
                 : null;
         };
+        // What a press BROUGHT UP, which the control itself cannot say: the
+        // Foreground tab that opens its launcher menu, a More Options that
+        // opens one, the Bible Lookup that opens its popup all stay exactly
+        // as they were, and every one answered 'unverified' to a QA run
+        // that could see the menu sitting right there (2026-10-06). A layer
+        // counts when it is on screen after the press and was not before
+        // it, most telling first: a dialog (the modal container the Bible
+        // Lookup and the app's own questions are drawn in), a floating
+        // panel, a menu. A new WINDOW is read by the tool, off the
+        // debugging targets, because no page can see another one open.
+        const OPENED_LAYERS = [
+            ['dialog', '[role="dialog"], [role="alertdialog"], #modal-container'],
+            ['panel', '.floating-widget'],
+            ['menu', '[role="menu"]'],
+        ];
+        const listShownLayers = (selector) => {
+            return [...document.querySelectorAll(selector)].filter((one) => {
+                return typeof one.checkVisibility !== 'function' ||
+                    one.checkVisibility();
+            });
+        };
+        const pressAtCentre = ${PRESS_AT_CENTRE_SOURCE};
         const found = await dm.waitForBest(
             ${JSON.stringify(finds)}, ${timeoutMs}, { preferPressSafe: true },
         );
@@ -1372,22 +1440,31 @@ export function genClickExpression(
         target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         const describedBefore = dm.describe(target);
         const stateBefore = stateOf(target);
-        target.click();
+        const layersBefore = new Set(OPENED_LAYERS.flatMap((layer) => {
+            return listShownLayers(layer[1]);
+        }));
+        pressAtCentre(target);
         // This app re-renders on an event, not on the press, so reading the
         // control straight back reports what it looked like BEFORE it was
         // pressed -- which would have made every toggle report 'no change'.
         await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
-        // Three kinds of evidence, weakest last. A control that is GONE did
-        // something (a menu item, a row that closed its own panel); a toggle
-        // that flipped is the state itself; a label that turned Show into
-        // Hide is the same fact written in words. Anything else is a press
-        // with nothing to show for it.
+        // Four kinds of evidence, weakest last. A layer the press brought
+        // up is the effect itself; a control that is GONE did something (a
+        // menu item, a row that closed its own panel); a toggle that
+        // flipped is the state itself; a label that turned Show into Hide
+        // is the same fact written in words. Anything else is a press with
+        // nothing to show for it.
+        const opened = OPENED_LAYERS.find((layer) => {
+            return listShownLayers(layer[1]).some((one) => {
+                return !layersBefore.has(one);
+            });
+        });
         const isStillHere = target.isConnected;
         const stateAfter = isStillHere ? stateOf(target) : null;
         // Read the way describedBefore was, or a label merely re-joined
         // would read as a change.
         const labelAfter = isStillHere ? dm.describe(target).label : null;
-        const didChange = !isStillHere
+        const didChange = opened !== undefined || !isStillHere
             ? true
             : (stateBefore !== null || stateAfter !== null
                 ? stateAfter !== stateBefore
@@ -1403,9 +1480,13 @@ export function genClickExpression(
             // says anything at all -- a plain button says nothing, and
             // inventing an 'on' for it would be the same lie in a new place.
             isOnNow: stateAfter === null ? undefined : stateAfter,
-            // Whether anything about the control itself changed. false is
-            // the interesting one: a press that did nothing at all.
+            // Whether the press changed anything it can see: the control, or
+            // a layer it brought up. false is the interesting one: a press
+            // that did nothing at all.
             didChange,
+            // What it brought up, when it brought anything up: one word,
+            // because a result rides every later round of the question.
+            opened: opened === undefined ? undefined : opened[0],
             // The one field written for the model rather than about the DOM.
             // Absent evidence must not read as success, so it is spelled out
             // rather than left to be inferred from a missing key.
@@ -1418,6 +1499,45 @@ export function genClickExpression(
                     'user what you pressed rather than what happened.',
         };
     })()`;
+}
+
+// How long `owa_click` keeps looking for a window its press opened when the
+// page itself saw nothing change. The Settings gear opens Settings as a window
+// of its own, which becomes a debugging target a few hundred milliseconds
+// after the press -- and no page can see another one open, so the press read
+// `unverified` with Settings in front of the user (2026-10-06). Measured
+// live, Settings was a target by the first look after the 250 ms settle; the
+// rest is margin for a slow machine, paid only by a press that showed nothing
+// (the /clear commands' plain Clear buttons among them).
+export const OPENED_WINDOW_WAIT_MS = 1000;
+
+/**
+ * Adds a window the press opened to a `genClickExpression` result, read off
+ * the debugging targets the press was evaluated beside (`evaluateInApp`'s
+ * `port` and `targets`). One look when the page already saw the press do
+ * something, a short poll when it saw nothing: an honest "nothing changed" is
+ * the only answer that pays for the wait. `waitForNewAppPage` is `cdp.mjs`'s,
+ * passed in so this file stays free of the network.
+ */
+export async function addOpenedWindow(value, { port, targets }, waitForNewAppPage) {
+  if (value === null || typeof value !== 'object' || !value.clicked) {
+    return value;
+  }
+  if (value.opened !== undefined || !Array.isArray(targets)) {
+    return value;
+  }
+  const page = await waitForNewAppPage(
+    port,
+    targets,
+    value.didChange ? 0 : OPENED_WINDOW_WAIT_MS,
+  );
+  if (page === null) {
+    return value;
+  }
+  const { unverified: _unverified, ...rest } = value;
+  // `page` is the word every tool's `page` argument takes, so the next call
+  // can be aimed straight at the window that opened.
+  return { ...rest, didChange: true, opened: 'window', page };
 }
 
 /**

@@ -6,7 +6,7 @@ import {
 } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
-import { tran } from '../lang/langHelpers';
+import { getCurrentLocale, tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
@@ -246,6 +246,9 @@ function StopwatchHistoryComp({
         return null;
     }
     const now = Date.now();
+    // The app's language, not the system's: a locale change reloads every
+    // window, so reading it once per render is never stale.
+    const locale = getCurrentLocale();
     return (
         <div className="fg-group">
             <div className="fg-history-head">
@@ -276,7 +279,11 @@ function StopwatchHistoryComp({
                                 )}
                             </span>
                             <span className="fg-history-when">
-                                {toStopwatchHistoryWhenText(entry.endedAt, now)}
+                                {toStopwatchHistoryWhenText(
+                                    entry.endedAt,
+                                    now,
+                                    locale,
+                                )}
                             </span>
                         </li>
                     );

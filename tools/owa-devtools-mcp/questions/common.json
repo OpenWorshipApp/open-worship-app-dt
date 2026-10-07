@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-05",
+    "updated": "2026-10-06",
     "sections": [
         {
             "id": "panels",
@@ -69,6 +69,25 @@
                         "recipe": "W-31",
                         "find": "divider between Document List and Presenting Flow List",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "divider-keyboard",
+                    "text": "Can I resize or close a panel with the keyboard?",
+                    "kind": "howto",
+                    "keywords": [
+                        "keyboard",
+                        "no mouse",
+                        "tab to the divider",
+                        "arrow keys",
+                        "menu key",
+                        "shift f10",
+                        "resize panel",
+                        "accessibility"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "find": "divider between Document List and Presenting Flow List"
                     }
                 }
             ]

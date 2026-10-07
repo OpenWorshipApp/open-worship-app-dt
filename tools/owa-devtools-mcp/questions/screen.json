@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-05",
+    "updated": "2026-10-06",
     "sections": [
         {
             "id": "screens",
@@ -117,7 +117,6 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "shortcut": "F5",
                         "tools": ["owa_hide_screens"]
                     }
                 },
@@ -405,6 +404,25 @@
                     "resources": {
                         "recipe": "W-18",
                         "related": ["W-03"]
+                    }
+                },
+                {
+                    "id": "screen-locked-message",
+                    "text": "Why does it say Screen Manager is locked?",
+                    "kind": "fix",
+                    "keywords": [
+                        "locked",
+                        "can't change the screen",
+                        "refused",
+                        "padlock",
+                        "red lock",
+                        "unlock the screen",
+                        "nothing changes on the screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "find": "Lock",
+                        "tools": ["owa_list_screens"]
                     }
                 }
             ]

@@ -1,3 +1,5 @@
+import { createElement } from 'react';
+
 import EventHandler from '../../event/EventHandler';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { getWindowDim } from '../../helper/helpers';
@@ -24,10 +26,9 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import type { ScreenMessageType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
-import {
-    releaseSubPixelScroll,
-    writeSubPixelScrollTop,
-} from '../../scrolling/subPixelScrollHelpers';
+import { applyRemoteScrollPercentage } from './screenScrollSyncHelpers';
+import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
+import ScreenLockedToastMessageComp from '../preview/ScreenLockedToastMessageComp';
 
 export type ScreenManagerEventType =
     | 'instance'
@@ -135,39 +136,13 @@ export default class ScreenManagerBase
         const { domSelector, scroll, isSubPixel } = data;
         const htmlElements = this.getElementsByDomSelector(domSelector);
         for (const element of htmlElements) {
-            const scrollLeft =
-                scroll.x * (element.scrollWidth - element.clientWidth);
-            const scrollTop =
-                scroll.y * (element.scrollHeight - element.clientHeight);
-            // Stamped so the scroll event this scrollTo fires is recognized
-            // as remote-applied and NOT re-broadcast
-            // (`registerScrollingSyncEvent`). The focused/mouse-over guard on
-            // the send side is not enough: `document.hasFocus()` reports true
-            // under an attached DevTools/CDP session, at which point a
-            // re-broadcast echoes between windows forever and floods the IPC
-            // channel until the renderer starves.
-            if (isSubPixel) {
-                // A mini preview's auto-scroll, one frame of it: glide by the
-                // same fractions of a pixel instead of ticking whole ones.
-                if (element.scrollLeft !== scrollLeft) {
-                    element.scrollLeft = scrollLeft;
-                }
-                writeSubPixelScrollTop(element, scrollTop);
-                (element as any)._remoteAppliedScroll = {
-                    left: element.scrollLeft,
-                    top: element.scrollTop,
-                };
-                continue;
-            }
-            releaseSubPixelScroll(element);
-            (element as any)._remoteAppliedScroll = {
-                left: scrollLeft,
-                top: scrollTop,
-            };
-            element.scrollTo({
-                left: scrollLeft,
-                top: scrollTop,
-            });
+            // Marked as remote-applied so the scroll events it sets off are
+            // NOT re-broadcast (`registerScrollingSyncEvent`). The
+            // focused/mouse-over guard on the send side is not enough: it is
+            // true in the presenter whenever the operator is at it, and under
+            // an attached DevTools/CDP session, and a re-broadcast echoes
+            // between windows -- or between grouped mini screens -- forever.
+            applyRemoteScrollPercentage(element, scroll, isSubPixel);
         }
     }
 
@@ -189,28 +164,44 @@ export default class ScreenManagerBase
     // When the refusal was last SAID. One press reaches the check below from
     // every layer at once -- Clear All asks the background, slide, bible and
     // foreground managers in turn -- and each used to raise its own copy of
-    // the same toast: four identical warnings stacked for one key. Every call
-    // is still refused; the message is said once per burst.
-    private lockedMessageShownAt = 0;
+    // the same toast: four identical warnings stacked for one key. Shared by
+    // every screen, because the same press is refused by each locked screen
+    // too (a locked colour group refuses on all of them), and that stacked one
+    // identical toast per screen. Every call is still refused; the message is
+    // said once per burst.
+    private static lockedMessageShownAt = 0;
     private static readonly lockedMessageGapMs = 1000;
+    // The screens the current burst was refused by -- what its Unlock frees.
+    // Replaced, not grown, by the next burst.
+    private static lockedRefusedScreens = new Set<ScreenManagerBase>();
 
     checkIsLockedWithMessage() {
         if (!this.isLocked) {
             return false;
         }
         const now = Date.now();
-        if (
-            now - this.lockedMessageShownAt >=
-            ScreenManagerBase.lockedMessageGapMs
-        ) {
-            this.lockedMessageShownAt = now;
-            // Not "change the app document": a locked screen refuses a
-            // background, a verse or a countdown just the same.
-            showSimpleToast(
-                tran('Screen Manager is locked'),
-                tran('Unlock the screen to change what it shows'),
-            );
+        const elapsed = now - ScreenManagerBase.lockedMessageShownAt;
+        // `elapsed >= 0`: a clock set back must not silence it until the
+        // clock catches up again.
+        if (elapsed >= 0 && elapsed < ScreenManagerBase.lockedMessageGapMs) {
+            ScreenManagerBase.lockedRefusedScreens.add(this);
+            return true;
         }
+        ScreenManagerBase.lockedMessageShownAt = now;
+        const refusedScreens = new Set<ScreenManagerBase>([this]);
+        ScreenManagerBase.lockedRefusedScreens = refusedScreens;
+        // Not "change the app document": a locked screen refuses a
+        // background, a verse or a countdown just the same.
+        showSimpleToast(
+            tran('Screen Manager is locked'),
+            createElement(ScreenLockedToastMessageComp, {
+                onUnlock: () => {
+                    for (const screenManagerBase of refusedScreens) {
+                        void screenManagerBase.setIsLockedWithSyncGroup(false);
+                    }
+                },
+            }),
+        );
         return true;
     }
 
@@ -278,7 +269,7 @@ export default class ScreenManagerBase
     set isShowing(isShowing: boolean) {
         this._isShowing = isShowing;
         if (isShowing) {
-            this.show();
+            this.showOrUndo();
         } else {
             this.hide();
         }
@@ -289,6 +280,40 @@ export default class ScreenManagerBase
         return showScreen({
             screenId: this.screenId,
             displayId: this.displayId,
+        });
+    }
+
+    // Counts show requests, so a refusal that comes back after a later show
+    // (or a hide and a show) cannot switch that later one off.
+    private showRequestCount = 0;
+
+    // `show()` rejects when main cannot put the screen up at all -- above all a
+    // Screen Mirror guest display that is not connected (`prepareOutput`
+    // throws "Guest display is disconnected"). Left unhandled, that rejection
+    // raised the app's "Reload is needed" dialog and left the toggle on with no
+    // window behind it. Switch it back off and say why instead.
+    private showOrUndo() {
+        const requestCount = ++this.showRequestCount;
+        const isRemoteDisplay = this.displayId <= MIRROR_REMOTE_DISPLAY_FIRST;
+        Promise.resolve(this.show()).catch((error: unknown) => {
+            if (requestCount !== this.showRequestCount || !this._isShowing) {
+                return;
+            }
+            this._isShowing = false;
+            // Drops anything main had started for it (a half-made mirror
+            // output); a no-op when nothing was made.
+            this.hide();
+            this.fireVisibleEvent();
+            showSimpleToast(
+                tran('Screen not shown'),
+                isRemoteDisplay
+                    ? tran(
+                          'Its Screen Mirror display is not connected. Connect that computer, or choose another display for this screen.',
+                      )
+                    : error instanceof Error
+                      ? error.message
+                      : String(error),
+            );
         });
     }
 

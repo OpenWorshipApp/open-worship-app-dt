@@ -26,6 +26,7 @@ import { useStateSettingString } from '../../helper/settingHelpers';
 import { DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME } from './slideItemRenderHelpers';
 import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../../_screen/screenAppDocumentTypeHelpers';
 import type { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
+import DocumentStagePreviewerComp from '../stage/DocumentStagePreviewerComp';
 
 type PreviewerBodyStyle = CSSProperties & {
     '--app-docx-preview-background'?: string;
@@ -53,7 +54,11 @@ function EditorComp({
         PdfAppDocument.checkIsThisType(varyAppDocument) ||
         DocxAppDocument.checkIsThisType(varyAppDocument)
     ) {
-        return <VarySlidesPreviewerComp />;
+        return (
+            <DocumentStagePreviewerComp
+                flexSizeNamePrefix={flexSizeNamePrefix}
+            />
+        );
     }
     return (
         <ResizeActorComp
@@ -86,7 +91,11 @@ function EditorComp({
                 {
                     children: {
                         render: () => {
-                            return <VarySlidesPreviewerComp />;
+                            return (
+                                <DocumentStagePreviewerComp
+                                    flexSizeNamePrefix={flexSizeNamePrefix}
+                                />
+                            );
                         },
                     },
                     key: 'v1',
@@ -129,7 +138,10 @@ function PreviewerBodyComp({
     if (checkIsLyricFilePath(filePath)) {
         return (
             <AppSuspenseComp>
-                <LazyLyricHandlerComp filePath={filePath} />
+                <LazyLyricHandlerComp
+                    filePath={filePath}
+                    flexSizeNamePrefix={flexSizeNamePrefix}
+                />
             </AppSuspenseComp>
         );
     }

@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { genDestructiveLabelRule } from './destructiveLabel.mjs';
 import {
   DOM_MATCH_RUNTIME,
+  OPENED_WINDOW_WAIT_MS,
+  addOpenedWindow,
   genClickExpression,
   genFindUiExpression,
   genListUiExpression,
@@ -470,6 +472,22 @@ describe('the packaged expressions', () => {
     expect(opened.isOnNow).toBe(true);
   });
 
+  // A list row says which one is open with aria-current. Written after
+  // opening a document by its row came back 'unverified' (2026-10-06).
+  it('reads a list row that became the current one as a change', async () => {
+    document.body.innerHTML =
+      '<ul><li class="list-group-item" aria-current="false"' +
+      ' title="Holy Holy Holy.ows">Holy Holy Holy</li></ul>';
+    const row = document.querySelector('li');
+    row.addEventListener('click', () => {
+      row.setAttribute('aria-current', 'true');
+    });
+    const result = await run(genClickExpression(['Holy Holy Holy']));
+    expect(result.didChange).toBe(true);
+    expect(result.isOnNow).toBe(true);
+    expect(result.unverified).toBe(undefined);
+  });
+
   // The guide card's bar, on the tool the model presses with. Written after
   // "show screen" matched the Bible Lookup's save-and-present button.
   it('refuses to press a loose match, and names what it found', async () => {
@@ -746,6 +764,26 @@ describe('a needle carrying the shortcut a title carries', () => {
     expect(dm.findBest(['Clear Bible']).isPressSafe).toBe(true);
     expect(dm.findBest(['Close [Ctrl+Q]']).isPressSafe).toBe(true);
     expect(dm.findBest(['Close']).isPressSafe).toBe(true);
+  });
+
+  // A row with unsaved changes draws a `*` right after its name, and the row
+  // that had work in it was the one that could not be opened by name
+  // (2026-10-06: "Amazing Grace" against "Amazing Grace*").
+  it('presses a row by its name with the unsaved mark after it', () => {
+    document.body.innerHTML =
+      '<ul><li title="Amazing Grace.ows"><div>Amazing Grace<span>*</span>' +
+      '</div></li><li title="Holy Holy Holy.ows"><div>Holy Holy Holy</div>' +
+      '</li></ul>';
+    const dm = install();
+    const starred = dm.findBest(['Amazing Grace']);
+    expect(starred.element.getAttribute('title')).toBe('Amazing Grace.ows');
+    expect(starred.isPressSafe).toBe(true);
+    expect(dm.findBest(['Amazing Grace*']).isPressSafe).toBe(true);
+    const plain = dm.findBest(['Holy Holy Holy']);
+    expect(plain.element.getAttribute('title')).toBe('Holy Holy Holy.ows');
+    // A bare mark is decoration and nothing else, so it names nothing.
+    const mark = dm.findBest(['*']);
+    expect(mark === null || mark.isPressSafe !== true).toBe(true);
   });
 
   it('never lets bare decoration stand for the words', () => {
@@ -1176,5 +1214,164 @@ describe('a list row is trimmed to what a reader needs', () => {
     expect(dm.labelOf(document.querySelector('button'))).toBe(
       'Drive Open C: drive',
     );
+  });
+});
+
+// Reported by a robot QA run on 2026-10-06: `owa_click "Foreground"` opened
+// the launcher menu pinned to the window's top-left corner, because the press
+// was `element.click()` -- coordinates 0,0 -- and the app places its context
+// menus at the event's coordinates. And it answered `unverified` for that
+// press, and for every other one that opened a menu, a popup or a window:
+// the control itself stays as it was, and the control was all it read.
+describe('a press lands where the control is, and says what it opened', () => {
+  it('presses at the centre of the control, the way the app positions a menu', async () => {
+    document.body.innerHTML = '<button id="go">Foreground</button>';
+    const seen = [];
+    document.getElementById('go').addEventListener('click', (event) => {
+      seen.push([event.clientX, event.clientY, event.bubbles]);
+    });
+    await run(genClickExpression(['Foreground'], 100, 0));
+    // The stubbed box is x 10, y 10, 40 wide, 20 high.
+    expect(seen).toEqual([[30, 20, true]]);
+  });
+
+  it('still presses nothing that is disabled', async () => {
+    document.body.innerHTML = '<button id="go" disabled>Save</button>';
+    let clicks = 0;
+    document.getElementById('go').addEventListener('click', () => {
+      clicks += 1;
+    });
+    const result = await run(genClickExpression(['Save'], 100, 0));
+    expect(clicks).toBe(0);
+    expect(result.didChange).toBe(false);
+  });
+
+  it('reports a menu the press brought up as the change it made', async () => {
+    document.body.innerHTML =
+      '<ul><li class="nav-item"><button class="btn nav-link">' +
+      'Foreground</button></li></ul>';
+    document.querySelector('.nav-link').addEventListener('click', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div id="app-context-menu-container"><div role="menu">' +
+          '<div role="menuitem">Countdown</div></div></div>',
+      );
+    });
+    const result = await run(genClickExpression(['Foreground'], 100, 0));
+    expect(result.opened).toBe('menu');
+    expect(result.didChange).toBe(true);
+    expect(result.unverified).toBe(undefined);
+    // The tab says what it says about itself, unchanged.
+    expect(result.isOnNow).toBe(false);
+  });
+
+  it('reports a popup as a dialog, ahead of anything else it opened', async () => {
+    document.body.innerHTML = '<button title="Bible Lookup">B</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div id="modal-container"><div role="menu"></div></div>',
+      );
+    });
+    const result = await run(genClickExpression(['Bible Lookup'], 100, 0));
+    expect(result.opened).toBe('dialog');
+    expect(result.didChange).toBe(true);
+  });
+
+  it('reports a floating panel as a panel', async () => {
+    document.body.innerHTML = '<button>Countdown</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div class="floating-widget"></div>',
+      );
+    });
+    const result = await run(genClickExpression(['Countdown'], 100, 0));
+    expect(result.opened).toBe('panel');
+  });
+
+  it('does not credit a press with a layer that was open before it', async () => {
+    document.body.innerHTML =
+      '<div role="menu"></div><div role="dialog" style="display:none">' +
+      '</div><button>Copy</button>';
+    const result = await run(genClickExpression(['Copy'], 100, 0));
+    expect(result.opened).toBe(undefined);
+    expect(result.didChange).toBe(false);
+    expect(result.unverified).toContain('nothing is proven');
+  });
+
+  it('counts a layer that was there but hidden, once it shows', async () => {
+    document.body.innerHTML =
+      '<div role="dialog" style="display:none"></div><button>Open</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      document.querySelector('[role="dialog"]').style.display = 'block';
+    });
+    const result = await run(genClickExpression(['Open'], 100, 0));
+    expect(result.opened).toBe('dialog');
+  });
+});
+
+// A WINDOW is the one thing a page cannot see open, so the tool reads it off
+// the debugging targets beside the press (`addOpenedWindow` + cdp.mjs's
+// `waitForNewAppPage`). Pressing the Settings gear opened Settings and still
+// answered `unverified` (2026-10-06).
+describe('addOpenedWindow', () => {
+  const unproven = {
+    clicked: { label: 'Setting' },
+    didChange: false,
+    unverified: 'The press left this control exactly as it was...',
+  };
+  const evaluated = { port: 1234, targets: [{ id: 'main' }] };
+
+  it('names the window a press opened and drops the unverified sentence', async () => {
+    const asked = [];
+    const result = await addOpenedWindow(
+      unproven,
+      evaluated,
+      async (port, targets, waitMs) => {
+        asked.push([port, targets, waitMs]);
+        return 'setting.html';
+      },
+    );
+    expect(result).toEqual({
+      clicked: { label: 'Setting' },
+      didChange: true,
+      opened: 'window',
+      page: 'setting.html',
+    });
+    // Nothing else changed, so it was worth waiting for one to appear.
+    expect(asked).toEqual([[1234, evaluated.targets, OPENED_WINDOW_WAIT_MS]]);
+  });
+
+  it('looks once, without waiting, when the page already saw a change', async () => {
+    let waited = null;
+    const result = await addOpenedWindow(
+      { clicked: {}, didChange: true },
+      evaluated,
+      async (_port, _targets, waitMs) => {
+        waited = waitMs;
+        return null;
+      },
+    );
+    expect(waited).toBe(0);
+    expect(result).toEqual({ clicked: {}, didChange: true });
+  });
+
+  it('leaves alone a miss, a refusal and a press that opened a layer', async () => {
+    const never = async () => {
+      throw new Error('should not look');
+    };
+    const miss = { clicked: null, reason: 'nothing on screen to act on' };
+    expect(await addOpenedWindow(miss, evaluated, never)).toBe(miss);
+    const menu = { clicked: {}, didChange: true, opened: 'menu' };
+    expect(await addOpenedWindow(menu, evaluated, never)).toBe(menu);
+    expect(
+      await addOpenedWindow(unproven, { port: 1, targets: undefined }, never),
+    ).toBe(unproven);
+  });
+
+  it('keeps the unverified answer when no window opened', async () => {
+    const result = await addOpenedWindow(unproven, evaluated, async () => null);
+    expect(result).toBe(unproven);
   });
 });

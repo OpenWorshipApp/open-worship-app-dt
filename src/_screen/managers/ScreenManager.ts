@@ -13,7 +13,10 @@ import {
     getScreenManagerBase,
     saveScreenManagersSetting,
 } from './screenManagerBaseHelpers';
-import { deleteScreenPersistedData } from './screenManagerDeleteHelpers';
+import {
+    deleteScreenPersistedData,
+    removeRetiredScreenSettings,
+} from './screenManagerDeleteHelpers';
 import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
@@ -22,7 +25,6 @@ import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
-import ScreenMaskManager from './ScreenMaskManager';
 import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
 import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
 
@@ -67,7 +69,6 @@ export default class ScreenManager extends ScreenManagerBase {
     readonly screenForegroundManager: ScreenForegroundManager;
     readonly screenDrawManager: ScreenDrawManager;
     readonly screenFocusManager: ScreenFocusManager;
-    readonly screenMaskManager: ScreenMaskManager;
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
@@ -75,6 +76,10 @@ export default class ScreenManager extends ScreenManagerBase {
 
     constructor(screenId: number) {
         super(screenId);
+        // The Presenter only, like every other per-screen key removal.
+        if (appProvider.isPagePresenter) {
+            removeRetiredScreenSettings(screenId);
+        }
         this.backgroundEffectManager = new ScreenEffectManager(
             this,
             'background',
@@ -136,15 +141,6 @@ export default class ScreenManager extends ScreenManagerBase {
             this.screenId,
             (screenManagerBase) => {
                 return (screenManagerBase as ScreenManager).screenFocusManager;
-            },
-        );
-        this.screenMaskManager = new ScreenMaskManager(this);
-        setGroupMembershipInf(
-            this,
-            this.screenMaskManager,
-            this.screenId,
-            (screenManagerBase) => {
-                return (screenManagerBase as ScreenManager).screenMaskManager;
             },
         );
         this.registeredEventListeners = [];
@@ -281,7 +277,6 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBibleManager.sendSyncScreen();
         this.screenDrawManager.sendSyncScreen();
         this.screenFocusManager.sendSyncScreen();
-        this.screenMaskManager.sendSyncScreen();
     }
 
     clear() {
@@ -291,13 +286,6 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBackgroundManager.clear();
         this.screenDrawManager.clear();
         this.screenFocusManager.clear();
-        // `screenMaskManager` is deliberately NOT cleared here. A mask is the
-        // shape of the ROOM -- measured once so the picture stops short of an
-        // organ pipe or the bottom of a half-lowered screen -- not something
-        // being presented. Clearing it with the content would hand an operator
-        // who just pressed the panic key a picture spilling onto the wall, and
-        // leave them re-measuring a mask mid-service. It comes off from its own
-        // panel and nowhere else.
         this.fireUpdateEvent();
     }
 
@@ -333,7 +321,6 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenForegroundManager.delete();
         this.screenDrawManager.delete();
         this.screenFocusManager.delete();
-        this.screenMaskManager.delete();
         this.divRef = null;
         this.getElementsByDomSelector = () => [];
         this.noSyncGroupMap.clear();
@@ -419,8 +406,6 @@ export default class ScreenManager extends ScreenManagerBase {
             return ScreenDrawManager;
         } else if (type === 'focus') {
             return ScreenFocusManager;
-        } else if (type === 'mask') {
-            return ScreenMaskManager;
         }
         return null;
     }
@@ -564,9 +549,10 @@ export default class ScreenManager extends ScreenManagerBase {
     // projector and left every member where it was. Applied here to the
     // member's mini screen and posted to the member's own window. NOT gated by
     // `noSyncGroupMap` -- that guard is sticky and would leave the group
-    // one-way after the first scroll; the `_remoteAppliedScroll` stamp
-    // `syncScrollPercentage` leaves is what stops the member's own scroll
-    // event from broadcasting it back.
+    // one-way after the first scroll; `syncScrollPercentage` marks the
+    // member's container remote-scrolled, and that is what stops the scroll
+    // events it fires -- in this window and in the member's own -- from
+    // broadcasting it back (`registerScrollingSyncEvent`).
     private static relayScrollToMember(
         screenManagerBase: ScreenManagerBase,
         message: ScreenMessageType,

@@ -419,36 +419,6 @@ export type FocusDataType = {
     isContrast: boolean;
 };
 
-/**
- * The BLANKING shape for a room -- solid bars that cover the edges of the
- * projector's picture so it stops short of an organ pipe, a window frame, or
- * the bottom of a screen that only comes half way down.
- *
- * Two things it is NOT, both deliberate:
- *
- * - It is not the Focus spotlight. That one is a live pointer, re-aimed by
- *   hand, and it is gone the moment it is switched off. This is ROOM GEOMETRY:
- *   measured once, right for as long as the projector sits where it sits.
- * - It is therefore not content, so `ScreenManager.clear()` does NOT touch it.
- *   `Clear All` mid-service must not hand the congregation a picture spilling
- *   onto the wall above the screen, and an operator who pressed the panic key
- *   is the last person who should have to re-measure a mask.
- *
- * Each inset is a percentage of the screen's own width or height, so one mask
- * is right whatever resolution the display reports and survives the projector
- * being swapped. Cost at rest is zero: four static divs, no timer, no
- * animation, nothing that repaints once painted.
- */
-export type MaskDataType = {
-    topPercentage: number;
-    rightPercentage: number;
-    bottomPercentage: number;
-    leftPercentage: number;
-    // `#rrggbb`. Black for a dark room; a projector with poor black level
-    // sometimes reads better masked in the wall's own colour.
-    color: string;
-};
-
 export type BoundsType = {
     x: number;
     y: number;
@@ -480,7 +450,6 @@ export const screenTypeList = [
     'sync-scroll-percentage',
     'draw',
     'focus',
-    'mask',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

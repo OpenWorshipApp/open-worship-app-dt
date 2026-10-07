@@ -21,7 +21,27 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-06i** (W-37 step 2 / RD-84 — Resources file-group headings visibly give the full book name and chapter or Introduction beside the code. Verified live in the Reader for John 3 and its introduction.)
+**workflowsVersion: 2026-10-06j** (Merge of two branches worked on the same day, each numbering its entries 2026-10-06a–i on its own: the Presenter entries come first below, then the Bible Reader entries, from its own `i` down. No entry was changed.)
+
+Previous: **workflowsVersion: 2026-10-06i** (W-03 step 3: the preview scrolls smoothly to the selected slide after repeated Next presses, including wrapping from the last slide to the first. Verified live on the dev Presenter, 2026-10-06.)
+
+Previous: **workflowsVersion: 2026-10-06h** (from the presenter robot run 20261006-1717, "fix all": W-03 step 5 and W-05 step 6 — a stage chip's **×** is **[en:tran:Hide Stage] N** and in a narrow pane the header keeps every chip in view; W-09 — the Stopwatch history reads in the app's language (numbers only in Khmer); W-10 — the lock refusal's own **[en:tran:Unlock]** closes the message; W-31 — a divider answers the keyboard: Tab, the Menu key, the arrows. Verified live 2026-10-06 on the dev presenter.)
+
+Previous: **workflowsVersion: 2026-10-06g** (W-47 — the edge **Mask** is REMOVED. Asked for with a screenshot circling its footer button: _"not sure what screen mask for, but I want to remove it"_. The Mini Screen footer no longer has the half-square button right of the drawing button, the four cover sliders and the colour are gone with it, and nothing covers the edges of the projected picture any more — a picture that runs past the screen is fixed on the projector itself (zoom, shift, keystone). A mask set on an earlier release is dropped, and its saved setting deleted, the next time the Presenter starts. W-47 is Messages only now; PM-136 retired.)
+
+Previous: **workflowsVersion: 2026-10-06f** (W-03 step 5 and W-05 step 8 — no gap between the boxes of a look-ahead stage, songs and documents alike: the current slide and the coming ones touch, each still framed. Asked for with a screenshot: _"I still don't space there, remove it"_. Verified live 2026-10-06 on the dev presenter: screen 0 on **St: 3** with a PowerPoint document, the slide and the two coming ones touching, `1/7`, `2/7`, `3/7` in their corners.)
+
+Previous: **workflowsVersion: 2026-10-06e** (W-03 step 5 — every coming slide on a document stage carries its OWN count in its corner, not only the current one, and the count is larger (8% of its box's height) on a 50%-opacity dark pill. Asked for by the user: _"all next slides should have index as well"_, then _"make the index bigger, background 0.5 opacity"_. A song's coming verses already carried theirs (each side box is the whole verse shrunk). Verified live 2026-10-06 on the dev presenter: screen 0 on **St: 3** with a PowerPoint document read `1/7` on the slide and `2/7`, `3/7` on the two coming ones.)
+
+Previous: **workflowsVersion: 2026-10-06d** (W-05 step 8 and W-03 step 5 — a SONG's look-ahead stages (2 to 5) now match the documents': the coming verse is at full opacity, and the boxes are laid over the whole slide, flush with its top left corner and no margin, instead of inside the stage's Slide Padding. Asked for by the user: _"apply current request for lyric as well"_, _"save space + full opacity"_. Verified live 2026-10-06 on the dev presenter: screen 0 on **St: 2** showed _Still_ Verse 1 flush top left with `Verse 1 · 1/7` and the Chorus under it at full brightness, flush left down to the bottom edge.)
+
+Previous: **workflowsVersion: 2026-10-06c** (W-03 step 5 — on a document's stages the coming slide is at FULL opacity (asked for: _"make the next coming slide to be full opacity, no need transparency"_), and the layout fills the SCREEN: the slide and the next one grow to the screen's full height from its top left corner with no margin (asked for: _"make align left, margin 0 for current and next slide"_), instead of being arranged inside the slide's own box fitted to the screen, which left a band above and one below on a screen of another shape (asked for with a screenshot: _"I need it bigger, cut those space"_). Also fixed: a PowerPoint slide with **Full Width** on drew plain on a stage screen; a stage screen now fits a PDF or Word page even under Full Width. Verified live 2026-10-06 on the dev presenter: screen 0 on **St: 2** with a PowerPoint slide drew it from the top edge with the next one full-bright down to the bottom edge, `1/7` in the corner.)
+
+Previous: **workflowsVersion: 2026-10-06b** (W-03 step 5 — every document that is not a song gets the song's **Stage Previewer** header: **[en:tran:Add Stage]** adds a pane per stage, and a screen's **St:** number now draws a slide document, a PDF, a PowerPoint or a Word file at that stage too. Asked for by the user: _"add stage 1 to 5 for all kind of documents. no configuration like lyric. story: as a leading singer on the stage I want to see what coming"_, then _"stage 0 have to be no change at all, stage 1 same stage 0 but has indexing"_. Stage 0 is the slide as it is; 1 adds the count in the corner; 2 and 3 the next one or two slides, smaller and dimmer, underneath; 4 the next one without the count; 5 the previous and next on a diagonal. No ⚙ — nothing to set. Verified live 2026-10-06 on the dev presenter with a slide document (5 slides) and a PDF (3 pages): Stage 1/2/5 panes, and screen 1 on **St: 2** drew slide 2 with `2/5` and slide 3 under it on its Mini Screen, moving on to `3/5` with the arrow key.)
+
+Previous: **workflowsVersion: 2026-10-06a** (W-10 and W-49 — **F5** acts on the SELECTED screens, every screen when none is selected, and brings them all to one state: shown only when every one of them is hidden, otherwise all hidden -- so it never puts a screen up while taking another down. Before, every mini screen's toggle took the key itself, so one press flipped each screen on its own — with one screen up it hid that one and showed the other. The card's own toggle still turns only its screen on or off. Verified live 2026-10-06 on the dev presenter: screen 1 solo-selected, F5 showed screen 1 alone and F5 again hid it; screen 0 stayed off.)
+
+Previous: **workflowsVersion: 2026-10-06i** (W-37 step 2 / RD-84 — Resources file-group headings visibly give the full book name and chapter or Introduction beside the code. Verified live in the Reader for John 3 and its introduction.)
 
 Previous: **workflowsVersion: 2026-10-06g** (W-11 step 3 / RD-29 — the color, sync-scroll and audio icons are dimmed at rest and regain full opacity when their group is hovered or a control has keyboard focus. Verified live in the Reader.)
 
@@ -197,7 +217,7 @@ lines. Each message now has its OWN editor with its own show / move / remove,
 a message can be as many lines as it needs, several can be on a screen at once
 and they stack instead of covering each other, and
 **[en:tran:Show All Messages]** puts the whole session up — as one block, or
-one at a time with **[en:tran:Rotate]**. **[en:tran:Mask]** is unchanged.
+one at a time with **[en:tran:Rotate]**. The edge Mask (since removed) was unchanged.
 Verified live 2026-09-25 on the dev Presenter and its real output window: two
 multi-line messages up together, laid out one under the other; hide and
 re-show; and the bars covering a full-screen video overlay. Not
@@ -1401,9 +1421,41 @@ _Verify: NAV-01..04._
 2. **Double-click** a slide thumbnail. The slide goes live: it appears on the mini
    screen, and the live item is marked highlighted (on-screen indicator). 📸
 3. To step through slides with the keyboard, click once in the thumbnail area, then use
-   **Arrow keys / PageUp / PageDown**; **Space** toggles the focused slide.
+   **Arrow keys / PageUp / PageDown**; **Space** advances and **Shift+Space** goes back.
+   The preview scrolls smoothly to the selected slide, including after several quick
+   Next presses or wrapping from the last slide to the first.
 4. To remove the slide from the screen, press **F8** ([en:tran:Clear Slide]) or click
    the matching clear button under the mini screen.
+5. **Show the person on the stage what comes next.** A screen's **St:** number (the badge at
+   the right of its mini screen's footer) decides how a slide is drawn on it, for every kind
+   of document — a slide document, a PDF, a PowerPoint or a Word file — just as it does for a
+   song (W-05):
+   - **Stage 0** — the slide exactly as it is.
+   - **Stage 1** — the slide, with its place in the document in the bottom-right corner
+     (`3/12`, or `Welcome · 3/12` when the slide has a name).
+   - **Stage 2** — the slide at the top, the **next** slide smaller under it — at full
+     brightness, not faded — and the count. The pair grows to fill the screen's height
+     whatever shape the slides are, flush with its top left corner, no margin, and the
+     slides touch — no gap between them, only each one's frame.
+   - **Stage 3** — the same with the next **two** slides.
+   - **Stage 4** — the next slide under it, without the count.
+   - **Stage 5** — the **previous** slide top left, the slide, and the **next** slide bottom
+     right.
+
+   As on a song's stages (W-05), the slides around the current one are never faded.
+   On every stage that shows a count, **each** slide on the screen carries its own — the
+   coming ones too (`2/7`, `3/7`) — in a large figure on a half-transparent dark pill.
+
+   Set a stage monitor's **St:** to **2** and the singer always sees what is coming. To see
+   it here first, click **[en:tran:Add Stage]** in the **[en:tran:Stage Previewer]** header
+   above the slides and pick a stage: it arrives as its own chip and its own pane, side by
+   side with **Stage 0**, which always stays. The **×** on a chip
+   (**[en:tran:Hide Stage] 2**) takes that pane away again, and **[en:tran:Add Stage]**
+   brings it straight back. In a narrow pane — beside the Bibles tab, say — the header's
+   title gives way first and **[en:tran:Add Stage]** folds to its **+**, so every chip stays
+   in view. There is nothing to set on a document's stage — unlike a song's, its chips have no
+   ⚙. Clicking a slide in any pane presents the same slide; each screen draws it at its own
+   **St:**. 📸
 
 Tips:
 
@@ -1418,7 +1470,7 @@ Tips:
   it costs nothing until you want it; to put it away again drag the divider above it
   down to the bottom edge, or untick **View → Widgets → Note** (W-31).
 
-_Verify: PL-01, PM-05..09, PM-149, KB-05, KB-08._
+_Verify: PL-01, PM-05..09, PM-149, PM-157, KB-05, KB-08._
 
 ### W-04 — Auto-play slides on a timer
 
@@ -1478,8 +1530,9 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
     **Increment · Stage N** at the foot, which adds one past the highest stage you have.
     Increment is how you get past Stage 4, and it is what matches a screen whose **St:**
     number you have already pushed up there. Each stage arrives as its own chip and its
-    own pane, in its own colour; the **×** on a chip takes that stage away again, and the
-    padlocked **Stage 0** stays. 📸
+    own pane, in its own colour; the **×** on a chip (**[en:tran:Hide Stage] N**) hides
+    that stage's pane again — its look under **⚙** is kept for when you add it back — and
+    the padlocked **Stage 0** stays. 📸
 7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
    (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **Stage Style** window
    opens — drag it anywhere, it remembers where you left it. It sets **Slide Padding**,
@@ -1493,6 +1546,12 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    look and differs only by what you set here. Custom CSS is **added to** the stage's
    built-in look rather than replacing it, so stage 0 keeps hiding its chords whatever
    you type.
+   **Stages 2 to 5 show what comes next** around the verse being sung: 2 the next verse
+   under it, 3 the next two, 4 like 2 in the plain look, 5 the previous one top left and
+   the next one bottom right. The coming verse is at **full brightness**, not faded, and
+   the verse sits flush in the screen's top left corner with the next one flush left
+   under it, touching it — no margin around them and no gap between them, whatever **Slide Padding** says (the padding stays
+   inside each verse's own box).
 9. **Reset** puts that stage back to the defaults.
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
@@ -1655,7 +1714,7 @@ button:
   **[en:tran:Start]** / **[en:tran:Pause]** / **[en:tran:Resume]** / **[en:tran:Reset]**
   (back to zero). **[en:tran:Reset]** first SAVES the time it read into a
   **[en:tran:History]** list under the buttons — newest on top, numbered, with the time
-  of day it was reset — so the 7:42 a testimony ran is not lost with the zero. Each
+  of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
 - **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
@@ -1766,7 +1825,10 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151
   that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
-  output display on or off. The icon fills in and brightens while showing. It is
+  output display on or off. The toggle acts on its own screen; **F5** acts on the
+  **selected** screens (every screen when none is selected) and turns them all the
+  same way: on only when all of them are off, otherwise all off — so with any of
+  them showing, **F5** hides them. The icon fills in and brightens while showing. It is
   the control named **[en:tran:Toggle showing screen]** — say those words when
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
@@ -1787,7 +1849,9 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151
   screen, and a clip that was playing carries on. The card remembers the choice for
   that screen, even after a restart. 📸
 - **Lock** (header, the padlock): when locked (red), the screen refuses slide changes —
-  handy during a live moment; click again (green) to unlock.
+  handy during a live moment; click again (green) to unlock. A change it refuses says
+  _Screen Manager is locked_ in a message with its own **[en:tran:Unlock]**: pressing it
+  unlocks the screens and closes the message.
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
@@ -3488,7 +3552,7 @@ Every page lists its own keys, searchable, under **Help → [en:tran:Keyboard Sh
 | ------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `Ctrl+B`                             | Open Bible Lookup                                                       | Presenter / Editor                                                    |
 | `Ctrl+Q`                             | Close the open dialog                                                   | any dialog                                                            |
-| `F5`                                 | Show / hide the presentation screen                                     | Presenter                                                             |
+| `F5`                                 | Show / hide the selected screens (all, when none is selected)           | Presenter                                                             |
 | `F6` / `F7` / `F8` / `F9` / `F10`    | Clear All / Background / Slide / Bible / Foreground                     | Presenter                                                             |
 | `Ctrl/Alt+ArrowLeft/Right`           | Previous / next Bible verse                                             | the output screen                                                     |
 | Arrows, `PageUp`/`PageDown`, `Space` | Next / previous slide (`Shift+Space` goes back)                         | slide thumbnails focused                                              |
@@ -3564,6 +3628,12 @@ in a popup window:
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
    shipped with. Double-clicking the divider does the same. The View menu's
    `Reset Widgets Size` (step 5) is the version for every panel at once.
+
+**With the keyboard:** press **Tab** until a divider shows a blue outline. The **Menu**
+key (or **Shift+F10**) opens the same menu as the right-click, and the arrow keys move
+the divider — **←/→** for one between side-by-side panels, **↑/↓** for one between an
+upper and a lower panel, **Shift** for bigger steps. The arrows never collapse a panel;
+the menu does that.
 
 > This used to be a button in Settings → General, where it did nothing until you also
 > clicked **Apply Settings** and the app reloaded. It is on the View menu now and takes
@@ -4888,11 +4958,10 @@ it is describing.
 
 _Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71._
 
-### W-47 — Put messages on the screen, and blank the edges of the picture
+### W-47 — Put messages on the screen
 
-**Goal:** handle the two things that come up around a service and are not
-slides — words everyone needs to read, and a projector whose picture spills off
-the screen.
+**Goal:** put up the words everyone needs to read around a service that are not
+slides — a parking notice, an offering notice, a call for the next speaker.
 
 1. Open the **[en:tran:Foreground]** tab. The launcher that opens is a menu of
    components, and the first row in it is **[en:tran:Messages]** — it is first
@@ -4931,23 +5000,8 @@ the screen.
    screen exactly as you typed them; a message is never treated as formatting.
    Use the save buttons at the top to keep a whole session — every message in it
    — and pick it back next week.
-9. **Blanking the edges.** If the projector's picture runs past your screen —
-   onto the wall, over an organ pipe, or below a screen that only comes half way
-   down — find the **[en:tran:Mask]** button in the **[en:tran:Mini Screen]**
-   footer, just right of the drawing button. Press it to open four sliders.
-10. Drag **[en:tran:Cover from the top]**, **[en:tran:Cover from the bottom]**,
-    **[en:tran:Cover from the left]** and **[en:tran:Cover from the right]** until
-    the picture stops where your screen does. The bars are solid and sit over
-    everything, including a video overlay. You can change the colour if black is
-    not the right answer for your room.
-11. **The mask is not content, and it behaves differently on purpose.** It is
-    measured once for the room and then left alone: it survives closing the
-    panel, it survives restarting the app, and **[en:tran:Clear All]** (F6) does
-    **not** remove it. That is deliberate — the panic key must never hand you a
-    picture spilling onto the wall. The only thing that removes it is
-    **[en:tran:Remove Mask]** in that same panel.
 
-_Verify: PM-134, PM-135, PM-136._
+_Verify: PM-134, PM-135._
 
 ### W-48 — Give a slide, a song, a background or an overlay its own transition
 
@@ -5050,7 +5104,7 @@ learn the keys of the page you are on.
    **[en:tran:While the slides panel has focus]**: the slide arrows only move
    the slides after you click into the slides panel.
 3. Each page lists its own keys. The Presenter starts with
-   **[en:tran:Screens]** (`F5` shows or hides the screen, `F6`–`F10` clear it,
+   **[en:tran:Screens]** (`F5` shows or hides the selected screens, `F6`–`F10` clear them,
    `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
    **[en:tran:Presenting Flow]** and the mini screen's
    **[en:tran:Drawing]** and **[en:tran:Focusing]** keys. The Bible Reader

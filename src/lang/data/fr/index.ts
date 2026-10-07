@@ -634,7 +634,7 @@ const dictionary = {
     'Stage Previewer': 'Aperçu des scènes',
     stages: 'scènes',
     'Add Stage': 'Ajouter une scène',
-    'Remove Stage': 'Retirer la scène',
+    'Hide Stage': 'Masquer la scène',
     'Base Stage': 'Scène de base',
     'Base stage is always shown': 'La scène de base est toujours affichée',
     'Choose a stage to add': 'Choisir une scène à ajouter',
@@ -1002,7 +1002,7 @@ const dictionary = {
     'Clear Cache': 'Vider le cache',
     'Clear Color Note': 'Effacer la note de couleur',
     'Clear Foreground': 'Effacer le premier plan',
-    // --- Messages and Mask ---
+    // --- Messages ---
     Messages: 'Messages',
     'Show All Messages': 'Afficher tous les messages',
     'Hide Messages': 'Masquer les messages',
@@ -1021,17 +1021,6 @@ const dictionary = {
         "Secondes d'affichage de chaque message avant le suivant",
     'Tick a screen first, then press the key again':
         "Cochez d'abord un écran, puis appuyez à nouveau sur la touche",
-    Mask: 'Masque',
-    'Cover from the top': 'Couvrir depuis le haut',
-    'Cover from the bottom': 'Couvrir depuis le bas',
-    'Cover from the left': 'Couvrir depuis la gauche',
-    'Cover from the right': 'Couvrir depuis la droite',
-    'Mask color': 'Couleur du masque',
-    'Remove Mask': 'Retirer le masque',
-    'Clear All does not remove the mask':
-        'Tout effacer ne retire pas le masque',
-    'Cover the edges the projector overshoots':
-        'Couvrir les bords que le projecteur dépasse',
     'Clear Slide': 'Effacer la diapositive',
     Clear: 'Effacer',
     'Click to change Stage Number': 'Cliquer pour changer le numéro de scène',
@@ -2928,7 +2917,8 @@ const dictionary = {
     'Jump to a menu item by its first letter':
         'Aller à un élément de menu par sa première lettre',
     Screens: 'Écrans',
-    'Show or hide the screen': "Afficher ou masquer l'écran",
+    'Show or hide the selected screens':
+        'Afficher ou masquer les écrans sélectionnés',
     'Show or take down Messages': 'Afficher ou retirer les messages',
     'While the Messages panel is open': 'Quand le panneau Messages est ouvert',
     'Next slide': 'Diapositive suivante',
@@ -2981,6 +2971,86 @@ const dictionary = {
     'While typing in a text box': 'Pendant la saisie dans une zone de texte',
     'Cancel editing the text': 'Annuler la modification du texte',
     'While the Bible Lookup is open': 'Quand la recherche biblique est ouverte',
+    'Screen not shown': 'Écran non affiché',
+    'Its Screen Mirror display is not connected. Connect that computer, or choose another display for this screen.':
+        "Son affichage Écran miroir n'est pas connecté. Connectez cet ordinateur ou choisissez un autre affichage pour cet écran.",
+    'Failed to load the font list':
+        'Impossible de charger la liste des polices',
+    'Guest display, not connected': 'Affichage invité, non connecté',
+    'Not connected': 'Non connecté',
+    'Primary display': 'Affichage principal',
+    'Unnamed display': 'Affichage sans nom',
+    Assistant: 'Assistant',
+    'clicked something': 'a cliqué sur quelque chose',
+    'dragged something': 'a fait glisser quelque chose',
+    'filled in a box': 'a rempli un champ',
+    'filled in a form': 'a rempli un formulaire',
+    'pointed at something': 'a pointé quelque chose',
+    'pressed a key': 'a appuyé sur une touche',
+    'typed something': 'a saisi quelque chose',
+    'chose a file': 'a choisi un fichier',
+    'answered a message box': 'a répondu à une boîte de message',
+    'opened another page': 'a ouvert une autre page',
+    'opened a window': 'a ouvert une fenêtre',
+    'closed a window': 'a fermé une fenêtre',
+    'resized the window': 'a redimensionné la fenêtre',
+    'changed how the page is shown': "a modifié l'affichage de la page",
+    'ran something in the page': 'a exécuté quelque chose dans la page',
+    'took content off a screen': "a retiré du contenu d'un écran",
+    'started a walkthrough': 'a démarré un guide',
+    'moved the walkthrough on': 'a fait avancer le guide',
+    'pointed out a control': 'a montré une commande',
+    'switched the window to another page':
+        'a fait passer la fenêtre à une autre page',
+    'asked you to point at a control': 'vous demande de désigner une commande',
+    'read a website': 'a lu un site web',
+    'changed a song': 'a modifié un chant',
+    'changed a slide document': 'a modifié un document de diapositives',
+    'put a Bible passage on the screen':
+        "a affiché un passage biblique à l'écran",
+    'put a countdown or a message on the screen':
+        "a affiché un compte à rebours ou un message à l'écran",
+    'changed the saved Bible passages':
+        'a modifié les passages bibliques enregistrés',
+    'changed a Bible note': 'a modifié une note biblique',
+    'put back an earlier change': 'a annulé une modification précédente',
+    'started a countdown on the screen':
+        "a lancé un compte à rebours à l'écran",
+    'started a stopwatch on the screen': "a lancé un chronomètre à l'écran",
+    'put a clock on the screen': "a affiché une horloge à l'écran",
+    'put a scrolling message on the screen':
+        "a affiché un bandeau défilant à l'écran",
+    'put a line of text on the screen':
+        "a affiché une ligne de texte à l'écran",
+    'took a foreground extra off the screen':
+        "a retiré un élément de premier plan de l'écran",
+    'took every foreground extra off the screen':
+        "a retiré tous les éléments de premier plan de l'écran",
+    'made a song': 'a créé un chant',
+    'made a slide document': 'a créé un document de diapositives',
+    'renamed a song': 'a renommé un chant',
+    'renamed a slide document': 'a renommé un document de diapositives',
+    'moved a song to the trash': 'a mis un chant à la corbeille',
+    'moved a slide document to the trash':
+        'a mis un document de diapositives à la corbeille',
+    'added a slide': 'a ajouté une diapositive',
+    'changed a slide': 'a modifié une diapositive',
+    'removed a slide': 'a retiré une diapositive',
+    'moved a slide': 'a déplacé une diapositive',
+    'copied a slide': 'a copié une diapositive',
+    'saved a Bible passage': 'a enregistré un passage biblique',
+    'changed a saved Bible passage': 'a modifié un passage biblique enregistré',
+    'removed a saved Bible passage': 'a retiré un passage biblique enregistré',
+    'made a Bibles list': 'a créé une liste de Bibles',
+    'renamed a Bibles list': 'a renommé une liste de Bibles',
+    'moved a Bibles list to the trash':
+        'a mis une liste de Bibles à la corbeille',
+    'added a Bible note': 'a ajouté une note biblique',
+    'removed a Bible note': 'a retiré une note biblique',
+    'made a notes file': 'a créé un fichier de notes',
+    'renamed a notes file': 'a renommé un fichier de notes',
+    'moved a notes file to the trash':
+        'a mis un fichier de notes à la corbeille',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

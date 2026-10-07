@@ -205,6 +205,72 @@ export async function evaluateInApp(
     return {
         port: livePort,
         target,
+        // The windows as they were BEFORE the expression ran, so a caller
+        // can tell what it opened (`waitForNewAppPage`) without a second
+        // listing up front.
+        targets,
         value: await evaluateInTarget(target, expression, timeout),
     };
+}
+
+/** `presenter.html` out of `https://localhost:3000/presenter.html?x=1`. */
+export function toPageName(url) {
+    return String(url)
+        .replace(/[?#].*$/, '')
+        .replace(/^.*\//, '');
+}
+
+/**
+ * The app windows in `after` that are not in `before` -- what a press opened.
+ *
+ * Only the app's own pages count. The hidden window that photographs a
+ * slide's website and the one that reads a page for `owa_read_website` are
+ * page targets too, and either can come and go in the middle of a press that
+ * opened nothing; reporting one as "opened a window" would be the made-up
+ * effect a press result exists to rule out.
+ */
+export function listNewAppPages(before, after) {
+    const seenIds = new Set(
+        before.map((target) => {
+            return target.id;
+        }),
+    );
+    return after
+        .filter((target) => {
+            return (
+                !seenIds.has(target.id) &&
+                getPageRank(target.url) < APP_PAGE_RANK.length
+            );
+        })
+        .map((target) => {
+            return toPageName(target.url);
+        });
+}
+
+/**
+ * The first app window that opened since `before`, polled for up to `waitMs`
+ * (one look when 0), or null. A window takes a few hundred milliseconds to
+ * become a target after the press that asked for it, so a single look right
+ * after the press misses most of them.
+ */
+export async function waitForNewAppPage(port, before, waitMs, pollMs = 200) {
+    const deadline = Date.now() + waitMs;
+    for (;;) {
+        let found = [];
+        try {
+            found = listNewAppPages(before, await listTargets(port));
+        } catch (_error) {
+            // The app went away mid-question; nothing can be said either way.
+            return null;
+        }
+        if (found.length > 0) {
+            return found[0];
+        }
+        if (Date.now() >= deadline) {
+            return null;
+        }
+        await new Promise((resolve) => {
+            setTimeout(resolve, pollMs);
+        });
+    }
 }

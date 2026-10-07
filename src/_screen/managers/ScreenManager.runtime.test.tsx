@@ -6,6 +6,7 @@ const appLogMock = vi.fn();
 const saveScreenManagersSettingMock = vi.fn(async () => {});
 const deleteScreenManagerBaseCacheMock = vi.fn();
 const deleteScreenPersistedDataMock = vi.fn(async () => {});
+const removeRetiredScreenSettingsMock = vi.fn();
 const listenForDataMock = vi.fn();
 const sendDataSyncMock = vi.fn(() => true);
 const sendDataMock = vi.fn();
@@ -226,23 +227,6 @@ class MockFocusManager {
     }
 }
 
-class MockMaskManager {
-    static readonly eventNamePrefix = 'screen-mask-m';
-    static readonly receiveSyncScreen = vi.fn();
-
-    readonly screenId: number;
-    isShowing = false;
-    // No `clear`: `ScreenManager.clear()` deliberately leaves the mask alone,
-    // and giving the mock one would hide a regression that started clearing it.
-    clearMask = vi.fn();
-    delete = vi.fn();
-    sendSyncScreen = vi.fn();
-
-    constructor(screenManagerBase: any) {
-        this.screenId = screenManagerBase.screenId;
-    }
-}
-
 vi.mock('../../helper/loggerHelpers', () => ({
     appLog: appLogMock,
 }));
@@ -285,10 +269,6 @@ vi.mock('./ScreenFocusManager', () => ({
     default: MockFocusManager,
 }));
 
-vi.mock('./ScreenMaskManager', () => ({
-    default: MockMaskManager,
-}));
-
 vi.mock('./screenManagerBaseHelpers', () => ({
     deleteScreenManagerBaseCache: deleteScreenManagerBaseCacheMock,
     getAllScreenManagerBases: vi.fn(() => Array.from(baseInstances.values())),
@@ -300,6 +280,7 @@ vi.mock('./screenManagerBaseHelpers', () => ({
 
 vi.mock('./screenManagerDeleteHelpers', () => ({
     deleteScreenPersistedData: deleteScreenPersistedDataMock,
+    removeRetiredScreenSettings: removeRetiredScreenSettingsMock,
 }));
 
 vi.mock('../../server/appProvider', () => ({
@@ -312,6 +293,18 @@ describe('ScreenManager runtime orchestration', () => {
         baseInstances.clear();
         appProviderMock.isPageScreen = false;
         appProviderMock.isPagePresenter = false;
+    });
+
+    test('drops retired per-screen settings in the presenter only', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        new ScreenManager(3);
+        expect(removeRetiredScreenSettingsMock).not.toHaveBeenCalled();
+
+        appProviderMock.isPagePresenter = true;
+        new ScreenManager(4);
+        expect(removeRetiredScreenSettingsMock).toHaveBeenCalledTimes(1);
+        expect(removeRetiredScreenSettingsMock).toHaveBeenCalledWith(4);
     });
 
     test('routes dropped content to the correct sub-manager', async () => {

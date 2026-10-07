@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     checkIsSameRowRange,
     genRowMetrics,
+    toCellWidth,
     toColumnCount,
     toRowCount,
     toRowIndexOfItem,
@@ -183,5 +184,23 @@ describe('row bookkeeping', () => {
         expect(
             checkIsSameRowRange({ first: 1, last: 4 }, { first: 1, last: 5 }),
         ).toBe(false);
+    });
+});
+
+// A row never grows wider than the grid, so one item in a pane narrower than
+// itself is squeezed -- the height has to come off the squeezed width.
+describe('toCellWidth', () => {
+    it('is the item width while the items fit', () => {
+        expect(toCellWidth(300, 800, 2)).toBe(300);
+        expect(toCellWidth(300, 300, 1)).toBe(300);
+    });
+
+    it('is the share of the grid each cell really gets once squeezed', () => {
+        expect(toCellWidth(366, 276, 1)).toBe(276);
+        expect(toCellWidth(300, 500, 2)).toBe(250);
+    });
+
+    it('is the item width before the grid has been measured', () => {
+        expect(toCellWidth(366, 0, 1)).toBe(366);
     });
 });

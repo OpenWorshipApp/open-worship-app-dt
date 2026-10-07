@@ -187,7 +187,7 @@ describe('Help -> Keyboard Shortcuts', () => {
         expect(getPanel()?.textContent).toContain(
             'Keyboard Shortcuts · Presenter',
         );
-        expect(listRowLabels()).toContain('Show or hide the screen');
+        expect(listRowLabels()).toContain('Show or hide the selected screens');
     });
 
     it('searches by words and by keys, and counts what matched', async () => {
@@ -196,7 +196,7 @@ describe('Help -> Keyboard Shortcuts', () => {
         const total = listRowLabels().length;
         expect(getPanel()?.textContent).toContain(`${total}/${total}`);
         await typeSearch('f5');
-        expect(listRowLabels()).toEqual(['Show or hide the screen']);
+        expect(listRowLabels()).toEqual(['Show or hide the selected screens']);
         expect(getPanel()?.textContent).toContain(`1/${total}`);
         await typeSearch('split');
         expect(listRowLabels()).toEqual(
@@ -230,12 +230,14 @@ describe('Help -> Keyboard Shortcuts', () => {
             'Keyboard Shortcuts · Bible Lookup',
         );
         expect(listRowLabels()).toContain('Close the Bible Lookup popup');
-        expect(listRowLabels()).not.toContain('Show or hide the screen');
+        expect(listRowLabels()).not.toContain(
+            'Show or hide the selected screens',
+        );
         await fireBibleLookup('close');
         expect(getPanel()?.textContent).toContain(
             'Keyboard Shortcuts · Presenter',
         );
-        expect(listRowLabels()).toContain('Show or hide the screen');
+        expect(listRowLabels()).toContain('Show or hide the selected screens');
     });
 
     it('keeps typing in its box, and lets function keys through', async () => {
@@ -281,7 +283,7 @@ describe('Help -> Keyboard Shortcuts', () => {
             'Keyboard Shortcuts · Bible Reader',
         );
         expect(labels).toContain('Clear the reference');
-        expect(labels).not.toContain('Show or hide the screen');
+        expect(labels).not.toContain('Show or hide the selected screens');
         expect(labels).not.toContain('Close the Bible Lookup popup');
     });
 });

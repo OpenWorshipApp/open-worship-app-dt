@@ -37,9 +37,8 @@ describe('genLookAheadLayout', () => {
         expect(layout.sideList).toHaveLength(1);
         const [next] = layout.sideList;
         expect(next.x).toBe(BOUNDS.x);
-        expect(next.y).toBeGreaterThan(
-            layout.current.y + layout.current.height,
-        );
+        // Touching, no gap: the slides get every pixel of the screen.
+        expect(next.y).toBe(layout.current.y + layout.current.height);
         expect(next.width).toBeLessThan(layout.current.width);
         expect(checkIsInside(layout.current, BOUNDS)).toBe(true);
         expect(checkIsInside(next, BOUNDS)).toBe(true);
@@ -50,7 +49,7 @@ describe('genLookAheadLayout', () => {
         expect(layout.sideList).toHaveLength(2);
         const [first, second] = layout.sideList;
         expect(second.y).toBe(first.y);
-        expect(second.x).toBeGreaterThan(first.x + first.width);
+        expect(second.x).toBe(first.x + first.width);
         layout.sideList.forEach((box) => {
             expect(checkIsInside(box, BOUNDS)).toBe(true);
         });
@@ -171,7 +170,8 @@ describe('genLookAheadItemsList', () => {
         // None: nothing of its own, Verse 1 coming.
         expect(itemsList[2]).toHaveLength(1);
         expect(itemsList[2][0].html).toContain('<p>Verse 1</p>');
-        expect(itemsList[2][0].html).toContain('opacity');
+        // At full opacity: a row arrangement does not fade what is coming.
+        expect(itemsList[2][0].html).not.toContain('opacity');
         // The last slide looks ahead to nothing.
         expect(itemsList[4]).toHaveLength(1);
         expect(itemsList[4][0].html).not.toContain('opacity');
@@ -301,11 +301,11 @@ describe('previous and next (stage 5)', () => {
     test('previous top left, current beside it, next bottom right', () => {
         expect(previousBox.x).toBe(BOUNDS.x);
         expect(previousBox.y).toBe(BOUNDS.y);
-        expect(layout.current.x).toBeGreaterThan(
+        expect(layout.current.x).toBeGreaterThanOrEqual(
             previousBox.x + previousBox.width,
         );
         expect(layout.current.y).toBe(BOUNDS.y);
-        expect(nextBox.y).toBeGreaterThan(
+        expect(nextBox.y).toBeGreaterThanOrEqual(
             layout.current.y + layout.current.height,
         );
         expect(nextBox.x + nextBox.width).toBe(BOUNDS.x + BOUNDS.width);

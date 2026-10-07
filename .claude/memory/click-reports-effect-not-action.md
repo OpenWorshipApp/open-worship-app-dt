@@ -23,9 +23,12 @@ to tell a press that worked from a press that hit the wrong thing.
 - The control is read back **~250 ms after** `target.click()`. This app
   re-renders on an event, not on the press, so reading it straight away reports
   the state BEFORE and every toggle would report "no change".
-- Three kinds of evidence, weakest last: the element is GONE (it did
-  something), a toggle flipped (the state itself), the label changed (same fact
-  in words). Anything else is `didChange: false`.
+- Four kinds of evidence, weakest last: a layer the press brought up
+  (`opened`: dialog / panel / menu, or window + `page` from the CDP targets),
+  the element is GONE (it did something), a toggle flipped (the state itself),
+  the label changed (same fact in words). Anything else is `didChange: false`.
+  The press is a click at the control's CENTRE, because the app opens menus at
+  the event's coordinates (2026-10-06).
 - The aiming half is [[dom-match-exact-label-beats-everything]]: `matchTier`
   ranks an exact label above every looser fit, so a generic decoration titled
   "Show" beat the screen's own control. Naming matters more than ranking here —
