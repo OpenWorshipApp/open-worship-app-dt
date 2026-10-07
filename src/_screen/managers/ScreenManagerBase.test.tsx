@@ -176,6 +176,30 @@ describe('ScreenManagerBase', () => {
         });
         expect(scrollToMock).toHaveBeenCalledWith({ left: 100, top: 200 });
 
+        // A mini preview's auto-scroll frame glides by fractions of a pixel.
+        const text = document.createElement('div');
+        target.append(text);
+        scrollToMock.mockClear();
+        manager.syncScrollPercentage({
+            domSelector: '.sync-target',
+            scroll: { x: 0.25, y: 0.5012 },
+            isSubPixel: true,
+        });
+        expect(scrollToMock).not.toHaveBeenCalled();
+        expect(target.scrollTop).toBe(200);
+        expect(text.style.translate).toBe('0 -0.480px');
+        expect((target as any)._remoteAppliedScroll).toEqual({
+            left: 100,
+            top: 200,
+        });
+        // The last one lets go, back to a plain scroll.
+        manager.syncScrollPercentage({
+            domSelector: '.sync-target',
+            scroll: { x: 0.25, y: 0.5 },
+        });
+        expect(text.style.translate).toBe('');
+        expect(scrollToMock).toHaveBeenCalledWith({ left: 100, top: 200 });
+
         manager.isShowing = true;
         manager.isShowing = false;
 

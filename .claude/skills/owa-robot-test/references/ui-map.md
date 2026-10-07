@@ -1,6 +1,6 @@
 # OWA UI Map (for robot testing)
 
-docVersion: 2026-09-12
+docVersion: 2026-10-06
 
 The app uses **Bootstrap semantic classes + accessibility roles + button text**, with
 very few `data-testid`s in production code. So target elements by **visible text /
@@ -200,7 +200,7 @@ is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View*
 entry now, see below).
 
 The **`Others`** tab now holds **three cards**, in order
-(`src/setting/SettingOthersComp.tsx`): *Set AI API Key* (`SettingOthersAIComp`),
+(`src/setting/SettingOthersComp.tsx`): *AI Providers* (`SettingOthersAIComp`),
 *SongSelect* (`SettingOthersSongSelectComp`, from `src/plugins/song-select/` — CCLI
 sign-in; dev builds add a `(dev) Use Mock Data` toggle), and **Extra Binaries**
 (`SettingOthersExtraBinComp` — the target of the mandatory `MD-05`/`MD-06` block).
@@ -210,9 +210,12 @@ secure storage is unavailable; credentials live in a separate `-secret` store vi
 has a 💡 hint icon, a `bi-check-circle-fill` tick once a key is stored, and an
 `API Key ↗` button opening the provider's key page externally (EX-04 — do not
 follow). Keys are saved **on blur**, not per keystroke, and then flag
-`pendingApply`. The AI card's two labels are hardcoded English so they do **not**
-translate in Khmer — untranslated UI, not the `tran()` throw. The ST section now
-runs to **ST-51** and covers this tab's contents — route from the matrix.
+`pendingApply`. Once an OpenAI key is saved, its provider group also shows the
+translated **Auto Play Audio AI when available** switch; it writes immediately and
+used to be a megaphone in the Reader's Bible Reference toolbar. The AI card's key
+labels are hardcoded English so they do **not** translate in Khmer — untranslated
+UI, not the `tran()` throw. The ST section now runs to **ST-59** and covers this
+tab's contents — route from the matrix.
 
 ## Native View menu (main window only)
 

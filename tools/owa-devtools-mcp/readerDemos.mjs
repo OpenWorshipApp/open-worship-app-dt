@@ -610,8 +610,8 @@ export const READER_DEMO_LIST = [
     title: 'Use Bible audio and AI reading controls',
     steps: [
       {
-        text: 'Use Auto Play Audio AI when available to control automatic reading for supported passages.',
-        find: 'Auto Play Audio AI when available',
+        text: 'Open Settings, choose Others, then use Auto Play Audio AI when available under the OpenAI key to control automatic reading for supported passages.',
+        find: 'Setting',
         translateFind: true,
         action: 'click',
       },

@@ -86,6 +86,7 @@ import {
 } from './website.mjs';
 import { listTranLanguages, tranText } from './tran.mjs';
 import { genListScreensExpression } from './agentScreens.mjs';
+import { registerBibleXmlTool } from './agentBibleXml.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -412,6 +413,8 @@ function genOpenLyricRefusal(report) {
 }
 
 export function registerOwaTools(server) {
+  // Bibles from an XML link, and the installed ones: its own module.
+  registerBibleXmlTool(server);
   server.registerTool(
     'owa_help_search',
     {

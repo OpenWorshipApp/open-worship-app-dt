@@ -62,6 +62,7 @@ import {
     findModelHiddenReason,
 } from '../../tools/owa-devtools-mcp/modelTools.mjs';
 import { callTool, listTools } from './mcpClient';
+import { genBibleImportCheckAnswer } from './bibleImportChatHelpers';
 import {
     LYRIC_COPY_TOOL_NAME,
     LYRIC_CREATE_TOOL_NAME,
@@ -969,6 +970,14 @@ Rules:
   offer its show button. When they only asked HOW, answer from the manual
   and offer to put it up for them. \`action: "check"\` reads a reference
   without touching a screen.
+- **A Bible from a link is \`owa_bible_xml\`, never Settings.** Any link --
+  a file, a GitHub page or folder -- goes to \`check\`; a page answers the
+  Bible files on it, so offer the ones in their language. No link, only a
+  language: check the catalog its description names. A downloaded Bible
+  is NOT installed yet: buttons appear under your answer for its name,
+  language, digits and book names, so say what it is (title, books) and let
+  them press. Changing or removing an installed one is the same tool by its
+  \`key\`, and can be undone.
 - **A countdown, stopwatch, clock, scrolling message or quick text is ONE
   call too**: \`owa_foreground\` with the widget and its \`minutes\`, \`at\`
   (a clock time) or \`text\` -- "start a 5 minute countdown", "count down to
@@ -1288,6 +1297,13 @@ type ToolWatchType = {
      */
     createdLyric: { name: string; filePath: string } | null;
     /**
+     * The last `owa_bible_xml` check that found Bibles: a download or a page
+     * of files. Off the RESULT, like the song draft above -- the answer then
+     * carries the import's own buttons, so the person PRESSES their choices
+     * instead of a model asking four questions over four paid rounds.
+     */
+    bibleImportCheck: { result: any; url: string } | null;
+    /**
      * The title of every page a tool result named in this ask, by id -- what
      * an id the model writes anyway is replaced WITH. Per ask, never kept.
      */
@@ -1345,6 +1361,7 @@ export function genToolWatch(): ToolWatchType {
         isActedOn: false,
         draftedLyric: null,
         createdLyric: null,
+        bibleImportCheck: null,
         pageTitles: {},
         isPageNudged: false,
         verifiedControlNames: new Set<string>(),
@@ -1404,6 +1421,20 @@ export function genOpenPageNudge(watch: ToolWatchType) {
         'step is how to get there; if it does not answer the question, ' +
         'say so plainly instead of guessing.'
     );
+}
+
+/**
+ * An `owa_bible_xml` answer worth buttons: a downloaded Bible or a page of
+ * Bible files. Null for anything else -- a problem with the link is said by
+ * the model in its own words, and a refusal is a sentence, not JSON.
+ */
+function parseBibleImportResult(text: string) {
+    try {
+        const result = JSON.parse(text);
+        return result !== null && typeof result === 'object' ? result : null;
+    } catch (_error) {
+        return null;
+    }
 }
 
 /** The file a `create` wrote, off the tool's own answer; null for a refusal. */
@@ -1481,6 +1512,21 @@ export function applyToolWatch(
         // draft the model sent with NO mode (plain words default to one) or
         // a song found by its title (`mode: "find"`) is a draft all the same.
         watch.draftedLyric = readDraftedLyric(text) ?? watch.draftedLyric;
+    }
+    if (name === 'owa_bible_xml') {
+        const result = parseBibleImportResult(text);
+        if (args?.action === 'check' && result !== null) {
+            watch.bibleImportCheck = { result, url: String(args?.url ?? '') };
+        }
+        // Installed by the model itself: the ask is done, and the buttons
+        // of a draft that no longer exists would install nothing.
+        if (
+            args?.action === 'import' &&
+            typeof result?.installed === 'string'
+        ) {
+            watch.bibleImportCheck = null;
+            watch.isActedOn = true;
+        }
     }
     if (name === 'owa_lyric_file' && args?.action === 'create') {
         // Off the RESULT: a refused create (a taken name, a path in the
@@ -2707,6 +2753,19 @@ export async function askLlmBot(
                     args: { reference: drafted.reference },
                 },
             ];
+        }
+        // A Bible the model downloaded (or a page of them): the import's
+        // own buttons, the same ones a pasted link gets with no model --
+        // and no walkthrough of the Settings form, which this replaces.
+        if (answer.actions === undefined && watch.bibleImportCheck !== null) {
+            const { result, url } = watch.bibleImportCheck;
+            const actions = genBibleImportCheckAnswer(result, {
+                step: 'check',
+                url,
+            }).actions;
+            if ((actions ?? []).length > 0) {
+                answer.actions = actions;
+            }
         }
         const manualId = toWatchedManualId(watch);
         if (answer.actions === undefined && manualId !== null) {

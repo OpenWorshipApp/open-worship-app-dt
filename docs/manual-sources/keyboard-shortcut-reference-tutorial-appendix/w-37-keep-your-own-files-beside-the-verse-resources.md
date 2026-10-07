@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
 screenshots: 16
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-05"
+workflowsVersion: "2026-10-06"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -33,6 +33,9 @@ all count as book-level too.
    passage you have open**, in the order of your panes, so you can always see what it is
    matching — reading Genesis 24 beside Genesis 27, a solid `GEN.24.*` and a solid
    `GEN.27.*` for the chapters' own files, then one dashed `GEN.0.*` for the book's.
+   Above each group of files, the heading also spells out the book and chapter:
+   `JHN.3.*, John chapter 3` or `JHN.0.*, John Introduction`. These full names
+   follow the interface language and are visible without hovering.
    Two panes on the same chapter in two versions count once. The pane you are typing a
    reference into follows what its box says, as soon as the reference is complete;
    moving to another verse of the same chapter changes nothing here — it is the chapter
@@ -222,5 +225,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-05).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-06).
 :::

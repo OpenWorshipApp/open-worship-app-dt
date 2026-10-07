@@ -29,6 +29,32 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Let the assistant import a Bible for me':
+        'ឱ្យជំនួយការនាំចូលព្រះគម្ពីរជំនួសខ្ញុំ',
+    'It finds Bibles in your language and asks you a few simple questions.':
+        'វាស្វែងរកព្រះគម្ពីរជាភាសារបស់អ្នក ហើយសួរសំណួរងាយៗតែពីរបីប៉ុណ្ណោះ។',
+    'It will use the link you typed below.':
+        'វានឹងប្រើតំណដែលអ្នកបានវាយខាងក្រោម។',
+    'Could not check installed Bible keys':
+        'មិនអាចពិនិត្យកូនសោព្រះគម្ពីរដែលបានដំឡើង',
+    'Saving...': 'កំពុងរក្សាទុក...',
+    'Find more editions': 'ស្វែងរកកំណែបន្ថែម',
+    'Review Bible import': 'ពិនិត្យការនាំចូលព្រះគម្ពីរ',
+    'Review the language and mappings before importing. The file name is only a language hint.':
+        'ពិនិត្យភាសា និងការផ្គូផ្គងមុននាំចូល។ ឈ្មោះឯកសារគ្រាន់តែជាតម្រុយអំពីភាសាប៉ុណ្ណោះ។',
+    'Choose a valid locale': 'ជ្រើសរើសភាសាដែលត្រឹមត្រូវ',
+    'Number mapping': 'ការផ្គូផ្គងលេខ',
+    Recommended: 'បានណែនាំ',
+    'Book name mapping': 'ការផ្គូផ្គងឈ្មោះកណ្ឌគម្ពីរ',
+    'Keep existing book names': 'រក្សាឈ្មោះកណ្ឌគម្ពីរដែលមានស្រាប់',
+    'Searching online for Bible book names...':
+        'កំពុងស្វែងរកឈ្មោះកណ្ឌគម្ពីរតាមអ៊ីនធឺណិត...',
+    'Some online sources are unavailable. You can keep the existing names or try another locale.':
+        'ប្រភពអនឡាញខ្លះមិនអាចប្រើបាន។ អ្នកអាចរក្សាឈ្មោះដែលមានស្រាប់ ឬសាកល្បងភាសាផ្សេង។',
+    'Preview book names': 'មើលឈ្មោះកណ្ឌគម្ពីរជាមុន',
+    'Built-in names': 'ឈ្មោះដែលមានក្នុងកម្មវិធី',
+    'Search for more book name lists': 'ស្វែងរកបញ្ជីឈ្មោះកណ្ឌគម្ពីរបន្ថែម',
+    'Invalid Bible key': 'កូនសោព្រះគម្ពីរមិនត្រឹមត្រូវ',
     'Screen Mirror': 'ការឆ្លុះអេក្រង់',
     'Connection code is incorrect': 'លេខកូដតភ្ជាប់មិនត្រឹមត្រូវ',
     'Disconnected by host': 'ម៉ាស៊ីនមេបានផ្តាច់ការតភ្ជាប់',
@@ -374,6 +400,7 @@ const dictionary = {
     // --- Bible Find: the results list and its chunk footer.
     'verses found': 'ខគម្ពីរដែលរកឃើញ',
     'verse found': 'ខគម្ពីរដែលរកឃើញ',
+    'No verses found': 'រកមិនឃើញខគម្ពីរ',
     Results: 'លទ្ធផល',
     'Go to results': 'ទៅកាន់លទ្ធផល',
     'Load more results': 'ផ្ទុកលទ្ធផលបន្ថែម',
@@ -381,6 +408,7 @@ const dictionary = {
     'Book-level files are shown in every chapter':
         'ឯកសារកម្រិតកណ្ឌគម្ពីរ ត្រូវបានបង្ហាញនៅគ្រប់ជំពូក',
     Introduction: 'សេចក្ដីផ្ដើម',
+    '{book} chapter {chapter}': '{book} ជំពូក {chapter}',
     'This folder is empty': 'ថតឯកសារនេះទទេ',
     Dimensions: 'វិមាត្រ',
     'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',
@@ -635,6 +663,9 @@ const dictionary = {
     'Remove from screen': 'ដកចេញពីអេក្រង់',
     Rename: 'កែឈ្មោះ',
     Reload: 'ផ្ទុកឡើងវិញ',
+    'Sync group scrolling': 'រំកិលក្រុមស្របគ្នា',
+    'Enable group sync scrolling': 'បើកការរំកិលក្រុមស្របគ្នា',
+    'Disable group sync scrolling': 'បិទការរំកិលក្រុមស្របគ្នា',
     'Set Line Sync': 'កំណត់ការសម្របសម្រួលបន្ទាត់',
     'Unset Line Sync': 'បោះបង់ការសម្របសម្រួលបន្ទាត់',
     Solo: 'តែមួយ',

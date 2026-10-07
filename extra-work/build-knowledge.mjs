@@ -258,6 +258,16 @@ writeFileSync(
 // English is the key language, so its dictionary is empty by construction and
 // is not written: `tran()` returns the key itself for the default locale.
 const LANG_DATA_DIR = join(REPO_ROOT, 'src', 'lang', 'data');
+const bibleBookNames = {};
+for (const code of readdirSync(LANG_DATA_DIR)) {
+    const file = join(LANG_DATA_DIR, code, 'bibleBooks.json');
+    if (existsSync(file))
+        bibleBookNames[code] = JSON.parse(readFileSync(file, 'utf8'));
+}
+writeFileSync(
+    join(OUTPUT_DIR, 'bible-books.json'),
+    JSON.stringify(bibleBookNames),
+);
 const languages = [];
 const dictionaries = {};
 for (const langCode of readdirSync(LANG_DATA_DIR)) {

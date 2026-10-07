@@ -226,6 +226,47 @@ function RenderWorkspaceIdComp() {
 }
 
 /**
+ * Bible Audio is the only AI feature that can start by itself. Keep that
+ * choice beside the OpenAI key that powers it instead of spending permanent
+ * space in every Bible lookup header.
+ */
+function RenderAudioAutoPlayComp() {
+    const aiSetting = useAISetting();
+    const handleToggling = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setAISetting({
+                ...getAISetting(),
+                isAutoPlay: event.currentTarget.checked,
+            });
+        },
+        [],
+    );
+    if (!aiSetting.openAIAPIKey) {
+        return null;
+    }
+    return (
+        <div className="app-setting-others-field">
+            <div className="form-check form-switch m-0">
+                <input
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="app-ai-audio-auto-play"
+                    checked={aiSetting.isAutoPlay}
+                    onChange={handleToggling}
+                />
+                <label
+                    className="form-check-label"
+                    htmlFor="app-ai-audio-auto-play"
+                >
+                    {tran('Auto Play Audio AI when available')}
+                </label>
+            </div>
+        </div>
+    );
+}
+
+/**
  * The master switch. Everything AI-shaped is decided at LAUNCH -- the main
  * process reads this before `ready` to know whether to open the debugging
  * endpoint and serve `owa-devtools-mcp` at all -- so turning it off can only
@@ -442,6 +483,7 @@ export default function SettingOthersAIComp() {
                         createKeyURL={PAID_PROVIDER_PAGE_MAP.openai.keys}
                         keyFocus={keyFocus}
                     />
+                    <RenderAudioAutoPlayComp />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
                     title="Anthropic"

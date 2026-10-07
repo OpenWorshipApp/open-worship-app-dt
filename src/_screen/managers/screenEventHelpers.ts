@@ -17,6 +17,7 @@ import ScreenFocusManager from './ScreenFocusManager';
 import type { ScreenMaskEventType } from './ScreenMaskManager';
 import ScreenMaskManager from './ScreenMaskManager';
 import { type ListenerType } from '../../event/EventHandler';
+import { checkIsSubPixelScrolling } from '../../scrolling/subPixelScrollHelpers';
 
 export function useScreenEvents<T extends string>(
     events: T[],
@@ -165,6 +166,18 @@ export function registerScrollingSyncEvent(
     );
     divHaftScale.addEventListener('scroll', (event) => {
         event.preventDefault();
+        const isFromWheel =
+            performance.now() - lastWheelAt < WHEEL_SCROLL_WINDOW_MS;
+        // Sliding by fractions of a pixel means an auto-scroll is driving it
+        // -- this window's own, or a mini preview's sent frame by frame -- and
+        // its driver broadcasts the exact position itself. Its offsets,
+        // rounded to a pixel, used to echo back and knock the preview it came
+        // from off its slide every few frames: the preview shook. Whatever
+        // else is listening (a second listener stamped no message for), only
+        // a wheel speaks for it.
+        if (checkIsSubPixelScrolling(divHaftScale) && !isFromWheel) {
+            return;
+        }
         // A scroll applied FROM a sync message (`syncScrollPercentage` stamps
         // the element) must not be broadcast back, or two windows echo each
         // other's scroll forever. Only the one event the remote scrollTo fires
@@ -189,7 +202,7 @@ export function registerScrollingSyncEvent(
                     divHaftScale.scrollTop /
                     (divHaftScale.scrollHeight - divHaftScale.clientHeight),
             },
-            performance.now() - lastWheelAt < WHEEL_SCROLL_WINDOW_MS,
+            isFromWheel,
         );
     });
 }

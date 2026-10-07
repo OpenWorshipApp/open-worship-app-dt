@@ -185,6 +185,36 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     /**
+     * The mini preview's auto-scroll, sent every frame from its exact position.
+     * Its scroll events only fire on whole pixels of a box a fraction of the
+     * projector's size, so following them moved the projector in hops of
+     * several pixels -- the stutter of a slow auto-scroll. Started by the
+     * operator's click, so it goes out like a wheel scroll, even with the
+     * mouse off the window. While `isPlaying`, the projector slides by the
+     * same fractions of a pixel the preview does; the last one lets go.
+     */
+    sendAutoScrollPosition(
+        div: HTMLDivElement,
+        scrollTop: number,
+        isPlaying: boolean,
+    ) {
+        const rangeY = div.scrollHeight - div.clientHeight;
+        if (rangeY <= 0) {
+            return;
+        }
+        const rangeX = div.scrollWidth - div.clientWidth;
+        this.sendSyncScrollPercentage(
+            '.screen-bible-container-scroll',
+            {
+                x: rangeX > 0 ? div.scrollLeft / rangeX : 0,
+                y: scrollTop / rangeY,
+            },
+            true,
+            isPlaying,
+        );
+    }
+
+    /**
      * Let go of the mini preview's div when it unmounts -- its rendering was
      * turned off, or its panel closed -- so a passage presented meanwhile is
      * not still laid out into a detached div. The data stays; the next div

@@ -49,7 +49,13 @@ const rounds = roundsArg ? Number(roundsArg.split('=')[1]) : 10;
 // Lowered 2026-09-18 from 8 200 to 7 450 when MC-07's description cut took
 // the bill to ~7 253: a ceiling left where it was would have handed the
 // saving straight back as ~950 tokens of room nobody decided to spend.
-const MODEL_TOKEN_CEILING = 7450;
+// 2026-10-06: MC-48, user-requested Bible-name lookup adds ~145 tokens.
+// Measured ~7,578; retain only 22 tokens of headroom.
+// 2026-10-06 (later): EC-196, the user asked for whole Bibles to be
+// installed, changed and removed through the assistant. `owa_bible_xml`
+// (354 tokens) REPLACED that lookup rather than joining it, and its
+// description and schema were cut from 423 first. Measured ~7,787.
+const MODEL_TOKEN_CEILING = 7800;
 const ratchetArg = argv.find((one) => {
     return one === '--ratchet' || one.startsWith('--ratchet=');
 });

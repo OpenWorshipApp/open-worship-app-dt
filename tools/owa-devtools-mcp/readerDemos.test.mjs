@@ -207,6 +207,16 @@ describe('Reader demos', () => {
     ]);
   });
 
+  it('routes the Bible Audio auto-play lesson through Settings', () => {
+    const demo = getReaderDemo('reader-ai-audio');
+    expect(demo.steps[0]).toMatchObject({
+      find: 'Setting',
+      action: 'click',
+    });
+    expect(demo.steps[0].text).toContain('Others');
+    expect(demo.steps[0].text).toContain('Auto Play Audio AI when available');
+  });
+
   it('keeps native-menu lessons self-guided instead of auto-running them', () => {
     const demo = getReaderDemo('reader-view-relaunch');
     expect(demo.steps).toEqual([

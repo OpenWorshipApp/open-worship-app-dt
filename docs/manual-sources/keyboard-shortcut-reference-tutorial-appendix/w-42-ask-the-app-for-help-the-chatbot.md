@@ -5,9 +5,14 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71]
 screenshots: 41
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-05"
+workflowsVersion: "2026-10-06"
 ---
 # W-42 — Ask the app for help (the chatbot)
+
+You can also start a Bible import with `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
+The **Bible versions** section under **More** contains this editable sample. Asking it opens Settings
+with the URL ready; you choose the key and review the language, digits and book-name
+options there before importing (W-34). This direct request needs no model call.
 
 The app can answer its own "how do I …?" questions. It reads the same manual you are
 reading now, looks at what the app is doing at that moment, and can point at the button
@@ -353,7 +358,9 @@ it is describing.
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
     Bible Cross Reference, **Kimi** answers here only — so you can tell which key is
-    worth getting before you go and fetch one.
+    worth getting before you go and fetch one. Once the OpenAI key is saved, its card
+    also shows **[en:tran:Auto Play Audio AI when available]**; turn that switch on when
+    supported Reader passages should begin their generated audio automatically.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
     can change your mind between two questions. The ones whose key you have set can be
     chosen; the others are still in the list, in a quieter colour and reading
@@ -555,5 +562,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-05).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-06).
 :::

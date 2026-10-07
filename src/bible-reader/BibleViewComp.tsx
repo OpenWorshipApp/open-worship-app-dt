@@ -1,6 +1,12 @@
 import './BibleViewComp.scss';
 
-import { useCallback, useState, type DragEvent as ReactDragEvent } from 'react';
+import {
+    useCallback,
+    useLayoutEffect,
+    useRef,
+    useState,
+    type DragEvent as ReactDragEvent,
+} from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type BibleItemsViewController from './BibleItemsViewController';
@@ -55,6 +61,13 @@ function handMovedChecking(
     container: HTMLElement,
     threshold: number,
 ) {
+    if (
+        viewController.getIsGroupScrollSynced(
+            viewController.getColorNote(bibleItem),
+        )
+    ) {
+        return;
+    }
     let kjvVerseKey: string | null = null;
     const currentElements = Array.from(
         viewController.getVerseElements<HTMLElement>(bibleItem.id),
@@ -151,6 +164,20 @@ export default function BibleViewComp({
     });
     const id = `uuid-${uuid}`;
     const viewController = useBibleItemsViewControllerContext();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const colorGroup = viewController.getColorNote(bibleItem);
+    const isSyncScrolling = viewController.getIsGroupScrollSynced(colorGroup);
+    // Register before the next frame so enabling from a header can align
+    // every member immediately, without waiting for another scroll event.
+    useLayoutEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container && colorGroup && isSyncScrolling) {
+            return viewController.groupScrollSync.register(
+                container,
+                colorGroup,
+            );
+        }
+    }, [viewController, colorGroup, isSyncScrolling]);
     const editingResult = useEditingResult();
     const textViewFontSize = useBibleViewFontSizeContext();
     const foundBibleItem = isEditing
@@ -177,6 +204,15 @@ export default function BibleViewComp({
         [],
     );
     const viewControllerRef = useAppCurrentRef(viewController);
+    // Auto-scroll slides its own pane by fractions of a pixel and moves no
+    // whole pixel for several frames at a time, so it says when to follow.
+    const handleAutoScrollFrame = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+            viewControllerRef.current.groupScrollSync.followFrame(container);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleDropping = useCallback(
         async (event: ReactDragEvent<HTMLDivElement>) => {
@@ -235,6 +271,7 @@ export default function BibleViewComp({
         >
             <BibleViewHeaderComp bibleItem={bibleItem} isEditing={isEditing} />
             <div
+                ref={scrollContainerRef}
                 className="card-body app-top-hover-motion-1"
                 data-scroll-on-next-chapter={isEditing ? '1' : '0'}
                 data-scroll-verses-container={id}
@@ -269,6 +306,7 @@ export default function BibleViewComp({
                     style={{ bottom: '30px' }}
                     playToBottomStyle={{ bottom: 0 }}
                     shouldShowPlayToBottom
+                    onAutoScrollFrame={handleAutoScrollFrame}
                     movedCheck={{
                         check: (container: HTMLElement) => {
                             handMovedChecking(

@@ -28,14 +28,22 @@ vi.mock('./bibleXMLHelpers', () => ({
 vi.mock('./bibleXMLAttributesGuessing', () => ({
     xmlFormatExample: '<bible />',
 }));
+vi.mock('./bibleImportRequestHelpers', () => ({
+    takeBibleImportRequest: () => null,
+}));
 
 vi.mock('./bibleXMLJsonDataHelpers', () => ({
     xmlTextToJson: vi.fn(),
 }));
 
+const openChatbotAsking = vi.fn(async () => true);
+vi.mock('../../helper/ai/chatbotHandoffHelpers', () => ({
+    openChatbotAsking,
+}));
 vi.mock('../../helper/appHooks', async () => {
     const React = await import('react');
     return {
+        useAppEffect: React.useEffect,
         useAppCurrentRef: (value: unknown) => {
             const ref = React.useRef(value);
             ref.current = value;
@@ -108,5 +116,40 @@ describe('BibleXMLImportComp', () => {
         await act(async () => cancelButton.click());
         expect(container.textContent).toContain('translated:No file chosen');
         expect(container.textContent).not.toContain('khmer.xml');
+    });
+
+    test('the assistant button starts an import in the chat, with the typed link', async () => {
+        await render();
+        const button = Array.from(container.querySelectorAll('button')).find(
+            (one) => {
+                return one.textContent?.includes(
+                    'translated:Let the assistant import a Bible for me',
+                );
+            },
+        ) as HTMLButtonElement;
+        expect(container.textContent).toContain(
+            'translated:It finds Bibles in your language',
+        );
+        await act(async () => button.click());
+        expect(openChatbotAsking).toHaveBeenLastCalledWith('Import bible');
+
+        const urlInput = container.querySelector(
+            'input[name="url"]',
+        ) as HTMLInputElement;
+        const setter = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            'value',
+        )?.set;
+        await act(async () => {
+            setter?.call(urlInput, 'https://example.com/KhmerBible.xml');
+            urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        expect(container.textContent).toContain(
+            'translated:It will use the link you typed below.',
+        );
+        await act(async () => button.click());
+        expect(openChatbotAsking).toHaveBeenLastCalledWith(
+            'Import bible from https://example.com/KhmerBible.xml',
+        );
     });
 });

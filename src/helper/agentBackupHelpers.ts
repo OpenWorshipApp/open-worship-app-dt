@@ -581,11 +581,18 @@ async function applyRestore(restore: AgentRestoreType) {
             if (await fsCheckFileExist(restore.filePath)) {
                 await trashAgentFile(restore.filePath, restore.kind);
             }
-            return;
+        } else {
+            const fileSource = FileSourceClass.getInstance(restore.filePath);
+            if (!(await fileSource.writeFileData(restore.text))) {
+                throw new Error(
+                    `"${fileSource.name}" could not be written back.`,
+                );
+            }
         }
-        const fileSource = FileSourceClass.getInstance(restore.filePath);
-        if (!(await fileSource.writeFileData(restore.text))) {
-            throw new Error(`"${fileSource.name}" could not be written back.`);
+        if (restore.bibleKey !== undefined) {
+            const { clearBibleXMLCache } =
+                await import('../setting/bible-setting/bibleXMLHelpers');
+            await clearBibleXMLCache(restore.bibleKey);
         }
         return;
     }
@@ -635,8 +642,13 @@ async function snapshotBeforeRestore(restore: AgentRestoreType) {
         );
         return editing === null ? [] : [editing];
     }
-    const restoreList = [
-        await snapshotAgentFile(restore.filePath, restore.kind),
+    const restoreList: AgentRestoreType[] = [
+        {
+            ...(await snapshotAgentFile(restore.filePath, restore.kind)),
+            ...(restore.bibleKey === undefined
+                ? {}
+                : { bibleKey: restore.bibleKey }),
+        } as AgentRestoreType,
     ];
     if (restore.kind !== undefined) {
         const editing = await snapshotAgentEditing(

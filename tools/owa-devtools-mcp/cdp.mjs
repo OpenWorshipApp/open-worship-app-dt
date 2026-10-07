@@ -179,7 +179,10 @@ export function evaluateInTarget(target, expression, timeout = 15000) {
 }
 
 /** `evaluateInTarget`, resolving the live app and the page for the caller. */
-export async function evaluateInApp(expression, { port, match } = {}) {
+export async function evaluateInApp(
+    expression,
+    { port, match, timeout } = {},
+) {
     const livePort = await requireLivePort(port);
     const targets = await listTargets(livePort);
     const target = pickTarget(targets, match);
@@ -202,6 +205,6 @@ export async function evaluateInApp(expression, { port, match } = {}) {
     return {
         port: livePort,
         target,
-        value: await evaluateInTarget(target, expression),
+        value: await evaluateInTarget(target, expression, timeout),
     };
 }

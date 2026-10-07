@@ -868,6 +868,7 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:read-web-page',
         (data: {
             url: string;
+            bibleCatalog?: boolean;
             wantsScreenshot?: boolean;
             maxChars?: number;
             width?: number;

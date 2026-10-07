@@ -1011,3 +1011,14 @@ The one renderer whose content comes from outside the machine had `require`,
 `electron/client/rendererLockdown.ts` (called from the preload, after
 `fullProvider` has finished requiring) and a `chatbot.html`-only CSP whose
 `connect-src` names the assistants it may speak to and nothing else.
+
+### `MC-48` — sourced Bible book-name lists by locale · done 2026-10-06
+
+Requested capability: raw XML imports had only bundled book-name suggestions in
+an editor action. Added `owa_bible_book_names` with complete 66-name arrays,
+provenance, deduplication and edition pagination. It uses the existing sandbox
+and charges each page to its network quota. Live Khmer lookup returned four
+sets; bad/incomplete sources remained warnings. No files are changed by lookup.
+Baseline 53 host / 24 model, ~7,433 tokens per round; after 54 / 25, ~7,578.
+The explicit new tool costs ~145 tokens; ratchet ceiling deliberately raised to
+7,600 with 22 tokens headroom, not a general tool-budget expansion.

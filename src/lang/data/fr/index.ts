@@ -11,6 +11,33 @@ const numList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 // `tranKeyCoverage.test.ts` holds this file to. Machine-translated
 // (2026-09-21); a native speaker should review the phrasing.
 const dictionary = {
+    'Let the assistant import a Bible for me':
+        'Laisser l’assistant importer une Bible pour moi',
+    'It finds Bibles in your language and asks you a few simple questions.':
+        'Il trouve des Bibles dans votre langue et vous pose quelques questions simples.',
+    'It will use the link you typed below.':
+        'Il utilisera le lien saisi ci-dessous.',
+    'Could not check installed Bible keys':
+        'Impossible de vérifier les clés bibliques installées',
+    'Saving...': 'Enregistrement...',
+    'Find more editions': 'Trouver d’autres éditions',
+    'Review Bible import': 'Vérifier l’importation de la Bible',
+    'Review the language and mappings before importing. The file name is only a language hint.':
+        'Vérifiez la langue et les correspondances avant l’importation. Le nom du fichier est seulement un indice de langue.',
+    'Choose a valid locale': 'Choisissez une langue valide',
+    'Number mapping': 'Correspondance des chiffres',
+    Recommended: 'Recommandé',
+    'Book name mapping': 'Correspondance des noms de livres',
+    'Keep existing book names': 'Conserver les noms de livres existants',
+    'Searching online for Bible book names...':
+        'Recherche de noms de livres bibliques en ligne...',
+    'Some online sources are unavailable. You can keep the existing names or try another locale.':
+        'Certaines sources en ligne sont indisponibles. Vous pouvez conserver les noms existants ou essayer une autre langue.',
+    'Preview book names': 'Aperçu des noms de livres',
+    'Built-in names': 'Noms intégrés',
+    'Search for more book name lists':
+        'Rechercher d’autres listes de noms de livres',
+    'Invalid Bible key': 'Clé biblique invalide',
     'Screen Mirror': 'Écran miroir',
     'Connection code is incorrect': 'Le code de connexion est incorrect',
     'Disconnected by host': 'Déconnecté par l’hôte',
@@ -388,6 +415,7 @@ const dictionary = {
     // --- Bible Find: the results list and its chunk footer.
     'verses found': 'versets trouvés',
     'verse found': 'verset trouvé',
+    'No verses found': 'Aucun verset trouvé',
     Results: 'Résultats',
     'Go to results': 'Aller aux résultats',
     'Load more results': 'Charger plus de résultats',
@@ -395,6 +423,7 @@ const dictionary = {
     'Book-level files are shown in every chapter':
         'Les fichiers au niveau du livre sont affichés dans chaque chapitre',
     Introduction: 'Introduction',
+    '{book} chapter {chapter}': '{book} chapitre {chapter}',
     'This folder is empty': 'Ce dossier est vide',
     Dimensions: 'Dimensions',
     'Exporting DOCX Pages': 'Exportation des pages DOCX',
@@ -660,6 +689,11 @@ const dictionary = {
     'Remove from screen': "Retirer de l'écran",
     Rename: 'Renommer',
     Reload: 'Recharger',
+    'Sync group scrolling': 'Défilement synchronisé du groupe',
+    'Enable group sync scrolling':
+        'Activer le défilement synchronisé du groupe',
+    'Disable group sync scrolling':
+        'Désactiver le défilement synchronisé du groupe',
     'Set Line Sync': 'Activer la synchro des lignes',
     'Unset Line Sync': 'Désactiver la synchro des lignes',
     Solo: 'Solo',

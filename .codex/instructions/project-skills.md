@@ -182,7 +182,7 @@ chatbot** answering a volunteer over HTTP. Preference order for any change is
 (the window a slide's website loads in) are CLOSED, the latter down to a
 documented `webSecurity: false` residual. `MC-14` put a RATCHET on the token
 bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses
-`MODEL_TOKEN_CEILING` (7 450, against 7 253 measured since `MC-07` cut the
+`MODEL_TOKEN_CEILING` (7 800 after EC-196, the Bible importer that replaced MC-48's lookup; ~7 787 measured, against 7 253 since `MC-07` cut the
 descriptions on 2026-09-18 — two of which contradicted the chatbot's prompt),
 so a tool added without a decision cannot land quietly. Tool results are
 compact JSON (`MC-33`): a result rides every later round, and indentation was

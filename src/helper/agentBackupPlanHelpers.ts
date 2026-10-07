@@ -34,6 +34,10 @@ export type AgentRestoreType =
           filePath: string;
           text: string | null;
           kind?: AgentEditableKindType;
+          // An installed Bible: the app keeps parsed copies of it beside the
+          // file and in every window, which must be dropped once the file is
+          // put back, or the Bible reads as it was before the undo for a week.
+          bibleKey?: string;
       }
     | {
           type: 'editing';

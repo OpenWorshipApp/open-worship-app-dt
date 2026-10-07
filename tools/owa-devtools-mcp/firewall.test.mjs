@@ -259,6 +259,29 @@ describe('removing something of the user', () => {
         );
     });
 
+    it('removing an installed Bible is a removal; reading the list is not', () => {
+        expect(checkIsRemovingCall('owa_bible_xml', { action: 'delete' })).toBe(
+            true,
+        );
+        expect(checkIsRemovingCall('owa_bible_xml', { action: 'list' })).toBe(
+            false,
+        );
+    });
+
+    it('a Bible download is screened like a web read; its other actions are not', () => {
+        const verdict = checkToolCall(
+            'owa_bible_xml',
+            { action: 'check', url: 'https://127.0.0.1:39223/mcp' },
+            { now: 5000 },
+        );
+        expect(verdict.isAllowed).toBe(false);
+        expect(verdict.rule).toBe('foreign-url');
+        expect(
+            checkToolCall('owa_bible_xml', { action: 'list' }, { now: 5000 })
+                .isAllowed,
+        ).toBe(true);
+    });
+
     it('rations removals far more tightly than presses', () => {
         let last = null;
         for (let index = 0; index < 12; index += 1) {

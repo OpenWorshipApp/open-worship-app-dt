@@ -574,4 +574,41 @@ describe('ScreenBibleManager coverage', () => {
         // No clash, nothing changed, nothing said.
         expect(mocks.showColorToast).toHaveBeenCalledOnce();
     });
+    test('sends the exact auto-scroll position as an operator scroll', () => {
+        const manager = new ScreenBibleManager(createScreenManagerBase(95));
+        const send = vi
+            .spyOn(manager, 'sendSyncScrollPercentage')
+            .mockImplementation(() => {});
+        const div = document.createElement('div');
+        const metrics = {
+            scrollHeight: 600,
+            clientHeight: 100,
+            scrollWidth: 300,
+            clientWidth: 300,
+            scrollLeft: 0,
+        };
+        for (const [name, value] of Object.entries(metrics)) {
+            Object.defineProperty(div, name, { configurable: true, value });
+        }
+        manager.sendAutoScrollPosition(div, 125.5, true);
+        expect(send).toHaveBeenCalledWith(
+            '.screen-bible-container-scroll',
+            { x: 0, y: 0.251 },
+            true, // past the mouse-over guard, like a wheel
+            true, // drawn to the sub-pixel on the projector
+        );
+        manager.sendAutoScrollPosition(div, 125.5, false);
+        expect(send).toHaveBeenLastCalledWith(
+            '.screen-bible-container-scroll',
+            { x: 0, y: 0.251 },
+            true,
+            false, // the last frame lets go
+        );
+        Object.defineProperty(div, 'scrollHeight', {
+            configurable: true,
+            value: 100,
+        });
+        manager.sendAutoScrollPosition(div, 0, true);
+        expect(send).toHaveBeenCalledTimes(2); // nothing to scroll, nothing sent
+    });
 });

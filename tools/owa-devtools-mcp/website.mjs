@@ -45,6 +45,7 @@ const LINK_LIMIT = 25;
  */
 export function genReadWebPageExpression({
     url,
+    bibleCatalog = false,
     wantsScreenshot = false,
     maxChars = WEBSITE_TEXT_DEFAULT_CHARS,
     width,
@@ -56,6 +57,7 @@ export function genReadWebPageExpression({
     // then across CDP purely to throw it away.
     const request = JSON.stringify({
         url,
+        bibleCatalog,
         wantsScreenshot,
         maxChars,
         ...(width === undefined ? {} : { width }),

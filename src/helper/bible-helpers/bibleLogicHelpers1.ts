@@ -12,18 +12,6 @@ import { getBibleModelInfo } from './bibleModelHelpers';
 
 export type BibleStatusType = [string, boolean, string];
 
-export const toLocaleNumQuick = (n: number, numList: string[]) => {
-    if (!numList) {
-        return n;
-    }
-    return `${n}`
-        .split('')
-        .map((n1) => {
-            return numList[Number.parseInt(n1)];
-        })
-        .join('');
-};
-
 export type ChapterMatchType = {
     chapter: number;
     chapterLocaleString: string;
@@ -252,11 +240,7 @@ async function toChapter(
         return null;
     }
     const book = bibleInfo.keyBookMap[bookKey];
-    return `${book} ${
-        bibleInfo.numList === undefined
-            ? chapterNum
-            : toLocaleNumQuick(chapterNum, bibleInfo.numList)
-    }`;
+    return `${book} ${await toLocaleNumBible(bibleKey, chapterNum)}`;
 }
 
 export function getModelChapterCount(bookKey: string) {

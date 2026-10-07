@@ -56,6 +56,7 @@ const ACTING_TOOLS = {
     // prompt injection makes, and a banner reading "read a website" would
     // have hidden exactly the part worth seeing.
     owa_read_website: 'read a website',
+    owa_bible_xml: 'changed the installed Bibles',
     // Writing the user's own documents. The banner says the ACTION and the
     // NAME, because "changed a song" is the one notice where which song is
     // the whole question -- and a read (`list` / `info`) says nothing at all,
@@ -175,6 +176,34 @@ function describeForegroundCall(args) {
 
 // Two tools say more than their entry. `owa_find_ui` only draws when asked to,
 // so without a highlight it is a read; `owa_read_website` names where it went.
+/**
+ * The Bible importer says what it did to WHICH Bible, and where a download
+ * came from: "installed a Bible" is the one notice where which one is the
+ * whole question. Reading (`list`, `info`) and dropping a download say
+ * nothing.
+ */
+function describeBibleXmlCall(args) {
+    const key = toQuotedName(args?.key, 'a Bible');
+    switch (args?.action) {
+        case 'check': {
+            const site = toSiteName(args?.url);
+            return site === null
+                ? 'downloaded a Bible file'
+                : `downloaded a Bible file from ${site}`;
+        }
+        case 'names':
+            return 'looked for Bible book names on Bible.com and Wordproject';
+        case 'import':
+            return `installed the Bible ${key}`;
+        case 'update':
+            return `changed the Bible ${key}`;
+        case 'delete':
+            return `moved the Bible ${key} to the trash`;
+        default:
+            return null;
+    }
+}
+
 export function describeToolCall(name, args) {
     if (name === 'owa_find_ui' && args?.highlight !== true) {
         return null;
@@ -219,6 +248,9 @@ export function describeToolCall(name, args) {
     }
     if (name === 'owa_foreground') {
         return describeForegroundCall(args);
+    }
+    if (name === 'owa_bible_xml') {
+        return describeBibleXmlCall(args);
     }
     if (name === 'owa_read_website' || checkIsDraftFromPage(name, args)) {
         const site = toSiteName(args?.url);

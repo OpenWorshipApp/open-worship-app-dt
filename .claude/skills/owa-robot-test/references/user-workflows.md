@@ -21,7 +21,25 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-05i** (W-50 steps 3 and 4 — verified across two real computers on one LAN: host hpw11 (dev, hosting switched on) and guest DESKTOP-BUS45KP (dev, 0c025e47), the guest driven by its own Claude session over Remote Control. The guest found only the host, filled it in, waited for approval, read **[en:tran:Connected]** as a1, and kept the host's name after the Presenter and back; screen 0 shown on a1 opened full-screen on the guest's monitor IN FRONT of its own app window (window order checked on the guest), hiding it closed the output, and **[en:tran:Disconnect]** returned the guest page to its start and took a1 off the host's header. The output is raised above the guest's own window, not above other applications.)
+**workflowsVersion: 2026-10-06i** (W-37 step 2 / RD-84 — Resources file-group headings visibly give the full book name and chapter or Introduction beside the code. Verified live in the Reader for John 3 and its introduction.)
+
+Previous: **workflowsVersion: 2026-10-06g** (W-11 step 3 / RD-29 — the color, sync-scroll and audio icons are dimmed at rest and regain full opacity when their group is hovered or a control has keyboard focus. Verified live in the Reader.)
+
+Previous: **workflowsVersion: 2026-10-06f** (W-39 step 2 / RD-107 — auto-scroll keeps a steady pace on any frame rate, follows the text size (bigger text travels further each second, same lines a minute), and carries on from where the reader scrolls it by hand. Verified live on a Reader pane: one device pixel every 150–166ms for 44s at the measured 25px text.)
+
+Previous: **workflowsVersion: 2026-10-06e** (W-11 step 3 / RD-29 — group sync scrolling follows continuously: the other translations move every frame with the pane being scrolled, at the same point of the same verse, and reach the top and the end of the passage together; a new leader or turning it back on glides them into line instead of jumping. Verified live with KJV, TK and Khmer panes: PageDown, End and Home on the KJV pane.)
+
+Previous: **workflowsVersion: 2026-10-06d** (W-34 — _The easy way_: [en:tran:Let the assistant import a Bible for me] in Settings → Bible, or `Import bible for khmer` / `Import bible` / a link in the assistant, installs a Bible by buttons with no model: language, every Bible in it from the Beblia collection with its own title, then name, language, digits and book names, Install it and Undo. Verified live on an isolated dev profile. ST-60, CB-80..CB-82.)
+
+Previous: **workflowsVersion: 2026-10-06c** (W-34 / CB-80: guided Bible XML import, filename locale hints, digit choices and sourced book-name lists. Verified with KhmerBible.xml.)
+
+Previous: **workflowsVersion: 2026-10-06b** (W-12 / RD-47 — a completed Bible Find search with zero matches shows [en:tran:No verses found]. Verified live in English and Khmer, with empty-query and matching-result checks.)
+
+Previous: **workflowsVersion: 2026-10-06a** (W-11 step 3 / RD-29 — grouped Bible previews have a small [en:tran:Sync group scrolling] toggle directly below the color dot, enabled by default. The other translations smoothly center the verse nearest the middle of the pane being scrolled. Verified live with English and Khmer panes, switching direction and source, disabling during animation, and ungrouping/regrouping; both icons fit inside the header.)
+
+Previous: **workflowsVersion: 2026-10-06** (W-11 step 8 and W-42 step 12 — the Bible Audio auto-play switch moved from the Reader's Bible Reference toolbar to **[en:tran:Settings]** → **Others** → **AI Providers**, directly below the saved OpenAI key. Verified live in English and Khmer; the switch toggled and restored its saved value, and the Reader no longer showed the megaphone or an empty spacer. RD-21, RD-22, ST-59.)
+
+Previous: **workflowsVersion: 2026-10-05i** (W-50 steps 3 and 4 — verified across two real computers on one LAN: host hpw11 (dev, hosting switched on) and guest DESKTOP-BUS45KP (dev, 0c025e47), the guest driven by its own Claude session over Remote Control. The guest found only the host, filled it in, waited for approval, read **[en:tran:Connected]** as a1, and kept the host's name after the Presenter and back; screen 0 shown on a1 opened full-screen on the guest's monitor IN FRONT of its own app window (window order checked on the guest), hiding it closed the output, and **[en:tran:Disconnect]** returned the guest page to its start and took a1 off the host's header. The output is raised above the guest's own window, not above other applications.)
 
 Previous: **workflowsVersion: 2026-10-05h** (W-50 step 1 — hosting is OFF until **[en:tran:Let other computers connect]** is turned on at the top of the **[en:tran:Screen Mirror Connection]** panel. Asked for by the user: _"mirror-screen host should not be enabled by default, should have a toggle switch in the panel"_. Off, the app's mirror server listens on loopback only, answers no scan and refuses guests; on, it rebinds to every network on the same port and answers scans; the switch is remembered. Verified live 2026-10-05 on the dev presenter: off at launch with only `127.0.0.1:39240` open, the panel showing the switch and one line; on moved it to `0.0.0.0:39240` with discovery answering, and a scan from this computer listed it beside the other computer on the network, DESKTOP-BUS45KP at 192.168.1.14:39240.)
 
@@ -1810,6 +1828,20 @@ quick lookup, and where you look a verse up when you are not presenting.
    large enough.
 3. To read two Bible versions next to each other, click **[en:tran:Add Extra Bible]**
    beside the version name, then click the version you want. 📸
+   When separate preview panes share a color group, the small up/down arrows
+   directly below the color dot control **[en:tran:Sync group scrolling]**.
+   The color, sync-scroll and audio icons are dimmed until you hover over
+   their group or reach one of them with the keyboard.
+   It starts enabled: scroll any pane and the other translations move along
+   with it, smoothly and continuously, keeping the same verse at the same
+   height. When it reaches the top or the end of the passage, they reach theirs
+   too. Scroll another member to make it lead; the others glide into line with
+   it instead of jumping. Click the arrows in any member to turn following off
+   for the group; the previous scrolling behavior remains. Click again to turn
+   it on: the group immediately glides into line with the pane where you
+   clicked, without needing another scroll.
+   The choice is remembered for that color group, and the toggle appears only
+   while the group has at least two panes.
 4. If you lose a passage, you do not need to remember and type it again. Click one of
    the recent reference rows near the top to go back to it.
 5. To change the main Bible version, click its short name in the header and choose a
@@ -1819,8 +1851,13 @@ quick lookup, and where you look a verse up when you are not presenting.
    **[en:tran:Exit Full]** to bring the panels back.
 7. To put a verse on the audience screen, double-click that verse. A double-click
    means pressing the left mouse button twice quickly in the same place.
+8. To let supported passages start their generated audio automatically, open
+   **[en:tran:Settings]** → **Others** → **AI Providers**. After an **OpenAI API
+   Key** is saved, turn on **[en:tran:Auto Play Audio AI when available]** under
+   the OpenAI key. The switch lives with the provider setting, not in the Bible
+   Reference toolbar.
 
-_Verify: RD-01..07, RD-11, RD-19, RD-38._
+_Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, ST-59._
 
 ### W-12 — Search the whole Bible (Bible Find)
 
@@ -1840,7 +1877,9 @@ _Verify: RD-01..07, RD-11, RD-19, RD-38._
    opens that verse. 📸
 3. The bar under the search box says how many verses matched — **74 verses found**.
    Use it to judge whether to narrow the search: a common word runs to tens of
-   thousands. 📸
+   thousands. If a completed search has no matches, the panel says
+   **[en:tran:No verses found]**. Try different words or widen the book filter.
+   Clearing the search shows **[en:tran:No data available]**. 📸
 4. Results arrive in blocks of twenty, each headed **Results 1–20**, **Results 21–40**
    and so on. The numbers at the bottom right move you through them: a **filled** number
    is a block already on screen, so clicking it scrolls straight there; a **plain**
@@ -1860,7 +1899,7 @@ _Verify: RD-01..07, RD-11, RD-19, RD-38._
    to the whole Bible, and **Reset Search Data**, which rebuilds the search index —
    that one takes a moment and reloads the app.
 
-_Verify: RD-08, RD-09, RD-45, RD-46._
+_Verify: RD-08, RD-09, RD-45, RD-46, RD-47._
 
 ### W-13 — Cross references
 
@@ -3643,76 +3682,89 @@ _Verify: ST-34..ST-40, LT-01._
 
 ### W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
-W-33 moves translations you already have. This one **adds a new translation from a link** —
-the way `ពគប` (Khmer BFBS 1954) was added — with no file to download by hand and no file
-manager: every step is in the app.
+W-33 moves translations you already have. This workflow adds a translation from an XML
+link and lets you review its language and mappings before saving it.
 
-The example throughout is the free Beblia XML collection, whose Khmer edition lives at
-`https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml`.
-Any XML in the app's format works the same way (**Import XML File → ?** shows the format).
+Example: `https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
+The GitHub redirect works as supplied. You can also use **[en:tran:Choose File]** for
+an XML file already on your computer.
 
-**Part 1 — bring the file in**
+**The easy way: let the assistant do it**
 
-1. Open **Settings** (Tools → Settings, or the ⚙ button) and pick the **[en:tran:Bible]** tab. Top-left is the **[en:tran:Import XML File]** box. 📸
-2. Leave **Choose File** alone and paste the link into the **URL:** box instead. As soon as
-   the link is a valid address the file row dims out and **[en:tran:Import]** lights up.
-   (A malformed address turns the box red with the tip **Invalid URL**.)
-3. Click **Import**. A progress line walks through **Downloading file… → Reading file… →
-   Deleting file…** — the app fetches the file itself, reads it, and throws the download
-   away. Bibles are big; the Khmer one is about 14 MB, so give it a moment.
-   > A GitHub `…/raw/…` link is fine as-is — the app follows the redirect. So is any plain
-   > `http://` address, e.g. a file served off another laptop on your own network.
+You do not need a link, and you do not need an AI key: this runs on buttons.
 
-**Part 2 — name it (the "Key is missing" question)**
+1. Open **[en:tran:Settings]** → **[en:tran:Bible]** and press the blue
+   **[en:tran:Let the assistant import a Bible for me]** at the top of
+   **[en:tran:Import XML File]**. (Or open the assistant 🤖 and type
+   `Import bible for khmer`, `Import bible`, or `Import bible from` and a link.)
+   Answer the _Be careful with AI_ question with **Open**. 📸
+2. The assistant opens in a new tab and asks **Which language do you want the Bible
+   in?** Press **Khmer**, **English** or **French**, or type the language — in English
+   or in its own words (`Thai`, `ខ្មែរ`, `Español`). **A file on this computer** opens
+   the form below instead.
+3. It lists **every** Bible in that language from a free collection of about a
+   thousand (Beblia, on GitHub), each with the title its own file gives — for Khmer,
+   seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer 2023
+   (ព្រះគម្ពីរខ្មែរសាកល)_. Press the one you want. 📸
+4. It downloads and reads it, then says what it is — for example _66 books, 1,189
+   chapters, 31,102 verses_, or _It has the New Testament only_. Nothing is installed
+   yet.
+5. **Step 1 — a short name**: press a suggestion (**KSV**, **KM1954** …) or type your
+   own, letters and numbers with no spaces. A name you already have is refused and
+   asked again.
+6. **Step 2 — the language**: it says which it looks like and why (_the verses are
+   written in Khmer script_). Press it, or type another.
+7. **Step 3 — numbers**: **០ ១ ២ ៣ …** or **0 1 2 3 …** (skipped for a language that
+   writes 0–9).
+8. **Step 4 — book names**: each list shows its first names, the names only it has,
+   and how many of its names appear in this Bible's own verses; the suggested one
+   uses the most. **Find more lists online** adds lists from Bible.com and
+   Wordproject. 📸
+9. **Ready to install** sums it up. Press **Install it**. _Done — KSV is installed_:
+   choose it from the Bible version button. **Undo** under that answer moves it to
+   the trash again. **Cancel** at any step stops with nothing installed.
 
-4. Most XML bibles on the internet carry no short code, so the app asks: a **Key is
-   missing** window with **Define a Bible key**, a **Key:** box, and a row of **Guessing
-   keys:** buttons. 📸
-   The buttons are every word the app could find in the file's own header, so one of them
-   is usually the right answer — for the Khmer file the publisher left a bible.com address
-   in the header ending in `…GEN.23.ពគប`, and **`ពគប` is offered as a button**. Click it and
-   the box fills in. Otherwise type your own short code; anything works, including Khmer.
-   > A code you already use is refused — the box turns red with **Key is already taken**.
-   > This code is the badge you will see everywhere in the app, and it also becomes the
-   > file name, so **choose it now**: changing it later in the editor renames the badge but
-   > not the file.
-5. Click **Ok**. The app asks once more — **Confirm Key for Bible**, _Do you want to
-   continue with key="ពគប"?_ — click **Yes**. (**No** takes you back to the box; the way
-   out entirely is **Cancel** then **No**.)
-6. The new translation appears in the **Bibles XML** list on the right, badge on the left
-   and full title beside it. 📸 It works already — but if it is not an English bible, read on.
+Pasting a link works the same way, and the link does not have to be the file: a
+GitHub **page** of the file is turned into its download address, and a GitHub
+**repository** lists its Bible files — type a word (`Khmer`, then `2019`) to narrow
+the list.
 
-**Part 3 — make it read in its own language**
+**Import a Bible XML file with the form**
 
-A file downloaded from the internet almost never says what language it is in, so the app
-assumes English: book names in English, `1 2 3` instead of `១ ២ ៣`, and the translation
-filed under **English** in the bible menu. Three settings fix that, and **the order
-matters** — the last two take their suggestions from the language you set first.
+1. Open **[en:tran:Settings]** → **[en:tran:Bible]**. In
+   **[en:tran:Import XML File]**, paste the link into **[en:tran:URL:]**.
+2. Press **[en:tran:Import]**. The download is read and its temporary file removed.
+   **[en:tran:Review Bible import]** appears with the translation title. Nothing has
+   been installed yet. 📸
+3. Choose an unused **[en:tran:Bible key]**. Buttons suggest a language code, a code
+   with the year, and usable words from the file header; you can type your own key.
+   This becomes the badge and file name. Empty, unsafe or already installed keys
+   cannot be imported, and the key is checked again when saving.
+4. Review **[en:tran:Locale]**. A locale stored in the XML is kept; otherwise the
+   filename provides a hint. `KhmerBible.xml` suggests `km-KH`. You can correct it.
+5. Choose **[en:tran:Number mapping]**. Khmer offers `០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩` first
+   and `0 1 2 3 4 5 6 7 8 9` as an alternative.
+6. Choose **[en:tran:Book name mapping]**. Built-in Khmer naming sets appear first;
+   online lookup adds complete lists from Bible.com and Wordproject. Each option
+   shows its edition/source, and **[en:tran:Preview book names]** expands all 66 names.
+   **[en:tran:Keep existing book names]** preserves the names already in the XML.
+   The recommended option is a suggestion: select the wording your church uses.
+   **[en:tran:Find more editions]** checks another batch when available;
+   **[en:tran:Search for more book name lists]** opens a wider web search.
+   If online sources fail, you can still choose built-in names or keep the existing map.
+7. Press **[en:tran:Import]** in the review. The new translation appears in
+   **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
 
-7. Click the ✏️ **pencil** next to your new translation. The **Info** tab opens a text
-   editor holding the translation's settings. **Right-click inside it** — below the usual
-   editing commands are three of the app's own:
-   **🌎 Choose Locale**, **#️⃣ Edit Numbers Map**, **📚 Edit Books Map**. 📸
-8. **🌎 Choose Locale** first. Pick the language from the list — for Khmer that is
-   **km-KH (Khmer (ភាសាខ្មែរ))**. The `"locale"` line in the editor changes and the bar at
-   the bottom starts warning **Unsaved changes**.
-9. **#️⃣ Edit Numbers Map** next. The window is titled **Numbers map** and now says _Define
-   numbers map for km_ — because of step 8. Click **Use ១ ២ ៣** to fill in that language's
-   own digits and click **Ok**. (There is also a **Translate** link to Google Translate if
-   your language is not one the app knows.) 📸
-10. **📚 Edit Books Map** last. This opens the 66 book names, one per line, with the
-    English name of each book shown down the left so you can never lose your place. Click
-    **📖 Guessing Names** — the app lists the book-name sets it ships for that language,
-    labelled by the translations that use them (for Khmer: `អគត`, `ពគប, គកស១៦, GKHB`,
-    `គខប`), with the set matching your code shown first and in bold. Pick one and all 66
-    lines fill in. Click **Ok**. 📸
-    > No set to pick from? Use **Translate** to translate the whole list in one go, paste
-    > it back, and — if what you paste comes back as web markup — **Parse Markup String**
-    > cleans it up. **Reset** puts the English names back.
-11. Click **Save**. The app reloads its windows, which is normal.
-12. Check it: in the **Bible Reader**, open the bible chooser. Your translation has moved
-    out of **English** and now sits under its own language heading, and its references read
-    in its own script and numerals — `(ពគប) កិច្ចការ ២៨:១៥` rather than `(ពគប) Acts 28:15`. 📸
+Later changes remain available through the translation's pencil → **Info** editor:
+**🌎 Choose Locale**, then **#️⃣ Edit Numbers Map**, then **📚 Edit Books Map**.
+Those editor actions use the locale currently in the editor buffer; save after editing.
+
+**Key is already taken**
+
+If it says the Bible key is already taken, choose a different unused key in the review.
+The installed translation is kept. Import does not replace it, even if another window
+installed that key while you were choosing mappings. Cancel if you meant to edit the
+existing Bible, then use its pencil instead.
 
 > **Removing one.** The 🗑 next to a translation asks _Are you sure to delete bible XML
 > "…"?_ — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
@@ -3736,7 +3788,7 @@ matters** — the last two take their suggestions from the language you set firs
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
 > because there is nothing left to create.
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, RD-11, LT-01._
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, CB-80..CB-82, LT-01._
 
 ### W-35 — Bring a song in from CCLI SongSelect
 
@@ -3842,6 +3894,9 @@ all count as book-level too.
    passage you have open**, in the order of your panes, so you can always see what it is
    matching — reading Genesis 24 beside Genesis 27, a solid `GEN.24.*` and a solid
    `GEN.27.*` for the chapters' own files, then one dashed `GEN.0.*` for the book's.
+   Above each group of files, the heading also spells out the book and chapter:
+   `JHN.3.*, John chapter 3` or `JHN.0.*, John Introduction`. These full names
+   follow the interface language and are visible without hovering.
    Two panes on the same chapter in two versions count once. The pane you are typing a
    reference into follows what its box says, as soon as the reference is complete;
    moving to another verse of the same chapter changes nothing here — it is the chapter
@@ -4154,6 +4209,10 @@ wheel — the app can scroll it for you, at whatever pace you set.
    The double chevron is the auto-scroll button. 📸
 2. Click the double chevron once. The text starts creeping downward. Click it again and
    it goes faster; each click adds a little more speed.
+   It glides at a steady pace on any computer, and the pace follows the text size: make
+   the text bigger and it travels further each second, so you still read the same number
+   of lines a minute. Scroll it yourself while it plays — back up to re-read, or ahead —
+   and it carries on from where you left it.
 3. As soon as it is moving, a **⋯** appears just to its left. Click it. 📸
    A small menu opens listing everything this button can do, with the mouse action for
    each one written beside it:
@@ -4278,6 +4337,11 @@ _Verify: PR-30, PR-31, CM-69, CM-98, CM-99._
 ---
 
 ### W-42 — Ask the app for help (the chatbot)
+
+You can also start a Bible import with `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
+The **Bible versions** section under **More** contains this editable sample. Asking it opens Settings
+with the URL ready; you choose the key and review the language, digits and book-name
+options there before importing (W-34). This direct request needs no model call.
 
 The app can answer its own "how do I …?" questions. It reads the same manual you are
 reading now, looks at what the app is doing at that moment, and can point at the button
@@ -4623,7 +4687,9 @@ it is describing.
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
     Bible Cross Reference, **Kimi** answers here only — so you can tell which key is
-    worth getting before you go and fetch one.
+    worth getting before you go and fetch one. Once the OpenAI key is saved, its card
+    also shows **[en:tran:Auto Play Audio AI when available]**; turn that switch on when
+    supported Reader passages should begin their generated audio automatically.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
     can change your mind between two questions. The ones whose key you have set can be
     chosen; the others are still in the list, in a quieter colour and reading

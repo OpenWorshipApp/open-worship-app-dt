@@ -445,3 +445,33 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   clipboard path the preview's Copy and the report's **Copy picture** share,
   which redraws anything that is not PNG because Chromium's async clipboard
   takes no other image type.
+
+- **A Bible is installed IN the chat, one question at a time, by buttons and
+  with no model** (2026-10-06, `src/chatbot/bibleImportChatHelpers.ts`; asked
+  for _for old and non-technical users_ — it used to open Settings with the
+  link typed in, leaving four fields nobody had heard of). Three ways in, all
+  caught in `handleAsking` ahead of any provider, like a `/` command: a
+  message with a Bible word and ONE link (`readBibleImportLinkAsk` — a file, a
+  GitHub file page, a repository); a Bible word with NO link
+  (`readBibleImportLanguageAsk`: _Import bible for khmer_ searches the Beblia
+  collection, _Import bible_ / _Can you install a Bible for me?_ asks the
+  language, _…from my computer_ opens the Settings form; a how/what/where
+  question is left to the guide); and Settings → Bible's
+  **[en:tran:Let the assistant import a Bible for me]**, which leaves the request
+  through `chatbotHandoffStoreHelpers.ts` (one setting, taken once, 30 s) after
+  the 🤖's own two questions, and the window starts it in a NEW tab when it opens
+  or comes to the front. Every answer is one step — the language, every file in
+  it with the title its own file gives, then a short name, the language, the
+  digits, the book names (ranked by how many of their names the verses use,
+  each with the names only it has), **Install it**, **Undo** — and every button
+  is `BIBLE_IMPORT_STEP_TOOL_NAME`, a pseudo tool no model can press, carrying
+  the WHOLE state in its args, so the window keeps nothing and an old button
+  restarts its own step. A typed word answers the step in front of the person
+  (`readBibleImportTypedReply`: their own short name, a language by name, a word
+  that narrows a list — added to the earlier search, "2019" after "Khmer"), read
+  off the LAST answer only, and a NEW request beats it. A tool's words never
+  reach the person: a `problem` code is worded here with how to find the right
+  link. A model that downloads a Bible itself gets the same buttons under its
+  answer (`watch.bibleImportCheck` in `llmBotHelpers.ts`). The Settings-form
+  prefill (`bibleImportRequestHelpers.ts`) is what **Do it in Settings instead**
+  and **A file on this computer** use.

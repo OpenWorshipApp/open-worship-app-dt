@@ -1,8 +1,18 @@
 import { tran } from '../lang/langHelpers';
+import {
+    PLAY_TO_BOTTOM_CLASSNAME,
+    PLAY_TO_BOTTOM_MENU_CLASSNAME,
+    TO_THE_TOP_CLASSNAME,
+    getSubPixelScrollTop,
+    releaseSubPixelScroll,
+    writeSubPixelScrollTop,
+} from './subPixelScrollHelpers';
 
-export const TO_THE_TOP_CLASSNAME = 'app-to-the-top';
-export const PLAY_TO_BOTTOM_CLASSNAME = 'play-to-bottom';
-export const PLAY_TO_BOTTOM_MENU_CLASSNAME = 'play-to-bottom-menu';
+export {
+    PLAY_TO_BOTTOM_CLASSNAME,
+    PLAY_TO_BOTTOM_MENU_CLASSNAME,
+    TO_THE_TOP_CLASSNAME,
+};
 export const TO_THE_TOP_STYLE_STRING = `
 .${PLAY_TO_BOTTOM_CLASSNAME} {
     padding: 0;
@@ -167,11 +177,46 @@ export function applyToTheTop(
     checkElement(parent, element);
 }
 
+// A speed keeps the meaning it always had -- CSS px per 60Hz frame on the
+// Reader's default 35px text -- but is now applied per SECOND and scaled by the
+// size the text is shown at. A per-frame step ran at half speed on a 30fps
+// machine, and a bigger font read more slowly at the same speed.
+const SPEED_FONT_SIZE = 35;
+const SPEED_FRAME_RATE = 60;
+const BASE_SPEED = 0.05;
+// Re-read while playing, so a font-size change takes effect mid-scroll.
+const FONT_MEASURE_MS = 500;
+// The longest frame gap honoured in full: after a stall (a busy machine, a
+// hidden window) the text carries on instead of leaping ahead.
+const MAX_FRAME_MS = 100;
+// The text whose size sets the pace: a verse in a bible view or on a screen.
+const FONT_SAMPLE_SELECTOR = '[data-kjv-verse-key]';
+
 type PlayToBottomStoreType = {
     speed: number;
+    // The exact position, as a float, drawn to the sub-pixel
+    // (`writeSubPixelScrollTop`). Reading the browser's whole-pixel offset
+    // back each frame made a slow scroll advance in uneven hops.
     scrollTop: number;
+    // The position last written, to tell a hand on the wheel or the scrollbar
+    // from this loop's own writes.
+    writtenTop: number | null;
+    frameTime: number | null;
+    fontScale: number;
+    fontMeasuredAt: number;
     isRunning: boolean;
+    onFrame?: AutoScrollFrameType;
 };
+
+/**
+ * Every frame the auto-scroll moves, with its exact position, then once more
+ * with `isPlaying` false when it stops -- so whatever follows it (a projector,
+ * the panes of a sync group) can drop its sub-pixel slide too.
+ */
+export type AutoScrollFrameType = (
+    scrollTop: number,
+    isPlaying: boolean,
+) => void;
 
 /**
  * The auto-scroll state, hung off the button itself rather than held in the
@@ -190,9 +235,45 @@ function getPlayToBottomStore(element: HTMLElement): PlayToBottomStoreType {
     anyElement._playToBottomStore ??= {
         speed: 0,
         scrollTop: 0,
+        writtenTop: null,
+        frameTime: null,
+        fontScale: 1,
+        fontMeasuredAt: Number.NEGATIVE_INFINITY,
         isRunning: false,
     };
     return anyElement._playToBottomStore;
+}
+
+function toVisualScale(element: HTMLElement) {
+    const height = element.offsetHeight;
+    const scale =
+        height > 0 ? element.getBoundingClientRect().height / height : 1;
+    return scale > 0 ? scale : 1;
+}
+
+/**
+ * How big the text LOOKS inside the scroller, against `SPEED_FONT_SIZE`. A
+ * screen's mini preview draws the projector's text inside a
+ * `transform: scale(...)`: its computed font size is the projector's, but it
+ * scrolls a box a fraction of that size.
+ */
+function measureFontScale(parent: HTMLElement) {
+    const sample =
+        parent.querySelector<HTMLElement>(FONT_SAMPLE_SELECTOR) ?? parent;
+    const fontSize = Number.parseFloat(getComputedStyle(sample).fontSize);
+    if (!(fontSize > 0)) {
+        return 1;
+    }
+    const scale =
+        sample === parent ? 1 : toVisualScale(sample) / toVisualScale(parent);
+    return (fontSize * scale) / SPEED_FONT_SIZE;
+}
+
+/** Ends a run's sub-pixel slide and tells the frame hook it stopped. */
+function settleAutoScroll(parent: HTMLElement, store: PlayToBottomStoreType) {
+    if (releaseSubPixelScroll(parent)) {
+        store.onFrame?.(parent.scrollTop, false);
+    }
 }
 
 function startAnimToBottom(
@@ -204,44 +285,74 @@ function startAnimToBottom(
         onStop: () => void;
         onToTheTop: () => void;
     },
+    time?: number,
 ) {
-    const shouldStop =
-        store.speed <= 0 ||
-        parent.scrollTop >= parent.scrollHeight - parent.clientHeight - 5;
+    const maxScroll = parent.scrollHeight - parent.clientHeight;
+    const shouldStop = store.speed <= 0 || parent.scrollTop >= maxScroll - 5;
 
     if (shouldStop) {
+        settleAutoScroll(parent, store);
         options.onStop();
         return;
     }
-    const nexTargetCallback = startAnimToBottom.bind(
-        null,
-        parent,
-        element,
-        store,
-        options,
-    );
+    const nexTargetCallback = (frameTime: number) => {
+        startAnimToBottom(parent, element, store, options, frameTime);
+    };
     if (parent.classList.contains('asking-to-top')) {
         (parent as any)._askingToTop = false;
-        store.scrollTop = 0;
+        settleAutoScroll(parent, store);
         parent.scrollTo({
             top: 0,
             behavior: 'smooth',
         });
         setTimeout(() => {
             parent.classList.remove('asking-to-top');
+            store.scrollTop = parent.scrollTop;
+            store.writtenTop = parent.scrollTop;
+            store.frameTime = null;
             options.onToTheTop();
             requestAnimationFrame(nexTargetCallback);
         }, 2e3);
         return;
     }
-
-    store.scrollTop += 0.05 + store.speed;
-    store.scrollTop = Math.max(parent.scrollTop, store.scrollTop);
-    if (parent.scrollTop !== store.scrollTop) {
-        parent.scrollTop = store.scrollTop;
-        setTimeout(() => {
-            options.onMoved();
-        }, 0);
+    if (time !== undefined) {
+        // A wheel, the scrollbar or a verse brought into view moved it: carry
+        // on from there, up as well as down.
+        const currentTop = getSubPixelScrollTop(parent);
+        if (
+            store.writtenTop !== null &&
+            Math.abs(currentTop - store.writtenTop) > 2
+        ) {
+            store.scrollTop = currentTop;
+        }
+        const elapsed =
+            store.frameTime === null
+                ? 0
+                : Math.min(Math.max(time - store.frameTime, 0), MAX_FRAME_MS);
+        store.frameTime = time;
+        if (time - store.fontMeasuredAt >= FONT_MEASURE_MS) {
+            store.fontScale = measureFontScale(parent);
+            store.fontMeasuredAt = time;
+        }
+        const pxPerMs =
+            ((BASE_SPEED + store.speed) * SPEED_FRAME_RATE * store.fontScale) /
+            1000;
+        const previousTop = store.scrollTop;
+        store.scrollTop = Math.min(
+            store.scrollTop + pxPerMs * elapsed,
+            maxScroll,
+        );
+        if (store.scrollTop !== previousTop) {
+            const wholeTop = parent.scrollTop;
+            writeSubPixelScrollTop(parent, store.scrollTop);
+            store.writtenTop = store.scrollTop;
+            if (parent.scrollTop !== wholeTop) {
+                setTimeout(() => {
+                    options.onMoved();
+                }, 0);
+            }
+            store.onFrame?.(store.scrollTop, true);
+        }
     }
     requestAnimationFrame(nexTargetCallback);
 }
@@ -275,12 +386,17 @@ const speedOffset = 0.07;
 export function applyPlayToBottom(
     element: HTMLElement,
     movedCheck?: MoveCheckType,
+    onFrame?: AutoScrollFrameType,
 ) {
     const parent = element.parentElement;
     if (parent === null) {
         return;
     }
     const store = getPlayToBottomStore(element);
+    store.onFrame = onFrame;
+    // This runs again on every render of the host -- a font-size change among
+    // them -- so the next frame reads the text size afresh.
+    store.fontMeasuredAt = Number.NEGATIVE_INFINITY;
     const resetSpeed = () => {
         const speed = Number.parseFloat(element.dataset['speed'] ?? '0');
         store.speed = Number.isNaN(speed) ? 0 : speed;
@@ -302,6 +418,8 @@ export function applyPlayToBottom(
         }
         store.isRunning = true;
         store.scrollTop = parent.scrollTop;
+        store.writtenTop = parent.scrollTop;
+        store.frameTime = performance.now();
         const movedThreshold = movedCheck?.threshold ?? 0;
         let scrollTop = parent.scrollTop - movedThreshold;
         startAnimToBottom(parent, element, store, {

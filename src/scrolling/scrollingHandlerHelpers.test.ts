@@ -11,6 +11,10 @@ import {
     TO_THE_TOP_CLASSNAME,
     TO_THE_TOP_STYLE_STRING,
 } from './scrollingHandlerHelpers';
+import {
+    checkIsSubPixelScrolling,
+    getSubPixelScrollTop,
+} from './subPixelScrollHelpers';
 
 type ResizeObserverEntryType = {
     callback: ResizeObserverCallback;
@@ -20,6 +24,8 @@ type ResizeObserverEntryType = {
 
 const resizeObserverEntries: ResizeObserverEntryType[] = [];
 const rafCallbacks: FrameRequestCallback[] = [];
+// One clock for frames and `performance.now()`, so timing is deterministic.
+let frameClock = 0;
 
 function defineScrollMetrics(
     element: HTMLElement,
@@ -55,6 +61,50 @@ function runNextAnimationFrame() {
     }
 }
 
+/** Runs `count` frames, each `frameMs` after the last; returns the times. */
+function runFrames(count: number, frameMs = 1000 / 60) {
+    for (let i = 0; i < count; i++) {
+        frameClock += frameMs;
+        rafCallbacks.shift()?.(frameClock);
+    }
+}
+
+/** A scroller with 1000px to travel and a play button in it. */
+function setUpPlaying({
+    fontSize,
+    devicePixelRatio = 1,
+}: { fontSize?: string; devicePixelRatio?: number } = {}) {
+    const parent = document.createElement('div');
+    const play = document.createElement('i');
+    play.className = PLAY_TO_BOTTOM_CLASSNAME;
+    if (fontSize !== undefined) {
+        const verse = document.createElement('span');
+        verse.dataset.kjvVerseKey = 'JHN 3:16';
+        verse.style.fontSize = fontSize;
+        parent.append(verse);
+    }
+    parent.append(play);
+    // Attached: jsdom only refreshes computed style inside the document.
+    document.body.append(parent);
+    defineScrollMetrics(parent, {
+        clientHeight: 100,
+        scrollHeight: 1100,
+        scrollTop: 0,
+    });
+    const writes: number[] = [];
+    const descriptor = Object.getOwnPropertyDescriptor(parent, 'scrollTop')!;
+    Object.defineProperty(parent, 'scrollTop', {
+        configurable: true,
+        get: descriptor.get,
+        set: (value: number) => {
+            writes.push(value);
+            descriptor.set!(value);
+        },
+    });
+    vi.stubGlobal('devicePixelRatio', devicePixelRatio);
+    return { parent, play, writes };
+}
+
 function createFakeEvent(options?: { altKey?: boolean }) {
     return {
         altKey: options?.altKey ?? false,
@@ -69,6 +119,8 @@ describe('scrollingHandlerHelpers', () => {
         vi.clearAllMocks();
         resizeObserverEntries.length = 0;
         rafCallbacks.length = 0;
+        frameClock = 1000;
+        vi.spyOn(performance, 'now').mockImplementation(() => frameClock);
 
         Object.defineProperty(globalThis, 'requestAnimationFrame', {
             configurable: true,
@@ -99,6 +151,9 @@ describe('scrollingHandlerHelpers', () => {
 
     afterEach(() => {
         vi.useRealTimers();
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        document.body.replaceChildren();
     });
 
     test('exposes style constants and safely handles orphaned controls', () => {
@@ -216,7 +271,9 @@ describe('scrollingHandlerHelpers', () => {
             3,
         );
         expect(play.title).toBe('0.07');
-        expect(parent.scrollTop).toBeCloseTo(0.12, 3);
+        expect(parent.scrollTop).toBe(0); // it moves with time, not on click
+        runFrames(10); // 10 frames x 0.12px = 1.2px: one whole pixel shown
+        expect(parent.scrollTop).toBe(1);
         vi.runOnlyPendingTimers();
         expect(movedCheck.check).toHaveBeenCalledWith(parent);
 
@@ -342,5 +399,130 @@ describe('scrollingHandlerHelpers', () => {
             0.07,
             3,
         );
+    });
+    test('keeps its pace per second, whatever the frame rate', () => {
+        const fast = setUpPlaying();
+        applyPlayToBottom(fast.play);
+        fast.play.onclick?.(createFakeEvent());
+        runFrames(120); // two seconds at 60fps
+        const slow = setUpPlaying();
+        rafCallbacks.length = 0;
+        applyPlayToBottom(slow.play);
+        slow.play.onclick?.(createFakeEvent());
+        runFrames(60, 1000 / 30); // the same two seconds at 30fps
+        // 0.12px a 60Hz frame = 7.2px a second, at either rate. A per-frame
+        // step used to cover half the distance at 30fps.
+        expect(fast.parent.scrollTop).toBe(14);
+        expect(slow.parent.scrollTop).toBe(14);
+    });
+
+    test('scales its pace with the size the text is shown at', () => {
+        const normal = setUpPlaying({ fontSize: '35px' });
+        applyPlayToBottom(normal.play);
+        normal.play.onclick?.(createFakeEvent());
+        runFrames(120);
+        const big = setUpPlaying({ fontSize: '70px' });
+        rafCallbacks.length = 0;
+        applyPlayToBottom(big.play);
+        big.play.onclick?.(createFakeEvent());
+        runFrames(120);
+        expect(getSubPixelScrollTop(normal.parent)).toBeCloseTo(14.4, 6);
+        // twice the text, twice the px
+        expect(getSubPixelScrollTop(big.parent)).toBeCloseTo(28.8, 6);
+    });
+
+    test('a slow scroll steps whole device pixels at an even beat', () => {
+        const { play, writes } = setUpPlaying({ devicePixelRatio: 1.25 });
+        applyPlayToBottom(play);
+        play.onclick?.(createFakeEvent());
+        const stepFrames: number[] = [];
+        for (let frame = 1; frame <= 120; frame++) {
+            const before = writes.length;
+            runFrames(1);
+            if (writes.length > before) {
+                stepFrames.push(frame);
+            }
+        }
+        // 7.2px a second in 0.8px device pixels: 9 steps a second, each one
+        // device pixel, a write only when the pixel changes.
+        expect(writes.length).toBe(stepFrames.length);
+        expect(writes.length).toBeGreaterThanOrEqual(17);
+        for (let i = 1; i < writes.length; i++) {
+            expect(writes[i] - writes[i - 1]).toBeCloseTo(0.8, 6);
+        }
+        const gaps = stepFrames
+            .slice(1)
+            .map((frame, i) => frame - stepFrames[i]);
+        expect(Math.max(...gaps) - Math.min(...gaps)).toBeLessThanOrEqual(1);
+    });
+
+    test('carries on from where a hand scrolled it, up as well as down', () => {
+        const { parent, play } = setUpPlaying();
+        applyPlayToBottom(play);
+        play.onclick?.(createFakeEvent());
+        runFrames(600); // 10 seconds: 72px
+        expect(parent.scrollTop).toBe(72);
+        parent.scrollTop = 10; // scrolled back up to re-read
+        runFrames(60);
+        // It used to snap straight back down to 72.
+        expect(parent.scrollTop).toBe(17);
+        parent.scrollTop = 500;
+        runFrames(60);
+        expect(parent.scrollTop).toBe(507);
+    });
+
+    test('hands every frame its exact position, slides while it plays', () => {
+        const { parent, play } = setUpPlaying();
+        const onFrame = vi.fn();
+        applyPlayToBottom(play, undefined, onFrame);
+        play.onclick?.(createFakeEvent());
+        runFrames(3);
+        expect(onFrame).toHaveBeenCalledTimes(3);
+        expect(onFrame.mock.calls[2][0]).toBeCloseTo(0.36, 6);
+        runFrames(6); // 1.08px: the first whole pixel is the scroll offset
+        expect(parent.scrollTop).toBe(1);
+        expect(checkIsSubPixelScrolling(parent)).toBe(true);
+        play.oncontextmenu?.(createFakeEvent({ altKey: true }));
+        runFrames(1);
+        expect(checkIsSubPixelScrolling(parent)).toBe(false);
+        expect(onFrame).toHaveBeenLastCalledWith(1, false);
+    });
+
+    test('a font-size change re-applied mid-scroll changes the pace at once', () => {
+        const { parent, play } = setUpPlaying({ fontSize: '35px' });
+        applyPlayToBottom(play);
+        play.onclick?.(createFakeEvent());
+        runFrames(60);
+        expect(parent.scrollTop).toBe(7);
+        parent.querySelector<HTMLElement>('span')!.style.fontSize = '70px';
+        applyPlayToBottom(play); // the host re-rendered with the new size
+        runFrames(60);
+        expect(getSubPixelScrollTop(parent)).toBeCloseTo(21.6, 6); // 7.2 + 14.4
+    });
+    test('glides the text every frame and lets go when it stops', () => {
+        const { parent, play, writes } = setUpPlaying();
+        const text = document.createElement('div');
+        parent.prepend(text);
+        const onFrame = vi.fn();
+        applyPlayToBottom(play, undefined, onFrame);
+        play.onclick?.(createFakeEvent());
+        const slides = new Set<string>();
+        for (let i = 0; i < 8; i++) {
+            runFrames(1);
+            slides.add(text.style.translate);
+        }
+        // 0.12px a frame: a new position every frame, no whole pixel yet.
+        expect(slides.size).toBe(8);
+        expect(writes).toEqual([]);
+        expect(text.style.willChange).toBe('transform');
+        expect(play.style.translate).toBe(''); // the button stays put
+        runFrames(1); // 1.08px
+        expect(writes).toEqual([1]);
+        expect(text.style.translate).toBe('0 -0.080px');
+        play.oncontextmenu?.(createFakeEvent({ altKey: true }));
+        runFrames(1);
+        expect(text.style.translate).toBe('');
+        expect(text.style.willChange).toBe('');
+        expect(onFrame).toHaveBeenLastCalledWith(1, false);
     });
 });

@@ -325,6 +325,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         } else {
             this.syncTargetByColorNote(bibleItem);
         }
+        this.fireUpdateEvent();
     }
 
     get inputText() {

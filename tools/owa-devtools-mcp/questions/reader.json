@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-05",
+    "updated": "2026-10-06",
     "sections": [
         {
             "id": "reading",
@@ -69,6 +69,32 @@
                         "guide": true
                     },
                     "starterRank": 4
+                },
+                {
+                    "id": "dim-header-icons",
+                    "text": "Why are the color, sync-scroll and audio icons dimmed above my Bible passage?",
+                    "kind": "howto",
+                    "keywords": ["faint icons", "opacity", "hover", "keyboard focus"],
+                    "resources": {
+                        "recipe": "W-11"
+                    }
+                },
+                {
+                    "id": "sync-group-scrolling",
+                    "text": "How do I make the other Bible translations follow the verse I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "sync scrolling",
+                        "color group",
+                        "same verse",
+                        "parallel translations",
+                        "smooth scrolling"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": ["W-39"],
+                        "find": "Sync group scrolling"
+                    }
                 },
                 {
                     "id": "add-version",
@@ -167,7 +193,8 @@
                         "hands free",
                         "scroll speed",
                         "teleprompter",
-                        "moving"
+                        "moving",
+                        "font size"
                     ],
                     "resources": {
                         "recipe": "W-39",
@@ -418,6 +445,21 @@
                     "resources": {
                         "recipe": "W-12",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "search-no-verses",
+                    "text": "Why does Bible Find say no verses found?",
+                    "kind": "howto",
+                    "keywords": [
+                        "no matches",
+                        "zero results",
+                        "empty search",
+                        "different words",
+                        "book filter"
+                    ],
+                    "resources": {
+                        "recipe": "W-12"
                     }
                 },
                 {
@@ -913,6 +955,22 @@
                         "book key",
                         "pattern",
                         "not showing"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-book-code",
+                    "text": "What does the three-letter book code in Resources mean?",
+                    "kind": "what",
+                    "keywords": [
+                        "full book name",
+                        "abbreviation",
+                        "chapter",
+                        "group heading",
+                        "title",
+                        "introduction"
                     ],
                     "resources": {
                         "recipe": "W-37"

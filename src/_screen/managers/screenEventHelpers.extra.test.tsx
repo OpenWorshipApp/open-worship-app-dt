@@ -441,4 +441,52 @@ describe('screenEventHelpers', () => {
         target.dispatchEvent(new Event('scroll', { bubbles: true }));
         expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 }, false);
     });
+
+    test('never echoes a scroll an auto-scroll is driving, however many listen', async () => {
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
+        const { writeSubPixelScrollTop, releaseSubPixelScroll } =
+            await import('../../scrolling/subPixelScrollHelpers');
+
+        const target = document.createElement('div');
+        Object.defineProperties(target, {
+            scrollLeft: { configurable: true, writable: true, value: 50 },
+            scrollTop: { configurable: true, writable: true, value: 25 },
+            scrollWidth: { configurable: true, value: 200 },
+            clientWidth: { configurable: true, value: 100 },
+            scrollHeight: { configurable: true, value: 125 },
+            clientHeight: { configurable: true, value: 25 },
+        });
+        // Registered twice, as a StrictMode remount of the projector's
+        // bible view does: the first listener consumed the remote stamp and
+        // the second broadcast the rounded offset straight back to the mini
+        // preview driving it, which shook.
+        const first = vi.fn();
+        const second = vi.fn();
+        registerScrollingSyncEvent(target, first);
+        registerScrollingSyncEvent(target, second);
+        // The projector's own window focused, the pointer over it.
+        appProviderMock.getIsMouseOverApp.mockReturnValue(true);
+        appProviderMock.getIsWindowFocused.mockReturnValue(true);
+
+        writeSubPixelScrollTop(target, 25.4); // one auto-scroll frame
+        (target as any)._remoteAppliedScroll = { left: 50, top: 25 };
+        target.dispatchEvent(new Event('scroll'));
+        target.dispatchEvent(new Event('scroll'));
+        expect(first).not.toHaveBeenCalled();
+        expect(second).not.toHaveBeenCalled();
+
+        // A wheel while it plays is still the operator's.
+        target.dispatchEvent(new Event('wheel'));
+        target.scrollTop = 75;
+        target.dispatchEvent(new Event('scroll'));
+        expect(first).toHaveBeenCalledWith({ x: 0.5, y: 0.75 }, true);
+
+        // Stopped: a plain scroll speaks again.
+        releaseSubPixelScroll(target);
+        vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 5000);
+        second.mockClear();
+        target.dispatchEvent(new Event('scroll'));
+        expect(second).toHaveBeenCalledWith({ x: 0.5, y: 0.75 }, false);
+    });
 });

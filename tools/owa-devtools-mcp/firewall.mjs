@@ -196,6 +196,9 @@ const ACTING_TOOL_SET = new Set([
     'owa_bible_item',
     'owa_bible_note',
     'owa_undo',
+    // Installs, changes and removes whole Bibles. Every change is backed up
+    // first; the budget is for the loop that installs one after another.
+    'owa_bible_xml',
 ]);
 
 // The tools whose `action` can take something away (see
@@ -207,6 +210,7 @@ const REMOVING_TOOL_SET = new Set([
     'owa_bible_item',
     'owa_bible_note',
     'owa_undo',
+    'owa_bible_xml',
 ]);
 
 /** Does THIS call take something of the user's away? */
@@ -236,7 +240,12 @@ const NETWORK_TOOL_SET = new Set(['owa_read_website']);
  * way. Judged on the ARGUMENTS, because a draft from a paste must not spend a
  * network slot or be refused for having no address.
  */
-const NETWORK_WHEN_URL_TOOL_SET = new Set(['owa_lyric_validate']);
+// The Bible importer is the same: `check` downloads what `url` names, and
+// nothing else it does takes an address.
+const NETWORK_WHEN_URL_TOOL_SET = new Set([
+    'owa_lyric_validate',
+    'owa_bible_xml',
+]);
 
 export function checkIsNetworkTool(name) {
     return NETWORK_TOOL_SET.has(name);

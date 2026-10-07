@@ -5431,3 +5431,43 @@ instead of sung. 532 tool tests pass, tool surface and token cost unchanged.
 2026-09-03 press-reports-its-effect work and once for 2026-09-04's song page.
 `scoreboard.md` cites it for both. Renumbering would break those citations, so
 it is recorded here rather than quietly fixed.
+
+## EC-195 · Guided Bible XML import from a sample question — `done` 2026-10-06
+
+The old flow opened key dialogs and silently defaulted missing locale/maps to
+English, requiring three later editor actions. The sample now opens the existing
+Settings import with its URL ready, without a provider call. A shared inline
+review helps choose an unused key, infer/correct locale, choose digits and compare
+sourced name lists. Exact KhmerBible.xml imported live; its written XML verified.
+Axis: easier and smarter; rung 3 for this request. CB-80, ST-41..44, W-34/W-42.
+Provider-neutral direct route was exercised once; no paid answer corpus was run.
+Broader internet coverage remains bounded by publisher availability and quota;
+the UI offers more editions and an external search, not an exhaustive guarantee.
+
+## EC-196 · A Bible is installed in the chat, by buttons, from a link or a language — `done` 2026-10-06
+
+Asked by the user with the EC-195 sample: the assistant should download, read,
+suggest keys, locale, digits and book names for the person to PICK, and
+install -- and help edit and delete -- for elderly non-technical users. EC-195
+only opened the Settings form. Now `owa_bible_xml` (eight actions; it absorbed
+`owa_bible_book_names` as `names`) does the work, and the chat runs it as one
+question per answer with buttons and no model (`bibleImportChatHelpers.ts`):
+a link, a GitHub page or repository, `Import bible for khmer` (the Beblia
+catalog, every Khmer Bible with its own title), `Import bible` (asks the
+language), and Settings → Bible's one button (`chatbotHandoffHelpers.ts`).
+Evidence, live on an isolated profile: the sample is 66 books / 31,102 verses
+in ~4 s; the modern Khmer list (កំណើតពិភពលោក) used to be recommended for a
+1954 text whose verses match the traditional list 44 to 22 -- ranking by names
+the verses use fixed it; installed in 1.5 s, John 3:16 then reads
+យ៉ូហាន ៣:១៦; Undo, delete and undo all proven on disk. Axis: easier and
+more impressive; rung 6 for this one ask (one press in Settings, four
+presses after). Not done: the model path for edit/delete was verified through
+the MCP, not through a model's answer (no paid corpus run); `update` cannot
+rename a key (renaming would orphan saved passages that name it).
+
+## EC-197 · The model's own Bible edits through the chat are unmeasured — `open`, low
+
+`owa_bible_xml` `update` / `delete` are reachable only by a model (no button
+flow edits an installed Bible). Ask the corpus questions _How do I remove a
+Bible translation I installed?_ and _change the book names of KSV_ on a paid
+provider and grade: does it list first, confirm before delete, and say undo?

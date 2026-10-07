@@ -1,7 +1,10 @@
 import type { CSSProperties, MouseEvent as ReactMouseEventType } from 'react';
 import { useRef } from 'react';
 
-import type { MoveCheckType } from './scrollingHandlerHelpers';
+import type {
+    AutoScrollFrameType,
+    MoveCheckType,
+} from './scrollingHandlerHelpers';
 import {
     TO_THE_TOP_STYLE_STRING,
     TO_THE_TOP_CLASSNAME,
@@ -21,6 +24,7 @@ export default function ScrollingHandlerComp({
     playToBottomStyle,
     shouldShowPlayToBottom = false,
     movedCheck,
+    onAutoScrollFrame,
     scrollingContainerSelector,
 }: Readonly<{
     // Positions the to-the-top button only. When both buttons show they are a
@@ -30,6 +34,7 @@ export default function ScrollingHandlerComp({
     playToBottomStyle?: CSSProperties;
     shouldShowPlayToBottom?: boolean;
     movedCheck?: MoveCheckType;
+    onAutoScrollFrame?: AutoScrollFrameType;
     // For hosts where the scroller is not this handler's own parent — see
     // `applyToTheTop`.
     scrollingContainerSelector?: string;
@@ -66,7 +71,11 @@ export default function ScrollingHandlerComp({
                     ref={(element) => {
                         playToBottomRef.current = element;
                         if (element) {
-                            applyPlayToBottom(element, movedCheck);
+                            applyPlayToBottom(
+                                element,
+                                movedCheck,
+                                onAutoScrollFrame,
+                            );
                         }
                     }}
                 />

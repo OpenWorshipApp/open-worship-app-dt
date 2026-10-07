@@ -20,6 +20,7 @@ import BibleItem from '../../bible-list/BibleItem';
 import { getModelChapterCount, getModelKeyBookMap } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
 import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
+import type { BibleInfoType } from './BibleDataReader';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
@@ -64,6 +65,29 @@ export async function toInputText(
     return text;
 }
 
+/**
+ * The digits the Bible's OWN data asks for — highest priority, above the
+ * language's digits and then English. `null` when it has none, or when they are
+ * the plain 0→0 … 9→9 an XML import fills in by default, so a Bible that never
+ * set its digits still reads in its language's (a Khmer Bible in Khmer).
+ */
+export function getBibleNumList(bibleInfo: BibleInfoType | null) {
+    if (bibleInfo === null) {
+        return null;
+    }
+    const { numList, numbersMap } = bibleInfo;
+    if (numList === undefined && numbersMap === undefined) {
+        return null;
+    }
+    const digits = Array.from({ length: 10 }, (_, i) => {
+        return numList?.[i] || numbersMap?.[`${i}`] || `${i}`;
+    });
+    if (digits.every((digit, i) => digit === `${i}`)) {
+        return null;
+    }
+    return digits;
+}
+
 const toLocaleNumCache = new CacheManager<string>(10);
 export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     const cacheKey = `${bibleKey}:${n}`;
@@ -74,10 +98,10 @@ export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     if (typeof n !== 'number') {
         return n;
     }
-    const bibleInfo = await getBibleInfo(bibleKey);
+    const numList = getBibleNumList(await getBibleInfo(bibleKey));
     let localeNum: string | null = null;
-    if (bibleInfo?.numList !== undefined) {
-        localeNum = toStringNum(bibleInfo.numList, n);
+    if (numList !== null) {
+        localeNum = toStringNum(numList, n);
     }
     if (localeNum === null) {
         const locale = await getBibleLocale(bibleKey);
@@ -103,10 +127,10 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     if (await localeNumCache.has(cacheKey)) {
         return localeNumCache.get(cacheKey);
     }
-    const bibleInfo = await getBibleInfo(bibleKey);
+    const numList = getBibleNumList(await getBibleInfo(bibleKey));
     let num: number | null = null;
-    if (bibleInfo?.numList !== undefined) {
-        num = fromStringNum(bibleInfo.numList, localeNum);
+    if (numList !== null) {
+        num = fromStringNum(numList, localeNum);
     }
     if (num === null) {
         const locale = await getBibleLocale(bibleKey);

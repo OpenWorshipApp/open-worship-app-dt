@@ -9,7 +9,6 @@ import appProvider from '../server/appProvider';
 import { ModalCloseButtonComp } from '../app-modal/ModalComp';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
-import { AIConfigComp } from '../bible-reader/AIConfigComp';
 import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
 import RenderExportWordComp from './RenderExportWordComp';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -78,9 +77,6 @@ export default function RenderBibleLookupHeaderComp({
                 </div>
             ) : (
                 <>
-                    <div className="mx-2">
-                        <AIConfigComp />
-                    </div>
                     <div
                         className={
                             'app-flex-item flex-fill justify-content-end' +

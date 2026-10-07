@@ -296,6 +296,25 @@ const FOREGROUND_NOUN_MAP: Record<string, string> = {
     all: 'the extras',
 };
 
+// A Bible download and install each take long enough to look stuck, so the
+// line says which one it is waiting on.
+function describeBibleXmlStep(args: any) {
+    switch (args?.action) {
+        case 'check':
+            return 'Downloading the Bible file and reading it';
+        case 'names':
+            return 'Finding Bible book names for your language';
+        case 'import':
+            return 'Installing the Bible';
+        case 'update':
+            return 'Changing the Bible';
+        case 'delete':
+            return 'Moving the Bible to the trash';
+        default:
+            return 'Looking at your Bibles';
+    }
+}
+
 function describeForegroundStep(args: any) {
     const widget = String(args?.widget ?? '');
     const noun = FOREGROUND_NOUN_MAP[widget] ?? 'an extra';
@@ -384,6 +403,8 @@ export function describeToolStep(name: string, args: any): string {
             return describeForegroundStep(args);
         case 'owa_tran':
             return 'Checking what that button is called here';
+        case 'owa_bible_xml':
+            return describeBibleXmlStep(args);
         case 'owa_read_website': {
             const site = toSiteName(args?.url);
             return site === null ? 'Reading a web page' : `Reading ${site}`;

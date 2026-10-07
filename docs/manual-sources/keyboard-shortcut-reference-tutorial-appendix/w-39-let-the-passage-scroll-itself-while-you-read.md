@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-107]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-05"
+workflowsVersion: "2026-10-06"
 ---
 # W-39 — Let the passage scroll itself while you read
 
@@ -18,6 +18,10 @@ wheel — the app can scroll it for you, at whatever pace you set.
    The double chevron is the auto-scroll button. 📸
 2. Click the double chevron once. The text starts creeping downward. Click it again and
    it goes faster; each click adds a little more speed.
+   It glides at a steady pace on any computer, and the pace follows the text size: make
+   the text bigger and it travels further each second, so you still read the same number
+   of lines a minute. Scroll it yourself while it plays — back up to re-read, or ahead —
+   and it carries on from where you left it.
 3. As soon as it is moving, a **⋯** appears just to its left. Click it. 📸
    A small menu opens listing everything this button can do, with the mouse action for
    each one written beside it:
@@ -40,5 +44,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-107`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-05).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-06).
 :::

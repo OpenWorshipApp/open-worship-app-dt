@@ -82,7 +82,7 @@ describe('the question corpus', () => {
         // address, an example verse reference or a quoted example title
         // is such a blank: the user overtypes the example with their own.
         expect(row.text, row.id).toMatch(
-          /example\.com|\.\.\.|<[^>]+>|\b[A-Z][a-z]+ \d+:\d+\b|"[^"]{2,}"/,
+          /example\.com|https:\/\/\S+\.xml\b|\.\.\.|<[^>]+>|\b[A-Z][a-z]+ \d+:\d+\b|"[^"]{2,}"/,
         );
         continue;
       }
@@ -123,10 +123,22 @@ describe('the question corpus', () => {
   // imports chrome-devtools-mcp, and a test that needs the app running is a
   // test that gets skipped.
   it('points every named tool at one this package registers', () => {
-    const source = readFileSync(
+    const mainSource = readFileSync(
       join(import.meta.dirname, 'owaTools.mjs'),
       'utf8',
     );
+    // ...and every module it hands the server to (`registerBibleXmlTool`):
+    // a tool grown big enough for a file of its own is still this package's.
+    const source = [
+      mainSource,
+      ...[
+        ...mainSource.matchAll(
+          /import \{ register[A-Za-z]+ \} from '\.\/([A-Za-z]+\.mjs)'/g,
+        ),
+      ].map((one) => {
+        return readFileSync(join(import.meta.dirname, one[1]), 'utf8');
+      }),
+    ].join('\n');
     // Both spellings: most tools name themselves at `registerTool`, but
     // `owa_lyric_file` and `owa_slide_file` are one registration in a loop
     // over two descriptors, so their names appear only as a `name:` field.

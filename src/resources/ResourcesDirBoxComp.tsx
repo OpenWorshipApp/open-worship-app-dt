@@ -21,6 +21,7 @@ import { showFileOrDirExplorer } from '../server/appHelpers';
 import { pathBasename, pathDirname, selectFiles } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import ResourcesFileRowComp from './ResourcesFileRowComp';
+import { toResourcePatternLabel } from './resourcePatternHelpers';
 import {
     checkIsInResourcesDataDir,
     copyFilesIntoResourcesFolder,
@@ -398,22 +399,23 @@ function ResourcesDirBoxBodyComp({
                 </div>
             ) : (
                 groupList.map((group) => {
+                    const label = toResourcePatternLabel(group);
                     return (
                         <Fragment key={group.pattern}>
                             <div
                                 className="app-resources-found-label"
-                                title={group.pattern}
+                                title={label}
                             >
                                 <span
                                     className={
-                                        'app-resources-pattern app-ellipsis' +
+                                        'app-resources-pattern' +
                                         ' app-data' +
                                         (group.isBookLevel
                                             ? ' is-book-level'
                                             : '')
                                     }
                                 >
-                                    {group.pattern}
+                                    {label}
                                 </span>
                             </div>
                             {group.filePaths.map((filePath) => {

@@ -64,6 +64,8 @@ export default abstract class ScreenEventHandler<
         domSelector: string,
         scroll: { x: number; y: number },
         isFromWheel = false,
+        // An auto-scroll frame, to be drawn to the sub-pixel.
+        isSubPixel = false,
     ) {
         if (
             !isFromWheel &&
@@ -80,6 +82,7 @@ export default abstract class ScreenEventHandler<
                     data: {
                         domSelector,
                         scroll,
+                        ...(isSubPixel ? { isSubPixel: true } : {}),
                     },
                 },
                 true,

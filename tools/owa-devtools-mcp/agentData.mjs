@@ -1,5 +1,5 @@
-// `owa_bible_item`, `owa_bible_note` and `owa_undo`: the page expression that
-// reaches the app's data workers, and the vocabulary their schemas, the
+// `owa_bible_item`, `owa_bible_note`, `owa_undo` and `owa_bible_xml`: the
+// page expression that reaches the app's data workers, and the vocabulary their schemas, the
 // firewall and the banner share.
 //
 // The work is on the app side -- `src/helper/agentBibleListHelpers.ts`,
@@ -68,7 +68,7 @@ export const AGENT_UNDO_TEXT =
  * timeout so a window that stopped listening fails rather than hangs. A write
  * takes its backup first, so the wait is generous.
  */
-export function genAgentDataExpression(domain, request) {
+export function genAgentDataExpression(domain, request, timeoutMs = 30000) {
     const payload = JSON.stringify(
         Object.assign({}, request ?? {}, { domain: String(domain) }),
     );
@@ -93,7 +93,7 @@ export function genAgentDataExpression(domain, request) {
                     'undo are handled by the presenter or the reader -- leave ' +
                     'the page argument unset, or set it to presenter.html.'
                 ));
-            }, 30000);
+            }, ${Math.max(1000, Number(timeoutMs) || 30000)});
             document.addEventListener('owa-agent-data-answer', onAnswer);
             document.dispatchEvent(
                 new CustomEvent('owa-agent-data', { detail: request }),

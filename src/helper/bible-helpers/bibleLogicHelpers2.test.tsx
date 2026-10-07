@@ -479,6 +479,61 @@ describe('bibleLogicHelpers2', () => {
         });
     });
 
+    test("puts the Bible's own number map above the language's digits", async () => {
+        const module = await loadModule();
+        const thaiDigits = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+        const thaiInfo = {
+            locale: 'th-TH',
+            numbersMap: Object.fromEntries(
+                thaiDigits.map((digit, i) => [`${i}`, digit]),
+            ),
+        };
+        // An XML Bible's map, for a locale with no language package.
+        mocks.getBibleInfoMock.mockResolvedValue(thaiInfo);
+        expect(await module.toLocaleNumBible('TK', 31)).toBe('๓๑');
+        expect(await module.fromLocaleNumBible('TK', '๓๑')).toBe(31);
+        expect(mocks.toLocaleNumMock).not.toHaveBeenCalled();
+
+        // It outranks the language's digits too: a Khmer Bible mapped to Thai.
+        mocks.getBibleInfoMock.mockResolvedValue({
+            ...thaiInfo,
+            locale: 'km-KH',
+        });
+        expect(await module.toLocaleNumBible('KH-TH', 12)).toBe('๑๒');
+
+        // The default 0→0 map an import writes is "not set": the language's.
+        const plainMap = Object.fromEntries(
+            Array.from({ length: 10 }, (_, i) => [`${i}`, `${i}`]),
+        );
+        mocks.getBibleInfoMock.mockResolvedValue({
+            locale: 'km-KH',
+            numbersMap: plainMap,
+        });
+        expect(await module.toLocaleNumBible('KH', 7)).toBe('km-KH:7');
+        expect(mocks.toLocaleNumMock).toHaveBeenCalledWith('km-KH', 7);
+    });
+
+    test('reads a Bible number list from either data shape', async () => {
+        const module = await loadModule();
+        const base = { locale: 'en-US' } as any;
+
+        expect(module.getBibleNumList(null)).toBeNull();
+        expect(module.getBibleNumList(base)).toBeNull();
+        expect(
+            module.getBibleNumList({
+                ...base,
+                numList: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+            }),
+        ).toBeNull();
+        // A partial or blank map keeps the plain digit where it says nothing.
+        expect(
+            module.getBibleNumList({
+                ...base,
+                numbersMap: { '0': '๐', '1': '', '2': '๒' },
+            }),
+        ).toEqual(['๐', '1', '๒', '3', '4', '5', '6', '7', '8', '9']);
+    });
+
     test('builds extracted bible defaults, parses chapters, and counts verses with caching', async () => {
         const module = await loadModule();
 

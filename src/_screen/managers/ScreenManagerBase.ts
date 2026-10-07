@@ -24,6 +24,10 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import type { ScreenMessageType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
+import {
+    releaseSubPixelScroll,
+    writeSubPixelScrollTop,
+} from '../../scrolling/subPixelScrollHelpers';
 
 export type ScreenManagerEventType =
     | 'instance'
@@ -126,8 +130,9 @@ export default class ScreenManagerBase
     syncScrollPercentage(data: {
         domSelector: string;
         scroll: { x: number; y: number };
+        isSubPixel?: boolean;
     }) {
-        const { domSelector, scroll } = data;
+        const { domSelector, scroll, isSubPixel } = data;
         const htmlElements = this.getElementsByDomSelector(domSelector);
         for (const element of htmlElements) {
             const scrollLeft =
@@ -141,6 +146,20 @@ export default class ScreenManagerBase
             // under an attached DevTools/CDP session, at which point a
             // re-broadcast echoes between windows forever and floods the IPC
             // channel until the renderer starves.
+            if (isSubPixel) {
+                // A mini preview's auto-scroll, one frame of it: glide by the
+                // same fractions of a pixel instead of ticking whole ones.
+                if (element.scrollLeft !== scrollLeft) {
+                    element.scrollLeft = scrollLeft;
+                }
+                writeSubPixelScrollTop(element, scrollTop);
+                (element as any)._remoteAppliedScroll = {
+                    left: element.scrollLeft,
+                    top: element.scrollTop,
+                };
+                continue;
+            }
+            releaseSubPixelScroll(element);
             (element as any)._remoteAppliedScroll = {
                 left: scrollLeft,
                 top: scrollTop,

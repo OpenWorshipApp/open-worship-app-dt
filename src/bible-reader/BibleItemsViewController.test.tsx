@@ -214,6 +214,24 @@ describe('bible-reader BibleItemsViewController', () => {
     });
 
     describe('settings-backed getters/setters', () => {
+        test('scroll sync defaults on and is remembered per color and preview controller', () => {
+            const ctl = genController();
+            expect(ctl.getIsGroupScrollSynced('magenta')).toBe(true);
+            expect(ctl.getIsGroupScrollSynced('')).toBe(false);
+            ctl.setIsGroupScrollSynced('magenta', false);
+            expect(ctl.getIsGroupScrollSynced('magenta')).toBe(false);
+            expect(ctl.getIsGroupScrollSynced('blue')).toBe(true);
+            expect(genController().getIsGroupScrollSynced('magenta')).toBe(
+                false,
+            );
+            expect(
+                genController('other').getIsGroupScrollSynced('magenta'),
+            ).toBe(true);
+            expect(ctl.addPropEvent).toHaveBeenCalledWith('update');
+            ctl.setIsGroupScrollSynced('magenta', true);
+            expect(ctl.getIsGroupScrollSynced('magenta')).toBe(true);
+        });
+
         test('colorNoteMap round-trips and recovers from bad json', () => {
             const ctl = genController();
             expect(ctl.colorNoteMap).toEqual({});

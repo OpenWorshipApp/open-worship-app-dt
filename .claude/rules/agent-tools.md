@@ -519,3 +519,47 @@ KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
   every history move, clone, delete and clear, and `preDelete` awaits the
   discard; anything new that renames, copies or deletes onto a path read
   through `readFileData` must forget it too.
+
+- **Whole Bibles are `owa_bible_xml`** (2026-10-06, asked for by the user:
+  _download → extract → analyze → guess keys → recommend a locale → digits →
+  book names for the user to pick → import_, and _help import, edit and delete_,
+  for elderly non-technical users). One tool, eight actions; it took over
+  `owa_bible_book_names` as `names`, so the model pays one schema. **The
+  download is the SERVER's** (`bibleXmlDraft.mjs`): every redirect hop is put
+  through `webUrlPolicy.mjs` WITH DNS before a socket opens (a hop into
+  127.0.0.1 is refused), 80 MB cap, three minutes, back-pressure to disk; a
+  GitHub/GitLab/Dropbox/Drive share page is turned into its file
+  (`toBibleXmlDownloadUrl`), a GitHub repository or folder is read through
+  the API listing, an HTML page through its `.xml` links, and each listed
+  file's own TITLE is read off a 2 KB ranged request. A link that leads nowhere
+  is an ANSWER, `{problem, message}` (`not-found`, `blocked`, `not-xml`,
+  `page-without-files`, `not-bible`, `key`, `draft-gone` …), not an error.
+  **The file waits on disk, not in a window**: `<temp>/open-worship-app-bible-
+  import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
+  at most, swept on every new download, removed by `import` and `cancel` —
+  a 15 MB Bible is read twice (to describe, to install) rather than held
+  parsed between questions. **The app's half** (`src/helper/agentBibleXMLHelpers.ts`
+  over the `owa-agent-data` relay, domain `bible-xml`, lazily) reads ONLY a
+  path matching that folder and id, with the app's own `xmlTextToJson`, and
+  answers counts, missing books, `locales` with WHY (the verses' script and
+  little words — `guessBibleLocalesFromText` — then the file's attribute only
+  when the words agree, then the file name), unused `keys`, and book-name
+  lists ranked by how many of their names the verses USE
+  (`scoreNameLists` — a 1954 Khmer text matched the traditional list 44 to
+  the modern list's 22); list ids are a hash of the names, remembered in
+  `book-names.json` so an import passes an id, never 66 retyped names.
+  `import` re-checks the key under the Settings import's lock and writes
+  `<key>.xml`; `update` (title, locale, digits, a list id or
+  `{"GEN": name}` changes) writes the file the key LIVES in; `delete` is
+  the trash. All three back up first, and a file restore carries `bibleKey` so
+  an undo also drops the Bible's parsed caches (`agentBackupHelpers.ts`).
+  Firewall: acting set, removal budget for `delete`, network screening and
+  budget for `check` (it carries a `url`); `names` charges each page it
+  reads. Banner names the Bible and the site. Long work runs with a 180 s
+  evaluate timeout (`evaluateInApp` takes `timeout` now). **No link, a
+  language**: `check` the catalog `BIBLE_XML_CATALOG_URL`
+  (github.com/Beblia/Holy-Bible-XML-Format, the user's choice) with the
+  language in `find`; a word in its own script or a code alone is mapped to
+  the English name the files use (`toCatalogLanguageWord`), and when some
+  file has every word only those are listed. Verified live through the
+  isolated profile: the sample installed (1.5 s), info, update, delete, undo.

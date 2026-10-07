@@ -2,10 +2,10 @@
 id: W-12
 title: "Search the whole Bible (Bible Find)"
 section: "Bible study"
-verify: [RD-08, RD-09, RD-45, RD-46]
+verify: [RD-08, RD-09, RD-45, RD-46, RD-47]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-05"
+workflowsVersion: "2026-10-06"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -25,7 +25,9 @@ workflowsVersion: "2026-10-05"
    opens that verse. 📸
 3. The bar under the search box says how many verses matched — **74 verses found**.
    Use it to judge whether to narrow the search: a common word runs to tens of
-   thousands. 📸
+   thousands. If a completed search has no matches, the panel says
+   **[en:tran:No verses found]**. Try different words or widen the book filter.
+   Clearing the search shows **[en:tran:No data available]**. 📸
 4. Results arrive in blocks of twenty, each headed **Results 1–20**, **Results 21–40**
    and so on. The numbers at the bottom right move you through them: a **filled** number
    is a block already on screen, so clicking it scrolls straight there; a **plain**
@@ -48,7 +50,7 @@ workflowsVersion: "2026-10-05"
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-08` · `RD-09` · `RD-45` · `RD-46`
+`RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-05).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-06).
 :::

@@ -52,7 +52,10 @@ export type BibleInfoType = Readonly<{
     copyRights: string;
     keyBookMap: { [key: string]: string };
     booksAvailable: string[];
+    // A downloaded Bible's digits come as `numList`, an XML Bible's as
+    // `numbersMap` ("0" → "๐"); read either through `getBibleNumList`.
     numList?: string[];
+    numbersMap?: { [key: string]: string };
     version: number;
 }>;
 export type BookList = { [key: string]: string };

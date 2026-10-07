@@ -620,6 +620,12 @@ const AGENT_DATA_WORKER_MAP: Record<
     undo: async () => {
         return (await import('./agentBackupHelpers')).handleAgentUndoRequest;
     },
+    // `owa_bible_xml`: the installed Bibles themselves -- reading a
+    // downloaded one, installing, changing and removing.
+    'bible-xml': async () => {
+        return (await import('./agentBibleXMLHelpers'))
+            .handleAgentBibleXMLRequest;
+    },
 };
 
 document.addEventListener('owa-agent-data', (event) => {

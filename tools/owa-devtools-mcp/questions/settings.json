@@ -4,14 +4,12 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-04",
+    "updated": "2026-10-06",
     "sections": [
         {
             "id": "general",
             "label": "Language, theme & fonts",
-            "recipes": [
-                "W-16"
-            ],
+            "recipes": ["W-16"],
             "questions": [
                 {
                     "id": "open-settings",
@@ -97,9 +95,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": [
-                            "W-25"
-                        ],
+                        "related": ["W-25"],
                         "guide": true
                     },
                     "starter": true,
@@ -120,9 +116,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": [
-                            "W-25"
-                        ],
+                        "related": ["W-25"],
                         "find": "Repair Links"
                     }
                 },
@@ -140,9 +134,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": [
-                            "W-25"
-                        ],
+                        "related": ["W-25"],
                         "find": "Recent Folders"
                     }
                 },
@@ -160,9 +152,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": [
-                            "W-31"
-                        ]
+                        "related": ["W-31"]
                     }
                 }
             ]
@@ -170,12 +160,7 @@
         {
             "id": "bible-settings",
             "label": "Bible versions",
-            "recipes": [
-                "W-16",
-                "W-32",
-                "W-33",
-                "W-34"
-            ],
+            "recipes": ["W-16", "W-32", "W-33", "W-34"],
             "questions": [
                 {
                     "id": "download-bible",
@@ -191,9 +176,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-16",
-                        "related": [
-                            "W-34"
-                        ],
+                        "related": ["W-34"],
                         "guide": true
                     },
                     "starterRank": 11
@@ -227,11 +210,79 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "related": [
-                            "W-33"
-                        ],
+                        "related": ["W-33"],
                         "find": "Import XML File",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "import-xml-url",
+                    "text": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
+                    "kind": "howto",
+                    "keywords": [
+                        "import",
+                        "xml",
+                        "url",
+                        "Khmer",
+                        "locale",
+                        "number mapping",
+                        "book names"
+                    ],
+                    "template": true,
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": ["owa_bible_xml"],
+                        "find": "Import XML File"
+                    }
+                },
+                {
+                    "id": "import-bible-language",
+                    "text": "Import a Bible in \"Khmer\"",
+                    "kind": "howto",
+                    "template": true,
+                    "keywords": [
+                        "install",
+                        "download",
+                        "language",
+                        "khmer",
+                        "translation",
+                        "add bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": ["owa_bible_xml"]
+                    }
+                },
+                {
+                    "id": "import-bible-ask-language",
+                    "text": "Can you install a Bible for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "install",
+                        "new bible",
+                        "add translation",
+                        "get a bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": ["owa_bible_xml"]
+                    }
+                },
+                {
+                    "id": "remove-bible-xml",
+                    "text": "How do I remove a Bible translation I installed?",
+                    "kind": "howto",
+                    "keywords": [
+                        "delete",
+                        "remove",
+                        "uninstall",
+                        "bible",
+                        "translation",
+                        "trash"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": ["owa_bible_xml"]
                     }
                 },
                 {
@@ -256,11 +307,7 @@
         {
             "id": "others",
             "label": "Accounts, AI and extras",
-            "recipes": [
-                "W-35",
-                "W-42",
-                "W-21"
-            ],
+            "recipes": ["W-35", "W-42", "W-21"],
             "questions": [
                 {
                     "id": "ai-key",
@@ -302,6 +349,23 @@
                     }
                 },
                 {
+                    "id": "auto-play-bible-audio",
+                    "text": "Where do I turn automatic Bible audio on?",
+                    "kind": "howto",
+                    "keywords": [
+                        "auto play audio",
+                        "automatic bible audio",
+                        "audio ai",
+                        "reader sound",
+                        "openai voice"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Auto Play Audio AI when available",
+                        "guide": true
+                    }
+                },
+                {
                     "id": "songselect-signin",
                     "text": "How do I sign in to CCLI SongSelect?",
                     "kind": "howto",
@@ -333,9 +397,7 @@
                     ],
                     "resources": {
                         "recipe": "W-35",
-                        "related": [
-                            "W-21"
-                        ],
+                        "related": ["W-21"],
                         "find": "Extra Binaries"
                     }
                 }

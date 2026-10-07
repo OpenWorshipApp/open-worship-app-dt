@@ -273,6 +273,15 @@ describe('screenBibleHelpers', () => {
         expect(addToTheTopMock).toHaveBeenCalledWith(screenBibleManager.div);
         expect(addPlayToBottomMock).toHaveBeenCalledWith(
             screenBibleManager.div,
+            expect.any(Function),
+        );
+        // Each auto-scroll frame goes to the projector from its exact position.
+        screenBibleManager.sendAutoScrollPosition = vi.fn();
+        addPlayToBottomMock.mock.calls[0][1](123.4, true);
+        expect(screenBibleManager.sendAutoScrollPosition).toHaveBeenCalledWith(
+            screenBibleManager.div,
+            123.4,
+            true,
         );
 
         capturedHighlightHandlers?.onSelectKey('GEN-1-1', true);

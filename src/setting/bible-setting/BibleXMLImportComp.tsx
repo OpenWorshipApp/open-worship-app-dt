@@ -1,4 +1,4 @@
-import { useCallback, useState, useTransition } from 'react';
+import { lazy, Suspense, useCallback, useState, useTransition } from 'react';
 import type { ChangeEvent, SyntheticEvent, MouseEvent } from 'react';
 
 import { tran } from '../../lang/langHelpers';
@@ -9,11 +9,16 @@ import {
     getInputByName,
     readFromFile,
     readFromUrl,
-    saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
 import { xmlFormatExample } from './bibleXMLAttributesGuessing';
-import { xmlTextToJson } from './bibleXMLJsonDataHelpers';
-import { useAppCurrentRef } from '../../helper/appHooks';
+import {
+    xmlTextToJson,
+    type BibleXMLJsonType,
+} from './bibleXMLJsonDataHelpers';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
+import { takeBibleImportRequest } from './bibleImportRequestHelpers';
+
+const LazyBibleImportReviewComp = lazy(() => import('./BibleImportReviewComp'));
 
 export default function BibleXMLImportComp({
     loadBibleKeys,
@@ -23,6 +28,22 @@ export default function BibleXMLImportComp({
     const [isShowingExample, setIsShowingExample] = useState(false);
     const [selectedFileName, setSelectedFileName] = useState('');
     const [urlText, setUrlText] = useState('');
+    const [reviewData, setReviewData] = useState<BibleXMLJsonType | null>(null);
+    const reviewDataRef = useAppCurrentRef(reviewData);
+    const [keyChoices, setKeyChoices] = useState<string[]>([]);
+    useAppEffect(() => {
+        const takeRequest = () => {
+            if (reviewDataRef.current !== null) return;
+            const url = takeBibleImportRequest();
+            if (url !== null) {
+                setSelectedFileName('');
+                setUrlText(url);
+            }
+        };
+        takeRequest();
+        window.addEventListener('focus', takeRequest);
+        return () => window.removeEventListener('focus', takeRequest);
+    }, [reviewData]);
     const [isPending, startTransition] = useTransition();
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const isFileSelected = selectedFileName !== '';
@@ -49,6 +70,10 @@ export default function BibleXMLImportComp({
                     if (!(form instanceof HTMLFormElement)) {
                         return;
                     }
+                    const sourceName = isFileSelectedRef.current
+                        ? (getInputByName(form, 'file') as HTMLInputElement)
+                              ?.files?.[0]?.name
+                        : getInputByName(form, 'url')?.value;
                     let dataText: string | null = null;
                     if (isFileSelectedRef.current) {
                         dataText = await readFromFile(form, setLoadingMessage);
@@ -62,7 +87,11 @@ export default function BibleXMLImportComp({
                         );
                         return;
                     }
-                    const dataJson = await xmlTextToJson(dataText);
+                    const dataJson = await xmlTextToJson(dataText, {
+                        isImportPreview: true,
+                        sourceName,
+                        onKeyChoices: setKeyChoices,
+                    });
                     if (dataJson === null) {
                         showSimpleToast(
                             tran('Parsing XML'),
@@ -70,12 +99,7 @@ export default function BibleXMLImportComp({
                         );
                         return;
                     }
-                    const isSuccess = await saveJsonDataToXMLfile(dataJson);
-                    if (isSuccess) {
-                        handleFileCancelingRef.current(form);
-                        setUrlText('');
-                        loadBibleKeysRef.current();
-                    }
+                    setReviewData(dataJson);
                 } catch (error) {
                     showSimpleToast(
                         tran('Format Submit Error'),
@@ -112,6 +136,40 @@ export default function BibleXMLImportComp({
     const handleClearUrl = useCallback(() => {
         setUrlText('');
     }, []);
+    // The way in for somebody this form is too much for: the assistant
+    // finds the Bible by its language (or takes the link already typed
+    // below) and asks one plain question at a time, with buttons.
+    const urlTextRef = useAppCurrentRef(urlText);
+    const handleAskingAssistant = useCallback(async () => {
+        const url = isValidUrlRef.current ? urlTextRef.current.trim() : '';
+        // Loaded at the press: the caution and the window opener are
+        // nothing this panel needs until somebody asks for the assistant.
+        const { openChatbotAsking } =
+            await import('../../helper/ai/chatbotHandoffHelpers');
+        await openChatbotAsking(
+            url === '' ? 'Import bible' : `Import bible from ${url}`,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    if (reviewData !== null)
+        return (
+            <Suspense fallback={<LoadingComp />}>
+                <LazyBibleImportReviewComp
+                    data={reviewData}
+                    keyChoices={keyChoices}
+                    onCancel={() => {
+                        setReviewData(null);
+                        setSelectedFileName('');
+                    }}
+                    onImported={() => {
+                        setReviewData(null);
+                        setSelectedFileName('');
+                        setUrlText('');
+                        loadBibleKeysRef.current();
+                    }}
+                />
+            </Suspense>
+        );
     return (
         <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>
@@ -127,6 +185,24 @@ export default function BibleXMLImportComp({
                     <i className="bi bi-question-lg" />
                 </button>
             </h3>
+            <div className="mb-2">
+                <button
+                    type="button"
+                    className="btn btn-info w-100"
+                    disabled={isPending}
+                    onClick={handleAskingAssistant}
+                >
+                    <i className="bi bi-robot me-2" />
+                    {tran('Let the assistant import a Bible for me')}
+                </button>
+                <div className="form-text">
+                    {isValidUrl
+                        ? tran('It will use the link you typed below.')
+                        : tran(
+                              'It finds Bibles in your language and asks you a few simple questions.',
+                          )}
+                </div>
+            </div>
             {isShowingExample ? (
                 <div>
                     <textarea

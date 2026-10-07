@@ -215,7 +215,7 @@ function guardNavigation(win: BrowserWindow, policy: WebUrlPolicyType) {
  *    thrown away -- on a machine chosen for being cheap. The word count is
  *    taken before the cut so the caller can still say how much more there is.
  */
-function genReadExpression(maxChars: number) {
+function genReadExpression(maxChars: number, catalogSource = '') {
     return `(() => {
     const hide = document.querySelectorAll(
         'nav, aside, [role="navigation"], [role="banner"], [role="contentinfo"]',
@@ -250,6 +250,7 @@ function genReadExpression(maxChars: number) {
         }
     }
     return {
+        ${catalogSource ? `bibleCatalog: (${catalogSource})(),` : ''}
         title: document.title || '',
         url: location.href,
         text: full.slice(0, ${maxChars}),
@@ -261,6 +262,10 @@ function genReadExpression(maxChars: number) {
 }
 
 export type WebPageReadType = {
+    bibleCatalog?: {
+        books: { key: string | number; name: string }[];
+        versions: { label: string; url: string }[];
+    };
     title: string;
     url: string;
     text: string;
@@ -349,17 +354,26 @@ export async function readWebPage(
     url: string,
     {
         wantsScreenshot = false,
+        bibleCatalog = false,
         maxChars = 20000,
         width = DEFAULT_VIEWPORT.width,
         height = DEFAULT_VIEWPORT.height,
     }: {
         wantsScreenshot?: boolean;
+        bibleCatalog?: boolean;
         maxChars?: number;
         width?: number;
         height?: number;
     } = {},
 ): Promise<WebPageReadType> {
     const policy = await getWebUrlPolicy();
+    const catalogSource = bibleCatalog
+        ? (
+              await importEsm(
+                  pathToFileURL(toMcpPackagePath('bibleBookNames.mjs')).href,
+              )
+          ).extractBibleCatalog.toString()
+        : '';
     // Re-checked here even though the MCP firewall already refused a bad
     // address: this function is what opens the socket, and it must not depend
     // on a caller having been careful.
@@ -408,7 +422,10 @@ export async function readWebPage(
         // out against a main process busy with pages nobody could see.
         const read = (await withTimeout(
             win.webContents.executeJavaScript(
-                genReadExpression(Math.max(200, Math.min(maxChars, 20000))),
+                genReadExpression(
+                    Math.max(200, Math.min(maxChars, 20000)),
+                    catalogSource,
+                ),
                 true,
             ),
             READ_TIMEOUT_MILLISECONDS,
@@ -421,6 +438,7 @@ export async function readWebPage(
             isCut: read?.isCut === true,
             links: Array.isArray(read?.links) ? read.links : [],
             imageDataUrl,
+            ...(bibleCatalog ? { bibleCatalog: read?.bibleCatalog } : {}),
         };
     } finally {
         attemptClosing(win);

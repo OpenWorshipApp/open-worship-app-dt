@@ -43,7 +43,7 @@
 - [PF auto next](presenting-flow-auto-next.md) · [CC elements](presenting-flow-cc-elements.md) · [Keyboard Event](presenting-flow-keyboard-event.md) — Ctrl/Shift, unique per sheet
 - [Downloads are protocol-aware](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http
 - [`.owapf` archive](presenting-flow-archive-owapf.md) · [`.owadoc`/`.owbible`/`.owanote`](document-archive-owadoc.md) · [`.owadata.tar`](data-archive-owadata.md) — unsaved state, never `.histories` · [Archive passwords](archive-password-protection.md)
-- [`.owabdata`](bible-xml-archive-owabdata.md) — refuses a colliding item · [Bible XML from a link](bible-xml-import-from-url.md) — key guessed from attributes
+- [`.owabdata`](bible-xml-archive-owabdata.md) — refuses a colliding item · [Bible XML from a link](bible-xml-import-from-url.md) — installed in the chat by buttons; names the verses use win
 - [PF drag & setting rules](presenting-flow-drag-and-settings-rules.md) · [cue gutter](presenting-flow-cue-gutter.md) — shared by tree and run player
 - [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md)
 - [PDF preload decoded all pages — FIXED](pdf-preload-decodes-all-pages.md)

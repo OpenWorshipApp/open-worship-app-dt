@@ -92,11 +92,21 @@ import {
 } from './tipHelpers';
 import {
     clearProgressSteps,
+    genProgressReporter,
     getProgressState,
     pushProgressStep,
     subscribeProgress,
     type ProgressStateType,
 } from './progressHelpers';
+import {
+    BIBLE_IMPORT_STEP_TOOL_NAME,
+    describeBibleImportStep,
+    findBibleImportState,
+    runBibleImportStep,
+    toBibleImportEcho,
+    type BibleImportStateType,
+} from './bibleImportChatHelpers';
+import { takeChatbotAsk } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
     askHelpBot,
     describeActionError,
@@ -3127,6 +3137,88 @@ export default function ChatbotAppComp() {
         };
     }, []);
 
+    // One step of installing a Bible from a link, pressed or typed. Runs like
+    // a command: echoed as the person's own choice, answered with the next
+    // question, no model and no key -- see `bibleImportChatHelpers`.
+    const handleBibleImportStep = useCallback(
+        async (
+            sessionId: string,
+            state: BibleImportStateType,
+            echo: string,
+        ) => {
+            addMessage(sessionId, { author: 'you', text: echo });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            clearProgressSteps();
+            setIsBusy(true);
+            const lineText = describeBibleImportStep(state);
+            const finishLine =
+                lineText === null
+                    ? null
+                    : genProgressReporter(pushProgressStep)(lineText);
+            try {
+                const answer = await runBibleImportStep(state);
+                if (pending.controller.signal.aborted) {
+                    return;
+                }
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: answer.text,
+                    actions: answer.actions,
+                });
+            } finally {
+                finishLine?.();
+                endPendingAsk(pending);
+                setIsBusy(pendingAskListRef.current.length > 0);
+                if (pendingAskListRef.current.length === 0) {
+                    clearProgressSteps();
+                }
+            }
+        },
+        [addMessage, genPendingAsk, endPendingAsk],
+    );
+    const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
+    // A job another window handed over -- Settings → Bible's "let the
+    // assistant do it" -- taken when this window opens or comes to the
+    // front (it may already have been open behind). In a tab of its own, so
+    // the import starts clean rather than under somebody's last question,
+    // and only a request this window knows how to run without a model.
+    useAppEffect(() => {
+        const takeHandoff = () => {
+            const asked = takeChatbotAsk();
+            const importState =
+                asked === null ? null : findBibleImportState([], asked);
+            if (asked === null || importState === null) {
+                return;
+            }
+            let sessionId = sessionStateRef.current.activeId;
+            if (checkCanAddChatSession(sessionStateRef.current.sessions)) {
+                const defaults = genNewSessionDefaults();
+                const session = genNewChatSession(
+                    defaults.focus,
+                    defaults.provider,
+                    defaults.model,
+                );
+                setSessionState((oldState) => {
+                    return {
+                        sessions: [...oldState.sessions, session],
+                        activeId: session.id,
+                    };
+                });
+                sessionId = session.id;
+            }
+            void handleBibleImportStepRef.current(
+                sessionId,
+                importState,
+                asked,
+            );
+        };
+        takeHandoff();
+        window.addEventListener('focus', takeHandoff);
+        return () => {
+            window.removeEventListener('focus', takeHandoff);
+        };
+    }, []);
+
     const handleAsking = useCallback(
         // `isForced` is for the follow-up `handleActing` fires the moment its
         // own tool call finishes: `setIsBusy(false)` has been called but React
@@ -3249,6 +3341,28 @@ export default function ChatbotAppComp() {
                     }
                 }
                 return;
+            }
+            // A Bible from a link, or a typed answer to the import's own
+            // question in front of them -- the import runs here, with no
+            // model, the way a command does (`bibleImportChatHelpers`).
+            if (options?.shownText === undefined && attachments.length === 0) {
+                const importState = findBibleImportState(
+                    sessionStateRef.current.sessions.find((session) => {
+                        return session.id === activeSessionId;
+                    })?.messages ?? [],
+                    trimmedAsked,
+                );
+                if (importState !== null) {
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    await handleBibleImportStepRef.current(
+                        activeSessionId,
+                        importState,
+                        trimmedAsked,
+                    );
+                    return;
+                }
             }
             const images = toBotImages(attachments);
             // Refused BEFORE a call is made rather than after one fails: a
@@ -4432,6 +4546,17 @@ export default function ChatbotAppComp() {
                 action.toolName === REPORT_EMAIL_TOOL_NAME
             ) {
                 await handleReportExtraRef.current(action, actedSessionId);
+                return;
+            }
+            // A step of installing a Bible from a link: the choice goes into
+            // the transcript as the person's own words, then the next
+            // question comes back.
+            if (action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME) {
+                await handleBibleImportStepRef.current(
+                    actedSessionId,
+                    action.args as BibleImportStateType,
+                    toBibleImportEcho(action.label),
+                );
                 return;
             }
             // A button that runs a built-in command. Asked as though typed,

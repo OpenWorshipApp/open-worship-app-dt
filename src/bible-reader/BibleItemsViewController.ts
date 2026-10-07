@@ -37,6 +37,7 @@ import BibleItem from '../bible-list/BibleItem';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { BibleGroupScrollSync } from './bibleGroupScrollHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -271,6 +272,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     extraActionButtons: ReactNode | null = null;
     shouldSelectFirstItem = false;
     _nestedBibleItems: NestedBibleItemsType = [];
+    readonly groupScrollSync = new BibleGroupScrollSync();
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};
     handleScreenBibleVersesHighlighting = (
@@ -432,6 +434,26 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         return this.colorNoteMap[bibleItem.id] ?? '';
     }
 
+    getIsGroupScrollSynced(color: string) {
+        return (
+            !!color &&
+            getSetting(
+                this.toSettingName(`-sync-scroll-${encodeURIComponent(color)}`),
+            ) !== 'false'
+        );
+    }
+
+    setIsGroupScrollSynced(color: string, enabled: boolean) {
+        if (!color) {
+            return;
+        }
+        setSetting(
+            this.toSettingName(`-sync-scroll-${encodeURIComponent(color)}`),
+            enabled ? 'true' : 'false',
+        );
+        this.fireUpdateEvent();
+    }
+
     _setColorNote(bibleItem: ReadIdOnlyBibleItem, color: string | null) {
         const colorNoteMap = this.colorNoteMap;
         if (color === null || color === '') {
@@ -455,6 +477,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     setColorNote(bibleItem: ReadIdOnlyBibleItem, color: string | null) {
         this._setColorNote(bibleItem, color);
         this.syncTargetByColorNote(bibleItem);
+        this.fireUpdateEvent();
     }
 
     getBibleItemsByColorNote(colorNote: string) {

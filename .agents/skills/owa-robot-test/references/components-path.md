@@ -1,6 +1,6 @@
 # OWA Components Path — pages → components → interactions
 
-docVersion: 2026-09-12
+docVersion: 2026-10-06
 
 Standalone map of **every page**, the **component tree inside it**, and the
 **interactive tests** each component supports (click / double-click / right-click /
@@ -288,7 +288,7 @@ matches `/Settings/`. Root `SettingComp` (tabs `General` / `Bible` / `Others` +
 | `SettingGeneralComp → SettingGeneralOtherOptionsComp` | [setting/SettingGeneralOtherOptionsComp.tsx](../../../../src/setting/SettingGeneralOtherOptionsComp.tsx) | 🖱️ `Clear All Settings` only (destructive, and it does **not** confirm). `Reset Widgets Size` moved to the native View menu on 2026-08-09. |
 | _(native View menu)_ `initWidgetAppMenu` | [resize-actor/widgetAppMenuHelpers.ts](../../../../src/resize-actor/widgetAppMenuHelpers.ts) · [resize-actor/widgetRegistry.ts](../../../../src/resize-actor/widgetRegistry.ts) | 🖱️ **View → Widgets** tick-box per collapsible pane (toggles it live) and **View → Reset Widgets Size** (confirm → restore defaults + reopen collapsed panes, live). Registered from `run()` for the main window only. Unreachable from CDP — drive `globalThis.getViewWidgetMenuItems()` / `tryToggleWidget(id)` / `tryResetWidgetsSize()` (dev only). |
 | `SettingComp → SettingBibleComp` (Bible tab) | [setting/bible-setting/SettingBibleComp.tsx](../../../../src/setting/bible-setting/SettingBibleComp.tsx) | 🖱️ download/enable/disable bible versions; ⌨️✎ search. A console `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` is **intended** when the online list is unavailable — do not report (KB §7). |
-| `SettingComp → SettingOthersComp` (Others tab) | [setting/SettingOthersComp.tsx](../../../../src/setting/SettingOthersComp.tsx) | Three cards in order: `SettingOthersAIComp` (AI API key), `SettingOthersSongSelectComp` ([plugins/song-select/](../../../../src/plugins/song-select/SettingOthersSongSelectComp.tsx) — CCLI SongSelect sign-in; dev builds add a `(dev) Use Mock Data` toggle), and `SettingOthersExtraBinComp` ([setting/SettingOthersExtraBinComp.tsx](../../../../src/setting/SettingOthersExtraBinComp.tsx) — **Extra Binaries**, the target of mandatory `MD-05`/`MD-06`). `SettingOthersSecureStorageWarningComp` renders on both credential cards when OS secure storage is unavailable. |
+| `SettingComp → SettingOthersComp` (Others tab) | [setting/SettingOthersComp.tsx](../../../../src/setting/SettingOthersComp.tsx) | Three cards in order: `SettingOthersAIComp` (AI API keys; an OpenAI key reveals the **Auto Play Audio AI when available** switch), `SettingOthersSongSelectComp` ([plugins/song-select/](../../../../src/plugins/song-select/SettingOthersSongSelectComp.tsx) — CCLI SongSelect sign-in; dev builds add a `(dev) Use Mock Data` toggle), and `SettingOthersExtraBinComp` ([setting/SettingOthersExtraBinComp.tsx](../../../../src/setting/SettingOthersExtraBinComp.tsx) — **Extra Binaries**, the target of mandatory `MD-05`/`MD-06`). `SettingOthersSecureStorageWarningComp` renders on both credential cards when OS secure storage is unavailable. |
 
 ---
 

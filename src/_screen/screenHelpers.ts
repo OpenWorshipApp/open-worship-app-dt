@@ -20,6 +20,7 @@ import {
     applyPlayToBottom,
     applyToTheTop,
 } from '../scrolling/scrollingHandlerHelpers';
+import type { AutoScrollFrameType } from '../scrolling/scrollingHandlerHelpers';
 import { showPlayToBottomContextMenu } from '../scrolling/playToBottomMenuHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
@@ -404,7 +405,10 @@ function getThreeDotsImageDataUrl() {
     return threeDotsImageDataUrl;
 }
 
-export function addPlayToBottom(div: HTMLDivElement) {
+export function addPlayToBottom(
+    div: HTMLDivElement,
+    onFrame?: AutoScrollFrameType,
+) {
     const oldIcon = div.querySelector(`.${PLAY_TO_BOTTOM_CLASSNAME}`);
     if (oldIcon !== null) {
         return;
@@ -419,7 +423,7 @@ export function addPlayToBottom(div: HTMLDivElement) {
     target.style.position = 'fixed';
     target.style.bottom = '0px';
     div.appendChild(target);
-    applyPlayToBottom(target);
+    applyPlayToBottom(target, undefined, onFrame);
     // The same menu the app's own auto-scroll button carries, for the copy of
     // this DOM that the presenter's mini previewer renders and the operator
     // actually clicks. Out there it is the only way the four gestures are ever

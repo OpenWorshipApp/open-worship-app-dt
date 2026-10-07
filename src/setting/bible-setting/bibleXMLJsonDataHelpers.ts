@@ -32,6 +32,8 @@ import {
 import { appLog } from '../../helper/loggerHelpers';
 import appProvider from '../../server/appProvider';
 import { checkIsBibleKeyTaken } from './bibleKeyHelpers';
+import { checkAgentFileName } from '../../../tools/owa-devtools-mcp/agentFileName.mjs';
+import { guessBibleLocale } from '../../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 
 // The root element's open tag (which carries the bible key attribute) lives
 // within the first few KB of the file, so reading the whole multi-MB XML file
@@ -121,6 +123,12 @@ export async function getBibleHeadInfoFromFile(filePath: string) {
         xmlElementBible === null
             ? null
             : guessValue(xmlElementBible, attributesMap.title);
+    // Same head, same parse: the assistant's list of installed Bibles says
+    // which language each is in without reading a whole file per row.
+    const locale =
+        xmlElementBible === null
+            ? null
+            : guessValue(xmlElementBible, attributesMap.locale);
     // Only the KEY is worth a full-file fallback, for a root open tag that did
     // not fit in the head chunk. `getBibleKeyFromFile` owns that path and its
     // cache, so it is asked only when the cheap read came up empty.
@@ -128,7 +136,7 @@ export async function getBibleHeadInfoFromFile(filePath: string) {
     if (bibleKey === null) {
         return null;
     }
-    return { bibleKey, title };
+    return { bibleKey, title, locale };
 }
 
 export async function getAllXMLFileKeys() {
@@ -400,7 +408,10 @@ async function guessingBibleKey(xmlElementOrText: Element | string) {
                 getGuessingBibleKeys(xmlElementOrText),
             ),
             {
-                canConfirm: () => !checkIsBibleKeyTaken(newKey, takenBibleKeys),
+                canConfirm: () =>
+                    newKey.trim().length > 0 &&
+                    checkAgentFileName(newKey.trim()) === null &&
+                    !checkIsBibleKeyTaken(newKey, takenBibleKeys),
                 extraStyles: { maxWidth: '700px' },
             },
         );
@@ -588,6 +599,7 @@ function parseBibleVersion(versionText: string | null) {
 
 export async function getBibleInfoJson(
     xmlElementOrText: Element | string,
+    importOptions: BibleXMLImportOptionsType = {},
 ): Promise<BibleJsonInfoType | null> {
     const xmlElementMaps = guessElement(xmlElementOrText, tagNamesMap.map);
     const xmlElementMap = xmlElementMaps[0] ?? null;
@@ -599,6 +611,9 @@ export async function getBibleInfoJson(
         ),
     );
     const locale = (guessValue(xmlElementOrText, attributesMap.locale) ??
+        (importOptions.sourceName
+            ? guessBibleLocale(importOptions.sourceName)
+            : null) ??
         DEFAULT_LOCALE) as LocaleType;
     const keyBookMap = getBibleMap(
         xmlElementMap,
@@ -611,7 +626,11 @@ export async function getBibleInfoJson(
             keyBookMap[key] = langData.sanitizeText(value);
         }
     }
-    const bibleKey = await guessingBibleKey(xmlElementOrText);
+    if (importOptions.isImportPreview)
+        importOptions.onKeyChoices?.(getGuessingBibleKeys(xmlElementOrText));
+    const bibleKey = importOptions.isImportPreview
+        ? guessValue(xmlElementOrText, attributesMap.bibleKey, '')
+        : await guessingBibleKey(xmlElementOrText);
     if (bibleKey === null) {
         return null;
     }
@@ -808,8 +827,15 @@ export function xmlTextToBibleElement<T extends Element>(
     return xmlElementBible;
 }
 
+type BibleXMLImportOptionsType = {
+    isImportPreview?: boolean;
+    sourceName?: string;
+    onKeyChoices?: (keys: string[]) => void;
+};
+
 export async function xmlTextToJson(
     xmlText: string,
+    importOptions: BibleXMLImportOptionsType = {},
 ): Promise<BibleXMLJsonType | null> {
     // Parse the multi-MB XML text to an element tree ONCE and share it across
     // the sub-extractors; each of them used to re-run the flipping-key
@@ -817,13 +843,17 @@ export async function xmlTextToJson(
     // parse yields no bible root, pass the raw text through so each extractor
     // behaves exactly as before.
     const xmlElementBible = xmlTextToBibleElement(xmlText);
+    if (importOptions.isImportPreview && xmlElementBible === null) return null;
     const xmlSource: Element | string = xmlElementBible ?? xmlText;
-    const bibleInfo = await getBibleInfoJson(xmlSource);
+    const bibleInfo = await getBibleInfoJson(xmlSource, importOptions);
     if (bibleInfo === null) {
         return null;
     }
     const bibleBooks = getBibleBooksJson(xmlSource);
-    if (bibleBooks === null) {
+    if (
+        bibleBooks === null ||
+        (importOptions.isImportPreview && Object.keys(bibleBooks).length === 0)
+    ) {
         return null;
     }
     const newLines = getNewLines(xmlSource) ?? [];

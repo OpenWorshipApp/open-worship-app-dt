@@ -258,6 +258,23 @@ describe('the data tools name what they changed', () => {
         expect(describeToolCall('owa_bible_note', { action: 'read' })).toBeNull();
     });
 
+    it('names the Bible installed, changed or removed, and where it came from', () => {
+        expect(
+            describeToolCall('owa_bible_xml', {
+                action: 'check',
+                url: 'https://github.com/Beblia/x/raw/master/KhmerBible.xml',
+            }),
+        ).toBe('downloaded a Bible file from github.com');
+        expect(
+            describeToolCall('owa_bible_xml', { action: 'import', key: 'KSV' }),
+        ).toBe('installed the Bible "KSV"');
+        expect(
+            describeToolCall('owa_bible_xml', { action: 'delete', key: 'KSV' }),
+        ).toBe('moved the Bible "KSV" to the trash');
+        expect(describeToolCall('owa_bible_xml', { action: 'list' })).toBeNull();
+        expect(describeToolCall('owa_bible_xml', { action: 'cancel' })).toBeNull();
+    });
+
     it('announces an undo, and not a look at the list', () => {
         expect(describeToolCall('owa_undo', { action: 'undo' })).toBe(
             'put back an earlier change',

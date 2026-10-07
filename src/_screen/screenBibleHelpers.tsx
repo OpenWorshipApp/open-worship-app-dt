@@ -191,7 +191,9 @@ export async function renderScreenBibleManager(
     div.scrollTop =
         screenBibleManager.scroll * (div.scrollHeight - div.clientHeight);
     addToTheTop(div);
-    addPlayToBottom(div);
+    addPlayToBottom(div, (scrollTop, isPlaying) => {
+        screenBibleManager.sendAutoScrollPosition(div, scrollTop, isPlaying);
+    });
 }
 
 export async function bibleItemToScreenViewData(
