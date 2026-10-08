@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-07e** (W-51 step 7 — a camera on the screen reaches the browser page, streamed from this computer, and the page stays silent until **[en:tran:Turn on sound]**. Reported by the user: _"camera not showing on web"_, and a console of "play() failed because the user didn't interact". Verified live 2026-10-07 on a scratch dev instance started with a fake camera: the page at the LAN address played the camera overlay with no console error.)
+**workflowsVersion: 2026-10-07f** (W-51: Disconnect immediately revokes screen, camera and interaction access. Verified with two live browsers and isolated held-open-connection regressions.)
+
+Previous: **workflowsVersion: 2026-10-07e** (W-51 step 7 — a camera on the screen reaches the browser page, streamed from this computer, and the page stays silent until **[en:tran:Turn on sound]**. Reported by the user: _"camera not showing on web"_, and a console of "play() failed because the user didn't interact". Verified live 2026-10-07 on a scratch dev instance started with a fake camera: the page at the LAN address played the camera overlay with no console error.)
 
 Previous: **workflowsVersion: 2026-10-07d** (W-51 step 8 — **[en:tran:Disconnect]** keeps out that browser, not its address, says so on its page, and lists it under **[en:tran:Disconnected]** with **[en:tran:Allow again]**. Reported by the user from a tab on the public address: after a Disconnect every tab on that address got _"Waiting for the display"_ and a console full of refused sockets, because the router made them all one address. Verified live 2026-10-07 on a scratch dev instance: of two viewers at 192.168.1.3, the disconnected browser showed the message and stopped retrying while the other stayed connected; **[en:tran:Allow again]** emptied the list.)
 
@@ -5346,7 +5348,9 @@ cable or a second copy of the app.
    since when. **[en:tran:Disconnect]** ends one and keeps it out of this
    display for ten minutes: a browser by itself (other devices behind the
    same router are not touched), a media player by its address. The browser
-   page then says the device was disconnected and stops trying. Each one is
+   page then says the device was disconnected and stops trying. Its access to
+   screen updates, camera streams and interaction ends immediately, even if
+   its connection takes longer to close. Each one is
    listed under **[en:tran:Disconnected]**, where **[en:tran:Allow again]**
    lets it back in at once. **[en:tran:Preview]** shows the display
    inside the card, listed as **[en:tran:This app (preview)]**. A browser's

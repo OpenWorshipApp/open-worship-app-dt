@@ -73,7 +73,7 @@ type ViewerType = VirtualDisplayClient & {
     socket: WebSocket;
     // One per screen: a page loading again replaces its own socket, and a
     // viewer cannot multiply the work by asking for one screen many times.
-    screenSockets: Map<number, WebSocket>;
+    screenSockets: Map<number, { socket: WebSocket; close: () => void }>;
 };
 
 // Closes a viewer the operator disconnected, saying so in the app's
@@ -159,6 +159,25 @@ export class VirtualDisplayWebViewers {
         return this.viewers.has(id);
     }
 
+    private checkIsActive(viewer: ViewerType) {
+        return (
+            this.viewers.get(viewer.id) === viewer &&
+            viewer.socket.readyState === WebSocket.OPEN &&
+            this.host.checkIsAdmitted(viewer.network) &&
+            (viewer.isPreview ||
+                !this.host.checkIsBlocked(viewer.number, viewer.id))
+        );
+    }
+
+    // Authorization ends now, not when the remote end answers a close frame.
+    private releaseViewer(viewer: ViewerType) {
+        viewer.isInteractive = false;
+        const isCurrent = this.viewers.get(viewer.id) === viewer;
+        if (isCurrent) this.viewers.delete(viewer.id);
+        for (const screen of [...viewer.screenSockets.values()]) screen.close();
+        if (isCurrent) this.host.onChanged();
+    }
+
     upgrade(
         req: http.IncomingMessage,
         socket: Duplex,
@@ -205,6 +224,7 @@ export class VirtualDisplayWebViewers {
         const screenId = Number(screenIdText);
         const controller =
             viewer !== undefined &&
+            this.checkIsActive(viewer) &&
             viewer.number === target.number &&
             viewer.address === address &&
             Number.isInteger(screenId)
@@ -251,6 +271,7 @@ export class VirtualDisplayWebViewers {
             this.host.checkIsBlocked(info.number, info.id)
         ) {
             this.wss.handleUpgrade(req, socket, head, (ws) => {
+                ws.on('error', () => ws.terminate());
                 sendDisconnected(ws, layout.labels);
             });
             return;
@@ -270,7 +291,7 @@ export class VirtualDisplayWebViewers {
         }
         this.wss.handleUpgrade(req, socket, head, (ws) => {
             if (isReload && this.viewers.get(info.id) === previous) {
-                this.viewers.delete(info.id);
+                this.releaseViewer(previous);
                 previous.socket.close(1000, 'Reloaded');
             }
             const viewer: ViewerType = {
@@ -287,15 +308,7 @@ export class VirtualDisplayWebViewers {
             };
             this.viewers.set(viewer.id, viewer);
             ws.on('error', () => {});
-            ws.on('close', () => {
-                if (this.viewers.get(viewer.id) === viewer) {
-                    this.viewers.delete(viewer.id);
-                }
-                for (const screenSocket of viewer.screenSockets.values()) {
-                    screenSocket.close(1000);
-                }
-                this.host.onChanged();
-            });
+            ws.on('close', () => this.releaseViewer(viewer));
             ws.send(JSON.stringify({ type: 'layout', layout }));
             this.host.onChanged();
         });
@@ -308,8 +321,7 @@ export class VirtualDisplayWebViewers {
     ) {
         const { screenId } = controller;
         const consumer = `vd:${viewer.id}:${screenId}`;
-        viewer.screenSockets.get(screenId)?.close(1000);
-        viewer.screenSockets.set(screenId, ws);
+        viewer.screenSockets.get(screenId)?.close();
         // A camera taken off the screen ends every stream of it here, so a
         // browser cannot keep watching what the operator put away.
         const onCamerasChanged = () => {
@@ -317,18 +329,29 @@ export class VirtualDisplayWebViewers {
         };
         controller.camerasChangedListeners.add(onCamerasChanged);
         ws.on('error', () => {});
-        ws.on('close', () => {
-            if (viewer.screenSockets.get(screenId) === ws) {
-                viewer.screenSockets.delete(screenId);
-                this.forgetCameras(consumer);
-            }
-            controller.sockets.delete(ws);
-            controller.camerasChangedListeners.delete(onCamerasChanged);
-        });
+        const connection = {
+            socket: ws,
+            close: () => {
+                if (viewer.screenSockets.get(screenId) === connection) {
+                    viewer.screenSockets.delete(screenId);
+                    this.forgetCameras(consumer);
+                }
+                controller.sockets.delete(ws);
+                controller.camerasChangedListeners.delete(onCamerasChanged);
+                // ws bounds the close handshake; it no longer grants access while closing.
+                ws.close(1000);
+            },
+        };
+        viewer.screenSockets.set(screenId, connection);
+        ws.once('close', connection.close);
+        const checkIsCurrent = () =>
+            this.checkIsActive(viewer) &&
+            viewer.screenSockets.get(screenId) === connection &&
+            ws.readyState === WebSocket.OPEN;
         const feedbackRate = genRateLimit(MAX_FEEDBACK_PER_SECOND);
         const cameraRate = genRateLimit(MAX_CAMERA_PACKETS_PER_SECOND);
         ws.on('message', (raw, isBinary) => {
-            if (isBinary) {
+            if (isBinary || !checkIsCurrent()) {
                 return;
             }
             let packet: any;
@@ -364,7 +387,7 @@ export class VirtualDisplayWebViewers {
             viewer.number,
             controller.screenId,
         );
-        if (ws.readyState !== WebSocket.OPEN) {
+        if (!checkIsCurrent()) {
             return;
         }
         if (context === null) {
@@ -469,6 +492,7 @@ export class VirtualDisplayWebViewers {
         const match = CAMERA_CONSUMER_PATTERN.exec(consumer);
         const socket = match
             ? this.viewers.get(match[1])?.screenSockets.get(Number(match[2]))
+                  ?.socket
             : undefined;
         if (packet.type === 'camera-close') {
             this.cameraRequests.delete(packet.requestId);
@@ -524,7 +548,7 @@ export class VirtualDisplayWebViewers {
             this.allowedClients.set(id, number);
         }
         for (const screenSocket of viewer.screenSockets.values()) {
-            sendInteractive(screenSocket, isInteractive);
+            sendInteractive(screenSocket.socket, isInteractive);
         }
         this.host.onChanged();
         return true;
@@ -539,6 +563,7 @@ export class VirtualDisplayWebViewers {
                 continue;
             }
             if (layout === null) {
+                this.releaseViewer(viewer);
                 viewer.socket.close(1000, 'Display removed');
             } else if (viewer.socket.readyState === WebSocket.OPEN) {
                 viewer.socket.send(text);
@@ -550,6 +575,7 @@ export class VirtualDisplayWebViewers {
         this.allowedClients.delete(id);
         const viewer = this.viewers.get(id);
         if (viewer !== undefined) {
+            this.releaseViewer(viewer);
             sendDisconnected(
                 viewer.socket,
                 this.host.getLayout(viewer.number)?.labels ?? {},
@@ -561,6 +587,7 @@ export class VirtualDisplayWebViewers {
     closeAll(number?: number) {
         for (const viewer of [...this.viewers.values()]) {
             if (number === undefined || viewer.number === number) {
+                this.releaseViewer(viewer);
                 viewer.socket.close(1000, 'Display changed');
             }
         }
@@ -570,6 +597,7 @@ export class VirtualDisplayWebViewers {
     closeNotAdmitted() {
         for (const viewer of [...this.viewers.values()]) {
             if (!this.host.checkIsAdmitted(viewer.network)) {
+                this.releaseViewer(viewer);
                 viewer.socket.close(1000, 'Not allowed');
             }
         }

@@ -30,6 +30,84 @@ because `scripts/triage.mjs` reads it from there:
 
 ---
 
+## EN-40 · Refused virtual-display sockets need error handling — `done` · S2 · security
+
+**Shipped (2026-10-07).** The blocked-viewer upgrade installs an error handler
+before sending its refusal; receiver errors terminate that socket rather than
+escaping into main. **Proof.** The new refusal-error regression failed before
+the change and passes afterward. Live: an operator-disconnected browser reloads
+to its refusal message, the other browser keeps its slide, and Allow again
+restores the first. Part of 52 passing focused tests. Audit `20261007-2116`.
+
+## EN-41 · Viewer revocation waited for the remote close handshake — `done` · S2 · security
+
+**Shipped (2026-10-07).** Disconnect, network revocation, display removal,
+close-all and replacement synchronously remove viewer/screen registrations,
+interaction authority and camera routes. Message and asynchronous context
+callbacks check current ownership. Transport closure remains bounded by ws.
+**Proof.** Five held-open-parent regressions: feedback accepted after revocation
+changed from one extra delivery to zero; child broadcast/listener registrations
+are immediately zero, cameras are released, and late context sends nothing.
+Live two-browser disconnect, blocked reload and Allow again passed, preserving
+the other viewer. Audit `20261007-2116`.
+
+## EN-42 · Discovery confirmations were not fully validated — `done` · S2 · security
+
+**Shipped (2026-10-07).** UDP and HTTP discovery share a bounded field decoder;
+HTTP identity, version and port must match, and only the receiver supplies the
+reached address. Sorting drops malformed records. **Proof.** Regression fixtures
+reject malformed announcements/confirmations and strip extra fields; valid
+results still sort. Live guest page discovered a well-formed loopback fixture,
+selected it and filled its address/port. Audit `20261007-2116`.
+
+## EN-43 · Peer handshakes were absent from the connection cap — `done` · S2 · security
+
+**Shipped (2026-10-07).** The 32-connection limit reserves a slot before upgrade,
+including unnamed handshakes and closing transports, and releases it on actual
+transport closure. Hello rechecks the registered-peer limit and ignores input
+on closing sockets. Existing tighter internet-only pending limits remain;
+LAN guests may still use all 32 slots. **Proof.** The 33rd pre-hello connection
+was accepted before and is refused now; closing one permits a replacement and
+all 32 LAN guests may await approval. Live approval/inventory/disconnect passed.
+Audit `20261007-2116`.
+
+## EN-44 · Virtual-display bootstrap can reuse stale state — `open` · S2 · reliability
+
+**Evidence.** Completed context promises in `virtualDisplayService.ts` retain
+old size/content briefly across mutations. **Proposed change.** In-flight-only
+deduplication or mutation-aware invalidation. **Proof on apply.** Immediate
+resize/reassignment/reconnect gets current size and slide. Audit `20261007-2116`.
+
+## EN-45 · Sound blanks a LAN development viewer — `open` · S3 · reliability
+
+**Evidence.** The viewer's sound parameter fails the development route allowlist
+and returns 404. **Proposed change.** Permit only the expected sound value.
+**Proof on apply.** Sound opt-in preserves the picture and plays known audio
+through a non-loopback viewer; also verify packaged routing. Audit `20261007-2116`.
+
+## EN-46 · Simultaneous display previews share one viewer identity — `open` · S3 · ui
+
+**Evidence.** The second card preview waits while the first renders because both
+use the same session-storage viewer ID. **Proposed change.** Scope stable IDs by
+display/frame, retaining reload semantics. **Proof on apply.** Two previews
+render together and survive reload without duplicate entries. Audit `20261007-2116`.
+
+## EN-47 · Iframe input does not reveal idle viewer controls — `open` · S3 · ui
+
+**Evidence.** Mouse movement in a full-surface screen frame does not reach parent
+wake/fullscreen listeners. **Proposed change.** Cleanly register frame input or
+a constrained event bridge. **Proof on apply.** Mouse and touch reveal controls
+after idle/reload and fullscreen works over content. Audit `20261007-2116`.
+
+## EN-48 · Camera background can be clipped below a blank video — `open` · S2 · reliability
+
+**Evidence.** Presenter shows a synthetic camera while a fresh browser has a
+blank video at y=0 and the live video below its viewport. **Proposed change.**
+Isolate the asynchronous bootstrap race, constrain wrapper geometry and discard
+stale results. **Proof on apply.** Fresh joins show the moving camera and repeated
+transitions release old streams; verify foreground and packaged cases separately.
+Audit `20261007-2116`.
+
 ## EN-39 · Document HTML reached Node-integrated windows without sanitization — `done` · S1 · security
 
 **Evidence.** `sanitizeHtml` returned its input, and the direct HTML/Bible canvas

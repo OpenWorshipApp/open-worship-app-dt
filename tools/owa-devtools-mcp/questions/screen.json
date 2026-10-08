@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-07",
+    "updated": "2026-10-08",
     "sections": [
         {
             "id": "screens",
@@ -701,6 +701,21 @@
                     "resources": {
                         "recipe": "W-51",
                         "find": "Allow interaction"
+                    }
+                },
+                {
+                    "id": "stop-virtual-viewer-access",
+                    "text": "Does Disconnect immediately stop a viewer from receiving my screen or controlling it?",
+                    "kind": "what",
+                    "keywords": [
+                        "disconnect",
+                        "revoke access",
+                        "camera stream",
+                        "stop interaction"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Disconnect"
                     }
                 },
                 {

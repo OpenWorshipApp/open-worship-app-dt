@@ -178,6 +178,32 @@ afterEach(async () => {
 });
 
 describe('a viewer page socket', () => {
+    test('handles errors on the blocked-client refusal socket', async () => {
+        blocked = true;
+        const wss = (viewers as any).wss;
+        const upgrade = wss.handleUpgrade.bind(wss);
+        let refused: WebSocket | undefined;
+        const spy = vi
+            .spyOn(wss, 'handleUpgrade')
+            .mockImplementation(
+                (req: any, socket: any, head: any, accept: any) => {
+                    upgrade(req, socket, head, (ws: WebSocket) => {
+                        refused = ws;
+                        accept(ws);
+                    });
+                },
+            );
+        try {
+            await connect(`/vd/1/ws?viewer=${VIEWER_ID}`);
+            expect(refused).toBeDefined();
+            expect(() =>
+                refused!.emit('error', new RangeError('Invalid frame')),
+            ).not.toThrow();
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
     test('is admitted from its own page and handed the layout', async () => {
         const viewer = await openViewer();
         expect(viewer.messages[0]).toEqual({
@@ -672,6 +698,99 @@ describe('the host side', () => {
             reason: 'Display removed',
         });
         expect(one.ws.readyState).toBe(WebSocket.OPEN);
+    });
+
+    test.each(['disconnect', 'sharing-off', 'close-all', 'removed', 'reload'])(
+        '%s immediately detaches screen and camera access before transport close',
+        async (action) => {
+            await openViewer();
+            const screen = await connect(
+                `/vd/1/ws?viewer=${VIEWER_ID}&screenId=5`,
+            );
+            await vi.waitFor(() => expect(screen!.messages).toHaveLength(2));
+            viewers.setInteractive(VIEWER_ID, 1, true);
+            controller.shownCameras.add('cam-1');
+            const serverScreen = [...controller.sockets][0];
+            const feedback = Buffer.from(
+                JSON.stringify({
+                    type: 'feedback',
+                    message: {
+                        type: 'bible-screen-view-selected-index',
+                        data: { selectedKJVVerseKey: 'EXO 14:18' },
+                    },
+                }),
+            );
+            const camera = Buffer.from(
+                JSON.stringify({
+                    type: 'camera',
+                    packet: {
+                        type: 'camera-request',
+                        requestId: '00000000-0000-4000-8000-000000000010',
+                        deviceId: `mirror-camera:${HOST_ID}:cam-1`,
+                    },
+                }),
+            );
+            serverScreen.emit('message', feedback, false);
+            serverScreen.emit('message', camera, false);
+            expect(host.onFeedback).toHaveBeenCalledTimes(1);
+            expect(host.onCamera).toHaveBeenCalledTimes(1);
+            const parent = (viewers as any).viewers.get(VIEWER_ID)
+                .socket as WebSocket;
+            // Hold the transport open deterministically: authorization must not
+            // depend on a remote peer acknowledging a WebSocket close.
+            const parentClose = vi
+                .spyOn(parent, 'close')
+                .mockImplementation(() => {});
+            try {
+                if (action === 'disconnect') viewers.disconnect(VIEWER_ID);
+                else if (action === 'sharing-off') {
+                    admitted.delete('local');
+                    viewers.closeNotAdmitted();
+                } else if (action === 'close-all') viewers.closeAll(1);
+                else if (action === 'removed') {
+                    displays.delete(1);
+                    viewers.sendLayout(1);
+                } else await openViewer();
+                serverScreen.emit('message', feedback, false);
+                serverScreen.emit('message', camera, false);
+                expect(host.onFeedback).toHaveBeenCalledTimes(1);
+                expect(host.onCamera).toHaveBeenCalledTimes(1);
+                expect(controller.sockets.size).toBe(0);
+                expect(controller.camerasChangedListeners.size).toBe(0);
+                expect(host.onCameraGone).toHaveBeenCalledWith(
+                    `vd:${VIEWER_ID}:5`,
+                );
+                expect(viewers.has(VIEWER_ID)).toBe(action === 'reload');
+                if (action !== 'reload') {
+                    expect(
+                        await connect(
+                            `/vd/1/ws?viewer=${VIEWER_ID}&screenId=5`,
+                        ),
+                    ).toBeNull();
+                }
+            } finally {
+                parentClose.mockRestore();
+                parent.terminate();
+            }
+        },
+    );
+
+    test('a context completing after disconnect cannot send screen state', async () => {
+        await openViewer();
+        let resolveContext!: (value: any) => void;
+        host.loadContext.mockImplementation(
+            () =>
+                new Promise((resolve) => {
+                    resolveContext = resolve;
+                }),
+        );
+        const screen = await connect(`/vd/1/ws?viewer=${VIEWER_ID}&screenId=5`);
+        await vi.waitFor(() => expect(controller.sockets.size).toBe(1));
+        viewers.disconnect(VIEWER_ID);
+        resolveContext(context);
+        await settle();
+        expect(screen!.messages).toEqual([]);
+        expect(controller.sockets.size).toBe(0);
     });
 
     test('disconnect ends one viewer and reports it', async () => {

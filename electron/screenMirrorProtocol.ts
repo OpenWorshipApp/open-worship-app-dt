@@ -24,6 +24,41 @@ export type MirrorDiscovery = {
     port: number;
     host?: string;
 };
+
+// UDP announcements and their HTTP confirmation have the same trust boundary.
+// Rebuild the record so only the receiver supplies its reached address.
+export function readMirrorDiscovery(value: unknown): MirrorDiscovery | null {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+        return null;
+    }
+    const record = value as Record<string, unknown>;
+    if (
+        record.service !== 'owa-screen-mirror' ||
+        record.protocol !== MIRROR_PROTOCOL ||
+        typeof record.id !== 'string' ||
+        record.id.length === 0 ||
+        record.id.length > 256 ||
+        typeof record.name !== 'string' ||
+        record.name.length > 256 ||
+        typeof record.version !== 'string' ||
+        record.version.length === 0 ||
+        record.version.length > 64 ||
+        typeof record.port !== 'number' ||
+        !Number.isInteger(record.port) ||
+        record.port < 1 ||
+        record.port > 65535
+    ) {
+        return null;
+    }
+    return {
+        service: 'owa-screen-mirror',
+        protocol: MIRROR_PROTOCOL,
+        id: record.id,
+        name: record.name,
+        version: record.version,
+        port: record.port,
+    };
+}
 // Where a guest came from: this computer's own networks, or the internet.
 export type MirrorNetwork = 'local' | 'internet';
 export type MirrorGuest = {
@@ -253,13 +288,20 @@ export function rankMirrorAddress(address: string) {
 // The scan's answer, best first: by the address it will connect on, then by
 // name so the list does not reshuffle between two scans.
 export function sortMirrorHosts(hosts: MirrorDiscovery[]) {
-    return [...hosts].sort((a, b) => {
-        return (
-            rankMirrorAddress(a.host ?? '') - rankMirrorAddress(b.host ?? '') ||
-            a.name.localeCompare(b.name) ||
-            a.port - b.port
-        );
-    });
+    return hosts
+        .filter(
+            (host) =>
+                readMirrorDiscovery(host) !== null &&
+                (host.host === undefined || typeof host.host === 'string'),
+        )
+        .sort((a, b) => {
+            return (
+                rankMirrorAddress(a.host ?? '') -
+                    rankMirrorAddress(b.host ?? '') ||
+                a.name.localeCompare(b.name) ||
+                a.port - b.port
+            );
+        });
 }
 
 function readIpv4(address: string) {

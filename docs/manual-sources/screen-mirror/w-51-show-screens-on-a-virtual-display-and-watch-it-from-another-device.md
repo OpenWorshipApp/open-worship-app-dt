@@ -84,7 +84,9 @@ cable or a second copy of the app.
    since when. **[en:tran:Disconnect]** ends one and keeps it out of this
    display for ten minutes: a browser by itself (other devices behind the
    same router are not touched), a media player by its address. The browser
-   page then says the device was disconnected and stops trying. Each one is
+   page then says the device was disconnected and stops trying. Its access to
+   screen updates, camera streams and interaction ends immediately, even if
+   its connection takes longer to close. Each one is
    listed under **[en:tran:Disconnected]**, where **[en:tran:Allow again]**
    lets it back in at once. **[en:tran:Preview]** shows the display
    inside the card, listed as **[en:tran:This app (preview)]**. A browser's

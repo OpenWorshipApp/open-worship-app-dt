@@ -44,6 +44,9 @@ Built 2026-10-07 at the user's ask (W-50 steps 7–8, SP-28/29).
 - Wrong codes lock a sender (IPv4 address or IPv6 /64) after 5 in 10 min;
   waiting-request caps (8, 4 per sender) apply to INTERNET requests only — a
   LAN or a site behind one router must not be capped.
+  The existing GLOBAL 32-connection limit still covers every network: since
+  EN-43 it counts handshakes before hello and closing transports until their
+  socket closes. Do not apply the internet-only cap of eight to LAN guests.
 - QR: `qr-image` `svgObject` in main on demand (plain `host:port`, never a
   link — the user's rule); decoding is `jsqr`, lazily imported in the guest
   page. Electron on Windows has no `BarcodeDetector`.

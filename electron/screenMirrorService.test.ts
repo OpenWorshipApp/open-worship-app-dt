@@ -3,6 +3,8 @@ import { EventEmitter } from 'node:events';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import net from 'node:net';
+import http from 'node:http';
+import dgram from 'node:dgram';
 import os from 'node:os';
 import path from 'node:path';
 import WebSocket from 'ws';
@@ -105,6 +107,14 @@ function ipc(name: string) {
 let service: ScreenMirrorService;
 let directory: string;
 const sockets: WebSocket[] = [];
+async function useFreePort() {
+    // Avoid the real app's port, including Windows' separate IPv4/IPv6 binds.
+    const probe = net.createServer();
+    await new Promise<void>((resolve) => probe.listen(0, resolve));
+    const port = (probe.address() as net.AddressInfo).port;
+    await new Promise<void>((resolve) => probe.close(() => resolve()));
+    fixture.client.set('screen-mirror-port', String(port));
+}
 beforeEach(async () => {
     fixture.client.clear();
     fixture.secure.clear();
@@ -120,6 +130,7 @@ beforeEach(async () => {
     directory = await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-service-'));
     // Hosting is off by default; these tests are about a host.
     fixture.client.set('screen-mirror-host', 'true');
+    await useFreePort();
     service = new ScreenMirrorService();
     await service.start();
 });
@@ -159,6 +170,114 @@ const display = {
     scaleFactor: 1,
     isPrimary: true,
 };
+
+test('counts connections before hello and releases capacity on transport close', async () => {
+    const open = () =>
+        new Promise<WebSocket | null>((resolve) => {
+            const socket = new WebSocket(
+                `${service.baseUrl.replace('http:', 'ws:')}/mirror`,
+            );
+            sockets.push(socket);
+            socket.once('open', () => resolve(socket));
+            socket.on('error', () => resolve(null));
+        });
+    const waiting = await Promise.all(Array.from({ length: 32 }, open));
+    expect(waiting.every(Boolean)).toBe(true);
+    expect(service.state().pending).toHaveLength(0);
+    expect(await open()).toBeNull();
+    waiting[0]!.terminate();
+    await vi.waitFor(() =>
+        expect(waiting[0]!.readyState).toBe(WebSocket.CLOSED),
+    );
+    // Let the server process the opposite end's close as well.
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    const replacement = await open();
+    expect(replacement).not.toBeNull();
+    for (const socket of [...waiting.slice(1), replacement]) {
+        socket!.send(
+            JSON.stringify({
+                protocol: 1,
+                type: 'hello',
+                id: randomUUID(),
+                name: 'Local guest',
+                version: appInfo.version,
+            }),
+        );
+    }
+    // LAN peers retain the documented allowance: no internet-only cap of 8.
+    await vi.waitFor(() => expect(service.state().pending).toHaveLength(32));
+    expect(await open()).toBeNull();
+});
+
+test('discovery validates both replies and never lets a remote field replace the verified address', async () => {
+    const scanSocket = new EventEmitter() as any;
+    scanSocket.bind = vi.fn();
+    scanSocket.close = vi.fn();
+    const responses: { req: any; reply: (value: any) => void }[] = [];
+    const udp = vi.spyOn(dgram, 'createSocket').mockReturnValue(scanSocket);
+    const get = vi.spyOn(http, 'get').mockImplementation((...args: any[]) => {
+        const req = new EventEmitter() as any;
+        req.destroy = vi.fn();
+        responses.push({
+            req,
+            reply: (value) => {
+                const res = new EventEmitter();
+                args[2](res);
+                res.emit('data', JSON.stringify(value));
+                res.emit('end');
+            },
+        });
+        return req;
+    });
+    const valid = {
+        service: 'owa-screen-mirror',
+        protocol: 1,
+        id: randomUUID(),
+        name: 'Valid host',
+        version: appInfo.version,
+        port: 42000,
+    };
+    const scan = service.rescan();
+    try {
+        const announce = (value: any) =>
+            scanSocket.emit('message', Buffer.from(JSON.stringify(value)), {
+                address: '192.168.1.20',
+            });
+        announce({ ...valid, name: {} });
+        expect(responses).toHaveLength(0);
+        announce(valid);
+        responses
+            .at(-1)!
+            .reply({ ...valid, host: 'untrusted.example', extra: true });
+        for (const change of [
+            { name: null },
+            { name: {} },
+            { version: 'incompatible' },
+            { protocol: 2 },
+            { port: 0 },
+            { port: 42001 },
+        ]) {
+            const candidate = {
+                ...valid,
+                id: randomUUID(),
+                port: 43000 + responses.length,
+            };
+            announce(candidate);
+            responses.at(-1)!.reply({ ...candidate, ...change });
+        }
+        // Completes the same scan path as its timer, without network broadcasts.
+        expect(() =>
+            scanSocket.emit('error', new Error('End scan')),
+        ).not.toThrow();
+        expect(await scan).toEqual([{ ...valid, host: '192.168.1.20' }]);
+    } finally {
+        try {
+            scanSocket.emit('error', new Error('End scan'));
+        } catch {}
+        udp.mockRestore();
+        get.mockRestore();
+    }
+});
 
 test('approval gates displays; HTTP output grants are revoked and resumed guests stay hidden', async () => {
     const client = await guest();
@@ -587,9 +706,11 @@ test('opening to the internet asks the router, and closing it removes the mappin
 test('a guest links to several hosts, and each host’s screen answers only its host', async () => {
     fixture.displays = [display];
     fixture.client.delete('screen-mirror-identity');
+    await useFreePort();
     const hostB = new ScreenMirrorService();
     await hostB.start();
     fixture.client.delete('screen-mirror-identity');
+    await useFreePort();
     const guestC = new ScreenMirrorService();
     await guestC.start();
     try {

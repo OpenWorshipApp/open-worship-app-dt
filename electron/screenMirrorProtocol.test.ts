@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
     isMirrorScreenMessage,
     readMirrorPacket,
+    readMirrorDiscovery,
     readMirrorDisplays,
     readMirrorCameras,
     rankMirrorAddress,
@@ -18,6 +19,50 @@ import {
 } from './screenMirrorProtocol';
 
 describe('mirror wire validation', () => {
+    test('rebuilds discovery records and rejects malformed fields before sorting', () => {
+        const valid = {
+            service: 'owa-screen-mirror',
+            protocol: 1,
+            id: 'host-1',
+            name: 'Host',
+            version: '2026.10.01',
+            port: 39240,
+        };
+        expect(
+            readMirrorDiscovery({ ...valid, host: 'untrusted', extra: true }),
+        ).toEqual(valid);
+        for (const value of [
+            null,
+            [],
+            {},
+            { ...valid, id: '' },
+            { ...valid, id: 'x'.repeat(257) },
+            { ...valid, name: 1 },
+            { ...valid, name: 'x'.repeat(257) },
+            { ...valid, version: null },
+            { ...valid, protocol: 2 },
+            { ...valid, service: 'other' },
+            { ...valid, port: '39240' },
+            { ...valid, port: 1.5 },
+            { ...valid, port: 65536 },
+        ]) {
+            expect(readMirrorDiscovery(value)).toBeNull();
+        }
+        const reached = {
+            ...valid,
+            service: 'owa-screen-mirror' as const,
+            host: '192.168.1.2',
+        };
+        expect(
+            sortMirrorHosts([
+                reached,
+                { ...reached, name: null } as any,
+                { ...reached, host: {} } as any,
+                null as any,
+            ]),
+        ).toEqual([reached]);
+    });
+
     test('requires the protocol version and known screen channels', () => {
         expect(readMirrorPacket('{"protocol":1,"type":"hello"}')).toEqual({
             protocol: 1,

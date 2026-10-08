@@ -97,6 +97,9 @@ cleared on a delete made from the card).
   let in only to be sent `{type:'refused'}` with the words and closed 4001; its
   page shows them and stops retrying. An MP4 block still covers 127.0.0.1
   (only `?preview=1` from this computer is exempt).
+  EN-41 detaches screen broadcasts, input authority and camera routes
+  synchronously on revocation/replacement; a delayed WebSocket close must
+  never keep the old viewer authorized or clear its replacement's cameras.
 
 **Bugs this work found in older code:**
 

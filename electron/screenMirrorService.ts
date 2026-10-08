@@ -44,6 +44,7 @@ import {
     MIRROR_FEEDBACK_TYPES,
     isMirrorScreenMessage,
     readMirrorPacket,
+    readMirrorDiscovery,
     readMirrorDisplays,
     readMirrorCameras,
     rankMirrorAddress,
@@ -195,6 +196,7 @@ const MAX_LINKS = 8;
 // internet waiting for approval are capped, in all and per sender (one public
 // address can be a whole site behind its router). The room's own are not.
 const MAX_PENDING = 8;
+const MAX_PEER_CONNECTIONS = 32;
 const MAX_PENDING_PER_SENDER = 4;
 // Five wrong codes from one sender locks it out until ten minutes after the
 // first.
@@ -288,6 +290,8 @@ export class ScreenMirrorService {
     private udp?: dgram.Socket;
     private heartbeat?: ReturnType<typeof setInterval>;
     private peers = new Map<string, Peer>();
+    // Includes handshakes and closing sockets, before/after a peer has an id.
+    private peerSockets = new Set<Duplex>();
     private outputs = new Map<number, Output>();
     // A screen presented through Screen Mirror is showing in the Presenter's
     // Mini Screen like any other, but a guest's display has no screen window
@@ -688,15 +692,26 @@ export class ScreenMirrorService {
             !this.isHostEnabled ||
             req.url !== '/mirror' ||
             req.headers.origin ||
-            this.peers.size >= 32 ||
+            this.peerSockets.size >= MAX_PEER_CONNECTIONS ||
+            this.peers.size >= MAX_PEER_CONNECTIONS ||
             !this.admits(address)
         ) {
             socket.destroy();
             return;
         }
-        this.wss!.handleUpgrade(req, socket, head, (ws) =>
-            this.acceptSocket(ws, address, readMirrorOrigin(req.headers.host)),
-        );
+        this.peerSockets.add(socket);
+        socket.once('close', () => this.peerSockets.delete(socket));
+        try {
+            this.wss!.handleUpgrade(req, socket, head, (ws) =>
+                this.acceptSocket(
+                    ws,
+                    address,
+                    readMirrorOrigin(req.headers.host),
+                ),
+            );
+        } catch {
+            socket.destroy();
+        }
     }
     private openDiscovery() {
         if (this.udp) return;
@@ -911,6 +926,7 @@ export class ScreenMirrorService {
         for (const link of this.links.values()) this.closeLink(link);
         for (const peer of this.peers.values()) peer.socket.terminate();
         for (const client of this.wss?.clients ?? []) client.terminate();
+        for (const socket of this.peerSockets) socket.destroy();
         this.wss?.close();
         try {
             this.udp?.close();
@@ -1116,6 +1132,7 @@ export class ScreenMirrorService {
             if (peer) peer.alive = true;
         });
         socket.on('message', (bytes, binary) => {
+            if (socket.readyState !== WebSocket.OPEN) return;
             if (binary) {
                 socket.close(1008);
                 return;
@@ -1135,7 +1152,8 @@ export class ScreenMirrorService {
                     packet.name.length > 256 ||
                     packet.version !== appInfo.version ||
                     this.links.size ||
-                    this.peers.has(packet.id)
+                    this.peers.has(packet.id) ||
+                    this.peers.size >= MAX_PEER_CONNECTIONS
                 ) {
                     socketSend(socket, 'error', {
                         error: 'Incompatible or duplicate connection',
@@ -2105,16 +2123,13 @@ export class ScreenMirrorService {
             socket.on('message', (bytes, rinfo) => {
                 if (bytes.length > 2048) return;
                 try {
-                    const value = JSON.parse(bytes.toString());
+                    const value = readMirrorDiscovery(
+                        JSON.parse(bytes.toString()),
+                    );
                     if (
-                        value.service !== 'owa-screen-mirror' ||
-                        value.protocol !== MIRROR_PROTOCOL ||
+                        value === null ||
                         value.id === this.id ||
-                        typeof value.id !== 'string' ||
-                        value.version !== appInfo.version ||
-                        !Number.isInteger(value.port) ||
-                        value.port < 1 ||
-                        value.port > 65535
+                        value.version !== appInfo.version
                     )
                         return;
                     const candidate = `${rinfo.address}:${value.port}`;
@@ -2131,14 +2146,18 @@ export class ScreenMirrorService {
                             });
                             response.on('end', () => {
                                 try {
-                                    const verified = JSON.parse(text);
+                                    const verified = readMirrorDiscovery(
+                                        JSON.parse(text),
+                                    );
                                     const known = found.get(value.id);
                                     // Every network it answered on was tried;
                                     // keep the best address, not the last.
                                     if (
                                         !done &&
+                                        verified !== null &&
                                         verified.id === value.id &&
-                                        verified.service === value.service &&
+                                        verified.version === appInfo.version &&
+                                        verified.port === value.port &&
                                         (!known ||
                                             rankMirrorAddress(rinfo.address) <
                                                 rankMirrorAddress(
