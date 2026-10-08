@@ -20,7 +20,7 @@ quick lookup, and where you look a verse up when you are not presenting.
    numbers. 📸
    > Typing a full reference such as `John 3:16` is an optional shortcut when the
    > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
-   > last piece and **Ctrl+Escape** clears the box.
+   > last piece and **Shift+Escape** clears the box.
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are

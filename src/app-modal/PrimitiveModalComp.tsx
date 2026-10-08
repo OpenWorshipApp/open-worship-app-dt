@@ -5,6 +5,7 @@ import type { PropsWithChildren, ReactNode } from 'react';
 import { KeyboardLayerContext } from '../event/KeyboardEventListener';
 import { useKeyboardLayerClaim } from '../event/keyboardLayerHelpers';
 import type { AppWidgetType } from '../event/WindowEventListener';
+import FullscreenPortalComp from '../others/FullscreenPortalComp';
 
 interface MyProps {
     children?: ReactNode;
@@ -24,9 +25,11 @@ export default function PrimitiveModalComp({
         // The popup's own Enter/Escape register under the layer it just
         // claimed, or they would be silenced along with everything else.
         <KeyboardLayerContext value={POPUP_KEYBOARD_LAYER}>
-            <div id="modal-container" className="modal-container--blocking">
-                {children}
-            </div>
+            <FullscreenPortalComp>
+                <div id="modal-container" className="modal-container--blocking">
+                    {children}
+                </div>
+            </FullscreenPortalComp>
         </KeyboardLayerContext>
     );
 }

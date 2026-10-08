@@ -208,7 +208,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 
 ### S11 — Bible Reader deep-dive `[RD-01..112]`
 - Incremental picker: char-by-char book → chapter → verse; `Tab` completes, `Escape`
-  clears, `Ctrl+Escape` clears a chunk; extra buttons mirror the keys.
+  removes the last chunk, `Shift+Escape` clears the whole input; extra buttons mirror the keys.
 - Full ref `John 3:16` **does** resolve here — and in the modal; both share
   `InputHandlerComp` and behave identically (corrected 2026-09-11, KB §5). Assert the
   **rendered verse**, not a dropped `3:16` — the old assertion would now fail a correct app.

@@ -74,6 +74,11 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    Downloads folder and revealed for you), **Print** (which prints on white paper
    whatever theme the app is using), and **Save preset** to name an arrangement and come
    back to it later.
+   > **[en:tran:Fullscreen]** gives the graph the whole window. Its
+   > **[en:tran:Presets]** and **[en:tran:Copy]** menus still work there,
+   > and **[en:tran:Save preset]** opens the name dialog over the graph.
+   > **[en:tran:Cancel]** returns to the graph without saving;
+   > **[en:tran:Exit fullscreen]** returns to the floating window.
 10. **Take it away as words.** The clipboard button (📋) left of the signpost opens six
     ways to copy the graph: **[en:tran:Copy as Markdown]** on its own, then five diagram
     languages — **[en:tran:Copy as Mermaid (across)]**, **[en:tran:Copy as Mermaid (down)]**,

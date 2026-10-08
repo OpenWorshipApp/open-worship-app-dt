@@ -1,6 +1,6 @@
 # OWA Components Path — pages → components → interactions
 
-docVersion: 2026-10-06
+docVersion: 2026-10-07
 
 Standalone map of **every page**, the **component tree inside it**, and the
 **interactive tests** each component supports (click / double-click / right-click /
@@ -71,7 +71,7 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 | `F10` | Clear Foreground | ⤴ same |
 | `Arrows` / `PageUp` / `PageDown` / `Space` | Navigate slides (container focused; `Space` toggles) | [app-document-presenter/items/VarySlidesComp.tsx](../../../../src/app-document-presenter/items/VarySlidesComp.tsx) |
 | `Tab` | Bible Lookup: complete current book/chapter/verse chunk | [bible-lookup/InputExtraButtonsComp.tsx](../../../../src/bible-lookup/InputExtraButtonsComp.tsx) |
-| `Escape` / `Ctrl+Escape` | Bible Lookup: clear input / clear chunk | ⤴ same |
+| `Escape` / `Shift+Escape` | Bible Lookup: remove the last input chunk / clear the whole input | ⤴ same |
 | `Ctrl+Enter` | Slide editor: focus the canvas | [slide-editor/canvas/canvas-container/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-container/CanvasContainerComp.tsx) |
 | `Ctrl+S` | Editors: save | (lyric/web/bible-note editors) |
 | `Ctrl/Alt+ArrowLeft/Right` | Screen output: prev/next bible | [screen.tsx](../../../../src/screen.tsx) |
@@ -230,7 +230,7 @@ Root `BibleReaderComp` (no `#app-header`). Source:
 |---|---|---|
 | `BibleReaderComp → BibleReadingLeftComp` | [bible-list/BibleReadingLeftComp.tsx](../../../../src/bible-list/BibleReadingLeftComp.tsx) | Bibles + Notes lists (same as presenter right column). |
 | `BibleReaderComp → RenderBibleLookupComp` | [bible-lookup/RenderBibleLookupComp.tsx](../../../../src/bible-lookup/RenderBibleLookupComp.tsx) | The reference lookup — the **same** step-by-step picker as the modal (same `InputHandlerComp`). A typed full ref (`John 3:16`) **resolves to the verse**, on this page and in the modal alike (corrected 2026-09-11). |
-| ↳ `InputHandlerComp` (reference input) | [bible-lookup/InputHandlerComp.tsx](../../../../src/bible-lookup/InputHandlerComp.tsx) | ⌨️✎ type a reference. **Incremental picker:** book → chapter → verse. ⌨️ `Tab` completes the current chunk; ⌨️ `Escape` clears input, `Ctrl+Escape` clears a chunk. Use char-by-char `type_text`. |
+| ↳ `InputHandlerComp` (reference input) | [bible-lookup/InputHandlerComp.tsx](../../../../src/bible-lookup/InputHandlerComp.tsx) | ⌨️✎ type a reference. **Incremental picker:** book → chapter → verse. ⌨️ `Tab` completes the current chunk; ⌨️ `Escape` removes the last input chunk, `Shift+Escape` clears the whole input. Use char-by-char `type_text`. |
 | ↳ `InputExtraButtonsComp` | [bible-lookup/InputExtraButtonsComp.tsx](../../../../src/bible-lookup/InputExtraButtonsComp.tsx) | 🖱️ Clear input, Clear chunk, `Tab-to-complete` buttons (each titled with its shortcut). |
 | ↳ `RenderBookOptionsComp` / `RenderChapterOptionsComp` / `RenderVerseOptionsComp` | [bible-lookup/](../../../../src/bible-lookup/) | 🖱️ pick book / chapter / verse options; ⌨️ arrow navigation within options. |
 | ↳ `BibleLookupInputHistoryComp` | [bible-lookup/BibleLookupInputHistoryComp.tsx](../../../../src/bible-lookup/BibleLookupInputHistoryComp.tsx) | 🖱️ a history entry → re-runs that lookup. |

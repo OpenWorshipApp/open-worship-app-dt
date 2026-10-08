@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-06",
+    "updated": "2026-10-07",
     "sections": [
         {
             "id": "reading",
@@ -44,7 +44,7 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "shortcut": "Tab to complete, Escape to clear",
+                        "shortcut": "Tab completes, Escape removes the last part, Shift+Escape clears",
                         "guide": true
                     },
                     "starter": true,
@@ -161,7 +161,7 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "shortcut": "Escape / Ctrl+Escape",
+                        "shortcut": "Escape removes the last part; Shift+Escape clears the whole reference",
                         "guide": true
                     }
                 },

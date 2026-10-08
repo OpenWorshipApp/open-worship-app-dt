@@ -31,6 +31,8 @@ Previous: **workflowsVersion: 2026-10-07b** (W-50 steps 1 and 5 and new W-51 / S
 
 Previous: **workflowsVersion: 2026-10-07** (W-50 steps 1–4 and new steps 7–8 / new SP-28, SP-29 — Screen Mirror opens to the internet, every address has **[en:tran:Copy address]** and **[en:tran:QR code]**, the guest page has **[en:tran:Paste address]** and **[en:tran:Read QR code]**, guests are marked **[en:tran:This network]** or **[en:tran:Internet]**, and a guest links to several hosts at once. Asked for by the user: _"I want an option to open to internet, have icon address and view qr code of address"_, _"the option is disable by default"_, _"the copy and qrcode should apply to all address"_, _"make assets access posible"_, _"the qrcode is to copy address, not open url"_, _"update screen-mirror.html to have option to read from qrcode image"_, _"make user on host aware which connection from local and which from internet"_, _"update screen-mirror.html to be able to connect to multiple host"_, _"the image should be copy-able"_, _"should have option to past url to auto-fill the input address and port"_. Verified live 2026-10-07: on the dev presenter the switch was off by default, a QR code decoded back to `192.168.1.3:39240`, copy put that text on the clipboard and **[en:tran:Copy image]** a PNG that decoded to the router address; with the option on, the real router (UPnP) forwarded the port, the panel listed the router's public address as **[en:tran:Router]**, `/discovery` answered through that public address, and turning it off removed the mapping (the router answered 714). On the guest page **[en:tran:Paste address]** filled host and port from a QR picture, from `http://[2001:db8::5]:39241/`, and refused `hello world`. Two scratch hosts and a scratch guest on one machine: the guest linked to both at once (each **[en:tran:Connected]**, each its own a1), a second link to one was refused, **[en:tran:Disconnect]** ended one and kept the other. Presenting to two hosts' screen 0 on one guest is covered by `screenMirrorService.test.ts`, not live — on one machine the guest output would cover the desktop.)
 
+Previous: **workflowsVersion: 2026-10-07** (W-38: graph menus and the preset-name dialog work in fullscreen. W-11: Shift+Escape clears the whole reference; Escape removes only the last part. Verified in the dev Reader, 2026-10-07.)
+
 Previous: **workflowsVersion: 2026-10-06j** (Merge of two branches worked on the same day, each numbering its entries 2026-10-06a–i on its own: the Presenter entries come first below, then the Bible Reader entries, from its own `i` down. No entry was changed.)
 
 Previous: **workflowsVersion: 2026-10-06i** (W-03 step 3: the preview scrolls smoothly to the selected slide after repeated Next presses, including wrapping from the last slide to the first. Verified live on the dev Presenter, 2026-10-06.)
@@ -1895,7 +1897,7 @@ quick lookup, and where you look a verse up when you are not presenting.
    numbers. 📸
    > Typing a full reference such as `John 3:16` is an optional shortcut when the
    > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
-   > last piece and **Ctrl+Escape** clears the box.
+   > last piece and **Shift+Escape** clears the box.
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
@@ -4232,6 +4234,11 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    Downloads folder and revealed for you), **Print** (which prints on white paper
    whatever theme the app is using), and **Save preset** to name an arrangement and come
    back to it later.
+   > **[en:tran:Fullscreen]** gives the graph the whole window. Its
+   > **[en:tran:Presets]** and **[en:tran:Copy]** menus still work there,
+   > and **[en:tran:Save preset]** opens the name dialog over the graph.
+   > **[en:tran:Cancel]** returns to the graph without saving;
+   > **[en:tran:Exit fullscreen]** returns to the floating window.
 10. **Take it away as words.** The clipboard button (📋) left of the signpost opens six
     ways to copy the graph: **[en:tran:Copy as Markdown]** on its own, then five diagram
     languages — **[en:tran:Copy as Mermaid (across)]**, **[en:tran:Copy as Mermaid (down)]**,

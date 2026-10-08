@@ -36,6 +36,48 @@ afterEach(() => {
     act(() => root.unmount());
     host.remove();
     state.data = null;
+    vi.restoreAllMocks();
+    Reflect.deleteProperty(document, 'fullscreenElement');
+});
+
+test('keeps a fullscreen graph menu visible and selectable, then returns it on exit', async () => {
+    const graph = document.createElement('div');
+    document.body.append(graph);
+    let fullscreenElement: Element | null = graph;
+    Object.defineProperty(document, 'fullscreenElement', {
+        configurable: true,
+        get: () => fullscreenElement,
+    });
+    const select = vi.fn();
+    const close = vi.fn();
+    state.data = {
+        event: new MouseEvent('click', { clientX: 400, clientY: 40 }),
+        onClose: close,
+        items: [{ menuElement: 'Save preset', onSelect: select }],
+    };
+    try {
+        await act(async () => root.render(<AppContextMenuComp />));
+        expect(host.querySelector('[role="menu"]')).toBeNull();
+        const item = graph.querySelector('[role="menuitem"]');
+        expect(item?.textContent).toBe('Save preset');
+        await act(async () => {
+            (item as HTMLElement).click();
+            await new Promise((resolve) => setTimeout(resolve));
+        });
+        expect(close).toHaveBeenCalledOnce();
+        expect(select).toHaveBeenCalledOnce();
+
+        await act(async () => {
+            fullscreenElement = null;
+            document.dispatchEvent(new Event('fullscreenchange'));
+        });
+        expect(graph.querySelector('[role="menu"]')).toBeNull();
+        expect(host.querySelector('[role="menuitem"]')?.textContent).toBe(
+            'Save preset',
+        );
+    } finally {
+        graph.remove();
+    }
 });
 
 test('renders an accessible menu, positions it, and closes before selecting an enabled item', async () => {

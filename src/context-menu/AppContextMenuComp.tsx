@@ -13,6 +13,7 @@ import {
     APP_CONTEXT_MENU_ID,
 } from './appContextMenuHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import FullscreenPortalComp from '../others/FullscreenPortalComp';
 
 export const elementDivider = (
     <hr className="w-100" style={{ padding: 0, margin: 0 }} />
@@ -107,36 +108,38 @@ export default function AppContextMenuComp() {
         return null;
     }
     return (
-        <div
-            id={APP_CONTEXT_MENU_ID}
-            onClick={handleClose}
-            onContextMenu={handleClose}
-        >
+        <FullscreenPortalComp>
             <div
-                tabIndex={0}
-                ref={(div) => {
-                    if (div === null) {
-                        return;
-                    }
-                    setPositionMenu(div, data.event, data.options);
-                    if (data.options?.shouldAutoFocusContainer) {
-                        div.focus();
-                    }
-                }}
-                className="app-context-menu app-focusable"
-                role="menu"
+                id={APP_CONTEXT_MENU_ID}
+                onClick={handleClose}
+                onContextMenu={handleClose}
             >
-                {data.items.map((item, i) => {
-                    return (
-                        <ContextMenuItemComp
-                            key={i}
-                            item={item}
-                            onClose={data.onClose}
-                        />
-                    );
-                })}
+                <div
+                    tabIndex={0}
+                    ref={(div) => {
+                        if (div === null) {
+                            return;
+                        }
+                        setPositionMenu(div, data.event, data.options);
+                        if (data.options?.shouldAutoFocusContainer) {
+                            div.focus();
+                        }
+                    }}
+                    className="app-context-menu app-focusable"
+                    role="menu"
+                >
+                    {data.items.map((item, i) => {
+                        return (
+                            <ContextMenuItemComp
+                                key={i}
+                                item={item}
+                                onClose={data.onClose}
+                            />
+                        );
+                    })}
+                </div>
             </div>
-        </div>
+        </FullscreenPortalComp>
     );
 }
 
