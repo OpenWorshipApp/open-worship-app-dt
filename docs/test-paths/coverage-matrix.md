@@ -2445,6 +2445,13 @@ alone, and it still runs.
 
 ## CB — In-app help chatbot (`chatbot.html`, `Help → App Help (Chatbot)`)
 
+2026-10-07, MC-31 transport check: a persistent external MCP session follows
+`OWA_CDP_TARGET=dev` across an app restart; `prod` refuses that dev instance.
+Two fresh HTTP sessions still resolve the host's own pinned app, and the idle
+sweep expires them with a controlled clock. This verifies transport behavior,
+not a new pass of the chatbot-window rows below. The troubleshooting corpus
+now includes keeping an external agent on the development copy after restart.
+
 The window a USER asks for help in — and the only product surface that consumes
 `owa-devtools-mcp`. It needs the app's MCP host running, i.e. **Enable AI features** ON
 (CB-07) and the app started since that was true.

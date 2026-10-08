@@ -124,7 +124,13 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   `describeDeadPin` writes the refusal: _"Port 9999 was named by OWA_CDP_PORT
   and is not answering. The app published 62807 (dev)."_ The old message said
   "start the app" with the app right there, which is what made it hard to see.
-  Pinning by KIND (`OWA_CDP_TARGET=dev`, which survives a restart) is `MC-31`.
+  **Pinning by KIND** (`MC-31`, 2026-10-07): `OWA_CDP_TARGET=dev|prod`
+  filters published instances by the exact boolean `isDev`, so a developer's
+  server follows restarts without reaching the other kind. Both tool groups
+  and the bridge honor it; unknown kinds and legacy fallback ports are never
+  candidates. Invalid nonempty values fail explicitly. The host's own port
+  and `OWA_CDP_PORT` take priority. This selects a kind, not a data profile;
+  several matches still follow newest-first discovery, read afresh each time.
 - **Master switch**: Settings → Others → _Enable AI features_ writes
   `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
   `checkIsAiEnabled()` reads that file directly (before `ready`, before the

@@ -599,21 +599,55 @@ Proven both ways against the live app: the shipped HEAD version answers
 one answers `[9999]` and refuses by name, while an unpinned call still
 resolves 62807.
 
-The second way, `OWA_CDP_TARGET=dev`, is still worth having and is now the
-whole of what is left here: it survives a nodemon restart, which a port does
-not, and it is what a verification script actually means. Filed as `MC-31`.
+The second way, `OWA_CDP_TARGET=dev`, survives a nodemon restart, which a port
+does not. Shipped as `MC-31` below.
 
-### `MC-31` — pin by KIND, not by port (`OWA_CDP_TARGET=dev`) · open
+### `MC-31` — pin by KIND, not by port (`OWA_CDP_TARGET=dev`) · done 2026-10-07
 
 Split out of `MC-30` when its first half closed. A pinned PORT is exact and
 dies with the instance: `npm run electron:dev` restarts the app on a new port
 whenever `electron-build/` or `tools/owa-devtools-mcp` is touched, so a script
 that pinned dev correctly a minute ago now refuses (which is the fix) but
 still cannot get itself back to dev without re-reading the discovery file.
-`OWA_CDP_TARGET=dev|prod` would filter `readLiveInstances()` on the published
-`isDev` and survive the restart. Cheap — the field is already in the file and
-`listCandidatePorts` is now the single place that decides — and unwritten only
-because nothing has needed it since the refusal started naming the live port.
+Before: setting `OWA_CDP_TARGET=prod` still resolved the running dev app and
+included legacy port 9223. Now both discovery paths and the bridge filter on
+the exact published `isDev` boolean. Missing kinds and invalid nonempty values
+fail explicitly; neither unknown instances nor legacy ports satisfy a kind
+pin. Explicit port pins retain priority. Discovery is re-read per call, with
+no cache. Multiple instances of the same kind still use newest-first order.
+
+Live: one long-lived stdio server followed an isolated dev app across a real
+restart and port change, through both `owa_app_state` and `list_pages`.
+`prod` refused while only dev was available. The bridge connection reached
+the dev CDP endpoint and refused absent prod too. A fresh HTTP host with two
+sessions stayed on its pinned dev app despite a contrary `prod` environment;
+both sessions were removed by the idle sweep under a controlled clock.
+Screenshot captured and inspected. Focused discovery/HTTP checks: 23 passed.
+Policy baseline: 16 checks passed on the original Reader, Presenter checks
+unavailable; scratch Presenter then passed 24/25, missing a visible destructive
+uid target during startup. After the restart the full probe passed 25/25.
+These availability differences are not claimed as policy improvements.
+
+Before/after: **54 host tools / 25 model tools / ~7,789 model schema tokens per
+round**, unchanged and within the 7,800 ratchet. No new tool, cache or policy
+exception. Tradeoff: selecting a kind deliberately gives up automatic fallback
+to other kinds in exchange for safer developer targeting; the in-app host
+retains its own explicit port pin.
+
+Gate: both typechecks passed. Source suite: 4,813 passed, two unrelated screen
+tests timed out at 10 seconds; their two files passed all 13 tests on a focused
+rerun with two workers. The skipped stages were run separately: 618 Electron
+tests, Prettier, ESLint and the production build check all passed. No test
+timeouts or repository-wide formatting settings were changed.
+
+### `MC-49` — a host pin not known yet still falls through · open
+
+`pinCdpPort(() => null)` still falls through to environment/discovery while
+Chromium is starting; `discovery.test.mjs` explicitly preserves this older
+behavior. Once the port is known, the host is exclusive. A future change should
+decide whether an installed but unresolved host pin must fail closed during
+startup and verify early HTTP sessions. Kept separate from `MC-31`, whose kind
+filter does not change the existing explicit-pin startup contract.
 
 ### `MC-20` — the app's own `PART_DEFINITIONS` has no drift guard · open
 

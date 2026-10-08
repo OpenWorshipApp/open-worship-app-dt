@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
-    "updated": "2026-09-12",
+    "updated": "2026-10-07",
     "sections": [
         {
             "id": "screen",
@@ -428,6 +428,21 @@
             "panel": null,
             "recipes": ["W-42"],
             "questions": [
+                {
+                    "id": "agent-wrong-instance",
+                    "text": "How do I keep an external agent connected to the development copy when the app restarts?",
+                    "kind": "howto",
+                    "keywords": [
+                        "OWA_CDP_TARGET",
+                        "wrong instance",
+                        "packaged copy",
+                        "port changed",
+                        "dev prod"
+                    ],
+                    "resources": {
+                        "tools": ["owa_help_search", "owa_app_state"]
+                    }
+                },
                 {
                     "id": "report-a-problem",
                     "text": "Something in the app is broken — how do I report it?",

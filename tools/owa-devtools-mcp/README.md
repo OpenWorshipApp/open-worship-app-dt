@@ -64,7 +64,9 @@ The token is 256 random bits, changes on every launch, and is required as an
 `Authorization: Bearer` value before the host creates or resumes an MCP
 session. Do not log it or place it in a query string.
 
-Overrides, in order: `OWA_CDP_PORT` (client side) ·
+Client selection: the in-app host's own port, then `OWA_CDP_PORT`, then
+`OWA_CDP_TARGET=dev|prod`, then unrestricted newest-first discovery.
+App launch overrides:
 `OWA_REMOTE_DEBUGGING_PORT` / `--owa-remote-debugging-port=` (app side) ·
 `OWA_MCP_PORT` / `--owa-mcp-port=` (app side).
 
@@ -75,6 +77,21 @@ through to the newest instance. It used to head a list that went on to every
 published instance, so a dev app that nodemon had restarted onto a new port
 left a "pinned" script driving whatever was published last — the PACKAGED app,
 with the user's real data, if one was up.
+
+**`OWA_CDP_TARGET=dev|prod` follows a kind across restarts** (`MC-31`). Set it
+in the environment of the stdio server or bridge: `dev` selects only published
+instances with `isDev: true`, `prod` only `isDev: false`. Unknown kinds and the
+legacy fallback port are excluded. With no matching app the tools refuse;
+start that kind with AI features enabled. Invalid nonempty values fail with a
+configuration error. Explicit port pins still take priority. Among several
+matching instances, newest-first selection remains; this is not a profile pin.
+
+PowerShell example (applies to this shell's child processes):
+
+```powershell
+$env:OWA_CDP_TARGET = 'dev'
+node tools/owa-devtools-mcp/bin.mjs
+```
 
 For a client that can only be pointed at one hardcoded URL:
 

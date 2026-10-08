@@ -179,7 +179,9 @@ What holds everywhere:
   token that never enters a URL, a log, a result or model context.
   `publishAiEndpoints()` writes `<temp>/open-worship-app-cdp/<pid>.json`. A port
   named on purpose (`pinCdpPort`, `OWA_CDP_PORT`) is a PIN: that port or
-  nothing.
+  nothing. `OWA_CDP_TARGET=dev|prod` selects only that published instance kind
+  across restarts; explicit port pins take priority, with no other-kind or
+  legacy fallback for a kind selection.
 - **The assistant may point, the human presses.** Every renderer has
   `nodeIntegration: true`, so `tools/owa-devtools-mcp/firewall.mjs` refuses and
   hides `evaluate_script` / `take_heapsnapshot` / `upload_file`, allowlists

@@ -113,7 +113,7 @@
 - [MCP uid interlock](mcp-uid-interlock.md) · [The interlock reads the control](mcp-interlock-reads-the-control.md) — every language · [Tools the model never sees](mcp-model-hidden-tools.md)
 - [Writing songs and slide documents](mcp-document-write-tools.md) — trash on delete · [Agent data tools back up first](agent-data-tools-backup-undo.md) · [History paths vs the read cache](history-read-cache-stale-paths.md)
 - [Reading a web page](mcp-read-website-tool.md) — the only tool that reaches out · [A slide website loads in a box](slide-website-loads-in-a-box.md)
-- [A CDP pin is exclusive](cdp-pin-is-exclusive.md) · [A preload must not eval at load](preload-must-not-eval-at-load.md)
+- [A CDP pin is exclusive](cdp-pin-is-exclusive.md) — kind pins follow dev/prod restarts · [A preload must not eval at load](preload-must-not-eval-at-load.md)
 - [A press says what it CHANGED](click-reports-effect-not-action.md) · [An exact label beats everything](dom-match-exact-label-beats-everything.md) · [Kind noun trimmed off an exact name](dom-match-kind-noun-exact.md) · [A name with a twin has no selector](selector-name-with-a-twin.md)
 - [Checking a song](open-lyric-validator-in-mcp.md) · [A model cannot write Open Lyric](model-cannot-write-open-lyric.md) · [A song page goes in as a URL](song-page-goes-in-as-url.md) · [/lyric offline](chatbot-lyric-command.md)
 - [Driving the chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen` · [Bash halves backslashes](bash-heredoc-halves-backslashes.md)
