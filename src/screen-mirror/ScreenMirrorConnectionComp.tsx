@@ -1,10 +1,31 @@
 import { useState } from 'react';
 import { tran } from '../lang/langHelpers';
+import type { MirrorNetwork } from '../../electron/screenMirrorProtocol';
 import {
     mirrorCommand,
     toMirrorErrorText,
     useMirrorState,
 } from './mirrorConnectionHelpers';
+import ScreenMirrorAddressesComp from './ScreenMirrorAddressesComp';
+import NetworkAccessNoticeComp from './NetworkAccessNoticeComp';
+
+// Where a guest came from, on every guest and every request: the room must
+// always see who is joining from outside it.
+function MirrorNetworkBadgeComp({
+    network,
+}: Readonly<{ network: MirrorNetwork }>) {
+    return network === 'internet' ? (
+        <span className="badge text-bg-warning">
+            <i className="bi bi-globe2 me-1" aria-hidden />
+            {tran('Internet')}
+        </span>
+    ) : (
+        <span className="badge text-bg-secondary">
+            <i className="bi bi-house-door me-1" aria-hidden />
+            {tran('This network')}
+        </span>
+    );
+}
 
 // The host's side: the floating panel opened from the Mini Screen list. The
 // guest's side is its own page, `ScreenMirrorGuestComp`.
@@ -71,16 +92,63 @@ export default function ScreenMirrorConnectionComp() {
             </div>
             {state.hostEnabled ? (
                 <>
+                    {/* Off by default, like hosting: until it is on, a guest
+                        from outside this computer's own networks is refused. */}
+                    <div className="form-check form-switch">
+                        <input
+                            id="app-mirror-internet-switch"
+                            className="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            checked={state.internetEnabled}
+                            disabled={busy}
+                            onChange={(event) => {
+                                const enabled = event.target.checked;
+                                void perform(() => {
+                                    return mirrorCommand('internet', {
+                                        enabled,
+                                    });
+                                });
+                            }}
+                        />
+                        <label
+                            className="form-check-label"
+                            htmlFor="app-mirror-internet-switch"
+                        >
+                            {tran('Open to the internet')}
+                        </label>
+                    </div>
+                    {state.internetEnabled ? (
+                        <div className="alert alert-warning small py-1 px-2 mb-0">
+                            {tran(
+                                'Anyone who has the address can ask to connect, and the connection is not encrypted. Use a connection code, and turn this off when you are done.',
+                            )}
+                        </div>
+                    ) : null}
+                    <NetworkAccessNoticeComp port={state.port} />
                     <h5>{tran('Connected guests')}</h5>
                     {state.guests.length === 0 && (
                         <div>{tran('No connected guests')}</div>
                     )}
                     {state.guests.map((guest) => (
-                        <div key={guest.id} className="border rounded p-2">
-                            <strong>
-                                {guest.prefix}: {guest.name}
-                            </strong>
-                            <div>{guest.address}</div>
+                        <div
+                            key={guest.id}
+                            className={
+                                'border rounded p-2' +
+                                (guest.network === 'internet'
+                                    ? ' border-warning'
+                                    : '')
+                            }
+                        >
+                            <div className="d-flex flex-wrap align-items-center gap-2">
+                                <strong>
+                                    {guest.prefix}: {guest.name}
+                                </strong>
+                                <MirrorNetworkBadgeComp
+                                    network={guest.network}
+                                />
+                            </div>
+                            <div className="app-data">{guest.address}</div>
                             {guest.displays.map((display) => (
                                 <div key={display.id}>
                                     {guest.prefix}: {display.bounds.width}x
@@ -108,10 +176,26 @@ export default function ScreenMirrorConnectionComp() {
                         </div>
                     ))}
                     {state.pending.map((guest) => (
-                        <div key={guest.id} className="border rounded p-2">
-                            <div>
-                                {tran('Connection request')}: {guest.name} (
-                                {guest.address})
+                        <div
+                            key={guest.id}
+                            className={
+                                'border rounded p-2' +
+                                (guest.network === 'internet'
+                                    ? ' border-warning'
+                                    : '')
+                            }
+                        >
+                            <div className="d-flex flex-wrap align-items-center gap-2">
+                                <span>
+                                    {tran('Connection request')}: {guest.name} (
+                                    <span className="app-data">
+                                        {guest.address}
+                                    </span>
+                                    )
+                                </span>
+                                <MirrorNetworkBadgeComp
+                                    network={guest.network}
+                                />
                             </div>
                             <button
                                 className="btn btn-sm btn-primary me-2"
@@ -139,10 +223,11 @@ export default function ScreenMirrorConnectionComp() {
                             </button>
                         </div>
                     ))}
-                    <div>
-                        {tran('Host addresses')}: {state.addresses.join(', ')} (
-                        {tran('Port')}: {state.port})
-                    </div>
+                    <ScreenMirrorAddressesComp
+                        state={state}
+                        busy={busy}
+                        perform={perform}
+                    />
                     <label>
                         {tran('Guest access')}
                         <select

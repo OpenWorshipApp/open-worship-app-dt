@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-06",
+    "updated": "2026-10-07",
     "sections": [
         {
             "id": "screens",
@@ -450,7 +450,7 @@
                     ],
                     "resources": {
                         "recipe": "W-50",
-                        "find": "Screen Mirror Connection",
+                        "find": "Virtual Screens Manager",
                         "guide": true
                     }
                 },
@@ -501,6 +501,221 @@
                         "related": ["W-08"],
                         "find": "Cameras",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "open-screen-mirror-to-internet",
+                    "text": "How do I let a computer outside this network connect over the internet?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open to the internet",
+                        "internet",
+                        "router",
+                        "public address",
+                        "port forward",
+                        "upnp",
+                        "outside",
+                        "another church"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Open to the internet"
+                    }
+                },
+                {
+                    "id": "share-screen-mirror-address",
+                    "text": "How do I send the host address to the guest computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy address",
+                        "qr code",
+                        "copy image",
+                        "share",
+                        "send",
+                        "host address"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Host addresses"
+                    }
+                },
+                {
+                    "id": "fill-address-from-qr-or-paste",
+                    "text": "How do I fill in the host address from a QR code or a copied link?",
+                    "kind": "howto",
+                    "keywords": [
+                        "read qr code",
+                        "paste address",
+                        "qr code",
+                        "picture",
+                        "link",
+                        "scan"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Paste address"
+                    }
+                },
+                {
+                    "id": "connect-several-hosts",
+                    "text": "Can this computer show screens from more than one host?",
+                    "kind": "howto",
+                    "keywords": [
+                        "more than one host",
+                        "several hosts",
+                        "multiple hosts",
+                        "second host",
+                        "two computers"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Connect by address"
+                    }
+                },
+                {
+                    "id": "guest-from-internet-or-local",
+                    "text": "How can I tell which guests are connected from the internet?",
+                    "kind": "where",
+                    "keywords": [
+                        "internet",
+                        "this network",
+                        "local",
+                        "badge",
+                        "who is connected",
+                        "outside"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Connected guests"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "virtual-displays",
+            "label": "Virtual displays",
+            "panel": "Mini Screen",
+            "recipes": ["W-51"],
+            "questions": [
+                {
+                    "id": "make-virtual-display",
+                    "text": "How do I make a virtual display?",
+                    "kind": "howto",
+                    "keywords": [
+                        "virtual display",
+                        "virtual monitor",
+                        "fake monitor",
+                        "add display",
+                        "no projector",
+                        "virtual screens manager"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Add Virtual Display",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "watch-on-phone-or-tv",
+                    "text": "How do I watch the screen on a phone or a TV without a cable?",
+                    "kind": "howto",
+                    "keywords": [
+                        "phone",
+                        "tablet",
+                        "smart tv",
+                        "browser",
+                        "stream",
+                        "watch",
+                        "livestream",
+                        "qr code"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "related": ["W-50"],
+                        "find": "Where to watch"
+                    }
+                },
+                {
+                    "id": "virtual-display-in-media-player",
+                    "text": "How do I get the screen into VLC or OBS as a video?",
+                    "kind": "howto",
+                    "keywords": [
+                        "vlc",
+                        "obs",
+                        "mp4",
+                        "video stream",
+                        "media player",
+                        "recording",
+                        "capture"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Video for media players (MP4)"
+                    }
+                },
+                {
+                    "id": "let-devices-watch-virtual-display",
+                    "text": "Why can other devices not open the virtual display's address?",
+                    "kind": "fix",
+                    "keywords": [
+                        "cannot connect",
+                        "not loading",
+                        "other devices",
+                        "this network",
+                        "refused",
+                        "firewall"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Let other devices watch"
+                    }
+                },
+                {
+                    "id": "who-watches-virtual-display",
+                    "text": "Who is watching my virtual display?",
+                    "kind": "where",
+                    "keywords": [
+                        "watching now",
+                        "viewers",
+                        "disconnect",
+                        "kick",
+                        "who is connected"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Watching now"
+                    }
+                },
+                {
+                    "id": "let-viewer-interact",
+                    "text": "How do I let a phone watching the virtual display scroll or pick verses?",
+                    "kind": "howto",
+                    "keywords": [
+                        "allow interaction",
+                        "interactive",
+                        "scroll",
+                        "tap a verse",
+                        "control from phone",
+                        "touch"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Allow interaction"
+                    }
+                },
+                {
+                    "id": "virtual-display-sound",
+                    "text": "Why is a screen on a virtual display silent on this computer?",
+                    "kind": "what",
+                    "keywords": [
+                        "no sound",
+                        "muted",
+                        "audio",
+                        "speakers",
+                        "silent"
+                    ],
+                    "resources": {
+                        "recipe": "W-51"
                     }
                 }
             ]

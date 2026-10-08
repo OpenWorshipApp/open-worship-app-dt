@@ -42,14 +42,14 @@ export function openMiniScreenContextMenu(event: any) {
             childBefore: genContextMenuItemIcon('pc-display'),
             menuElement: `${guest.prefix}: ${guest.name}`,
             onSelect() {
-                setMirrorPanelShowing(true);
+                setMirrorPanelShowing(true, 'mirror');
             },
         })),
         {
             childBefore: genContextMenuItemIcon(
                 getMirrorPanelShowing() ? 'check-square' : 'square',
             ),
-            menuElement: tran('Screen Mirror Connection'),
+            menuElement: tran('Virtual Screens Manager'),
             onSelect() {
                 setMirrorPanelShowing(!getMirrorPanelShowing());
             },

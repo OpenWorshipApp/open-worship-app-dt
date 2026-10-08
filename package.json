@@ -206,11 +206,13 @@
         "chrome-devtools-mcp": "^1.8.0",
         "docx-to-html": "https://github.com/raksa/docx-to-html-dist",
         "dompurify": "^3.4.15",
+        "jsqr": "^1.4.0",
         "libreoffice-convert": "^1.8.1",
         "lw-share": "^0.0.7",
         "mermaid": "^12.0.0",
         "mupdf": "^1.28.0",
         "pptx-to-html": "https://github.com/raksa/pptx-to-html-dist",
+        "qr-image": "^3.2.0",
         "tar": "^7.5.22",
         "ws": "^8.21.3",
         "yt-dlp-wrap": "^2.3.12"

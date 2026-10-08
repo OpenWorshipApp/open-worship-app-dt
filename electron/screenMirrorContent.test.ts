@@ -58,6 +58,21 @@ describe('presentation resources', () => {
         expect(registry.publish(scope, file)).toBeNull();
         expect((await fetch(base + '/content/settings.json')).status).toBe(404);
     });
+    // Windows paths ignore case, and the real path carries the disk's own
+    // casing: a data folder given as `C--Users` that is `c--Users` on disk
+    // made every video on a virtual display a 404.
+    test.runIf(process.platform === 'win32')(
+        'serves a file published with another casing of its path',
+        async () => {
+            const file = path.join(directory, 'clip.mp4');
+            await writeFile(file, 'video');
+            const resource = registry.publish(
+                registry.createScope(),
+                file.toUpperCase(),
+            )!;
+            expect((await fetch(base + resource)).status).toBe(200);
+        },
+    );
     test('allows relative web assets inside the published folder and blocks escapes', async () => {
         await mkdir(path.join(directory, 'web'));
         await writeFile(

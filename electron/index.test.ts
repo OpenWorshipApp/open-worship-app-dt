@@ -46,7 +46,12 @@ vi.mock('./taskbarHelpers', () => ({
 
 vi.mock('./aiHelpers', () => ({ enableRemoteDebugging, initAi }));
 vi.mock('./aiChatGuestHelpers', () => ({ initAiChatGuestGuard }));
-vi.mock('./screenMirrorService', () => ({ initScreenMirror }));
+vi.mock('./screenMirrorService', () => ({
+    initScreenMirror,
+    getScreenMirror: () => undefined,
+}));
+const initVirtualDisplays = vi.fn();
+vi.mock('./virtualDisplayService', () => ({ initVirtualDisplays }));
 vi.mock('./electronMenu', () => ({ initMenu }));
 vi.mock('./devtools', () => ({ initDevtools }));
 vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));

@@ -7,6 +7,7 @@ import { tran } from '../../lang/langHelpers';
 import { getSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
+import { checkIsSoundHere } from '../screenSoundHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
@@ -68,6 +69,15 @@ class ScreenBackgroundManager
     static readonly eventNamePrefix: string = 'screen-bg-m';
     private _backgroundSrc: BackgroundSrcType | null = null;
     private _rootContainer: HTMLDivElement | null = null;
+    // A background video's sound on a virtual display's page: whether the
+    // presenter's audio for it is playing, at what level, and which of the
+    // loop's two copies is the one being heard.
+    private videoSound: {
+        videoId: string;
+        isPlaying: boolean;
+        volume: number;
+    } | null = null;
+    private soundingVideo: HTMLVideoElement | null = null;
     effectManager: ScreenEffectManager;
     clearTracks = () => {};
 
@@ -312,6 +322,71 @@ class ScreenBackgroundManager
             return;
         }
         this.setVideoCurrentTime(data);
+    }
+
+    // The presenter's audio for a background video, as a screen on a virtual
+    // display hears it: only that page ever unmutes its video.
+    sendSyncVideoSound(videoId: string, isPlaying: boolean, volume: number) {
+        this.screenManagerBase.sendScreenMessage(
+            {
+                screenId: this.screenId,
+                type: 'background-video-sound',
+                data: { videoId, isPlaying, volume },
+            },
+            true,
+        );
+    }
+
+    applyVideoSound(soundingVideo?: HTMLVideoElement) {
+        const rootContainer = this.rootContainer;
+        if (!appProvider.isPageScreen || rootContainer === null) {
+            return;
+        }
+        if (soundingVideo !== undefined) {
+            this.soundingVideo = soundingVideo;
+        }
+        const sound = this.videoSound;
+        const isSoundHere = checkIsSoundHere(this.screenManagerBase);
+        const videos = [
+            ...rootContainer.querySelectorAll<HTMLVideoElement>(
+                'video[id^="video-"]',
+            ),
+        ];
+        const sounding =
+            this.soundingVideo?.isConnected &&
+            videos.includes(this.soundingVideo)
+                ? this.soundingVideo
+                : (videos.find((video) => !video.paused) ?? null);
+        for (const video of videos) {
+            const isOn =
+                isSoundHere &&
+                sound !== null &&
+                sound.isPlaying &&
+                sound.videoId === video.id &&
+                video === sounding;
+            video.muted = !isOn;
+            if (sound !== null && sound.videoId === video.id) {
+                video.volume = sound.volume;
+            }
+        }
+    }
+
+    receiveSyncVideoSound(message: ScreenMessageType) {
+        const { videoId, isPlaying, volume } = message.data ?? {};
+        if (
+            typeof videoId !== 'string' ||
+            typeof isPlaying !== 'boolean' ||
+            typeof volume !== 'number' ||
+            !(volume >= 0 && volume <= 1)
+        ) {
+            return;
+        }
+        this.videoSound = { videoId, isPlaying, volume };
+        this.applyVideoSound();
+    }
+
+    static receiveSyncVideoSound(message: ScreenMessageType) {
+        this.getInstance(message.screenId)?.receiveSyncVideoSound(message);
     }
 
     static receiveSyncVideoTime(message: ScreenMessageType) {
@@ -656,6 +731,8 @@ class ScreenBackgroundManager
             return;
         }
         await playMediaElement(twinVideo);
+        // The copy coming in is the one heard from now on.
+        this.applyVideoSound(twinVideo);
         twin.style.opacity = restOpacity;
         await this.effectManager.styleAnimList.fade.animIn(twin, rootContainer);
         if (!twin.isConnected) {

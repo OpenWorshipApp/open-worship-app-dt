@@ -13,6 +13,10 @@ vi.mock('./protocolHelpers', () => {
 
 import { initDisplayMediaHandler } from './displayMediaHelpers';
 import { electronMockState } from './testElectronModule';
+import {
+    markVirtualDisplayHost,
+    setVirtualDisplayAudioTarget,
+} from './virtualDisplayHostRegistry';
 
 function getHandler() {
     initDisplayMediaHandler();
@@ -70,6 +74,68 @@ describe('displayMediaHelpers', () => {
             video: frame,
             audio: undefined,
             enableLocalEcho: true,
+        });
+    });
+
+    test('a virtual display compositor records itself without an echo', () => {
+        const handler = getHandler();
+        const host = { id: 7001, once: vi.fn() } as any;
+        markVirtualDisplayHost(host);
+        electronMockState.webContentsModule.fromFrame.mockReturnValue(host);
+        const frame = { name: 'compositor' };
+        const callback = vi.fn();
+
+        handler(
+            {
+                frame,
+                securityOrigin: 'https://localhost:3000/virtual-display.html',
+                videoRequested: true,
+                audioRequested: false,
+            },
+            callback,
+        );
+
+        expect(callback).toHaveBeenCalledWith({
+            video: frame,
+            audio: undefined,
+            enableLocalEcho: false,
+        });
+    });
+
+    test('a screen named first is the audio of the next audio request only', () => {
+        const handler = getHandler();
+        const host = { id: 7002, once: vi.fn() } as any;
+        markVirtualDisplayHost(host);
+        electronMockState.webContentsModule.fromFrame.mockReturnValue(host);
+        const frame = { name: 'compositor' };
+        const guestFrame = { name: 'screen 0' };
+        setVirtualDisplayAudioTarget(host, guestFrame as any);
+        const callback = vi.fn();
+        const request = {
+            frame,
+            securityOrigin: 'https://localhost:3000/virtual-display.html',
+            videoRequested: true,
+        };
+
+        // A picture-only request leaves the named screen for the audio one.
+        handler({ ...request, audioRequested: false }, callback);
+        handler({ ...request, audioRequested: true }, callback);
+        handler({ ...request, audioRequested: true }, callback);
+
+        expect(callback).toHaveBeenNthCalledWith(1, {
+            video: frame,
+            audio: undefined,
+            enableLocalEcho: false,
+        });
+        expect(callback).toHaveBeenNthCalledWith(2, {
+            video: frame,
+            audio: guestFrame,
+            enableLocalEcho: false,
+        });
+        expect(callback).toHaveBeenNthCalledWith(3, {
+            video: frame,
+            audio: undefined,
+            enableLocalEcho: false,
         });
     });
 

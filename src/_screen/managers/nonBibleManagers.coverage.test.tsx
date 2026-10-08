@@ -918,6 +918,35 @@ describe('non-Bible manager coverage', () => {
         expect(base.sendScreenMessage).toHaveBeenCalled();
     });
 
+    // A virtual display's browser page and a Screen Mirror guest receive the
+    // screen's messages as JSON: a running clock with its start as text drew
+    // 00:00:00 and never ticked.
+    test('a clock that crossed JSON gets its dateTime back as a Date', () => {
+        const startedAt = new Date('2026-10-07T20:00:00.000Z');
+        const viaJson = JSON.parse(
+            JSON.stringify({
+                countdownData: {
+                    dateTime: startedAt,
+                    durationMillisecond: 60000,
+                },
+                stopwatchData: { dateTime: startedAt },
+                timeDataList: [],
+            }),
+        );
+        const revived = ScreenForegroundManager.reviveTimerDates(viaJson);
+        expect(revived.countdownData?.dateTime).toBeInstanceOf(Date);
+        expect(revived.countdownData?.durationMillisecond).toBe(60000);
+        expect(revived.stopwatchData?.dateTime.getTime()).toBe(
+            startedAt.getTime(),
+        );
+        // Untouched when nothing was lost: the same object comes back.
+        const native = {
+            countdownData: null,
+            stopwatchData: { dateTime: startedAt },
+        } as any;
+        expect(ScreenForegroundManager.reviveTimerDates(native)).toBe(native);
+    });
+
     test('covers ScreenVaryAppDocumentManager selection, render branches, cleanup, loading, and sync clearing', async () => {
         const base = createScreenManagerBase(51);
         const effect = createEffectManager();
@@ -1085,11 +1114,13 @@ describe('non-Bible manager coverage', () => {
         manager.getMemberInstances = vi.fn(async () => [groupMember]);
         const sendSyncVideoTimeSpy = vi.spyOn(manager, 'sendSyncVideoTime');
         await manager.setSlideVideoCurrentTimeForce('video-abc123', 33, true);
-        // The playback rate rides the time message, left off when nobody set one.
+        // The playback rate and the level ride the time message, left off
+        // when nobody set them.
         expect(sendSyncVideoTimeSpy).toHaveBeenCalledWith(
             'video-abc123',
             33,
             true,
+            undefined,
             undefined,
         );
         expect(groupMember.setVideoCurrentTimeForce).toHaveBeenCalledWith(
@@ -1117,6 +1148,7 @@ describe('non-Bible manager coverage', () => {
             presenterVideo.currentTime,
             !presenterVideo.paused,
             presenterVideo.playbackRate,
+            presenterVideo.volume,
         );
         suppressLoopSpy.mockRestore();
 

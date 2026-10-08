@@ -95,7 +95,10 @@ Breaking one of these is a regression even when the feature works.
    second silently replaces the first.
 5. **`webviewTag: true` goes to ONE page by its bounds key**
    (`genPopupWebPreferences`, `electron/electronHelpers.ts`), never by a
-   feature an opener could ask for.
+   feature an opener could ask for. The virtual-display compositor is the one
+   other host: created by main for the app's own screen pages, registered by
+   WebContents (`virtualDisplayHostRegistry.ts`), exempt from this guard and
+   nothing else is.
 6. **The host page is locked down** like the chatbot's
    (`LOCKED_DOWN_PATH_NAMES`, `electron/client/rendererLockdown.ts`): no
    `require`, a decoy `process`. It draws a tab strip and a chooser and

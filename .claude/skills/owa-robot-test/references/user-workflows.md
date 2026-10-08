@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-06j** (Merge of two branches worked on the same day, each numbering its entries 2026-10-06a–i on its own: the Presenter entries come first below, then the Bible Reader entries, from its own `i` down. No entry was changed.)
+**workflowsVersion: 2026-10-07e** (W-51 step 7 — a camera on the screen reaches the browser page, streamed from this computer, and the page stays silent until **[en:tran:Turn on sound]**. Reported by the user: _"camera not showing on web"_, and a console of "play() failed because the user didn't interact". Verified live 2026-10-07 on a scratch dev instance started with a fake camera: the page at the LAN address played the camera overlay with no console error.)
+
+Previous: **workflowsVersion: 2026-10-07d** (W-51 step 8 — **[en:tran:Disconnect]** keeps out that browser, not its address, says so on its page, and lists it under **[en:tran:Disconnected]** with **[en:tran:Allow again]**. Reported by the user from a tab on the public address: after a Disconnect every tab on that address got _"Waiting for the display"_ and a console full of refused sockets, because the router made them all one address. Verified live 2026-10-07 on a scratch dev instance: of two viewers at 192.168.1.3, the disconnected browser showed the message and stopped retrying while the other stayed connected; **[en:tran:Allow again]** emptied the list.)
+
+Previous: **workflowsVersion: 2026-10-07c** (W-51 step 8 — a browser viewer's row in **[en:tran:Watching now]** has **[en:tran:Allow interaction]**, off by default, per client: asked for by the user (_"interactive not propagate to the app"_, _"give toggle option to allow interactive on each connection, disable by default"_, _"allow per client"_). Verified live 2026-10-07 on a scratch dev instance: a viewer's verse taps did not reach the Presenter while the switch was off; after pressing it the viewer was told so and every tap arrived; the same client reconnecting came back already allowed. Only a verse picked and a page scrolled ever pass, checked field by field and capped at sixty a second (`virtualDisplayWebViewers.test.ts`).)
+
+Previous: **workflowsVersion: 2026-10-07b** (W-50 steps 1 and 5 and new W-51 / SP-30, SP-31 — the floating panel is **[en:tran:Virtual Screens Manager]**, with **[en:tran:Screen Mirror Connection]** as one tab and **[en:tran:Virtual Displays]** as the other; a virtual display is a monitor that exists only in the app, listed in the display picker, streamed to a browser page and as an MP4. Asked for by the user: _"add a new tab `Virtual Displays` (old section to be `Screen Mirror Connection`, title of the panel to be `Virtual Screens Manager`"_, _"the self app will see the vitual display and treated as the real one"_, _"I can set wallspapter (image, vidoe or color), resolution (selection and manual input)"_, _"remember `Screen Mirror Connection` opening status"_, _"performance and low latency streaming are the goal"_, _"on client for web rendering, it should support toggle full-screen and keep os stay awake"_, _"make the area collapsible, should remember all collapse/expand state"_. Verified live 2026-10-07 on a scratch dev instance: the picker listed the display as `<name> (Virtual): W×H` and a screen shown on it opened no window; the browser page drew it about 0.17 s behind the presenter; the MP4 decoded as H.264 + AAC with the background video's sound in it while the Mini Screen's player stayed muted; image and video wallpapers and a resolution change reached the stream (a change ended the viewer then watching); **[en:tran:Disconnect]** ended a viewer and refused its address; deleting the display hid its screen; the folds and the panel's tab survived a remount; the browser page's full-screen button entered and left full screen and the page kept the device awake (wake lock, or a looping muted video when refused); the whole tab read in Khmer.)
+
+Previous: **workflowsVersion: 2026-10-07** (W-50 steps 1–4 and new steps 7–8 / new SP-28, SP-29 — Screen Mirror opens to the internet, every address has **[en:tran:Copy address]** and **[en:tran:QR code]**, the guest page has **[en:tran:Paste address]** and **[en:tran:Read QR code]**, guests are marked **[en:tran:This network]** or **[en:tran:Internet]**, and a guest links to several hosts at once. Asked for by the user: _"I want an option to open to internet, have icon address and view qr code of address"_, _"the option is disable by default"_, _"the copy and qrcode should apply to all address"_, _"make assets access posible"_, _"the qrcode is to copy address, not open url"_, _"update screen-mirror.html to have option to read from qrcode image"_, _"make user on host aware which connection from local and which from internet"_, _"update screen-mirror.html to be able to connect to multiple host"_, _"the image should be copy-able"_, _"should have option to past url to auto-fill the input address and port"_. Verified live 2026-10-07: on the dev presenter the switch was off by default, a QR code decoded back to `192.168.1.3:39240`, copy put that text on the clipboard and **[en:tran:Copy image]** a PNG that decoded to the router address; with the option on, the real router (UPnP) forwarded the port, the panel listed the router's public address as **[en:tran:Router]**, `/discovery` answered through that public address, and turning it off removed the mapping (the router answered 714). On the guest page **[en:tran:Paste address]** filled host and port from a QR picture, from `http://[2001:db8::5]:39241/`, and refused `hello world`. Two scratch hosts and a scratch guest on one machine: the guest linked to both at once (each **[en:tran:Connected]**, each its own a1), a second link to one was refused, **[en:tran:Disconnect]** ended one and kept the other. Presenting to two hosts' screen 0 on one guest is covered by `screenMirrorService.test.ts`, not live — on one machine the guest output would cover the desktop.)
+
+Previous: **workflowsVersion: 2026-10-06j** (Merge of two branches worked on the same day, each numbering its entries 2026-10-06a–i on its own: the Presenter entries come first below, then the Bible Reader entries, from its own `i` down. No entry was changed.)
 
 Previous: **workflowsVersion: 2026-10-06i** (W-03 step 3: the preview scrolls smoothly to the selected slide after repeated Next presses, including wrapping from the last slide to the first. Verified live on the dev Presenter, 2026-10-06.)
 
@@ -5142,15 +5152,25 @@ _Verify: KB-61, KB-62, KB-63, KB-64, KB-65._
 ### W-50 — Present on another computer with Screen Mirror
 
 Use one app as the host and another as the guest. Both computers need the same
-app version and a reachable network connection.
+app version and a reachable network connection — the same network, or the
+internet once the host opens to it (step 7).
 
 1. On the host's Presenter, open the Mini Screen list's bottom **⋮** and
-   click **[en:tran:Screen Mirror Connection]**. Hosting is off until you
-   turn on **[en:tran:Let other computers connect]** at the top of the
-   floating panel — until then no other computer can find or join this one.
+   click **[en:tran:Virtual Screens Manager]**, then pick the floating
+   panel's **[en:tran:Screen Mirror Connection]** tab. The panel remembers
+   which tab was open and whether it was open at all. Hosting is off until you
+   turn on **[en:tran:Let other computers connect]** at the top of the tab —
+   until then no other computer can find or join this one.
    Once it is on, the panel shows **[en:tran:Host addresses]** and
    **[en:tran:Port]**: the app serves HTTP and WebSocket on an available port
-   from 39240–39259, and the switch stays on for the next launch.
+   from 39240–39259, and the switch stays on for the next launch. Under
+   **[en:tran:This network]** each address of this computer is written as
+   `address:port` (for example `192.168.1.3:39240`) with two buttons:
+   **[en:tran:Copy address]** puts that text on the clipboard, and
+   **[en:tran:QR code]** shows it as a QR code under the row. The code holds
+   the same plain text, not a link, so a phone that scans it offers the words
+   to copy. **[en:tran:Copy image]** under the code copies it as a picture,
+   with the address written beneath it, to send to whoever sets up the guest.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
    header — its one button, **[en:tran:Presenter]**, goes back — and it looks
    for hosts as it opens, listing them under
@@ -5161,7 +5181,17 @@ app version and a reachable network connection.
    the first host is filled into **[en:tran:Host address]** and
    **[en:tran:Port]** under **[en:tran:Connect by address]** — never over
    an address you typed or a host you picked. Pick another host or type an
-   address if needed, then click **[en:tran:Connect]**. In approval mode the guest reads
+   address if needed, then click **[en:tran:Connect]**. An address someone
+   sent you needs no retyping: **[en:tran:Paste address]** fills
+   **[en:tran:Host address]** and **[en:tran:Port]** from whatever was
+   copied — `address:port`, a whole `http://` link, an IPv6 address in
+   brackets, or a picture of the host's QR code — and
+   **[en:tran:Read QR code]** does the same from a picture file you choose.
+   Pasting `address:port` straight into **[en:tran:Host address]** splits it
+   too, and a picture pasted anywhere in the form is read as a QR code. A
+   clipboard with no address in it reads
+   **[en:tran:No host address found in the clipboard.]** and leaves the form
+   as it was. In approval mode the guest reads
    **[en:tran:Waiting for host approval]** while the host clicks
    **[en:tran:Allow connection]** in the floating panel.
 3. The guest reads **[en:tran:Connected]**, and under
@@ -5170,15 +5200,22 @@ app version and a reachable network connection.
    host lists it under
    **[en:tran:Connected guests]** above the Mini Screen previews and at the
    top of their list menu. Each guest has a stable prefix such as a1 or a2;
-   click its header button to open the connection panel.
+   click its header button to open the connection panel. In the panel every
+   guest and every request carries where it came from:
+   **[en:tran:This network]** for a computer on one of the host's own
+   networks, or **[en:tran:Internet]** — a globe and an amber border — for
+   one from outside. The header button of an internet guest is amber with a
+   globe as well.
 4. Choose the guest's prefixed monitor in the screen card's display picker.
    Present a slide and a background image, then use the card's show control
    (F5). The guest opens the presentation output on that monitor, in front
    of its own app window. Images and
    other host files load through the host's HTTP service; the guest does not
-   need its own copy of them.
+   need its own copy of them. They load from the address the guest dialled,
+   so a guest that reached the host through a router gets them through that
+   router too.
 5. Close the floating panel with its **✕**, or toggle
-   **[en:tran:Screen Mirror Connection]** again. The connection and its
+   **[en:tran:Virtual Screens Manager]** again. The connection and its
    header entry stay active. To end the connection, use
    **[en:tran:Disconnect]**. The guest output closes and its entry leaves
    the host's connected-guest header.
@@ -5187,5 +5224,133 @@ app version and a reachable network connection.
    it to the host preview and to the selected guest output. Selecting an
    image instead releases the camera stream. Camera access must be available
    on the computer providing it.
+7. To let a guest connect from outside this network, turn on
+   **[en:tran:Open to the internet]** under
+   **[en:tran:Let other computers connect]**. It is off until you turn it
+   on, and remembered. A warning says that anyone with the address can ask to
+   connect and that the connection is not encrypted: choose
+   **[en:tran:Require connection code]** under **[en:tran:Guest access]**,
+   and turn the option off when you are done. The host asks the router to
+   forward its port (UPnP); once **[en:tran:The router opened the port.]**,
+   an **[en:tran:Internet]** list shows the router's public address marked
+   **[en:tran:Router]**, and any global IPv6 address of this computer marked
+   IPv6 — which works only if the router lets incoming connections through.
+   When no router answers, or it refuses, the panel says so and shows the
+   port and this computer's address to forward by hand on the router;
+   **[en:tran:Ask the router again]** tries once more. A public address or a
+   DDNS name typed into **[en:tran:Public address (optional)]** and saved
+   with **[en:tran:Save address]** is listed too. Every internet address has
+   the same copy and QR buttons. A router that sits behind another network
+   (carrier NAT) cannot be reached from the internet at all; the panel says
+   so and suggests a VPN such as Tailscale instead. Turning the option off
+   removes the router's port forward and ends every guest that came from the
+   internet — the ones on this network stay. While it is off, a computer
+   outside this computer's own networks is refused. Five wrong connection
+   codes from one sender lock it out for ten minutes.
+8. A guest can be linked to several hosts at once. Once one is connected,
+   **[en:tran:Hosts on this network]** and **[en:tran:Connect by address]**
+   stay under its panel: pick or type another host and click
+   **[en:tran:Connect]** again. Each host gets a panel of its own — its own
+   status, the prefix that host gave this computer, and a
+   **[en:tran:Disconnect]** that ends only that link. A host already linked
+   reads **[en:tran:Connected]** in the list and cannot be picked again;
+   connecting to it a second time by address is refused with
+   **[en:tran:Incompatible or duplicate connection]**. A link that failed —
+   a wrong code, say — keeps its panel with the reason, and its host can be
+   picked again to retry. Two hosts can each show a screen on this computer
+   at the same time.
 
-_Verify: SP-25, SP-26, SP-27._
+_Verify: SP-25, SP-26, SP-27, SP-28, SP-29._
+
+### W-51 — Show screens on a virtual display and watch it from another device
+
+A virtual display is a monitor that exists only inside the app. Screens are
+shown on it exactly as on a real monitor, and any phone, TV or computer can
+watch it — in a web browser, or as a video in a media player — without a
+cable or a second copy of the app.
+
+1. On the Presenter, open the Mini Screen list's bottom **⋮**, click
+   **[en:tran:Virtual Screens Manager]** and pick the floating panel's
+   **[en:tran:Virtual Displays]** tab. The screen card's display picker gets
+   there too: its last row, **[en:tran:Manage Virtual Displays]**, opens the
+   same tab.
+2. Click **[en:tran:Add Virtual Display]**. A display named
+   **[en:tran:Virtual Display]** and its number is added at 1920 × 1080 with a
+   black wallpaper, and its card opens. Up to eight can exist; a deleted
+   display's number is never given to a new one, so an address someone saved
+   never shows them a different display.
+3. The card's header shows the name, the size and what it is doing:
+   **[en:tran:Idle]** while nobody watches, **[en:tran:Live]** with the number
+   of people watching. Its chevron folds the card. Inside,
+   **[en:tran:Settings]** holds **[en:tran:Name]** (saved when you leave the
+   box or press Enter), **[en:tran:Resolution]** — a size from the list, or
+   **[en:tran:Custom]** with **[en:tran:Width]**, **[en:tran:Height]** and
+   **[en:tran:Apply]** — and **[en:tran:Wallpaper]**:
+   **[en:tran:None (black)]**, **[en:tran:Color]** (a colour box),
+   **[en:tran:Image]** or **[en:tran:Video]** (each with
+   **[en:tran:Choose File]**; a file that has gone reads
+   **[en:tran:File not found]**). A video wallpaper plays on a loop, without
+   sound. While someone watches, the card warns that changing the
+   resolution restarts the stream for everyone watching — their player stops
+   and has to be opened again. **[en:tran:Settings]** and
+   **[en:tran:Where to watch]** each fold under their title; the card and both
+   parts stay folded or open as you left them, also after a restart.
+4. In a screen card's display picker, choose the display — it is listed as
+   its name, **[en:tran:Virtual]** and its size, such as
+   `Virtual Display 1 (Virtual): 1920x1080`. Present something and use the
+   card's show control (F5): no window opens on any monitor; the screen shows
+   on the virtual display instead, over its wallpaper. Several screens on one
+   display are stacked in the order they were shown, the way they would be on
+   a real monitor. **[en:tran:Screens on this display]** under
+   **[en:tran:Settings]** lists them.
+5. Sound from a screen on a virtual display goes into what the display
+   streams, not out of this computer's speakers: the Mini Screen's
+   background audio player for that screen stays muted, but its play, pause,
+   position and volume still drive the sound the viewers hear.
+6. **[en:tran:Where to watch]** lists two kinds of address, each with
+   **[en:tran:Copy address]** and **[en:tran:QR code]** (the code holds the
+   whole link):
+   - **[en:tran:Watch in a browser]** — `http://<address>:<port>/vd/<number>/`.
+     The browser draws the display itself from what the app sends it, so it is
+     the fastest way to watch, and this computer encodes nothing for it.
+   - **[en:tran:Video for media players (MP4)]** —
+     `http://<address>:<port>/vd/<number>/video`, an H.264 + AAC MP4 for a
+     player such as VLC or OBS. It is made only while someone plays it.
+
+   Until **[en:tran:Let other devices watch]** at the top of the tab is on,
+   only **[en:tran:This computer]** addresses are listed and nobody else can
+   watch. Turned on, it lists **[en:tran:This network]** addresses; turning
+   on **[en:tran:Open to the internet]** as well (the same option as Screen
+   Mirror's, with the same warning) lists **[en:tran:Internet]** ones. No code
+   is asked for: anyone who has the address can watch.
+7. The browser page fits the display to its window. Its
+   **[en:tran:Full screen]** button (or a double-click) fills the screen, and
+   **[en:tran:Exit full screen]** leaves it; the buttons hide while the mouse
+   is still. **[en:tran:Turn on sound]** is needed once, because a browser
+   plays sound only after the page has been touched; until then the page
+   plays everything silently. A camera put on the screen (Camera Show, or a
+   camera background) is streamed from this computer to the page, on this
+   network. The page keeps the
+   device from sleeping while it is open. If the app goes away, the page reads
+   **[en:tran:Waiting for the display]** and joins again by itself.
+8. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
+   or MP4, where they are (**[en:tran:This computer]**,
+   **[en:tran:This network]** or **[en:tran:Internet]**), their address and
+   since when. **[en:tran:Disconnect]** ends one and keeps it out of this
+   display for ten minutes: a browser by itself (other devices behind the
+   same router are not touched), a media player by its address. The browser
+   page then says the device was disconnected and stops trying. Each one is
+   listed under **[en:tran:Disconnected]**, where **[en:tran:Allow again]**
+   lets it back in at once. **[en:tran:Preview]** shows the display
+   inside the card, listed as **[en:tran:This app (preview)]**. A browser's
+   row has **[en:tran:Allow interaction]**, off for every new viewer. Turned
+   on, a hand on that browser's page reaches the app the way a hand on the
+   projector's own window does: scrolling a passage or a tall slide, and
+   tapping a verse to pick it. Off, those stay on that device. A browser keeps
+   the permission when its page reloads, until the switch is turned off, the
+   viewer is disconnected, or the app restarts. A media player has no switch.
+9. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
+   hidden and go back to the main monitor, as when a monitor is unplugged,
+   and everyone watching is disconnected.
+
+_Verify: SP-30, SP-31._

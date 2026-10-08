@@ -10,6 +10,7 @@ export const htmlFiles = {
     screen: 'screen.html',
     screenMirror: 'screen-mirror.html',
     cameraBroker: 'camera-broker.html',
+    virtualDisplay: 'virtual-display.html',
     reader: 'reader.html',
     setting: 'setting.html',
     finder: 'finder.html',

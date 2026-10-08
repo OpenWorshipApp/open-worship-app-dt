@@ -657,6 +657,7 @@ export function genHtmlForegroundVideo(
         soundVolume = 100,
     }: ForegroundVideoDataType,
     animData: StyleAnimType,
+    isSilenced = false,
 ) {
     const fileSource = FileSource.getInstance(filePath);
     const element = document.createElement('video');
@@ -665,7 +666,7 @@ export function genHtmlForegroundVideo(
     // than an attribute for the reason in the note above, and the volume is
     // set whether or not the sound is on so that unmuting mid-clip lands at
     // the level the operator chose rather than at full.
-    element.muted = !isSoundOn;
+    element.muted = !isSoundOn || isSilenced;
     element.volume = Math.min(1, Math.max(0, soundVolume / 100));
     element.loop = true;
     element.autoplay = true;

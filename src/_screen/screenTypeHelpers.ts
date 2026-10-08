@@ -446,6 +446,8 @@ export const screenTypeList = [
     'init',
     'effect',
     'background-video-time',
+    // A background video's sound, for a screen on a virtual display only.
+    'background-video-sound',
     'vary-app-document-video-time',
     'sync-scroll-percentage',
     'draw',

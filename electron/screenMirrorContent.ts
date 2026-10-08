@@ -193,7 +193,13 @@ export class MirrorContentRegistry {
             return;
         }
         // An explicitly published file cannot change into a symlink to another file.
-        if (!entry.root && actual !== path.resolve(entry.file)) {
+        // Compared through `path.relative`, which ignores case on Windows: the
+        // real path carries the disk's casing (`c--Users`), the published one
+        // whatever casing the app was given (`C--Users`), and both are one file.
+        if (
+            !entry.root &&
+            path.relative(path.resolve(entry.file), actual) !== ''
+        ) {
             res.writeHead(404).end();
             return;
         }

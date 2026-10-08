@@ -48,6 +48,12 @@ const WebContentsViewMock: any = vi.fn(function WebContentsViewMock(
     return view;
 });
 
+let lastPowerSaveBlockerId = 0;
+const nextPowerSaveBlockerId = () => {
+    lastPowerSaveBlockerId += 1;
+    return lastPowerSaveBlockerId;
+};
+
 const menuBuildFromTemplate = vi.fn();
 const menuSetApplicationMenu = vi.fn();
 const MenuMock: any = vi.fn(function MenuMock() {
@@ -147,6 +153,10 @@ export const electronMockState = {
     systemPreferences: {
         askForMediaAccess: vi.fn(),
     },
+    powerSaveBlocker: {
+        start: vi.fn(nextPowerSaveBlockerId),
+        stop: vi.fn(),
+    },
     webContentsViews,
     WebContentsViewMock,
     screen: {
@@ -211,6 +221,10 @@ export const electronMockState = {
         this.ipcMain.handle.mockClear();
         this.ipcMain.on.mockClear();
         this.systemPreferences.askForMediaAccess.mockClear();
+        this.powerSaveBlocker.start
+            .mockClear()
+            .mockImplementation(nextPowerSaveBlockerId);
+        this.powerSaveBlocker.stop.mockClear();
         // `mockClear` keeps any `mockReturnValue` a test set, so each default
         // implementation is restored explicitly.
         this.safeStorage.isEncryptionAvailable
@@ -244,13 +258,26 @@ export const electronMockState = {
         this.nativeTheme.themeSource = 'system';
         this.app.isPackaged = false;
     },
+    get webContentsModule() {
+        return webContentsModule;
+    },
     setBrowserWindowFactory(factory: BrowserWindowFactory) {
         browserWindowFactory = factory;
     },
 };
 
+// `webContents.fromFrame` / `fromId`: unknown by default, as for a frame
+// no test set up.
+const webContentsModule = {
+    fromFrame: vi.fn((_frame: any): any => undefined),
+    fromId: vi.fn((_id: number): any => undefined),
+};
+
 export function createElectronModuleMock() {
+    webContentsModule.fromFrame.mockClear();
+    webContentsModule.fromId.mockClear();
     const electronModule = {
+        webContents: webContentsModule,
         app: electronMockState.app,
         safeStorage: electronMockState.safeStorage,
         nativeTheme: electronMockState.nativeTheme,
@@ -264,6 +291,7 @@ export function createElectronModuleMock() {
         dialog: electronMockState.dialog,
         ipcMain: electronMockState.ipcMain,
         systemPreferences: electronMockState.systemPreferences,
+        powerSaveBlocker: electronMockState.powerSaveBlocker,
         screen: electronMockState.screen,
         Menu: electronMockState.Menu,
         MenuItem: electronMockState.MenuItem,

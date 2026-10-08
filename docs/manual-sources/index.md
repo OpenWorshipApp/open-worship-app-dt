@@ -31,7 +31,7 @@ features:
     details: "Hide, show, and reset the app's panels (View menu) · See who published a Bible translation (and its copyright) · Share your Bible translations (XML) with another machine · Add a Bible translation from the internet (XML), and make it read in its own language · Bring a song in from CCLI SongSelect · Import a public domain song (no account needed) · Keep your own files beside the verse (Resources) · See how people and places connect (Connection Graph) · Let the passage scroll itself while you read · Mark up a passage while you study it · Share a whole page of Bible Notes with another machine · Ask the app for help (the chatbot) · Put messages on the screen · Give a slide, a song, a background or an overlay its own transition · See every keyboard shortcut for this page (Help → Keyboard Shortcuts)"
     link: /keyboard-shortcut-reference-tutorial-appendix/w-31-hide-show-and-reset-the-app-s-panels-view-menu
   - title: "Screen Mirror"
-    details: "Present on another computer with Screen Mirror"
+    details: "Present on another computer with Screen Mirror · Show screens on a virtual display and watch it from another device"
     link: /screen-mirror/w-50-present-on-another-computer-with-screen-mirror
 ---
 

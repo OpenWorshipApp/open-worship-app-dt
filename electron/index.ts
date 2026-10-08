@@ -25,7 +25,8 @@ import {
 import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 import { initDisplayMediaHandler } from './displayMediaHelpers';
-import { initScreenMirror } from './screenMirrorService';
+import { getScreenMirror, initScreenMirror } from './screenMirrorService';
+import { initVirtualDisplays } from './virtualDisplayService';
 import {
     findUserDataPathArg,
     initAppUserModelId,
@@ -90,6 +91,7 @@ async function main() {
     // can exist: the window is opened by a renderer, not by code here.
     initAiChatGuestGuard();
     await initScreenMirror();
+    initVirtualDisplays(getScreenMirror());
     const appController = ElectronAppController.getInstance();
     initSecondInstance(appController);
     initUserTasks();

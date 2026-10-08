@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [CB-68]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-06"
+workflowsVersion: "2026-10-07"
 ---
 # W-44 — Chat with an AI website inside the app (AI Chat)
 
@@ -98,5 +98,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-06).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-07).
 :::

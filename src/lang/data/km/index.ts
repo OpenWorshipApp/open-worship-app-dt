@@ -60,6 +60,80 @@ const dictionary = {
     'Disconnected by host': 'ម៉ាស៊ីនមេបានផ្តាច់ការតភ្ជាប់',
     'Incompatible or duplicate connection': 'ការតភ្ជាប់មិនត្រូវគ្នា ឬស្ទួន',
     'Screen Mirror Connection': 'ការតភ្ជាប់អេក្រង់ឆ្លុះ',
+    'Full screen': 'ពេញអេក្រង់',
+    'Exit full screen': 'ចេញពីពេញអេក្រង់',
+    'Turn on sound': 'បើកសំឡេង',
+    'Waiting for the display': 'កំពុងរង់ចាំម៉ូនីទ័រ',
+    'Watch in a browser': 'មើលក្នុងកម្មវិធីរុករក',
+    'Where to watch': 'កន្លែងសម្រាប់មើល',
+    'Allow interaction': 'អនុញ្ញាតឲ្យប៉ះ និងរំកិល',
+    'Allow again': 'អនុញ្ញាតម្ដងទៀត',
+    'This device was disconnected. Ask whoever runs the display to let it back in.':
+        'ឧបករណ៍នេះត្រូវបានផ្ដាច់។ សូមសុំអ្នកដែលគ្រប់គ្រងម៉ូនីទ័រឲ្យអនុញ្ញាតវាម្ដងទៀត។',
+    'Lets this viewer scroll and pick verses in the app':
+        'អនុញ្ញាតឲ្យអ្នកមើលនេះរំកិល និងជ្រើសខគម្ពីរក្នុងកម្មវិធី',
+    'Video for media players (MP4)': 'វីដេអូសម្រាប់កម្មវិធីចាក់មេឌៀ (MP4)',
+    Browser: 'កម្មវិធីរុករក',
+    'This computer cannot encode AAC audio, so the video has no sound.':
+        'កុំព្យូទ័រនេះមិនអាចអ៊ិនកូដសំឡេង AAC បានទេ ដូច្នេះវីដេអូគ្មានសំឡេងទេ។',
+    'Virtual Screens Manager': 'កម្មវិធីគ្រប់គ្រងអេក្រង់និម្មិត',
+    'Virtual Displays': 'ម៉ូនីទ័រនិម្មិត',
+    'Virtual Display': 'ម៉ូនីទ័រនិម្មិត',
+    Virtual: 'និម្មិត',
+    'Add Virtual Display': 'បន្ថែមម៉ូនីទ័រនិម្មិត',
+    'Manage Virtual Displays': 'គ្រប់គ្រងម៉ូនីទ័រនិម្មិត',
+    'Delete Virtual Display': 'លុបម៉ូនីទ័រនិម្មិត',
+    'Too many virtual displays': 'ម៉ូនីទ័រនិម្មិតច្រើនពេក',
+    'Virtual display not found': 'រកមិនឃើញម៉ូនីទ័រនិម្មិត',
+    'Let other devices watch': 'អនុញ្ញាតឲ្យឧបករណ៍ផ្សេងមើល',
+    'Turn this on to watch virtual displays from phones, TVs and other computers on this network.':
+        'បើកវាដើម្បីមើលម៉ូនីទ័រនិម្មិតពីទូរស័ព្ទ ទូរទស្សន៍ និងកុំព្យូទ័រផ្សេងទៀតនៅលើបណ្ដាញនេះ។',
+    'Anyone who has a stream address can watch it, and the stream is not encrypted. Turn this off when you are done.':
+        'អ្នកណាដែលមានអាសយដ្ឋានផ្សាយ អាចមើលវាបាន ហើយការផ្សាយមិនត្រូវបានអ៊ិនគ្រីបទេ។ សូមបិទវាពេលអ្នកប្រើរួច។',
+    'A virtual display is a screen that exists only in this app. Show screens on it like on a real monitor, and watch it from any device as a video.':
+        'ម៉ូនីទ័រនិម្មិត គឺជាអេក្រង់ដែលមានតែនៅក្នុងកម្មវិធីនេះ។ បង្ហាញអេក្រង់លើវាដូចលើម៉ូនីទ័រពិត ហើយមើលវាពីឧបករណ៍ណាមួយជាវីដេអូ។',
+    Stopped: 'បានឈប់',
+    'Starting…': 'កំពុងចាប់ផ្តើម…',
+    Idle: 'ទំនេរ',
+    Resolution: 'កម្រិតភាពច្បាស់',
+    Custom: 'ផ្ទាល់ខ្លួន',
+    'Changing the resolution restarts the stream for everyone watching.':
+        'ការប្តូរកម្រិតភាពច្បាស់ នឹងចាប់ផ្តើមការផ្សាយឡើងវិញសម្រាប់អ្នកកំពុងមើលទាំងអស់។',
+    Wallpaper: 'រូបផ្ទៃខាងក្រោយ',
+    'None (black)': 'គ្មាន (ខ្មៅ)',
+    'This app (preview)': 'កម្មវិធីនេះ (មើលជាមុន)',
+    'Watching now': 'កំពុងមើលឥឡូវនេះ',
+    'No one is watching': 'គ្មាននរណាកំពុងមើលទេ',
+    'Screens showing on this virtual display will be hidden, and everyone watching it will be disconnected.':
+        'អេក្រង់ដែលកំពុងបង្ហាញលើម៉ូនីទ័រនិម្មិតនេះនឹងត្រូវលាក់ ហើយអ្នកកំពុងមើលទាំងអស់នឹងត្រូវផ្តាច់។',
+    'Screens on this display': 'អេក្រង់នៅលើម៉ូនីទ័រនេះ',
+    'This computer cannot make MP4 video':
+        'កុំព្យូទ័រនេះមិនអាចបង្កើតវីដេអូ MP4 បានទេ',
+    'The virtual display stopped': 'ម៉ូនីទ័រនិម្មិតបានឈប់',
+    'The virtual display stopped recording': 'ម៉ូនីទ័រនិម្មិតបានឈប់ថត',
+    'Its virtual display is not available. Choose another display for this screen.':
+        'ម៉ូនីទ័រនិម្មិតរបស់វាមិនអាចប្រើបានទេ។ សូមជ្រើសរើសម៉ូនីទ័រផ្សេងសម្រាប់អេក្រង់នេះ។',
+    'The firewall is stopping other devices from reaching this app.':
+        'ជញ្ជាំងភ្លើងកំពុងរារាំងឧបករណ៍ផ្សេងមិនឲ្យភ្ជាប់មកកម្មវិធីនេះ។',
+    'This network is set as Public, and the firewall lets this app in only on private networks.':
+        'បណ្ដាញនេះត្រូវបានកំណត់ជាសាធារណៈ ហើយជញ្ជាំងភ្លើងអនុញ្ញាតកម្មវិធីនេះតែលើបណ្ដាញឯកជនប៉ុណ្ណោះ។',
+    'Set this network to Private, or allow this app on public networks in the firewall.':
+        'កំណត់បណ្ដាញនេះជាឯកជន ឬអនុញ្ញាតកម្មវិធីនេះលើបណ្ដាញសាធារណៈនៅក្នុងជញ្ជាំងភ្លើង។',
+    'Click Open firewall settings.': 'ចុច បើកការកំណត់ជញ្ជាំងភ្លើង។',
+    'Click Change settings.': 'ចុច ប្តូរការកំណត់ (Change settings)។',
+    'Find this app in the list and tick Private. Tick Public too if this network is public.':
+        'រកកម្មវិធីនេះនៅក្នុងបញ្ជី ហើយធីក ឯកជន (Private)។ ធីក សាធារណៈ (Public) ផងដែរ ប្រសិនបើបណ្ដាញនេះជាសាធារណៈ។',
+    'Click OK, then Check again.': 'ចុច OK រួចចុច ពិនិត្យម្តងទៀត។',
+    'Click Options.': 'ចុច ជម្រើស (Options)។',
+    'Find this app and set it to allow incoming connections, and turn off blocking all incoming connections.':
+        'រកកម្មវិធីនេះ ហើយកំណត់ឲ្យអនុញ្ញាតការតភ្ជាប់ចូល និងបិទការរារាំងការតភ្ជាប់ចូលទាំងអស់។',
+    'If another device cannot connect, allow this port in the firewall:':
+        'ប្រសិនបើឧបករណ៍ផ្សេងមិនអាចភ្ជាប់បាន សូមអនុញ្ញាតច្រកនេះនៅក្នុងជញ្ជាំងភ្លើង៖',
+    'Another security program on this computer may need to allow this app too.':
+        'កម្មវិធីសុវត្ថិភាពផ្សេងទៀតនៅលើកុំព្យូទ័រនេះ ប្រហែលជាត្រូវអនុញ្ញាតកម្មវិធីនេះដែរ។',
+    'Open firewall settings': 'បើកការកំណត់ជញ្ជាំងភ្លើង',
+    'Open network settings': 'បើកការកំណត់បណ្ដាញ',
+    'Check again': 'ពិនិត្យម្តងទៀត',
     'Screen mirror server is unavailable':
         'ម៉ាស៊ីនបម្រើអេក្រង់ឆ្លុះមិនអាចប្រើបាន',
     'Connect to host': 'តភ្ជាប់ទៅម៉ាស៊ីនមេ',
@@ -105,6 +179,50 @@ const dictionary = {
     'Connect by address': 'តភ្ជាប់តាមអាសយដ្ឋាន',
     'Leave empty unless the host uses a code.':
         'ទុកឲ្យទទេ លុះត្រាតែម៉ាស៊ីនមេប្រើលេខកូដ។',
+    'Open to the internet': 'បើកឲ្យតភ្ជាប់តាមអ៊ីនធឺណិត',
+    'Anyone who has the address can ask to connect, and the connection is not encrypted. Use a connection code, and turn this off when you are done.':
+        'អ្នកណាដែលមានអាសយដ្ឋាននេះ អាចស្នើសុំតភ្ជាប់បាន ហើយការតភ្ជាប់មិនត្រូវបានអ៊ិនគ្រីបទេ។ សូមប្រើលេខកូដតភ្ជាប់ ហើយបិទវាវិញពេលអ្នករួចរាល់។',
+    Internet: 'អ៊ីនធឺណិត',
+    'This network': 'បណ្ដាញនេះ',
+    Router: 'រ៉ោតទ័រ',
+    'Public address': 'អាសយដ្ឋានសាធារណៈ',
+    'QR code': 'កូដ QR',
+    'Copy address': 'ចម្លងអាសយដ្ឋាន',
+    'Asking the router to open the port…': 'កំពុងស្នើរ៉ោតទ័រឲ្យបើកច្រក…',
+    'The router opened the port.': 'រ៉ោតទ័របានបើកច្រករួចហើយ។',
+    'This router is behind another network, so the internet cannot reach it. A VPN such as Tailscale works instead.':
+        'រ៉ោតទ័រនេះនៅពីក្រោយបណ្ដាញមួយទៀត ដូច្នេះអ៊ីនធឺណិតមិនអាចទៅដល់វាបានទេ។ សូមប្រើ VPN ដូចជា Tailscale ជំនួសវិញ។',
+    'No router answered.': 'គ្មានរ៉ោតទ័រណាឆ្លើយតបទេ។',
+    'The router refused to open the port.': 'រ៉ោតទ័របានបដិសេធមិនបើកច្រក។',
+    'Forward the port on the router to this computer, then type the public address below.':
+        'សូមបញ្ជូនបន្តច្រកនៅលើរ៉ោតទ័រមកកុំព្យូទ័រនេះ រួចវាយអាសយដ្ឋានសាធារណៈនៅខាងក្រោម។',
+    'Ask the router again': 'ស្នើរ៉ោតទ័រម្ដងទៀត',
+    'An IPv6 address works only if the router lets incoming connections through.':
+        'អាសយដ្ឋាន IPv6 ដំណើរការបាន លុះត្រាតែរ៉ោតទ័រអនុញ្ញាតឲ្យការតភ្ជាប់ចូលឆ្លងកាត់។',
+    'Public address (optional)': 'អាសយដ្ឋានសាធារណៈ (ស្រេចចិត្ត)',
+    'Save address': 'រក្សាទុកអាសយដ្ឋាន',
+    'Connected from the internet': 'បានតភ្ជាប់តាមអ៊ីនធឺណិត',
+    'Connected from this network': 'បានតភ្ជាប់ពីបណ្ដាញនេះ',
+    'Invalid host or port': 'អាសយដ្ឋានម៉ាស៊ីនមេ ឬច្រកមិនត្រឹមត្រូវ',
+    'Too many hosts': 'ម៉ាស៊ីនមេច្រើនពេក',
+    'Too many wrong codes. Try again later.':
+        'វាយលេខកូដខុសច្រើនដងពេក។ សូមព្យាយាមម្ដងទៀតពេលក្រោយ។',
+    'Too many connection requests. Try again later.':
+        'សំណើតភ្ជាប់ច្រើនពេក។ សូមព្យាយាមម្ដងទៀតពេលក្រោយ។',
+    'No host address found in this image.':
+        'រកមិនឃើញអាសយដ្ឋានម៉ាស៊ីនមេក្នុងរូបភាពនេះទេ។',
+    'Choose a picture of a QR code, or paste one here.':
+        'ជ្រើសរើសរូបភាពកូដ QR ឬបិទភ្ជាប់វានៅទីនេះ។',
+    'Read QR code': 'អានកូដ QR',
+    'Paste address': 'បិទភ្ជាប់អាសយដ្ឋាន',
+    'Fill in a copied address, link or QR code picture.':
+        'បំពេញដោយអាសយដ្ឋាន តំណ ឬរូបភាពកូដ QR ដែលបានចម្លង។',
+    'No host address found in the clipboard.':
+        'រកមិនឃើញអាសយដ្ឋានម៉ាស៊ីនមេក្នុងក្ដារតម្បៀតខ្ទាស់ទេ។',
+    'Copy image': 'ចម្លងរូបភាព',
+    'The QR code image has been copied to the clipboard':
+        'រូបភាពកូដ QR ត្រូវបានចម្លងទៅក្ដារតម្បៀតខ្ទាស់ហើយ',
+    'The QR code image could not be copied': 'មិនអាចចម្លងរូបភាពកូដ QR បានទេ',
     'HTML-in-Canvas': 'HTML-in-Canvas',
     'PDF.js': 'PDF.js',
     'Interactive text': 'អត្ថបទអន្តរកម្ម',

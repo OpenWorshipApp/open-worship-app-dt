@@ -55,16 +55,39 @@ export default function MiniScreenComp() {
                     aria-label={tran('Connected guests')}
                 >
                     <span className="small">{tran('Connected guests')}</span>
-                    {mirror.guests.map((guest) => (
-                        <button
-                            key={guest.id}
-                            className="btn btn-sm btn-outline-info py-0"
-                            onClick={() => setMirrorPanelShowing(true)}
-                        >
-                            <i className="bi bi-pc-display me-1" />
-                            {guest.prefix}: {guest.name}
-                        </button>
-                    ))}
+                    {mirror.guests.map((guest) => {
+                        // A guest from outside this network wears the globe
+                        // and the warning colour, so the room is never unsure
+                        // who is watching from elsewhere.
+                        const isInternet = guest.network === 'internet';
+                        return (
+                            <button
+                                key={guest.id}
+                                className={
+                                    'btn btn-sm py-0 ' +
+                                    (isInternet
+                                        ? 'btn-outline-warning'
+                                        : 'btn-outline-info')
+                                }
+                                title={
+                                    isInternet
+                                        ? tran('Connected from the internet')
+                                        : tran('Connected from this network')
+                                }
+                                onClick={() => setMirrorPanelShowing(true)}
+                            >
+                                <i
+                                    className={
+                                        'bi me-1 ' +
+                                        (isInternet
+                                            ? 'bi-globe2'
+                                            : 'bi-pc-display')
+                                    }
+                                />
+                                {guest.prefix}: {guest.name}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
             <MiniScreenBodyComp previewScale={previewScale} />

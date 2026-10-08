@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
+        <title>Open Worship app - Virtual Display</title>
+        <style>
+            html,
+            body {
+                margin: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                background: #000;
+            }
+            #wallpaper,
+            #screens,
+            #screens > webview {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+            }
+            #wallpaper > img,
+            #wallpaper > video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="wallpaper"></div>
+        <div id="screens"></div>
+        <script type="module" src="/src/virtual-display.ts"></script>
+    </body>
+</html>

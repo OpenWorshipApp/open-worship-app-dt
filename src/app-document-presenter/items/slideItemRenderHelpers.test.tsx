@@ -279,7 +279,7 @@ describe('slideItemRenderHelpers', () => {
         expect(getDataListMock).not.toHaveBeenCalled();
     });
 
-    test('builds color-note menu items and emits updates after a color change', async () => {
+    test('saves color-note choices without broadcasting a screen update', async () => {
         const { genChooseColorNoteOption, getSlideItemShadowingStyle } =
             await import('./slideItemRenderHelpers');
 
@@ -307,7 +307,7 @@ describe('slideItemRenderHelpers', () => {
             7,
             '#654321',
         );
-        expect(fireUpdateEventMock).toHaveBeenCalledTimes(1);
+        expect(fireUpdateEventMock).not.toHaveBeenCalled();
 
         const styleMarkup = renderToStaticMarkup(getSlideItemShadowingStyle());
         expect(styleMarkup).toContain(

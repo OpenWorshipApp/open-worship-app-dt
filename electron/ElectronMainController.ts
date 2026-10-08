@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, MenuItem, shell } from 'electron';
 import path from 'node:path';
 
 import { type ScreenMessageType } from './electronEventListener';
+import { genKeepAwake } from './keepAwakeHelpers';
 import { genRoutProps, genRouteUrl } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
@@ -108,6 +109,22 @@ function guardMainNavigation(win: BrowserWindow) {
     win.webContents.on('will-redirect', handleNavigation);
 }
 
+// The Screen Mirror guest page stands in for a projector machine: it holds
+// the connection a host's screens arrive through, and it is often left alone
+// for the whole service. While the main window is on it the display is kept
+// awake; leaving the page lets it sleep again. The window closing ends the
+// process, which releases the request with it.
+function keepAwakeOnScreenMirrorPage(win: BrowserWindow) {
+    const setIsAwake = genKeepAwake();
+    win.webContents.on('did-navigate', (_event, url) => {
+        setIsAwake(
+            URL.canParse(url) &&
+                new URL(url).pathname.split('/').pop() ===
+                    htmlFiles.screenMirror,
+        );
+    });
+}
+
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
     win: BrowserWindow;
@@ -137,6 +154,7 @@ export default class ElectronMainController {
         });
         guardBrowsing(win, webPreferences);
         guardMainNavigation(win);
+        keepAwakeOnScreenMirrorPage(win);
         applyRendererRecovery(win, () => {
             // Re-resolved at crash time: the window may have navigated to
             // another main page since boot, and that navigation is what

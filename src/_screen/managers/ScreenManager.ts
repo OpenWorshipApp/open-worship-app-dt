@@ -441,6 +441,8 @@ export default class ScreenManager extends ScreenManagerBase {
             ScreenBibleManager.receiveSyncTextStyle(message);
         } else if (type === 'background-video-time') {
             ScreenBackgroundManager.receiveSyncVideoTime(message);
+        } else if (type === 'background-video-sound') {
+            ScreenBackgroundManager.receiveSyncVideoSound(message);
         } else if (type === 'vary-app-document-video-time') {
             ScreenVaryAppDocumentManager.receiveSyncVideoTime(message);
         } else if (type === 'sync-scroll-percentage') {

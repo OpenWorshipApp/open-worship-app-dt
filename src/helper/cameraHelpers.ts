@@ -267,6 +267,12 @@ export async function getCameraAndShowMedia(
         const mediaStream = await acquireCameraStream(resolvedId);
         acquiredDeviceId = resolvedId;
         const video = document.createElement('video');
+        // A camera brings no sound (it is opened \`audio: false\`), and a
+        // browser refuses to start an element that is not muted until the
+        // page is touched -- a phone watching a virtual display drew an empty
+        // box. Set as a PROPERTY: the attribute does not stop that.
+        video.muted = true;
+        video.playsInline = true;
         video.srcObject = mediaStream;
         video.onloadedmetadata = () => {
             playMediaElement(video);

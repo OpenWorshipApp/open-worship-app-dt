@@ -6,6 +6,15 @@ import {
     readMirrorCameras,
     rankMirrorAddress,
     sortMirrorHosts,
+    readMirrorIpv6,
+    readMirrorIpv4,
+    toMirrorPlainAddress,
+    isMirrorLanAddress,
+    isMirrorGlobalIpv6,
+    toMirrorSenderKey,
+    toMirrorHostPort,
+    readMirrorAddressText,
+    readMirrorOrigin,
 } from './screenMirrorProtocol';
 
 describe('mirror wire validation', () => {
@@ -106,5 +115,111 @@ describe('choosing the address a scanned host is offered on', () => {
             'a',
         ]);
         expect(hosts[0].id).toBe('a');
+    });
+});
+
+describe('mirror addresses', () => {
+    test('reads IPv6 in every written form and IPv4 mapped into it', () => {
+        expect(readMirrorIpv6('::1')).toEqual([0, 0, 0, 0, 0, 0, 0, 1]);
+        expect(readMirrorIpv6('[2001:db8::5]')).toEqual([
+            0x2001, 0xdb8, 0, 0, 0, 0, 0, 5,
+        ]);
+        expect(readMirrorIpv6('fe80::1%12')).toEqual([
+            0xfe80, 0, 0, 0, 0, 0, 0, 1,
+        ]);
+        expect(readMirrorIpv6('::ffff:192.168.1.5')).toEqual([
+            0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0105,
+        ]);
+        expect(readMirrorIpv6('1:2:3:4:5:6:7:8:9')).toBeNull();
+        expect(readMirrorIpv6('1::2::3')).toBeNull();
+        expect(readMirrorIpv6('192.168.1.5')).toBeNull();
+        expect(readMirrorIpv4('::ffff:10.0.0.7')).toEqual([10, 0, 0, 7]);
+        expect(readMirrorIpv4('10.0.0.256')).toBeNull();
+        expect(toMirrorPlainAddress('::ffff:192.168.1.5')).toBe('192.168.1.5');
+        expect(toMirrorPlainAddress('2001:db8::5')).toBe('2001:db8::5');
+    });
+    test('tells this computer’s own networks from the internet', () => {
+        for (const address of [
+            '127.0.0.1',
+            '::ffff:192.168.1.5',
+            '10.1.2.3',
+            '172.20.240.1',
+            '169.254.9.9',
+            '100.101.102.103',
+            '::1',
+            'fd12:3456::1',
+            'fe80::1%4',
+        ])
+            expect(isMirrorLanAddress(address), address).toBe(true);
+        for (const address of [
+            '203.0.113.10',
+            '172.32.0.1',
+            '100.128.0.1',
+            '2001:db8::5',
+            '::ffff:8.8.8.8',
+            'not an address',
+        ])
+            expect(isMirrorLanAddress(address), address).toBe(false);
+        expect(isMirrorGlobalIpv6('2606:4700::1111')).toBe(true);
+        expect(isMirrorGlobalIpv6('fd12::1')).toBe(false);
+        expect(isMirrorGlobalIpv6('::ffff:8.8.8.8')).toBe(false);
+    });
+    test('counts wrong codes per IPv4 address and per IPv6 /64', () => {
+        expect(toMirrorSenderKey('::ffff:203.0.113.10')).toBe('203.0.113.10');
+        expect(toMirrorSenderKey('2001:db8:1:2:aaaa::1')).toBe(
+            toMirrorSenderKey('2001:db8:1:2:bbbb::9'),
+        );
+        expect(toMirrorSenderKey('2001:db8:1:2::1')).not.toBe(
+            toMirrorSenderKey('2001:db8:1:3::1'),
+        );
+    });
+    test('writes and reads addresses the way a person types them', () => {
+        expect(toMirrorHostPort('192.168.1.3', 39241)).toBe(
+            '192.168.1.3:39241',
+        );
+        expect(toMirrorHostPort('2001:db8::5', 39241)).toBe(
+            '[2001:db8::5]:39241',
+        );
+        expect(toMirrorHostPort('[2001:db8::5]', 1)).toBe('[2001:db8::5]:1');
+        expect(readMirrorAddressText(' 192.168.1.3:39241 ')).toEqual({
+            host: '192.168.1.3',
+            port: 39241,
+        });
+        expect(readMirrorAddressText('[2001:db8::5]:39241')).toEqual({
+            host: '2001:db8::5',
+            port: 39241,
+        });
+        expect(readMirrorAddressText('2001:db8::5')).toEqual({
+            host: '2001:db8::5',
+            port: null,
+        });
+        expect(readMirrorAddressText('http://Church.example:8080/x')).toEqual({
+            host: 'church.example',
+            port: 8080,
+        });
+        expect(readMirrorAddressText('church.example')).toEqual({
+            host: 'church.example',
+            port: null,
+        });
+        expect(readMirrorAddressText('')).toBeNull();
+        expect(readMirrorAddressText('a b')).toBeNull();
+        expect(readMirrorAddressText('ftp://x.example')).toBeNull();
+        expect(readMirrorAddressText('http://user@x.example')).toBeNull();
+        expect(readMirrorAddressText('x.example:70000')).toBeNull();
+    });
+    test('reads the origin a guest dialled from its Host header', () => {
+        expect(readMirrorOrigin('203.0.113.10:40001')).toBe(
+            'http://203.0.113.10:40001',
+        );
+        expect(readMirrorOrigin('[2001:db8::5]:39241')).toBe(
+            'http://[2001:db8::5]:39241',
+        );
+        expect(readMirrorOrigin('church.example')).toBe(
+            'http://church.example',
+        );
+        expect(readMirrorOrigin('evil.example/path')).toBeNull();
+        expect(readMirrorOrigin('a@b.example')).toBeNull();
+        expect(readMirrorOrigin('b.example:99999')).toBeNull();
+        expect(readMirrorOrigin(undefined)).toBeNull();
     });
 });

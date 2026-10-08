@@ -1,6 +1,7 @@
 import { getSetting } from '../../helper/settingHelpers';
 import appProvider from '../../server/appProvider';
 import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
+import { isVirtualDisplayId } from '../../../electron/virtualDisplayProtocol';
 import { type AllDisplayType } from '../screenTypeHelpers';
 
 export const SCREEN_MANAGER_SETTING_NAME = 'screen-display-';
@@ -18,7 +19,10 @@ export function getDefaultScreenDisplay() {
     const { primaryDisplay, displays } = getAllDisplays();
     return (
         displays.find((display) => {
-            return display.id !== primaryDisplay.id;
+            return (
+                display.id !== primaryDisplay.id &&
+                !isVirtualDisplayId(display.id)
+            );
         }) ?? primaryDisplay
     );
 }

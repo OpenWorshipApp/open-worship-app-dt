@@ -14,6 +14,7 @@ import {
     genHtmlForegroundWeb,
 } from '../screenForegroundHelpers';
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
+import { checkIsPresenterCopySilenced } from '../screenSoundHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
@@ -1093,6 +1094,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const { handleAdding, handleRemoving } = genHtmlForegroundVideo(
             data,
             this.styleAnimFor(data),
+            checkIsPresenterCopySilenced(this.screenManagerBase),
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
@@ -1209,8 +1211,28 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
 
+    /**
+     * A clock's `dateTime` back as a Date. A message that crossed JSON on its
+     * way here -- a virtual display's browser page, a Screen Mirror guest --
+     * carries it as text, and a running clock with no Date shows zeros and
+     * never ticks. A Date already there is left as it is, object and all.
+     */
+    static reviveTimerDates(data: ForegroundDataType): ForegroundDataType {
+        const revive = <T extends { dateTime: Date }>(timer: T | null) => {
+            return !timer || timer.dateTime instanceof Date
+                ? timer
+                : { ...timer, dateTime: new Date(timer.dateTime) };
+        };
+        const countdownData = revive(data.countdownData);
+        const stopwatchData = revive(data.stopwatchData);
+        return countdownData === data.countdownData &&
+            stopwatchData === data.stopwatchData
+            ? data
+            : { ...data, countdownData, stopwatchData };
+    }
+
     receiveSyncScreen(message: ScreenMessageType) {
-        const data: ForegroundDataType = message.data;
+        const data = ScreenForegroundManager.reviveTimerDates(message.data);
         for (const [key, setter] of this.setterMap.entries()) {
             setter(data[key as keyof ForegroundDataType] ?? null, true);
         }

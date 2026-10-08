@@ -493,8 +493,22 @@ export function useFileSourceIsOnScreen(
     return isOnScreen ?? false;
 }
 
+// One file has a different address in each window: a file URL in the
+// presenter, a published `/content/<scope>/<id>/<name>` on a screen page the
+// Screen Mirror server serves (every screen now loads from it). Keyed on the
+// address, a sync message from the presenter named a video no screen had, so
+// the key is the file's name, which every window shares.
+export function toMediaSyncKey(src: string) {
+    try {
+        const name = new URL(src, 'http://localhost').pathname.split('/').pop();
+        return name ? decodeURIComponent(name) : src;
+    } catch {
+        return src;
+    }
+}
+
 export function genVideoIDFromSrc(src: string) {
-    const md5 = appProvider.systemUtils.generateMD5(src);
+    const md5 = appProvider.systemUtils.generateMD5(toMediaSyncKey(src));
     return `video-${md5}`;
 }
 

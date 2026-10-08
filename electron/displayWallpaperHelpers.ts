@@ -350,6 +350,59 @@ export async function readDisplayWallpaper({
     return wallpaper;
 }
 
+/**
+ * A virtual display's own wallpaper, as the mini screen card draws a monitor's:
+ * a small JPEG of the picture, a still of the video (never the video itself --
+ * a card playing one is a decoder running for a thumbnail), or the colour.
+ * Black when there is none, because black is what that display streams.
+ */
+export async function readVirtualDisplayWallpaper(
+    wallpaper:
+        | { kind: 'none' }
+        | { kind: 'color'; color: string }
+        | { kind: 'image' | 'video'; filePath: string },
+    width?: number,
+): Promise<DisplayWallpaperType> {
+    const black = '#000000';
+    if (wallpaper.kind === 'none') {
+        return { imageDataUrl: null, color: black, fit: 'cover' };
+    }
+    if (wallpaper.kind === 'color') {
+        return { imageDataUrl: null, color: wallpaper.color, fit: 'cover' };
+    }
+    const validWidth = toValidWidth(width);
+    const cacheKey = `virtual:${wallpaper.kind}:${validWidth}:${wallpaper.filePath}`;
+    const cached = cacheMap.get(cacheKey);
+    if (cached?.wallpaper) {
+        return cached.wallpaper;
+    }
+    let imageDataUrl: string | null = null;
+    if (wallpaper.kind === 'image') {
+        imageDataUrl = toImageDataUrl(wallpaper.filePath, validWidth);
+    } else if (process.platform === 'win32' || process.platform === 'darwin') {
+        try {
+            const still = await nativeImage.createThumbnailFromPath(
+                wallpaper.filePath,
+                { width: validWidth, height: Math.round(validWidth * 0.75) },
+            );
+            imageDataUrl = still.isEmpty()
+                ? null
+                : `data:image/jpeg;base64,${still
+                      .toJPEG(JPEG_QUALITY)
+                      .toString('base64')}`;
+        } catch (_error) {
+            imageDataUrl = null;
+        }
+    }
+    const result: DisplayWallpaperType = {
+        imageDataUrl,
+        color: black,
+        fit: 'cover',
+    };
+    holdInCache(cacheKey, result);
+    return result;
+}
+
 /** Forgets every held wallpaper — what Refresh Preview is asking for. */
 export function forgetDisplayWallpapers() {
     for (const entry of cacheMap.values()) {

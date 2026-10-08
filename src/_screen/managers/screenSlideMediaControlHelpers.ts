@@ -1,5 +1,6 @@
 import type { PresentingFlowMediaControlType } from '../../presenting-flow/presentingFlowMediaControlHelpers';
 import { playMediaElement } from '../../helper/mediaHelpers';
+import { checkIsSoundHere } from '../screenSoundHelpers';
 import type { SlideYouTubePlayer } from './slideYouTubeSyncHelpers';
 import type ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
 
@@ -238,8 +239,11 @@ function applyVolumeAndSpeed(
             );
         }
     }
+    // `setVolume` also un-mutes, and the presenter's copy of a screen on a
+    // virtual display must stay silent.
+    const isPresenterSilent = !checkIsSoundHere(manager.screenManagerBase);
     for (const player of media.youTubePlayers) {
-        if (volume !== undefined) {
+        if (volume !== undefined && !isPresenterSilent) {
             player.setVolume(volume);
         }
         if (speed !== undefined) {

@@ -44,6 +44,83 @@ const dictionary = {
     'Incompatible or duplicate connection':
         'Connexion incompatible ou en double',
     'Screen Mirror Connection': 'Connexion écran miroir',
+    'Full screen': 'Plein écran',
+    'Exit full screen': 'Quitter le plein écran',
+    'Turn on sound': 'Activer le son',
+    'Waiting for the display': 'En attente de l’affichage',
+    'Watch in a browser': 'Regarder dans un navigateur',
+    'Where to watch': 'Où regarder',
+    'Allow interaction': 'Autoriser l’interaction',
+    'Allow again': 'Autoriser à nouveau',
+    'This device was disconnected. Ask whoever runs the display to let it back in.':
+        'Cet appareil a été déconnecté. Demandez à la personne qui gère l’écran de l’autoriser à nouveau.',
+    'Lets this viewer scroll and pick verses in the app':
+        'Permet à ce spectateur de faire défiler et de choisir des versets dans l’application',
+    'Video for media players (MP4)': 'Vidéo pour lecteurs multimédias (MP4)',
+    Browser: 'Navigateur',
+    'This computer cannot encode AAC audio, so the video has no sound.':
+        'Cet ordinateur ne peut pas encoder l’audio AAC, la vidéo n’a donc pas de son.',
+    'Virtual Screens Manager': 'Gestionnaire d’écrans virtuels',
+    'Virtual Displays': 'Affichages virtuels',
+    'Virtual Display': 'Affichage virtuel',
+    Virtual: 'Virtuel',
+    'Add Virtual Display': 'Ajouter un affichage virtuel',
+    'Manage Virtual Displays': 'Gérer les affichages virtuels',
+    'Delete Virtual Display': 'Supprimer l’affichage virtuel',
+    'Too many virtual displays': 'Trop d’affichages virtuels',
+    'Virtual display not found': 'Affichage virtuel introuvable',
+    'Let other devices watch': 'Laisser d’autres appareils regarder',
+    'Turn this on to watch virtual displays from phones, TVs and other computers on this network.':
+        'Activez cette option pour regarder les affichages virtuels depuis des téléphones, des téléviseurs et d’autres ordinateurs de ce réseau.',
+    'Anyone who has a stream address can watch it, and the stream is not encrypted. Turn this off when you are done.':
+        'Toute personne qui a une adresse de diffusion peut la regarder, et la diffusion n’est pas chiffrée. Désactivez cette option quand vous avez terminé.',
+    'A virtual display is a screen that exists only in this app. Show screens on it like on a real monitor, and watch it from any device as a video.':
+        'Un affichage virtuel est un écran qui n’existe que dans cette application. Affichez-y des écrans comme sur un vrai moniteur, et regardez-le depuis n’importe quel appareil sous forme de vidéo.',
+    Stopped: 'Arrêté',
+    'Starting…': 'Démarrage…',
+    Idle: 'Inactif',
+    Resolution: 'Résolution',
+    Custom: 'Personnalisé',
+    'Changing the resolution restarts the stream for everyone watching.':
+        'Changer la résolution redémarre la diffusion pour tous ceux qui regardent.',
+    Wallpaper: 'Fond d’écran',
+    'None (black)': 'Aucun (noir)',
+    'This app (preview)': 'Cette application (aperçu)',
+    'Watching now': 'Spectateurs actuels',
+    'No one is watching': 'Personne ne regarde',
+    'Screens showing on this virtual display will be hidden, and everyone watching it will be disconnected.':
+        'Les écrans affichés sur cet affichage virtuel seront masqués, et toutes les personnes qui le regardent seront déconnectées.',
+    'Screens on this display': 'Écrans sur cet affichage',
+    'This computer cannot make MP4 video':
+        'Cet ordinateur ne peut pas créer de vidéo MP4',
+    'The virtual display stopped': 'L’affichage virtuel s’est arrêté',
+    'The virtual display stopped recording':
+        'L’affichage virtuel a cessé l’enregistrement',
+    'Its virtual display is not available. Choose another display for this screen.':
+        'Son affichage virtuel n’est pas disponible. Choisissez un autre affichage pour cet écran.',
+    'The firewall is stopping other devices from reaching this app.':
+        'Le pare-feu empêche les autres appareils d’atteindre cette application.',
+    'This network is set as Public, and the firewall lets this app in only on private networks.':
+        'Ce réseau est défini comme public, et le pare-feu n’autorise cette application que sur les réseaux privés.',
+    'Set this network to Private, or allow this app on public networks in the firewall.':
+        'Définissez ce réseau comme privé, ou autorisez cette application sur les réseaux publics dans le pare-feu.',
+    'Click Open firewall settings.':
+        'Cliquez sur Ouvrir les paramètres du pare-feu.',
+    'Click Change settings.': 'Cliquez sur Modifier les paramètres.',
+    'Find this app in the list and tick Private. Tick Public too if this network is public.':
+        'Trouvez cette application dans la liste et cochez Privé. Cochez aussi Public si ce réseau est public.',
+    'Click OK, then Check again.':
+        'Cliquez sur OK, puis sur Vérifier à nouveau.',
+    'Click Options.': 'Cliquez sur Options.',
+    'Find this app and set it to allow incoming connections, and turn off blocking all incoming connections.':
+        'Trouvez cette application et autorisez les connexions entrantes, puis désactivez le blocage de toutes les connexions entrantes.',
+    'If another device cannot connect, allow this port in the firewall:':
+        'Si un autre appareil ne peut pas se connecter, autorisez ce port dans le pare-feu :',
+    'Another security program on this computer may need to allow this app too.':
+        'Un autre programme de sécurité sur cet ordinateur doit peut-être aussi autoriser cette application.',
+    'Open firewall settings': 'Ouvrir les paramètres du pare-feu',
+    'Open network settings': 'Ouvrir les paramètres réseau',
+    'Check again': 'Vérifier à nouveau',
     'Screen mirror server is unavailable':
         'Le serveur écran miroir est indisponible',
     'Connect to host': 'Se connecter à l’hôte',
@@ -90,6 +167,53 @@ const dictionary = {
     'Connect by address': 'Se connecter par adresse',
     'Leave empty unless the host uses a code.':
         'Laissez vide sauf si l’hôte utilise un code.',
+    'Open to the internet': 'Ouvrir à Internet',
+    'Anyone who has the address can ask to connect, and the connection is not encrypted. Use a connection code, and turn this off when you are done.':
+        'Toute personne qui a l’adresse peut demander à se connecter, et la connexion n’est pas chiffrée. Utilisez un code de connexion et désactivez ceci quand vous avez terminé.',
+    Internet: 'Internet',
+    'This network': 'Ce réseau',
+    Router: 'Routeur',
+    'Public address': 'Adresse publique',
+    'QR code': 'Code QR',
+    'Copy address': 'Copier l’adresse',
+    'Asking the router to open the port…':
+        'Demande au routeur d’ouvrir le port…',
+    'The router opened the port.': 'Le routeur a ouvert le port.',
+    'This router is behind another network, so the internet cannot reach it. A VPN such as Tailscale works instead.':
+        'Ce routeur est derrière un autre réseau, Internet ne peut donc pas l’atteindre. Un VPN comme Tailscale fonctionne à la place.',
+    'No router answered.': 'Aucun routeur n’a répondu.',
+    'The router refused to open the port.':
+        'Le routeur a refusé d’ouvrir le port.',
+    'Forward the port on the router to this computer, then type the public address below.':
+        'Redirigez le port du routeur vers cet ordinateur, puis saisissez l’adresse publique ci-dessous.',
+    'Ask the router again': 'Redemander au routeur',
+    'An IPv6 address works only if the router lets incoming connections through.':
+        'Une adresse IPv6 ne fonctionne que si le routeur laisse passer les connexions entrantes.',
+    'Public address (optional)': 'Adresse publique (facultatif)',
+    'Save address': 'Enregistrer l’adresse',
+    'Connected from the internet': 'Connecté depuis Internet',
+    'Connected from this network': 'Connecté depuis ce réseau',
+    'Invalid host or port': 'Hôte ou port invalide',
+    'Too many hosts': 'Trop d’hôtes',
+    'Too many wrong codes. Try again later.':
+        'Trop de codes erronés. Réessayez plus tard.',
+    'Too many connection requests. Try again later.':
+        'Trop de demandes de connexion. Réessayez plus tard.',
+    'No host address found in this image.':
+        'Aucune adresse d’hôte trouvée dans cette image.',
+    'Choose a picture of a QR code, or paste one here.':
+        'Choisissez une image de code QR, ou collez-en une ici.',
+    'Read QR code': 'Lire un code QR',
+    'Paste address': 'Coller l’adresse',
+    'Fill in a copied address, link or QR code picture.':
+        'Remplir avec une adresse, un lien ou une image de code QR copiés.',
+    'No host address found in the clipboard.':
+        'Aucune adresse d’hôte trouvée dans le presse-papiers.',
+    'Copy image': 'Copier l’image',
+    'The QR code image has been copied to the clipboard':
+        'L’image du code QR a été copiée dans le presse-papiers',
+    'The QR code image could not be copied':
+        'L’image du code QR n’a pas pu être copiée',
     'HTML-in-Canvas': 'HTML-in-Canvas',
     'PDF.js': 'PDF.js',
     'Interactive text': 'Texte interactif',

@@ -22,6 +22,7 @@ import {
     handleMediaStopped,
 } from '../../helper/mediaControlHelpers';
 import { genVideoIDFromSrc } from '../screenHelpers';
+import { checkIsSoundHere } from '../screenSoundHelpers';
 import {
     checkIsYouTubeSyncIframe,
     genYouTubeSyncId,
@@ -135,6 +136,12 @@ type SlideVideoTimeDataType = {
     videoTime: number;
     timestamp: number;
     isPlaying: boolean;
+    /**
+     * The master's volume (0-1), when it is not the default 1. Only a screen
+     * on a virtual display plays its own sound, and this is how the level the
+     * operator set on the presenter's (silent) copy reaches it.
+     */
+    volume?: number;
     /**
      * The master's playback rate, when it is not the default 1.
      *
@@ -422,6 +429,7 @@ class ScreenVaryAppDocumentManager
         videoTime: number,
         isPlaying: boolean,
         playbackRate?: number,
+        volume?: number,
     ) {
         setTimeout(() => {
             this.screenManagerBase.sendScreenMessage(
@@ -437,6 +445,9 @@ class ScreenVaryAppDocumentManager
                         // unchanged — see `SlideVideoTimeDataType.playbackRate`.
                         ...(playbackRate !== undefined && playbackRate !== 1
                             ? { playbackRate }
+                            : {}),
+                        ...(volume !== undefined && volume !== 1
+                            ? { volume }
                             : {}),
                     },
                 },
@@ -498,6 +509,12 @@ class ScreenVaryAppDocumentManager
         }
         const { videoId, videoTime, timestamp, isPlaying, playbackRate } = data;
         const mediaElements = this.getMediaElements(videoId);
+        // A page that plays its own sound (a virtual display's) follows the
+        // master more loosely: every correcting seek is a click in the audio.
+        const isSoundHere =
+            appProvider.isPageScreen &&
+            checkIsSoundHere(this.screenManagerBase);
+        const seekThreshold = isSoundHere ? 0.4 : 0.15;
         // Absent means the default, not "leave it alone": a master that has gone
         // back to 1x stops sending the field, and a follower left at 2x would then
         // be corrected by a seek on every tick for ever.
@@ -508,7 +525,12 @@ class ScreenVaryAppDocumentManager
             }
             if (appProvider.isPageScreen) {
                 // The screen follows the mini screen's play state; sound
-                // stays on the presenter side, the screen keeps muted.
+                // stays on the presenter side, the screen keeps muted --
+                // unless it is on a virtual display, at the master's level.
+                const targetVolume = data.volume ?? 1;
+                if (isSoundHere && mediaElement.volume !== targetVolume) {
+                    mediaElement.volume = targetVolume;
+                }
                 if (isPlaying && mediaElement.paused) {
                     playMediaElement(mediaElement);
                 } else if (!isPlaying && !mediaElement.paused) {
@@ -519,7 +541,10 @@ class ScreenVaryAppDocumentManager
             const exactVideoTime = videoTime + latency;
             // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can
             // be 3 frames, which is good enough for syncing video.
-            if (Math.abs(mediaElement.currentTime - exactVideoTime) > 0.15) {
+            if (
+                Math.abs(mediaElement.currentTime - exactVideoTime) >
+                seekThreshold
+            ) {
                 // Prevent the timeupdate emitted by this sync correction from
                 // being broadcast back to the group.
                 this.syncAdjustedMediaElements.add(mediaElement);
@@ -548,10 +573,15 @@ class ScreenVaryAppDocumentManager
         if (appProvider.isPageScreen) {
             if (isPlaying && !player.isPlaying) {
                 // Only the master (the first-clicked mini) keeps sound; the
-                // projected screen is always silent. Re-mute right before it
-                // starts in case the setup-time mute landed before the player
-                // was ready.
-                player.mute();
+                // projected screen is silent -- unless it is on a virtual
+                // display, whose page is what is heard. Re-set right before
+                // it starts in case the setup-time mute landed before the
+                // player was ready.
+                if (checkIsSoundHere(this.screenManagerBase)) {
+                    player.unMute();
+                } else {
+                    player.mute();
+                }
                 player.play();
             } else if (!isPlaying && player.isPlaying) {
                 player.pause();
@@ -589,8 +619,15 @@ class ScreenVaryAppDocumentManager
         videoTime: number,
         isPlaying: boolean,
         playbackRate?: number,
+        volume?: number,
     ) {
-        this.sendSyncVideoTime(videoId, videoTime, isPlaying, playbackRate);
+        this.sendSyncVideoTime(
+            videoId,
+            videoTime,
+            isPlaying,
+            playbackRate,
+            volume,
+        );
         const managers = await this.getMemberInstances();
         for (const manager of managers) {
             manager.setVideoCurrentTimeForce(
@@ -613,6 +650,9 @@ class ScreenVaryAppDocumentManager
             typeof videoTime !== 'number' ||
             typeof timestamp !== 'number' ||
             typeof isPlaying !== 'boolean' ||
+            (data.volume !== undefined &&
+                (typeof data.volume !== 'number' ||
+                    !(data.volume >= 0 && data.volume <= 1))) ||
             // Optional, so only a PRESENT value has to be usable — a garbage rate
             // must not drop the time message it rode in on.
             (playbackRate !== undefined &&
@@ -934,6 +974,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.currentTime,
             true,
             mediaElement.playbackRate,
+            mediaElement.volume,
         );
     };
 
@@ -1036,7 +1077,7 @@ class ScreenVaryAppDocumentManager
                           );
                       },
                   },
-            { muteOnReady: isScreen },
+            { muteOnReady: !checkIsSoundHere(this.screenManagerBase) },
         );
         this.youTubePlayers.push(player);
     }
@@ -1056,6 +1097,29 @@ class ScreenVaryAppDocumentManager
             mediaElement.currentTime,
             false,
             mediaElement.playbackRate,
+            mediaElement.volume,
+        );
+    };
+
+    // A screen on a virtual display sounds on its own page: the presenter's
+    // copy stays silent and passes the operator's level on.
+    private readonly handleSlideMediaVolumeChange = (event: Event) => {
+        const mediaElement = event.currentTarget as HTMLMediaElement;
+        if (checkIsSoundHere(this.screenManagerBase)) {
+            return;
+        }
+        if (!mediaElement.muted) {
+            mediaElement.muted = true;
+        }
+        if (!mediaElement.id) {
+            return;
+        }
+        void this.setSlideVideoCurrentTimeForce(
+            mediaElement.id,
+            mediaElement.currentTime,
+            !mediaElement.paused,
+            mediaElement.playbackRate,
+            mediaElement.volume,
         );
     };
 
@@ -1075,6 +1139,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.currentTime,
             !mediaElement.paused,
             mediaElement.playbackRate,
+            mediaElement.volume,
         );
     };
 
@@ -1130,12 +1195,17 @@ class ScreenVaryAppDocumentManager
             media.id = genVideoIDFromSrc(getMediaSyncSrc(media));
             if (appProvider.isPageScreen) {
                 // No auto-play: hold the first frame, muted. Playback is
-                // driven from a mini screen and the sound stays there.
-                media.muted = true;
+                // driven from a mini screen and the sound stays there --
+                // except on a virtual display, which streams the sound.
+                media.muted = !checkIsSoundHere(this.screenManagerBase);
                 media.preload = 'auto';
             } else {
-                media.muted = false;
+                media.muted = !checkIsSoundHere(this.screenManagerBase);
                 media.controls = true;
+                media.addEventListener(
+                    'volumechange',
+                    this.handleSlideMediaVolumeChange,
+                );
                 // The canvas/pptx render disables pointer events on its
                 // wrapper; re-enable them for the native controls.
                 media.style.pointerEvents = 'auto';

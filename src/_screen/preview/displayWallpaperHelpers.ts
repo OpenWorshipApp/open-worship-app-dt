@@ -5,6 +5,7 @@ import { handleError } from '../../helper/errorHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { electronSendAsync } from '../../server/electronSendHelpers';
 import { getAllDisplays } from '../managers/screenHelpers';
+import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
 
 /**
  * The monitor's own desktop background, drawn behind everything a mini screen
@@ -84,7 +85,7 @@ async function readWallpaper(
     state: WallpaperStateType,
     isForced = false,
 ) {
-    if (displayId <= -1000000) return;
+    if (displayId <= MIRROR_REMOTE_DISPLAY_FIRST) return;
     if (state.isReading) {
         return;
     }
@@ -93,7 +94,13 @@ async function readWallpaper(
         const { displayIndex, sizes } = readDisplayPlace(displayId);
         const wallpaper = await electronSendAsync<DisplayWallpaperType | null>(
             'main:app:read-display-wallpaper',
-            { displayIndex, sizes, width: WALLPAPER_WIDTH, isForced },
+            {
+                displayId,
+                displayIndex,
+                sizes,
+                width: WALLPAPER_WIDTH,
+                isForced,
+            },
         );
         // The card may have gone while the read was in flight; writing into a
         // dropped state would resurrect the picture it was meant to release.

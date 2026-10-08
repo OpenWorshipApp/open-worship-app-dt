@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <title>Open Worship App</title>
+        <link rel="icon" type="image/png" href="/logo192.png" />
+        <style>
+            html,
+            body {
+                margin: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                background: #000;
+                touch-action: manipulation;
+            }
+            body.is-idle {
+                cursor: none;
+            }
+            #stage {
+                position: absolute;
+                left: 0;
+                top: 0;
+                transform-origin: 0 0;
+                overflow: hidden;
+                background: #000;
+            }
+            #wallpaper,
+            #wallpaper > img,
+            #wallpaper > video,
+            #stage > iframe {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                border: 0;
+                object-fit: cover;
+            }
+            #stage > iframe {
+                background: transparent;
+                color-scheme: normal;
+            }
+            #toolbar {
+                position: fixed;
+                top: 12px;
+                right: 12px;
+                display: flex;
+                gap: 8px;
+                z-index: 10;
+                transition: opacity 0.3s;
+            }
+            body.is-idle #toolbar {
+                opacity: 0;
+                pointer-events: none;
+            }
+            #toolbar button {
+                width: 44px;
+                height: 44px;
+                border-radius: 22px;
+                border: 0;
+                background: rgba(0, 0, 0, 0.55);
+                color: #fff;
+                display: grid;
+                place-items: center;
+                cursor: pointer;
+            }
+            #toolbar button[hidden] {
+                display: none;
+            }
+            #status {
+                position: fixed;
+                inset: 0;
+                display: grid;
+                place-items: center;
+                color: #aaa;
+                font: 16px system-ui, sans-serif;
+            }
+            #status[hidden] {
+                display: none;
+            }
+            #keep-awake {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 1px;
+                height: 1px;
+                opacity: 0.01;
+                pointer-events: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="stage"><div id="wallpaper"></div></div>
+        <div id="status"></div>
+        <div id="toolbar">
+            <button id="sound-button" type="button" hidden>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z"/>
+                    <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z"/>
+                    <path d="M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06"/>
+                </svg>
+            </button>
+            <button id="fullscreen-button" type="button">
+                <svg id="fullscreen-icon" width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5M.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5"/>
+                </svg>
+            </button>
+        </div>
+        <script type="module" src="/src/virtual-display-viewer.ts"></script>
+    </body>
+</html>

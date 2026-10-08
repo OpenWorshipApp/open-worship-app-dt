@@ -22,7 +22,17 @@ The ✨ window — a company's chat site in a sandboxed `<webview>`, owned by th
   with the user): there is no key, MCP or CDP door to turn off. W-44, CB-68.
   - **The guest stays a stranger.** A `<webview>` (`webviewTag: true` from
     `genPopupWebPreferences` for that ONE page by its bounds key, never by an
-    opener's feature) on the persistent `persist:aichat` session.
+    opener's feature) on the persistent `persist:aichat` session. **The one
+    other `<webview>` host is main's own** (2026-10-07): a virtual display's
+    hidden compositor window (`electron/virtualDisplayService.ts`) holds the
+    app's OWN screen pages, one `<webview>` per screen. It is created by
+    main, never opened by a page, and registered BY WEBCONTENTS in
+    `electron/virtualDisplayHostRegistry.ts` before it loads anything;
+    `initAiChatGuestGuard` steps aside for that registered host and its
+    guests only (`checkIsVirtualDisplayHost` / `checkIsVirtualDisplayGuest`),
+    and the compositor's own `will-attach-webview` refuses any `src` but an
+    attached screen's `screenMirrorRuntime.screenUrl(id)`. An unregistered
+    host is refused exactly as before; a URL is never what exempts one.
     `initAiChatGuestGuard`: `will-attach-webview` forces no preload / no node /
     context isolation / sandbox and REFUSES another partition or a non-https
     `src`; navigation is http(s) only; `window.open` is denied and sent to
@@ -95,8 +105,8 @@ isLocked, lastUsedAt}`; `lastUrl` is only an https page on the site's own
     window**, it is handed to the main process by a sync IPC keyed by the
     new window's uuid and taken ONCE at module scope (a `useState`
     initialiser runs twice under StrictMode). The new window's parent is the
-    opener's parent, and `webviewTag` is `false` on every other page, so
-    nothing an AI Chat window opens inherits the tag. A closed tab goes to
+    opener's parent, and `webviewTag` is `false` on every other page a
+    renderer can open, so nothing an AI Chat window opens inherits the tag. A closed tab goes to
     **Recently closed** (`aichat-closed-tabs`, 20, shared, read with
     `getSettingForce`), reopened from the card, the 🕘 or Ctrl+Shift+T; Sign
     out empties it and tells the other windows. Hide with `visibility: hidden`,

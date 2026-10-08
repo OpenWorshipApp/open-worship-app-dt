@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import EventHandler from '../../event/EventHandler';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { getWindowDim } from '../../helper/helpers';
-import { setSetting } from '../../helper/settingHelpers';
+import { getSetting, setSetting } from '../../helper/settingHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import ScreenBibleManager from './ScreenBibleManager';
@@ -28,6 +28,7 @@ import { tran } from '../../lang/langHelpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { applyRemoteScrollPercentage } from './screenScrollSyncHelpers';
 import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
+import { isVirtualDisplayId } from '../../../electron/virtualDisplayProtocol';
 import ScreenLockedToastMessageComp from '../preview/ScreenLockedToastMessageComp';
 
 export type ScreenManagerEventType =
@@ -91,6 +92,22 @@ export default class ScreenManagerBase
 
     get display() {
         return getDisplayByScreenId(this.screenId);
+    }
+
+    // On a virtual display, the screen page plays the sound (it is what the
+    // display streams). The screen page knows it from its context; the
+    // presenter reads the stored choice first, so a screen on a real monitor
+    // never pays for the display list.
+    get isOnVirtualDisplay() {
+        if (appProvider.isPageScreen) {
+            return appProvider.screenUtils?.getContext()?.isSoundOwner === true;
+        }
+        const stored = Number.parseInt(
+            getSetting(`${SCREEN_MANAGER_SETTING_NAME}-pid-${this.screenId}`) ??
+                '',
+        );
+        // A deleted virtual display falls back to a real one.
+        return isVirtualDisplayId(stored) && this.displayId === stored;
     }
 
     get isSelected() {
@@ -295,6 +312,7 @@ export default class ScreenManagerBase
     private showOrUndo() {
         const requestCount = ++this.showRequestCount;
         const isRemoteDisplay = this.displayId <= MIRROR_REMOTE_DISPLAY_FIRST;
+        const isVirtualDisplay = isVirtualDisplayId(this.displayId);
         Promise.resolve(this.show()).catch((error: unknown) => {
             if (requestCount !== this.showRequestCount || !this._isShowing) {
                 return;
@@ -310,9 +328,13 @@ export default class ScreenManagerBase
                     ? tran(
                           'Its Screen Mirror display is not connected. Connect that computer, or choose another display for this screen.',
                       )
-                    : error instanceof Error
-                      ? error.message
-                      : String(error),
+                    : isVirtualDisplay
+                      ? tran(
+                            'Its virtual display is not available. Choose another display for this screen.',
+                        )
+                      : error instanceof Error
+                        ? error.message
+                        : String(error),
             );
         });
     }

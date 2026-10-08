@@ -30,6 +30,9 @@ export function genHtmlBackground(
     let child: HTMLDivElement = document.createElement('div');
     if (backgroundSrc.type === 'camera') {
         const video = document.createElement('video');
+        // No sound in a camera; unmuted, a browser will not start it untapped.
+        video.muted = true;
+        video.playsInline = true;
         Object.assign(video.style, {
             width: '100%',
             height: '100%',

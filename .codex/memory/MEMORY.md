@@ -136,5 +136,7 @@
 - [A foreground camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label
 - [Message editors hold local text](message-editor-text-is-local-state.md)
 - [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there; drawing layers release on unmount
-- [Screen Mirror across two machines](screen-mirror-cross-machine-test.md) — hosting is opt-in; peers need /remote-control here; newest-instance tools
+- [Screen Mirror across two machines](screen-mirror-cross-machine-test.md) — hosting is opt-in; peers need /remote-control here; newest-instance tools; seeding a code
+- [Screen Mirror: internet & several hosts](screen-mirror-internet-multi-host.md) — `admits()` not the bind; assets by Host header; windows by webContents, never remap ids
+- [Virtual displays](virtual-displays.md) — browser page draws the screens, MP4 via WebCodecs only while played; sound stream-only; a phone is not a secure context; Disconnect blocks 127.0.0.1 too
 - [Electron has no Khmer dates](electron-icu-has-no-khmer.md) — Intl answers km-KH in English; vitest (Node) does not

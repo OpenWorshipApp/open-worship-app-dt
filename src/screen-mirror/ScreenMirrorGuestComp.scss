@@ -1,12 +1,11 @@
 // The guest page of Screen Mirror, kept minimal on purpose: one way out
-// (back to the Presenter), then one panel -- the patch from the host to
-// this computer -- the wire between them IS the connection state -- and under
-// it the two ways to find the host. Colour comes only from the console's own
+// (back to the Presenter), then one panel per host -- the patch from that host
+// to this computer, the wire between them IS the link's state -- and under
+// them the ways to find another host. Colour comes only from the console's own
 // tokens (`--app-*`): the accent marks where this computer is to the host,
 // and `--app-on-air` stays unused because nothing here is live.
 
 .app .app-mirror-guest {
-  --app-mirror-wire: var(--app-line);
   // `--app-line` IS the dark page's background (gray-700), so a rule drawn
   // on the page itself, outside the patch, needs a tint of the text colour.
   --app-mirror-rule: rgba(var(--bs-emphasis-color-rgb), 0.16);
@@ -15,15 +14,6 @@
   flex-direction: column;
   height: 100%;
   color: var(--app-ink);
-
-  &[data-tone='busy'],
-  &[data-tone='linked'] {
-    --app-mirror-wire: var(--app-accent);
-  }
-
-  &[data-tone='failed'] {
-    --app-mirror-wire: var(--bs-danger-text-emphasis);
-  }
 
   h1,
   h2,
@@ -87,6 +77,8 @@
   // whatever the link offers to do. Source order stays host -> link -> this
   // computer, which is what a screen reader walks.
   .app-mirror-patch {
+    --app-mirror-wire: var(--app-line);
+
     display: grid;
     grid-template-areas:
       'host-label status this-label'
@@ -102,6 +94,15 @@
     background-color: var(--app-surface);
     border: 1px solid var(--app-line);
     border-radius: var(--bs-border-radius-lg);
+
+    &[data-tone='busy'],
+    &[data-tone='linked'] {
+      --app-mirror-wire: var(--app-accent);
+    }
+
+    &[data-tone='failed'] {
+      --app-mirror-wire: var(--bs-danger-text-emphasis);
+    }
   }
 
   .app-mirror-host-label {
@@ -228,7 +229,7 @@
     }
   }
 
-  &[data-tone='linked'] .app-mirror-cable-wire::before {
+  .app-mirror-patch[data-tone='linked'] .app-mirror-cable-wire::before {
     border-top-style: solid;
   }
 
@@ -305,11 +306,21 @@
 
   .app-mirror-section-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.5rem 1rem;
     min-height: 2rem;
     margin-bottom: 0.5rem;
+  }
+
+  // Paste address and Read QR code: one group that moves under the heading
+  // when the column is narrow, rather than squeezing the heading onto two
+  // lines beside it.
+  .app-mirror-head-actions {
+    display: flex;
+    gap: 0.5rem;
+    white-space: nowrap;
   }
 
   .app-mirror-host-list {
@@ -341,6 +352,12 @@
     &[aria-pressed='true'] {
       background-color: var(--app-accent-halo);
       border-left-color: var(--app-accent);
+    }
+
+    // Already linked: listed, but not offered again.
+    &:disabled {
+      color: var(--app-muted);
+      background-color: transparent;
     }
   }
 

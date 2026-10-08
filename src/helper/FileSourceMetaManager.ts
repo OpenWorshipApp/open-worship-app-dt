@@ -65,6 +65,36 @@ function toKey(filePath: string, id: string | number | null) {
     }
     return key;
 }
+
+type ColorNoteListener = (color: string | null) => void;
+const colorNoteListeners = new Map<string, Set<ColorNoteListener>>();
+
+export function subscribeColorNoteFilePathSetting(
+    filePath: string,
+    id: string | number | null,
+    listener: ColorNoteListener,
+) {
+    const key = toKey(filePath, id);
+    let listeners = colorNoteListeners.get(key);
+    if (!listeners) {
+        listeners = new Set();
+        colorNoteListeners.set(key, listeners);
+    }
+    listeners.add(listener);
+    return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+            colorNoteListeners.delete(key);
+        }
+    };
+}
+
+function notifyColorNoteSetting(key: string, color: string | null) {
+    for (const listener of colorNoteListeners.get(key) ?? []) {
+        listener(color);
+    }
+}
+
 export function getColorNoteFilePathSetting(
     filePath: string,
     id: string | number | null,
@@ -88,8 +118,11 @@ export function setColorNoteFilePathSetting(
         delete setting[key];
     } else if (isColor(color)) {
         setting[key] = color;
+    } else {
+        return;
     }
     getSettingManager().setSetting(setting);
+    notifyColorNoteSetting(key, color);
 }
 
 /**
@@ -137,6 +170,14 @@ export function setColorNoteFilePathSettings(
     }
     if (isChanged) {
         getSettingManager().setSetting(setting);
+        for (const [key, color] of Object.entries(colorNotes)) {
+            if (typeof color === 'string' && isColor(color)) {
+                notifyColorNoteSetting(
+                    toKey(filePath, key === COLOR_NOTE_SELF_KEY ? null : key),
+                    color,
+                );
+            }
+        }
     }
 }
 

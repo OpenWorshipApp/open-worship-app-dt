@@ -68,6 +68,13 @@ import {
 } from './finderOverlayHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { getScreenMirror } from './screenMirrorService';
+import { getVirtualDisplays } from './virtualDisplayService';
+import {
+    getScreenOutput,
+    getVirtualScreenOutput,
+    getVirtualScreenOutputIds,
+} from './screenOutputRegistry';
+import { isVirtualDisplayId } from './virtualDisplayProtocol';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
 import {
@@ -244,6 +251,18 @@ export function initEventListenerApp(appController: ElectronAppController) {
         ipcMain,
         'main:app:capture-window',
         async ({ screenId }: { screenId?: number }) => {
+            // A screen on a virtual display is a page, not a window.
+            const virtualCapture =
+                screenId === undefined
+                    ? undefined
+                    : getVirtualDisplays()?.captureScreen(screenId);
+            if (virtualCapture !== undefined) {
+                const image = await virtualCapture;
+                if (image === null) {
+                    throw new Error('That window is not open');
+                }
+                return image.toDataURL();
+            }
             return await captureWindowImage(
                 screenId === undefined
                     ? appController.mainWin
@@ -263,11 +282,13 @@ export function initEventListenerApp(appController: ElectronAppController) {
         ipcMain,
         'main:app:read-display-wallpaper',
         async ({
+            displayId,
             displayIndex,
             width,
             sizes,
             isForced,
         }: {
+            displayId?: number;
             displayIndex: number;
             width?: number;
             sizes?: DisplaySizeType[];
@@ -275,6 +296,15 @@ export function initEventListenerApp(appController: ElectronAppController) {
         }) => {
             if (isForced) {
                 forgetDisplayWallpapers();
+            }
+            // A virtual display's wallpaper is its own setting, not the OS's.
+            if (isVirtualDisplayId(displayId)) {
+                return (
+                    (await getVirtualDisplays()?.readWallpaper(
+                        displayId,
+                        width,
+                    )) ?? null
+                );
             }
             return await readDisplayWallpaper({ displayIndex, width, sizes });
         },
@@ -312,13 +342,17 @@ function onAsync<T1, T2>(
 
 export function initEventScreen(appController: ElectronAppController) {
     const mirror = getScreenMirror();
+    const virtualDisplays = getVirtualDisplays();
     mirror?.configure(appController.mainWin.webContents);
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
             primaryDisplay: appController.settingManager.primaryDisplay,
+            // Virtual displays last: the wallpaper readers count the real
+            // monitors by their place in this list.
             displays: [
                 ...appController.settingManager.allDisplays,
                 ...(mirror?.displays() ?? []),
+                ...(virtualDisplays?.displays() ?? []),
             ],
         };
     });
@@ -328,9 +362,82 @@ export function initEventScreen(appController: ElectronAppController) {
             ...new Set([
                 ...ElectronScreenController.getAllIds(),
                 ...(mirror?.showingIds() ?? []),
+                ...getVirtualScreenOutputIds(),
             ]),
         ];
     });
+
+    const notifyHidden = (screenId: number) => {
+        mirror?.hide(screenId);
+        appController.mainController.sendNotifyInvisibility(screenId);
+    };
+
+    // A screen window on a monitor. Closing it hides the screen, unless it is
+    // only being handed to a virtual display.
+    const openScreenWindow = async (screenId: number, displayId: number) => {
+        const isNewInstance =
+            ElectronScreenController.getInstance(screenId) === null;
+        const screenController =
+            ElectronScreenController.createInstance(screenId);
+        // Attach only once — createInstance returns a cached controller,
+        // and stacking a listener per show call duplicates the notify.
+        if (isNewInstance) {
+            screenController.win.on('close', () => {
+                screenController.destroyInstance();
+                if (!screenController.isMoving) {
+                    notifyHidden(screenId);
+                }
+            });
+        }
+        const display = appController.settingManager.getDisplayById(displayId);
+        if (display !== undefined) {
+            await screenController.listenLoading();
+            screenController.setDisplay(display);
+            appController.mainWin.focus();
+        }
+    };
+
+    // A screen on a virtual display: no window of its own, a page in the
+    // display's compositor while somebody watches.
+    const attachVirtualScreen = (screenId: number, displayId: number) => {
+        if (virtualDisplays === undefined) {
+            throw new Error('Virtual display is unavailable');
+        }
+        const controller = virtualDisplays.attachScreen(screenId, displayId);
+        controller.onClosed(() => {
+            if (!controller.isMoving) {
+                notifyHidden(screenId);
+            }
+        });
+    };
+
+    // Hands a showing screen from a monitor to a virtual display or back, or
+    // between two virtual displays. The presenter is never told it hid,
+    // because it did not.
+    const moveScreenHere = async (screenId: number, displayId: number) => {
+        mirror?.retargetOutput(screenId, displayId);
+        const virtualOutput = getVirtualScreenOutput(screenId);
+        if (isVirtualDisplayId(displayId)) {
+            if (virtualOutput !== null) {
+                virtualDisplays?.moveScreen(screenId, displayId);
+                return;
+            }
+            const screenController =
+                ElectronScreenController.getInstance(screenId);
+            if (screenController !== null) {
+                screenController.isMoving = true;
+                screenController.destroyInstance();
+                screenController.close();
+            }
+            attachVirtualScreen(screenId, displayId);
+            return;
+        }
+        if (virtualOutput !== null) {
+            virtualOutput.isMoving = true;
+            virtualOutput.close();
+        }
+        await openScreenWindow(screenId, displayId);
+    };
 
     // TODO: use shareProps.mainWin.on or shareProps.screenWin.on
     onAsync(
@@ -342,35 +449,36 @@ export function initEventScreen(appController: ElectronAppController) {
                 (await mirror.prepareOutput(data.screenId, data.displayId))
             )
                 return;
-            const isNewInstance =
-                ElectronScreenController.getInstance(data.screenId) === null;
-            const screenController = ElectronScreenController.createInstance(
-                data.screenId,
-            );
-            const display = appController.settingManager.getDisplayById(
-                data.displayId,
-            );
-            if (display !== undefined) {
-                await screenController.listenLoading();
-                screenController.setDisplay(display);
-                appController.mainWin.focus();
-            }
-            // Attach only once — createInstance returns a cached controller,
-            // and stacking a listener per show call duplicates the notify.
-            if (isNewInstance) {
-                screenController.win.on('close', () => {
-                    mirror?.hide(data.screenId);
+            if (isVirtualDisplayId(data.displayId)) {
+                if (getVirtualScreenOutput(data.screenId) !== null) {
+                    return;
+                }
+                const screenController = ElectronScreenController.getInstance(
+                    data.screenId,
+                );
+                if (screenController !== null) {
+                    screenController.isMoving = true;
                     screenController.destroyInstance();
-                    appController.mainController.sendNotifyInvisibility(
-                        data.screenId,
-                    );
-                });
+                    screenController.close();
+                }
+                attachVirtualScreen(data.screenId, data.displayId);
+                return;
             }
+            const virtualOutput = getVirtualScreenOutput(data.screenId);
+            if (virtualOutput !== null) {
+                virtualOutput.isMoving = true;
+                virtualOutput.close();
+            }
+            await openScreenWindow(data.screenId, data.displayId);
         },
     );
 
-    ipcMain.on('app:hide-screen', (_, screenId: number) => {
+    ipcMain.on('app:hide-screen', (event, screenId: number) => {
+        // A Screen Mirror host's screen shown here closes itself, not this
+        // computer's own screen that happens to share its id.
+        if (mirror?.closeIncomingOf(event.sender)) return;
         mirror?.hide(screenId);
+        getVirtualScreenOutput(screenId)?.close();
         const screenController = ElectronScreenController.getInstance(screenId);
         if (screenController === null) {
             return;
@@ -380,6 +488,7 @@ export function initEventScreen(appController: ElectronAppController) {
     });
     ipcMain.on('app:hide-all-screens', () => {
         for (const id of mirror?.showingIds() ?? []) mirror?.hide(id);
+        virtualDisplays?.closeAllScreens();
         ElectronScreenController.closeAll();
     });
 
@@ -395,25 +504,54 @@ export function initEventScreen(appController: ElectronAppController) {
                 displayId: number;
             },
         ) => {
+            const virtualOutput = getVirtualScreenOutput(screenId);
+            const isToRemote = !!mirror?.isRemoteDisplay(displayId);
+            const isFromRemote = !!mirror?.isRemoteOutput(screenId);
+            // To, from or between virtual displays, all on this computer.
+            if (
+                (virtualOutput !== null || isVirtualDisplayId(displayId)) &&
+                !isToRemote &&
+                !isFromRemote
+            ) {
+                const isShowing =
+                    virtualOutput !== null ||
+                    ElectronScreenController.getInstance(screenId) !== null;
+                if (isShowing) {
+                    moveScreenHere(screenId, displayId).catch((error) => {
+                        console.error(error);
+                    });
+                }
+                return;
+            }
+            if (virtualOutput !== null && isToRemote) {
+                virtualOutput.isMoving = true;
+                virtualOutput.close();
+            }
             if (
                 mirror?.showingIds().includes(screenId) &&
-                (mirror.isRemoteDisplay(displayId) ||
+                (isToRemote ||
+                    isFromRemote ||
                     ElectronScreenController.getInstance(screenId) === null)
             ) {
                 ElectronScreenController.getInstance(screenId)?.close();
                 void mirror
                     .prepareOutput(screenId, displayId)
                     .then((isRemote) => {
-                        if (!isRemote) {
-                            const targetDisplay =
-                                appController.settingManager.getDisplayById(
-                                    displayId,
-                                );
-                            if (targetDisplay)
-                                ElectronScreenController.createInstance(
-                                    screenId,
-                                ).setDisplay(targetDisplay);
+                        if (isRemote) {
+                            return;
                         }
+                        if (isVirtualDisplayId(displayId)) {
+                            attachVirtualScreen(screenId, displayId);
+                            return;
+                        }
+                        const targetDisplay =
+                            appController.settingManager.getDisplayById(
+                                displayId,
+                            );
+                        if (targetDisplay)
+                            ElectronScreenController.createInstance(
+                                screenId,
+                            ).setDisplay(targetDisplay);
                     })
                     .catch((error) => console.error(error.message));
                 return;
@@ -441,7 +579,10 @@ export function initEventScreen(appController: ElectronAppController) {
             }: ScreenMessageType & { isScreen: boolean },
         ) => {
             if (isScreen) {
-                if (mirror?.sendFeedback({ screenId, type, data })) return;
+                if (
+                    mirror?.sendFeedback({ screenId, type, data }, event.sender)
+                )
+                    return;
                 appController.mainController.sendScreenMessage({
                     screenId,
                     type,
@@ -450,16 +591,15 @@ export function initEventScreen(appController: ElectronAppController) {
             } else {
                 if (mirror?.sendScreenMessage({ screenId, type, data, stage }))
                     return;
-                const screenController =
-                    ElectronScreenController.getInstance(screenId);
-                if (screenController !== null) {
+                const screenOutput = getScreenOutput(screenId);
+                if (screenOutput !== null) {
                     const message = mirror?.localMessage({
                         screenId,
                         type,
                         data,
                         stage,
                     });
-                    screenController.sendMessage(type, message?.data ?? data);
+                    screenOutput.sendMessage(type, message?.data ?? data);
                 }
             }
             event.returnValue = true;
@@ -468,8 +608,8 @@ export function initEventScreen(appController: ElectronAppController) {
 
     ipcMain.on(
         'screen:app:change-bible',
-        (_, data: { screenId: number; isNext: boolean }) => {
-            if (mirror?.stepBible(data)) return;
+        (event, data: { screenId: number; isNext: boolean }) => {
+            if (mirror?.stepBible(data, event.sender)) return;
             appController.mainController.changeBible(data);
         },
     );

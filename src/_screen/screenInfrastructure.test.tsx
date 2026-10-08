@@ -433,8 +433,10 @@ describe('screen infrastructure', () => {
             bottomContainer.querySelector('img.play-to-bottom'),
         ).not.toBeNull();
 
+        // Keyed on the file's name, so the presenter's `file:` address and a
+        // screen's served one name the same video.
         expect(screenHelpers.genVideoIDFromSrc('/video.mp4')).toBe(
-            'video-md5-/video.mp4',
+            'video-md5-video.mp4',
         );
     });
 
@@ -848,7 +850,7 @@ describe('screen infrastructure', () => {
                 <ManagerHost />
             </screenManagerHooks.ScreenManagerBaseContext>,
         );
-        expect(managerHtml).toContain('video-md5-/video.mp4');
+        expect(managerHtml).toContain('video-md5-video.mp4');
         expect(useScreenEventsSpy).toHaveBeenCalled();
         expect(useScreenBackgroundManagerEventsSpy).toHaveBeenCalled();
         expect(useScreenVaryAppDocumentManagerEventsSpy).toHaveBeenCalled();

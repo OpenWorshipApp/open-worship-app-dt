@@ -24,7 +24,7 @@ import AttachBackgroundIconComp from '../../others/AttachBackgroundIconComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
-import { getColorNoteFilePathSetting } from '../../helper/FileSourceMetaManager';
+import { useColorNoteFilePathSetting } from '../../helper/useColorNoteFilePathSetting';
 import {
     genAttachBackgroundComponent,
     genChooseColorNoteOption,
@@ -106,7 +106,7 @@ function VarySlideHeaderComp({
 }>) {
     const isChanged =
         Slide.checkIsThisType(varySlide) && (varySlide as Slide).isChanged;
-    const colorNote = getColorNoteFilePathSetting(
+    const colorNote = useColorNoteFilePathSetting(
         varySlide.filePath,
         varySlide.id,
     );
@@ -352,6 +352,11 @@ export default function VarySlideRenderComp({
     const attachedBackgroundDataRef = useAppCurrentRef(attachedBackgroundData);
     const onContextMenuRef = useAppCurrentRef(onContextMenu);
     const handleContextMenuOpening = useCallback((event: any) => {
+        // File-based slides read their preview path before opening the menu.
+        // Claim the event now, or the document menu also opens while they await
+        // that read and replaces the slide's own actions.
+        event.preventDefault();
+        event.stopPropagation();
         const menuItems: ContextMenuItemType[] = [];
         if (attachedBackgroundDataRef.current) {
             menuItems.push(

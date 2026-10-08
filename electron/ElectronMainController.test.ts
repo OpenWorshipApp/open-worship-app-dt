@@ -154,6 +154,44 @@ describe('ElectronMainController', () => {
         processExit.mockRestore();
     });
 
+    test('keeps the display awake only while the screen mirror page is open', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const { start, stop } = electronMockState.powerSaveBlocker;
+            const controller = new ElectronMainController({
+                mainHtmlPath: 'presenter.html',
+            } as any);
+            const didNavigate = (
+                controller.win.webContents.on as any
+            ).mock.calls.find(
+                ([eventName]: [string]) => eventName === 'did-navigate',
+            )?.[1];
+            const navigate = (url: string) => didNavigate({}, url);
+
+            navigate('https://localhost:3000/presenter.html');
+            expect(start).not.toHaveBeenCalled();
+
+            navigate('owa://local/screen-mirror.html');
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(start).toHaveBeenCalledWith('prevent-display-sleep');
+            // A reload of the same page (renderer recovery) holds the one
+            // request it already has.
+            navigate('owa://local/screen-mirror.html');
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(stop).not.toHaveBeenCalled();
+
+            navigate('owa://local/reader.html');
+            expect(stop).toHaveBeenCalledTimes(1);
+            expect(stop).toHaveBeenCalledWith(start.mock.results[0].value);
+            navigate('owa://local/presenter.html');
+            expect(stop).toHaveBeenCalledTimes(1);
+        } finally {
+            processExit.mockRestore();
+        }
+    });
+
     test('sends screen messages over the configured channel', () => {
         const processExit = vi
             .spyOn(process, 'exit')

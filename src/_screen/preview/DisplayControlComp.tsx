@@ -4,6 +4,9 @@ import { tran } from '../../lang/langHelpers';
 import { getAllDisplays } from '../managers/screenHelpers';
 import type ScreenManagerBase from '../managers/ScreenManagerBase';
 import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
+import { isVirtualDisplayId } from '../../../electron/virtualDisplayProtocol';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
+import { setMirrorPanelShowing } from '../../screen-mirror/mirrorConnectionHelpers';
 import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
@@ -28,6 +31,9 @@ function toDisplayLabel(
         return label;
     }
     if (display === undefined) {
+        if (isVirtualDisplayId(displayId)) {
+            return tran('Virtual display not found');
+        }
         return displayId <= MIRROR_REMOTE_DISPLAY_FIRST
             ? tran('Guest display, not connected')
             : tran('Not connected');
@@ -54,11 +60,14 @@ function handleDisplayChoosing(
                 isPrimary: false,
             });
         const isSelected = display.id === displayId;
+        const isVirtual = isVirtualDisplayId(display.id);
         const menuElement =
             (isSelected ? '*' : '') +
-            ((display as { guestId?: string }).guestId
-                ? `${label}: `
-                : `${label}(${display.id}): `) +
+            (isVirtual
+                ? `${label} (${tran('Virtual')}): `
+                : (display as { guestId?: string }).guestId
+                  ? `${label}: `
+                  : `${label}(${display.id}): `) +
             `${bounds.width}x${bounds.height}` +
             (isPrimary ? ` (${tran('primary')})` : '');
         return {
@@ -67,6 +76,14 @@ function handleDisplayChoosing(
                 screenManagerBase.displayId = display.id;
             },
         };
+    });
+    // Where virtual displays are made, from where they are chosen.
+    contextMenuItems.push({
+        childBefore: genContextMenuItemIcon('display'),
+        menuElement: tran('Manage Virtual Displays'),
+        onSelect: () => {
+            setMirrorPanelShowing(true, 'virtual');
+        },
     });
     showAppContextMenu(event, contextMenuItems);
 }
@@ -88,8 +105,9 @@ export default function DisplayControlComp() {
                 ?.isPrimary === true,
     });
     const isMissing = currentDisplay === undefined;
-    const isGuest = !!(currentDisplay as { guestId?: string } | undefined)
-        ?.guestId;
+    const isGuest =
+        !!(currentDisplay as { guestId?: string } | undefined)?.guestId ||
+        (currentDisplay !== undefined && isVirtualDisplayId(displayId));
     return (
         <button
             className="btn btn-sm btn-outline-secondary app-ellipsis app-data"

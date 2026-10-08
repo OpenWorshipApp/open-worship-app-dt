@@ -82,7 +82,9 @@ export default class ElectronAppController {
         for (const win of BrowserWindow.getAllWindows()) {
             if (
                 win.isDestroyed() ||
-                win.webContents.getURL().includes(htmlFiles.screen)
+                win.webContents.getURL().includes(htmlFiles.screen) ||
+                // A virtual display's compositor: reloading it cuts every stream.
+                win.webContents.getURL().includes(htmlFiles.virtualDisplay)
             ) {
                 continue;
             }
@@ -97,7 +99,9 @@ export default class ElectronAppController {
         for (const win of BrowserWindow.getAllWindows()) {
             if (
                 win.isDestroyed() ||
-                win.webContents.getURL().includes(htmlFiles.screen)
+                win.webContents.getURL().includes(htmlFiles.screen) ||
+                // A virtual display's compositor: reloading it cuts every stream.
+                win.webContents.getURL().includes(htmlFiles.virtualDisplay)
             ) {
                 continue;
             }
