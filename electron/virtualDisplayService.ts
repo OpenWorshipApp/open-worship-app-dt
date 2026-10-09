@@ -139,6 +139,11 @@ const DEFAULT_VIEWER_LABELS: Record<string, string> = {
     castAppTvs: 'TVs on the app’s network',
     close: 'Close',
     camera: 'Share my cameras',
+    cameraShare: 'Share',
+    cameraStop: 'Stop',
+    cameraName: 'Camera',
+    cameraFront: 'Front camera',
+    cameraBack: 'Back camera',
     micFailed:
         'The microphone could not be opened. Allow it for this page, or close another app using it.',
     cameraFailed:
@@ -1636,6 +1641,7 @@ export class VirtualDisplayService {
             hasCode: !!this.settings.getSecureSetting(VIRTUAL_DISPLAY_CODE_KEY),
             tunnelEnabled: this.mirror.isTunnelEnabled,
             tunnel: this.mirror.tunnelState,
+            httpsEnabled: this.mirror.isHttpsEnabled,
             publicAddress: this.mirror.publicAddress,
             customPort: this.mirror.customPort,
             castTargets: this.castTargets.map(({ id, name, kind }) => {
@@ -1718,6 +1724,8 @@ export class VirtualDisplayService {
                 data.enabled === true,
             );
             this.onNetworkChanged();
+        } else if (data.action === 'https') {
+            await this.mirror.setHttpsEnabled(data.enabled === true);
         } else if (data.action === 'disconnect') {
             this.disconnect(Number(data.number), String(data.clientId));
         } else if (data.action === 'unblock') {

@@ -175,6 +175,33 @@ describe('virtualDisplayProtocol', () => {
         expect(toVirtualDisplayStreamUrl(tunnel, 3)).toBe(
             'https://quiet-river.trycloudflare.com/vd/3/video',
         );
+        // "Use HTTPS": the same port over TLS for a browser on another
+        // device -- never for this computer's own (a secure context already,
+        // it would only be warned) nor for a media player.
+        expect(
+            toVirtualDisplayPageUrl(
+                { host: '192.168.1.3', port: 39240, kind: 'lan' },
+                3,
+                true,
+            ),
+        ).toBe('https://192.168.1.3:39240/vd/3/');
+        expect(
+            toVirtualDisplayPageUrl(
+                { host: '2001:db8::1', port: 39240, kind: 'internet' },
+                3,
+                true,
+            ),
+        ).toBe('https://[2001:db8::1]:39240/vd/3/');
+        expect(
+            toVirtualDisplayPageUrl(
+                { host: '127.0.0.1', port: 39240, kind: 'this-computer' },
+                3,
+                true,
+            ),
+        ).toBe('http://127.0.0.1:39240/vd/3/');
+        expect(toVirtualDisplayPageUrl(tunnel, 3, true)).toBe(
+            'https://quiet-river.trycloudflare.com/vd/3/',
+        );
     });
 
     test('H.264 High, Main then Baseline, at the level the size needs', () => {

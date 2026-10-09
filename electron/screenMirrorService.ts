@@ -25,6 +25,7 @@ import ElectronScreenController from './ElectronScreenController';
 import { getScreenOutput } from './screenOutputRegistry';
 import { checkNetworkFirewall, openFirewallSettings } from './firewallHelpers';
 import {
+    VIRTUAL_DISPLAY_HTTPS_KEY,
     VIRTUAL_DISPLAY_SHARE_KEY,
     checkIsVirtualDisplayDevViewerFile,
     isVirtualDisplayId,
@@ -39,6 +40,11 @@ import { screenMirrorRuntime } from './screenMirrorRuntime';
 import { MirrorTunnel } from './screenMirrorTunnel';
 import { getCloudflaredBinPath } from './extraBinPaths';
 import { noteTunnelRequest, readRequestSender } from './mirrorRequestSender';
+import {
+    genMirrorTlsCertificate,
+    readMirrorTlsCertificate,
+    routeMirrorSocket,
+} from './mirrorTls';
 import { MIRROR_INTERCOM_KEY_PATTERN, MirrorIntercom } from './mirrorIntercom';
 import { getRootUrl } from './protocolHelpers';
 import { isDev, messageChannels } from './electronHelpers';
@@ -238,6 +244,9 @@ const LOOPBACK_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
 const KEY = 'screen-mirror-';
 // The port the last launch had, asked for first (see `listen`).
 const LAST_PORT_KEY = `${KEY}last-port`;
+// This computer's own HTTPS certificate and key (`mirrorTls.ts`), kept while
+// it lasts so a browser let past its warning is not warned again.
+const TLS_CERTIFICATE_KEY = 'virtual-display-tls';
 const FIRST_PORT_RETRIES = 12;
 const FIRST_PORT_RETRY_MILLISECOND = 250;
 const LOOPBACK_PROBE_MILLISECOND = 500;
@@ -345,7 +354,14 @@ export class ScreenMirrorService {
     readonly content = new MirrorContentRegistry();
     port = 0;
     error: string | null = null;
-    private server?: http.Server;
+    // The port: it listens, and hands each connection to the plain HTTP
+    // server or -- a TLS one, while HTTPS is on -- the HTTPS server.
+    private server?: net.Server;
+    private plainServer?: http.Server;
+    private secureServer?: https.Server;
+    // Connections handed to the HTTPS server, ended when it goes off.
+    private secureSockets = new Set<Duplex>();
+    private secureRun = 0;
     private wss?: WebSocketServer;
     private udp?: dgram.Socket;
     private heartbeat?: ReturnType<typeof setInterval>;
@@ -398,7 +414,7 @@ export class ScreenMirrorService {
     private scan?: { close: () => void };
     private displayRevision = 0;
     private virtualDisplayHooks?: VirtualDisplayHooks;
-    private serverSockets = new WeakMap<http.Server, Set<Duplex>>();
+    private serverSockets = new WeakMap<net.Server, Set<Duplex>>();
     // Cloudflare's quick tunnel and the loopback door only it uses: every
     // socket on that door is the internet, whatever its peer says.
     private tunnel = new MirrorTunnel({
@@ -513,6 +529,15 @@ export class ScreenMirrorService {
             this.settings.getClientSetting(VIRTUAL_DISPLAY_SHARE_KEY) === 'true'
         );
     }
+    // Virtual Displays' "Use HTTPS" (off until turned on): the port answers
+    // TLS as well, with this computer's own certificate, and a browser's
+    // addresses are listed as https. Plain HTTP stays -- media players,
+    // Screen Mirror guests and this computer's own windows use it.
+    get isHttpsEnabled() {
+        return (
+            this.settings.getClientSetting(VIRTUAL_DISPLAY_HTTPS_KEY) === 'true'
+        );
+    }
     get shouldBindToAll() {
         return this.isHostEnabled || this.isVirtualDisplayShareEnabled;
     }
@@ -583,6 +608,7 @@ export class ScreenMirrorService {
     private async openTunnel() {
         const opening = (async () => {
             const server = this.createServer();
+            this.trackSockets(server);
             server.on('connection', (socket) => {
                 this.tunnelSockets.add(socket);
             });
@@ -624,6 +650,72 @@ export class ScreenMirrorService {
             }
             server.close();
         });
+    }
+    // Saved first, so a second press while the first key is being made
+    // finds it on. Turned back off when no certificate could be had.
+    async setHttpsEnabled(isEnabled: boolean) {
+        if (isEnabled === this.isHttpsEnabled) return;
+        this.settings.setClientSetting(
+            VIRTUAL_DISPLAY_HTTPS_KEY,
+            isEnabled ? 'true' : '',
+        );
+        if (!isEnabled) {
+            this.closeHttps();
+        } else if (!(await this.openHttps()) && this.isHttpsEnabled) {
+            this.settings.setClientSetting(VIRTUAL_DISPLAY_HTTPS_KEY, '');
+            this.notify();
+            throw new Error('Unable to turn on HTTPS');
+        }
+        this.notify();
+    }
+    // The HTTPS side of the port, with the stored certificate while it lasts,
+    // else a new one for this computer's name and addresses. Read only once
+    // HTTPS is on: a computer that never turns it on never makes a key.
+    private async openHttps() {
+        if (this.secureServer) return true;
+        const run = ++this.secureRun;
+        try {
+            let certificate = readMirrorTlsCertificate(
+                this.settings.getSecureSetting(TLS_CERTIFICATE_KEY),
+            );
+            if (certificate === null) {
+                certificate = await genMirrorTlsCertificate([
+                    os.hostname(),
+                    `${os.hostname()}.local`,
+                    '127.0.0.1',
+                    '::1',
+                    ...localAddresses().map((nic) => nic.address),
+                    ...globalIpv6Addresses(),
+                ]);
+                if (run !== this.secureRun) return false;
+                this.settings.setSecureSetting(
+                    TLS_CERTIFICATE_KEY,
+                    JSON.stringify(certificate),
+                );
+            }
+            if (run !== this.secureRun) return false;
+            const server = https.createServer(certificate, (req, res) => {
+                void this.handleHttp(req, res);
+            });
+            server.on('upgrade', (req, socket, head) =>
+                this.handleUpgrade(req, socket, head),
+            );
+            // Node times out slow headers and bodies only on a server that
+            // listened; this one is handed its connections by the port.
+            server.emit('listening');
+            this.secureServer = server;
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    private closeHttps() {
+        this.secureRun++;
+        const server = this.secureServer;
+        this.secureServer = undefined;
+        for (const socket of this.secureSockets) socket.destroy();
+        this.secureSockets.clear();
+        server?.close();
     }
     private admits(address: string) {
         return this.isInternetOpen || checkIsLocalSender(address);
@@ -780,6 +872,8 @@ export class ScreenMirrorService {
         if (this.isRouterWanted) void this.openRouter();
         else this.releaseRouter();
         this.syncTunnel();
+        // Until it is up a TLS connection is closed; plain HTTP never waits.
+        if (this.isHttpsEnabled) void this.openHttps();
         const displayChanged = () => {
             this.displayRevision++;
             this.sendInventory();
@@ -794,19 +888,45 @@ export class ScreenMirrorService {
         const server = http.createServer((req, res) => {
             void this.handleHttp(req, res);
         });
-        // Every socket, upgraded ones included: `closeAllConnections` ends
-        // only HTTP requests, and `close` waits for the rest -- a virtual
-        // display's viewers, a dev screen's HMR socket -- for ever.
-        const sockets = new Set<Duplex>();
-        server.on('connection', (socket) => {
-            sockets.add(socket);
-            socket.once('close', () => sockets.delete(socket));
-        });
-        this.serverSockets.set(server, sockets);
         server.on('upgrade', (req, socket, head) =>
             this.handleUpgrade(req, socket, head),
         );
         return server;
+    }
+    // Every socket, upgraded ones included: `closeAllConnections` ends only
+    // HTTP requests, and `close` waits for the rest -- a virtual display's
+    // viewers, a dev screen's HMR socket, a connection that has not spoken
+    // yet -- for ever.
+    private trackSockets(server: net.Server) {
+        const sockets = new Set<Duplex>();
+        server.on('connection', (socket: Duplex) => {
+            sockets.add(socket);
+            socket.once('close', () => sockets.delete(socket));
+        });
+        this.serverSockets.set(server, sockets);
+    }
+    // The port itself: plain HTTP, and TLS while HTTPS is on, on the same
+    // number -- the router's forwarding, the firewall rule and every address
+    // stay as they are, only the scheme changes.
+    private createPort() {
+        const plain = this.createServer();
+        // Node times out slow headers and bodies only on a server that
+        // listened; this one is handed its connections by the port.
+        plain.emit('listening');
+        const server = net.createServer((socket) => {
+            routeMirrorSocket(socket, {
+                plain,
+                toSecure: () => this.secureServer ?? null,
+                onSecure: (secureSocket) => {
+                    this.secureSockets.add(secureSocket);
+                    secureSocket.once('close', () => {
+                        this.secureSockets.delete(secureSocket);
+                    });
+                },
+            });
+        });
+        this.trackSockets(server);
+        return { server, plain };
     }
     // Loopback while hosting is off, every network while it is on -- IPv4 and
     // IPv6 both, or IPv4 alone on a computer without IPv6. Who may come in is
@@ -820,7 +940,7 @@ export class ScreenMirrorService {
     // seconds before the next one is taken -- moving on at once sent every
     // viewer to a dead address (seen: 39240, 39241, 39240 on three restarts).
     private async listen(preferredPort?: number) {
-        const server = this.createServer();
+        const { server, plain } = this.createPort();
         this.isBoundToAll = this.shouldBindToAll;
         let host = this.isBoundToAll ? '::' : '127.0.0.1';
         const lastPort = readPort(
@@ -904,6 +1024,7 @@ export class ScreenMirrorService {
                     !['EADDRINUSE', 'EACCES'].includes(error.code)
                 ) {
                     this.error = 'Unable to start screen mirror server';
+                    plain.close();
                     return false;
                 }
                 index++;
@@ -914,6 +1035,7 @@ export class ScreenMirrorService {
             this.notify();
         });
         this.server = server;
+        this.plainServer = plain;
         this.error = null;
         return true;
     }
@@ -1061,15 +1183,17 @@ export class ScreenMirrorService {
     // Listens again on the same port, on loopback or on every network.
     private async rebind() {
         const previous = this.server;
+        const previousPlain = this.plainServer;
         if (previous) {
             await new Promise<void>((resolve) => {
                 previous.close(() => resolve());
-                previous.closeAllConnections();
+                previousPlain?.closeAllConnections();
                 // A browser watching a virtual display reconnects by itself.
                 for (const socket of this.serverSockets.get(previous) ?? []) {
                     socket.destroy();
                 }
             });
+            previousPlain?.close();
             this.serverSockets.delete(previous);
         }
         return await this.listen(this.port);
@@ -1296,7 +1420,9 @@ export class ScreenMirrorService {
         try {
             this.udp?.close();
         } catch {}
+        this.closeHttps();
         this.server?.close();
+        this.plainServer?.close();
         this.content.clear();
         this.broker?.destroy();
     }

@@ -155,6 +155,7 @@ function showIntercom(isShown: boolean) {
     castButton.hidden = !(isShown && isCastOffered);
     if (!isShown) {
         closeCastPanel();
+        closeCameraPanel();
         castState = null;
         updateCastButton();
     }
@@ -167,7 +168,7 @@ function showIntercom(isShown: boolean) {
     isVoiceAllowed = isShown && isIntercomOffered;
     applyVoice();
     if (isShown) {
-        shareCameraButton.title = label('camera', 'Share my camera');
+        shareCameraButton.title = label('camera', 'Share my cameras');
         shareCameraButton.setAttribute('aria-label', shareCameraButton.title);
     }
     if (isShown) {
@@ -218,9 +219,15 @@ async function toggleMic() {
 // -- Camera ------------------------------------------------------------------------
 //
 // This device's camera shared with the computer running the display, as in a
-// video call: pressed, it is opened and offered; it is encoded (VP8, small,
+// video call: chosen, it is opened and offered; it is encoded (VP8, small,
 // 15 a second) only while a window there shows it (`camera-start` until
 // `camera-stop`), and frames are skipped rather than queued on a slow link.
+//
+// The button opens a list of every camera of this device, one shared at a
+// time (asked for 2026-10-08: _"on mobile I need option to choose different.
+// add all choices"_ -- it opened the browser's default, a phone's front, and
+// nothing else). Another one chosen while one is shared takes its place on
+// every screen showing it; nothing there is added again.
 
 const isCameraOffered =
     !isPreview &&
@@ -230,7 +237,18 @@ const isCameraOffered =
 const CAMERA_FRAME_MILLISECOND = 1000 / 15;
 const CAMERA_KEY_EVERY = 30;
 const CAMERA_MAX_BUFFERED = 1024 * 1024;
+// A phone or a tablet: before this page may use a camera the browser names
+// none of them, but the two sides of one can still be asked for.
+const isTouchFirst =
+    globalThis.matchMedia?.('(pointer: coarse)').matches === true;
+// What Android calls a phone's cameras ("camera2 1, facing front"); iOS
+// already says "Back Ultra Wide Camera".
+const ANDROID_CAMERA_NAME = /^camera\d*\s+\d+,\s*facing\s+(front|back)$/i;
+
 type CameraType = {
+    // The device it is (the choice's own key where the browser gave none).
+    key: string;
+    name: string;
     stream: MediaStream;
     video: HTMLVideoElement;
     canvas: HTMLCanvasElement | null;
@@ -239,7 +257,176 @@ type CameraType = {
     frameCount: number;
     isKeyWanted: boolean;
 };
+type CameraChoiceType = {
+    // A device's id, or the side of a phone (`user`, `environment`) or
+    // `default` while the browser names no device.
+    key: string;
+    name: string;
+    video: MediaTrackConstraints;
+};
 let camera: CameraType | null = null;
+let cameraChoices: CameraChoiceType[] = [];
+let isCameraOpening = false;
+// Counts each camera asked for or let go: one that opens after it was let go
+// (the display lost meanwhile) is closed again, not shared.
+let cameraRequest = 0;
+
+const cameraPanel = document.getElementById('camera-panel') as HTMLDivElement;
+const cameraTitle = document.getElementById('camera-title') as HTMLElement;
+const cameraCloseButton = document.getElementById(
+    'camera-close',
+) as HTMLButtonElement;
+const cameraPreview = document.getElementById(
+    'camera-preview',
+) as HTMLDivElement;
+const cameraList = document.getElementById('camera-list') as HTMLUListElement;
+
+function toUnnamedCameraChoices(): CameraChoiceType[] {
+    if (!isTouchFirst) {
+        return [
+            {
+                key: 'default',
+                name: label('cameraName', 'Camera'),
+                video: {},
+            },
+        ];
+    }
+    return [
+        {
+            key: 'user',
+            name: label('cameraFront', 'Front camera'),
+            video: { facingMode: 'user' },
+        },
+        // Exact: a tablet with no back camera says so, rather than sharing
+        // its front one under the wrong name.
+        {
+            key: 'environment',
+            name: label('cameraBack', 'Back camera'),
+            video: { facingMode: { exact: 'environment' } },
+        },
+    ];
+}
+
+// Every camera this device has, by name -- once this page may use one; the
+// browser names none before.
+async function listCameraChoices(): Promise<CameraChoiceType[]> {
+    let devices: MediaDeviceInfo[] = [];
+    try {
+        devices = await navigator.mediaDevices.enumerateDevices();
+    } catch {
+        // Not told: the sides of a phone, or the browser's own choice.
+    }
+    const named = devices.filter((device) => {
+        return (
+            device.kind === 'videoinput' &&
+            device.deviceId !== '' &&
+            device.label !== ''
+        );
+    });
+    if (named.length === 0) {
+        return toUnnamedCameraChoices();
+    }
+    const facings = named.map((device) => {
+        return (
+            ANDROID_CAMERA_NAME.exec(device.label)?.[1].toLowerCase() ?? null
+        );
+    });
+    const seen = new Map<string, number>();
+    return named.map((device, index) => {
+        const facing = facings[index];
+        let name = device.label;
+        if (facing !== null) {
+            const count = (seen.get(facing) ?? 0) + 1;
+            seen.set(facing, count);
+            name =
+                facing === 'front'
+                    ? label('cameraFront', 'Front camera')
+                    : label('cameraBack', 'Back camera');
+            // A phone with three back lenses lists three back cameras.
+            if (facings.filter((item) => item === facing).length > 1) {
+                name += ` ${count}`;
+            }
+        }
+        return {
+            key: device.deviceId,
+            name,
+            video: { deviceId: { exact: device.deviceId } },
+        };
+    });
+}
+
+function renderCameraPanel() {
+    if (cameraPanel.hidden) {
+        return;
+    }
+    cameraTitle.textContent = label('camera', 'Share my cameras');
+    cameraCloseButton.setAttribute('aria-label', label('close', 'Close'));
+    // Shown while the list is open only: nothing paints it otherwise.
+    if (camera === null) {
+        cameraPreview.replaceChildren();
+    } else if (camera.video.parentElement !== cameraPreview) {
+        cameraPreview.replaceChildren(camera.video);
+    }
+    // The one shared stays listed, with its Stop, when the list no longer
+    // has it (unplugged, or a browser that still names nothing).
+    const choices =
+        camera === null ||
+        cameraChoices.some((choice) => choice.key === camera?.key)
+            ? cameraChoices
+            : [
+                  { key: camera.key, name: camera.name, video: {} },
+                  ...cameraChoices,
+              ];
+    cameraList.replaceChildren(
+        ...choices.map((choice) => {
+            const isCurrent = camera?.key === choice.key;
+            const item = document.createElement('li');
+            item.classList.toggle('is-current', isCurrent);
+            const name = document.createElement('span');
+            name.className = 'panel-item-name';
+            const title = document.createElement('span');
+            title.textContent = choice.name;
+            title.title = choice.name;
+            name.append(title);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = isCurrent ? 'is-stop' : '';
+            button.disabled = isCameraOpening;
+            button.textContent = isCurrent
+                ? label('cameraStop', 'Stop')
+                : label('cameraShare', 'Share');
+            button.addEventListener('click', () => {
+                if (isCurrent) {
+                    stopSharingCamera();
+                } else {
+                    void shareCamera(choice);
+                }
+            });
+            item.append(name, button);
+            return item;
+        }),
+    );
+}
+
+async function refreshCameraChoices() {
+    cameraChoices = await listCameraChoices();
+    renderCameraPanel();
+}
+
+function openCameraPanel() {
+    closeCastPanel();
+    cameraPanel.hidden = false;
+    renderCameraPanel();
+    void refreshCameraChoices();
+}
+
+function closeCameraPanel() {
+    if (cameraPanel.hidden) {
+        return;
+    }
+    cameraPanel.hidden = true;
+    cameraPreview.replaceChildren();
+}
 
 function stopEncoding() {
     if (camera === null) {
@@ -254,13 +441,21 @@ function stopEncoding() {
 }
 
 function stopCamera() {
+    cameraRequest++;
     stopEncoding();
     if (camera !== null) {
         camera.stream.getTracks().forEach((track) => track.stop());
         camera.video.srcObject = null;
+        camera.video.remove();
     }
     camera = null;
     setPressed(shareCameraButton, false);
+    renderCameraPanel();
+}
+
+function stopSharingCamera() {
+    stopCamera();
+    sendPacket({ type: 'camera-state', shared: false });
 }
 
 function startEncoding() {
@@ -353,13 +548,18 @@ function startEncoding() {
     }, CAMERA_FRAME_MILLISECOND);
 }
 
-async function toggleCamera() {
-    if (camera !== null) {
-        stopCamera();
-        sendPacket({ type: 'camera-state', shared: false });
+// Shares the chosen camera, or puts it in place of the one shared now.
+async function shareCamera(choice: CameraChoiceType) {
+    if (isCameraOpening) {
         return;
     }
-    shareCameraButton.disabled = true;
+    isCameraOpening = true;
+    renderCameraPanel();
+    const previous = camera;
+    // A phone opens one camera at a time: the one shared now is let go
+    // first, or the other would not open.
+    previous?.stream.getTracks().forEach((track) => track.stop());
+    const request = ++cameraRequest;
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: false,
@@ -367,31 +567,63 @@ async function toggleCamera() {
                 width: { ideal: 640 },
                 height: { ideal: 360 },
                 frameRate: { ideal: 15 },
+                ...choice.video,
             },
         });
-        const video = document.createElement('video');
-        video.muted = true;
-        video.playsInline = true;
-        video.srcObject = stream;
-        void video.play().catch(() => {});
-        camera = {
-            stream,
-            video,
-            canvas: null,
-            encoder: null,
-            timer: undefined,
-            frameCount: 0,
-            isKeyWanted: true,
-        };
+        if (request !== cameraRequest) {
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+        }
+        const track = stream.getVideoTracks()[0];
+        const key = track?.getSettings?.().deviceId || choice.key;
+        if (previous !== null && camera === previous) {
+            // The same encoder goes on, from a key frame of the new picture.
+            previous.key = key;
+            previous.name = choice.name;
+            previous.stream = stream;
+            previous.video.srcObject = stream;
+            previous.isKeyWanted = true;
+            void previous.video.play().catch(() => {});
+        } else {
+            const video = document.createElement('video');
+            video.muted = true;
+            video.playsInline = true;
+            video.srcObject = stream;
+            void video.play().catch(() => {});
+            camera = {
+                key,
+                name: choice.name,
+                stream,
+                video,
+                canvas: null,
+                encoder: null,
+                timer: undefined,
+                frameCount: 0,
+                isKeyWanted: true,
+            };
+        }
         setPressed(shareCameraButton, true);
+        // Named now that this page may use a camera.
+        cameraChoices = await listCameraChoices();
+        if (request !== cameraRequest) {
+            return;
+        }
+        const listed = cameraChoices.find((item) => item.key === key);
+        camera!.name = listed?.name || track?.label || choice.name;
         sendPacket({
             type: 'camera-state',
             shared: true,
-            label: stream.getVideoTracks()[0]?.label ?? '',
+            label: camera!.name,
         });
     } catch {
-        // Refused, in use (Windows lets one app hold a camera), or none: it
-        // stays off, and says so.
+        if (request !== cameraRequest) {
+            return;
+        }
+        // Refused, in use (Windows lets one app hold a camera), or no such
+        // side: it is off, and says so.
+        if (previous !== null) {
+            stopSharingCamera();
+        }
         showToast(
             label(
                 'cameraFailed',
@@ -399,7 +631,8 @@ async function toggleCamera() {
             ),
         );
     } finally {
-        shareCameraButton.disabled = false;
+        isCameraOpening = false;
+        renderCameraPanel();
     }
 }
 
@@ -589,12 +822,12 @@ function renderCastPanel() {
         ...(castAppSection.hidden ? [] : state!.targets).map((target) => {
             const item = document.createElement('li');
             const name = document.createElement('span');
-            name.className = 'cast-name';
+            name.className = 'panel-item-name';
             const title = document.createElement('span');
             title.textContent = target.name;
             title.title = target.name;
             const detail = document.createElement('span');
-            detail.className = 'cast-detail';
+            detail.className = 'panel-item-detail';
             detail.textContent = toCastDetail(target);
             name.append(title, detail);
             const isOn =
@@ -676,6 +909,7 @@ function releaseCastStream() {
 }
 
 function openCastPanel() {
+    closeCameraPanel();
     castState = null;
     browserCastProblem = '';
     castPanel.hidden = false;
@@ -1291,6 +1525,7 @@ function main() {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeCastPanel();
+            closeCameraPanel();
         }
     });
     castRemote?.addEventListener('connect', () => setCasting(true));
@@ -1305,7 +1540,18 @@ function main() {
     );
     soundVolume.addEventListener('input', applyVoice);
     shareCameraButton.addEventListener('click', () => {
-        void toggleCamera();
+        if (cameraPanel.hidden) {
+            openCameraPanel();
+        } else {
+            closeCameraPanel();
+        }
+    });
+    cameraCloseButton.addEventListener('click', closeCameraPanel);
+    // A camera plugged in or out while the list is open.
+    navigator.mediaDevices?.addEventListener?.('devicechange', () => {
+        if (!cameraPanel.hidden) {
+            void refreshCameraChoices();
+        }
     });
     codeForm.addEventListener('submit', (event) => {
         event.preventDefault();

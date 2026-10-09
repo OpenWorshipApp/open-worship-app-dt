@@ -4,7 +4,7 @@ description: "Virtual displays (W-51, SP-30/31): app-only monitors in the displa
 metadata:
   node_type: memory
   type: project
-  modified: 2026-10-09T01:04:59.060Z
+  modified: 2026-10-09T01:44:39.424Z
   originSessionId: d2d65105-9e71-4dd7-9744-fda3c4099ead
 ---
 
@@ -305,6 +305,46 @@ Casting a display to a TV, from the app or a browser: [[cast-to-tv]].
   tabs), the tunnel note and the router note are `CollapsibleNoteComp` -- one
   clamped line keeping colour and first words, chevron or a click opens it,
   `virtual-screens-note-<name>-expanded` remembers it.
+
+**Use HTTPS -- one port, two protocols** (2026-10-08, asked with a picture of
+Where to watch: _"add https toggling option"_). Client setting
+`virtual-display-https`, off by default, a switch under _Let other devices
+watch_. It exists because a LAN phone on `http://` is not a secure context
+(see above): measured with headless Chrome on `https://192.168.1.3:39240/vd/1/`
+-- `isSecureContext`, Wake Lock, `mediaDevices`, `crypto.randomUUID` all
+present; all absent on `http://`.
+
+- **The port is a `net.Server` that looks at each connection's first byte**
+  (`routeMirrorSocket`, `electron/mirrorTls.ts`; 0x16 = TLS handshake) and
+  hands it whole to a plain `http.Server` or the `https.Server`, neither of
+  which listens. Same port on purpose: the router mapping, firewall rule,
+  sticky port and every printed QR stay valid; only the scheme changes. Plain
+  HTTP NEVER stops -- screen windows and the MP4 compositor load from
+  `http://127.0.0.1`, Screen Mirror guests dial http/ws from main, and a media
+  player or TV refuses a self-signed certificate with nowhere to accept it.
+  So the MP4 rows and _This computer_ (127.0.0.1 is a secure context already;
+  https there would only warn the operator) stay `http://`
+  (`toVirtualDisplayPageUrl(address, n, isSecure)`); the tunnel was https
+  already. Off: a TLS hello is closed and open TLS sockets are destroyed.
+- **The non-listening servers get `emit('listening')`**: Node starts its
+  headers/request timeout checks (`setupConnectionsTracking`) only on that
+  event, and the port is open to the internet. The front also closes a
+  connection silent for 60 s, and tracks every raw socket so a rebind's
+  `close()` cannot wait on one that never spoke.
+- **The certificate is this computer's own**, made by hand-written DER in
+  `mirrorTls.ts` (no dependency): RSA 2048 / SHA-256, serverAuth EKU, SAN of
+  localhost, the hostname (+ `.local`) and every address at the time, valid
+  800 days (Apple refuses > 825 even when trusted), renewed at < 30 left. Kept
+  in the SECURE setting `virtual-display-tls` and made only the first time
+  HTTPS is turned on, so a browser let past the warning is not warned again
+  next launch (Chrome remembers the exception per host + certificate). Where
+  secure storage is unavailable it is session-only: a new one each launch.
+- **The viewer socket's Origin check** is `https://<host>` when
+  `checkIsSecureRequest(req)` (tunnel OR `req.socket.encrypted`).
+- **Not done / not seen**: iOS Safari over `wss` with a self-signed
+  certificate (WebKit has refused it in the past even after the page was
+  accepted -- the http address still works); a browser's "Cast from this
+  browser" from an https page hands the TV an https MP4 it may refuse.
 
 **Driving it in dev:** the presenter deletes `globalThis.provider` after
 `appProvider` reads it; raw CDP in a scratch instance reaches IPC through

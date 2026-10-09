@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-08e** (W-51 step 4 — a screen showing on a virtual display is showing again when the app starts next time (asked for with a picture of a screen's show button off after a reload: _"for virtual display, it should remember showing screen, so even reload it still have content showing"_); W-50 step 7 and W-51 — the internet warning, the tunnel note and the router note fold to one line (asked for with a picture of the Virtual Displays tab: _"make those verbose message collapsed, expandable"_); W-51 steps 7 and 8 — from the virtual display robot run vd-20261008b, "fix high medium and low": on the browser page a tap, a click or the mouse ON THE PICTURE brings the buttons back and a double-click on it goes full screen (the screens covered the whole page and took every touch, so the buttons came back only from the black bars, and a double-click selected a word on the screen instead); the pointer shows over the picture while the buttons do; and a device that leaves the page, or drops off the network without a word, leaves **[en:tran:Watching now]** by itself within about 40 seconds (a tab sent to another site stayed listed for minutes, kept alive by the browser's back/forward cache). Verified live 2026-10-08 on the dev presenter with a headless Chrome on the page: a mouse move and a tap over the picture showed the buttons, a double-click entered and left full screen with nothing selected, the page's row left the list 3 s after it navigated away and came back fresh on Back, and a socket that answered no ping was ended 22 s after it was first asked.)
+**workflowsVersion: 2026-10-08g** (W-51 step 7 — **[en:tran:Share my cameras]** on the browser page opens a list of every camera of the device instead of sharing the browser's default one: **[en:tran:Front camera]** / **[en:tran:Back camera]** on a phone until a camera has been allowed, then each camera by name (Android's `camera2 0, facing back` read as **[en:tran:Back camera]**, numbered when a phone has several), **[en:tran:Share]** / **[en:tran:Stop]** per row, another one swapped in place on every screen showing it, and a picture of the one shared above the list. Asked for by the user: _"virtual display camera sharing, on mobile I need option to choose different. add all choices to choose different cameras"_. Verified live 2026-10-08 on the dev presenter's display 1 with a headless Chrome emulating a phone (coarse pointer, three fake cameras) on `http://127.0.0.1:39240/vd/1/`: the list read Front / Back camera before permission; **[en:tran:Back camera]** was refused with the camera toast (the fake cameras have no back side, as on a laptop); **[en:tran:Front camera]** shared `fake_device_0` with its picture shown and the list turned into the three cameras by name; **[en:tran:Share]** on `fake_device_1` swapped it with no unshare in between, and the presenter's Virtual Screens Manager read `Browser 127.0.0.1: fake_device_1`; **[en:tran:Stop]** ended it. A real phone's back lens was not driven.)
+
+Previous: **workflowsVersion: 2026-10-08f** (W-51 step 6 — **[en:tran:Use HTTPS]** in the **[en:tran:Virtual Displays]** tab, off until turned on: a browser's addresses on other devices become `https://` on the same port, so a phone's page is a secure context (kept awake in full screen, its microphone and camera for the intercom). This computer signs its own certificate, so a browser warns once per address. Asked for by the user with a picture of **[en:tran:Where to watch]**: _"add https toggling option"_. Verified live 2026-10-08 on the dev presenter: on, every **[en:tran:This network]** and the **[en:tran:Public IP]** row read `https://` with the QR code still open, **[en:tran:This computer]** and the MP4 stayed `http://`; a headless Chrome on `https://192.168.1.3:39240/vd/1/` drew the display with `isSecureContext`, Wake Lock and `mediaDevices` all present (all absent on the `http://` address); the viewer socket answered `wss` from the https page and refused it from an http one; off again, TLS was refused and `http://` answered.)
+
+Previous: **workflowsVersion: 2026-10-08e** (W-51 step 4 — a screen showing on a virtual display is showing again when the app starts next time (asked for with a picture of a screen's show button off after a reload: _"for virtual display, it should remember showing screen, so even reload it still have content showing"_); W-50 step 7 and W-51 — the internet warning, the tunnel note and the router note fold to one line (asked for with a picture of the Virtual Displays tab: _"make those verbose message collapsed, expandable"_); W-51 steps 7 and 8 — from the virtual display robot run vd-20261008b, "fix high medium and low": on the browser page a tap, a click or the mouse ON THE PICTURE brings the buttons back and a double-click on it goes full screen (the screens covered the whole page and took every touch, so the buttons came back only from the black bars, and a double-click selected a word on the screen instead); the pointer shows over the picture while the buttons do; and a device that leaves the page, or drops off the network without a word, leaves **[en:tran:Watching now]** by itself within about 40 seconds (a tab sent to another site stayed listed for minutes, kept alive by the browser's back/forward cache). Verified live 2026-10-08 on the dev presenter with a headless Chrome on the page: a mouse move and a tap over the picture showed the buttons, a double-click entered and left full screen with nothing selected, the page's row left the list 3 s after it navigated away and came back fresh on Back, and a socket that answered no ping was ended 22 s after it was first asked.)
 
 Previous: **workflowsVersion: 2026-10-08d** (W-09 — a **[en:tran:Screen Show]** is see-through: where the screen it shows draws nothing, the screen beneath shows through, with none of the tinted, blurred backing the text overlays carry. Asked for by the user with a picture of the copy drawing a solid box where screen 1 had nothing: _"it should be transparency"_. Verified live 2026-10-08 on a scratch dev instance with screen 1 HIDDEN and holding only a stopwatch: screen 0's red background showed through the whole copy around that stopwatch on screen 0's projector; in the user's own app a copy placed before the fix turned see-through as well, its empty part showing screen 0's starry background on Mini Screen 0. PM-158.)
 
@@ -5373,6 +5377,16 @@ cable or a second copy of the app.
    on **[en:tran:Open to the internet]** as well (the same option as Screen
    Mirror's, with the same warning) lists **[en:tran:Internet]** ones. No code
    is asked for: anyone who has the address can watch.
+
+   **[en:tran:Use HTTPS]**, under it (off until turned on), lists the browser
+   addresses for other devices as `https://`, on the same port. A phone's
+   page on this network can then do what a browser allows only a secure
+   page: keep the screen awake in full screen, and send its microphone and
+   camera. This computer signs its own certificate, so each browser warns
+   once the first time it opens an address — continue past the warning
+   (in Chrome, **Advanced**, then **Proceed**). **[en:tran:This computer]**,
+   the tunnel's address and the MP4 are unchanged, and the `http://`
+   addresses keep working.
 7. The browser page fits the display to its window. Its
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
@@ -5398,6 +5412,17 @@ cable or a second copy of the app.
      there (Google Cast, DLNA, Roku): **[en:tran:Cast]** puts the display on
      one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]** looks
      once more.
+
+   On a page that may use a camera (an `https://` address from step 6, the
+   tunnel's, or this computer's own), **[en:tran:Share my cameras]** opens a
+   list of every camera of the device, each with **[en:tran:Share]**. A
+   phone lists **[en:tran:Front camera]** and **[en:tran:Back camera]** until
+   the browser has been allowed a camera, then every camera it has by name —
+   a phone with several back lenses lists each one. The camera shared shows
+   its picture above the list and reads **[en:tran:Stop]**; **[en:tran:Share]**
+   on another one puts it in its place on every screen showing it, with
+   nothing to add again. The app lists it among its cameras as
+   `Browser <address>: <camera>`.
 
    The page keeps the device from sleeping while it is open. If the app goes
    away, the page reads **[en:tran:Waiting for the display]** and joins again

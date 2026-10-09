@@ -76,5 +76,8 @@ export function toVirtualDisplayErrorText(message: string) {
     if (message === 'The virtual display stopped recording') {
         return tran('The virtual display stopped recording');
     }
+    if (message === 'Unable to turn on HTTPS') {
+        return tran('Unable to turn on HTTPS');
+    }
     return tran('The virtual display stopped');
 }

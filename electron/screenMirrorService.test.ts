@@ -5,6 +5,8 @@ import { randomUUID } from 'node:crypto';
 import net from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
+import tls from 'node:tls';
+import { X509Certificate } from 'node:crypto';
 import dgram from 'node:dgram';
 import os from 'node:os';
 import path from 'node:path';
@@ -104,6 +106,7 @@ import {
 import { MirrorTunnel } from './screenMirrorTunnel';
 import { readRequestSender } from './mirrorRequestSender';
 import {
+    VIRTUAL_DISPLAY_HTTPS_KEY,
     VIRTUAL_DISPLAY_SHARE_KEY,
     toVirtualDisplayId,
 } from './virtualDisplayProtocol';
@@ -1410,3 +1413,76 @@ test('the intercom and camera sharing between a host and a guest', async () => {
         guest.stop();
     }
 });
+
+// "Use HTTPS" (Virtual Displays): the same port answers TLS with this
+// computer's own certificate, kept for the next launch; plain HTTP never
+// stops, and a TLS connection open when it goes off is ended.
+test('HTTPS on the same port, with a certificate kept for the next launch', async () => {
+    const port = service.port;
+    const status = (url: string) => {
+        return new Promise<number>((resolve, reject) => {
+            (url.startsWith('https:') ? https : http)
+                .get(
+                    url,
+                    { rejectUnauthorized: false, agent: false },
+                    (res) => {
+                        res.resume();
+                        resolve(res.statusCode ?? 0);
+                    },
+                )
+                .on('error', reject);
+        });
+    };
+    const fingerprint = (onPort: number) => {
+        return new Promise<string>((resolve, reject) => {
+            const socket = tls.connect({
+                host: '127.0.0.1',
+                port: onPort,
+                rejectUnauthorized: false,
+            });
+            socket.once('secureConnect', () => {
+                resolve(socket.getPeerCertificate().fingerprint256);
+                socket.destroy();
+            });
+            socket.once('error', reject);
+        });
+    };
+    const httpsUrl = `https://127.0.0.1:${port}/discovery`;
+    const httpUrl = `http://127.0.0.1:${port}/discovery`;
+    await expect(status(httpsUrl)).rejects.toThrow();
+    expect(fixture.secure.has('virtual-display-tls')).toBe(false);
+
+    await service.setHttpsEnabled(true);
+    expect(service.isHttpsEnabled).toBe(true);
+    expect(await status(httpsUrl)).toBe(200);
+    expect(await status(httpUrl)).toBe(200);
+    const stored = JSON.parse(fixture.secure.get('virtual-display-tls')!);
+    const storedFingerprint = new X509Certificate(stored.cert).fingerprint256;
+    expect(await fingerprint(port)).toBe(storedFingerprint);
+
+    const open = tls.connect({
+        host: '127.0.0.1',
+        port,
+        rejectUnauthorized: false,
+    });
+    open.on('error', () => {});
+    await new Promise((resolve) => open.once('secureConnect', resolve));
+    const closed = new Promise((resolve) => open.once('close', resolve));
+    await service.setHttpsEnabled(false);
+    await closed;
+    await expect(status(httpsUrl)).rejects.toThrow();
+    expect(await status(httpUrl)).toBe(200);
+
+    // The next launch answers with the same certificate.
+    fixture.client.set(VIRTUAL_DISPLAY_HTTPS_KEY, 'true');
+    service.stop();
+    service = new ScreenMirrorService();
+    await service.start();
+    const nextPort = service.port;
+    await vi.waitFor(async () => {
+        expect(await status(`https://127.0.0.1:${nextPort}/discovery`)).toBe(
+            200,
+        );
+    });
+    expect(await fingerprint(nextPort)).toBe(storedFingerprint);
+}, 30_000);

@@ -26,6 +26,7 @@ export const VIRTUAL_DISPLAY_MAX_PIXELS = 3840 * 2160;
 export const VIRTUAL_DISPLAY_NAME_MAX = 64;
 export const VIRTUAL_DISPLAY_SETTING_KEY = 'virtual-displays';
 export const VIRTUAL_DISPLAY_SHARE_KEY = 'virtual-display-share';
+export const VIRTUAL_DISPLAY_HTTPS_KEY = 'virtual-display-https';
 
 export const RESOLUTION_PRESETS: ReadonlyArray<{
     width: number;
@@ -204,6 +205,9 @@ export type VirtualDisplayState = {
     // directly (a VPN, carrier NAT, a router that forwards nothing).
     tunnelEnabled: boolean;
     tunnel: MirrorTunnelState;
+    // The port answers TLS too, with this computer's own certificate, and a
+    // browser's addresses on other devices are https (`toVirtualDisplayPageUrl`).
+    httpsEnabled: boolean;
     // Shared with Screen Mirror: one server, one public address, one port.
     publicAddress: string;
     customPort: number | null;
@@ -645,17 +649,24 @@ export function parseVirtualDisplayStreamPath(pathname: string) {
     return number >= 1 ? number : null;
 }
 
-// A tunnel address is https on the default port; every other is plain http.
-function toVirtualDisplayOrigin(address: {
-    host: string;
-    port: number;
-    kind?: string;
-}) {
-    return address.kind === 'tunnel'
-        ? `https://${address.host}`
-        : `http://${toMirrorHostPort(address.host, address.port)}`;
+// A tunnel address is https on the default port. Every other is plain http,
+// or -- with `isSecure`, the operator's "Use HTTPS" -- https on the same
+// port, except this computer's own: `127.0.0.1` is a secure context already,
+// and its browser would only be warned about the certificate.
+function toVirtualDisplayOrigin(
+    address: { host: string; port: number; kind?: string },
+    isSecure = false,
+) {
+    if (address.kind === 'tunnel') {
+        return `https://${address.host}`;
+    }
+    const scheme =
+        isSecure && address.kind !== 'this-computer' ? 'https' : 'http';
+    return `${scheme}://${toMirrorHostPort(address.host, address.port)}`;
 }
 
+// The MP4 stays plain http whatever the page's scheme: a media player or a
+// TV refuses a certificate this computer signed, with nowhere to accept it.
 export function toVirtualDisplayStreamUrl(
     address: { host: string; port: number; kind?: string },
     number: number,
@@ -666,8 +677,9 @@ export function toVirtualDisplayStreamUrl(
 export function toVirtualDisplayPageUrl(
     address: { host: string; port: number; kind?: string },
     number: number,
+    isSecure = false,
 ) {
-    return `${toVirtualDisplayOrigin(address)}${toVirtualDisplayPagePath(number)}`;
+    return `${toVirtualDisplayOrigin(address, isSecure)}${toVirtualDisplayPagePath(number)}`;
 }
 
 // The order the H.264 encoder is tried in: High, Main, then Baseline, at the

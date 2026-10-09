@@ -121,6 +121,10 @@ const dictionary = {
     'Let other devices watch': 'អនុញ្ញាតឲ្យឧបករណ៍ផ្សេងមើល',
     'Turn this on to watch virtual displays from phones, TVs and other computers on this network.':
         'បើកវាដើម្បីមើលម៉ូនីទ័រនិម្មិតពីទូរស័ព្ទ ទូរទស្សន៍ និងកុំព្យូទ័រផ្សេងទៀតនៅលើបណ្ដាញនេះ។',
+    'Use HTTPS': 'ប្រើ HTTPS',
+    'Browsers on other devices open the display by an https address, so a phone can keep its screen on and share its microphone and camera. This computer signs its own certificate, so each browser warns once: continue past the warning (Advanced, then Proceed). Media players keep the http address.':
+        'កម្មវិធីរុករកនៅលើឧបករណ៍ផ្សេងទៀតបើកម៉ូនីទ័រតាមអាសយដ្ឋាន https ដូច្នេះទូរស័ព្ទអាចរក្សាអេក្រង់ឲ្យភ្លឺ ហើយចែករំលែកមីក្រូហ្វូន និងកាមេរ៉ារបស់វាបាន។ កុំព្យូទ័រនេះចុះហត្ថលេខាលើវិញ្ញាបនបត្រផ្ទាល់ខ្លួន ដូច្នេះកម្មវិធីរុករកនីមួយៗព្រមានម្ដង៖ សូមបន្តហួសការព្រមាននោះ (Advanced រួច Proceed)។ កម្មវិធីចាក់មេឌៀនៅតែប្រើអាសយដ្ឋាន http។',
+    'Unable to turn on HTTPS': 'មិនអាចបើក HTTPS បានទេ',
     'Anyone who has a stream address can watch it, and the stream is not encrypted. Turn this off when you are done.':
         'អ្នកណាដែលមានអាសយដ្ឋានផ្សាយ អាចមើលវាបាន ហើយការផ្សាយមិនត្រូវបានអ៊ិនគ្រីបទេ។ សូមបិទវាពេលអ្នកប្រើរួច។',
     'A virtual display is a screen that exists only in this app. Show screens on it like on a real monitor, and watch it from any device as a video.':
@@ -242,6 +246,9 @@ const dictionary = {
     'Speaker volume': 'កម្រិតសំឡេងឧបករណ៍បំពងសំឡេង',
     'Share my cameras': 'ចែករំលែកកាមេរ៉ារបស់ខ្ញុំ',
     'Stop sharing my cameras': 'ឈប់ចែករំលែកកាមេរ៉ារបស់ខ្ញុំ',
+    Share: 'ចែករំលែក',
+    'Front camera': 'កាមេរ៉ាមុខ',
+    'Back camera': 'កាមេរ៉ាក្រោយ',
     'Microphone access denied': 'មិនបានអនុញ្ញាតឲ្យប្រើមីក្រូហ្វូនទេ',
     'The microphone could not be opened. Allow it for this page, or close another app using it.':
         'មិនអាចបើកមីក្រូហ្វូនបានទេ។ សូមអនុញ្ញាតវាសម្រាប់ទំព័រនេះ ឬបិទកម្មវិធីផ្សេងដែលកំពុងប្រើវា។',

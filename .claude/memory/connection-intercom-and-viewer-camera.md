@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 84de4c50-a44b-4c8d-bd33-0a72a39fe576
-  modified: 2026-10-08T19:57:08.411Z
+  modified: 2026-10-08T22:15:00.000Z
 ---
 
 Built 2026-10-08 at the user's ask (_"3 icons per connection, mic speaker and
@@ -46,6 +46,23 @@ screen shows) -- the same frames passed on, never encoded twice. Decoded into a
   browser's screen page as `{...frame, type: 'vd-camera-frame'}` overwrote its
   `key`/`delta`; the page waited for a key frame for ever and drew nothing.
   The frame's own goes as `frameType`.
+- **The camera button is a picker, not a toggle** (2026-10-08, asked for:
+  _"on mobile I need option to choose different. add all choices"_ -- it
+  opened the browser's default, a phone's front, and nothing else). It opens
+  `#camera-panel` (styled with the cast list as `.panel`; one open at a time):
+  before the browser has allowed a camera it names none, so a coarse-pointer
+  device gets Front / Back (`facingMode`, the back one EXACT so a device with
+  none refuses rather than sharing its front under the wrong name) and
+  anything else one "Camera"; after, every `videoinput` by label, Android's
+  `camera2 N, facing back` read as Back camera, numbered when several. A
+  switch STOPS the shared track before `getUserMedia` (a phone opens one
+  camera at a time), keeps the same `camera` object and encoder (`isKeyWanted`)
+  and sends `camera-state shared:true` with the new name -- never `false` in
+  between, so the host's watchers just carry on; `share()` renames the
+  `vd-camera:` entry. `cameraRequest` is bumped by every open and by
+  `stopCamera`, so a camera that opens after the display was lost is closed,
+  not shared. The `<video>` already feeding the encoder is the panel's
+  preview, put in the DOM only while the list is open.
 - Release through `stopCameraStream` (`cameraHelpers`): it lets go of the
   mirror AND the viewer transports. The background camera used to release only
   the mirror one.
@@ -58,7 +75,8 @@ screen shows) -- the same frames passed on, never encoded twice. Decoded into a
 display's MP4 sound (compositor message `{type:'mic'}`, re-sent on
 `vd:compositor-ready`).
 
-**Viewer page controls**: mic, ONE sound button, share camera, full screen.
+**Viewer page controls**: mic, ONE sound button, share camera (the picker
+above), full screen.
 The sound button is the display's sound AND the host's voice, on and off
 together (asked for 2026-10-08: the old one-shot _Turn on sound_ beside a
 separate speaker for the voice was _"one extra icon"_); pressing it loads the

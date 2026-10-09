@@ -82,6 +82,16 @@ cable or a second copy of the app.
    on **[en:tran:Open to the internet]** as well (the same option as Screen
    Mirror's, with the same warning) lists **[en:tran:Internet]** ones. No code
    is asked for: anyone who has the address can watch.
+
+   **[en:tran:Use HTTPS]**, under it (off until turned on), lists the browser
+   addresses for other devices as `https://`, on the same port. A phone's
+   page on this network can then do what a browser allows only a secure
+   page: keep the screen awake in full screen, and send its microphone and
+   camera. This computer signs its own certificate, so each browser warns
+   once the first time it opens an address — continue past the warning
+   (in Chrome, **Advanced**, then **Proceed**). **[en:tran:This computer]**,
+   the tunnel's address and the MP4 are unchanged, and the `http://`
+   addresses keep working.
 7. The browser page fits the display to its window. Its
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
@@ -107,6 +117,17 @@ cable or a second copy of the app.
      there (Google Cast, DLNA, Roku): **[en:tran:Cast]** puts the display on
      one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]** looks
      once more.
+
+   On a page that may use a camera (an `https://` address from step 6, the
+   tunnel's, or this computer's own), **[en:tran:Share my cameras]** opens a
+   list of every camera of the device, each with **[en:tran:Share]**. A
+   phone lists **[en:tran:Front camera]** and **[en:tran:Back camera]** until
+   the browser has been allowed a camera, then every camera it has by name —
+   a phone with several back lenses lists each one. The camera shared shows
+   its picture above the list and reads **[en:tran:Stop]**; **[en:tran:Share]**
+   on another one puts it in its place on every screen showing it, with
+   nothing to add again. The app lists it among its cameras as
+   `Browser <address>: <camera>`.
 
    The page keeps the device from sleeping while it is open. If the app goes
    away, the page reads **[en:tran:Waiting for the display]** and joins again

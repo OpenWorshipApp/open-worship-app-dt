@@ -107,18 +107,21 @@ function fakeUpgrade({
     remoteAddress = '127.0.0.1',
     origin = 'http://192.168.1.2:40000',
     hostHeader = '192.168.1.2:40000',
+    encrypted = false,
 }: {
     url: string;
     remoteAddress?: string;
     origin?: string;
     hostHeader?: string;
+    // Over the port's own TLS ("Use HTTPS").
+    encrypted?: boolean;
 }) {
     const socket = { destroy: vi.fn() };
     viewers.upgrade(
         {
             url,
             headers: { origin, host: hostHeader },
-            socket: { remoteAddress },
+            socket: { remoteAddress, ...(encrypted ? { encrypted } : {}) },
         } as unknown as http.IncomingMessage,
         socket as any,
         Buffer.alloc(0),
@@ -576,6 +579,32 @@ describe('a screen socket', () => {
         });
         expect(mapped.destroy).toHaveBeenCalledTimes(1);
         expect(host.getScreen).toHaveBeenCalledWith(1, 5);
+    });
+
+    test('over TLS ("Use HTTPS") its page is https', async () => {
+        await openViewer();
+        const plainOrigin = fakeUpgrade({
+            url: screenPath(),
+            encrypted: true,
+        });
+        expect(plainOrigin.destroy).toHaveBeenCalledTimes(1);
+        expect(host.getScreen).not.toHaveBeenCalled();
+        // The https page of the same address gets as far as its screen.
+        host.getScreen.mockReturnValueOnce(null);
+        fakeUpgrade({
+            url: screenPath(),
+            origin: 'https://192.168.1.2:40000',
+            encrypted: true,
+        });
+        expect(host.getScreen).toHaveBeenCalledWith(1, 5);
+        // And an https page is not let in over plain http.
+        host.getScreen.mockClear();
+        const secureOrigin = fakeUpgrade({
+            url: screenPath(),
+            origin: 'https://192.168.1.2:40000',
+        });
+        expect(secureOrigin.destroy).toHaveBeenCalledTimes(1);
+        expect(host.getScreen).not.toHaveBeenCalled();
     });
 
     test('is closed with 1011 when the screen has no context', async () => {

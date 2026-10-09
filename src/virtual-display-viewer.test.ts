@@ -85,6 +85,10 @@ beforeAll(async () => {
         .parseFromString(html, 'text/html')
         .body.innerHTML.replace(/<script[\s\S]*?<\/script>/g, '');
     (globalThis as any).WebSocket = FakeSocket;
+    // A phone: a coarse pointer.
+    (globalThis as any).matchMedia = (query: string) => ({
+        matches: query === '(pointer: coarse)',
+    });
     HTMLMediaElement.prototype.play = vi.fn(async () => {});
     HTMLMediaElement.prototype.pause = vi.fn();
     HTMLMediaElement.prototype.load = vi.fn();
@@ -252,42 +256,140 @@ test('one sound button turns the sound on and off again', () => {
     expect(frame().src).not.toContain('sound=1');
 });
 
-// Shared like a video call: pressed, the camera opens and the computer running
-// the display is told; pressed again, it closes. One that cannot be opened (in
-// use by another app, refused) leaves the button off and says so.
-test('the camera button turns on with the camera, and says when it cannot', async () => {
+// Shared like a video call, from a list of every camera of this device: on a
+// phone its front and back before the browser names them, then each by name.
+// Another one chosen takes the place of the one shared, without it ever being
+// unshared; Stop closes it. One that cannot be opened (in use by another app,
+// refused) is not shared, and the page says so.
+test('the camera button lists every camera, and shares the one chosen', async () => {
     latest().open();
     latest().receive({ type: 'layout', layout: LAYOUT });
-    const track = { label: 'Front Camera', stop: vi.fn() };
-    const stream = {
+    const genTrack = (label: string, deviceId: string) => ({
+        label,
+        stop: vi.fn(),
+        getSettings: () => ({ deviceId }),
+    });
+    const genStream = (track: ReturnType<typeof genTrack>) => ({
         getVideoTracks: () => [track],
         getTracks: () => [track],
-    };
-    const getUserMedia = vi.fn(async () => stream);
+    });
+    const back = genTrack('camera2 0, facing back', 'back-0');
+    const front = genTrack('camera2 1, facing front', 'front-1');
+    const getUserMedia = vi.fn(async (): Promise<unknown> => genStream(back));
+    // Before this page may use a camera, the browser names none.
+    let devices = [{ kind: 'videoinput', deviceId: '', label: '' }];
+    const enumerateDevices = vi.fn(async () => devices);
     Object.defineProperty(navigator, 'mediaDevices', {
         configurable: true,
-        value: { getUserMedia },
+        value: { getUserMedia, enumerateDevices },
     });
     const button = element<HTMLButtonElement>('share-camera-button');
-    const flush = () => vi.advanceTimersByTimeAsync(0);
+    const panel = element('camera-panel');
+    const flush = async () => {
+        for (let i = 0; i < 5; i++) {
+            await vi.advanceTimersByTimeAsync(0);
+        }
+    };
+    const rows = () => [...element('camera-list').querySelectorAll('li')];
+    const rowOf = (name: string) => {
+        return rows().find((row) => row.textContent?.startsWith(name))!;
+    };
+    const statesSent = () => {
+        return latest()
+            .sent.map((text) => JSON.parse(text))
+            .filter((packet) => packet.type === 'camera-state');
+    };
+
     button.click();
     await flush();
+    expect(panel.hidden).toBe(false);
+    expect(element('camera-title').textContent).toBe('Share my cameras');
+    expect(rows().map((row) => row.textContent)).toEqual([
+        'Front cameraShare',
+        'Back cameraShare',
+    ]);
+    // Nothing opens until one is chosen.
+    expect(getUserMedia).not.toHaveBeenCalled();
+
+    devices = [
+        { kind: 'audioinput', deviceId: 'mic', label: 'Microphone' },
+        { kind: 'videoinput', deviceId: 'front-1', label: front.label },
+        { kind: 'videoinput', deviceId: 'back-0', label: back.label },
+        {
+            kind: 'videoinput',
+            deviceId: 'back-2',
+            label: 'camera2 2, facing back',
+        },
+    ];
+    rowOf('Back camera').querySelector('button')!.click();
+    await flush();
+    expect(getUserMedia).toHaveBeenLastCalledWith({
+        audio: false,
+        video: expect.objectContaining({
+            facingMode: { exact: 'environment' },
+        }),
+    });
     expect(button.getAttribute('aria-pressed')).toBe('true');
-    expect(latest().sent.map((text) => JSON.parse(text))).toContainEqual({
+    // Named now: every lens, the shared one marked.
+    expect(rows().map((row) => row.textContent)).toEqual([
+        'Front cameraShare',
+        'Back camera 1Stop',
+        'Back camera 2Share',
+    ]);
+    expect(rowOf('Back camera 1').classList.contains('is-current')).toBe(true);
+    expect(element('camera-preview').querySelector('video')).not.toBeNull();
+    expect(statesSent()).toEqual([
+        { type: 'camera-state', shared: true, label: 'Back camera 1' },
+    ]);
+
+    // Another one: the shared one is let go first (a phone opens one at a
+    // time), and the new one takes its place without a pause in between.
+    getUserMedia.mockImplementationOnce(async () => {
+        expect(back.stop).toHaveBeenCalled();
+        return genStream(front);
+    });
+    rowOf('Front camera').querySelector('button')!.click();
+    await flush();
+    expect(getUserMedia).toHaveBeenLastCalledWith({
+        audio: false,
+        video: expect.objectContaining({
+            deviceId: { exact: 'front-1' },
+        }),
+    });
+    expect(rowOf('Front camera').textContent).toBe('Front cameraStop');
+    expect(statesSent().at(-1)).toEqual({
         type: 'camera-state',
         shared: true,
-        label: 'Front Camera',
+        label: 'Front camera',
     });
+    expect(statesSent().some((packet) => !packet.shared)).toBe(false);
+
+    // Gone from the list while shared (unplugged): still listed, with Stop.
+    devices = devices.filter((device) => device.deviceId !== 'front-1');
+    element<HTMLButtonElement>('camera-close').click();
     button.click();
     await flush();
+    expect(rows().map((row) => row.textContent)).toEqual([
+        'Front cameraStop',
+        'Back camera 1Share',
+        'Back camera 2Share',
+    ]);
+
+    rowOf('Front camera').querySelector('button')!.click();
+    await flush();
     expect(button.getAttribute('aria-pressed')).toBe('false');
-    expect(track.stop).toHaveBeenCalled();
-    expect(JSON.parse(latest().sent.at(-1)!)).toEqual({
+    expect(front.stop).toHaveBeenCalled();
+    expect(statesSent().at(-1)).toEqual({
         type: 'camera-state',
         shared: false,
     });
+    expect(element('camera-preview').childElementCount).toBe(0);
+    expect(rows().every((row) => row.textContent?.endsWith('Share'))).toBe(
+        true,
+    );
+
     getUserMedia.mockRejectedValueOnce(new Error('NotReadableError'));
-    button.click();
+    rowOf('Back camera 2').querySelector('button')!.click();
     await flush();
     expect(button.getAttribute('aria-pressed')).toBe('false');
     expect(element('toast').hidden).toBe(false);
@@ -296,6 +398,9 @@ test('the camera button turns on with the camera, and says when it cannot', asyn
     );
     vi.advanceTimersByTime(5000);
     expect(element('toast').hidden).toBe(true);
+
+    element<HTMLButtonElement>('camera-close').click();
+    expect(panel.hidden).toBe(true);
 });
 
 // "Cast to a TV" did nothing in Chrome: the browser's picker, handed a stream

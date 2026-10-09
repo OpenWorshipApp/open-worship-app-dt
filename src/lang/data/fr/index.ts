@@ -105,6 +105,10 @@ const dictionary = {
     'Let other devices watch': 'Laisser d’autres appareils regarder',
     'Turn this on to watch virtual displays from phones, TVs and other computers on this network.':
         'Activez cette option pour regarder les affichages virtuels depuis des téléphones, des téléviseurs et d’autres ordinateurs de ce réseau.',
+    'Use HTTPS': 'Utiliser HTTPS',
+    'Browsers on other devices open the display by an https address, so a phone can keep its screen on and share its microphone and camera. This computer signs its own certificate, so each browser warns once: continue past the warning (Advanced, then Proceed). Media players keep the http address.':
+        'Les navigateurs des autres appareils ouvrent l’affichage par une adresse https : un téléphone peut alors garder son écran allumé et partager son micro et sa caméra. Cet ordinateur signe son propre certificat, donc chaque navigateur avertit une fois : passez outre l’avertissement (Paramètres avancés, puis Continuer). Les lecteurs multimédias gardent l’adresse http.',
+    'Unable to turn on HTTPS': 'Impossible d’activer HTTPS',
     'Anyone who has a stream address can watch it, and the stream is not encrypted. Turn this off when you are done.':
         'Toute personne qui a une adresse de diffusion peut la regarder, et la diffusion n’est pas chiffrée. Désactivez cette option quand vous avez terminé.',
     'A virtual display is a screen that exists only in this app. Show screens on it like on a real monitor, and watch it from any device as a video.':
@@ -230,6 +234,9 @@ const dictionary = {
     'Speaker volume': 'Volume du haut-parleur',
     'Share my cameras': 'Partager mes caméras',
     'Stop sharing my cameras': 'Arrêter de partager mes caméras',
+    Share: 'Partager',
+    'Front camera': 'Caméra avant',
+    'Back camera': 'Caméra arrière',
     'Microphone access denied': 'Accès au micro refusé',
     'The microphone could not be opened. Allow it for this page, or close another app using it.':
         'Le micro n’a pas pu être ouvert. Autorisez-le pour cette page, ou fermez l’autre application qui l’utilise.',

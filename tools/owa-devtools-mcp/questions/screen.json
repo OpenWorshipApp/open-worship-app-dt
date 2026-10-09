@@ -783,6 +783,24 @@
                     }
                 },
                 {
+                    "id": "virtual-display-https",
+                    "text": "How do I give the virtual display an https address?",
+                    "kind": "howto",
+                    "keywords": [
+                        "https",
+                        "secure",
+                        "not secure",
+                        "certificate",
+                        "phone microphone",
+                        "phone camera",
+                        "keep screen on"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Use HTTPS"
+                    }
+                },
+                {
                     "id": "cast-virtual-display-from-page",
                     "text": "How do I cast the virtual display to a TV from my phone?",
                     "kind": "howto",
@@ -799,6 +817,24 @@
                         "recipe": "W-51",
                         "related": ["W-50"],
                         "find": "Cast to a TV"
+                    }
+                },
+                {
+                    "id": "virtual-display-choose-camera",
+                    "text": "How do I share my phone's back camera with the virtual display?",
+                    "kind": "howto",
+                    "keywords": [
+                        "back camera",
+                        "front camera",
+                        "rear camera",
+                        "switch camera",
+                        "choose camera",
+                        "other camera",
+                        "phone camera"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Share my cameras"
                     }
                 },
                 {

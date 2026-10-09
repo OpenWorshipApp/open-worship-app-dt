@@ -2,7 +2,7 @@ import type http from 'node:http';
 import type { Duplex } from 'node:stream';
 import WebSocket, { WebSocketServer } from 'ws';
 
-import { readRequestSender } from './mirrorRequestSender';
+import { checkIsSecureRequest, readRequestSender } from './mirrorRequestSender';
 import { MAX_VIEWER_FRAME_TEXT } from './virtualDisplayViewerCameras';
 import { toMirrorPlainAddress } from './screenMirrorProtocol';
 import {
@@ -352,13 +352,15 @@ export class VirtualDisplayWebViewers {
         }
         // Only the display's own page may open these: a page from any other
         // site open in the viewer's browser sends its own origin. Through
-        // Cloudflare's tunnel that page is https.
+        // Cloudflare's tunnel, or over this port's own TLS, that page is
+        // https.
         const sender = readRequestSender(req);
         const { origin, host } = req.headers;
         if (
             !origin ||
             !host ||
-            origin !== `${sender.isTunnel ? 'https' : 'http'}://${host}`
+            origin !==
+                `${checkIsSecureRequest(req) ? 'https' : 'http'}://${host}`
         ) {
             refuse(socket);
             return;

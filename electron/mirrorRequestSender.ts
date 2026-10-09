@@ -27,6 +27,15 @@ export function noteTunnelRequest(req: http.IncomingMessage) {
     return sender;
 }
 
+// Whether the page that sent this request is https: through the tunnel, or
+// over TLS on the server's own port ("Use HTTPS").
+export function checkIsSecureRequest(req: http.IncomingMessage) {
+    return (
+        readRequestSender(req).isTunnel ||
+        (req.socket as { encrypted?: boolean } | undefined)?.encrypted === true
+    );
+}
+
 export function readRequestSender(
     req: http.IncomingMessage,
 ): MirrorRequestSenderType {

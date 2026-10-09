@@ -53,7 +53,7 @@ vi.mock('../popup-widget/popupWidgetHelpers', () => ({
     showAppConfirm: vi.fn(async () => false),
 }));
 vi.mock('../screen-mirror/MirrorNetworkComps', () => ({
-    MirrorQrCodeComp: () => null,
+    MirrorQrCodeComp: ({ text }: { text: string }) => `[QR ${text}]`,
 }));
 vi.mock('../others/AppSuspenseComp', () => ({
     default: ({ children }: { children: unknown }) => children,
@@ -100,6 +100,7 @@ const state: VirtualDisplayState = {
     hasCode: false,
     tunnelEnabled: false,
     tunnel: { status: 'off', url: '', error: '' },
+    httpsEnabled: false,
     publicAddress: '',
     customPort: null,
     addresses: [{ host: '127.0.0.1', port: 40000, kind: 'this-computer' }],
@@ -533,5 +534,70 @@ describe('VirtualDisplayCardComp casting', () => {
             'Turn on “Let other devices watch” to cast to a TV.',
         );
         expect(buttonIn(panel()!, 'Cast').disabled).toBe(true);
+    });
+});
+
+// "Use HTTPS": a browser on another device gets an https address on the same
+// port; a media player (the MP4) and this computer's own browser keep http.
+describe('VirtualDisplayCardComp with HTTPS', () => {
+    let container: HTMLDivElement;
+    let root: Root | null = null;
+    const lanState: VirtualDisplayState = {
+        ...state,
+        addresses: [
+            { host: '127.0.0.1', port: 40000, kind: 'this-computer' },
+            { host: '192.168.1.3', port: 40000, kind: 'lan' },
+        ],
+    };
+
+    function render(httpsEnabled: boolean) {
+        act(() => {
+            root!.render(
+                <VirtualDisplayCardComp
+                    display={display}
+                    state={{ ...lanState, httpsEnabled }}
+                    isBusy={false}
+                    isJustCreated={false}
+                    perform={async () => {}}
+                />,
+            );
+        });
+    }
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        settingStore.clear();
+        settingStore.set(CARD_KEY, 'true');
+        settingStore.set(
+            `virtual-display-${NUMBER}-more-addresses-expanded`,
+            'true',
+        );
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+    });
+
+    afterEach(() => {
+        act(() => {
+            root?.unmount();
+        });
+        root = null;
+        container.remove();
+    });
+
+    test('the network address turns https and its QR code stays open', () => {
+        render(false);
+        const lanPage = `192.168.1.3:40000/vd/${NUMBER}/`;
+        expect(container.textContent).toContain(`[QR http://${lanPage}]`);
+        expect(container.textContent).not.toContain('https://');
+
+        render(true);
+        const text = container.textContent ?? '';
+        expect(text).toContain(`[QR https://${lanPage}]`);
+        // Only the MP4 is still http on this network.
+        expect(text.split(`http://${lanPage}`)).toHaveLength(2);
+        expect(text).toContain(`http://${lanPage}video`);
+        expect(text).toContain(PAGE_URL);
+        expect(text).not.toContain('https://127.0.0.1');
     });
 });

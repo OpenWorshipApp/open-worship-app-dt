@@ -17,6 +17,7 @@ import {
     MirrorTunnelComp,
 } from '../screen-mirror/MirrorInternetComps';
 import NetworkAccessNoticeComp from '../screen-mirror/NetworkAccessNoticeComp';
+import CollapsibleNoteComp from '../screen-mirror/CollapsibleNoteComp';
 import {
     toVirtualDisplayErrorText,
     useVirtualDisplayState,
@@ -27,6 +28,55 @@ import VirtualDisplayCardComp from './VirtualDisplayCardComp';
 export type VirtualDisplayPerformType = (
     work: () => Promise<unknown>,
 ) => Promise<void>;
+
+// Off by default. A browser on another device watching over plain http is
+// not a secure context, so its page cannot keep the screen awake in full
+// screen, send a microphone or share a camera; over https it can. The port
+// stays the same, and plain http keeps answering for media players.
+function RenderHttpsSwitchComp({
+    state,
+    isBusy,
+    perform,
+}: Readonly<{
+    state: VirtualDisplayState;
+    isBusy: boolean;
+    perform: VirtualDisplayPerformType;
+}>) {
+    return (
+        <div className="d-flex flex-column gap-1">
+            <div className="form-check form-switch mb-0">
+                <input
+                    id="app-virtual-display-https-switch"
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    checked={state.httpsEnabled}
+                    disabled={isBusy}
+                    onChange={(event) => {
+                        const enabled = event.target.checked;
+                        void perform(() => {
+                            return virtualDisplayCommand('https', { enabled });
+                        });
+                    }}
+                />
+                <label
+                    className="form-check-label"
+                    htmlFor="app-virtual-display-https-switch"
+                >
+                    {tran('Use HTTPS')}
+                </label>
+            </div>
+            <CollapsibleNoteComp
+                settingName="virtual-screens-note-https-expanded"
+                className="small text-muted"
+            >
+                {tran(
+                    'Browsers on other devices open the display by an https address, so a phone can keep its screen on and share its microphone and camera. This computer signs its own certificate, so each browser warns once: continue past the warning (Advanced, then Proceed). Media players keep the http address.',
+                )}
+            </CollapsibleNoteComp>
+        </div>
+    );
+}
 
 function RenderShareSwitchesComp({
     state,
@@ -64,6 +114,11 @@ function RenderShareSwitchesComp({
             </div>
             {state.shareEnabled ? (
                 <>
+                    <RenderHttpsSwitchComp
+                        state={state}
+                        isBusy={isBusy}
+                        perform={perform}
+                    />
                     {/* The same option as Screen Mirror's: one server. */}
                     <div className="form-check form-switch">
                         <input
@@ -207,6 +262,11 @@ export default function VirtualDisplaysComp() {
                 castAppTvs: tran('TVs on the app’s network'),
                 close: tran('Close'),
                 camera: tran('Share my cameras'),
+                cameraShare: tran('Share'),
+                cameraStop: tran('Stop'),
+                cameraName: tran('Camera'),
+                cameraFront: tran('Front camera'),
+                cameraBack: tran('Back camera'),
                 micFailed: tran(
                     'The microphone could not be opened. Allow it for this page, or close another app using it.',
                 ),

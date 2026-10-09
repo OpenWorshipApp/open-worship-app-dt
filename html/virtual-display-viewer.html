@@ -217,8 +217,9 @@
                 color: #ff8a80;
                 min-height: 1.2em;
             }
-            /* "Cast to a TV": the TVs the app found, each cast from it. */
-            #cast-panel {
+            /* "Cast to a TV" and "Share my cameras": a list over the
+               picture, under the toolbar, one open at a time. */
+            .panel {
                 position: fixed;
                 top: 64px;
                 right: 12px;
@@ -235,17 +236,17 @@
                 flex-direction: column;
                 gap: 8px;
             }
-            #cast-panel[hidden],
-            #cast-panel [hidden] {
+            .panel[hidden],
+            .panel [hidden] {
                 display: none;
             }
-            #cast-head,
+            .panel-head,
             .cast-app-head {
                 display: flex;
                 align-items: center;
                 gap: 8px;
             }
-            #cast-head strong,
+            .panel-head strong,
             .cast-app-head strong {
                 flex: 1;
             }
@@ -261,7 +262,7 @@
                 padding-top: 8px;
                 border-top: 1px solid #333;
             }
-            #cast-panel button {
+            .panel button {
                 font: inherit;
                 padding: 6px 12px;
                 border-radius: 6px;
@@ -270,16 +271,16 @@
                 color: #fff;
                 cursor: pointer;
             }
-            #cast-panel button:disabled {
+            .panel button:disabled {
                 opacity: 0.5;
                 cursor: default;
             }
-            #cast-panel button.is-plain {
+            .panel button.is-plain {
                 background: transparent;
                 border-color: #555;
                 color: #ddd;
             }
-            #cast-panel button.is-stop {
+            .panel button.is-stop {
                 background: #b00020;
                 border-color: #b00020;
             }
@@ -290,7 +291,7 @@
             #cast-note:empty {
                 display: none;
             }
-            #cast-list {
+            .panel-list {
                 list-style: none;
                 margin: 0;
                 padding: 0;
@@ -298,25 +299,40 @@
                 flex-direction: column;
                 gap: 6px;
             }
-            #cast-list li {
+            .panel-list li {
                 display: flex;
                 align-items: center;
                 gap: 8px;
             }
-            #cast-list .cast-name {
+            .panel-list .panel-item-name {
                 flex: 1;
                 min-width: 0;
                 display: flex;
                 flex-direction: column;
             }
-            #cast-list .cast-name > span:first-child {
+            .panel-list .panel-item-name > span:first-child {
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
-            #cast-list .cast-detail {
+            .panel-list li.is-current .panel-item-name > span:first-child {
+                font-weight: 600;
+            }
+            .panel-list .panel-item-detail {
                 font-size: 12px;
                 color: #aaa;
+            }
+            /* The camera shared now, so a phone shows which side it is. */
+            #camera-preview:empty {
+                display: none;
+            }
+            #camera-preview video {
+                display: block;
+                width: 100%;
+                max-height: 180px;
+                object-fit: contain;
+                border-radius: 6px;
+                background: #000;
             }
             #keep-awake {
                 position: fixed;
@@ -381,14 +397,14 @@
                 </svg>
             </button>
         </div>
-        <div id="cast-panel" role="dialog" aria-labelledby="cast-title" hidden>
-            <div id="cast-head">
+        <div id="cast-panel" class="panel" role="dialog" aria-labelledby="cast-title" hidden>
+            <div class="panel-head">
                 <strong id="cast-title">Cast to a TV</strong>
                 <button id="cast-close" class="is-plain" type="button" aria-label="Close">✕</button>
             </div>
             <!-- A TV on this device's network, through the browser. -->
             <button id="cast-picker" type="button">Cast from this browser</button>
-            <div id="cast-picker-note" class="cast-detail" role="status"></div>
+            <div id="cast-picker-note" class="panel-item-detail" role="status"></div>
             <!-- A browser on the app's network: the TVs the app found there. -->
             <div id="cast-app" hidden>
                 <div class="cast-app-head">
@@ -396,8 +412,19 @@
                     <button id="cast-search" class="is-plain" type="button">Search again</button>
                 </div>
                 <div id="cast-note" role="status"></div>
-                <ul id="cast-list"></ul>
+                <ul id="cast-list" class="panel-list"></ul>
             </div>
+        </div>
+        <!-- Every camera of this device, one shared at a time: on a phone its
+             front and back before the browser names them, then each by
+             name. -->
+        <div id="camera-panel" class="panel" role="dialog" aria-labelledby="camera-title" hidden>
+            <div class="panel-head">
+                <strong id="camera-title">Share my cameras</strong>
+                <button id="camera-close" class="is-plain" type="button" aria-label="Close">✕</button>
+            </div>
+            <div id="camera-preview"></div>
+            <ul id="camera-list" class="panel-list"></ul>
         </div>
         <script type="module" src="/src/virtual-display-viewer.ts"></script>
     </body>

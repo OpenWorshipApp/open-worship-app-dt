@@ -460,6 +460,12 @@ function RenderAddressRowComp({
 // first, its QR code already open -- the best network of this computer and any
 // internet address opened on purpose; every other card and the MP4 fold under
 // "More addresses" (a laptop with a VPN and WSL listed five look-alikes).
+// With "Use HTTPS" a browser's addresses are https; the MP4 stays http.
+// The open QR code follows its address across that switch.
+function toQrKey(url: string) {
+    return url.replace(/^https?:/, '');
+}
+
 function RenderAddressesComp({ display, state }: PropsType) {
     const { main, others } = useMemo(() => {
         return splitVirtualDisplayAddresses(state.addresses);
@@ -467,9 +473,12 @@ function RenderAddressesComp({ display, state }: PropsType) {
     const isSharing = main.some((address) => {
         return address.kind !== 'this-computer';
     });
-    const [qrUrl, setQrUrl] = useState(() => {
+    const toPageUrl = (address: VirtualDisplayAddress, number: number) => {
+        return toVirtualDisplayPageUrl(address, number, state.httpsEnabled);
+    };
+    const [qrKey, setQrKey] = useState(() => {
         return isSharing && main.length > 0
-            ? toVirtualDisplayPageUrl(main[0], display.number)
+            ? toQrKey(toPageUrl(main[0], display.number))
             : '';
     });
     const renderRows = (
@@ -481,6 +490,7 @@ function RenderAddressesComp({ display, state }: PropsType) {
             <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
                 {addresses.map((address) => {
                     const url = toUrl(address, display.number);
+                    const key = toQrKey(url);
                     return (
                         <RenderAddressRowComp
                             key={url}
@@ -490,9 +500,9 @@ function RenderAddressesComp({ display, state }: PropsType) {
                                 isRecommended &&
                                 address.kind !== 'this-computer'
                             }
-                            isQrShowing={qrUrl === url}
+                            isQrShowing={qrKey === key}
                             onToggleQr={() => {
-                                setQrUrl(qrUrl === url ? '' : url);
+                                setQrKey(qrKey === key ? '' : key);
                             }}
                         />
                     );
@@ -506,7 +516,7 @@ function RenderAddressesComp({ display, state }: PropsType) {
                 <i className="bi bi-browser-chrome me-1" aria-hidden />
                 {tran('Watch in a browser')}
             </span>
-            {renderRows(main, toVirtualDisplayPageUrl, true)}
+            {renderRows(main, toPageUrl, true)}
             <RenderFoldComp
                 number={display.number}
                 part="more-addresses"
@@ -514,9 +524,7 @@ function RenderAddressesComp({ display, state }: PropsType) {
                 icon="bi-three-dots"
                 isExpandedByDefault={false}
             >
-                {others.length > 0
-                    ? renderRows(others, toVirtualDisplayPageUrl)
-                    : null}
+                {others.length > 0 ? renderRows(others, toPageUrl) : null}
                 <span className="mt-1">
                     <i className="bi bi-film me-1" aria-hidden />
                     {tran('Video for media players (MP4)')}
