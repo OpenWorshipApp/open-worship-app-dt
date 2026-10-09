@@ -23,13 +23,34 @@ import {
 } from './screenHelpers';
 import appProvider from '../../server/appProvider';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import type { ScreenMessageType } from '../screenTypeHelpers';
+import type {
+    ScreenMessageType,
+    ScreenShowPayloadType,
+} from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { applyRemoteScrollPercentage } from './screenScrollSyncHelpers';
 import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
 import { isVirtualDisplayId } from '../../../electron/virtualDisplayProtocol';
 import ScreenLockedToastMessageComp from '../preview/ScreenLockedToastMessageComp';
+import { getAllScreenManagerBases } from './screenManagerBaseHelpers';
+import { rememberVirtualScreensShowing } from './virtualScreenShowingHelpers';
+
+// Which screens are up on a virtual display, kept for the next start.
+function rememberVirtualDisplayScreens() {
+    rememberVirtualScreensShowing(
+        getAllScreenManagerBases()
+            .filter((screenManagerBase) => {
+                return !screenManagerBase.isDeleted;
+            })
+            .map((screenManagerBase) => {
+                return {
+                    screenId: screenManagerBase.screenId,
+                    isShowing: screenManagerBase.isShowing,
+                };
+            }),
+    );
+}
 
 export type ScreenManagerEventType =
     | 'instance'
@@ -281,6 +302,8 @@ export default class ScreenManagerBase
         this.addPropEvent('display-id', data);
         ScreenManagerBase.addPropEvent('display-id', data);
         this.fireRefreshEvent();
+        // A showing screen moved onto or off a virtual display.
+        rememberVirtualDisplayScreens();
     }
 
     set isShowing(isShowing: boolean) {
@@ -361,6 +384,7 @@ export default class ScreenManagerBase
     fireVisibleEvent() {
         this.addPropEvent('visible');
         ScreenManagerBase.fireVisibleEvent();
+        rememberVirtualDisplayScreens();
     }
 
     fireRefreshEvent() {
@@ -400,6 +424,16 @@ export default class ScreenManagerBase
     sendSyncScreen(_shouldFromOtherGroupMember = false) {
         throw new Error('sendSyncScreen is not implemented.');
     }
+
+    // Screen Show: this screen's whole state, for a screen that shows it.
+    // Only a full screen manager on the presenter has one to give.
+    genScreenShowPayload(): ScreenShowPayloadType | null {
+        return null;
+    }
+
+    // Screen Show: send this screen's window the whole state of each screen
+    // it shows. Only the presenter sends.
+    sendScreenShowSnapshots(_sourceScreenIds: number[]) {}
 
     clear() {
         throw new Error('clear is not implemented.');

@@ -9,6 +9,13 @@ const createScreenManagerMock = vi.fn();
 const genStyleRenderingMock = vi.fn();
 const getScreenManagerBaseMock = vi.fn((screenId: number) => ({ screenId }));
 const getCameraStreamMock = vi.fn();
+const stopCameraStreamMock = vi.fn((stream: any) => {
+    for (const track of stream.getTracks()) {
+        track.stop();
+    }
+});
+const viewerCameraLiveListeners: ((isLive: boolean) => void)[] = [];
+const stopViewerCameraLiveMock = vi.fn();
 const handleErrorMock = vi.fn();
 const showAppAlertMock = vi.fn();
 const useScreenManagerEventsMock = vi.fn(
@@ -93,6 +100,23 @@ vi.mock('./managers/screenHelpers', () => ({
 
 vi.mock('../helper/cameraHelpers', () => ({
     getCameraStream: getCameraStreamMock,
+    stopCameraStream: stopCameraStreamMock,
+}));
+
+// A browser viewer's camera stream says whether pictures come; any other
+// stream says nothing, as the real one does.
+vi.mock('../virtual-display/viewerCameraTransport', () => ({
+    checkIsViewerCameraId: (id: string) => id.startsWith('vd-camera:'),
+    listenViewerCameraLive: (
+        stream: any,
+        listener: (isLive: boolean) => void,
+    ) => {
+        if (stream.isViewer) {
+            viewerCameraLiveListeners.push(listener);
+            listener(false);
+        }
+        return stopViewerCameraLiveMock;
+    },
 }));
 
 vi.mock('../helper/errorHelpers', () => ({
@@ -249,6 +273,9 @@ describe('screen component runtime behavior', () => {
         useScreenManagerEventsMock.mockClear();
         useScreenBibleManagerEventsMock.mockClear();
         getCameraStreamMock.mockReset();
+        stopCameraStreamMock.mockClear();
+        stopViewerCameraLiveMock.mockClear();
+        viewerCameraLiveListeners.length = 0;
         handleErrorMock.mockReset();
         showAppAlertMock.mockReset();
         appProviderMock.isPageScreen = false;
@@ -542,6 +569,31 @@ describe('screen component runtime behavior', () => {
         const clearTracks = await cameraBackground.promise;
         clearTracks();
         expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce();
+        expect(stopTrack).toHaveBeenCalledOnce();
+    });
+
+    test("a browser viewer's camera background goes up at once, hidden until it sends pictures", async () => {
+        const { genHtmlBackground } = await import('./ScreenBackgroundComp');
+        const stopTrack = vi.fn();
+        getCameraStreamMock.mockResolvedValue({
+            isViewer: true,
+            getTracks: () => [{ stop: stopTrack }],
+        });
+        const background = genHtmlBackground(5, {
+            type: 'camera',
+            src: 'vd-camera:viewer-1',
+        } as any);
+        // Not shared yet there is no picture, so nothing to wait for.
+        const clearTracks = await background.promise;
+        const video = background.newDiv.querySelector('video');
+        expect(video?.style.visibility).toBe('hidden');
+        viewerCameraLiveListeners.at(-1)?.(true);
+        expect(video?.style.visibility).toBe('');
+        viewerCameraLiveListeners.at(-1)?.(false);
+        expect(video?.style.visibility).toBe('hidden');
+        clearTracks();
+        expect(stopViewerCameraLiveMock).toHaveBeenCalledOnce();
+        expect(stopCameraStreamMock).toHaveBeenCalledOnce();
         expect(stopTrack).toHaveBeenCalledOnce();
     });
 

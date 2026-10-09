@@ -1,6 +1,8 @@
 import http from 'node:http';
 import https from 'node:https';
+import net from 'node:net';
 import dgram from 'node:dgram';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { Duplex } from 'node:stream';
@@ -10,7 +12,9 @@ import {
     app,
     BrowserWindow,
     ipcMain,
+    net as electronNet,
     screen,
+    systemPreferences,
     type WebContents,
 } from 'electron';
 import WebSocket, { WebSocketServer } from 'ws';
@@ -32,6 +36,10 @@ import {
     serveMirrorFile,
 } from './screenMirrorContent';
 import { screenMirrorRuntime } from './screenMirrorRuntime';
+import { MirrorTunnel } from './screenMirrorTunnel';
+import { getCloudflaredBinPath } from './extraBinPaths';
+import { noteTunnelRequest, readRequestSender } from './mirrorRequestSender';
+import { MIRROR_INTERCOM_KEY_PATTERN, MirrorIntercom } from './mirrorIntercom';
 import { getRootUrl } from './protocolHelpers';
 import { isDev, messageChannels } from './electronHelpers';
 import { genKeepAwake } from './keepAwakeHelpers';
@@ -52,6 +60,7 @@ import {
     isMirrorLanAddress,
     isMirrorGlobalIpv6,
     readMirrorAddressText,
+    MIRROR_SECURE_PORT,
     readMirrorIpv4,
     readMirrorOrigin,
     toMirrorHostPort,
@@ -73,9 +82,13 @@ import {
     closeRouterPort,
     findRouterGateway,
     getRouterExternalAddress,
+    lookUpPublicAddress,
     openRouterPort,
+    probeRouterPort,
     readRouterMapping,
     renewRouterPort,
+    ROUTER_LEASE_SECONDS,
+    ROUTER_PROBE_PATH,
     type RouterMapping,
 } from './screenMirrorRouter';
 
@@ -109,6 +122,9 @@ type Link = {
     reconnectTimer?: ReturnType<typeof setTimeout>;
     attempt: number;
     cameras: MirrorCamera[];
+    // This computer's cameras are offered to that host: off until the guest
+    // turns it on, like the microphone and the speaker (the user's ask).
+    shareCameras: boolean;
 };
 // A host's screen on one of this computer's monitors. It keeps the host's
 // screen id -- its settings are keyed by it -- so two hosts can both show
@@ -144,6 +160,36 @@ export type VirtualDisplayHooks = {
 // The app's own files a browser viewer of a virtual display loads: its two
 // pages and the built code they import. Nothing else of the app is served
 // off this computer.
+// Whether a server on this computer answers on 127.0.0.1:<port>. A refusal
+// is immediate on loopback; the timeout only bounds a stuck stack.
+function checkIsLoopbackPortAnswering(port: number) {
+    return new Promise<boolean>((resolve) => {
+        const socket = net.connect({ host: '127.0.0.1', port });
+        const finish = (isAnswering: boolean) => {
+            socket.destroy();
+            resolve(isAnswering);
+        };
+        socket.setTimeout(LOOPBACK_PROBE_MILLISECOND, () => finish(false));
+        socket.once('connect', () => finish(true));
+        socket.once('error', () => finish(false));
+    });
+}
+
+// The file behind one of the app's own page addresses (`/assets/blank.png`,
+// `/src/...`, Vite's `/@fs/...`), as a screen window of this computer loads it.
+function toAppFile(pathname: string) {
+    if (!isDev) {
+        return path.join(app.getAppPath(), 'dist', pathname);
+    }
+    if (pathname.startsWith('/@fs/')) {
+        return pathname.slice(5);
+    }
+    return path.join(
+        app.getAppPath(),
+        pathname.startsWith('/src/') ? '' : 'public',
+        pathname,
+    );
+}
 function checkIsVirtualDisplayAppFile(pathname: string) {
     return (
         pathname === '/virtual-display-viewer.html' ||
@@ -190,7 +236,14 @@ export class ErrorOverlay extends HTMLElement {}
 `;
 const LOOPBACK_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
 const KEY = 'screen-mirror-';
+// The port the last launch had, asked for first (see `listen`).
+const LAST_PORT_KEY = `${KEY}last-port`;
+const FIRST_PORT_RETRIES = 12;
+const FIRST_PORT_RETRY_MILLISECOND = 250;
+const LOOPBACK_PROBE_MILLISECOND = 500;
 const HOST_CAMERA = 'mirror-camera:';
+// What keeps the broker up while an intercom captures or plays.
+const INTERCOM_BROKER_REQUEST = 'intercom';
 const MAX_LINKS = 8;
 // A stranger on the internet must not crowd out the room: requests from the
 // internet waiting for approval are capped, in all and per sender (one public
@@ -203,6 +256,13 @@ const MAX_PENDING_PER_SENDER = 4;
 const MAX_WRONG_CODES = 5;
 const WRONG_CODE_WINDOW = 10 * 60 * 1000;
 
+// A TCP port from a setting or a command, null when it is not one.
+function readPort(value: unknown) {
+    const port = typeof value === 'string' && value ? Number(value) : value;
+    return Number.isInteger(port) && Number(port) > 0 && Number(port) <= 65535
+        ? Number(port)
+        : null;
+}
 function localAddresses() {
     return Object.values(os.networkInterfaces())
         .flatMap((list) => list ?? [])
@@ -307,6 +367,13 @@ export class ScreenMirrorService {
     private routerMapping?: RouterMapping;
     private routerRun = 0;
     private routerRenewTimer?: ReturnType<typeof setTimeout>;
+    // One-time tokens of the probes asking, through the router's public side,
+    // whether the port it opened leads here (`probeRouter`).
+    private routerProbeTokens = new Set<string>();
+    // This network's public address while no router opened a port: what the
+    // router said it is, else what a lookup site saw. Held only while the
+    // router is wanted.
+    private publicIp = '';
     private physicalCameras: MirrorCamera[] = [];
     private broker?: BrowserWindow;
     private brokerRequests = new Set<string>();
@@ -332,6 +399,68 @@ export class ScreenMirrorService {
     private displayRevision = 0;
     private virtualDisplayHooks?: VirtualDisplayHooks;
     private serverSockets = new WeakMap<http.Server, Set<Duplex>>();
+    // Cloudflare's quick tunnel and the loopback door only it uses: every
+    // socket on that door is the internet, whatever its peer says.
+    private tunnel = new MirrorTunnel({
+        // Out of the extra-bin pack, in the data folder the renderer chose --
+        // where `appLocalStorage.defaultStorageDirPath` puts it: the chosen
+        // folder while it is there, else this profile's own.
+        binaryPath: () => {
+            const chosen = this.settings.getClientSetting(
+                'selected-parent-dir',
+            );
+            return getCloudflaredBinPath(
+                chosen && fs.existsSync(chosen)
+                    ? chosen
+                    : app.getPath('userData'),
+            );
+        },
+        onChange: () => this.notify(),
+        fetch: (url, init) => electronNet.fetch(url, init),
+    });
+    private tunnelServer?: Promise<http.Server | null>;
+    // The talk-back of every connection: microphones and speakers.
+    private intercom = new MirrorIntercom({
+        send: (key, type, data) => {
+            const [kind, id] = key.split(':');
+            const peers = this.intercomPeers.get(kind);
+            if (peers) {
+                if (peers.has(id)) peers.send(id, type, data);
+                return;
+            }
+            const socket = this.intercomSocket(key);
+            if (socket) socketSend(socket, type, data);
+        },
+        toBroker: (message) => this.sendBrokerIntercom(message),
+        onActiveChanged: (isActive) => {
+            if (isActive) {
+                clearTimeout(this.brokerIdleTimer);
+                this.brokerRequests.add(INTERCOM_BROKER_REQUEST);
+            } else {
+                this.brokerRequests.delete(INTERCOM_BROKER_REQUEST);
+                if (!this.brokerRequests.size) this.scheduleBrokerRelease();
+            }
+        },
+        onChanged: () => {
+            this.notifyStateOnly();
+            for (const peers of this.intercomPeers.values()) peers.onChanged();
+        },
+    });
+    // Intercom pairs this server does not hold the socket of: a virtual
+    // display's browser viewers (`viewer:<id>`), reached through its service.
+    private intercomPeers = new Map<
+        string,
+        {
+            has: (id: string) => boolean;
+            send: (
+                id: string,
+                type: string,
+                data: Record<string, unknown>,
+            ) => void;
+            onChanged: () => void;
+        }
+    >();
+    private tunnelSockets = new WeakSet<object>();
     // Whether the server is listening on every network (`::`) rather than
     // loopback alone, as it was last bound.
     private isBoundToAll = false;
@@ -402,17 +531,108 @@ export class ScreenMirrorService {
         return this.settings.getClientSetting(`${KEY}public-address`) ?? '';
     }
     get customPort() {
-        const port = Number(this.settings.getClientSetting(`${KEY}port`));
-        return Number.isInteger(port) && port > 0 && port <= 65535
-            ? port
-            : null;
+        return readPort(this.settings.getClientSetting(`${KEY}port`));
+    }
+    // The public port the operator chose for the router (see `MirrorState`).
+    get publicPort() {
+        return readPort(this.settings.getClientSetting(`${KEY}public-port`));
+    }
+    // Saved and, while the router is wanted, asked for at once: no restart,
+    // since this computer's own port stays as it is.
+    setPublicPort(port: unknown) {
+        const value = readPort(port);
+        if (port !== null && value === null) throw new Error('Invalid port');
+        this.settings.setClientSetting(
+            `${KEY}public-port`,
+            value === null ? '' : String(value),
+        );
+        if (this.isRouterWanted) void this.openRouter();
+        else this.notify();
+    }
+    // Cloudflare's quick tunnel (`screen-mirror-tunnel`, off until turned
+    // on): for Screen Mirror's guests and virtual display viewers alike, while
+    // either is open to the internet -- what it carries is the internet.
+    get isTunnelEnabled() {
+        return this.settings.getClientSetting(`${KEY}tunnel`) === 'true';
+    }
+    get isTunnelWanted() {
+        return this.isTunnelEnabled && this.isRouterWanted;
+    }
+    get tunnelState() {
+        return this.tunnel.state;
+    }
+    // The extra-bin pack was installed or changed in Settings: a tunnel that
+    // was waiting for its cloudflared starts.
+    retryTunnel() {
+        this.tunnel.retryMissing();
+    }
+    setTunnelEnabled(isEnabled: boolean) {
+        this.settings.setClientSetting(`${KEY}tunnel`, isEnabled ? 'true' : '');
+        this.syncTunnel();
+        this.notify();
+    }
+    private syncTunnel() {
+        if (this.isTunnelWanted) {
+            if (this.tunnelServer === undefined) void this.openTunnel();
+        } else if (this.tunnelServer !== undefined) {
+            this.closeTunnel();
+        }
+    }
+    // The door cloudflared carries visitors to: loopback, a port of its own,
+    // the same handlers -- each of its sockets marked as the internet.
+    private async openTunnel() {
+        const opening = (async () => {
+            const server = this.createServer();
+            server.on('connection', (socket) => {
+                this.tunnelSockets.add(socket);
+            });
+            try {
+                await new Promise<void>((resolve, reject) => {
+                    server.once('error', reject);
+                    server.listen(0, '127.0.0.1', () => {
+                        server.off('error', reject);
+                        resolve();
+                    });
+                });
+            } catch {
+                return null;
+            }
+            server.on('error', () => {});
+            return server;
+        })();
+        this.tunnelServer = opening;
+        const server = await opening;
+        if (this.tunnelServer !== opening) {
+            server?.close();
+            return;
+        }
+        const address = server?.address();
+        if (!server || typeof address !== 'object' || address === null) {
+            this.tunnelServer = undefined;
+            return;
+        }
+        this.tunnel.start(address.port);
+    }
+    private closeTunnel() {
+        const opening = this.tunnelServer;
+        this.tunnelServer = undefined;
+        this.tunnel.stop();
+        void opening?.then((server) => {
+            if (!server) return;
+            for (const socket of this.serverSockets.get(server) ?? []) {
+                socket.destroy();
+            }
+            server.close();
+        });
     }
     private admits(address: string) {
         return this.isInternetOpen || checkIsLocalSender(address);
     }
     // What a guest can type to reach this host, best first: this computer's
     // network cards, then -- with the internet open -- the router's public
-    // side, global IPv6 cards and the address the operator typed.
+    // side (or, while no router opened a port, the public address with the
+    // port to forward by hand), global IPv6 cards and the address the
+    // operator typed.
     addressList(isIncludingInternet: boolean): MirrorAddress[] {
         const port = this.port;
         const list: MirrorAddress[] = localAddresses()
@@ -421,11 +641,28 @@ export class ScreenMirrorService {
                 (a, b) => rankMirrorAddress(a.host) - rankMirrorAddress(b.host),
             );
         if (!isIncludingInternet) return list;
+        const publicPort =
+            this.routerMapping?.externalPort ?? this.publicPort ?? port;
         if (this.routerMapping)
             list.push({
                 host: this.routerMapping.externalAddress,
-                port: this.routerMapping.externalPort,
+                port: publicPort,
                 kind: 'router',
+            });
+        else if (this.publicIp)
+            list.push({
+                host: this.publicIp,
+                port: publicPort,
+                kind: 'public',
+            });
+        // The tunnel's https address, once cloudflared gave one and its name
+        // is in the DNS.
+        const tunnel = this.tunnel.state;
+        if (this.isTunnelWanted && tunnel.status === 'up' && tunnel.url)
+            list.push({
+                host: new URL(tunnel.url).host,
+                port: MIRROR_SECURE_PORT,
+                kind: 'tunnel',
             });
         for (const host of globalIpv6Addresses())
             list.push({ host, port, kind: 'internet' });
@@ -433,7 +670,7 @@ export class ScreenMirrorService {
         if (typed)
             list.push({
                 host: typed.host,
-                port: typed.port ?? this.routerMapping?.externalPort ?? port,
+                port: typed.port ?? publicPort,
                 kind: 'typed',
             });
         return list;
@@ -462,9 +699,15 @@ export class ScreenMirrorService {
             approvalMode: this.approvalMode,
             hasCode: !!this.settings.getSecureSetting(`${KEY}code`),
             customPort: this.customPort,
+            publicPort: this.publicPort,
+            tunnelEnabled: this.isTunnelEnabled,
+            tunnel: this.tunnel.state,
             guests: [...this.peers.values()]
                 .filter((peer) => peer.approved)
-                .map((peer) => peer.guest),
+                .map((peer) => ({
+                    ...peer.guest,
+                    intercom: this.intercom.stateOf(`guest:${peer.guest.id}`),
+                })),
             pending: [...this.peers.values()]
                 .filter((peer) => !peer.approved)
                 .map(({ guest }) => ({
@@ -475,6 +718,8 @@ export class ScreenMirrorService {
                 })),
             connections: [...this.links.values()].map((link) => ({
                 ...link.connection,
+                intercom: this.intercom.stateOf(`link:${link.connection.id}`),
+                shareCameras: link.shareCameras,
             })),
         };
     }
@@ -534,6 +779,7 @@ export class ScreenMirrorService {
             this.outputs.get(screenId)?.context;
         if (this.isRouterWanted) void this.openRouter();
         else this.releaseRouter();
+        this.syncTunnel();
         const displayChanged = () => {
             this.displayRevision++;
             this.sendInventory();
@@ -567,15 +813,26 @@ export class ScreenMirrorService {
     // `admits`'s call, not the bind's, so opening to the internet needs no
     // rebind and drops no guest. A rebind asks for the port it had first, so
     // windows already loaded from it keep their origin.
+    //
+    // A launch asks first for the port the last one had: that is the address
+    // every TV, bookmark and printed QR code holds. A restart can find it
+    // still held by the copy that is closing, so it is asked again for a few
+    // seconds before the next one is taken -- moving on at once sent every
+    // viewer to a dead address (seen: 39240, 39241, 39240 on three restarts).
     private async listen(preferredPort?: number) {
         const server = this.createServer();
         this.isBoundToAll = this.shouldBindToAll;
         let host = this.isBoundToAll ? '::' : '127.0.0.1';
+        const lastPort = readPort(
+            this.settings.getClientSetting(LAST_PORT_KEY),
+        );
+        const firstPort = preferredPort ?? lastPort;
+        let retries = 0;
         const ports = this.customPort
             ? [this.customPort]
             : [
                   ...new Set([
-                      ...(preferredPort ? [preferredPort] : []),
+                      ...(firstPort ? [firstPort] : []),
                       ...Array.from(
                           { length: MIRROR_PORT_LAST - MIRROR_PORT_FIRST + 1 },
                           (_, i) => MIRROR_PORT_FIRST + i,
@@ -586,6 +843,18 @@ export class ScreenMirrorService {
         for (let index = 0; index < ports.length;) {
             const port = ports[index];
             try {
+                // Windows lets 127.0.0.1:<port> be bound while another
+                // process holds 0.0.0.0:<port> (and the other way round),
+                // and loopback then goes to the newer one: a second copy of
+                // the app took the first one's port, and the first one's
+                // screen windows and this computer's viewers -- which all
+                // load from 127.0.0.1 -- reached the wrong app. A port
+                // something here already answers on is taken.
+                if (port !== 0 && (await checkIsLoopbackPortAnswering(port))) {
+                    throw Object.assign(new Error('Port in use'), {
+                        code: 'EADDRINUSE',
+                    });
+                }
                 await new Promise<void>((resolve, reject) => {
                     const fail = (error: Error) => {
                         server.off('listening', done);
@@ -602,6 +871,12 @@ export class ScreenMirrorService {
                 const address = server.address();
                 this.port =
                     typeof address === 'object' && address ? address.port : 0;
+                if (!this.customPort && this.port && this.port !== lastPort) {
+                    this.settings.setClientSetting(
+                        LAST_PORT_KEY,
+                        String(this.port),
+                    );
+                }
                 break;
             } catch (error: any) {
                 if (
@@ -611,6 +886,17 @@ export class ScreenMirrorService {
                     )
                 ) {
                     host = '0.0.0.0';
+                    continue;
+                }
+                if (
+                    index === 0 &&
+                    error.code === 'EADDRINUSE' &&
+                    retries < FIRST_PORT_RETRIES
+                ) {
+                    retries++;
+                    await new Promise((resolve) => {
+                        setTimeout(resolve, FIRST_PORT_RETRY_MILLISECOND);
+                    });
                     continue;
                 }
                 if (
@@ -636,9 +922,13 @@ export class ScreenMirrorService {
         socket: Duplex,
         head: Buffer,
     ) {
-        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(
-            req.socket.remoteAddress ?? '',
-        );
+        const isTunnel = this.tunnelSockets.has(req.socket);
+        if (isTunnel) noteTunnelRequest(req);
+        const local =
+            !isTunnel &&
+            ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(
+                req.socket.remoteAddress ?? '',
+            );
         if (isDev && local && req.url?.startsWith('/?token=')) {
             // Keep HTTP-loaded development screens on the existing Vite HMR server.
             this.wss!.handleUpgrade(req, socket, head, (client) => {
@@ -672,7 +962,7 @@ export class ScreenMirrorService {
             });
             return;
         }
-        const address = req.socket.remoteAddress ?? '';
+        const address = readRequestSender(req).address;
         if (req.url?.startsWith('/vd/') && this.virtualDisplayHooks) {
             this.virtualDisplayHooks.upgrade(
                 req,
@@ -680,7 +970,7 @@ export class ScreenMirrorService {
                 head,
                 local
                     ? 'this-computer'
-                    : checkIsLocalSender(address)
+                    : !isTunnel && checkIsLocalSender(address)
                       ? 'local'
                       : 'internet',
             );
@@ -706,7 +996,7 @@ export class ScreenMirrorService {
                 this.acceptSocket(
                     ws,
                     address,
-                    readMirrorOrigin(req.headers.host),
+                    readMirrorOrigin(req.headers.host, isTunnel),
                 ),
             );
         } catch {
@@ -790,6 +1080,7 @@ export class ScreenMirrorService {
         } else if (this.routerStatus !== 'off') {
             this.releaseRouter();
         }
+        this.syncTunnel();
     }
     // Virtual Displays' "Let other devices watch". Rebinds only when that
     // changes what the server listens on; Screen Mirror's guests stay.
@@ -811,6 +1102,7 @@ export class ScreenMirrorService {
             `${KEY}internet`,
             isEnabled ? 'true' : '',
         );
+        this.syncTunnel();
         if (isEnabled) {
             if (this.isRouterWanted) void this.openRouter();
         } else {
@@ -824,6 +1116,17 @@ export class ScreenMirrorService {
                 peer.socket.close();
             }
         }
+        this.notify();
+    }
+    // This computer's own port from the next launch (`screen-mirror-port`),
+    // or null for the first free one of Screen Mirror's.
+    setCustomPort(port: unknown) {
+        const value = readPort(port);
+        if (port !== null && value === null) throw new Error('Invalid port');
+        this.settings.setClientSetting(
+            `${KEY}port`,
+            value === null ? '' : String(value),
+        );
         this.notify();
     }
     setPublicAddress(text: string) {
@@ -840,18 +1143,18 @@ export class ScreenMirrorService {
         clearTimeout(this.routerRenewTimer);
         const stale = this.routerMapping;
         this.routerMapping = undefined;
+        this.publicIp = '';
         this.routerStatus = 'working';
         this.notify();
         const previous = readRouterMapping(
             this.settings.getClientSetting(`${KEY}router-mapping`),
         );
         let status: MirrorRouterStatus = 'unavailable';
+        let external = '';
         try {
             const gateway = await findRouterGateway();
             if (run !== this.routerRun) return;
-            const external = gateway
-                ? await getRouterExternalAddress(gateway)
-                : '';
+            external = gateway ? await getRouterExternalAddress(gateway) : '';
             if (run !== this.routerRun) return;
             if (gateway && external && isMirrorLanAddress(external)) {
                 status = 'shared';
@@ -860,11 +1163,29 @@ export class ScreenMirrorService {
                     gateway,
                     this.port,
                     external,
-                    stale?.externalPort ?? previous?.externalPort,
+                    {
+                        preferredPort:
+                            this.publicPort ??
+                            stale?.externalPort ??
+                            previous?.externalPort,
+                        reach: (port) => this.probeRouter(external, port),
+                    },
                 );
                 if (run !== this.routerRun) {
                     void closeRouterPort(mapping).catch(() => {});
                     return;
+                }
+                // The port asked for first led elsewhere: this app's own
+                // mapping there goes, if the router still says it is its own.
+                // A record from before the internal port was kept cannot tell
+                // this app from another app on this computer, and stays.
+                for (const old of [stale, previous]) {
+                    if (
+                        old?.internalPort &&
+                        old.externalPort !== mapping.externalPort
+                    ) {
+                        void closeRouterPort(old).catch(() => {});
+                    }
                 }
                 this.routerMapping = mapping;
                 this.settings.setClientSetting(
@@ -873,6 +1194,7 @@ export class ScreenMirrorService {
                         controlUrl: mapping.controlUrl,
                         serviceType: mapping.serviceType,
                         externalPort: mapping.externalPort,
+                        internalPort: mapping.internalPort,
                     }),
                 );
                 this.scheduleRouterRenew(run);
@@ -882,19 +1204,60 @@ export class ScreenMirrorService {
             status = 'refused';
         }
         if (run !== this.routerRun) return;
+        // No port opened: the public address is listed all the same, with
+        // the port to forward by hand -- as the router told it, else as a
+        // lookup site sees it. Behind carrier NAT nothing can reach it.
+        if (status === 'unavailable' || status === 'refused') {
+            const publicIp =
+                status === 'refused' && external
+                    ? external
+                    : await lookUpPublicAddress();
+            if (run !== this.routerRun) return;
+            this.publicIp = publicIp;
+        }
         this.routerStatus = status;
         this.notify();
     }
+    // Renews at half the lease -- every half hour for a permanent one, which
+    // has nothing to renew -- and asks again, for another port, the moment
+    // the router or the probe says this one leads elsewhere now.
     private scheduleRouterRenew(run: number) {
         const mapping = this.routerMapping;
-        if (!mapping?.leaseSeconds) return;
-        this.routerRenewTimer = setTimeout(() => {
-            if (run !== this.routerRun) return;
-            renewRouterPort(mapping).then(
-                () => this.scheduleRouterRenew(run),
-                () => void this.openRouter(),
-            );
-        }, mapping.leaseSeconds * 500);
+        if (!mapping) return;
+        this.routerRenewTimer = setTimeout(
+            () => {
+                if (run !== this.routerRun) return;
+                renewRouterPort(mapping)
+                    .then(() => {
+                        return this.probeRouter(
+                            mapping.externalAddress,
+                            mapping.externalPort,
+                        );
+                    })
+                    .then(
+                        (reach) => {
+                            if (run !== this.routerRun) return;
+                            if (reach === 'other') void this.openRouter();
+                            else this.scheduleRouterRenew(run);
+                        },
+                        () => {
+                            if (run === this.routerRun) void this.openRouter();
+                        },
+                    );
+            },
+            (mapping.leaseSeconds || ROUTER_LEASE_SECONDS) * 500,
+        );
+    }
+    // Whether the router's public side lands on this server, asked for a
+    // token only this server will answer (`ROUTER_PROBE_PATH`).
+    private async probeRouter(host: string, port: number) {
+        const token = randomUUID();
+        this.routerProbeTokens.add(token);
+        try {
+            return await probeRouterPort(host, port, token);
+        } finally {
+            this.routerProbeTokens.delete(token);
+        }
     }
     // Removes this computer's port mapping, or the one an earlier run left
     // when it could not (a crash, or quitting before the router answered).
@@ -907,6 +1270,7 @@ export class ScreenMirrorService {
                 this.settings.getClientSetting(`${KEY}router-mapping`),
             );
         this.routerMapping = undefined;
+        this.publicIp = '';
         this.routerStatus = 'off';
         if (!mapping) return;
         this.settings.setClientSetting(`${KEY}router-mapping`, '');
@@ -914,6 +1278,7 @@ export class ScreenMirrorService {
     }
     stop() {
         clearInterval(this.heartbeat);
+        this.closeTunnel();
         clearTimeout(this.brokerIdleTimer);
         this.scan?.close();
         // Quitting does not wait for the router: an unanswered removal lapses
@@ -944,14 +1309,35 @@ export class ScreenMirrorService {
                 res.writeHead(405).end();
                 return;
             }
-            const remoteAddress = req.socket.remoteAddress ?? '';
-            const isLoopback = LOOPBACK_ADDRESSES.includes(remoteAddress);
+            // Through the tunnel the socket is this computer's cloudflared:
+            // the sender is the internet visitor Cloudflare names.
+            const isTunnel = this.tunnelSockets.has(req.socket);
+            const remoteAddress = isTunnel
+                ? noteTunnelRequest(req).address
+                : (req.socket.remoteAddress ?? '');
+            const isLoopback =
+                !isTunnel && LOOPBACK_ADDRESSES.includes(remoteAddress);
             const url = new URL(req.url ?? '/', this.baseUrl);
+            // This computer's own probe, arriving through the router's public
+            // side from wherever the router says it comes from.
+            if (url.pathname.startsWith(ROUTER_PROBE_PATH)) {
+                const token = url.pathname.slice(ROUTER_PROBE_PATH.length);
+                if (!this.routerProbeTokens.has(token)) {
+                    res.writeHead(404).end();
+                    return;
+                }
+                res.writeHead(200, {
+                    'Content-Type': 'text/plain',
+                    'Cache-Control': 'no-store',
+                });
+                res.end(req.method === 'HEAD' ? undefined : token);
+                return;
+            }
             // A virtual display's stream decides for itself who may watch:
             // its own switch, not Screen Mirror's hosting.
             const network: VirtualDisplayNetwork = isLoopback
                 ? 'this-computer'
-                : checkIsLocalSender(remoteAddress)
+                : !isTunnel && checkIsLocalSender(remoteAddress)
                   ? 'local'
                   : 'internet';
             if (url.pathname.startsWith('/vd/') && this.virtualDisplayHooks) {
@@ -1005,7 +1391,8 @@ export class ScreenMirrorService {
                 return;
             }
             // Listening on every network for the streams alone opens nothing
-            // else of Screen Mirror to anyone.
+            // else of Screen Mirror to anyone. Through the tunnel a guest is
+            // the internet: hosting and the internet both have to be on.
             if (
                 (!isLoopback && !this.isHostEnabled) ||
                 !this.admits(remoteAddress)
@@ -1087,6 +1474,32 @@ export class ScreenMirrorService {
             if (!res.headersSent) res.writeHead(404);
             res.end();
         }
+    }
+    // A connection code someone at `address` gave for something this server
+    // serves (a virtual display's viewers own theirs): wrong ones count
+    // toward the same lockout as a Screen Mirror guest's, per sender, so two
+    // doors do not double the guesses.
+    checkSenderCode(
+        address: string,
+        code: string | null | undefined,
+        supplied: string,
+    ): 'ok' | 'wrong' | 'locked' {
+        const sender = toMirrorSenderKey(toMirrorPlainAddress(address));
+        if (this.checkIsLockedOut(sender)) return 'locked';
+        if (
+            !!code &&
+            Buffer.byteLength(code) === Buffer.byteLength(supplied) &&
+            timingSafeEqual(Buffer.from(code), Buffer.from(supplied))
+        ) {
+            return 'ok';
+        }
+        this.countWrongCode(sender);
+        return this.checkIsLockedOut(sender) ? 'locked' : 'wrong';
+    }
+    checkIsSenderLockedOut(address: string) {
+        return this.checkIsLockedOut(
+            toMirrorSenderKey(toMirrorPlainAddress(address)),
+        );
     }
     private checkIsLockedOut(sender: string) {
         const entry = this.wrongCodes.get(sender);
@@ -1307,6 +1720,13 @@ export class ScreenMirrorService {
                 packet.type === 'camera-close'
             ) {
                 this.routeCamera(peer.guest.id, packet);
+            } else if (packet.type === 'audio') {
+                this.intercom.receive(`guest:${peer.guest.id}`, packet);
+            } else if (packet.type === 'intercom-state') {
+                this.intercom.setRemoteMic(
+                    `guest:${peer.guest.id}`,
+                    packet.mic === true,
+                );
             }
         });
         socket.on('close', () => {
@@ -1316,6 +1736,7 @@ export class ScreenMirrorService {
             for (const [id, output] of this.outputs)
                 if (output.guestId === peer.guest.id) this.hide(id);
             this.closeCameraRoutes(peer.guest.id);
+            this.intercom.forget(`guest:${peer.guest.id}`);
             this.notify();
         });
     }
@@ -1568,6 +1989,16 @@ export class ScreenMirrorService {
         }
         const output = this.outputs.get(screenId);
         if (!output) return '';
+        // A virtual display's state is also what browsers elsewhere draw
+        // from -- over the network, the public side, the tunnel -- so it keeps
+        // the path alone, relative to whatever address each one dialled. Only
+        // this computer's own window asking (the MP4 compositor's screens) is
+        // answered with the loopback address. Stored absolute, a slide's
+        // picture pointed every browser at 127.0.0.1: their own device.
+        if (isVirtualDisplayId(output.displayId)) {
+            const published = this.publish(output, filePath, '');
+            return published ? `${this.baseUrl}${published}` : '';
+        }
         return this.publish(output, filePath, this.baseUrl) ?? '';
     }
     private publish(output: Output, filePath: string, baseUrl: string) {
@@ -1599,17 +2030,22 @@ export class ScreenMirrorService {
             if (typeof value === 'string') {
                 if (value.startsWith(`${getRootUrl()}/`)) {
                     const url = new URL(value);
-                    const pathname = decodeURIComponent(url.pathname);
-                    const file = isDev
-                        ? pathname.startsWith('/@fs/')
-                            ? pathname.slice(5)
-                            : path.join(
-                                  app.getAppPath(),
-                                  pathname.startsWith('/src/') ? '' : 'public',
-                                  pathname,
-                              )
-                        : path.join(app.getAppPath(), 'dist', pathname);
+                    const file = toAppFile(decodeURIComponent(url.pathname));
                     return this.publish(output, file, baseUrl) ?? '';
+                }
+                // A page-relative address of the app's own -- a blank slide's
+                // `/assets/blank.png`. `path.isAbsolute` below takes it for a
+                // disk path (`C:\assets\blank.png`, the root on macOS), so a
+                // file that is not there was published, and every guest and
+                // virtual display drew a broken picture instead of a blank.
+                if (
+                    /^\/assets\/[^/]/.test(value) &&
+                    /(?:src|path|url)$/i.test(key) &&
+                    !fs.existsSync(value)
+                ) {
+                    return (
+                        this.publish(output, toAppFile(value), baseUrl) ?? ''
+                    );
                 }
                 if (value.startsWith('file:')) {
                     try {
@@ -1752,7 +2188,10 @@ export class ScreenMirrorService {
                 cameras: this.physicalCameras,
             };
             for (const link of linked)
-                socketSend(link.socket!, 'inventory', inventory);
+                socketSend(link.socket!, 'inventory', {
+                    ...inventory,
+                    cameras: link.shareCameras ? inventory.cameras : [],
+                });
         }
         for (const peer of this.peers.values())
             if (peer.approved)
@@ -1784,10 +2223,12 @@ export class ScreenMirrorService {
         if (this.links.size >= MAX_LINKS) throw new Error('Too many hosts');
         const host = typed.host;
         const target = toMirrorHostPort(host, options.port);
+        // Port 443 is a tunnel's: dialled with TLS.
+        const isSecure = options.port === MIRROR_SECURE_PORT;
         const found = await new Promise<{ id: string; name: string }>(
             (resolve, reject) => {
-                const request = http.get(
-                    `http://${target}/discovery`,
+                const request = (isSecure ? https : http).get(
+                    `${isSecure ? 'https' : 'http'}://${target}/discovery`,
                     { timeout: 5000 },
                     (response) => {
                         let data = '';
@@ -1860,6 +2301,7 @@ export class ScreenMirrorService {
             options: { host, port: options.port, code: options.code },
             attempt: 0,
             cameras: [],
+            shareCameras: false,
         };
         this.links.set(link.connection.id, link);
         this.openLink(link);
@@ -1868,8 +2310,9 @@ export class ScreenMirrorService {
         const { options, connection } = link;
         connection.status = link.attempt ? 'reconnecting' : 'connecting';
         connection.error = null;
+        const scheme = options.port === MIRROR_SECURE_PORT ? 'wss' : 'ws';
         const socket = new WebSocket(
-            `ws://${toMirrorHostPort(options.host, options.port)}/mirror`,
+            `${scheme}://${toMirrorHostPort(options.host, options.port)}/mirror`,
             {
                 perMessageDeflate: false,
                 maxPayload: MIRROR_MAX_MESSAGE,
@@ -1924,8 +2367,19 @@ export class ScreenMirrorService {
                 connection.status = 'connected';
                 connection.prefix = packet.prefix;
                 this.sendInventory();
+                this.intercom.announce(`link:${connection.id}`);
             } else if (connection.status === 'connected') {
-                if (packet.type === 'show')
+                // Fifty a second: played or dropped, never a state broadcast.
+                if (packet.type === 'audio') {
+                    this.intercom.receive(`link:${connection.id}`, packet);
+                    return;
+                }
+                if (packet.type === 'intercom-state')
+                    this.intercom.setRemoteMic(
+                        `link:${connection.id}`,
+                        packet.mic === true,
+                    );
+                else if (packet.type === 'show')
                     void this.showIncoming(link, packet).catch(() =>
                         socketSend(socket, 'screen-feedback', {
                             message: {
@@ -1988,6 +2442,7 @@ export class ScreenMirrorService {
             link.cameras = [];
             this.closeLinkScreens(link);
             this.closeLinkCameras(connection.id);
+            this.intercom.pause(`link:${connection.id}`);
             if (!denied && this.links.get(connection.id) === link) {
                 connection.status = 'reconnecting';
                 link.reconnectTimer = setTimeout(
@@ -2015,6 +2470,7 @@ export class ScreenMirrorService {
         link.cameras = [];
         this.closeLinkScreens(link);
         this.closeLinkCameras(link.connection.id);
+        this.intercom.forget(`link:${link.connection.id}`);
     }
     // One host's link, or -- without an id -- every one.
     disconnect(id?: string) {
@@ -2280,6 +2736,13 @@ export class ScreenMirrorService {
         const linkId = link.connection.id;
         if (typeof packet.requestId !== 'string') return;
         if (packet.type === 'camera-request') {
+            if (!link.shareCameras) {
+                if (link.socket)
+                    socketSend(link.socket, 'camera-close', {
+                        requestId: packet.requestId,
+                    });
+                return;
+            }
             if (this.brokerLinks.size >= 128) return;
             this.brokerLinks.set(packet.requestId, linkId);
             this.sendBroker(packet);
@@ -2391,6 +2854,117 @@ export class ScreenMirrorService {
             );
         else broker.webContents.send('mirror:camera', packet);
     }
+    // The other side of an intercom pair, while it is connected.
+    private intercomSocket(key: string) {
+        const [kind, id] = key.split(':');
+        if (kind === 'guest') {
+            const peer = this.peers.get(id);
+            return peer?.approved ? peer.socket : undefined;
+        }
+        const link = this.links.get(id);
+        return link?.connection.status === 'connected'
+            ? link.socket
+            : undefined;
+    }
+    // To the broker's intercom: a configuration starts it when anything is
+    // on; a packet reaches it only when it is already up and loaded.
+    private sendBrokerIntercom(message: Record<string, unknown>) {
+        if (message.type === 'audio') {
+            if (this.broker && !this.broker.webContents.isLoading())
+                this.broker.webContents.send('mirror:intercom', message);
+            return;
+        }
+        if (!this.brokerRequests.has(INTERCOM_BROKER_REQUEST)) {
+            if (this.broker && !this.broker.isDestroyed())
+                this.broker.webContents.send('mirror:intercom', message);
+            return;
+        }
+        const broker = this.ensureBroker();
+        if (broker.webContents.isLoading())
+            broker.webContents.once('did-finish-load', () =>
+                broker.webContents.send('mirror:intercom', message),
+            );
+        else broker.webContents.send('mirror:intercom', message);
+    }
+    // The operator's intercom toggles for one connection. macOS asks once
+    // before a microphone may be heard.
+    async setIntercom(key: string, change: Record<string, unknown>) {
+        const [kind, id] = key.split(':');
+        const peers = this.intercomPeers.get(kind);
+        if (
+            !MIRROR_INTERCOM_KEY_PATTERN.test(key) ||
+            !(peers ? peers.has(id) : this.intercomSocket(key))
+        )
+            throw new Error('Connection failed');
+        if (
+            change.mic === true &&
+            process.platform === 'darwin' &&
+            !(await systemPreferences.askForMediaAccess('microphone'))
+        )
+            throw new Error('Microphone access denied');
+        this.intercom.set(key, change);
+    }
+    // A virtual display's browser viewers join the intercom as `viewer:<id>`;
+    // their service carries the packets both ways.
+    registerIntercomPeers(
+        kind: string,
+        peers: {
+            has: (id: string) => boolean;
+            send: (
+                id: string,
+                type: string,
+                data: Record<string, unknown>,
+            ) => void;
+            onChanged: () => void;
+        },
+    ) {
+        this.intercomPeers.set(kind, peers);
+    }
+    // Cameras this computer can show beside its own and its guests': a
+    // virtual display's browser viewers that share theirs. Listed for this
+    // computer's windows only, never offered on to guests.
+    private cameraSources = new Set<() => MirrorCamera[]>();
+    registerCameraSource(source: () => MirrorCamera[]) {
+        this.cameraSources.add(source);
+    }
+    intercomStateOf(key: string) {
+        return this.intercom.stateOf(key);
+    }
+    // From a pair this server does not hold the socket of.
+    receiveIntercom(key: string, packet: Record<string, unknown>) {
+        if (packet.type === 'audio') this.intercom.receive(key, packet);
+        else if (packet.type === 'intercom-state')
+            this.intercom.setRemoteMic(key, packet.mic === true);
+    }
+    forgetIntercom(key: string) {
+        this.intercom.forget(key);
+    }
+    // Whether this computer's cameras are offered to one host. Off ends every
+    // stream of them that host has, at once.
+    setShareCameras(linkId: string, isShared: boolean) {
+        const link = this.links.get(linkId);
+        if (!link || link.shareCameras === isShared) return;
+        link.shareCameras = isShared;
+        if (!isShared) {
+            let isReleased = false;
+            for (const [requestId, owner] of this.brokerLinks) {
+                if (owner !== linkId) continue;
+                this.brokerLinks.delete(requestId);
+                this.brokerRequests.delete(requestId);
+                this.broker?.webContents.send('mirror:camera', {
+                    type: 'camera-close',
+                    requestId,
+                });
+                if (link.socket)
+                    socketSend(link.socket, 'camera-close', { requestId });
+                isReleased = true;
+            }
+            if (isReleased && !this.brokerRequests.size)
+                this.scheduleBrokerRelease();
+        }
+        this.sendInventory();
+        this.notifyStateOnly();
+    }
     private scheduleBrokerRelease() {
         clearTimeout(this.brokerIdleTimer);
         this.brokerIdleTimer = setTimeout(() => {
@@ -2401,6 +2975,11 @@ export class ScreenMirrorService {
         }, 5000);
     }
     private initIpc() {
+        // This computer's microphone, encoded by the broker.
+        ipcMain.on('mirror:intercom-audio', (event, data) => {
+            if (this.broker && event.sender === this.broker.webContents)
+                this.intercom.sendLocal(data);
+        });
         ipcMain.on('mirror:state', (event) => {
             if (this.trusted(event.sender)) event.returnValue = this.state();
             else event.returnValue = null;
@@ -2420,7 +2999,10 @@ export class ScreenMirrorService {
         });
         ipcMain.on('mirror:cameras', (event) => {
             event.returnValue = this.trusted(event.sender)
-                ? this.cameras()
+                ? [
+                      ...this.cameras(),
+                      ...[...this.cameraSources].flatMap((source) => source()),
+                  ]
                 : [];
         });
         ipcMain.on('mirror:physical-cameras', (event, cameras) => {
@@ -2481,6 +3063,22 @@ export class ScreenMirrorService {
                     await this.setInternetEnabled(data.enabled === true);
                 else if (data.action === 'router') {
                     if (this.isRouterWanted) void this.openRouter();
+                } else if (data.action === 'public-port') {
+                    this.setPublicPort(data.port ?? null);
+                } else if (data.action === 'intercom') {
+                    await this.setIntercom(String(data.key ?? ''), data);
+                } else if (data.action === 'share-cameras') {
+                    this.setShareCameras(
+                        String(data.id ?? ''),
+                        data.enabled === true,
+                    );
+                } else if (data.action === 'tunnel') {
+                    this.setTunnelEnabled(data.enabled === true);
+                } else if (data.action === 'public-address') {
+                    this.setPublicAddress(String(data.text ?? ''));
+                    this.notify();
+                } else if (data.action === 'custom-port') {
+                    this.setCustomPort(data.port ?? null);
                 } else if (data.action === 'approve') this.approve(data.id);
                 else if (
                     data.action === 'reject' ||

@@ -11,6 +11,10 @@ import {
 } from './screenManagerBaseHelpers';
 import appProvider from '../../server/appProvider';
 import { handleError } from '../../helper/errorHelpers';
+import {
+    rememberVirtualScreensShowing,
+    restoreVirtualScreensShowing,
+} from './virtualScreenShowingHelpers';
 
 export function screenManagerFromBase(
     screenManagerBase: ScreenManagerBase | null,
@@ -201,6 +205,40 @@ export function getScreenManagersFromSetting() {
     }
     scheduleGroupReconcileOnce();
     return screenManagers;
+}
+
+// Once, as the presenter starts: the screens that were up on a virtual display
+// when the app last ran are put up again (`virtualScreenShowingHelpers`).
+export function restoreVirtualDisplayScreens() {
+    if (!appProvider.isPagePresenter) {
+        return [];
+    }
+    const screenManagers = getScreenManagersFromSetting();
+    const shownIds = restoreVirtualScreensShowing(
+        screenManagers.map((screenManager) => {
+            return {
+                screenId: screenManager.screenId,
+                isShowing: screenManager.isShowing,
+                get displayId() {
+                    return screenManager.displayId;
+                },
+                show: () => {
+                    screenManager.isShowing = true;
+                },
+            };
+        }),
+    );
+    // What is up now is what the next start brings back, even when nothing
+    // is shown or hidden before then.
+    rememberVirtualScreensShowing(
+        screenManagers.map((screenManager) => {
+            return {
+                screenId: screenManager.screenId,
+                isShowing: screenManager.isShowing,
+            };
+        }),
+    );
+    return shownIds;
 }
 
 export function getAllScreenManagers(): ScreenManager[] {

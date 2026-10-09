@@ -46,10 +46,43 @@ const dictionary = {
     'Screen Mirror Connection': 'Connexion écran miroir',
     'Full screen': 'Plein écran',
     'Exit full screen': 'Quitter le plein écran',
+    'Catching up': 'Rattrapage',
+    'behind live': 'de retard sur le direct',
+    'Cast to a TV': 'Diffuser sur une TV',
+    Cast: 'Diffuser',
+    Casting: 'Diffusion en cours',
+    'Search again': 'Chercher à nouveau',
+    'Looking for TVs…': 'Recherche des TV…',
+    'No TV found. Make sure the TV is on and on the same network as this computer.':
+        'Aucune TV trouvée. Vérifiez que la TV est allumée et sur le même réseau que cet ordinateur.',
+    'Turn on “Let other devices watch” to cast to a TV.':
+        'Activez « Laisser d’autres appareils regarder » pour diffuser sur une TV.',
+    'That TV was not found. Search again.':
+        'Cette TV est introuvable. Cherchez à nouveau.',
+    'The TV could not be reached.': 'La TV est injoignable.',
+    'The TV could not play this display.':
+        'La TV n’a pas pu lire cet affichage.',
+    'The TV did not answer.': 'La TV n’a pas répondu.',
+    'The TV stopped playing.': 'La TV a arrêté la lecture.',
+    'No TV was found that can play this display. It must be on and on the same network.':
+        'Aucune TV pouvant lire cet affichage n’a été trouvée. Elle doit être allumée et sur le même réseau.',
+    'Turn off sound': 'Couper le son',
+    'Voice volume': 'Volume de la voix',
     'Turn on sound': 'Activer le son',
     'Waiting for the display': 'En attente de l’affichage',
     'Watch in a browser': 'Regarder dans un navigateur',
     'Where to watch': 'Où regarder',
+    'More addresses': 'Autres adresses',
+    'Cast from this browser': 'Diffuser depuis ce navigateur',
+    'For a TV on the same network as this device.':
+        'Pour une télévision sur le même réseau que cet appareil.',
+    'This browser found no TV. It must be on and on the same network as this device.':
+        'Ce navigateur n’a trouvé aucune télévision. Elle doit être allumée et sur le même réseau que cet appareil.',
+    'This browser cannot cast. Try Chrome, Edge or Safari.':
+        'Ce navigateur ne peut pas diffuser. Essayez Chrome, Edge ou Safari.',
+    'TVs on the app’s network': 'Télévisions sur le réseau de l’application',
+    'Several screens show on this display, stacked: the one shown last is on top.':
+        'Plusieurs écrans s’affichent sur cet écran virtuel, empilés : le dernier affiché est au-dessus.',
     'Allow interaction': 'Autoriser l’interaction',
     'Allow again': 'Autoriser à nouveau',
     'This device was disconnected. Ask whoever runs the display to let it back in.':
@@ -127,6 +160,7 @@ const dictionary = {
     Rescan: 'Rechercher à nouveau',
     'Host address': 'Adresse de l’hôte',
     Port: 'Port',
+    'Port (optional)': 'Port (facultatif)',
     'Connection code': 'Code de connexion',
     Connect: 'Connecter',
     Disconnect: 'Déconnecter',
@@ -174,6 +208,39 @@ const dictionary = {
     'This network': 'Ce réseau',
     Router: 'Routeur',
     'Public address': 'Adresse publique',
+    'Public IP': 'IP publique',
+    'Public port': 'Port public',
+    'The router would not open the chosen port, so it opened another one.':
+        'Le routeur n’a pas voulu ouvrir le port choisi : il en a ouvert un autre.',
+    Tunnel: 'Tunnel',
+    'Share through a Cloudflare tunnel': 'Partager via un tunnel Cloudflare',
+    'For when the internet cannot reach this computer, such as behind a VPN or a router that forwards no port. Guests and viewers come in through Cloudflare by an https address that changes each time the tunnel starts.':
+        'Pour quand Internet ne peut pas joindre cet ordinateur, par exemple derrière un VPN ou un routeur qui ne redirige aucun port. Invités et spectateurs passent par Cloudflare, à une adresse https qui change à chaque démarrage du tunnel.',
+    'Starting the tunnel…': 'Démarrage du tunnel…',
+    'The tunnel is up.': 'Le tunnel est actif.',
+    'The tunnel stopped. It starts again by itself.':
+        'Le tunnel s’est arrêté. Il redémarre tout seul.',
+    'The tunnel comes with the Extra Binaries. Install or update them in Settings, and it starts by itself.':
+        'Le tunnel est fourni avec les binaires supplémentaires. Installez-les ou mettez-les à jour dans les paramètres : il démarre alors tout seul.',
+    'The tunnel is not working.': 'Le tunnel ne fonctionne pas.',
+    'Send my microphone': 'Envoyer mon micro',
+    'Stop sending my microphone': 'Arrêter d’envoyer mon micro',
+    'Play their microphone': 'Écouter leur micro',
+    'Their microphone is on': 'Leur micro est ouvert',
+    'Speaker volume': 'Volume du haut-parleur',
+    'Share my cameras': 'Partager mes caméras',
+    'Stop sharing my cameras': 'Arrêter de partager mes caméras',
+    'Microphone access denied': 'Accès au micro refusé',
+    'The microphone could not be opened. Allow it for this page, or close another app using it.':
+        'Le micro n’a pas pu être ouvert. Autorisez-le pour cette page, ou fermez l’autre application qui l’utilise.',
+    'The camera could not be opened. Allow it for this page, or close another app using it.':
+        'La caméra n’a pas pu être ouverte. Autorisez-la pour cette page, ou fermez l’autre application qui l’utilise.',
+    'Waiting for approval': 'En attente d’autorisation',
+    'Waiting for the code': 'En attente du code',
+    'Nothing is showing on this display yet.':
+        'Rien n’est encore affiché sur cet écran.',
+    'Set a connection code: until then no one can come in with a code.':
+        'Définissez un code de connexion : d’ici là, personne ne peut entrer avec un code.',
     'QR code': 'Code QR',
     'Copy address': 'Copier l’adresse',
     'Asking the router to open the port…':
@@ -874,6 +941,9 @@ const dictionary = {
     'Camera not found': 'Caméra introuvable',
     'Camera Not Available': 'Caméra non disponible',
     'Could not open the camera': 'Impossible d’ouvrir la caméra',
+    'A screen cannot show itself': 'Un écran ne peut pas s’afficher lui-même',
+    'These screens would show each other':
+        'Ces écrans s’afficheraient l’un l’autre',
     'Start Camera': 'Démarrer la caméra',
     'Stop Camera': 'Arrêter la caméra',
     Preview: 'Aperçu',
@@ -996,6 +1066,7 @@ const dictionary = {
     'Clear FG Stopwatch': 'Effacer le chronomètre (1er plan)',
     'Clear FG Time': "Effacer l'heure (1er plan)",
     'Clear FG Camera Show': 'Effacer la caméra (1er plan)',
+    'Clear FG Screen Show': 'Effacer l’affichage d’écran (1er plan)',
     'Clear FG Web Show': 'Effacer le site web (1er plan)',
     'Other Clear FG Items': 'Autres effacements (1er plan)',
     'Screen: Show': 'Écran : afficher',
@@ -1117,6 +1188,7 @@ const dictionary = {
     'Bible key': 'Clé de Bible',
     'Bible Lookup': 'Recherche biblique',
     'Camera Show': 'Affichage de la caméra',
+    'Screen Show': 'Affichage d’écran',
     'Change Bible Model Info': 'Modifier les infos du modèle de Bible',
     'Child Directories': 'Sous-dossiers',
     'Clear All Settings': 'Effacer tous les paramètres',
@@ -1211,6 +1283,7 @@ const dictionary = {
     'Or add bible ': 'Ou ajouter une Bible ',
     'Go to Settings': 'Aller aux paramètres',
     'Hide Camera': 'Masquer la caméra',
+    'Hide Screen Show': 'Masquer l’affichage d’écran',
     'Hide Countdown': 'Masquer le compte à rebours',
     'Hide Editor': "Masquer l'éditeur",
     'Hide Marquee Bottom': 'Masquer le bandeau défilant bas',
@@ -2139,8 +2212,8 @@ const dictionary = {
         "Trouver l'ID de l'espace de travail Anthropic",
     Hide: 'Masquer',
     'Extra Binaries': 'Binaires supplémentaires',
-    'The media tools used to download background video and audio. They are downloaded separately to keep the app small.':
-        "Les outils multimédias servant à télécharger les vidéos et audios d'arrière-plan. Ils sont téléchargés séparément pour garder l'application légère.",
+    'The media tools used to download background video and audio, and the Screen Mirror internet tunnel. They are downloaded separately to keep the app small.':
+        "Les outils multimédias servant à télécharger les vidéos et audios d'arrière-plan, et le tunnel Internet de Screen Mirror. Ils sont téléchargés séparément pour garder l'application légère.",
     'Media Tools Required': 'Outils multimédias requis',
     'Downloading video or audio needs the extra binaries, which are not installed yet.':
         "Le téléchargement de vidéos ou d'audios nécessite les binaires supplémentaires, qui ne sont pas encore installés.",
@@ -2521,6 +2594,9 @@ const dictionary = {
         'Afficher une caméra par-dessus la diapositive',
     'Camera Show puts a live camera picture above the slide, not behind it.':
         'Camera Show place une image de caméra en direct au-dessus de la diapositive, pas derrière.',
+    'Show one screen inside another': 'Afficher un écran dans un autre',
+    'Screen Show puts the live picture of another screen above the slide.':
+        'Screen Show place l’image en direct d’un autre écran au-dessus de la diapositive.',
     'Show a web page over the slide':
         'Afficher une page web par-dessus la diapositive',
     'Web Show puts a page or a small web file above the slide.':

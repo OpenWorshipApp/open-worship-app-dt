@@ -30,6 +30,7 @@ import type {
     ForegroundMarqueeDataType,
     MarqueePositionType,
     ForegroundCameraDataType,
+    ForegroundScreenDataType,
     ForegroundCountdownDataType,
     ForegroundImageDataType,
     ForegroundTimeDataType,
@@ -50,9 +51,26 @@ import type { OptionalPromise } from '../../helper/typeHelpers';
 import type ScreenEffectManager from './ScreenEffectManager';
 import type { TransitionEffectType } from '../transitionEffectHelpers';
 import { toTransitionPart } from '../transitionOverrideHelpers';
-import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
+import {
+    getCameraAndShowMedia,
+    requestCameraAccess,
+} from '../../helper/cameraHelpers';
+import { getSetting } from '../../helper/settingHelpers';
 import appProvider from '../../server/appProvider';
 import { SCREEN_FONT_FAMILY } from '../screenFontFamily';
+import {
+    checkIsScreenShowFrame,
+    mountScreenShowFrame,
+    type ScreenShowFrameMountType,
+} from '../screenShowFrameHelpers';
+import {
+    checkIsScreenShowSourceId,
+    findScreenShowRefusal,
+} from '../screenShowGraphHelpers';
+import {
+    getAllScreenManagerBases,
+    getScreenManagerBase,
+} from './screenManagerBaseHelpers';
 
 export type ScreenForegroundEventType = 'update';
 
@@ -118,6 +136,18 @@ function toMessageDataList(foregroundData: any): any[] {
         ];
     }
     return [];
+}
+
+// The Screen Show pictures of a saved foreground entry. Anything that is not
+// a plain screen id is dropped: an entry restored from disk, or one that came
+// from an app that had no such slot, must not stop the rest from loading.
+function toScreenDataList(screenDataList: unknown): ForegroundScreenDataType[] {
+    if (!Array.isArray(screenDataList)) {
+        return [];
+    }
+    return screenDataList.filter((item) => {
+        return checkIsScreenShowSourceId(item?.id);
+    });
 }
 
 type CountdownSetTimingType = Pick<
@@ -190,6 +220,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ],
             ['quickTextData', whenMounted(this.renderQuickText.bind(this))],
             ['cameraDataList', whenMounted(this.renderCamera.bind(this))],
+            ['screenDataList', whenMounted(this.renderScreen.bind(this))],
             ['webDataList', whenMounted(this.renderWeb.bind(this))],
             ['videoDataList', whenMounted(this.renderVideo.bind(this))],
             ['imageDataList', whenMounted(this.renderImage.bind(this))],
@@ -206,6 +237,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['marqueeBottomData', this.setMarqueeBottomData.bind(this)],
             ['quickTextData', this.setQuickTextData.bind(this)],
             ['cameraDataList', this.setCameraDataList.bind(this)],
+            ['screenDataList', this.setScreenDataList.bind(this)],
             ['webDataList', this.setWebDataList.bind(this)],
             ['videoDataList', this.setVideoDataList.bind(this)],
             ['imageDataList', this.setImageDataList.bind(this)],
@@ -264,6 +296,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             marqueeBottomData: foregroundData['marqueeBottomData'] ?? null,
             quickTextData: foregroundData['quickTextData'] ?? null,
             cameraDataList: foregroundData['cameraDataList'] ?? [],
+            screenDataList: toScreenDataList(foregroundData['screenDataList']),
             webDataList: foregroundData['webDataList'] ?? [],
             videoDataList: foregroundData['videoDataList'] ?? [],
             imageDataList: foregroundData['imageDataList'] ?? [],
@@ -1027,6 +1060,236 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             },
             isForceChoosing,
         );
+    }
+
+    /**
+     * Another screen's content, drawn here whether or not that screen is
+     * showing (`screenShowFrameHelpers`). Skipped on the source screen itself
+     * -- a colour-note group copies "show screen 2" to screen 2 as well -- and
+     * inside a copy, which never draws a copy of its own.
+     */
+    renderScreen(data: ForegroundScreenDataType) {
+        if (data.id === this.screenId || checkIsScreenShowFrame()) {
+            return;
+        }
+        let handle: ScreenShowFrameMountType | null = null;
+        const divContainer = this.createDivContainer(data, async () => {
+            await handle?.dispose();
+        });
+        handle = mountScreenShowFrame({
+            sourceScreenId: data.id,
+            ownScreenId: this.screenId,
+            parentContainer: divContainer!,
+            extraStyle: data.extraStyle,
+            animData: this.styleAnimFor(data),
+            getSetting,
+            askCameraAccess: requestCameraAccess,
+            // The presenter reads the source's state straight from its
+            // managers; every other window keeps what the presenter sends.
+            getSnapshot: appProvider.isPageScreen
+                ? undefined
+                : () => {
+                      return (
+                          getScreenManagerBase(
+                              data.id,
+                          )?.genScreenShowPayload() ?? null
+                      );
+                  },
+        });
+    }
+    setScreenDataList(
+        dataList: ForegroundScreenDataType[] | null,
+        isNoSyncGroup = false,
+    ) {
+        const oldSourceIds = this.foregroundData.screenDataList.map((item) => {
+            return item.id;
+        });
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                // A sync message from a sender that has no such slot reads
+                // `?? null` (`receiveSyncScreen`), and a null list would throw
+                // on the next add.
+                screenDataList: dataList ?? [],
+            },
+            isNoSyncGroup,
+        );
+        // A screen just put on this one: its window is sent that screen's
+        // whole state now, before any change of it comes.
+        const addedSourceIds = this.foregroundData.screenDataList
+            .map((item) => {
+                return item.id;
+            })
+            .filter((id) => {
+                return !oldSourceIds.includes(id);
+            });
+        if (addedSourceIds.length > 0) {
+            this.screenManagerBase.sendScreenShowSnapshots(addedSourceIds);
+        }
+    }
+    /**
+     * The screens showing screen `sourceScreenId` right now, other than
+     * itself: where a change of it has to be carried.
+     */
+    static getScreenShowTargetIds(sourceScreenId: number) {
+        return this.getAllInstancesBase<ScreenForegroundManager>()
+            .filter((instance) => {
+                return (
+                    instance.screenId !== sourceScreenId &&
+                    instance.foregroundData.screenDataList.some((item) => {
+                        return item.id === sourceScreenId;
+                    })
+                );
+            })
+            .map((instance) => {
+                return instance.screenId;
+            });
+    }
+    /**
+     * Put screen `data.id`'s picture on this screen, REPLACING the one already
+     * here from the same source (Properties changed). Refused, with a word to
+     * the operator, when it would be this screen itself or close a loop.
+     */
+    addScreenData(data: ForegroundScreenDataType, isNoSyncGroup = false) {
+        if (!checkIsScreenShowSourceId(data?.id)) {
+            return false;
+        }
+        const refusal = ScreenForegroundManager.getScreenShowRefusal(
+            this.screenId,
+            data.id,
+        );
+        if (refusal !== null) {
+            if (!appProvider.isPageScreen) {
+                showSimpleToast(
+                    tran('Screen Show'),
+                    refusal === 'self'
+                        ? tran('A screen cannot show itself')
+                        : tran('These screens would show each other'),
+                );
+            }
+            return false;
+        }
+        const dataList = this.foregroundData.screenDataList;
+        const existingData = dataList.find((item) => {
+            return item.id === data.id;
+        });
+        if (
+            existingData !== undefined &&
+            checkAreObjectsEqual(existingData, data)
+        ) {
+            return true;
+        }
+        this.setScreenDataList(
+            existingData === undefined
+                ? [...dataList, data]
+                : dataList.map((item) => {
+                      return item.id === data.id ? data : item;
+                  }),
+            isNoSyncGroup,
+        );
+        return true;
+    }
+    removeScreenData(data: ForegroundScreenDataType, isNoSyncGroup = false) {
+        const dataList = this.foregroundData.screenDataList.filter((item) => {
+            return item.id !== data.id;
+        });
+        this.setScreenDataList(dataList, isNoSyncGroup);
+    }
+    static async addScreenData(
+        event: MouseEvent,
+        data: ForegroundScreenDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.addScreenData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    static async removeScreenData(
+        event: MouseEvent,
+        data: ForegroundScreenDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeScreenData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    /**
+     * Whether screen `targetScreenId` may show screen `sourceScreenId`. Read
+     * from the DATA of every screen, hidden ones included, so the answer does
+     * not depend on which windows happen to be up. The target's colour-note
+     * group counts with it: the group receives the same foreground. A group
+     * member that IS the source skips its own copy when drawing, so it is no
+     * reason to refuse.
+     */
+    static getScreenShowRefusal(
+        targetScreenId: number,
+        sourceScreenId: number,
+    ) {
+        if (targetScreenId === sourceScreenId) {
+            return 'self';
+        }
+        const edges = new Map<number, number[]>();
+        for (const instance of this.getAllInstancesBase<ScreenForegroundManager>()) {
+            edges.set(
+                instance.screenId,
+                instance.foregroundData.screenDataList.map((item) => {
+                    return item.id;
+                }),
+            );
+        }
+        const colorNote = getScreenManagerBase(targetScreenId)?.colorNote;
+        const groupScreenIds =
+            colorNote === null || colorNote === undefined
+                ? []
+                : getAllScreenManagerBases()
+                      .filter((screenManagerBase) => {
+                          return screenManagerBase.colorNote === colorNote;
+                      })
+                      .map((screenManagerBase) => {
+                          return screenManagerBase.screenId;
+                      });
+        const targetScreenIds = Array.from(
+            new Set([targetScreenId, ...groupScreenIds]),
+        ).filter((screenId) => {
+            return screenId !== sourceScreenId;
+        });
+        return findScreenShowRefusal(sourceScreenId, targetScreenIds, edges);
+    }
+    /**
+     * Screen `sourceScreenId` was deleted. Its id is handed to the NEXT screen
+     * added (`screenManagerDeleteHelpers`), so a picture left pointing at it
+     * would quietly start showing a different screen. Taken off every screen,
+     * locked ones too -- what it showed no longer exists.
+     */
+    static removeScreenShowSource(sourceScreenId: number) {
+        for (const instance of this.getAllInstancesBase<ScreenForegroundManager>()) {
+            const dataList = instance.foregroundData.screenDataList;
+            const removedList = dataList.filter((item) => {
+                return item.id === sourceScreenId;
+            });
+            if (removedList.length === 0) {
+                continue;
+            }
+            for (const item of removedList) {
+                instance.removeDivContainer(item);
+            }
+            // A NEW list: sync-grouped screens share the old one by reference
+            // (memory `foreground-sync-shared-refs`).
+            Object.assign(instance.foregroundData, {
+                screenDataList: dataList.filter((item) => {
+                    return item.id !== sourceScreenId;
+                }),
+            });
+            instance.saveForegroundData();
+        }
     }
 
     renderWeb(data: ForegroundWebDataType) {

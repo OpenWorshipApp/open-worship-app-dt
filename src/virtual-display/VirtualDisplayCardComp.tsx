@@ -12,6 +12,8 @@ import {
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { MirrorQrCodeComp } from '../screen-mirror/MirrorNetworkComps';
+import MirrorIntercomComp from '../screen-mirror/MirrorIntercomComp';
+import { mirrorCommand } from '../screen-mirror/mirrorConnectionHelpers';
 import {
     RESOLUTION_PRESETS,
     VIRTUAL_DISPLAY_IMAGE_EXTENSIONS,
@@ -32,6 +34,13 @@ import {
     virtualDisplayCommand,
 } from './virtualDisplayHelpers';
 import type { VirtualDisplayPerformType } from './VirtualDisplaysComp';
+import VirtualDisplayCastComp, {
+    VirtualDisplayCastButtonComp,
+} from './VirtualDisplayCastComp';
+import {
+    splitVirtualDisplayAddresses,
+    toViewerDeviceLabel,
+} from './virtualDisplayAddressHelpers';
 
 const LazyPreviewComp = lazy(() => import('./VirtualDisplayPreviewComp'));
 
@@ -45,7 +54,7 @@ type PropsType = Readonly<{
 // What is folded in a card is remembered per display. A display's number is
 // never given to another one, so its keys cannot open someone else's card,
 // and deleting the display clears them.
-const FOLD_PARTS = ['card', 'settings', 'addresses'] as const;
+const FOLD_PARTS = ['card', 'settings', 'addresses', 'more-addresses'] as const;
 type FoldPartType = (typeof FOLD_PARTS)[number];
 
 function toFoldSettingName(number: number, part: FoldPartType) {
@@ -65,17 +74,19 @@ function RenderFoldComp({
     part,
     title,
     icon,
+    isExpandedByDefault = true,
     children,
 }: Readonly<{
     number: number;
     part: FoldPartType;
     title: string;
     icon: string;
+    isExpandedByDefault?: boolean;
     children: ReactNode;
 }>) {
     const [isExpanded, setIsExpanded] = useStateSettingBoolean(
         toFoldSettingName(number, part),
-        true,
+        isExpandedByDefault,
     );
     return (
         <section className="d-flex flex-column gap-2" aria-label={title}>
@@ -381,24 +392,39 @@ function toAddressGroupLabel(kind: VirtualDisplayAddress['kind']) {
     if (kind === 'lan') {
         return tran('This network');
     }
+    // The public address with a port no router opened: forwarded by hand.
+    if (kind === 'public') {
+        return tran('Public IP');
+    }
+    if (kind === 'tunnel') {
+        return tran('Tunnel');
+    }
     return tran('Internet');
 }
 
 function RenderAddressRowComp({
     url,
     groupKind,
+    isRecommended = false,
     isQrShowing,
     onToggleQr,
 }: Readonly<{
     url: string;
     groupKind: VirtualDisplayAddress['kind'];
+    isRecommended?: boolean;
     isQrShowing: boolean;
     onToggleQr: () => void;
 }>) {
     return (
         <li className="d-flex flex-column">
             <div className="d-flex align-items-center gap-1">
-                <span className="badge text-bg-secondary">
+                <span
+                    className={`badge ${isRecommended ? 'text-bg-success' : 'text-bg-secondary'}`}
+                    title={isRecommended ? tran('Recommended') : undefined}
+                >
+                    {isRecommended ? (
+                        <i className="bi bi-star-fill me-1" aria-hidden />
+                    ) : null}
                     {toAddressGroupLabel(groupKind)}
                 </span>
                 <span className="app-data text-break flex-grow-1">{url}</span>
@@ -430,21 +456,40 @@ function RenderAddressRowComp({
 }
 
 // Where to watch: a browser draws the display itself (fastest, nothing is
-// encoded here); a media player takes the MP4.
+// encoded here); a media player takes the MP4. What to give someone comes
+// first, its QR code already open -- the best network of this computer and any
+// internet address opened on purpose; every other card and the MP4 fold under
+// "More addresses" (a laptop with a VPN and WSL listed five look-alikes).
 function RenderAddressesComp({ display, state }: PropsType) {
-    const [qrUrl, setQrUrl] = useState('');
+    const { main, others } = useMemo(() => {
+        return splitVirtualDisplayAddresses(state.addresses);
+    }, [state.addresses]);
+    const isSharing = main.some((address) => {
+        return address.kind !== 'this-computer';
+    });
+    const [qrUrl, setQrUrl] = useState(() => {
+        return isSharing && main.length > 0
+            ? toVirtualDisplayPageUrl(main[0], display.number)
+            : '';
+    });
     const renderRows = (
+        addresses: VirtualDisplayAddress[],
         toUrl: (address: VirtualDisplayAddress, number: number) => string,
+        isRecommended = false,
     ) => {
         return (
             <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
-                {state.addresses.map((address) => {
+                {addresses.map((address) => {
                     const url = toUrl(address, display.number);
                     return (
                         <RenderAddressRowComp
                             key={url}
                             url={url}
                             groupKind={address.kind}
+                            isRecommended={
+                                isRecommended &&
+                                address.kind !== 'this-computer'
+                            }
                             isQrShowing={qrUrl === url}
                             onToggleQr={() => {
                                 setQrUrl(qrUrl === url ? '' : url);
@@ -461,12 +506,23 @@ function RenderAddressesComp({ display, state }: PropsType) {
                 <i className="bi bi-browser-chrome me-1" aria-hidden />
                 {tran('Watch in a browser')}
             </span>
-            {renderRows(toVirtualDisplayPageUrl)}
-            <span className="mt-1">
-                <i className="bi bi-film me-1" aria-hidden />
-                {tran('Video for media players (MP4)')}
-            </span>
-            {renderRows(toVirtualDisplayStreamUrl)}
+            {renderRows(main, toVirtualDisplayPageUrl, true)}
+            <RenderFoldComp
+                number={display.number}
+                part="more-addresses"
+                title={tran('More addresses')}
+                icon="bi-three-dots"
+                isExpandedByDefault={false}
+            >
+                {others.length > 0
+                    ? renderRows(others, toVirtualDisplayPageUrl)
+                    : null}
+                <span className="mt-1">
+                    <i className="bi bi-film me-1" aria-hidden />
+                    {tran('Video for media players (MP4)')}
+                </span>
+                {renderRows([...main, ...others], toVirtualDisplayStreamUrl)}
+            </RenderFoldComp>
         </div>
     );
 }
@@ -483,6 +539,9 @@ function RenderClientComp({
     perform: VirtualDisplayPerformType;
 }>) {
     const switchId = `app-vd-interactive-${client.id}`;
+    const deviceLabel = client.isPreview
+        ? ''
+        : toViewerDeviceLabel(client.userAgent);
     return (
         <li className="d-flex flex-column gap-1">
             <div className="d-flex align-items-center gap-1">
@@ -508,15 +567,92 @@ function RenderClientComp({
                     {client.isPreview
                         ? tran('This app (preview)')
                         : client.address}
+                    {deviceLabel ? (
+                        <span className="text-muted">{` · ${deviceLabel}`}</span>
+                    ) : null}
                 </span>
                 <span className="text-muted text-nowrap">
                     {new Date(client.since).toLocaleTimeString()}
                 </span>
             </div>
+            {client.camera !== undefined ? (
+                <span
+                    className="badge text-bg-success align-self-start app-ellipsis"
+                    title={client.camera}
+                >
+                    <i className="bi bi-camera-video-fill me-1" aria-hidden />
+                    {client.camera}
+                </span>
+            ) : null}
+            {client.waiting !== null ? (
+                <span className="badge text-bg-warning align-self-start">
+                    {client.waiting === 'approval'
+                        ? tran('Waiting for approval')
+                        : tran('Waiting for the code')}
+                </span>
+            ) : null}
             <div className="d-flex align-items-center gap-2">
+                {/* From the internet, nothing of the display is sent until
+                    the operator allows it (or it gives the code). */}
+                {client.waiting === 'approval' ? (
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        disabled={isBusy}
+                        onClick={() => {
+                            void perform(() => {
+                                return virtualDisplayCommand('allow', {
+                                    number: display.number,
+                                    clientId: client.id,
+                                });
+                            });
+                        }}
+                    >
+                        {tran('Allow connection')}
+                    </button>
+                ) : null}
+                {/* A media player cannot answer: this computer's microphone
+                    goes into the display's MP4 sound -- one stream, so one
+                    switch for every player of it. */}
+                {client.kind === 'video' && !client.isPreview ? (
+                    <MirrorIntercomComp
+                        intercom={{
+                            mic: display.isMp4MicOn,
+                            speaker: false,
+                            volume: 1,
+                            remoteMic: false,
+                        }}
+                        busy={isBusy}
+                        isSpeakerShown={false}
+                        onChange={(change) => {
+                            return perform(() => {
+                                return virtualDisplayCommand('mp4-mic', {
+                                    number: display.number,
+                                    enabled: change.mic === true,
+                                });
+                            });
+                        }}
+                    />
+                ) : null}
+                {/* Talk-back with a browser that was let in: this
+                    computer's microphone to it, its microphone here. */}
+                {client.intercom !== undefined ? (
+                    <MirrorIntercomComp
+                        intercom={client.intercom}
+                        busy={isBusy}
+                        onChange={(change) => {
+                            return perform(() => {
+                                return mirrorCommand('intercom', {
+                                    key: `viewer:${client.id}`,
+                                    ...change,
+                                });
+                            });
+                        }}
+                    />
+                ) : null}
                 {/* A browser draws the screens itself, so a hand on it can
                     scroll and pick verses -- in the app too, once allowed. */}
-                {client.kind === 'web' ? (
+                {client.kind === 'web' && client.waiting === null ? (
                     <div
                         className="form-check form-switch mb-0"
                         title={tran(
@@ -563,7 +699,9 @@ function RenderClientComp({
                             });
                         }}
                     >
-                        {tran('Disconnect')}
+                        {client.waiting === null
+                            ? tran('Disconnect')
+                            : tran('Reject connection')}
                     </button>
                 )}
             </div>
@@ -690,6 +828,7 @@ export default function VirtualDisplayCardComp(
         }
     }, [isJustCreated]);
     const [isPreviewing, setIsPreviewing] = useState(false);
+    const [isCastOpen, setIsCastOpen] = useState(false);
     const confirmDelete = async () => {
         const isOk = await showAppConfirm(
             tran('Delete Virtual Display'),
@@ -727,13 +866,67 @@ export default function VirtualDisplayCardComp(
                 <span className="app-ellipsis flex-fill" title={display.name}>
                     {display.name}
                 </span>
+                <VirtualDisplayCastButtonComp
+                    display={display}
+                    isOpen={isCastOpen}
+                    onToggle={() => {
+                        setIsCastOpen(!isCastOpen);
+                    }}
+                />
                 <span className="small text-muted app-data">
                     {display.width}×{display.height}
                 </span>
                 <RenderStatusComp display={display} />
             </div>
+            {isCastOpen ? (
+                <VirtualDisplayCastComp
+                    {...props}
+                    onClose={() => {
+                        setIsCastOpen(false);
+                    }}
+                />
+            ) : null}
             {isExpanded ? (
                 <div className="card-body p-2 d-flex flex-column gap-2">
+                    {/* First, so it opens where it was pressed: under Delete it
+                        needed a scroll to find. */}
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary align-self-start"
+                        aria-pressed={isPreviewing}
+                        onClick={() => {
+                            setIsPreviewing(!isPreviewing);
+                        }}
+                    >
+                        <i
+                            className={`bi bi-${isPreviewing ? 'eye-slash' : 'eye'} me-1`}
+                            aria-hidden
+                        />
+                        {tran('Preview')}
+                    </button>
+                    {isPreviewing ? (
+                        <AppSuspenseComp>
+                            <LazyPreviewComp
+                                port={state.port}
+                                number={display.number}
+                                width={display.width}
+                                height={display.height}
+                            />
+                        </AppSuspenseComp>
+                    ) : null}
+                    {/* Like windows on a real monitor, the screen shown last
+                        covers the others wherever it has a background. */}
+                    {display.screenIds.length > 1 ? (
+                        <span className="small text-warning">
+                            <i className="bi bi-layers me-1" aria-hidden />
+                            {tran(
+                                'Several screens show on this display, stacked: the one shown last is on top.',
+                            )}{' '}
+                            <span className="app-data">
+                                {display.screenIds.join(', ')}
+                            </span>
+                        </span>
+                    ) : null}
                     <RenderFoldComp
                         number={display.number}
                         part="settings"
@@ -761,43 +954,17 @@ export default function VirtualDisplayCardComp(
                         <RenderAddressesComp {...props} />
                     </RenderFoldComp>
                     <RenderStreamComp {...props} />
-                    <div className="d-flex flex-wrap gap-1">
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary"
-                            aria-pressed={isPreviewing}
-                            onClick={() => {
-                                setIsPreviewing(!isPreviewing);
-                            }}
-                        >
-                            <i
-                                className={`bi bi-${isPreviewing ? 'eye-slash' : 'eye'} me-1`}
-                                aria-hidden
-                            />
-                            {tran('Preview')}
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger ms-auto"
-                            disabled={isBusy}
-                            onClick={() => {
-                                void confirmDelete();
-                            }}
-                        >
-                            <i className="bi bi-trash me-1" aria-hidden />
-                            {tran('Delete Virtual Display')}
-                        </button>
-                    </div>
-                    {isPreviewing ? (
-                        <AppSuspenseComp>
-                            <LazyPreviewComp
-                                port={state.port}
-                                number={display.number}
-                                width={display.width}
-                                height={display.height}
-                            />
-                        </AppSuspenseComp>
-                    ) : null}
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger align-self-end"
+                        disabled={isBusy}
+                        onClick={() => {
+                            void confirmDelete();
+                        }}
+                    >
+                        <i className="bi bi-trash me-1" aria-hidden />
+                        {tran('Delete Virtual Display')}
+                    </button>
                 </div>
             ) : null}
         </div>

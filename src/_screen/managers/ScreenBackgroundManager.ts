@@ -78,6 +78,8 @@ class ScreenBackgroundManager
         volume: number;
     } | null = null;
     private soundingVideo: HTMLVideoElement | null = null;
+    // Bumped by every `render`; only the latest one puts its background up.
+    private renderGeneration = 0;
     effectManager: ScreenEffectManager;
     clearTracks = () => {};
 
@@ -789,7 +791,20 @@ class ScreenBackgroundManager
         );
     }
 
+    /**
+     * Only the latest render puts its background up. What is in the root is
+     * read NOW but the new copy goes in a microtask later (a camera much
+     * later), so two renders in one tick -- the root attached and the
+     * background set together, as a screen page does on load -- each saw an
+     * empty root and BOTH copies went in, playing on top of each other. At
+     * the end of a lap each took the other for its crossfade twin and parked
+     * it, until every copy sat at opacity 0: the wallpaper showed through
+     * most of every lap on the projected screen, a browser watching a virtual
+     * display and its MP4. A render overtaken is dropped, so a background
+     * cleared in the meantime does not come back either.
+     */
     render(overrideAnimData?: StyleAnimType) {
+        const generation = ++this.renderGeneration;
         const rootContainer = this.rootContainer;
         if (rootContainer === null) {
             return;
@@ -814,10 +829,18 @@ class ScreenBackgroundManager
                 this.backgroundSrc,
             );
             promise.then((clearTracks) => {
-                if (this.rootContainer !== rootContainer) {
-                    // Let go of (or replaced) while a camera was opening: the
-                    // root it was meant for is gone, and whatever holds the
-                    // background now has rendered it itself.
+                if (
+                    this.rootContainer !== rootContainer ||
+                    generation !== this.renderGeneration
+                ) {
+                    // Let go of (or replaced) while it was getting ready --
+                    // a camera opening, or another render in the same tick:
+                    // whatever holds the background now has rendered it.
+                    for (const videoElement of newDiv.querySelectorAll(
+                        'video',
+                    )) {
+                        releaseMediaElement(videoElement);
+                    }
                     clearTracks();
                     return;
                 }

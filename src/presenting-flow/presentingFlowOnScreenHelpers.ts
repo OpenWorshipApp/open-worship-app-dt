@@ -147,6 +147,11 @@ const foregroundOnScreenMatcherMap: Record<
             return item.id === data?.id;
         });
     },
+    screen: (foregroundData, data) => {
+        return (foregroundData.screenDataList ?? []).some((item: any) => {
+            return item.id === data?.id;
+        });
+    },
     web: (foregroundData, data) => {
         return (foregroundData.webDataList ?? []).some((item: any) => {
             return item.filePath === data?.filePath;

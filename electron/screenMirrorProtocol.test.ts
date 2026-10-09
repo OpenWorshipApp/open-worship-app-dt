@@ -16,6 +16,8 @@ import {
     toMirrorHostPort,
     readMirrorAddressText,
     readMirrorOrigin,
+    toMirrorAddressText,
+    toMirrorDefaultPort,
 } from './screenMirrorProtocol';
 
 describe('mirror wire validation', () => {
@@ -251,6 +253,38 @@ describe('mirror addresses', () => {
         expect(readMirrorAddressText('ftp://x.example')).toBeNull();
         expect(readMirrorAddressText('http://user@x.example')).toBeNull();
         expect(readMirrorAddressText('x.example:70000')).toBeNull();
+        // A tunnel's address is a whole https link with no port: 443.
+        expect(
+            readMirrorAddressText('https://quiet-river.trycloudflare.com/'),
+        ).toEqual({ host: 'quiet-river.trycloudflare.com', port: 443 });
+        expect(readMirrorAddressText('wss://x.example')).toEqual({
+            host: 'x.example',
+            port: 443,
+        });
+        expect(readMirrorAddressText('https://x.example:8443')).toEqual({
+            host: 'x.example',
+            port: 8443,
+        });
+    });
+    // With the port box left empty a guest dials a tunnel's 443, or Screen
+    // Mirror's own first port.
+    test('a host with no port is dialled on its default', () => {
+        expect(toMirrorDefaultPort('quiet-river.trycloudflare.com')).toBe(443);
+        expect(toMirrorDefaultPort(' QUIET.TRYCLOUDFLARE.COM ')).toBe(443);
+        expect(toMirrorDefaultPort('trycloudflare.com.evil.example')).toBe(
+            39240,
+        );
+        expect(toMirrorDefaultPort('192.168.1.3')).toBe(39240);
+        expect(
+            toMirrorAddressText({
+                host: 'quiet-river.trycloudflare.com',
+                port: 443,
+                kind: 'tunnel',
+            }),
+        ).toBe('https://quiet-river.trycloudflare.com');
+        expect(toMirrorAddressText({ host: '2001:db8::5', port: 39241 })).toBe(
+            '[2001:db8::5]:39241',
+        );
     });
     test('reads the origin a guest dialled from its Host header', () => {
         expect(readMirrorOrigin('203.0.113.10:40001')).toBe(
@@ -266,5 +300,9 @@ describe('mirror addresses', () => {
         expect(readMirrorOrigin('a@b.example')).toBeNull();
         expect(readMirrorOrigin('b.example:99999')).toBeNull();
         expect(readMirrorOrigin(undefined)).toBeNull();
+        // Through the tunnel the guest dialled https.
+        expect(readMirrorOrigin('quiet-river.trycloudflare.com', true)).toBe(
+            'https://quiet-river.trycloudflare.com',
+        );
     });
 });

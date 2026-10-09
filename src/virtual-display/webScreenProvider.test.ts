@@ -9,6 +9,8 @@ type SocketListener = (event: any) => void;
 
 class FakeWebSocket {
     static readonly instances: FakeWebSocket[] = [];
+    static readonly OPEN = 1;
+    readonly readyState = FakeWebSocket.OPEN;
     readonly url: string;
     private readonly listeners = new Map<string, SocketListener[]>();
 
@@ -511,6 +513,30 @@ describe('a viewer interacting', () => {
         report('bible-screen-view-selected-index');
         expect(sent).toHaveLength(1);
     });
+
+    // Asked for by the user: the screen's ✕ on a browser let to interact
+    // hides the screen in the app, as on the projector's own window. The
+    // screen is the socket's; the id the page passes is never sent.
+    test('its ✕ asks to hide the screen only while it may interact', async () => {
+        vi.stubGlobal('WebSocket', FakeWebSocket);
+        const { socket, provider } = await connect();
+        const sent: string[] = [];
+        const push = socket.send.bind(socket);
+        socket.send = (packet: unknown) => {
+            if (typeof packet === 'string') {
+                sent.push(packet);
+            } else {
+                push(packet);
+            }
+        };
+        provider.messageUtils.sendData('app:hide-screen', 7);
+        expect(sent).toEqual([]);
+        socket.send({ type: 'interactive', isInteractive: true });
+        provider.messageUtils.sendData('app:hide-screen', 7);
+        expect(sent.map((item) => JSON.parse(item))).toEqual([
+            { type: 'hide' },
+        ]);
+    });
 });
 
 // A browser has none of this computer's cameras: a camera on the screen is
@@ -618,6 +644,99 @@ describe('a camera on the screen', () => {
         });
         expect(signals).toEqual([
             { type: 'camera-close', requestId: request.requestId },
+        ]);
+    });
+
+    test("a browser viewer's camera is watched over the socket, and each frame keeps its key or delta", async () => {
+        vi.stubGlobal('WebSocket', FakeWebSocket);
+        const { socket, provider } = await connect(
+            undefined,
+            genContext({
+                messages: [
+                    {
+                        screenId: 0,
+                        type: 'foreground',
+                        data: {
+                            cameraDataList: [
+                                { id: 'vd-camera:viewer-1', label: 'Phone' },
+                            ],
+                        },
+                    },
+                ],
+            }),
+        );
+        // Its id is not renamed: its frames come over this socket.
+        const [message] = provider.screenUtils.getContext().messages;
+        expect(message.data.cameraDataList[0].id).toBe('vd-camera:viewer-1');
+
+        const sent: string[] = [];
+        const push = socket.send.bind(socket);
+        socket.send = (packet: unknown) => {
+            if (typeof packet === 'string') {
+                sent.push(packet);
+            } else {
+                push(packet);
+            }
+        };
+        provider.messageUtils.sendData('vd:camera-watch', {
+            cameraId: 'vd-camera:viewer-1',
+            isWatching: true,
+        });
+        expect(sent.map((item) => JSON.parse(item))).toEqual([
+            {
+                type: 'camera-watch',
+                cameraId: 'vd-camera:viewer-1',
+                isWatching: true,
+            },
+        ]);
+
+        const frames: any[] = [];
+        provider.messageUtils.listenForData(
+            'vd:camera-frame',
+            (_e: unknown, frame: any) => {
+                frames.push(frame);
+            },
+        );
+        const ends: any[] = [];
+        provider.messageUtils.listenForData(
+            'vd:camera-end',
+            (_e: unknown, end: any) => {
+                ends.push(end);
+            },
+        );
+        // The packet's `type` names the packet; the frame's own is
+        // `frameType`. Lost, no frame was ever a key one and none decoded.
+        socket.send({
+            type: 'vd-camera-frame',
+            cameraId: 'vd-camera:viewer-1',
+            frameType: 'key',
+            timestamp: 40,
+            data: btoa('ÿ'),
+        });
+        socket.send({
+            type: 'vd-camera-frame',
+            cameraId: 'vd-camera:viewer-1',
+            frameType: 'delta',
+            timestamp: 80,
+            data: btoa(''),
+        });
+        expect(frames).toEqual([
+            {
+                cameraId: 'vd-camera:viewer-1',
+                type: 'key',
+                timestamp: 40,
+                data: new Uint8Array([1, 2, 255]),
+            },
+            {
+                cameraId: 'vd-camera:viewer-1',
+                type: 'delta',
+                timestamp: 80,
+                data: new Uint8Array([3]),
+            },
+        ]);
+        socket.send({ type: 'vd-camera-end', cameraId: 'vd-camera:viewer-1' });
+        expect(ends).toEqual([
+            { type: 'vd-camera-end', cameraId: 'vd-camera:viewer-1' },
         ]);
     });
 });

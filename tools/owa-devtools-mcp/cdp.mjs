@@ -118,6 +118,23 @@ function sendCommand(socket, id, method, params) {
  * Runs `expression` in a page and returns its value. Promises are awaited, so
  * a tool can hand over an `async` expression and read the settled value.
  */
+/**
+ * What a page's thrown error SAYS, without where it was thrown. CDP describes
+ * an exception as its stack, so every tool failing in the page answered with
+ * `Error: That window is not open` and four lines of `at IpcRenderer...` --
+ * frames of a script made up for the call, which tell a caller nothing and
+ * ride along in a model's context for the rest of the question.
+ */
+export function toPageErrorMessage(description) {
+    const text = String(description ?? '');
+    const lines = text.split(/\r?\n/);
+    const firstFrame = lines.findIndex((line) => /^\s+at\s/.test(line));
+    const message = (firstFrame === -1 ? lines : lines.slice(0, firstFrame))
+        .join('\n')
+        .trim();
+    return message.replace(/^Error:\s*/, '') || text;
+}
+
 export function evaluateInTarget(target, expression, timeout = 15000) {
     return new Promise((resolve, reject) => {
         const socket = new WebSocket(target.webSocketDebuggerUrl);
@@ -167,8 +184,10 @@ export function evaluateInTarget(target, expression, timeout = 15000) {
             if (exceptionDetails) {
                 finish(
                     new Error(
-                        exceptionDetails.exception?.description ??
-                            exceptionDetails.text,
+                        toPageErrorMessage(
+                            exceptionDetails.exception?.description ??
+                                exceptionDetails.text,
+                        ),
                     ),
                 );
                 return;

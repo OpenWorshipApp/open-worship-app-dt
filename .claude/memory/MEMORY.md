@@ -128,15 +128,20 @@
 - [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — no z-index/isolation on `#foreground`; `#foreground-behind` sits under the slide
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19
 - [Transition overrides](transition-overrides.md) — slides preview / slide / background tab / item / foreground component / session; present = ticked
-- [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md)
+- [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md) — only the latest render puts one up; >2 children in `#background` is the bug
 - [Own font list with weights](own-font-list-with-weights.md)
 - [Data folder path is aliased in files](portable-data-dir-alias.md) — `$DATA_DIR_PATH` · [Module-scope setting read before init](module-scope-setting-read-before-init.md) — alias unexpanded, packaged-only
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule
 - [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md)
 - [A foreground camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label
+- [A screen page's settings are its own copy](screen-page-settings-are-page-local.md) — synced settings land there; a screen never originates one (Bible contrast is presenter-only)
+- [Screen Show draws the other screen](screen-show-foreground.md) — its screen page in an iframe, fed by the presenter, shown or hidden; never a capture; no self, no loop, one level
 - [Message editors hold local text](message-editor-text-is-local-state.md)
 - [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there; drawing layers release on unmount
 - [Screen Mirror across two machines](screen-mirror-cross-machine-test.md) — hosting is opt-in; peers need /remote-control here; newest-instance tools; seeding a code
 - [Screen Mirror: internet & several hosts](screen-mirror-internet-multi-host.md) — `admits()` not the bind; assets by Host header; windows by webContents, never remap ids
-- [Virtual displays](virtual-displays.md) — browser page draws the screens, MP4 via WebCodecs only while played; sound stream-only; a phone is not a secure context; Disconnect blocks 127.0.0.1 too
+- [Virtual displays](virtual-displays.md) — browser page draws the screens, MP4 via WebCodecs only while played; sound stream-only; a phone is not a secure context; Disconnect blocks 127.0.0.1 too; internet viewers need Allow or a code; content is sized for it with no 2nd monitor; sticky port; every viewer query key in the dev allowlist; showing screens come back at start; frames take the viewer's input
+- [Intercom & browser cameras](connection-intercom-and-viewer-camera.md) — per-connection mic/speaker, `vd-camera:` watched only while shown; a watch outlives the sharing; a relayed packet's `type` is the packet's
+- [Cast to a TV](cast-to-tv.md) — Google Cast/DLNA/Roku from the app; a browser page casts to a TV on ITS network via its picker on the app's stream (`?cast=` token skips Allow/code), plus the app's TVs on the app's network; every TV pulls the MP4; searched only when the list opens; a still screen with holes cost 7 s on a TV, catch-up by playback rate (never SEEK)
+- [Cloudflare quick tunnel](cloudflare-quick-tunnel.md) — for a VPN/CGNAT; guests and viewers; cloudflared built from source in the extra-bin pack; everything through it is the internet; a guest dials 443 with TLS
 - [Electron has no Khmer dates](electron-icu-has-no-khmer.md) — Intl answers km-KH in English; vitest (Node) does not

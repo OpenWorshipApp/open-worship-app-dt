@@ -8,6 +8,12 @@ import {
 } from './mirrorConnectionHelpers';
 import ScreenMirrorAddressesComp from './ScreenMirrorAddressesComp';
 import NetworkAccessNoticeComp from './NetworkAccessNoticeComp';
+import MirrorIntercomComp from './MirrorIntercomComp';
+import {
+    MirrorCustomPortComp,
+    MirrorGuestAccessComp,
+    MirrorInternetWarningComp,
+} from './MirrorInternetComps';
 
 // Where a guest came from, on every guest and every request: the room must
 // always see who is joining from outside it.
@@ -31,8 +37,6 @@ function MirrorNetworkBadgeComp({
 // guest's side is its own page, `ScreenMirrorGuestComp`.
 export default function ScreenMirrorConnectionComp() {
     const state = useMirrorState();
-    const [hostCode, setHostCode] = useState('');
-    const [customPort, setCustomPort] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     async function perform(work: () => Promise<unknown>) {
@@ -119,11 +123,7 @@ export default function ScreenMirrorConnectionComp() {
                         </label>
                     </div>
                     {state.internetEnabled ? (
-                        <div className="alert alert-warning small py-1 px-2 mb-0">
-                            {tran(
-                                'Anyone who has the address can ask to connect, and the connection is not encrypted. Use a connection code, and turn this off when you are done.',
-                            )}
-                        </div>
+                        <MirrorInternetWarningComp />
                     ) : null}
                     <NetworkAccessNoticeComp port={state.port} />
                     <h5>{tran('Connected guests')}</h5>
@@ -161,18 +161,35 @@ export default function ScreenMirrorConnectionComp() {
                             {guest.cameras.map((camera) => (
                                 <div key={camera.deviceId}>{camera.label}</div>
                             ))}
-                            <button
-                                className="btn btn-sm btn-outline-secondary"
-                                onClick={() =>
-                                    void perform(() =>
-                                        mirrorCommand('disconnect-guest', {
-                                            id: guest.id,
-                                        }),
-                                    )
-                                }
-                            >
-                                {tran('Disconnect')}
-                            </button>
+                            <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                {/* Talk-back with that guest: this
+                                    computer's microphone to it, its
+                                    microphone on this speaker. */}
+                                <MirrorIntercomComp
+                                    intercom={guest.intercom}
+                                    busy={busy}
+                                    onChange={(change) => {
+                                        return perform(() => {
+                                            return mirrorCommand('intercom', {
+                                                key: `guest:${guest.id}`,
+                                                ...change,
+                                            });
+                                        });
+                                    }}
+                                />
+                                <button
+                                    className="btn btn-sm btn-outline-secondary ms-auto"
+                                    onClick={() =>
+                                        void perform(() =>
+                                            mirrorCommand('disconnect-guest', {
+                                                id: guest.id,
+                                            }),
+                                        )
+                                    }
+                                >
+                                    {tran('Disconnect')}
+                                </button>
+                            </div>
                         </div>
                     ))}
                     {state.pending.map((guest) => (
@@ -228,87 +245,31 @@ export default function ScreenMirrorConnectionComp() {
                         busy={busy}
                         perform={perform}
                     />
-                    <label>
-                        {tran('Guest access')}
-                        <select
-                            className="form-select form-select-sm"
-                            value={state.approvalMode}
-                            onChange={(event) =>
-                                void perform(() =>
-                                    mirrorCommand('settings', {
-                                        mode: event.target.value,
-                                    }),
-                                )
-                            }
-                        >
-                            <option value="approve">
-                                {tran('Approve each connection')}
-                            </option>
-                            <option value="code">
-                                {tran('Require connection code')}
-                            </option>
-                        </select>
-                    </label>
-                    <label>
-                        {tran('Connection code')}
-                        <input
-                            className="form-control form-control-sm"
-                            type="password"
-                            autoComplete="new-password"
-                            value={hostCode}
-                            placeholder={
-                                state.hasCode ? tran('Code is set') : ''
-                            }
-                            onChange={(event) =>
-                                setHostCode(event.target.value)
-                            }
-                        />
-                    </label>
-                    <button
-                        className="btn btn-sm btn-outline-primary"
-                        disabled={!hostCode.trim() || busy}
-                        onClick={() =>
-                            void perform(async () => {
-                                await mirrorCommand('settings', {
+                    {/* Every guest, from any network: the operator allows
+                        each one, or it gives the code. */}
+                    <MirrorGuestAccessComp
+                        mode={state.approvalMode}
+                        hasCode={state.hasCode}
+                        busy={busy}
+                        onMode={(mode) => {
+                            return perform(() => {
+                                return mirrorCommand('settings', { mode });
+                            });
+                        }}
+                        onCode={(code) => {
+                            return perform(() => {
+                                return mirrorCommand('settings', {
                                     mode: state.approvalMode,
-                                    code: hostCode,
+                                    code,
                                 });
-                                setHostCode('');
-                            })
-                        }
-                    >
-                        {tran('Set connection code')}
-                    </button>
-                    <label>
-                        {tran('Custom port (next launch)')}
-                        <input
-                            className="form-control form-control-sm"
-                            type="number"
-                            min={1}
-                            max={65535}
-                            value={customPort}
-                            placeholder={String(state.customPort ?? '')}
-                            onChange={(event) =>
-                                setCustomPort(event.target.value)
-                            }
-                        />
-                    </label>
-                    <button
-                        className="btn btn-sm btn-outline-primary"
-                        disabled={busy}
-                        onClick={() =>
-                            void perform(() =>
-                                mirrorCommand('settings', {
-                                    mode: state.approvalMode,
-                                    port: customPort
-                                        ? Number(customPort)
-                                        : null,
-                                }),
-                            )
-                        }
-                    >
-                        {tran('Save port')}
-                    </button>
+                            });
+                        }}
+                    />
+                    <MirrorCustomPortComp
+                        customPort={state.customPort}
+                        busy={busy}
+                        perform={perform}
+                    />
                 </>
             ) : (
                 <p className="text-muted mb-0">

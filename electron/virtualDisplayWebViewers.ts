@@ -2,12 +2,16 @@ import type http from 'node:http';
 import type { Duplex } from 'node:stream';
 import WebSocket, { WebSocketServer } from 'ws';
 
+import { readRequestSender } from './mirrorRequestSender';
+import { MAX_VIEWER_FRAME_TEXT } from './virtualDisplayViewerCameras';
 import { toMirrorPlainAddress } from './screenMirrorProtocol';
 import {
     parseVirtualDisplayPath,
     readVirtualDisplayViewerFeedback,
     toVirtualDisplayCameraId,
+    type VirtualDisplayAccessMode,
     type VirtualDisplayClient,
+    type VirtualDisplayViewerCastState,
     type VirtualDisplayViewerFeedback,
     type VirtualDisplayLayout,
     type VirtualDisplayNetwork,
@@ -27,6 +31,9 @@ const MAX_WEB_VIEWERS = 32;
 const MAX_WEB_VIEWERS_PER_ADDRESS = 4;
 // A camera's WebRTC answer is a few kilobytes; nothing else comes near.
 const MAX_INCOMING_BYTES = 16 * 1024;
+// A viewer page's camera frame is the one larger message (a VP8 key frame,
+// base64); everything else stays under the limit above.
+const MAX_PAGE_FRAME_BYTES = MAX_VIEWER_FRAME_TEXT + 1024;
 // Camera setup messages a second (an answer and a burst of candidates).
 const MAX_CAMERA_PACKETS_PER_SECOND = 100;
 // Each browser's camera stream is an encode of its own on this computer.
@@ -35,11 +42,26 @@ const REQUEST_ID_PATTERN = /^[a-f0-9-]{36}$/;
 const CAMERA_CONSUMER_PATTERN = /^vd:([\w-]+):(\d+)$/;
 // A scroll sends a message a frame; more than this in a second is dropped.
 const MAX_FEEDBACK_PER_SECOND = 60;
+// "Cast to a TV" from a page: a look takes seconds and a cast a TV, so a few
+// presses a second is all a hand makes.
+const MAX_CAST_PACKETS_PER_SECOND = 4;
+const MAX_CAST_TARGET_ID_LENGTH = 256;
 // Clients the operator let interact, remembered across their page reloads.
 const MAX_ALLOWED_CLIENTS = 256;
+// Browsers from the internet waiting to be let in, across every display: a
+// stranger must not crowd out the room's own.
+const MAX_WAITING_VIEWERS = 8;
+const MAX_CODE_LENGTH = 64;
 
 export type WebViewersHostType = {
     checkIsAdmitted: (network: VirtualDisplayNetwork) => boolean;
+    // How a viewer from `network` is let in: at once (`open`), or -- from
+    // the internet -- after the operator's Allow or with the connection code.
+    getAccess: (
+        network: VirtualDisplayNetwork,
+    ) => 'open' | VirtualDisplayAccessMode;
+    checkCode: (address: string, code: string) => 'ok' | 'wrong' | 'locked';
+    checkIsLockedOut: (address: string) => boolean;
     // A browser the operator disconnected, by its own id.
     checkIsBlocked: (number: number, viewerId: string) => boolean;
     getLayout: (number: number) => VirtualDisplayLayout | null;
@@ -55,11 +77,41 @@ export type WebViewersHostType = {
     onFeedback: (
         message: VirtualDisplayViewerFeedback & { screenId: number },
     ) => void;
+    // The screen's own ✕ on a browser let to interact: hidden as if a hand
+    // closed it on the projector. Never a show.
+    onHideScreen: (number: number, screenId: number) => void;
+    // "Cast to a TV" on a browser page, through this computer's own casting.
+    getCastState: (
+        number: number,
+    ) => Omit<VirtualDisplayViewerCastState, 'isAllowed'>;
+    onCastSearch: (number: number) => void;
+    // The token a browser's own cast picker hands its TV with the MP4.
+    issueCastToken: (number: number, viewerId: string) => string;
+    onCastStart: (number: number, targetId: string) => Promise<void>;
+    onCastStop: (number: number, targetId: string) => void;
     // A camera stream's setup, to and from Screen Mirror's camera relay;
     // `consumer` is `vd:<viewer>:<screen>`.
     onCamera: (consumer: string, packet: Record<string, any>) => void;
     onCameraGone: (consumer: string) => void;
     hostId: () => string;
+    // The intercom of a viewer that was let in: its microphone packets and
+    // whether its microphone is on (`audio`, `intercom-state`).
+    onIntercom: (viewerId: string, packet: Record<string, unknown>) => void;
+    // A viewer gone: nothing of its intercom stays on.
+    onViewerGone: (viewerId: string) => void;
+    // A browser's screen page shows a viewer's camera (`vd-camera:`), or
+    // stops; null for every camera it watched (the page left).
+    onScreenCamera: (
+        watcher: string,
+        cameraId: string | null,
+        isWatching: boolean,
+    ) => void;
+    // A viewer that was let in shares its camera, or sends a frame of it.
+    onViewerCamera: (
+        viewerId: string,
+        address: string,
+        packet: Record<string, unknown>,
+    ) => void;
 };
 
 type CameraRequestType = {
@@ -74,18 +126,37 @@ type ViewerType = VirtualDisplayClient & {
     // One per screen: a page loading again replaces its own socket, and a
     // viewer cannot multiply the work by asking for one screen many times.
     screenSockets: Map<number, { socket: WebSocket; close: () => void }>;
+    // Its "Cast to a TV" list is open: it is sent each change of it.
+    isCastOpen?: boolean;
+    castRate?: () => boolean;
 };
 
-// Closes a viewer the operator disconnected, saying so in the app's
-// language; its page shows the words and stops reconnecting.
+// Closes a viewer the operator disconnected -- or one locked out for wrong
+// codes -- saying so in the app's language; its page shows the words and
+// stops reconnecting.
 export const DISCONNECTED_CLOSE_CODE = 4001;
-function sendDisconnected(ws: WebSocket, labels: Record<string, string>) {
+function sendDisconnected(
+    ws: WebSocket,
+    labels: Record<string, string>,
+    reason: 'disconnected' | 'locked' = 'disconnected',
+) {
     if (ws.readyState === WebSocket.OPEN) {
-        ws.send(
-            JSON.stringify({ type: 'refused', reason: 'disconnected', labels }),
-        );
+        ws.send(JSON.stringify({ type: 'refused', reason, labels }));
     }
     ws.close(DISCONNECTED_CLOSE_CODE, 'Disconnected');
+}
+
+// What a viewer not let in yet is told: nothing of the display, only what it
+// waits for, and whether the code it gave was wrong.
+function sendWaiting(
+    ws: WebSocket,
+    waiting: 'approval' | 'code',
+    labels: Record<string, string>,
+    isWrong = false,
+) {
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'access', waiting, isWrong, labels }));
+    }
 }
 
 // True while fewer than `limit` calls came in the last second.
@@ -112,11 +183,15 @@ function refuse(socket: Duplex) {
     socket.destroy();
 }
 
+// How often a viewer page is asked whether it is still there; one silent for
+// a whole round is ended (gone within two rounds).
+const HEARTBEAT_MILLISECOND = 20e3;
+
 export class VirtualDisplayWebViewers {
     private wss = new WebSocketServer({
         noServer: true,
         perMessageDeflate: false,
-        maxPayload: MAX_INCOMING_BYTES,
+        maxPayload: MAX_PAGE_FRAME_BYTES,
     });
     private viewers = new Map<string, ViewerType>();
     // Camera streams browsers are watching, by request id.
@@ -126,8 +201,51 @@ export class VirtualDisplayWebViewers {
     // wakes up) is still allowed. Id -> display; kept until the switch goes
     // off, Disconnect, or the app restarts.
     private allowedClients = new Map<string, number>();
+    // Browsers from the internet the operator allowed or that gave the code,
+    // id -> display, so a reload is not asked again. Forgotten on Disconnect,
+    // when the access option or the code changes, and when the internet is
+    // closed.
+    private grantedClients = new Map<string, number>();
+    // A browser that went away without closing -- a phone asleep or off the
+    // Wi-Fi -- sends nothing ever again: it stayed under Watching now for
+    // good, and counted toward what one address may open. While any page is
+    // here each is pinged; one that has not answered by the next ping is
+    // ended. Nothing runs while nobody watches.
+    private heartbeat: ReturnType<typeof setInterval> | null = null;
+    private unanswered = new WeakSet<WebSocket>();
 
-    constructor(private readonly host: WebViewersHostType) {}
+    constructor(
+        private readonly host: WebViewersHostType,
+        private readonly heartbeatMillisecond = HEARTBEAT_MILLISECOND,
+    ) {}
+
+    private watchHeartbeat(ws: WebSocket) {
+        ws.on('pong', () => this.unanswered.delete(ws));
+        if (this.heartbeat === null) {
+            this.heartbeat = setInterval(() => {
+                this.beat();
+            }, this.heartbeatMillisecond);
+            this.heartbeat.unref?.();
+        }
+    }
+
+    private beat() {
+        if (this.viewers.size === 0) {
+            clearInterval(this.heartbeat ?? undefined);
+            this.heartbeat = null;
+            return;
+        }
+        for (const viewer of [...this.viewers.values()]) {
+            const ws = viewer.socket;
+            if (this.unanswered.has(ws)) {
+                // Its close releases it, as any close does.
+                ws.terminate();
+            } else if (ws.readyState === WebSocket.OPEN) {
+                this.unanswered.add(ws);
+                ws.ping();
+            }
+        }
+    }
 
     listOf(number: number): VirtualDisplayClient[] {
         return [...this.viewers.values()]
@@ -142,6 +260,7 @@ export class VirtualDisplayWebViewers {
                     since,
                     isPreview,
                     isInteractive,
+                    waiting,
                 }) => ({
                     id,
                     kind,
@@ -151,6 +270,7 @@ export class VirtualDisplayWebViewers {
                     since,
                     isPreview,
                     isInteractive,
+                    waiting,
                 }),
             );
     }
@@ -162,6 +282,7 @@ export class VirtualDisplayWebViewers {
     private checkIsActive(viewer: ViewerType) {
         return (
             this.viewers.get(viewer.id) === viewer &&
+            viewer.waiting === null &&
             viewer.socket.readyState === WebSocket.OPEN &&
             this.host.checkIsAdmitted(viewer.network) &&
             (viewer.isPreview ||
@@ -175,7 +296,42 @@ export class VirtualDisplayWebViewers {
         const isCurrent = this.viewers.get(viewer.id) === viewer;
         if (isCurrent) this.viewers.delete(viewer.id);
         for (const screen of [...viewer.screenSockets.values()]) screen.close();
-        if (isCurrent) this.host.onChanged();
+        if (isCurrent) {
+            this.host.onViewerGone(viewer.id);
+            this.host.onChanged();
+        }
+    }
+
+    // A viewer that was let in and is still here: its intercom can reach it.
+    checkIsLetIn(id: string) {
+        const viewer = this.viewers.get(id);
+        return (
+            viewer !== undefined &&
+            viewer.waiting === null &&
+            !viewer.isPreview &&
+            viewer.socket.readyState === WebSocket.OPEN
+        );
+    }
+
+    // A viewer camera's frame (or end) to one browser's screen page.
+    sendScreenCamera(
+        viewerId: string,
+        screenId: number,
+        type: string,
+        data: Record<string, unknown>,
+    ) {
+        const screen = this.viewers.get(viewerId)?.screenSockets.get(screenId);
+        if (screen?.socket.readyState === WebSocket.OPEN) {
+            screen.socket.send(JSON.stringify({ ...data, type }));
+        }
+    }
+
+    // An intercom packet to a viewer's page.
+    sendIntercom(id: string, type: string, data: Record<string, unknown>) {
+        const viewer = this.viewers.get(id);
+        if (viewer !== undefined && this.checkIsLetIn(id)) {
+            viewer.socket.send(JSON.stringify({ ...data, type }));
+        }
     }
 
     upgrade(
@@ -195,9 +351,15 @@ export class VirtualDisplayWebViewers {
             return;
         }
         // Only the display's own page may open these: a page from any other
-        // site open in the viewer's browser sends its own origin.
+        // site open in the viewer's browser sends its own origin. Through
+        // Cloudflare's tunnel that page is https.
+        const sender = readRequestSender(req);
         const { origin, host } = req.headers;
-        if (!origin || !host || origin !== `http://${host}`) {
+        if (
+            !origin ||
+            !host ||
+            origin !== `${sender.isTunnel ? 'https' : 'http'}://${host}`
+        ) {
             refuse(socket);
             return;
         }
@@ -206,7 +368,7 @@ export class VirtualDisplayWebViewers {
             refuse(socket);
             return;
         }
-        const address = toMirrorPlainAddress(req.socket.remoteAddress ?? '');
+        const address = toMirrorPlainAddress(sender.address);
         const screenIdText = url.searchParams.get('screenId');
         if (screenIdText === null) {
             this.upgradeViewer(req, socket, head, {
@@ -263,16 +425,35 @@ export class VirtualDisplayWebViewers {
         const others = this.listOf(info.number).filter((viewer) => {
             return !viewer.isPreview && !(isReload && viewer.id === info.id);
         });
-        // Disconnected by the operator: let in only to be told so, which
-        // also ends its page's retrying (`DISCONNECTED_CLOSE_CODE`).
-        if (
+        // From the internet, a browser not let in before waits for the
+        // operator's Allow or gives the code; it gets nothing of the display
+        // -- no layout, no screen, no published file -- until then. One the
+        // operator disconnected, from any network, comes back only by asking:
+        // it waits for Allow, and the code does not get it past the operator
+        // (asked for 2026-10-08: its Retry met the block and nothing else).
+        const isBlocked =
             layout !== null &&
             !info.isPreview &&
-            this.host.checkIsBlocked(info.number, info.id)
+            this.host.checkIsBlocked(info.number, info.id);
+        const access = info.isPreview
+            ? 'open'
+            : this.host.getAccess(info.network);
+        const waiting = isBlocked
+            ? 'approval'
+            : access === 'open' ||
+                this.grantedClients.get(info.id) === info.number
+              ? null
+              : access === 'code'
+                ? 'code'
+                : 'approval';
+        if (
+            layout !== null &&
+            waiting === 'code' &&
+            this.host.checkIsLockedOut(info.address)
         ) {
             this.wss.handleUpgrade(req, socket, head, (ws) => {
                 ws.on('error', () => ws.terminate());
-                sendDisconnected(ws, layout.labels);
+                sendDisconnected(ws, layout.labels, 'locked');
             });
             return;
         }
@@ -284,7 +465,11 @@ export class VirtualDisplayWebViewers {
                     (info.network !== 'this-computer' &&
                         others.filter((viewer) => {
                             return viewer.address === info.address;
-                        }).length >= MAX_WEB_VIEWERS_PER_ADDRESS)))
+                        }).length >= MAX_WEB_VIEWERS_PER_ADDRESS))) ||
+            (waiting !== null &&
+                [...this.viewers.values()].filter((viewer) => {
+                    return viewer.waiting !== null && viewer.id !== info.id;
+                }).length >= MAX_WAITING_VIEWERS)
         ) {
             refuse(socket);
             return;
@@ -302,16 +487,229 @@ export class VirtualDisplayWebViewers {
                     120,
                 ),
                 since: Date.now(),
-                isInteractive: this.allowedClients.get(info.id) === info.number,
+                isInteractive:
+                    waiting === null &&
+                    this.allowedClients.get(info.id) === info.number,
+                waiting,
                 socket: ws,
                 screenSockets: new Map(),
             };
             this.viewers.set(viewer.id, viewer);
             ws.on('error', () => {});
             ws.on('close', () => this.releaseViewer(viewer));
-            ws.send(JSON.stringify({ type: 'layout', layout }));
+            this.watchHeartbeat(ws);
+            ws.on('message', (raw, isBinary) => {
+                this.receivePage(viewer, raw, isBinary);
+            });
+            if (waiting === null) {
+                ws.send(JSON.stringify({ type: 'layout', layout }));
+            } else {
+                sendWaiting(ws, waiting, layout.labels);
+            }
             this.host.onChanged();
         });
+    }
+
+    // The only thing a page sends on its own socket: the connection code,
+    // while it is asked for. Wrong ones count toward the sender's lockout.
+    // What a page sends on its own socket: the connection code while it is
+    // asked for; once let in, its intercom (checked in size and rate by the
+    // intercom itself).
+    private receivePage(
+        viewer: ViewerType,
+        raw: WebSocket.RawData,
+        isBinary: boolean,
+    ) {
+        if (
+            isBinary ||
+            viewer.isPreview ||
+            this.viewers.get(viewer.id) !== viewer
+        ) {
+            return;
+        }
+        let packet: any;
+        try {
+            packet = JSON.parse(String(raw));
+        } catch {
+            return;
+        }
+        if (
+            viewer.waiting === null &&
+            (packet?.type === 'audio' || packet?.type === 'intercom-state')
+        ) {
+            this.host.onIntercom(viewer.id, packet);
+            return;
+        }
+        if (
+            viewer.waiting === null &&
+            (packet?.type === 'video' || packet?.type === 'camera-state')
+        ) {
+            this.host.onViewerCamera(viewer.id, viewer.address, packet);
+            return;
+        }
+        // Only a camera frame may be large.
+        if ((raw as Buffer).length > MAX_INCOMING_BYTES) {
+            return;
+        }
+        if (
+            viewer.waiting === null &&
+            typeof packet?.type === 'string' &&
+            packet.type.startsWith('cast-')
+        ) {
+            this.receiveCast(viewer, packet);
+            return;
+        }
+        if (viewer.waiting !== 'code') {
+            return;
+        }
+        if (
+            packet?.type !== 'code' ||
+            typeof packet.code !== 'string' ||
+            packet.code.length > MAX_CODE_LENGTH
+        ) {
+            return;
+        }
+        const labels = this.host.getLayout(viewer.number)?.labels ?? {};
+        const result = this.host.checkCode(viewer.address, packet.code);
+        if (result === 'ok') {
+            this.grant(viewer);
+        } else if (result === 'locked') {
+            this.releaseViewer(viewer);
+            sendDisconnected(viewer.socket, labels, 'locked');
+        } else {
+            sendWaiting(viewer.socket, 'code', labels, true);
+        }
+    }
+
+    // "Cast to a TV" on a page: looked for and cast by this computer, so it
+    // works in any browser. Only from this computer and its own networks --
+    // the TV is on this network, and a stranger on the internet does not get
+    // to put something on it. Every field is checked; the target is one of
+    // the TVs this computer found, by id.
+    private receiveCast(viewer: ViewerType, packet: any) {
+        viewer.castRate ??= genRateLimit(MAX_CAST_PACKETS_PER_SECOND);
+        if (!viewer.castRate()) {
+            return;
+        }
+        const { type } = packet;
+        if (type === 'cast-close') {
+            viewer.isCastOpen = false;
+            return;
+        }
+        // The page's own picker: the display's MP4 for a TV on the
+        // BROWSER's network, so from any browser let in -- the internet
+        // too. Its token lets that TV in without the Allow or the code.
+        if (type === 'cast-stream') {
+            const token = this.host.issueCastToken(viewer.number, viewer.id);
+            if (viewer.socket.readyState === WebSocket.OPEN) {
+                viewer.socket.send(
+                    JSON.stringify({
+                        type: 'cast-stream',
+                        path: `/vd/${viewer.number}/video?cast=${token}`,
+                    }),
+                );
+            }
+            return;
+        }
+        const isAllowed = viewer.network !== 'internet';
+        if (type === 'cast-open') {
+            viewer.isCastOpen = true;
+            this.sendCastState(viewer);
+            if (isAllowed && this.host.getCastState(viewer.number).isSharing) {
+                this.host.onCastSearch(viewer.number);
+            }
+            return;
+        }
+        if (!isAllowed) {
+            return;
+        }
+        if (type === 'cast-search') {
+            this.host.onCastSearch(viewer.number);
+            return;
+        }
+        const { targetId } = packet;
+        if (
+            typeof targetId !== 'string' ||
+            !targetId ||
+            targetId.length > MAX_CAST_TARGET_ID_LENGTH
+        ) {
+            return;
+        }
+        if (type === 'cast-start') {
+            this.host.onCastStart(viewer.number, targetId).catch(() => {
+                // Said by the list: the TV stays without a cast.
+                this.sendCastState(viewer);
+            });
+        } else if (type === 'cast-stop') {
+            this.host.onCastStop(viewer.number, targetId);
+        }
+    }
+
+    private sendCastState(viewer: ViewerType) {
+        if (viewer.socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        const state: VirtualDisplayViewerCastState = {
+            ...this.host.getCastState(viewer.number),
+            isAllowed: viewer.network !== 'internet',
+        };
+        viewer.socket.send(JSON.stringify({ type: 'cast', state }));
+    }
+
+    // A change of the TVs or of a cast: to every page with its list open.
+    sendCastStates() {
+        for (const viewer of this.viewers.values()) {
+            if (viewer.isCastOpen && this.checkIsActive(viewer)) {
+                this.sendCastState(viewer);
+            }
+        }
+    }
+
+    // Lets a waiting browser in: it is sent the display now, and is not
+    // asked again when its page loads again.
+    private grant(viewer: ViewerType) {
+        const layout = this.host.getLayout(viewer.number);
+        if (layout === null) {
+            return;
+        }
+        viewer.waiting = null;
+        if (this.grantedClients.size >= MAX_ALLOWED_CLIENTS) {
+            this.grantedClients.delete(
+                this.grantedClients.keys().next().value!,
+            );
+        }
+        this.grantedClients.set(viewer.id, viewer.number);
+        if (viewer.socket.readyState === WebSocket.OPEN) {
+            viewer.socket.send(JSON.stringify({ type: 'layout', layout }));
+        }
+        this.host.onChanged();
+    }
+
+    checkIsWaitingForApproval(id: string, number: number) {
+        const viewer = this.viewers.get(id);
+        return viewer?.waiting === 'approval' && viewer.number === number;
+    }
+
+    // The operator's Allow for a browser waiting for it.
+    allow(id: string, number: number) {
+        const viewer = this.viewers.get(id);
+        if (viewer?.waiting !== 'approval' || viewer.number !== number) {
+            return false;
+        }
+        this.grant(viewer);
+        return true;
+    }
+
+    // The access option or the code changed, or the internet was closed:
+    // every browser let in from the internet is asked again.
+    revokeGrants() {
+        this.grantedClients.clear();
+        for (const viewer of [...this.viewers.values()]) {
+            if (viewer.network === 'internet' && !viewer.isPreview) {
+                this.releaseViewer(viewer);
+                viewer.socket.close(1000, 'Access changed');
+            }
+        }
     }
 
     private async acceptScreen(
@@ -324,8 +722,18 @@ export class VirtualDisplayWebViewers {
         viewer.screenSockets.get(screenId)?.close();
         // A camera taken off the screen ends every stream of it here, so a
         // browser cannot keep watching what the operator put away.
+        // Viewer cameras (`vd-camera:`) this page shows: their frames come
+        // from this computer as they arrived from that viewer.
+        const watcher = `screen:${viewer.id}:${screenId}`;
+        const watched = new Set<string>();
         const onCamerasChanged = () => {
             this.closeCamerasNotShown(controller);
+            for (const cameraId of [...watched]) {
+                if (!controller.checkIsCameraShown(cameraId)) {
+                    watched.delete(cameraId);
+                    this.host.onScreenCamera(watcher, cameraId, false);
+                }
+            }
         };
         controller.camerasChangedListeners.add(onCamerasChanged);
         ws.on('error', () => {});
@@ -338,6 +746,10 @@ export class VirtualDisplayWebViewers {
                 }
                 controller.sockets.delete(ws);
                 controller.camerasChangedListeners.delete(onCamerasChanged);
+                if (watched.size > 0) {
+                    watched.clear();
+                    this.host.onScreenCamera(watcher, null, false);
+                }
                 // ws bounds the close handshake; it no longer grants access while closing.
                 ws.close(1000);
             },
@@ -351,7 +763,11 @@ export class VirtualDisplayWebViewers {
         const feedbackRate = genRateLimit(MAX_FEEDBACK_PER_SECOND);
         const cameraRate = genRateLimit(MAX_CAMERA_PACKETS_PER_SECOND);
         ws.on('message', (raw, isBinary) => {
-            if (isBinary || !checkIsCurrent()) {
+            if (
+                isBinary ||
+                !checkIsCurrent() ||
+                (raw as Buffer).length > MAX_INCOMING_BYTES
+            ) {
                 return;
             }
             let packet: any;
@@ -365,6 +781,35 @@ export class VirtualDisplayWebViewers {
                 // the cameras this screen shows.
                 if (cameraRate()) {
                     this.receiveCamera(consumer, controller, packet.packet);
+                }
+                return;
+            }
+            if (packet?.type === 'camera-watch') {
+                const { cameraId } = packet;
+                const isWatching = packet.isWatching === true;
+                if (
+                    typeof cameraId === 'string' &&
+                    cameraId.startsWith('vd-camera:') &&
+                    cameraId.length <= 100 &&
+                    cameraRate() &&
+                    (!isWatching || controller.checkIsCameraShown(cameraId))
+                ) {
+                    if (isWatching) {
+                        watched.add(cameraId);
+                    } else {
+                        watched.delete(cameraId);
+                    }
+                    this.host.onScreenCamera(watcher, cameraId, isWatching);
+                }
+                return;
+            }
+            // The screen's own ✕, on a browser the operator lets interact:
+            // this screen hides, as a hand on the projector's window would
+            // hide it. Nothing in the packet is read -- the screen is the
+            // socket's own, and a viewer can never show one.
+            if (packet?.type === 'hide') {
+                if (viewer.isInteractive && feedbackRate()) {
+                    this.host.onHideScreen(viewer.number, screenId);
                 }
                 return;
             }
@@ -534,7 +979,11 @@ export class VirtualDisplayWebViewers {
     // pages are told, so a page that may not does not send at all.
     setInteractive(id: string, number: number, isInteractive: boolean) {
         const viewer = this.viewers.get(id);
-        if (viewer === undefined || viewer.number !== number) {
+        if (
+            viewer === undefined ||
+            viewer.number !== number ||
+            viewer.waiting !== null
+        ) {
             return false;
         }
         viewer.isInteractive = isInteractive;
@@ -565,7 +1014,10 @@ export class VirtualDisplayWebViewers {
             if (layout === null) {
                 this.releaseViewer(viewer);
                 viewer.socket.close(1000, 'Display removed');
-            } else if (viewer.socket.readyState === WebSocket.OPEN) {
+            } else if (
+                viewer.waiting === null &&
+                viewer.socket.readyState === WebSocket.OPEN
+            ) {
                 viewer.socket.send(text);
             }
         }
@@ -573,6 +1025,7 @@ export class VirtualDisplayWebViewers {
 
     disconnect(id: string) {
         this.allowedClients.delete(id);
+        this.grantedClients.delete(id);
         const viewer = this.viewers.get(id);
         if (viewer !== undefined) {
             this.releaseViewer(viewer);

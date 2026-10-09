@@ -687,6 +687,53 @@
                     }
                 },
                 {
+                    "id": "virtual-display-page-buttons",
+                    "text": "How do I get the buttons back on the virtual display page?",
+                    "kind": "howto",
+                    "keywords": [
+                        "buttons gone",
+                        "full screen",
+                        "double click",
+                        "turn on sound",
+                        "tap the screen",
+                        "controls hidden"
+                    ],
+                    "resources": {
+                        "recipe": "W-51"
+                    }
+                },
+                {
+                    "id": "virtual-display-after-restart",
+                    "text": "Will my virtual display still show after the app restarts?",
+                    "kind": "what",
+                    "keywords": [
+                        "restart",
+                        "reload",
+                        "comes back",
+                        "still showing",
+                        "remember"
+                    ],
+                    "resources": {
+                        "recipe": "W-51"
+                    }
+                },
+                {
+                    "id": "virtual-display-viewer-still-listed",
+                    "text": "Why is a phone that stopped watching still under Watching now?",
+                    "kind": "fix",
+                    "keywords": [
+                        "still listed",
+                        "left the page",
+                        "phone asleep",
+                        "closed the tab",
+                        "ghost viewer"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Watching now"
+                    }
+                },
+                {
                     "id": "let-viewer-interact",
                     "text": "How do I let a phone watching the virtual display scroll or pick verses?",
                     "kind": "howto",
@@ -716,6 +763,58 @@
                     "resources": {
                         "recipe": "W-51",
                         "find": "Disconnect"
+                    }
+                },
+                {
+                    "id": "which-virtual-display-address",
+                    "text": "Which address do I give people to watch the virtual display?",
+                    "kind": "howto",
+                    "keywords": [
+                        "address",
+                        "link",
+                        "qr code",
+                        "share",
+                        "recommended",
+                        "more addresses"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Where to watch"
+                    }
+                },
+                {
+                    "id": "cast-virtual-display-from-page",
+                    "text": "How do I cast the virtual display to a TV from my phone?",
+                    "kind": "howto",
+                    "keywords": [
+                        "cast",
+                        "chromecast",
+                        "google cast",
+                        "smart tv",
+                        "dlna",
+                        "roku",
+                        "airplay"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "related": ["W-50"],
+                        "find": "Cast to a TV"
+                    }
+                },
+                {
+                    "id": "viewer-hides-screen",
+                    "text": "Can someone watching on a phone hide the screen with its ✕?",
+                    "kind": "what",
+                    "keywords": [
+                        "close button",
+                        "x button",
+                        "hide screen",
+                        "allow interaction",
+                        "phone"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Allow interaction"
                     }
                 },
                 {

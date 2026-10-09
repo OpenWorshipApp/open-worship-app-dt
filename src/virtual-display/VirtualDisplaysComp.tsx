@@ -9,6 +9,13 @@ import {
 } from '../../electron/virtualDisplayProtocol';
 import { mirrorCommand } from '../screen-mirror/mirrorConnectionHelpers';
 import { MirrorRouterStatusComp } from '../screen-mirror/MirrorNetworkComps';
+import {
+    MirrorCustomPortComp,
+    MirrorGuestAccessComp,
+    MirrorInternetWarningComp,
+    MirrorPublicAddressComp,
+    MirrorTunnelComp,
+} from '../screen-mirror/MirrorInternetComps';
 import NetworkAccessNoticeComp from '../screen-mirror/NetworkAccessNoticeComp';
 import {
     toVirtualDisplayErrorText,
@@ -84,19 +91,53 @@ function RenderShareSwitchesComp({
                     </div>
                     {state.internetEnabled ? (
                         <>
-                            <div className="alert alert-warning small py-1 px-2 mb-0">
-                                {tran(
-                                    'Anyone who has a stream address can watch it, and the stream is not encrypted. Turn this off when you are done.',
-                                )}
-                            </div>
+                            <MirrorInternetWarningComp />
+                            {/* A viewer from the internet is let in by
+                                the operator or by the code; this computer's
+                                own networks come in as before. */}
+                            <MirrorGuestAccessComp
+                                mode={state.access}
+                                hasCode={state.hasCode}
+                                busy={isBusy}
+                                onMode={(mode) => {
+                                    return perform(() => {
+                                        return virtualDisplayCommand('access', {
+                                            mode,
+                                        });
+                                    });
+                                }}
+                                onCode={(code) => {
+                                    return perform(() => {
+                                        return virtualDisplayCommand('code', {
+                                            code,
+                                        });
+                                    });
+                                }}
+                            />
+                            <MirrorTunnelComp
+                                state={state}
+                                busy={isBusy}
+                                perform={perform}
+                                idPrefix="app-virtual-display"
+                            />
                             <MirrorRouterStatusComp
                                 state={state}
+                                busy={isBusy}
+                                perform={perform}
+                            />
+                            <MirrorPublicAddressComp
+                                publicAddress={state.publicAddress}
                                 busy={isBusy}
                                 perform={perform}
                             />
                         </>
                     ) : null}
                     <NetworkAccessNoticeComp port={state.port} />
+                    <MirrorCustomPortComp
+                        customPort={state.customPort}
+                        busy={isBusy}
+                        perform={perform}
+                    />
                 </>
             ) : (
                 <p className="small text-muted mb-0">
@@ -128,6 +169,49 @@ export default function VirtualDisplaysComp() {
                 waiting: tran('Waiting for the display'),
                 disconnected: tran(
                     'This device was disconnected. Ask whoever runs the display to let it back in.',
+                ),
+                waitingApproval: tran('Waiting for host approval'),
+                code: tran('Connection code'),
+                connect: tran('Connect'),
+                wrongCode: tran('Connection code is incorrect'),
+                locked: tran('Too many wrong codes. Try again later.'),
+                retry: tran('Retry'),
+                empty: tran('Nothing is showing on this display yet.'),
+                mic: tran('Send my microphone'),
+                soundOff: tran('Turn off sound'),
+                voiceVolume: tran('Voice volume'),
+                cast: tran('Cast to a TV'),
+                castFailed: tran(
+                    'No TV was found that can play this display. It must be on and on the same network.',
+                ),
+                castSearching: tran('Looking for TVs…'),
+                castSearchAgain: tran('Search again'),
+                castStart: tran('Cast'),
+                castStop: tran('Stop'),
+                castConnecting: tran('Connecting'),
+                casting: tran('Casting'),
+                castCouldNot: tran('The TV could not play this display.'),
+                castNeedsSharing: tran(
+                    'Turn on “Let other devices watch” to cast to a TV.',
+                ),
+                castFromBrowser: tran('Cast from this browser'),
+                castBrowserHint: tran(
+                    'For a TV on the same network as this device.',
+                ),
+                castNoBrowserTv: tran(
+                    'This browser found no TV. It must be on and on the same network as this device.',
+                ),
+                castNoBrowser: tran(
+                    'This browser cannot cast. Try Chrome, Edge or Safari.',
+                ),
+                castAppTvs: tran('TVs on the app’s network'),
+                close: tran('Close'),
+                camera: tran('Share my cameras'),
+                micFailed: tran(
+                    'The microphone could not be opened. Allow it for this page, or close another app using it.',
+                ),
+                cameraFailed: tran(
+                    'The camera could not be opened. Allow it for this page, or close another app using it.',
                 ),
             },
         }).catch(() => {});

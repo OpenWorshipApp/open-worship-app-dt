@@ -149,9 +149,9 @@ The doors and the firewall: `agent-access.md`.
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 90 lessons across documents,
+  person's own word. The Presenter catalog has 91 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
-  planning, app help and the View menu. Eighty lessons now begin with a
+  planning, app help and the View menu. Eighty-one lessons now begin with a
   safe deterministic **Do it**
   action, then turn any explanation-only follow-up into **Next**; ten native-menu
   or disruptive lessons remain fully self-guided.
@@ -164,7 +164,8 @@ The doors and the firewall: `agent-access.md`.
   the left and keeps the right one selected. A `press` is written as on Windows
   and sent as written on every platform, so the step text names the Mac keys. **The foreground had two vague lessons for ten components**
   (2026-09-24): one per component now — Marquee Top / Bottom, Quick Text,
-  Countdown, Stopwatch, Time, Video / Image / Camera / Web Show — plus
+  Countdown, Stopwatch, Time, Video / Image / Camera / Screen / Web Show (Screen Show's
+  joined 2026-10-08) — plus
   Properties, saved sessions and taking an overlay back off, filed under one
   **Foreground overlays** heading of their own rather than buried in
   "Background and media". Each is the same two safe presses — the

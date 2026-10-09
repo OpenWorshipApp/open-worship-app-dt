@@ -32,6 +32,7 @@ import {
     getExtraBinDirPath,
     getInstalledExtraBinVersion,
     moveLegacyExtraBinPack,
+    notifyExtraBinChanged,
 } from './extraBinHelpers';
 
 export type ExtraBinEntryType = {
@@ -256,6 +257,9 @@ export async function installExtraBin({
                 `${tran('Installed')} ` +
                     `"${await getInstalledExtraBinVersion()}"`,
             );
+            // Other windows re-read, and a Screen Mirror tunnel waiting for
+            // the pack's cloudflared starts (main process).
+            notifyExtraBinChanged();
             return true;
         } catch (error) {
             logError(error);

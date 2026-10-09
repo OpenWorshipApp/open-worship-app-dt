@@ -19,6 +19,8 @@ export function toMirrorErrorText(message: string) {
         return tran('Too many wrong codes. Try again later.');
     if (message === 'Too many connection requests. Try again later.')
         return tran('Too many connection requests. Try again later.');
+    if (message === 'Microphone access denied')
+        return tran('Microphone access denied');
     return tran('Connection failed');
 }
 

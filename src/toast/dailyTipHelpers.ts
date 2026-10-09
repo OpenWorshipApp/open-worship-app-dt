@@ -186,6 +186,7 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-foreground-video',
         'presenter-foreground-image',
         'presenter-foreground-camera',
+        'presenter-foreground-screen',
         'presenter-foreground-web',
         'presenter-foreground-properties',
         'presenter-foreground-sessions',

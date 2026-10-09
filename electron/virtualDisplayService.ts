@@ -1,10 +1,11 @@
 import type http from 'node:http';
 import type { Duplex } from 'node:stream';
 import fs from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import {
     BrowserWindow,
     ipcMain,
+    systemPreferences,
     webContents,
     type WebContents,
     type WebPreferences,
@@ -18,8 +19,10 @@ import { htmlFiles } from './fsServe';
 import { screenMirrorRuntime } from './screenMirrorRuntime';
 import type { ScreenMirrorService } from './screenMirrorService';
 import { toMirrorPlainAddress } from './screenMirrorProtocol';
+import { readRequestSender } from './mirrorRequestSender';
 import { Fmp4Fanout } from './fmp4Fanout';
 import { VirtualDisplayWebViewers } from './virtualDisplayWebViewers';
+import { ViewerCameras } from './virtualDisplayViewerCameras';
 import VirtualScreenController from './VirtualScreenController';
 import {
     checkIsVirtualDisplayHost,
@@ -27,17 +30,30 @@ import {
     setVirtualDisplayAudioTarget,
 } from './virtualDisplayHostRegistry';
 import { readVirtualDisplayWallpaper } from './displayWallpaperHelpers';
+import { DLNA_CONTENT_FEATURES, type CastTarget } from './castProtocol';
+import {
+    discoverCastTargets,
+    startCastSession,
+    type CastFailureType,
+    type CastSessionType,
+} from './castTargets';
 import {
     MAX_VIRTUAL_DISPLAYS,
+    VIRTUAL_DISPLAY_ACCESS_KEY,
+    VIRTUAL_DISPLAY_CODE_KEY,
     VIRTUAL_DISPLAY_SETTING_KEY,
     clampResolution,
     parseVirtualDisplayPath,
+    readBasicAuthPassword,
+    readVirtualDisplayAccessMode,
     readVirtualDisplaySetting,
     sanitizeVirtualDisplayName,
     sanitizeWallpaper,
     toVirtualDisplayId,
     toVirtualDisplayNumber,
+    toVirtualDisplayStreamUrl,
     type VirtualDisplayBlockedClient,
+    type VirtualDisplayCast,
     type VirtualDisplayClient,
     type VirtualDisplayCompositorConfig,
     type VirtualDisplayLayout,
@@ -75,6 +91,9 @@ function logErrors(contents: WebContents, name: string) {
 }
 const DEVICES_CHANGED_DELAY_MILLISECOND = 300;
 const STATE_DELAY_MILLISECOND = 50;
+// A browser page asks for a look for TVs at most this often (see
+// `onCastSearch`); the card's own look is not held back.
+const VIEWER_CAST_SEARCH_GAP_MILLISECOND = 5000;
 const MAX_VIEWERS = 8;
 const MAX_VIEWERS_PER_ADDRESS = 3;
 const BLOCK_MILLISECOND = 10 * 60 * 1000;
@@ -91,6 +110,57 @@ const DEFAULT_VIEWER_LABELS: Record<string, string> = {
     waiting: 'Waiting for the display',
     disconnected:
         'This device was disconnected. Ask whoever runs the display to let it back in.',
+    waitingApproval: 'Waiting for host approval',
+    code: 'Connection code',
+    connect: 'Connect',
+    wrongCode: 'Connection code is incorrect',
+    locked: 'Too many wrong codes. Try again later.',
+    retry: 'Retry',
+    empty: 'Nothing is showing on this display yet.',
+    mic: 'Send my microphone',
+    soundOff: 'Turn off sound',
+    voiceVolume: 'Voice volume',
+    cast: 'Cast to a TV',
+    castFailed:
+        'No TV was found that can play this display. It must be on and on the same network.',
+    castSearching: 'Looking for TVs…',
+    castSearchAgain: 'Search again',
+    castStart: 'Cast',
+    castStop: 'Stop',
+    castConnecting: 'Connecting',
+    casting: 'Casting',
+    castCouldNot: 'The TV could not play this display.',
+    castNeedsSharing: 'Turn on “Let other devices watch” to cast to a TV.',
+    castFromBrowser: 'Cast from this browser',
+    castBrowserHint: 'For a TV on the same network as this device.',
+    castNoBrowserTv:
+        'This browser found no TV. It must be on and on the same network as this device.',
+    castNoBrowser: 'This browser cannot cast. Try Chrome, Edge or Safari.',
+    castAppTvs: 'TVs on the app’s network',
+    close: 'Close',
+    camera: 'Share my cameras',
+    micFailed:
+        'The microphone could not be opened. Allow it for this page, or close another app using it.',
+    cameraFailed:
+        'The camera could not be opened. Allow it for this page, or close another app using it.',
+};
+// A media player from the internet waiting for the operator's Allow is
+// answered 403 after this long.
+const PLAYER_WAIT_MILLISECOND = 5 * 60 * 1000;
+// Media players let in from the internet, by display and address.
+const MAX_PLAYER_GRANTS = 256;
+const MAX_CAST_TOKENS = 256;
+const CAST_TOKEN_MILLISECOND = 24 * 60 * 60 * 1000;
+
+// A display cast to one TV.
+type CastEntryType = {
+    number: number;
+    target: CastTarget;
+    status: VirtualDisplayCast['status'];
+    failure: CastFailureType | null;
+    session: CastSessionType | null;
+    behind: number | null;
+    playbackRate: number;
 };
 
 type SessionType = {
@@ -99,6 +169,12 @@ type SessionType = {
     isReady: boolean;
     fanout: Fmp4Fanout;
     viewers: Map<string, VirtualDisplayClient>;
+    // Players from the internet held until the operator's Allow: listed in
+    // `viewers` as waiting, answered once allowed, rejected or timed out.
+    waitingPlayers: Map<
+        string,
+        { res: http.ServerResponse; timer: ReturnType<typeof setTimeout> }
+    >;
     stream: VirtualDisplayStreamStatus;
     error: string | null;
     mimeType: string | null;
@@ -121,6 +197,45 @@ export class VirtualDisplayService {
     private stateTimer?: ReturnType<typeof setTimeout>;
     private orderCounter = 0;
     private readonly webViewers: VirtualDisplayWebViewers;
+    // Browser viewers' cameras shared with this computer.
+    private readonly viewerCameras = new ViewerCameras({
+        toViewer: (viewerId, packet) => {
+            this.webViewers.sendIntercom(viewerId, String(packet.type), {});
+        },
+        toWatcher: (watcher, channel, data) => {
+            const { text, ...frame } = data;
+            const [kind, first, second] = watcher.split(':');
+            if (kind === 'window') {
+                const contents = webContents.fromId(Number(first));
+                if (contents && !contents.isDestroyed()) {
+                    contents.send(channel, frame);
+                }
+            } else if (kind === 'screen') {
+                // A browser's screen page: the frame as it came, base64. Its
+                // key/delta goes as `frameType` -- the packet's own `type`
+                // names the packet, and a frame that lost it was never a
+                // key frame, so the page decoded none of them.
+                const isFrame = channel === 'vd:camera-frame';
+                this.webViewers.sendScreenCamera(
+                    first,
+                    Number(second),
+                    isFrame ? 'vd-camera-frame' : 'vd-camera-end',
+                    isFrame
+                        ? {
+                              cameraId: frame.cameraId,
+                              frameType: frame.type,
+                              timestamp: frame.timestamp,
+                              data: text,
+                          }
+                        : { cameraId: frame.cameraId },
+                );
+            }
+        },
+        onListChanged: () => {
+            this.mirror.sendDevicesChanged();
+            this.scheduleState();
+        },
+    });
     // A display's wallpaper is published to browser viewers under its own
     // scope, revoked when the wallpaper or the display goes.
     private wallpaperScopes = new Map<number, string>();
@@ -129,6 +244,19 @@ export class VirtualDisplayService {
         { promise: Promise<VirtualDisplayWebContext | null>; at: number }
     >();
     private viewerLabels: Record<string, string>;
+    // `<number>|<address>` of media players let in from the internet.
+    private playerGrants = new Set<string>();
+    // A browser that was let in may cast its display to a TV on ITS OWN
+    // network, through the browser's picker (asked for by the user: _"this is
+    // for casting to a tv with same network of the browser not app"_). The TV
+    // is handed the MP4 with one of these, so it is not held for the
+    // operator's Allow nor asked a code it cannot type. One per browser and
+    // display; it ends with that browser's access (Disconnect, the access
+    // option or code changing, the display deleted) or after a day.
+    private castTokens = new Map<
+        string,
+        { number: number; viewerId: string; until: number }
+    >();
     private readonly preloadFilePath = genRoutProps(htmlFiles.virtualDisplay)
         .preloadFilePath;
 
@@ -141,6 +269,17 @@ export class VirtualDisplayService {
         this.viewerLabels = this.readViewerLabels();
         this.webViewers = new VirtualDisplayWebViewers({
             checkIsAdmitted: (network) => this.checkIsAdmitted(network),
+            getAccess: (network) => this.getAccess(network),
+            checkCode: (address, code) => {
+                return this.mirror.checkSenderCode(
+                    address,
+                    this.settings.getSecureSetting(VIRTUAL_DISPLAY_CODE_KEY),
+                    code,
+                );
+            },
+            checkIsLockedOut: (address) => {
+                return this.mirror.checkIsSenderLockedOut(address);
+            },
             checkIsBlocked: (number, viewerId) => {
                 return this.checkIsBlocked(number, 'web', viewerId);
             },
@@ -156,6 +295,53 @@ export class VirtualDisplayService {
             // A viewer the operator let interact picked a verse or scrolled:
             // to the presenter, as a screen window's own report would go.
             onFeedback: (message) => this.mirror.forwardViewerFeedback(message),
+            // The same as a screen window's own ✕ (`app:hide-screen`).
+            onHideScreen: (number, screenId) => {
+                const controller = this.screens.get(screenId);
+                if (controller?.displayNumber !== number) {
+                    return;
+                }
+                this.mirror.hide(screenId);
+                controller.close();
+            },
+            getCastState: (number) => {
+                const casts = this.listCasts(number);
+                return {
+                    isSharing: this.mirror.isVirtualDisplayShareEnabled,
+                    isSearching: this.isCastSearching,
+                    targets: this.castTargets.map(({ id, name, kind }) => {
+                        const cast = casts.find((item) => item.id === id);
+                        return {
+                            id,
+                            name,
+                            kind,
+                            status: cast?.status ?? null,
+                            behind: cast?.behind ?? null,
+                        };
+                    }),
+                };
+            },
+            // A page's look waits a few seconds after the last one: each is
+            // a burst of mDNS and SSDP on this network.
+            onCastSearch: () => {
+                if (
+                    Date.now() - this.castSearchedAt <
+                    VIEWER_CAST_SEARCH_GAP_MILLISECOND
+                ) {
+                    this.webViewers.sendCastStates();
+                    return;
+                }
+                this.searchCastTargets().catch(() => {});
+            },
+            onCastStart: (number, targetId) => {
+                return this.startCast(number, targetId);
+            },
+            issueCastToken: (number, viewerId) => {
+                return this.issueCastToken(number, viewerId);
+            },
+            onCastStop: (number, targetId) => {
+                this.stopCast(number, targetId);
+            },
             // A browser's camera stream rides Screen Mirror's camera relay,
             // with this computer's camera broker as the source.
             onCamera: (consumer, packet) => {
@@ -165,9 +351,36 @@ export class VirtualDisplayService {
                 this.mirror.closeViewerCameras(consumer);
             },
             hostId: () => this.mirror.id,
+            onIntercom: (viewerId, packet) => {
+                this.mirror.receiveIntercom(`viewer:${viewerId}`, packet);
+            },
+            onViewerGone: (viewerId) => {
+                this.mirror.forgetIntercom(`viewer:${viewerId}`);
+                this.viewerCameras.drop(viewerId);
+            },
+            onViewerCamera: (viewerId, address, packet) => {
+                this.viewerCameras.receive(viewerId, address, packet);
+            },
+            onScreenCamera: (watcher, cameraId, isWatching) => {
+                if (cameraId === null) {
+                    this.viewerCameras.forgetWatcher(watcher);
+                } else {
+                    this.viewerCameras.watch(watcher, cameraId, isWatching);
+                }
+            },
         });
         this.mirror.setViewerCameraSink((consumer, packet) => {
             this.webViewers.sendCamera(consumer, packet);
+        });
+        // A browser viewer's shared camera, among this computer's own.
+        this.mirror.registerCameraSource(() => this.viewerCameras.list());
+        // A browser viewer's talk-back rides its page's own socket.
+        this.mirror.registerIntercomPeers('viewer', {
+            has: (id) => this.webViewers.checkIsLetIn(id),
+            send: (id, type, data) => {
+                this.webViewers.sendIntercom(id, type, data);
+            },
+            onChanged: () => this.scheduleState(),
         });
     }
 
@@ -250,6 +463,7 @@ export class VirtualDisplayService {
                 .sort((a, b) => a.order - b.order)
                 .map((controller) => controller.screenId),
             labels: this.viewerLabels,
+            castUrl: this.toCastUrl(number),
         };
     }
 
@@ -396,11 +610,212 @@ export class VirtualDisplayService {
         this.scheduleState();
     }
 
+    // -- Casting to a TV ---------------------------------------------------------
+    //
+    // The TV pulls the display's MP4 itself, over this network -- one more
+    // player in Watching now -- so it plays while nothing here draws it.
+    // TVs are looked for only when the operator asks (the cast list opens),
+    // and the few found are kept until the next look.
+    private castTargets: CastTarget[] = [];
+    private isCastSearching = false;
+    private castSearchedAt = 0;
+    private casts = new Map<string, CastEntryType>();
+
+    private toCastKey(number: number, targetId: string) {
+        return `${number}\n${targetId}`;
+    }
+
+    async searchCastTargets() {
+        if (this.isCastSearching) {
+            return;
+        }
+        this.isCastSearching = true;
+        this.scheduleState();
+        try {
+            this.castTargets = await discoverCastTargets();
+        } finally {
+            this.isCastSearching = false;
+            this.castSearchedAt = Date.now();
+            this.scheduleState();
+        }
+    }
+
+    async startCast(number: number, targetId: string) {
+        const record = this.getRecord(number);
+        if (record === null) {
+            throw new Error('Virtual display not found');
+        }
+        const target = this.castTargets.find((item) => item.id === targetId);
+        if (target === undefined) {
+            throw new Error('TV not found');
+        }
+        // Over this network only, so only while devices on it may watch.
+        if (!this.mirror.isVirtualDisplayShareEnabled) {
+            throw new Error('Let other devices watch is off');
+        }
+        const key = this.toCastKey(number, targetId);
+        const previous = this.casts.get(key);
+        if (previous !== undefined && previous.status !== 'failed') {
+            return;
+        }
+        const entry: CastEntryType = {
+            number,
+            target,
+            status: 'connecting',
+            failure: null,
+            session: null,
+            behind: null,
+            playbackRate: 1,
+        };
+        this.casts.set(key, entry);
+        this.scheduleState();
+        const isCurrent = () => this.casts.get(key) === entry;
+        const session = await startCastSession(
+            target,
+            (localAddress) => {
+                return toVirtualDisplayStreamUrl(
+                    { host: localAddress, port: this.mirror.port, kind: 'lan' },
+                    number,
+                );
+            },
+            record.name,
+            {
+                onCasting: () => {
+                    if (isCurrent()) {
+                        entry.status = 'casting';
+                        this.scheduleState();
+                    }
+                },
+                getLiveTime: () => {
+                    return this.sessions.get(number)?.fanout.liveTime ?? null;
+                },
+                onBehind: (seconds, playbackRate) => {
+                    if (!isCurrent()) {
+                        return;
+                    }
+                    // Shown to a tenth of a second: a change smaller than
+                    // that is not worth a state broadcast.
+                    const behind = Math.round(seconds * 10) / 10;
+                    if (
+                        behind !== entry.behind ||
+                        playbackRate !== entry.playbackRate
+                    ) {
+                        entry.behind = behind;
+                        entry.playbackRate = playbackRate;
+                        this.scheduleState();
+                    }
+                },
+                onEnded: (failure) => {
+                    if (!isCurrent()) {
+                        return;
+                    }
+                    if (failure === null) {
+                        this.casts.delete(key);
+                    } else {
+                        entry.status = 'failed';
+                        entry.failure = failure;
+                    }
+                    this.scheduleState();
+                },
+            },
+        );
+        if (isCurrent()) {
+            entry.session = session;
+        } else {
+            session.stop();
+        }
+    }
+
+    stopCast(number: number, targetId: string) {
+        const key = this.toCastKey(number, targetId);
+        const entry = this.casts.get(key);
+        if (entry === undefined) {
+            return;
+        }
+        this.casts.delete(key);
+        entry.session?.stop();
+        this.scheduleState();
+    }
+
+    private stopCasts(number?: number) {
+        for (const [key, entry] of [...this.casts]) {
+            if (number === undefined || entry.number === number) {
+                this.casts.delete(key);
+                entry.session?.stop();
+            }
+        }
+    }
+
+    private listCasts(number: number): VirtualDisplayCast[] {
+        return [...this.casts.values()]
+            .filter((entry) => entry.number === number)
+            .map(({ target, status, failure, behind, playbackRate }) => {
+                return {
+                    id: target.id,
+                    name: target.name,
+                    kind: target.kind,
+                    status,
+                    failure,
+                    behind,
+                    playbackRate,
+                };
+            });
+    }
+
+    // The MP4 on this network, for a browser on this computer to cast: a TV
+    // cannot reach 127.0.0.1.
+    private toCastUrl(number: number) {
+        if (!this.mirror.isVirtualDisplayShareEnabled) {
+            return null;
+        }
+        const [lan] = this.mirror.addressList(false);
+        return lan === undefined
+            ? null
+            : toVirtualDisplayStreamUrl(lan, number);
+    }
+
+    // This computer's microphone in a display's MP4 sound (off until turned
+    // on, and again each launch). Media players cannot answer, so there is
+    // no speaker for them. macOS asks once before a microphone may be heard.
+    private mp4Mics = new Set<number>();
+    async setMp4Mic(number: number, isOn: boolean) {
+        if (this.getRecord(number) === null) {
+            return;
+        }
+        if (
+            isOn &&
+            process.platform === 'darwin' &&
+            !(await systemPreferences.askForMediaAccess('microphone'))
+        ) {
+            throw new Error('Microphone access denied');
+        }
+        if (isOn) {
+            this.mp4Mics.add(number);
+        } else {
+            this.mp4Mics.delete(number);
+        }
+        const session = this.sessions.get(number);
+        if (
+            session?.isReady &&
+            session.window &&
+            !session.window.isDestroyed()
+        ) {
+            session.window.webContents.send('vd:compositor', {
+                type: 'mic',
+                isOn,
+            });
+        }
+        this.scheduleState();
+    }
+
     delete(number: number) {
         const record = this.getRecord(number);
         if (record === null) {
             return;
         }
+        this.mp4Mics.delete(number);
+        this.stopCasts(number);
+        this.revokeCastTokens(number);
         for (const controller of this.screensOn(number)) {
             controller.close();
         }
@@ -554,6 +969,7 @@ export class VirtualDisplayService {
                     () => this.requestKeyframe(created),
                 ),
                 viewers: new Map(),
+                waitingPlayers: new Map(),
                 stream: 'idle',
                 error: null,
                 mimeType: null,
@@ -852,6 +1268,154 @@ export class VirtualDisplayService {
         return network === 'local' || this.mirror.isInternetEnabled;
     }
 
+    get accessMode() {
+        return readVirtualDisplayAccessMode(
+            this.settings.getClientSetting(VIRTUAL_DISPLAY_ACCESS_KEY),
+        );
+    }
+
+    // This computer and its own networks come in at once; the internet waits
+    // for the operator's Allow or gives the connection code.
+    private getAccess(network: VirtualDisplayNetwork) {
+        return network === 'internet' ? this.accessMode : 'open';
+    }
+
+    // The access option or the code changed, or the internet closed: everyone
+    // let in from the internet is asked again.
+    private revokeInternetGrants() {
+        this.webViewers.revokeGrants();
+        this.playerGrants.clear();
+        this.castTokens.clear();
+        for (const session of this.sessions.values()) {
+            for (const viewer of [...session.viewers.values()]) {
+                if (viewer.network === 'internet' && !viewer.isPreview) {
+                    this.endPlayer(session, viewer.id, 403);
+                }
+            }
+        }
+    }
+
+    private setAccessMode(value: unknown) {
+        const mode = readVirtualDisplayAccessMode(value);
+        if (mode === this.accessMode) {
+            return;
+        }
+        this.settings.setClientSetting(VIRTUAL_DISPLAY_ACCESS_KEY, mode);
+        this.revokeInternetGrants();
+    }
+
+    private setCode(value: unknown) {
+        if (typeof value !== 'string' || !value.trim()) {
+            return;
+        }
+        this.settings.setSecureSetting(VIRTUAL_DISPLAY_CODE_KEY, value.trim());
+        this.revokeInternetGrants();
+    }
+
+    // A player waiting or watching: ended, or -- waiting -- answered with
+    // `status`.
+    private endPlayer(session: SessionType, id: string, status: number) {
+        const waiting = session.waitingPlayers.get(id);
+        if (waiting === undefined) {
+            session.fanout.removeClient(id);
+            return;
+        }
+        clearTimeout(waiting.timer);
+        session.waitingPlayers.delete(id);
+        if (!waiting.res.headersSent) {
+            waiting.res.writeHead(status, { 'Cache-Control': 'no-store' });
+        }
+        waiting.res.end();
+        this.onViewerGone(session, id);
+    }
+
+    private startPlayer(
+        session: SessionType,
+        id: string,
+        res: http.ServerResponse,
+    ) {
+        clearTimeout(session.releaseTimer);
+        session.fanout.addClient(id, res);
+        this.scheduleState();
+        return this.startCompositor(session);
+    }
+
+    // The token a browser's cast hands its TV (see `castTokens`), the same
+    // one each time it asks while it lasts.
+    issueCastToken(number: number, viewerId: string) {
+        const now = Date.now();
+        for (const [token, entry] of this.castTokens) {
+            if (entry.until < now) {
+                this.castTokens.delete(token);
+            } else if (entry.number === number && entry.viewerId === viewerId) {
+                return token;
+            }
+        }
+        if (this.castTokens.size >= MAX_CAST_TOKENS) {
+            this.castTokens.delete(this.castTokens.keys().next().value!);
+        }
+        const token = randomBytes(18).toString('hex');
+        this.castTokens.set(token, {
+            number,
+            viewerId,
+            until: now + CAST_TOKEN_MILLISECOND,
+        });
+        return token;
+    }
+
+    private checkCastToken(number: number, token: string | null) {
+        const entry = token === null ? undefined : this.castTokens.get(token);
+        return (
+            entry !== undefined &&
+            entry.number === number &&
+            entry.until >= Date.now()
+        );
+    }
+
+    private revokeCastTokens(number: number, viewerId?: string) {
+        for (const [token, entry] of this.castTokens) {
+            if (
+                entry.number === number &&
+                (viewerId === undefined || entry.viewerId === viewerId)
+            ) {
+                this.castTokens.delete(token);
+            }
+        }
+    }
+
+    // The operator's Allow for a browser or a media player from the internet.
+    async allow(number: number, clientId: string) {
+        // A browser the operator disconnected that asked to come back: its
+        // block goes first, or its screens would be refused once let in.
+        if (this.webViewers.checkIsWaitingForApproval(clientId, number)) {
+            this.blocked.delete(this.toBlockKey(number, 'web', clientId));
+            this.webViewers.allow(clientId, number);
+            return;
+        }
+        const session = this.sessions.get(number);
+        const waiting = session?.waitingPlayers.get(clientId);
+        const viewer = session?.viewers.get(clientId);
+        if (
+            session === undefined ||
+            waiting === undefined ||
+            viewer === undefined
+        ) {
+            return;
+        }
+        clearTimeout(waiting.timer);
+        session.waitingPlayers.delete(clientId);
+        if (this.playerGrants.size >= MAX_PLAYER_GRANTS) {
+            this.playerGrants.delete(this.playerGrants.values().next().value!);
+        }
+        this.playerGrants.add(`${number}|${viewer.address}`);
+        viewer.waiting = null;
+        if (waiting.res.writableEnded || waiting.res.destroyed) {
+            this.onViewerGone(session, clientId);
+            return;
+        }
+        await this.startPlayer(session, clientId, waiting.res);
+    }
+
     // `/vd/<number>/video`: who may watch, then a seat in the fan-out.
     async route(
         req: http.IncomingMessage,
@@ -882,7 +1446,7 @@ export class VirtualDisplayService {
             );
             return;
         }
-        const address = toMirrorPlainAddress(req.socket.remoteAddress ?? '');
+        const address = toMirrorPlainAddress(readRequestSender(req).address);
         const isPreview =
             network === 'this-computer' &&
             url.searchParams.get('preview') === '1';
@@ -892,6 +1456,49 @@ export class VirtualDisplayService {
         ) {
             res.writeHead(403).end();
             return;
+        }
+        // From the internet a media player is let in after the operator's
+        // Allow, or with the connection code as its password: players ask
+        // for one when answered 401, and take `http://name:code@host/...`.
+        // A TV a let-in browser cast to carries that browser's token.
+        const access =
+            isPreview ||
+            this.checkCastToken(record.number, url.searchParams.get('cast'))
+                ? 'open'
+                : this.getAccess(network);
+        let isWaiting =
+            access !== 'open' &&
+            !this.playerGrants.has(`${record.number}|${address}`);
+        if (isWaiting && access === 'code') {
+            const supplied = readBasicAuthPassword(req.headers.authorization);
+            const result =
+                supplied === null
+                    ? this.mirror.checkIsSenderLockedOut(address)
+                        ? 'locked'
+                        : 'missing'
+                    : this.mirror.checkSenderCode(
+                          address,
+                          this.settings.getSecureSetting(
+                              VIRTUAL_DISPLAY_CODE_KEY,
+                          ),
+                          supplied,
+                      );
+            if (result === 'locked') {
+                res.writeHead(429, {
+                    'Retry-After': '600',
+                    'Cache-Control': 'no-store',
+                }).end();
+                return;
+            }
+            if (result !== 'ok') {
+                res.writeHead(401, {
+                    'WWW-Authenticate':
+                        'Basic realm="Open Worship", charset="UTF-8"',
+                    'Cache-Control': 'no-store',
+                }).end();
+                return;
+            }
+            isWaiting = false;
         }
         const session = this.ensureSession(record.number);
         const others = [...session.viewers.values()].filter((viewer) => {
@@ -906,6 +1513,13 @@ export class VirtualDisplayService {
         ) {
             res.writeHead(503, { 'Cache-Control': 'no-store' }).end();
             return;
+        }
+        // A DLNA TV asks how the stream may be played, and for it as a stream.
+        if (req.headers['getcontentfeatures.dlna.org'] === '1') {
+            res.setHeader('contentFeatures.dlna.org', DLNA_CONTENT_FEATURES);
+        }
+        if (req.headers['transfermode.dlna.org'] !== undefined) {
+            res.setHeader('transferMode.dlna.org', 'Streaming');
         }
         if (req.method === 'HEAD') {
             res.writeHead(200, {
@@ -924,11 +1538,25 @@ export class VirtualDisplayService {
             since: Date.now(),
             isPreview,
             isInteractive: false,
+            waiting: isWaiting ? 'approval' : null,
         });
-        clearTimeout(session.releaseTimer);
-        session.fanout.addClient(id, res);
-        this.scheduleState();
-        await this.startCompositor(session);
+        if (isWaiting) {
+            // Held, sent nothing, until the operator's Allow (`allow`).
+            const timer = setTimeout(() => {
+                this.endPlayer(session, id, 403);
+            }, PLAYER_WAIT_MILLISECOND);
+            session.waitingPlayers.set(id, { res, timer });
+            res.on('close', () => {
+                if (session.waitingPlayers.get(id)?.res === res) {
+                    clearTimeout(timer);
+                    session.waitingPlayers.delete(id);
+                    this.onViewerGone(session, id);
+                }
+            });
+            this.scheduleState();
+            return;
+        }
+        await this.startPlayer(session, id, res);
     }
 
     private onViewerGone(session: SessionType, id: string) {
@@ -947,6 +1575,7 @@ export class VirtualDisplayService {
     disconnect(number: number, clientId: string) {
         const webViewer = this.webViewers.disconnect(clientId);
         if (webViewer !== null) {
+            this.revokeCastTokens(number, webViewer.id);
             if (!webViewer.isPreview) {
                 this.block(number, 'web', webViewer.id, webViewer.address);
             }
@@ -960,7 +1589,7 @@ export class VirtualDisplayService {
         if (!viewer.isPreview) {
             this.block(number, 'video', viewer.address, viewer.address);
         }
-        session.fanout.removeClient(clientId);
+        this.endPlayer(session, clientId, 403);
     }
 
     // Who may reach the server changed: a viewer no longer let in is ended.
@@ -969,9 +1598,22 @@ export class VirtualDisplayService {
         for (const session of this.sessions.values()) {
             for (const viewer of [...session.viewers.values()]) {
                 if (!this.checkIsAdmitted(viewer.network)) {
-                    session.fanout.removeClient(viewer.id);
+                    this.endPlayer(session, viewer.id, 403);
                 }
             }
+        }
+        // Closed to the internet: whoever was let in from it is asked again
+        // the next time it opens.
+        if (!this.checkIsAdmitted('internet')) {
+            this.revokeInternetGrants();
+        }
+        // A TV pulls the stream over this network: it cannot any more.
+        if (!this.mirror.isVirtualDisplayShareEnabled) {
+            this.stopCasts();
+        }
+        // A browser here casts the address on this network, or none now.
+        for (const record of this.records) {
+            this.webViewers.sendLayout(record.number);
         }
         this.scheduleState();
     }
@@ -989,6 +1631,17 @@ export class VirtualDisplayService {
             shareEnabled,
             internetEnabled,
             router: this.mirror.routerState,
+            publicPort: this.mirror.publicPort,
+            access: this.accessMode,
+            hasCode: !!this.settings.getSecureSetting(VIRTUAL_DISPLAY_CODE_KEY),
+            tunnelEnabled: this.mirror.isTunnelEnabled,
+            tunnel: this.mirror.tunnelState,
+            publicAddress: this.mirror.publicAddress,
+            customPort: this.mirror.customPort,
+            castTargets: this.castTargets.map(({ id, name, kind }) => {
+                return { id, name, kind };
+            }),
+            isCastSearching: this.isCastSearching,
             addresses: [
                 { host: '127.0.0.1', port, kind: 'this-computer' },
                 ...(shareEnabled
@@ -1011,11 +1664,29 @@ export class VirtualDisplayService {
                         (wallpaper.kind === 'image' ||
                             wallpaper.kind === 'video') &&
                         !fs.existsSync(wallpaper.filePath),
+                    isMp4MicOn: this.mp4Mics.has(record.number),
                     clients: [
-                        ...this.webViewers.listOf(record.number),
+                        ...this.webViewers
+                            .listOf(record.number)
+                            .map((client) => {
+                                return client.isPreview ||
+                                    client.waiting !== null
+                                    ? client
+                                    : {
+                                          ...client,
+                                          intercom: this.mirror.intercomStateOf(
+                                              `viewer:${client.id}`,
+                                          ),
+                                          camera:
+                                              this.viewerCameras.labelOf(
+                                                  client.id,
+                                              ) ?? undefined,
+                                      };
+                            }),
                         ...(session?.viewers.values() ?? []),
                     ],
                     blocked: this.listBlocked(record.number),
+                    casts: this.listCasts(record.number),
                 };
             }),
         };
@@ -1028,6 +1699,8 @@ export class VirtualDisplayService {
         this.stateTimer = setTimeout(() => {
             this.stateTimer = undefined;
             this.mirror.broadcast('vd:state', this.state());
+            // A page with its cast list open sees the same change.
+            this.webViewers.sendCastStates();
         }, STATE_DELAY_MILLISECOND);
     }
 
@@ -1055,13 +1728,57 @@ export class VirtualDisplayService {
                 Number(data.number),
                 data.enabled === true,
             );
+        } else if (data.action === 'mp4-mic') {
+            await this.setMp4Mic(Number(data.number), data.enabled === true);
+        } else if (data.action === 'allow') {
+            await this.allow(Number(data.number), String(data.clientId));
+        } else if (data.action === 'access') {
+            this.setAccessMode(data.mode);
+        } else if (data.action === 'code') {
+            this.setCode(data.code);
         } else if (data.action === 'labels') {
             this.setViewerLabels(data.labels);
+        } else if (data.action === 'cast-search') {
+            await this.searchCastTargets();
+        } else if (data.action === 'cast-start') {
+            await this.startCast(Number(data.number), String(data.targetId));
+        } else if (data.action === 'cast-stop') {
+            this.stopCast(Number(data.number), String(data.targetId));
         }
         return this.state();
     }
 
+    // A window here showing a viewer's camera, or done with it.
+    private watchedWindows = new Set<number>();
+    private watchViewerCamera(
+        contents: WebContents,
+        cameraId: unknown,
+        isWatching: boolean,
+    ) {
+        if (typeof cameraId !== 'string') {
+            return;
+        }
+        if (isWatching && !this.watchedWindows.has(contents.id)) {
+            const id = contents.id;
+            this.watchedWindows.add(id);
+            contents.once('destroyed', () => {
+                this.watchedWindows.delete(id);
+                this.viewerCameras.forgetWatcher(`window:${id}`);
+            });
+        }
+        this.viewerCameras.watch(`window:${contents.id}`, cameraId, isWatching);
+    }
+
     initIpc() {
+        ipcMain.on('vd:camera-watch', (event, data) => {
+            if (this.mirror.trusted(event.sender)) {
+                this.watchViewerCamera(
+                    event.sender,
+                    data?.cameraId,
+                    data?.isWatching === true,
+                );
+            }
+        });
         ipcMain.on('vd:state', (event) => {
             event.returnValue = this.mirror.trusted(event.sender)
                 ? this.state()
@@ -1092,6 +1809,10 @@ export class VirtualDisplayService {
             }
             session.isReady = true;
             this.sendConfig(session.number);
+            // A compositor started again takes the microphone back up.
+            if (this.mp4Mics.has(session.number)) {
+                event.sender.send('vd:compositor', { type: 'mic', isOn: true });
+            }
             const record = this.getRecord(session.number);
             if (record !== null) {
                 event.sender.send('vd:compositor', {
@@ -1198,6 +1919,7 @@ export class VirtualDisplayService {
     }
 
     stop() {
+        this.stopCasts();
         this.webViewers.closeAll();
         for (const session of this.sessions.values()) {
             session.fanout.reset();

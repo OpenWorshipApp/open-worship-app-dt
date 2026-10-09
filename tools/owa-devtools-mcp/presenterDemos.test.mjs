@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 90 Presenter lessons with stable unique ids', () => {
+  it('offers 91 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -29,6 +29,7 @@ describe('Presenter demos', () => {
       'presenter-foreground-video',
       'presenter-foreground-image',
       'presenter-foreground-camera',
+      'presenter-foreground-screen',
       'presenter-foreground-web',
       'presenter-foreground-properties',
       'presenter-foreground-sessions',
@@ -101,7 +102,7 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(90);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(91);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );

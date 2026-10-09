@@ -58,6 +58,7 @@ export function readVideoTrackInfo(moov: Buffer) {
         end: moov.length,
     };
     let trackId: number | null = null;
+    let timescale = 0;
     for (const trak of readBoxes(moov, root.header, root.end)) {
         if (trak.type !== 'trak') {
             continue;
@@ -75,6 +76,14 @@ export function readVideoTrackInfo(moov: Buffer) {
         );
         if (handler !== 'vide') {
             continue;
+        }
+        const mdhd = mdia ? findChild(moov, mdia, 'mdhd') : null;
+        if (mdhd) {
+            const body = mdhd.start + mdhd.header;
+            const at = body + 4 + (moov[body] === 1 ? 16 : 8);
+            if (at + 4 <= mdhd.end) {
+                timescale = moov.readUInt32BE(at);
+            }
         }
         const version = moov[tkhd.start + tkhd.header];
         trackId = moov.readUInt32BE(
@@ -95,7 +104,36 @@ export function readVideoTrackInfo(moov: Buffer) {
             }
         }
     }
-    return { trackId, trexFlags };
+    return { trackId, trexFlags, timescale };
+}
+
+// When a `moof`'s fragment of `trackId` starts, in that track's timescale:
+// its `tfdt`. Null when it carries none.
+export function readFragmentDecodeTime(moof: Buffer, trackId: number | null) {
+    for (const traf of readBoxes(moof, 8, moof.length)) {
+        if (traf.type !== 'traf') {
+            continue;
+        }
+        let id: number | null = null;
+        let time: number | null = null;
+        for (const box of readBoxes(moof, traf.start + traf.header, traf.end)) {
+            const body = box.start + box.header;
+            if (box.type === 'tfhd' && body + 8 <= box.end) {
+                id = moof.readUInt32BE(body + 4);
+            } else if (box.type === 'tfdt') {
+                const isLong = moof[body] === 1;
+                if (body + (isLong ? 12 : 8) <= box.end) {
+                    time = isLong
+                        ? Number(moof.readBigUInt64BE(body + 4))
+                        : moof.readUInt32BE(body + 4);
+                }
+            }
+        }
+        if (time !== null && (trackId === null || id === trackId)) {
+            return time;
+        }
+    }
+    return null;
 }
 
 // Whether a `moof` starts its video track on a sync sample: `trun`'s
@@ -164,6 +202,10 @@ export class Fmp4Fanout {
     private init: Buffer | null = null;
     private videoTrackId: number | null = null;
     private trexFlags = 0;
+    private videoTimescale = 0;
+    // Where the picture is now, in seconds of the stream's own timeline: the
+    // newest video fragment's start. A cast TV is steered by it.
+    liveTime: number | null = null;
     private moof: Buffer | null = null;
     private isKeyMoof = false;
     private clients = new Map<string, ClientType>();
@@ -229,6 +271,7 @@ export class Fmp4Fanout {
             const info = readVideoTrackInfo(box);
             this.videoTrackId = info.trackId;
             this.trexFlags = info.trexFlags;
+            this.videoTimescale = info.timescale;
         } else if (type === 'moof') {
             this.moof = box;
             this.isKeyMoof = checkIsKeyframeFragment(
@@ -236,6 +279,12 @@ export class Fmp4Fanout {
                 this.videoTrackId,
                 this.trexFlags,
             );
+            if (this.videoTrackId !== null && this.videoTimescale > 0) {
+                const time = readFragmentDecodeTime(box, this.videoTrackId);
+                if (time !== null) {
+                    this.liveTime = time / this.videoTimescale;
+                }
+            }
         } else if (type === 'mdat' && this.moof !== null && this.init) {
             const fragment = Buffer.concat([this.moof, box]);
             this.moof = null;
@@ -332,6 +381,7 @@ export class Fmp4Fanout {
         this.initParts = [];
         this.init = null;
         this.moof = null;
+        this.liveTime = null;
         this.isBroken = false;
         for (const [id, client] of this.clients) {
             if (client.isLive) {

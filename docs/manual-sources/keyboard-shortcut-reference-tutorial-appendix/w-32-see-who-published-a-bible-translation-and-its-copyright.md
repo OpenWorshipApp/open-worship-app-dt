@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-77, RD-78, RD-11, RD-26, LT-01, KB-25, KB-26, CM-79]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-07"
+workflowsVersion: "2026-10-08"
 ---
 # W-32 — See who published a Bible translation (and its copyright)
 
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-77` · `RD-78` · `RD-11` · `RD-26` · `LT-01` · `KB-25` · `KB-26` · `CM-79`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-07).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
 :::

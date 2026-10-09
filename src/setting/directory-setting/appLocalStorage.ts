@@ -223,7 +223,18 @@ class AppLocalStorage {
     }
 
     setItem(key: string, value: string): void {
-        if (appProvider.screenUtils) return;
+        // A screen page reads its settings from the context it was opened
+        // with, and never writes the disk. What the presenter syncs to it (a
+        // Bible text style) still has to take effect there, so it lands in
+        // that page's own copy. Dropping it left every open screen on the
+        // style it opened with, and a screen's own contrast fix sent that old
+        // style back to the presenter -- white Bible text on a white
+        // background, after a toast saying the colour had been changed.
+        if (appProvider.screenUtils) {
+            const settings = appProvider.screenUtils.getContext()?.settings;
+            if (settings) settings[key] = value;
+            return;
+        }
         const fullPath = this.toFullPath(key);
         // Atomic: every window reads these files, and a half-written one read
         // as broken JSON (`fsWriteFileAtomicSync`).
@@ -235,7 +246,11 @@ class AppLocalStorage {
     }
 
     removeItem(key: string): void {
-        if (appProvider.screenUtils) return;
+        if (appProvider.screenUtils) {
+            const settings = appProvider.screenUtils.getContext()?.settings;
+            if (settings) delete settings[key];
+            return;
+        }
         const fullPath = this.toFullPath(key);
         // Drop the in-memory entry too. getItem answers from this cache before
         // touching disk, so a removal that left it behind kept handing back the

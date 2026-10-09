@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-07f** (W-51: Disconnect immediately revokes screen, camera and interaction access. Verified with two live browsers and isolated held-open-connection regressions.)
+**workflowsVersion: 2026-10-08e** (W-51 step 4 — a screen showing on a virtual display is showing again when the app starts next time (asked for with a picture of a screen's show button off after a reload: _"for virtual display, it should remember showing screen, so even reload it still have content showing"_); W-50 step 7 and W-51 — the internet warning, the tunnel note and the router note fold to one line (asked for with a picture of the Virtual Displays tab: _"make those verbose message collapsed, expandable"_); W-51 steps 7 and 8 — from the virtual display robot run vd-20261008b, "fix high medium and low": on the browser page a tap, a click or the mouse ON THE PICTURE brings the buttons back and a double-click on it goes full screen (the screens covered the whole page and took every touch, so the buttons came back only from the black bars, and a double-click selected a word on the screen instead); the pointer shows over the picture while the buttons do; and a device that leaves the page, or drops off the network without a word, leaves **[en:tran:Watching now]** by itself within about 40 seconds (a tab sent to another site stayed listed for minutes, kept alive by the browser's back/forward cache). Verified live 2026-10-08 on the dev presenter with a headless Chrome on the page: a mouse move and a tap over the picture showed the buttons, a double-click entered and left full screen with nothing selected, the page's row left the list 3 s after it navigated away and came back fresh on Back, and a socket that answered no ping was ended 22 s after it was first asked.)
+
+Previous: **workflowsVersion: 2026-10-08d** (W-09 — a **[en:tran:Screen Show]** is see-through: where the screen it shows draws nothing, the screen beneath shows through, with none of the tinted, blurred backing the text overlays carry. Asked for by the user with a picture of the copy drawing a solid box where screen 1 had nothing: _"it should be transparency"_. Verified live 2026-10-08 on a scratch dev instance with screen 1 HIDDEN and holding only a stopwatch: screen 0's red background showed through the whole copy around that stopwatch on screen 0's projector; in the user's own app a copy placed before the fix turned see-through as well, its empty part showing screen 0's starry background on Mini Screen 0. PM-158.)
+
+Previous: **workflowsVersion: 2026-10-08c** (W-09 — **[en:tran:Screen Show]**, a foreground component that shows what one screen holds on another, cloned from **[en:tran:Camera Show]** with one card per SCREEN carrying that screen's colour and number. Asked for by the user with a picture of the Foreground menu, **Camera Show** circled: _"clone `camera show` foreground to `Screen Show`, everything the same except instead of camera thumbnail but screen id thumbnail. story: as a user I want to show a screen in another screen"_ — a screen never shows itself, and two screens never show each other; then, with a picture of a Mini Screen holding a coloured place-holder: _"wrong design, screen should be rendered independently in screen 0, no need to wait until it got live"_ — the other screen is drawn from what it holds, shown or hidden, never captured from its window. Verified live 2026-10-08 on a scratch dev instance with screen 1 HIDDEN: its red background appeared on screen 0's projector and on Mini Screen 0, blue on screen 1 followed at once, screen 1's stopwatch was drawn inside it, and hiding and showing screen 0 again brought it straight back; screen 0's card onto screen 0 was refused (**[en:tran:A screen cannot show itself]**) and screen 1's onto screen 0 while 1 showed 0 (**[en:tran:These screens would show each other]**); **[en:tran:Width (%)]** resized it; **[en:tran:Hide Screen Show]** took it off. PM-158.)
+
+Previous: **workflowsVersion: 2026-10-08b** (W-51 step 7 — the browser page's **[en:tran:Cast to a TV]** casts first to a TV on the BROWSER's network: **[en:tran:Cast from this browser]** opens the browser's own picker on a stream the app sends the page, and the TV it picks plays the display from the app with the browser's token — no Allow, no code. Asked for with a screenshot: _"host app should stream video to the web to cast from page to browser. this is for casting to a tv with same network of the browser not app"_. The app's own TV list stays below it for a browser on the app's network. Verified live 2026-10-08 on a scratch dev instance with a headless Chrome on the LAN address: the page was handed `…/vd/1/video?cast=<token>`, read the stream's start without playing it, enabled **[en:tran:Cast from this browser]** and said the browser knew no TV (headless has none); the app's list showed 58S470G; closing the list let the stream go. Also from that run: a second copy of the app could share the first one's port on Windows (loopback beside every network); a port something here already answers on is now taken.)
+
+Previous: **workflowsVersion: 2026-10-08a** (W-51 steps 3, 4, 6, 7, 8 — from the virtual display robot run vd-20261008, "fix and enhance": **[en:tran:Where to watch]** leads with one recommended address, its QR code open, and folds the rest — every other network card and the MP4 — under **[en:tran:More addresses]** (a laptop with a VPN, WSL and Hyper-V had listed five look-alikes, each twice); **[en:tran:Preview]** sits at the top of the card; the card notes when several screens share a display; **[en:tran:Watching now]** names each viewer's browser and device; songs and new slides are laid out for the virtual display when there is no second monitor (they were sized for the laptop and boxed on the display); the address keeps its port across a quick restart; on the browser page **[en:tran:Turn on sound]** works on a phone of a development build (it blanked every screen), **[en:tran:Cast to a TV]** lists the TVs the app finds and casts through the app (asked for with a screenshot: _"screen casting on client web not working"_ — Chrome's own picker closed at once and the button did nothing), full screen turns a phone sideways, and with **[en:tran:Allow interaction]** on, the screen's **✕** hides that screen in the app (asked for with a screenshot: _"allowed interactive should be able to [close] a screen by the `x` button as well"_). Verified live 2026-10-08 on the dev presenter with a headless Chrome on the LAN address: sound on drew the screens, the cast list showed the real TV 58S470G, the ✕ hid screen 1 only after Allow interaction, a song filled 1920×1080, the blank PDF slide loaded instead of a broken picture, and a full-width page drew no scrollbar.)
+
+Previous: **workflowsVersion: 2026-10-07f** (W-51: Disconnect immediately revokes screen, camera and interaction access. Verified with two live browsers and isolated held-open-connection regressions.)
 
 Previous: **workflowsVersion: 2026-10-07e** (W-51 step 7 — a camera on the screen reaches the browser page, streamed from this computer, and the page stays silent until **[en:tran:Turn on sound]**. Reported by the user: _"camera not showing on web"_, and a console of "play() failed because the user didn't interact". Verified live 2026-10-07 on a scratch dev instance started with a fake camera: the page at the LAN address played the camera overlay with no console error.)
 
@@ -1732,6 +1742,21 @@ button:
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
 - **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Screen Show]:** what one screen holds, shown on another —
+  screen 1's slide in the corner of screen 0. The panel has one card per
+  screen, in that screen's own colour with its number. Click a card to
+  put that screen on the selected screen, or press its **⋮**
+  (**[en:tran:Show on Screens]**) to choose. Place and size it under
+  _Properties_ like any other overlay. It shows that screen's
+  background, slide, Bible text and overlays as they change, **even
+  while that screen is hidden** — a screen that is up nowhere else can
+  be shown only inside another. Where that screen draws nothing,
+  the one beneath shows through. A screen never shows itself, and two
+  screens never show each other: the app refuses with
+  **[en:tran:A screen cannot show itself]** or
+  **[en:tran:These screens would show each other]** instead. It never
+  carries sound: the screen it shows plays that. Take it off with
+  **[en:tran:Hide Screen Show]**. 📸
 - **[en:tran:Video Show]**, **[en:tran:Image Show]** and **[en:tran:Web Show]:** a clip,
   a picture or a web page shown _over_ the slide instead of behind it. Each lists a
   folder the same way the Background tabs do — only the rows on screen are built, so a
@@ -1791,8 +1816,8 @@ button:
   follow it — the tile that is up is marked when it happens to be in view, and the list
   stays where you left it so you can keep looking for the next picture while the show
   runs.
-- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show
-  and Web Show) decides how the overlay mixes with whatever is under it. It is the
+- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show,
+  Screen Show and Web Show) decides how the overlay mixes with whatever is under it. It is the
   answer to a clip that has a black background: pick **[en:tran:Screen Blend]** and the
   black drops out, leaving only the falling snow, sparks or light over the live slide.
   **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
@@ -1822,7 +1847,7 @@ show button is offered, never pressed unasked. **/countdown 5**, **/countdown
 10:30** and **/marquee Please silence your phones** do the same with no assistant,
 and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6).
 
-_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, KB-03, KB-07, CB-67._
+_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67._
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 
@@ -2419,7 +2444,7 @@ thing to another machine.
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
-   marquee running: **Clear FG Messages** (`MS`), **Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown** (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Video Show** (`VD`), **Image Show** (`IM`), **Camera Show** (`CM`) and **Web Show** (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show` and `Web Show` ones clear all of their items at once.
+   marquee running: **Clear FG Messages** (`MS`), **Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown** (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Video Show** (`VD`), **Image Show** (`IM`), **Camera Show** (`CM`), **Screen Show** (`SS`) and **Web Show** (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
    The panel's **Background Images Slide Show** has no action of its own — it is a
    _background_ despite sitting in that panel, so **Clear Background** is what stops it.
 
@@ -5237,7 +5262,9 @@ internet once the host opens to it (step 7).
    **[en:tran:Open to the internet]** under
    **[en:tran:Let other computers connect]**. It is off until you turn it
    on, and remembered. A warning says that anyone with the address can ask to
-   connect and that the connection is not encrypted: choose
+   connect and that the connection is not encrypted (folded to one line; its
+   chevron, or a click on it, shows it all — the router and tunnel notes fold
+   the same way, and each stays as you left it): choose
    **[en:tran:Require connection code]** under **[en:tran:Guest access]**,
    and turn the option off when you are done. The host asks the router to
    forward its port (UPnP); once **[en:tran:The router opened the port.]**,
@@ -5304,27 +5331,41 @@ cable or a second copy of the app.
    and has to be opened again. **[en:tran:Settings]** and
    **[en:tran:Where to watch]** each fold under their title; the card and both
    parts stay folded or open as you left them, also after a restart.
+   **[en:tran:Preview]**, at the top of the card, shows the display inside it.
 4. In a screen card's display picker, choose the display — it is listed as
    its name, **[en:tran:Virtual]** and its size, such as
    `Virtual Display 1 (Virtual): 1920x1080`. Present something and use the
    card's show control (F5): no window opens on any monitor; the screen shows
    on the virtual display instead, over its wallpaper. Several screens on one
    display are stacked in the order they were shown, the way they would be on
-   a real monitor. **[en:tran:Screens on this display]** under
-   **[en:tran:Settings]** lists them.
+   a real monitor, and the card says so while they are.
+   **[en:tran:Screens on this display]** under **[en:tran:Settings]** lists
+   them. With no second monitor plugged in, songs and new slides are laid out
+   for the virtual display's size, so they fill it. A screen showing on a
+   virtual display is showing again, with what it held, when the app starts
+   next time, so its viewers are not left on the wallpaper; hide it (F5) and
+   it stays hidden. A screen on a real monitor never comes up by itself, and
+   going to the Bible Reader, which hides every screen, keeps them all
+   hidden.
 5. Sound from a screen on a virtual display goes into what the display
    streams, not out of this computer's speakers: the Mini Screen's
    background audio player for that screen stays muted, but its play, pause,
    position and volume still drive the sound the viewers hear.
-6. **[en:tran:Where to watch]** lists two kinds of address, each with
-   **[en:tran:Copy address]** and **[en:tran:QR code]** (the code holds the
-   whole link):
+6. **[en:tran:Where to watch]** starts with the address to give someone,
+   marked with a star and its QR code already open: this computer's best
+   network (a router's 192.168 before a VPN or a virtual adapter), and any
+   internet address you opened. Each address has **[en:tran:Copy address]**
+   and **[en:tran:QR code]** (the code holds the whole link). Everything else
+   folds under **[en:tran:More addresses]**:
    - **[en:tran:Watch in a browser]** — `http://<address>:<port>/vd/<number>/`.
      The browser draws the display itself from what the app sends it, so it is
      the fastest way to watch, and this computer encodes nothing for it.
    - **[en:tran:Video for media players (MP4)]** —
      `http://<address>:<port>/vd/<number>/video`, an H.264 + AAC MP4 for a
      player such as VLC or OBS. It is made only while someone plays it.
+
+   The port stays the same from one launch to the next, so a saved address
+   or a printed QR code keeps working after the app restarts.
 
    Until **[en:tran:Let other devices watch]** at the top of the tab is on,
    only **[en:tran:This computer]** addresses are listed and nobody else can
@@ -5333,19 +5374,41 @@ cable or a second copy of the app.
    Mirror's, with the same warning) lists **[en:tran:Internet]** ones. No code
    is asked for: anyone who has the address can watch.
 7. The browser page fits the display to its window. Its
-   **[en:tran:Full screen]** button (or a double-click) fills the screen, and
-   **[en:tran:Exit full screen]** leaves it; the buttons hide while the mouse
-   is still. **[en:tran:Turn on sound]** is needed once, because a browser
-   plays sound only after the page has been touched; until then the page
-   plays everything silently. A camera put on the screen (Camera Show, or a
-   camera background) is streamed from this computer to the page, on this
-   network. The page keeps the
-   device from sleeping while it is open. If the app goes away, the page reads
-   **[en:tran:Waiting for the display]** and joins again by itself.
+   **[en:tran:Full screen]** button (or a double-click on the picture) fills
+   the screen, and **[en:tran:Exit full screen]** (or another double-click)
+   leaves it; on a phone, full screen also turns the picture sideways where
+   the browser allows it. The buttons show while the mouse is over the page
+   and hide when it leaves; a tap on the picture shows them for a few
+   seconds. The pointer shows over the picture only while they do.
+   **[en:tran:Turn on sound]** is
+   needed once, because a browser plays sound only after the page has been
+   touched; until then the page plays everything silently. A camera put on
+   the screen (Camera Show, or a camera background) is streamed from this
+   computer to the page, on this network. **[en:tran:Cast to a TV]** puts
+   the display on a TV:
+   - **[en:tran:Cast from this browser]** — a TV on the same network as the
+     device holding the page (at home, in another building), through the
+     browser's own picker: Chrome and Edge list Google Cast TVs, Safari
+     AirPlay ones. The app streams the display to the page for it, and the TV
+     then plays it from the app itself, without the operator's
+     **[en:tran:Allow connection]** or the connection code. When the browser
+     knows no TV, the list says so. A browser that cannot cast (Firefox)
+     says that too.
+   - On the app's own network, the list also shows the TVs the app found
+     there (Google Cast, DLNA, Roku): **[en:tran:Cast]** puts the display on
+     one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]** looks
+     once more.
+
+   The page keeps the device from sleeping while it is open. If the app goes
+   away, the page reads **[en:tran:Waiting for the display]** and joins again
+   by itself.
 8. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
    or MP4, where they are (**[en:tran:This computer]**,
-   **[en:tran:This network]** or **[en:tran:Internet]**), their address and
-   since when. **[en:tran:Disconnect]** ends one and keeps it out of this
+   **[en:tran:This network]** or **[en:tran:Internet]**), their address with
+   their browser and device (such as `Chrome · Android` or `VLC`), and
+   since when. A device that leaves the page, or drops off the network
+   without a word (a phone gone to sleep), leaves the list by itself within
+   about 40 seconds. **[en:tran:Disconnect]** ends one and keeps it out of this
    display for ten minutes: a browser by itself (other devices behind the
    same router are not touched), a media player by its address. The browser
    page then says the device was disconnected and stops trying. Its access to
@@ -5356,8 +5419,10 @@ cable or a second copy of the app.
    inside the card, listed as **[en:tran:This app (preview)]**. A browser's
    row has **[en:tran:Allow interaction]**, off for every new viewer. Turned
    on, a hand on that browser's page reaches the app the way a hand on the
-   projector's own window does: scrolling a passage or a tall slide, and
-   tapping a verse to pick it. Off, those stay on that device. A browser keeps
+   projector's own window does: scrolling a passage or a tall slide, tapping
+   a verse to pick it, and the screen's **✕** (top right, under the mouse)
+   hiding that screen. Off, those stay on that device, and the **✕** is not
+   shown. A browser keeps
    the permission when its page reloads, until the switch is turned off, the
    viewer is disconnected, or the app restarts. A media player has no switch.
 9. **[en:tran:Delete Virtual Display]** asks first. The screens on it are

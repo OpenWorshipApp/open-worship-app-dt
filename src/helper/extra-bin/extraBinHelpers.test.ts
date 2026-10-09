@@ -86,6 +86,8 @@ describe('extraBinHelpers', () => {
             ffmpegBinDirPath: '/data/extra-bin/win/ffmpeg/bin',
             ffmpegBinPath: '/data/extra-bin/win/ffmpeg/bin/ffmpeg.exe',
             qjsBinPath: '/data/extra-bin/win/qjs/qjs.exe',
+            cloudflaredBinPath:
+                '/data/extra-bin/win/cloudflared/cloudflared.exe',
         });
     });
 
@@ -96,6 +98,9 @@ describe('extraBinHelpers', () => {
 
         expect(paths.ytDlpBinPath).toBe('/data/extra-bin/linux/yt/yt-dlp');
         expect(paths.qjsBinPath).toBe('/data/extra-bin/linux/qjs/qjs');
+        expect(paths.cloudflaredBinPath).toBe(
+            '/data/extra-bin/linux/cloudflared/cloudflared',
+        );
         expect(paths.ffmpegBinPath).toBe(
             '/data/extra-bin/linux/ffmpeg/bin/ffmpeg',
         );
@@ -157,7 +162,7 @@ describe('extraBinHelpers', () => {
 
         expect(await module.checkIsExtraBinInstalled()).toEqual({
             isInstalled: false,
-            missingNames: ['yt-dlp', 'ffmpeg', 'qjs'],
+            missingNames: ['yt-dlp', 'ffmpeg', 'qjs', 'cloudflared'],
         });
         expect(fsMoveMock).not.toHaveBeenCalled();
     });
@@ -178,6 +183,27 @@ describe('extraBinHelpers', () => {
             isInstalled: true,
             missingNames: [],
         });
+    });
+
+    // A pack from before cloudflared joined it: the panel says what is
+    // missing, but video and audio still download with it.
+    test('the media download asks for its own three tools only', async () => {
+        const module = await loadModule();
+        fsCheckFileExistMock.mockImplementation(async (filePath: string) => {
+            return !filePath.includes('cloudflared');
+        });
+
+        expect(await module.checkIsExtraBinInstalled()).toEqual({
+            isInstalled: false,
+            missingNames: ['cloudflared'],
+        });
+        expect(
+            await module.checkIsExtraBinInstalled(module.EXTRA_BIN_MEDIA_NAMES),
+        ).toEqual({ isInstalled: true, missingNames: [] });
+        expect(await module.requireExtraBinPaths()).toEqual(
+            module.getExtraBinPaths(),
+        );
+        expect(showAppConfirmMock).not.toHaveBeenCalled();
     });
 
     test('reads the installed version, and survives a missing or broken info file', async () => {

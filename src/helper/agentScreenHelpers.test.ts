@@ -230,6 +230,7 @@ describe('toForegroundSummary', () => {
             marqueeBottomData: null,
             quickTextData: null,
             cameraDataList: [],
+            screenDataList: [{ id: 2 }],
             webDataList: [],
             videoDataList: [{ filePath: 'C:\\media\\snow.mp4' }],
             imageDataList: [{ filePath: '/media/logo.png' }],
@@ -238,6 +239,7 @@ describe('toForegroundSummary', () => {
             'stopwatch at 00:01:05, running',
             'clock "Phnom Penh"',
             'marquee at the top: "Welcome <b>everyone</b>"',
+            'picture of screen 2',
             'video snow.mp4',
             'picture logo.png',
         ]);

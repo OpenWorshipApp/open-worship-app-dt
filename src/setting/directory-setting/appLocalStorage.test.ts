@@ -7,6 +7,7 @@ const h = vi.hoisted(() => {
         movedDirPath: null as string | null,
         markerId: 'marker-id' as string | null,
         fileHelpersLoaded: false,
+        diskWrites: [] as string[],
     };
 });
 
@@ -63,9 +64,13 @@ vi.mock('../../server/storageFileHelpers', () => ({
     },
     fsMkDirSync: () => {},
     fsReadSync: () => '',
-    fsUnlinkSync: () => {},
+    fsUnlinkSync: (filePath: string) => {
+        h.diskWrites.push(`unlink ${filePath}`);
+    },
     fsWriteFileSync: () => {},
-    fsWriteFileAtomicSync: () => {},
+    fsWriteFileAtomicSync: (filePath: string) => {
+        h.diskWrites.push(`write ${filePath}`);
+    },
 }));
 
 vi.mock('../../server/fileHelpers', () => {
@@ -88,6 +93,7 @@ beforeEach(() => {
     h.movedDirPath = null;
     h.markerId = 'marker-id';
     h.fileHelpersLoaded = false;
+    h.diskWrites = [];
 });
 
 test('startup storage does not load the broad file helper graph', async () => {
@@ -184,5 +190,42 @@ describe('the folders used before', () => {
 
         expect(appLocalStorage.defaultStorageDirPath).toBe('F:\\data');
         expect(readHistory()).toEqual(['D:\\other', 'F:\\data', 'C:\\first']);
+    });
+});
+
+// A screen page reads the settings it was opened with and never writes the
+// disk. A setting the presenter syncs to it -- the Bible text style -- has to
+// land in that copy, or the screen keeps drawing the old one (and sends it
+// back as its own).
+describe('a screen page', () => {
+    test('keeps what it is told in its own copy, never on disk', async () => {
+        const { appLocalStorage } = await loadAppLocalStorage();
+        const { default: appProvider } =
+            await import('../../server/appProvider');
+        const context = {
+            settings: { 'screen-bible--style-text': '{"color":"#FFFFFF"}' },
+        };
+        (appProvider as any).screenUtils = { getContext: () => context };
+        try {
+            expect(appLocalStorage.getItem('screen-bible--style-text')).toBe(
+                '{"color":"#FFFFFF"}',
+            );
+
+            appLocalStorage.setItem(
+                'screen-bible--style-text',
+                '{"color":"#000000"}',
+            );
+            expect(appLocalStorage.getItem('screen-bible--style-text')).toBe(
+                '{"color":"#000000"}',
+            );
+
+            appLocalStorage.removeItem('screen-bible--style-text');
+            expect(appLocalStorage.getItem('screen-bible--style-text')).toBe(
+                null,
+            );
+            expect(h.diskWrites).toEqual([]);
+        } finally {
+            delete (appProvider as any).screenUtils;
+        }
     });
 });

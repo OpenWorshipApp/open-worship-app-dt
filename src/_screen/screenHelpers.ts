@@ -11,6 +11,7 @@ import { checkIsValidLocale, tran } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { electronSendAsync } from '../server/appHelpers';
 import { getValidOnScreen } from './managers/screenManagerBaseHelpers';
+import { forgetVirtualScreensShowing } from './managers/virtualScreenShowingHelpers';
 import appProvider from '../server/appProvider';
 import {
     PLAY_TO_BOTTOM_CLASSNAME,
@@ -108,6 +109,8 @@ export function hideScreen(screenId: number) {
 }
 
 export function hideAllScreens() {
+    // Hidden on purpose, every one: none is put up again at the next start.
+    forgetVirtualScreensShowing();
     messageUtils.sendData('app:hide-all-screens');
 }
 

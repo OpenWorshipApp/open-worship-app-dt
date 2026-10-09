@@ -72,8 +72,13 @@ export type MirrorGuest = {
 };
 // One address a guest can type: on a network card of this computer (`lan`, or
 // `internet` for a global IPv6 one), the router's public side once UPnP opened
-// the port (`router`), or the public address the operator typed (`typed`).
-export type MirrorAddressKind = 'lan' | 'internet' | 'router' | 'typed';
+// the port (`router`), this network's public address while the router has NOT
+// opened it -- as the router told it, or a lookup site when no router
+// answered -- for a port forwarded by hand (`public`), the public address
+// the operator typed (`typed`), or Cloudflare's quick tunnel (`tunnel`:
+// https on its default port, reached with nothing coming in).
+export type MirrorAddressKind =
+    'lan' | 'internet' | 'router' | 'public' | 'typed' | 'tunnel';
 export type MirrorAddress = {
     host: string;
     port: number;
@@ -85,6 +90,18 @@ export type MirrorAddress = {
 // the internet cannot reach it anyway.
 export type MirrorRouterStatus =
     'off' | 'working' | 'open' | 'unavailable' | 'refused' | 'shared';
+// Cloudflare's quick tunnel for guests and viewers (`MirrorTunnel`):
+// `starting` until cloudflared registered, `up` with its https address,
+// `error` with why -- `missing` while the extra-bin pack that carries
+// cloudflared is not installed (it starts once it is), `stopped` when it
+// died (started again by itself), `failed` when it would not run.
+export type MirrorTunnelStatus = 'off' | 'starting' | 'up' | 'error';
+export type MirrorTunnelErrorCode = 'missing' | 'stopped' | 'failed';
+export type MirrorTunnelState = {
+    status: MirrorTunnelStatus;
+    url: string;
+    error: MirrorTunnelErrorCode | '';
+};
 export type MirrorState = {
     id: string;
     port: number;
@@ -103,7 +120,14 @@ export type MirrorState = {
     approvalMode: 'approve' | 'code';
     hasCode: boolean;
     customPort: number | null;
-    guests: MirrorGuest[];
+    // The public port the operator chose: the router is asked for it first,
+    // and the public address is listed with it while no router opened one.
+    publicPort: number | null;
+    // Cloudflare's quick tunnel, for guests and viewers the internet cannot
+    // reach here directly (a VPN, carrier NAT, a router that forwards nothing).
+    tunnelEnabled: boolean;
+    tunnel: MirrorTunnelState;
+    guests: (MirrorGuest & { intercom: MirrorIntercomState })[];
     pending: {
         id: string;
         name: string;
@@ -111,10 +135,28 @@ export type MirrorState = {
         network: MirrorNetwork;
     }[];
     // This computer as a guest: one entry per host it is linked to.
-    connections: MirrorConnection[];
+    connections: (MirrorConnection & {
+        intercom: MirrorIntercomState;
+        // Whether this computer's cameras are offered to that host.
+        shareCameras: boolean;
+    })[];
 };
 export type MirrorConnectionStatus =
     'connecting' | 'pending' | 'connected' | 'reconnecting' | 'error';
+// A two-way intercom on one Screen Mirror connection, as this computer has it
+// set: its microphone goes to the other side, the other side's plays here
+// (at `volume`, 0 to 1), and whether the other side's microphone is on. Each
+// side turns on only its own microphone and its own speaker.
+export type MirrorIntercomState = {
+    mic: boolean;
+    speaker: boolean;
+    volume: number;
+    remoteMic: boolean;
+};
+// One Opus packet of 20 ms, base64 on the wire: far under this.
+export const MIRROR_INTERCOM_MAX_BYTES = 1024;
+// Packets a second one connection may send; 20 ms packets are 50.
+export const MIRROR_INTERCOM_MAX_PER_SECOND = 100;
 export type MirrorConnection = {
     id: string;
     // The host's own id, so a scan can tell a host this computer is linked to.
@@ -139,6 +181,9 @@ export type MirrorScreenContext = {
     // Shown on a virtual display: the screen page plays its own sound (it is
     // what the display streams), and the presenter's copy stays silent.
     isSoundOwner?: boolean;
+    // A copy of the screen drawn inside ANOTHER screen (Screen Show): never
+    // heard, and never drawing a Screen Show of its own.
+    isScreenShowFrame?: boolean;
     messages?: MirrorScreenMessage[];
 };
 // What the operating system's firewall does to other computers reaching this
@@ -178,6 +223,8 @@ export const MIRROR_SCREEN_TYPES = new Set([
     'background-video-time',
     'vary-app-document-video-time',
     'sync-scroll-percentage',
+    // Another screen's state, for a Screen Show on this one.
+    'screen-show',
 ]);
 export const MIRROR_FEEDBACK_TYPES = new Set([
     'init',
@@ -427,7 +474,9 @@ export function toMirrorHostPort(host: string, port: number) {
 }
 // What a person types or pastes as an address: a host, `host:port`,
 // `[IPv6]:port`, a bare IPv6 address, or a whole `http://` link. The port is
-// null when the text has none.
+// null when the text has none -- except an `https://` (or `wss://`) link,
+// which is 443: a tunnel's address is just that, and port 443 is dialled
+// with TLS (`MIRROR_SECURE_PORT`).
 export function readMirrorAddressText(
     text: string,
 ): { host: string; port: number | null } | null {
@@ -455,13 +504,40 @@ export function readMirrorAddressText(
     }
     return {
         host: url.hostname.replace(/^\[|\]$/g, ''),
-        port: url.port ? Number(url.port) : null,
+        port: url.port
+            ? Number(url.port)
+            : ['https:', 'wss:'].includes(url.protocol)
+              ? MIRROR_SECURE_PORT
+              : null,
     };
+}
+// The port a guest dials with TLS (https, wss): a Cloudflare tunnel's. The
+// Screen Mirror server itself only ever speaks plain HTTP on its own ports.
+export const MIRROR_SECURE_PORT = 443;
+// The port a guest dials when none is typed: a Cloudflare quick tunnel's
+// address has none to show (https, 443); any other host, Screen Mirror's
+// first port.
+export function toMirrorDefaultPort(host: string) {
+    return /(?:^|\.)trycloudflare\.com$/i.test(host.trim())
+        ? MIRROR_SECURE_PORT
+        : MIRROR_PORT_FIRST;
+}
+// The text a guest types to reach an address: `host:port`, or a tunnel's
+// whole https link.
+export function toMirrorAddressText(address: {
+    host: string;
+    port: number;
+    kind?: string;
+}) {
+    return address.kind === 'tunnel'
+        ? `https://${address.host}`
+        : toMirrorHostPort(address.host, address.port);
 }
 // The origin a guest reached this host on, from its own `Host` header: on the
 // internet that is the router's public address and port, not the network card
 // the connection arrived on, so it is the one base its files can load from.
-export function readMirrorOrigin(host: unknown) {
+// Through the tunnel it is https.
+export function readMirrorOrigin(host: unknown, isSecure = false) {
     if (
         typeof host !== 'string' ||
         host.length > 300 ||
@@ -470,7 +546,7 @@ export function readMirrorOrigin(host: unknown) {
         return null;
     }
     try {
-        return new URL(`http://${host}`).origin;
+        return new URL(`${isSecure ? 'https' : 'http'}://${host}`).origin;
     } catch {
         return null;
     }

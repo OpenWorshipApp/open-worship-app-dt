@@ -1,4 +1,5 @@
 import { getSetting } from '../../helper/settingHelpers';
+import { screenManagerSettingNames } from '../../helper/constants';
 import appProvider from '../../server/appProvider';
 import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
 import { isVirtualDisplayId } from '../../../electron/virtualDisplayProtocol';
@@ -15,8 +16,10 @@ export function getAllDisplays(): AllDisplayType {
     return appProvider.messageUtils.sendDataSync('main:app:get-displays');
 }
 
-export function getDefaultScreenDisplay() {
-    const { primaryDisplay, displays } = getAllDisplays();
+// Where a screen goes when it has no display of its own, or its display is
+// gone: the first monitor that is not this one, else this one -- never a
+// virtual display, which nobody sees until someone opens its address.
+function getPlacementDisplay({ primaryDisplay, displays }: AllDisplayType) {
     return (
         displays.find((display) => {
             return (
@@ -27,13 +30,58 @@ export function getDefaultScreenDisplay() {
     );
 }
 
+// The screens the presenter keeps, read straight from their setting: this
+// module stays a leaf (see `getAllDisplays`), so no screen-manager import.
+function readScreenIds(): number[] {
+    try {
+        const list = JSON.parse(
+            getSetting(screenManagerSettingNames.MANAGERS) ?? '[]',
+        );
+        return Array.isArray(list)
+            ? list
+                  .map((item) => item?.screenId)
+                  .filter((screenId) => Number.isInteger(screenId))
+            : [];
+    } catch {
+        return [];
+    }
+}
+
+// The display content is SIZED for: a new slide, a song's slides, a web
+// page's viewport, a capture. A second monitor wins, as it does for placing a
+// screen; with none, a virtual display a screen is set to -- that is the
+// output then, and sizing for the operator's own monitor letterboxed every
+// song on it (1494x934 inside a 1920x1080 virtual display).
+export function getDefaultScreenDisplay() {
+    const allDisplays = getAllDisplays();
+    const placementDisplay = getPlacementDisplay(allDisplays);
+    if (placementDisplay.id !== allDisplays.primaryDisplay.id) {
+        return placementDisplay;
+    }
+    for (const screenId of readScreenIds()) {
+        const displayId = Number.parseInt(
+            getSetting(`${SCREEN_MANAGER_SETTING_NAME}-pid-${screenId}`) ?? '',
+        );
+        if (!isVirtualDisplayId(displayId)) {
+            continue;
+        }
+        const display = allDisplays.displays.find((item) => {
+            return item.id === displayId;
+        });
+        if (display !== undefined) {
+            return display;
+        }
+    }
+    return placementDisplay;
+}
+
 export function getDisplayByScreenId(screenId: number) {
     const displayId = getDisplayIdByScreenId(screenId);
-    const { displays } = getAllDisplays();
+    const allDisplays = getAllDisplays();
     return (
-        displays.find((display) => {
+        allDisplays.displays.find((display) => {
             return display.id === displayId;
-        }) ?? getDefaultScreenDisplay()
+        }) ?? getPlacementDisplay(allDisplays)
     );
 }
 
@@ -57,7 +105,7 @@ export function getPresentingScreenDisplay() {
 }
 
 export function getDisplayIdByScreenId(screenId: number) {
-    const defaultDisplay = getDefaultScreenDisplay();
+    const defaultDisplay = getPlacementDisplay(getAllDisplays());
     const str =
         getSetting(`${SCREEN_MANAGER_SETTING_NAME}-pid-${screenId}`) ??
         defaultDisplay.id.toString();

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 0d6afc89-1c6b-4cd5-8f88-163d1daabea1
-  modified: 2026-10-07T17:36:34.694Z
+  modified: 2026-10-08T13:38:35.763Z
 ---
 
 Built 2026-10-07 at the user's ask (W-50 steps 7–8, SP-28/29).
@@ -28,6 +28,38 @@ Built 2026-10-07 at the user's ask (W-50 steps 7–8, SP-28/29).
   so a launch with the option off removes what a crash left; quitting does
   not wait for the router. A private external address is `shared` (carrier
   NAT) and nothing is mapped.
+- **The router's yes is never trusted on its word** (2026-10-08, reported
+  _"port is listening by another computer"_: the panel said _The router
+  opened the port._ and `<public>:39240/vd/1/` showed ANOTHER computer's
+  display — a viewer that never appeared in Watching now). Before asking for
+  a port, `GetSpecificPortMappingEntry` says whose it is: another client (or
+  this computer on another internal port — dev beside packaged) is skipped,
+  never asked for, because some routers hand it over and cut that computer
+  off. A yes is read back once, and `openRouter` then probes the public side
+  through NAT loopback for a one-time token only this server answers
+  (`/router-probe/<token>`, routed before every gate); any other answer moves
+  to another port, no answer is `unknown` (many routers do not loop back).
+  Renewal re-checks both every half hour, permanent leases too; removal
+  deletes only an entry still this computer's (the remembered record now
+  keeps `internalPort`). A manual forwarding rule on the router outranks UPnP
+  and is invisible to it — only the probe catches that. Proton VPN (`ProTUN`,
+  10.2.0.2) on the user's PC blocks the LAN: no router answers while it is
+  up, and whatismyip shows the VPN's exit, not the router's public address.
+- **Any refusal of a port moves to another** (2026-10-08, asked _"try
+  different port if router not ok with the port"_): up to 8 ports (the
+  operator's **Public port** `screen-mirror-public-port`, else the remembered
+  one, this computer's own, then random 40000-59999); only a router that
+  stops answering (`NO_ANSWER`, a timeout) ends the search; 724
+  SamePortValuesRequired narrows it to this computer's own port. The public
+  port is a preference, not a pin: the panel says when the router opened
+  another. **The public address is listed even with no port opened**
+  (`kind: 'public'`, badge **Public IP**, with the public port to forward by
+  hand): the router's own answer when it refused, else
+  `https://api.ipify.org` when no router answered -- the user chose that
+  (_"Router, then lookup site"_), asked only while the router is wanted.
+  Behind a VPN that is the VPN's exit -- unreachable unless the VPN forwards
+  a port; the answer there is [[cloudflare-quick-tunnel]]. The service tests
+  MOCK the lookup; never let a test reach it.
 - **A guest holds one `Link` per host.** A host's screen opens in
   `ElectronScreenController.createDetached(hostScreenId)` — outside the
   id-keyed cache — and `incoming` is keyed `linkId:screenId`, found again by

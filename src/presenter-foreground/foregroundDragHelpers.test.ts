@@ -23,6 +23,7 @@ function genManager() {
         setMarqueeBottomData: vi.fn(),
         setQuickTextData: vi.fn(),
         addCameraData: vi.fn(),
+        addScreenData: vi.fn(),
         addWebData: vi.fn(),
         addVideoData: vi.fn(),
         addImageData: vi.fn(),
@@ -137,6 +138,33 @@ describe('foreground drag helpers', () => {
             }),
         );
         expect(manager.addVideoData).toHaveBeenCalledWith({ id: 'v' });
+    });
+
+    test('replays a stored Screen Show row only for a plain screen id', async () => {
+        const manager = genManager();
+        await applyForegroundDragData(manager as any, {
+            target: 'screen',
+            data: { id: 1, extraStyle: { width: '30%' } },
+        });
+        expect(manager.addScreenData).toHaveBeenCalledWith({
+            id: 1,
+            extraStyle: { width: '30%' },
+        });
+        // A row from a hand-edited file names nothing that can be shown.
+        for (const id of ['1', -1, 2.5, undefined]) {
+            await applyForegroundDragData(manager as any, {
+                target: 'screen',
+                data: { id },
+            });
+        }
+        expect(manager.addScreenData).toHaveBeenCalledOnce();
+        expect(
+            toForegroundDragLabel(
+                { target: 'screen', data: { id: 1 } },
+                (key) => `t:${key}`,
+            ),
+        ).toBe('t:Screen Show: 1');
+        expect(toForegroundDragIconName('screen')).toBe('display');
     });
 
     test('a row dragged with Auto-start off goes up stopped', async () => {

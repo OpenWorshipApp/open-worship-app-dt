@@ -134,7 +134,8 @@
             "category": "public.app-category.productivity",
             "minimumSystemVersion": "10.0",
             "extendInfo": {
-                "NSCameraUsageDescription": "This app requires camera access to use as background video."
+                "NSCameraUsageDescription": "This app requires camera access to use as background video.",
+                "NSMicrophoneUsageDescription": "This app uses the microphone only when you turn on talk-back with a Screen Mirror connection."
             }
         },
         "directories": {

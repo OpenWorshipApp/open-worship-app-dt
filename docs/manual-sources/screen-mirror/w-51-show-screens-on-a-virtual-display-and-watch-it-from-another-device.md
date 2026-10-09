@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-30, SP-31]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-07"
+workflowsVersion: "2026-10-08"
 ---
 # W-51 — Show screens on a virtual display and watch it from another device
 
@@ -40,27 +40,41 @@ cable or a second copy of the app.
    and has to be opened again. **[en:tran:Settings]** and
    **[en:tran:Where to watch]** each fold under their title; the card and both
    parts stay folded or open as you left them, also after a restart.
+   **[en:tran:Preview]**, at the top of the card, shows the display inside it.
 4. In a screen card's display picker, choose the display — it is listed as
    its name, **[en:tran:Virtual]** and its size, such as
    `Virtual Display 1 (Virtual): 1920x1080`. Present something and use the
    card's show control (F5): no window opens on any monitor; the screen shows
    on the virtual display instead, over its wallpaper. Several screens on one
    display are stacked in the order they were shown, the way they would be on
-   a real monitor. **[en:tran:Screens on this display]** under
-   **[en:tran:Settings]** lists them.
+   a real monitor, and the card says so while they are.
+   **[en:tran:Screens on this display]** under **[en:tran:Settings]** lists
+   them. With no second monitor plugged in, songs and new slides are laid out
+   for the virtual display's size, so they fill it. A screen showing on a
+   virtual display is showing again, with what it held, when the app starts
+   next time, so its viewers are not left on the wallpaper; hide it (F5) and
+   it stays hidden. A screen on a real monitor never comes up by itself, and
+   going to the Bible Reader, which hides every screen, keeps them all
+   hidden.
 5. Sound from a screen on a virtual display goes into what the display
    streams, not out of this computer's speakers: the Mini Screen's
    background audio player for that screen stays muted, but its play, pause,
    position and volume still drive the sound the viewers hear.
-6. **[en:tran:Where to watch]** lists two kinds of address, each with
-   **[en:tran:Copy address]** and **[en:tran:QR code]** (the code holds the
-   whole link):
+6. **[en:tran:Where to watch]** starts with the address to give someone,
+   marked with a star and its QR code already open: this computer's best
+   network (a router's 192.168 before a VPN or a virtual adapter), and any
+   internet address you opened. Each address has **[en:tran:Copy address]**
+   and **[en:tran:QR code]** (the code holds the whole link). Everything else
+   folds under **[en:tran:More addresses]**:
    - **[en:tran:Watch in a browser]** — `http://<address>:<port>/vd/<number>/`.
      The browser draws the display itself from what the app sends it, so it is
      the fastest way to watch, and this computer encodes nothing for it.
    - **[en:tran:Video for media players (MP4)]** —
      `http://<address>:<port>/vd/<number>/video`, an H.264 + AAC MP4 for a
      player such as VLC or OBS. It is made only while someone plays it.
+
+   The port stays the same from one launch to the next, so a saved address
+   or a printed QR code keeps working after the app restarts.
 
    Until **[en:tran:Let other devices watch]** at the top of the tab is on,
    only **[en:tran:This computer]** addresses are listed and nobody else can
@@ -69,19 +83,41 @@ cable or a second copy of the app.
    Mirror's, with the same warning) lists **[en:tran:Internet]** ones. No code
    is asked for: anyone who has the address can watch.
 7. The browser page fits the display to its window. Its
-   **[en:tran:Full screen]** button (or a double-click) fills the screen, and
-   **[en:tran:Exit full screen]** leaves it; the buttons hide while the mouse
-   is still. **[en:tran:Turn on sound]** is needed once, because a browser
-   plays sound only after the page has been touched; until then the page
-   plays everything silently. A camera put on the screen (Camera Show, or a
-   camera background) is streamed from this computer to the page, on this
-   network. The page keeps the
-   device from sleeping while it is open. If the app goes away, the page reads
-   **[en:tran:Waiting for the display]** and joins again by itself.
+   **[en:tran:Full screen]** button (or a double-click on the picture) fills
+   the screen, and **[en:tran:Exit full screen]** (or another double-click)
+   leaves it; on a phone, full screen also turns the picture sideways where
+   the browser allows it. The buttons show while the mouse is over the page
+   and hide when it leaves; a tap on the picture shows them for a few
+   seconds. The pointer shows over the picture only while they do.
+   **[en:tran:Turn on sound]** is
+   needed once, because a browser plays sound only after the page has been
+   touched; until then the page plays everything silently. A camera put on
+   the screen (Camera Show, or a camera background) is streamed from this
+   computer to the page, on this network. **[en:tran:Cast to a TV]** puts
+   the display on a TV:
+   - **[en:tran:Cast from this browser]** — a TV on the same network as the
+     device holding the page (at home, in another building), through the
+     browser's own picker: Chrome and Edge list Google Cast TVs, Safari
+     AirPlay ones. The app streams the display to the page for it, and the TV
+     then plays it from the app itself, without the operator's
+     **[en:tran:Allow connection]** or the connection code. When the browser
+     knows no TV, the list says so. A browser that cannot cast (Firefox)
+     says that too.
+   - On the app's own network, the list also shows the TVs the app found
+     there (Google Cast, DLNA, Roku): **[en:tran:Cast]** puts the display on
+     one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]** looks
+     once more.
+
+   The page keeps the device from sleeping while it is open. If the app goes
+   away, the page reads **[en:tran:Waiting for the display]** and joins again
+   by itself.
 8. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
    or MP4, where they are (**[en:tran:This computer]**,
-   **[en:tran:This network]** or **[en:tran:Internet]**), their address and
-   since when. **[en:tran:Disconnect]** ends one and keeps it out of this
+   **[en:tran:This network]** or **[en:tran:Internet]**), their address with
+   their browser and device (such as `Chrome · Android` or `VLC`), and
+   since when. A device that leaves the page, or drops off the network
+   without a word (a phone gone to sleep), leaves the list by itself within
+   about 40 seconds. **[en:tran:Disconnect]** ends one and keeps it out of this
    display for ten minutes: a browser by itself (other devices behind the
    same router are not touched), a media player by its address. The browser
    page then says the device was disconnected and stops trying. Its access to
@@ -92,8 +128,10 @@ cable or a second copy of the app.
    inside the card, listed as **[en:tran:This app (preview)]**. A browser's
    row has **[en:tran:Allow interaction]**, off for every new viewer. Turned
    on, a hand on that browser's page reaches the app the way a hand on the
-   projector's own window does: scrolling a passage or a tall slide, and
-   tapping a verse to pick it. Off, those stay on that device. A browser keeps
+   projector's own window does: scrolling a passage or a tall slide, tapping
+   a verse to pick it, and the screen's **✕** (top right, under the mouse)
+   hiding that screen. Off, those stay on that device, and the **✕** is not
+   shown. A browser keeps
    the permission when its page reloads, until the switch is turned off, the
    viewer is disconnected, or the app restarts. A media player has no switch.
 9. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
@@ -105,5 +143,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-30` · `SP-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-07).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
 :::

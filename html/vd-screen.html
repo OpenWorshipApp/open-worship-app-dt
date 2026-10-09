@@ -6,7 +6,6 @@
         <link rel="icon" href="/favicon.ico" />
         <!-- TODO: change logo192.png -->
         <link rel="apple-touch-icon" href="/logo192.png" />
-        <link rel="manifest" href="/manifest.json" />
         <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Open Worship App" />
@@ -16,6 +15,24 @@
                 * {
                     cursor: url('/assets/transparency-cursor.svg'), auto !important;
                 }
+            }
+            /* A projector hides the pointer; a browser page shows it while
+               its controls are up (the page marks its frames then), or
+               there is no telling where the mouse is. */
+            html[data-vd-controls='1'] body * {
+                cursor: auto !important;
+            }
+            /* A double-click goes full screen and a long-press is a touch:
+               neither may select the words on the screen. */
+            html {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-touch-callout: none;
+            }
+            /* The screen's ✕ hides it in the app: only a browser the
+               operator lets interact may use it. */
+            html:not([data-vd-interactive='1']) #close {
+                display: none;
             }
         </style>
     </head>

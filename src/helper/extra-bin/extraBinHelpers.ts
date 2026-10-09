@@ -55,7 +55,23 @@ export type ExtraBinPathsType = {
     // The executable itself, for the existence check only.
     ffmpegBinPath: string;
     qjsBinPath: string;
+    // Run by the main process for Screen Mirror's tunnel
+    // (`electron/extraBinPaths.ts` resolves the same path); here for the
+    // existence check only.
+    cloudflaredBinPath: string;
 };
+
+export type ExtraBinNameType = 'yt-dlp' | 'ffmpeg' | 'qjs' | 'cloudflared';
+// What a video or audio download needs; the pack carries cloudflared too.
+export const EXTRA_BIN_MEDIA_NAMES: readonly ExtraBinNameType[] = [
+    'yt-dlp',
+    'ffmpeg',
+    'qjs',
+];
+const EXTRA_BIN_ALL_NAMES: readonly ExtraBinNameType[] = [
+    ...EXTRA_BIN_MEDIA_NAMES,
+    'cloudflared',
+];
 
 /**
  * Where the on-demand media pack is installed. Pure path math and NO `mkdir`:
@@ -163,21 +179,35 @@ export function getExtraBinPaths(): ExtraBinPathsType {
         ffmpegBinDirPath,
         ffmpegBinPath: pathJoin(ffmpegBinDirPath, `ffmpeg${dotExe}`),
         qjsBinPath: pathJoin(dirPath, 'qjs', `qjs${dotExe}`),
+        cloudflaredBinPath: pathJoin(
+            dirPath,
+            'cloudflared',
+            `cloudflared${dotExe}`,
+        ),
     };
 }
 
 /**
  * `missingNames` is what makes a failure diagnosable — "not installed" and "the
- * ffmpeg half of the pack is gone" need different answers.
+ * ffmpeg half of the pack is gone" need different answers. The whole pack by
+ * default; the media download asks for its own three only, so a pack from
+ * before cloudflared joined it still downloads video.
  */
-export async function checkIsExtraBinInstalled() {
+export async function checkIsExtraBinInstalled(
+    names: readonly ExtraBinNameType[] = EXTRA_BIN_ALL_NAMES,
+) {
     await moveLegacyExtraBinPack();
-    const { ytDlpBinPath, ffmpegBinPath, qjsBinPath } = getExtraBinPaths();
-    const targetList = [
-        ['yt-dlp', ytDlpBinPath],
-        ['ffmpeg', ffmpegBinPath],
-        ['qjs', qjsBinPath],
-    ] as const;
+    const { ytDlpBinPath, ffmpegBinPath, qjsBinPath, cloudflaredBinPath } =
+        getExtraBinPaths();
+    const pathMap: Record<ExtraBinNameType, string> = {
+        'yt-dlp': ytDlpBinPath,
+        ffmpeg: ffmpegBinPath,
+        qjs: qjsBinPath,
+        cloudflared: cloudflaredBinPath,
+    };
+    const targetList = names.map((name) => {
+        return [name, pathMap[name]] as const;
+    });
     const existingList = await Promise.all(
         targetList.map(([_name, filePath]) => {
             return fsCheckFileExist(filePath);
@@ -210,7 +240,9 @@ export async function getInstalledExtraBinVersion() {
  * there — after offering to take the user to the panel that installs it.
  */
 export async function requireExtraBinPaths() {
-    const { isInstalled, missingNames } = await checkIsExtraBinInstalled();
+    const { isInstalled, missingNames } = await checkIsExtraBinInstalled(
+        EXTRA_BIN_MEDIA_NAMES,
+    );
     if (isInstalled) {
         return getExtraBinPaths();
     }

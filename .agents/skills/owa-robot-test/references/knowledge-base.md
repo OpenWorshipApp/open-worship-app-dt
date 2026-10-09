@@ -1224,7 +1224,7 @@ and `acceptedDragTypeList` must keep refusing it.
 
 Two families, split by a `target` discriminant — the difference decides the whole menu:
 
-- **`target: 'screen'` (18 in Add Action, plus the attached-only `Slide: Media Control`)** — `apply(screenManager)`. Five mirror the mini screen's clear bar; ELEVEN are per-foreground-widget clears derived from `foregroundClearMap` (Messages, Marquee Top/Bottom, Quick Text, Countdown, Stopwatch, Time, Video/Image/Camera/Web Show — badges `MS`/`M↑`/`M↓`/`QT`/`CD`/`SW`/`TM`/`VD`/`IM`/`CM`/`WB`)
+- **`target: 'screen'` (19 in Add Action, plus the attached-only `Slide: Media Control`)** — `apply(screenManager)`. Five mirror the mini screen's clear bar; TWELVE are per-foreground-widget clears derived from `foregroundClearMap` (Messages, Marquee Top/Bottom, Quick Text, Countdown, Stopwatch, Time, Video/Image/Camera/Screen/Web Show — badges `MS`/`M↑`/`M↓`/`QT`/`CD`/`SW`/`TM`/`VD`/`IM`/`CM`/`SS`/`WB`; Screen Show joined 2026-10-08)
   (keyed by the widget type, so a new widget without a clear is a compile error). They
   behave like content for every purpose except being shown: clickable, draggable onto a
   mini screen, pinnable. The Foreground panel's **Background Images Slide Show** has no
@@ -1238,7 +1238,7 @@ Two families, split by a `target` discriminant — the difference decides the wh
   deliberately do (§14.10).
 
 **The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
-**Clear Screen** row with a chevron, and inside it the ELEVEN per-widget FG clears fold again behind **Other Clear FG Items** (sixteen of the twenty-three entries clear something, so inline they were the menu; the count was eight until the Messages, Video Show and Image Show clears joined — corrected 2026-10-02). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
+**Clear Screen** row with a chevron, and inside it the TWELVE per-widget FG clears fold again behind **Other Clear FG Items** (seventeen of the twenty-four entries clear something, so inline they were the menu; the count was eight until the Messages, Video Show and Image Show clears joined — corrected 2026-10-02). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
 ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
 resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
 it recursively, so a family added later folds itself away. The stored ids did not change. The
@@ -1247,7 +1247,7 @@ rows in that order (corrected 2026-08-13 — this said seven, which predates `Ne
 Interval`/PL-101 joining the run family): `Clear Screen`, `Screen: Show`, `Screen: Hide`,
 `Next: Interval`, `Next: Clear Interval`, `Next: Timeout`, `Jump to`, `Keyboard Event`.
 **Clear Screen** opens the five whole-layer clears in the mini screen bar's own order plus the
-**Other Clear FG Items** row, which in turn holds the eleven per-widget FG clears — all verified rendering non-blank in Khmer on 2026-08-13 (the six top rows of **Clear Screen** and the eight of **Add Action** again on 2026-10-02).
+**Other Clear FG Items** row, which in turn holds the twelve per-widget FG clears — all verified rendering non-blank in Khmer on 2026-08-13 (the six top rows of **Clear Screen** and the eight of **Add Action** again on 2026-10-02).
 
 **Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
 case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new

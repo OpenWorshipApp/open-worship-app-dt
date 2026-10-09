@@ -289,6 +289,18 @@ export type ForegroundCameraDataType = ForegroundLayerDataType & {
     label?: string;
     extraStyle?: CSSProperties;
 };
+/**
+ * Another screen's live picture shown over this one -- the Foreground panel's
+ * Screen Show. `id` is the SOURCE screen's id: the screen whose window is
+ * captured, never the screen this datum sits on. A screen never shows itself,
+ * and two screens never show each other (`screenShowGraphHelpers`).
+ */
+export type ForegroundScreenDataType = ForegroundLayerDataType & {
+    /** See `ForegroundCameraDataType`. */
+    transitionEffect?: TransitionEffectType;
+    id: number;
+    extraStyle?: CSSProperties;
+};
 export type ForegroundWebDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
@@ -359,6 +371,7 @@ export type ForegroundDataType = {
     marqueeBottomData: ForegroundMarqueeDataType | null;
     quickTextData: ForegroundQuickTextDataType | null;
     cameraDataList: ForegroundCameraDataType[];
+    screenDataList: ForegroundScreenDataType[];
     webDataList: ForegroundWebDataType[];
     videoDataList: ForegroundVideoDataType[];
     imageDataList: ForegroundImageDataType[];
@@ -452,6 +465,8 @@ export const screenTypeList = [
     'sync-scroll-percentage',
     'draw',
     'focus',
+    // Another screen's state, carried to a screen that shows it (Screen Show).
+    'screen-show',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {
@@ -460,6 +475,22 @@ export type BasicScreenMessageType = {
 };
 export type ScreenMessageType = BasicScreenMessageType & {
     screenId: number;
+};
+
+/**
+ * Screen N's state on its way to a screen that shows it -- the payload of a
+ * `screen-show` message. A snapshot is N's WHOLE state and replaces what the
+ * receiver held; anything else is one change as it happens. N's size rides
+ * along because the receiver draws N at N's own size and scales it into its
+ * box.
+ */
+export type ScreenShowPayloadType = {
+    sourceScreenId: number;
+    width: number;
+    height: number;
+    stage: number;
+    isSnapshot: boolean;
+    messages: ScreenMessageType[];
 };
 
 export type SetDisplayType = {

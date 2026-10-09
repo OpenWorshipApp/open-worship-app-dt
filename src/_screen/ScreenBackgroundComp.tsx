@@ -13,14 +13,17 @@ import {
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
 import type { BackgroundSrcType } from './screenTypeHelpers';
-import { getCameraStream } from '../helper/cameraHelpers';
+import { getCameraStream, stopCameraStream } from '../helper/cameraHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { playMediaElement } from '../helper/mediaHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import { genWebBackgroundElement } from './managers/screenWebsiteHelpers';
-import { releaseMirrorCameraStream } from '../screen-mirror/mirrorCameraTransport';
+import {
+    checkIsViewerCameraId,
+    listenViewerCameraLive,
+} from '../virtual-display/viewerCameraTransport';
 
 export function genHtmlBackground(
     screenId: number,
@@ -43,17 +46,27 @@ export function genHtmlBackground(
             getCameraStream(backgroundSrc.src)
                 .then((mediaStream) => {
                     video.srcObject = mediaStream;
+                    // A browser viewer's camera is hidden while it sends no
+                    // pictures, and shows again when it does.
+                    const stopListeningLive = listenViewerCameraLive(
+                        mediaStream,
+                        (isLive) => {
+                            video.style.visibility = isLive ? '' : 'hidden';
+                        },
+                    );
                     const clearTracks = () => {
-                        releaseMirrorCameraStream(mediaStream);
-                        const tracks = mediaStream.getTracks();
-                        for (const track of tracks) {
-                            track.stop();
-                        }
+                        stopListeningLive();
+                        stopCameraStream(mediaStream);
                     };
                     video.onloadedmetadata = () => {
                         playMediaElement(video);
                         resolve(clearTracks);
                     };
+                    // One not shared yet has no picture to wait for: put up
+                    // now, it can still be let go of.
+                    if (checkIsViewerCameraId(backgroundSrc.src)) {
+                        resolve(clearTracks);
+                    }
                 })
                 .catch((error) => {
                     handleError(error);

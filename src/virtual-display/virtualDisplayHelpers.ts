@@ -64,6 +64,12 @@ export function toVirtualDisplayErrorText(message: string) {
     if (message === 'Virtual display not found') {
         return tran('Virtual display not found');
     }
+    if (message === 'TV not found') {
+        return tran('That TV was not found. Search again.');
+    }
+    if (message === 'Let other devices watch is off') {
+        return tran('Turn on “Let other devices watch” to cast to a TV.');
+    }
     if (message === 'This computer cannot make MP4 video') {
         return tran('This computer cannot make MP4 video');
     }

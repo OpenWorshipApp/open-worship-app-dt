@@ -69,6 +69,12 @@ class MockScreenManager extends MockScreenManagerBase {
     sendSyncScreen = vi.fn(async () => {});
 }
 
+// Keeping and restoring the virtual display screens reads settings; these
+// tests are about other things.
+vi.mock('./virtualScreenShowingHelpers', () => ({
+    rememberVirtualScreensShowing: vi.fn(),
+    restoreVirtualScreensShowing: vi.fn(() => []),
+}));
 vi.mock('../screenHelpers', () => ({
     getAllShowingScreenIds: getAllShowingScreenIdsMock,
 }));

@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-06",
+    "updated": "2026-10-08",
     "sections": [
         {
             "id": "general",
@@ -392,6 +392,8 @@
                         "download tools",
                         "yt-dlp",
                         "ffmpeg",
+                        "cloudflared",
+                        "tunnel",
                         "install pack",
                         "missing"
                     ],

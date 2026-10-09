@@ -1,6 +1,11 @@
 // A source renderer is created only when somebody actually uses a network camera.
 import appProvider from './server/appProvider';
 import { sendMirrorCameraPacket } from './screen-mirror/mirrorCameraTransport';
+import {
+    closeMirrorIntercom,
+    initMirrorIntercomBroker,
+    receiveIntercomMessage,
+} from './screen-mirror/mirrorIntercomBroker';
 
 type Capture = { promise: Promise<MediaStream>; users: number };
 type Source = {
@@ -135,6 +140,15 @@ appProvider.messageUtils.listenForData('mirror:camera', (_, packet) => {
 appProvider.messageUtils.listenForData('mirror:camera-reset', () => {
     for (const id of sources.keys()) release(id);
 });
+// Screen Mirror's intercom: this computer's microphone out, each
+// connection's sound in.
+initMirrorIntercomBroker((data) => {
+    appProvider.messageUtils.sendData('mirror:intercom-audio', data);
+});
+appProvider.messageUtils.listenForData('mirror:intercom', (_, message) => {
+    receiveIntercomMessage(message);
+});
 window.addEventListener('beforeunload', () => {
     for (const id of sources.keys()) release(id);
+    closeMirrorIntercom();
 });

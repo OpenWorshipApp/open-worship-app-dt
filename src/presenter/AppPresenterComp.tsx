@@ -13,6 +13,8 @@ import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewEx
 import LangAppMenuComp from '../lang/LangAppMenuComp';
 import { toWidgetLabel } from '../others/labelIconHelpers';
 import DataArchiveAppMenuComp from '../setting/data-archive/DataArchiveAppMenuComp';
+import { useAppEffect } from '../helper/appHooks';
+import { handleError } from '../helper/errorHelpers';
 
 const LazyAppPresenterLeftComp = lazy(() => {
     return import('./AppPresenterLeftComp');
@@ -25,6 +27,22 @@ const LazyAppPresenterRightComp = lazy(() => {
 });
 
 export default function AppPresenterComp() {
+    // The screens that were up on a virtual display come back with the app.
+    // The Mini Screen's module first: loading it registers the answer to
+    // main's request for a screen's state (`initReceiveScreenMessage` at its
+    // top), and a screen shown before that request can be answered waits ten
+    // seconds and goes off again -- what a restore from here met at first,
+    // its panel being a lazy chunk that loads after this.
+    useAppEffect(() => {
+        Promise.all([
+            import('../_screen/preview/MiniScreenComp'),
+            import('../_screen/managers/screenManagerHelpers'),
+        ])
+            .then(([, { restoreVirtualDisplayScreens }]) => {
+                restoreVirtualDisplayScreens();
+            })
+            .catch(handleError);
+    }, []);
     const viewController = useMemo(() => {
         const newViewController = new BibleItemsViewController('presenter');
         newViewController.finalRenderer = (bibleItem: BibleItem) => {

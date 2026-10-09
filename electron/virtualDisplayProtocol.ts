@@ -7,7 +7,12 @@ import {
     type MirrorAddressKind,
     type MirrorRouterStatus,
     type MirrorScreenContext,
+    type MirrorIntercomState,
+    type MirrorTunnelState,
 } from './screenMirrorProtocol';
+// Types only: erased, so this file still loads anywhere.
+import type { CastTargetKind } from './castProtocol';
+import type { CastFailureType } from './castTargets';
 
 // Display ids between the real monitors (positive) and Screen Mirror's guest
 // monitors (-1000000 and below). A virtual display's id is this base minus its
@@ -85,7 +90,47 @@ export type VirtualDisplayClient = {
     // hand on the projector's own window would. Off until the operator turns
     // it on, for each connection; never for an MP4 player.
     isInteractive: boolean;
+    // A viewer from the internet not let in yet: waiting for the operator's
+    // Allow, or for its connection code. It is sent nothing of the display.
+    waiting: 'approval' | 'code' | null;
+    // A browser's talk-back with this computer, once it is let in (never a
+    // preview or a media player).
+    intercom?: MirrorIntercomState;
+    // The camera it shares with this computer, by its name here.
+    camera?: string;
 };
+// How a viewer from the internet is let in (`virtual-display-access`): the
+// operator allows each one, or it gives the connection code. A viewer on this
+// computer's own networks is let in as before.
+export type VirtualDisplayAccessMode = 'approve' | 'code';
+export const VIRTUAL_DISPLAY_ACCESS_KEY = 'virtual-display-access';
+export const VIRTUAL_DISPLAY_CODE_KEY = 'virtual-display-code';
+export function readVirtualDisplayAccessMode(
+    value: unknown,
+): VirtualDisplayAccessMode {
+    return value === 'code' ? 'code' : 'approve';
+}
+// The password of an HTTP Basic `Authorization` header -- how a media player
+// gives the connection code -- or null; the user name is anything.
+export function readBasicAuthPassword(header: unknown) {
+    const match =
+        typeof header === 'string'
+            ? /^Basic\s+([A-Za-z0-9+/]+={0,2})$/i.exec(header.trim())
+            : null;
+    if (match === null || match[1].length > 512) {
+        return null;
+    }
+    let text: string;
+    try {
+        text = new TextDecoder().decode(
+            Uint8Array.from(atob(match[1]), (char) => char.charCodeAt(0)),
+        );
+    } catch {
+        return null;
+    }
+    const colon = text.indexOf(':');
+    return colon < 0 ? null : text.slice(colon + 1).slice(0, 64);
+}
 // A viewer the operator disconnected, kept out for a while: a browser by its
 // own id (others at the same address -- a whole church behind one router --
 // are not touched), a media player, which has none, by its address.
@@ -103,8 +148,42 @@ export type VirtualDisplayInfo = VirtualDisplayRecord & {
     error: string | null;
     mimeType: string | null;
     isWallpaperMissing: boolean;
+    // This computer's microphone mixed into the display's MP4 sound: one
+    // stream for every media player watching it, so one switch for them all.
+    isMp4MicOn: boolean;
     clients: VirtualDisplayClient[];
     blocked: VirtualDisplayBlockedClient[];
+    // TVs this display is cast to.
+    casts: VirtualDisplayCast[];
+};
+// A TV found on this network that a display can be cast to.
+export type VirtualDisplayCastTarget = {
+    id: string;
+    name: string;
+    kind: CastTargetKind;
+};
+export type VirtualDisplayCast = VirtualDisplayCastTarget & {
+    status: 'connecting' | 'casting' | 'failed';
+    failure: CastFailureType | null;
+    // How far behind live the TV plays (seconds; a Google Cast TV says), and
+    // its speed: above 1 while it catches up.
+    behind: number | null;
+    playbackRate: number;
+};
+// What a browser page's "Cast to a TV" list shows: the TVs this computer
+// found and, for each, this display's cast to it. A page casts through this
+// computer, so any browser can -- the browser's own picker reached only a
+// Chrome with a device it judged able to play the stream, and did nothing
+// otherwise. Only on this computer and its own networks (`isAllowed`), and
+// only while devices there may watch (`isSharing`): the TV pulls the MP4.
+export type VirtualDisplayViewerCastState = {
+    isAllowed: boolean;
+    isSharing: boolean;
+    isSearching: boolean;
+    targets: (VirtualDisplayCastTarget & {
+        status: VirtualDisplayCast['status'] | null;
+        behind: number | null;
+    })[];
 };
 export type VirtualDisplayAddress = {
     host: string;
@@ -118,8 +197,21 @@ export type VirtualDisplayState = {
     shareEnabled: boolean;
     internetEnabled: boolean;
     router: MirrorRouterStatus;
+    publicPort: number | null;
+    access: VirtualDisplayAccessMode;
+    hasCode: boolean;
+    // Cloudflare's quick tunnel, for viewers the internet cannot reach here
+    // directly (a VPN, carrier NAT, a router that forwards nothing).
+    tunnelEnabled: boolean;
+    tunnel: MirrorTunnelState;
+    // Shared with Screen Mirror: one server, one public address, one port.
+    publicAddress: string;
+    customPort: number | null;
     addresses: VirtualDisplayAddress[];
     displays: VirtualDisplayInfo[];
+    // The TVs the last search found, and whether one is under way.
+    castTargets: VirtualDisplayCastTarget[];
+    isCastSearching: boolean;
 };
 // What the compositor page is told to draw.
 export type VirtualDisplayCompositorConfig = {
@@ -146,6 +238,9 @@ export type VirtualDisplayLayout = {
     screenIds: number[];
     // The viewer page's few words, in the app's language.
     labels: Record<string, string>;
+    // The MP4 on this network, for a page on this computer casting to a TV:
+    // the TV cannot reach 127.0.0.1. Null while other devices may not watch.
+    castUrl: string | null;
 };
 // A screen page in a browser: its context, and the display it is on (the page
 // asks for "the displays" and is answered with this one).
@@ -458,10 +553,18 @@ export function toVirtualDisplayCameraId(hostId: string, cameraId: string) {
     return `mirror-camera:${hostId}:${cameraId}`;
 }
 
-// The two pages, and what each is told in its address.
+// The two pages, and what each is told in its address -- every key
+// `toScreenSrc` in `src/virtual-display-viewer.ts` can write. One missing
+// here is a 404 on every device but this computer: `sound` was, and
+// "Turn on sound" left a phone with the wallpaper alone.
 const DEV_VIEWER_PAGE_QUERY_KEYS = new Map([
     ['/virtual-display-viewer.html', new Set(['preview'])],
-    ['/vd-screen.html', new Set(['vd', 'screenId', 'viewer', 'preview'])],
+    [
+        '/vd-screen.html',
+        // `screenShow`: the same page drawing another screen inside this
+        // one (`screenShowFrameHelpers`).
+        new Set(['vd', 'screenId', 'viewer', 'preview', 'sound', 'screenShow']),
+    ],
 ]);
 const DEV_VIEWER_PATHS = new Set([
     '/src/virtual-display-viewer.ts',
@@ -478,9 +581,12 @@ const DEV_VIEWER_QUERY_KEYS = new Set(['t', 'v', 'import', 'url']);
 // A browser on this network watching a virtual display of a DEVELOPMENT
 // build: its code comes from the Vite dev server one module at a time, so
 // only what that page's module graph asks for passes -- the app's sources,
-// the prebundled packages, the two protocol files and the Vite client. Never
-// the rest of the dev server, which hands any file it can read to whoever
-// asks. `appPath` is the repository root (`app.getAppPath()` in development).
+// the prebundled packages, the protocol files `src/` imports and the Vite
+// client. Never the rest of the dev server, which hands any file it can read
+// to whoever asks. A new `electron/` import in `src/` must be named here or
+// every remote viewer draws the wallpaper alone (a 404 kills the screen
+// page); `virtualDisplayProtocol.test.ts` checks every one of them.
+// `appPath` is the repository root (`app.getAppPath()` in development).
 export function checkIsVirtualDisplayDevViewerFile(url: URL, appPath: string) {
     let pathname: string;
     try {
@@ -539,18 +645,29 @@ export function parseVirtualDisplayStreamPath(pathname: string) {
     return number >= 1 ? number : null;
 }
 
+// A tunnel address is https on the default port; every other is plain http.
+function toVirtualDisplayOrigin(address: {
+    host: string;
+    port: number;
+    kind?: string;
+}) {
+    return address.kind === 'tunnel'
+        ? `https://${address.host}`
+        : `http://${toMirrorHostPort(address.host, address.port)}`;
+}
+
 export function toVirtualDisplayStreamUrl(
-    address: { host: string; port: number },
+    address: { host: string; port: number; kind?: string },
     number: number,
 ) {
-    return `http://${toMirrorHostPort(address.host, address.port)}${toVirtualDisplayStreamPath(number)}`;
+    return `${toVirtualDisplayOrigin(address)}${toVirtualDisplayStreamPath(number)}`;
 }
 
 export function toVirtualDisplayPageUrl(
-    address: { host: string; port: number },
+    address: { host: string; port: number; kind?: string },
     number: number,
 ) {
-    return `http://${toMirrorHostPort(address.host, address.port)}${toVirtualDisplayPagePath(number)}`;
+    return `${toVirtualDisplayOrigin(address)}${toVirtualDisplayPagePath(number)}`;
 }
 
 // The order the H.264 encoder is tried in: High, Main, then Baseline, at the

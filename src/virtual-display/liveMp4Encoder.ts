@@ -13,8 +13,14 @@ import {
 //
 // It does only what a viewer needs: a frame the encoder cannot keep up with is
 // dropped rather than queued (a queue is latency), a picture that does not
-// change is re-sent once a second rather than thirty times, and a keyframe is
+// change is re-sent ten times a second rather than thirty, and a keyframe is
 // made when a viewer joins rather than on a timer.
+//
+// The picture's timeline has no holes: each frame is written once the next
+// one exists, lasting exactly until it. A still screen used to go out once a
+// second (up to two), each frame saying it lasted 1/30 s -- 97% of the video
+// track was holes, and a player that buffers a few frames before it plays
+// waited seconds for them: a Chromecast sat 7 s behind live (2026-10-08).
 
 const AUDIO_SAMPLE_RATE = 48000;
 const AUDIO_CHANNELS = 2;
@@ -32,7 +38,11 @@ function toBytes(source: AllowSharedBufferSource) {
               (source as ArrayBufferView).byteLength,
           ).slice();
 }
-const IDLE_REPEAT_MILLISECOND = 1000;
+// A still picture is encoded again this long after the last frame: the most a
+// frame waits to be written, and the longest a still screen's frame lasts.
+const IDLE_FRAME_MILLISECOND = 100;
+
+type HeldFrameType = { data: Uint8Array; timestamp: number; isKey: boolean };
 
 type MediaStreamTrackProcessorType = new (init: {
     track: MediaStreamTrack;
@@ -91,7 +101,10 @@ export class LiveMp4Encoder {
     private lastEncodedAt = 0;
     private isKeyWanted = true;
     private isStopped = false;
-    private idleTimer?: ReturnType<typeof setInterval>;
+    private idleTimer?: ReturnType<typeof setTimeout>;
+    // The newest encoded frame: written when the next one says how long it
+    // lasts.
+    private heldFrame: HeldFrameType | null = null;
     private startedAt = performance.now();
     private lastTimestamp = -1;
     private sequence = 0;
@@ -161,14 +174,6 @@ export class LiveMp4Encoder {
         void this.pump(new Processor({ track: videoTrack }), (frame) => {
             this.encodeFrame(frame);
         });
-        this.idleTimer = setInterval(() => {
-            if (
-                performance.now() - this.lastEncodedAt >=
-                IDLE_REPEAT_MILLISECOND
-            ) {
-                this.repeatLastFrame();
-            }
-        }, IDLE_REPEAT_MILLISECOND);
         this.options.onLive(
             `video/mp4; codecs="${videoConfig.codec}${this.isAudioOn ? ', mp4a.40.2' : ''}"`,
         );
@@ -214,11 +219,23 @@ export class LiveMp4Encoder {
         this.isKeyWanted = false;
         this.lastEncodedAt = performance.now();
         stamped.close();
+        this.scheduleIdleFrame();
+    }
+
+    // Nothing new by then: the picture again, so the frame before it can be
+    // written. One timer, moved on by every frame.
+    private scheduleIdleFrame() {
+        clearTimeout(this.idleTimer);
+        if (!this.isStopped) {
+            this.idleTimer = setTimeout(() => {
+                this.repeatLastFrame();
+            }, IDLE_FRAME_MILLISECOND);
+        }
     }
 
     // The picture again, at the time it is now: a still screen is encoded
-    // once a second, and a viewer who joins gets its keyframe without waiting
-    // for something to move.
+    // ten times a second, and a viewer who joins gets its keyframe without
+    // waiting for something to move.
     private repeatLastFrame() {
         if (
             this.lastFrame === null ||
@@ -233,6 +250,7 @@ export class LiveMp4Encoder {
         this.isKeyWanted = false;
         this.lastEncodedAt = performance.now();
         copy.close();
+        this.scheduleIdleFrame();
     }
 
     requestKeyFrame() {
@@ -280,20 +298,33 @@ export class LiveMp4Encoder {
         }
         const data = new Uint8Array(chunk.byteLength);
         chunk.copyTo(data);
+        const held = this.heldFrame;
+        this.heldFrame = {
+            data,
+            timestamp: chunk.timestamp,
+            isKey: chunk.type === 'key',
+        };
+        if (held !== null) {
+            this.writeVideoFrame(held, chunk.timestamp);
+        }
+    }
+
+    // A frame, lasting until `nextTimestamp` (microseconds).
+    private writeVideoFrame(frame: HeldFrameType, nextTimestamp: number) {
+        const start = Math.round(
+            (frame.timestamp * VIDEO_TIMESCALE) / 1_000_000,
+        );
+        const end = Math.round((nextTimestamp * VIDEO_TIMESCALE) / 1_000_000);
         this.options.onData(
             buildFragment({
                 sequence: ++this.sequence,
                 trackId: VIDEO_TRACK_ID,
-                baseDecodeTime: Math.round(
-                    (chunk.timestamp * VIDEO_TIMESCALE) / 1_000_000,
-                ),
+                baseDecodeTime: start,
                 samples: [
                     {
-                        data,
-                        duration: Math.round(
-                            VIDEO_TIMESCALE / this.options.frameRate,
-                        ),
-                        isKey: chunk.type === 'key',
+                        data: frame.data,
+                        duration: Math.max(1, end - start),
+                        isKey: frame.isKey,
                     },
                 ],
             }),
@@ -356,7 +387,8 @@ export class LiveMp4Encoder {
             return;
         }
         this.isStopped = true;
-        clearInterval(this.idleTimer);
+        clearTimeout(this.idleTimer);
+        this.heldFrame = null;
         for (const reader of this.readers) {
             void reader.cancel().catch(() => {});
         }

@@ -27,6 +27,7 @@ export const foregroundDragTargetList = [
     'video',
     'image',
     'camera',
+    'screen',
     'web',
 ] as const;
 export type ForegroundDragTargetType =
@@ -56,6 +57,7 @@ const targetLabelMap: Record<ForegroundDragTargetType, string> = {
     video: 'Video Show',
     image: 'Image Show',
     camera: 'Camera Show',
+    screen: 'Screen Show',
     web: 'Web Show',
 };
 
@@ -70,6 +72,7 @@ const targetIconMap: Record<ForegroundDragTargetType, string> = {
     video: 'camera-reels',
     image: 'images',
     camera: 'camera-video',
+    screen: 'display',
     web: 'globe2',
 };
 
@@ -176,6 +179,9 @@ export function toForegroundDragLabel(
             )}`;
         }
         return `${label}: ${data.dateTime ?? ''}`;
+    }
+    if (target === 'screen') {
+        return `${label}: ${data.id}`;
     }
     return label;
 }
@@ -303,6 +309,12 @@ export async function applyForegroundDragData(
         );
     } else if (target === 'camera') {
         screenForegroundManager.addCameraData(data);
+    } else if (target === 'screen') {
+        // Rows come from files: only a plain screen id gets through, and the
+        // manager still refuses the screen itself and a loop.
+        if (Number.isInteger(data.id) && data.id >= 0) {
+            screenForegroundManager.addScreenData(data);
+        }
     } else if (target === 'web') {
         screenForegroundManager.addWebData(data);
     } else if (target === 'video') {

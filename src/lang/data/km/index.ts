@@ -62,10 +62,43 @@ const dictionary = {
     'Screen Mirror Connection': 'ការតភ្ជាប់អេក្រង់ឆ្លុះ',
     'Full screen': 'ពេញអេក្រង់',
     'Exit full screen': 'ចេញពីពេញអេក្រង់',
+    'Catching up': 'កំពុងតាមឱ្យទាន់',
+    'behind live': 'យឺតជាងផ្សាយផ្ទាល់',
+    'Cast to a TV': 'បញ្ចាំងទៅទូរទស្សន៍',
+    Cast: 'បញ្ចាំង',
+    Casting: 'កំពុងបញ្ចាំង',
+    'Search again': 'ស្វែងរកម្ដងទៀត',
+    'Looking for TVs…': 'កំពុងស្វែងរកទូរទស្សន៍…',
+    'No TV found. Make sure the TV is on and on the same network as this computer.':
+        'រកមិនឃើញទូរទស្សន៍ទេ។ សូមប្រាកដថាទូរទស្សន៍បានបើក ហើយនៅលើបណ្ដាញតែមួយជាមួយកុំព្យូទ័រនេះ។',
+    'Turn on “Let other devices watch” to cast to a TV.':
+        'សូមបើក «អនុញ្ញាតឱ្យឧបករណ៍ផ្សេងមើល» ដើម្បីបញ្ចាំងទៅទូរទស្សន៍។',
+    'That TV was not found. Search again.':
+        'រកមិនឃើញទូរទស្សន៍នោះទេ។ សូមស្វែងរកម្ដងទៀត។',
+    'The TV could not be reached.': 'មិនអាចភ្ជាប់ទៅទូរទស្សន៍បានទេ។',
+    'The TV could not play this display.':
+        'ទូរទស្សន៍មិនអាចចាក់អេក្រង់នេះបានទេ។',
+    'The TV did not answer.': 'ទូរទស្សន៍មិនបានឆ្លើយតបទេ។',
+    'The TV stopped playing.': 'ទូរទស្សន៍បានឈប់ចាក់។',
+    'No TV was found that can play this display. It must be on and on the same network.':
+        'រកមិនឃើញទូរទស្សន៍ដែលអាចចាក់អេក្រង់នេះទេ។ វាត្រូវតែបើក ហើយនៅលើបណ្ដាញតែមួយ។',
+    'Turn off sound': 'បិទសំឡេង',
+    'Voice volume': 'កម្រិតសំឡេងនិយាយ',
     'Turn on sound': 'បើកសំឡេង',
     'Waiting for the display': 'កំពុងរង់ចាំម៉ូនីទ័រ',
     'Watch in a browser': 'មើលក្នុងកម្មវិធីរុករក',
     'Where to watch': 'កន្លែងសម្រាប់មើល',
+    'More addresses': 'អាសយដ្ឋានផ្សេងទៀត',
+    'Cast from this browser': 'បញ្ចាំងពីកម្មវិធីរុករកនេះ',
+    'For a TV on the same network as this device.':
+        'សម្រាប់ទូរទស្សន៍នៅលើបណ្តាញតែមួយជាមួយឧបករណ៍នេះ។',
+    'This browser found no TV. It must be on and on the same network as this device.':
+        'កម្មវិធីរុករកនេះរកមិនឃើញទូរទស្សន៍ទេ។ ទូរទស្សន៍ត្រូវតែបើក ហើយនៅលើបណ្តាញតែមួយជាមួយឧបករណ៍នេះ។',
+    'This browser cannot cast. Try Chrome, Edge or Safari.':
+        'កម្មវិធីរុករកនេះមិនអាចបញ្ចាំងបានទេ។ សាកល្បង Chrome, Edge ឬ Safari។',
+    'TVs on the app’s network': 'ទូរទស្សន៍នៅលើបណ្តាញរបស់កម្មវិធី',
+    'Several screens show on this display, stacked: the one shown last is on top.':
+        'អេក្រង់ច្រើនបង្ហាញលើអេក្រង់បង្ហាញនេះ ត្រួតលើគ្នា៖ អេក្រង់ដែលបង្ហាញចុងក្រោយនៅខាងលើ។',
     'Allow interaction': 'អនុញ្ញាតឲ្យប៉ះ និងរំកិល',
     'Allow again': 'អនុញ្ញាតម្ដងទៀត',
     'This device was disconnected. Ask whoever runs the display to let it back in.':
@@ -140,6 +173,7 @@ const dictionary = {
     Rescan: 'ស្វែងរកឡើងវិញ',
     'Host address': 'អាសយដ្ឋានម៉ាស៊ីនមេ',
     Port: 'ច្រក',
+    'Port (optional)': 'ច្រក (ស្រេចចិត្ត)',
     'Connection code': 'លេខកូដតភ្ជាប់',
     Connect: 'តភ្ជាប់',
     Disconnect: 'ផ្តាច់ការតភ្ជាប់',
@@ -186,6 +220,39 @@ const dictionary = {
     'This network': 'បណ្ដាញនេះ',
     Router: 'រ៉ោតទ័រ',
     'Public address': 'អាសយដ្ឋានសាធារណៈ',
+    'Public IP': 'IP សាធារណៈ',
+    'Public port': 'ច្រកសាធារណៈ',
+    'The router would not open the chosen port, so it opened another one.':
+        'រ៉ោតទ័រមិនព្រមបើកច្រកដែលបានជ្រើសរើសទេ ដូច្នេះវាបានបើកច្រកមួយផ្សេងទៀត។',
+    Tunnel: 'ផ្លូវរូង',
+    'Share through a Cloudflare tunnel': 'ចែករំលែកតាមផ្លូវរូង Cloudflare',
+    'For when the internet cannot reach this computer, such as behind a VPN or a router that forwards no port. Guests and viewers come in through Cloudflare by an https address that changes each time the tunnel starts.':
+        'សម្រាប់ពេលដែលអ៊ីនធឺណិតមិនអាចទៅដល់កុំព្យូទ័រនេះបាន ដូចជានៅពីក្រោយ VPN ឬរ៉ោតទ័រដែលមិនបញ្ជូនបន្តច្រកណាមួយ។ ភ្ញៀវ និងអ្នកមើលចូលមកតាម Cloudflare ដោយអាសយដ្ឋាន https ដែលប្ដូររាល់ពេលផ្លូវរូងចាប់ផ្ដើម។',
+    'Starting the tunnel…': 'កំពុងចាប់ផ្ដើមផ្លូវរូង…',
+    'The tunnel is up.': 'ផ្លូវរូងកំពុងដំណើរការ។',
+    'The tunnel stopped. It starts again by itself.':
+        'ផ្លូវរូងបានឈប់។ វានឹងចាប់ផ្ដើមម្ដងទៀតដោយខ្លួនឯង។',
+    'The tunnel comes with the Extra Binaries. Install or update them in Settings, and it starts by itself.':
+        'ផ្លូវរូងមកជាមួយកម្មវិធីបន្ថែម។ សូមដំឡើង ឬធ្វើបច្ចុប្បន្នភាពវានៅក្នុងការកំណត់ នោះវានឹងចាប់ផ្ដើមដោយខ្លួនឯង។',
+    'The tunnel is not working.': 'ផ្លូវរូងមិនដំណើរការទេ។',
+    'Send my microphone': 'ផ្ញើមីក្រូហ្វូនរបស់ខ្ញុំ',
+    'Stop sending my microphone': 'ឈប់ផ្ញើមីក្រូហ្វូនរបស់ខ្ញុំ',
+    'Play their microphone': 'ចាក់សំឡេងមីក្រូហ្វូនរបស់ពួកគេ',
+    'Their microphone is on': 'មីក្រូហ្វូនរបស់ពួកគេកំពុងបើក',
+    'Speaker volume': 'កម្រិតសំឡេងឧបករណ៍បំពងសំឡេង',
+    'Share my cameras': 'ចែករំលែកកាមេរ៉ារបស់ខ្ញុំ',
+    'Stop sharing my cameras': 'ឈប់ចែករំលែកកាមេរ៉ារបស់ខ្ញុំ',
+    'Microphone access denied': 'មិនបានអនុញ្ញាតឲ្យប្រើមីក្រូហ្វូនទេ',
+    'The microphone could not be opened. Allow it for this page, or close another app using it.':
+        'មិនអាចបើកមីក្រូហ្វូនបានទេ។ សូមអនុញ្ញាតវាសម្រាប់ទំព័រនេះ ឬបិទកម្មវិធីផ្សេងដែលកំពុងប្រើវា។',
+    'The camera could not be opened. Allow it for this page, or close another app using it.':
+        'មិនអាចបើកកាមេរ៉ាបានទេ។ សូមអនុញ្ញាតវាសម្រាប់ទំព័រនេះ ឬបិទកម្មវិធីផ្សេងដែលកំពុងប្រើវា។',
+    'Waiting for approval': 'កំពុងរង់ចាំការអនុញ្ញាត',
+    'Waiting for the code': 'កំពុងរង់ចាំលេខកូដ',
+    'Nothing is showing on this display yet.':
+        'មិនទាន់មានអ្វីបង្ហាញនៅលើម៉ូនីទ័រនេះនៅឡើយទេ។',
+    'Set a connection code: until then no one can come in with a code.':
+        'សូមកំណត់លេខកូដតភ្ជាប់៖ រហូតដល់ពេលនោះ គ្មាននរណាម្នាក់អាចចូលដោយលេខកូដបានទេ។',
     'QR code': 'កូដ QR',
     'Copy address': 'ចម្លងអាសយដ្ឋាន',
     'Asking the router to open the port…': 'កំពុងស្នើរ៉ោតទ័រឲ្យបើកច្រក…',
@@ -839,6 +906,9 @@ const dictionary = {
     'Camera not found': 'រកមិនឃើញកាមេរ៉ា',
     'Camera Not Available': 'កាមេរ៉ាមិនអាចប្រើបាន',
     'Could not open the camera': 'មិនអាចបើកកាមេរ៉ាបានទេ',
+    'A screen cannot show itself': 'អេក្រង់មិនអាចបង្ហាញខ្លួនឯងបានទេ',
+    'These screens would show each other':
+        'អេក្រង់ទាំងនេះនឹងបង្ហាញគ្នាទៅវិញទៅមក',
     'Start Camera': 'ចាប់ផ្តើមកាមេរ៉ា',
     'Stop Camera': 'បញ្ឈប់កាមេរ៉ា',
     Preview: 'មើលជាមុន',
@@ -957,6 +1027,7 @@ const dictionary = {
     'Clear FG Stopwatch': 'លុប FG នាឡិកាបញ្ឈប់',
     'Clear FG Time': 'លុប FG ម៉ោង',
     'Clear FG Camera Show': 'លុប FG បង្ហាញកាមេរ៉ា',
+    'Clear FG Screen Show': 'លុប FG បង្ហាញអេក្រង់',
     'Clear FG Web Show': 'លុប FG ការបង្ហាញគេហទំព័រ',
     'Other Clear FG Items': 'ការលុប FG ផ្សេងទៀត',
     'Screen: Show': 'អេក្រង់៖ បង្ហាញ',
@@ -1075,6 +1146,7 @@ const dictionary = {
     'Bible key': 'កូនសោរព្រះគម្ពីរ',
     'Bible Lookup': 'ស្វែងរកព្រះគម្ពីរ',
     'Camera Show': 'បង្ហាញកាមេរ៉ា',
+    'Screen Show': 'បង្ហាញអេក្រង់',
     'Change Bible Model Info': 'ផ្លាស់ប្តូរព័ត៌មានគំរូព្រះគម្ពីរ',
     'Child Directories': 'ថតកូន',
     'Clear All Settings': 'លុបការកំណត់ទាំងអស់',
@@ -1167,6 +1239,7 @@ const dictionary = {
     'Or add bible ': 'ឬបន្ថែមព្រះគម្ពីរ',
     'Go to Settings': 'ទៅកាន់ការកំណត់',
     'Hide Camera': 'លាក់កាមេរ៉ា',
+    'Hide Screen Show': 'លាក់ការបង្ហាញអេក្រង់',
     'Hide Countdown': 'លាក់ការរាប់ថយក្រោយ',
     'Hide Editor': 'លាក់កម្មវិធីកែសម្រួល',
     'Hide Marquee Bottom': 'លាក់អក្សររត់ខាងក្រោម',
@@ -2070,8 +2143,8 @@ const dictionary = {
     'Find Anthropic workspace id': 'រកមើល Anthropic workspace id',
     Hide: 'លាក់',
     'Extra Binaries': 'កម្មវិធីបន្ថែម',
-    'The media tools used to download background video and audio. They are downloaded separately to keep the app small.':
-        'ឧបករណ៍មេឌាសម្រាប់ទាញយកវីដេអូ និងសំឡេងផ្ទៃខាងក្រោយ។ ' +
+    'The media tools used to download background video and audio, and the Screen Mirror internet tunnel. They are downloaded separately to keep the app small.':
+        'ឧបករណ៍មេឌាសម្រាប់ទាញយកវីដេអូ និងសំឡេងផ្ទៃខាងក្រោយ និងផ្លូវរូងអ៊ីនធឺណិតនៃការឆ្លុះអេក្រង់។ ' +
         'វាត្រូវបានទាញយកដោយឡែក ដើម្បីឲ្យកម្មវិធីនៅតូច។',
     'Media Tools Required': 'ត្រូវការឧបករណ៍មេឌា',
     'Downloading video or audio needs the extra binaries, which are not installed yet.':
@@ -2445,6 +2518,9 @@ const dictionary = {
     'Show a camera over the slide': 'បង្ហាញកាមេរ៉ាពីលើស្លាយ',
     'Camera Show puts a live camera picture above the slide, not behind it.':
         'Camera Show ដាក់រូបភាពកាមេរ៉ាផ្ទាល់នៅពីលើស្លាយ មិនមែននៅពីក្រោយទេ។',
+    'Show one screen inside another': 'បង្ហាញអេក្រង់មួយនៅក្នុងអេក្រង់មួយទៀត',
+    'Screen Show puts the live picture of another screen above the slide.':
+        'Screen Show ដាក់រូបភាពផ្ទាល់នៃអេក្រង់មួយទៀតនៅពីលើស្លាយ។',
     'Show a web page over the slide': 'បង្ហាញទំព័របណ្តាញពីលើស្លាយ',
     'Web Show puts a page or a small web file above the slide.':
         'Web Show ដាក់ទំព័របណ្តាញ ឬឯកសារបណ្តាញតូចនៅពីលើស្លាយ។',
@@ -3069,6 +3145,44 @@ const sanitizedDictionary = Object.fromEntries(
 const fontFamily = 'app-Battambang';
 const globalFontFamily = 'Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
+
+// The names a slide, a song or a PowerPoint asks for, answered by the
+// Battambang this app ships. A font installed on the presenting computer
+// never reaches a phone or TV watching a virtual display, nor a Screen Mirror
+// guest: each drew its own system Khmer face instead, with other metrics, and
+// a fixed text box could wrap differently. `Battambang` IS the shipped font,
+// so it is answered by the file at once. `Khmer OS Battambang` and
+// `Kh Battambang` are other designs: one installed here wins (`local()`), and
+// only a device without it falls back to the shipped one. A face is fetched
+// only when text uses it.
+function genKhmerFontAliasCss() {
+    const btbFaces: [string, string][] = [
+        [btbRegular, 'normal'],
+        [btbBold, 'bold'],
+        [btbLight, '300'],
+        [btbThin, '100'],
+        [btbBlack, '900'],
+    ];
+    const sameFont = btbFaces.map(([file, weight]) => {
+        return `
+        @font-face {
+            font-family: "${globalFontFamily}";
+            src: url(${file}) format("truetype");
+            font-weight: ${weight};
+        }`;
+    });
+    const lookAlikes = ['Khmer OS Battambang', 'Kh Battambang'].map(
+        (family) => {
+            return `
+        @font-face {
+            font-family: "${family}";
+            src: local("${family}"), url(${btbRegular}) format("truetype");
+            font-weight: normal;
+        }`;
+        },
+    );
+    return [...sameFont, ...lookAlikes].join('\n');
+}
 const lang: LanguageDataType = {
     packageDir: '',
     version: '0.0.1',
@@ -3114,6 +3228,7 @@ const lang: LanguageDataType = {
             src: url(${fhRegular}) format("truetype");
             font-weight: normal;
         }
+        ${genKhmerFontAliasCss()}
         `;
     },
     fontFamily,

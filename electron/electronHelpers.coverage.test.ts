@@ -45,6 +45,7 @@ vi.mock('./ElectronSettingManager', () => ({
 }));
 
 import {
+    captureMiniScreenImage,
     captureWindowImage,
     captureWebScreenShot,
     copyDebugInfoToClipboard,
@@ -1046,6 +1047,49 @@ describe('electronHelpers coverage', () => {
         await expect(captureWindowImage(screenWin as any)).resolves.toBe(
             'data:image/png;base64,SCREEN',
         );
+    });
+
+    test('a screen with no window is photographed off its Mini Screen', async () => {
+        const mainWin = createWindowAt(
+            'https://localhost:3000/presenter.html',
+            { x: 0, y: 0 },
+        );
+        mainWin.webContents.capturePage.mockResolvedValue({
+            toDataURL: () => 'data:image/png;base64,MINI',
+        });
+        mainWin.webContents.executeJavaScript.mockResolvedValue({
+            x: 840,
+            y: 480,
+            width: 480,
+            height: 270,
+        });
+
+        await expect(captureMiniScreenImage(mainWin as any, 1)).resolves.toBe(
+            'data:image/png;base64,MINI',
+        );
+        expect(mainWin.webContents.capturePage).toHaveBeenCalledWith({
+            x: 840,
+            y: 480,
+            width: 480,
+            height: 270,
+        });
+        expect(
+            mainWin.webContents.executeJavaScript.mock.calls[0][0],
+        ).toContain('.mini-screen[data-screen-key="1"]');
+
+        // No card (another page, rendering off): said in words, no picture.
+        mainWin.webContents.executeJavaScript.mockResolvedValue(null);
+        await expect(captureMiniScreenImage(mainWin as any, 1)).rejects.toThrow(
+            'Screen 1 is on a virtual display',
+        );
+        await expect(captureMiniScreenImage(null, 1)).rejects.toThrow(
+            'Mini Screen',
+        );
+        // Only a whole number reaches the page's script.
+        await expect(
+            captureMiniScreenImage(mainWin as any, '1"]' as any),
+        ).rejects.toThrow('virtual display');
+        expect(mainWin.webContents.capturePage).toHaveBeenCalledTimes(1);
     });
 
     test('can run a throttled attempt immediately and debounce the next one', () => {

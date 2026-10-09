@@ -202,7 +202,8 @@ export default function SettingOthersExtraBinComp() {
             title="Extra Binaries"
             description={
                 'The media tools used to download background video and ' +
-                'audio. They are downloaded separately to keep the app small.'
+                'audio, and the Screen Mirror internet tunnel. They are ' +
+                'downloaded separately to keep the app small.'
             }
             state={isInstalled && !isOutdated ? 'ready' : 'attention'}
             stateLabel={

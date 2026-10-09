@@ -5,7 +5,7 @@ import type {
 } from '../../electron/screenMirrorProtocol';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import appProvider from '../server/appProvider';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import { getScreenManagerBase } from '../_screen/managers/screenManagerBaseHelpers';
 
 // Only screen appearance settings cross the connection, never secrets or documents.
 const PRESENTATION_SETTING =
@@ -20,34 +20,27 @@ export async function getMirrorBootstrap(
         const value = appLocalStorage.getItem(key);
         if (value !== null && value.length < 256000) settings[key] = value;
     }
-    const handlers = [
-        manager.screenBackgroundManager,
-        manager.screenForegroundManager,
-        manager.screenVaryAppDocumentManager,
-        manager.screenBibleManager,
-        manager.screenDrawManager,
-        manager.screenFocusManager,
-    ];
-    const messages: MirrorScreenMessage[] = handlers.map((handler) => ({
-        ...handler.toSyncMessage(),
-        screenId: manager.screenId,
-    }));
-    messages.unshift({
-        screenId: manager.screenId,
-        type: 'bible-screen-view-text-style',
-        data: { textStyle: ScreenBibleManager.textStyle },
-    });
-    for (const effect of [
-        manager.backgroundEffectManager,
-        manager.foregroundEffectManager,
-        manager.varyAppDocumentEffectManager,
-    ]) {
-        messages.unshift({
-            screenId: manager.screenId,
-            type: 'effect',
-            data: { target: effect.target, effect: effect.effectType },
-        });
+    // The whole state of every screen this one shows (Screen Show), first:
+    // its overlays find it waiting when the foreground puts them up.
+    const screenShowMessages: MirrorScreenMessage[] = [];
+    for (const { id } of manager.screenForegroundManager.foregroundData
+        .screenDataList) {
+        const payload =
+            id === manager.screenId
+                ? null
+                : getScreenManagerBase(id)?.genScreenShowPayload();
+        if (payload) {
+            screenShowMessages.push({
+                screenId: manager.screenId,
+                type: 'screen-show',
+                data: payload,
+            });
+        }
     }
+    const messages: MirrorScreenMessage[] = [
+        ...screenShowMessages,
+        ...manager.genSyncSnapshotMessages(),
+    ];
     const fontCss: string[] = [];
     for (const sheet of Array.from(document.styleSheets)) {
         try {

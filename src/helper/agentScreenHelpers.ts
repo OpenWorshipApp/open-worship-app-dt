@@ -313,6 +313,9 @@ export function toForegroundSummary(
     for (const _camera of foregroundData.cameraDataList ?? []) {
         items.push('camera');
     }
+    for (const screen of foregroundData.screenDataList ?? []) {
+        items.push(`picture of screen ${screen.id}`);
+    }
     for (const web of foregroundData.webDataList ?? []) {
         items.push(`web page ${pathBasename(web.filePath ?? '')}`.trim());
     }

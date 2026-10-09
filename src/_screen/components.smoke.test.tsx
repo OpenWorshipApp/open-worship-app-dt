@@ -185,6 +185,7 @@ vi.mock('../others/color/colorHelpers', () => ({
 
 vi.mock('../helper/cameraHelpers', () => ({
     getCameraStream: vi.fn(async () => ({ getTracks: () => [] })),
+    stopCameraStream: vi.fn(),
 }));
 
 vi.mock('../helper/audioControlHelpers', () => ({

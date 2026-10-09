@@ -1,7 +1,13 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, test } from 'vitest';
 
 import { MIRROR_REMOTE_DISPLAY_FIRST } from './screenMirrorProtocol';
 import {
+    readBasicAuthPassword,
+    readVirtualDisplayAccessMode,
     MAX_VIRTUAL_DISPLAYS,
     VIRTUAL_DISPLAY_MAX_PIXELS,
     checkIsVirtualDisplayDevViewerFile,
@@ -157,6 +163,18 @@ describe('virtualDisplayProtocol', () => {
         expect(
             toVirtualDisplayPageUrl({ host: '192.168.1.3', port: 39240 }, 3),
         ).toBe('http://192.168.1.3:39240/vd/3/');
+        // A tunnel address is https on its default port.
+        const tunnel = {
+            host: 'quiet-river.trycloudflare.com',
+            port: 443,
+            kind: 'tunnel',
+        };
+        expect(toVirtualDisplayPageUrl(tunnel, 3)).toBe(
+            'https://quiet-river.trycloudflare.com/vd/3/',
+        );
+        expect(toVirtualDisplayStreamUrl(tunnel, 3)).toBe(
+            'https://quiet-river.trycloudflare.com/vd/3/video',
+        );
     });
 
     test('H.264 High, Main then Baseline, at the level the size needs', () => {
@@ -303,6 +321,9 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
     test('lets the viewer page and its modules through', () => {
         for (const address of [
             '/vd-screen.html?vd=1&screenId=0&viewer=abcdef12',
+            // "Turn on sound" loads every screen again as the sound player.
+            '/vd-screen.html?vd=1&screenId=0&viewer=abcdef12&sound=1',
+            '/vd-screen.html?vd=1&screenId=0&viewer=abcdef12&preview=1',
             '/src/vd-screen.ts',
             '/@vite/client',
             '/@vite/env',
@@ -316,6 +337,51 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
             `${fs}/tools/owa-devtools-mcp/agentFileName.mjs`,
             `${fs}/electron/virtualDisplayProtocol.ts`,
         ]) {
+            expect(check(address), address).toBe(true);
+        }
+    });
+    // The screen page imports half of `src/`, so any `electron/` module a
+    // source file imports for a VALUE is fetched by every remote viewer. One
+    // missing here was a 404 that left a LAN, internet and tunnel viewer with
+    // the wallpaper alone, while 127.0.0.1 (never filtered) looked fine.
+    test('lets every electron module src imports through', () => {
+        const repoDir = path.resolve(
+            path.dirname(fileURLToPath(import.meta.url)),
+            '..',
+        );
+        const listSources = (dirPath: string): string[] => {
+            return readdirSync(dirPath, { withFileTypes: true }).flatMap(
+                (entry) => {
+                    const entryPath = path.join(dirPath, entry.name);
+                    if (entry.isDirectory()) {
+                        return listSources(entryPath);
+                    }
+                    return /\.tsx?$/.test(entry.name) &&
+                        !/\.test\.tsx?$/.test(entry.name)
+                        ? [entryPath]
+                        : [];
+                },
+            );
+        };
+        const names = new Set<string>();
+        for (const filePath of listSources(path.join(repoDir, 'src'))) {
+            const text = readFileSync(filePath, 'utf8');
+            const pattern =
+                /(?:^|\n)\s*(import|export)\s+(type\s+)?[^;]*?from\s+'(?:\.\.\/)+electron\/([\w-]+)'/g;
+            for (const match of text.matchAll(pattern)) {
+                if (match[2] === undefined) {
+                    names.add(match[3]);
+                }
+            }
+            const dynamicPattern =
+                /import\(\s*'(?:\.\.\/)+electron\/([\w-]+)'/g;
+            for (const match of text.matchAll(dynamicPattern)) {
+                names.add(match[1]);
+            }
+        }
+        expect(names.size).toBeGreaterThan(0);
+        for (const name of names) {
+            const address = `${fs}/electron/${name}.ts`;
             expect(check(address), address).toBe(true);
         }
     });
@@ -343,4 +409,25 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
             expect(check(address), address).toBe(false);
         }
     });
+});
+
+// How a media player gives the connection code: as the password of HTTP
+// Basic, whatever the user name.
+test('reads the password of a Basic authorization header', () => {
+    expect(readBasicAuthPassword(`Basic ${btoa('vlc:church-1234')}`)).toBe(
+        'church-1234',
+    );
+    expect(readBasicAuthPassword(`basic ${btoa(':a:b')}`)).toBe('a:b');
+    expect(readBasicAuthPassword(`Basic ${btoa('no-colon')}`)).toBeNull();
+    expect(readBasicAuthPassword('Bearer abc')).toBeNull();
+    expect(readBasicAuthPassword('Basic ***')).toBeNull();
+    expect(readBasicAuthPassword(undefined)).toBeNull();
+    expect(readBasicAuthPassword(`Basic ${'A'.repeat(600)}`)).toBeNull();
+});
+
+test('the access option is approval unless it says code', () => {
+    expect(readVirtualDisplayAccessMode('code')).toBe('code');
+    expect(readVirtualDisplayAccessMode('approve')).toBe('approve');
+    expect(readVirtualDisplayAccessMode(null)).toBe('approve');
+    expect(readVirtualDisplayAccessMode('open')).toBe('approve');
 });

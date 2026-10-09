@@ -171,6 +171,24 @@ force, draggable). Uses geometry props (isCommonStyle default true, isFontSize f
 
 ---
 
+## J2. Screen Show — `ForegroundScreenComp`  (needs two screens)
+
+**PM-158** (added 2026-10-08). The Camera Show clone with one card per SCREEN: a static
+tile in `genColorFromScreenId` colour with the id. What goes up is the OTHER screen
+drawn from its state: the app's own screen page (`vd-screen.html?screenShow=<key>`) in
+an iframe of the window holding the overlay, on a stand-in provider
+(`screenShowFrameProvider`) fed by the presenter — the source screen may be hidden.
+
+| Proposed ID | Target | Interaction | Keys | Given | When | Then (observable) | Source | Status |
+|---|---|---|---|---|---|---|---|---|
+| PM-158 | Screen card → another screen | 🖱️ / ⋮ | – | screen 1 HIDDEN with a background and an overlay | ⋮ **Show on Screens** on card 1 → screen 0 | screen 0's target and Mini Screen 0 draw screen 1's background and overlay; Hide chip `Hide Screen Show 0` | `ForegroundScreenComp.tsx`, `screenShowFrameHelpers.ts` | COVERED |
+| PM-158 | Live follow | 🖱️ | – | 0 shows 1 | change screen 1's background | the copy on screen 0 follows at once (`relayToScreenShows`) | `ScreenManager.ts` | COVERED |
+| PM-158 | Self / loop refusal | 🖱️ | – | 0 shows 1 | card 0 onto 0; card 0 onto 1; same with a shared colour note | toasts _A screen cannot show itself_ / _These screens would show each other_ on the presenter only; nothing added | `ScreenForegroundManager.ts` `getScreenShowRefusal`, `screenShowGraphHelpers.ts` | COVERED |
+| PM-158 | Reload of the showing screen | 🖱️ | F5 | 0 shows 1 | hide screen 0, show it again | the copy is there at once (`screen-show` snapshot in the bootstrap context) | `screenBootstrapHelpers.ts` | COVERED |
+| PM-158 | Delete a shown source | 🖱️ | – | 1 shows 2 | delete screen 2 | taken off screen 1 (ids are reused) | `ScreenForegroundManager.removeScreenShowSource` | unit only — the delete confirm cannot be pressed by an agent |
+
+---
+
 ## K. Web Show — `ForegroundWebComp`
 
 **PM-23** claims "⌨️✎ URL" — **wrong**: there is no URL field; the widget lists `.html`

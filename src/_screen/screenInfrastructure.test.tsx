@@ -654,6 +654,65 @@ describe('screen infrastructure', () => {
         );
     });
 
+    // A laptop and a virtual display: songs and new slides were sized for the
+    // laptop (1494x934) and letterboxed on the 1920x1080 display. Content
+    // follows the virtual display a screen is set to; a screen with no
+    // display of its own still never lands on one.
+    test('content is sized for a virtual display when there is no second monitor', async () => {
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
+        const managerScreenHelpers = await import('./managers/screenHelpers');
+        const laptop = {
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1494, height: 934 },
+        };
+        const virtual = {
+            id: -500001,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            label: 'Virtual Display 1',
+        };
+        sendDataSyncMock.mockImplementation((channel: string) => {
+            if (channel === 'main:app:get-displays') {
+                return { primaryDisplay: laptop, displays: [laptop, virtual] };
+            }
+            return null;
+        });
+        const settings: Record<string, string> = {
+            [screenManagerSettingNames.MANAGERS]: JSON.stringify([
+                { screenId: 0 },
+                { screenId: 1 },
+            ]),
+        };
+        getSettingMock.mockImplementation((key: string) => settings[key]);
+
+        // No screen on it yet: the laptop, as before.
+        expect(managerScreenHelpers.getDefaultScreenDisplay().id).toBe(1);
+
+        settings['screen-display--pid-1'] = String(virtual.id);
+        expect(managerScreenHelpers.getDefaultScreenDisplay().bounds).toEqual(
+            virtual.bounds,
+        );
+        // Placement is unchanged: screen 0 has no display of its own.
+        expect(managerScreenHelpers.getDisplayIdByScreenId(0)).toBe(1);
+        expect(managerScreenHelpers.getDisplayIdByScreenId(1)).toBe(virtual.id);
+
+        // A real second monitor still wins over a virtual display.
+        const side = {
+            id: 2,
+            bounds: { x: 1494, y: 0, width: 1280, height: 720 },
+        };
+        sendDataSyncMock.mockImplementation((channel: string) => {
+            if (channel === 'main:app:get-displays') {
+                return {
+                    primaryDisplay: laptop,
+                    displays: [laptop, virtual, side],
+                };
+            }
+            return null;
+        });
+        expect(managerScreenHelpers.getDefaultScreenDisplay().id).toBe(2);
+    });
+
     test('sends sync messages from event handlers and applies base manager behaviors', async () => {
         const { default: ScreenEventHandler } =
             await import('./managers/ScreenEventHandler');

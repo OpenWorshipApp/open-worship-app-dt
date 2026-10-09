@@ -8,10 +8,9 @@ import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { getAllCameraDevices } from '../helper/cameraHelpers';
 import { getAllDisplays } from '../_screen/managers/screenHelpers';
 import {
-    MIRROR_PORT_FIRST,
     readMirrorAddressText,
+    toMirrorDefaultPort,
     toMirrorHostPort,
-    type MirrorConnection,
     type MirrorConnectionStatus,
     type MirrorDiscovery,
     type MirrorState,
@@ -23,6 +22,7 @@ import {
 } from './mirrorConnectionHelpers';
 import { findImageFile, readQrTextFromImage } from './mirrorQrHelpers';
 import { layoutMirrorMonitors } from './mirrorMonitorLayout';
+import MirrorIntercomComp from './MirrorIntercomComp';
 import { isVirtualDisplayId } from '../../electron/virtualDisplayProtocol';
 
 // `idle` is the patch drawn before any host is linked.
@@ -264,6 +264,7 @@ function MirrorPatchComp({
     errorText,
     displayRevision,
     onDisconnect,
+    intercom,
 }: Readonly<{
     status: LinkStatusType;
     name: string;
@@ -272,6 +273,8 @@ function MirrorPatchComp({
     errorText: string;
     displayRevision: number;
     onDisconnect?: () => void;
+    // The connection's talk-back and camera controls, once connected.
+    intercom?: ReactNode;
 }>) {
     const tone = toWireTone(status);
     const hint = toHintText(status);
@@ -293,6 +296,7 @@ function MirrorPatchComp({
                 </span>
             </div>
             <div className="app-mirror-cable-action">
+                {intercom}
                 {errorText ? (
                     <p role="alert" className="app-mirror-cable-error">
                         {errorText}
@@ -321,7 +325,21 @@ function MirrorPatchComp({
 function MirrorLinkPatchComp({
     connection,
     displayRevision,
-}: Readonly<{ connection: MirrorConnection; displayRevision: number }>) {
+}: Readonly<{
+    connection: MirrorState['connections'][number];
+    displayRevision: number;
+}>) {
+    const [busy, setBusy] = useState(false);
+    const command = async (action: string, data: Record<string, unknown>) => {
+        setBusy(true);
+        try {
+            await mirrorCommand(action, data);
+        } catch {
+            // The state broadcast shows what took effect.
+        } finally {
+            setBusy(false);
+        }
+    };
     return (
         <MirrorPatchComp
             status={connection.status}
@@ -337,6 +355,29 @@ function MirrorLinkPatchComp({
                     () => {},
                 );
             }}
+            intercom={
+                connection.status === 'connected' ? (
+                    <MirrorIntercomComp
+                        intercom={connection.intercom}
+                        busy={busy}
+                        onChange={(change) => {
+                            return command('intercom', {
+                                key: `link:${connection.id}`,
+                                ...change,
+                            });
+                        }}
+                        camera={{
+                            isShared: connection.shareCameras,
+                            onToggle: () => {
+                                void command('share-cameras', {
+                                    id: connection.id,
+                                    enabled: !connection.shareCameras,
+                                });
+                            },
+                        }}
+                    />
+                ) : null
+            }
         />
     );
 }
@@ -359,7 +400,9 @@ function ScreenMirrorGuestBodyComp({
     const linkedHostIdsRef = useAppCurrentRef(linkedHostIds);
     const [host, setHost] = useState('');
     // Text, not a number: clearing the box to retype it must not leave a 0.
-    const [portText, setPortText] = useState(String(MIRROR_PORT_FIRST));
+    // Optional: empty dials the host's default -- 443 for a tunnel's address,
+    // which shows none (asked for 2026-10-08), else Screen Mirror's first.
+    const [portText, setPortText] = useState('');
     // What a scan filled in, so the next scan may replace it -- but never an
     // address the volunteer typed or a host they picked themselves.
     const autoFilledRef = useRef('');
@@ -451,7 +494,10 @@ function ScreenMirrorGuestBodyComp({
     // wins over the port box.
     const typed = readMirrorAddressText(host);
     const typedHost = typed?.host ?? host.trim();
-    const port = typed?.port ?? Number(portText);
+    const defaultPort = toMirrorDefaultPort(typedHost);
+    const port =
+        typed?.port ??
+        (portText.trim() === '' ? defaultPort : Number(portText));
     const isPortValid = Number.isInteger(port) && port >= 1 && port <= 65535;
     const canConnect = !busy && typedHost !== '' && isPortValid;
     const connect = () => {
@@ -650,7 +696,7 @@ function ScreenMirrorGuestBodyComp({
                             />
                         </label>
                         <label className="app-mirror-field">
-                            <span>{tran('Port')}</span>
+                            <span>{tran('Port (optional)')}</span>
                             <input
                                 className="form-control form-control-sm app-data"
                                 aria-label={tran('Port')}
@@ -658,6 +704,7 @@ function ScreenMirrorGuestBodyComp({
                                 min={1}
                                 max={65535}
                                 value={portText}
+                                placeholder={String(defaultPort)}
                                 onChange={(event) => {
                                     setPortText(event.target.value);
                                 }}

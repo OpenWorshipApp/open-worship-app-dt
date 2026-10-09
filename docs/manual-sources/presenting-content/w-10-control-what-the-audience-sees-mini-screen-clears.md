@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-07"
+workflowsVersion: "2026-10-08"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
@@ -68,5 +68,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-07).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
 :::

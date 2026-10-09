@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { listNewAppPages, toPageName } from './cdp.mjs';
+import { listNewAppPages, toPageName, toPageErrorMessage } from './cdp.mjs';
 
 // What `owa_click` reads to say a press opened a WINDOW (2026-10-06: the
 // Settings gear opened Settings and the press still answered `unverified`).
@@ -47,5 +47,37 @@ describe('toPageName', () => {
     expect(toPageName('http://127.0.0.1:1/screen.html?screenId=2')).toBe(
       'screen.html',
     );
+  });
+});
+
+// A page's error said where it was thrown, four frames of a script made up
+// for the call, to every caller and into a model's context.
+describe('toPageErrorMessage', () => {
+  it('keeps what the error says and drops where it was thrown', () => {
+    expect(
+      toPageErrorMessage(
+        [
+          'Error: That window is not open',
+          '    at IpcRenderer.<anonymous> (<anonymous>:20:28)',
+          '    at IpcRenderer.wrapper (node:events:639:12)',
+        ].join('\n'),
+      ),
+    ).toBe('That window is not open');
+  });
+
+  it('keeps a typed error and a message over several lines', () => {
+    expect(
+      toPageErrorMessage(
+        [
+          'TypeError: Cannot read properties of null',
+          "reading 'x'",
+          '    at f (a.js:1:1)',
+        ].join('\n'),
+      ),
+    ).toBe(
+      ['TypeError: Cannot read properties of null', "reading 'x'"].join('\n'),
+    );
+    expect(toPageErrorMessage('Uncaught')).toBe('Uncaught');
+    expect(toPageErrorMessage(undefined)).toBe('');
   });
 });

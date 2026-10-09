@@ -324,6 +324,13 @@ const foregroundClearMap: Record<
             manager.setCameraDataList([]);
         },
     },
+    screen: {
+        label: 'Clear FG Screen Show',
+        badge: 'SS',
+        clear: (manager) => {
+            manager.setScreenDataList([]);
+        },
+    },
     web: {
         label: 'Clear FG Web Show',
         badge: 'WB',

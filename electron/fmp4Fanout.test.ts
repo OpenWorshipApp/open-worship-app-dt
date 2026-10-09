@@ -12,6 +12,7 @@ import {
 import {
     Fmp4Fanout,
     checkIsKeyframeFragment,
+    readFragmentDecodeTime,
     readVideoTrackInfo,
 } from './fmp4Fanout';
 
@@ -223,6 +224,7 @@ describe('readVideoTrackInfo', () => {
         expect(readVideoTrackInfo(moovOf(INIT))).toEqual({
             trackId: VIDEO_TRACK_ID,
             trexFlags: 0,
+            timescale: 90000,
         });
         const videoOnly = toBuffer(buildInitSegment(VIDEO, null));
         expect(readVideoTrackInfo(moovOf(videoOnly)).trackId).toBe(
@@ -240,7 +242,30 @@ describe('readVideoTrackInfo', () => {
         expect(readVideoTrackInfo(moov)).toEqual({
             trackId: 7,
             trexFlags: 0x10000,
+            // No mdhd in this one.
+            timescale: 0,
         });
+    });
+
+    // Where the picture is: a cast TV is steered by how far behind it plays.
+    test('reads where a fragment starts, and the fanout keeps the newest', () => {
+        const fragment = videoFragment(true);
+        const moof = fragment.subarray(0, fragment.readUInt32BE(0));
+        expect(readFragmentDecodeTime(moof, VIDEO_TRACK_ID)).toBe(
+            sequence * 3000,
+        );
+        expect(readFragmentDecodeTime(moof, AUDIO_TRACK_ID)).toBeNull();
+        expect(readFragmentDecodeTime(Buffer.alloc(8), null)).toBeNull();
+
+        const fanout = new Fmp4Fanout();
+        expect(fanout.liveTime).toBeNull();
+        fanout.push(INIT);
+        fanout.push(videoFragment(true));
+        fanout.push(audioFragment());
+        // The sound does not move it: the picture's time is the live edge.
+        expect(fanout.liveTime).toBe(((sequence - 1) * 3000) / 90000);
+        fanout.resetStream();
+        expect(fanout.liveTime).toBeNull();
     });
 
     test('no video track: no id and no flags', () => {
@@ -252,6 +277,7 @@ describe('readVideoTrackInfo', () => {
         expect(readVideoTrackInfo(moov)).toEqual({
             trackId: null,
             trexFlags: 0,
+            timescale: 0,
         });
     });
 });

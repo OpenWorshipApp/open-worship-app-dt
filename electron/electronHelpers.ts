@@ -1702,6 +1702,52 @@ export async function captureWindowImage(win: BrowserWindow | null) {
 }
 
 /**
+ * The picture of a screen that has no window: one on a virtual display is
+ * drawn by whoever watches it, and here only while a player watches its MP4.
+ * The rest of the time the one copy of it drawn on this computer is its Mini
+ * Screen in the presenter, so that card is photographed out of the window
+ * (`capturePage` takes the area, nothing is drawn again). Without it -- the
+ * main window on another page, the card off the window, its rendering
+ * switched off -- the answer says why, in words a person can act on.
+ */
+export async function captureMiniScreenImage(
+    win: BrowserWindow | null,
+    screenId: number,
+) {
+    const failure = new Error(
+        `Screen ${screenId} is on a virtual display: no window draws it on ` +
+            'this computer, and its Mini Screen in the Presenter is not ' +
+            'showing to take it from.',
+    );
+    if (win === null || win.isDestroyed() || !Number.isInteger(screenId)) {
+        throw failure;
+    }
+    const rect = await win.webContents.executeJavaScript(
+        `(() => {
+            const card = document.querySelector(
+                '.mini-screen[data-screen-key="${screenId}"]',
+            );
+            if (card === null || card.querySelector('.mini-screen-no-rendering')) {
+                return null;
+            }
+            const box = (
+                card.querySelector('.mini-screen-preview-fit') ?? card
+            ).getBoundingClientRect();
+            const x = Math.max(0, Math.round(box.left));
+            const y = Math.max(0, Math.round(box.top));
+            const width = Math.min(innerWidth, Math.round(box.right)) - x;
+            const height = Math.min(innerHeight, Math.round(box.bottom)) - y;
+            return width > 1 && height > 1 ? { x, y, width, height } : null;
+        })()`,
+    );
+    if (rect === null || typeof rect !== 'object') {
+        throw failure;
+    }
+    const image = await win.webContents.capturePage(rect);
+    return image.toDataURL();
+}
+
+/**
  * The window a showing projector screen is drawn in, or null when that screen
  * is not showing — which is not an error but an answer: "there is nothing on
  * screen 2" is what most questions asking for a picture of screen 2 are really

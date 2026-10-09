@@ -55,6 +55,42 @@ function getDisplayMedia(options: Record<string, unknown>) {
     );
 }
 
+// This computer's microphone, mixed into the MP4's sound while it is on.
+let mic: { stream: MediaStream; source: MediaStreamAudioSourceNode } | null =
+    null;
+let micRun = 0;
+async function setMic(isOn: boolean) {
+    const run = ++micRun;
+    if (!isOn) {
+        if (mic !== null) {
+            mic.source.disconnect();
+            mic.stream.getTracks().forEach((track) => track.stop());
+            mic = null;
+        }
+        return;
+    }
+    if (mic !== null) {
+        return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: 1,
+        },
+        video: false,
+    });
+    if (run !== micRun) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+    }
+    const { context, destination } = ensureMix();
+    const source = context.createMediaStreamSource(stream);
+    source.connect(destination);
+    mic = { stream, source };
+}
+
 // Every screen's sound and a constant silence, so the AAC track has samples
 // from the first byte: with no audio the recorder holds the video back.
 function ensureMix() {
@@ -303,6 +339,10 @@ messageUtils.listenForData('vd:compositor', (_event, message) => {
         encoder?.encoder.requestKeyFrame();
     } else if (message?.type === 'stop') {
         stopEncoder();
+    } else if (message?.type === 'mic') {
+        setMic(message.isOn === true).catch((error) => {
+            console.error('Virtual display: microphone', error);
+        });
     }
 });
 messageUtils.sendData('vd:compositor-ready');

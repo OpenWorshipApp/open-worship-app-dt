@@ -41,6 +41,7 @@ import {
 import {
     attemptClosing,
     captureWebScreenShot,
+    captureMiniScreenImage,
     captureWindowImage,
     findScreenWindow,
     getUpdatePageUrl,
@@ -259,7 +260,12 @@ export function initEventListenerApp(appController: ElectronAppController) {
             if (virtualCapture !== undefined) {
                 const image = await virtualCapture;
                 if (image === null) {
-                    throw new Error('That window is not open');
+                    // Drawn here only while an MP4 is watched: else its
+                    // Mini Screen is the picture.
+                    return await captureMiniScreenImage(
+                        appController.mainWin,
+                        screenId!,
+                    );
                 }
                 return image.toDataURL();
             }
@@ -943,10 +949,13 @@ export function initEventOther(appController: ElectronAppController) {
         appController.reloadAll();
     });
 
-    // The media download found the pack missing (or just installed it) in one
-    // renderer; the Settings window it is about to raise has to re-read.
+    // The media download found the pack missing, or Settings just installed
+    // it, in one renderer; the Settings window it is about to raise has to
+    // re-read, and a Screen Mirror tunnel waiting for the pack's cloudflared
+    // starts.
     ipcMain.on('all:app:extra-bin-changed', () => {
         appController.sendMessageToAll('main:app:extra-bin-changed');
+        getScreenMirror()?.retryTunnel();
     });
 
     // A bible was created, imported, reset or removed in one renderer; a

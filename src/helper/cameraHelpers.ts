@@ -13,6 +13,12 @@ import {
     getMirrorCameraStream,
     releaseMirrorCameraStream,
 } from '../screen-mirror/mirrorCameraTransport';
+import {
+    checkIsViewerCameraId,
+    getViewerCameraStream,
+    listenViewerCameraLive,
+    releaseViewerCameraStream,
+} from '../virtual-display/viewerCameraTransport';
 
 export type CameraInfoType = {
     deviceId: string;
@@ -90,6 +96,10 @@ export function useCameraInfoList() {
 }
 
 export async function getCameraStream(cameraId: string) {
+    // A browser viewer's camera, shared with this computer.
+    if (checkIsViewerCameraId(cameraId)) {
+        return await getViewerCameraStream(cameraId);
+    }
     if (cameraId.startsWith('mirror-camera:')) {
         const camera = getRemoteCameras().find(
             (item) => item.deviceId === cameraId,
@@ -212,17 +222,20 @@ export function releaseCameraStream(cameraId: string) {
         if (cameraStreamMap.get(cameraId) === slot) {
             cameraStreamMap.delete(cameraId);
         }
-        slot.promise
-            .then((mediaStream) => {
-                releaseMirrorCameraStream(mediaStream);
-                for (const track of mediaStream.getTracks()) {
-                    track.stop();
-                }
-            })
-            .catch(() => {
-                // Never opened; nothing to stop.
-            });
+        slot.promise.then(stopCameraStream).catch(() => {
+            // Never opened; nothing to stop.
+        });
     }, CAMERA_RELEASE_GRACE_MS);
+}
+
+// Ends a stream from `getCameraStream`, and what feeds it: another
+// computer's camera, or a browser viewer's (told nothing here shows it).
+export function stopCameraStream(mediaStream: MediaStream) {
+    releaseMirrorCameraStream(mediaStream);
+    releaseViewerCameraStream(mediaStream);
+    for (const track of mediaStream.getTracks()) {
+        track.stop();
+    }
 }
 
 export async function getCameraAndShowMedia(
@@ -257,7 +270,12 @@ export async function getCameraAndShowMedia(
         // `deviceId` per origin and per session, so the id the presenter saved
         // can be dead here. Without this the projector showed nothing while the
         // mini preview kept working, and the throw went to the console only.
-        const resolvedId = await resolveCameraDeviceId(id, label ?? '');
+        // A browser viewer's camera not shared right now (its tab reloading,
+        // its camera turned off) is still opened: it shows the moment it is
+        // shared again, hidden until then.
+        const resolvedId =
+            (await resolveCameraDeviceId(id, label ?? '')) ??
+            (checkIsViewerCameraId(id) ? id : null);
         if (resolvedId === null) {
             onUnavailable?.(label || id);
             return () => {};
@@ -281,11 +299,19 @@ export async function getCameraAndShowMedia(
             video.style.width = `${width}px`;
         }
         Object.assign(video.style, extraStyle ?? {});
+        // Hidden while a viewer's camera sends no pictures.
+        const stopListeningLive = listenViewerCameraLive(
+            mediaStream,
+            (isLive) => {
+                video.style.visibility = isLive ? '' : 'hidden';
+            },
+        );
         parentContainer.innerHTML = '';
         const releaseThisStream = () => {
             if (acquiredDeviceId === null) {
                 return;
             }
+            stopListeningLive();
             releaseCameraStream(acquiredDeviceId);
             acquiredDeviceId = null;
         };

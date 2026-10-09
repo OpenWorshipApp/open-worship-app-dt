@@ -99,8 +99,10 @@ function genCameraMapper(hostId: string) {
         foreground: [],
         background: [],
     };
+    // A browser viewer's shared camera (`vd-camera:`) keeps its id: its
+    // frames come over this page's own socket, not a camera stream.
     const toRemoteId = (id: string) => {
-        return id.startsWith('mirror-camera:')
+        return id.startsWith('mirror-camera:') || id.startsWith('vd-camera:')
             ? id
             : toVirtualDisplayCameraId(hostId, id);
     };
@@ -330,8 +332,28 @@ export function connectWebScreen(): Promise<WebScreenConnectionType> {
                 deliver(SCREEN_MESSAGE_CHANNEL, packet.message);
             } else if (packet?.type === 'interactive') {
                 isInteractive = packet.isInteractive === true;
+                // The screen's ✕ shows only to a browser that may use it
+                // (`vd-screen.html`).
+                const root = globalThis.document?.documentElement;
+                if (root !== undefined) {
+                    root.dataset.vdInteractive = isInteractive ? '1' : '0';
+                }
             } else if (packet?.type === 'camera') {
                 deliver('mirror:camera', packet.packet);
+            } else if (
+                packet?.type === 'vd-camera-frame' &&
+                typeof packet.data === 'string'
+            ) {
+                deliver('vd:camera-frame', {
+                    cameraId: packet.cameraId,
+                    type: packet.frameType,
+                    timestamp: packet.timestamp,
+                    data: Uint8Array.from(atob(packet.data), (char) => {
+                        return char.charCodeAt(0);
+                    }),
+                });
+            } else if (packet?.type === 'vd-camera-end') {
+                deliver('vd:camera-end', packet);
             } else if (packet?.type === 'context-update' && context !== null) {
                 context = { ...context, ...packet.data };
             } else if (packet?.type === 'context' && context === null) {
@@ -412,11 +434,33 @@ export function connectWebScreen(): Promise<WebScreenConnectionType> {
                     }
                     return;
                 }
+                if (channel === 'vd:camera-watch') {
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(
+                            JSON.stringify({
+                                type: 'camera-watch',
+                                cameraId: payload?.cameraId,
+                                isWatching: payload?.isWatching === true,
+                            }),
+                        );
+                    }
+                    return;
+                }
                 if (channel === 'mirror:camera-send') {
                     if (socket.readyState === WebSocket.OPEN) {
                         socket.send(
                             JSON.stringify({ type: 'camera', packet: payload }),
                         );
+                    }
+                    return;
+                }
+                // The screen's own ✕: on a browser the operator lets
+                // interact, it hides this screen as a hand on the
+                // projector's window would. The screen is the socket's own,
+                // so nothing of `payload` is sent.
+                if (channel === 'app:hide-screen') {
+                    if (isInteractive && socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: 'hide' }));
                     }
                     return;
                 }

@@ -20,7 +20,15 @@ import {
 import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
-import type { ScreenMessageType } from '../screenTypeHelpers';
+import type {
+    ScreenMessageType,
+    ScreenShowPayloadType,
+    ScreenType,
+} from '../screenTypeHelpers';
+import {
+    checkHasScreenShowFrame,
+    receiveScreenShowPayload,
+} from '../screenShowFrameHelpers';
 import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
@@ -61,6 +69,16 @@ function setGroupMembershipInf(
         return screenId === minId;
     };
 }
+
+// What a Screen Show of a screen does not follow: what concerns that screen's
+// own window (shown, hidden, moved, its sound) and Screen Show itself.
+const SCREEN_SHOW_UNRELAYED_TYPES = new Set<ScreenType>([
+    'screen-show',
+    'init',
+    'visible',
+    'display-change',
+    'background-video-sound',
+]);
 
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;
@@ -164,6 +182,13 @@ export default class ScreenManager extends ScreenManagerBase {
     }
 
     initEvent() {
+        // The Bible text style is the presenter's to change: it syncs the
+        // contrast fix to every screen. A screen page answering the same
+        // colour with its own copy sent that copy back -- the colour it was
+        // opened with -- and undid the fix on the presenter and every screen.
+        if (appProvider.isPageScreen) {
+            return;
+        }
         this.screenBackgroundManager.registerEventListener(
             ['color-set'],
             (color: string) => {
@@ -277,6 +302,91 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBibleManager.sendSyncScreen();
         this.screenDrawManager.sendSyncScreen();
         this.screenFocusManager.sendSyncScreen();
+        // And the whole state of every screen this one shows: its window may
+        // have just loaded.
+        this.sendScreenShowSnapshots(
+            this.screenForegroundManager.foregroundData.screenDataList.map(
+                (item) => {
+                    return item.id;
+                },
+            ),
+        );
+    }
+
+    /**
+     * Everything this screen holds, as the messages that put it there: what a
+     * window drawing it from nothing needs (a Screen Mirror guest, a virtual
+     * display's page, a Screen Show of it).
+     */
+    genSyncSnapshotMessages(): ScreenMessageType[] {
+        const handlers = [
+            this.screenBackgroundManager,
+            this.screenForegroundManager,
+            this.screenVaryAppDocumentManager,
+            this.screenBibleManager,
+            this.screenDrawManager,
+            this.screenFocusManager,
+        ];
+        const messages: ScreenMessageType[] = [
+            ...[
+                this.backgroundEffectManager,
+                this.foregroundEffectManager,
+                this.varyAppDocumentEffectManager,
+            ].map((effectManager) => {
+                return {
+                    screenId: this.screenId,
+                    type: 'effect' as const,
+                    data: {
+                        target: effectManager.target,
+                        effect: effectManager.effectType,
+                    },
+                };
+            }),
+            {
+                screenId: this.screenId,
+                type: 'bible-screen-view-text-style',
+                data: { textStyle: ScreenBibleManager.textStyle },
+            },
+        ];
+        for (const handler of handlers) {
+            messages.push({
+                ...handler.toSyncMessage(),
+                screenId: this.screenId,
+            });
+        }
+        return messages;
+    }
+
+    override genScreenShowPayload(): ScreenShowPayloadType {
+        return {
+            sourceScreenId: this.screenId,
+            width: this.width,
+            height: this.height,
+            stage: this.stage,
+            isSnapshot: true,
+            messages: this.genSyncSnapshotMessages(),
+        };
+    }
+
+    override sendScreenShowSnapshots(sourceScreenIds: number[]) {
+        // No window, nothing to send: one that opens asks with `init`.
+        if (appProvider.isPageScreen || !this.isShowing) {
+            return;
+        }
+        for (const sourceScreenId of sourceScreenIds) {
+            if (sourceScreenId === this.screenId) {
+                continue;
+            }
+            const payload =
+                getScreenManagerBase(sourceScreenId)?.genScreenShowPayload();
+            if (payload) {
+                ScreenManager.postScreenMessage({
+                    screenId: this.screenId,
+                    type: 'screen-show',
+                    data: payload,
+                });
+            }
+        }
     }
 
     clear() {
@@ -319,6 +429,9 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenVaryAppDocumentManager.delete();
         this.screenBibleManager.delete();
         this.screenForegroundManager.delete();
+        // Its id goes to the next screen added: no other screen may keep
+        // showing "screen N" and quietly pick up that one instead.
+        ScreenForegroundManager.removeScreenShowSource(this.screenId);
         this.screenDrawManager.delete();
         this.screenFocusManager.delete();
         this.divRef = null;
@@ -445,6 +558,11 @@ export default class ScreenManager extends ScreenManagerBase {
             ScreenBackgroundManager.receiveSyncVideoSound(message);
         } else if (type === 'vary-app-document-video-time') {
             ScreenVaryAppDocumentManager.receiveSyncVideoTime(message);
+        } else if (type === 'screen-show') {
+            // Another screen's state, for a Screen Show drawn here.
+            if (appProvider.isPageScreen) {
+                receiveScreenShowPayload(data);
+            }
         } else if (type === 'sync-scroll-percentage') {
             screenManagerBase.syncScrollPercentage(data);
             // Scrolled on the projector itself. Only the presenter knows the
@@ -578,6 +696,59 @@ export default class ScreenManager extends ScreenManagerBase {
             stage: getScreenManagerBase(message.screenId)?.stage,
             isScreen: appProvider.isPageScreen,
         });
+        if (!appProvider.isPageScreen) {
+            ScreenManager.relayToScreenShows(message);
+        }
+    }
+
+    /**
+     * A change of screen N, carried on to every screen showing it (Screen
+     * Show) -- whether or not N itself is showing, which is the point: the
+     * presenter is the one place that always holds N's state. Also to the
+     * copies of N drawn in this window's own Mini Screens.
+     */
+    private static relayToScreenShows(message: ScreenMessageType) {
+        if (SCREEN_SHOW_UNRELAYED_TYPES.has(message.type)) {
+            return;
+        }
+        const sourceScreenId = message.screenId;
+        const isDrawnHere = checkHasScreenShowFrame(sourceScreenId);
+        const targetIds = ScreenForegroundManager.getScreenShowTargetIds(
+            sourceScreenId,
+        ).filter((screenId) => {
+            return getScreenManagerBase(screenId)?.isShowing === true;
+        });
+        if (!isDrawnHere && targetIds.length === 0) {
+            return;
+        }
+        const source = getScreenManagerBase(sourceScreenId);
+        if (source === null) {
+            return;
+        }
+        const payload: ScreenShowPayloadType = {
+            sourceScreenId,
+            width: source.width,
+            height: source.height,
+            stage: source.stage,
+            isSnapshot: false,
+            messages: [
+                {
+                    screenId: sourceScreenId,
+                    type: message.type,
+                    data: message.data,
+                },
+            ],
+        };
+        if (isDrawnHere) {
+            receiveScreenShowPayload(payload);
+        }
+        for (const screenId of targetIds) {
+            ScreenManager.postScreenMessage({
+                screenId,
+                type: 'screen-show',
+                data: payload,
+            });
+        }
     }
 
     sendScreenMessage(message: ScreenMessageType, isForce: boolean) {

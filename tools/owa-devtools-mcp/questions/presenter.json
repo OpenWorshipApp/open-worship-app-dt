@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-06",
+    "updated": "2026-10-08",
     "sections": [
         {
             "id": "orientation",
@@ -1641,6 +1641,24 @@
                         "find": "Foreground",
                         "guide": true,
                         "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "screen-show",
+                    "text": "How do I show one screen inside another screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen show",
+                        "picture in picture",
+                        "screen in screen",
+                        "mirror a screen",
+                        "show screen 0 on screen 1",
+                        "inset"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
                     }
                 },
                 {

@@ -1,9 +1,17 @@
-import http from 'node:http';
 import dgram from 'node:dgram';
 import net from 'node:net';
-import os from 'node:os';
 
 import { isMirrorLanAddress } from './screenMirrorProtocol';
+import {
+    UpnpSoapError,
+    checkIsDeviceUrl,
+    listLocalIpv4s,
+    readXmlTag,
+    sendSsdpSearch,
+    upnpRequest,
+    upnpSoap,
+    type UpnpFailureType,
+} from './upnpHelpers';
 
 // UPnP IGD: ask the router -- the Internet Gateway Device -- to forward the
 // Screen Mirror port to this computer, and which public address it has. Used
@@ -11,8 +19,6 @@ import { isMirrorLanAddress } from './screenMirrorProtocol';
 // must be the router itself, so a device on the network that answers the
 // search cannot send this computer's requests anywhere else.
 
-const SSDP_ADDRESS = '239.255.255.250';
-const SSDP_PORT = 1900;
 const SEARCH_TARGETS = [
     'urn:schemas-upnp-org:device:InternetGatewayDevice:1',
     'urn:schemas-upnp-org:device:InternetGatewayDevice:2',
@@ -22,11 +28,22 @@ const SEARCH_TARGETS = [
 ];
 const SERVICE_PATTERN =
     /^urn:schemas-upnp-org:service:WAN(?:IP|PPP)Connection:\d$/;
-const MAX_BODY = 256 * 1024;
 const DESCRIPTION = 'Open Worship Screen Mirror';
 // Renewed at half time while the option is on. A crash leaves the mapping to
 // lapse on its own, and the next launch removes it (see `readRouterMapping`).
 export const ROUTER_LEASE_SECONDS = 3600;
+// Where the probe through the router's public side asks this computer's own
+// server for the one-time token it was given (`probeRouterPort`).
+export const ROUTER_PROBE_PATH = '/router-probe/';
+// Asked for this network's public address only when no router tells it, and
+// only while "Open to the internet" is on. It answers the bare IPv4 text.
+export const PUBLIC_ADDRESS_LOOKUP_URL = 'https://api.ipify.org';
+// The code of a RouterError for a router that did not answer at all, as
+// opposed to one that answered no.
+const NO_ANSWER = -1;
+// Ports asked for at most: the one remembered, this computer's own, and
+// random ones -- a router can say no to a port for many reasons.
+const MAX_PORT_TRIES = 8;
 
 export type RouterGateway = {
     controlUrl: string;
@@ -40,6 +57,13 @@ export type RouterMapping = RouterGateway & {
     internalPort: number;
     leaseSeconds: number;
 };
+// Who a router forwards an external port to: this computer (`ours`), nobody
+// (`free`), another computer -- or another app on this one -- (`taken`), or
+// `unknown` when the router will not say.
+export type RouterPortOwner = 'ours' | 'free' | 'taken' | 'unknown';
+// What answered on the router's public side: this computer's server
+// (`this`), something else (`other`), or nothing (`unknown`).
+export type RouterReach = 'this' | 'other' | 'unknown';
 export class RouterError extends Error {
     constructor(
         message: string,
@@ -49,84 +73,16 @@ export class RouterError extends Error {
     }
 }
 
-function checkIsRouterUrl(url: string, host?: string) {
-    try {
-        const parsed = new URL(url);
-        return (
-            parsed.protocol === 'http:' &&
-            !parsed.username &&
-            !parsed.password &&
-            net.isIPv4(parsed.hostname) &&
-            (host === undefined || parsed.hostname === host)
-        );
-    } catch {
-        return false;
-    }
-}
-function request(
-    url: string,
-    options: {
-        method?: string;
-        headers?: Record<string, string | number>;
-        body?: string;
-    } = {},
-) {
-    return new Promise<{ status: number; body: string; localAddress: string }>(
-        (resolve, reject) => {
-            const req = http.request(
-                url,
-                {
-                    method: options.method ?? 'GET',
-                    headers: options.headers,
-                    timeout: 3000,
-                    agent: false,
-                },
-                (res) => {
-                    const localAddress = (
-                        res.socket?.localAddress ?? ''
-                    ).replace(/^::ffff:/, '');
-                    let body = '';
-                    res.setEncoding('utf8');
-                    res.on('data', (chunk) => {
-                        body += chunk;
-                        if (body.length > MAX_BODY)
-                            req.destroy(new RouterError('Answer too large'));
-                    });
-                    res.on('error', reject);
-                    res.on('end', () => {
-                        resolve({
-                            status: res.statusCode ?? 0,
-                            body,
-                            localAddress,
-                        });
-                    });
-                },
-            );
-            req.on('timeout', () => {
-                req.destroy(new RouterError('Router did not answer'));
-            });
-            req.on('error', reject);
-            req.end(options.body);
-        },
+const checkIsRouterUrl = checkIsDeviceUrl;
+const readTag = readXmlTag;
+function toRouterError(failure: UpnpFailureType) {
+    return new RouterError(
+        failure === 'timeout' ? 'Router did not answer' : 'Answer too large',
+        NO_ANSWER,
     );
 }
-function readTag(xml: string, tag: string) {
-    const match = new RegExp(
-        `<(?:\\w+:)?${tag}>\\s*([^<]*?)\\s*</(?:\\w+:)?${tag}>`,
-        'i',
-    ).exec(xml);
-    return (match?.[1] ?? '')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&apos;/g, "'")
-        .replace(/&amp;/g, '&');
-}
-function escapeXml(text: string) {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+function request(url: string, options: Parameters<typeof upnpRequest>[1] = {}) {
+    return upnpRequest(url, options, toRouterError);
 }
 
 // The WAN connection services a router's description offers, IP before PPP:
@@ -165,31 +121,20 @@ async function soap(
     action: string,
     args: [string, string | number][],
 ) {
-    const body =
-        '<?xml version="1.0"?>\r\n' +
-        '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ' +
-        's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">' +
-        `<s:Body><u:${action} xmlns:u="${gateway.serviceType}">` +
-        args
-            .map(([name, value]) => {
-                return `<${name}>${escapeXml(String(value))}</${name}>`;
-            })
-            .join('') +
-        `</u:${action}></s:Body></s:Envelope>`;
-    const response = await request(gateway.controlUrl, {
-        method: 'POST',
-        body,
-        headers: {
-            'Content-Type': 'text/xml; charset="utf-8"',
-            'Content-Length': Buffer.byteLength(body),
-            SOAPAction: `"${gateway.serviceType}#${action}"`,
-        },
-    });
-    if (response.status === 200) return response.body;
-    throw new RouterError(
-        readTag(response.body, 'errorDescription') || `${action} refused`,
-        Number(readTag(response.body, 'errorCode')) || 0,
-    );
+    try {
+        return await upnpSoap(
+            gateway.controlUrl,
+            gateway.serviceType,
+            action,
+            args,
+            toRouterError,
+        );
+    } catch (error) {
+        if (error instanceof UpnpSoapError) {
+            throw new RouterError(error.message, error.code);
+        }
+        throw error;
+    }
 }
 
 export async function getRouterExternalAddress(gateway: RouterGateway) {
@@ -200,34 +145,8 @@ export async function getRouterExternalAddress(gateway: RouterGateway) {
     return net.isIPv4(address) && address !== '0.0.0.0' ? address : '';
 }
 
-function localIpv4s() {
-    return Object.values(os.networkInterfaces())
-        .flatMap((list) => list ?? [])
-        .filter((nic) => !nic.internal && nic.family === 'IPv4')
-        .map((nic) => nic.address);
-}
 function sendSearch(socket: dgram.Socket, address?: string) {
-    return Promise.all(
-        SEARCH_TARGETS.map((target) => {
-            return new Promise<void>((resolve) => {
-                try {
-                    if (address) socket.setMulticastInterface(address);
-                    socket.send(
-                        'M-SEARCH * HTTP/1.1\r\n' +
-                            `HOST: ${SSDP_ADDRESS}:${SSDP_PORT}\r\n` +
-                            'MAN: "ssdp:discover"\r\n' +
-                            'MX: 2\r\n' +
-                            `ST: ${target}\r\n\r\n`,
-                        SSDP_PORT,
-                        SSDP_ADDRESS,
-                        () => resolve(),
-                    );
-                } catch {
-                    resolve();
-                }
-            });
-        }),
-    );
+    return sendSsdpSearch(socket, SEARCH_TARGETS, address);
 }
 
 // The first router on any of this computer's networks that answers the search
@@ -303,13 +222,89 @@ export function findRouterGateway(timeout = 2500) {
         socket.bind(0, async () => {
             // One search out of every network card: Windows sends multicast
             // out of one card only unless told otherwise.
-            const addresses = localIpv4s();
+            const addresses = listLocalIpv4s();
             for (const address of addresses.length ? addresses : [undefined]) {
                 if (!searching) return;
                 await sendSearch(socket, address);
             }
         });
     });
+}
+
+// GetSpecificPortMappingEntry is optional on IGD:1 routers, so `unknown` is a
+// real answer: the caller then goes on as it would without asking.
+export async function readRouterPortOwner(
+    gateway: Pick<RouterGateway, 'controlUrl' | 'serviceType'> & {
+        localAddress?: string;
+    },
+    externalPort: number,
+    internalPort?: number,
+): Promise<RouterPortOwner> {
+    let xml: string;
+    try {
+        xml = await soap(
+            { localAddress: '', ...gateway },
+            'GetSpecificPortMappingEntry',
+            [
+                ['NewRemoteHost', ''],
+                ['NewExternalPort', externalPort],
+                ['NewProtocol', 'TCP'],
+            ],
+        );
+    } catch (error) {
+        // NoSuchEntryInArray.
+        return error instanceof RouterError && error.code === 714
+            ? 'free'
+            : 'unknown';
+    }
+    const client = readTag(xml, 'NewInternalClient');
+    if (!net.isIPv4(client)) return 'unknown';
+    const clients = new Set(listLocalIpv4s());
+    if (gateway.localAddress) clients.add(gateway.localAddress);
+    return clients.has(client) &&
+        (internalPort === undefined ||
+            Number(readTag(xml, 'NewInternalPort')) === internalPort)
+        ? 'ours'
+        : 'taken';
+}
+
+// Asks the router's public side for `token`, through the router itself (NAT
+// loopback). Only this computer's server knows the token, so any other answer
+// means the port leads elsewhere: a manual forwarding rule outranks UPnP on
+// most routers, and some keep another computer's mapping while saying yes.
+// No answer is `unknown` -- many routers do not loop back at all.
+export async function probeRouterPort(
+    externalAddress: string,
+    externalPort: number,
+    token: string,
+): Promise<RouterReach> {
+    try {
+        const response = await request(
+            `http://${externalAddress}:${externalPort}${ROUTER_PROBE_PATH}${token}`,
+        );
+        return response.status === 200 && response.body === token
+            ? 'this'
+            : 'other';
+    } catch {
+        return 'unknown';
+    }
+}
+
+// This network's public IPv4 address as a lookup site sees it, '' when it
+// does not say. Asked only when no router told it: behind a VPN it is the
+// VPN's address, which reaches this computer only if the VPN forwards the port.
+export async function lookUpPublicAddress(url = PUBLIC_ADDRESS_LOOKUP_URL) {
+    try {
+        const response = await request(url);
+        const address = response.body.trim();
+        return response.status === 200 &&
+            net.isIPv4(address) &&
+            !isMirrorLanAddress(address)
+            ? address
+            : '';
+    } catch {
+        return '';
+    }
 }
 
 function addMapping(
@@ -330,26 +325,42 @@ function addMapping(
     ]);
 }
 
-// Forwards `externalPort` (the same port as this computer's, unless another
-// computer already holds that one) to this computer. Re-adding a mapping this
-// computer already holds renews it.
+// Forwards an external port -- the one remembered, else the same port as this
+// computer's -- to this computer, and moves on to another port whenever the
+// router will not have that one: another computer holds it, it is kept for
+// something else, it is outside what the router allows. Only a router that
+// stops answering ends the search early. Re-adding a mapping this computer
+// already holds renews it. The router's yes is not taken on its word: a port
+// it says another computer holds is never asked for (some routers hand it
+// over and cut that computer off, others say yes and keep it there), and
+// `reach`, when given, checks that the public side lands on this computer.
 export async function openRouterPort(
     gateway: RouterGateway,
     internalPort: number,
     externalAddress: string,
-    preferredPort = internalPort,
+    {
+        preferredPort = internalPort,
+        reach,
+    }: {
+        preferredPort?: number;
+        reach?: (externalPort: number) => Promise<RouterReach>;
+    } = {},
 ): Promise<RouterMapping> {
-    const ports = [
-        ...new Set([
-            preferredPort,
-            internalPort,
-            ...Array.from({ length: 4 }, () => {
-                return 40000 + Math.floor(Math.random() * 20000);
-            }),
-        ]),
-    ];
+    const ports = new Set([preferredPort, internalPort]);
+    while (ports.size < MAX_PORT_TRIES) {
+        ports.add(40000 + Math.floor(Math.random() * 20000));
+    }
     let leaseSeconds = ROUTER_LEASE_SECONDS;
+    let isSamePortRequired = false;
+    let refusal = new RouterError('Router port is taken', 718);
     for (const externalPort of ports) {
+        if (isSamePortRequired && externalPort !== internalPort) continue;
+        let owner = await readRouterPortOwner(
+            gateway,
+            externalPort,
+            internalPort,
+        );
+        if (owner === 'taken') continue;
         try {
             try {
                 await addMapping(
@@ -365,23 +376,58 @@ export async function openRouterPort(
                 leaseSeconds = 0;
                 await addMapping(gateway, externalPort, internalPort, 0);
             }
-            return {
-                ...gateway,
-                externalAddress,
+        } catch (error) {
+            if (!(error instanceof RouterError) || error.code === NO_ANSWER)
+                throw error;
+            // SamePortValuesRequired: only this computer's own port can work.
+            if (error.code === 724) isSamePortRequired = true;
+            refusal = error;
+            continue;
+        }
+        if (owner === 'free') {
+            owner = await readRouterPortOwner(
+                gateway,
                 externalPort,
                 internalPort,
-                leaseSeconds,
-            };
-        } catch (error) {
-            // ConflictInMappingEntry: another computer holds that port.
-            if (!(error instanceof RouterError) || error.code !== 718)
-                throw error;
+            );
+            if (owner === 'taken') continue;
         }
+        if (reach && (await reach(externalPort)) === 'other') {
+            // Removed only when the router says it is this computer's: the
+            // entry may be the very one that leads elsewhere.
+            if (owner === 'ours') {
+                await closeRouterPort({
+                    ...gateway,
+                    externalPort,
+                    internalPort,
+                }).catch(() => {});
+            }
+            continue;
+        }
+        return {
+            ...gateway,
+            externalAddress,
+            externalPort,
+            internalPort,
+            leaseSeconds,
+        };
     }
-    throw new RouterError('Router port is taken', 718);
+    throw refusal;
 }
 
+// Renews the lease, and fails with 718 once the port forwards elsewhere: a
+// router can hand a lapsed or overwritten port to another computer, so this
+// runs for a permanent lease too, which has nothing to renew.
 export async function renewRouterPort(mapping: RouterMapping) {
+    const owner = await readRouterPortOwner(
+        mapping,
+        mapping.externalPort,
+        mapping.internalPort,
+    );
+    if (owner === 'taken') {
+        throw new RouterError('Router port is taken', 718);
+    }
+    if (!mapping.leaseSeconds && owner !== 'free') return;
     await addMapping(
         mapping,
         mapping.externalPort,
@@ -390,9 +436,21 @@ export async function renewRouterPort(mapping: RouterMapping) {
     );
 }
 
+// Removes the mapping only while it still forwards to this computer: a lapsed
+// lease may since have gone to another one, and that mapping is not ours.
 export async function closeRouterPort(
-    mapping: Pick<RouterMapping, 'controlUrl' | 'serviceType' | 'externalPort'>,
+    mapping: Pick<
+        RouterMapping,
+        'controlUrl' | 'serviceType' | 'externalPort'
+    > &
+        Partial<Pick<RouterMapping, 'localAddress' | 'internalPort'>>,
 ) {
+    const owner = await readRouterPortOwner(
+        mapping,
+        mapping.externalPort,
+        mapping.internalPort,
+    );
+    if (owner === 'taken' || owner === 'free') return;
     await soap({ ...mapping, localAddress: '' }, 'DeletePortMapping', [
         ['NewRemoteHost', ''],
         ['NewExternalPort', mapping.externalPort],
@@ -400,8 +458,14 @@ export async function closeRouterPort(
     ]);
 }
 
+function checkIsPort(value: unknown): value is number {
+    return (
+        Number.isInteger(value) && Number(value) > 0 && Number(value) <= 65535
+    );
+}
 // A mapping remembered from an earlier run, so the next launch can remove it
-// when the app did not get to: it holds only where to ask and which port.
+// when the app did not get to: it holds only where to ask, which port, and
+// which port of this computer it led to (missing in a record from before).
 export function readRouterMapping(text: string | null | undefined) {
     try {
         const value = JSON.parse(text ?? '');
@@ -411,14 +475,15 @@ export function readRouterMapping(text: string | null | undefined) {
             isMirrorLanAddress(new URL(value.controlUrl).hostname) &&
             typeof value.serviceType === 'string' &&
             SERVICE_PATTERN.test(value.serviceType) &&
-            Number.isInteger(value.externalPort) &&
-            value.externalPort > 0 &&
-            value.externalPort <= 65535
+            checkIsPort(value.externalPort)
         ) {
             return {
                 controlUrl: value.controlUrl as string,
                 serviceType: value.serviceType as string,
-                externalPort: value.externalPort as number,
+                externalPort: value.externalPort,
+                ...(checkIsPort(value.internalPort)
+                    ? { internalPort: value.internalPort }
+                    : {}),
             };
         }
     } catch {}

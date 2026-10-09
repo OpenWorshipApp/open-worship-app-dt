@@ -141,6 +141,17 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         }),
     },
     {
+        key: 'screen',
+        labelKey: 'Screen Show',
+        iconName: 'display',
+        checkIsOnScreen: (data) => {
+            return (data.screenDataList ?? []).length > 0;
+        },
+        Comp: lazy(() => {
+            return import('./ForegroundScreenComp');
+        }),
+    },
+    {
         key: 'web',
         labelKey: 'Web Show',
         iconName: 'globe2',

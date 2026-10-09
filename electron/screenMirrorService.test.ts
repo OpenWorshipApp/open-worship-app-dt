@@ -4,6 +4,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import net from 'node:net';
 import http from 'node:http';
+import https from 'node:https';
 import dgram from 'node:dgram';
 import os from 'node:os';
 import path from 'node:path';
@@ -39,7 +40,9 @@ vi.mock('./screenMirrorRouter', async (importOriginal) => ({
     ...(await importOriginal<typeof RouterModule>()),
     findRouterGateway: vi.fn(),
     getRouterExternalAddress: vi.fn(),
+    lookUpPublicAddress: vi.fn(),
     openRouterPort: vi.fn(),
+    probeRouterPort: vi.fn(),
     renewRouterPort: vi.fn(),
     closeRouterPort: vi.fn(),
 }));
@@ -94,8 +97,16 @@ import {
     closeRouterPort,
     findRouterGateway,
     getRouterExternalAddress,
+    lookUpPublicAddress,
     openRouterPort,
+    probeRouterPort,
 } from './screenMirrorRouter';
+import { MirrorTunnel } from './screenMirrorTunnel';
+import { readRequestSender } from './mirrorRequestSender';
+import {
+    VIRTUAL_DISPLAY_SHARE_KEY,
+    toVirtualDisplayId,
+} from './virtualDisplayProtocol';
 import appInfo from '../package.json';
 
 function ipc(name: string) {
@@ -126,6 +137,8 @@ beforeEach(async () => {
     vi.mocked(findRouterGateway).mockReset().mockResolvedValue(null);
     vi.mocked(getRouterExternalAddress).mockReset().mockResolvedValue('');
     vi.mocked(openRouterPort).mockReset();
+    vi.mocked(probeRouterPort).mockReset().mockResolvedValue('unknown');
+    vi.mocked(lookUpPublicAddress).mockReset().mockResolvedValue('');
     vi.mocked(closeRouterPort).mockReset().mockResolvedValue(undefined);
     directory = await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-service-'));
     // Hosting is off by default; these tests are about a host.
@@ -603,6 +616,103 @@ test('a guest’s files load from the address it dialled, not the card it came i
     expect(await response.text()).toBe('host picture');
 });
 
+async function holdFreePort() {
+    const holder = net.createServer();
+    await new Promise<void>((resolve) => holder.listen(0, resolve));
+    const port = (holder.address() as net.AddressInfo).port;
+    const release = () =>
+        new Promise<void>((resolve) => holder.close(() => resolve()));
+    return { port, release };
+}
+
+// Every TV, bookmark and printed QR code holds the address the last launch
+// had. A restart found it still held by the closing copy and moved on at once:
+// seen 39240, 39241, 39240 on three restarts, every viewer on a dead address.
+test('a restart waits for its port instead of moving to the next one', async () => {
+    const { port, release } = await holdFreePort();
+    fixture.client.set('screen-mirror-port', '');
+    fixture.client.set('screen-mirror-last-port', String(port));
+    const restarted = new ScreenMirrorService();
+    setTimeout(() => void release(), 600);
+    try {
+        await restarted.start();
+        expect(restarted.port).toBe(port);
+    } finally {
+        restarted.stop();
+    }
+});
+
+// Windows lets a loopback bind share a port another process holds on every
+// network: a second copy of the app took the first one's port, and loopback
+// -- its screen windows, this computer's viewers -- went to the wrong app.
+test('a port another app answers on is not shared, even bound to loopback', async () => {
+    const holder = net.createServer();
+    await new Promise<void>((resolve) => holder.listen(0, '0.0.0.0', resolve));
+    const { port } = holder.address() as net.AddressInfo;
+    try {
+        // Hosting off: this copy binds 127.0.0.1 only.
+        fixture.client.set('screen-mirror-host', '');
+        fixture.client.set('screen-mirror-port', '');
+        fixture.client.set('screen-mirror-last-port', String(port));
+        const second = new ScreenMirrorService();
+        try {
+            await second.start();
+            expect(second.port).not.toBe(port);
+            expect(second.port).toBeGreaterThan(0);
+        } finally {
+            second.stop();
+        }
+    } finally {
+        await new Promise<void>((resolve) => holder.close(() => resolve()));
+    }
+}, 15000);
+
+test('a held custom port is waited for, then reported', async () => {
+    const { port, release } = await holdFreePort();
+    fixture.client.set('screen-mirror-port', String(port));
+    const waited = new ScreenMirrorService();
+    setTimeout(() => void release(), 600);
+    try {
+        await waited.start();
+        expect(waited.port).toBe(port);
+        expect(waited.state().error ?? null).toBeNull();
+    } finally {
+        waited.stop();
+    }
+});
+
+// A document's blank first slide is `/assets/blank.png`, an address of the
+// app's page. Taken for a disk path (`C:\assets\blank.png`), it was published
+// as a file that is not there: a 404 and a broken picture on every guest and
+// virtual display.
+test('the app’s own page-relative files are published from the app', async () => {
+    const client = await guest();
+    await vi.waitFor(() => expect(service.state().pending).toHaveLength(1));
+    service.approve(client.id);
+    client.send('inventory', { displays: [display], cameras: [] });
+    await vi.waitFor(() => expect(service.displays()).toHaveLength(1));
+    answerBootstraps(service, [
+        {
+            type: 'slide',
+            data: { imagePreviewSrc: '/assets/blank.png' },
+        },
+    ]);
+    await service.prepareOutput(0, service.displays()[0].id);
+    await vi.waitFor(() =>
+        expect(client.packets.some((packet) => packet.type === 'show')).toBe(
+            true,
+        ),
+    );
+    const src = client.packets.find((packet) => packet.type === 'show').context
+        .messages[0].data.imagePreviewSrc;
+    expect(src).toMatch(/\/content\/[a-f0-9]{48}\/[a-f0-9]{24}\/blank\.png$/);
+    const published = Object.keys(service.getOutputContext(0)!.resources);
+    expect(published).toContain(
+        path.join(process.cwd(), 'dist', 'assets', 'blank.png'),
+    );
+    expect(published).not.toContain(path.resolve('/assets/blank.png'));
+});
+
 // The address rewriting rebuilt every object from its own fields, and a Date
 // has none: a running stopwatch reached the guest as `dateTime: {}` and drew
 // 00:00:00 for good.
@@ -701,6 +811,354 @@ test('opening to the internet asks the router, and closing it removes the mappin
     await service.setInternetEnabled(true);
     await vi.waitFor(() => expect(service.state().router).toBe('shared'));
     expect(openRouterPort).toHaveBeenCalledTimes(1);
+});
+
+test('without an opened port the public address is still listed, on the chosen public port', async () => {
+    const gateway = {
+        controlUrl: 'http://192.168.1.1:5000/ctl',
+        serviceType: 'urn:schemas-upnp-org:service:WANIPConnection:1',
+        localAddress: '192.168.1.3',
+    };
+    // No router answers: a lookup site is asked.
+    vi.mocked(lookUpPublicAddress).mockResolvedValue('198.51.100.20');
+    await service.setInternetEnabled(true);
+    await vi.waitFor(() => {
+        expect(service.state().router).toBe('unavailable');
+    });
+    expect(service.state().addresses).toContainEqual({
+        host: '198.51.100.20',
+        port: service.port,
+        kind: 'public',
+    });
+    // A router that tells its address but opens no port is believed over
+    // the lookup site, and the chosen public port is what is listed.
+    vi.mocked(findRouterGateway).mockResolvedValue(gateway);
+    vi.mocked(getRouterExternalAddress).mockResolvedValue('203.0.113.10');
+    vi.mocked(openRouterPort).mockRejectedValue(new Error('refused'));
+    expect(() => service.setPublicPort(70000)).toThrow('Invalid port');
+    service.setPublicPort(40500);
+    await vi.waitFor(() => expect(service.state().router).toBe('refused'));
+    expect(service.state()).toMatchObject({ publicPort: 40500 });
+    expect(service.state().addresses).toContainEqual({
+        host: '203.0.113.10',
+        port: 40500,
+        kind: 'public',
+    });
+    expect(vi.mocked(openRouterPort).mock.lastCall?.[3]).toMatchObject({
+        preferredPort: 40500,
+    });
+    expect(lookUpPublicAddress).toHaveBeenCalledTimes(1);
+    // Off forgets it.
+    await service.setInternetEnabled(false);
+    expect(
+        service.state().addresses.some((address) => {
+            return address.kind === 'public';
+        }),
+    ).toBe(false);
+});
+
+// A file a window of this computer asks for on demand joins the screen's
+// state. A virtual display's state is also what browsers elsewhere draw from,
+// so it keeps the path alone: an absolute 127.0.0.1 address sent a slide's
+// picture to every viewer's own device (seen through the tunnel).
+test('a virtual display keeps on-demand files relative; a screen window gets its address', () => {
+    const output = (displayId: number) => ({
+        displayId,
+        scope: service.content.createScope(),
+        context: { screenId: 0, resources: {} as Record<string, string> },
+    });
+    const outputs = (service as any).outputs as Map<number, any>;
+    outputs.set(7, output(toVirtualDisplayId(1)));
+    outputs.set(8, output(1));
+    const picture = path.join(directory, 'slide', 'media', 'image1.jpg');
+    const forWindow = service.resource(7, picture);
+    expect(
+        forWindow.startsWith(`http://127.0.0.1:${service.port}/content/`),
+    ).toBe(true);
+    const stored = service.getOutputContext(7)!.resources[picture];
+    expect(stored).toBe(forWindow.slice(service.baseUrl.length));
+    expect(stored).toMatch(
+        /^\/content\/[a-f0-9]{48}\/[a-f0-9]{24}\/image1\.jpg$/,
+    );
+    // A screen on this computer's own monitors is drawn only here.
+    service.resource(8, picture);
+    expect(service.getOutputContext(8)!.resources[picture]).toMatch(
+        /^http:\/\/127\.0\.0\.1:/,
+    );
+    outputs.delete(7);
+    outputs.delete(8);
+});
+
+// Cloudflare's quick tunnel reaches this server through a loopback door of
+// its own: whatever its socket's peer says, every request on it is the
+// internet, from the address Cloudflare names, and only a virtual display's
+// viewer is served there.
+test('through the tunnel everything is the internet: viewers, and guests while hosting', async () => {
+    const started: number[] = [];
+    const startSpy = vi
+        .spyOn(MirrorTunnel.prototype, 'start')
+        .mockImplementation((port: number) => {
+            started.push(port);
+        });
+    const stopSpy = vi
+        .spyOn(MirrorTunnel.prototype, 'stop')
+        .mockImplementation(() => {});
+    const seen: string[] = [];
+    service.setVirtualDisplayHooks({
+        route: (req, res, _url, network) => {
+            seen.push(`${network} ${readRequestSender(req).address}`);
+            res.writeHead(200).end();
+        },
+        upgrade: (req, socket, _head, network) => {
+            seen.push(`ws ${network} ${readRequestSender(req).address}`);
+            socket.destroy();
+        },
+        admits: () => true,
+        onNetworkChanged: () => {},
+    });
+    const get = (port: number, pathname: string, ip?: string) => {
+        return new Promise<number>((resolve) => {
+            http.get(
+                {
+                    host: '127.0.0.1',
+                    port,
+                    path: pathname,
+                    headers: ip ? { 'cf-connecting-ip': ip } : {},
+                },
+                (res) => {
+                    res.resume();
+                    resolve(res.statusCode ?? 0);
+                },
+            ).on('error', () => resolve(0));
+        });
+    };
+    try {
+        // Wanted only while the displays are shared to the internet.
+        service.setTunnelEnabled(true);
+        expect(started).toEqual([]);
+        fixture.client.set(VIRTUAL_DISPLAY_SHARE_KEY, 'true');
+        await service.setInternetEnabled(true);
+        await vi.waitFor(() => expect(started).toHaveLength(1));
+        const door = started[0];
+        expect(door).not.toBe(service.port);
+        expect(await get(door, '/vd/1/video', '198.51.100.7')).toBe(200);
+        expect(await get(door, '/vd/1/video', 'not an address')).toBe(200);
+        expect(await get(service.port, '/vd/1/video')).toBe(200);
+        expect(seen.slice(0, 2)).toEqual([
+            'internet 198.51.100.7',
+            'internet 0.0.0.0',
+        ]);
+        expect(seen[2]).toMatch(/^this-computer (::ffff:)?127\.0\.0\.1$/);
+        // Screen Mirror's guests come in through it too while hosting is
+        // on -- from the internet, under the guest access, their files
+        // published under the https origin they dialled.
+        expect(await get(door, '/discovery', '198.51.100.8')).toBe(200);
+        const tunnelGuest = new WebSocket(`ws://127.0.0.1:${door}/mirror`, {
+            headers: {
+                'cf-connecting-ip': '198.51.100.8',
+                host: 'quiet-river.trycloudflare.com',
+            },
+        });
+        sockets.push(tunnelGuest);
+        tunnelGuest.on('error', () => {});
+        await new Promise((resolve) => tunnelGuest.once('open', resolve));
+        tunnelGuest.send(
+            JSON.stringify({
+                protocol: 1,
+                type: 'hello',
+                id: randomUUID(),
+                name: 'Tunnel guest',
+                version: appInfo.version,
+            }),
+        );
+        await vi.waitFor(() => {
+            expect(service.state().pending).toMatchObject([
+                { address: '198.51.100.8', network: 'internet' },
+            ]);
+        });
+        const peer = [...(service as any).peers.values()][0];
+        expect(peer.origin).toBe('https://quiet-river.trycloudflare.com');
+        const viewer = new WebSocket(`ws://127.0.0.1:${door}/vd/1/ws`, {
+            headers: { 'cf-connecting-ip': '2001:db8::5' },
+        });
+        viewer.on('error', () => {});
+        await vi.waitFor(() => {
+            expect(seen).toContain('ws internet 2001:db8::5');
+        });
+        expect(service.tunnelState.status).toBe('off');
+        // Hosting off: the viewers' door alone, nothing of Screen Mirror.
+        tunnelGuest.terminate();
+        await service.setHostEnabled(false);
+        expect(await get(door, '/discovery')).toBe(404);
+        expect(await get(door, '/vd/1/video', '198.51.100.7')).toBe(200);
+        // Off closes the door.
+        service.setTunnelEnabled(false);
+        expect(stopSpy).toHaveBeenCalled();
+        await vi.waitFor(async () => {
+            expect(await get(door, '/vd/1/video')).toBe(0);
+        });
+    } finally {
+        startSpy.mockRestore();
+        stopSpy.mockRestore();
+    }
+});
+
+// One server, one set of connection settings for both tabs: the tunnel's
+
+// address joins the shared address list once it is up, and the port and the
+
+// public address have commands of their own (not the guest-access one).
+
+test('the tunnel joins the shared address list; the port has its own command', async () => {
+    const startSpy = vi
+
+        .spyOn(MirrorTunnel.prototype, 'start')
+
+        .mockImplementation(() => {});
+
+    const stateSpy = vi
+
+        .spyOn(MirrorTunnel.prototype, 'state', 'get')
+
+        .mockReturnValue({
+            status: 'up',
+
+            url: 'https://quiet-river.trycloudflare.com',
+
+            progress: 100,
+
+            error: '',
+        });
+
+    try {
+        await service.setInternetEnabled(true);
+
+        const isListed = () => {
+            return service.state().addresses.some((address) => {
+                return address.kind === 'tunnel';
+            });
+        };
+
+        expect(isListed()).toBe(false);
+
+        service.setTunnelEnabled(true);
+
+        expect(service.state()).toMatchObject({
+            tunnelEnabled: true,
+
+            tunnel: { status: 'up' },
+        });
+
+        expect(service.state().addresses).toContainEqual({
+            host: 'quiet-river.trycloudflare.com',
+
+            port: 443,
+
+            kind: 'tunnel',
+        });
+
+        await service.setInternetEnabled(false);
+
+        expect(isListed()).toBe(false);
+
+        service.setCustomPort(40500);
+
+        expect(service.state()).toMatchObject({
+            customPort: 40500,
+
+            approvalMode: 'approve',
+        });
+
+        expect(() => service.setCustomPort(70000)).toThrow('Invalid port');
+
+        service.setCustomPort(null);
+
+        expect(service.state().customPort).toBeNull();
+    } finally {
+        startSpy.mockRestore();
+
+        stateSpy.mockRestore();
+    }
+});
+
+// A tunnel's address has no port to show: a guest given one dials 443, with
+
+// TLS -- https for the host's discovery, wss for its socket.
+
+test('a guest dials port 443 -- a tunnel -- with TLS', async () => {
+    const get = vi.spyOn(https, 'get').mockImplementation(((_url: string) => {
+        const request = new EventEmitter() as any;
+
+        request.destroy = () => {};
+
+        setImmediate(() => request.emit('error', new Error('offline')));
+
+        return request;
+    }) as any);
+
+    try {
+        await expect(
+            service.connect({
+                host: 'https://quiet-river.trycloudflare.com',
+
+                port: 443,
+
+                code: '',
+            }),
+        ).rejects.toThrow('Connection failed');
+
+        expect(get.mock.calls[0][0]).toBe(
+            'https://quiet-river.trycloudflare.com:443/discovery',
+        );
+    } finally {
+        get.mockRestore();
+    }
+});
+
+test('the router port is checked against this server, with a token only it answers', async () => {
+    const real = await vi.importActual<typeof RouterModule>(
+        './screenMirrorRouter',
+    );
+    // The router's loopback, played by this computer's own loopback.
+    vi.mocked(probeRouterPort).mockImplementation((_host, _port, token) => {
+        return real.probeRouterPort('127.0.0.1', service.port, token);
+    });
+    const gateway = {
+        controlUrl: 'http://192.168.1.1:5000/ctl',
+        serviceType: 'urn:schemas-upnp-org:service:WANIPConnection:1',
+        localAddress: '192.168.1.3',
+    };
+    const reached: string[] = [];
+    vi.mocked(findRouterGateway).mockResolvedValue(gateway);
+    vi.mocked(getRouterExternalAddress).mockResolvedValue('203.0.113.10');
+    vi.mocked(openRouterPort).mockImplementation(
+        async (_gateway, internalPort, externalAddress, options) => {
+            reached.push(await options!.reach!(40001));
+            return {
+                ...gateway,
+                externalAddress,
+                externalPort: 40001,
+                internalPort,
+                leaseSeconds: 3600,
+            };
+        },
+    );
+    await service.setInternetEnabled(true);
+    await vi.waitFor(() => expect(service.state().router).toBe('open'));
+    expect(reached).toEqual(['this']);
+    expect(probeRouterPort).toHaveBeenCalledWith(
+        '203.0.113.10',
+        40001,
+        expect.any(String),
+    );
+    // The token is good for its own probe only.
+    const [, , token] = vi.mocked(probeRouterPort).mock.calls[0];
+    expect(await real.probeRouterPort('127.0.0.1', service.port, token)).toBe(
+        'other',
+    );
+    expect(
+        JSON.parse(fixture.client.get('screen-mirror-router-mapping')!),
+    ).toMatchObject({ externalPort: 40001, internalPort: service.port });
 });
 
 test('a guest links to several hosts, and each host’s screen answers only its host', async () => {
@@ -835,5 +1293,120 @@ test('a guest links to several hosts, and each host’s screen answers only its 
     } finally {
         guestC.stop();
         hostB.stop();
+    }
+});
+
+// Talk-back on a connection, end to end between a host and a guest: each turns
+// on only its own microphone and speaker, the other side sees a microphone go
+// on, and sound reaches a speaker only while it is on. A guest can stop
+// offering its cameras to a host.
+test('the intercom and camera sharing between a host and a guest', async () => {
+    fixture.client.delete('screen-mirror-identity');
+    await useFreePort();
+    const guest = new ScreenMirrorService();
+    await guest.start();
+    // The broker window is the sound's; here it is where packets land.
+    const hostBroker = vi
+        .spyOn(service as any, 'sendBrokerIntercom')
+        .mockImplementation(() => {});
+    const guestBroker = vi
+        .spyOn(guest as any, 'sendBrokerIntercom')
+        .mockImplementation(() => {});
+    try {
+        (guest as any).physicalCameras = [
+            { deviceId: 'cam-1', label: 'HD Camera', groupId: '' },
+        ];
+        await guest.connect({
+            host: '127.0.0.1',
+            port: service.port,
+            code: '',
+        });
+        await vi.waitFor(() => expect(service.state().pending).toHaveLength(1));
+        service.approve(service.state().pending[0].id);
+        await vi.waitFor(() => {
+            expect(service.state().guests).toHaveLength(1);
+        });
+        // Everything starts off: no microphone, no speaker, no cameras.
+        const [connection] = guest.state().connections;
+        expect(connection).toMatchObject({
+            shareCameras: false,
+            intercom: { mic: false, speaker: false, remoteMic: false },
+        });
+        expect(service.state().guests[0].cameras).toEqual([]);
+        guest.setShareCameras(connection.id, true);
+        await vi.waitFor(() => {
+            expect(service.state().guests[0].cameras).toHaveLength(1);
+        });
+        const guestId = service.state().guests[0].id;
+        const hostKey = `guest:${guestId}`;
+        const guestKey = `link:${connection.id}`;
+
+        await guest.setIntercom(guestKey, { mic: true });
+        await vi.waitFor(() => {
+            expect(service.state().guests[0].intercom.remoteMic).toBe(true);
+        });
+        // The host's speaker is off: the guest's sound is dropped.
+        (guest as any).intercom.sendLocal(new Uint8Array([1, 2, 3]));
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(
+            hostBroker.mock.calls.some(([message]: any) => {
+                return message.type === 'audio';
+            }),
+        ).toBe(false);
+        await service.setIntercom(hostKey, { speaker: true, volume: 0.5 });
+        expect(hostBroker).toHaveBeenLastCalledWith({
+            type: 'config',
+            isMicOn: false,
+            speakers: { [hostKey]: 0.5 },
+        });
+        (guest as any).intercom.sendLocal(new Uint8Array([1, 2, 3]));
+        await vi.waitFor(() => {
+            expect(hostBroker).toHaveBeenLastCalledWith({
+                type: 'audio',
+                key: hostKey,
+                data: new Uint8Array([1, 2, 3]),
+            });
+        });
+        expect(service.state().guests[0].intercom).toMatchObject({
+            speaker: true,
+            volume: 0.5,
+        });
+        // The guest's own speaker: the host's microphone plays there.
+        await guest.setIntercom(guestKey, { speaker: true });
+        await service.setIntercom(hostKey, { mic: true });
+        await vi.waitFor(() => {
+            expect(guest.state().connections[0].intercom.remoteMic).toBe(true);
+        });
+        (service as any).intercom.sendLocal(new Uint8Array([9]));
+        await vi.waitFor(() => {
+            expect(guestBroker).toHaveBeenLastCalledWith({
+                type: 'audio',
+                key: guestKey,
+                data: new Uint8Array([9]),
+            });
+        });
+        // Only a connection that is there.
+        await expect(
+            service.setIntercom('guest:nobody', { mic: true }),
+        ).rejects.toThrow('Connection failed');
+
+        guest.setShareCameras(connection.id, false);
+        await vi.waitFor(() => {
+            expect(service.state().guests[0].cameras).toEqual([]);
+        });
+        expect(guest.state().connections[0].shareCameras).toBe(false);
+
+        // The guest leaves: nothing of the intercom stays on.
+        guest.disconnect(connection.id);
+        await vi.waitFor(() => expect(service.state().guests).toEqual([]));
+        expect(hostBroker).toHaveBeenLastCalledWith({
+            type: 'config',
+            isMicOn: false,
+            speakers: {},
+        });
+    } finally {
+        hostBroker.mockRestore();
+        guestBroker.mockRestore();
+        guest.stop();
     }
 });

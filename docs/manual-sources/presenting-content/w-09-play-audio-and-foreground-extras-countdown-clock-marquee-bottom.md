@@ -2,10 +2,10 @@
 id: W-09
 title: "Play audio, and foreground extras (countdown, clock, marquee bottom…)"
 section: "Presenting content"
-verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, KB-03, KB-07, CB-67]
-screenshots: 3
+verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
+screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-07"
+workflowsVersion: "2026-10-08"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -55,6 +55,21 @@ button:
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
 - **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Screen Show]:** what one screen holds, shown on another —
+  screen 1's slide in the corner of screen 0. The panel has one card per
+  screen, in that screen's own colour with its number. Click a card to
+  put that screen on the selected screen, or press its **⋮**
+  (**[en:tran:Show on Screens]**) to choose. Place and size it under
+  _Properties_ like any other overlay. It shows that screen's
+  background, slide, Bible text and overlays as they change, **even
+  while that screen is hidden** — a screen that is up nowhere else can
+  be shown only inside another. Where that screen draws nothing,
+  the one beneath shows through. A screen never shows itself, and two
+  screens never show each other: the app refuses with
+  **[en:tran:A screen cannot show itself]** or
+  **[en:tran:These screens would show each other]** instead. It never
+  carries sound: the screen it shows plays that. Take it off with
+  **[en:tran:Hide Screen Show]**. 📸
 - **[en:tran:Video Show]**, **[en:tran:Image Show]** and **[en:tran:Web Show]:** a clip,
   a picture or a web page shown _over_ the slide instead of behind it. Each lists a
   folder the same way the Background tabs do — only the rows on screen are built, so a
@@ -114,8 +129,8 @@ button:
   follow it — the tile that is up is marked when it happens to be in view, and the list
   stays where you left it so you can keep looking for the next picture while the show
   runs.
-- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show
-  and Web Show) decides how the overlay mixes with whatever is under it. It is the
+- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show,
+  Screen Show and Web Show) decides how the overlay mixes with whatever is under it. It is the
   answer to a clip that has a black background: pick **[en:tran:Screen Blend]** and the
   black drops out, leaving only the falling snow, sparks or light over the live slide.
   **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
@@ -148,7 +163,7 @@ and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `KB-03` · `KB-07` · `CB-67`
+`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-07).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
 :::

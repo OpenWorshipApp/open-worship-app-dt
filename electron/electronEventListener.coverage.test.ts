@@ -11,6 +11,7 @@ const {
     answerGuideHelp,
     askGuideHelp,
     captureOAuthRedirectUrl,
+    captureMiniScreenImage,
     captureWindowImage,
     captureWebScreenShot,
     clearAiChatGuestData,
@@ -53,6 +54,7 @@ const {
     answerGuideHelp: vi.fn(),
     askGuideHelp: vi.fn(),
     captureOAuthRedirectUrl: vi.fn(),
+    captureMiniScreenImage: vi.fn(),
     captureWindowImage: vi.fn(),
     captureWebScreenShot: vi.fn(),
     clearAiChatGuestData: vi.fn(async () => undefined),
@@ -109,10 +111,20 @@ vi.mock('./fontListHelpers', () => ({
     getSystemFontListMap,
 }));
 
+const { getVirtualDisplays } = vi.hoisted(() => ({
+    getVirtualDisplays: vi.fn((): any => null),
+}));
+
+vi.mock('./virtualDisplayService', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    getVirtualDisplays,
+}));
+
 vi.mock('./electronHelpers', () => ({
     attemptClosing,
     answerGuideHelp,
     askGuideHelp,
+    captureMiniScreenImage,
     captureWindowImage,
     captureWebScreenShot,
     findScreenWindow,
@@ -952,6 +964,37 @@ describe('electronEventListener handlers', () => {
         );
         expect(findScreenWindow).toHaveBeenCalledWith(4);
         expect(captureWindowImage).toHaveBeenLastCalledWith(screenWin);
+    });
+
+    // A screen on a virtual display has no window, and is drawn here only
+    // while an MP4 is watched: the rest of the time its Mini Screen is the
+    // picture, never "That window is not open".
+    test('a virtual display screen nobody streams is taken from its Mini Screen', async () => {
+        const appController = createAppController();
+        const captureScreen = vi.fn(async () => null);
+        getVirtualDisplays.mockReturnValue({ captureScreen });
+        captureMiniScreenImage.mockResolvedValue('data:image/png;base64,MINI');
+        initEventListenerApp(appController);
+        const sender = { id: 5, send: vi.fn() };
+        try {
+            await findOnHandler('main:app:capture-window')(
+                { sender },
+                { replyEventName: 'reply:vd', screenId: 6 },
+            );
+        } finally {
+            getVirtualDisplays.mockReturnValue(null);
+        }
+
+        expect(captureScreen).toHaveBeenCalledWith(6);
+        expect(captureMiniScreenImage).toHaveBeenCalledWith(
+            appController.mainWin,
+            6,
+        );
+        expect(captureWindowImage).not.toHaveBeenCalled();
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply:vd',
+            'data:image/png;base64,MINI',
+        );
     });
 
     test('routes remaining main-process services and walkthrough messages', async () => {

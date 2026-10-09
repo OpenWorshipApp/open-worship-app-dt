@@ -386,6 +386,31 @@ export const PRESENTER_DEMO_LIST = [
     ],
   },
   {
+    id: 'presenter-foreground-screen',
+    label: 'Show one screen inside another',
+    detail:
+      'Screen Show puts the live picture of another screen above the slide.',
+    title: 'Show one screen inside another',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Screen Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Screen Show',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Each card is one screen, in its own colour with its number. Press the three dots on a card to choose which screen shows it, then size and place it with Properties. It shows what that screen holds even while that screen is hidden. A screen cannot show itself, and two screens cannot show each other. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
     id: 'presenter-foreground-web',
     label: 'Show a web page over the slide',
     detail: 'Web Show puts a page or a small web file above the slide.',
@@ -915,7 +940,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Eleven components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
+        text: 'Twelve components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera, Screen and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
       },
     ],
   },

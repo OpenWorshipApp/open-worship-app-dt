@@ -7,6 +7,7 @@ import {
     type MirrorRouterStatus,
 } from '../../electron/screenMirrorProtocol';
 import { mirrorCommand } from './mirrorConnectionHelpers';
+import CollapsibleNoteComp from './CollapsibleNoteComp';
 
 type QrCodeType = { size: number; path: string };
 export type PerformType = (work: () => Promise<unknown>) => Promise<void>;
@@ -121,27 +122,75 @@ export function MirrorQrCodeComp({ text }: Readonly<{ text: string }>) {
     );
 }
 
-// What the router said about forwarding the port. Shared by both tabs: Screen
-// Mirror's hosting and Virtual Displays' sharing open the same server.
-export function MirrorRouterStatusComp({
+type RouterStatePropsType = {
+    router: MirrorRouterStatus;
+    port: number;
+    publicPort: number | null;
+    addresses: { host: string; port: number; kind: string }[];
+};
+
+// The public port to ask the router for, or to forward by hand: empty means
+// this computer's own. Saving asks the router again at once.
+function RenderPublicPortComp({
     state,
     busy,
     perform,
 }: Readonly<{
-    state: {
-        router: MirrorRouterStatus;
-        port: number;
-        addresses: { host: string; port: number; kind: string }[];
-    };
+    state: RouterStatePropsType;
+    busy: boolean;
+    perform: PerformType;
+}>) {
+    const [text, setText] = useState('');
+    const port = Number(text);
+    const isValid =
+        text === '' || (Number.isInteger(port) && port > 0 && port <= 65535);
+    return (
+        <label className="small d-flex flex-column gap-1">
+            <span>{tran('Public port')}</span>
+            <span className="input-group input-group-sm">
+                <input
+                    className="form-control app-data"
+                    type="number"
+                    min={1}
+                    max={65535}
+                    value={text}
+                    placeholder={String(state.publicPort ?? state.port)}
+                    onChange={(event) => {
+                        setText(event.target.value);
+                    }}
+                />
+                <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    disabled={busy || !isValid}
+                    onClick={() => {
+                        void perform(async () => {
+                            await mirrorCommand('public-port', {
+                                port: text === '' ? null : port,
+                            });
+                            setText('');
+                        });
+                    }}
+                >
+                    {tran('Save port')}
+                </button>
+            </span>
+        </label>
+    );
+}
+
+function RenderRouterStatusComp({
+    state,
+    busy,
+    perform,
+}: Readonly<{
+    state: RouterStatePropsType;
     busy: boolean;
     perform: PerformType;
 }>) {
     const lan = state.addresses.find((address) => {
         return address.kind === 'lan';
     });
-    if (state.router === 'off') {
-        return null;
-    }
     if (state.router === 'working') {
         return (
             <p className="small text-muted mb-0" role="status">
@@ -154,52 +203,110 @@ export function MirrorRouterStatusComp({
         );
     }
     if (state.router === 'open') {
+        // The public port can differ from this computer's: another computer
+        // behind the same router may already hold that one.
+        const router = state.addresses.find((address) => {
+            return address.kind === 'router';
+        });
         return (
-            <p className="small text-success mb-0" role="status">
-                <i className="bi bi-check-circle me-1" aria-hidden />
-                {tran('The router opened the port.')}
-            </p>
-        );
-    }
-    return (
-        <div className="small d-flex flex-column gap-1" role="status">
-            {state.router === 'shared' ? (
-                <p className="text-warning mb-0">
-                    {tran(
-                        'This router is behind another network, so the internet cannot reach it. A VPN such as Tailscale works instead.',
-                    )}
+            <div className="small d-flex flex-column gap-1" role="status">
+                <p className="text-success mb-0">
+                    <i className="bi bi-check-circle me-1" aria-hidden />
+                    {tran('The router opened the port.')}
                 </p>
-            ) : (
-                <>
+                {router &&
+                state.publicPort !== null &&
+                router.port !== state.publicPort ? (
                     <p className="text-warning mb-0">
-                        {state.router === 'unavailable'
-                            ? tran('No router answered.')
-                            : tran('The router refused to open the port.')}{' '}
                         {tran(
-                            'Forward the port on the router to this computer, then type the public address below.',
+                            'The router would not open the chosen port, so it opened another one.',
                         )}
                     </p>
-                    {lan ? (
-                        <span className="app-data text-muted">
-                            {state.port} →{' '}
-                            {toMirrorHostPort(lan.host, state.port)}
-                        </span>
-                    ) : null}
-                </>
-            )}
-            <button
-                type="button"
-                className="btn btn-sm btn-outline-secondary align-self-start"
-                disabled={busy}
-                onClick={() => {
-                    void perform(() => {
-                        return mirrorCommand('router');
-                    });
-                }}
+                ) : null}
+                {router && lan ? (
+                    <span className="app-data text-muted">
+                        {toMirrorHostPort(router.host, router.port)} →{' '}
+                        {toMirrorHostPort(lan.host, state.port)}
+                    </span>
+                ) : null}
+            </div>
+        );
+    }
+    // Folded to its first line: the advice, the ports and the retry are there
+    // for whoever opens it.
+    return (
+        <div className="small" role="status">
+            <CollapsibleNoteComp
+                settingName="virtual-screens-note-router-expanded"
+                className="text-warning"
             >
-                <i className="bi bi-arrow-clockwise me-1" aria-hidden />
-                {tran('Ask the router again')}
-            </button>
+                {state.router === 'shared' ? (
+                    <p className="mb-0">
+                        {tran(
+                            'This router is behind another network, so the internet cannot reach it. A VPN such as Tailscale works instead.',
+                        )}
+                    </p>
+                ) : (
+                    <>
+                        <p className="mb-0">
+                            {state.router === 'unavailable'
+                                ? tran('No router answered.')
+                                : tran(
+                                      'The router refused to open the port.',
+                                  )}{' '}
+                            {tran(
+                                'Forward the port on the router to this computer, then type the public address below.',
+                            )}
+                        </p>
+                        {lan ? (
+                            <p className="app-data text-muted mb-1">
+                                {state.publicPort ?? state.port} →{' '}
+                                {toMirrorHostPort(lan.host, state.port)}
+                            </p>
+                        ) : null}
+                    </>
+                )}
+                <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    disabled={busy}
+                    onClick={() => {
+                        void perform(() => {
+                            return mirrorCommand('router');
+                        });
+                    }}
+                >
+                    <i className="bi bi-arrow-clockwise me-1" aria-hidden />
+                    {tran('Ask the router again')}
+                </button>
+            </CollapsibleNoteComp>
+        </div>
+    );
+}
+
+// What the router said about forwarding the port, and the public port to use.
+// Shared by both tabs: Screen Mirror's hosting and Virtual Displays' sharing
+// open the same server.
+export function MirrorRouterStatusComp({
+    state,
+    busy,
+    perform,
+}: Readonly<{
+    state: RouterStatePropsType;
+    busy: boolean;
+    perform: PerformType;
+}>) {
+    if (state.router === 'off') {
+        return null;
+    }
+    return (
+        <div className="d-flex flex-column gap-2">
+            <RenderRouterStatusComp
+                state={state}
+                busy={busy}
+                perform={perform}
+            />
+            <RenderPublicPortComp state={state} busy={busy} perform={perform} />
         </div>
     );
 }

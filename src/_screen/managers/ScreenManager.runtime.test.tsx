@@ -184,9 +184,14 @@ class MockForegroundManager {
     static readonly eventNamePrefix = 'screen-foreground-m';
     static readonly fireUpdateEvent = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
+    static readonly removeScreenShowSource = vi.fn();
+    static readonly getScreenShowTargetIds = vi.fn((_id: number) => {
+        return [] as number[];
+    });
 
     readonly screenId: number;
     isShowing = true;
+    foregroundData = { screenDataList: [] as { id: number }[] };
     receiveScreenDropped = vi.fn();
     clear = vi.fn();
     delete = vi.fn();
@@ -285,6 +290,15 @@ vi.mock('./screenManagerDeleteHelpers', () => ({
 
 vi.mock('../../server/appProvider', () => ({
     default: appProviderMock,
+}));
+
+const receiveScreenShowPayloadMock = vi.fn();
+const screenShowFrameState = { sourceIds: new Set<number>() };
+vi.mock('../screenShowFrameHelpers', () => ({
+    receiveScreenShowPayload: receiveScreenShowPayloadMock,
+    checkHasScreenShowFrame: (sourceScreenId: number) => {
+        return screenShowFrameState.sourceIds.has(sourceScreenId);
+    },
 }));
 
 describe('ScreenManager runtime orchestration', () => {
@@ -523,6 +537,11 @@ describe('ScreenManager runtime orchestration', () => {
         expect(deleteScreenManagerBaseCacheMock).toHaveBeenCalledWith('3');
         expect(saveScreenManagersSettingMock).toHaveBeenCalledWith(3);
         expect(deleteScreenPersistedDataMock).toHaveBeenCalledWith(3);
+        // Its id goes to the next screen added, so no other screen may keep
+        // a Screen Show of it.
+        expect(
+            MockForegroundManager.removeScreenShowSource,
+        ).toHaveBeenCalledWith(3);
         // the "on screen" badges elsewhere in the app listen to the LAYER
         // statics, and nothing in the delete path goes through a layer setter
         expect(MockBackgroundManager.fireUpdateEvent).toHaveBeenCalled();
@@ -701,6 +720,26 @@ describe('ScreenManager runtime orchestration', () => {
             data: { quickTextData: { text: 'Forced' } },
             isScreen: true,
         });
+    });
+
+    // A screen page answering a colour background with its own copy of the
+    // Bible text style sent the colour it was opened with back to the
+    // presenter: white text stayed on a white background.
+    test('a screen page leaves the Bible text contrast to the presenter', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        appProviderMock.isPageScreen = true;
+
+        const onScreen = new ScreenManager(11);
+
+        expect(
+            onScreen.screenBackgroundManager.registerEventListener,
+        ).not.toHaveBeenCalledWith(['color-set'], expect.any(Function));
+
+        appProviderMock.isPageScreen = false;
+        const onPresenter = new ScreenManager(12);
+        expect(
+            onPresenter.screenBackgroundManager.registerEventListener,
+        ).toHaveBeenCalledWith(['color-set'], expect.any(Function));
     });
 
     test('persists setter state, forwards full syncs, clears sub-managers, and respects sync-group guards', async () => {
@@ -1047,5 +1086,145 @@ describe('ScreenManager runtime orchestration', () => {
             data: { isShowing: true },
         });
         expect(screenManager.isShowing).toBe(true);
+    });
+
+    test('carries a change of a screen to every screen showing it', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const source = new ScreenManager(1);
+        const target = new ScreenManager(0);
+        const hiddenTarget = new ScreenManager(2);
+        Object.assign(source, { width: 1600, height: 1000 });
+        target.isShowing = true;
+        baseInstances.set(0, target);
+        baseInstances.set(1, source);
+        baseInstances.set(2, hiddenTarget);
+        MockForegroundManager.getScreenShowTargetIds.mockReturnValue([0, 2]);
+        screenShowFrameState.sourceIds = new Set([1]);
+
+        // Whether or not screen 1 itself is showing.
+        source.sendScreenMessage(
+            { screenId: 1, type: 'background', data: { src: 'red' } } as any,
+            false,
+        );
+
+        const payload = {
+            sourceScreenId: 1,
+            width: 1600,
+            height: 1000,
+            stage: 0,
+            isSnapshot: false,
+            messages: [
+                { screenId: 1, type: 'background', data: { src: 'red' } },
+            ],
+        };
+        // To screen 0's window, and not to a hidden screen 2.
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 0,
+            stage: 0,
+            type: 'screen-show',
+            data: payload,
+            isScreen: false,
+        });
+        expect(
+            sendDataMock.mock.calls.filter(([, message]: any) => {
+                return message.screenId === 2;
+            }),
+        ).toHaveLength(0);
+        // And to the copies of it in this window's own Mini Screens.
+        expect(receiveScreenShowPayloadMock).toHaveBeenCalledWith(payload);
+
+        screenShowFrameState.sourceIds = new Set();
+        MockForegroundManager.getScreenShowTargetIds.mockReturnValue([]);
+    });
+
+    test("never carries what concerns the screen's own window", async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const source = new ScreenManager(1);
+        const target = new ScreenManager(0);
+        target.isShowing = true;
+        baseInstances.set(0, target);
+        baseInstances.set(1, source);
+        MockForegroundManager.getScreenShowTargetIds.mockReturnValue([0]);
+
+        for (const type of ['visible', 'init', 'display-change']) {
+            source.sendScreenMessage(
+                { screenId: 1, type, data: null } as any,
+                false,
+            );
+        }
+        expect(
+            sendDataMock.mock.calls.filter(([, message]: any) => {
+                return message.type === 'screen-show';
+            }),
+        ).toHaveLength(0);
+
+        // A projector follows; it never relays.
+        appProviderMock.isPageScreen = true;
+        source.sendScreenMessage(
+            { screenId: 1, type: 'background', data: null } as any,
+            true,
+        );
+        expect(
+            sendDataMock.mock.calls.filter(([, message]: any) => {
+                return message.type === 'screen-show';
+            }),
+        ).toHaveLength(0);
+        MockForegroundManager.getScreenShowTargetIds.mockReturnValue([]);
+    });
+
+    test("sends a screen's window the whole state of each screen it shows", async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const target = new ScreenManager(0);
+        const source = new ScreenManager(1);
+        baseInstances.set(0, target);
+        baseInstances.set(1, source);
+        const payload = {
+            sourceScreenId: 1,
+            width: 1,
+            height: 1,
+            stage: 0,
+            isSnapshot: true,
+            messages: [],
+        };
+        vi.spyOn(source, 'genScreenShowPayload').mockReturnValue(payload);
+
+        // No window, nothing to send.
+        target.sendScreenShowSnapshots([1]);
+        expect(sendDataMock).not.toHaveBeenCalled();
+
+        target.isShowing = true;
+        target.sendScreenShowSnapshots([0, 1, 9]);
+        expect(sendDataMock).toHaveBeenCalledOnce();
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 0,
+            stage: 0,
+            type: 'screen-show',
+            data: payload,
+            isScreen: false,
+        });
+    });
+
+    test("a projector takes another screen's state for its Screen Show", async () => {
+        appProviderMock.isPageScreen = true;
+        const { default: ScreenManager } = await import('./ScreenManager');
+        baseInstances.set(0, new ScreenManager(0));
+        const data = { sourceScreenId: 1, messages: [] };
+
+        ScreenManager.applyScreenManagerSyncScreen({
+            screenId: 0,
+            type: 'screen-show',
+            data,
+        } as any);
+        expect(receiveScreenShowPayloadMock).toHaveBeenCalledWith(data);
+
+        // The presenter is never sent one.
+        appProviderMock.isPageScreen = false;
+        receiveScreenShowPayloadMock.mockClear();
+        ScreenManager.applyScreenManagerSyncScreen({
+            screenId: 0,
+            type: 'screen-show',
+            data,
+        } as any);
+        expect(receiveScreenShowPayloadMock).not.toHaveBeenCalled();
     });
 });

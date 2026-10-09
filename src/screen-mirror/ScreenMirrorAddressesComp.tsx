@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import {
+    toMirrorAddressText,
     toMirrorHostPort,
     type MirrorAddress,
     type MirrorState,
 } from '../../electron/screenMirrorProtocol';
-import { mirrorCommand } from './mirrorConnectionHelpers';
 import {
     MirrorQrCodeComp,
     MirrorRouterStatusComp,
     type PerformType,
 } from './MirrorNetworkComps';
+import {
+    MirrorPublicAddressComp,
+    MirrorTunnelComp,
+} from './MirrorInternetComps';
 
 function toKindLabel(kind: MirrorAddress['kind']) {
     if (kind === 'router') {
@@ -22,6 +26,12 @@ function toKindLabel(kind: MirrorAddress['kind']) {
     }
     if (kind === 'typed') {
         return tran('Public address');
+    }
+    if (kind === 'public') {
+        return tran('Public IP');
+    }
+    if (kind === 'tunnel') {
+        return tran('Tunnel');
     }
     return '';
 }
@@ -35,7 +45,11 @@ function MirrorAddressRowComp({
     isQrShowing: boolean;
     onToggleQr: () => void;
 }>) {
-    const text = toMirrorHostPort(address.host, address.port);
+    // Shown and copied as a guest types it -- a tunnel's whole https link;
+    // the QR code stays plain host:port (the user's rule), port 443 meaning
+    // TLS to a guest that reads it.
+    const text = toMirrorAddressText(address);
+    const qrText = toMirrorHostPort(address.host, address.port);
     const kindLabel = toKindLabel(address.kind);
     return (
         <li className="d-flex flex-column">
@@ -66,7 +80,7 @@ function MirrorAddressRowComp({
                     <i className="bi bi-qr-code" aria-hidden />
                 </button>
             </div>
-            {isQrShowing ? <MirrorQrCodeComp text={text} /> : null}
+            {isQrShowing ? <MirrorQrCodeComp text={qrText} /> : null}
         </li>
     );
 }
@@ -80,7 +94,6 @@ export default function ScreenMirrorAddressesComp({
     perform,
 }: Readonly<{ state: MirrorState; busy: boolean; perform: PerformType }>) {
     const [qrText, setQrText] = useState('');
-    const [publicText, setPublicText] = useState('');
     const renderList = (list: MirrorAddress[]) => {
         return (
             <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
@@ -140,44 +153,22 @@ export default function ScreenMirrorAddressesComp({
                             )}
                         </p>
                     ) : null}
+                    <MirrorTunnelComp
+                        state={state}
+                        busy={busy}
+                        perform={perform}
+                        idPrefix="app-mirror"
+                    />
                     <MirrorRouterStatusComp
                         state={state}
                         busy={busy}
                         perform={perform}
                     />
-                    <div className="small d-flex flex-column gap-1">
-                        <span>{tran('Public address (optional)')}</span>
-                        <span className="input-group input-group-sm">
-                            <input
-                                className="form-control app-data"
-                                aria-label={tran('Public address (optional)')}
-                                spellCheck={false}
-                                value={publicText}
-                                placeholder={
-                                    state.publicAddress || 'example.ddns.net'
-                                }
-                                onChange={(event) => {
-                                    setPublicText(event.target.value);
-                                }}
-                            />
-                            <button
-                                type="button"
-                                className="btn btn-outline-primary"
-                                disabled={busy}
-                                onClick={() => {
-                                    void perform(async () => {
-                                        await mirrorCommand('settings', {
-                                            mode: state.approvalMode,
-                                            publicAddress: publicText,
-                                        });
-                                        setPublicText('');
-                                    });
-                                }}
-                            >
-                                {tran('Save address')}
-                            </button>
-                        </span>
-                    </div>
+                    <MirrorPublicAddressComp
+                        publicAddress={state.publicAddress}
+                        busy={busy}
+                        perform={perform}
+                    />
                 </>
             ) : null}
         </section>

@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-25, SP-26, SP-27, SP-28, SP-29]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-07"
+workflowsVersion: "2026-10-08"
 ---
 # W-50 — Present on another computer with Screen Mirror
 
@@ -86,7 +86,9 @@ internet once the host opens to it (step 7).
    **[en:tran:Open to the internet]** under
    **[en:tran:Let other computers connect]**. It is off until you turn it
    on, and remembered. A warning says that anyone with the address can ask to
-   connect and that the connection is not encrypted: choose
+   connect and that the connection is not encrypted (folded to one line; its
+   chevron, or a click on it, shows it all — the router and tunnel notes fold
+   the same way, and each stays as you left it): choose
    **[en:tran:Require connection code]** under **[en:tran:Guest access]**,
    and turn the option off when you are done. The host asks the router to
    forward its port (UPnP); once **[en:tran:The router opened the port.]**,
@@ -123,5 +125,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-25` · `SP-26` · `SP-27` · `SP-28` · `SP-29`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-07).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
 :::

@@ -475,4 +475,52 @@ describe('cameraHelpers', () => {
         expect(onUnavailableMock).toHaveBeenCalledWith('Unplugged Camera');
         expect(cleanup()).toBeUndefined();
     });
+
+    test("opens a browser viewer's camera not shared right now, hidden until it sends pictures", async () => {
+        electronSendAsyncMock.mockResolvedValue(true);
+        enumerateDevicesMock.mockResolvedValue([]);
+        const stream = { getTracks: () => [] };
+        let setLive: (isLive: boolean) => void = () => {};
+        const stopListening = vi.fn();
+        const getViewerCameraStream = vi.fn(async () => stream);
+        vi.doMock('../virtual-display/viewerCameraTransport', () => ({
+            checkIsViewerCameraId: (id: string) => id.startsWith('vd-camera:'),
+            getViewerCameraStream,
+            listenViewerCameraLive: (
+                _stream: unknown,
+                listener: (isLive: boolean) => void,
+            ) => {
+                setLive = listener;
+                listener(false);
+                return stopListening;
+            },
+            releaseViewerCameraStream: vi.fn(),
+        }));
+        try {
+            const { getCameraAndShowMedia } = await import('./cameraHelpers');
+            const parentContainer = document.createElement('div');
+            const onUnavailableMock = vi.fn();
+
+            // Not listed (its tab is reloading): opened all the same.
+            const cleanup = await getCameraAndShowMedia({
+                id: 'vd-camera:viewer-1',
+                label: 'Browser 198.51.100.9: Phone',
+                parentContainer,
+                onUnavailable: onUnavailableMock,
+            } as any);
+
+            expect(onUnavailableMock).not.toHaveBeenCalled();
+            expect(getViewerCameraStream).toHaveBeenCalledWith(
+                'vd-camera:viewer-1',
+            );
+            const video = parentContainer.querySelector('video');
+            expect(video?.style.visibility).toBe('hidden');
+            setLive(true);
+            expect(video?.style.visibility).toBe('');
+            await cleanup();
+            expect(stopListening).toHaveBeenCalledOnce();
+        } finally {
+            vi.doUnmock('../virtual-display/viewerCameraTransport');
+        }
+    });
 });

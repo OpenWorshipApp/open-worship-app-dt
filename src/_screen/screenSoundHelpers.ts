@@ -24,5 +24,10 @@ export function checkIsSoundHere(screen: ScreenPlaceType) {
 // monitor; for a screen on a virtual display the presenter's copy is the one
 // to keep quiet.
 export function checkIsPresenterCopySilenced(screen: ScreenPlaceType) {
+    // A copy of another screen drawn inside this one (Screen Show) is never
+    // heard: that screen's own window plays it.
+    if (appProvider.screenUtils?.getContext()?.isScreenShowFrame === true) {
+        return true;
+    }
     return !appProvider.isPageScreen && screen.isOnVirtualDisplay;
 }

@@ -1442,6 +1442,50 @@ describe('non-Bible manager coverage', () => {
         rootContainer.remove();
     });
 
+    test('two renders in one tick put up ONE copy, and an overtaken one nothing', async () => {
+        const base = createScreenManagerBase(28);
+        const effectManager = createEffectManager();
+        effectManager.styleAnim.animIn = vi.fn(
+            (element: HTMLElement, root: HTMLElement) => {
+                root.appendChild(element);
+            },
+        );
+        const manager = new ScreenBackgroundManager(base, effectManager);
+        const rootContainer = document.createElement('div');
+        document.body.appendChild(rootContainer);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(
+            rootContainer as any,
+        );
+        const backgroundSrc = vi
+            .spyOn(manager, 'backgroundSrc', 'get')
+            .mockReturnValue({ type: 'video', src: 'file:///a.mp4' } as any);
+        const flush = async () => {
+            for (let index = 0; index < 4; index++) {
+                await Promise.resolve();
+            }
+        };
+
+        // The root attached and the background set together, as a screen
+        // page does on load: both copies used to go in and play at once.
+        manager.render();
+        manager.render();
+        await flush();
+        expect(rootContainer.children).toHaveLength(1);
+        expect(effectManager.styleAnim.animIn).toHaveBeenCalledTimes(1);
+
+        // Cleared before the new copy was ready: it does not come back.
+        manager.render();
+        backgroundSrc.mockReturnValue(null as any);
+        manager.render();
+        await flush();
+        expect(rootContainer.children).toHaveLength(0);
+        expect(effectManager.styleAnim.animIn).toHaveBeenCalledTimes(1);
+        // The copy dropped hands its media player back.
+        expect(HTMLMediaElement.prototype.load).toHaveBeenCalled();
+
+        rootContainer.remove();
+    });
+
     test('the end-of-video fade gives up when the background was swapped', async () => {
         const base = createScreenManagerBase(26);
         const effectManager = createEffectManager();

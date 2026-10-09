@@ -21,7 +21,9 @@ export function showSimpleToast(
 }
 
 if (appProvider.systemUtils.isDev) {
-    (global as any).testSimpleToasts = async () => {
+    // `globalThis`, not Node's `global`: a page with no Node (a Screen Show
+    // copy in its iframe) loads this too.
+    (globalThis as any).testSimpleToasts = async () => {
         showSimpleToast('1: Test Title', 'This is a test message');
         await new Promise((resolve) => setTimeout(resolve, 500)); // wait 500ms between toasts
         showSimpleToast(

@@ -45,6 +45,8 @@ let viewers: VirtualDisplayWebViewers;
 let host: { [K in keyof WebViewersHostType]: ReturnType<typeof vi.fn> };
 let admitted: Set<VirtualDisplayNetwork>;
 let blocked: boolean;
+let access: 'approve' | 'code';
+let lockedOut: boolean;
 let displays: Set<number>;
 let controller: ControllerType;
 let context: any;
@@ -57,12 +59,17 @@ function settle(millisecond = 30) {
 // Opens `/vd/...` the way a viewer page does; null when it is refused.
 function connect(
     path: string,
-    { origin = `http://127.0.0.1:${port}` as string | null } = {},
+    {
+        origin = `http://127.0.0.1:${port}` as string | null,
+        // false: a browser that is gone and answers no ping.
+        autoPong = true,
+    } = {},
 ) {
     return new Promise<OpenedType | null>((resolve) => {
         const ws = new WebSocket(`ws://127.0.0.1:${port}${path}`, {
             ...(origin === null ? {} : { origin }),
             headers: { 'User-Agent': 'TestBrowser/1.0' },
+            autoPong,
         });
         opened.push(ws);
         const messages: any[] = [];
@@ -124,6 +131,8 @@ beforeEach(async () => {
     network = 'local';
     admitted = new Set(['this-computer', 'local']);
     blocked = false;
+    access = 'approve';
+    lockedOut = false;
     displays = new Set([1, 2]);
     const shownCameras = new Set<string>();
     controller = {
@@ -139,6 +148,20 @@ beforeEach(async () => {
             return admitted.has(value);
         }),
         checkIsBlocked: vi.fn(() => blocked),
+        getAccess: vi.fn((value: VirtualDisplayNetwork) => {
+            return value === 'internet' ? access : 'open';
+        }),
+        checkCode: vi.fn((_address: string, code: string) => {
+            if (lockedOut) {
+                return 'locked';
+            }
+            if (code === 'church-1234') {
+                return 'ok';
+            }
+            lockedOut = code === 'last-try';
+            return lockedOut ? 'locked' : 'wrong';
+        }),
+        checkIsLockedOut: vi.fn(() => lockedOut),
         getLayout: vi.fn((number: number) => {
             return displays.has(number) ? toLayout(number) : null;
         }),
@@ -148,9 +171,31 @@ beforeEach(async () => {
         loadContext: vi.fn(async () => context),
         onChanged: vi.fn(),
         onFeedback: vi.fn(),
+        onHideScreen: vi.fn(),
+        getCastState: vi.fn(() => ({
+            isSharing: true,
+            isSearching: false,
+            targets: [
+                {
+                    id: 'tv-1',
+                    name: 'Hall TV',
+                    kind: 'google-cast',
+                    status: null,
+                    behind: null,
+                },
+            ],
+        })),
+        onCastSearch: vi.fn(),
+        issueCastToken: vi.fn(() => 'feedface'),
+        onCastStart: vi.fn(async () => {}),
+        onCastStop: vi.fn(),
         onCamera: vi.fn(),
         onCameraGone: vi.fn(),
         hostId: () => HOST_ID,
+        onIntercom: vi.fn(),
+        onViewerGone: vi.fn(),
+        onViewerCamera: vi.fn(),
+        onScreenCamera: vi.fn(),
     };
     viewers = new VirtualDisplayWebViewers(
         host as unknown as WebViewersHostType,
@@ -178,8 +223,11 @@ afterEach(async () => {
 });
 
 describe('a viewer page socket', () => {
-    test('handles errors on the blocked-client refusal socket', async () => {
-        blocked = true;
+    test('handles errors on the locked-out refusal socket', async () => {
+        network = 'internet';
+        admitted.add('internet');
+        access = 'code';
+        lockedOut = true;
         const wss = (viewers as any).wss;
         const upgrade = wss.handleUpgrade.bind(wss);
         let refused: WebSocket | undefined;
@@ -221,6 +269,7 @@ describe('a viewer page socket', () => {
                 since: expect.any(Number),
                 isPreview: false,
                 isInteractive: false,
+                waiting: null,
             },
         ]);
         expect(viewers.listOf(2)).toEqual([]);
@@ -299,29 +348,65 @@ describe('a viewer page socket', () => {
         expect(viewers.listOf(1)[0].isInteractive).toBe(false);
     });
 
-    // A disconnected browser is let in only to be told so, in the app's
-    // words, and closed with 4001 -- its page stops retrying. It is known by
+    // A browser the operator disconnected comes back only by asking: it is
+    // let in to wait for Allow -- from any network, and the code does not get
+    // it past -- and is sent nothing of the display meanwhile. It is known by
     // its own id, so others behind the same address are not touched.
-    test('a disconnected browser is told so, a preview on this computer is not', async () => {
+    test('a disconnected browser comes back only by asking; a preview is not asked', async () => {
         blocked = true;
-        const refused = await connect(`/vd/1/ws?viewer=${VIEWER_ID}`);
-        expect(refused).not.toBeNull();
-        expect(await waitClosed(refused!.ws)).toEqual({
-            code: 4001,
-            reason: 'Disconnected',
+        access = 'code';
+        const asking = await openViewer();
+        expect(asking.messages[0]).toEqual({
+            type: 'access',
+            waiting: 'approval',
+            isWrong: false,
+            labels: toLayout(1).labels,
         });
-        expect(refused!.messages).toEqual([
-            {
-                type: 'refused',
-                reason: 'disconnected',
-                labels: toLayout(1).labels,
-            },
-        ]);
         expect(host.checkIsBlocked).toHaveBeenCalledWith(1, VIEWER_ID);
-        expect(viewers.listOf(1)).toEqual([]);
+        expect(viewers.listOf(1)[0]).toMatchObject({ waiting: 'approval' });
+        expect(viewers.checkIsWaitingForApproval(VIEWER_ID, 1)).toBe(true);
+        expect(
+            await connect(`/vd/1/ws?viewer=${VIEWER_ID}&screenId=5`),
+        ).toBeNull();
+        // The service lifts the block as it allows.
+        blocked = false;
+        expect(viewers.allow(VIEWER_ID, 1)).toBe(true);
+        await vi.waitFor(() => expect(asking.messages).toHaveLength(2));
+        expect(asking.messages[1]).toEqual({
+            type: 'layout',
+            layout: toLayout(1),
+        });
+        expect(
+            await connect(`/vd/1/ws?viewer=${VIEWER_ID}&screenId=5`),
+        ).not.toBeNull();
+        blocked = true;
         network = 'this-computer';
-        await openViewer('preview-01', '&preview=1');
-        expect(viewers.listOf(1)[0].isPreview).toBe(true);
+        const preview = await openViewer('preview-01', '&preview=1');
+        expect(preview.messages[0].type).toBe('layout');
+    });
+
+    // A phone that slept or lost the Wi-Fi never says goodbye: it stayed
+    // under Watching now for good, counting toward its address's four.
+    test('one that stops answering is ended; one that answers stays', async () => {
+        viewers = new VirtualDisplayWebViewers(
+            host as unknown as WebViewersHostType,
+            40,
+        );
+        const live = await openViewer('viewer-live01');
+        const silent = await connect('/vd/1/ws?viewer=viewer-gone01', {
+            autoPong: false,
+        });
+        expect(silent).not.toBeNull();
+        await vi.waitFor(() => expect(silent!.messages).toHaveLength(1));
+
+        await waitClosed(silent!.ws);
+
+        await vi.waitFor(() => {
+            expect(host.onViewerGone).toHaveBeenCalledWith('viewer-gone01');
+        });
+        expect(host.onViewerGone).not.toHaveBeenCalledWith('viewer-live01');
+        await settle(120);
+        expect(live.ws.readyState).toBe(WebSocket.OPEN);
     });
 
     test('at most four per address from the network, per display', async () => {
@@ -348,6 +433,90 @@ describe('a viewer page socket', () => {
         expect(await connect('/vd/1/ws?viewer=viewer-one-more')).toBeNull();
         await openViewer('preview-viewer', '&preview=1');
         expect(viewers.listOf(1)).toHaveLength(MAX_WEB_VIEWERS + 1);
+    });
+});
+
+// "Cast to a TV" on a page did nothing in Chrome: the browser's picker
+// judged the stream unplayable and closed at once. The page now casts
+// through this computer.
+describe('casting from a viewer page', () => {
+    test('a page on this network lists TVs, casts and stops', async () => {
+        const viewer = await openViewer();
+        viewer.ws.send(JSON.stringify({ type: 'cast-open' }));
+        await vi.waitFor(() => expect(viewer.messages).toHaveLength(2));
+        expect(viewer.messages[1]).toEqual({
+            type: 'cast',
+            state: expect.objectContaining({
+                isAllowed: true,
+                targets: [expect.objectContaining({ id: 'tv-1' })],
+            }),
+        });
+        expect(host.onCastSearch).toHaveBeenCalledWith(1);
+
+        viewer.ws.send(
+            JSON.stringify({ type: 'cast-start', targetId: 'tv-1' }),
+        );
+        await vi.waitFor(() => {
+            expect(host.onCastStart).toHaveBeenCalledWith(1, 'tv-1');
+        });
+        await settle(300);
+        viewer.ws.send(JSON.stringify({ type: 'cast-stop', targetId: 'tv-1' }));
+        await vi.waitFor(() => {
+            expect(host.onCastStop).toHaveBeenCalledWith(1, 'tv-1');
+        });
+
+        // Every change reaches a page with its list open, and none after.
+        viewers.sendCastStates();
+        await vi.waitFor(() => expect(viewer.messages).toHaveLength(3));
+        viewer.ws.send(JSON.stringify({ type: 'cast-close' }));
+        await settle(300);
+        viewers.sendCastStates();
+        await settle();
+        expect(viewer.messages).toHaveLength(3);
+    });
+
+    // Asked for by the user: _"this is for casting to a tv with same network
+    // of the browser not app"_. Any browser let in -- the internet too -- is
+    // handed the display's MP4 with its token, for its own picker.
+    test('any page let in gets the stream for its own picker', async () => {
+        network = 'internet';
+        admitted.add('internet');
+        access = 'code';
+        const viewer = await connect(`/vd/1/ws?viewer=${VIEWER_ID}`);
+        await vi.waitFor(() => expect(viewer!.messages).toHaveLength(1));
+        // Not let in yet: nothing.
+        viewer!.ws.send(JSON.stringify({ type: 'cast-stream' }));
+        await settle(300);
+        expect(host.issueCastToken).not.toHaveBeenCalled();
+        viewer!.ws.send(JSON.stringify({ type: 'code', code: 'church-1234' }));
+        await vi.waitFor(() => expect(viewer!.messages).toHaveLength(2));
+        viewer!.ws.send(JSON.stringify({ type: 'cast-stream' }));
+        await vi.waitFor(() => expect(viewer!.messages).toHaveLength(3));
+        expect(host.issueCastToken).toHaveBeenCalledWith(1, VIEWER_ID);
+        expect(viewer!.messages[2]).toEqual({
+            type: 'cast-stream',
+            path: '/vd/1/video?cast=feedface',
+        });
+    });
+
+    test('a page from the internet sees the list but casts nothing', async () => {
+        network = 'internet';
+        admitted.add('internet');
+        access = 'code';
+        const viewer = await connect(`/vd/1/ws?viewer=${VIEWER_ID}`);
+        await vi.waitFor(() => expect(viewer!.messages).toHaveLength(1));
+        viewer!.ws.send(JSON.stringify({ type: 'code', code: 'church-1234' }));
+        await vi.waitFor(() => expect(viewer!.messages).toHaveLength(2));
+        viewer!.ws.send(JSON.stringify({ type: 'cast-open' }));
+        await vi.waitFor(() => expect(viewer!.messages).toHaveLength(3));
+        expect(viewer!.messages[2].state.isAllowed).toBe(false);
+        await settle(300);
+        viewer!.ws.send(
+            JSON.stringify({ type: 'cast-start', targetId: 'tv-1' }),
+        );
+        await settle();
+        expect(host.onCastSearch).not.toHaveBeenCalled();
+        expect(host.onCastStart).not.toHaveBeenCalled();
     });
 });
 
@@ -419,6 +588,24 @@ describe('a screen socket', () => {
             reason: 'No screen',
         });
         await vi.waitFor(() => expect(controller.sockets.size).toBe(0));
+    });
+
+    // The screen's own ✕ on a browser page: asked for by the user, for a
+    // viewer let to interact only. It hides the socket's own screen; nothing
+    // the packet says picks another one.
+    test('its ✕ hides the screen only once the viewer may interact', async () => {
+        await openViewer();
+        const screen = await connect(screenPath());
+        await vi.waitFor(() => expect(screen!.messages).toHaveLength(2));
+        screen!.ws.send(JSON.stringify({ type: 'hide', screenId: 9 }));
+        await settle();
+        expect(host.onHideScreen).not.toHaveBeenCalled();
+
+        viewers.setInteractive(VIEWER_ID, 1, true);
+        await vi.waitFor(() => expect(screen!.messages).toHaveLength(3));
+        screen!.ws.send(JSON.stringify({ type: 'hide', screenId: 9 }));
+        await vi.waitFor(() => expect(host.onHideScreen).toHaveBeenCalled());
+        expect(host.onHideScreen).toHaveBeenCalledWith(1, 5);
     });
 
     // A hand on the browser page reaches the app only once the operator lets
@@ -833,5 +1020,116 @@ describe('the host side', () => {
         expect(await closed).toEqual({ code: 1000, reason: 'Not allowed' });
         await settle();
         expect(here.ws.readyState).toBe(WebSocket.OPEN);
+    });
+});
+
+// From the internet a browser is sent nothing of the display -- no layout,
+// so no screen, no published file -- until the operator allows it or it
+// gives the connection code. This computer and its own networks are not
+// asked.
+describe('a viewer from the internet', () => {
+    const screenPath = (id = VIEWER_ID) => `/vd/1/ws?viewer=${id}&screenId=5`;
+
+    beforeEach(() => {
+        network = 'internet';
+        admitted.add('internet');
+    });
+
+    test('waits for the operator, and once allowed is not asked again', async () => {
+        const viewer = await openViewer();
+        expect(viewer.messages[0]).toEqual({
+            type: 'access',
+            waiting: 'approval',
+            isWrong: false,
+            labels: {},
+        });
+        expect(viewers.listOf(1)[0]).toMatchObject({
+            network: 'internet',
+            waiting: 'approval',
+        });
+        expect(await connect(screenPath())).toBeNull();
+        // Asking for a code does nothing while approval is what it waits for.
+        viewer.ws.send(JSON.stringify({ type: 'code', code: 'church-1234' }));
+        await settle();
+        expect(viewers.setInteractive(VIEWER_ID, 1, true)).toBe(false);
+        expect(viewers.allow(VIEWER_ID, 2)).toBe(false);
+        expect(viewers.allow(VIEWER_ID, 1)).toBe(true);
+        await vi.waitFor(() => expect(viewer.messages).toHaveLength(2));
+        expect(viewer.messages[1]).toEqual({
+            type: 'layout',
+            layout: toLayout(1),
+        });
+        expect(viewers.listOf(1)[0].waiting).toBeNull();
+        expect(await connect(screenPath())).not.toBeNull();
+        // The same tab loading again goes straight in.
+        const reloaded = await openViewer();
+        expect(reloaded.messages[0].type).toBe('layout');
+        // The access option changing asks everyone from the internet again.
+        const closed = waitClosed(reloaded.ws);
+        viewers.revokeGrants();
+        expect((await closed).reason).toBe('Access changed');
+        const again = await openViewer();
+        expect(again.messages[0]).toMatchObject({ waiting: 'approval' });
+    });
+
+    test('with a code: wrong ones are told so, the right one lets it in', async () => {
+        access = 'code';
+        const viewer = await openViewer();
+        expect(viewer.messages[0]).toMatchObject({
+            type: 'access',
+            waiting: 'code',
+            isWrong: false,
+        });
+        expect(viewers.allow(VIEWER_ID, 1)).toBe(false);
+        viewer.ws.send(JSON.stringify({ type: 'code', code: 'nope' }));
+        await vi.waitFor(() => expect(viewer.messages).toHaveLength(2));
+        expect(viewer.messages[1]).toMatchObject({
+            waiting: 'code',
+            isWrong: true,
+        });
+        // Too long to be a code: not even counted.
+        viewer.ws.send(JSON.stringify({ type: 'code', code: 'x'.repeat(65) }));
+        await settle();
+        expect(host.checkCode).toHaveBeenCalledTimes(1);
+        viewer.ws.send(JSON.stringify({ type: 'code', code: 'church-1234' }));
+        await vi.waitFor(() => expect(viewer.messages).toHaveLength(3));
+        expect(viewer.messages[2]).toEqual({
+            type: 'layout',
+            layout: toLayout(1),
+        });
+        expect(await connect(screenPath())).not.toBeNull();
+    });
+
+    test('too many wrong codes end it, and keep its address out', async () => {
+        access = 'code';
+        const viewer = await openViewer();
+        const closed = waitClosed(viewer.ws);
+        viewer.ws.send(JSON.stringify({ type: 'code', code: 'last-try' }));
+        expect(await closed).toEqual({ code: 4001, reason: 'Disconnected' });
+        expect(viewer.messages.at(-1)).toMatchObject({
+            type: 'refused',
+            reason: 'locked',
+        });
+        await vi.waitFor(() => expect(viewers.has(VIEWER_ID)).toBe(false));
+        // Back again, from the same address: told at once, and closed.
+        const refused = await connect(`/vd/1/ws?viewer=viewer-0002`);
+        expect(await waitClosed(refused!.ws)).toMatchObject({ code: 4001 });
+        expect(refused!.messages[0]).toMatchObject({ reason: 'locked' });
+    });
+
+    test('at most eight wait at once, across every display', async () => {
+        // Every test socket comes from one address, capped at four per
+        // display: two displays hold the eight.
+        displays.add(3);
+        for (const number of [1, 2]) {
+            for (let index = 0; index < 4; index++) {
+                await openViewer(`waiting-${number}-${index}`, '', number);
+            }
+        }
+        expect(await connect('/vd/3/ws?viewer=waiting-one-more')).toBeNull();
+        // Its own network is not asked, and not capped by them.
+        network = 'local';
+        const local = await openViewer('local-viewer-01', '', 3);
+        expect(local.messages[0].type).toBe('layout');
     });
 });
