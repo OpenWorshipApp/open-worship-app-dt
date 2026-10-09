@@ -75,7 +75,10 @@ Each area's scope, leads, probes, already-known list and proof on apply:
 with its `research` argument, which is this skill's pause for that subsystem;
 `mcp` / `tools` → `owa-enhance-mcp`; `aichat` → `owa-enhance-aichat`. Those two
 have no research-only mode, so take their baseline and their areas and keep
-this skill's rule: report, then stop. A QA walk is `/owa-robot-test`; a diff
+this skill's rule: report, then stop. The agent docs — CLAUDE.md, rules,
+memory, skills and the Codex mirror — are `owa-enhance-agent-docs` (its
+`audit` argument is read-only); the `docs` area here keeps the user manual and
+knowledge freshness. A QA walk is `/owa-robot-test`; a diff
 review is `review-stagged-change` / `review-unstagged-change`.
 
 ## The research contract

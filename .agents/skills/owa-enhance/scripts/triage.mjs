@@ -113,6 +113,7 @@ const BACKLOG_PATH_MAP = {
     EC: '.claude/skills/owa-enhance-chatbot/references/backlog.md',
     MC: '.claude/skills/owa-enhance-mcp/references/backlog.md',
     AC: '.claude/skills/owa-enhance-aichat/references/backlog.md',
+    AD: '.claude/skills/owa-enhance-agent-docs/references/backlog.md',
 };
 // Where the two high-frequency event hooks are DEFINED rather than used.
 const EVENT_HOOK_DEFINITION_SET = new Set([

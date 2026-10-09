@@ -411,6 +411,10 @@ all of them are in `.claude/rules/project-skills.md`.
   source file by `scripts/coverage-gap.mjs`; `npm run test:coverage` counts
   loaded files only (memory `coverage-number-is-loaded-files-only`). No shared
   `appProvider` mock may come back, and a test must be able to fail.
+- **`owa-enhance-agent-docs`** — the agent docs themselves (this file, rules,
+  memory, skills, the Codex mirror): fixes what the code contradicts and
+  proposes `AD-xx` ways agents could help more. Code is the truth for facts,
+  a doc for decisions; history stays history.
 
 **The Codex mirror.** `.claude/` is the source of truth; `AGENTS.md` at the repo
 root says how it is copied: `CLAUDE.md` → `.codex/project-instructions.md`,

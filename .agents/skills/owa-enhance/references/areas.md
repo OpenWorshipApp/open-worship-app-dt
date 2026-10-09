@@ -397,6 +397,12 @@ source) → `docs/manual-sources/` (generated, tracked);
 skill that are gone; a knowledge index older than the notes it is built from
 (`triage.mjs`).
 
+**Routed:** the agent docs in depth — every claim in CLAUDE.md, the rules, the
+memory and the skills checked against the code, the mirror, and how agents
+could help more — are `owa-enhance-agent-docs` (`AD-xx`). Its
+`audit-agent-docs.mjs` supersedes tracks 2, 4 and 5 below; this area keeps the
+manual (track 1) and the corpus (track 3).
+
 **Research:**
 
 1. **A recipe against the app.** For the windows that changed most in the last

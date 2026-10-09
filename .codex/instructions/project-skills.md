@@ -235,6 +235,43 @@ and `lighthouse_audit` both RELOAD the window they are aimed at unless told
 `reload: false` / `mode: "snapshot"`. Same mirror rule:
 `.agents/skills/owa-enhance` is a copy.
 
+## owa-enhance-agent-docs skill
+
+`.claude/skills/owa-enhance-agent-docs` owns the AGENT DOCUMENTS (asked for
+on 2026-10-08): `CLAUDE.md`, `rules/`, `memory/`, `skills/`, and their Codex
+mirror (`AGENTS.md`, `.codex/`, `.agents/skills/`, `.mcp.json` ↔
+`.codex/config.toml`). Those are what every Claude and Codex session reads,
+and what the in-app 🤖 answers from as its internal corpus. `owa-enhance`'s
+`docs` area keeps the user manual and knowledge freshness and routes
+agent-doc work here.
+
+The skill has two jobs. **Drift**: `scripts/audit-agent-docs.mjs` reads
+~16 000 code spans and links out of ~245 documents in ~1 s, with no app, no
+network and no writes. It runs 15 checks: paths and `file:line` anchors, code
+names, the `owa_*` listings against `server.registerTool`, `npm run` and script
+flags, `OWA_*` variables, ledger ids, the memory index and front matter, rule
+`paths:` globs, skill wiring and mirrored `SKILL.md` bodies, mirror drift with
+direction, knowledge freshness, and four leverage signals (`budget`,
+`coverage`, `staleness`, `prose-rules`). A confirmed lead is fixed in the doc
+in the same run, inside the safe classes `references/checks.md` lists, with
+the mirror copied and the knowledge rebuilt. **Leverage**: eight lenses
+(`references/leverage.md`) turn blind spots, always-loaded context cost, prose
+rules a test or hook could hold, skill routing, Codex parity, the 🤖's 3 000-
+character index window, and repeated session friction into `AD-xx` proposals
+that wait for `apply`. The friction comes from `scripts/session-friction.mjs`,
+which reads the local Claude Code transcripts, prints masked error signatures
+only, and is never quoted into a note, since notes ship.
+
+Its binding rules: **code is the truth for facts, a doc for decisions**. A
+note recording a decision that the code now breaks is a possible regression,
+routed to `owa-enhance`, not blessed by rewriting the note. **History stays
+history**: ledgers, FIXED notes, dated measurements and the frozen
+`owa-robot-test/coverage-expansion/` are left as written. Measured on the
+calibration run, 2026-10-08: the skill listing cuts a description at ~1 530
+characters, so `owa-robot-test`'s 3 932-character description loses most of
+its triggers. CLAUDE.md + MEMORY.md cost ≈ 11.5k tokens in every session.
+Same mirror rule: `.agents/skills/owa-enhance-agent-docs` is a copy.
+
 ## owa-upgrade-unit-test skill
 
 `.claude/skills/owa-upgrade-unit-test` owns the UNIT TEST SUITE and the climb
