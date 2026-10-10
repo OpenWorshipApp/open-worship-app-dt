@@ -55,7 +55,13 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   billed to every volunteer. Since 2026-10-10 three `owa_*` tools are the
   developer's too — `owa_press_key`, `owa_drag`, `owa_menu` (`MC-50`,
   `MC-56`) — so "the model sees every `owa_*` tool" is no longer the rule;
-  `modelTools.mjs` is, and it says what to use instead of each.
+  `modelTools.mjs` is, and it says what to use instead of each. **A custom
+  server is sent 14 of those 26** (`LOCAL_TOOL_NAME_LIST`,
+  `OpenAiCompatProviderType.filterTools`, 2026-10-10): 4 234 tokens of
+  schemas a round instead of 8 322, because a local server pays for every
+  schema in prompt-processing TIME — measured 11 tokens/s on the user's
+  laptop under Ollama (a 4B model), 1 000 on their LM Studio box; memory
+  `custom-llm-servers`.
 - **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropic` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
   standing corpus, 12 questions, 44 rounds, **813 000 input tokens every one

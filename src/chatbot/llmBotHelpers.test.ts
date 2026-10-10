@@ -159,6 +159,7 @@ import {
     genGuideRescueSummary,
     genToolWatch,
     toGuideRescueAnswer,
+    filterLocalToolList,
     toGeneralQuestionAsk,
     toHistoryTurns,
     toWatchedManualId,
@@ -2523,6 +2524,13 @@ describe('the custom servers', () => {
         const request = (create.mock.calls[0] as any[])[0];
         expect(request).not.toHaveProperty('tools');
         expect(request).not.toHaveProperty('tool_choice');
+        // The short system prompt, not the app's: a 4k local model has to
+        // hold the question.
+        expect(request.messages[0].role).toBe('system');
+        expect(request.messages[0].content).toMatch(
+            /general question that is NOT about the app/,
+        );
+        expect(request.messages[0].content.length).toBeLessThan(600);
         const lastMessage = request.messages[request.messages.length - 1];
         expect(lastMessage.role).toBe('user');
         expect(lastMessage.content).toMatch(
@@ -2530,6 +2538,96 @@ describe('the custom servers', () => {
         );
         // The app is never connected to for it.
         expect(steps).not.toContain('Connecting to the app');
+    });
+
+    test('sends a local server the essential tools only, and says it is reading them', async () => {
+        fake.toolList = [
+            { name: 'owa_slide_file' },
+            { name: 'owa_help_search' },
+            { name: 'owa_bible_xml' },
+            { name: 'owa_click' },
+            { name: 'owa_read_website' },
+            { name: 'owa_list_screens' },
+        ];
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 32768,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const steps: string[] = [];
+        await askLlmBot(
+            'Is the screen on?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            {
+                onProgress: (step) => {
+                    if (!step.isDone) {
+                        steps.push(step.text);
+                    }
+                },
+            },
+        );
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(
+            request.tools.map((tool: any) => {
+                return tool.function.name;
+            }),
+        ).toEqual(['owa_help_search', 'owa_click', 'owa_list_screens']);
+        expect(steps).toContain(
+            'LM Studio is reading the instructions first — the first answer ' +
+                'takes longer on a local model',
+        );
+        expect(filterLocalToolList([{ name: 'owa_undo' }])).toEqual([]);
+    });
+
+    test('a general question is not refused by a context too small for the app', async () => {
+        // Ollama's default: the model loaded at 4k (2026-10-10, the user's
+        // qwen3.5:4b under `ollama run`). An app question is refused before
+        // a round; a general one is small and goes out.
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 4096,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn(async () => {
+            return {
+                choices: [
+                    { message: { role: 'assistant', content: 'A library.' } },
+                ],
+                usage: { prompt_tokens: 120, completion_tokens: 5 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            toGeneralQuestionAsk('what is the Bible?'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { isGeneral: true },
+        );
+        expect(answer.text).toBe('A library.');
+        expect(create).toHaveBeenCalledTimes(1);
     });
 
     test('says the model is gone, without asking anyone, when no server is left', async () => {

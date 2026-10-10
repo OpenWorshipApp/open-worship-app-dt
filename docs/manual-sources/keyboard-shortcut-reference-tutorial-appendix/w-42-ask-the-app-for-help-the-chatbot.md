@@ -451,7 +451,16 @@ it is describing.
     32k, set **Settings → Context length** in the Ollama app (or start Ollama with
     `OLLAMA_CONTEXT_LENGTH=32768`), start `llama-server` again with `-c 32768` —
     because the assistant's instructions alone fill most of 16k, and a follow-up
-    question runs out of room there. Each model has a **[en:tran:Sees pictures]** box
+    question runs out of room there. A server of your own is sent the essential
+    tools only (14 of the 26 an online assistant gets, about half the words), so
+    a cold round costs it half the reading; while it reads, the waiting line says
+    _<server> is reading the instructions first — the first answer takes longer on
+    a local model_, and a computer that takes more than ten minutes over it is
+    told so — _this computer is too slow for that; a general question typed after
+    /btw is small enough to answer here_ — rather than that the internet is down.
+    How long a local answer takes is the computer's: a laptop's Ollama read 11
+    words a second on a 4-billion-parameter model and 200 on a 0.6-billion one;
+    a computer with a graphics card reads thousands. Each model has a **[en:tran:Sees pictures]** box
     — tick it for a model that can look at a picture;
     **[en:tran:Load models from server]** ticks it for you from LM Studio's and
     Ollama's own word (a `vision` model). A model the server does not have, an

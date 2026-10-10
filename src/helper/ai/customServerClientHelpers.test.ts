@@ -345,6 +345,31 @@ describe('the custom-server client', () => {
         );
     });
 
+    it('says the server was too slow when the window’s own clock ran out', async () => {
+        // What the SDK throws at its timeout: no status, "Request timed out."
+        const error: any = new Error('Request timed out.');
+        Object.defineProperty(error, 'constructor', {
+            value: { name: 'APIConnectionTimeoutError' },
+        });
+        expect(
+            toCustomServerFailure(error, {
+                baseUrl: 'http://localhost:11434/v1',
+            })?.message,
+        ).toBe(
+            'the server took longer than 10 minutes over the question and ' +
+                'the window gave up — a local model reads the assistant’s ' +
+                'whole instruction set first, and this computer is too slow ' +
+                'for that; a general question typed after /btw is small ' +
+                'enough to answer here, and questions about the app need a ' +
+                'faster computer or a model running on a GPU',
+        );
+        expect(
+            toCustomServerFailure(error, {
+                baseUrl: 'http://super-computer:1237/v1',
+            })?.message,
+        ).toMatch(/the computer it runs on is too slow/);
+    });
+
     it('leaves any other refusal to the generic reading', async () => {
         relay.requestCustomLlm.mockResolvedValue({
             ok: true,

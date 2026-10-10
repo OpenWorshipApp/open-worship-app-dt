@@ -251,10 +251,10 @@ describe('readCustomServerModelInfo', () => {
         ).toEqual(['/api/v0/models', '/api/tags', '/api/ps']);
     });
 
-    it('asks nothing of a server that is not shaped like either', async () => {
+    it('asks nothing of a server behind a longer path', async () => {
         expect(
             await readCustomServerModelInfo(
-                genServer({ baseUrl: 'http://localhost:11434' }),
+                genServer({ baseUrl: 'https://example.com/team/v1' }),
             ),
         ).toBeNull();
         expect(h.send).not.toHaveBeenCalled();

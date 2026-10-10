@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 16780dd5-d3fa-4663-8b19-127ebf319066
-  modified: 2026-10-10T15:06:55.940Z
+  modified: 2026-10-10T15:45:58.277Z
 ---
 
 The chatbot window takes **commands** (2026-09-02,
@@ -23,10 +23,14 @@ the user's ask: _add command `/btw` to let assistant know it about asking
 general question, e.g. `/btw "what is holy bible"`_). `readGeneralQuestion`
 reads the words (quotes taken off) and `handleAsking` takes the ordinary
 model road with `AskExtraType.isGeneral`: the ask is the words plus a frame
-in the USER turn (`toGeneralQuestionAsk` — never the cached system prompt),
-ONE round, NO tools (the MCP session is not opened, so no _Connecting to the
-app_ step and no tool schemas), no known-question hint, no reader-button
-shortcut. The transcript shows what was typed. With no assistant, or one
+in the USER turn (`toGeneralQuestionAsk`), under a SHORT system prompt of
+its own (`GENERAL_SYSTEM_PROMPT`, ~60 tokens, its own cached prefix) in
+place of the app's ~5 000-token one, ONE round, NO tools (the MCP session is
+not opened, so no _Connecting to the app_ step and no tool schemas), no
+known-question hint, no reader-button shortcut, and NOT refused by a custom
+server's 16k context rule — measured 2026-10-10: `/btw what is holy bible`
+on the user's qwen3.5:4b, loaded by `ollama run` at Ollama's default 4k,
+was refused as not fitting, the question needing none of the app's prompt. The transcript shows what was typed. With no assistant, or one
 that fails, the answer says a general question needs an assistant and
 offers **Open AI settings** — the guide never answers it. The bare `/btw`
 runs as a command and says how to use it; `/commands` names it as the

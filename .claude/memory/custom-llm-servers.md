@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-10T15:14:05.698Z
+  modified: 2026-10-10T16:31:17.633Z
 ---
 
 Added 2026-10-09 at the user's ask, tested against their LM Studio
@@ -91,7 +91,10 @@ read that 404 as _this model is not available to the account_.
   Ollama's `/api/tags` (every model with `capabilities` — `vision` is what
   ticks **Sees pictures** — and `details.context_length`) plus `/api/ps`
   (what is in memory, with the `context_length` it is loaded with), all
-  three at the ROOT of a `/v1` address only, all read-only
+  three at the ROOT of a `/v1` address or of a bare one (llama-server and
+  LiteLLM answer `/models` at their root, so Test keeps such an address as
+  typed — measured on llama.cpp b11541, whose `/props` then went unasked
+  until the bare origin counted), never under a longer path, all read-only
   (`checkIsRootCustomLlmPath`; pull / copy / load / delete stay refused).
   `CustomModelInfoType` replaced `LmStudioModelInfoType`; the LM Studio
   parser is unchanged, `toOllamaModelInfoMap` is the twin. The Settings
@@ -134,6 +137,33 @@ read that 404 as _this model is not available to the account_.
   `--enable-auto-tool-choice` / `--tool-call-parser`
   (`NO_TOOLS_ERROR_LIST`, each with its fix sentence). Usual ports are in
   W-42 step 13. Not measured live: none of them was installed here.
+- **A local server is sent the essential tools only, and a slow one is told
+  it is slow** (2026-10-10, the user's goal: _make the app chatbot work
+  smoothly with local llm_). Measured on the user's laptop under Ollama:
+  prompt processing is **11 tokens/s** on qwen3.5:4b (2 335 tokens in
+  206 s) and **206 tokens/s** on qwen3:0.6b, generation 37-49 tokens/s —
+  so the assistant's full request (system prompt ~5k tokens + 8 322 of tool
+  schemas) is a twenty-minute round on the 4B, and the SDK's 10-minute
+  clock ran out, which the window read as _"it could not be reached — the
+  internet may be down"_. Now: `OpenAiCompatProviderType.filterTools`, and
+  the custom provider sends `LOCAL_TOOL_NAME_LIST` (14 of 26 model-visible
+  tools, **4 234 tokens instead of 8 322**: help search/page, app state,
+  screens, find/list ui, click, type, goto, the three guide tools, verse,
+  foreground — not the file writers, Bible import, web reads, corpus
+  listing or undo, which a small local model is weak at calling anyway);
+  round 0 says _<server> is reading the instructions first — the first
+  answer takes longer on a local model_; and the SDK timeout
+  (`APIConnectionTimeoutError`, no status, "Request timed out.") is read in
+  `toCustomServerFailure` as _the server took longer than 10 minutes … this
+  computer is too slow for that; a general question typed after /btw is
+  small enough … app questions need a faster computer or a model on a GPU_
+  (loopback) / _the computer it runs on is too slow_ (elsewhere). `/btw` on
+  the 4B at 4k answered in 3 min 4 s on that laptop; the user's LM Studio
+  box reads ~1 000 tokens/s, so the lean set saves it ~4 s a cold round.
+  Ollama keeps a model's loaded context per model: `ollama create` (or
+  `POST /api/create` with `parameters.num_ctx`) derives `qwen3.5-16k:4b`
+  from `qwen3.5:4b` without new weights, which is how a 16k model was had
+  without the app's Settings.
 - **Ollama facts measured:** the OpenAI door ignores `options.num_ctx` and a
   top-level `num_ctx` — the context is the server's (or the Modelfile's: the
   user's `tev1:4b` pins `num_ctx 2050`, which no request can raise); unknown

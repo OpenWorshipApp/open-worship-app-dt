@@ -113,7 +113,10 @@ export function checkIsAllowedCustomLlmCall(
 
 /**
  * The address one allowed call goes to: under the base URL, except what a
- * server says about itself, which is at the root of a `/v1` address and
+ * server says about itself, which is at the root of a `/v1` address or of
+ * a bare one (llama.cpp's server and a LiteLLM proxy answer `/models` at
+ * their root, so a Test accepts that address as typed -- measured
+ * 2026-10-10 on llama.cpp b11541, whose `/props` then went unasked) and
  * nowhere else -- under a proxy's longer path the root may be somebody
  * else's.
  */
@@ -122,7 +125,9 @@ export function toCustomLlmCallUrl(baseUrl: string, path: string) {
         return `${baseUrl}${path}`;
     }
     const url = new URL(baseUrl);
-    return url.pathname === '/v1' ? `${url.origin}${path}` : null;
+    return url.pathname === '/v1' || url.pathname === '/'
+        ? `${url.origin}${path}`
+        : null;
 }
 
 /** Same scheme, host and port: the same program listening. */

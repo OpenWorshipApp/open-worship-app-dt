@@ -11,6 +11,7 @@ import {
     CUSTOM_CONTEXT_COMFORTABLE,
     CustomServerError,
     checkIsCustomServerError,
+    checkIsLoopbackUrl,
     toContextLabel,
     toCustomServerBaseUrl,
     type CustomLlmFetchResultType,
@@ -364,6 +365,28 @@ export function toCustomServerFailure(
     const { loadedContext = null, kind = 'other', baseUrl, model } = context;
     const status = error?.status;
     const message = String(error?.message ?? '');
+    // The SDK's own clock ran out (`CLIENT_TIMEOUT_MILLISECONDS`): the
+    // generic reading of an error with no status is "the internet may be
+    // down", and what happened is that the server was too SLOW. Measured
+    // 2026-10-10: the user's laptop under Ollama read 11 tokens a second,
+    // so the assistant's full request took the whole ten minutes.
+    if (
+        error?.constructor?.name === 'APIConnectionTimeoutError' ||
+        /request timed out/i.test(message)
+    ) {
+        const where =
+            baseUrl !== undefined && checkIsLoopbackUrl(baseUrl)
+                ? 'this computer is too slow'
+                : 'the computer it runs on is too slow';
+        return new CustomServerError(
+            `the server took longer than ${Math.round(CLIENT_TIMEOUT_MILLISECONDS / 60000)} minutes ` +
+                'over the question and the window gave up — a local model ' +
+                `reads the assistant’s whole instruction set first, and ${where} ` +
+                'for that; a general question typed after /btw is small ' +
+                'enough to answer here, and questions about the app need a ' +
+                'faster computer or a model running on a GPU',
+        );
+    }
     if (typeof status !== 'number') {
         return null;
     }

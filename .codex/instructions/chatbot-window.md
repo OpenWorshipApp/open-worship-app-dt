@@ -141,8 +141,8 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     sentence asks for 32k; a machine that goes to sleep mid-question is
     caught by the relay asking `/models` on a second connection every 20 s
     (`lost` after two failed connections — a slow list is a busy server);
-    LM Studio's own `/api/v0/models` (root of a `/v1` address only) is read
-    by Settings' Test / Load — loaded, context, and **Sees pictures**
+    LM Studio's own `/api/v0/models` (root of a `/v1` or a bare address,
+    never under a longer path) is read by Settings' Test / Load — loaded, context, and **Sees pictures**
     (`canSeeImages` on the row, the only way a custom model gets pictures)
     — and by the chatbot before each ask, 1.5 s cap, for the too-small
     refusal and a round-1 line _Waiting for <server> to load <model>_.
@@ -495,10 +495,14 @@ answer` under them opens all of it for that window (184 in the Presenter),
   `chatbot-builtin-commands`). `readGeneralQuestion` reads the words (quotes
   off) and `handleAsking` takes the ordinary model road with
   `AskExtraType.isGeneral`: the words plus a frame in the USER turn
-  (`toGeneralQuestionAsk` — never the cached system prompt), ONE round, NO
-  tools (the MCP session is not opened: no _Connecting to the app_ step,
-  no tool schemas), no known-question hint, no reader-button shortcut, the
-  transcript showing what was typed. With no assistant, or one that fails,
+  (`toGeneralQuestionAsk`) under a short system prompt of its own
+  (`GENERAL_SYSTEM_PROMPT`, ~60 tokens, its own cached prefix) instead of
+  the app's ~5 000-token one, ONE round, NO tools (the MCP session is not
+  opened: no _Connecting to the app_ step, no tool schemas), no
+  known-question hint, no reader-button shortcut, not refused by a custom
+  server's 16k context rule (a local model at Ollama's default 4k holds it
+  — measured 2026-10-10 on the user's qwen3.5:4b), the transcript showing
+  what was typed. With no assistant, or one that fails,
   the answer says a general question needs an assistant and offers **Open
   AI settings** — the guide never answers it. The bare `/btw` runs as a
   command and says how; `/commands` names it as the exception.

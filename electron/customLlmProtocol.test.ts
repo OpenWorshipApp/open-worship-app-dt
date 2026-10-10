@@ -147,8 +147,16 @@ describe('toCustomLlmCallUrl', () => {
                 LM_STUDIO_MODELS_PATH,
             ),
         ).toBeNull();
+        // A bare address IS the server's root: llama.cpp and LiteLLM answer
+        // the protocol there, so Test keeps it as typed.
         expect(
             toCustomLlmCallUrl('http://localhost:11434', LM_STUDIO_MODELS_PATH),
+        ).toBe('http://localhost:11434/api/v0/models');
+        expect(
+            toCustomLlmCallUrl(
+                'http://localhost:11434/api',
+                LM_STUDIO_MODELS_PATH,
+            ),
         ).toBeNull();
     });
 
@@ -160,7 +168,7 @@ describe('toCustomLlmCallUrl', () => {
             toCustomLlmCallUrl('http://localhost:11434/v1', OLLAMA_PS_PATH),
         ).toBe('http://localhost:11434/api/ps');
         expect(
-            toCustomLlmCallUrl('http://localhost:11434', OLLAMA_PS_PATH),
+            toCustomLlmCallUrl('http://localhost:11434/api', OLLAMA_PS_PATH),
         ).toBeNull();
     });
 });

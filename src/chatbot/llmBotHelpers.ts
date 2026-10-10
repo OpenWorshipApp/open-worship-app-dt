@@ -1413,6 +1413,14 @@ type OpenAiCompatProviderType = {
      */
     checkIsOneToolCallPerTurn?: (model: string) => boolean;
     /**
+     * The tools this provider is sent, out of the model-visible list. A
+     * local server pays for every schema in prompt-processing TIME rather
+     * than money -- measured 2026-10-10: 11 tokens a second on the user's
+     * laptop under Ollama, 1 000 on their LM Studio box -- so the custom
+     * provider sends the essentials only (`LOCAL_TOOL_NAME_LIST`).
+     */
+    filterTools?: (tools: McpToolType[]) => McpToolType[];
+    /**
      * Why this model cannot be asked with the user's current setup, in one
      * line for the window, or null. Checked BEFORE a round is paid for: a
      * Bedrock model asked in a region that does not serve it comes back as a
@@ -2057,6 +2065,26 @@ export function toGeneralQuestionAsk(question: string) {
     return `${question.trim()}\n\n(${GENERAL_QUESTION_FRAME})`;
 }
 
+/**
+ * The system prompt of a general question: a few lines in place of the
+ * app's ~5 000-token one, which describes panels and tools the question is
+ * not about. Measured 2026-10-10 on the user's Ollama with qwen3.5:4b at
+ * Ollama's default 4k context: `/btw what is holy bible` was refused as
+ * not fitting -- the app's own prompt did not fit, and the question needed
+ * none of it. Its own cached prefix on Anthropic, and a small one.
+ */
+const GENERAL_SYSTEM_PROMPT =
+    'You are the help assistant inside Open Worship app, a church ' +
+    'presentation program, answering a general question that is NOT about ' +
+    'the app. Answer from your own knowledge, plainly and in a few short ' +
+    'paragraphs at most, in the language the question is asked in. Do not ' +
+    'describe the app or its controls, and do not offer a walkthrough.';
+
+/** The system prompt an ask goes out with: the app's, or the general one. */
+function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
+    return extra?.isGeneral ? GENERAL_SYSTEM_PROMPT : genSystemPrompt(focus);
+}
+
 // The frame an addition arrives in. Named as coming from the user and joined to
 // the original question on purpose: the model is mid-way through looking things
 // up, and "answer both together" is the difference between a second answer and
@@ -2206,7 +2234,7 @@ async function askAnthropic(
     const systemBlockList: Anthropic.TextBlockParam[] = [
         {
             type: 'text',
-            text: genSystemPrompt(focus),
+            text: toSystemPrompt(focus, extra),
             cache_control: { type: 'ephemeral' },
         },
     ];
@@ -2384,7 +2412,8 @@ async function askOpenAiCompatible(
     if (client === null) {
         throw new Error(`${provider.label} is not available`);
     }
-    const openAITools = tools.map((tool) => {
+    const providerTools = provider.filterTools?.(tools) ?? tools;
+    const openAITools = providerTools.map((tool) => {
         return {
             type: 'function' as const,
             function: {
@@ -2404,7 +2433,7 @@ async function askOpenAiCompatible(
         ? { tools: openAITools, parallel_tool_calls: false }
         : { tools: openAITools };
     const messages: any[] = [
-        { role: 'system', content: genSystemPrompt(focus) },
+        { role: 'system', content: toSystemPrompt(focus, extra) },
         ...history.map((turn) => {
             return {
                 role: turn.author === 'you' ? 'user' : 'assistant',
@@ -2719,6 +2748,40 @@ const FREE_PROVIDER: OpenAiCompatProviderType = {
     maxToolRounds: FREE_MAX_TOOL_ROUNDS,
 };
 
+/**
+ * The tools a custom server is sent: the ones a how-do-I, a "what is on the
+ * screen", a press, a walkthrough, a verse and a foreground extra need --
+ * and not the eleven that write files, import Bibles, read web pages or
+ * list the corpus, which a small local model is weak at calling anyway.
+ * Measured 2026-10-10 off the audit: the full model-visible list is 8 322
+ * tokens a round, this set 4 234; on a server reading 11 tokens a second
+ * (the user's laptop under Ollama) that is seven minutes off every cold
+ * round, on one reading 1 000 (their LM Studio box) four seconds.
+ */
+const LOCAL_TOOL_NAME_LIST = [
+    'owa_help_search',
+    'owa_help_page',
+    'owa_app_state',
+    'owa_list_screens',
+    'owa_find_ui',
+    'owa_list_ui',
+    'owa_click',
+    'owa_type',
+    'owa_goto_page',
+    'owa_guide_start',
+    'owa_guide_step',
+    'owa_guide_status',
+    'owa_present_bible',
+    'owa_foreground',
+];
+const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
+
+export function filterLocalToolList(tools: McpToolType[]) {
+    return tools.filter((tool) => {
+        return LOCAL_TOOL_NAME_SET.has(tool.name);
+    });
+}
+
 function findCustomModelOrThrow(model: string) {
     const found = findCustomModel(getCustomServers(), model);
     if (found === null) {
@@ -2759,11 +2822,20 @@ function genCustomProvider(
             return row.model;
         },
         isPricedAtZero: checkIsLocalNetworkUrl(server.baseUrl),
+        filterTools: filterLocalToolList,
         describeRound: (round) => {
-            return isLoading && round === 0
+            if (round !== 0) {
+                return null;
+            }
+            // The first round is the one the server reads the whole
+            // instruction set in -- minutes on a slow computer -- and a
+            // volunteer watching a plain "thinking" for that long presses
+            // Stop. Say what the time is going on.
+            return isLoading
                 ? `Waiting for ${server.name} to load ` +
                       `${toCustomModelLabel(row)} — the first answer takes longer`
-                : null;
+                : `${server.name} is reading the instructions first — ` +
+                      'the first answer takes longer on a local model';
         },
     };
 }
@@ -2812,8 +2884,15 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
     const loadedContext = info?.loadedContext ?? null;
     // Refused before a round is posted: a model loaded with a context that
     // cannot hold the instructions spends a minute reading them and then
-    // fails, and the fix is one setting in the program that loaded it.
-    if (loadedContext !== null && loadedContext < CUSTOM_CONTEXT_MIN) {
+    // fails, and the fix is one setting in the program that loaded it. Not
+    // for a general question, which carries no tools and a short prompt
+    // and fits the 4k a local server loads with by default; should it
+    // still not fit, the server's own refusal says so after the round.
+    if (
+        !extra?.isGeneral &&
+        loadedContext !== null &&
+        loadedContext < CUSTOM_CONTEXT_MIN
+    ) {
         throw new CustomServerError(
             genContextTooSmallText(loadedContext, kind),
         );

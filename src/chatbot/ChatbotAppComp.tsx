@@ -4010,9 +4010,14 @@ export default function ChatbotAppComp() {
                                 allowAction,
                                 ...(answer.actions ?? []),
                             ];
+                            // A general question got no guide answer to
+                            // introduce -- only the sentence saying it
+                            // needs an assistant.
                             note =
-                                `${error.message} ` +
-                                describeOfflineStandIn(answer);
+                                generalQuestion === null
+                                    ? `${error.message} ` +
+                                      describeOfflineStandIn(answer)
+                                    : error.message;
                         } else {
                             // The server's own name for a custom one.
                             const label =
@@ -4066,8 +4071,13 @@ export default function ChatbotAppComp() {
                                 ...(answer.actions ?? []),
                             ];
                             note =
-                                `${describeAskFailure(label ?? provider, error)} ` +
-                                describeOfflineStandIn(answer);
+                                generalQuestion === null
+                                    ? `${describeAskFailure(label ?? provider, error)} ` +
+                                      describeOfflineStandIn(answer)
+                                    : describeAskFailure(
+                                          label ?? provider,
+                                          error,
+                                      );
                         }
                     }
                     // The amber line, said once on the answer that crossed
@@ -4100,20 +4110,25 @@ export default function ChatbotAppComp() {
                 // Skipped for an ask nobody typed -- that answer is one line
                 // drawn on a card in another window, and buttons under it in
                 // this transcript would belong to nobody.
+                // A general question keeps only the options its model
+                // wrote: the guide's nearest questions under an answer
+                // about the Bible's books are buttons about the app.
                 const replies =
-                    options?.shownText === undefined
-                        ? await genMessageReplies({
-                              modelOptions: answer.replies,
-                              answerText: shownAnswer,
-                              askedText: trimmedAsked,
-                              actionLabels: (answer.actions ?? []).map(
-                                  (action) => {
-                                      return action.label;
-                                  },
-                              ),
-                              focus: activeFocus,
-                          })
-                        : [];
+                    options?.shownText !== undefined
+                        ? []
+                        : generalQuestion !== null
+                          ? (answer.replies ?? []).slice(0, 5)
+                          : await genMessageReplies({
+                                modelOptions: answer.replies,
+                                answerText: shownAnswer,
+                                askedText: trimmedAsked,
+                                actionLabels: (answer.actions ?? []).map(
+                                    (action) => {
+                                        return action.label;
+                                    },
+                                ),
+                                focus: activeFocus,
+                            });
                 if (signal.aborted) {
                     return;
                 }
