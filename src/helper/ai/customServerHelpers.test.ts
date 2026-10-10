@@ -27,13 +27,15 @@ vi.mock('../../server/electronSendHelpers', () => ({
 
 import {
     describeCustomLlmFailure,
+    findCustomModelInfo,
+    listCustomServerModels,
     mergeCustomServerModels,
-    readLmStudioModels,
+    readCustomServerModelInfo,
 } from './customServerHelpers';
 import {
     CUSTOM_LLM_CANCEL_CHANNEL,
+    type CustomModelInfoType,
     type CustomServerType,
-    type LmStudioModelInfoType,
 } from '../../../electron/customLlmProtocol';
 
 function genServer(value: Partial<CustomServerType> = {}): CustomServerType {
@@ -46,7 +48,7 @@ function genServer(value: Partial<CustomServerType> = {}): CustomServerType {
     };
 }
 
-function genInfo(value: Partial<LmStudioModelInfoType> = {}) {
+function genInfo(value: Partial<CustomModelInfoType> = {}) {
     return {
         isLoaded: true,
         loadedContext: 16384,
@@ -155,13 +157,33 @@ describe('mergeCustomServerModels', () => {
     });
 });
 
-describe('readLmStudioModels', () => {
+function genAnswer(status: number, body: unknown) {
+    return {
+        ok: true,
+        status,
+        contentType: 'application/json',
+        text: typeof body === 'string' ? body : JSON.stringify(body),
+    };
+}
+
+// The relay answered by the PATH asked, the way a real server would.
+function answerByPath(answers: Record<string, unknown>) {
+    h.send.mockImplementation(async (_channel: string, request: any) => {
+        const key = `${request.probeBaseUrl ?? ''}${request.path}`;
+        const answer = answers[key] ?? answers[request.path];
+        if (answer === undefined) {
+            return genAnswer(404, '404 page not found');
+        }
+        return answer;
+    });
+}
+
+const MODEL_LIST = genAnswer(200, { data: [{ id: 'qwen3.5:4b' }] });
+
+describe('readCustomServerModelInfo', () => {
     it('reads LM Studio’s own list through the relay', async () => {
-        h.send.mockResolvedValue({
-            ok: true,
-            status: 200,
-            contentType: 'application/json',
-            text: JSON.stringify({
+        h.send.mockResolvedValue(
+            genAnswer(200, {
                 data: [
                     {
                         id: 'qwen/qwen3.5-9b',
@@ -172,9 +194,11 @@ describe('readLmStudioModels', () => {
                     },
                 ],
             }),
-        });
-        const infoMap = await readLmStudioModels(genServer());
-        expect(infoMap?.get('qwen/qwen3.5-9b')).toEqual(genInfo());
+        );
+        const info = await readCustomServerModelInfo(genServer());
+        expect(info?.kind).toBe('lm-studio');
+        expect(info?.infoMap.get('qwen/qwen3.5-9b')).toEqual(genInfo());
+        expect(h.send).toHaveBeenCalledTimes(1);
         expect(h.send.mock.calls[0][1]).toMatchObject({
             serverId: 'server-1',
             method: 'GET',
@@ -182,32 +206,181 @@ describe('readLmStudioModels', () => {
         });
     });
 
-    it('asks nothing of a server that is not shaped like LM Studio', async () => {
+    it('reads Ollama’s two lists when LM Studio’s is not there', async () => {
+        answerByPath({
+            '/api/tags': genAnswer(200, {
+                models: [
+                    {
+                        name: 'qwen3.5:4b',
+                        model: 'qwen3.5:4b',
+                        details: { context_length: 262144 },
+                        capabilities: ['completion', 'tools', 'vision'],
+                    },
+                    {
+                        name: 'llama3.2:3b',
+                        model: 'llama3.2:3b',
+                        details: { context_length: 131072 },
+                        capabilities: ['completion', 'tools'],
+                    },
+                ],
+            }),
+            '/api/ps': genAnswer(200, {
+                models: [{ name: 'qwen3.5:4b', context_length: 4096 }],
+            }),
+        });
+        const info = await readCustomServerModelInfo(
+            genServer({ baseUrl: 'http://localhost:11434/v1' }),
+        );
+        expect(info?.kind).toBe('ollama');
+        expect(info?.infoMap.get('qwen3.5:4b')).toEqual({
+            isLoaded: true,
+            loadedContext: 4096,
+            maxContext: 262144,
+            canSeeImages: true,
+        });
+        expect(info?.infoMap.get('llama3.2:3b')).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: 131072,
+            canSeeImages: false,
+        });
         expect(
-            await readLmStudioModels(
+            h.send.mock.calls.map((call: any[]) => {
+                return call[1].path;
+            }),
+        ).toEqual(['/api/v0/models', '/api/tags', '/api/ps']);
+    });
+
+    it('asks nothing of a server that is not shaped like either', async () => {
+        expect(
+            await readCustomServerModelInfo(
                 genServer({ baseUrl: 'http://localhost:11434' }),
             ),
         ).toBeNull();
         expect(h.send).not.toHaveBeenCalled();
     });
 
-    it('is null for a refusal, and gives up on a machine that is off', async () => {
-        h.send.mockResolvedValue({
-            ok: true,
-            status: 404,
-            contentType: 'text/plain',
-            text: 'Not found',
+    it('reads llama.cpp’s /props as the word on its one model', async () => {
+        answerByPath({
+            '/props': genAnswer(200, {
+                default_generation_settings: { id: 0, n_ctx: 4096 },
+                total_slots: 1,
+                model_path: '/models/qwen3.5-4b.gguf',
+                modalities: { vision: true, audio: false },
+            }),
         });
-        expect(await readLmStudioModels(genServer())).toBeNull();
+        const info = await readCustomServerModelInfo(
+            genServer({ baseUrl: 'http://localhost:8080/v1' }),
+        );
+        expect(info?.kind).toBe('llama-cpp');
+        expect(info?.infoMap.size).toBe(0);
+        expect(info?.commonInfo).toEqual({
+            isLoaded: true,
+            loadedContext: 4096,
+            maxContext: null,
+            canSeeImages: true,
+        });
+        // Whatever id the row was given, the server's one word applies.
+        expect(findCustomModelInfo(info, 'anything')?.loadedContext).toBe(4096);
+        expect(
+            h.send.mock.calls.map((call: any[]) => {
+                return call[1].path;
+            }),
+        ).toEqual(['/api/v0/models', '/api/tags', '/props']);
+    });
 
+    it('calls a server that answers no door something else', async () => {
+        answerByPath({});
+        const info = await readCustomServerModelInfo(genServer());
+        expect(info).toEqual({
+            kind: 'other',
+            infoMap: new Map(),
+            commonInfo: null,
+        });
+        expect(findCustomModelInfo(info, 'x')).toBeNull();
+        expect(findCustomModelInfo(null, 'x')).toBeNull();
+    });
+
+    it('gives up on a machine that is off, within the one wait', async () => {
         vi.useFakeTimers();
         h.send.mockReturnValue(new Promise(() => {}));
-        const pending = readLmStudioModels(genServer(), 1500);
+        const pending = readCustomServerModelInfo(genServer(), 1500);
         await vi.advanceTimersByTimeAsync(1500);
         expect(await pending).toBeNull();
+        // One ask, not one per door: the wait is for the whole reading.
+        expect(h.send).toHaveBeenCalledTimes(1);
         // And the relay is told to drop it, so nothing waits on for nobody.
         expect(h.sendData).toHaveBeenCalledWith(CUSTOM_LLM_CANCEL_CHANNEL, {
             requestId: expect.any(String),
         });
+    });
+});
+
+describe('listCustomServerModels', () => {
+    it('lists the chat models at the saved address', async () => {
+        answerByPath({ '/models': MODEL_LIST });
+        expect(
+            await listCustomServerModels(
+                genServer({ baseUrl: 'http://localhost:11434/v1' }),
+            ),
+        ).toEqual({ ok: true, models: ['qwen3.5:4b'] });
+        expect(h.send.mock.calls[0][1]).not.toHaveProperty('probeBaseUrl');
+    });
+
+    it('finds the protocol one path off and says which address to save', async () => {
+        // Ollama typed as its own `/v1/systemone` door (2026-10-10): every
+        // call under it is a 404 page.
+        answerByPath({ 'http://localhost:11434/v1/models': MODEL_LIST });
+        expect(
+            await listCustomServerModels(
+                genServer({ baseUrl: 'http://localhost:11434/v1/systemone' }),
+            ),
+        ).toEqual({
+            ok: true,
+            models: ['qwen3.5:4b'],
+            correctedBaseUrl: 'http://localhost:11434/v1',
+        });
+        expect(h.send.mock.calls[1][1]).toMatchObject({
+            path: '/models',
+            probeBaseUrl: 'http://localhost:11434/v1',
+        });
+    });
+
+    it('says what to type when no address of the server speaks the protocol', async () => {
+        answerByPath({});
+        const answer = await listCustomServerModels(
+            genServer({ baseUrl: 'http://localhost:11434' }),
+        );
+        expect(answer.ok).toBe(false);
+        expect((answer as any).message).toBe(
+            'the server answered 404 — nothing at this address speaks the ' +
+                'OpenAI API; the address usually ends in /v1 (Ollama: ' +
+                'http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)',
+        );
+        // The root, `/v1`: nothing on another host.
+        expect(
+            h.send.mock.calls.map((call: any[]) => {
+                return call[1].probeBaseUrl ?? '(saved)';
+            }),
+        ).toEqual(['(saved)', 'http://localhost:11434/v1']);
+    });
+
+    it('tries no other path for a refused key or a machine that is off', async () => {
+        h.send.mockResolvedValue(genAnswer(401, { error: 'no' }));
+        expect(await listCustomServerModels(genServer())).toEqual({
+            ok: false,
+            message: 'the server refused the API key',
+        });
+        expect(h.send).toHaveBeenCalledTimes(1);
+
+        h.send.mockReset();
+        h.send.mockResolvedValue({
+            ok: false,
+            reason: 'unreachable',
+            detail: '',
+        });
+        const answer = await listCustomServerModels(genServer());
+        expect((answer as any).message).toMatch(/^nothing answered at/);
+        expect(h.send).toHaveBeenCalledTimes(1);
     });
 });

@@ -188,6 +188,15 @@ vi.mock('./msHelpers', () => ({
     getPptxToHtmlsVersion,
     pptxToHtmls,
 }));
+const agentMenuMocks = vi.hoisted(() => ({
+    listAgentMenuItems: vi.fn(() => [{ path: 'View > Reload' }]),
+    clickAgentMenuItem: vi.fn(() => ({ clicked: 'View > Reload' })),
+}));
+vi.mock('./appMenuAgentHelpers', () => ({
+    AGENT_MENU_LIST_CHANNEL: 'main:app:agent-menu-list',
+    AGENT_MENU_CLICK_CHANNEL: 'main:app:agent-menu-click',
+    ...agentMenuMocks,
+}));
 vi.mock('./electronMenu', () => ({
     initMenu,
     sendMenuClicked,
@@ -236,6 +245,7 @@ function createAppController(overrides: Record<string, any> = {}) {
             sendScreenMessage: vi.fn(),
             changeBible: vi.fn(),
             sendNotifyInvisibility: vi.fn(),
+            syncStayAwake: vi.fn(),
         },
         settingManager: {
             themeSource: 'system',
@@ -318,6 +328,32 @@ describe('electronEventListener handlers', () => {
         const tempPathEvent: any = {};
         findOnHandler('main:app:get-temp-path')(tempPathEvent);
         expect(tempPathEvent.returnValue).toBe('/mock/temp');
+
+        // The menu bar for an agent: a list, a press, and a throw that still
+        // answers -- a sendSync left without a returnValue hangs the renderer.
+        const menuListEvent: any = {};
+        findOnHandler('main:app:agent-menu-list')(menuListEvent);
+        expect(menuListEvent.returnValue).toEqual([{ path: 'View > Reload' }]);
+        const menuClickEvent: any = { sender: {} };
+        findOnHandler('main:app:agent-menu-click')(
+            menuClickEvent,
+            'View > Reload',
+        );
+        expect(menuClickEvent.returnValue).toEqual({
+            clicked: 'View > Reload',
+        });
+        expect(agentMenuMocks.clickAgentMenuItem.mock.calls[0]?.[0]).toBe(
+            'View > Reload',
+        );
+        agentMenuMocks.clickAgentMenuItem.mockImplementationOnce(() => {
+            throw new Error('menu gone');
+        });
+        const menuThrowEvent: any = { sender: {} };
+        findOnHandler('main:app:agent-menu-click')(menuThrowEvent, 'View');
+        expect(menuThrowEvent.returnValue).toEqual({
+            isError: true,
+            reason: 'menu gone',
+        });
 
         const sender = { send: vi.fn() };
         await findOnHandler('main:app:select-dirs')(
@@ -1130,6 +1166,35 @@ describe('electronEventListener handlers', () => {
         expect(call({ key: '', type: 'clear' })).toBe(true);
         // an unknown operation returns nothing rather than throwing
         expect(call({ key: 'a', type: 'unknown' as any })).toBeNull();
+    });
+
+    test('a change to the stay-awake setting reaches the main window at once', () => {
+        const appController = createAppController();
+        initEventOther(appController);
+        const clientSetting = findOnHandler('main:app:client-setting');
+        const { syncStayAwake } = appController.mainController;
+        const call = (data: Record<string, any>) => {
+            clientSetting({}, data);
+        };
+
+        // Reading it, and writing any other setting, asks nothing of the OS.
+        call({ key: 'stay-awake', type: 'get' });
+        call({ key: 'ai-enabled', type: 'set', value: 'true' });
+        call({ key: 'ai-enabled', type: 'delete' });
+        call({ key: '', type: 'get-all-keys' });
+        expect(syncStayAwake).not.toHaveBeenCalled();
+
+        call({ key: 'stay-awake', type: 'set', value: 'false' });
+        expect(syncStayAwake).toHaveBeenCalledTimes(1);
+        // Written before it is acted on: the main window reads it back.
+        expect(
+            appController.settingManager.setClientSetting,
+        ).toHaveBeenCalledWith('stay-awake', 'false');
+        call({ key: 'stay-awake', type: 'delete' });
+        expect(syncStayAwake).toHaveBeenCalledTimes(2);
+        // Clear All Settings takes it with the rest, back to its default.
+        call({ key: '', type: 'clear' });
+        expect(syncStayAwake).toHaveBeenCalledTimes(3);
     });
 
     test('secure settings are read, written, deleted, cleared, and probed', () => {

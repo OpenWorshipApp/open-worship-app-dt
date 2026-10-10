@@ -52,7 +52,10 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   model (was 29 / ~7 366).
   `audit-mcp-tools.mjs` reports both and prints a withheld tool as `(name)`;
   reporting only the total is how a tool added "for the developer" ends up
-  billed to every volunteer.
+  billed to every volunteer. Since 2026-10-10 three `owa_*` tools are the
+  developer's too — `owa_press_key`, `owa_drag`, `owa_menu` (`MC-50`,
+  `MC-56`) — so "the model sees every `owa_*` tool" is no longer the rule;
+  `modelTools.mjs` is, and it says what to use instead of each.
 - **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropic` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
   standing corpus, 12 questions, 44 rounds, **813 000 input tokens every one

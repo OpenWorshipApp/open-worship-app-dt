@@ -92,6 +92,16 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   open on a uid it never saw, deliberately: a uid the model was not shown is
   one it cannot aim with. Only ACTIONABLE roles count, or a verse reading
   "remove" would make its own text unpressable;
+  **The same words-half reads the three label-aimed tools of 2026-10-10**
+  (`MC-50`): `owa_press_key`'s `find` and `keys` — plus **F6 by name**
+  (`DESTRUCTIVE_KEY_MAP`, the app's Clear All key, because the page half judges
+  a key by the control whose title names it and that panel may be collapsed;
+  measured collapsed, F6 went through), both ends of an `owa_drag`, and an
+  `owa_menu` `item`; the page half reads the focused control for Enter and
+  Space, refuses every key while a question popup is up, and reads both ends
+  of a drop. The menu's own refusals (Quit / Close / Relaunch, Developer
+  Tools) are the MAIN process's (`electron/appMenuAgentHelpers.ts`), not the
+  firewall's: a menu item has no DOM for the page half to read;
   acting calls are capped at 25 per rolling minute ACROSS sessions because the
   thing protected is one window; **`owa_read_website` inverts the URL rule and
   gets a budget of its own** (10 per 5 minutes — a separate counter, because

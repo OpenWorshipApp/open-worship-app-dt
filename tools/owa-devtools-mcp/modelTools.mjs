@@ -80,6 +80,52 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
         nameList: ['click', 'fill', 'fill_form', 'drag', 'hover', 'type_text'],
     },
     {
+        // Label-aimed and guarded, and still the developer's (2026-10-10):
+        // what a volunteer asks for -- a song into Sunday's run sheet -- is
+        // owa_presenting_flow's `add`, said by name and backed up, where a
+        // drag's result is a drop the tool cannot read back. Offering the
+        // model a second, unverifiable way to do a thing it has a verifiable
+        // way to do is a round spent and a wrong turn to take (`MC-50`).
+        reason:
+            'Dragging is not yours to do. What goes into a run sheet is ' +
+            'owa_presenting_flow with action add, which says what it added ' +
+            'and can be undone; a slide is moved with owa_slide_file ' +
+            'move-slide. For anything else, tell the user what to drag where.',
+        nameList: ['owa_drag'],
+    },
+    {
+        // The menu bar is the developer's too: every item a volunteer needs
+        // has a button in the window (Settings, Help, the panels), and the
+        // rest -- Reload, zoom, Export Data -- changes the window under them.
+        reason:
+            'The menu bar is not yours to press. Settings opens from the ' +
+            'gear with owa_click, the panels from their tabs and dividers; ' +
+            'for anything else, tell the user which menu and item to open.',
+        nameList: ['owa_menu'],
+    },
+    {
+        // A QA run walks a long list; a volunteer's assistant names a row
+        // and the data tools find a file by name whether or not its row is
+        // on screen (`owa_lyric_file list`, `owa_presenting_flow info`).
+        reason:
+            'Scrolling the window is not yours to do. The file tools find a ' +
+            'song, document or run sheet by name whether or not its row is ' +
+            'on screen; for a control, tell the user where to scroll.',
+        nameList: ['owa_scroll'],
+    },
+    {
+        // Pictures, clips and tracks are the operator's own library, imported
+        // from their disk: a path is nothing a volunteer says to an
+        // assistant, and a clip trashed by a model on a misread ask is a
+        // morning lost even with the copy kept. The developer's door keeps
+        // it for QA runs that seed and sweep a library (`MC-56`).
+        reason:
+            "The user's pictures, clips and web pages are not yours to " +
+            'rename, trash or import. Tell them which Background tab holds ' +
+            'the file and what to right-click; owa_find_ui can ring the row.',
+        nameList: ['owa_media_file'],
+    },
+    {
         reason:
             "Opening and closing the user's windows is not yours to do. " +
             'owa_goto_page moves the main window between the presenter and ' +
@@ -101,7 +147,14 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
             'F6 change what the congregation sees. Press the CONTROL with ' +
             'owa_click, by the words written on it, after the user has said ' +
             'yes -- or tell them which key to press themselves.',
-        nameList: ['press_key', 'handle_dialog'],
+        // `owa_press_key` IS guarded (by the control whose title names the
+        // key), and is still withheld: the prompt tells the model no tool
+        // advances a run (the operator presses Space), and every shortcut
+        // worth pressing for a volunteer has a button owa_click can name.
+        // The developer's door keeps it -- the arrow keys and Space are how a
+        // QA run walks a slide list and a run player. `MC-50` weighs offering
+        // it.
+        nameList: ['press_key', 'handle_dialog', 'owa_press_key'],
     },
     {
         // The page-level readers. Each answers in uids, page numbers and log
@@ -174,4 +227,3 @@ export function filterModelToolList(toolList) {
         return !checkIsModelHiddenTool(tool?.name);
     });
 }
-

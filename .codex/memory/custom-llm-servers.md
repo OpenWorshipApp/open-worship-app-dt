@@ -1,11 +1,11 @@
 ---
 name: custom-llm-servers
-description: "The user's own OpenAI-compatible servers (LM Studio, Ollama, any URL) in the chatbot — one `custom` provider, a row per server, every call through a main-process relay"
+description: "The user's own OpenAI-compatible servers (LM Studio, Ollama, any URL) in the chatbot — one `custom` provider, a row per server, every call through a main-process relay; the server's KIND is read off its root (LM Studio's list, Ollama's /api/tags + /api/ps), Test corrects an address one path off, and a 404 is never 'not available to the account'"
 metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-09T23:39:00.999Z
+  modified: 2026-10-10T15:14:05.698Z
 ---
 
 Added 2026-10-09 at the user's ask, tested against their LM Studio
@@ -76,5 +76,70 @@ Others → **Custom servers**; shared rules in `electron/customLlmProtocol.ts`.
   and to say "Waiting for <server> to load <model>" on round 1.
 - **A machine on the church's own network is free** (`checkIsLocalNetworkUrl`:
   a bare machine name, `.local`/`.lan`/…, RFC1918, 100.64/10, fc00::/7).
+
+**Made generic for Ollama and the rest (2026-10-10, the user's ask: _make the
+custom assistant work generically … it's not working with ollama now … work
+with most popular llm server like lmstudio ollama_).** Measured on the user's
+Ollama 0.40 (`http://localhost:11434`): the row had been typed as
+`http://localhost:11434/v1/systemone` (a decision-model door of Ollama's
+own), every call under it was a text `404 page not found`, and the chatbot
+read that 404 as _this model is not available to the account_.
+
+- **The server's KIND is read off its root, never stored**
+  (`readCustomServerModelInfo` → `{kind, infoMap}`, `CustomServerKindType`
+  `lm-studio | ollama | other`): LM Studio's `/api/v0/models` first, else
+  Ollama's `/api/tags` (every model with `capabilities` — `vision` is what
+  ticks **Sees pictures** — and `details.context_length`) plus `/api/ps`
+  (what is in memory, with the `context_length` it is loaded with), all
+  three at the ROOT of a `/v1` address only, all read-only
+  (`checkIsRootCustomLlmPath`; pull / copy / load / delete stay refused).
+  `CustomModelInfoType` replaced `LmStudioModelInfoType`; the LM Studio
+  parser is unchanged, `toOllamaModelInfoMap` is the twin. The Settings
+  lines and the chatbot's refusal speak in the program's words
+  (`genContextTooSmallText(loaded, kind)`: LM Studio reloads a model with a
+  Context Length, the Ollama app has ONE setting — Settings → Context
+  length — or `OLLAMA_CONTEXT_LENGTH=32768`; Ollama's docs: the default is
+  4k under 24 GiB of VRAM). Each is its own literal `tran` key per program,
+  so Khmer reads naturally.
+- **Test corrects an address one path off** (`listCustomServerModels` →
+  `correctedBaseUrl`): when the saved address answers 404 or no list, the
+  SAME origin's `/v1`, `<path>/v1` and root are tried
+  (`genCustomServerAddressCandidates`) through the relay's `probeBaseUrl`,
+  which the relay accepts for `GET /models` only and only on the saved
+  origin (`checkIsSameOrigin`) — the key never goes to another host. The
+  panel saves the one that answered and says _Address corrected to …_;
+  when none answers, the sentence names the two usual addresses.
+- **A 404 is read two ways** (`toCustomServerFailure(error, {loadedContext,
+  kind, baseUrl, model})`): a 404 the server WROTE (Ollama's `not_found_error`
+  JSON — the SDK puts it on `error.error`) is _this server has no model
+  called “x”_ (+ `ollama pull x`); a bare page is _nothing speaks the OpenAI
+  API at … — check the address and press Test_. A 400 saying `does not
+  support tools` is _this model cannot use tools_. Ollama's context 400
+  (`exceed_context_size_error`, "exceeds the available context size") matches
+  the existing pattern.
+- **The rest of the family** (the user's list: _Ollama, LocalAI, Llamafile,
+  Respawn, LiteLLM Proxy, LM Studio, Jan, GPT4All, vLLM, SGLang, llama.cpp_):
+  all OpenAI-shaped at `<origin>/v1` (LiteLLM at the root too), so the
+  address correction, the key box and `/models` already serve them. What
+  they needed: **llama.cpp's `/props`** (kind `llama-cpp`, llamafile too —
+  `default_generation_settings.n_ctx` is the context the server was started
+  with, 4096 unless `-c`; `modalities.vision`; ONE model, so the info is
+  `commonInfo` for every row, `findCustomModelInfo`); **error bodies in
+  other shapes** — vLLM / SGLang write `{object:"error", message, type,
+  code}` with no `error` key and a FastAPI server `{detail}`, which the SDK
+  reports as "404 status code (no body)", so `toReadableErrorText` rewraps a
+  ≥400 JSON body as `{error:{message,type,code}}` before the SDK sees it;
+  and **tool calling that is off server-side** — llama.cpp answers 500
+  `tools param requires --jinja flag`, vLLM / SGLang 400 naming
+  `--enable-auto-tool-choice` / `--tool-call-parser`
+  (`NO_TOOLS_ERROR_LIST`, each with its fix sentence). Usual ports are in
+  W-42 step 13. Not measured live: none of them was installed here.
+- **Ollama facts measured:** the OpenAI door ignores `options.num_ctx` and a
+  top-level `num_ctx` — the context is the server's (or the Modelfile's: the
+  user's `tev1:4b` pins `num_ctx 2050`, which no request can raise); unknown
+  body fields are ignored, not refused; `reasoning_effort: "none"` turns a
+  thinking model's reasoning off (686 ms against 5.3 s), `think: false` is
+  ignored there; `/v1/models` lists every pulled model with `owned_by:
+  library`. Not shipped: sending `reasoning_effort` to custom servers.
 Related: [[bedrock-llm-provider]], [[kimi-third-llm-provider]],
 [[secure-storage-safestorage]], [[scratch-dev-instance-beside-user-app]].

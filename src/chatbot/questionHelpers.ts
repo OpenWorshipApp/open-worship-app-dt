@@ -184,6 +184,19 @@ export async function suggestQuestions(
 }
 
 /**
+ * Whether the box already says what a suggestion would put in it -- the whole
+ * of it, with or without more words typed after. Such a row has nothing left
+ * to offer: taking it would change nothing, or would throw away what was added
+ * to it (2026-10-10, the user's ask: _should close suggestion when user type
+ * more extra, or already in input text_). The command rows answer the same
+ * question in `matchBuiltinActions`, which knows where a command's name ends.
+ */
+export function checkIsAlreadyTyped(typed: string, suggestion: string) {
+    const offered = suggestion.trim().toLowerCase();
+    return offered.length > 0 && typed.trim().toLowerCase().startsWith(offered);
+}
+
+/**
  * A heading and the questions under it, for the window's "everything it can
  * answer" list.
  */

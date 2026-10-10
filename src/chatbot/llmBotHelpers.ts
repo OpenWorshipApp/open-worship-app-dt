@@ -30,9 +30,10 @@ import { getKimiInstance } from '../helper/ai/kimiHelpers';
 import { getBedrockInstance } from '../helper/ai/bedrockHelpers';
 import { FREE_SERVICE_MAP, getFreeInstance } from '../helper/ai/freeHelpers';
 import {
+    findCustomModelInfo,
     getCustomServers,
     getUsableCustomServers,
-    readLmStudioModels,
+    readCustomServerModelInfo,
 } from '../helper/ai/customServerHelpers';
 import {
     genContextTooSmallText,
@@ -49,7 +50,10 @@ import {
     findCustomModel,
     getUsableCustomModels,
     toCustomModelLabel,
-    type LmStudioModelInfoType,
+    type CustomModelInfoType,
+    type CustomModelType,
+    type CustomServerKindType,
+    type CustomServerType,
 } from '../../electron/customLlmProtocol';
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -2025,7 +2029,33 @@ export type AskExtraType = {
      * read lower than the bill every time.
      */
     onUsage?: (round: LlmRoundUsageType) => void;
+    /**
+     * A general question, not about the app (`/btw`, `readGeneralQuestion`
+     * in `builtinActionHelpers`): answered from the model's own knowledge in
+     * ONE round with NO tools -- the MCP session is not even opened, so the
+     * window's "Connecting to the app" step and the ~8 000 tokens of tool
+     * schemas are spared -- and the ask itself carries the frame that says
+     * so (`toGeneralQuestionAsk`). The provider's own refusals, the spend
+     * guard and the stand-in key work as for any other ask.
+     */
+    isGeneral?: boolean;
 };
+
+// The frame a `/btw` question goes to the model in. In the USER turn, never
+// the system prompt: the system prompt is a cached prefix shared by every
+// question about the same window, and a line that changes per question would
+// break it at that byte (see `askAnthropic`).
+const GENERAL_QUESTION_FRAME =
+    'This is a general question, not about the Open Worship app. Answer it ' +
+    'from your own knowledge, plainly and in a few short paragraphs at most, ' +
+    'in the language it is asked in. Do not look anything up in the app or ' +
+    'its guide, do not describe the app’s controls, and do not offer a ' +
+    'walkthrough.';
+
+/** What the model is asked for a `/btw` question: the words, then the frame. */
+export function toGeneralQuestionAsk(question: string) {
+    return `${question.trim()}\n\n(${GENERAL_QUESTION_FRAME})`;
+}
 
 // The frame an addition arrives in. Named as coming from the user and joined to
 // the original question on purpose: the model is mid-way through looking things
@@ -2181,14 +2211,17 @@ async function askAnthropic(
         },
     ];
     const reportStep = genProgressReporter(extra?.onProgress);
-    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    // A general question (`AskExtraType.isGeneral`) is one round: there is
+    // nothing to look up, so there is nothing to go round for.
+    const maxRounds = extra?.isGeneral ? 1 : MAX_TOOL_ROUNDS;
+    for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
         // round that would take the hour over its cap is a round that is
         // never posted, whoever is asking (see `spendGuardHelpers`).
         throwIfCancelled(signal);
         throwIfSpendLimitReached();
-        const isLastRound = round === MAX_TOOL_ROUNDS - 1;
+        const isLastRound = round === maxRounds - 1;
         // The model round itself is the longest single wait in most questions
         // and the one with nothing to show for it, so it gets a line too.
         const finishThinking = reportStep(genThinkingStep(round));
@@ -2200,13 +2233,21 @@ async function askAnthropic(
                     max_tokens: ANTHROPIC_MAX_TOKENS,
                     cache_control: { type: 'ephemeral' },
                     system: systemBlockList,
-                    tools: anthropicTools,
                     // Nothing left to look up: answer with what you have. The
                     // tools stay in the request even so -- taking them out
                     // changes the prefix at byte zero and forfeits the cache
                     // on the most expensive round of all -- and `none` is
-                    // what forbids the call.
-                    ...(isLastRound ? { tool_choice: { type: 'none' } } : {}),
+                    // what forbids the call. A general question was given
+                    // none to begin with, and `tool_choice` without tools
+                    // is refused, so neither key goes then.
+                    ...(extra?.isGeneral
+                        ? {}
+                        : {
+                              tools: anthropicTools,
+                              ...(isLastRound
+                                  ? { tool_choice: { type: 'none' } }
+                                  : {}),
+                          }),
                     messages,
                 },
                 // The request itself is dropped when the user gives up: a
@@ -2375,7 +2416,11 @@ async function askOpenAiCompatible(
             content: toOpenAiUserContent(question, extra?.images ?? []),
         },
     ];
-    const maxRounds = provider.maxToolRounds ?? MAX_TOOL_ROUNDS;
+    // A general question (`AskExtraType.isGeneral`) is one round with no
+    // tools: `isLastRound` from the first, which is what leaves them out.
+    const maxRounds = extra?.isGeneral
+        ? 1
+        : (provider.maxToolRounds ?? MAX_TOOL_ROUNDS);
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
     // no tools at all, which is the one request a throttled service is most
@@ -2691,12 +2736,12 @@ function findCustomModelOrThrow(model: string) {
  * tier's round cap, for the free tier's reasons -- these are mostly small
  * open models, and a local one pays for every extra round in minutes.
  *
- * `info` is what LM Studio said about the model just before the question,
- * when the server is LM Studio and answered in time.
+ * `info` is what the server said about the model just before the question,
+ * when it is LM Studio or Ollama and answered in time.
  */
 function genCustomProvider(
     model: string,
-    info: LmStudioModelInfoType | null = null,
+    info: CustomModelInfoType | null = null,
 ): OpenAiCompatProviderType {
     const { server, row } = findCustomModelOrThrow(model);
     const isLoading = info !== null && !info.isLoaded;
@@ -2731,17 +2776,24 @@ function genCustomProvider(
 const CUSTOM_INFO_WAIT_MILLISECONDS = 5000;
 
 /**
- * What LM Studio says about the model about to be asked, or null when that is
- * not known. Asked in front of every question rather than remembered: a model
- * is loaded and unloaded in LM Studio whenever somebody uses it.
+ * What the server says about the model about to be asked -- which program it
+ * is, and the model's state when it says (LM Studio and Ollama do; `info` is
+ * null when not known). Asked in front of every question rather than
+ * remembered: a model is loaded and unloaded whenever somebody uses the
+ * server.
  */
-async function readCustomModelInfo(model: string) {
-    const { server, row } = findCustomModelOrThrow(model);
-    const infoMap = await readLmStudioModels(
+async function readCustomModelInfo(
+    server: CustomServerType,
+    row: CustomModelType,
+): Promise<{ kind: CustomServerKindType; info: CustomModelInfoType | null }> {
+    const serverInfo = await readCustomServerModelInfo(
         server,
         CUSTOM_INFO_WAIT_MILLISECONDS,
     );
-    return infoMap?.get(row.model) ?? null;
+    return {
+        kind: serverInfo?.kind ?? 'other',
+        info: findCustomModelInfo(serverInfo, row.model),
+    };
 }
 
 const askCustomServer: LlmProviderRuntimeType['ask'] = async (
@@ -2754,14 +2806,17 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
     signal,
     extra,
 ) => {
-    const info = await readCustomModelInfo(model);
+    const { server, row } = findCustomModelOrThrow(model);
+    const { kind, info } = await readCustomModelInfo(server, row);
     throwIfCancelled(signal);
     const loadedContext = info?.loadedContext ?? null;
     // Refused before a round is posted: a model loaded with a context that
     // cannot hold the instructions spends a minute reading them and then
-    // fails, and the fix is one setting in LM Studio.
+    // fails, and the fix is one setting in the program that loaded it.
     if (loadedContext !== null && loadedContext < CUSTOM_CONTEXT_MIN) {
-        throw new CustomServerError(genContextTooSmallText(loadedContext));
+        throw new CustomServerError(
+            genContextTooSmallText(loadedContext, kind),
+        );
     }
     const provider = genCustomProvider(model, info);
     try {
@@ -2784,7 +2839,14 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
         if (checkIsCancelError(error, signal)) {
             throw error;
         }
-        throw toCustomServerFailure(error, loadedContext) ?? error;
+        throw (
+            toCustomServerFailure(error, {
+                loadedContext,
+                kind,
+                baseUrl: server.baseUrl,
+                model: row.model,
+            }) ?? error
+        );
     }
 };
 
@@ -3108,26 +3170,33 @@ export async function askLlmBot(
         }
         asked = ATTACHMENT_ONLY_QUESTION;
     }
+    const isGeneral = extra?.isGeneral === true;
     // This one has a complete local solution and exact live-safe controls.
     // Letting a small model improvise it was measured asking a senior to read
     // and type back the Khmer button label -- precisely the task they could
-    // not do. It needs neither the network nor a model round.
-    const readerButtonAnswer = genReaderButtonReferenceAnswer(asked, focus);
+    // not do. It needs neither the network nor a model round. Not for a
+    // general question, which is about nothing in this app.
+    const readerButtonAnswer = isGeneral
+        ? null
+        : genReaderButtonReferenceAnswer(asked, focus);
     if (readerButtonAnswer !== null) {
         return readerButtonAnswer;
     }
     // Its own step because it is the one wait that has nothing to do with the
     // question: on the first ask of a window this opens the MCP session, and a
     // machine that is busy elsewhere can sit here for a couple of seconds with
-    // the model not yet asked anything at all.
-    const finishConnecting = genProgressReporter(extra?.onProgress)(
-        'Connecting to the app',
-    );
-    let tools: McpToolType[];
-    try {
-        tools = (await listTools(signal)) as McpToolType[];
-    } finally {
-        finishConnecting();
+    // the model not yet asked anything at all. A general question gets no
+    // tools and so never opens the session at all.
+    let tools: McpToolType[] = [];
+    if (!isGeneral) {
+        const finishConnecting = genProgressReporter(extra?.onProgress)(
+            'Connecting to the app',
+        );
+        try {
+            tools = (await listTools(signal)) as McpToolType[];
+        } finally {
+            finishConnecting();
+        }
     }
     let watch = genToolWatch();
     const history = toHistoryTurns(priorTurns);

@@ -23,6 +23,7 @@ import {
 import { findImageFile, readQrTextFromImage } from './mirrorQrHelpers';
 import { layoutMirrorMonitors } from './mirrorMonitorLayout';
 import MirrorIntercomComp from './MirrorIntercomComp';
+import StayAwakeButtonComp from '../others/StayAwakeButtonComp';
 import { isVirtualDisplayId } from '../../electron/virtualDisplayProtocol';
 
 // `idle` is the patch drawn before any host is linked.
@@ -232,7 +233,8 @@ function MirrorHostNodeComp({
     );
 }
 
-// The page's whole frame: one way out, back to the Presenter, and the column.
+// The page's whole frame: one way out, back to the Presenter, the switch that
+// keeps this computer awake while the page is open, and the column.
 function MirrorPageComp({ children }: Readonly<{ children: ReactNode }>) {
     return (
         <div className="app-mirror-guest">
@@ -247,6 +249,7 @@ function MirrorPageComp({ children }: Readonly<{ children: ReactNode }>) {
                     <i className="bi bi-arrow-left" aria-hidden />{' '}
                     {tran('Presenter')}
                 </button>
+                <StayAwakeButtonComp className="btn-sm ms-auto" />
             </nav>
             <main className="app-mirror-guest-scroll">
                 <div className="app-mirror-guest-column">{children}</div>

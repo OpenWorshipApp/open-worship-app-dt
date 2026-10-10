@@ -20,6 +20,7 @@ export const AGENT_FILE_ACTIONS = [
     'create',
     'update',
     'rename',
+    'revert',
     'delete',
 ];
 
@@ -42,7 +43,8 @@ export const AGENT_SLIDE_ACTIONS = [
  */
 export const AGENT_FILE_ACTION_TEXT =
     '`list` names what is there, `info` reads one, `create` makes a new one, ' +
-    '`update` changes one, `rename` renames one, `delete` moves one to the ' +
+    '`update` changes one, `rename` renames one, `revert` drops its unsaved ' +
+    "edits (the editor's Discard, undoable here), `delete` moves one to the " +
     'trash.';
 
 /**

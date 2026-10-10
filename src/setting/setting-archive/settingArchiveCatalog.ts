@@ -486,6 +486,9 @@ const EXCLUDED_HOME_KEY_LIST = [
     // The AI master switch opens the agent doors on the next launch, and
     // must be turned on knowingly (`.claude/rules/agent-access.md`).
     'ai-enabled',
+    // Whether THIS computer may sleep (`electron/stayAwakeProtocol.ts`): a
+    // habit of the machine, and it is on unless switched off anyway.
+    'stay-awake',
     'lexical-playground-editor-state',
 ];
 
@@ -648,6 +651,9 @@ const LOCAL_RULE_LIST: LocalRuleType[] = [
             'app-document-preview-rect-',
             'bible-xml-',
             'bible-setting-',
+            // Which sections of Settings → Others are folded,
+            // `src/setting/settingSectionFoldHelpers.ts`.
+            'setting-section-collapsed-',
         ],
     },
     {

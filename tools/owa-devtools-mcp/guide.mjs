@@ -1877,7 +1877,8 @@ const MODIFIER_MAP = {
 // forces every key back to that layout THROUGH the code before matching it
 // (`toEnUsKey`), so a `key` sent with no `code` matches nothing on a German
 // or Khmer layout -- the exact users this app is for.
-function toKeyCode(key) {
+/** The `code` a key's `key` value implies: `a` is `KeyA`, `5` is `Digit5`. */
+export function toKeyCode(key) {
   if (/^[a-z]$/i.test(key)) {
     return 'Key' + key.toUpperCase();
   }

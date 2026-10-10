@@ -31,8 +31,10 @@ import {
     BUILTIN_ACTION_LIST,
     BUILTIN_TOOL_NAME,
     checkIsBuiltinCommand,
+    GENERAL_QUESTION_COMMAND,
     matchBuiltinActions,
     parseBuiltinCommand,
+    readGeneralQuestion,
     readCountdownArgument,
     runBuiltinCommand,
     toBuiltinCommandText,
@@ -99,6 +101,38 @@ describe('the command list', () => {
     });
 });
 
+describe('/btw', () => {
+    test('reads a general question off the line, quotes and all', () => {
+        expect(readGeneralQuestion('/btw "what is holy bible"')).toBe(
+            'what is holy bible',
+        );
+        expect(readGeneralQuestion('  /BTW   What is the Bible?  ')).toBe(
+            'What is the Bible?',
+        );
+        expect(readGeneralQuestion('/general ‘who wrote Psalms’')).toBe(
+            'who wrote Psalms',
+        );
+        // Not this command, or nothing after it: the command itself answers.
+        expect(readGeneralQuestion('/btw')).toBeNull();
+        expect(readGeneralQuestion('/btw ""')).toBeNull();
+        expect(readGeneralQuestion('/screen')).toBeNull();
+        expect(readGeneralQuestion('what is the Bible?')).toBeNull();
+    });
+
+    test('is offered with the commands, and the bare word says how', async () => {
+        expect(matchBuiltinActions('/bt')[0].name).toBe(
+            GENERAL_QUESTION_COMMAND,
+        );
+        const answer = await runBuiltinCommand('/btw', 'presenter');
+        expect(answer.text).toContain('Say the question after /btw');
+        expect(answer.text).toContain('/btw What is the Bible?');
+        // The list says it is the one command that uses the assistant.
+        const list = await runBuiltinCommand('/commands', 'presenter');
+        expect(list.text).toContain('`/btw`');
+        expect(list.text).toContain('except `/btw`');
+    });
+});
+
 describe('the suggestion list', () => {
     test('a bare slash lists everything, letters narrow it', () => {
         expect(matchBuiltinActions('/', 50).length).toBe(
@@ -109,6 +143,31 @@ describe('the suggestion list', () => {
         // An alias reaches its command too.
         expect(matchBuiltinActions('/presenter-')[0].name).toBe('screen-show');
         expect(matchBuiltinActions('how do I')).toEqual([]);
+    });
+
+    test('closes once the words after the name have started', () => {
+        expect(matchBuiltinActions('/btw what is')).toEqual([]);
+        // The space alone is the name being finished with.
+        expect(matchBuiltinActions('/btw ')).toEqual([]);
+        expect(matchBuiltinActions('/screen now')).toEqual([]);
+        expect(matchBuiltinActions('/find\nClear Bible')).toEqual([]);
+        // Space BEFORE the slash is not a word after the name.
+        expect(matchBuiltinActions('  /bt')[0].name).toBe(
+            GENERAL_QUESTION_COMMAND,
+        );
+    });
+
+    test('does not offer back a name already typed in full', () => {
+        expect(matchBuiltinActions('/btw')).toEqual([]);
+        expect(matchBuiltinActions('/BTW')).toEqual([]);
+        // A longer name starting with it is still something to finish.
+        const names = matchBuiltinActions('/screen').map((one) => one.name);
+        expect(names).toEqual(['screen-show', 'screen-hide']);
+        // An alias in full keeps its row: that row is what says which
+        // command the alias is.
+        expect(matchBuiltinActions('/general')[0].name).toBe(
+            GENERAL_QUESTION_COMMAND,
+        );
     });
 
     test('a command that takes words is offered with a space to type into', () => {

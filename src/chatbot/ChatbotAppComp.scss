@@ -73,11 +73,112 @@
 // Always there. It was a band that tucked away while the conversation
 // scrolled for one day (2026-09-10); the user wanted every control of this
 // window where it always is, and it came out whole.
+//
+// What it does do, since 2026-10-09 (asked for with a picture of this head
+// circled: _make the area collapsible_), is fold to one line when the arrow
+// at its left is pressed -- and ONLY then. Folded, it still says what every
+// picker is set to and what the hour has cost; it never folds or opens by
+// itself, and it stays the way it was left.
 .chat-head {
   flex: 0 0 auto;
-  padding: 10px 12px 9px;
+  display: flex;
+  align-items: stretch;
   border-bottom: 1px solid var(--chat-line);
   background-color: var(--chat-panel-soft);
+}
+
+// The pickers and the bill under them. The padding the head used to carry
+// sits here, less its left side: that gutter is the fold's rail now. Two
+// pixels come off the right as well, so rail and padding together take the
+// 24px the head's two 12px sides took -- measured at the 412px this window
+// opens at, a rail that cost the row ten pixels pushed the model picker off
+// the first line and onto the limit's.
+.chat-head-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 10px 9px 0;
+}
+
+// The fold. Open, a slim rail down the head's left edge -- no wider than a
+// scrollbar, and the full height of the head, so it is a target nobody has
+// to aim at and it costs the picker row nothing. No transition on the fold
+// itself, for the reason the notice below has none: a re-layout of the whole
+// log is felt on the machines this window opens on.
+.chat-head-fold {
+  flex: 0 0 14px;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  color: var(--chat-muted);
+  font-size: 10px;
+  line-height: 1;
+
+  &:hover {
+    color: var(--chat-text);
+    background-color: var(--chat-line);
+  }
+
+  // Inside the head's own edge, or the ring is clipped by the window.
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+// Folded, the button IS the head: the arrow where it was, then what the
+// pickers are set to, and the whole line opens it again.
+.chat-head.is-collapsed .chat-head-fold {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  // Two pixels on the left: where the arrow stood in the rail, so it does
+  // not move under the pointer that just pressed it.
+  padding: 6px 12px 6px 2px;
+}
+
+.chat-head-folded {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  // The pickers' own voice, so the line reads as the same choices at rest.
+  font-family: var(--chat-font-data);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+// The one that gives ground: a long model name ellipsises here, as it does
+// in its picker.
+.chat-head-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The spend guard's corner, kept whole at the end of the line. The same two
+// colours as the figure beside the picker: amber past the warning line, and
+// bold while paused -- the Allow button is behind the fold then.
+.chat-head-spend {
+  flex: 0 0 auto;
+  white-space: nowrap;
+
+  &.is-near {
+    color: var(--chat-warn);
+  }
+
+  &.is-paused {
+    color: var(--chat-warn);
+    font-weight: 600;
+  }
 }
 
 .chat-head-row {

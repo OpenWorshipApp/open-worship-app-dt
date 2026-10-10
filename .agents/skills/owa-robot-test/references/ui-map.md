@@ -199,6 +199,14 @@ vertical left sidebar (`TabRenderComp` nav-links, not a top tab bar), plus a fix
 is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View** menu
 entry now, see below).
 
+**Every part of the `Others` tab FOLDS** (2026-10-10, `useSettingSectionFold`): the
+three cards, and inside AI Providers each provider's box, **Custom servers** and each
+server. The title is the button (`aria-expanded`, hover **Collapse** / **Expand**),
+and a folded part's contents are **not in the DOM** — a key box or **Add server** that
+`owa_find_ui` cannot see is behind a fold, so `owa_click` its title first (`ST-71..74`).
+The folds persist (`setting-section-collapsed-<name>`), so a run can start on a tab
+somebody left folded; put back what you fold.
+
 The **`Others`** tab now holds **three cards**, in order
 (`src/setting/SettingOthersComp.tsx`): *AI Providers* (`SettingOthersAIComp`),
 *SongSelect* (`SettingOthersSongSelectComp`, from `src/plugins/song-select/` — CCLI

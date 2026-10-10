@@ -453,6 +453,22 @@ export function describeSpendState(state: SpendStateType) {
         : `${spent} of ${toSpendLimitLabel(state.limitUsd)} this hour`;
 }
 
+/**
+ * The same corner once the head is FOLDED to one line and the picker is not
+ * drawn: the figure when there is one, and otherwise the cap itself, which
+ * the picker was saying. Never empty -- a protection nobody can see is a
+ * protection nobody trusts, folded or not.
+ */
+export function describeSpendFolded(state: SpendStateType) {
+    const figure = describeSpendState(state);
+    if (figure.length > 0) {
+        return figure;
+    }
+    return state.limitUsd === null
+        ? toSpendLimitLabel(null)
+        : `${toSpendLimitLabel(state.limitUsd)} an hour`;
+}
+
 /** The hover behind that figure, and the words under the picker. */
 export function describeSpendGuard(state: SpendStateType) {
     const cap =

@@ -11,20 +11,27 @@ import {
     CUSTOM_LLM_FETCH_CHANNEL,
     CUSTOM_LLM_KEYS_SETTING_KEY,
     CUSTOM_LLM_SERVERS_SETTING_KEY,
+    LLAMA_CPP_PROPS_PATH,
     LM_STUDIO_MODELS_PATH,
+    OLLAMA_PS_PATH,
+    OLLAMA_TAGS_PATH,
     checkIsLoopbackUrl,
     checkIsUsableCustomServer,
+    genCustomServerAddressCandidates,
     toCustomLlmCallUrl,
     toCustomServerBaseUrl,
+    toLlamaCppModelInfo,
     toLmStudioModelInfoMap,
+    toOllamaModelInfoMap,
     toCustomServersText,
     toValidCustomServerKeys,
     toValidCustomServers,
     type CustomLlmFetchRequestType,
     type CustomLlmFetchResultType,
+    type CustomModelInfoType,
     type CustomModelType,
+    type CustomServerKindType,
     type CustomServerType,
-    type LmStudioModelInfoType,
 } from '../../../electron/customLlmProtocol';
 
 /**
@@ -197,24 +204,50 @@ export function readServerErrorMessage(text: string): string {
 const NOT_CHAT_MODEL_PATTERN = /embed|rerank|whisper|tts/i;
 
 export type CustomServerModelsAnswerType =
-    { ok: true; models: string[] } | { ok: false; message: string };
+    | {
+          ok: true;
+          models: string[];
+          // Set when the list came from another address of the same server
+          // than the one saved (`genCustomServerAddressCandidates`): the one
+          // to save instead.
+          correctedBaseUrl?: string;
+      }
+    | { ok: false; message: string };
 
-/**
- * The chat models the server says it has -- the Test button's proof that the
- * address answers, and what "Load models from server" adds.
- */
-export async function listCustomServerModels(
+type ModelListReadType =
+    | { ok: true; models: string[] }
+    | {
+          ok: false;
+          message: string;
+          // The address answered, but not with the protocol -- a 404 page,
+          // or something that is not a model list -- so the protocol may
+          // live at another path of the same server.
+          isWrongPath: boolean;
+      };
+
+// What every popular server's address looks like, for the sentence that
+// says the typed one answered nothing.
+const ADDRESS_EXAMPLES_TEXT =
+    'Ollama: http://localhost:11434/v1, LM Studio: http://localhost:1234/v1';
+
+async function readCustomServerModelList(
     server: CustomServerType,
-): Promise<CustomServerModelsAnswerType> {
+    probeBaseUrl?: string,
+): Promise<ModelListReadType> {
     const result = await requestCustomLlm({
         serverId: server.id,
         method: 'GET',
         path: '/models',
+        ...(probeBaseUrl === undefined ? {} : { probeBaseUrl }),
     });
     if (!result.ok) {
         return {
             ok: false,
-            message: describeCustomLlmFailure(result, server.baseUrl),
+            message: describeCustomLlmFailure(
+                result,
+                probeBaseUrl ?? server.baseUrl,
+            ),
+            isWrongPath: false,
         };
     }
     if (result.status < 200 || result.status >= 300) {
@@ -226,22 +259,21 @@ export async function listCustomServerModels(
                     ? 'the server refused the API key'
                     : `the server answered ${result.status}` +
                       (reason.length > 0 ? `: ${reason}` : ''),
+            isWrongPath: result.status === 404,
         };
     }
     let data: any;
     try {
         data = JSON.parse(result.text);
     } catch (_error) {
-        return {
-            ok: false,
-            message: 'the server did not answer with a model list',
-        };
+        data = null;
     }
     const list = Array.isArray(data?.data) ? data.data : null;
     if (list === null) {
         return {
             ok: false,
             message: 'the server did not answer with a model list',
+            isWrongPath: true,
         };
     }
     const models: string[] = [];
@@ -258,27 +290,81 @@ export async function listCustomServerModels(
     return { ok: true, models };
 }
 
-export type LmStudioModelInfoMapType = Map<string, LmStudioModelInfoType>;
+/**
+ * The chat models the server says it has -- the Test button's proof that the
+ * address answers, and what "Load models from server" adds.
+ *
+ * When the saved address answers, but not with the protocol, the other
+ * addresses of the same server are tried (`genCustomServerAddressCandidates`)
+ * and the one that answers comes back as `correctedBaseUrl`, for the caller
+ * to save: an address typed one path off -- Ollama's root, LM Studio's
+ * without the `/v1`, Ollama's own `/v1/systemone` door -- is the commonest
+ * way a server that is running answers nothing.
+ */
+export async function listCustomServerModels(
+    server: CustomServerType,
+): Promise<CustomServerModelsAnswerType> {
+    const first = await readCustomServerModelList(server);
+    if (first.ok) {
+        return { ok: true, models: first.models };
+    }
+    if (!first.isWrongPath) {
+        return { ok: false, message: first.message };
+    }
+    for (const candidate of genCustomServerAddressCandidates(server.baseUrl)) {
+        const next = await readCustomServerModelList(server, candidate);
+        if (next.ok) {
+            return {
+                ok: true,
+                models: next.models,
+                correctedBaseUrl: candidate,
+            };
+        }
+    }
+    return {
+        ok: false,
+        message:
+            `${first.message} — nothing at this address speaks the OpenAI ` +
+            `API; the address usually ends in /v1 (${ADDRESS_EXAMPLES_TEXT})`,
+    };
+}
+
+export type CustomModelInfoMapType = Map<string, CustomModelInfoType>;
+
+export type CustomServerInfoType = {
+    kind: CustomServerKindType;
+    // By the model id the server lists it under. Empty for a server that
+    // says nothing about its models (`kind` other), and for one that runs a
+    // single model under whatever id it was given (llama.cpp), whose word is
+    // `commonInfo`.
+    infoMap: CustomModelInfoMapType;
+    // What the server says of every model it serves, when it says it of all
+    // of them at once rather than by id.
+    commonInfo: CustomModelInfoType | null;
+};
+
+/** What the server said about one model, by its id or of all of them. */
+export function findCustomModelInfo(
+    serverInfo: CustomServerInfoType | null,
+    modelId: string,
+): CustomModelInfoType | null {
+    if (serverInfo === null) {
+        return null;
+    }
+    return serverInfo.infoMap.get(modelId) ?? serverInfo.commonInfo;
+}
 
 /**
- * What LM Studio says about its models -- loaded or not, the context each is
- * loaded with, which ones see pictures -- or null when the server is not LM
- * Studio, did not answer, or took longer than `timeoutMilliseconds`. Never
- * held: what is loaded changes whenever somebody uses LM Studio.
- *
- * Bounded, because the chatbot asks it in front of a question: a machine
- * that is switched off takes ~20 s to fail a connection, and the question
- * itself will say so -- this must not make the person wait twice.
+ * One call at the root of the server, given up at `deadline` (and the
+ * relay told to drop it): the text of a 2xx answer, else null.
  */
-export async function readLmStudioModels(
+async function readRootCallText(
     server: CustomServerType,
-    timeoutMilliseconds = 60 * 1000,
-): Promise<LmStudioModelInfoMapType | null> {
-    const baseUrl = toCustomServerBaseUrl(server.baseUrl);
-    if (
-        baseUrl === null ||
-        toCustomLlmCallUrl(baseUrl, LM_STUDIO_MODELS_PATH) === null
-    ) {
+    path: string,
+    deadline: number,
+): Promise<string | null> {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
         return null;
     }
     const requestId = crypto.randomUUID();
@@ -287,16 +373,16 @@ export async function readLmStudioModels(
         timer = setTimeout(() => {
             cancelCustomLlmRequest(requestId);
             resolve(null);
-        }, timeoutMilliseconds);
+        }, remaining);
     });
     const reading = requestCustomLlm(
-        { serverId: server.id, method: 'GET', path: LM_STUDIO_MODELS_PATH },
+        { serverId: server.id, method: 'GET', path },
         requestId,
     ).then((result) => {
         if (!result.ok || result.status < 200 || result.status >= 300) {
             return null;
         }
-        return toLmStudioModelInfoMap(result.text);
+        return result.text;
     });
     try {
         return await Promise.race([reading, timeout]);
@@ -306,16 +392,80 @@ export async function readLmStudioModels(
 }
 
 /**
+ * What the server says about itself: which program it is, and for each
+ * model whether it is loaded, the context it is loaded with and whether it
+ * sees pictures -- LM Studio through its own list, Ollama through its two,
+ * llama.cpp's server through `/props`, any other server nothing beyond
+ * `kind` other. Null when the address is not shaped to be asked (only a
+ * `/v1` address has a root worth asking) or the server answered nothing in
+ * `timeoutMilliseconds` in all. Never held: what is loaded changes whenever
+ * somebody uses the server.
+ *
+ * Bounded, because the chatbot asks it in front of a question: a machine
+ * that is switched off takes ~20 s to fail a connection, and the question
+ * itself will say so -- this must not make the person wait twice.
+ */
+export async function readCustomServerModelInfo(
+    server: CustomServerType,
+    timeoutMilliseconds = 60 * 1000,
+): Promise<CustomServerInfoType | null> {
+    const baseUrl = toCustomServerBaseUrl(server.baseUrl);
+    if (
+        baseUrl === null ||
+        toCustomLlmCallUrl(baseUrl, LM_STUDIO_MODELS_PATH) === null
+    ) {
+        return null;
+    }
+    const deadline = Date.now() + timeoutMilliseconds;
+    const lmStudioText = await readRootCallText(
+        server,
+        LM_STUDIO_MODELS_PATH,
+        deadline,
+    );
+    if (lmStudioText !== null) {
+        const infoMap = toLmStudioModelInfoMap(lmStudioText);
+        if (infoMap !== null) {
+            return { kind: 'lm-studio', infoMap, commonInfo: null };
+        }
+    }
+    const tagsText = await readRootCallText(server, OLLAMA_TAGS_PATH, deadline);
+    if (tagsText !== null) {
+        const psText = await readRootCallText(server, OLLAMA_PS_PATH, deadline);
+        const infoMap = toOllamaModelInfoMap(tagsText, psText);
+        if (infoMap !== null) {
+            return { kind: 'ollama', infoMap, commonInfo: null };
+        }
+    }
+    const propsText = await readRootCallText(
+        server,
+        LLAMA_CPP_PROPS_PATH,
+        deadline,
+    );
+    if (propsText !== null) {
+        const commonInfo = toLlamaCppModelInfo(propsText);
+        if (commonInfo !== null) {
+            return { kind: 'llama-cpp', infoMap: new Map(), commonInfo };
+        }
+    }
+    // Every door asked and none answered in time: the server is away, which
+    // is not the same as a server that is simply something else.
+    if (Date.now() >= deadline) {
+        return null;
+    }
+    return { kind: 'other', infoMap: new Map(), commonInfo: null };
+}
+
+/**
  * The server's rows with every listed model present: new ones appended in the
  * server's order, rows already there kept with their ids and names, so a tab
- * asking one of them keeps asking it. When LM Studio said which models see
- * pictures, every row it named takes that answer -- the press asked the
- * server, and the server knows.
+ * asking one of them keeps asking it. When the server said which models see
+ * pictures (LM Studio's `vlm`, Ollama's `vision`), every row it named takes
+ * that answer -- the press asked the server, and the server knows.
  */
 export function mergeCustomServerModels(
     server: CustomServerType,
     models: string[],
-    infoMap: LmStudioModelInfoMapType | null = null,
+    infoMap: CustomModelInfoMapType | null = null,
 ): CustomServerType {
     const known = new Set(
         server.models.map((one) => {

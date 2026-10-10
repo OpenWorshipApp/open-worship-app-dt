@@ -62,10 +62,10 @@ import { checkWebUrl } from './webUrlPolicy.mjs';
 // volunteer could understand if it were ever shown to them.
 const DENIED_TOOL_MAP = {
     evaluate_script:
-        'Running code in the app window is switched off. This app\'s windows ' +
+        "Running code in the app window is switched off. This app's windows " +
         'run with full access to the computer -- files, settings, other ' +
         'programs -- so a script here is not "just a page script". Use the ' +
-        'app\'s own tools instead: owa_app_state for what the app is doing, ' +
+        "app's own tools instead: owa_app_state for what the app is doing, " +
         'owa_list_ui for the controls on screen, owa_find_ui to point one ' +
         'out, owa_click and owa_type to use one.',
     take_heapsnapshot:
@@ -134,6 +134,11 @@ export function readFirewallMode() {
     return process.env.OWA_MCP_FIREWALL === 'off' ? 'off' : 'strict';
 }
 
+/** Whether the point-don't-press interlock is in force. */
+export function checkIsInterlockOn() {
+    return readFirewallMode() === 'strict';
+}
+
 function recordDecision(entry) {
     state.logList.push({ at: Date.now(), ...entry });
     if (state.logList.length > LOG_LIMIT) {
@@ -170,6 +175,16 @@ const ACTING_TOOL_SET = new Set([
     'emulate',
     'owa_click',
     'owa_type',
+    // A keystroke and a drag, by label (2026-10-10). Judged in the page the
+    // way a press is -- the key by the control whose title names it, the
+    // drop by both ends -- and counted here like one.
+    'owa_press_key',
+    'owa_drag',
+    // The native menu bar. A `list` reads; counted all the same, the way a
+    // `check` is -- the budget counts the tool, not the argument.
+    'owa_menu',
+    // Moves the list under the user's eyes.
+    'owa_scroll',
     'owa_goto_page',
     'owa_hide_screens',
     'owa_guide_start',
@@ -199,6 +214,12 @@ const ACTING_TOOL_SET = new Set([
     // Installs, changes and removes whole Bibles. Every change is backed up
     // first; the budget is for the loop that installs one after another.
     'owa_bible_xml',
+    // The run sheets. A presenting flow has no editing history -- every
+    // write is the file -- so each change is backed up first, and counted.
+    'owa_presenting_flow',
+    // The Background tabs' files: a clip trashed is copied beside its
+    // backup first; an import writes into the user's folders.
+    'owa_media_file',
 ]);
 
 // The tools whose `action` can take something away (see
@@ -211,6 +232,8 @@ const REMOVING_TOOL_SET = new Set([
     'owa_bible_note',
     'owa_undo',
     'owa_bible_xml',
+    'owa_presenting_flow',
+    'owa_media_file',
 ]);
 
 /** Does THIS call take something of the user's away? */
@@ -290,9 +313,7 @@ export function checkIsAppUrl(url) {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
         return false;
     }
-    return ['localhost', '127.0.0.1', '[::1]', '::1'].includes(
-        parsed.hostname,
-    );
+    return ['localhost', '127.0.0.1', '[::1]', '::1'].includes(parsed.hostname);
 }
 
 /**
@@ -326,7 +347,10 @@ const DESTRUCTIVE_RULE_TTL_MILLISECONDS = 60 * 1000;
  */
 export function getDestructiveLabelRule(now = Date.now()) {
     const cached = state.destructiveRule;
-    if (cached === null || now - cached.at > DESTRUCTIVE_RULE_TTL_MILLISECONDS) {
+    if (
+        cached === null ||
+        now - cached.at > DESTRUCTIVE_RULE_TTL_MILLISECONDS
+    ) {
         state.destructiveRule = {
             at: now,
             rule: genDestructiveLabelRule(loadTranBundle()),
@@ -351,6 +375,17 @@ export function findDestructiveLabel(find) {
     }
     return null;
 }
+
+// A key the app binds to a control that cannot be undone, whether or not that
+// control is on screen. The page half judges a key by the control whose title
+// names it (`Clear All [F6]`), and that is right when the Mini Screen panel is
+// up -- and nothing at all when it is collapsed: measured 2026-10-10, F6 went
+// through with the panel closed and would have cleared every layer of every
+// screen. `clearAllEventMapper` in `src/keyboard-shortcut/appShortcutMappers.ts`
+// is the one global key whose control the dictionary rule refuses; F7–F10
+// clear one layer each and are as pressable as their buttons.
+// A Map, not an object: a key named `constructor` must find nothing.
+const DESTRUCTIVE_KEY_MAP = new Map([['f6', 'Clear All [F6]']]);
 
 // --- The uid interlock -------------------------------------------------
 //
@@ -524,6 +559,57 @@ export function findDestructiveUid(name, args, lookupUidLabel) {
     return null;
 }
 
+/**
+ * The words half of the interlock, for every label-aimed tool: the label
+ * that stops this call and the rule it fell to, or null.
+ */
+function findInterlockLabel(name, args, lookupUidLabel) {
+    if (
+        name === 'owa_click' ||
+        name === 'owa_type' ||
+        name === 'owa_press_key'
+    ) {
+        const label = findDestructiveLabel(args?.find);
+        if (label !== null) {
+            return { rule: 'destructive-label', label };
+        }
+    }
+    if (name === 'owa_press_key') {
+        const label =
+            findDestructiveLabel(args?.keys) ??
+            DESTRUCTIVE_KEY_MAP.get(
+                String(args?.keys ?? '')
+                    .trim()
+                    .toLowerCase(),
+            ) ??
+            null;
+        if (label !== null) {
+            return { rule: 'destructive-label', label };
+        }
+    }
+    if (name === 'owa_menu' && args?.action === 'click') {
+        const label = findDestructiveLabel(args?.item);
+        if (label !== null) {
+            return { rule: 'destructive-label', label };
+        }
+    }
+    if (name === 'owa_drag') {
+        const label =
+            findDestructiveLabel(args?.from) ?? findDestructiveLabel(args?.to);
+        if (label !== null) {
+            return { rule: 'destructive-label', label };
+        }
+    }
+    // chrome-devtools' own acting tools are aimed by a uid, which means
+    // nothing on its own -- so the label comes from the snapshot that minted
+    // it, remembered on the way out by `guardToolCalls`.
+    const uidLabel = findDestructiveUid(name, args, lookupUidLabel);
+    if (uidLabel !== null) {
+        return { rule: 'destructive-uid', label: uidLabel };
+    }
+    return null;
+}
+
 function checkHasRoom(kind, now) {
     const { windowMilliseconds, limit } = RATE_BUDGET_MAP[kind];
     const since = now - windowMilliseconds;
@@ -587,9 +673,7 @@ const QUESTION_REASON =
  * the page half can never be stricter or looser than the rest of the policy.
  */
 export function genPressGuard() {
-    return readFirewallMode() === 'off'
-        ? null
-        : { rule: getDestructiveLabelRule() };
+    return checkIsInterlockOn() ? { rule: getDestructiveLabelRule() } : null;
 }
 
 /**
@@ -680,20 +764,11 @@ export function checkToolCall(
             return refuse('foreign-url', verdict.reason);
         }
     }
-    // The interlock, in its two halves. `owa_click`/`owa_type` are aimed BY
-    // label, so the words are right there in the arguments.
-    if (name === 'owa_click' || name === 'owa_type') {
-        const label = findDestructiveLabel(args?.find);
-        if (label !== null) {
-            return refuse('destructive-label', genDestructiveReason(label));
-        }
-    }
-    // chrome-devtools' own acting tools are aimed by a uid, which means
-    // nothing on its own -- so the label comes from the snapshot that minted
-    // it, remembered on the way out by `guardToolCalls`.
-    const uidLabel = findDestructiveUid(name, args, lookupUidLabel);
-    if (uidLabel !== null) {
-        return refuse('destructive-uid', genDestructiveReason(uidLabel));
+    // The interlock, in its two halves: the words a call carries, read here;
+    // the control itself, read in the page (`genPressGuard`).
+    const interlock = findInterlockLabel(name, args, lookupUidLabel);
+    if (interlock !== null) {
+        return refuse(interlock.rule, genDestructiveReason(interlock.label));
     }
     // Both budgets are looked at before either is spent, so a call refused
     // by one does not use up a slot of the other.
@@ -908,9 +983,14 @@ export function guardToolCalls(
     transport.onmessage = (message, extra) => {
         try {
             const { method, id } = message ?? {};
-            if (id !== undefined && (method === 'tools/list' || method === 'tools/call')) {
+            if (
+                id !== undefined &&
+                (method === 'tools/list' || method === 'tools/call')
+            ) {
                 if (pendingMethodMap.size >= PENDING_LIMIT) {
-                    pendingMethodMap.delete(pendingMethodMap.keys().next().value);
+                    pendingMethodMap.delete(
+                        pendingMethodMap.keys().next().value,
+                    );
                 }
                 pendingMethodMap.set(id, method);
             }
@@ -999,7 +1079,9 @@ export function guardToolCalls(
                     }
                 }
             } catch (error) {
-                log(`firewall scrub failed: ${String(error?.message ?? error)}`);
+                log(
+                    `firewall scrub failed: ${String(error?.message ?? error)}`,
+                );
             }
             return innerSend(message, options);
         };

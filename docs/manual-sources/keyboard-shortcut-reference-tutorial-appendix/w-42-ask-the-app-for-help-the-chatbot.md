@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, ST-67, ST-68, ST-69, ST-70]
-screenshots: 42
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74]
+screenshots: 44
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-09"
+workflowsVersion: "2026-10-10"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -65,6 +65,14 @@ it is describing.
    left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
    its models; with no API key at all the third one reads **app guide · offline** under
    **ANSWERS FROM**, and clicking it opens the settings panel that takes a key. 📸
+   **Short of room? Fold those lists to one line.** A small arrow sits at the left
+   edge of the lists. Click it and the lists — with the **LIMIT PER HOUR** list and
+   the **CREDIT USED** line of step 8 — fold into a single line that still says
+   what each one is set to, such as _Presenter · Claude · Sonnet 5_, with the hourly
+   limit at its end (it turns amber when the assistant is close to that limit or
+   paused). Click that line to bring the lists back, exactly as they were. It only
+   ever folds when you press the arrow — never while you scroll or read — and it
+   stays the way you left it in every chat tab. 📸
    When **ASKING ABOUT** is **Bible Reader**, answers lead with the easiest mouse or
    touch route, use no more than three steps at first, say where the control is, and
    explain actions such as double-clicking or dragging. A lost item starts with a
@@ -122,6 +130,19 @@ it is describing.
    the screen number, and ask it again without writing the whole sentence out twice.
    (The plain arrow keys still move the cursor and still walk the list of
    suggestions, which is why this one wants **Alt** as well.) 📸
+   **The list above the box is worked from the keyboard.** As you type, the
+   questions it can already answer — or, after a `/`, the commands — open in a list
+   above the box. **↑** and **↓** walk it, and the list scrolls with you, so the row
+   you are on is always in view (**↑** from the box starts at the bottom row, the
+   one nearest the box). **Tab** takes a row: the one you walked to, or the first one
+   when you have not walked at all. Type `/bt`, press **Tab**, and the box reads
+   `/btw ` with the cursor after it, ready for your question. **Tab only fills the
+   box — it never sends.** Finishing `/screen-hide` with **Tab** turns nothing off
+   until you press **Ctrl+Enter**. (**Enter** on a row you walked to, and a click,
+   still run a command that needs no words after it.) The list closes by itself once
+   it has nothing left to offer — a command typed in full, or the first word typed
+   after one — and **Esc** closes it sooner. With no list open, **Tab** moves on to
+   the **Ask** button as it always did. 📸
    **You can just carry on talking.** Each tab is one conversation, so the answer to
    "is any screen showing?" can be replied to with **yes**, or with "how do I turn it
    off?", and it knows what you mean — you do not have to say the whole thing again.
@@ -170,8 +191,9 @@ it is describing.
    **Some things need no assistant at all — type `/`.** A line that starts with
    `/` is a **command**: it runs on the spot, on this machine, with no assistant,
    no key and no internet, and the answer says what CHANGED. Type `/` on its own
-   and the list of them appears above the box — walk it with the arrows or click
-   one. **/screen** says whether anything is on the projector AND what is on it
+   and the list of them appears above the box — every one of them, the list
+   scrolls — walk it with the arrows, finish one with **Tab**, or click one.
+   **/screen** says whether anything is on the projector AND what is on it
    — the song and the verse, the passage, the background — even while the screen
    is off, so _the screen is off but already holds Verse 2, turning it on shows
    that_ is the answer rather than a bare _nothing is showing_; **/screen-show**
@@ -227,6 +249,12 @@ it is describing.
    words does the same without an assistant — _Create a lyric file from
    https://…_ and _Create a lyric file for song "Amazing Grace"_ are answered
    by the built-in guide with the same buttons when no assistant can answer;
+   **/btw what is the Bible?** is the one command that DOES ask the assistant
+   — "by the way", a general question that is not about this app: it is
+   answered from the assistant's own knowledge in one go, with nothing of the
+   app looked up and no walkthrough offered (the quotes in `/btw "what is
+   holy bible"` are fine), and with no assistant to ask it says so and offers
+   **Open AI settings**, because the built-in guide only knows this app;
    **/commands**
    lists them all. The square buttons under a command's answer are
    commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
@@ -361,6 +389,17 @@ it is describing.
     worth getting before you go and fetch one. Once the OpenAI key is saved, its card
     also shows **[en:tran:Auto Play Audio AI when available]**; turn that switch on when
     supported Reader passages should begin their generated audio automatically.
+    **Every part of that page folds.** Click a section's title —
+    **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**,
+    **[en:tran:Extra Binaries]** — and it folds to one row, which still says whether it
+    is set up (**[en:tran:Key set]**, **[en:tran:Installed]**) and keeps its buttons;
+    click the title again to open it. Inside **AI Providers**, each provider's card,
+    **[en:tran:Custom servers]** and each server in it fold the same way: a folded
+    card shows a green ✓ beside its name when its key is saved, a folded server when
+    the chatbot is offering it. The app remembers what you folded. So when a key box
+    or **[en:tran:Add server]** is not where this page says, the part holding it is
+    folded — click its title. Choosing an assistant that needs a key (the next step)
+    opens whatever is folded in front of its key box by itself.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
     can change your mind between two questions. The ones whose key you have set can be
     chosen; the others are still in the list, in a quieter colour and reading
@@ -379,23 +418,50 @@ it is describing.
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
-    **Your own AI server answers too** — LM Studio or Ollama on this computer or on
-    another computer in the church, or any service that speaks the OpenAI API. In
-    **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**, press
+    **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
+    or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
+    computer or on another computer in the church, or any service that speaks the
+    OpenAI API. In **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]** —
+    where, for anyone who has no server yet,
+    **[en:tran:Watch how to set up a free AI assistant on your own computer]** is
+    followed by **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]**, each
+    opening a page of YouTube videos in your browser — press
     **[en:tran:Add server]**, give it a **[en:tran:Server name]** and its
-    **[en:tran:Base URL]** — for LM Studio `http://localhost:1234/v1`, or the other
-    computer's name in place of `localhost` — then press **[en:tran:Test]** and
-    **[en:tran:Load models from server]**. The server then shows in the **who answers**
-    list under its own name, with its models in the third list, and a question to it
-    costs nothing when it is on this computer or on the church's own network. On LM
-    Studio, **[en:tran:Test]** also writes under each model whether LM Studio has it
-    loaded right now. Load the model in LM Studio with a **Context Length** of 32k:
-    the assistant's instructions alone fill most of 16k, and a follow-up question
-    runs out of room there. Each model has a **[en:tran:Sees pictures]** box — tick
-    it for a model that can look at a picture. If the server's computer is switched
-    off or goes to sleep in the middle of a question, the answer stops within a
-    minute or two and says to check that the computer is on and awake, instead of
-    waiting on for ten. 📸
+    **[en:tran:Base URL]** — the address usually ends in `/v1`: LM Studio
+    `http://localhost:1234/v1`, Ollama `http://localhost:11434/v1`, llama.cpp,
+    llamafile and LocalAI `http://localhost:8080/v1`, Jan `http://localhost:1337/v1`,
+    GPT4All `http://localhost:4891/v1`, vLLM `http://localhost:8000/v1`, SGLang
+    `http://localhost:30000/v1`, LiteLLM `http://localhost:4000/v1`, or the other
+    computer's name in place of `localhost`; a server that asks for a key (LiteLLM,
+    vLLM started with one, Jan) takes it in **[en:tran:API key (optional)]** — then
+    press **[en:tran:Test]** and **[en:tran:Load models from server]**. An address
+    typed one path off is put right by **[en:tran:Test]**: Ollama's bare
+    `http://localhost:11434`, an address without its `/v1`, or a door of the
+    server's own such as Ollama's `/v1/systemone` is tried at the same computer and
+    port's `/v1` and root, the one that answers is saved and the line reads
+    _Address corrected to http://localhost:11434/v1_; when nothing there speaks the
+    OpenAI API the line says so and names the usual addresses. The server then
+    shows in the **who answers** list under its own name, with its models in the
+    third list, and a question to it costs nothing when it is on this computer or
+    on the church's own network. On LM Studio, Ollama and llama.cpp,
+    **[en:tran:Test]** also writes under each model what that program says of it
+    in its own words: **Not loaded in LM Studio right now** / **Not loaded in
+    Ollama right now**, or **Loaded in Ollama. Context length: 4k** with the fix
+    beside it — load the model again in LM Studio with a **Context Length** of
+    32k, set **Settings → Context length** in the Ollama app (or start Ollama with
+    `OLLAMA_CONTEXT_LENGTH=32768`), start `llama-server` again with `-c 32768` —
+    because the assistant's instructions alone fill most of 16k, and a follow-up
+    question runs out of room there. Each model has a **[en:tran:Sees pictures]** box
+    — tick it for a model that can look at a picture;
+    **[en:tran:Load models from server]** ticks it for you from LM Studio's and
+    Ollama's own word (a `vision` model). A model the server does not have, an
+    address that answers nothing, and
+    a model that cannot use tools (Ollama says so; llama.cpp wants `--jinja`, vLLM
+    and SGLang `--enable-auto-tool-choice --tool-call-parser`) are each said in the
+    chat as that, never as _not available to the account_. If the server's computer
+    is switched off or goes to sleep in the middle of a question, the answer stops
+    within a minute or two and says to check that the computer is on and awake,
+    instead of waiting on for ten. 📸
     **A key that cannot answer does not leave you with the guide while another of
     yours can.** When the assistant you chose is out of credit, refused, or its
     service is down, the question goes to the next assistant whose key you have set —
@@ -577,7 +643,7 @@ it is describing.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `ST-67` · `ST-68` · `ST-69` · `ST-70`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
 :::

@@ -37,18 +37,56 @@ export const AGENT_NOTE_ACTIONS = [
 export const AGENT_UNDO_ACTIONS = ['list', 'undo'];
 
 /**
+ * `owa_presenting_flow` (2026-10-10): the run sheets, and the lines in them.
+ * `park` / `unpark` are the panel's own Disable / Enable -- a line kept listed
+ * and out of the run -- said the way a stage manager says it.
+ */
+export const AGENT_PRESENTING_FLOW_ACTIONS = [
+    'list',
+    'info',
+    'create',
+    'rename',
+    'delete',
+    'add',
+    'remove',
+    'move',
+    'duplicate',
+    'park',
+    'unpark',
+];
+
+/**
+ * `owa_media_file` (2026-10-10, MC-52 / MC-53 / MC-55): the Background
+ * tabs' files. `create` and `update` are for a web page (text); `import`
+ * copies a file from the disk into the kind's folder.
+ */
+export const AGENT_MEDIA_FILE_ACTIONS = [
+    'list',
+    'info',
+    'create',
+    'update',
+    'rename',
+    'delete',
+    'import',
+];
+
+export const AGENT_MEDIA_KINDS = ['image', 'video', 'audio', 'web', 'document'];
+
+/**
  * Every action that can take something of the user's away -- a file to the
- * trash, a slide, a saved passage, a note -- plus `undo`, which puts a created
- * file in the trash as readily as it brings a deleted one back. The firewall
- * rations these on a budget of their own: each one is recoverable, but a loop
- * emptying somebody's Documents folder into the trash is still a Sunday
- * morning lost, and no honest question removes more than a handful of things.
+ * trash, a slide, a saved passage, a note, a line of a run sheet -- plus
+ * `undo`, which puts a created file in the trash as readily as it brings a
+ * deleted one back. The firewall rations these on a budget of their own: each
+ * one is recoverable, but a loop emptying somebody's Documents folder into the
+ * trash is still a Sunday morning lost, and no honest question removes more
+ * than a handful of things.
  */
 export const AGENT_REMOVING_ACTIONS = [
     'delete',
     'delete-list',
     'delete-file',
     'delete-slide',
+    'remove',
     'undo',
 ];
 

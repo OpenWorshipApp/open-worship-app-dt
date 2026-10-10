@@ -2,10 +2,10 @@
 id: W-35
 title: "Bring a song in from CCLI SongSelect"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-57, PL-103, PL-104]
+verify: [ST-57, ST-71, PL-103, PL-104]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-09"
+workflowsVersion: "2026-10-10"
 ---
 # W-35 — Bring a song in from CCLI SongSelect
 
@@ -21,7 +21,8 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 
 1. Open **[en:tran:Others]**. Between the AI-key card and **Extra Binaries**
    there is a card headed **[en:tran:SongSelect Integration]**, with a
-   **SongSelect ↗** button that opens songselect.ccli.com in your browser. 📸
+   **SongSelect ↗** button that opens songselect.ccli.com in your browser. A card
+   showing only its heading is folded — click the heading to open it. 📸
 2. Fill **Client ID**, **Subscription Key** and **Redirect URI** (and **Client Secret**
    if you have one). Each field saves the moment you click away from it and gains a
    green ✓. Until all three are filled, **[en:tran:Sign In]** stays grey — hovering it
@@ -57,7 +58,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-57` · `PL-103` · `PL-104`
+`ST-57` · `ST-71` · `PL-103` · `PL-104`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
 :::

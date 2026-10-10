@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [ST-61, ST-62, ST-63, ST-64, ST-65, ST-66]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-09"
+workflowsVersion: "2026-10-10"
 ---
 # W-52 — Move your settings to another computer (Export / Import Settings)
 
@@ -74,5 +74,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-61` · `ST-62` · `ST-63` · `ST-64` · `ST-65` · `ST-66`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
 :::

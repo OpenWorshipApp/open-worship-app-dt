@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-08",
+    "updated": "2026-10-09",
     "sections": [
         {
             "id": "orientation",
@@ -136,6 +136,26 @@
                     "resources": {
                         "recipe": "W-01",
                         "related": ["W-31"]
+                    }
+                },
+                {
+                    "id": "stay-awake",
+                    "text": "How do I stop the computer going to sleep during the service?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stay awake",
+                        "keep awake",
+                        "sleep",
+                        "screen turns off",
+                        "display off",
+                        "screensaver",
+                        "goes dark",
+                        "cup"
+                    ],
+                    "resources": {
+                        "recipe": "W-01",
+                        "related": ["W-50"],
+                        "find": "Stay Awake"
                     }
                 },
                 {

@@ -11,8 +11,9 @@ const h = vi.hoisted(() => ({
     keys: {} as Record<string, string>,
     listeners: new Set<() => void>(),
     listModels: vi.fn(),
-    readLmStudio: vi.fn(async () => null as Map<string, any> | null),
+    readServerInfo: vi.fn(async () => null as any),
     nextId: 0,
+    collapsedMap: new Map<string, boolean>(),
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -79,7 +80,12 @@ vi.mock('../helper/ai/customServerHelpers', async () => {
             name,
         }),
         listCustomServerModels: h.listModels,
-        readLmStudioModels: h.readLmStudio,
+        readCustomServerModelInfo: h.readServerInfo,
+        findCustomModelInfo: (info: any, modelId: string) => {
+            return info === null
+                ? null
+                : (info.infoMap.get(modelId) ?? info.commonInfo ?? null);
+        },
         mergeCustomServerModels: (server: any, models: string[]) => {
             const known = new Set(server.models.map((one: any) => one.model));
             return {
@@ -95,10 +101,35 @@ vi.mock('../helper/ai/customServerHelpers', async () => {
     };
 });
 
+// A real store behind the fold's names too: what is folded is read back.
+vi.mock('./settingSectionFoldHelpers', () => ({
+    toCustomServerFoldName: (serverId: string) => {
+        return `ai-custom-server-${serverId}`;
+    },
+    getIsSettingSectionCollapsed: (foldName: string) => {
+        return h.collapsedMap.get(foldName) ?? false;
+    },
+    saveIsSettingSectionCollapsed: (foldName: string, isCollapsed: boolean) => {
+        h.collapsedMap.set(foldName, isCollapsed);
+    },
+    forgetIsSettingSectionCollapsed: (foldName: string) => {
+        h.collapsedMap.delete(foldName);
+    },
+}));
+
 import SettingOthersCustomServersComp from './SettingOthersCustomServersComp';
 
 let container: HTMLDivElement;
 let root: Root | null = null;
+
+// A title that folds what it heads, by the words on it.
+function findFoldButton(text: string) {
+    return Array.from(
+        container.querySelectorAll<HTMLButtonElement>('button[aria-expanded]'),
+    ).find((one) => {
+        return one.textContent === text;
+    }) as HTMLButtonElement;
+}
 
 function findButton(text: string) {
     return Array.from(container.querySelectorAll('button')).find((one) => {
@@ -137,9 +168,10 @@ describe('SettingOthersCustomServersComp', () => {
         h.keys = {};
         h.listeners.clear();
         h.listModels.mockReset();
-        h.readLmStudio.mockReset();
-        h.readLmStudio.mockResolvedValue(null);
+        h.readServerInfo.mockReset();
+        h.readServerInfo.mockResolvedValue(null);
         h.nextId = 0;
+        h.collapsedMap.clear();
         container = document.createElement('div');
         document.body.appendChild(container);
     });
@@ -301,8 +333,9 @@ describe('SettingOthersCustomServersComp', () => {
             },
         ];
         h.listModels.mockResolvedValue({ ok: true, models: [] });
-        h.readLmStudio.mockResolvedValue(
-            new Map([
+        h.readServerInfo.mockResolvedValue({
+            kind: 'lm-studio',
+            infoMap: new Map([
                 [
                     'qwen/qwen3.5-9b',
                     {
@@ -331,7 +364,7 @@ describe('SettingOthersCustomServersComp', () => {
                     },
                 ],
             ]),
-        );
+        });
         await render();
         expect(container.textContent).not.toContain('Loaded in LM Studio');
         await act(async () => findButton('Test').click());
@@ -360,8 +393,9 @@ describe('SettingOthersCustomServersComp', () => {
             },
         ];
         h.listModels.mockResolvedValue({ ok: true, models: ['phi'] });
-        h.readLmStudio.mockResolvedValue(
-            new Map([
+        h.readServerInfo.mockResolvedValue({
+            kind: 'lm-studio',
+            infoMap: new Map([
                 [
                     'phi',
                     {
@@ -372,12 +406,123 @@ describe('SettingOthersCustomServersComp', () => {
                     },
                 ],
             ]),
-        );
+        });
         await render();
         await act(async () => findButton('Test').click());
         expect(container.textContent).toContain(
             'Context length: 4k. That is too small for the assistant.',
         );
+    });
+
+    test('Test speaks in Ollama’s words for an Ollama server', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'Ollama',
+                baseUrl: 'http://localhost:11434/v1',
+                models: [
+                    { id: 'row-1', model: 'qwen3.5:4b', name: '' },
+                    { id: 'row-2', model: 'llama3.2:3b', name: '' },
+                ],
+            },
+        ];
+        h.listModels.mockResolvedValue({ ok: true, models: [] });
+        h.readServerInfo.mockResolvedValue({
+            kind: 'ollama',
+            infoMap: new Map([
+                [
+                    'qwen3.5:4b',
+                    {
+                        isLoaded: true,
+                        loadedContext: 4096,
+                        maxContext: 262144,
+                        canSeeImages: true,
+                    },
+                ],
+                [
+                    'llama3.2:3b',
+                    {
+                        isLoaded: false,
+                        loadedContext: null,
+                        maxContext: 131072,
+                        canSeeImages: false,
+                    },
+                ],
+            ]),
+        });
+        await render();
+        await act(async () => findButton('Test').click());
+        const notes = Array.from(
+            container.querySelectorAll('.app-setting-others-model-note'),
+        ).map((one) => {
+            return one.textContent;
+        });
+        expect(notes).toEqual([
+            'Loaded in Ollama. Context length: 4k. That is too small for ' +
+                'the assistant. In the Ollama app, set Settings → Context ' +
+                'length to 32k.',
+            'Not loaded in Ollama right now. The first question waits for ' +
+                'it to load.',
+        ]);
+    });
+
+    test('Test speaks in llama.cpp’s words, for every row of that server', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'llama.cpp',
+                baseUrl: 'http://localhost:8080/v1',
+                models: [{ id: 'row-1', model: 'qwen3.5-4b.gguf', name: '' }],
+            },
+        ];
+        h.listModels.mockResolvedValue({ ok: true, models: [] });
+        h.readServerInfo.mockResolvedValue({
+            kind: 'llama-cpp',
+            infoMap: new Map(),
+            commonInfo: {
+                isLoaded: true,
+                loadedContext: 4096,
+                maxContext: null,
+                canSeeImages: false,
+            },
+        });
+        await render();
+        await act(async () => findButton('Test').click());
+        expect(
+            container.querySelector('.app-setting-others-model-note')
+                ?.textContent,
+        ).toBe(
+            'Loaded in llama.cpp. Context length: 4k. That is too small for ' +
+                'the assistant. Start llama-server again with a context size ' +
+                '(-c) of 32k.',
+        );
+    });
+
+    test('Test saves the address the server really answered at, and says so', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'Ollama',
+                baseUrl: 'http://localhost:11434/v1/systemone',
+                models: [{ id: 'row-1', model: 'qwen3.5:4b', name: '' }],
+            },
+        ];
+        h.listModels.mockResolvedValue({
+            ok: true,
+            models: ['qwen3.5:4b'],
+            correctedBaseUrl: 'http://localhost:11434/v1',
+        });
+        await render();
+        await act(async () => findButton('Test').click());
+        expect(h.servers[0].baseUrl).toBe('http://localhost:11434/v1');
+        expect(container.textContent).toContain(
+            'Address corrected to http://localhost:11434/v1. The server ' +
+                'answered. Chat models it has: 1',
+        );
+        // The model state was then read at the corrected address.
+        expect((h.readServerInfo.mock.calls[0] as any[])[0]).toMatchObject({
+            baseUrl: 'http://localhost:11434/v1',
+        });
     });
 
     test('"Sees pictures" is stored on the row, and only while ticked', async () => {
@@ -410,5 +555,111 @@ describe('SettingOthersCustomServersComp', () => {
             model: 'qwen',
             name: '',
         });
+    });
+
+    test('a server folds to its name and model count, and keeps what a Test said', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'LM Studio',
+                baseUrl: 'http://localhost:1234/v1',
+                models: [{ id: 'row-1', model: 'phi', name: 'Phi' }],
+            },
+        ];
+        h.listModels.mockResolvedValue({ ok: true, models: ['phi', 'llama'] });
+        await render();
+        await act(async () => findButton('Test').click());
+        // Open, the line under Test says it is offered; the title does not.
+        expect(
+            container.querySelector('[title="Offered in the chatbot"]'),
+        ).toBeNull();
+
+        await act(async () => {
+            findFoldButton('LM Studio · Models: 1').click();
+        });
+
+        expect(findInputByLabel('Server name')).toBeNull();
+        expect(findButton('Test')).toBeUndefined();
+        expect(
+            container.querySelector('.app-setting-others-model-row'),
+        ).toBeNull();
+        expect(container.textContent).not.toContain('The server answered');
+        // What is left says which server it is, that it is offered, and can
+        // still take it out.
+        expect(container.textContent).toContain('LM Studio · Models: 1');
+        expect(
+            container.querySelector('[title="Offered in the chatbot"]'),
+        ).not.toBeNull();
+        expect(findButton('Delete this server')).toBeDefined();
+        expect(h.collapsedMap.get('ai-custom-server-server-1')).toBe(true);
+
+        await act(async () => {
+            findFoldButton('LM Studio · Models: 1').click();
+        });
+
+        expect(findInputByLabel('Server name')).not.toBeNull();
+        expect(container.textContent).toContain(
+            'The server answered. Chat models it has: 2',
+        );
+    });
+
+    test('a folded server that cannot be offered yet does not say it is', async () => {
+        h.servers = [
+            { id: 'server-1', name: 'LM Studio', baseUrl: '', models: [] },
+        ];
+        h.collapsedMap.set('ai-custom-server-server-1', true);
+
+        await render();
+
+        expect(findInputByLabel('Server name')).toBeNull();
+        expect(
+            container.querySelector('[title="Offered in the chatbot"]'),
+        ).toBeNull();
+    });
+
+    test('the list of servers folds as one, Add server with it', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'LM Studio',
+                baseUrl: 'http://localhost:1234/v1',
+                models: [{ id: 'row-1', model: 'phi', name: 'Phi' }],
+            },
+        ];
+        await render();
+
+        await act(async () => findFoldButton('Custom servers').click());
+
+        expect(findButton('Add server')).toBeUndefined();
+        expect(container.textContent).not.toContain('LM Studio');
+        expect(h.collapsedMap.get('ai-custom-servers')).toBe(true);
+        // One usable server is in there.
+        expect(
+            container.querySelector('[title="Offered in the chatbot"]'),
+        ).not.toBeNull();
+
+        await act(async () => findFoldButton('Custom servers').click());
+
+        expect(findButton('Add server')).toBeDefined();
+        expect(container.textContent).toContain('LM Studio · Models: 1');
+    });
+
+    test('a deleted server takes its fold with it', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'LM Studio',
+                baseUrl: 'http://localhost:1234/v1',
+                models: [],
+            },
+        ];
+        h.collapsedMap.set('ai-custom-server-server-1', true);
+        await render();
+
+        // Still on the folded row.
+        await act(async () => findButton('Delete this server').click());
+
+        expect(h.servers).toEqual([]);
+        expect(h.collapsedMap.has('ai-custom-server-server-1')).toBe(false);
     });
 });

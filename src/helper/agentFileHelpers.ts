@@ -94,6 +94,7 @@ export type AgentFileActionType =
     | 'update'
     | 'rename'
     | 'delete'
+    | 'revert'
     | 'find'
     | AgentSlideActionType;
 
@@ -478,7 +479,11 @@ async function handleFind(
  * so a document saved a moment ago still has one. `lastEditDate` is set aside
  * for the same reason the status hook sets it aside: Save stamps it.
  */
-async function readHasUnsavedChanges(
+/**
+ * Whether the editing head differs from the file, and the file's own content
+ * -- read once here so a revert can write it back without parsing it again.
+ */
+async function readUnsavedState(
     kindName: AgentFileKindNameType,
     filePath: string,
 ) {
@@ -497,7 +502,11 @@ async function readHasUnsavedChanges(
     };
     const current = await document.getJsonData();
     const original = await document.getJsonData(true);
-    return toComparable(current) !== toComparable(original);
+    return {
+        document,
+        original,
+        hasUnsavedChanges: toComparable(current) !== toComparable(original),
+    };
 }
 
 async function handleInfo(
@@ -513,7 +522,8 @@ async function handleInfo(
     return {
         name,
         filePath,
-        hasUnsavedChanges: await readHasUnsavedChanges(kindName, filePath),
+        hasUnsavedChanges: (await readUnsavedState(kindName, filePath))
+            .hasUnsavedChanges,
         ...(await kind.describe(filePath)),
     };
 }
@@ -630,6 +640,70 @@ async function handleUpdate(
         };
     } catch (error) {
         return toChangeFailure(error, `Changing the ${kind.label} “${name}”`);
+    }
+}
+
+/**
+ * The editor's own Discard, made undoable: the saved file's content goes back
+ * into the editing history as a new entry, so the `*` clears and the unsaved
+ * edits are gone from the document -- and, unlike the button (which wipes the
+ * history for good and is refused for that), the backup taken first lets
+ * `owa_undo` bring them back. The one destructive outcome a user reached only
+ * through a confirm that had no revertible route (2026-10-10, MC-50).
+ */
+async function handleRevert(
+    dirPath: string,
+    name: string,
+    kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
+) {
+    const filePath = toFilePath(dirPath, name, kind);
+    if (filePath === null || !(await fsCheckFileExist(filePath))) {
+        return fail(genNoSuchFileReason(kind, name));
+    }
+    const {
+        document,
+        original: saved,
+        hasUnsavedChanges,
+    } = await readUnsavedState(kindName, filePath);
+    if (!hasUnsavedChanges) {
+        return {
+            reverted: name,
+            didChange: false,
+            note: 'It already matches its saved file; there was nothing to discard.',
+        };
+    }
+    if (saved === null) {
+        return fail(`"${name}" could not be read, so it was not changed.`);
+    }
+    const editing = await snapshotAgentEditing(kindName, filePath);
+    if (editing === null) {
+        return fail(`"${name}" could not be read, so it was not changed.`);
+    }
+    try {
+        const { meta } = await runWithAgentBackup(
+            `Put the ${kind.label} “${name}” back to its saved state`,
+            [editing],
+            async () => {
+                await document.setJsonData(saved as any);
+            },
+        );
+        const FileSourceClass = await getFileSourceClass();
+        FileSourceClass.getInstance(filePath).fireUpdateEvent();
+        return {
+            reverted: name,
+            filePath,
+            isSaved: true,
+            ...genUndoField(meta),
+            note:
+                'The unsaved edits are gone from the document, as Discard ' +
+                'does -- and owa_undo puts them back, which Discard cannot.',
+        };
+    } catch (error) {
+        return toChangeFailure(
+            error,
+            `Putting the ${kind.label} “${name}” back`,
+        );
     }
 }
 
@@ -904,6 +978,9 @@ export async function handleAgentFileRequest(
         if (action === 'delete') {
             return await handleDelete(dirPath, safeName, kind, kindName);
         }
+        if (action === 'revert') {
+            return await handleRevert(dirPath, safeName, kind, kindName);
+        }
         if (checkIsAgentSlideAction(action)) {
             return await handleSlideAction(
                 dirPath,
@@ -948,7 +1025,7 @@ export async function handleAgentFileRequest(
                   );
         }
         return fail(
-            'Unknown action. Use list, info, create, update, rename or delete' +
+            'Unknown action. Use list, info, create, update, rename, revert or delete' +
                 (kindName === 'slide'
                     ? ', or one slide at a time: slides, add-slide, ' +
                       'update-slide, delete-slide, move-slide, duplicate-slide.'

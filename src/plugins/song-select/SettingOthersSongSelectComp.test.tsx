@@ -67,6 +67,12 @@ vi.mock('../../setting/SettingApplyComp', () => ({
     applyStore: { pendingApply: pendingApplyMock },
 }));
 
+// The fold has its own tests; here every section is simply open.
+vi.mock('../../setting/settingSectionFoldHelpers', () => ({
+    getIsSettingSectionCollapsed: () => false,
+    saveIsSettingSectionCollapsed: vi.fn(),
+}));
+
 vi.mock('../../toast/toastHelpers', () => ({
     showSimpleToast: showSimpleToastMock,
 }));
@@ -304,8 +310,15 @@ describe('SettingOthersSongSelectComp', () => {
 
     test('opens the SongSelect website externally', async () => {
         await render();
+        // By its whole label: the section's heading is a button too (it folds
+        // the section), and it starts with the same word.
+        const websiteButton = Array.from(
+            container.querySelectorAll('button'),
+        ).find((button) => {
+            return button.textContent === 'SongSelect';
+        });
         await act(async () => {
-            findButton('SongSelect')?.click();
+            websiteButton?.click();
         });
         expect(openExternalURLMock).toHaveBeenCalledWith(
             'https://songselect.ccli.com',

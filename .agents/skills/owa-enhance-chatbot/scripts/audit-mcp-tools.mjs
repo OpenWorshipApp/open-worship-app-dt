@@ -55,7 +55,10 @@ const rounds = roundsArg ? Number(roundsArg.split('=')[1]) : 10;
 // installed, changed and removed through the assistant. `owa_bible_xml`
 // (354 tokens) REPLACED that lookup rather than joining it, and its
 // description and schema were cut from 423 first. Measured ~7,787.
-const MODEL_TOKEN_CEILING = 7800;
+// 7 800 → 8 350 on 2026-10-10 (`MC-50`): `owa_presenting_flow` (~419, the
+// run sheets had no tool and no undo of their own) and `owa_click`'s
+// `button` / `clicks` (~62) were added on purpose, measured at 8 273.
+const MODEL_TOKEN_CEILING = 8350;
 const ratchetArg = argv.find((one) => {
     return one === '--ratchet' || one.startsWith('--ratchet=');
 });

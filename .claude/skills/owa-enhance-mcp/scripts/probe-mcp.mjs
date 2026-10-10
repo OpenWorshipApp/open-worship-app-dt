@@ -235,6 +235,28 @@ try {
     // refused calls above never reach the tool so they never had to know.
     const pageList = await call('list_pages', {});
     const pageId = Number(toText(pageList).match(/^(\d+): /m)?.[1] ?? 1);
+    // A destructively worded probe button for the snapshot to carry, so this
+    // check no longer depends on the user's layout having a Clear All on
+    // screen (24/25 with the Mini Screen panel collapsed, 2026-10-10). It is
+    // never pressed -- the refusal below is the point -- and is removed again.
+    const { evaluateInApp: evaluateForUid } = await import(
+        pathToFileURL(path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', 'cdp.mjs'))
+            .href
+    );
+    const uidProbe = await evaluateForUid(
+        `(() => {
+            document.getElementById('owa-probe-uid-host')?.remove();
+            const host = document.createElement('div');
+            host.id = 'owa-probe-uid-host';
+            host.style.cssText = 'position:fixed;left:8px;top:40px;z-index:2147483600';
+            host.innerHTML = '<button>Probe Trash 7f3a</button>';
+            document.body.appendChild(host);
+            return true;
+        })()`,
+        { match: 'presenter.html' },
+    ).catch(() => {
+        return null;
+    });
     const snapshot = await call('take_snapshot', { pageId });
     const destructiveLine = toText(snapshot)
         .split('\n')
@@ -272,6 +294,12 @@ try {
         !toText(strayUid).includes('press it themselves'),
         `it answered: ${toText(strayUid).slice(0, 120)}`,
     );
+    if (uidProbe !== null) {
+        await evaluateForUid(
+            "(() => { document.getElementById('owa-probe-uid-host')?.remove(); return true; })()",
+            { match: 'presenter.html' },
+        ).catch(() => {});
+    }
 
     // --- reaching OUT ------------------------------------------------
     //

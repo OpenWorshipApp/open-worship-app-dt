@@ -1,8 +1,11 @@
 ---
 name: chatbot-builtin-commands
-description: A line starting with / in the chatbot's ask box is a built-in command run through the app's own tools with NO model, no key and no history; the button under its answer is a pseudo tool a model cannot fire
+description: "A line starting with / in the chatbot's ask box is a built-in command run through the app's own tools with NO model, no key and no history; the button under its answer is a pseudo tool a model cannot fire. The one exception is `/btw <words>`, a general question put to the model with no tools"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 16780dd5-d3fa-4663-8b19-127ebf319066
+  modified: 2026-10-10T15:06:55.940Z
 ---
 
 The chatbot window takes **commands** (2026-09-02,
@@ -14,6 +17,20 @@ song from a page, no model; see [[chatbot-lyric-command]]). `handleAsking` runs 
 looked at — no model round, no history, attachments left in the box, ~1.6 s.
 Typing `/` lists them in the same suggestion list as the questions
 (`SuggestRowType`; a command with no argument asks on the press).
+
+**`/btw <words>` is the one slash line that DOES go to a model** (2026-10-10,
+the user's ask: _add command `/btw` to let assistant know it about asking
+general question, e.g. `/btw "what is holy bible"`_). `readGeneralQuestion`
+reads the words (quotes taken off) and `handleAsking` takes the ordinary
+model road with `AskExtraType.isGeneral`: the ask is the words plus a frame
+in the USER turn (`toGeneralQuestionAsk` — never the cached system prompt),
+ONE round, NO tools (the MCP session is not opened, so no _Connecting to the
+app_ step and no tool schemas), no known-question hint, no reader-button
+shortcut. The transcript shows what was typed. With no assistant, or one
+that fails, the answer says a general question needs an assistant and
+offers **Open AI settings** — the guide never answers it. The bare `/btw`
+runs as a command and says how to use it; `/commands` names it as the
+exception; aliases `/general`, `/anything`.
 
 **Why:** measured on the standing corpus the afternoon three of the four
 providers answered 429 within an hour — the offline bot the window fell back

@@ -104,6 +104,11 @@ import {
     type ChatTipType,
 } from './tipHelpers';
 import {
+    genHeadSummary,
+    getIsHeadCollapsed,
+    saveIsHeadCollapsed,
+} from './headCollapseHelpers';
+import {
     clearProgressSteps,
     genProgressReporter,
     genSessionProgress,
@@ -134,6 +139,7 @@ import {
 } from './helpBotHelpers';
 import {
     askLlmBot,
+    toGeneralQuestionAsk,
     checkCanSeeImages,
     checkHasMoreModels,
     checkIsFreeProvider,
@@ -191,6 +197,7 @@ import {
     SPEND_LIMIT_CHOICE_LIST,
     allowMoreSpending,
     checkIsSpendLimitError,
+    describeSpendFolded,
     describeSpendGuard,
     describeSpendState,
     getLastSpendState,
@@ -203,6 +210,7 @@ import {
     type SpendStateType,
 } from './spendGuardHelpers';
 import {
+    OPEN_AI_SETTING_LABEL,
     OPEN_AI_SETTING_TOOL_NAME,
     OPEN_PROVIDER_PAGE_TOOL_NAME,
     genProviderIssueActions,
@@ -210,6 +218,7 @@ import {
     readLlmIssue,
 } from './providerIssueHelpers';
 import {
+    checkIsAlreadyTyped,
     FALLBACK_STARTERS,
     findKnownQuestion,
     genKnownQuestionHint,
@@ -222,9 +231,11 @@ import {
     type StarterQuestionType,
 } from './questionHelpers';
 import {
+    BUILTIN_ACTION_LIST,
     BUILTIN_TOOL_NAME,
     checkIsBuiltinCommand,
     matchBuiltinActions,
+    readGeneralQuestion,
     runBuiltinCommand,
     toBuiltinCommandText,
 } from './builtinActionHelpers';
@@ -548,11 +559,25 @@ function RenderSuggestionsComp({
     activeIndex: number;
     onChoose: (row: SuggestRowType) => void;
 }>) {
+    const listRef = useRef<HTMLUListElement | null>(null);
+    // The list scrolls -- `/` alone offers more commands than fit -- and it
+    // opens with its FIRST row in view, so the highlight has to bring its row
+    // with it. Without this ↑ from the box, which wraps to the last row, the
+    // one nearest the box, lit a row nobody could see: the arrows looked dead.
+    // `nearest` moves nothing while the row is already in view.
+    useAppEffect(() => {
+        if (activeIndex < 0) {
+            return;
+        }
+        listRef.current?.children
+            .item(activeIndex)
+            ?.scrollIntoView({ block: 'nearest' });
+    }, [activeIndex]);
     if (suggestions.length === 0) {
         return null;
     }
     return (
-        <ul className="chat-suggests" role="listbox">
+        <ul className="chat-suggests" role="listbox" ref={listRef}>
             {suggestions.map((row, index) => {
                 return (
                     <li key={row.id}>
@@ -706,21 +731,12 @@ function RenderCreditLineComp({
     );
 }
 
-/**
- * The spend guard's own corner of the head: the cap the user set, what the
- * hour has cost against it, and -- while the assistant is paused -- the
- * button that lifts the pause. Drawn whether or not anything has been spent
- * yet, unlike the credit line under it: a protection nobody can see is a
- * protection nobody trusts, and the picker is how they set it. It sits in
- * the PICKER row, after the model (2026-09-11, asked for with a picture: a
- * row of its own under three pickers was a head line spent on one small
- * select), and wraps under them only where the window is too narrow to hold
- * four. Subscribed to
- * the guard's own store rather than lifted into the window's state, for the
- * same reason the progress line is: every model round would otherwise
- * re-render the whole message list. See `spendGuardHelpers`.
- */
-function RenderSpendGuardComp() {
+// The spend guard's state, for whichever corner of the head is drawing it --
+// the picker, or the one line the head folds to. Subscribed to the guard's
+// own store rather than lifted into the window's state, for the same reason
+// the progress line is: every model round would otherwise re-render the whole
+// message list. See `spendGuardHelpers`.
+function useSpendState() {
     const [state, setState] = useState<SpendStateType>(() => {
         return getLastSpendState();
     });
@@ -731,6 +747,22 @@ function RenderSpendGuardComp() {
         setState(getLastSpendState());
         return subscribeSpendGuard(setState);
     }, []);
+    return state;
+}
+
+/**
+ * The spend guard's own corner of the head: the cap the user set, what the
+ * hour has cost against it, and -- while the assistant is paused -- the
+ * button that lifts the pause. Drawn whether or not anything has been spent
+ * yet, unlike the credit line under it: a protection nobody can see is a
+ * protection nobody trusts, and the picker is how they set it. It sits in
+ * the PICKER row, after the model (2026-09-11, asked for with a picture: a
+ * row of its own under three pickers was a head line spent on one small
+ * select), and wraps under them only where the window is too narrow to hold
+ * four.
+ */
+function RenderSpendGuardComp() {
+    const state = useSpendState();
     const figure = describeSpendState(state);
     const hover = describeSpendGuard(state);
     // `/limit 0.05` sets a cap the picker does not list, and a select whose
@@ -810,6 +842,41 @@ function RenderSpendGuardComp() {
     );
 }
 
+/**
+ * What the head reads once it is FOLDED to one line (2026-10-09, asked for
+ * with a picture of the head circled: _make the area collapsible_).
+ *
+ * Folded is not hidden. The line still says what every picker is set to --
+ * which window, who answers, with which model -- and the spend guard's
+ * corner stays a thing of its own at the end of it, never ellipsised away
+ * with a long model name and amber once the assistant is paused: the Allow
+ * button is behind the fold then, and a pause nobody can see reads as a
+ * window that has stopped working. See `headCollapseHelpers`.
+ */
+function RenderHeadSummaryComp({ summary }: Readonly<{ summary: string }>) {
+    const state = useSpendState();
+    // The space between the two is drawn as nothing in a flex line; it is
+    // there for whatever reads this button by its words -- a screen reader,
+    // a tool finding it by label -- as the gap the eye sees between them.
+    return (
+        <span className="chat-head-folded">
+            <span className="chat-head-summary">{summary}</span>{' '}
+            <span
+                className={
+                    'chat-head-spend' +
+                    (state.isTripped
+                        ? ' is-paused'
+                        : state.isNearLimit
+                          ? ' is-near'
+                          : '')
+                }
+            >
+                {describeSpendFolded(state)}
+            </span>
+        </span>
+    );
+}
+
 // One app, many windows: the same question has a presenter answer, a reader
 // answer and often none at all in the Lyric Editor, so the user says which one
 // they are asking about. Each launch starts on the page it came from; a manual
@@ -861,6 +928,9 @@ function RenderFocusSwitchComp({
 // Settings with the cursor in that provider's key box, and the tab stays on
 // the provider it had.
 const NO_PROVIDER_VALUE = '';
+// What stands where the model would, with no key at all -- on the head's own
+// button, and on the one line the head folds to.
+const OFFLINE_ENGINE_LABEL = 'app guide · offline';
 
 /**
  * What a row of the assistant list reads as. Three cases, and the third is the
@@ -2340,6 +2410,48 @@ export default function ChatbotAppComp() {
             return one.serverId === serverId;
         });
     }, [provider, model, modelListMap]);
+    // The head folded to one line. By hand only -- nothing in this window
+    // tucks itself away -- and the window's, not the tab's: see
+    // `headCollapseHelpers`.
+    const [isHeadCollapsed, setIsHeadCollapsed] = useState(getIsHeadCollapsed);
+    const isHeadCollapsedRef = useAppCurrentRef(isHeadCollapsed);
+    const handleHeadFolding = useCallback(() => {
+        const isCollapsed = !isHeadCollapsedRef.current;
+        saveIsHeadCollapsed(isCollapsed);
+        setIsHeadCollapsed(isCollapsed);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // What the folded line says the pickers are set to: each one's own
+    // chosen words. Worked out only while folded -- this component is the
+    // whole window and renders on every keystroke in the box.
+    const headSummary = useMemo(() => {
+        if (!isHeadCollapsed) {
+            return '';
+        }
+        const focusLabel = BOT_FOCUS_LIST.find((item) => {
+            return item.key === focus;
+        })?.label;
+        if (provider === null) {
+            return genHeadSummary([focusLabel, OFFLINE_ENGINE_LABEL]);
+        }
+        return genHeadSummary([
+            focusLabel,
+            assistantRows.find((row) => {
+                return row.value === assistantRowValue;
+            })?.label,
+            modelList.find((item) => {
+                return item.id === model;
+            })?.label ?? model,
+        ]);
+    }, [
+        isHeadCollapsed,
+        focus,
+        provider,
+        model,
+        assistantRows,
+        assistantRowValue,
+        modelList,
+    ]);
     // Both of these change THIS tab, and are also written down as what the
     // next new tab should start with. The tabs already open keep asking with
     // whatever they were asking with.
@@ -2652,8 +2764,13 @@ export default function ChatbotAppComp() {
         }
         if (checkIsBuiltinCommand(question)) {
             // All of them: the list scrolls, and a command nobody can see
-            // is a command nobody has.
-            return matchBuiltinActions(question, 20).map((action) => {
+            // is a command nobody has. The list's own length, not a number:
+            // it was 20 when there were 25, and a bare `/` never offered
+            // `/credit`, `/limit`, `/lyric`, `/btw` or `/commands`.
+            return matchBuiltinActions(
+                question,
+                BUILTIN_ACTION_LIST.length,
+            ).map((action) => {
                 return {
                     id: `command.${action.name}`,
                     text: `/${action.name}`,
@@ -2663,7 +2780,13 @@ export default function ChatbotAppComp() {
                 };
             });
         }
-        return matchedQuestions.map(toQuestionSuggestRow);
+        // ...and never a question the box already holds: the row would be
+        // offering them their own words back, over the conversation.
+        return matchedQuestions
+            .filter((row) => {
+                return !checkIsAlreadyTyped(question, row.text);
+            })
+            .map(toQuestionSuggestRow);
     }, [isSuggestDismissed, isBusy, question, matchedQuestions]);
     /**
      * A question this window was asked, put where the next one is walked back
@@ -2746,22 +2869,29 @@ export default function ChatbotAppComp() {
     // ASKS rather than fills -- a command with nothing to add to it.
     const askFromSuggestionRef = useRef<(text: string) => void>(() => {});
     const handleChoosingSuggestion = useCallback(
-        (row: SuggestRowType) => {
+        (row: SuggestRowType, isCompleting = false) => {
             setIsSuggestDismissed(true);
             setSuggestIndex(-1);
             // A command with no words after it is complete as it stands, and
             // it costs nothing -- no model, no key -- so it runs on the press.
-            if (row.isImmediate) {
+            // Not on Tab (`isCompleting`): that key finishes the word and
+            // stops, and it takes the FIRST row when none was walked to -- a
+            // `/clear` and a Tab must not be what empties the projector.
+            if (row.isImmediate && !isCompleting) {
                 askFromSuggestionRef.current(row.fill);
                 return;
             }
             // Filling the box rather than asking outright: the suggestion is a
             // starting point a volunteer often wants to add a word to, and an
             // answer they did not ask for costs them a call on their own key.
-            handleDrafting(row.fill);
+            if (row.fill !== question) {
+                handleDrafting(row.fill);
+                // Ready for the words that come after it.
+                isCaretToEndRef.current = true;
+            }
             inputRef.current?.focus();
         },
-        [handleDrafting],
+        [handleDrafting, question],
     );
     // ATTACHING. Five ways in -- the paperclip, a paste, a drop, the snapshot
     // button and the picker -- and every one of them ends here, so there is one
@@ -3511,6 +3641,14 @@ export default function ChatbotAppComp() {
             ) {
                 return;
             }
+            // `/btw <words>` is the one slash line that DOES go to a model:
+            // a general question, asked with no tools and no lookup in the
+            // app (`readGeneralQuestion`). It takes the ordinary road below
+            // with the frame on the ask; the transcript keeps what was typed.
+            const generalQuestion =
+                options?.shownText === undefined
+                    ? readGeneralQuestion(trimmedAsked)
+                    : null;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -3518,6 +3656,7 @@ export default function ChatbotAppComp() {
             // attachments stay in the box for the next real question.
             if (
                 options?.shownText === undefined &&
+                generalQuestion === null &&
                 checkIsBuiltinCommand(trimmedAsked)
             ) {
                 const commandSessionId = activeSessionId;
@@ -3676,15 +3815,21 @@ export default function ChatbotAppComp() {
                 // user's own sentence instead: a bubble reading back a
                 // control's selector, or words they never typed, is exactly
                 // what this window exists to avoid.
-                const askedOfModel = toAskedOfModel(trimmedAsked, attachments);
+                const askedOfModel =
+                    generalQuestion === null
+                        ? toAskedOfModel(trimmedAsked, attachments)
+                        : toGeneralQuestionAsk(
+                              toAskedOfModel(generalQuestion, attachments),
+                          );
                 // A question picked off the app's own list -- a chip, the
                 // suggestion list, More… -- is one the corpus has already
                 // filed under a page. The model is told which, on the ask
                 // alone (see `genKnownQuestionHint`); the transcript keeps
                 // the user's own words. Not for a rescue, whose ask is
-                // machine-written and never a corpus row.
+                // machine-written and never a corpus row, nor for a general
+                // question, which is about nothing in the guide.
                 const knownQuestion =
-                    options?.shownText === undefined
+                    options?.shownText === undefined && generalQuestion === null
                         ? await findKnownQuestion(trimmedAsked, activeFocus)
                         : null;
                 const knownHint =
@@ -3702,6 +3847,25 @@ export default function ChatbotAppComp() {
                 // picture WAS the question, the honest line is that it cannot
                 // see it, and asking for words is the way out of that.
                 const askOffline = async (): Promise<BotAnswerType> => {
+                    // The guide answers questions about the app and nothing
+                    // else; a general question with no assistant to put it
+                    // to is said so, with the door to one.
+                    if (generalQuestion !== null) {
+                        return {
+                            text:
+                                'A general question needs an assistant, and ' +
+                                'none could answer just now. Pick one in the ' +
+                                'row above, or add a key in Settings → Others ' +
+                                '→ AI Providers, and ask again.',
+                            actions: [
+                                {
+                                    label: OPEN_AI_SETTING_LABEL,
+                                    toolName: OPEN_AI_SETTING_TOOL_NAME,
+                                    args: {},
+                                },
+                            ],
+                        };
+                    }
                     if (trimmedAsked.length === 0 && images.length > 0) {
                         return {
                             text:
@@ -3728,6 +3892,9 @@ export default function ChatbotAppComp() {
                             signal,
                             {
                                 images,
+                                ...(generalQuestion === null
+                                    ? {}
+                                    : { isGeneral: true }),
                                 // Pulled by the loop between rounds. The
                                 // splice is the handover: what comes out of
                                 // the queue is what was folded in, so nothing
@@ -4983,56 +5150,101 @@ export default function ChatbotAppComp() {
                 onSolo={handleSoloingSession}
                 onClearAll={handleClearingSessions}
             />
-            <header className="chat-head">
-                <div className="chat-head-row">
-                    <RenderPickFieldComp caption="Asking about">
-                        <RenderFocusSwitchComp
-                            focus={focus}
-                            onChange={handleFocusChanging}
-                        />
-                    </RenderPickFieldComp>
-                    <RenderPickFieldComp caption="Assistant">
-                        <RenderProviderSwitchComp
-                            rows={assistantRows}
-                            value={assistantRowValue}
-                            onChange={handleProviderChanging}
-                        />
-                    </RenderPickFieldComp>
-                    {provider === null ? (
-                        // The head says WHAT is answering; the empty state
-                        // says where its answers come from. Saying both in the
-                        // head cost two lines of a 640px window. With no key
-                        // it is also the way OUT of here, to the panel that
-                        // takes one -- so its caption names the way out, not a
-                        // model there is none of.
-                        <RenderPickFieldComp caption="Answers from" isEngine>
-                            <button
-                                type="button"
-                                className="chat-pick chat-engine chat-engine-off"
-                                title={
-                                    `${genProviderNames()} need an API key of` +
-                                    ' your own — open AI settings'
-                                }
-                                onClick={openAiSetting}
-                            >
-                                app guide · offline
-                            </button>
-                        </RenderPickFieldComp>
-                    ) : (
-                        <RenderPickFieldComp caption="Model" isEngine>
-                            <RenderModelPickerComp
-                                model={model}
-                                modelList={modelList}
-                                isLoadingModels={isLoadingModels}
-                                hasMoreModels={checkHasMoreModels(provider)}
-                                onChange={handleModelChanging}
-                                onLoadingMore={handleLoadingMoreModels}
-                            />
-                        </RenderPickFieldComp>
-                    )}
-                    <RenderSpendGuardComp />
-                </div>
-                <RenderCreditLineComp usage={activeSession.usage} />
+            <header
+                className={
+                    'chat-head' + (isHeadCollapsed ? ' is-collapsed' : '')
+                }
+            >
+                {/*
+                 * ONE button in both states, at the same place: the arrow is
+                 * pressed again where it was just pressed, and the keyboard
+                 * stays on it across the fold. Open, it is the slim rail at
+                 * the head's left edge; folded, it is the whole line.
+                 */}
+                <button
+                    type="button"
+                    className="chat-head-fold"
+                    aria-expanded={!isHeadCollapsed}
+                    title={
+                        isHeadCollapsed
+                            ? 'Show the choices again: which window, which ' +
+                              'assistant, which model and the limit per hour'
+                            : 'Fold these choices to one line'
+                    }
+                    onClick={handleHeadFolding}
+                >
+                    <i
+                        className={
+                            'bi ' +
+                            (isHeadCollapsed
+                                ? 'bi-chevron-right'
+                                : 'bi-chevron-down')
+                        }
+                        aria-hidden="true"
+                    />
+                    {isHeadCollapsed ? (
+                        <RenderHeadSummaryComp summary={headSummary} />
+                    ) : null}
+                </button>
+                {isHeadCollapsed ? null : (
+                    <div className="chat-head-body">
+                        <div className="chat-head-row">
+                            <RenderPickFieldComp caption="Asking about">
+                                <RenderFocusSwitchComp
+                                    focus={focus}
+                                    onChange={handleFocusChanging}
+                                />
+                            </RenderPickFieldComp>
+                            <RenderPickFieldComp caption="Assistant">
+                                <RenderProviderSwitchComp
+                                    rows={assistantRows}
+                                    value={assistantRowValue}
+                                    onChange={handleProviderChanging}
+                                />
+                            </RenderPickFieldComp>
+                            {provider === null ? (
+                                // The head says WHAT is answering; the empty
+                                // state says where its answers come from.
+                                // Saying both in the head cost two lines of a
+                                // 640px window. With no key it is also the way
+                                // OUT of here, to the panel that takes one --
+                                // so its caption names the way out, not a
+                                // model there is none of.
+                                <RenderPickFieldComp
+                                    caption="Answers from"
+                                    isEngine
+                                >
+                                    <button
+                                        type="button"
+                                        className="chat-pick chat-engine chat-engine-off"
+                                        title={
+                                            `${genProviderNames()} need an API` +
+                                            ' key of your own — open AI settings'
+                                        }
+                                        onClick={openAiSetting}
+                                    >
+                                        {OFFLINE_ENGINE_LABEL}
+                                    </button>
+                                </RenderPickFieldComp>
+                            ) : (
+                                <RenderPickFieldComp caption="Model" isEngine>
+                                    <RenderModelPickerComp
+                                        model={model}
+                                        modelList={modelList}
+                                        isLoadingModels={isLoadingModels}
+                                        hasMoreModels={checkHasMoreModels(
+                                            provider,
+                                        )}
+                                        onChange={handleModelChanging}
+                                        onLoadingMore={handleLoadingMoreModels}
+                                    />
+                                </RenderPickFieldComp>
+                            )}
+                            <RenderSpendGuardComp />
+                        </div>
+                        <RenderCreditLineComp usage={activeSession.usage} />
+                    </div>
+                )}
             </header>
             <div className="chat-log" ref={listRef}>
                 <RenderProviderWarningComp provider={provider} />
@@ -5378,7 +5590,8 @@ export default function ChatbotAppComp() {
                     title={
                         'Ctrl+Enter asks · Enter starts a new line · ' +
                         'Alt+↑ and Alt+↓ bring back an earlier question · ' +
-                        '/ lists the commands that need no assistant'
+                        '/ lists the commands that need no assistant · ' +
+                        '↑ and ↓ walk a list of suggestions, Tab takes one'
                     }
                     onPaste={handlePasting}
                     onChange={(event) => {
@@ -5437,7 +5650,9 @@ export default function ChatbotAppComp() {
                             setSuggestIndex(-1);
                             return;
                         }
+                        const isTab = event.key === 'Tab';
                         if (
+                            !isTab &&
                             event.key !== 'ArrowDown' &&
                             event.key !== 'ArrowUp'
                         ) {
@@ -5449,7 +5664,33 @@ export default function ChatbotAppComp() {
                         // back up to the line they are fixing. It only walks
                         // the list while what they have typed is still one
                         // line -- which is every question the list matches.
+                        // Tab stands down there too: taking a row would put
+                        // one line where they had written several.
                         if (question.includes('\n')) {
+                            return;
+                        }
+                        if (isTab) {
+                            // **Tab finishes the word** (2026-10-10, the
+                            // user's ask): the row the arrows walked to, or
+                            // the first when none was -- `/bt`, Tab, and the
+                            // box reads `/btw ` with the caret after it. It
+                            // FILLS and never asks, whatever the row. With a
+                            // modifier, or with no list up, Tab is still the
+                            // way out of the box to the buttons.
+                            if (
+                                event.shiftKey ||
+                                event.ctrlKey ||
+                                event.altKey ||
+                                event.metaKey ||
+                                event.nativeEvent.isComposing
+                            ) {
+                                return;
+                            }
+                            event.preventDefault();
+                            handleChoosingSuggestion(
+                                suggestions[Math.max(suggestIndex, 0)],
+                                true,
+                            );
                             return;
                         }
                         event.preventDefault();

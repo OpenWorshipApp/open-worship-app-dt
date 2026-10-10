@@ -61,7 +61,20 @@ vi.mock('../helper/ai/bedrockHelpers', () => ({
 vi.mock('../helper/ai/customServerHelpers', () => ({
     getCustomServers: () => fake.customServers,
     getUsableCustomServers: () => fake.customServers,
-    readLmStudioModels: async () => fake.lmStudioInfoMap,
+    readCustomServerModelInfo: async () => {
+        return fake.lmStudioInfoMap === null
+            ? null
+            : {
+                  kind: 'lm-studio',
+                  infoMap: fake.lmStudioInfoMap,
+                  commonInfo: null,
+              };
+    },
+    findCustomModelInfo: (info: any, modelId: string) => {
+        return info === null
+            ? null
+            : (info.infoMap.get(modelId) ?? info.commonInfo ?? null);
+    },
 }));
 vi.mock('../helper/ai/customServerClientHelpers', () => ({
     genContextTooSmallText: (loadedContext: number | null) => {
@@ -146,6 +159,7 @@ import {
     genGuideRescueSummary,
     genToolWatch,
     toGuideRescueAnswer,
+    toGeneralQuestionAsk,
     toHistoryTurns,
     toWatchedManualId,
 } from './llmBotHelpers';
@@ -2470,6 +2484,52 @@ describe('the custom servers', () => {
             askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
         ).rejects.toThrow('context 4096 is too small');
         expect(create).not.toHaveBeenCalled();
+    });
+
+    test('a general question goes out framed, with no tools and in one round', async () => {
+        const create = vi.fn(async () => {
+            return {
+                choices: [
+                    {
+                        message: {
+                            role: 'assistant',
+                            content: 'The Bible is a collection of books.',
+                        },
+                    },
+                ],
+                usage: { prompt_tokens: 900, completion_tokens: 30 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const steps: string[] = [];
+        const answer = await askLlmBot(
+            toGeneralQuestionAsk('what is holy bible'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            {
+                isGeneral: true,
+                onProgress: (step) => {
+                    if (!step.isDone) {
+                        steps.push(step.text);
+                    }
+                },
+            },
+        );
+        expect(answer.text).toBe('The Bible is a collection of books.');
+        expect(create).toHaveBeenCalledTimes(1);
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).not.toHaveProperty('tools');
+        expect(request).not.toHaveProperty('tool_choice');
+        const lastMessage = request.messages[request.messages.length - 1];
+        expect(lastMessage.role).toBe('user');
+        expect(lastMessage.content).toMatch(
+            /^what is holy bible\n\n\(This is a general question, not about the Open Worship app\./,
+        );
+        // The app is never connected to for it.
+        expect(steps).not.toContain('Connecting to the app');
     });
 
     test('says the model is gone, without asking anyone, when no server is left', async () => {

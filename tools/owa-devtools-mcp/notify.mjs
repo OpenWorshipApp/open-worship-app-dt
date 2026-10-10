@@ -54,6 +54,13 @@ const ACTING_TOOLS = {
     owa_find_ui: 'pointed out a control',
     owa_click: 'clicked something',
     owa_type: 'typed something',
+    // The label-aimed twins of `press_key` and `drag`: the same news, the
+    // same dictionary keys, so a Khmer window reads them already.
+    owa_press_key: 'pressed a key',
+    owa_drag: 'dragged something',
+    // The menu bar. A `list` reads and is quiet; a press names the item.
+    owa_menu: 'chose a menu item',
+    owa_scroll: 'scrolled a list',
     owa_goto_page: 'switched the window to another page',
     // Draws an outline over the window and swallows the next click. Nothing in
     // the app changes, but the window stops behaving normally until the user
@@ -92,6 +99,11 @@ const ACTING_TOOLS = {
     owa_bible_item: 'changed the saved Bible passages',
     owa_bible_note: 'changed a Bible note',
     owa_undo: 'put back an earlier change',
+    // The run sheets: each action names the sheet and what went in below;
+    // this is the generic news the audit script probes for.
+    owa_presenting_flow: 'changed a run sheet',
+    // The Background tabs' files; each action names the file below.
+    owa_media_file: 'changed a media file',
 };
 
 // The two kinds of document the file tools write, as a banner names them.
@@ -116,6 +128,10 @@ const AGENT_FILE_PHRASE_MAP = {
     delete: {
         say: (what, named) => `moved the ${what} ${named} to the trash`,
         key: (what) => `moved a ${what} to the trash`,
+    },
+    revert: {
+        say: (what, named) => `put the ${what} ${named} back as saved`,
+        key: (what) => `put a ${what} back as saved`,
     },
     'add-slide': {
         say: (_what, named) => `added a slide to ${named}`,
@@ -195,6 +211,87 @@ const AGENT_DATA_PHRASE_MAP = {
         'delete-file': {
             say: (_args, file) => `moved the notes file ${file} to the trash`,
             key: 'moved a notes file to the trash',
+        },
+    },
+    // The run sheets. "Run sheet" rather than "presenting flow" in the
+    // English: it is what the operator calls it, and the dictionary keys
+    // below are what a Khmer or French window reads instead.
+    owa_presenting_flow: {
+        create: {
+            say: (_args, sheet) => `made the run sheet ${sheet}`,
+            key: 'made a run sheet',
+        },
+        rename: {
+            say: (_args, sheet) => `renamed the run sheet ${sheet}`,
+            key: 'renamed a run sheet',
+        },
+        delete: {
+            say: (_args, sheet) => `moved the run sheet ${sheet} to the trash`,
+            key: 'moved a run sheet to the trash',
+        },
+        add: {
+            say: (args, sheet) => {
+                const what =
+                    toQuotedName(args?.document, null) ??
+                    toReference(args) ??
+                    toQuotedName(args?.actionId, null);
+                return what === null
+                    ? `added a line to the run sheet ${sheet}`
+                    : `added ${what} to the run sheet ${sheet}`;
+            },
+            key: 'added a line to a run sheet',
+            detail: (args, sheet) => [
+                toQuotedName(args?.document, null) ??
+                    toReference(args) ??
+                    toQuotedName(args?.actionId, null),
+                sheet,
+            ],
+        },
+        remove: {
+            say: (_args, sheet) => `removed a line from the run sheet ${sheet}`,
+            key: 'removed a line from a run sheet',
+        },
+        move: {
+            say: (_args, sheet) => `moved a line in the run sheet ${sheet}`,
+            key: 'moved a line in a run sheet',
+        },
+        duplicate: {
+            say: (_args, sheet) => `copied a line in the run sheet ${sheet}`,
+            key: 'copied a line in a run sheet',
+        },
+        park: {
+            say: (_args, sheet) => `parked a line in the run sheet ${sheet}`,
+            key: 'parked a line in a run sheet',
+        },
+        unpark: {
+            say: (_args, sheet) =>
+                `put a line of the run sheet ${sheet} back in play`,
+            key: 'put a line of a run sheet back in play',
+        },
+    },
+    // The Background tabs' files. `where` is the file's own name here.
+    owa_media_file: {
+        create: {
+            say: (_args, file) => `made the web page ${file}`,
+            key: 'made a web page',
+        },
+        update: {
+            say: (_args, file) => `changed the web page ${file}`,
+            key: 'changed a web page',
+        },
+        rename: {
+            say: (_args, file) => `renamed the media file ${file}`,
+            key: 'renamed a media file',
+        },
+        delete: {
+            say: (_args, file) => `moved the media file ${file} to the trash`,
+            key: 'moved a media file to the trash',
+        },
+        import: {
+            say: (args, _file) =>
+                `imported ${toQuotedName(args?.path, 'a file')} from the disk`,
+            key: 'imported a media file from the disk',
+            detail: (args) => [toQuotedName(args?.path, null)],
         },
     },
 };
@@ -323,7 +420,11 @@ function describeBibleXmlNotice(args) {
         case 'update':
             return toNotice(`changed the Bible ${named}`, key, detail);
         case 'delete':
-            return toNotice(`moved the Bible ${named} to the trash`, key, detail);
+            return toNotice(
+                `moved the Bible ${named} to the trash`,
+                key,
+                detail,
+            );
         default:
             return toNotice(key);
     }
@@ -369,26 +470,55 @@ export function describeToolNotice(name, args) {
     }
     if (Object.hasOwn(AGENT_DATA_PHRASE_MAP, name)) {
         const phraseMap = AGENT_DATA_PHRASE_MAP[name];
-        if (!Object.hasOwn(phraseMap, String(args?.action))) {
+        // No action at all is not a read -- the schema requires one, so this
+        // is a probe (the audit script's) asking whether the tool announces
+        // itself: the generic news, so a data tool is never reported silent.
+        if (args?.action === undefined) {
+            return toNotice(ACTING_TOOLS[name]);
+        }
+        if (!Object.hasOwn(phraseMap, String(args.action))) {
             return null;
         }
-        const where = toQuotedName(
-            name === 'owa_bible_item' ? args?.list : args?.file,
-            '"Default"',
-        );
+        const where =
+            name === 'owa_presenting_flow' || name === 'owa_media_file'
+                ? toQuotedName(args?.name, '')
+                : toQuotedName(
+                      name === 'owa_bible_item' ? args?.list : args?.file,
+                      '"Default"',
+                  );
         const phrase = phraseMap[args.action];
         return toNotice(
-            phrase.say(args, where),
+            // A sheet with no name read ("made the run sheet ") is tidied.
+            phrase
+                .say(args, where)
+                .replace(/\s{2,}/g, ' ')
+                .trim(),
             phrase.key,
-            phrase.detail === undefined
-                ? [where]
-                : phrase.detail(args, where),
+            phrase.detail === undefined ? [where] : phrase.detail(args, where),
         );
     }
     if (name === 'owa_undo') {
-        return args?.action === 'undo'
-            ? toNotice(ACTING_TOOLS.owa_undo)
-            : null;
+        return args?.action === 'undo' ? toNotice(ACTING_TOOLS.owa_undo) : null;
+    }
+    // A key names itself: "pressed F5" is something the operator can check
+    // against the wall, "pressed a key" is not. The words are the same in
+    // every language.
+    if (name === 'owa_press_key') {
+        const keys = typeof args?.keys === 'string' ? args.keys.trim() : '';
+        return keys === ''
+            ? toNotice(ACTING_TOOLS.owa_press_key)
+            : toNotice(`pressed ${keys}`, ACTING_TOOLS.owa_press_key, [keys]);
+    }
+    if (name === 'owa_menu') {
+        if (args?.action !== 'click') {
+            return null;
+        }
+        const item = typeof args?.item === 'string' ? args.item.trim() : '';
+        return item === ''
+            ? toNotice(ACTING_TOOLS.owa_menu)
+            : toNotice(`chose ${item} in the menu`, ACTING_TOOLS.owa_menu, [
+                  item,
+              ]);
     }
     if (name === 'owa_present_bible') {
         if (args?.action === 'check') {
@@ -416,9 +546,11 @@ export function describeToolNotice(name, args) {
         // exactly when it matters least.
         return site === null
             ? toNotice(ACTING_TOOLS.owa_read_website)
-            : toNotice(`read a page on ${site}`, ACTING_TOOLS.owa_read_website, [
-                  site,
-              ]);
+            : toNotice(
+                  `read a page on ${site}`,
+                  ACTING_TOOLS.owa_read_website,
+                  [site],
+              );
     }
     const phrase = ACTING_TOOLS[name];
     return phrase === undefined ? null : toNotice(phrase);
@@ -537,7 +669,10 @@ function readNoticeDictionaries(now = Date.now()) {
  * so no round trip is spent asking which. A language is left out, and the
  * page falls back to English, when its dictionary lacks the phrase.
  */
-export function genNoticeWords(notice, dictionaries = readNoticeDictionaries()) {
+export function genNoticeWords(
+    notice,
+    dictionaries = readNoticeDictionaries(),
+) {
     const words = { en: { who: NOTICE_WHO_TEXT, what: notice.text } };
     for (const [langCode, dictionary] of Object.entries(dictionaries ?? {})) {
         const what = dictionary?.[sanitizeTranKey(notice.key)];

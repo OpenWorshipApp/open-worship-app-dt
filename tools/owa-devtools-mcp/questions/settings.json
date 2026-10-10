@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-09",
+    "updated": "2026-10-10",
     "sections": [
         {
             "id": "general",
@@ -376,6 +376,14 @@
                     "keywords": [
                         "lm studio",
                         "ollama",
+                        "llama.cpp",
+                        "llamafile",
+                        "localai",
+                        "jan",
+                        "gpt4all",
+                        "vllm",
+                        "sglang",
+                        "litellm",
                         "local model",
                         "local llm",
                         "own server",
@@ -383,6 +391,9 @@
                         "context length",
                         "sees pictures",
                         "base url",
+                        "address corrected",
+                        "wrong address",
+                        "11434",
                         "on my network"
                     ],
                     "resources": {
@@ -423,6 +434,26 @@
                         "recipe": "W-42",
                         "find": "Auto Play Audio AI when available",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "fold-settings-section",
+                    "text": "How do I fold or open a section in Settings?",
+                    "kind": "howto",
+                    "keywords": [
+                        "collapse",
+                        "expand",
+                        "fold",
+                        "unfold",
+                        "hide section",
+                        "arrow beside the title",
+                        "key box is gone",
+                        "add server is missing",
+                        "section is closed"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "AI Providers"
                     }
                 },
                 {

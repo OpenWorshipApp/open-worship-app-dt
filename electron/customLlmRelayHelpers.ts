@@ -6,6 +6,7 @@ import {
     CUSTOM_LLM_KEYS_SETTING_KEY,
     CUSTOM_LLM_SERVERS_SETTING_KEY,
     checkIsAllowedCustomLlmCall,
+    checkIsSameOrigin,
     toCustomLlmCallUrl,
     toCustomServerBaseUrl,
     toValidCustomServerKeys,
@@ -177,7 +178,8 @@ export async function runCustomLlmFetch(
     if (!deps.isAiEnabled()) {
         return genFailure('ai-off', 'AI features are turned off in Settings');
     }
-    const { serverId, method, path, body, requestId } = request ?? {};
+    const { serverId, method, path, body, requestId, probeBaseUrl } =
+        request ?? {};
     if (
         typeof requestId !== 'string' ||
         !REQUEST_ID_PATTERN.test(requestId) ||
@@ -196,10 +198,26 @@ export async function runCustomLlmFetch(
     if (server === undefined) {
         return genFailure('unknown-server', 'that server is not in Settings');
     }
-    const baseUrl = toCustomServerBaseUrl(server.baseUrl);
-    if (baseUrl === null) {
+    const savedBaseUrl = toCustomServerBaseUrl(server.baseUrl);
+    if (savedBaseUrl === null) {
         return genFailure('bad-url', 'the server address is not a web address');
     }
+    // A probe asks the model list at another path of the SAME program, and
+    // nothing else: the key goes only to the host it was saved for.
+    const probe =
+        probeBaseUrl === undefined ? null : toCustomServerBaseUrl(probeBaseUrl);
+    if (
+        probeBaseUrl !== undefined &&
+        (probe === null ||
+            path !== '/models' ||
+            !checkIsSameOrigin(probe, savedBaseUrl))
+    ) {
+        return genFailure(
+            'not-allowed',
+            'that call is not one the chatbot makes',
+        );
+    }
+    const baseUrl = probe ?? savedBaseUrl;
     const url = toCustomLlmCallUrl(baseUrl, path);
     if (url === null) {
         return genFailure(

@@ -74,10 +74,33 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     parameter opens a duplicate; it is read on mount and on focus via
     `getSettingForce`. An arrow on the closed list steps over the row. Keys are
     re-read on window focus, and **Open AI settings** under a refused key lands
-    on its box too. `chatbot-llm-provider` / `chatbot-llm-model-<provider>`
+    on its box too. **That panel folds** (2026-10-10, `useSettingSectionFold`:
+    the section, each provider's box, Custom servers, each server), and a
+    folded part is NOT mounted — so the request is the panel's `openToken`:
+    whatever is folded in front of the box opens, each on its own mount, and a
+    request for the panel alone (`keyName: null`) is kept for that reason. A
+    fold by hand forgets the request (`onCollapse`), or the box would take the
+    cursor back on every reopening. `chatbot-llm-provider` / `chatbot-llm-model-<provider>`
     only seed a NEW tab. Three models per provider (speed + list price on
     hover) plus _More models…_ (the account's `models.list`); a non-reasoning
     OpenAI model gets no `reasoning_effort`.
+  - **The head folds to ONE line, by hand** (2026-10-09, the user's ask with a
+    picture of the head circled: _make the area collapsible_;
+    `headCollapseHelpers.ts`). The arrow in the slim rail at the head's left
+    edge (`.chat-head-fold` — ONE button in both states, so the keyboard
+    stays on it and it is pressed again where it was just pressed) folds the
+    pickers, the limit and the credit line to `<window> · <assistant> ·
+    <model>` (`genHeadSummary`, the pickers' own chosen words) plus the spend
+    guard's corner (`describeSpendFolded`: the figure, else the cap; never
+    ellipsised, amber when near or paused — **Allow more** is behind the fold
+    then). The whole line opens it again. Remembered for the WINDOW
+    (`chatbot-head-collapsed`), not the tab, and open on a fresh install.
+    Folded, the pickers are UNMOUNTED: a script that reads or sets them opens
+    the head first, in an evaluation of its own because the selects exist
+    only once React has rendered the press (`extra-work/verify-chatbot-e2e.mjs`
+    does). The rail is 14px and the body's right padding 10px — the 24px the
+    head's two 12px sides took; at the 412px the window opens at, a rail that
+    cost the row ten pixels pushed MODEL off the first line.
   - **Providers are declared ONCE, in `LLM_PROVIDER_MAP`**
     (`Record<LlmProviderType, …>` lookups and a `keyField`; ternaries once sent
     an unknown provider to OpenAI silently): Claude, ChatGPT, **Kimi**,
@@ -123,6 +146,24 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     (`canSeeImages` on the row, the only way a custom model gets pictures)
     — and by the chatbot before each ask, 1.5 s cap, for the too-small
     refusal and a round-1 line _Waiting for <server> to load <model>_.
+    **Generic since 2026-10-10** (the user's ask, with Ollama failing:
+    _make the custom assistant work generically … work with most popular
+    llm server like lmstudio ollama_; memory `custom-llm-servers`): the
+    server's KIND is read off its root and never stored
+    (`readCustomServerModelInfo` → `lm-studio` / `ollama` — `/api/tags` +
+    `/api/ps`, `vision` ticks the box — / `llama-cpp` — `/props`, one
+    `commonInfo` for every row — / `other`: LocalAI, Jan, GPT4All, vLLM,
+    SGLang, a LiteLLM proxy, which get the protocol alone); Settings' Test
+    corrects an address one path off through the relay's `probeBaseUrl`
+    (same origin, `GET /models` only — Ollama typed as `…/v1/systemone`
+    had every call answered with a 404 page the chat read as _not
+    available to the account_); a 404 is read as _no model called …_ or
+    _nothing speaks the OpenAI API at …_; a refusal written in vLLM's or a
+    FastAPI shape is rewrapped as `{error: …}` for the SDK
+    (`toReadableErrorText`); _does not support tools_, `--jinja` and
+    `--tool-call-parser` each get their fix sentence; and every context
+    sentence speaks in the program's words (LM Studio's load dialog, the
+    Ollama app's Settings → Context length, `llama-server -c`).
   - **Free needs no key** (`src/helper/ai/freeHelpers.ts`): Kilo Code
     (`api.kilo.ai`), three `:free` models each proven through the real tool
     loop (a test holds ids to `:free`; an unsuffixed Kilo id is paid and
@@ -251,6 +292,32 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   that decides. The arrows stop belonging to the suggestion list the moment the
   draft holds a newline: a caret that cannot get back to the line being fixed is
   worse than a list that needs the mouse.
+- **Tab finishes the word, the arrows bring their row with them, and the list
+  closes when it has nothing left to offer** (2026-10-10, the user's three
+  asks, with pictures of `/bt` over a `/btw` row and of `/btw what is` still
+  offering `/btw`: _tab key should auto select the suggestion_, _up/down arrow
+  should move selection_, _should close suggestion when user type more extra,
+  or already in input text_). **Tab** takes the row the arrows walked to, or
+  the FIRST when none was, and it FILLS and never asks
+  (`handleChoosingSuggestion(row, true)`), whatever the row: Enter on a
+  walked-to row and a click still run a no-argument command on the press, but
+  a key that defaults to the first row must not be what empties the projector
+  (`/clear`, Tab). With a modifier, an
+  IME composing, a draft that holds a newline, or no list up, Tab is still the
+  way out of the box to the buttons. No row is highlighted by default, on
+  purpose: a highlighted row is what makes plain Enter take a suggestion
+  instead of starting a new line, and the list must never rewrite a question
+  under them. **The arrows did work and looked dead**: the list scrolls (`/`
+  alone offers more than fit) and opens on its first row, so ↑ from the box —
+  which wraps to the LAST row, the one nearest the box — lit a row out of
+  view; `RenderSuggestionsComp` now scrolls the active row in (`nearest`,
+  which moves nothing while it is already visible). **Closing** is two pure
+  functions with tests: `matchBuiltinActions` offers nothing once whitespace
+  follows the name (the words have started) and never offers back a NAME typed
+  in full — a longer one starting with it stays (`/screen` leaves
+  `/screen-show`, `/screen-hide`), and an ALIAS in full keeps its row, because
+  that row is what says `/clear` means `/clear-all`; `checkIsAlreadyTyped`
+  (`questionHelpers.ts`) drops a question row the box already starts with.
 - **Nothing in the chatbot window auto-hides, and that is a decision**
   (2026-09-11). The head row and the ask form were made to tuck away while
   the conversation scrolled, at the user's ask with a picture (2026-09-10,
@@ -260,7 +327,12 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   control that has to be found again before it can be pressed is a control
   in the way, in a window used minutes before a service. Do not reintroduce
   a hide-on-scroll, hide-on-idle or collapse of any row there without being
-  asked in so many words.
+  asked in so many words. **The one fold there is was asked for in so many
+  words** (2026-10-09, the head — _make the area collapsible_, above): it
+  happens when its arrow is pressed and at no other time, stays the way it
+  was left, and what it leaves on screen still says what every picker is set
+  to. It is not a licence for a second one, nor for this one to start
+  folding by itself.
 - **The window carries TWO warnings and they are about different things**
   (2026-09-12, `EC-174`, the user's own ask). `RenderProviderWarningComp`
   (`.chat-warn`) is about where the user's words GO — true of the keyless
@@ -386,7 +458,8 @@ answer` under them opens all of it for that window (184 in the Presenter),
   tools from `handleAsking` BEFORE any provider is chosen — no key, no history,
   no attachment, ~1.6 s — and typing `/` lists them in the suggestion list
   (`SuggestRowType` is the one shape questions and commands share; a command
-  with no argument asks on the press, one with an argument fills the box).
+  with no argument asks on the press, one with an argument fills the box;
+  Tab fills either — see _Tab finishes the word_ above).
   Three rules: a command reports what CHANGED (the screens are read back before
   AND after the press — `EC-76`'s lesson); typing it IS the consent, so the
   offered-never-done rule for the congregation's screen does not apply, but a
@@ -416,6 +489,19 @@ answer` under them opens all of it for that window (184 in the Presenter),
   searched for in the manual and answered with how to make an EMPTY file.
   A page with no song, a refused read and a site's bot check each get a
   sentence of their own (`EC-123`).
+  **`/btw <words>` is the ONE slash line that goes to a model** (2026-10-10,
+  the user's ask: _add command `/btw` to let assistant know it about asking
+  general question, e.g. `/btw "what is holy bible"`_; memory
+  `chatbot-builtin-commands`). `readGeneralQuestion` reads the words (quotes
+  off) and `handleAsking` takes the ordinary model road with
+  `AskExtraType.isGeneral`: the words plus a frame in the USER turn
+  (`toGeneralQuestionAsk` — never the cached system prompt), ONE round, NO
+  tools (the MCP session is not opened: no _Connecting to the app_ step,
+  no tool schemas), no known-question hint, no reader-button shortcut, the
+  transcript showing what was typed. With no assistant, or one that fails,
+  the answer says a general question needs an assistant and offers **Open
+  AI settings** — the guide never answers it. The bare `/btw` runs as a
+  command and says how; `/commands` names it as the exception.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it

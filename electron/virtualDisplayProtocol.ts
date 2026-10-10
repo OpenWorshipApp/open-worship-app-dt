@@ -619,7 +619,7 @@ export function checkIsVirtualDisplayDevViewerFile(url: URL, appPath: string) {
     if (!pathname.startsWith(root)) {
         return false;
     }
-    return /^(?:src\/|node_modules\/(?:\.vite\/deps\/|[^./])|tools\/owa-devtools-mcp\/[\w-]+\.mjs$|electron\/(?:screenMirrorProtocol|virtualDisplayProtocol|customLlmProtocol)\.ts$)/.test(
+    return /^(?:src\/|node_modules\/(?:\.vite\/deps\/|[^./])|tools\/owa-devtools-mcp\/[\w-]+\.mjs$|electron\/(?:screenMirrorProtocol|virtualDisplayProtocol|customLlmProtocol|stayAwakeProtocol)\.ts$)/.test(
         pathname.slice(root.length),
     );
 }

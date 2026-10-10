@@ -107,10 +107,14 @@ not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 / `_status`, `owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
 `owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`,
 `owa_present_bible`, `owa_foreground`, `owa_bible_item` / `_note` / `_xml`,
-`owa_undo`.
+`owa_presenting_flow`, `owa_undo`, and — the developer's, withheld from the
+chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
+`owa_media_file`.
 Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
 by its visible text, `owa_list_ui` enumerates the visible controls of a window,
-`owa_click` / `owa_type` act on a control by its label, `owa_goto_page`
+`owa_click` / `owa_type` act on a control by its label (`owa_click` right-
+or double-clicks with `button` / `clicks`; `owa_press_key`, `owa_drag` and
+`owa_menu` press a shortcut, drag by label and use the menu bar), `owa_goto_page`
 switches the main window between presenter and reader, and `owa_app_state`
 reports which window, page, language and theme are live — all without a
 snapshot. `owa_hide_screens` takes content

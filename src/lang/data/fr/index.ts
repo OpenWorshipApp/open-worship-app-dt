@@ -2254,8 +2254,9 @@ const dictionary = {
     'The name the chatbot shows for this server, such as LM Studio':
         "Le nom que l'assistant conversationnel affiche pour ce serveur, par exemple LM Studio",
     'Base URL': 'URL de base',
-    'The address that ends in /v1, such as http://localhost:1234/v1 for LM Studio':
-        "L'adresse qui se termine par /v1, par exemple http://localhost:1234/v1 pour LM Studio",
+    'The address that ends in /v1, such as http://localhost:1234/v1 for LM Studio or http://localhost:11434/v1 for Ollama':
+        "L'adresse qui se termine par /v1, par exemple http://localhost:1234/v1 pour LM Studio ou http://localhost:11434/v1 pour Ollama",
+    'Address corrected to': 'Adresse corrigée en',
     'API key (optional)': 'Clé API (facultative)',
     'Only if the server asks for one. It is stored encrypted and never shown to the chatbot window.':
         "Seulement si le serveur en demande une. Elle est chiffrée et jamais transmise à la fenêtre de l'assistant.",
@@ -2281,14 +2282,32 @@ const dictionary = {
         "Nom affiché dans l'assistant conversationnel (facultatif)",
     'Remove this model': 'Retirer ce modèle',
     'Sees pictures': 'Voit les images',
-    'Tick only if this model can look at a picture. Load models from server ticks it for you on LM Studio.':
-        'Cochez seulement si ce modèle peut regarder une image. Sur LM Studio, « Charger les modèles du serveur » la coche pour vous.',
+    'Tick only if this model can look at a picture. Load models from server ticks it for you on LM Studio and Ollama.':
+        'Cochez seulement si ce modèle peut regarder une image. Sur LM Studio et Ollama, « Charger les modèles du serveur » la coche pour vous.',
     'Not loaded in LM Studio right now. The first question waits for it to load.':
         "Pas chargé dans LM Studio pour l'instant. La première question attendra qu'il se charge.",
     'Loaded in LM Studio. Context length:':
         'Chargé dans LM Studio. Longueur de contexte :',
     'In LM Studio, load this model again with a Context Length of':
         'Dans LM Studio, rechargez ce modèle avec une longueur de contexte (Context Length) de',
+    'Not loaded in Ollama right now. The first question waits for it to load.':
+        "Pas chargé dans Ollama pour l'instant. La première question attendra qu'il se charge.",
+    'Loaded in Ollama. Context length:':
+        'Chargé dans Ollama. Longueur de contexte :',
+    'In the Ollama app, set Settings → Context length to':
+        "Dans l'application Ollama, réglez Settings → Context length (longueur de contexte) sur",
+    'Loaded in llama.cpp. Context length:':
+        'Chargé dans llama.cpp. Longueur de contexte :',
+    'Start llama-server again with a context size (-c) of':
+        'Relancez llama-server avec une taille de contexte (-c) de',
+    'Watch how to set up a free AI assistant on your own computer':
+        'Voir comment installer un assistant IA gratuit sur votre propre ordinateur',
+    'LM Studio videos': 'Vidéos LM Studio',
+    'Ollama videos': 'Vidéos Ollama',
+    'Opens YouTube videos about LM Studio in your browser':
+        'Ouvre des vidéos YouTube sur LM Studio dans votre navigateur',
+    'Opens YouTube videos about Ollama in your browser':
+        'Ouvre des vidéos YouTube sur Ollama dans votre navigateur',
     'That is too small for the assistant.':
         "C'est trop petit pour l'assistant.",
     'A follow-up question may not fit.':
@@ -2317,6 +2336,14 @@ const dictionary = {
         'Requis uniquement si votre clé Anthropic est liée à une identité',
     'App Assistant': "Assistant de l'application",
     'AI Chat': 'Chat IA',
+    // --- The stay-awake switch in the Presenter's and the Screen Mirror
+    // page's header (2026-10-09). The two sentences follow the name on the
+    // hover, after a dash, so they start in lower case.
+    'Stay Awake': 'Maintenir éveillé',
+    'this computer will not sleep while this page is open':
+        'cet ordinateur ne se mettra pas en veille tant que cette page est ouverte',
+    'turned off, this computer may sleep when no screen is showing':
+        "désactivé, cet ordinateur peut se mettre en veille quand aucun écran n'est affiché",
     // --- The caution asked before either AI window opens (2026-09-12).
     'Be careful with AI': "Soyez prudent avec l'IA",
     'AI can be confidently wrong.': "L'IA peut se tromper avec assurance.",
@@ -3332,6 +3359,30 @@ const dictionary = {
         'a modifié les passages bibliques enregistrés',
     'changed a Bible note': 'a modifié une note biblique',
     'put back an earlier change': 'a annulé une modification précédente',
+    'chose a menu item': 'a choisi un élément du menu',
+    'scrolled a list': 'a fait défiler une liste',
+    'changed a media file': 'a modifié un fichier multimédia',
+    'put a song back as saved': 'a remis un chant à son état enregistré',
+    'put a slide document back as saved':
+        'a remis un document de diapositives à son état enregistré',
+    'made a web page': 'a créé une page web',
+    'changed a web page': 'a modifié une page web',
+    'renamed a media file': 'a renommé un fichier multimédia',
+    'moved a media file to the trash':
+        'a déplacé un fichier multimédia vers la corbeille',
+    'imported a media file from the disk':
+        'a importé un fichier multimédia depuis le disque',
+    'changed a run sheet': 'a modifié un déroulé',
+    'made a run sheet': 'a créé un déroulé',
+    'renamed a run sheet': 'a renommé un déroulé',
+    'moved a run sheet to the trash': 'a déplacé un déroulé vers la corbeille',
+    'added a line to a run sheet': 'a ajouté une ligne à un déroulé',
+    'removed a line from a run sheet': "a retiré une ligne d'un déroulé",
+    'moved a line in a run sheet': 'a déplacé une ligne dans un déroulé',
+    'copied a line in a run sheet': 'a copié une ligne dans un déroulé',
+    'parked a line in a run sheet': 'a désactivé une ligne dans un déroulé',
+    'put a line of a run sheet back in play':
+        "a réactivé une ligne d'un déroulé",
     'started a countdown on the screen':
         "a lancé un compte à rebours à l'écran",
     'started a stopwatch on the screen': "a lancé un chronomètre à l'écran",

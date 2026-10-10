@@ -45,6 +45,25 @@ const importButton = () =>
     Array.from(host.querySelectorAll('button')).find(
         (x) => x.textContent === 'Import',
     )!;
+// The built-in lists arrive after an import() the component awaits; under a
+// loaded full run a fixed 30 ms was not always enough (2026-10-10), so the
+// mapping picker is waited for rather than assumed.
+const waitForMapping = async () => {
+    for (let tick = 0; tick < 80; tick += 1) {
+        const select = host.querySelector(
+            '[aria-label="Book name mapping"]',
+        ) as HTMLSelectElement | null;
+        if (select !== null && select.options.length > 1) {
+            return select;
+        }
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 25));
+        });
+    }
+    return host.querySelector(
+        '[aria-label="Book name mapping"]',
+    ) as HTMLSelectElement;
+};
 beforeEach(async () => {
     (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
     mocks.save.mockReset().mockResolvedValue(true);
@@ -77,9 +96,7 @@ test('offers built-in choices offline, requires a key, and saves the selected na
         (x) => x.textContent === 'KM1954',
     )!;
     await act(async () => key.click());
-    const select = host.querySelector(
-        '[aria-label="Book name mapping"]',
-    ) as HTMLSelectElement;
+    const select = await waitForMapping();
     expect(select.options.length).toBeGreaterThan(1);
     await act(async () => {
         select.value = '1';
@@ -125,9 +142,7 @@ test('a late online result preserves the selected built-in list and adds its sou
             />,
         );
     });
-    const select = host.querySelector(
-        '[aria-label="Book name mapping"]',
-    ) as HTMLSelectElement;
+    const select = await waitForMapping();
     await act(async () => {
         select.value = '1';
         select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -186,9 +201,7 @@ test('preserves a custom digit map and keeps the selected books when the locale 
             />,
         );
     });
-    const select = host.querySelector(
-        '[aria-label="Book name mapping"]',
-    ) as HTMLSelectElement;
+    const select = await waitForMapping();
     await act(async () => {
         select.value = '1';
         select.dispatchEvent(new Event('change', { bubbles: true }));

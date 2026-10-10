@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-09",
+    "updated": "2026-10-10",
     "sections": [
         {
             "id": "panels",
@@ -584,6 +584,28 @@
                     }
                 },
                 {
+                    "id": "suggestion-keyboard",
+                    "text": "How do I pick a suggestion with the keyboard?",
+                    "kind": "howto",
+                    "keywords": [
+                        "tab",
+                        "arrow",
+                        "arrows",
+                        "up",
+                        "down",
+                        "suggestion",
+                        "suggestions",
+                        "autocomplete",
+                        "complete",
+                        "list above the box",
+                        "keyboard"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Ask how to do something in the app"
+                    }
+                },
+                {
                     "id": "walk-me-through",
                     "text": "Can you walk me through it step by step?",
                     "kind": "howto",
@@ -692,6 +714,27 @@
                     "resources": {
                         "recipe": "W-42",
                         "find": "Limit per hour"
+                    }
+                },
+                {
+                    "id": "chat-fold-head",
+                    "text": "How do I get more room for the answers in the help window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "fold",
+                        "unfold",
+                        "collapse the top",
+                        "collapsible",
+                        "hide the pickers",
+                        "one line",
+                        "more space",
+                        "small window",
+                        "top of the help window",
+                        "pickers gone",
+                        "bring the pickers back"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
                     }
                 },
                 {
@@ -834,6 +877,24 @@
                     "resources": {
                         "recipe": "W-42",
                         "related": ["W-16"]
+                    }
+                },
+                {
+                    "id": "general-question",
+                    "text": "Can I ask the assistant something that is not about this app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "btw",
+                        "by the way",
+                        "general question",
+                        "not about the app",
+                        "anything",
+                        "bible question",
+                        "what is the bible",
+                        "ask anything"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
                     }
                 },
                 {

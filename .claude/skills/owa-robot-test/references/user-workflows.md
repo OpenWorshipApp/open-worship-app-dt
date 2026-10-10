@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-09b** (W-42 step 13 — **your own AI server** in **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**: name, address, **[en:tran:Test]**, **[en:tran:Load models from server]**, LM Studio saying under each model whether it is loaded, a **[en:tran:Sees pictures]** box per model, the 32k Context Length to load a model with, and a question that stops within a minute or two when the server's computer goes to sleep. Asked for by the user: _"test everything important (all pages) then find anything we can update the app to make it work smoothly with the local llm"_. Observed live 2026-10-09 against the user's LM Studio on another computer (`http://super-computer:1237/v1`, qwen3.5-9b): Presenter and Reader how-do-Is answered right in 3 rounds and 21–30 s, priced **free**; the panel, the box, **Not loaded in LM Studio right now** under the model, and with the machine off both the Test sentence and a question giving up after 81 s with _it went quiet in the middle of the question — check that the computer it runs on is on and awake_. The machine went down three times under load, so the loaded-model lines were proven in unit tests only.)
+**workflowsVersion: 2026-10-10c** (W-42 step 6 — **the list above the ask box is worked from the keyboard.** **Tab** takes a suggestion — the row the arrows walked to, or the first — and only ever FILLS the box, never sends: `/bt` then **Tab** reads `/btw ` with the cursor after it, and `/scr` then **Tab** reads `/screen` with nothing run. **↑** and **↓** bring their row into view: the list scrolls, and **↑** from the box lit the bottom row out of sight, so the arrows looked dead. The list closes once it has nothing left to offer — a command typed in full (`/screen` leaves **/screen-show** and **/screen-hide**), or the first word after one (`/btw what is`). And a bare `/` lists every command: it stopped at twenty of twenty-five, so **/credit**, **/limit**, **/lyric**, **/btw** and **/commands** were never offered. Asked for by the user with two pictures: _"tab key should auto select the suggestion"_, _"up/down arrow should move selection"_, _"should close suggestion when user type more extra, or already in input text"_. Observed live 2026-10-10 on the dev app's help window, each of the above, and **Tab** with no list open still moving on to **Ask**. CB-90.)
+
+Previous: **workflowsVersion: 2026-10-10b** (W-42 steps 6 and 13 — **your own AI server works with Ollama and the rest, and `/btw` asks a general question.** In **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**, **[en:tran:Test]** and **[en:tran:Load models from server]** now find the OpenAI door of a server whose address was typed one path off — Ollama's root `http://localhost:11434`, an address without its `/v1`, Ollama's own `/v1/systemone` — on the same computer and port only, save the right one and say _Address corrected to …_; the lines under each model speak in the server's own words — **Loaded in Ollama. Context length: …** with the Ollama app's **Settings → Context length** as the fix, beside LM Studio's reload — and Ollama's `vision` models get **[en:tran:Sees pictures]** ticked by Load; a wrong address or a model the server does not have is said as that in the chat, never as _not available to the account_. And **/btw what is the Bible?** puts a general question, not about the app, to the assistant in one go with nothing looked up. Asked for by the user: _"make the custom assistant work genericly … it's not working with ollama now … work with most popular llm server like lmstudio ollama"_ and _"add command `/btw` … e.g. `/btw "what is holy bible"`"_. Observed live 2026-10-10 on the dev app against Ollama 0.40 on this computer (`tev1:4b`, then `gemma4:e4b`): the row typed as `…/v1/systemone` answered `404 page not found` to every call and the chat read it as _not available to the account_; after the change, Test corrected the address to `http://localhost:11434/v1`, listed 2 chat models and Load ticked **[en:tran:Sees pictures]** on `gemma4:e4b` from Ollama's own `vision` capability. The chat's `/btw` answer was proven in unit tests only — the help window's caution is a person's to press. The same change takes in the rest of the family — llama.cpp's `llama-server` and llamafile (their `/props` says the context the server was started with), LocalAI, Jan, GPT4All, vLLM, SGLang and a LiteLLM proxy — with their usual addresses in step 13, a refusal written in vLLM's or a FastAPI shape read as one, and the flag that switches tool calling on named per server. The Settings half of those was observed live the same day on a scratch profile against stand-in servers answering each program's own shapes: a llama.cpp address typed without its `/v1` corrected and its **Loaded in llama.cpp. Context length: 4k** line with the `-c` fix, a LiteLLM proxy at its ROOT address refusing without its key and listing 2 models with it, vLLM's and GPT4All's lists loaded (the embedding model left out), and a wrong port answered _nothing answered at …_; the chat-side sentences (no such model, the tool-calling flags, the context fixes) are unit tested only — none of those programs is installed here, and Respawn, which adds the OpenAI Responses API in front of Ollama rather than chat completions, is not a server this feature can ask. And at the top of **[en:tran:Custom servers]**, under **[en:tran:Watch how to set up a free AI assistant on your own computer]**, the **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]** buttons each open a page of YouTube videos in the browser — asked for by the user: _"add link … in ai provider setting somewhere to let user know they can setup local ai assistant"_, then _"add … ollama as well"_. ST-75, ST-76, CB-89.)
+
+Previous: **workflowsVersion: 2026-10-10** (W-42 step 12 and W-35 step 1 — every part of **[en:tran:Settings]** → **Others** folds to its title: the three sections (**[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**, **[en:tran:Extra Binaries]**), and inside AI Providers each provider's card, **[en:tran:Custom servers]** and each server in it. A folded section keeps its state and its buttons, a folded card a ✓ when its key is saved or its server is offered, and what is folded is remembered. Asked for by the user with two pictures of that tab: _"make sections in setting to be collapsible"_, then _"make the nested sections collapsible as well"_. Observed live 2026-10-10 on the dev app in English: the three sections, the five cards and a server each folded and opened again by its title, the folds held across a change of tab, and a ✓ stood only beside a card with a saved key or an offered server. Not observed: the help window opening a folded card to put the cursor in its key box — that needs the Settings window to take real focus, and is unit tested; and the Khmer window — no new words, **[en:tran:Collapse]** and **[en:tran:Expand]** were already translated. ST-71, ST-72, ST-73, ST-74.)
+
+Previous: **workflowsVersion: 2026-10-09d** (W-01 and W-50 step 2 — **[en:tran:Stay Awake]**, the cup left of the **[en:tran:Settings]** gear in the Presenter's header and at the right of the Screen Mirror page's top bar: on unless switched off, it keeps this computer from sleeping for as long as the main window is on one of those two pages; the Bible Reader and the Slide Editor never hold the computer awake and have no cup. Asked for by the user with a picture of the header, the spot left of the gear circled: _"add an icon to toggle force os stay awake, stay awake for presenter.html and screen-mirror.html only. the toggle is enabled by default"_. Observed live 2026-10-09 on the dev app (Windows), reading the system's execution state after each press: with the cup on, the display was required on the Presenter and on the Screen Mirror page; switched off on either page it was released at once with no reload and `stay-awake` read `false` in `setting.json`; the Presenter reopened with the cup still off; switched back on, the display was required again; on the Bible Reader it was released with the cup still on, and no cup was there. Not observed: a computer actually going to sleep, the packaged build, macOS and Linux, and the Khmer hover — its three keys are held by `tranKeyCoverage.test.ts`.)
+
+Previous: **workflowsVersion: 2026-10-09c** (W-42 step 5 — the lists at the top of the help window fold to one line: a small arrow at their left edge folds **ASKING ABOUT**, **ASSISTANT**, **MODEL**, **LIMIT PER HOUR** and **CREDIT USED** into a line reading what each is set to, with the hourly limit at its end, and a click on that line opens them again. Asked for by the user with a picture of that head circled: _"make the area collapsible"_. Observed live 2026-10-09 on the dev help window at its default width: folded, the line read _Presenter · LM Studio super-computer · qwen/qwen3.5-9b_ and _$1 an hour_ and the head went from 100px to 27px; the line opened it with the three lists on the first line as before; the fold was written to `chatbot-head-collapsed` by the press. A reopen of the window finding it folded was not driven — unit tested only.)
+
+Previous: **workflowsVersion: 2026-10-09b** (W-42 step 13 — **your own AI server** in **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**: name, address, **[en:tran:Test]**, **[en:tran:Load models from server]**, LM Studio saying under each model whether it is loaded, a **[en:tran:Sees pictures]** box per model, the 32k Context Length to load a model with, and a question that stops within a minute or two when the server's computer goes to sleep. Asked for by the user: _"test everything important (all pages) then find anything we can update the app to make it work smoothly with the local llm"_. Observed live 2026-10-09 against the user's LM Studio on another computer (`http://super-computer:1237/v1`, qwen3.5-9b): Presenter and Reader how-do-Is answered right in 3 rounds and 21–30 s, priced **free**; the panel, the box, **Not loaded in LM Studio right now** under the model, and with the machine off both the Test sentence and a question giving up after 81 s with _it went quiet in the middle of the question — check that the computer it runs on is on and awake_. The machine went down three times under load, so the loaded-model lines were proven in unit tests only.)
 
 Previous: **workflowsVersion: 2026-10-09a** (new W-52 — **[en:tran:Export Settings]** / **[en:tran:Import Settings]** under **[en:tran:Apply Settings]** in the Settings sidebar: a nested tree of sections to carry, the export password, API keys only into a protected file, and an import that REPLACES each ticked section. Asked for by the user: _"in setting.html I want see option to export import setting … import can choose section to import and override the existing section"_ and _"export should allow choose section under nested sections"_. Observed live 2026-10-09 on a scratch dev profile, in English and Khmer: the two buttons, and the export dialog with eleven collapsed sections, their counts, the API keys row disabled and the password pair; the presses inside the dialog are a person's.)
 
@@ -1388,6 +1398,13 @@ The Presenter has a header and three resizable columns:
 - **Header:** page tabs — **Presenter** / **[en:tran:Bible Reader]** /
   **[en:tran:Slide Editor]** — the **[en:tran:Bible Lookup]** button
   (center, `Ctrl+B`), and the **[en:tran:Settings]** gear + Help buttons (right). 📸
+  Left of the gear, the cup is **[en:tran:Stay Awake]**: while it is on — and
+  it is, unless you switch it off — this computer does not go to sleep or
+  turn its display off for as long as the Presenter is open. Click the cup to
+  switch it off (it turns grey and empty) and again to switch it back on; the
+  choice is kept for the next launch. The Bible Reader and the Slide Editor
+  never hold the computer awake, so they have no cup. A screen that is
+  showing keeps the display on by itself, whatever the cup says.
 - **Left column:** your content libraries — the **[en:tran:Documents]** list (songs live
   here too, marked with a music note) and **Presenting Flows**.
 - **Middle column:** the working area — **Documents / Bibles** preview tabs plus the
@@ -1399,7 +1416,7 @@ The Presenter has a header and three resizable columns:
 
 Drag any divider between panels to resize them; the size is remembered. 📸
 
-_Verify: GL-12, NAV-01..02, PL-01, PR-04._
+_Verify: GL-12, NAV-01..02, NAV-24, PL-01, PR-04._
 
 ### W-01b — The `⋮` button: everything a thing can do
 
@@ -3921,7 +3938,8 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 
 1. Open **[en:tran:Others]**. Between the AI-key card and **Extra Binaries**
    there is a card headed **[en:tran:SongSelect Integration]**, with a
-   **SongSelect ↗** button that opens songselect.ccli.com in your browser. 📸
+   **SongSelect ↗** button that opens songselect.ccli.com in your browser. A card
+   showing only its heading is folded — click the heading to open it. 📸
 2. Fill **Client ID**, **Subscription Key** and **Redirect URI** (and **Client Secret**
    if you have one). Each field saves the moment you click away from it and gains a
    green ✓. Until all three are filled, **[en:tran:Sign In]** stays grey — hovering it
@@ -3954,7 +3972,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 > **SongSelect sign-in expired, please sign in again in Settings**; no internet says
 > **Could not reach SongSelect**.
 
-_Verify: ST-57, PL-103, PL-104._
+_Verify: ST-57, ST-71, PL-103, PL-104._
 
 ### W-36 — Import a public domain song (no account needed)
 
@@ -4516,6 +4534,14 @@ it is describing.
    left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
    its models; with no API key at all the third one reads **app guide · offline** under
    **ANSWERS FROM**, and clicking it opens the settings panel that takes a key. 📸
+   **Short of room? Fold those lists to one line.** A small arrow sits at the left
+   edge of the lists. Click it and the lists — with the **LIMIT PER HOUR** list and
+   the **CREDIT USED** line of step 8 — fold into a single line that still says
+   what each one is set to, such as _Presenter · Claude · Sonnet 5_, with the hourly
+   limit at its end (it turns amber when the assistant is close to that limit or
+   paused). Click that line to bring the lists back, exactly as they were. It only
+   ever folds when you press the arrow — never while you scroll or read — and it
+   stays the way you left it in every chat tab. 📸
    When **ASKING ABOUT** is **Bible Reader**, answers lead with the easiest mouse or
    touch route, use no more than three steps at first, say where the control is, and
    explain actions such as double-clicking or dragging. A lost item starts with a
@@ -4573,6 +4599,19 @@ it is describing.
    the screen number, and ask it again without writing the whole sentence out twice.
    (The plain arrow keys still move the cursor and still walk the list of
    suggestions, which is why this one wants **Alt** as well.) 📸
+   **The list above the box is worked from the keyboard.** As you type, the
+   questions it can already answer — or, after a `/`, the commands — open in a list
+   above the box. **↑** and **↓** walk it, and the list scrolls with you, so the row
+   you are on is always in view (**↑** from the box starts at the bottom row, the
+   one nearest the box). **Tab** takes a row: the one you walked to, or the first one
+   when you have not walked at all. Type `/bt`, press **Tab**, and the box reads
+   `/btw ` with the cursor after it, ready for your question. **Tab only fills the
+   box — it never sends.** Finishing `/screen-hide` with **Tab** turns nothing off
+   until you press **Ctrl+Enter**. (**Enter** on a row you walked to, and a click,
+   still run a command that needs no words after it.) The list closes by itself once
+   it has nothing left to offer — a command typed in full, or the first word typed
+   after one — and **Esc** closes it sooner. With no list open, **Tab** moves on to
+   the **Ask** button as it always did. 📸
    **You can just carry on talking.** Each tab is one conversation, so the answer to
    "is any screen showing?" can be replied to with **yes**, or with "how do I turn it
    off?", and it knows what you mean — you do not have to say the whole thing again.
@@ -4621,8 +4660,9 @@ it is describing.
    **Some things need no assistant at all — type `/`.** A line that starts with
    `/` is a **command**: it runs on the spot, on this machine, with no assistant,
    no key and no internet, and the answer says what CHANGED. Type `/` on its own
-   and the list of them appears above the box — walk it with the arrows or click
-   one. **/screen** says whether anything is on the projector AND what is on it
+   and the list of them appears above the box — every one of them, the list
+   scrolls — walk it with the arrows, finish one with **Tab**, or click one.
+   **/screen** says whether anything is on the projector AND what is on it
    — the song and the verse, the passage, the background — even while the screen
    is off, so _the screen is off but already holds Verse 2, turning it on shows
    that_ is the answer rather than a bare _nothing is showing_; **/screen-show**
@@ -4678,6 +4718,12 @@ it is describing.
    words does the same without an assistant — _Create a lyric file from
    https://…_ and _Create a lyric file for song "Amazing Grace"_ are answered
    by the built-in guide with the same buttons when no assistant can answer;
+   **/btw what is the Bible?** is the one command that DOES ask the assistant
+   — "by the way", a general question that is not about this app: it is
+   answered from the assistant's own knowledge in one go, with nothing of the
+   app looked up and no walkthrough offered (the quotes in `/btw "what is
+   holy bible"` are fine), and with no assistant to ask it says so and offers
+   **Open AI settings**, because the built-in guide only knows this app;
    **/commands**
    lists them all. The square buttons under a command's answer are
    commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
@@ -4812,6 +4858,17 @@ it is describing.
     worth getting before you go and fetch one. Once the OpenAI key is saved, its card
     also shows **[en:tran:Auto Play Audio AI when available]**; turn that switch on when
     supported Reader passages should begin their generated audio automatically.
+    **Every part of that page folds.** Click a section's title —
+    **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**,
+    **[en:tran:Extra Binaries]** — and it folds to one row, which still says whether it
+    is set up (**[en:tran:Key set]**, **[en:tran:Installed]**) and keeps its buttons;
+    click the title again to open it. Inside **AI Providers**, each provider's card,
+    **[en:tran:Custom servers]** and each server in it fold the same way: a folded
+    card shows a green ✓ beside its name when its key is saved, a folded server when
+    the chatbot is offering it. The app remembers what you folded. So when a key box
+    or **[en:tran:Add server]** is not where this page says, the part holding it is
+    folded — click its title. Choosing an assistant that needs a key (the next step)
+    opens whatever is folded in front of its key box by itself.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
     can change your mind between two questions. The ones whose key you have set can be
     chosen; the others are still in the list, in a quieter colour and reading
@@ -4830,23 +4887,50 @@ it is describing.
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
-    **Your own AI server answers too** — LM Studio or Ollama on this computer or on
-    another computer in the church, or any service that speaks the OpenAI API. In
-    **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**, press
+    **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
+    or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
+    computer or on another computer in the church, or any service that speaks the
+    OpenAI API. In **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]** —
+    where, for anyone who has no server yet,
+    **[en:tran:Watch how to set up a free AI assistant on your own computer]** is
+    followed by **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]**, each
+    opening a page of YouTube videos in your browser — press
     **[en:tran:Add server]**, give it a **[en:tran:Server name]** and its
-    **[en:tran:Base URL]** — for LM Studio `http://localhost:1234/v1`, or the other
-    computer's name in place of `localhost` — then press **[en:tran:Test]** and
-    **[en:tran:Load models from server]**. The server then shows in the **who answers**
-    list under its own name, with its models in the third list, and a question to it
-    costs nothing when it is on this computer or on the church's own network. On LM
-    Studio, **[en:tran:Test]** also writes under each model whether LM Studio has it
-    loaded right now. Load the model in LM Studio with a **Context Length** of 32k:
-    the assistant's instructions alone fill most of 16k, and a follow-up question
-    runs out of room there. Each model has a **[en:tran:Sees pictures]** box — tick
-    it for a model that can look at a picture. If the server's computer is switched
-    off or goes to sleep in the middle of a question, the answer stops within a
-    minute or two and says to check that the computer is on and awake, instead of
-    waiting on for ten. 📸
+    **[en:tran:Base URL]** — the address usually ends in `/v1`: LM Studio
+    `http://localhost:1234/v1`, Ollama `http://localhost:11434/v1`, llama.cpp,
+    llamafile and LocalAI `http://localhost:8080/v1`, Jan `http://localhost:1337/v1`,
+    GPT4All `http://localhost:4891/v1`, vLLM `http://localhost:8000/v1`, SGLang
+    `http://localhost:30000/v1`, LiteLLM `http://localhost:4000/v1`, or the other
+    computer's name in place of `localhost`; a server that asks for a key (LiteLLM,
+    vLLM started with one, Jan) takes it in **[en:tran:API key (optional)]** — then
+    press **[en:tran:Test]** and **[en:tran:Load models from server]**. An address
+    typed one path off is put right by **[en:tran:Test]**: Ollama's bare
+    `http://localhost:11434`, an address without its `/v1`, or a door of the
+    server's own such as Ollama's `/v1/systemone` is tried at the same computer and
+    port's `/v1` and root, the one that answers is saved and the line reads
+    _Address corrected to http://localhost:11434/v1_; when nothing there speaks the
+    OpenAI API the line says so and names the usual addresses. The server then
+    shows in the **who answers** list under its own name, with its models in the
+    third list, and a question to it costs nothing when it is on this computer or
+    on the church's own network. On LM Studio, Ollama and llama.cpp,
+    **[en:tran:Test]** also writes under each model what that program says of it
+    in its own words: **Not loaded in LM Studio right now** / **Not loaded in
+    Ollama right now**, or **Loaded in Ollama. Context length: 4k** with the fix
+    beside it — load the model again in LM Studio with a **Context Length** of
+    32k, set **Settings → Context length** in the Ollama app (or start Ollama with
+    `OLLAMA_CONTEXT_LENGTH=32768`), start `llama-server` again with `-c 32768` —
+    because the assistant's instructions alone fill most of 16k, and a follow-up
+    question runs out of room there. Each model has a **[en:tran:Sees pictures]** box
+    — tick it for a model that can look at a picture;
+    **[en:tran:Load models from server]** ticks it for you from LM Studio's and
+    Ollama's own word (a `vision` model). A model the server does not have, an
+    address that answers nothing, and
+    a model that cannot use tools (Ollama says so; llama.cpp wants `--jinja`, vLLM
+    and SGLang `--enable-auto-tool-choice --tool-call-parser`) are each said in the
+    chat as that, never as _not available to the account_. If the server's computer
+    is switched off or goes to sleep in the middle of a question, the answer stops
+    within a minute or two and says to check that the computer is on and awake,
+    instead of waiting on for ten. 📸
     **A key that cannot answer does not leave you with the guide while another of
     yours can.** When the assistant you chose is out of credit, refused, or its
     service is down, the question goes to the next assistant whose key you have set —
@@ -5025,7 +5109,7 @@ it is describing.
     section and restart the app: the chatbot, its tools and the debugging endpoint they
     use are then never started.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, ST-67, ST-68, ST-69, ST-70._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74._
 
 ### W-47 — Put messages on the screen
 
@@ -5231,8 +5315,11 @@ internet once the host opens to it (step 7).
    to copy. **[en:tran:Copy image]** under the code copies it as a picture,
    with the address written beneath it, to send to whoever sets up the guest.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
-   header — its one button, **[en:tran:Presenter]**, goes back — and it looks
-   for hosts as it opens, listing them under
+   header, only a top bar: **[en:tran:Presenter]** at its left goes back, and
+   the cup at its right is **[en:tran:Stay Awake]** — on unless you switch it
+   off, it keeps this computer from sleeping for as long as the page is
+   open, which is what a computer standing in for a projector needs. The page
+   looks for hosts as it opens, listing them under
    **[en:tran:Hosts on this network]**; **[en:tran:Rescan]** looks again.
    The scan asks on every network this computer is on, at every port from
    39240 to 39259; a host that answers on several networks is listed once,
@@ -5321,7 +5408,7 @@ internet once the host opens to it (step 7).
    picked again to retry. Two hosts can each show a screen on this computer
    at the same time.
 
-_Verify: SP-25, SP-26, SP-27, SP-28, SP-29._
+_Verify: SP-25, SP-26, SP-27, SP-28, SP-29, SP-32._
 
 ### W-51 — Show screens on a virtual display and watch it from another device
 

@@ -2,10 +2,10 @@
 id: W-50
 title: "Present on another computer with Screen Mirror"
 section: "Screen Mirror"
-verify: [SP-25, SP-26, SP-27, SP-28, SP-29]
+verify: [SP-25, SP-26, SP-27, SP-28, SP-29, SP-32]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-09"
+workflowsVersion: "2026-10-10"
 ---
 # W-50 — Present on another computer with Screen Mirror
 
@@ -30,8 +30,11 @@ internet once the host opens to it (step 7).
    to copy. **[en:tran:Copy image]** under the code copies it as a picture,
    with the address written beneath it, to send to whoever sets up the guest.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
-   header — its one button, **[en:tran:Presenter]**, goes back — and it looks
-   for hosts as it opens, listing them under
+   header, only a top bar: **[en:tran:Presenter]** at its left goes back, and
+   the cup at its right is **[en:tran:Stay Awake]** — on unless you switch it
+   off, it keeps this computer from sleeping for as long as the page is
+   open, which is what a computer standing in for a projector needs. The page
+   looks for hosts as it opens, listing them under
    **[en:tran:Hosts on this network]**; **[en:tran:Rescan]** looks again.
    The scan asks on every network this computer is on, at every port from
    39240 to 39259; a host that answers on several networks is listed once,
@@ -123,7 +126,7 @@ internet once the host opens to it (step 7).
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`SP-25` · `SP-26` · `SP-27` · `SP-28` · `SP-29`
+`SP-25` · `SP-26` · `SP-27` · `SP-28` · `SP-29` · `SP-32`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
 :::

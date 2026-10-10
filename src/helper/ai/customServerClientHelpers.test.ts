@@ -32,6 +32,7 @@ import {
     getCustomServerInstance,
     relayFetch,
     toCustomServerFailure,
+    toReadableErrorText,
 } from './customServerClientHelpers';
 import { checkIsCustomServerError } from '../../../electron/customLlmProtocol';
 import { checkIsCancelError } from '../../chatbot/cancelHelpers';
@@ -118,30 +119,243 @@ describe('the custom-server client', () => {
 
         const error = await ask().catch((caught) => caught);
 
-        // 32k, not the 16k minimum: 16k runs out on the follow-up.
+        // 32k, not the 16k minimum: 16k runs out on the follow-up. With
+        // no word on which program the server is, no program is named.
         expect(toCustomServerFailure(error)?.message).toBe(
             "the conversation does not fit this model's context — load it " +
-                'with a Context Length of 32k or more where the model is ' +
-                'loaded (in LM Studio: the model’s load settings), then ask ' +
-                'again',
+                'with a context length of 32k or more where the model is ' +
+                'served, then ask again',
         );
-        // With what LM Studio said, the size it IS loaded with is named.
-        expect(toCustomServerFailure(error, 16384)?.message).toMatch(
-            /^the conversation does not fit the 16k context this model is loaded with — /,
+        // With what the server said, the size it IS loaded with is named,
+        // and the fix is in the words of the program that loads it.
+        expect(
+            toCustomServerFailure(error, {
+                loadedContext: 16384,
+                kind: 'lm-studio',
+            })?.message,
+        ).toBe(
+            'the conversation does not fit the 16k context this model is ' +
+                'loaded with — load it again in LM Studio with a Context ' +
+                'Length of 32k or more (the model’s load settings), then ' +
+                'ask again',
+        );
+        expect(
+            toCustomServerFailure(error, {
+                loadedContext: 2050,
+                kind: 'ollama',
+            })?.message,
+        ).toBe(
+            'the conversation does not fit the 2k context this model is ' +
+                'loaded with — in the Ollama app, set Settings → Context ' +
+                'length to 32k or more (or start Ollama with ' +
+                'OLLAMA_CONTEXT_LENGTH=32768), then ask again',
+        );
+    });
+
+    it('reads Ollama’s own context refusal as the context being too small', async () => {
+        // Ollama 0.40, 2026-10-10: a 400 whose message is itself JSON.
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 400,
+            contentType: 'application/json',
+            text: JSON.stringify({
+                error: {
+                    message:
+                        '{"error":{"code":400,"message":"request (6856 tokens) exceeds the available context size (2304 tokens), try increasing it","type":"exceed_context_size_error"}}',
+                    type: 'invalid_request_error',
+                },
+            }),
+        });
+        const error = await ask().catch((caught) => caught);
+        expect(
+            toCustomServerFailure(error, { kind: 'ollama' })?.message,
+        ).toMatch(
+            /^the conversation does not fit this model's context — in the Ollama app/,
+        );
+    });
+
+    it('says the server has no such model when its 404 names one', async () => {
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 404,
+            contentType: 'application/json',
+            text: JSON.stringify({
+                error: {
+                    message: "model 'qwen3.5:4b' not found",
+                    type: 'not_found_error',
+                },
+            }),
+        });
+
+        const error = await ask().catch((caught) => caught);
+
+        expect(error.status).toBe(404);
+        expect(
+            toCustomServerFailure(error, {
+                kind: 'ollama',
+                model: 'qwen3.5:4b',
+                baseUrl: 'http://localhost:11434/v1',
+            })?.message,
+        ).toBe(
+            'this server has no model called “qwen3.5:4b” — check the model ' +
+                'id in Settings → Others → Custom servers, press Load models ' +
+                'from server there, or pull it (ollama pull qwen3.5:4b)',
+        );
+        // Another server: the same, without Ollama's command.
+        expect(toCustomServerFailure(error, { model: 'phi' })?.message).toMatch(
+            /press Load models from server there$/,
+        );
+    });
+
+    it('says the address is wrong when the 404 is a bare page', async () => {
+        // Ollama typed as `…/v1/systemone` (2026-10-10): a text page, which
+        // the generic reading called "not available to the account".
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 404,
+            contentType: 'text/plain',
+            text: '404 page not found',
+        });
+
+        const error = await ask().catch((caught) => caught);
+
+        expect(
+            toCustomServerFailure(error, {
+                baseUrl: 'http://localhost:11434/v1/systemone',
+            })?.message,
+        ).toBe(
+            'nothing speaks the OpenAI API at ' +
+                'http://localhost:11434/v1/systemone — in Settings → Others → ' +
+                'Custom servers, check the address and press Test (Ollama: ' +
+                'http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)',
+        );
+    });
+
+    it('says a model that cannot take tools cannot', async () => {
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 400,
+            contentType: 'application/json',
+            text: JSON.stringify({
+                error: {
+                    message:
+                        'registry.ollama.ai/library/gemma3:4b does not support tools',
+                    type: 'api_error',
+                },
+            }),
+        });
+        const error = await ask().catch((caught) => caught);
+        expect(toCustomServerFailure(error, { kind: 'ollama' })?.message).toBe(
+            'this model cannot use tools, which the assistant needs to look ' +
+                'things up — pick a model that supports tools (Ollama marks ' +
+                'them “tools” in its library)',
+        );
+    });
+
+    it('says which flag switches tool calling on, server by server', async () => {
+        // llama.cpp / llamafile: a 500 until `--jinja`.
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 500,
+            contentType: 'application/json',
+            text: JSON.stringify({
+                error: {
+                    code: 500,
+                    message: 'tools param requires --jinja flag',
+                    type: 'server_error',
+                },
+            }),
+        });
+        let error = await ask().catch((caught) => caught);
+        expect(toCustomServerFailure(error)?.message).toBe(
+            'this server needs tool calling switched on — start llama-server ' +
+                '(or llamafile) again with the --jinja flag, then ask again',
+        );
+        // vLLM / SGLang: a 400 written in a shape with no `error` key.
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 400,
+            contentType: 'application/json',
+            text: JSON.stringify({
+                object: 'error',
+                message:
+                    '"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set',
+                type: 'BadRequestError',
+                param: null,
+                code: 400,
+            }),
+        });
+        error = await ask().catch((caught) => caught);
+        expect(toCustomServerFailure(error)?.message).toBe(
+            'this server needs tool calling switched on — start it again ' +
+                'with --enable-auto-tool-choice and --tool-call-parser (vLLM, ' +
+                'SGLang), then ask again',
+        );
+    });
+
+    it('reads a refusal vLLM, SGLang or a FastAPI server wrote in its own shape', async () => {
+        // vLLM's unknown model: JSON with no `error` key, which the SDK
+        // would otherwise report as "404 status code (no body)".
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 404,
+            contentType: 'application/json',
+            text: JSON.stringify({
+                object: 'error',
+                message: 'The model `qwen3.5` does not exist.',
+                type: 'NotFoundError',
+                param: null,
+                code: 404,
+            }),
+        });
+        let error = await ask().catch((caught) => caught);
+        expect(error.error).toEqual({
+            message: 'The model `qwen3.5` does not exist.',
+            type: 'NotFoundError',
+            code: 404,
+        });
+        expect(
+            toCustomServerFailure(error, { model: 'qwen3.5' })?.message,
+        ).toMatch(/^this server has no model called “qwen3.5”/);
+        // A FastAPI `detail`.
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: true,
+            status: 401,
+            contentType: 'application/json',
+            text: JSON.stringify({ detail: 'Unauthorized' }),
+        });
+        error = await ask().catch((caught) => caught);
+        expect(error.error).toEqual({
+            message: 'Unauthorized',
+            type: null,
+            code: null,
+        });
+        // The usual shape, and a text page, are left as they are.
+        expect(toReadableErrorText(404, '{"error":{"message":"x"}}')).toBe(
+            '{"error":{"message":"x"}}',
+        );
+        expect(toReadableErrorText(404, '404 page not found')).toBe(
+            '404 page not found',
+        );
+        expect(toReadableErrorText(200, '{"message":"fine"}')).toBe(
+            '{"message":"fine"}',
+        );
+        expect(toReadableErrorText(500, '{"detail":[{"loc":"x"}]}')).toBe(
+            '{"error":{"message":"[{\\"loc\\":\\"x\\"}]","type":null,"code":null}}',
         );
     });
 
     it('leaves any other refusal to the generic reading', async () => {
         relay.requestCustomLlm.mockResolvedValue({
             ok: true,
-            status: 404,
+            status: 401,
             contentType: 'application/json',
-            text: JSON.stringify({ error: { message: 'model not found' } }),
+            text: JSON.stringify({ error: { message: 'bad key' } }),
         });
 
         const error = await ask().catch((caught) => caught);
 
-        expect(error.status).toBe(404);
+        expect(error.status).toBe(401);
         expect(toCustomServerFailure(error)).toBeNull();
     });
 

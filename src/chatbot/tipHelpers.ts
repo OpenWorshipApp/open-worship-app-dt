@@ -121,7 +121,7 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
         id: 'suggest',
         text:
             'Type a few words and a list of questions it can already answer ' +
-            'drops up; the arrows walk it.',
+            'drops up; ↑ and ↓ walk it, Tab takes one.',
     },
     {
         id: 'credit',
@@ -134,6 +134,12 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
         text:
             'It cannot run up the bill: “Limit per hour” at the top pauses ' +
             'it at $1 an hour until you press Allow more.',
+    },
+    {
+        id: 'fold-head',
+        text:
+            'Short of room? The arrow at the top left folds the pickers to ' +
+            'one line; press the line to open them.',
     },
 ];
 

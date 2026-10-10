@@ -88,6 +88,12 @@ import {
     type PptxToHtmlsParamsType,
 } from './msHelpers';
 import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import {
+    AGENT_MENU_CLICK_CHANNEL,
+    AGENT_MENU_LIST_CHANNEL,
+    clickAgentMenuItem,
+    listAgentMenuItems,
+} from './appMenuAgentHelpers';
 import { captureOAuthRedirectUrl } from './oauthHelpers';
 import { relaunchApp } from './taskbarHelpers';
 import { readWebPage } from './webPageHelpers';
@@ -100,6 +106,7 @@ import {
     CUSTOM_LLM_FETCH_CHANNEL,
     type CustomLlmFetchRequestType,
 } from './customLlmProtocol';
+import { STAY_AWAKE_SETTING_NAME } from './stayAwakeProtocol';
 import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
 const { dialog, ipcMain, app } = electron;
@@ -189,6 +196,37 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     ipcMain.on('main:app:get-temp-path', (event) => {
         event.returnValue = app.getPath('temp');
+    });
+
+    // `owa_menu` (2026-10-10): the native menu bar, which no renderer can see.
+    // Synchronous like the other agent reads here; the press is handed the
+    // window that asked, so a role acts on it. A `sendSync` with no
+    // `returnValue` leaves the renderer hanging, so a throw becomes an answer.
+    const answerAgentMenu = (
+        event: Electron.IpcMainEvent,
+        read: () => unknown,
+    ) => {
+        try {
+            event.returnValue = read();
+        } catch (error) {
+            event.returnValue = {
+                isError: true,
+                reason: error instanceof Error ? error.message : String(error),
+            };
+        }
+    };
+    ipcMain.on(AGENT_MENU_LIST_CHANNEL, (event) => {
+        answerAgentMenu(event, () => {
+            return listAgentMenuItems();
+        });
+    });
+    ipcMain.on(AGENT_MENU_CLICK_CHANNEL, (event, item: unknown) => {
+        answerAgentMenu(event, () => {
+            return clickAgentMenuItem(
+                String(item ?? ''),
+                BrowserWindow.fromWebContents(event.sender),
+            );
+        });
     });
 
     // What the in-app chatbot connects to. Both doors are on ports this
@@ -1201,6 +1239,16 @@ export function initEventOther(appController: ElectronAppController) {
             } else if (type === 'clear') {
                 appController.settingManager.clearClientSettings();
                 returnValue = true;
+            }
+            // The one client setting this process acts on while it runs.
+            // Read here rather than on a channel of its own, so the OS request
+            // follows whoever wrote it -- the header's icon or a Clear.
+            if (
+                type === 'clear' ||
+                (key === STAY_AWAKE_SETTING_NAME &&
+                    (type === 'set' || type === 'delete'))
+            ) {
+                appController.mainController.syncStayAwake();
             }
             event.returnValue = returnValue;
         },

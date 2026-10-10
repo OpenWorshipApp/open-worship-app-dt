@@ -136,6 +136,55 @@ describe('runCustomLlmFetch', () => {
         expect(deps.fetch).not.toHaveBeenCalled();
     });
 
+    it('probes the model list at another path of the SAME server only', async () => {
+        const deps = genDeps({
+            readKeysText: () => JSON.stringify({ [SERVER_ID]: 'sk-local' }),
+        });
+        const result = await runCustomLlmFetch(
+            genRequest({ probeBaseUrl: 'http://localhost:1234' }),
+            deps,
+        );
+        expect(result).toMatchObject({ ok: true, status: 200 });
+        const [url, init] = deps.fetch.mock.calls[0];
+        expect(url).toBe('http://localhost:1234/models');
+        // The same server, so the key goes with it.
+        expect(init.headers.authorization).toBe('Bearer sk-local');
+
+        // Another host, another port, another scheme: never, key or no key.
+        for (const probeBaseUrl of [
+            'http://localhost:11434/v1',
+            'https://localhost:1234/v1',
+            'http://evil.example/v1',
+            'not an address',
+        ]) {
+            expect(
+                await runCustomLlmFetch(genRequest({ probeBaseUrl }), deps),
+            ).toMatchObject({ ok: false, reason: 'not-allowed' });
+        }
+        // And only the model list is ever probed.
+        expect(
+            await runCustomLlmFetch(
+                genRequest({
+                    method: 'POST',
+                    path: '/chat/completions',
+                    body: '{}',
+                    probeBaseUrl: 'http://localhost:1234',
+                }),
+                deps,
+            ),
+        ).toMatchObject({ ok: false, reason: 'not-allowed' });
+        expect(
+            await runCustomLlmFetch(
+                genRequest({
+                    path: '/api/tags',
+                    probeBaseUrl: 'http://localhost:1234',
+                }),
+                deps,
+            ),
+        ).toMatchObject({ ok: false, reason: 'not-allowed' });
+        expect(deps.fetch).toHaveBeenCalledTimes(1);
+    });
+
     it('refuses every call but the ones the chatbot makes', async () => {
         const deps = genDeps();
         for (const request of [

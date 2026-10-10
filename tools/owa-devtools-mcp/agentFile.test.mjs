@@ -89,6 +89,7 @@ describe('the shared wording', () => {
             'create',
             'update',
             'rename',
+            'revert',
             'delete',
         ]);
         // A song's slides are made from its words, so only the slide tool

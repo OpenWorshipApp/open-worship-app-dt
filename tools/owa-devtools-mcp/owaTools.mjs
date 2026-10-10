@@ -18,9 +18,12 @@ import {
 import {
   addOpenedWindow,
   genClickExpression,
+  genDragExpression,
   genFindUiExpression,
   genHighlightSelectorExpression,
   genListUiExpression,
+  genPressKeyExpression,
+  genScrollExpression,
   genTypeExpression,
 } from './domMatch.mjs';
 import { readLiveInstances } from './discovery.mjs';
@@ -40,6 +43,7 @@ import {
   selectGuideStepsForTopic,
   stripInternalIds,
   toGuideSteps,
+  toKeyCode,
   toKeystroke,
 } from './guide.mjs';
 import {
@@ -72,8 +76,17 @@ import {
   genAgentFileExpression,
 } from './agentFile.mjs';
 import {
+  AGENT_MENU_ACTIONS,
+  formatMenuResult,
+  genMenuClickExpression,
+  genMenuListExpression,
+} from './agentMenu.mjs';
+import {
   AGENT_BIBLE_ITEM_ACTIONS,
+  AGENT_MEDIA_FILE_ACTIONS,
+  AGENT_MEDIA_KINDS,
   AGENT_NOTE_ACTIONS,
+  AGENT_PRESENTING_FLOW_ACTIONS,
   AGENT_UNDO_ACTIONS,
   AGENT_UNDO_TEXT,
   formatAgentDataResult,
@@ -1510,13 +1523,111 @@ export function registerOwaTools(server) {
     },
   );
 
+  // The run sheets. The one editable document with no Save button -- every
+  // change the panel makes is the file -- so the backup behind each action is
+  // its whole undo, and the one place a volunteer's "add this to Sunday" had
+  // no tool at all: the panel is built by dragging (2026-10-10).
+  server.registerTool(
+    'owa_presenting_flow',
+    {
+      description:
+        "The user's run sheets (presenting flows): the order of a " +
+        "service. `list` names them; `info` reads one's lines (number, " +
+        'title, kind, isParked); `create`, `rename` (to `newName`) and ' +
+        '`delete` (to the trash) work on whole sheets. `add` puts a line ' +
+        'into sheet `name`: a `document` (a song or slide document by its ' +
+        'Documents-list name), a Bible `reference` ("John 3:16", in ' +
+        '`version`), or an `actionId` ("clear-all", "next-timeout" with ' +
+        '`seconds`, "screen-show" with `screenIds`; a wrong id answers with ' +
+        'them all) -- at line `at`, else last. `remove`, `duplicate`, ' +
+        '`park` (keep it listed, out of the run) and `unpark` take `line`; ' +
+        '`move` takes `line` and `to`. Nothing reaches a screen: the ' +
+        'operator runs the sheet. ' +
+        AGENT_UNDO_TEXT,
+      inputSchema: {
+        action: z.enum(AGENT_PRESENTING_FLOW_ACTIONS),
+        name: z
+          .string()
+          .optional()
+          .describe('The sheet as the Presenting Flows panel shows it'),
+        newName: z.string().optional(),
+        document: z.string().optional(),
+        reference: z.string().optional(),
+        version: z.string().optional(),
+        actionId: z.string().optional(),
+        seconds: z.number().int().optional(),
+        screenIds: z.array(z.number().int()).optional(),
+        line: z.number().int().optional().describe('A line number from info'),
+        to: z.number().int().optional(),
+        at: z.number().int().optional(),
+        page: z.string().optional(),
+      },
+    },
+    async ({ page, ...request }) => {
+      try {
+        const nameReason = findDataNameReason(request.name, request.newName);
+        if (nameReason !== null) {
+          return toErrorResult(new Error(nameReason));
+        }
+        return await runDataRequest('presenting-flow', request, page);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The Background tabs' files. Three kinds are binary, which the backup
+  // store could not hold until the `blob` restore (2026-10-10): a clip is
+  // copied beside its backup before it goes to the trash, and an undo copies
+  // it back. An import copies a file from the disk in; a web page is written.
+  server.registerTool(
+    'owa_media_file',
+    {
+      description:
+        "The user's Background files by `kind`: pictures, clips, tracks " +
+        '(the Images / Videos / Audios tabs), web pages (Webs), and the ' +
+        "Documents folder's files (`document`: import a PDF, PowerPoint, " +
+        'Word, song or slide file from the disk; list them). `list` ' +
+        'names them (full names, "bg.mp4"); `info` reads one (a web ' +
+        "page's text); `rename` (to `newName`, extension kept); `delete` " +
+        '(to the trash, a copy kept so owa_undo puts it back); `import` ' +
+        'copies the file at `path` on the disk into the folder, never over ' +
+        'an existing one; `create` / `update` write a web page from ' +
+        '`content`. Nothing reaches a screen. ' +
+        AGENT_UNDO_TEXT,
+      inputSchema: {
+        action: z.enum(AGENT_MEDIA_FILE_ACTIONS),
+        kind: z.enum(AGENT_MEDIA_KINDS),
+        name: z.string().optional().describe('The full file name shown'),
+        newName: z.string().optional(),
+        content: z
+          .string()
+          .optional()
+          .describe('A web page, for create/update'),
+        path: z.string().optional().describe('A file on the disk, for import'),
+        page: z.string().optional(),
+      },
+    },
+    async ({ page, ...request }) => {
+      try {
+        const nameReason = findDataNameReason(request.name, request.newName);
+        if (nameReason !== null) {
+          return toErrorResult(new Error(nameReason));
+        }
+        return await runDataRequest('media', request, page);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
   server.registerTool(
     'owa_undo',
     {
       description:
         'Put back a change made through these tools -- a song, slide ' +
-        'document, slide, note or saved passage that was deleted, ' +
-        'changed, renamed or created. `list` shows the recent ' +
+        'document, slide, note, saved passage, run sheet or media file that was ' +
+        'deleted, changed, renamed or created. `list` shows the recent ' +
         'changes, newest first, each with an `id`; `undo` puts back ' +
         'change `id`, or with no `id` the newest one not yet undone. ' +
         'An undo is itself a change in the list, so it can be undone ' +
@@ -1823,13 +1934,16 @@ export function registerOwaTools(server) {
         'how a word several panels share picks the right one. The ' +
         'answer says what was pressed AND what the press did: ' +
         '`didChange`, `isOnNow` for a control with an on/off state, ' +
-        '`opened` (menu, dialog, panel or window) for what it brought ' +
-        'up, and `unverified` when nothing changed. Pressing ' +
+        '`opened` / `closed` (menu, dialog, panel or window) for what it ' +
+        'brought up or put away, and `unverified` when nothing changed. Pressing ' +
         'something is not the thing happening -- on `unverified`, ' +
         'check (`owa_list_screens`, `owa_app_state`, `owa_find_ui`) ' +
         'before telling the user it worked. Anything that changes what the ' +
         'congregation sees -- presenting, clearing, hiding a screen ' +
-        '-- must be offered to the user first, never done unasked.',
+        '-- must be offered to the user first, never done unasked. ' +
+        '`button: "right"` opens the control\'s own menu (a list row\'s ' +
+        'Rename, Move to Trash…); `clicks: 2` double-clicks (opens a ' +
+        'document, plays a clip).',
       inputSchema: {
         find: z
           .union([z.string(), z.array(z.string())])
@@ -1837,10 +1951,12 @@ export function registerOwaTools(server) {
             'The label written on the control, or a list of ' +
               'candidate labels to try in order.',
           ),
+        button: z.enum(['left', 'right']).optional(),
+        clicks: z.number().int().min(1).max(2).optional(),
         page: z.string().optional().describe(PAGE_TEXT),
       },
     },
-    async ({ find, page }) => {
+    async ({ find, button, clicks, page }) => {
       return await attempt(async () => {
         const finds = (Array.isArray(find) ? find : [find]).filter(Boolean);
         if (finds.length === 0) {
@@ -1851,7 +1967,7 @@ export function registerOwaTools(server) {
             withTranslations(finds, await readAppLanguage(page)),
             undefined,
             undefined,
-            { guard: genPressGuard() },
+            { guard: genPressGuard(), button, clicks },
           ),
           { match: page },
         );
@@ -1918,6 +2034,233 @@ export function registerOwaTools(server) {
         }
         return result;
       });
+    },
+  );
+
+  // A keystroke, JUDGED. chrome-devtools' `press_key` drives the real
+  // keyboard and reads nothing (`MC-13`: Enter on a focused Move to Trash
+  // names no label at any point), and in this app the function keys ARE the
+  // projector. This one sends the same keydown/keyup the walkthrough card
+  // sends and carries the card's guard: a key is as destructive as the
+  // control whose title names it, a question on screen is the user's, and
+  // Enter or Space on a destructively named focus is the press it would be.
+  // A lone character counts here ("1", "a") where the card's parser refuses
+  // one -- there it is bold prose nine times in ten; here it was typed on
+  // purpose.
+  server.registerTool(
+    'owa_press_key',
+    {
+      description:
+        'Press a keyboard shortcut in the app window: "F5", "Ctrl+S", ' +
+        '"Escape", "ArrowRight", "Space", "Shift+Enter". With `find`, ' +
+        'that control is focused first -- arrow keys and Space belong to ' +
+        'the panel that has focus (a slide list, a run player). Refuses ' +
+        'a key whose control cannot be undone (F6 is Clear All), any key ' +
+        'while the app is asking the user a question, and Enter or Space ' +
+        'on such a control. F5 shows the projector and F10 clears every ' +
+        'foreground extra: only when asked. The answer says what it ' +
+        'brought up or moved; `unverified` means check before saying so.',
+      inputSchema: {
+        keys: z
+          .string()
+          .describe('The shortcut as written on a tooltip, "Ctrl+Shift+A"'),
+        find: z
+          .union([z.string(), z.array(z.string())])
+          .optional()
+          .describe('A control to focus first, by its label'),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ keys, find, page }) => {
+      return await attempt(async () => {
+        const phrase = typeof keys === 'string' ? keys.trim() : '';
+        let keystroke = toKeystroke(phrase);
+        if (keystroke === null && /^\S$/u.test(phrase)) {
+          keystroke = {
+            key: phrase,
+            code: toKeyCode(phrase),
+            ctrlKey: false,
+            altKey: false,
+            shiftKey: false,
+            metaKey: false,
+            label: phrase,
+          };
+        }
+        if (keystroke === null) {
+          throw new Error(
+            `"${phrase}" is not a keystroke. Write it as a tooltip does: ` +
+              '"F5", "Ctrl+S", "Escape", "ArrowRight", "Space".',
+          );
+        }
+        const finds =
+          find === undefined
+            ? null
+            : (Array.isArray(find) ? find : [find]).filter(Boolean);
+        const { value } = await evaluateInApp(
+          genPressKeyExpression(keystroke, {
+            finds:
+              finds === null || finds.length === 0
+                ? null
+                : withTranslations(finds, await readAppLanguage(page)),
+            guard: genPressGuard(),
+          }),
+          { match: page },
+        );
+        if (typeof value?.refused === 'string') {
+          recordPressRefusal('owa_press_key', value);
+          throw new Error(genPressRefusalReason(value));
+        }
+        return value;
+      });
+    },
+  );
+
+  // Drag and drop by the words on both ends. The mouse's move this app is
+  // built around -- a song into a run sheet, a slide to another place, a
+  // background onto a slide card -- and chrome-devtools' `drag` aims by uid
+  // and drives the pointer, which this app's HTML5 drop handlers never read.
+  server.registerTool(
+    'owa_drag',
+    {
+      description:
+        'Drag one control onto another, both found by their labels -- ' +
+        'a Documents row into a presenting flow, a slide onto another ' +
+        'slide, a background onto a slide card. `place` is where on the ' +
+        'target: `on` (default) is what dropping on it means in the app ' +
+        '(attach, replace, play); `before` / `after` put it at that ' +
+        'position in a list. The answer says whether anything took the ' +
+        'drop (`accepted`); on `unverified` check the list before saying ' +
+        'it worked. Same refusals as owa_click.',
+      inputSchema: {
+        from: z
+          .union([z.string(), z.array(z.string())])
+          .describe('The label on the thing to drag'),
+        to: z
+          .union([z.string(), z.array(z.string())])
+          .describe('The label on the thing to drop it on'),
+        place: z
+          .enum(['on', 'before', 'after'])
+          .optional()
+          .describe(
+            'on (default) drops onto the control; before / after are a ' +
+              "row's reorder bands, Ctrl held -- after lands on the next " +
+              "row's top band, which is how this app's rows read it.",
+          ),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ from, to, place, page }) => {
+      return await attempt(async () => {
+        const fromFinds = (Array.isArray(from) ? from : [from]).filter(Boolean);
+        const toFinds = (Array.isArray(to) ? to : [to]).filter(Boolean);
+        if (fromFinds.length === 0 || toFinds.length === 0) {
+          throw new Error('Pass the label to drag and the label to drop on.');
+        }
+        const langCode = await readAppLanguage(page);
+        const { value } = await evaluateInApp(
+          genDragExpression(
+            withTranslations(fromFinds, langCode),
+            withTranslations(toFinds, langCode),
+            { place, guard: genPressGuard() },
+          ),
+          { match: page },
+        );
+        if (typeof value?.refused === 'string') {
+          recordPressRefusal('owa_drag', value);
+          throw new Error(genPressRefusalReason(value));
+        }
+        return value;
+      });
+    },
+  );
+
+  // A list scrolled. This app's long lists are windowed, so a row past the
+  // fold is not in the DOM: `owa_list_ui` cannot list it and `owa_click`
+  // cannot press it until the list has been scrolled -- which a user does
+  // without thinking (2026-10-10, MC-54).
+  server.registerTool(
+    'owa_scroll',
+    {
+      description:
+        'Scroll a list in the app to reach rows that are not on screen -- ' +
+        'the long lists are windowed, so a row past the fold matches ' +
+        'nothing until the list is scrolled. `find` names the list, its ' +
+        'panel or a row in it (default: the biggest list on screen); `to` ' +
+        'is `down` (default), `up`, `top` or `bottom`. Answers where the ' +
+        'list is now, `isAtBottom`, and `inView`: the labels that can be ' +
+        'pressed after the scroll.',
+      inputSchema: {
+        find: z
+          .union([z.string(), z.array(z.string())])
+          .optional()
+          .describe('The list, panel or a row in it, by label'),
+        to: z.enum(['down', 'up', 'top', 'bottom']).optional(),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ find, to, page }) => {
+      return await attempt(async () => {
+        const finds =
+          find === undefined
+            ? []
+            : (Array.isArray(find) ? find : [find]).filter(Boolean);
+        const { value } = await evaluateInApp(
+          genScrollExpression(
+            finds.length === 0
+              ? []
+              : withTranslations(finds, await readAppLanguage(page)),
+            { to },
+          ),
+          { match: page },
+        );
+        return value;
+      });
+    },
+  );
+
+  // The native menu bar -- the one surface of the window no page expression
+  // can see or press, so Reload, the View menu's widget toggles, Export Data
+  // and the Help items were a user's alone (2026-10-10). The main process
+  // lists and presses it (`electron/appMenuAgentHelpers.ts`) and refuses by
+  // itself what takes the app down or opens Developer Tools.
+  server.registerTool(
+    'owa_menu',
+    {
+      description:
+        "The app's menu bar (File, Edit, View, Tools, Window, Help). " +
+        '`list` names every item with its path and `isEnabled` / ' +
+        '`isChecked`, and marks `refused` the ones nobody may press for ' +
+        'the user (Quit, Relaunch, Developer Tools). `click` presses ' +
+        '`item` by its path ("View > Reload") or its bare label when ' +
+        'that is unique. Reload re-reads the window the user is in.',
+      inputSchema: {
+        action: z.enum(AGENT_MENU_ACTIONS),
+        item: z.string().optional().describe('"Menu > Item", for click'),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ action, item, page }) => {
+      try {
+        if (action === 'click' && (typeof item !== 'string' || !item.trim())) {
+          return toErrorResult(
+            new Error('Name the menu item to press, as "View > Reload".'),
+          );
+        }
+        const { value } = await evaluateInApp(
+          action === 'list'
+            ? genMenuListExpression()
+            : genMenuClickExpression(item.trim()),
+          { match: page },
+        );
+        const formatted = formatMenuResult(
+          action === 'list' ? { items: value } : value,
+        );
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
     },
   );
 

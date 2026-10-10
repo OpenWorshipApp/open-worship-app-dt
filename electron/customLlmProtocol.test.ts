@@ -4,16 +4,24 @@ import {
     CUSTOM_CONTEXT_COMFORTABLE,
     CUSTOM_CONTEXT_MIN,
     CustomServerError,
+    LLAMA_CPP_PROPS_PATH,
     LM_STUDIO_MODELS_PATH,
     MAX_CUSTOM_MODELS,
     MAX_CUSTOM_SERVERS,
+    OLLAMA_PS_PATH,
+    OLLAMA_TAGS_PATH,
     checkIsAllowedCustomLlmCall,
     checkIsCustomServerError,
     checkIsLocalNetworkUrl,
     checkIsLoopbackUrl,
+    checkIsSameOrigin,
+    genCustomServerAddressCandidates,
     toContextLabel,
     toCustomLlmCallUrl,
+    toCustomServerKindLabel,
+    toLlamaCppModelInfo,
     toLmStudioModelInfoMap,
+    toOllamaModelInfoMap,
     checkIsUsableCustomServer,
     decodeCustomModel,
     encodeCustomModel,
@@ -142,6 +150,185 @@ describe('toCustomLlmCallUrl', () => {
         expect(
             toCustomLlmCallUrl('http://localhost:11434', LM_STUDIO_MODELS_PATH),
         ).toBeNull();
+    });
+
+    it('asks Ollama’s own two lists at the root of a /v1 address too', () => {
+        expect(
+            toCustomLlmCallUrl('http://localhost:11434/v1', OLLAMA_TAGS_PATH),
+        ).toBe('http://localhost:11434/api/tags');
+        expect(
+            toCustomLlmCallUrl('http://localhost:11434/v1', OLLAMA_PS_PATH),
+        ).toBe('http://localhost:11434/api/ps');
+        expect(
+            toCustomLlmCallUrl('http://localhost:11434', OLLAMA_PS_PATH),
+        ).toBeNull();
+    });
+});
+
+describe('genCustomServerAddressCandidates', () => {
+    it('offers the same server’s usual paths, best first, never another host', () => {
+        // Ollama typed as its own `/v1/systemone` door (2026-10-10).
+        expect(
+            genCustomServerAddressCandidates(
+                'http://localhost:11434/v1/systemone',
+            ),
+        ).toEqual([
+            'http://localhost:11434/v1',
+            'http://localhost:11434/v1/systemone/v1',
+            'http://localhost:11434',
+        ]);
+        // Ollama's root, as its docs write the server address.
+        expect(
+            genCustomServerAddressCandidates('http://localhost:11434'),
+        ).toEqual(['http://localhost:11434/v1']);
+        // Behind a proxy's path: that path's own `/v1` is a guess too.
+        expect(
+            genCustomServerAddressCandidates('https://example.com/team/'),
+        ).toEqual([
+            'https://example.com/v1',
+            'https://example.com/team/v1',
+            'https://example.com',
+        ]);
+        // The address itself is never a candidate.
+        expect(
+            genCustomServerAddressCandidates('http://localhost:1234/v1'),
+        ).toEqual(['http://localhost:1234']);
+        expect(genCustomServerAddressCandidates('localhost:1234')).toEqual([]);
+        for (const candidate of genCustomServerAddressCandidates(
+            'http://super-computer:1237/v1/x',
+        )) {
+            expect(
+                checkIsSameOrigin(candidate, 'http://super-computer:1237/v1/x'),
+            ).toBe(true);
+        }
+    });
+
+    it('tells one origin from another by scheme, host and port', () => {
+        expect(
+            checkIsSameOrigin(
+                'http://localhost:11434/v1',
+                'http://localhost:11434',
+            ),
+        ).toBe(true);
+        expect(
+            checkIsSameOrigin(
+                'http://localhost:11434/v1',
+                'http://localhost:1234/v1',
+            ),
+        ).toBe(false);
+        expect(
+            checkIsSameOrigin(
+                'http://localhost:11434',
+                'https://localhost:11434',
+            ),
+        ).toBe(false);
+        expect(checkIsSameOrigin('nope', 'http://localhost:11434')).toBe(false);
+    });
+});
+
+describe('toOllamaModelInfoMap', () => {
+    // Trimmed from what Ollama 0.40 answered on 2026-10-10.
+    const TAGS_TEXT = JSON.stringify({
+        models: [
+            {
+                name: 'tev1:4b',
+                model: 'tev1:4b',
+                details: { family: 'qwen35', context_length: 262144 },
+                capabilities: ['decision'],
+            },
+            {
+                name: 'qwen3.5:4b',
+                model: 'qwen3.5:4b',
+                details: { context_length: 262144 },
+                capabilities: ['completion', 'tools', 'vision', 'thinking'],
+            },
+            { name: '', model: '' },
+            'junk',
+        ],
+    });
+    const PS_TEXT = JSON.stringify({
+        models: [{ name: 'tev1:4b', model: 'tev1:4b', context_length: 2050 }],
+    });
+
+    it('says which models are loaded, how big, and which ones see', () => {
+        const infoMap = toOllamaModelInfoMap(TAGS_TEXT, PS_TEXT);
+        expect(infoMap?.get('tev1:4b')).toEqual({
+            isLoaded: true,
+            loadedContext: 2050,
+            maxContext: 262144,
+            canSeeImages: false,
+        });
+        expect(infoMap?.get('qwen3.5:4b')).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: 262144,
+            canSeeImages: true,
+        });
+        expect(infoMap?.size).toBe(2);
+    });
+
+    it('takes a missing or odd second list as nothing loaded', () => {
+        expect(toOllamaModelInfoMap(TAGS_TEXT, null)?.get('tev1:4b')).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: 262144,
+            canSeeImages: false,
+        });
+        expect(
+            toOllamaModelInfoMap(TAGS_TEXT, '<html>')?.get('tev1:4b')?.isLoaded,
+        ).toBe(false);
+    });
+
+    it('is null for anything that is not Ollama’s list', () => {
+        expect(toOllamaModelInfoMap('<html>', null)).toBeNull();
+        expect(toOllamaModelInfoMap('{"data":[]}', null)).toBeNull();
+    });
+
+    it('names the program for a sentence', () => {
+        expect(toCustomServerKindLabel('lm-studio')).toBe('LM Studio');
+        expect(toCustomServerKindLabel('ollama')).toBe('Ollama');
+        expect(toCustomServerKindLabel('llama-cpp')).toBe('llama.cpp');
+        expect(toCustomServerKindLabel('other')).toBe('the server');
+    });
+});
+
+describe('toLlamaCppModelInfo', () => {
+    it('reads the context each slot was started with, and the projector', () => {
+        expect(
+            toLlamaCppModelInfo(
+                JSON.stringify({
+                    default_generation_settings: { id: 0, n_ctx: 4096 },
+                    total_slots: 1,
+                    model_path: '/models/qwen3.5-4b.gguf',
+                    modalities: { vision: true, audio: false },
+                }),
+            ),
+        ).toEqual({
+            isLoaded: true,
+            loadedContext: 4096,
+            maxContext: null,
+            canSeeImages: true,
+        });
+        // An older llamafile says less.
+        expect(
+            toLlamaCppModelInfo(
+                JSON.stringify({
+                    default_generation_settings: { n_ctx: 512 },
+                    total_slots: 1,
+                }),
+            ),
+        ).toEqual({
+            isLoaded: true,
+            loadedContext: 512,
+            maxContext: null,
+            canSeeImages: false,
+        });
+    });
+
+    it('is null for anything that is not that answer', () => {
+        expect(toLlamaCppModelInfo('<html>')).toBeNull();
+        expect(toLlamaCppModelInfo('{"data":[]}')).toBeNull();
+        expect(toLlamaCppModelInfo('{"version":"0.40.2"}')).toBeNull();
     });
 });
 
@@ -342,6 +529,25 @@ describe('the relay calls', () => {
         expect(checkIsAllowedCustomLlmCall('GET', LM_STUDIO_MODELS_PATH)).toBe(
             true,
         );
+        expect(checkIsAllowedCustomLlmCall('GET', OLLAMA_TAGS_PATH)).toBe(true);
+        expect(checkIsAllowedCustomLlmCall('GET', OLLAMA_PS_PATH)).toBe(true);
+        expect(checkIsAllowedCustomLlmCall('GET', LLAMA_CPP_PROPS_PATH)).toBe(
+            true,
+        );
+        // llama.cpp's doors that change the server.
+        expect(checkIsAllowedCustomLlmCall('POST', LLAMA_CPP_PROPS_PATH)).toBe(
+            false,
+        );
+        expect(checkIsAllowedCustomLlmCall('POST', '/slots')).toBe(false);
+        // Ollama's doors that pull, copy, load or delete a model.
+        expect(checkIsAllowedCustomLlmCall('POST', '/api/pull')).toBe(false);
+        expect(checkIsAllowedCustomLlmCall('POST', '/api/generate')).toBe(
+            false,
+        );
+        expect(checkIsAllowedCustomLlmCall('DELETE', '/api/delete')).toBe(
+            false,
+        );
+        expect(checkIsAllowedCustomLlmCall('POST', OLLAMA_PS_PATH)).toBe(false);
         // Reading what LM Studio has loaded, never loading or unloading it.
         expect(checkIsAllowedCustomLlmCall('POST', LM_STUDIO_MODELS_PATH)).toBe(
             false,

@@ -17,6 +17,7 @@ import {
     SpendLimitError,
     allowMoreSpending,
     checkIsSpendLimitError,
+    describeSpendFolded,
     describeSpendGuard,
     describeSpendPause,
     describeSpendState,
@@ -137,6 +138,17 @@ describe('counting the hour', () => {
         expect(state.spentTokens).toBe(6 + 16875 + 425);
         expect(state.spentUsd).toBeCloseTo(0.0464, 3);
         expect(describeSpendState(state)).toBe('≈ $0.05 of $1 this hour');
+    });
+
+    test('the folded head always says something: the figure, or the cap', () => {
+        // Folded, the picker that was saying the cap is not drawn.
+        expect(describeSpendFolded(getSpendState(T0))).toBe('$1 an hour');
+        expect(describeSpendFolded(setSpendLimitUsd(null, T0))).toBe(
+            'No limit',
+        );
+        setSpendLimitUsd(0.25, T0);
+        const state = recordSpendRound(COLD_ROUND, T0);
+        expect(describeSpendFolded(state)).toBe('≈ $0.05 of $0.25 this hour');
     });
 
     test('a round older than an hour stops counting, and stops being stored', () => {

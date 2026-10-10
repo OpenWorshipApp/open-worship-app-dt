@@ -626,6 +626,18 @@ const AGENT_DATA_WORKER_MAP: Record<
         return (await import('./agentBibleXMLHelpers'))
             .handleAgentBibleXMLRequest;
     },
+    // `owa_presenting_flow`: the run sheets and their lines (2026-10-10).
+    'presenting-flow': async () => {
+        return (await import('./agentPresentingFlowHelpers'))
+            .handleAgentPresentingFlowRequest;
+    },
+    // `owa_media_file`: the Background tabs' pictures, clips, tracks and web
+    // pages -- listed, renamed, trashed, imported from the disk, and a web
+    // page written (2026-10-10).
+    media: async () => {
+        return (await import('./agentMediaFileHelpers'))
+            .handleAgentMediaFileRequest;
+    },
 };
 
 document.addEventListener('owa-agent-data', (event) => {

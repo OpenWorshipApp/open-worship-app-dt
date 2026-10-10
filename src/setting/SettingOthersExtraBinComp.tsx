@@ -198,6 +198,7 @@ export default function SettingOthersExtraBinComp() {
     ) : null;
     return (
         <SettingOthersSectionComp
+            foldName="extra-bin"
             iconClassName="bi-hdd-stack"
             title="Extra Binaries"
             description={

@@ -14,7 +14,11 @@
 // history all the same -- the note window writes into it and the human
 // presses Save -- so a rename has to take that history with the file, a
 // delete has to take it away, and an undo has to put it back.
-export type AgentEditableKindType = 'slide' | 'lyric' | 'note';
+// `presentingFlow` IS one, with the opposite twist: it has a history and no
+// Save button, every write being the file, so a state put back is saved at
+// once (`getEditableClass` in `agentBackupHelpers.ts`).
+export type AgentEditableKindType =
+    'slide' | 'lyric' | 'note' | 'presentingFlow';
 
 /**
  * One thing an undo puts back. Taken BEFORE a change, so each carries the
@@ -50,6 +54,17 @@ export type AgentRestoreType =
           from: string;
           to: string;
           kind?: AgentEditableKindType;
+      }
+    | {
+          // A BINARY file -- a picture, a clip, a track -- which no text
+          // field can hold (2026-10-10, MC-52). Taken as `sourcePath`, the
+          // file still on disk; `saveAgentBackup` copies it beside the
+          // backup as `blobName` and writes that instead. An undo copies the
+          // blob back over `filePath`.
+          type: 'blob';
+          filePath: string;
+          sourcePath?: string;
+          blobName?: string;
       };
 
 /** The small half of a backup: what a list of changes reads. */
@@ -79,10 +94,18 @@ export const AGENT_BACKUP_KEEP_DAYS = 30;
  * refused a backup -- and so refused the change -- rather than written.
  */
 export const AGENT_BACKUP_MAX_CHARS = 25 * 1024 * 1024;
+/**
+ * A clip bigger than this is not copied beside its backup -- and so the
+ * change that would trash it is refused, with the app's own Move to Trash
+ * (and the Recycle Bin behind it) named as the route. A hundred such copies
+ * is the most the store can hold, and the disk of a church machine is small.
+ */
+export const AGENT_BACKUP_MAX_BLOB_BYTES = 200 * 1024 * 1024;
 
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const ID_PATTERN = /^\d{8}-\d{9}-[a-z0-9]{2,8}$/;
-const FILE_NAME_PATTERN = /^(\d{8}-\d{9}-[a-z0-9]{2,8})\.(meta|data)\.json$/;
+const FILE_NAME_PATTERN =
+    /^(\d{8}-\d{9}-[a-z0-9]{2,8})\.(meta|data|blob-\d+)\.(?:json|bin)$/;
 // `YYYYMMDD-HHMMSSmmm`, the part of an id that says when.
 const ID_TIME_LENGTH = 18;
 
@@ -107,16 +130,24 @@ export function toAgentBackupFileNames(id: string) {
     return { meta: `${id}.meta.json`, data: `${id}.data.json` };
 }
 
+/** The copy of a binary file a backup keeps: `<id>.blob-<n>.bin`. */
+export function toAgentBackupBlobName(id: string, index: number) {
+    return `${id}.blob-${index}.bin`;
+}
+
 export function readAgentBackupFileName(fileName: string) {
     const matched = FILE_NAME_PATTERN.exec(fileName);
-    return matched === null
-        ? null
-        : { id: matched[1], part: matched[2] as 'meta' | 'data' };
+    if (matched === null) {
+        return null;
+    }
+    const part = matched[2].startsWith('blob-') ? 'blob' : matched[2];
+    return { id: matched[1], part: part as 'meta' | 'data' | 'blob' };
 }
 
 const RESTORE_PRIORITY_MAP: Record<AgentRestoreType['type'], number> = {
     rename: 0,
     file: 1,
+    blob: 1,
     editing: 2,
 };
 

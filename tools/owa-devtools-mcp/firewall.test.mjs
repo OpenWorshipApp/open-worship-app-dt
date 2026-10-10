@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+    checkIsActingTool,
     checkIsAppUrl,
     checkIsRemovingCall,
     checkToolCall,
@@ -81,9 +82,9 @@ describe('checkToolCall', () => {
         });
         expect(verdict.isAllowed).toBe(false);
         expect(verdict.rule).toBe('foreign-url');
-        expect(checkToolCall('new_page', { url: 'data:text/html,x' }).isAllowed).toBe(
-            false,
-        );
+        expect(
+            checkToolCall('new_page', { url: 'data:text/html,x' }).isAllowed,
+        ).toBe(false);
     });
 
     // "The assistant may point, the human presses."
@@ -118,9 +119,9 @@ describe('checkToolCall', () => {
         expect(last.isAllowed).toBe(false);
         expect(last.rule).toBe('rate-limit');
         // Reading is never rationed -- the way out of a loop is to look.
-        expect(
-            checkToolCall('owa_list_ui', {}, { now: 1000 }).isAllowed,
-        ).toBe(true);
+        expect(checkToolCall('owa_list_ui', {}, { now: 1000 }).isAllowed).toBe(
+            true,
+        );
         // ...and the budget is a rolling window, not a session cap.
         expect(
             checkToolCall('owa_click', { find: 'Next' }, { now: 90000 })
@@ -141,9 +142,9 @@ describe('checkToolCall', () => {
     it('stands down entirely when the operator switched it off', () => {
         process.env.OWA_MCP_FIREWALL = 'off';
         expect(checkToolCall('evaluate_script', {}).isAllowed).toBe(true);
-        expect(
-            checkToolCall('owa_click', { find: 'Delete' }).isAllowed,
-        ).toBe(true);
+        expect(checkToolCall('owa_click', { find: 'Delete' }).isAllowed).toBe(
+            true,
+        );
     });
 });
 
@@ -247,9 +248,9 @@ describe('removing something of the user', () => {
         expect(
             checkIsRemovingCall('owa_slide_file', { action: 'delete-slide' }),
         ).toBe(true);
-        expect(checkIsRemovingCall('owa_lyric_file', { action: 'delete' })).toBe(
-            true,
-        );
+        expect(
+            checkIsRemovingCall('owa_lyric_file', { action: 'delete' }),
+        ).toBe(true);
         expect(checkIsRemovingCall('owa_undo', { action: 'undo' })).toBe(true);
         expect(checkIsRemovingCall('owa_bible_item', { action: 'list' })).toBe(
             false,
@@ -352,7 +353,9 @@ describe('findDestructiveLabel', () => {
 
 describe('checkIsAppUrl', () => {
     it('takes the app own pages and about:blank', () => {
-        expect(checkIsAppUrl('https://localhost:3000/presenter.html')).toBe(true);
+        expect(checkIsAppUrl('https://localhost:3000/presenter.html')).toBe(
+            true,
+        );
         expect(checkIsAppUrl('file:///C:/app/electron-build/index.html')).toBe(
             true,
         );
@@ -600,7 +603,9 @@ describe('guardToolCalls', () => {
             jsonrpc: '2.0',
             id: 31,
             result: {
-                content: [{ type: 'text', text: 'Saved snapshot to snap.txt.' }],
+                content: [
+                    { type: 'text', text: 'Saved snapshot to snap.txt.' },
+                ],
             },
         });
         expect(readPaths).toEqual(['snap.txt']);
@@ -636,7 +641,9 @@ describe('guardToolCalls', () => {
         transport.send({
             jsonrpc: '2.0',
             id: 41,
-            result: { content: [{ type: 'text', text: 'uid=1_0 RootWebArea' }] },
+            result: {
+                content: [{ type: 'text', text: 'uid=1_0 RootWebArea' }],
+            },
         });
         expect(readPaths).toEqual([]);
     });
@@ -716,7 +723,9 @@ describe('the uid interlock', () => {
                 lookup,
             ),
         ).not.toBeNull();
-        expect(findDestructiveUid('click', { uid: '1_115' }, lookup)).toBeNull();
+        expect(
+            findDestructiveUid('click', { uid: '1_115' }, lookup),
+        ).toBeNull();
     });
 
     // The whole point: the snapshot came back through the firewall, so the
@@ -875,7 +884,11 @@ describe('moving within the app', () => {
             // A type that says history but an address that does not: the
             // address is what gets checked, whatever the type claims.
             { pageId: 1, type: 'reload', url: 'https://example.com' },
-            { pageId: 1, type: 'url', url: 'data:text/html,<script>x</script>' },
+            {
+                pageId: 1,
+                type: 'url',
+                url: 'data:text/html,<script>x</script>',
+            },
         ]) {
             expect(
                 checkToolCall('navigate_page', args).rule,
@@ -887,9 +900,9 @@ describe('moving within the app', () => {
     // `new_page` has no history to move through -- it only ever opens an
     // address, so it never takes this exemption.
     it('gives new_page no history exemption', () => {
-        expect(
-            checkToolCall('new_page', { type: 'reload' }).rule,
-        ).toBe('foreign-url');
+        expect(checkToolCall('new_page', { type: 'reload' }).rule).toBe(
+            'foreign-url',
+        );
     });
 });
 
@@ -1030,5 +1043,142 @@ describe('reading a page off the internet', () => {
                 { now: 1000 },
             ).isAllowed,
         ).toBe(true);
+    });
+});
+
+// The label-aimed key, drag and run-sheet tools (2026-10-10). Each is counted
+// as the acting call it is, and the words a call carries are read the way
+// `owa_click`'s are -- the page half reads the control itself.
+describe('the key, drag and run-sheet tools', () => {
+    // The Background files: a delete is a removal, an import or a rename is
+    // acting, a list reads.
+    it('rations what a media-file call takes away', () => {
+        expect(checkIsActingTool('owa_media_file')).toBe(true);
+        expect(
+            checkIsRemovingCall('owa_media_file', { action: 'delete' }),
+        ).toBe(true);
+        for (const action of ['list', 'info', 'rename', 'import', 'create']) {
+            expect(
+                checkIsRemovingCall('owa_media_file', { action }),
+                action,
+            ).toBe(false);
+        }
+    });
+
+    it('counts a scroll as an acting call too', () => {
+        expect(checkIsActingTool('owa_scroll')).toBe(true);
+        expect(
+            checkToolCall('owa_scroll', { find: 'Document List', to: 'down' })
+                .isAllowed,
+        ).toBe(true);
+    });
+
+    it('counts them as acting calls', () => {
+        for (const name of [
+            'owa_press_key',
+            'owa_drag',
+            'owa_presenting_flow',
+        ]) {
+            expect(checkIsActingTool(name), name).toBe(true);
+        }
+    });
+
+    it('refuses a key named for what cannot be undone, and a focus that is', () => {
+        expect(checkToolCall('owa_press_key', { keys: 'Delete' }).rule).toBe(
+            'destructive-label',
+        );
+        expect(
+            checkToolCall('owa_press_key', {
+                keys: 'Enter',
+                find: 'Move to Trash',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_press_key', { keys: 'F9', find: 'Clear Bible' })
+                .isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_press_key', { keys: 'Ctrl+S' }).isAllowed,
+        ).toBe(true);
+    });
+
+    // F6 is Clear All whether or not the Mini Screen panel that names it is
+    // on screen (2026-10-10: it went through with the panel collapsed).
+    it('refuses the Clear All key by name, and lets the one-layer clears through', () => {
+        const verdict = checkToolCall('owa_press_key', { keys: 'f6' });
+        expect(verdict.rule).toBe('destructive-label');
+        expect(verdict.reason).toContain('Clear All [F6]');
+        for (const keys of ['F5', 'F7', 'F8', 'F9', 'F10']) {
+            expect(
+                checkToolCall('owa_press_key', { keys }).isAllowed,
+                keys,
+            ).toBe(true);
+        }
+    });
+
+    it('refuses a menu item named for what cannot be undone, and counts a menu press', () => {
+        expect(
+            checkToolCall('owa_menu', {
+                action: 'click',
+                item: 'File > Delete All',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_menu', {
+                action: 'click',
+                item: 'View > Reload',
+            }).isAllowed,
+        ).toBe(true);
+        expect(checkIsActingTool('owa_menu')).toBe(true);
+    });
+
+    it('refuses a drag whose either end cannot be undone', () => {
+        expect(
+            checkToolCall('owa_drag', {
+                from: 'Amazing Grace',
+                to: 'Move to Trash',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_drag', {
+                from: ['Discard changed'],
+                to: 'Sunday',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_drag', { from: 'Amazing Grace', to: 'Sunday' })
+                .isAllowed,
+        ).toBe(true);
+    });
+
+    // A line taken out of a run sheet is a removal, and a sheet to the trash
+    // is one; reading and adding are not.
+    it('rations what a run-sheet call takes away', () => {
+        expect(
+            checkIsRemovingCall('owa_presenting_flow', { action: 'remove' }),
+        ).toBe(true);
+        expect(
+            checkIsRemovingCall('owa_presenting_flow', { action: 'delete' }),
+        ).toBe(true);
+        for (const action of ['list', 'info', 'add', 'move', 'park']) {
+            expect(
+                checkIsRemovingCall('owa_presenting_flow', { action }),
+                action,
+            ).toBe(false);
+        }
+    });
+});
+
+describe('a key named after an object property', () => {
+    // The F6 map is a Map: a key spelt `constructor` must find nothing there,
+    // where a plain object handed back `function Object() { [native code] }`
+    // as the label of a control that does not exist.
+    it('is judged by its words alone', () => {
+        expect(
+            checkToolCall('owa_press_key', { keys: 'constructor' }).isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_press_key', { keys: ' F6 ' }).isAllowed,
+        ).toBe(false);
     });
 });

@@ -15,6 +15,10 @@ const h = vi.hoisted(() => ({
         isAutoPlay: false,
     },
     setAISettingMock: vi.fn(),
+    takeAIKeyFocusRequestMock: vi.fn(
+        (): { keyName: string | null } | null => null,
+    ),
+    collapsedMap: new Map<string, boolean>(),
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -34,7 +38,16 @@ vi.mock('../helper/appHooks', async () => {
 });
 
 vi.mock('../helper/ai/aiKeyFocusHelpers', () => ({
-    takeAIKeyFocusRequest: vi.fn(() => null),
+    takeAIKeyFocusRequest: h.takeAIKeyFocusRequestMock,
+}));
+
+vi.mock('./settingSectionFoldHelpers', () => ({
+    getIsSettingSectionCollapsed: (foldName: string) => {
+        return h.collapsedMap.get(foldName) ?? false;
+    },
+    saveIsSettingSectionCollapsed: (foldName: string, isCollapsed: boolean) => {
+        h.collapsedMap.set(foldName, isCollapsed);
+    },
 }));
 
 vi.mock('../helper/ai/aiHelpers', () => ({
@@ -101,6 +114,9 @@ describe('SettingOthersAIComp', () => {
         vi.clearAllMocks();
         h.setting.openAIAPIKey = 'openai-key';
         h.setting.isAutoPlay = false;
+        h.collapsedMap.clear();
+        // jsdom has no layout, so it has no `scrollIntoView` either.
+        Element.prototype.scrollIntoView = vi.fn();
         container = document.createElement('div');
         document.body.appendChild(container);
     });
@@ -118,6 +134,40 @@ describe('SettingOthersAIComp', () => {
             root = createRoot(container);
             root.render(<SettingOthersAIComp />);
         });
+    }
+
+    function getFoldButton() {
+        return container.querySelector(
+            'h2 button[aria-expanded]',
+        ) as HTMLButtonElement;
+    }
+
+    // A provider's box inside the panel, by the name on it.
+    function getBoxFoldButton(title: string) {
+        return Array.from(
+            container.querySelectorAll<HTMLButtonElement>(
+                '.app-setting-others-group-title button[aria-expanded]',
+            ),
+        ).find((button) => {
+            return button.textContent === title;
+        }) as HTMLButtonElement;
+    }
+
+    function findTitleTick(title: string) {
+        return (
+            getBoxFoldButton(title).parentElement?.querySelector(
+                '.app-setting-others-field-set',
+            ) ?? null
+        );
+    }
+
+    function findKeyInput(labelText: string) {
+        const label = Array.from(container.querySelectorAll('label')).find(
+            (one) => {
+                return one.textContent?.includes(labelText);
+            },
+        );
+        return label ? document.getElementById(label.htmlFor) : null;
     }
 
     test('keeps the Bible Audio auto-play switch beside its OpenAI key', async () => {
@@ -173,5 +223,116 @@ describe('SettingOthersAIComp', () => {
             ...h.setting,
             bedrockRegion: 'us-west-2',
         });
+    });
+
+    // The help window sends the user here to type a key. A folded panel has
+    // no box to put the cursor in, so it opens first.
+    test('a key asked for while the panel is folded opens it at that box', async () => {
+        h.collapsedMap.set('ai', true);
+        h.takeAIKeyFocusRequestMock.mockReturnValueOnce({
+            keyName: 'anthropicAPIKey',
+        });
+
+        await renderComponent();
+
+        expect(getFoldButton().getAttribute('aria-expanded')).toBe('true');
+        expect(h.collapsedMap.get('ai')).toBe(false);
+        const input = findKeyInput('Anthropic API Key');
+        expect(input).not.toBeNull();
+        expect(document.activeElement).toBe(input);
+    });
+
+    test('a request for the panel itself opens a folded panel', async () => {
+        h.collapsedMap.set('ai', true);
+        h.takeAIKeyFocusRequestMock.mockReturnValueOnce({ keyName: null });
+
+        await renderComponent();
+
+        expect(container.querySelector('#app-ai-enabled')).not.toBeNull();
+    });
+
+    test('stays folded when nothing asked for it', async () => {
+        h.collapsedMap.set('ai', true);
+
+        await renderComponent();
+
+        expect(container.querySelector('#app-ai-enabled')).toBeNull();
+        // The state the row is in is still on its header.
+        expect(container.textContent).toContain('Key set');
+    });
+
+    // The boxes are mounted afresh on every opening. A request still held
+    // would take the cursor back into its box each time.
+    test('folded and opened again by hand, the cursor is left alone', async () => {
+        h.takeAIKeyFocusRequestMock.mockReturnValueOnce({
+            keyName: 'anthropicAPIKey',
+        });
+        await renderComponent();
+        expect(document.activeElement).toBe(findKeyInput('Anthropic API Key'));
+
+        await act(async () => getFoldButton().click());
+        expect(findKeyInput('Anthropic API Key')).toBeNull();
+        await act(async () => getFoldButton().click());
+
+        const input = findKeyInput('Anthropic API Key');
+        expect(input).not.toBeNull();
+        expect(document.activeElement).not.toBe(input);
+    });
+
+    // The boxes inside the panel fold too, each on its own.
+    test('a provider box folds to its name, with a tick when its key is saved', async () => {
+        await renderComponent();
+        // Open, the field says the key is saved; the title says nothing.
+        expect(findKeyInput('OpenAI API Key')).not.toBeNull();
+        expect(findTitleTick('OpenAI')).toBeNull();
+
+        await act(async () => getBoxFoldButton('OpenAI').click());
+
+        expect(getBoxFoldButton('OpenAI').getAttribute('aria-expanded')).toBe(
+            'false',
+        );
+        expect(findKeyInput('OpenAI API Key')).toBeNull();
+        expect(container.querySelector('#app-ai-audio-auto-play')).toBeNull();
+        expect(findTitleTick('OpenAI')).not.toBeNull();
+        expect(h.collapsedMap.get('ai-openai')).toBe(true);
+        // The box beside it is left as it was.
+        expect(findKeyInput('Anthropic API Key')).not.toBeNull();
+
+        // No key, no tick: a folded box must not claim a key it has not got.
+        await act(async () => getBoxFoldButton('Anthropic').click());
+        expect(findKeyInput('Anthropic API Key')).toBeNull();
+        expect(findTitleTick('Anthropic')).toBeNull();
+    });
+
+    test('a key asked for in a folded box of a folded panel opens both', async () => {
+        h.collapsedMap.set('ai', true);
+        h.collapsedMap.set('ai-openai', true);
+        h.collapsedMap.set('ai-anthropic', true);
+        h.takeAIKeyFocusRequestMock.mockReturnValueOnce({
+            keyName: 'anthropicAPIKey',
+        });
+
+        await renderComponent();
+
+        expect(document.activeElement).toBe(findKeyInput('Anthropic API Key'));
+        expect(h.collapsedMap.get('ai-anthropic')).toBe(false);
+        // The box nobody asked for stays folded.
+        expect(findKeyInput('OpenAI API Key')).toBeNull();
+        expect(h.collapsedMap.get('ai-openai')).toBe(true);
+    });
+
+    test('a box folded and opened again by hand leaves the cursor alone', async () => {
+        h.takeAIKeyFocusRequestMock.mockReturnValueOnce({
+            keyName: 'anthropicAPIKey',
+        });
+        await renderComponent();
+        expect(document.activeElement).toBe(findKeyInput('Anthropic API Key'));
+
+        await act(async () => getBoxFoldButton('Anthropic').click());
+        await act(async () => getBoxFoldButton('Anthropic').click());
+
+        const input = findKeyInput('Anthropic API Key');
+        expect(input).not.toBeNull();
+        expect(document.activeElement).not.toBe(input);
     });
 });

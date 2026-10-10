@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The running order for a service: what happens, in what order, on which screen. Built in the Presenting Flows panel and run from its own preview.",
-    "updated": "2026-09-04",
+    "updated": "2026-10-10",
     "sections": [
         {
             "id": "building",
@@ -63,7 +63,29 @@
                     ],
                     "resources": {
                         "recipe": "W-22",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_presenting_flow"
+                        ]
+                    }
+                },
+                {
+                    "id": "flow-add-for-me",
+                    "text": "Can you add a song to my presenting flow for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add for me",
+                        "put in my run sheet",
+                        "add to sunday",
+                        "assistant add",
+                        "do it for me"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "tools": [
+                            "owa_presenting_flow",
+                            "owa_undo"
+                        ]
                     }
                 },
                 {

@@ -285,6 +285,74 @@ describe('the data tools name what they changed', () => {
     });
 
     it('announces an undo, and not a look at the list', () => {
+        // A key names itself; a run-sheet change names the sheet and what
+        // went in. Reading a sheet says nothing; a call with no action at
+        // all (the audit script's probe) gets the generic news.
+        expect(describeToolCall('owa_press_key', { keys: 'F5' })).toBe(
+            'pressed F5',
+        );
+        expect(describeToolCall('owa_drag', { from: 'a', to: 'b' })).toBe(
+            'dragged something',
+        );
+        expect(
+            describeToolCall('owa_menu', { action: 'click', item: 'View > Reload' }),
+        ).toBe('chose View > Reload in the menu');
+        expect(describeToolCall('owa_scroll', { find: 'Document List' })).toBe(
+            'scrolled a list',
+        );
+        expect(
+            describeToolCall('owa_media_file', {
+                action: 'delete',
+                kind: 'video',
+                name: 'bg.mp4',
+            }),
+        ).toBe('moved the media file "bg.mp4" to the trash');
+        expect(
+            describeToolCall('owa_media_file', {
+                action: 'import',
+                kind: 'image',
+                path: 'C:\\pics\\sunrise.jpg',
+            }),
+        ).toBe('imported "C:\\pics\\sunrise.jpg" from the disk');
+        expect(
+            describeToolCall('owa_media_file', { action: 'list', kind: 'image' }),
+        ).toBeNull();
+        expect(describeToolCall('owa_menu', { action: 'list' })).toBeNull();
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'add',
+                name: 'Sunday',
+                document: 'Amazing Grace',
+            }),
+        ).toBe('added "Amazing Grace" to the run sheet "Sunday"');
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'add',
+                name: 'Sunday',
+                reference: 'John 3:16',
+            }),
+        ).toBe('added John 3:16 to the run sheet "Sunday"');
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'remove',
+                name: 'Sunday',
+                line: 2,
+            }),
+        ).toBe('removed a line from the run sheet "Sunday"');
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'delete',
+                name: 'Sunday',
+            }),
+        ).toBe('moved the run sheet "Sunday" to the trash');
+        expect(describeToolCall('owa_presenting_flow', {})).toBe(
+            'changed a run sheet',
+        );
+        for (const action of ['list', 'info']) {
+            expect(
+                describeToolCall('owa_presenting_flow', { action, name: 'x' }),
+            ).toBeNull();
+        }
         expect(describeToolCall('owa_undo', { action: 'undo' })).toBe(
             'put back an earlier change',
         );

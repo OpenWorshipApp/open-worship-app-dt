@@ -30,6 +30,8 @@ import { useCustomServers } from '../helper/ai/customServerHelpers';
 import { checkIsUsableCustomServer } from '../../electron/customLlmProtocol';
 import SettingOthersSecureStorageWarningComp from './SettingOthersSecureStorageWarningComp';
 import SettingOthersSectionComp from './SettingOthersSectionComp';
+import SettingOthersGroupComp from './SettingOthersGroupComp';
+import type { SettingSectionFoldNameType } from './settingSectionFoldHelpers';
 
 /**
  * What a key actually buys, named where the operator is typing it in. It used
@@ -72,24 +74,61 @@ function RenderOpenPageButtonComp({
     );
 }
 
+// A null `keyName` asks for the panel itself, no box in particular.
+type AIKeyFocusType = {
+    keyName: AISecretKeyNameType | null;
+    token: number;
+};
+
 /**
  * One provider's fields fenced off as a unit. The Anthropic key and the
  * workspace it acts in are a PAIR; laid out as loose siblings of OpenAI's key
  * they wrapped onto the next row, so the workspace id read as if it belonged
  * to whichever field happened to sit above it.
+ *
+ * It folds to its name, with a tick beside it when its key is saved -- which
+ * providers are set up is the one thing worth reading off a folded row -- and
+ * opens by itself when another window asks for the cursor in its key box.
  */
 function RenderProviderGroupComp({
+    foldName,
     title,
     usedForList,
+    keyName,
+    isKeySet,
+    keyFocus,
+    onCollapse,
     children,
 }: Readonly<{
+    foldName: SettingSectionFoldNameType;
     title: string;
     usedForList: string[];
+    keyName: AISecretKeyNameType;
+    isKeySet: boolean;
+    keyFocus: AIKeyFocusType | null;
+    onCollapse: () => void;
     children: ReactNode;
 }>) {
     return (
-        <div className="app-setting-others-group">
-            <span className="app-setting-others-group-title">{title}</span>
+        <SettingOthersGroupComp
+            foldName={foldName}
+            title={title}
+            foldedMark={
+                isKeySet ? (
+                    <i
+                        className={
+                            'bi bi-check-circle-fill' +
+                            ' app-setting-others-field-set'
+                        }
+                        title={tran('Saved')}
+                    />
+                ) : null
+            }
+            openToken={
+                keyFocus?.keyName === keyName ? keyFocus.token : undefined
+            }
+            onCollapse={onCollapse}
+        >
             <div
                 className="app-setting-others-group-uses"
                 // One label for the row, so a screen reader does not read
@@ -111,11 +150,9 @@ function RenderProviderGroupComp({
                 })}
             </div>
             <div className="app-setting-others-group-fields">{children}</div>
-        </div>
+        </SettingOthersGroupComp>
     );
 }
-
-type AIKeyFocusType = { keyName: AISecretKeyNameType; token: number };
 
 /**
  * The key box another window asked the cursor to be put in (see
@@ -124,18 +161,26 @@ type AIKeyFocusType = { keyName: AISecretKeyNameType; token: number };
  * and whenever the window comes to the front with the panel already showing,
  * because the help window RAISES a Settings window that is already open rather
  * than opening a second, and a raise is a focus. A request for the panel
- * itself needs nothing more once the panel is showing.
+ * itself names no box, and is kept all the same: the panel may be FOLDED, and
+ * being sent to a folded header is being sent nowhere.
+ *
+ * Forgotten when the panel is folded by hand. The boxes are mounted afresh
+ * when it opens again, and a request still held here would take the cursor
+ * back into its box on every opening.
  */
 function useAIKeyFocus() {
     const [keyFocus, setKeyFocus] = useState<AIKeyFocusType | null>(null);
     useAppEffect(() => {
         const handleTaking = () => {
-            const keyName = takeAIKeyFocusRequest()?.keyName ?? null;
-            if (keyName === null) {
+            const request = takeAIKeyFocusRequest();
+            if (request === null) {
                 return;
             }
             setKeyFocus((oldKeyFocus) => {
-                return { keyName, token: (oldKeyFocus?.token ?? 0) + 1 };
+                return {
+                    keyName: request.keyName,
+                    token: (oldKeyFocus?.token ?? 0) + 1,
+                };
             });
         };
         handleTaking();
@@ -144,7 +189,10 @@ function useAIKeyFocus() {
             window.removeEventListener('focus', handleTaking);
         };
     }, []);
-    return keyFocus;
+    const forgetKeyFocus = useCallback(() => {
+        setKeyFocus(null);
+    }, []);
+    return [keyFocus, forgetKeyFocus] as const;
 }
 
 function RenderAPIKeyComp({
@@ -499,7 +547,7 @@ function RenderFreeFallbackComp() {
 export default function SettingOthersAIComp() {
     const aiSetting = useAISetting();
     const isEnabled = getIsAIEnabled();
-    const keyFocus = useAIKeyFocus();
+    const [keyFocus, forgetKeyFocus] = useAIKeyFocus();
     const customServers = useCustomServers();
     // Either provider on its own is enough to make the features work, so one
     // key is a working row -- and so is one usable server of the user's own,
@@ -512,6 +560,9 @@ export default function SettingOthersAIComp() {
         customServers.some(checkIsUsableCustomServer);
     return (
         <SettingOthersSectionComp
+            foldName="ai"
+            openToken={keyFocus?.token}
+            onCollapse={forgetKeyFocus}
             iconClassName="bi-robot"
             title="AI Providers"
             description={
@@ -533,8 +584,13 @@ export default function SettingOthersAIComp() {
             </div>
             <div className="app-setting-others-groups">
                 <RenderProviderGroupComp
+                    foldName="ai-openai"
                     title="OpenAI"
                     usedForList={[USE_CHATBOT, USE_CROSS_REF, USE_AUDIO]}
+                    keyName="openAIAPIKey"
+                    isKeySet={!!aiSetting.openAIAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="openAIAPIKey"
@@ -547,8 +603,13 @@ export default function SettingOthersAIComp() {
                     <RenderAudioAutoPlayComp />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
+                    foldName="ai-anthropic"
                     title="Anthropic"
                     usedForList={[USE_CHATBOT, USE_CROSS_REF]}
+                    keyName="anthropicAPIKey"
+                    isKeySet={!!aiSetting.anthropicAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="anthropicAPIKey"
@@ -561,8 +622,13 @@ export default function SettingOthersAIComp() {
                     <RenderWorkspaceIdComp />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
+                    foldName="ai-kimi"
                     title="Kimi"
                     usedForList={[USE_CHATBOT]}
+                    keyName="kimiAPIKey"
+                    isKeySet={!!aiSetting.kimiAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="kimiAPIKey"
@@ -574,8 +640,13 @@ export default function SettingOthersAIComp() {
                     />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
+                    foldName="ai-bedrock"
                     title="Amazon Bedrock"
                     usedForList={[USE_CHATBOT]}
+                    keyName="bedrockAPIKey"
+                    isKeySet={!!aiSetting.bedrockAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="bedrockAPIKey"

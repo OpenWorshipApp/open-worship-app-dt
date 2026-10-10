@@ -109,4 +109,23 @@ describe('what the model is offered', () => {
         );
         expect(checkIsModelHiddenTool('owa_click')).toBe(false);
     });
+
+    // The developer's two label-aimed hands of 2026-10-10 stay the
+    // developer's: a key is how a QA run walks a slide list, and the prompt
+    // tells the model no tool advances a run; a drag's result cannot be read
+    // back where `owa_presenting_flow add` says what it added and can be
+    // undone. The run-sheet tool itself IS offered, for exactly that ask.
+    it('withholds the key, drag and menu tools, and offers the run-sheet tool', () => {
+        for (const name of [
+            'owa_press_key',
+            'owa_drag',
+            'owa_menu',
+            'owa_scroll',
+            'owa_media_file',
+        ]) {
+            expect(checkIsModelHiddenTool(name), name).toBe(true);
+            expect(checkIsActingTool(name), name).toBe(true);
+        }
+        expect(checkIsModelHiddenTool('owa_presenting_flow')).toBe(false);
+    });
 });

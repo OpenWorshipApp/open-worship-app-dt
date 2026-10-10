@@ -2185,8 +2185,9 @@ const dictionary = {
     'The name the chatbot shows for this server, such as LM Studio':
         'ឈ្មោះដែល chatbot បង្ហាញសម្រាប់ម៉ាស៊ីនមេនេះ ដូចជា LM Studio',
     'Base URL': 'URL មូលដ្ឋាន',
-    'The address that ends in /v1, such as http://localhost:1234/v1 for LM Studio':
-        'អាសយដ្ឋានដែលបញ្ចប់ដោយ /v1 ដូចជា http://localhost:1234/v1 សម្រាប់ LM Studio',
+    'The address that ends in /v1, such as http://localhost:1234/v1 for LM Studio or http://localhost:11434/v1 for Ollama':
+        'អាសយដ្ឋានដែលបញ្ចប់ដោយ /v1 ដូចជា http://localhost:1234/v1 សម្រាប់ LM Studio ឬ http://localhost:11434/v1 សម្រាប់ Ollama',
+    'Address corrected to': 'អាសយដ្ឋានត្រូវបានកែទៅជា',
     'API key (optional)': 'API key (ស្រេចចិត្ត)',
     'Only if the server asks for one. It is stored encrypted and never shown to the chatbot window.':
         'តែក្នុងករណីម៉ាស៊ីនមេសុំវាប៉ុណ្ណោះ។ វាត្រូវបានរក្សាទុកដោយអ៊ិនគ្រីប ហើយមិនដែលបង្ហាញទៅផ្ទាំង chatbot ទេ។',
@@ -2212,14 +2213,38 @@ const dictionary = {
         'ឈ្មោះដែលបង្ហាញក្នុង chatbot (ស្រេចចិត្ត)',
     'Remove this model': 'ដកម៉ូដែលនេះចេញ',
     'Sees pictures': 'មើលរូបភាពបាន',
-    'Tick only if this model can look at a picture. Load models from server ticks it for you on LM Studio.':
-        'គូសធីកតែពេលម៉ូដែលនេះអាចមើលរូបភាពបាន។ នៅលើ LM Studio ប៊ូតុង «ផ្ទុកម៉ូដែលពីម៉ាស៊ីនមេ» គូសវាឱ្យអ្នកដោយស្វ័យប្រវត្តិ។',
+    'Tick only if this model can look at a picture. Load models from server ticks it for you on LM Studio and Ollama.':
+        'គូសធីកតែពេលម៉ូដែលនេះអាចមើលរូបភាពបាន។ នៅលើ LM Studio និង Ollama ប៊ូតុង «ផ្ទុកម៉ូដែលពីម៉ាស៊ីនមេ» គូសវាឱ្យអ្នកដោយស្វ័យប្រវត្តិ។',
     'Not loaded in LM Studio right now. The first question waits for it to load.':
         'មិនទាន់បានផ្ទុកក្នុង LM Studio ទេពេលនេះ។ សំណួរដំបូងនឹងរង់ចាំវាផ្ទុក។',
     'Loaded in LM Studio. Context length:':
         'បានផ្ទុកក្នុង LM Studio។ ប្រវែងបរិបទ (Context Length)៖',
     'In LM Studio, load this model again with a Context Length of':
         'ក្នុង LM Studio សូមផ្ទុកម៉ូដែលនេះម្ដងទៀតដោយ Context Length',
+    // The same three for Ollama (2026-10-10), whose app has one context
+    // length setting for every model rather than a load dialog per model.
+    'Not loaded in Ollama right now. The first question waits for it to load.':
+        'មិនទាន់បានផ្ទុកក្នុង Ollama ទេពេលនេះ។ សំណួរដំបូងនឹងរង់ចាំវាផ្ទុក។',
+    'Loaded in Ollama. Context length:':
+        'បានផ្ទុកក្នុង Ollama។ ប្រវែងបរិបទ (Context Length)៖',
+    'In the Ollama app, set Settings → Context length to':
+        'ក្នុងកម្មវិធី Ollama សូមកំណត់ Settings → Context length ទៅ',
+    // And llama.cpp's own server (llamafile too), which runs one model with
+    // the context it was started with.
+    'Loaded in llama.cpp. Context length:':
+        'បានផ្ទុកក្នុង llama.cpp។ ប្រវែងបរិបទ (Context Length)៖',
+    'Start llama-server again with a context size (-c) of':
+        'សូមចាប់ផ្ដើម llama-server ម្ដងទៀតដោយទំហំបរិបទ (-c)',
+    // The door for somebody who has none of these yet (2026-10-10, the
+    // user's ask): a page of videos on setting LM Studio up.
+    'Watch how to set up a free AI assistant on your own computer':
+        'មើលរបៀបដំឡើងជំនួយការ AI ឥតគិតថ្លៃនៅលើកុំព្យូទ័ររបស់អ្នកផ្ទាល់',
+    'LM Studio videos': 'វីដេអូ LM Studio',
+    'Ollama videos': 'វីដេអូ Ollama',
+    'Opens YouTube videos about LM Studio in your browser':
+        'បើកវីដេអូ YouTube អំពី LM Studio ក្នុងកម្មវិធីរុករករបស់អ្នក',
+    'Opens YouTube videos about Ollama in your browser':
+        'បើកវីដេអូ YouTube អំពី Ollama ក្នុងកម្មវិធីរុករករបស់អ្នក',
     'That is too small for the assistant.': 'វាតូចពេកសម្រាប់ជំនួយការ។',
     'A follow-up question may not fit.': 'សំណួរបន្តអាចនឹងមិនសមល្មម។',
     'working on an answer': 'កំពុងរៀបចំចម្លើយ',
@@ -2246,6 +2271,14 @@ const dictionary = {
         'ត្រូវការតែពេល key Anthropic របស់អ្នកជាប្រភេទ identity-linked ប៉ុណ្ណោះ',
     'App Assistant': 'ជំនួយការកម្មវិធី',
     'AI Chat': 'ជជែក AI',
+    // --- The stay-awake switch in the Presenter's and the Screen Mirror
+    // page's header (2026-10-09). The two sentences follow the name on the
+    // hover, after a dash, so they start in lower case.
+    'Stay Awake': 'រក្សាឲ្យភ្ញាក់',
+    'this computer will not sleep while this page is open':
+        'កុំព្យូទ័រនេះនឹងមិនដេកទេ ពេលទំព័រនេះកំពុងបើក',
+    'turned off, this computer may sleep when no screen is showing':
+        'បានបិទ កុំព្យូទ័រនេះអាចដេកបាន ពេលគ្មានអេក្រង់ណាកំពុងបង្ហាញ',
     // --- The caution asked before either AI window opens (2026-09-12).
     'Be careful with AI': 'សូមប្រុងប្រយ័ត្នជាមួយ AI',
     'AI can be confidently wrong.':
@@ -3201,6 +3234,28 @@ const dictionary = {
     'changed the saved Bible passages': 'បានកែប្រែវគ្គព្រះគម្ពីរដែលបានរក្សាទុក',
     'changed a Bible note': 'បានកែប្រែកំណត់ត្រាព្រះគម្ពីរមួយ',
     'put back an earlier change': 'បានត្រឡប់ការផ្លាស់ប្ដូរមុនវិញ',
+    'chose a menu item': 'បានជ្រើសរើសធាតុម៉ឺនុយមួយ',
+    'scrolled a list': 'បានរំកិលបញ្ជីមួយ',
+    'changed a media file': 'បានកែប្រែឯកសារមេឌៀមួយ',
+    'put a song back as saved': 'បានដាក់ចំរៀងមួយត្រឡប់ទៅសភាពដែលបានរក្សាទុក',
+    'put a slide document back as saved':
+        'បានដាក់ឯកសារស្លាយមួយត្រឡប់ទៅសភាពដែលបានរក្សាទុក',
+    'made a web page': 'បានបង្កើតទំព័រវេបមួយ',
+    'changed a web page': 'បានកែប្រែទំព័រវេបមួយ',
+    'renamed a media file': 'បានកែឈ្មោះឯកសារមេឌៀមួយ',
+    'moved a media file to the trash': 'បានផ្លាស់ទីឯកសារមេឌៀមួយទៅធុងសំរាម',
+    'imported a media file from the disk': 'បាននាំចូលឯកសារមេឌៀមួយពីថាស',
+    'changed a run sheet': 'បានកែប្រែតារាងកម្មវិធីមួយ',
+    'made a run sheet': 'បានបង្កើតតារាងកម្មវិធីមួយ',
+    'renamed a run sheet': 'បានកែឈ្មោះតារាងកម្មវិធីមួយ',
+    'moved a run sheet to the trash': 'បានផ្លាស់ទីតារាងកម្មវិធីមួយទៅធុងសំរាម',
+    'added a line to a run sheet': 'បានបន្ថែមធាតុមួយទៅតារាងកម្មវិធី',
+    'removed a line from a run sheet': 'បានដកធាតុមួយចេញពីតារាងកម្មវិធី',
+    'moved a line in a run sheet': 'បានផ្លាស់ទីធាតុមួយក្នុងតារាងកម្មវិធី',
+    'copied a line in a run sheet': 'បានចម្លងធាតុមួយក្នុងតារាងកម្មវិធី',
+    'parked a line in a run sheet': 'បានបិទដំណើរការធាតុមួយក្នុងតារាងកម្មវិធី',
+    'put a line of a run sheet back in play':
+        'បានបើកដំណើរការធាតុមួយក្នុងតារាងកម្មវិធីវិញ',
     'started a countdown on the screen': 'បានចាប់ផ្ដើមរាប់ថយក្រោយលើអេក្រង់',
     'started a stopwatch on the screen': 'បានចាប់ផ្ដើមនាឡិកាបញ្ឈប់លើអេក្រង់',
     'put a clock on the screen': 'បានដាក់នាឡិកាលើអេក្រង់',

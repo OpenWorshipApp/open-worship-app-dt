@@ -122,6 +122,12 @@
     &.app-setting-others-attention {
       --app-setting-others-state: var(--bs-warning-text-emphasis);
     }
+
+    // Folded to its header: the row sits level in its box, where an open
+    // section leaves the extra under its last field.
+    &.app-setting-others-collapsed {
+      padding-bottom: 10px;
+    }
   }
 
   .app-setting-others-header {
@@ -129,6 +135,39 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  // A title is the button that folds what it heads -- a section, a box inside
+  // one, a server inside that. It keeps the title's own type and takes none of
+  // a button's chrome: a fold is a quiet thing to be able to do, not one more
+  // control competing with the row's real ones.
+  .app-setting-others-fold {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--bs-border-radius-sm);
+    background-color: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover .app-setting-others-chevron {
+      color: var(--app-ink);
+    }
+
+    &:focus-visible {
+      outline-offset: 3px;
+    }
+  }
+
+  .app-setting-others-chevron {
+    font-size: var(--app-text-xs);
+    line-height: 1;
+    color: var(--app-muted);
   }
 
   .app-setting-others-icon {
@@ -232,15 +271,35 @@
     padding: 6px 10px 10px;
   }
 
+  // Folded to its title: the row sits level in its box, as a folded section
+  // does.
+  .app-setting-others-group,
+  .app-setting-others-server {
+    &.app-setting-others-collapsed {
+      padding-bottom: 6px;
+    }
+  }
+
   // The account's name, not a field name: it sits ABOVE the labels in the
   // hierarchy but stays quiet, because it is a landmark and not an
-  // instruction. Brand casing is kept as the provider writes it.
+  // instruction. Brand casing is kept as the provider writes it. A row, for
+  // the tick a folded box carries beside its name.
   .app-setting-others-group-title {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-bottom: 6px;
     font-size: var(--app-text-xs);
     font-weight: 600;
     color: var(--app-muted);
+
+    .app-setting-others-fold {
+      gap: 5px;
+    }
+  }
+
+  .app-setting-others-collapsed > .app-setting-others-group-title {
+    margin-bottom: 0;
   }
 
   // What the key in this box is actually for, said on the box rather than in

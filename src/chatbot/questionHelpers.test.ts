@@ -4,6 +4,7 @@ import { BOT_FOCUS_KEYS } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 import type { BotFocusType } from '../../tools/owa-devtools-mcp/botFocus.d.mts';
 
 import {
+    checkIsAlreadyTyped,
     FALLBACK_STARTERS,
     getAllQuestions,
     getStarterQuestions,
@@ -59,6 +60,33 @@ describe('FALLBACK_STARTERS', () => {
                 }),
             );
         }
+    });
+});
+
+// A row the box already holds is a row with nothing to offer: taking it would
+// change nothing, or would throw away the words added after it.
+describe('checkIsAlreadyTyped', () => {
+    it('is true once the box holds the whole suggestion', () => {
+        const suggestion = 'How do I present a Bible verse?';
+        expect(checkIsAlreadyTyped(suggestion, suggestion)).toBe(true);
+        expect(
+            checkIsAlreadyTyped(`  ${suggestion.toLowerCase()} `, suggestion),
+        ).toBe(true);
+        expect(
+            checkIsAlreadyTyped(`${suggestion} On screen 2`, suggestion),
+        ).toBe(true);
+    });
+
+    it('is false while there is still some of it to finish', () => {
+        const suggestion = 'How do I present a Bible verse?';
+        expect(checkIsAlreadyTyped('How do I present', suggestion)).toBe(false);
+        expect(checkIsAlreadyTyped('', suggestion)).toBe(false);
+        // The words being somewhere in the box is not the box saying them.
+        expect(
+            checkIsAlreadyTyped(`Quick one: ${suggestion}`, suggestion),
+        ).toBe(false);
+        // An empty suggestion must not close the list for everything.
+        expect(checkIsAlreadyTyped('anything', '  ')).toBe(false);
     });
 });
 

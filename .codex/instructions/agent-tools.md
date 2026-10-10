@@ -1,11 +1,11 @@
 ---
 paths:
-  - "tools/owa-devtools-mcp/**"
-  - "src/helper/agent*.ts"
-  - "src/helper/domHelpers.ts"
-  - "src/toast/DailyTipComp.tsx"
-  - "src/resize-actor/FlexResizeActorComp.tsx"
-  - ".claude/skills/owa-enhance-chatbot/scripts/**"
+  - 'tools/owa-devtools-mcp/**'
+  - 'src/helper/agent*.ts'
+  - 'src/helper/domHelpers.ts'
+  - 'src/toast/DailyTipComp.tsx'
+  - 'src/resize-actor/FlexResizeActorComp.tsx'
+  - '.claude/skills/owa-enhance-chatbot/scripts/**'
 ---
 
 # Agent tools: what the `owa_*` tools do
@@ -540,6 +540,98 @@ KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
   discard; anything new that renames, copies or deletes onto a path read
   through `readFileData` must forget it too.
 
+- **Everything a user does on the page, by its words** (2026-10-10, `MC-50`,
+  asked for by the user: _except security risk, I want the mcp can do
+  everything that user can do on the page. all modification file have to
+  provide option to revert_). Five things a user did all day that no tool
+  could: **right-click** (`owa_click` `button: "right"` — a `contextmenu` at
+  the control's centre, the event every list row's menu opens on; the result's
+  `opened: "menu"` says so) and **double-click** (`clicks: 2` — click, click,
+  `dblclick`, the order a mouse sends them, because a row that opens on the
+  second still selects on the first); a **keystroke** (`owa_press_key`, the
+  walkthrough card's own keydown/keyup with `key` AND `code`, JUDGED where the
+  raw `press_key` is not — `MC-13`: refused when the control whose title names
+  the key cannot be undone, when the app is asking a question, and for Enter
+  or Space on a destructively named focus; **F6 is refused by NAME as well**,
+  because the Mini Screen panel that titles it `Clear All [F6]` may be
+  collapsed, and measured with it collapsed F6 went through — F7–F10 clear one
+  layer each and stay as pressable as their buttons; `find` focuses a control
+  first, since the arrow keys and Space belong to the panel that has focus);
+  **drag and drop** (`owa_drag`, both ends by label, ONE `DataTransfer`
+  carried through dragstart → dragenter → dragover → drop → dragend so what
+  `handleDragStart` wrote is what the target reads; `place` `before` / `after`
+  aim at the row's reorder bands with Ctrl held, which `toPresentingFlowRowDropKind`
+  reads as "put it here" rather than "attach it" — at the ROW'S position
+  whichever edge is hit, so `after` lands on the NEXT row's top band and only
+  the last row's bottom band is its own; the drop lands on what
+  `elementFromPoint` paints there; proven live — a Documents row onto a run
+  sheet's row added the line through the sheet's own drop handler); and the
+  **native menu bar** (`owa_menu`, `electron/appMenuAgentHelpers.ts` over two
+  synchronous IPC channels — `list` walks `Menu.getApplicationMenu()` into
+  paths with `isEnabled` / `isChecked` / `refused`, `click` is Electron's own
+  `MenuItem.click` handed the asking window so a role acts on it; the main
+  process refuses by itself `toggleDevTools` (a console with Node in every
+  renderer, the reach `evaluate_script` was denied for), `quit` / `close` /
+  the macOS hide roles and the `Relaunch` label (every window goes, and a
+  native dialog nothing here can answer), and a submenu or a greyed-out item
+  in a sentence). Plus the one editable document that had no tool and no undo
+  of its own: **`owa_presenting_flow`** (`src/helper/agentPresentingFlowHelpers.ts`
+  over the `owa-agent-data` relay, domain `presenting-flow`). A run sheet has
+  an editing history and NO Save button — `PresentingFlow.setItems` is
+  `setJsonData` then `save`, every write is the file — so the backup behind
+  each action is its whole undo, and `agentBackupHelpers.ts` has a
+  `presentingFlow` editable kind whose `setJsonData` saves at once, or the
+  panel would read a restored head over a file still holding the undone
+  change; its `preDelete` takes the sheet's settings with it as the panel's own
+  Move to Trash does. `add` goes through `PresentingFlow.addItem` /
+  `addActionItem` — the drop path — so a line this tool writes is exactly the
+  line a drag writes (a document as a REFERENCE found by its Documents-list
+  name across every kind the list shows, two of a name named back; a passage
+  through `owa_present_bible`'s resolvers; an action by id with the registry's
+  own `requiresScreenIds` enforced). `remove` is a removal in the firewall's
+  budget. The firewall reads the words every one of these carries
+  (`find`, `keys`, `from`/`to`, `item`) and the page half reads the control;
+  all four are acting tools; `owa_press_key`, `owa_drag` and `owa_menu` are
+  withheld from the model (`modelTools.mjs` says what to use instead) and
+  `owa_presenting_flow` is offered — **7 789 → 8 273 tokens a round** to the
+  model, the ratchet raised to 8 350 on purpose. Verified live through fresh
+  servers against the dev app and, for the menu, a scratch second instance.
+  Still the user's alone, on purpose: a confirm the app is asking, a control
+  named for what cannot be undone (the data tools are the revertible route to
+  the same ends), a native file dialog, typing into Monaco. Two more closed
+  the same day: **a row named by its file name** — a file row's title is the
+  name WITH its extension and an EXPANDED run sheet's own text is every line
+  of it, so `checkIsNamedNearly` counts a part that is the needle plus a file
+  extension as the name (`MC-51`; the drop that opened a sheet had left it
+  un-right-clickable); and **`owa_scroll`** (`MC-54`) — the long lists are
+  windowed, so a row past the fold is not in the DOM until the list has
+  moved; it pages the nearest scroller of the control named (or inside the
+  panel named, else `findListRegion`'s nearest list), fires `scroll` so the
+  windowed rows render, and answers `inView`, the labels pressable afterwards.
+  Withheld from the model: the file tools find a file by name whether or not
+  its row is on screen. And **the Background tabs' files** (`owa_media_file`,
+  `src/helper/agentMediaFileHelpers.ts`, domain `media`; `MC-52` / `MC-53` /
+  `MC-55`): pictures, clips and tracks are BINARY, which the backup store
+  could not hold, so `agentBackupPlanHelpers.ts` has a `blob` restore —
+  `saveAgentBackup` copies the file beside its backup (`<id>.blob-<n>.bin`)
+  before the data file is written, an undo copies it back and keeps the one it
+  overwrites, the prune deletes the blobs with their change, and a clip over
+  200 MB is refused with the app's own Move to Trash named. `import` copies a
+  file at a disk `path` into the kind's folder (extension checked, never over
+  an existing file, the original untouched; undoing it trashes the copy); a
+  web page is written the way the Webs panel's New File and editor write it
+  (`fsWriteFile`, `writeFileData` — no editing history), backed up as text.
+  Withheld from the model: a path is nothing a volunteer says, and a clip
+  trashed on a misread ask is a morning lost even with the copy kept.
+  `kind: "document"` lists the Documents folder and imports a PDF /
+  PowerPoint / Word / song / slide file from the disk — the one file-dialog
+  case left — while a song or slide document stays its own tool's to rename
+  or trash (the editing history goes with it). And **`revert`** on
+  `owa_lyric_file` / `owa_slide_file` is the editor's Discard made
+  revertible: the saved content goes back into the editing history as a new
+  entry (the `*` clears) behind a backup of the head it replaces, where the
+  button wipes the history for good — so every destructive OUTCOME a user
+  reaches through a confirm now has a backed-up tool route.
 - **Whole Bibles are `owa_bible_xml`** (2026-10-06, asked for by the user:
   _download → extract → analyze → guess keys → recommend a locale → digits →
   book names for the user to pick → import_, and _help import, edit and delete_,
@@ -555,7 +647,7 @@ KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
   is an ANSWER, `{problem, message}` (`not-found`, `blocked`, `not-xml`,
   `page-without-files`, `not-bible`, `key`, `draft-gone` …), not an error.
   **The file waits on disk, not in a window**: `<temp>/open-worship-app-bible-
-  import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
+import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   at most, swept on every new download, removed by `import` and `cancel` —
   a 15 MB Bible is read twice (to describe, to install) rather than held
   parsed between questions. **The app's half** (`src/helper/agentBibleXMLHelpers.ts`

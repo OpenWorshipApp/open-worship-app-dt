@@ -159,14 +159,22 @@ export function checkIsDestructiveLabelText(text, rule) {
  * Shipped into the page: self-contained apart from
  * `checkIsDestructiveLabelText`.
  */
+/**
+ * Where the app asks the user a question: a confirm, an alert, an input
+ * popup, a blocking modal. Nothing inside one is pressed, typed into or sent
+ * a key for anyone -- read here, in the page half of the interlock, and by
+ * `genPressKeyExpression`, which refuses every key while one is up.
+ */
+export const QUESTION_SELECTOR =
+    '#app-confirm-popup, #app-alert-popup, #app-input-popup, ' +
+    '.modal-container--blocking';
+
 export function findPressRefusal(element, rule) {
     if (element === null || typeof element !== 'object' ||
         typeof element.closest !== 'function') {
         return null;
     }
-    const questionSelector = '#app-confirm-popup, #app-alert-popup, ' +
-        '#app-input-popup, .modal-container--blocking';
-    if (element.closest(questionSelector) !== null) {
+    if (element.closest(QUESTION_SELECTOR) !== null) {
         return { refused: 'question' };
     }
     // A box and a picker are named by their attributes, never by their text:
@@ -249,6 +257,7 @@ export function findKeyRefusal(keys, rule, root) {
  * the letter s in a page expression).
  */
 export const PRESS_GUARD_SOURCE = `(() => {
+    const QUESTION_SELECTOR = ${JSON.stringify(QUESTION_SELECTOR)};
     const toComparableLabel = ${toComparableLabel.toString()};
     const checkIsDestructiveLabelText = ${checkIsDestructiveLabelText.toString()};
     const findPressRefusal = ${findPressRefusal.toString()};

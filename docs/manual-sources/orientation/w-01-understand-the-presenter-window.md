@@ -2,10 +2,10 @@
 id: W-01
 title: "Understand the Presenter window"
 section: "Orientation"
-verify: [GL-12, NAV-01, NAV-02, PL-01, PR-04]
+verify: [GL-12, NAV-01, NAV-02, NAV-24, PL-01, PR-04]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-09"
+workflowsVersion: "2026-10-10"
 ---
 # W-01 — Understand the Presenter window
 
@@ -17,6 +17,13 @@ The Presenter has a header and three resizable columns:
 - **Header:** page tabs — **Presenter** / **[en:tran:Bible Reader]** /
   **[en:tran:Slide Editor]** — the **[en:tran:Bible Lookup]** button
   (center, `Ctrl+B`), and the **[en:tran:Settings]** gear + Help buttons (right). 📸
+  Left of the gear, the cup is **[en:tran:Stay Awake]**: while it is on — and
+  it is, unless you switch it off — this computer does not go to sleep or
+  turn its display off for as long as the Presenter is open. Click the cup to
+  switch it off (it turns grey and empty) and again to switch it back on; the
+  choice is kept for the next launch. The Bible Reader and the Slide Editor
+  never hold the computer awake, so they have no cup. A screen that is
+  showing keeps the display on by itself, whatever the cup says.
 - **Left column:** your content libraries — the **[en:tran:Documents]** list (songs live
   here too, marked with a music note) and **Presenting Flows**.
 - **Middle column:** the working area — **Documents / Bibles** preview tabs plus the
@@ -31,7 +38,7 @@ Drag any divider between panels to resize them; the size is remembered. 📸
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`GL-12` · `NAV-01` · `NAV-02` · `PL-01` · `PR-04`
+`GL-12` · `NAV-01` · `NAV-02` · `NAV-24` · `PL-01` · `PR-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
 :::

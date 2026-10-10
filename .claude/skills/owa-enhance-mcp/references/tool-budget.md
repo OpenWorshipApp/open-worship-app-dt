@@ -48,6 +48,8 @@ that matters for a question is the model's. The audit reports both.
 | 2026-09-14, baseline before the data tools (other drift since 09-11) | 50 (24 owa) / ~12 511 | 21 / ~6 901 | ~69 010 |
 | 2026-09-14, `owa_bible_item` / `owa_bible_note` / `owa_undo`, slide CRUD, delete | 53 (27 owa) / ~13 600 | 24 / ~7 990 | ~79 900 |
 | 2026-09-18, `MC-07` — the descriptions cut, two contradictions out | 53 (27 owa) / ~12 863 | 24 / **~7 253** | ~72 530 |
+| 2026-10-09, baseline before `MC-50` (`owa_bible_xml` and drift since) | 54 (28 owa) / ~13 399 | 25 / ~7 789 | ~77 890 |
+| 2026-10-10, `MC-50` — `owa_presenting_flow`, `owa_click` `button`/`clicks`; `owa_press_key`, `owa_drag`, `owa_menu` withheld | 60 (34 owa) / ~15 243 | 26 / **~8 316** | ~83 160 |
 
 Each of those last two rows is what one deliberate addition costs, paid by
 every volunteer whether or not they ever ask about a web page or a song:
@@ -87,6 +89,15 @@ withhold, if the bill has to come down, is `owa_bible_note` (the rarest ask of
 the three) through `modelTools.mjs`, which takes nothing from the developer.
 Measured with the audit's new `--stdio`, which lists the code on disk instead
 of the app's cached host -- no restart of the operator's app to see an edit.
+
+`MC-50` (2026-10-10) is **+527 to the model** for six tools, two fields and a `revert` action:
+`owa_presenting_flow` ~419 (the run sheets had no tool and no undo of their
+own, asked for in so many words) and `owa_click`'s `button` / `clicks` ~62
+reach the model; `owa_press_key` (~277), `owa_drag` (~272), `owa_menu`
+(~195), `owa_scroll` (~221, `MC-54`) and `owa_media_file` (~319, `MC-52` /
+`MC-53` / `MC-55`) are withheld by `modelTools.mjs`, so the developer's door
+grew by ~1 840 (13 399 → 15 243) and the volunteer pays none of it. The ratchet moved
+7 800 → 8 350 in the same change.
 
 `owa_lyric_validate` is the cheaper of the two for a reason worth copying: its
 whole input is one required `text` string, so almost all of its 221 tokens are

@@ -1065,6 +1065,9 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
     }
 }
 
+/** The one command that goes to a model: see `readGeneralQuestion`. */
+export const GENERAL_QUESTION_COMMAND = 'btw';
+
 export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
     {
         name: 'screen',
@@ -1264,6 +1267,17 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         run: runLyric,
     },
     {
+        // The one command that DOES go to a model: see `readGeneralQuestion`.
+        // Listed here so `/` offers it and `/commands` names it; this `run`
+        // only answers the bare `/btw` with how to use it.
+        name: GENERAL_QUESTION_COMMAND,
+        aliases: ['general', 'anything'],
+        hint: 'Ask the assistant a general question, not about this app',
+        takesArgument: true,
+        isActing: false,
+        run: runGeneralUsage,
+    },
+    {
         name: 'commands',
         aliases: ['?', 'list'],
         hint: 'List every command',
@@ -1307,14 +1321,28 @@ export function parseBuiltinCommand(text: string): ParsedCommandType | null {
  * The commands to offer for what has been typed so far. `/` alone lists them
  * all; letters after it narrow by name and alias. A command that takes words
  * is offered as `/name ` so the box is ready for them.
+ *
+ * The list is for finishing a NAME, so it has nothing to say once there is
+ * nothing left of one to finish (2026-10-10, the user's ask, with a picture of
+ * `/btw` still offered over `/btw what is`): a space after the name means the
+ * words have started, and a name typed in full is not offered back -- though
+ * a longer one that starts with it still is (`/screen` leaves `/screen-show`
+ * and `/screen-hide`). An ALIAS typed in full keeps its row: `/clear` under
+ * the box does not say it means `/clear-all`, and the row is what does.
  */
 export function matchBuiltinActions(query: string, limit = 8) {
-    const trimmed = query.trim();
-    if (!trimmed.startsWith('/')) {
+    const line = query.trimStart();
+    if (!line.startsWith('/')) {
         return [];
     }
-    const typed = trimmed.slice(1).toLowerCase().split(/\s+/)[0] ?? '';
+    const typed = line.slice(1).toLowerCase();
+    if (/\s/.test(typed)) {
+        return [];
+    }
     return BUILTIN_ACTION_LIST.filter((one) => {
+        if (one.name === typed) {
+            return false;
+        }
         return (
             typed.length === 0 ||
             one.name.startsWith(typed) ||
@@ -1330,6 +1358,44 @@ export function toBuiltinCommandText(action: BuiltinActionType) {
     return `/${action.name}${action.takesArgument ? ' ' : ''}`;
 }
 
+/**
+ * `/btw <words>` -- "by the way" -- is a question that is NOT about this
+ * app, put to the assistant as general knowledge (2026-10-10, asked for by
+ * the user: _add command `/btw` to let assistant know it about asking general
+ * question, e.g. `/btw "what is holy bible"`_). Every other command runs with
+ * no model; this one is the opposite, a model with no tools: the words go
+ * to the assistant framed as general (`toGeneralQuestionAsk`), in one round,
+ * with nothing of the app looked up and no walkthrough offered -- without the
+ * frame, the system prompt sends every question to the manual and _what is
+ * the Bible?_ comes back as how to open the Bible Reader.
+ *
+ * The words, with the quotes the example was typed with taken off, or null
+ * when the line is not this command or carries no words -- the bare `/btw`
+ * then runs as a command and says how to use it (`runGeneralUsage`).
+ */
+export function readGeneralQuestion(text: string): string | null {
+    const parsed = parseBuiltinCommand(text);
+    if (parsed === null || parsed.action?.name !== GENERAL_QUESTION_COMMAND) {
+        return null;
+    }
+    const words = parsed.argument
+        .replace(/^["'“”‘’]+/, '')
+        .replace(/["'“”‘’]+$/, '')
+        .trim();
+    return words.length > 0 ? words : null;
+}
+
+async function runGeneralUsage(): Promise<BotAnswerType> {
+    return {
+        text:
+            '**Say the question after /btw** -- `/btw What is the Bible?` -- ' +
+            'and the assistant answers it from its own knowledge instead of ' +
+            'looking in this app’s guide. It takes an assistant (a key in ' +
+            'Settings → Others, or a server of your own): the built-in guide ' +
+            'cannot answer a general question.',
+    };
+}
+
 function genCommandList(): BotAnswerType {
     const lines = BUILTIN_ACTION_LIST.map((one) => {
         return `- \`/${one.name}\` -- ${one.hint}`;
@@ -1337,7 +1403,8 @@ function genCommandList(): BotAnswerType {
     return {
         text:
             '**Commands you can type** -- each one runs on the spot, with no ' +
-            'assistant and no internet:\n\n' +
+            'assistant and no internet (except `/btw`, which puts a general ' +
+            'question to the assistant):\n\n' +
             lines.join('\n') +
             '\n\nType `/` and the list appears as you type.',
         actions: [

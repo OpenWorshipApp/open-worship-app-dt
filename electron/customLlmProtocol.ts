@@ -55,37 +55,113 @@ export type CustomServerType = {
 export const LM_STUDIO_MODELS_PATH = '/api/v0/models';
 
 /**
- * The only three calls the relay forwards. Everything else a server might
- * answer -- embeddings, file uploads, model loading, admin routes -- is
- * refused, because nothing in the chatbot needs it.
+ * Ollama's own two lists, at the root as well: every model it has
+ * (`/api/tags` -- each with its capabilities, of which `vision` is the one
+ * that matters here, and the most context it could take) and the ones in
+ * memory right now (`/api/ps`, each with the context it is loaded with).
+ * Read-only, like LM Studio's list: the Ollama calls that pull, copy, load
+ * or delete a model stay refused.
+ */
+export const OLLAMA_TAGS_PATH = '/api/tags';
+export const OLLAMA_PS_PATH = '/api/ps';
+
+/**
+ * llama.cpp's `llama-server` (and llamafile, built on it) says what it is
+ * running at `/props`: the context each slot was started with
+ * (`default_generation_settings.n_ctx` -- 4096 unless `-c` said otherwise),
+ * the model file, and whether it sees pictures (`modalities.vision`).
+ * Read-only; the server has one model and no loading door at all.
+ */
+export const LLAMA_CPP_PROPS_PATH = '/props';
+
+// What a server says about ITSELF, asked at the root of a `/v1` address and
+// nowhere else (`toCustomLlmCallUrl`).
+const ROOT_CALL_PATH_LIST = [
+    LM_STUDIO_MODELS_PATH,
+    OLLAMA_TAGS_PATH,
+    OLLAMA_PS_PATH,
+    LLAMA_CPP_PROPS_PATH,
+];
+
+/**
+ * The only calls the relay forwards. Everything else a server might answer
+ * -- embeddings, file uploads, model loading, admin routes -- is refused,
+ * because nothing in the chatbot needs it.
  */
 export type CustomLlmCallType =
     | { method: 'GET'; path: '/models' }
     | { method: 'GET'; path: typeof LM_STUDIO_MODELS_PATH }
+    | { method: 'GET'; path: typeof OLLAMA_TAGS_PATH }
+    | { method: 'GET'; path: typeof OLLAMA_PS_PATH }
+    | { method: 'GET'; path: typeof LLAMA_CPP_PROPS_PATH }
     | { method: 'POST'; path: '/chat/completions' };
+
+export function checkIsRootCustomLlmPath(path: unknown): boolean {
+    return typeof path === 'string' && ROOT_CALL_PATH_LIST.indexOf(path) !== -1;
+}
 
 export function checkIsAllowedCustomLlmCall(
     method: unknown,
     path: unknown,
 ): boolean {
     return (
-        (method === 'GET' && path === '/models') ||
-        (method === 'GET' && path === LM_STUDIO_MODELS_PATH) ||
+        (method === 'GET' &&
+            (path === '/models' || checkIsRootCustomLlmPath(path))) ||
         (method === 'POST' && path === '/chat/completions')
     );
 }
 
 /**
- * The address one allowed call goes to: under the base URL, except LM
- * Studio's own list, which is at the root of a `/v1` address and nowhere
- * else -- under a proxy's longer path the root may be somebody else's.
+ * The address one allowed call goes to: under the base URL, except what a
+ * server says about itself, which is at the root of a `/v1` address and
+ * nowhere else -- under a proxy's longer path the root may be somebody
+ * else's.
  */
 export function toCustomLlmCallUrl(baseUrl: string, path: string) {
-    if (path !== LM_STUDIO_MODELS_PATH) {
+    if (!checkIsRootCustomLlmPath(path)) {
         return `${baseUrl}${path}`;
     }
     const url = new URL(baseUrl);
     return url.pathname === '/v1' ? `${url.origin}${path}` : null;
+}
+
+/** Same scheme, host and port: the same program listening. */
+export function checkIsSameOrigin(urlA: string, urlB: string): boolean {
+    try {
+        return new URL(urlA).origin === new URL(urlB).origin;
+    } catch (_error) {
+        return false;
+    }
+}
+
+/**
+ * The other addresses on the SAME server where the OpenAI protocol is
+ * usually served, best guess first, for a Test that found nothing at the
+ * address typed. Measured 2026-10-10: Ollama's own address was typed as
+ * `http://localhost:11434/v1/systemone` (a door of its own that answers
+ * something else), every call under it was a 404 page, and the chatbot read
+ * that as "this model is not available to the account". The protocol lives
+ * at `<origin>/v1` on LM Studio, Ollama, llama.cpp and vLLM alike, at the
+ * root on a few, and under `<path>/v1` behind a proxy -- so those three,
+ * never another host: the server's key goes only where it was saved to go.
+ */
+export function genCustomServerAddressCandidates(baseUrl: unknown): string[] {
+    const base = toCustomServerBaseUrl(baseUrl);
+    if (base === null) {
+        return [];
+    }
+    const url = new URL(base);
+    const candidates = [`${url.origin}/v1`, url.origin];
+    if (!/\/v1$/.test(url.pathname)) {
+        candidates.splice(1, 0, `${base}/v1`);
+    }
+    const unique: string[] = [];
+    for (const candidate of candidates) {
+        if (candidate !== base && unique.indexOf(candidate) === -1) {
+            unique.push(candidate);
+        }
+    }
+    return unique;
 }
 
 export type CustomLlmFetchRequestType = {
@@ -94,6 +170,14 @@ export type CustomLlmFetchRequestType = {
     path: string;
     body?: string;
     requestId: string;
+    /**
+     * Another address to ask the model list at, in place of the saved one
+     * -- one of `genCustomServerAddressCandidates`, so on the SAME origin;
+     * the relay refuses any other, and refuses it on every call but
+     * `GET /models`. How Settings' Test finds the right path without a
+     * wrong one ever being saved.
+     */
+    probeBaseUrl?: string;
 };
 
 export type CustomLlmFailureType =
@@ -252,10 +336,39 @@ export function toContextLabel(tokens: number) {
     return `${Math.round(tokens / 1024)}k`;
 }
 
-export type LmStudioModelInfoType = {
+/**
+ * Which program a server turned out to be, read off what it answers at its
+ * root (`readCustomServerModelInfo`): LM Studio has its own model list,
+ * Ollama its own two, llama.cpp's server (llamafile too) its `/props`, and
+ * anything else -- LocalAI, Jan, GPT4All, vLLM, SGLang, a LiteLLM proxy --
+ * is asked nothing but the protocol, which is all it needs. Never stored:
+ * the program at an address can change.
+ */
+export type CustomServerKindType =
+    'lm-studio' | 'ollama' | 'llama-cpp' | 'other';
+
+/** The program's name for a sentence, when it has one. */
+export function toCustomServerKindLabel(kind: CustomServerKindType) {
+    switch (kind) {
+        case 'lm-studio':
+            return 'LM Studio';
+        case 'ollama':
+            return 'Ollama';
+        case 'llama-cpp':
+            return 'llama.cpp';
+        default:
+            return 'the server';
+    }
+}
+
+/**
+ * What a server says about one of its models, the same three things
+ * whichever program said them.
+ */
+export type CustomModelInfoType = {
     // Whether it sits in memory now. A not-loaded one is loaded by the
-    // server on the first question (when its "JIT" loading is on), which
-    // takes a while.
+    // server on the first question (LM Studio when its "JIT" loading is on,
+    // Ollama always), which takes a while.
     isLoaded: boolean;
     // The context it is loaded with; null when not loaded.
     loadedContext: number | null;
@@ -277,7 +390,7 @@ function toPositiveInteger(value: unknown) {
  */
 export function toLmStudioModelInfoMap(
     text: string,
-): Map<string, LmStudioModelInfoType> | null {
+): Map<string, CustomModelInfoType> | null {
     let data: any;
     try {
         data = JSON.parse(text);
@@ -287,7 +400,7 @@ export function toLmStudioModelInfoMap(
     if (!Array.isArray(data?.data)) {
         return null;
     }
-    const infoMap = new Map<string, LmStudioModelInfoType>();
+    const infoMap = new Map<string, CustomModelInfoType>();
     for (const item of data.data) {
         const id = typeof item?.id === 'string' ? item.id.trim() : '';
         if (id.length === 0 || id.length > CUSTOM_MODEL_MAX) {
@@ -307,6 +420,101 @@ export function toLmStudioModelInfoMap(
         }
     }
     return infoMap;
+}
+
+/**
+ * One of Ollama's two lists (`{models: [...]}`), or null when the text is
+ * not one -- the server is not Ollama.
+ */
+function toOllamaModelList(text: string): any[] | null {
+    let data: any;
+    try {
+        data = JSON.parse(text);
+    } catch (_error) {
+        return null;
+    }
+    return Array.isArray(data?.models) ? data.models : null;
+}
+
+/** The id Ollama's OpenAI door lists a model under: `qwen3.5:4b`. */
+function toOllamaModelId(item: any): string {
+    const value = typeof item?.model === 'string' ? item.model : item?.name;
+    return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Ollama's own word on its models, from the list of what it has
+ * (`OLLAMA_TAGS_PATH`) and the list of what is in memory (`OLLAMA_PS_PATH`),
+ * read as untrusted. Null when the first is not Ollama's list; a second that
+ * is missing or not a list means nothing is loaded. Measured 2026-10-10 on
+ * Ollama 0.40: `/api/tags` names each model's `capabilities` (`vision`,
+ * `tools`, `completion`, ...) and `details.context_length`, the most it could
+ * take; `/api/ps` gives the `context_length` it is loaded with -- which was
+ * 2050 on the model tried, pinned by its own Modelfile, and no request can
+ * raise it through the OpenAI door.
+ */
+export function toOllamaModelInfoMap(
+    tagsText: string,
+    psText: string | null,
+): Map<string, CustomModelInfoType> | null {
+    const tags = toOllamaModelList(tagsText);
+    if (tags === null) {
+        return null;
+    }
+    const loaded = psText === null ? [] : (toOllamaModelList(psText) ?? []);
+    const infoMap = new Map<string, CustomModelInfoType>();
+    for (const item of tags) {
+        const id = toOllamaModelId(item);
+        if (id.length === 0 || id.length > CUSTOM_MODEL_MAX) {
+            continue;
+        }
+        const running = loaded.find((one) => {
+            return toOllamaModelId(one) === id;
+        });
+        const capabilities: unknown[] = Array.isArray(item?.capabilities)
+            ? item.capabilities
+            : [];
+        infoMap.set(id, {
+            isLoaded: running !== undefined,
+            loadedContext:
+                running === undefined
+                    ? null
+                    : toPositiveInteger(running.context_length),
+            maxContext: toPositiveInteger(item?.details?.context_length),
+            canSeeImages: capabilities.indexOf('vision') !== -1,
+        });
+        if (infoMap.size >= MAX_CUSTOM_MODELS * 4) {
+            break;
+        }
+    }
+    return infoMap;
+}
+
+/**
+ * What llama.cpp's server says about the one model it runs
+ * (`LLAMA_CPP_PROPS_PATH`), read as untrusted: null when the text is not
+ * that answer. It is always loaded -- the server IS the model -- with the
+ * context each slot was started with, which is what the conversation has
+ * to fit; the model's own ceiling is not said. Pictures when the server
+ * was started with a projector (`modalities.vision`, newer builds).
+ */
+export function toLlamaCppModelInfo(text: string): CustomModelInfoType | null {
+    let data: any;
+    try {
+        data = JSON.parse(text);
+    } catch (_error) {
+        return null;
+    }
+    const settings = data?.default_generation_settings;
+    if (settings === null || typeof settings !== 'object') {
+        return null;
+    }
+    return {
+        isLoaded: true,
+        loadedContext: toPositiveInteger(settings.n_ctx),
+        maxContext: null,
+        canSeeImages: data?.modalities?.vision === true,
+    };
 }
 
 function toValidModels(raw: unknown): CustomModelType[] {

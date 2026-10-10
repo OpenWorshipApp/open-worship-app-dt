@@ -18,7 +18,7 @@
 // The generators below package one call to it as an expression for
 // `evaluateInApp`; keep them free of backticks and `${` so they embed clean.
 
-import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
+import { PRESS_GUARD_SOURCE, QUESTION_SELECTOR } from './destructiveLabel.mjs';
 
 // How many matches `owa_find_ui` answers with -- and, when asked to
 // highlight, how many rings are drawn. They are the same number on purpose:
@@ -37,7 +37,17 @@ const MAX_FIND_UI_MATCHES = 20;
 // depend on a function that runtime never had. Returns where it pressed, or
 // null for a disabled form control, which takes no click by the method or by
 // a dispatched event alike -- `click()` is kept there for its own early return.
-export const PRESS_AT_CENTRE_SOURCE = `((element) => {
+//
+// `how` says WHICH press (2026-10-10): `button: 'right'` is the control's own
+// menu -- a `contextmenu` at its centre, the event the app's lists open their
+// row menus on; `clicks: 2` is a double-click -- two clicks and the `dblclick`
+// React's onDoubleClick listens for, in the order a mouse sends them, because
+// a row that opens on a double-click still selects itself on the first. A
+// user does both all day and no tool could do either (every list row's menu,
+// opening a document, playing a clip -- W-08's step nobody could demo).
+export const PRESS_AT_CENTRE_SOURCE = `((element, how) => {
+    const button = how && how.button === 'right' ? 'right' : 'left';
+    const clicks = how && how.clicks === 2 ? 2 : 1;
     if (typeof element.matches === 'function' && element.matches(':disabled')) {
         element.click();
         return null;
@@ -48,14 +58,71 @@ export const PRESS_AT_CENTRE_SOURCE = `((element) => {
     // No 'view' member, as pressElementLikeButton passes none: a realm
     // other than the element's own can refuse it, and nothing reads it.
     const view = element.ownerDocument.defaultView ?? window;
-    element.dispatchEvent(new MouseEvent('click', {
-        bubbles: true, cancelable: true, composed: true,
-        detail: 1, button: 0,
-        clientX: x, clientY: y,
-        screenX: (view.screenX || 0) + x, screenY: (view.screenY || 0) + y,
-    }));
-    return { x, y };
+    const send = (type, detail, buttonCode) => {
+        element.dispatchEvent(new MouseEvent(type, {
+            bubbles: true, cancelable: true, composed: true,
+            detail: detail, button: buttonCode,
+            clientX: x, clientY: y,
+            screenX: (view.screenX || 0) + x, screenY: (view.screenY || 0) + y,
+        }));
+    };
+    if (button === 'right') {
+        send('contextmenu', 0, 2);
+        return { x, y, button };
+    }
+    send('click', 1, 0);
+    if (clicks === 2) {
+        send('click', 2, 0);
+        send('dblclick', 2, 0);
+    }
+    return clicks === 2 ? { x, y, clicks } : { x, y };
 })`;
+
+// Which layers a press can bring up, most telling first: a dialog (the modal
+// container the Bible Lookup and the app's own questions are drawn in), a
+// floating panel, a menu. `snapshot()` before the press, `findOpened()` after
+// it: a layer counts when it is on screen now and was not before. A new
+// WINDOW is read by the tool, off the debugging targets -- no page can see
+// another one open. Shared by every acting expression here (click, key, drag)
+// so the three cannot disagree about what "it opened a menu" means.
+const LAYER_WATCH_SOURCE = `(() => {
+    const OPENED_LAYERS = [
+        ['dialog', '[role="dialog"], [role="alertdialog"], #modal-container'],
+        ['panel', '.floating-widget'],
+        ['menu', '[role="menu"]'],
+    ];
+    const listShownLayers = (selector) => {
+        return [...document.querySelectorAll(selector)].filter((one) => {
+            return typeof one.checkVisibility !== 'function' ||
+                one.checkVisibility();
+        });
+    };
+    return {
+        snapshot() {
+            return new Set(OPENED_LAYERS.flatMap((layer) => {
+                return listShownLayers(layer[1]);
+            }));
+        },
+        findOpened(before) {
+            const opened = OPENED_LAYERS.find((layer) => {
+                return listShownLayers(layer[1]).some((one) => {
+                    return !before.has(one);
+                });
+            });
+            return opened === undefined ? undefined : opened[0];
+        },
+        // The other direction: Escape on a menu, a click on its backdrop.
+        findClosed(before) {
+            const closed = OPENED_LAYERS.find((layer) => {
+                const shown = new Set(listShownLayers(layer[1]));
+                return [...before].some((one) => {
+                    return one.matches(layer[1]) && !shown.has(one);
+                });
+            });
+            return closed === undefined ? undefined : closed[0];
+        },
+    };
+})()`;
 
 export const DOM_MATCH_RUNTIME = `
 (() => {
@@ -197,13 +264,29 @@ export const DOM_MATCH_RUNTIME = `
     // (EC-135: "Close [Ctrl+Q]" on the Bible Lookup, "Clear Bible [F9]" on
     // the Mini Screen, both the control's own title). A needle that is
     // nothing but decoration matches nothing.
+    // A file row's title is the file name WITH its extension ("Amazing
+    // Grace.owl", "Sunday.owpf"), and its own text is the bare name -- until
+    // the row is EXPANDED (a run sheet open in its panel), when its text is
+    // every line of the sheet run together and the title is the one part
+    // left that still names it. So a part that is the needle plus a file
+    // extension counts as the name (2026-10-10, MC-51: the sheet a drop had
+    // just opened could not be right-clicked by its own name). Both sides go
+    // through the same strip, so a needle written with the extension still
+    // matches too.
+    // A letter first: "John 3.16" is a verse, not a file called "John 3".
+    const withoutExtension = (bare) => {
+        return bare.replace(/\\.[a-z][a-z0-9]{0,4}$/, '');
+    };
     const checkIsNamedNearly = (element, needle) => {
         const bare = normaliseLabelPart(needle);
         if (bare.length === 0) {
             return false;
         }
+        const stem = withoutExtension(bare);
         return labelPartsOf(element).some((part) => {
-            return normaliseLabelPart(part) === bare;
+            const barePart = normaliseLabelPart(part);
+            return barePart === bare ||
+                (stem.length > 0 && withoutExtension(barePart) === stem);
         });
     };
 
@@ -1315,11 +1398,16 @@ export function genClickExpression(
   finds,
   timeoutMs = 1500,
   settleMs = 250,
-  { guard = null } = {},
+  { guard = null, button = 'left', clicks = 1 } = {},
 ) {
+  const how = {
+    button: button === 'right' ? 'right' : 'left',
+    clicks: clicks === 2 ? 2 : 1,
+  };
   return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
         const guard = ${JSON.stringify(guard)};
+        const how = ${JSON.stringify(how)};
         const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
         // The on/off a control carries about ITSELF, or null when it carries
         // none. Read off the accessibility tree first because that is what
@@ -1360,23 +1448,8 @@ export function genClickExpression(
         // Foreground tab that opens its launcher menu, a More Options that
         // opens one, the Bible Lookup that opens its popup all stay exactly
         // as they were, and every one answered 'unverified' to a QA run
-        // that could see the menu sitting right there (2026-10-06). A layer
-        // counts when it is on screen after the press and was not before
-        // it, most telling first: a dialog (the modal container the Bible
-        // Lookup and the app's own questions are drawn in), a floating
-        // panel, a menu. A new WINDOW is read by the tool, off the
-        // debugging targets, because no page can see another one open.
-        const OPENED_LAYERS = [
-            ['dialog', '[role="dialog"], [role="alertdialog"], #modal-container'],
-            ['panel', '.floating-widget'],
-            ['menu', '[role="menu"]'],
-        ];
-        const listShownLayers = (selector) => {
-            return [...document.querySelectorAll(selector)].filter((one) => {
-                return typeof one.checkVisibility !== 'function' ||
-                    one.checkVisibility();
-            });
-        };
+        // that could see the menu sitting right there (2026-10-06).
+        const layers = ${LAYER_WATCH_SOURCE};
         const pressAtCentre = ${PRESS_AT_CENTRE_SOURCE};
         const found = await dm.waitForBest(
             ${JSON.stringify(finds)}, ${timeoutMs}, { preferPressSafe: true },
@@ -1440,10 +1513,8 @@ export function genClickExpression(
         target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         const describedBefore = dm.describe(target);
         const stateBefore = stateOf(target);
-        const layersBefore = new Set(OPENED_LAYERS.flatMap((layer) => {
-            return listShownLayers(layer[1]);
-        }));
-        pressAtCentre(target);
+        const layersBefore = layers.snapshot();
+        pressAtCentre(target, how);
         // This app re-renders on an event, not on the press, so reading the
         // control straight back reports what it looked like BEFORE it was
         // pressed -- which would have made every toggle report 'no change'.
@@ -1454,17 +1525,15 @@ export function genClickExpression(
         // flipped is the state itself; a label that turned Show into Hide
         // is the same fact written in words. Anything else is a press with
         // nothing to show for it.
-        const opened = OPENED_LAYERS.find((layer) => {
-            return listShownLayers(layer[1]).some((one) => {
-                return !layersBefore.has(one);
-            });
-        });
+        const opened = layers.findOpened(layersBefore);
+        const closed = layers.findClosed(layersBefore);
         const isStillHere = target.isConnected;
         const stateAfter = isStillHere ? stateOf(target) : null;
         // Read the way describedBefore was, or a label merely re-joined
         // would read as a change.
         const labelAfter = isStillHere ? dm.describe(target).label : null;
-        const didChange = opened !== undefined || !isStillHere
+        const didChange = opened !== undefined || closed !== undefined ||
+            !isStillHere
             ? true
             : (stateBefore !== null || stateAfter !== null
                 ? stateAfter !== stateBefore
@@ -1472,6 +1541,11 @@ export function genClickExpression(
         return {
             clicked: describedBefore,
             matched: found.needle,
+            // Only when it was not an ordinary click: the result rides
+            // every later round, and 'left, once' is the default a reader
+            // assumes.
+            button: how.button === 'right' ? 'right' : undefined,
+            clicks: how.clicks === 2 ? 2 : undefined,
             // Only when it happened, and said in the words the
             // answer needs: this control is not on their screen
             // until they put the mouse over that part of it.
@@ -1486,7 +1560,10 @@ export function genClickExpression(
             didChange,
             // What it brought up, when it brought anything up: one word,
             // because a result rides every later round of the question.
-            opened: opened === undefined ? undefined : opened[0],
+            opened,
+            // ...or took down: a press on a menu's backdrop, a row that
+            // closed the floating panel it sat in.
+            closed,
             // The one field written for the model rather than about the DOM.
             // Absent evidence must not read as success, so it is spelled out
             // rather than left to be inferred from a missing key.
@@ -1497,6 +1574,463 @@ export function genClickExpression(
                     'owa_list_screens for the projector, owa_app_state for ' +
                     'the window, owa_find_ui for the control -- or tell the ' +
                     'user what you pressed rather than what happened.',
+        };
+    })()`;
+}
+
+/**
+ * Press a keystroke the way the walkthrough card presses one (`pressKeys` in
+ * guide.mjs): keydown then keyup, `key` AND `code` because the app forces the
+ * key back through an en-US layout before matching it. `owa_press_key`'s
+ * expression, written for the thing the raw `press_key` cannot do -- be
+ * JUDGED (`MC-13`): a key carries no label, so this reads the control whose
+ * title names it (F6 is *Clear All [F6]*), refuses every key while the app
+ * is asking the user a question (Enter and Escape are both answers to one),
+ * and refuses Enter and Space when the focused control is named for what
+ * cannot be undone -- the "Enter on a focused Move to Trash" the raw tool was
+ * filed for. With `finds`, that control is focused first, because this app's
+ * arrow keys belong to the panel that has focus (a slide list, the run
+ * player) and a key sent to the body reaches none of them.
+ *
+ * Dispatched at the focused element rather than the document so a panel's
+ * own handler sees it; it bubbles to `document.onkeydown` all the same.
+ */
+export function genPressKeyExpression(
+  keys,
+  { finds = null, timeoutMs = 1500, settleMs = 250, guard = null } = {},
+) {
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const keys = ${JSON.stringify(keys)};
+        const finds = ${JSON.stringify(finds)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
+        const layers = ${LAYER_WATCH_SOURCE};
+        let focused = null;
+        if (Array.isArray(finds) && finds.length > 0) {
+            const found = await dm.waitForBest(
+                finds, ${timeoutMs}, { preferPressSafe: true },
+            );
+            if (found.element === null) {
+                return {
+                    pressed: null,
+                    reason: 'nothing on screen to focus first',
+                    nearMisses: found.nearMisses,
+                };
+            }
+            if (found.isPressSafe !== true) {
+                return {
+                    pressed: null,
+                    reason:
+                        'the closest control on screen is not called that -- ' +
+                        'retry with the label under nearest.',
+                    nearest: dm.describe(found.element),
+                    nearMisses: dm.nearMisses(finds),
+                };
+            }
+            focused = found.element;
+            // Focusing a control named for what cannot be undone and then
+            // sending it Enter is pressing it; refused as the press would be.
+            if (pressGuard !== null) {
+                const refusal = pressGuard.findPressRefusal(focused, guard.rule);
+                if (refusal !== null) {
+                    return Object.assign(
+                        { pressed: null, match: dm.describe(focused) },
+                        refusal,
+                    );
+                }
+            }
+            focused.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            focused.focus();
+            if (document.activeElement !== focused) {
+                // A pane or a row's words take no focus; the keyboard
+                // surface is the focusable thing INSIDE (a slide list's own
+                // tabIndex box), else the one the words sit in. Never a
+                // button or link: Enter on one of those is a press.
+                const inner = focused.querySelector(
+                    '[tabindex]:not([tabindex="-1"]):not(button):not(a), ' +
+                    'input, textarea, [contenteditable="true"]',
+                ) ?? focused.closest('[tabindex]:not([tabindex="-1"])');
+                if (inner !== null) {
+                    inner.focus();
+                }
+                if (inner !== null && document.activeElement === inner) {
+                    if (pressGuard !== null) {
+                        const refusal = pressGuard.findPressRefusal(inner, guard.rule);
+                        if (refusal !== null) {
+                            return Object.assign(
+                                { pressed: null, match: dm.describe(inner) },
+                                refusal,
+                            );
+                        }
+                    }
+                    focused = inner;
+                } else {
+                    focused = null;
+                }
+            }
+        }
+        if (pressGuard !== null) {
+            // A question on screen is the user's whatever key is sent: Enter
+            // says yes, Escape says no, Tab walks its buttons.
+            const question = document.querySelector(${JSON.stringify(QUESTION_SELECTOR)});
+            if (question !== null && (typeof question.checkVisibility !== 'function' ||
+                question.checkVisibility())) {
+                return { pressed: null, refused: 'question' };
+            }
+            const keyRefusal = pressGuard.findKeyRefusal(keys, guard.rule, document);
+            if (keyRefusal !== null) {
+                return Object.assign({ pressed: null }, keyRefusal);
+            }
+            // Enter and Space press whatever has focus.
+            const active = document.activeElement;
+            if ((keys.key === 'Enter' || keys.key === ' ') && active !== null &&
+                active !== document.body) {
+                const refusal = pressGuard.findPressRefusal(active, guard.rule);
+                if (refusal !== null) {
+                    return Object.assign(
+                        { pressed: null, match: dm.describe(active) },
+                        refusal,
+                    );
+                }
+            }
+        }
+        const init = {
+            key: keys.key,
+            code: keys.code,
+            ctrlKey: !!keys.ctrlKey,
+            altKey: !!keys.altKey,
+            shiftKey: !!keys.shiftKey,
+            metaKey: !!keys.metaKey,
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+        };
+        const at = document.activeElement ?? document;
+        // Named only when the focus is on a control: a focused list is its
+        // every row's words run together, which is no name at all.
+        const atLabel = at === document || at === document.body ||
+            !dm.checkIsControl(at)
+            ? undefined
+            : dm.describe(at).label;
+        const layersBefore = layers.snapshot();
+        const titleBefore = document.title;
+        at.dispatchEvent(new KeyboardEvent('keydown', init));
+        at.dispatchEvent(new KeyboardEvent('keyup', init));
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const opened = layers.findOpened(layersBefore);
+        const closed = layers.findClosed(layersBefore);
+        const after = document.activeElement;
+        const focusMoved = after !== at;
+        const didChange = opened !== undefined || closed !== undefined ||
+            focusMoved || document.title !== titleBefore;
+        return {
+            pressed: keys.label,
+            at: atLabel,
+            focusedFirst: focused === null ? undefined : dm.describe(focused).label,
+            focusNote: finds !== null && focused === null
+                ? 'That cannot take the keyboard focus, so the key went ' +
+                    'to the window.'
+                : undefined,
+            opened,
+            closed,
+            focusMoved: focusMoved ? true : undefined,
+            didChange,
+            unverified: didChange
+                ? undefined
+                : 'The key was sent, and nothing this expression can see ' +
+                    'changed -- a key often changes a screen or a selection ' +
+                    'it cannot read. Check with owa_list_screens or ' +
+                    'owa_app_state before saying it worked.',
+        };
+    })()`;
+}
+
+/**
+ * Drag one control onto another, the way the mouse does it -- HTML5 drag
+ * and drop with ONE DataTransfer carried through dragstart, dragenter,
+ * dragover, drop and dragend, so what the source put on the drag
+ * (`handleDragStart` writes the payload and its kind's mime type) is what
+ * the target reads off it. `owa_drag`'s expression (2026-10-10): reordering
+ * slides, dropping a song into a run sheet, attaching a background to a
+ * slide card are all a user's everyday moves, and no tool could do one --
+ * chrome-devtools' `drag` aims by uid and drives the pointer, which this
+ * app's drop handlers do not read.
+ *
+ * `place` is WHERE on the target: `on` is its centre, what dropping on a
+ * thing means in the app (attach, replace, play); `before` / `after` are the
+ * target's top and bottom edges -- the reorder bands a list row carries --
+ * sent with Ctrl held, which this app's rows read as "put it at this
+ * position" rather than "attach it here" (`toPresentingFlowRowDropKind`).
+ *
+ * A drop lands on what is painted at the point, found by `elementFromPoint`,
+ * so a row's own handler gets it; everything bubbles. `accepted` is whether
+ * any target cancelled the dragover, which is the one thing a drop target
+ * says about itself before the drop.
+ */
+export function genDragExpression(
+  fromFinds,
+  toFinds,
+  { place = 'on', timeoutMs = 1500, settleMs = 300, guard = null } = {},
+) {
+  const wanted = ['on', 'before', 'after'].includes(place) ? place : 'on';
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const place = ${JSON.stringify(wanted)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
+        const layers = ${LAYER_WATCH_SOURCE};
+        const fromFinds = ${JSON.stringify(fromFinds)};
+        const toFinds = ${JSON.stringify(toFinds)};
+        const find = async (finds, what) => {
+            const found = await dm.waitForBest(
+                finds, ${timeoutMs}, { preferPressSafe: true },
+            );
+            if (found.element === null) {
+                return {
+                    refusal: {
+                        dragged: null,
+                        reason: 'nothing on screen to ' + what,
+                        nearMisses: found.nearMisses,
+                    },
+                };
+            }
+            if (found.isPressSafe !== true) {
+                return {
+                    refusal: {
+                        dragged: null,
+                        reason:
+                            'the closest control on screen is not called ' +
+                            'that -- retry with the label under nearest.',
+                        nearest: dm.describe(found.element),
+                        nearMisses: dm.nearMisses(finds),
+                    },
+                };
+            }
+            if (pressGuard !== null) {
+                const refusal = pressGuard.findPressRefusal(
+                    found.element, guard.rule,
+                );
+                if (refusal !== null) {
+                    return {
+                        refusal: Object.assign(
+                            { dragged: null, match: dm.describe(found.element) },
+                            refusal,
+                        ),
+                    };
+                }
+            }
+            return { element: found.element };
+        };
+        const source = await find(fromFinds, 'drag');
+        if (source.refusal !== undefined) {
+            return source.refusal;
+        }
+        const target = await find(toFinds, 'drop on');
+        if (target.refusal !== undefined) {
+            return target.refusal;
+        }
+        // The row is what is draggable; the words may be on a child of it.
+        const dragged = source.element.closest('[draggable="true"]') ??
+            source.element;
+        if (dragged.getAttribute('draggable') !== 'true') {
+            return {
+                dragged: null,
+                reason: 'that control cannot be dragged',
+                match: dm.describe(source.element),
+            };
+        }
+        dragged.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        target.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const centreOf = (element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+                x: Math.round(rect.left + rect.width / 2),
+                y: Math.round(rect.top + rect.height / 2),
+            };
+        };
+        const from = centreOf(dragged);
+        // \`after\` is the top band of the NEXT row: this app's rows read a
+        // Ctrl drop as "put it at my position" top edge or bottom alike, so
+        // the row's own bottom band would land the thing BEFORE it. With no
+        // next row the bottom band is all there is.
+        const targetRow = target.element.closest('[draggable="true"]') ??
+            target.element;
+        const nextRow = place === 'after' ? targetRow.nextElementSibling : null;
+        const landing = nextRow ?? target.element;
+        const rect = landing.getBoundingClientRect();
+        const centre = centreOf(landing);
+        const to = {
+            x: centre.x,
+            y: place === 'on'
+                ? centre.y
+                : nextRow !== null || place === 'before'
+                    ? Math.round(rect.top + 2)
+                    : Math.round(rect.bottom - 2),
+        };
+        const dataTransfer = new DataTransfer();
+        const send = (element, type, point) => {
+            const event = new DragEvent(type, {
+                bubbles: true, cancelable: true, composed: true,
+                clientX: point.x, clientY: point.y,
+                ctrlKey: place !== 'on',
+                dataTransfer: dataTransfer,
+            });
+            element.dispatchEvent(event);
+            return event.defaultPrevented;
+        };
+        const layersBefore = layers.snapshot();
+        send(dragged, 'dragstart', from);
+        if (dataTransfer.types.length === 0) {
+            send(dragged, 'dragend', from);
+            return {
+                dragged: null,
+                reason:
+                    'that control starts no drag the app can read -- it ' +
+                    'is moved with the pointer, not dropped',
+                match: dm.describe(dragged),
+            };
+        }
+        const at = document.elementFromPoint(to.x, to.y) ?? landing;
+        send(at, 'dragenter', to);
+        const accepted = send(at, 'dragover', to);
+        const dropped = send(at, 'drop', to);
+        send(dragged, 'dragend', from);
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const opened = layers.findOpened(layersBefore);
+        return {
+            dragged: dm.describe(dragged),
+            onto: dm.describe(target.element),
+            place,
+            carried: [...dataTransfer.types],
+            accepted,
+            dropped,
+            opened,
+            unverified: accepted || dropped
+                ? undefined
+                : 'Nothing under that point took the drop. Check the thing ' +
+                    'you meant to change -- owa_app_state, owa_list_ui, a ' +
+                    'data tool\\'s list -- before saying it worked.',
+        };
+    })()`;
+}
+
+/**
+ * Scroll a list, the way a user does to reach a row that is not on screen.
+ * `owa_scroll`'s expression (2026-10-10, MC-54): this app's long lists are
+ * windowed, so a row past the fold is not in the DOM and matches nothing
+ * until the list is scrolled. The region is the nearest scroller of the
+ * control `finds` names (or inside it, for a panel), else the list nearest
+ * where it is -- `findListRegion`, the guide's own rule -- and the answer
+ * says what came into view, so the next call aims at words that exist.
+ */
+export function genScrollExpression(
+  finds,
+  { to = 'down', timeoutMs = 1500, settleMs = 300 } = {},
+) {
+  const wanted = ['down', 'up', 'top', 'bottom'].includes(to) ? to : 'down';
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const to = ${JSON.stringify(wanted)};
+        const finds = ${JSON.stringify(finds)};
+        // The runtime's own rule (\`checkIsScroller\`), with its size floor:
+        // a 30 px box that happens to overflow is not the list.
+        const isScroller = (element) => {
+            if (element === null || element === undefined ||
+                element.getBoundingClientRect === undefined) {
+                return false;
+            }
+            const rect = element.getBoundingClientRect();
+            return rect.width >= 200 && rect.height >= 100 &&
+                element.scrollHeight > element.clientHeight + 4;
+        };
+        let anchor = null;
+        if (Array.isArray(finds) && finds.length > 0) {
+            const found = await dm.waitForBest(finds, ${timeoutMs}, {});
+            if (found.element === null) {
+                return {
+                    scrolled: null,
+                    reason: 'nothing on screen called that to scroll',
+                    nearMisses: found.nearMisses,
+                };
+            }
+            anchor = found.element;
+        }
+        let region = null;
+        if (anchor !== null) {
+            let node = anchor;
+            while (node !== null && node !== document.body) {
+                if (isScroller(node)) {
+                    region = node;
+                    break;
+                }
+                node = node.parentElement;
+            }
+            if (region === null) {
+                // A panel named: the list is INSIDE it. Containers only --
+                // every node of a Bible pane is thousands of layout reads.
+                region = [...anchor.querySelectorAll('div, ul, section')]
+                    .find(isScroller) ?? null;
+            }
+        }
+        if (region === null) {
+            const rect = anchor === null ? null : anchor.getBoundingClientRect();
+            region = dm.findListRegion(
+                rect === null
+                    ? null
+                    : { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 },
+            );
+        }
+        if (region === null) {
+            return { scrolled: null, reason: 'nothing here scrolls' };
+        }
+        const before = region.scrollTop;
+        const page = Math.max(40, Math.round(region.clientHeight * 0.9));
+        const max = Math.max(0, region.scrollHeight - region.clientHeight);
+        const target = to === 'top' ? 0
+            : to === 'bottom' ? max
+            : to === 'up' ? before - page
+            : before + page;
+        region.scrollTop = Math.max(0, Math.min(target, max));
+        // The browser fires its own scroll event for a moved scrollTop on
+        // the next frame; a windowed list renders its new rows on it. A
+        // synthetic one here made every such list render twice.
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const after = region.scrollTop;
+        const regionRect = region.getBoundingClientRect();
+        const checkIsInView = (element) => {
+            const rect = element.getBoundingClientRect();
+            return rect.height > 0 && rect.bottom > regionRect.top &&
+                rect.top < regionRect.bottom;
+        };
+        const seen = new Set();
+        const inView = [];
+        for (const element of dm.collect()) {
+            if (!region.contains(element) || !checkIsInView(element)) {
+                continue;
+            }
+            const label = dm.shownLabelOf(element);
+            if (label.length === 0 || label.length > 120 || seen.has(label)) {
+                continue;
+            }
+            seen.add(label);
+            inView.push(label);
+            if (inView.length >= 40) {
+                break;
+            }
+        }
+        const panel = region.closest('[data-widget-name]');
+        return {
+            scrolled: panel === null ? region.tagName.toLowerCase()
+                : panel.getAttribute('data-widget-name'),
+            to,
+            from: before,
+            now: after,
+            max,
+            isAtTop: after <= 0,
+            isAtBottom: after >= max - 1,
+            didChange: after !== before,
+            inView,
         };
     })()`;
 }
@@ -1519,7 +2053,11 @@ export const OPENED_WINDOW_WAIT_MS = 1000;
  * the only answer that pays for the wait. `waitForNewAppPage` is `cdp.mjs`'s,
  * passed in so this file stays free of the network.
  */
-export async function addOpenedWindow(value, { port, targets }, waitForNewAppPage) {
+export async function addOpenedWindow(
+  value,
+  { port, targets },
+  waitForNewAppPage,
+) {
   if (value === null || typeof value !== 'object' || !value.clicked) {
     return value;
   }
