@@ -36,7 +36,9 @@ instructions. Preserve references to it: the application's knowledge builder
 and several helper scripts read those paths directly.
 
 When changing shared guidance, edit the canonical `.claude/` file first, then
-update these Codex copies in the same change:
+run `node extra-work/sync-agent-mirror.mjs` in the same change; it makes these
+copies, and `src/test-setup/agentDocsMirror.test.ts` fails the gate until they
+match:
 
 - `.claude/CLAUDE.md` -> `.codex/project-instructions.md` (exact copy).
 - `.claude/rules/` -> `.codex/instructions/` (exact copies).

@@ -4,6 +4,8 @@ description: "Bibles install IN the chat by buttons (link, GitHub page/repo, or 
 metadata:
   node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:04:12.829Z
 ---
 
 Updated 2026-10-06 (twice); W-34, ST-60, CB-80..CB-82. The user asked for the
@@ -29,6 +31,6 @@ Non-obvious, learned live:
 
 Unchanged: the Settings form (`BibleXMLImportComp`) still downloads in the
 renderer and reviews inline; the Info editor still edits locale/numbers/books;
-`bibles-data` follows `appLocalStorage.defaultStorage`. Verify the file on disk,
+`bibles-data` follows `appLocalStorage.defaultStorageDirPath`. Verify the file on disk,
 not a toast. Removing a Bible clears its sibling XML cache, and an agent undo
 of a Bible file does too (`bibleKey` on the restore).

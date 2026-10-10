@@ -27,6 +27,12 @@
 // index's timestamp. What it never does: write a file, reach the app, or use
 // the network. It works with the app shut and costs nothing to re-run.
 //
+// A lead a run already confirmed as history or as an external name is listed
+// in the skill's `references/killed-leads.json` (check + doc + name, never a
+// line number, so an edit above it does not bring it back). The paths and
+// symbols checks set those aside, and report an entry whose doc no longer
+// names it, so the list cannot rot into a blanket exemption.
+//
 // Exit code: 0, or 2 for a --check it does not know.
 
 import { execFileSync } from 'node:child_process';
@@ -118,6 +124,8 @@ const CHAIN_PATTERN = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/;
 const SYMBOL_SEGMENT_PATTERN =
     /^(?:[a-z_$][a-z0-9_$]*[A-Z][\w$]*|[A-Z][a-z0-9]+[A-Z][\w$]*|[A-Z][A-Z0-9]*_[A-Z0-9_]+)$/;
 const MIN_SYMBOL_LENGTH = 6;
+const FILE_NAME_TOKEN_PATTERN =
+    /\.(?:[cm]?[jt]sx?|md|json|s?css|html|ya?ml|toml|sh|txt)$/;
 // Platform names the notes use on purpose that no typing in node_modules
 // declares here: Chrome DevTools Protocol methods, Win32 / macOS window APIs,
 // React fiber internals, Prettier options, Claude Code's own tools. Grow it
@@ -148,6 +156,24 @@ const EXTERNAL_NAME_SET = new Set([
     'ListAgents',
     'WebFetch',
     'WebSearch',
+    // Proven external on 2026-10-08: a WMI `Win32_Process` property, a
+    // registry value, Chromium's UI Automation root, a VPN adapter's name,
+    // and an accessor of the `bible-note` dependency's typings.
+    'CreationDate',
+    'EnableTransparency',
+    'RootView',
+    'ProTUN',
+    'defaultLang',
+    // Also 2026-10-08: npm's config key, open-lyric's own exports, Vite's
+    // `_metadata.json` field, a Node `_http_server` internal, the Shape
+    // Detection API (no TS lib declares it), a chrome-devtools-mcp parameter.
+    'allowScripts',
+    'parsePlainText',
+    'registerPlugin',
+    'browserHash',
+    'setupConnectionsTracking',
+    'BarcodeDetector',
+    'dblClick',
 ]);
 const TOOL_NAME_PATTERN = /\bowa_[a-z][a-z_]*[a-z]\b(?![*_])/g;
 const ENV_NAME_PATTERN = /\bOWA_[A-Z0-9_]*[A-Z0-9]\b/g;
@@ -218,10 +244,10 @@ function toRepoPath(fullPath) {
     return path.relative(REPO_ROOT, fullPath).split(path.sep).join('/');
 }
 
-function readText(relPath) {
+function readText(relPath, maxBytes = MAX_READ_BYTES) {
     try {
         const fullPath = path.join(REPO_ROOT, relPath);
-        if (statSync(fullPath).size > MAX_READ_BYTES) {
+        if (statSync(fullPath).size > maxBytes) {
             return null;
         }
         return readFileSync(fullPath, 'utf-8');
@@ -304,9 +330,15 @@ const EXTRA_NAME_SOURCE_LIST = [
         return /^\.claude\/skills\/[^/]+\/scripts\/.+\.m?js$/.test(relPath);
     }),
     'node_modules/electron/electron.d.ts',
-    'node_modules/typescript/lib/lib.dom.d.ts',
-    'node_modules/@typescript/old/lib/lib.dom.d.ts',
+    // TypeScript 7 keeps the JS-world typings under `@typescript/old`; the
+    // older layout is kept for a checkout without it.
+    ...['typescript', '@typescript/old'].flatMap((packageName) => {
+        return ['dom', 'es5', 'esnext.disposable'].map((libName) => {
+            return `node_modules/${packageName}/lib/lib.${libName}.d.ts`;
+        });
+    }),
 ];
+const EXTRA_NAME_SOURCE_SET = new Set(EXTRA_NAME_SOURCE_LIST);
 
 let identifierSetCache = null;
 function getIdentifierSet() {
@@ -315,7 +347,12 @@ function getIdentifierSet() {
     }
     identifierSetCache = new Set();
     for (const relPath of [...codeFileList, ...EXTRA_NAME_SOURCE_LIST]) {
-        const text = readText(relPath);
+        // `lib.dom.d.ts` is 2.3 MB: under the cap it was skipped without a
+        // word, and every DOM API a note names came back as drift.
+        const text = readText(
+            relPath,
+            EXTRA_NAME_SOURCE_SET.has(relPath) ? Infinity : MAX_READ_BYTES,
+        );
         if (text === null) {
             continue;
         }
@@ -526,12 +563,91 @@ function countLines(relPath) {
 
 // ---- checks -------------------------------------------------------------------
 
-function hit(claim, text) {
+function hit(claim, text, name = null) {
     return {
         at: `${claim.doc.relPath}:${claim.line}`,
+        doc: claim.doc.relPath,
+        name,
         kind: claim.doc.kind,
         text,
     };
+}
+
+// ---- killed leads ------------------------------------------------------------
+
+const KILLED_LEADS_PATH = path.join(
+    HERE,
+    '..',
+    'references',
+    'killed-leads.json',
+);
+let killedLeadListCache = null;
+function readKilledLeadList() {
+    if (killedLeadListCache === null) {
+        try {
+            killedLeadListCache = JSON.parse(
+                readFileSync(KILLED_LEADS_PATH, 'utf-8'),
+            );
+        } catch {
+            killedLeadListCache = [];
+        }
+    }
+    return killedLeadListCache;
+}
+
+/**
+ * Sets aside the leads a run already confirmed and filed in
+ * `references/killed-leads.json`, and returns the entries that no longer
+ * match anything in their doc -- a renamed note, a fixed line -- as hits of
+ * their own, so a stale entry is deleted rather than kept forever.
+ */
+function setKilledLeadsAside(checkName, signalList, targetDocList) {
+    const entryList = readKilledLeadList().filter((entry) => {
+        return entry.check === checkName;
+    });
+    const keyOf = (doc, name) => `${doc}\0${name}`;
+    const killedKeySet = new Set(
+        entryList.map((entry) => {
+            return keyOf(entry.doc, entry.name);
+        }),
+    );
+    let setAsideCount = 0;
+    for (const signal of signalList) {
+        signal.items = signal.items.filter((item) => {
+            const isKilled =
+                item.name !== null &&
+                killedKeySet.has(keyOf(item.doc, item.name));
+            setAsideCount += isKilled ? 1 : 0;
+            return !isKilled;
+        });
+    }
+    const targetDocSet = new Set(targetDocList.map((doc) => doc.relPath));
+    const staleList = entryList
+        .filter((entry) => {
+            if (!targetDocSet.has(entry.doc)) {
+                return false;
+            }
+            return !(readText(entry.doc) ?? '').includes(entry.name);
+        })
+        .map((entry) => {
+            return {
+                at: entry.doc,
+                doc: entry.doc,
+                name: entry.name,
+                kind: 'live',
+                text:
+                    `${entry.name} -- the doc no longer names it; ` +
+                    'delete the entry',
+            };
+        });
+    return [
+        ...signalList,
+        {
+            label: 'killed-leads.json entries whose doc no longer names them',
+            text: `${setAsideCount} confirmed leads set aside`,
+            items: staleList,
+        },
+    ];
 }
 
 // Live claims first; history after, so a FIXED note's old path never buries a
@@ -555,7 +671,13 @@ function runPathsCheck(claimList) {
                 : parsePathToken(claim.token, claim.doc);
         if (parsed !== null) {
             if (!checkExists(parsed.relPath)) {
-                gone.push(hit(claim, `${parsed.relPath} -- not on disk`));
+                gone.push(
+                    hit(
+                        claim,
+                        `${parsed.relPath} -- not on disk`,
+                        parsed.relPath,
+                    ),
+                );
             } else if (parsed.lineNumber !== null) {
                 const lineCount = countLines(parsed.relPath);
                 if (lineCount !== null && parsed.lineNumber > lineCount) {
@@ -580,7 +702,7 @@ function runPathsCheck(claimList) {
             !checkExists(bareName)
         ) {
             unknownBasename.push(
-                hit(claim, `${bareName} -- no file of that name`),
+                hit(claim, `${bareName} -- no file of that name`, bareName),
             );
         }
     }
@@ -614,7 +736,9 @@ function runSymbolsCheck(claimList) {
             .replace(/\s*\/?>$/, '')
             .replace(/\(.*\)$/, '')
             .replace(/\[\]$/, '');
-        if (!CHAIN_PATTERN.test(token)) {
+        // A file name (`managerHelpers.extra.test.tsx`, `PRIVACY_POLICY.md`)
+        // is the paths check's to judge, not a chain of code names.
+        if (!CHAIN_PATTERN.test(token) || FILE_NAME_TOKEN_PATTERN.test(token)) {
             continue;
         }
         for (const segment of token.split('.')) {
@@ -631,7 +755,9 @@ function runSymbolsCheck(claimList) {
                 continue;
             }
             seenSet.add(key);
-            missing.push(hit(claim, `${segment} -- not in any code file`));
+            missing.push(
+                hit(claim, `${segment} -- not in any code file`, segment),
+            );
         }
     }
     return [
@@ -1746,8 +1872,20 @@ const targetClaimList = claimList.filter((claim) => {
     return checkIsInDocArg(claim.doc);
 });
 const RUNNER_MAP = {
-    paths: () => runPathsCheck(targetClaimList),
-    symbols: () => runSymbolsCheck(targetClaimList),
+    paths: () => {
+        return setKilledLeadsAside(
+            'paths',
+            runPathsCheck(targetClaimList),
+            targetDocList,
+        );
+    },
+    symbols: () => {
+        return setKilledLeadsAside(
+            'symbols',
+            runSymbolsCheck(targetClaimList),
+            targetDocList,
+        );
+    },
     tools: () => runToolsCheck(targetDocList),
     scripts: () => runScriptsCheck(targetDocList, targetClaimList),
     env: () => runEnvCheck(targetDocList),

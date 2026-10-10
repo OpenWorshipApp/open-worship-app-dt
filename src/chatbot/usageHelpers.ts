@@ -66,6 +66,68 @@ const MODEL_PRICE_MAP: Record<string, LlmModelPriceType> = {
         output: 0.4,
     },
     'kimi-k3': { input: 3, cacheRead: 0.3, cacheWrite: 3, output: 15 },
+    // Amazon Bedrock, the Standard-tier In-Region rate in its US regions off
+    // each model's own AWS card and the pricing page, checked 2026-10-09; the
+    // OpenAI rows are the short-context (272K or fewer input tokens) rate,
+    // which every question here is. Frankfurt is ~20% more for the Gemmas and
+    // is not told apart, because the table is keyed on the model. Where AWS
+    // publishes no cached rate (the Gemmas, every cache write but OpenAI's) a
+    // cached token is priced as a full one: the estimate can only come out
+    // HIGH, never under the bill.
+    'openai.gpt-6-astra': {
+        input: 11,
+        cacheRead: 1.1,
+        cacheWrite: 13.75,
+        output: 55,
+    },
+    'openai.gpt-5.6-terra': {
+        input: 2.2,
+        cacheRead: 0.22,
+        cacheWrite: 2.75,
+        output: 13.2,
+    },
+    'openai.gpt-5.6-luna': {
+        input: 0.22,
+        cacheRead: 0.022,
+        cacheWrite: 0.275,
+        output: 1.32,
+    },
+    'openai.gpt-5.4': {
+        input: 2.75,
+        cacheRead: 0.275,
+        cacheWrite: 2.75,
+        output: 16.5,
+    },
+    'xai.grok-4.6': {
+        input: 2.2,
+        cacheRead: 0.55,
+        cacheWrite: 2.2,
+        output: 6.6,
+    },
+    'xai.grok-4.3': {
+        input: 1.25,
+        cacheRead: 0.2,
+        cacheWrite: 1.25,
+        output: 2.5,
+    },
+    'google.gemma-4-31b': {
+        input: 0.14,
+        cacheRead: 0.14,
+        cacheWrite: 0.14,
+        output: 0.4,
+    },
+    'google.gemma-4-26b-a4b': {
+        input: 0.13,
+        cacheRead: 0.13,
+        cacheWrite: 0.13,
+        output: 0.4,
+    },
+    'google.gemma-4-e2b': {
+        input: 0.04,
+        cacheRead: 0.04,
+        cacheWrite: 0.04,
+        output: 0.08,
+    },
 };
 
 // The keyless services charge nobody. Priced at zero rather than left
@@ -123,6 +185,11 @@ export type LlmRoundUsageType = {
     cacheRead: number;
     cacheWrite: number;
     output: number;
+    // A round answered by a model on THIS computer (a custom server on a
+    // loopback address): it costs nothing, whatever the model is called.
+    // Decided by the loop, which knows the server; this module never reads
+    // the settings store.
+    isPricedAtZero?: boolean;
 };
 
 /**
@@ -187,7 +254,8 @@ export function toAnthropicRoundUsage(
 }
 
 /**
- * The OpenAI shape, which ChatGPT, Kimi and both free services all speak.
+ * The OpenAI shape, which ChatGPT, Kimi, Bedrock and the free service all
+ * speak.
  * `prompt_tokens` is the WHOLE prompt and `cached_tokens` the part of it that
  * was served from the cache, so the full-rate part is the difference; a host
  * that reports no details at all is read as having cached nothing. Reasoning
@@ -223,6 +291,9 @@ export function toOpenAiRoundUsage(
 
 /** What one round costs at list price, or null for a model with no price. */
 export function toRoundCostUsd(round: LlmRoundUsageType): number | null {
+    if (round.isPricedAtZero) {
+        return 0;
+    }
     const price = getLlmModelPrice(round.provider, round.model);
     if (price === null) {
         return null;

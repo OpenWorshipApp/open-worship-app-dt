@@ -649,4 +649,27 @@ describe('Fmp4Fanout', () => {
         fanout.push(INIT);
         expect(fanout.hasInit).toBe(true);
     });
+
+    test('a sink is given the stream as it is, then every fragment and reset', () => {
+        const { fanout } = setup();
+        fanout.push(INIT);
+        const sink = { onInit: vi.fn(), onFragment: vi.fn(), onReset: vi.fn() };
+        // Attached mid-stream: told the init it missed.
+        fanout.setSink(sink);
+        expect(sink.onInit).toHaveBeenCalledWith(INIT);
+        const key = videoFragment(true);
+        const sound = audioFragment();
+        fanout.push(Buffer.concat([key, sound]));
+        expect(sink.onFragment.mock.calls).toEqual([
+            [key, true, (sequence - 1) * (3000 / 90000)],
+            [sound, false, null],
+        ]);
+        fanout.resetStream();
+        expect(sink.onReset).toHaveBeenCalledTimes(1);
+        // Let go: told nothing more.
+        fanout.setSink(null);
+        fanout.push(Buffer.concat([INIT, videoFragment(true)]));
+        expect(sink.onInit).toHaveBeenCalledTimes(1);
+        expect(sink.onFragment).toHaveBeenCalledTimes(2);
+    });
 });

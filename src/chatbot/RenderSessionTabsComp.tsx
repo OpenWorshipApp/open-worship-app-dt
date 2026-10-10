@@ -72,6 +72,7 @@ type SweepType =
 export default function RenderSessionTabsComp<T extends TabSessionType>({
     sessions,
     activeId,
+    busyIds,
     onChoose,
     onClose,
     onAdd,
@@ -89,6 +90,10 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
 }: Readonly<{
     sessions: T[];
     activeId: string;
+    // The tabs still waiting on an answer. Each tab works on its own, so the
+    // one being looked at may be idle while another is still going -- and
+    // the strip is the one place all of them are on screen at once.
+    busyIds?: readonly string[];
     // The strip knows a tab by its id and its lock and nothing else; what
     // it is CALLED, and whether there is anything worth adding or sweeping,
     // is the owning window’s business.
@@ -387,6 +392,19 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     {title}
                                 </button>
                             )}
+                            {/* After the name, beside its ×: where the eye
+                                lands on a tab, and the same place in every
+                                tab whatever its name's length. */}
+                            {busyIds?.includes(session.id) ? (
+                                <span
+                                    className="chat-tab-busy"
+                                    role="img"
+                                    aria-label={`${title} is working on an answer`}
+                                    title="Working on an answer"
+                                >
+                                    <span className="chat-status-dot" />
+                                </span>
+                            ) : null}
                             {session.isLocked ? (
                                 // The close button, replaced by the reason it
                                 // is not there. Not a button of its own: a

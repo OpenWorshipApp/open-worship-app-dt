@@ -91,6 +91,15 @@ import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
 import { captureOAuthRedirectUrl } from './oauthHelpers';
 import { relaunchApp } from './taskbarHelpers';
 import { readWebPage } from './webPageHelpers';
+import {
+    cancelCustomLlmFetch,
+    handleCustomLlmFetch,
+} from './customLlmRelayHelpers';
+import {
+    CUSTOM_LLM_CANCEL_CHANNEL,
+    CUSTOM_LLM_FETCH_CHANNEL,
+    type CustomLlmFetchRequestType,
+} from './customLlmProtocol';
 import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
 const { dialog, ipcMain, app } = electron;
@@ -964,6 +973,35 @@ export function initEventOther(appController: ElectronAppController) {
         appController.sendMessageToAll('main:app:bible-list-changed');
     });
 
+    // The help window working on an answer, for the 🤖 in every other window
+    // (`src/helper/ai/chatbotBusyHelpers.ts`). Remembered so a window opened
+    // mid-answer can ask, and cleared when the help window closes mid-answer
+    // -- a dot left on for a window that no longer exists would never go out.
+    let isChatbotBusy = false;
+    const watchedChatbotSet = new WeakSet<WebContents>();
+    const setChatbotBusy = (isBusy: boolean) => {
+        if (isBusy === isChatbotBusy) {
+            return;
+        }
+        isChatbotBusy = isBusy;
+        appController.sendMessageToAll('main:app:chatbot-busy', { isBusy });
+    };
+    ipcMain.on('all:app:chatbot-busy', (event, data: any) => {
+        if (!watchedChatbotSet.has(event.sender)) {
+            watchedChatbotSet.add(event.sender);
+            event.sender.once('destroyed', () => {
+                setChatbotBusy(false);
+            });
+        }
+        setChatbotBusy(data?.isBusy === true);
+    });
+    // Answered on the relay's own channel, to the asking window alone --
+    // never as a synchronous `returnValue`, which blocks that window until
+    // this replies.
+    ipcMain.on('all:app:get-chatbot-busy', (event) => {
+        event.sender.send('main:app:chatbot-busy', { isBusy: isChatbotBusy });
+    });
+
     ipcMain.on('all:app:print', (event, htmlText?: string) => {
         if (typeof htmlText === 'string') {
             void printHTMLContent(htmlText).catch((error) => {
@@ -1026,6 +1064,21 @@ export function initEventOther(appController: ElectronAppController) {
             return readWebPage(data.url, data);
         },
     );
+
+    // The chatbot's door to a custom model server (LM Studio and the like):
+    // forwarded only to an address saved in Settings, only the two calls the
+    // chatbot makes, with the key read here -- `customLlmRelayHelpers.ts`.
+    onAsync(
+        ipcMain,
+        CUSTOM_LLM_FETCH_CHANNEL,
+        (data: CustomLlmFetchRequestType, event) => {
+            return handleCustomLlmFetch(data, event.sender);
+        },
+    );
+    // Stop, sent with no reply wanted: the request's own reply settles it.
+    ipcMain.on(CUSTOM_LLM_CANCEL_CHANNEL, (_event, data) => {
+        cancelCustomLlmFetch(data?.requestId);
+    });
 
     ipcMain.on('all:app:check-is-window-on-top', (event) => {
         const win = BrowserWindow.fromWebContents(event.sender);

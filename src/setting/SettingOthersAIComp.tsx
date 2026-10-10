@@ -1,5 +1,5 @@
 import type { ChangeEvent, ReactNode } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import { useAppEffect } from '../helper/appHooks';
 import { takeAIKeyFocusRequest } from '../helper/ai/aiKeyFocusHelpers';
@@ -9,6 +9,7 @@ import type {
     AISettingType,
 } from '../helper/ai/aiHelpers';
 import {
+    BEDROCK_REGION_LIST,
     getAISetting,
     getIsAIEnabled,
     setAISetting,
@@ -24,6 +25,9 @@ import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { applyStore } from './SettingApplyComp';
 import { relaunchApp } from './settingHelpers';
 import SettingOthersFieldComp from './SettingOthersFieldComp';
+import SettingOthersCustomServersComp from './SettingOthersCustomServersComp';
+import { useCustomServers } from '../helper/ai/customServerHelpers';
+import { checkIsUsableCustomServer } from '../../electron/customLlmProtocol';
 import SettingOthersSecureStorageWarningComp from './SettingOthersSecureStorageWarningComp';
 import SettingOthersSectionComp from './SettingOthersSectionComp';
 
@@ -222,6 +226,59 @@ function RenderWorkspaceIdComp() {
                 url={PAID_PROVIDER_PAGE_MAP.anthropic.workspaces ?? ''}
             />
         </SettingOthersFieldComp>
+    );
+}
+
+/**
+ * Which AWS region Bedrock is asked in. One Bedrock key reaches every region
+ * of its account, so the key alone does not say where to go -- and a model is
+ * only served in some of them. A closed list rather than a text box: each
+ * region is a host the chatbot window's CSP has to name, so a region typed in
+ * by hand would be refused there and read back as the internet being down.
+ * The codes are shown as they are, untranslated, because they are AWS's
+ * identifiers and the console the operator copies the key from shows them so.
+ */
+function RenderBedrockRegionComp() {
+    const aiSetting = useAISetting();
+    const selectId = useId();
+    const handleChanging = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            const setting: AISettingType = getAISetting();
+            const value = event.currentTarget.value;
+            if (setting.bedrockRegion === value) {
+                return;
+            }
+            setAISetting({ ...setting, bedrockRegion: value });
+            applyStore.pendingApply();
+        },
+        [],
+    );
+    return (
+        <div className="app-setting-others-field">
+            <label className="app-setting-others-label" htmlFor={selectId}>
+                {tran('AWS Region')}
+                <i
+                    className="bi bi-info-circle app-setting-others-hint"
+                    title={tran(
+                        'The region your Bedrock models are enabled in',
+                    )}
+                />
+            </label>
+            <select
+                id={selectId}
+                className="form-select form-select-sm"
+                value={aiSetting.bedrockRegion}
+                onChange={handleChanging}
+            >
+                {BEDROCK_REGION_LIST.map((region) => {
+                    return (
+                        <option key={region} value={region}>
+                            {region}
+                        </option>
+                    );
+                })}
+            </select>
+        </div>
     );
 }
 
@@ -443,12 +500,16 @@ export default function SettingOthersAIComp() {
     const aiSetting = useAISetting();
     const isEnabled = getIsAIEnabled();
     const keyFocus = useAIKeyFocus();
+    const customServers = useCustomServers();
     // Either provider on its own is enough to make the features work, so one
-    // key is a working row.
+    // key is a working row -- and so is one usable server of the user's own,
+    // which the chatbot answers with and no key at all.
     const isAnyKeySet =
         !!aiSetting.openAIAPIKey ||
         !!aiSetting.anthropicAPIKey ||
-        !!aiSetting.kimiAPIKey;
+        !!aiSetting.kimiAPIKey ||
+        !!aiSetting.bedrockAPIKey ||
+        customServers.some(checkIsUsableCustomServer);
     return (
         <SettingOthersSectionComp
             iconClassName="bi-robot"
@@ -512,6 +573,21 @@ export default function SettingOthersAIComp() {
                         keyFocus={keyFocus}
                     />
                 </RenderProviderGroupComp>
+                <RenderProviderGroupComp
+                    title="Amazon Bedrock"
+                    usedForList={[USE_CHATBOT]}
+                >
+                    <RenderAPIKeyComp
+                        keyName="bedrockAPIKey"
+                        label="Amazon Bedrock API Key"
+                        hintKey="Answers in the chatbot only"
+                        createKeyTitleKey="Create Amazon Bedrock api key"
+                        createKeyURL={PAID_PROVIDER_PAGE_MAP.bedrock.keys}
+                        keyFocus={keyFocus}
+                    />
+                    <RenderBedrockRegionComp />
+                </RenderProviderGroupComp>
+                <SettingOthersCustomServersComp />
             </div>
             {isEnabled && !isAnyKeySet ? <RenderFreeFallbackComp /> : null}
         </SettingOthersSectionComp>

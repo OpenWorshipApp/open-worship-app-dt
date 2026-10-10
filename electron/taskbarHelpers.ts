@@ -91,7 +91,7 @@ function genRelaunchArguments() {
 export function relaunchApp() {
     app.relaunch({ args: genRelaunchArgList() });
     // `quit`, not `exit`: `will-quit` is where the agent endpoint file is
-    // swept and the settings are flushed.
+    // swept and the settings are flushed (`ElectronSettingManager`).
     app.quit();
 }
 

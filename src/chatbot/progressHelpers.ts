@@ -21,6 +21,12 @@
 // takes twenty steps would otherwise re-render the whole message list twenty
 // times on a machine that has nothing to spare. One small component subscribes
 // here; nothing else re-renders at all.
+//
+// One list PER TAB (2026-10-09). The tabs work independently -- a question
+// waiting on a slow local model in one must not stop the next tab asking its
+// own -- and a single list showed whichever tab had pushed last in every tab.
+// An entry exists only while its tab has steps: cleared is deleted, so the
+// map holds at most one list per open tab.
 
 export type BotProgressType = {
     // Order, and the handle a finishing step is matched back to its start by.
@@ -50,21 +56,27 @@ export type ProgressStateType = {
 
 const EMPTY_PROGRESS: ProgressStateType = { steps: [], droppedCount: 0 };
 
-let state: ProgressStateType = EMPTY_PROGRESS;
-const listenerSet = new Set<(next: ProgressStateType) => void>();
+const stateMap = new Map<string, ProgressStateType>();
+const listenerSet = new Set<(sessionId: string) => void>();
 
-function publish(next: ProgressStateType) {
-    state = next;
+function publish(sessionId: string, next: ProgressStateType) {
+    if (next.steps.length === 0 && next.droppedCount === 0) {
+        stateMap.delete(sessionId);
+    } else {
+        stateMap.set(sessionId, next);
+    }
     for (const listener of listenerSet) {
-        listener(state);
+        listener(sessionId);
     }
 }
 
-export function getProgressState() {
-    return state;
+/** What one tab is doing right now. */
+export function getProgressState(sessionId: string) {
+    return stateMap.get(sessionId) ?? EMPTY_PROGRESS;
 }
 
-export function subscribeProgress(listener: (next: ProgressStateType) => void) {
+/** Told the tab whose list changed; a listener reads only its own. */
+export function subscribeProgress(listener: (sessionId: string) => void) {
     listenerSet.add(listener);
     return () => {
         listenerSet.delete(listener);
@@ -72,36 +84,44 @@ export function subscribeProgress(listener: (next: ProgressStateType) => void) {
 }
 
 /**
- * A step starting, or the same step finishing.
+ * A step starting, or the same step finishing, in one tab.
  *
  * Matched by `id` rather than appended twice: the point of the line is that it
  * shows what is happening NOW, and a log listing "Reading the guide" and then
  * "Reading the guide" again reads as the window going round in circles.
  */
-export function pushProgressStep(step: BotProgressType) {
+export function pushProgressStep(sessionId: string, step: BotProgressType) {
+    const state = getProgressState(sessionId);
     const index = state.steps.findIndex((one) => {
         return one.id === step.id;
     });
     if (index !== -1) {
         const steps = state.steps.slice();
         steps[index] = step;
-        publish({ ...state, steps });
+        publish(sessionId, { ...state, steps });
         return;
     }
     const steps = [...state.steps, step];
     const overflow = steps.length - PROGRESS_SHOWN_MAX;
-    publish({
+    publish(sessionId, {
         steps: overflow > 0 ? steps.slice(overflow) : steps,
         droppedCount: state.droppedCount + Math.max(overflow, 0),
     });
 }
 
+/** The callback an ask reports through, bound to the tab that asked. */
+export function genSessionProgress(sessionId: string): BotProgressCallbackType {
+    return (step) => {
+        pushProgressStep(sessionId, step);
+    };
+}
+
 /** Cleared when a question starts and when it stops, however it stops. */
-export function clearProgressSteps() {
-    if (state.steps.length === 0 && state.droppedCount === 0) {
+export function clearProgressSteps(sessionId: string) {
+    if (!stateMap.has(sessionId)) {
         return;
     }
-    publish(EMPTY_PROGRESS);
+    publish(sessionId, EMPTY_PROGRESS);
 }
 
 /**

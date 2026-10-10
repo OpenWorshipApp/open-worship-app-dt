@@ -99,6 +99,8 @@ vi.mock('./managers/screenHelpers', () => ({
 }));
 
 vi.mock('../helper/cameraHelpers', () => ({
+    // Safari and Firefox show a camera in a canvas view.
+    createCameraCanvasView: (stream: any) => stream.canvasView ?? null,
     getCameraStream: getCameraStreamMock,
     stopCameraStream: stopCameraStreamMock,
 }));
@@ -595,6 +597,49 @@ describe('screen component runtime behavior', () => {
         expect(stopViewerCameraLiveMock).toHaveBeenCalledOnce();
         expect(stopCameraStreamMock).toHaveBeenCalledOnce();
         expect(stopTrack).toHaveBeenCalledOnce();
+    });
+
+    test("Safari shows a camera background in a canvas in the video's place, put up at once", async () => {
+        const { genHtmlBackground } = await import('./ScreenBackgroundComp');
+        const canvas = document.createElement('canvas');
+        const releaseView = vi.fn();
+        // This computer's camera, as a browser viewer has it: no metadata
+        // will ever come to the hidden video, so nothing waits for it.
+        getCameraStreamMock.mockResolvedValue({
+            canvasView: { element: canvas, release: releaseView },
+            getTracks: () => [],
+        });
+        const background = genHtmlBackground(5, {
+            type: 'camera',
+            src: 'mirror-camera:host-1:camera-1',
+        } as any);
+        const clearTracks = await background.promise;
+        // The video an iPad never paints is gone; the canvas has its look.
+        expect(background.newDiv.querySelector('video')).toBeNull();
+        expect(background.newDiv.firstElementChild).toBe(canvas);
+        expect(canvas.style.objectFit).toBe('cover');
+        expect(canvas.style.visibility).toBe('');
+        clearTracks();
+        expect(releaseView).toHaveBeenCalledOnce();
+        expect(stopCameraStreamMock).toHaveBeenCalledOnce();
+    });
+
+    test("Safari: a browser viewer's camera background in a canvas hides while it sends nothing", async () => {
+        const { genHtmlBackground } = await import('./ScreenBackgroundComp');
+        const canvas = document.createElement('canvas');
+        getCameraStreamMock.mockResolvedValue({
+            isViewer: true,
+            canvasView: { element: canvas, release: vi.fn() },
+            getTracks: () => [],
+        });
+        const background = genHtmlBackground(5, {
+            type: 'camera',
+            src: 'vd-camera:viewer-1',
+        } as any);
+        await background.promise;
+        expect(canvas.style.visibility).toBe('hidden');
+        viewerCameraLiveListeners.at(-1)?.(true);
+        expect(canvas.style.visibility).toBe('');
     });
 
     test('handles camera background failures with a user-facing alert', async () => {

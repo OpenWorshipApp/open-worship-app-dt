@@ -108,6 +108,15 @@ export default class VirtualScreenController implements ScreenOutputType {
         );
     }
 
+    // The name the screen gives a camera it shows; '' when it gives none.
+    cameraLabelOf(cameraId: string) {
+        return (
+            [...this.cameras.foreground, ...this.cameras.background].find(
+                (camera) => camera.id === cameraId,
+            )?.label ?? ''
+        );
+    }
+
     sendMessage(type: string, data: any) {
         const message = { screenId: this.screenId, type, data };
         this.noteCameras([message]);

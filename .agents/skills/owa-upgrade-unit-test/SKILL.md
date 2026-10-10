@@ -235,12 +235,13 @@ of the gain: 1290 lines behavioural, 546 lines smoke render
 
 Then `npm run lint` — the whole gate, reading the log body rather than the exit
 code, since it is `&&`-chained and the first failure hides every stage after.
-Two things that will look like your fault and are not:
+Two things to know about the gate:
 
-- **`lint:pre` is red on a Windows checkout for line endings.** `core.autocrlf`
-  is `true` and `.prettierrc` sets no `endOfLine`, so `prettier --check` flags
-  ~1270 files that nobody touched. **Do not run `npm run format`** — it would
-  rewrite the repo. Check only your own new files:
+- **Line endings.** `core.autocrlf` is `true` and `.prettierrc` sets no
+  `endOfLine`, so ~1 350 files sit on disk as CRLF. `lint:pre` passes
+  `--end-of-line auto` (since `408ecbc3`, 2026-09-30) and is green on them;
+  `npm run format` does not, so **do not run `npm run format`** — it would
+  rewrite every one of them. Check only your own new files:
   `npx prettier --check <your files>`, and `--write` those.
 - **`lint:es` does not lint test files** (`--ignore-pattern "src/**/*.test.ts*"`),
   so a new test's eslint cleanliness is not gated — but prettier's is.

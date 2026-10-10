@@ -17,7 +17,9 @@
             to is named, plus the app's own MCP host on a loopback port the
             launcher picks. Anything else -- a paste, an attachment or an
             answer that tried to send the user's key somewhere -- has nowhere
-            to send it to.
+            to send it to. Bedrock is named one region at a time, never as
+            `*.api.aws`, which would let this window speak to every AWS
+            service; the list is `BEDROCK_REGION_LIST` in `aiHelpers.ts`.
 
             No 'unsafe-eval', and `object-src`/`frame-src`/`base-uri` are shut
             because nothing here uses them and each is a way to get script into
@@ -35,6 +37,10 @@
                 connect-src 'self' data: blob:
                     https://api.anthropic.com https://api.openai.com
                     https://api.moonshot.ai https://api.kilo.ai
+                    https://bedrock-mantle.us-east-1.api.aws
+                    https://bedrock-mantle.us-east-2.api.aws
+                    https://bedrock-mantle.us-west-2.api.aws
+                    https://bedrock-mantle.eu-central-1.api.aws
                     http://127.0.0.1:* http://localhost:*;
                 object-src 'none'; frame-src 'none'; child-src 'none';
                 base-uri 'none'; form-action 'none'">prod -->

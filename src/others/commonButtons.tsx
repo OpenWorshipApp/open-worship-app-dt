@@ -8,6 +8,7 @@ import KeyboardEventListener, {
 import { askAiCaution } from '../helper/ai/aiCautionHelpers';
 import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import { useIsChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { openBibleLookupEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
@@ -89,14 +90,23 @@ export function ChatbotButtonComp() {
         }
         openChatbotPage();
     }, []);
+    // A point of colour while the help window works on an answer -- the
+    // window is often behind the app, and a slow local model takes minutes.
+    const isChatbotBusy = useIsChatbotBusy();
+    const label = isChatbotBusy
+        ? `${tran('App Assistant')} — ${tran('working on an answer')}`
+        : tran('App Assistant');
     return (
         <button
-            className="btn btn-outline-info"
-            title={tran('App Assistant')}
-            aria-label={tran('App Assistant')}
+            className="btn btn-outline-info app-assistant-button"
+            title={label}
+            aria-label={label}
             onClick={handleClick}
         >
             <i className="bi bi-robot" />
+            {isChatbotBusy ? (
+                <span className="app-assistant-busy-dot" aria-hidden="true" />
+            ) : null}
         </button>
     );
 }

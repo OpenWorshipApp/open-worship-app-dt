@@ -312,6 +312,41 @@ describe('Khmer translation coverage', () => {
         ).toEqual([]);
     });
 
+    // Export / Import Settings draws its section tree with
+    // `tran(leaf.titleKey)` over the catalog, and its dialogs hand their
+    // messages to the tree as props -- all dynamic, all out of the sweep's
+    // reach, and all on screen the moment either button is pressed.
+    test('every Export / Import Settings label has a Khmer string', async () => {
+        const { keySet } = readKhmerKeys();
+        const { SETTING_SECTION_LIST } =
+            await import('../setting/setting-archive/settingArchiveCatalog');
+        const labels = [
+            ...SETTING_SECTION_LIST.flatMap((section) => {
+                return [
+                    section.titleKey,
+                    ...section.leaves.flatMap((leaf) => {
+                        return [
+                            leaf.titleKey,
+                            ...(leaf.noteKey ? [leaf.noteKey] : []),
+                        ];
+                    }),
+                ];
+            }),
+            // Props and options that reach `tran()` inside the tree.
+            'Choose the settings to export',
+            'Choose the settings to import',
+            'Type a password below to include these',
+            'This computer cannot keep them safely',
+        ];
+        expect(labels).toContain('Other Settings');
+        expect(labels.length).toBeGreaterThanOrEqual(50);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
     // Every other interface language is held to the Khmer file, which the
     // tests above hold to the app: that also covers the dynamic
     // `tran(prop)` keys no sweep can read. A key French lacks throws in a

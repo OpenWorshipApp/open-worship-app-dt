@@ -71,6 +71,11 @@ vi.mock('../helper/ai/aiHelpers', () => ({
     getIsAIEnabled: h.getIsAIEnabledMock,
 }));
 
+// The 🤖's busy point has its own test (`chatbotBusyHelpers.test.tsx`).
+vi.mock('../helper/ai/chatbotBusyHelpers', () => ({
+    useIsChatbotBusy: () => false,
+}));
+
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,

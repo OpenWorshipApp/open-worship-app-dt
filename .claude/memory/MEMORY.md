@@ -45,6 +45,7 @@
 - [Downloads are protocol-aware](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http
 - [`.owapf` archive](presenting-flow-archive-owapf.md) · [`.owadoc`/`.owbible`/`.owanote`](document-archive-owadoc.md) · [`.owadata.tar`](data-archive-owadata.md) — unsaved state, never `.histories` · [Archive passwords](archive-password-protection.md)
 - [`.owabdata`](bible-xml-archive-owabdata.md) — refuses a colliding item · [Bible XML from a link](bible-xml-import-from-url.md) — installed in the chat by buttons; names the verses use win
+- [`.owasetting` — Export / Import Settings](settings-archive-owasetting.md) — nested section tree; import REPLACES a ticked section; credentials only with a password
 - [PF drag & setting rules](presenting-flow-drag-and-settings-rules.md) · [cue gutter](presenting-flow-cue-gutter.md) — shared by tree and run player
 - [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md)
 - [PDF preload decoded all pages — FIXED](pdf-preload-decodes-all-pages.md)
@@ -106,8 +107,9 @@
 - [Stuck guide step asks the chatbot](guide-stuck-step-rescue.md) · [Guide press safety & covers](guide-press-safety-and-covers.md) · [Walkthrough followed the first search](chatbot-walkthrough-follows-first-search.md)
 - [Window tools on every page](app-window-tools-everywhere.md) · [The chatbot opens the window](chatbot-opens-the-window.md)
 - [Chatbot answer options](chatbot-answer-options.md) · [Stop aborts on the wire](chatbot-stop-answer.md) · [Adding to an answer in flight](chatbot-mid-flight-additions.md) · [Recipe ids scrubbed in code](chatbot-recipe-id-scrub.md)
-- [Kimi provider](kimi-third-llm-provider.md) · [Kimi free tier ~3 rounds/min](kimi-free-tier-round-budget.md) · [Free keyless provider](free-keyless-chatbot-provider.md) — Kilo Code only
+- [Kimi provider](kimi-third-llm-provider.md) · [Kimi free tier ~3 rounds/min](kimi-free-tier-round-budget.md) · [Free keyless provider](free-keyless-chatbot-provider.md) — Kilo Code only · [Bedrock provider](bedrock-llm-provider.md) — nine models on `/openai/v1`, per-vendor rules, per-model regions · [Custom servers](custom-llm-servers.md) — LM Studio & co. through a main-process relay, one row per server; ~13.4k-token request so load at 32k; LAN is free; a lost server is caught in ~80 s
 - [Chatbot attachments](chatbot-attachments.md) — every asset opens one preview · [Report button](chatbot-report-button.md)
+- [Chatbot tabs work independently](chatbot-tabs-work-independently.md) — busy, progress and Stop per tab; 3 points of colour; never sendSync on mount
 - [The wait says what it is doing](chatbot-progress-log.md) · [Ask history & tips](chatbot-ask-history-and-tips.md) · [Built-in commands](chatbot-builtin-commands.md) — no model
 - [Chatbot cost on the wire](chatbot-cost-measured-on-the-wire.md) · [Spend guard](chatbot-spend-guard.md) · [Provider failure comes with its door](chatbot-provider-issue-door.md)
 - [MCP uid interlock](mcp-uid-interlock.md) · [The interlock reads the control](mcp-interlock-reads-the-control.md) — every language · [Tools the model never sees](mcp-model-hidden-tools.md)
@@ -116,7 +118,7 @@
 - [A CDP pin is exclusive](cdp-pin-is-exclusive.md) — kind pins follow dev/prod restarts · [A preload must not eval at load](preload-must-not-eval-at-load.md)
 - [A press says what it CHANGED](click-reports-effect-not-action.md) · [An exact label beats everything](dom-match-exact-label-beats-everything.md) · [Kind noun trimmed off an exact name](dom-match-kind-noun-exact.md) · [A name with a twin has no selector](selector-name-with-a-twin.md)
 - [Checking a song](open-lyric-validator-in-mcp.md) · [A model cannot write Open Lyric](model-cannot-write-open-lyric.md) · [A song page goes in as a URL](song-page-goes-in-as-url.md) · [/lyric offline](chatbot-lyric-command.md)
-- [Driving the chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen` · [Bash halves backslashes](bash-heredoc-halves-backslashes.md)
+- [Driving the chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen` · [Bash halves `\\`, breaks on `'`](bash-heredoc-halves-backslashes.md) — Write the script to the scratchpad, run the file
 - [No user-entered references in notes](no-user-specific-references-in-notes.md)
 - Grading: [panic shapes in both screen states](chatbot-grade-panic-in-both-states.md) · [on the window's own default](chatbot-grade-on-the-window-default.md)
 - [What the user is in the middle of](chatbot-in-the-middle-of.md) · [Wrong-window route is a page fact](chatbot-wrong-window-route-is-a-page-fact.md)
@@ -140,8 +142,8 @@
 - [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there; drawing layers release on unmount
 - [Screen Mirror across two machines](screen-mirror-cross-machine-test.md) — hosting is opt-in; peers need /remote-control here; newest-instance tools; seeding a code
 - [Screen Mirror: internet & several hosts](screen-mirror-internet-multi-host.md) — `admits()` not the bind; assets by Host header; windows by webContents, never remap ids
-- [Virtual displays](virtual-displays.md) — browser page draws the screens, MP4 via WebCodecs only while played; sound stream-only; a phone is not a secure context (Use HTTPS: same port, first byte picks TLS, own cert; MP4 stays http); Disconnect blocks 127.0.0.1 too; internet viewers need Allow or a code; content is sized for it with no 2nd monitor; sticky port; every viewer query key in the dev allowlist; showing screens come back at start; frames take the viewer's input
-- [Intercom & browser cameras](connection-intercom-and-viewer-camera.md) — per-connection mic/speaker, `vd-camera:` watched only while shown; a watch outlives the sharing; a relayed packet's `type` is the packet's; the camera button picks among every camera, switched in place
-- [Cast to a TV](cast-to-tv.md) — Google Cast/DLNA/Roku from the app; a browser page casts to a TV on ITS network via its picker on the app's stream (`?cast=` token skips Allow/code), plus the app's TVs on the app's network; every TV pulls the MP4; searched only when the list opens; a still screen with holes cost 7 s on a TV, catch-up by playback rate (never SEEK)
+- [Virtual displays](virtual-displays.md) — app-only monitors watched in a browser or as an MP4; the traps are in rule `screen-mirror.md`
+- [Intercom & browser cameras](connection-intercom-and-viewer-camera.md) — per-connection mic/speaker; `vd-camera:` watched only while shown
+- [Cast to a TV](cast-to-tv.md) — Cast/DLNA/Roku; every TV pulls the MP4; catch up by playback rate, never SEEK
 - [Cloudflare quick tunnel](cloudflare-quick-tunnel.md) — for a VPN/CGNAT; guests and viewers; cloudflared built from source in the extra-bin pack; everything through it is the internet; a guest dials 443 with TLS
 - [Electron has no Khmer dates](electron-icu-has-no-khmer.md) — Intl answers km-KH in English; vitest (Node) does not

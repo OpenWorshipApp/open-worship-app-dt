@@ -77,6 +77,10 @@ vi.mock('./SettingApplyComp', () => ({
     default: () => <div data-testid="apply" />,
 }));
 
+vi.mock('./setting-archive/SettingArchiveButtonsComp', () => ({
+    default: () => <div data-testid="setting-archive-buttons" />,
+}));
+
 vi.mock('./bible-setting/bibleEditorDirtyHelpers', () => ({
     warnIfAnyBibleEditorDirty: warnIfAnyBibleEditorDirtyMock,
 }));
@@ -134,5 +138,16 @@ describe('SettingComp cross-window tab requests', () => {
             container.querySelector('[data-testid="active-tab"]')?.textContent,
         ).toBe('b');
         expect(setSettingMock).toHaveBeenCalledWith('setting-tabs', 'b');
+    });
+
+    test('puts Export / Import Settings under Apply Settings', async () => {
+        await renderSetting();
+
+        const applyBox = container.querySelector('.app-setting-apply');
+        expect(
+            Array.from(applyBox?.children ?? []).map((child) => {
+                return child.getAttribute('data-testid');
+            }),
+        ).toEqual(['apply', 'setting-archive-buttons']);
     });
 });

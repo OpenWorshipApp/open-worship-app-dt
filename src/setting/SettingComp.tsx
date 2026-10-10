@@ -11,6 +11,7 @@ import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { SETTING_SETTING_NAME, takeSettingTabRequest } from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
+import SettingArchiveButtonsComp from './setting-archive/SettingArchiveButtonsComp';
 import { toIconedLabel } from '../others/labelIconHelpers';
 import { warnIfAnyBibleEditorDirty } from './bible-setting/bibleEditorDirtyHelpers';
 
@@ -117,6 +118,7 @@ export default function SettingComp() {
                 />
                 <div className="app-setting-apply mt-1 pt-1">
                     <SettingApplyComp />
+                    <SettingArchiveButtonsComp />
                 </div>
             </div>
             <div className="card-body app-overflow-hidden p-0">

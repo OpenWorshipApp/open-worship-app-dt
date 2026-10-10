@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-auto-next
-description: The presenting flow run can walk itself (one clock per OPEN RUN, two endings), stop its own interval and jump; the run's SELECTION CHANGING cancels a timeout and restarts an interval — raw clicks/keys mean nothing
+description: "The presenting flow run can walk itself (one clock per OPEN RUN, two endings), stop its own interval and jump; the run's SELECTION CHANGING cancels a timeout and restarts an interval — raw clicks/keys mean nothing"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:05:44.338Z
 ---
 
 `src/presenting-flow/presentingFlowAutoNextHelpers.ts` (added 2026-08-05, branch refactor24) is the
@@ -120,7 +123,8 @@ itself. See [[presenting-flow-cc-elements]].
   that quietly stopped mattering. `PresentingFlowItem.actionTime` also answers null for an action
   that may not carry one, so a hand-edited interval is ignored in the row, the question and
   the clock at once.
-- **No unit tests.** `presentingFlowAutoNext.test.ts`, `presentingFlowActionTime.test.ts`
-  and `presentingFlowCcPropagation.test.ts` were ALL deleted on 2026-08-24
-  (47053c9d). The clock, time-of-day arming and CC half are covered only by
-  matrix rows PL-95/PL-96/PL-101 — treat any change here as untested.
+- **Unit tests rebuilt 2026-09-26 (`c24d3a43`).** `presentingFlowAutoNext.test.ts`,
+  `presentingFlowActionTime.test.ts` and `presentingFlowCcPropagation.test.ts` were ALL
+  deleted on 2026-08-24 (47053c9d); `presentingFlowAutoNextHelpers.coverage.test.ts`
+  (the clock, wall-clock arming) and `presentingFlowCcApplyHelpers.coverage.test.ts`
+  (the CC half) replace them. Matrix rows PL-95/PL-96/PL-101 cover it live.

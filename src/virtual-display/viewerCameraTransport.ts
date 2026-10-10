@@ -4,7 +4,8 @@ import appProvider from '../server/appProvider';
 // computer or by a browser drawing a screen of a virtual display: its VP8
 // frames arrive (IPC here, the screen page's socket there) and this turns
 // them back into a camera stream that the camera background and foreground
-// draw like any other.
+// draw like any other -- or, in Safari and Firefox, into canvases they show
+// in its place (`createViewerCameraView`).
 //
 // Like a call's video it can pause: not shared yet, shared no more, or its
 // browser reloading. The stream stays watched through that, and the box
@@ -13,12 +14,18 @@ import appProvider from '../server/appProvider';
 // they do, with nothing re-added.
 
 const VIEWER_CAMERA_PREFIX = 'vd-camera:';
-const CANVAS_FRAME_RATE = 15;
 
+type ViewType = {
+    canvas: HTMLCanvasElement;
+    context: CanvasRenderingContext2D;
+};
 type SinkType = {
     stream: MediaStream;
     write: (frame: VideoFrame) => void;
     stop: () => void;
+    // The canvases showing it where no `<video>` can (`createCanvasSink`);
+    // null where the stream itself plays in a `<video>`.
+    views: Set<ViewType> | null;
 };
 type WatchType = {
     cameraId: string;
@@ -36,50 +43,65 @@ export function checkIsViewerCameraId(cameraId: string) {
     return cameraId.startsWith(VIEWER_CAMERA_PREFIX);
 }
 
-// Where decoded frames go: a track generator (Chromium -- the app, Chrome,
-// Edge), else a canvas whose captured stream is the camera (Firefox, Safari).
-function createSink(): SinkType {
-    const Generator = (globalThis as any).MediaStreamTrackGenerator;
-    if (typeof Generator === 'function') {
-        const generator = new Generator({ kind: 'video' });
-        const writer: WritableStreamDefaultWriter<VideoFrame> =
-            generator.writable.getWriter();
-        return {
-            stream: new MediaStream([generator]),
-            write: (frame) => {
-                writer.write(frame).catch(() => frame.close());
-            },
-            stop: () => {
-                void writer.close().catch(() => {});
-                generator.stop();
-            },
-        };
+function drawFrame({ canvas, context }: ViewType, frame: VideoFrame) {
+    if (
+        canvas.width !== frame.displayWidth ||
+        canvas.height !== frame.displayHeight
+    ) {
+        canvas.width = frame.displayWidth;
+        canvas.height = frame.displayHeight;
     }
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (context === null || typeof canvas.captureStream !== 'function') {
-        throw new Error('Camera is unavailable');
-    }
-    const stream = canvas.captureStream(CANVAS_FRAME_RATE);
+    context.drawImage(frame, 0, 0);
+}
+
+// No track generator (Safari, Firefox): each place showing the camera gets a
+// canvas of its own (`createViewerCameraView`) and every frame is drawn into
+// all of them. A `<video>` of a canvas's `captureStream()` was the way here,
+// and on an iPhone or iPad it sizes itself to the camera and never paints a
+// picture, nor starts without a touch (WebKit bugs 181663, 275456) -- an
+// empty box where the camera should be, while every Android and computer
+// showed it. So nothing plays this stream: it only names the camera to the
+// code that shares and lets go of it.
+function createCanvasSink(): SinkType {
+    const views = new Set<ViewType>();
     return {
-        stream,
+        stream: new MediaStream(),
+        views,
         write: (frame) => {
             try {
-                if (
-                    canvas.width !== frame.displayWidth ||
-                    canvas.height !== frame.displayHeight
-                ) {
-                    canvas.width = frame.displayWidth;
-                    canvas.height = frame.displayHeight;
+                for (const view of views) {
+                    drawFrame(view, frame);
                 }
-                context.drawImage(frame, 0, 0);
             } finally {
                 frame.close();
             }
         },
         stop: () => {
-            stream.getTracks().forEach((track) => track.stop());
+            views.clear();
         },
+    };
+}
+
+// Where decoded frames go: a track generator (Chromium -- the app, Chrome,
+// Edge), else canvases (`createCanvasSink`).
+function createSink(): SinkType {
+    const Generator = (globalThis as any).MediaStreamTrackGenerator;
+    if (typeof Generator !== 'function') {
+        return createCanvasSink();
+    }
+    const generator = new Generator({ kind: 'video' });
+    const writer: WritableStreamDefaultWriter<VideoFrame> =
+        generator.writable.getWriter();
+    return {
+        stream: new MediaStream([generator]),
+        write: (frame) => {
+            writer.write(frame).catch(() => frame.close());
+        },
+        stop: () => {
+            void writer.close().catch(() => {});
+            generator.stop();
+        },
+        views: null,
     };
 }
 
@@ -190,6 +212,29 @@ export function listenViewerCameraLive(
     listener(watch.isLive);
     return () => {
         watch.liveListeners.delete(listener);
+    };
+}
+
+// The element to show a viewer's camera in, on a browser that cannot play
+// its stream in a `<video>` (`createCanvasSink`): a canvas drawn with every
+// frame until `release`. Null means put the stream in a `<video>` as usual.
+export function createViewerCameraView(stream: MediaStream) {
+    const views = watches.get(stream)?.sink.views;
+    if (!views) {
+        return null;
+    }
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (context === null) {
+        return null;
+    }
+    const view: ViewType = { canvas, context };
+    views.add(view);
+    return {
+        element: canvas,
+        release: () => {
+            views.delete(view);
+        },
     };
 }
 

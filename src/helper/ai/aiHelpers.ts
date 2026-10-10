@@ -21,7 +21,7 @@ export type RefreshingRefType = {
  * and these are the ones a key is read out of.
  */
 export type AISecretKeyNameType =
-    'openAIAPIKey' | 'anthropicAPIKey' | 'kimiAPIKey';
+    'openAIAPIKey' | 'anthropicAPIKey' | 'kimiAPIKey' | 'bedrockAPIKey';
 
 export type AISettingType = {
     openAIAPIKey: string;
@@ -29,10 +29,18 @@ export type AISettingType = {
     // Kimi (Moonshot) answers in the chatbot only -- Bible Cross Ref and Bible
     // Audio are bound to their own SDKs and have no reason to learn about it.
     kimiAPIKey: string;
+    // An Amazon Bedrock API key (`ABSK...`), chatbot only like Kimi's. One key
+    // reaches every region of the account, so WHICH region answers is the
+    // separate plain field below.
+    bedrockAPIKey: string;
     // Required by Anthropic when the key is identity-linked ("anthropic-
     // workspace-id is required ..." 400); ignored otherwise. Not a secret --
     // it is an id, not a credential -- so it lives in the plaintext half.
     anthropicWorkspaceId: string;
+    // The AWS region Bedrock is asked in. A place, not a credential, so it
+    // lives in the plaintext half; an unknown one reads as the default
+    // (`toBedrockRegion`).
+    bedrockRegion: string;
     isAutoPlay: boolean;
 };
 
@@ -63,12 +71,55 @@ function getAISecret(): Record<AISecretKeyNameType, string> {
             openAIAPIKey: toStoredKey(data.openAIAPIKey),
             anthropicAPIKey: toStoredKey(data.anthropicAPIKey),
             kimiAPIKey: toStoredKey(data.kimiAPIKey),
+            bedrockAPIKey: toStoredKey(data.bedrockAPIKey),
         };
     } catch (_error) {
         // Every field, not just the ones that existed when this was written:
         // a blob that failed to parse must still answer the same shape, or a
         // provider added later reads `undefined` here and nowhere else.
-        return { openAIAPIKey: '', anthropicAPIKey: '', kimiAPIKey: '' };
+        return {
+            openAIAPIKey: '',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+            bedrockAPIKey: '',
+        };
+    }
+}
+
+/**
+ * The regions that serve the Bedrock models the chatbot offers on
+ * `bedrock-mantle`, read off each model's AWS card (2026-10-09): in-region
+ * only, no cross-region profile. GovCloud is left out -- a GovCloud account
+ * is not one a church runs. Each one is also named in `html/chatbot.html`'s
+ * `connect-src`, which is why this is a closed list and not a text box: a
+ * region typed in by hand would be a host that window is not allowed to
+ * reach, and the failure would read as the internet being down.
+ *
+ * FIRST is the default, and it is us-west-2 because it is the one region
+ * that serves every model in the list: Grok 4.6 is served there and nowhere
+ * else, GPT-6 Astra skips Ohio, and Frankfurt has the Gemmas only.
+ */
+export const BEDROCK_REGION_LIST = [
+    'us-west-2',
+    'us-east-1',
+    'us-east-2',
+    'eu-central-1',
+] as const;
+
+export function toBedrockRegion(value: unknown): string {
+    return typeof value === 'string' &&
+        (BEDROCK_REGION_LIST as readonly string[]).includes(value.trim())
+        ? value.trim()
+        : BEDROCK_REGION_LIST[0];
+}
+
+/** The non-secret half only, like the workspace id below. */
+export function getBedrockRegion(): string {
+    const settingStr = appHomeStorage.getItem(AI_SETTING_NAME) || '{}';
+    try {
+        return toBedrockRegion(JSON.parse(settingStr).bedrockRegion);
+    } catch (_error) {
+        return toBedrockRegion(null);
     }
 }
 
@@ -104,6 +155,7 @@ export function getAISetting(): AISettingType {
     return {
         ...secret,
         anthropicWorkspaceId: getAnthropicWorkspaceId(),
+        bedrockRegion: getBedrockRegion(),
         // Auto play needs the OpenAI key. `setAISetting` already keeps the
         // stored flag in step; this also covers a store edited behind the app.
         isAutoPlay: secret.openAIAPIKey.length > 0 && getAIIsAutoPlay(),
@@ -146,6 +198,7 @@ export function setAISetting(value: AISettingType) {
         JSON.stringify({
             isAutoPlay: openAIAPIKey.length > 0 && value.isAutoPlay === true,
             anthropicWorkspaceId: (value.anthropicWorkspaceId ?? '').trim(),
+            bedrockRegion: toBedrockRegion(value.bedrockRegion),
         }),
     );
     // Built as ONE object and then asked whether it holds anything, rather
@@ -158,6 +211,7 @@ export function setAISetting(value: AISettingType) {
         openAIAPIKey,
         anthropicAPIKey: (value.anthropicAPIKey ?? '').trim(),
         kimiAPIKey: (value.kimiAPIKey ?? '').trim(),
+        bedrockAPIKey: (value.bedrockAPIKey ?? '').trim(),
     };
     const isAnyKeySet = Object.values(secret).some((one) => {
         return one.length > 0;

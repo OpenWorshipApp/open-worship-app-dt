@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-25, SP-26, SP-27, SP-28, SP-29]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-08"
+workflowsVersion: "2026-10-09"
 ---
 # W-50 — Present on another computer with Screen Mirror
 
@@ -125,5 +125,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-25` · `SP-26` · `SP-27` · `SP-28` · `SP-29`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
 :::

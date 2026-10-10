@@ -1,8 +1,11 @@
 ---
 name: screen-draw-feature
-description: Screen Draw overlay feature — scope, architecture, and how to extend to more FreeShow modes
+description: "Screen Draw overlay feature — scope, architecture, and how to extend to more FreeShow modes"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:10:48.665Z
 ---
 
 FreeShow-style "Draw" overlay on the screen output, driven from the presenter
@@ -74,8 +77,10 @@ idempotent.
 
 **Keyboard:** the paint `<canvas>` is `tabIndex=0` (focused on pointer-down).
 Its `keydown` handler (presenter side only, while armed) does Ctrl+Z=undo,
-Ctrl+Shift+Z / Ctrl+Y=redo, and `stopPropagation()`s ALL keys so the app's
-`document.onkeydown` global shortcuts don't fire while the canvas is focused.
+Ctrl+Shift+Z / Ctrl+Y=redo, lets the draw panel's own shortcut keys through, and
+`stopPropagation()`s every other key only while a stroke is in progress
+(`currentStroke !== null`) — deliberately never on mere focus, which killed F5,
+the F6–F10 clear keys and slide navigation after a click-to-select.
 
 **Palette shortcuts (added 2026-07-21).** `src/_screen/managers/
 screenDrawShortcutHelpers.ts` is the single source of truth: `drawShortcutMap`
@@ -106,7 +111,7 @@ combos. Design points that matter:
   them so the buttons can show the keys, but a binding would be unreachable: the
   canvas keydown handler consumes Ctrl+Z / Ctrl+Y and `stopPropagation`s before
   `document.onkeydown` runs, and the hook only acts while that canvas is focused.
-- Panel buttons carry `onMouseDown={handleKeepCanvasFocus}` (preventDefault).
+- Panel buttons carry `onMouseDown={handleKeepOverlayFocus}` (preventDefault).
   Without it, clicking ANY palette button moved focus off the canvas, which both
   killed every shortcut and turned the user's next drag into a silent no-op
   re-select. The range/color inputs still take focus — they need the default
@@ -190,7 +195,7 @@ to ERASE instead of paint, so a drag rubs out any chunk of the drawn lines.
 Implemented as **just another stroke**, which is why it needed no new plumbing:
 `DrawPaintStrokeType.isEraser?` + `PaintToolType.isEraser?` (both OPTIONAL, so
 old persisted blobs and existing `setPaintTool` callers/tests still typecheck),
-and `drawStroke` sets `ctx.globalCompositeOperation = 'destination-out'` with an
+and `paintStroke` (`screenOverlayHelpers.ts`) sets `ctx.globalCompositeOperation = 'destination-out'` with an
 opaque style (only source ALPHA matters for destination-out; the stored color is
 irrelevant). The existing per-stroke `ctx.save()/restore()` resets the composite
 op, so no leakage into later strokes. It therefore rides the existing
@@ -211,7 +216,7 @@ begin/points/commit sync, undo/redo history, and v2 persistence for free.
   being replayed each frame — erasing raises render cost while lowering visible
   content. Only `Clear` actually reclaims. A fix means stroke-list compaction
   (dropping fully-covered strokes), which the current model has no geometry for.
-- The Opacity control is silently INERT while the eraser is armed: `drawStroke`
+- The Opacity control is silently INERT while the eraser is armed: `paintStroke`
   paints eraser paths fully opaque because only source alpha matters for
   `destination-out`. Honouring the stored alpha would give a soft/partial eraser
   (the stroke already carries the colour, unused) — deliberately not done, since
@@ -248,7 +253,7 @@ review flagged eager allocation vs the low-spec mandate. All keep behavior;
 - **Straight strokes keep 2 points.** `handlePointerMove` rubber-bands
   `stroke.points = [first, current]` for `isStraight && !isDots` (Dots needs
   every point — it draws a dot at each, and the `isDots` branch precedes
-  `isStraight` in `drawStroke`). Stops unbounded point accumulation + O(n²) IPC
+  `isStraight` in `paintStroke`). Stops unbounded point accumulation + O(n²) IPC
   on a slow straight drag.
 - **Cached stroke rect.** `strokeRect` captured at pointer-down, reused by
   `clientToNative` for the gesture (canvas can't move under pointer capture),

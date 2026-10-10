@@ -54,6 +54,8 @@ const PROVIDER_KEY_MAP: Record<LlmProviderType, true> = {
     anthropic: true,
     openai: true,
     kimi: true,
+    bedrock: true,
+    custom: true,
     free: true,
 };
 

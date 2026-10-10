@@ -12,6 +12,17 @@ const { fake } = vi.hoisted(() => ({
         // A fake OpenAI-shaped client, for the stand-in tests; null means the
         // provider is not set up, which is what the module answers then.
         openai: null as any,
+        // The same for Amazon Bedrock, which rides the same loop.
+        bedrock: null as any,
+        // The AWS region Settings names; us-west-2 is the app's default.
+        bedrockRegion: 'us-west-2',
+        // The user's own servers (usable ones) and the fake client asked for
+        // any of them; none by default, the state the app ships in.
+        customServers: [] as any[],
+        custom: null as any,
+        // What LM Studio's own list says about the models, by model id; null
+        // is a server that is not LM Studio (or did not answer in time).
+        lmStudioInfoMap: null as Map<string, any> | null,
         // The keys `getAISetting` answers with; null means none at all, the
         // state the app ships in and the one most of this file assumes.
         aiSetting: null as Record<string, string> | null,
@@ -31,6 +42,7 @@ vi.mock('../helper/ai/aiHelpers', () => ({
             }
         );
     },
+    getBedrockRegion: () => fake.bedrockRegion,
 }));
 vi.mock('../helper/ai/anthropicHelpers', () => ({
     getAnthropicInstance: () => fake.anthropic,
@@ -40,6 +52,28 @@ vi.mock('../helper/ai/openAIHelpers', () => ({
 }));
 vi.mock('../helper/ai/kimiHelpers', () => ({
     getKimiInstance: () => null,
+}));
+vi.mock('../helper/ai/bedrockHelpers', () => ({
+    getBedrockInstance: () => fake.bedrock,
+}));
+// The user's own servers. The real modules reach the setting store and the
+// relay's IPC, neither of which a node-env suite has.
+vi.mock('../helper/ai/customServerHelpers', () => ({
+    getCustomServers: () => fake.customServers,
+    getUsableCustomServers: () => fake.customServers,
+    readLmStudioModels: async () => fake.lmStudioInfoMap,
+}));
+vi.mock('../helper/ai/customServerClientHelpers', () => ({
+    genContextTooSmallText: (loadedContext: number | null) => {
+        return `context ${loadedContext} is too small`;
+    },
+    getCustomServerInstance: () => fake.custom,
+    toCustomServerFailure: (error: any) => {
+        if (error?.name === 'CustomServerError') {
+            return error;
+        }
+        return error?.cause?.name === 'CustomServerError' ? error.cause : null;
+    },
 }));
 // The fourth of them. Without it the module graph reaches `langHelpers` and
 // `toastHelpers`, and this whole file dies at import on `document` -- these
@@ -74,6 +108,7 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import { AskCancelledError } from './cancelHelpers';
+import { CustomServerError } from '../../electron/customLlmProtocol';
 import {
     SpendLimitError,
     allowMoreSpending,
@@ -85,7 +120,13 @@ import { MODEL_HIDDEN_TOOL_MAP } from '../../tools/owa-devtools-mcp/modelTools.m
 import {
     applyToolWatch,
     askLlmBot,
+    checkCanSeeImages,
+    checkHasMoreModels,
+    checkIsCustomProvider,
     checkIsFreeProvider,
+    getLlmProviderLabel,
+    findBedrockRegionProblem,
+    listAllLlmModels,
     checkIsProviderFault,
     checkIsStepsWithoutPage,
     getStandInLlmProvider,
@@ -93,6 +134,7 @@ import {
     genOpenPageNudge,
     describeLlmError,
     getAvailableLlmProviders,
+    getFirstImageCapableModel,
     getLlmModel,
     getLlmModelList,
     getLlmProviderKeyField,
@@ -1108,6 +1150,7 @@ describe('getLlmProviderKeyField', () => {
         expect(getLlmProviderKeyField('anthropic')).toBe('anthropicAPIKey');
         expect(getLlmProviderKeyField('openai')).toBe('openAIAPIKey');
         expect(getLlmProviderKeyField('kimi')).toBe('kimiAPIKey');
+        expect(getLlmProviderKeyField('bedrock')).toBe('bedrockAPIKey');
     });
 
     test('is null for the keyless one and for what is not a provider', () => {
@@ -1146,6 +1189,7 @@ describe('the free provider', () => {
         expect(getLlmProviderWarning('anthropic')).toBeNull();
         expect(getLlmProviderWarning('openai')).toBeNull();
         expect(getLlmProviderWarning('kimi')).toBeNull();
+        expect(getLlmProviderWarning('bedrock')).toBeNull();
         const warning = getLlmProviderWarning('free');
         expect(warning).not.toBeNull();
         // The three facts it exists to state.
@@ -1858,6 +1902,584 @@ describe('getStandInLlmProvider', () => {
             kimiAPIKey: '',
         };
         expect(getStandInLlmProvider('free')).toBeNull();
+    });
+});
+
+// Amazon Bedrock. Each model's AWS card is the spec these hold the loop to:
+// three vendors behind one OpenAI-shaped route, each with its own rules, and
+// each served in its own regions.
+describe('the Bedrock provider', () => {
+    function genToolCallResponse() {
+        return {
+            choices: [
+                {
+                    message: {
+                        role: 'assistant',
+                        content: null,
+                        tool_calls: [
+                            {
+                                id: 'call-1',
+                                type: 'function',
+                                function: {
+                                    name: 'owa_help_search',
+                                    arguments: '{"query":"screen"}',
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        };
+    }
+    function genTextResponse() {
+        return {
+            choices: [{ message: { role: 'assistant', content: 'Press F5.' } }],
+        };
+    }
+
+    beforeEach(() => {
+        fake.toolCallList = [];
+        fake.toolList = [{ name: 'owa_help_search' }];
+        fake.aiSetting = {
+            openAIAPIKey: '',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+            bedrockAPIKey: 'ABSKlive',
+        };
+        resetSpendGuardForTests();
+    });
+    afterEach(() => {
+        fake.aiSetting = null;
+        fake.bedrock = null;
+        fake.bedrockRegion = 'us-west-2';
+    });
+
+    // Asks once and hands back the first request the model was sent.
+    async function askFirstRequest(model: string) {
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+        await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            model,
+        );
+        return (create.mock.calls[0] as any[])[0];
+    }
+
+    test('is offered once its key is set, ahead of the keyless one', () => {
+        expect(getAvailableLlmProviders()).toEqual(['bedrock', 'free']);
+    });
+
+    // Its route has no catalogue (`/openai/v1/models` answers 404), so the
+    // row would only ever say the listing failed.
+    test('offers no More models, like the keyless one', async () => {
+        expect(checkHasMoreModels('bedrock')).toBe(false);
+        expect(checkHasMoreModels('free')).toBe(false);
+        expect(checkHasMoreModels('openai')).toBe(true);
+        expect(checkHasMoreModels(null)).toBe(false);
+        const listed = await listAllLlmModels('bedrock');
+        expect(listed).toEqual(getLlmModelList('bedrock'));
+    });
+
+    test('offers every usable model of the catalogue, recommended first', () => {
+        const modelList = getLlmModelList('bedrock');
+        expect(
+            modelList.map((model) => {
+                return model.id;
+            }),
+        ).toEqual([
+            'openai.gpt-5.6-terra',
+            'openai.gpt-5.6-luna',
+            'xai.grok-4.3',
+            'xai.grok-4.6',
+            'google.gemma-4-31b',
+            'openai.gpt-6-astra',
+            'openai.gpt-5.4',
+            'google.gemma-4-26b-a4b',
+            'google.gemma-4-e2b',
+        ]);
+        // The first is what a fresh install asks with, so it is the pick.
+        expect(getLlmModel('bedrock')).toBe('openai.gpt-5.6-terra');
+        for (const model of modelList) {
+            // A list price on every one, so the cost line never goes quiet,
+            // and the regions it is served in, so a wrong one is caught.
+            expect(model.price).not.toBe('');
+            expect(model.regions?.length).toBeGreaterThan(0);
+            // Each card says it takes a picture.
+            expect(checkCanSeeImages('bedrock', model.id)).toBe(true);
+        }
+        // A name off the account's own list is blind until known otherwise.
+        expect(checkCanSeeImages('bedrock', 'openai.gpt-oss-120b')).toBe(false);
+    });
+
+    test('a GPT gets OpenAI budget and a little thinking, and may call several tools', async () => {
+        const request = await askFirstRequest('openai.gpt-5.6-terra');
+        expect(request).toMatchObject({
+            model: 'openai.gpt-5.6-terra',
+            max_completion_tokens: 6000,
+            reasoning_effort: 'low',
+        });
+        // OpenAI's reasoning models refuse `max_tokens`.
+        expect(request).not.toHaveProperty('max_tokens');
+        expect(request).not.toHaveProperty('parallel_tool_calls');
+    });
+
+    test("a Grok gets its card's budget name and its own default thinking", async () => {
+        const request = await askFirstRequest('xai.grok-4.3');
+        expect(request).toMatchObject({ max_completion_tokens: 6000 });
+        expect(request).not.toHaveProperty('max_tokens');
+        expect(request).not.toHaveProperty('reasoning_effort');
+        expect(request).not.toHaveProperty('parallel_tool_calls');
+    });
+
+    test('Gemma 4 E2B thinks hard, as AWS advises, so it does not think aloud', async () => {
+        const request = await askFirstRequest('google.gemma-4-e2b');
+        expect(request).toMatchObject({
+            max_tokens: 6000,
+            reasoning_effort: 'high',
+            parallel_tool_calls: false,
+        });
+    });
+
+    test('a model the region does not serve is refused before a round is paid for', async () => {
+        fake.bedrockRegion = 'us-east-1';
+        // A live ChatGPT key too, to show it is NOT handed the question:
+        // the fix is a setting, and another key would only hide it.
+        fake.aiSetting = { ...fake.aiSetting, openAIAPIKey: 'sk-live' };
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+        const openAiCreate = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.openai = { chat: { completions: { create: openAiCreate } } };
+
+        try {
+            await expect(
+                askLlmBot('Hello?', 'presenter', 'bedrock', 'xai.grok-4.6'),
+            ).rejects.toThrow(
+                'Grok 4.6 is not offered in us-east-1 — choose us-west-2 ' +
+                    'under Settings → Others → AWS Region',
+            );
+            expect(create).not.toHaveBeenCalled();
+            expect(openAiCreate).not.toHaveBeenCalled();
+        } finally {
+            fake.openai = null;
+        }
+    });
+
+    test('names every region that does serve the model', () => {
+        expect(
+            findBedrockRegionProblem('openai.gpt-5.6-luna', 'eu-central-1'),
+        ).toBe(
+            'GPT-5.6 Luna is not offered in eu-central-1 — choose ' +
+                'us-east-1, us-east-2 or us-west-2 under Settings → Others → ' +
+                'AWS Region',
+        );
+        expect(
+            findBedrockRegionProblem('google.gemma-4-31b', 'eu-central-1'),
+        ).toBeNull();
+        // A model off the account's own list is the service's to answer for.
+        expect(
+            findBedrockRegionProblem('openai.gpt-oss-120b', 'eu-central-1'),
+        ).toBeNull();
+    });
+
+    test('asks for one tool call a turn, with the plain budget', async () => {
+        const create = vi
+            .fn()
+            .mockImplementationOnce(async () => {
+                return genToolCallResponse();
+            })
+            .mockImplementationOnce(async () => {
+                return genTextResponse();
+            });
+        fake.bedrock = { chat: { completions: { create } } };
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            'google.gemma-4-31b',
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        expect(fake.toolCallList).toEqual(['owa_help_search']);
+        const request = create.mock.calls[0][0];
+        expect(request).toMatchObject({
+            model: 'google.gemma-4-31b',
+            max_tokens: 6000,
+            parallel_tool_calls: false,
+        });
+        expect(request.tools.length).toBeGreaterThan(0);
+        // Not OpenAI: neither OpenAI's budget name nor a thinking setting.
+        expect(request).not.toHaveProperty('max_completion_tokens');
+        expect(request).not.toHaveProperty('reasoning_effort');
+    });
+
+    test('the last round carries neither tools nor the one-call rule', async () => {
+        // OpenAI refuses `parallel_tool_calls` on a request with no tools,
+        // and the last round of every question is one.
+        const create = vi.fn(async (request: any) => {
+            return request.tools ? genToolCallResponse() : genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            'google.gemma-4-31b',
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        const lastRequest: any = create.mock.calls.at(-1)?.[0];
+        expect(lastRequest).not.toHaveProperty('tools');
+        expect(lastRequest).not.toHaveProperty('parallel_tool_calls');
+        for (const [request] of create.mock.calls.slice(0, -1)) {
+            expect(request).toMatchObject({ parallel_tool_calls: false });
+        }
+    });
+});
+
+// The user's own servers (LM Studio and the like): ONE provider key standing
+// for all of them, each model `<serverId>/<rowId>`, asked by the server's
+// own model id through the main-process relay.
+describe('the custom servers', () => {
+    const SERVER_ID = '11111111-2222-3333-4444-555555555555';
+    const PHI_MODEL = `${SERVER_ID}/row-phi`;
+    function genServer(value: Record<string, any> = {}) {
+        return {
+            id: SERVER_ID,
+            name: 'LM Studio',
+            baseUrl: 'http://localhost:1234/v1',
+            models: [
+                {
+                    id: 'row-phi',
+                    model: 'phi-3.1-mini-128k-instruct',
+                    name: 'Phi 3.1 Mini 128k Instruct',
+                },
+                { id: 'row-llama', model: 'llama-3.2-3b-instruct', name: '' },
+            ],
+            ...value,
+        };
+    }
+    function genTextResponse() {
+        return {
+            choices: [{ message: { role: 'assistant', content: 'Press F5.' } }],
+            usage: { prompt_tokens: 900, completion_tokens: 30 },
+        };
+    }
+
+    beforeEach(() => {
+        fake.toolCallList = [];
+        fake.toolList = [{ name: 'owa_help_search' }];
+        fake.customServers = [genServer()];
+        resetSpendGuardForTests();
+    });
+    afterEach(() => {
+        fake.customServers = [];
+        fake.custom = null;
+        fake.aiSetting = null;
+        fake.lmStudioInfoMap = null;
+    });
+
+    test('is offered only with a usable server, before the keyless one', () => {
+        expect(getAvailableLlmProviders()).toEqual(['custom', 'free']);
+        fake.customServers = [];
+        expect(getAvailableLlmProviders()).toEqual(['free']);
+    });
+
+    test('is neither the keyless provider nor one with a key or a catalogue', () => {
+        expect(checkIsCustomProvider('custom')).toBe(true);
+        expect(checkIsFreeProvider('custom')).toBe(false);
+        expect(getLlmProviderKeyField('custom')).toBeNull();
+        expect(getLlmProviderWarning('custom')).toBeNull();
+        expect(checkHasMoreModels('custom')).toBe(false);
+        expect(checkCanSeeImages('custom', PHI_MODEL)).toBe(false);
+    });
+
+    test('lists every row by the name given, the server id behind it', () => {
+        const [phi, llama] = getLlmModelList('custom');
+        expect(phi).toMatchObject({
+            id: PHI_MODEL,
+            label: 'Phi 3.1 Mini 128k Instruct',
+            wireId: 'phi-3.1-mini-128k-instruct',
+            serverId: SERVER_ID,
+            note: 'LM Studio, on this computer',
+        });
+        // No name given: the model id it is asked by.
+        expect(llama.label).toBe('llama-3.2-3b-instruct');
+        expect(getLlmProviderLabel('custom', PHI_MODEL)).toBe('LM Studio');
+        expect(getLlmProviderLabel('openai')).toBe('ChatGPT');
+    });
+
+    test('moves a tab off a deleted row, onto the same server first', () => {
+        expect(toUsableLlmModel('custom', PHI_MODEL)).toBe(PHI_MODEL);
+        expect(toUsableLlmModel('custom', `${SERVER_ID}/row-gone`)).toBe(
+            PHI_MODEL,
+        );
+        expect(toUsableLlmModel('custom', 'other-server/row-x')).toBe(
+            PHI_MODEL,
+        );
+    });
+
+    test('never stands in for a paid key, nor is stood in for', () => {
+        fake.aiSetting = {
+            openAIAPIKey: 'sk-live',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+        };
+        expect(getAvailableLlmProviders()).toEqual([
+            'openai',
+            'custom',
+            'free',
+        ]);
+        expect(getStandInLlmProvider('openai')).toBeNull();
+        expect(getStandInLlmProvider('custom')).toBeNull();
+    });
+
+    test('asks by the server’s own model id, with the plain budget, at no cost', async () => {
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const rounds: any[] = [];
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            {
+                onUsage: (round) => {
+                    rounds.push(round);
+                },
+            },
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).toMatchObject({
+            model: 'phi-3.1-mini-128k-instruct',
+            max_tokens: 2000,
+        });
+        // The window's own id stays on the usage, for the price and the log;
+        // a server on this computer costs nothing.
+        expect(rounds[0]).toMatchObject({
+            provider: 'custom',
+            model: PHI_MODEL,
+            isPricedAtZero: true,
+        });
+    });
+
+    test('prices a server elsewhere as not known', async () => {
+        fake.customServers = [
+            genServer({ baseUrl: 'https://llm.example.org/v1' }),
+        ];
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        return genTextResponse();
+                    }),
+                },
+            },
+        };
+        const rounds: any[] = [];
+        await askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL, [], null, {
+            onUsage: (round) => {
+                rounds.push(round);
+            },
+        });
+        expect(rounds[0].isPricedAtZero).toBeUndefined();
+    });
+
+    test('says what the server said about itself, in its own sentence', async () => {
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        const error: any = new Error('Connection error.');
+                        error.cause = new CustomServerError(
+                            'nothing answered at http://localhost:1234/v1 — ' +
+                                'check that its server is running',
+                        );
+                        throw error;
+                    }),
+                },
+            },
+        };
+        await expect(
+            askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow(
+            'nothing answered at http://localhost:1234/v1 — check that its ' +
+                'server is running',
+        );
+    });
+
+    test('asks a deleted row’s server by its first model instead', async () => {
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        await askLlmBot(
+            'Hello?',
+            'presenter',
+            'custom',
+            `${SERVER_ID}/row-gone`,
+        );
+        expect((create.mock.calls[0] as any[])[0].model).toBe(
+            'phi-3.1-mini-128k-instruct',
+        );
+    });
+
+    test('a machine on the same network costs nothing too', async () => {
+        fake.customServers = [
+            genServer({
+                name: 'LM Studio super-computer',
+                baseUrl: 'http://super-computer:1237/v1',
+            }),
+        ];
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        return genTextResponse();
+                    }),
+                },
+            },
+        };
+        expect(getLlmModelList('custom')[0].note).toBe(
+            'LM Studio super-computer, on your network',
+        );
+        const rounds: any[] = [];
+        await askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL, [], null, {
+            onUsage: (round) => {
+                rounds.push(round);
+            },
+        });
+        expect(rounds[0].isPricedAtZero).toBe(true);
+    });
+
+    test('sees a picture only with a row that says it can', () => {
+        fake.customServers = [
+            genServer({
+                models: [
+                    { id: 'row-phi', model: 'phi', name: '' },
+                    {
+                        id: 'row-qwen',
+                        model: 'qwen/qwen3.5-9b',
+                        name: '',
+                        canSeeImages: true,
+                    },
+                ],
+            }),
+        ];
+        expect(checkCanSeeImages('custom', PHI_MODEL)).toBe(false);
+        expect(checkCanSeeImages('custom', `${SERVER_ID}/row-qwen`)).toBe(true);
+        // Said on the model picker's hover, as the Free one says it.
+        expect(getLlmModelList('custom')[1].note).toBe(
+            'LM Studio, on this computer · can see pictures',
+        );
+        expect(getFirstImageCapableModel('custom')?.id).toBe(
+            `${SERVER_ID}/row-qwen`,
+        );
+    });
+
+    test('says the server is still loading the model, on the first round only', async () => {
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: false,
+                    loadedContext: null,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        let round = 0;
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        round += 1;
+                        return round === 1
+                            ? {
+                                  choices: [
+                                      {
+                                          message: {
+                                              role: 'assistant',
+                                              content: null,
+                                              tool_calls: [
+                                                  {
+                                                      id: 'c1',
+                                                      type: 'function',
+                                                      function: {
+                                                          name: 'owa_help_search',
+                                                          arguments: '{}',
+                                                      },
+                                                  },
+                                              ],
+                                          },
+                                      },
+                                  ],
+                              }
+                            : genTextResponse();
+                    }),
+                },
+            },
+        };
+        const steps: string[] = [];
+        await askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL, [], null, {
+            onProgress: (step) => {
+                if (!step.isDone) {
+                    steps.push(step.text);
+                }
+            },
+        });
+        expect(steps).toContain(
+            'Waiting for LM Studio to load Phi 3.1 Mini 128k Instruct — ' +
+                'the first answer takes longer',
+        );
+        expect(steps).toContain('Thinking it over (2)');
+    });
+
+    test('refuses a model loaded too small, before a round is posted', async () => {
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 4096,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn();
+        fake.custom = { chat: { completions: { create } } };
+        await expect(
+            askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow('context 4096 is too small');
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    test('says the model is gone, without asking anyone, when no server is left', async () => {
+        const create = vi.fn();
+        fake.custom = { chat: { completions: { create } } };
+        fake.customServers = [];
+        await expect(
+            askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow('this model is no longer in Settings');
+        expect(create).not.toHaveBeenCalled();
     });
 });
 

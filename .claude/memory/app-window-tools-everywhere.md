@@ -1,15 +1,19 @@
 ---
 name: app-window-tools-everywhere
-description: AppWindowToolsComp mounts the presenting control and the assistant on all nine app pages; the theme-token wrapper and focused-window menu routing are both load-bearing
+description: AppWindowToolsComp mounts the presenting control and the assistant on all ten app pages; the theme-token wrapper and focused-window menu routing are both load-bearing
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:11:04.436Z
 ---
 
 `src/others/AppWindowToolsComp.tsx` is the one declaration of **what every
-window of the app carries**: `PresentingControlComp` (the annotation overlay)
-and `AppAssistantComp` (the way into the chatbot). It is mounted on all nine
-renderer entries — presenter, reader, appDocumentEditor, bibleNote, setting,
-webEditor, lwShare, lyricEditor, experiment — and deliberately NOT on `about`,
+window of the app carries**: `PresentingControlComp` (the annotation overlay),
+`AppAssistantComp` (the way into the chatbot) and `KeyboardShortcutsComp`
+(Help → Keyboard Shortcuts). It is mounted on all ten renderer entries —
+presenter, reader, appDocumentEditor, bibleNote, setting, webEditor, lwShare,
+lyricEditor, experiment, screen-mirror — and deliberately NOT on `about`,
 `chatbot`, `finder` or `screen`. Inclusion is decided by which entry file
 imports it; there is no page gate anywhere.
 

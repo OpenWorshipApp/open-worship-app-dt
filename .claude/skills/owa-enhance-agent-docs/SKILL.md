@@ -43,7 +43,9 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    mirror. Code, tests, settings, hooks, user data and the app's screens wait
    for `apply`.
 4. **Paper trail in the SAME change.** Copy the Codex mirror again from
-   `.claude/`; never reconcile it by hand. Then run
+   `.claude/` with `node extra-work/sync-agent-mirror.mjs` (the gate's
+   `agentDocsMirror.test.ts` fails until it matches); never reconcile it by
+   hand. Then run
    `node extra-work/build-knowledge.mjs`, with one condition: under
    `npm run electron:dev` the rebuild relaunches the dev app. When a dev app is
    up and another session may be driving it, defer the rebuild and say so in
@@ -152,7 +154,10 @@ Then classify each survivor:
 - **fix**: one of the safe classes below
 - **ask**: a judgement call
 - **regression**: the code broke a recorded decision, so route it
-- **history**: leave it
+- **history**: leave it. File each killed `paths` / `symbols` lead (history,
+  or not a path) in `references/killed-leads.json` with its `why`, so the next
+  scan sets it aside; the scan reports an entry whose doc no longer names it.
+  A proven external name goes in the script's `EXTERNAL_NAME_SET` instead.
 
 ### 3. Fix drift (`auto`, `drift`)
 

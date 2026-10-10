@@ -42,7 +42,20 @@ import {
     type ChatAssetPreviewType,
 } from './assetPreviewHelpers';
 import RenderSessionTabsComp from './RenderSessionTabsComp';
-import { findSteppedProvider } from './providerPickHelpers';
+import {
+    findSteppedProvider,
+    genAssistantRows,
+    toAssistantRowValue,
+    type AssistantRowType,
+} from './providerPickHelpers';
+import { getUsableCustomServers } from '../helper/ai/customServerHelpers';
+import { notifyChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
+
+// In front of the window's title while any tab is working on an answer: the
+// title is what the taskbar shows, so it can be seen with this window behind
+// the app. A coloured emoji, the one kind of colour an OS title can carry.
+const CHATBOT_BUSY_TITLE_MARK = '🟠 ';
+import type { CustomServerType } from '../../electron/customLlmProtocol';
 import {
     REPORT_COPY_EMAIL_TOOL_NAME,
     REPORT_COPY_IMAGE_TOOL_NAME,
@@ -93,8 +106,8 @@ import {
 import {
     clearProgressSteps,
     genProgressReporter,
+    genSessionProgress,
     getProgressState,
-    pushProgressStep,
     subscribeProgress,
     type ProgressStateType,
 } from './progressHelpers';
@@ -122,6 +135,7 @@ import {
 import {
     askLlmBot,
     checkCanSeeImages,
+    checkHasMoreModels,
     checkIsFreeProvider,
     getLlmProviderWarning,
     getLlmProviderWarningLinks,
@@ -134,6 +148,8 @@ import {
     getLlmModelList,
     getLlmProvider,
     getLlmProviderKeyField,
+    getLlmProviderLabel,
+    checkIsCustomProvider,
     listAllLlmModels,
     setLlmModel,
     setLlmProvider,
@@ -287,6 +303,12 @@ function toReportQuote(text: string) {
 const BLIND_MODEL_MESSAGE =
     'This assistant cannot look at pictures. Pick one that can, or take the ' +
     'picture off and describe it instead.';
+// A custom server's model sees only once somebody says it does, so the way
+// forward may be a box in Settings rather than another model.
+const BLIND_CUSTOM_MODEL_MESSAGE =
+    'This model is not marked as able to look at pictures. If it can, tick ' +
+    'Sees pictures for it in Settings → Others → Custom servers; or take ' +
+    'the picture off and describe it instead.';
 
 /**
  * Settings → Others, with the cursor in `keyName`'s box -- or on the AI panel
@@ -875,8 +897,11 @@ function genProviderNames() {
         // The keyless one is deliberately not in this sentence. The sentence
         // exists to tell a user which providers a key would buy them; naming
         // the one that needs none inside "... need an API key of your own"
-        // makes it say the opposite of the truth about itself.
-        return !checkIsFreeProvider(item.key);
+        // makes it say the opposite of the truth about itself. The user's own
+        // servers are not bought with a key either.
+        return (
+            !checkIsFreeProvider(item.key) && !checkIsCustomProvider(item.key)
+        );
     }).map((item) => {
         return item.label;
     });
@@ -886,17 +911,27 @@ function genProviderNames() {
     return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
 }
 
+/** What an assistant row needs of a custom server: its id and its name. */
+function toCustomServerRows(servers: CustomServerType[]) {
+    return servers.map((server) => {
+        return { id: server.id, name: server.name };
+    });
+}
+
 function RenderProviderSwitchComp({
-    provider,
-    availableProviders,
+    rows,
+    value,
     onChange,
 }: Readonly<{
-    provider: LlmProviderType | null;
-    availableProviders: LlmProviderType[];
-    onChange: (provider: LlmProviderType) => void;
+    // One per provider, and one per server for the user's own
+    // (`genAssistantRows`).
+    rows: AssistantRowType<LlmProviderType>[];
+    // The row the tab is on, or null when no provider can answer at all.
+    value: string | null;
+    onChange: (row: AssistantRowType<LlmProviderType>) => void;
 }>) {
-    const chosenLabel = LLM_PROVIDER_LIST.find((item) => {
-        return item.key === provider;
+    const chosenLabel = rows.find((row) => {
+        return row.value === value;
     })?.label;
     // An arrow on the CLOSED list changes its value on every press (Windows,
     // Linux). A row with no key would then open Settings under somebody who
@@ -918,7 +953,7 @@ function RenderProviderSwitchComp({
             }
             // With no key at all there is no provider to be on, and a select
             // whose value matches no option renders blank.
-            value={provider ?? NO_PROVIDER_VALUE}
+            value={value ?? NO_PROVIDER_VALUE}
             onKeyDown={(event) => {
                 if (
                     event.altKey ||
@@ -932,46 +967,61 @@ function RenderProviderSwitchComp({
                 }, 0);
             }}
             onChange={(event) => {
-                const newProvider = event.target.value as LlmProviderType;
-                const step = arrowStepRef.current;
-                if (step === null || availableProviders.includes(newProvider)) {
-                    onChange(newProvider);
+                const findRow = (rowValue: string) => {
+                    return rows.find((row) => {
+                        return row.value === rowValue;
+                    });
+                };
+                const landedRow = findRow(event.target.value);
+                if (landedRow === undefined) {
                     return;
                 }
-                const steppedProvider = findSteppedProvider(
-                    LLM_PROVIDER_LIST.map((item) => {
-                        return item.key;
+                const step = arrowStepRef.current;
+                if (step === null || landedRow.isAvailable) {
+                    onChange(landedRow);
+                    return;
+                }
+                const steppedValue = findSteppedProvider(
+                    rows.map((row) => {
+                        return row.value;
                     }),
-                    availableProviders,
-                    newProvider,
+                    rows
+                        .filter((row) => {
+                            return row.isAvailable;
+                        })
+                        .map((row) => {
+                            return row.value;
+                        }),
+                    landedRow.value,
                     step,
                 );
-                if (steppedProvider !== null) {
-                    onChange(steppedProvider);
+                const steppedRow =
+                    steppedValue === null ? undefined : findRow(steppedValue);
+                if (steppedRow !== undefined) {
+                    onChange(steppedRow);
                 }
             }}
         >
-            {provider === null ? (
+            {value === null ? (
                 <option value={NO_PROVIDER_VALUE} disabled>
                     No AI key
                 </option>
             ) : null}
-            {LLM_PROVIDER_LIST.map((item) => {
-                const isAvailable = availableProviders.includes(item.key);
+            {rows.map((row) => {
                 const { text, title } = genProviderOptionText(
-                    item.key,
-                    item.label,
-                    isAvailable,
+                    row.provider,
+                    row.label,
+                    row.isAvailable,
                 );
                 return (
                     <option
-                        key={item.key}
-                        value={item.key}
+                        key={row.value}
+                        value={row.value}
                         // Pickable, NOT disabled: picking it is how the user
                         // asks to add its key (`handleProviderChanging`). The
                         // attribute is what tells it apart -- to the style
                         // sheet, and to a script driving this window.
-                        data-needs-key={isAvailable ? undefined : ''}
+                        data-needs-key={row.isAvailable ? undefined : ''}
                         title={title}
                     >
                         {text}
@@ -1177,12 +1227,13 @@ function RenderModelPickerComp({
             })}
             {/* Asking the account what else it can run costs a request, so it
                 is a thing the user does, not something the window does on
-                opening. Absent entirely for the keyless provider: its two
-                hosts DO answer with a catalogue, but almost none of it is
-                free and only some of it can call a tool at all, so the row
-                would be a control that either changes nothing or picks a
-                model that cannot do the job. A control that does nothing is
-                worse than no control. */}
+                opening. Absent entirely for a closed list
+                (`checkHasMoreModels`): the keyless provider's host DOES
+                answer with a catalogue, but almost none of it is free and
+                only some of it can call a tool at all, and Bedrock's route
+                has no catalogue at all, so the row would be a control that
+                either changes nothing or picks a model that cannot do the
+                job. A control that does nothing is worse than no control. */}
             {hasMoreModels ? (
                 <option value={MORE_MODELS_VALUE}>
                     {isLoadingModels ? 'Loading…' : 'More models…'}
@@ -1829,15 +1880,26 @@ function RenderMessageComp({
  * somebody deciding whether to press Stop, is "is it getting anywhere?". Only
  * the last few are kept; older ones are counted, never dropped in silence.
  */
-function RenderChatProgressComp() {
-    const [progress, setProgress] =
-        useState<ProgressStateType>(getProgressState);
+function RenderChatProgressComp({
+    sessionId,
+}: Readonly<{
+    // The tab in front: each tab shows what ITS question is doing.
+    sessionId: string;
+}>) {
+    const [progress, setProgress] = useState<ProgressStateType>(() => {
+        return getProgressState(sessionId);
+    });
     useAppEffect(() => {
         // Read once more on subscribe: the first steps of an ask are pushed
-        // between this component mounting and the effect running.
-        setProgress(getProgressState());
-        return subscribeProgress(setProgress);
-    }, []);
+        // between this component mounting and the effect running -- and on
+        // a tab switch, which is a different list altogether.
+        setProgress(getProgressState(sessionId));
+        return subscribeProgress((changedSessionId) => {
+            if (changedSessionId === sessionId) {
+                setProgress(getProgressState(sessionId));
+            }
+        });
+    }, [sessionId]);
     if (progress.steps.length === 0) {
         return (
             <p className="chat-status">
@@ -2090,7 +2152,27 @@ export default function ChatbotAppComp() {
         },
         [activeSessionId, updateSession],
     );
-    const [isBusy, setIsBusy] = useState(false);
+    // Which TABS are waiting on something, not whether the window is. The
+    // tabs work independently (2026-10-09, the user's ask): a question left
+    // waiting on a slow local model in one tab used to put Stop, the progress
+    // lines and "Add anything else" over EVERY tab, so nothing new could be
+    // asked anywhere until it came back. `isBusy` is the tab in front's.
+    const [busySessionIds, setBusySessionIds] = useState<readonly string[]>([]);
+    const isBusy = busySessionIds.includes(activeSessionId);
+    // Any tab at all: the window title and the 🤖 in the app say so, because
+    // a question to a slow local model takes minutes and this window is
+    // usually behind the app while it does (`chatbotBusyHelpers`). Said again
+    // on mount, so a reload mid-answer does not leave the 🤖 lit.
+    const isAnyTabBusy = busySessionIds.length > 0;
+    useAppEffect(() => {
+        notifyChatbotBusy(isAnyTabBusy);
+        const title = document.title.startsWith(CHATBOT_BUSY_TITLE_MARK)
+            ? document.title.slice(CHATBOT_BUSY_TITLE_MARK.length)
+            : document.title;
+        document.title = isAnyTabBusy
+            ? `${CHATBOT_BUSY_TITLE_MARK}${title}`
+            : title;
+    }, [isAnyTabBusy]);
     const [serviceError, setServiceError] = useState<string | null>(null);
     // What is attached to the question NOT YET asked, per tab.
     //
@@ -2156,6 +2238,11 @@ export default function ChatbotAppComp() {
     const [availableProviders, setAvailableProviders] = useState(
         getAvailableLlmProviders,
     );
+    // The user's own servers, one assistant row each. Only the parts a row
+    // shows: their model lists live in `modelListMap.custom`.
+    const [customServers, setCustomServers] = useState(() => {
+        return toCustomServerRows(getUsableCustomServers());
+    });
     // Read again, not remembered from when the window opened: the key that
     // makes a provider answer is typed into ANOTHER window, and this list is
     // what sends the user there. Returned, so a press acts on the fresh
@@ -2170,21 +2257,95 @@ export default function ChatbotAppComp() {
         });
         return newProviders;
     }, []);
+    // The servers and their models are typed into the Settings window too,
+    // and adding a second server changes no PROVIDER -- it is still the one
+    // `custom` -- so they are read again on their own. A tab left on a server
+    // or a model that has since been deleted is moved, or the head row would
+    // show another row while the deleted one is asked.
+    const refreshCustomServers = useCallback(() => {
+        const newServers = toCustomServerRows(getUsableCustomServers());
+        setCustomServers((oldServers) => {
+            return JSON.stringify(oldServers) === JSON.stringify(newServers)
+                ? oldServers
+                : newServers;
+        });
+        const newModels = getLlmModelList('custom');
+        setModelListMap((oldMap) => {
+            return JSON.stringify(oldMap.custom) === JSON.stringify(newModels)
+                ? oldMap
+                : { ...oldMap, custom: newModels };
+        });
+        const isCustomAvailable = newServers.length > 0;
+        const defaults = genNewSessionDefaults();
+        setSessionState((oldState) => {
+            let isChanged = false;
+            const sessions = oldState.sessions.map((session) => {
+                if (!checkIsCustomProvider(session.provider)) {
+                    return session;
+                }
+                const nextSession = isCustomAvailable
+                    ? {
+                          ...session,
+                          model: toUsableLlmModel('custom', session.model),
+                      }
+                    : {
+                          ...session,
+                          provider: defaults.provider,
+                          model: defaults.model,
+                      };
+                if (
+                    nextSession.provider === session.provider &&
+                    nextSession.model === session.model
+                ) {
+                    return session;
+                }
+                isChanged = true;
+                return nextSession;
+            });
+            return isChanged ? { ...oldState, sessions } : oldState;
+        });
+    }, []);
     // Coming back from Settings is a focus. A list still reading "needs an API
     // key" beside a key that has just been saved sends the user back to type
     // it again.
     useAppEffect(() => {
-        window.addEventListener('focus', refreshAvailableProviders);
+        const handleFocusing = () => {
+            refreshAvailableProviders();
+            refreshCustomServers();
+        };
+        window.addEventListener('focus', handleFocusing);
         return () => {
-            window.removeEventListener('focus', refreshAvailableProviders);
+            window.removeEventListener('focus', handleFocusing);
         };
     }, []);
-    const modelList = provider === null ? [] : modelListMap[provider];
+    const assistantRows = useMemo(() => {
+        return genAssistantRows(
+            LLM_PROVIDER_LIST,
+            availableProviders,
+            'custom',
+            customServers,
+        );
+    }, [availableProviders, customServers]);
+    const assistantRowValue = toAssistantRowValue(provider, model, 'custom');
+    const modelList = useMemo(() => {
+        if (provider === null) {
+            return [];
+        }
+        if (!checkIsCustomProvider(provider)) {
+            return modelListMap[provider];
+        }
+        // Only the server the tab is on: each server is its own assistant.
+        const serverId = model.split('/')[0];
+        return modelListMap.custom.filter((one) => {
+            return one.serverId === serverId;
+        });
+    }, [provider, model, modelListMap]);
     // Both of these change THIS tab, and are also written down as what the
     // next new tab should start with. The tabs already open keep asking with
     // whatever they were asking with.
     const handleProviderChanging = useCallback(
-        (newProvider: LlmProviderType) => {
+        (row: AssistantRowType<LlmProviderType>) => {
+            const newProvider = row.provider;
             if (!refreshAvailableProviders().includes(newProvider)) {
                 // A provider with no key yet: picking it is how the user asks
                 // to add one. Nothing about the tab changes -- the list is
@@ -2194,7 +2355,23 @@ export default function ChatbotAppComp() {
                 return;
             }
             setLlmProvider(newProvider);
-            const newModel = getLlmModel(newProvider);
+            let newModel = getLlmModel(newProvider);
+            if (row.serverId !== null) {
+                // A server row: that server's model -- the one last asked
+                // there when it is still listed, its first one otherwise.
+                const serverModels = getLlmModelList(newProvider).filter(
+                    (one) => {
+                        return one.serverId === row.serverId;
+                    },
+                );
+                newModel =
+                    serverModels.find((one) => {
+                        return one.id === newModel;
+                    })?.id ??
+                    serverModels[0]?.id ??
+                    newModel;
+                setLlmModel(newProvider, newModel);
+            }
             updateActiveSession((session) => {
                 return { ...session, provider: newProvider, model: newModel };
             });
@@ -3025,6 +3202,46 @@ export default function ChatbotAppComp() {
     // lands in the conversation that asked rather than in whichever tab
     // happens to be in front when the button is pressed.
     const pendingAskListRef = useRef<PendingAskType[]>([]);
+    // Work that keeps a tab busy without being stoppable -- writing a song
+    // file the assistant drafted. One entry per hold, so two at once in the
+    // same tab release one at a time.
+    const busyHoldListRef = useRef<string[]>([]);
+    // The busy TABS, worked out from what is still on its way. Set only on a
+    // change: this component is the whole window.
+    const syncBusy = useCallback(() => {
+        const newIds = Array.from(
+            new Set([
+                ...pendingAskListRef.current.map((pending) => {
+                    return pending.sessionId;
+                }),
+                ...busyHoldListRef.current,
+            ]),
+        );
+        setBusySessionIds((oldIds) => {
+            return oldIds.length === newIds.length &&
+                newIds.every((id) => {
+                    return oldIds.includes(id);
+                })
+                ? oldIds
+                : newIds;
+        });
+    }, []);
+    const checkIsSessionPending = useCallback((sessionId: string) => {
+        return pendingAskListRef.current.some((pending) => {
+            return pending.sessionId === sessionId;
+        });
+    }, []);
+    // One ask ended: the tab's own busy and progress lines follow, and a
+    // second ask still running in the SAME tab keeps both up.
+    const settleSession = useCallback(
+        (sessionId: string) => {
+            syncBusy();
+            if (!checkIsSessionPending(sessionId)) {
+                clearProgressSteps(sessionId);
+            }
+        },
+        [syncBusy, checkIsSessionPending],
+    );
     const genPendingAsk = useCallback(
         (
             sessionId: string,
@@ -3055,14 +3272,24 @@ export default function ChatbotAppComp() {
     // this window thinks, and a Stop button that leaves "Looking it up…"
     // spinning for another two seconds is a Stop button nobody trusts. What
     // is stopped is the WAITING -- see `cancelHelpers`.
+    //
+    // The TAB IN FRONT's only: another tab's question is its own business,
+    // and a Stop pressed here must not end a wait the user is not looking at.
     const handleCancelling = useCallback(() => {
-        const pendingList = pendingAskListRef.current;
+        const sessionId = sessionStateRef.current.activeId;
+        const pendingList = pendingAskListRef.current.filter((pending) => {
+            return pending.sessionId === sessionId;
+        });
         if (pendingList.length === 0) {
             return;
         }
-        pendingAskListRef.current = [];
-        setIsBusy(false);
-        clearProgressSteps();
+        pendingAskListRef.current = pendingAskListRef.current.filter(
+            (pending) => {
+                return pending.sessionId !== sessionId;
+            },
+        );
+        syncBusy();
+        clearProgressSteps(sessionId);
         for (const pending of pendingList) {
             pending.controller.abort();
             // Nothing the user typed is thrown away by a Stop. Anything they
@@ -3096,7 +3323,7 @@ export default function ChatbotAppComp() {
             // "asking the assistant" until its timeout.
             pending.onCancelled?.();
         }
-    }, [addMessage, updateSession]);
+    }, [addMessage, updateSession, syncBusy, sessionStateRef]);
     const handleCancellingRef = useAppCurrentRef(handleCancelling);
     const previewRef = useAppCurrentRef(preview);
     // Escape is what a hurried person presses, and the box that already
@@ -3148,13 +3375,15 @@ export default function ChatbotAppComp() {
         ) => {
             addMessage(sessionId, { author: 'you', text: echo });
             const pending = genPendingAsk(sessionId, undefined, false);
-            clearProgressSteps();
-            setIsBusy(true);
+            clearProgressSteps(sessionId);
+            syncBusy();
             const lineText = describeBibleImportStep(state);
             const finishLine =
                 lineText === null
                     ? null
-                    : genProgressReporter(pushProgressStep)(lineText);
+                    : genProgressReporter(genSessionProgress(sessionId))(
+                          lineText,
+                      );
             try {
                 const answer = await runBibleImportStep(state);
                 if (pending.controller.signal.aborted) {
@@ -3168,13 +3397,10 @@ export default function ChatbotAppComp() {
             } finally {
                 finishLine?.();
                 endPendingAsk(pending);
-                setIsBusy(pendingAskListRef.current.length > 0);
-                if (pendingAskListRef.current.length === 0) {
-                    clearProgressSteps();
-                }
+                settleSession(sessionId);
             }
         },
-        [addMessage, genPendingAsk, endPendingAsk],
+        [addMessage, genPendingAsk, endPendingAsk, syncBusy, settleSession],
     );
     const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
     // A job another window handed over -- Settings → Bible's "let the
@@ -3221,9 +3447,9 @@ export default function ChatbotAppComp() {
 
     const handleAsking = useCallback(
         // `isForced` is for the follow-up `handleActing` fires the moment its
-        // own tool call finishes: `setIsBusy(false)` has been called but React
-        // has not re-rendered, so the busy flag this closure can see is still
-        // true and the ask would be dropped without a word.
+        // own tool call finishes: `syncBusy()` has been called but React has
+        // not re-rendered, so the busy flag this closure can see is still true
+        // and the ask would be dropped without a word.
         //
         // `options` is for the one ask nobody typed: a walkthrough card stuck
         // on a step, asking on the user's behalf. Such an ask needs three
@@ -3310,13 +3536,13 @@ export default function ChatbotAppComp() {
                     undefined,
                     false,
                 );
-                clearProgressSteps();
-                setIsBusy(true);
+                clearProgressSteps(commandSessionId);
+                syncBusy();
                 try {
                     const answer = await runBuiltinCommand(
                         trimmedAsked,
                         commandFocus,
-                        pushProgressStep,
+                        genSessionProgress(commandSessionId),
                         // The one fact a command answers that lives in this
                         // window and nowhere a tool can read: what the tab
                         // has spent. Read through the ref, for the tab that
@@ -3335,10 +3561,7 @@ export default function ChatbotAppComp() {
                     });
                 } finally {
                     endPendingAsk(pending);
-                    setIsBusy(pendingAskListRef.current.length > 0);
-                    if (pendingAskListRef.current.length === 0) {
-                        clearProgressSteps();
-                    }
+                    settleSession(commandSessionId);
                 }
                 return;
             }
@@ -3370,7 +3593,11 @@ export default function ChatbotAppComp() {
             // `describeLlmError` reads as an unreachable service and would
             // tell a volunteer their internet is down.
             if (images.length > 0 && !checkCanSeeImages(provider, model)) {
-                setAttachError(BLIND_MODEL_MESSAGE);
+                setAttachError(
+                    checkIsCustomProvider(provider)
+                        ? BLIND_CUSTOM_MODEL_MESSAGE
+                        : BLIND_MODEL_MESSAGE,
+                );
                 return;
             }
             // Pinned before the first await: everything this ask writes goes
@@ -3425,8 +3652,8 @@ export default function ChatbotAppComp() {
             // matters, because the window between the line appearing and the
             // first step arriving is exactly where a stale list would be read
             // as what is happening now.
-            clearProgressSteps();
-            setIsBusy(true);
+            clearProgressSteps(askedSessionId);
+            syncBusy();
             let activeFocus = focus;
             if (!isFocusChosen) {
                 const openerFocus = detectOpenerFocus();
@@ -3519,7 +3746,7 @@ export default function ChatbotAppComp() {
                                 // happening, and deciding here which ones
                                 // are worth showing is how a line ends up
                                 // saying something the app is not doing.
-                                onProgress: pushProgressStep,
+                                onProgress: genSessionProgress(askedSessionId),
                                 onUsage: usageTally.onUsage,
                             },
                         );
@@ -3620,9 +3847,11 @@ export default function ChatbotAppComp() {
                                 `${error.message} ` +
                                 describeOfflineStandIn(answer);
                         } else {
-                            const label = LLM_PROVIDER_LIST.find((item) => {
-                                return item.key === provider;
-                            })?.label;
+                            // The server's own name for a custom one.
+                            const label =
+                                provider === null
+                                    ? undefined
+                                    : getLlmProviderLabel(provider, model);
                             // The door to what went wrong, under the note.
                             // The thrown line carries the SDK's error as its
                             // `cause`, and what KIND of failure that was
@@ -3763,15 +3992,13 @@ export default function ChatbotAppComp() {
                 options?.onAnswered?.(null);
             } finally {
                 endPendingAsk(pending);
-                // Busy for as long as ANYTHING is still on its way. Written
-                // off the list rather than as a flat `false`, because two asks
-                // can overlap -- a stuck walkthrough card asks while the
-                // user's own question is still running -- and the first one
-                // home used to take the other one's spinner down with it.
-                setIsBusy(pendingAskListRef.current.length > 0);
-                if (pendingAskListRef.current.length === 0) {
-                    clearProgressSteps();
-                }
+                // The TAB is busy for as long as anything of its own is still
+                // on its way. Written off the list rather than as a flat
+                // "not busy", because two asks can overlap in one tab -- a
+                // stuck walkthrough card asks while the user's own question
+                // is still running -- and the first one home used to take the
+                // other one's spinner down with it.
+                settleSession(askedSessionId);
                 // Anything they added too late to be folded in. The model had
                 // already stopped looking things up, so there was no round
                 // left to carry it -- it becomes its own question, and the
@@ -3870,10 +4097,14 @@ export default function ChatbotAppComp() {
         rememberAsking,
         updateActiveSession,
     ]);
-    // The model to offer when the chosen one cannot see a picture.
+    // The model to offer when the chosen one cannot see a picture. A custom
+    // server's list is re-read on focus, and a box ticked in Settings changes
+    // it, so that list is a dependency too.
+    const customModelList = modelListMap.custom;
     const seeingModel = useMemo(() => {
         return getFirstImageCapableModel(provider);
-    }, [provider]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [provider, customModelList]);
 
     // A walkthrough card in the app window, stuck on a step it cannot do for
     // the user. It asks here instead of apologising, and the answer goes back
@@ -4002,7 +4233,7 @@ export default function ChatbotAppComp() {
             // page is read while the investigation runs rather than after
             // it -- the page can take seconds, and so does the model.
             const contactPromise = findContactEmail();
-            setIsBusy(true);
+            syncBusy();
             try {
                 // The picture FIRST, before the investigation starts clicking
                 // about the window: the evidence is the app as it was when the
@@ -4065,9 +4296,7 @@ export default function ChatbotAppComp() {
                             issueActions = genProviderIssueActions(
                                 provider,
                                 readLlmIssue(error.cause).kind,
-                                LLM_PROVIDER_LIST.find((item) => {
-                                    return item.key === provider;
-                                })?.label ?? provider,
+                                getLlmProviderLabel(provider, model),
                             );
                         }
                     }
@@ -4085,11 +4314,12 @@ export default function ChatbotAppComp() {
                     investigatedBy:
                         provider === null || answerText.length === 0
                             ? null
-                            : `${
-                                  LLM_PROVIDER_LIST.find((item) => {
-                                      return item.key === provider;
-                                  })?.label ?? provider
-                              } (${model})`,
+                            : `${getLlmProviderLabel(provider, model)} (${
+                                  // The id the server knows, not two uuids.
+                                  getLlmModelList(provider).find((one) => {
+                                      return one.id === model;
+                                  })?.wireId ?? model
+                              })`,
                     contact: await contactPromise.catch(() => {
                         return null;
                     }),
@@ -4126,7 +4356,7 @@ export default function ChatbotAppComp() {
                 });
             } finally {
                 endPendingAsk(pending);
-                setIsBusy(pendingAskListRef.current.length > 0);
+                settleSession(reportedSessionId);
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4631,11 +4861,24 @@ export default function ChatbotAppComp() {
                 action.toolName === LYRIC_CREATE_TOOL_NAME ||
                 action.toolName === LYRIC_COPY_TOOL_NAME
             ) {
-                setIsBusy(true);
+                // Busy in the tab that pressed it, and not stoppable: a file
+                // half written is worse than one the user can delete.
+                busyHoldListRef.current = [
+                    ...busyHoldListRef.current,
+                    actedSessionId,
+                ];
+                syncBusy();
                 try {
                     await handleDraftedLyricRef.current(action, actedSessionId);
                 } finally {
-                    setIsBusy(pendingAskListRef.current.length > 0);
+                    const holdIndex =
+                        busyHoldListRef.current.indexOf(actedSessionId);
+                    busyHoldListRef.current = busyHoldListRef.current.filter(
+                        (_sessionId, index) => {
+                            return index !== holdIndex;
+                        },
+                    );
+                    syncBusy();
                 }
                 return;
             }
@@ -4647,7 +4890,7 @@ export default function ChatbotAppComp() {
             // otherwise.
             const pending = genPendingAsk(actedSessionId);
             const { signal } = pending.controller;
-            setIsBusy(true);
+            syncBusy();
             let isNeedingModel = false;
             try {
                 const result = await runBotAction(action);
@@ -4697,7 +4940,7 @@ export default function ChatbotAppComp() {
                 });
             } finally {
                 endPendingAsk(pending);
-                setIsBusy(pendingAskListRef.current.length > 0);
+                settleSession(actedSessionId);
             }
             // The card the recipe could build is already up; this is the
             // second half, for the steps it could not point at. Working out
@@ -4728,6 +4971,7 @@ export default function ChatbotAppComp() {
             <RenderSessionTabsComp
                 sessions={sessions}
                 activeId={activeSession.id}
+                busyIds={busySessionIds}
                 genTitle={genChatSessionTitle}
                 canAdd={checkCanAddChatSession(sessions)}
                 canClearAll={checkCanClearChatSessions(sessions)}
@@ -4749,8 +4993,8 @@ export default function ChatbotAppComp() {
                     </RenderPickFieldComp>
                     <RenderPickFieldComp caption="Assistant">
                         <RenderProviderSwitchComp
-                            provider={provider}
-                            availableProviders={availableProviders}
+                            rows={assistantRows}
+                            value={assistantRowValue}
                             onChange={handleProviderChanging}
                         />
                     </RenderPickFieldComp>
@@ -4780,7 +5024,7 @@ export default function ChatbotAppComp() {
                                 model={model}
                                 modelList={modelList}
                                 isLoadingModels={isLoadingModels}
-                                hasMoreModels={!checkIsFreeProvider(provider)}
+                                hasMoreModels={checkHasMoreModels(provider)}
                                 onChange={handleModelChanging}
                                 onLoadingMore={handleLoadingMoreModels}
                             />
@@ -4962,7 +5206,7 @@ export default function ChatbotAppComp() {
                     // -- the way out of it. A volunteer who has changed their
                     // mind three minutes before a service should not have to
                     // work out that the Ask button has become the way to stop.
-                    <RenderChatProgressComp />
+                    <RenderChatProgressComp sessionId={activeSessionId} />
                 ) : null}
             </div>
             <form
@@ -5005,7 +5249,8 @@ export default function ChatbotAppComp() {
                 {attachError === null ? null : (
                     <p className="chat-attach-error">
                         {attachError}
-                        {attachError === BLIND_MODEL_MESSAGE &&
+                        {(attachError === BLIND_MODEL_MESSAGE ||
+                            attachError === BLIND_CUSTOM_MODEL_MESSAGE) &&
                         seeingModel !== null ? (
                             <button
                                 type="button"

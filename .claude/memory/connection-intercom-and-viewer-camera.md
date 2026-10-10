@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 84de4c50-a44b-4c8d-bd33-0a72a39fe576
-  modified: 2026-10-08T22:15:00.000Z
+  modified: 2026-10-09T15:15:00.000Z
 ---
 
 Built 2026-10-08 at the user's ask (_"3 icons per connection, mic speaker and
@@ -85,6 +85,55 @@ shows the voice volume. Mic and camera show only on a secure page (loopback,
 the tunnel); nothing shows in the app's own Preview. Controls appear only
 under the mouse; a mic that is on stays visible. A refusal says so in a toast
 (`micFailed`, `cameraFailed`).
+
+**On an iPhone or iPad a camera shows in a canvas, never a `<video>`**
+(2026-10-09, reported _"iphone and ipad can't [see] the camera"_; Android and
+every computer could). Two WebKit traps, both measured on the user's iPad
+through a logging proxy (below):
+
+- A `<video>` of a canvas's `captureStream()` -- how a browser camera reached
+  the screen where there is no `MediaStreamTrackGenerator` -- takes the
+  camera's size and never paints nor autoplays (WebKit 181663, 275456). The
+  tell: a box with the camera's exact shape filled with the style's own
+  background colour. Now the frames go straight into canvases
+  (`createViewerCameraView`).
+- A WebRTC `<video>` (this computer's camera, `mirror-camera:`) played --
+  `paused:false`, time running, every frame decoded -- and painted only its
+  background. A fresh copy painted or not by its style (blur on, positioned:
+  yes; plain or unblurred: no), and re-attaching the stream did not save the
+  element, so no style is a fix. A canvas drawn from the same video always
+  painted, even from a video on no page. `createCameraCanvasView`
+  (`cameraHelpers`) does that wherever there is no track generator: a video
+  nobody sees, started at once (not on its metadata), drawn per frame by
+  `requestVideoFrameCallback` (15/s, the camera's rate; never per refresh).
+  No per-frame callback: the `<video>` stays. Foreground, camera background
+  (put up at once -- its hidden video never loads) and slide camera items
+  all swap the canvas in. Chromium keeps the `<video>`.
+
+**A camera on the screen follows the device, not the tab.** A browser's
+camera id is its viewer id, per tab: a new tab, another port, or a tab
+Safari threw away is a new camera, and the screen kept the old id. The
+presenter found it again by name (`resolveCameraDeviceId`), so its Mini
+Screen showed it while every browser page and the Preview showed nothing --
+a page may only ask for an id its screen shows. Now a screen page's watch
+carries the name the screen gives the camera (`cameraLabelOf`), and
+`ViewerCameras` feeds an unshared id from a camera shared under exactly that
+name, tagging the frames with the id asked for; routes are worked out again
+on every share, rename, drop and watch, and only the differences are sent
+(start, stop, key frame, pause). The name begins `Browser <address>:`,
+written here, so another device cannot take a box over. A window gives no
+name and follows only its id. A switch to another camera renames it, so a
+box following the old name pauses.
+
+**Seeing what an iPhone does with no Mac:** a throwaway reverse proxy in the
+scratchpad on a spare LAN port, forwarding to the app's port (Host and Origin
+rewritten to the app's address, WebSocket upgrades piped), injecting a
+logger script into every HTML page that POSTs back what the page does
+(capabilities, `RTCPeerConnection` states and `getStats`, `play()` results,
+each video's state, canvas pixels). Labelled A/B tiles placed in the screen's
+own container answered the paint questions in one screenshot each. It opens
+LAN ports: ask first, and stop it after. Safari loads a self-signed https
+proxy page once its warning is passed.
 
 **Testing without a second person:** a throwaway Electron main in the
 scratchpad with `use-fake-device-for-media-stream` +

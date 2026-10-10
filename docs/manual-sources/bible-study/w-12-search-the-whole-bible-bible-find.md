@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-08, RD-09, RD-45, RD-46, RD-47]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-08"
+workflowsVersion: "2026-10-09"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -52,5 +52,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
 :::

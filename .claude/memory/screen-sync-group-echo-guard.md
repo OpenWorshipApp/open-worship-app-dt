@@ -7,18 +7,19 @@ metadata:
 
 `ScreenManager.syncScreenManagerGroup` sets the *receiver's*
 `noSyncGroupMap` entry before `receiveSyncScreen`, and never resets it — it is
-a `Map<string, boolean>` (`ScreenManagerBase.ts:51`), written via
-`.set(prefix, true)` (`ScreenEventHandler.ts:104`, `ScreenManager.ts:490-493`).
+a `Map<string, boolean>` (`ScreenManagerBase`), written via
+`.set(prefix, true)` (`ScreenEventHandler`, `ScreenManager.syncScreenManagerGroup`).
 `checkIsSyncGroupEnabled` is consulted on the **sender**, so once a screen has
 received one group sync for a layer, that screen can no longer broadcast that
 layer to its group — the color-note group silently becomes one-way for the rest
 of the session. `ScreenDrawManager` and `ScreenFocusManager` both escape it —
 every local send calls `enableSyncGroup` first (`sendDrawMessage` /
-`sendSyncScreen`, `sendFocusMessage` at `ScreenFocusManager.ts:508` /
-`sendSyncScreen` at `:532`) — which is why drawings and the spotlight stay in
-lockstep across a group while slides/background drift apart. Bible and
-foreground have narrower re-enable paths on their `apply*WithSyncGroup` setters
-only (`ScreenBibleManager.ts:296`, `ScreenForegroundManager.ts:711`), and
+`sendSyncScreen`, and `sendFocusMessage` / `sendSyncScreen` in
+`ScreenFocusManager`) — which is why drawings and the spotlight stay in
+lockstep across a group while slides/background drift apart. Background,
+slides, Bible and foreground have narrower re-enable paths on their
+`apply*WithSyncGroup` setters only (`applyBackgroundSrcWithSyncGroup`,
+`applySlideSrcWithSyncGroup`, and the Bible and foreground managers' own), and
 `ScreenManagerBase.setColorNote` re-enables when a screen joins/leaves a group.
 
 **Why:** this is the root cause of "mini screens in one group show different

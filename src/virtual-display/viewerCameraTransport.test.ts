@@ -25,6 +25,7 @@ vi.mock('../server/appProvider', () => ({
 
 import {
     checkIsViewerCameraId,
+    createViewerCameraView,
     getViewerCameraStream,
     listenViewerCameraLive,
     releaseViewerCameraStream,
@@ -36,7 +37,7 @@ function emit(channel: string, data: unknown) {
     }
 }
 
-// A decoder that outputs one frame per chunk, at once.
+// A decoder that outputs one 640x360 frame per chunk, at once.
 const decoders: FakeVideoDecoder[] = [];
 class FakeVideoDecoder {
     state = 'unconfigured';
@@ -50,7 +51,12 @@ class FakeVideoDecoder {
     }
     decode(chunk: any) {
         this.chunks.push(chunk);
-        this.init.output({ close: vi.fn(), chunk });
+        this.init.output({
+            close: vi.fn(),
+            chunk,
+            displayWidth: 640,
+            displayHeight: 360,
+        });
     }
     close() {
         this.state = 'closed';
@@ -169,6 +175,61 @@ describe('viewerCameraTransport', () => {
         expect(listeners.get('vd:camera-end')?.size).toBe(0);
         // A stream it does not know is told nothing.
         expect(listenViewerCameraLive(stream, () => {})).toBeTypeOf('function');
+    });
+
+    test('Chromium plays the stream in a video: no canvas view', async () => {
+        const stream = await getViewerCameraStream(CAMERA);
+        expect(createViewerCameraView(stream)).toBeNull();
+        releaseViewerCameraStream(stream);
+    });
+
+    test('Safari and Firefox draw every frame into each canvas view, never a captured stream', async () => {
+        vi.stubGlobal('MediaStreamTrackGenerator', undefined);
+        // Each view's canvas and what was drawn into it.
+        const canvases: { width: number; height: number; drawn: any[] }[] = [];
+        vi.stubGlobal('document', {
+            createElement: (tag: string) => {
+                expect(tag).toBe('canvas');
+                const canvas = {
+                    width: 300,
+                    height: 150,
+                    drawn: [] as any[],
+                    captureStream: () => {
+                        throw new Error('an iPhone never paints this');
+                    },
+                    getContext: () => ({
+                        drawImage: (frame: any) => canvas.drawn.push(frame),
+                    }),
+                };
+                canvases.push(canvas);
+                return canvas;
+            },
+        });
+        const stream = await getViewerCameraStream(CAMERA);
+        // Nothing plays it: it only names the camera.
+        expect((stream as any).tracks).toBeUndefined();
+        const first = createViewerCameraView(stream)!;
+        const second = createViewerCameraView(stream)!;
+        expect(first.element).toBe(canvases[0]);
+        expect(second.element).toBe(canvases[1]);
+
+        // Each decoded frame (640x360) is drawn, then closed.
+        emit('vd:camera-frame', frame('key'));
+        expect(canvases.map((canvas) => canvas.drawn.length)).toEqual([1, 1]);
+        expect(canvases[0]).toMatchObject({ width: 640, height: 360 });
+        expect(canvases[1]).toMatchObject({ width: 640, height: 360 });
+        expect(canvases[0].drawn[0].close).toHaveBeenCalledTimes(1);
+
+        // A view let go is drawn no more; the other still is.
+        first.release();
+        emit('vd:camera-frame', frame('delta'));
+        expect(canvases.map((canvas) => canvas.drawn.length)).toEqual([1, 2]);
+
+        // The stream let go: no view is drawn, and none is handed out.
+        releaseViewerCameraStream(stream);
+        emit('vd:camera-frame', frame('key'));
+        expect(canvases[1].drawn).toHaveLength(2);
+        expect(createViewerCameraView(stream)).toBeNull();
     });
 
     test('a page with no video decoder cannot show one', async () => {

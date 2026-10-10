@@ -33,6 +33,7 @@ const AI_KEY_NAME_MAP: Record<AISecretKeyNameType, true> = {
     openAIAPIKey: true,
     anthropicAPIKey: true,
     kimiAPIKey: true,
+    bedrockAPIKey: true,
 };
 
 export type AIKeyFocusRequestType = {

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 709cd00f-9374-4a37-9a3a-80dbd06b55b5
-  modified: 2026-10-02T16:56:15.894Z
+  modified: 2026-10-09T03:04:19.329Z
 ---
 
 **Video Show** and **Image Show** (2026-09-24) put a clip or a picture on the
@@ -68,9 +68,10 @@ Other rules that fell out of building it:
   Several sessions is how one widget holds several overlays; there is
   deliberately no shift-click "append".
 - **A session's slide show runs OUTSIDE React**
-  (`foregroundAutoPlayHelpers.ts`): `SlideAutoPlayComp` keeps its timer in an
-  effect, so a show stopped the moment its session stopped being rendered.
-  Timers now live in a module map keyed `<kind>:<sessionId>`, reconciled from
+  (`src/slide-auto-play/autoPlayRunnerHelpers.ts`): `SlideAutoPlayComp` keeps
+  its timer in an effect, so a show stopped the moment its session stopped
+  being rendered. Timers now live in a module map keyed by the show's settings
+  prefix (`toForegroundAutoPlayPrefix`), reconciled from
   whatever renders, and the TICK decides whether the show still has anything to
   advance -- which is how Clear Foreground stops a show whose panel nobody has
   open, with no subscription. `SlideAutoPlayComp` takes `isTimerExternal` so it

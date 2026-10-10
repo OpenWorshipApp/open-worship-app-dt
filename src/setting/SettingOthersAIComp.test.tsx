@@ -9,7 +9,9 @@ const h = vi.hoisted(() => ({
         openAIAPIKey: 'openai-key',
         anthropicAPIKey: '',
         kimiAPIKey: '',
+        bedrockAPIKey: '',
         anthropicWorkspaceId: '',
+        bedrockRegion: 'us-east-1',
         isAutoPlay: false,
     },
     setAISettingMock: vi.fn(),
@@ -36,6 +38,7 @@ vi.mock('../helper/ai/aiKeyFocusHelpers', () => ({
 }));
 
 vi.mock('../helper/ai/aiHelpers', () => ({
+    BEDROCK_REGION_LIST: ['us-east-1', 'us-west-2'],
     getAISetting: () => ({ ...h.setting }),
     getIsAIEnabled: () => true,
     setAISetting: h.setAISettingMock,
@@ -55,6 +58,7 @@ vi.mock('../chatbot/providerIssueHelpers', () => ({
             workspaces: 'https://example.test/workspaces',
         },
         kimi: { keys: 'https://example.test/kimi' },
+        bedrock: { keys: 'https://example.test/bedrock' },
     },
 }));
 
@@ -76,6 +80,14 @@ vi.mock('./settingHelpers', () => ({
 
 vi.mock('./SettingOthersSecureStorageWarningComp', () => ({
     default: () => null,
+}));
+
+// The custom-server group has its own test; here it only has to load.
+vi.mock('./SettingOthersCustomServersComp', () => ({
+    default: () => null,
+}));
+vi.mock('../helper/ai/customServerHelpers', () => ({
+    useCustomServers: () => [],
 }));
 
 import SettingOthersAIComp from './SettingOthersAIComp';
@@ -133,5 +145,33 @@ describe('SettingOthersAIComp', () => {
         await renderComponent();
 
         expect(container.querySelector('#app-ai-audio-auto-play')).toBeNull();
+    });
+
+    // One Bedrock key reaches every region of its account, so the region is
+    // picked beside it -- off a closed list, never typed.
+    test('saves the Bedrock region picked beside its key', async () => {
+        await renderComponent();
+
+        expect(container.textContent).toContain('Amazon Bedrock');
+        const select = Array.from(container.querySelectorAll('select')).find(
+            (one) => {
+                return one.value === 'us-east-1';
+            },
+        ) as HTMLSelectElement;
+        expect(
+            Array.from(select.options).map((option) => {
+                return option.value;
+            }),
+        ).toEqual(['us-east-1', 'us-west-2']);
+
+        await act(async () => {
+            select.value = 'us-west-2';
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        expect(h.setAISettingMock).toHaveBeenCalledWith({
+            ...h.setting,
+            bedrockRegion: 'us-west-2',
+        });
     });
 });

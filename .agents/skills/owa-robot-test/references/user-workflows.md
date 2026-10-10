@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-08g** (W-51 step 7 — **[en:tran:Share my cameras]** on the browser page opens a list of every camera of the device instead of sharing the browser's default one: **[en:tran:Front camera]** / **[en:tran:Back camera]** on a phone until a camera has been allowed, then each camera by name (Android's `camera2 0, facing back` read as **[en:tran:Back camera]**, numbered when a phone has several), **[en:tran:Share]** / **[en:tran:Stop]** per row, another one swapped in place on every screen showing it, and a picture of the one shared above the list. Asked for by the user: _"virtual display camera sharing, on mobile I need option to choose different. add all choices to choose different cameras"_. Verified live 2026-10-08 on the dev presenter's display 1 with a headless Chrome emulating a phone (coarse pointer, three fake cameras) on `http://127.0.0.1:39240/vd/1/`: the list read Front / Back camera before permission; **[en:tran:Back camera]** was refused with the camera toast (the fake cameras have no back side, as on a laptop); **[en:tran:Front camera]** shared `fake_device_0` with its picture shown and the list turned into the three cameras by name; **[en:tran:Share]** on `fake_device_1` swapped it with no unshare in between, and the presenter's Virtual Screens Manager read `Browser 127.0.0.1: fake_device_1`; **[en:tran:Stop]** ended it. A real phone's back lens was not driven.)
+**workflowsVersion: 2026-10-09b** (W-42 step 13 — **your own AI server** in **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**: name, address, **[en:tran:Test]**, **[en:tran:Load models from server]**, LM Studio saying under each model whether it is loaded, a **[en:tran:Sees pictures]** box per model, the 32k Context Length to load a model with, and a question that stops within a minute or two when the server's computer goes to sleep. Asked for by the user: _"test everything important (all pages) then find anything we can update the app to make it work smoothly with the local llm"_. Observed live 2026-10-09 against the user's LM Studio on another computer (`http://super-computer:1237/v1`, qwen3.5-9b): Presenter and Reader how-do-Is answered right in 3 rounds and 21–30 s, priced **free**; the panel, the box, **Not loaded in LM Studio right now** under the model, and with the machine off both the Test sentence and a question giving up after 81 s with _it went quiet in the middle of the question — check that the computer it runs on is on and awake_. The machine went down three times under load, so the loaded-model lines were proven in unit tests only.)
+
+Previous: **workflowsVersion: 2026-10-09a** (new W-52 — **[en:tran:Export Settings]** / **[en:tran:Import Settings]** under **[en:tran:Apply Settings]** in the Settings sidebar: a nested tree of sections to carry, the export password, API keys only into a protected file, and an import that REPLACES each ticked section. Asked for by the user: _"in setting.html I want see option to export import setting … import can choose section to import and override the existing section"_ and _"export should allow choose section under nested sections"_. Observed live 2026-10-09 on a scratch dev profile, in English and Khmer: the two buttons, and the export dialog with eleven collapsed sections, their counts, the API keys row disabled and the password pair; the presses inside the dialog are a person's.)
+
+Previous: **workflowsVersion: 2026-10-08g** (W-51 step 7 — **[en:tran:Share my cameras]** on the browser page opens a list of every camera of the device instead of sharing the browser's default one: **[en:tran:Front camera]** / **[en:tran:Back camera]** on a phone until a camera has been allowed, then each camera by name (Android's `camera2 0, facing back` read as **[en:tran:Back camera]**, numbered when a phone has several), **[en:tran:Share]** / **[en:tran:Stop]** per row, another one swapped in place on every screen showing it, and a picture of the one shared above the list. Asked for by the user: _"virtual display camera sharing, on mobile I need option to choose different. add all choices to choose different cameras"_. Verified live 2026-10-08 on the dev presenter's display 1 with a headless Chrome emulating a phone (coarse pointer, three fake cameras) on `http://127.0.0.1:39240/vd/1/`: the list read Front / Back camera before permission; **[en:tran:Back camera]** was refused with the camera toast (the fake cameras have no back side, as on a laptop); **[en:tran:Front camera]** shared `fake_device_0` with its picture shown and the list turned into the three cameras by name; **[en:tran:Share]** on `fake_device_1` swapped it with no unshare in between, and the presenter's Virtual Screens Manager read `Browser 127.0.0.1: fake_device_1`; **[en:tran:Stop]** ended it. A real phone's back lens was not driven.)
 
 Previous: **workflowsVersion: 2026-10-08f** (W-51 step 6 — **[en:tran:Use HTTPS]** in the **[en:tran:Virtual Displays]** tab, off until turned on: a browser's addresses on other devices become `https://` on the same port, so a phone's page is a secure context (kept awake in full screen, its microphone and camera for the intercom). This computer signs its own certificate, so a browser warns once per address. Asked for by the user with a picture of **[en:tran:Where to watch]**: _"add https toggling option"_. Verified live 2026-10-08 on the dev presenter: on, every **[en:tran:This network]** and the **[en:tran:Public IP]** row read `https://` with the QR code still open, **[en:tran:This computer]** and the MP4 stayed `http://`; a headless Chrome on `https://192.168.1.3:39240/vd/1/` drew the display with `isSecureContext`, Wake Lock and `mediaDevices` all present (all absent on the `http://` address); the viewer socket answered `wss` from the https page and refused it from an http one; off again, TLS was refused and `http://` answered.)
 
@@ -4826,6 +4830,23 @@ it is describing.
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
+    **Your own AI server answers too** — LM Studio or Ollama on this computer or on
+    another computer in the church, or any service that speaks the OpenAI API. In
+    **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**, press
+    **[en:tran:Add server]**, give it a **[en:tran:Server name]** and its
+    **[en:tran:Base URL]** — for LM Studio `http://localhost:1234/v1`, or the other
+    computer's name in place of `localhost` — then press **[en:tran:Test]** and
+    **[en:tran:Load models from server]**. The server then shows in the **who answers**
+    list under its own name, with its models in the third list, and a question to it
+    costs nothing when it is on this computer or on the church's own network. On LM
+    Studio, **[en:tran:Test]** also writes under each model whether LM Studio has it
+    loaded right now. Load the model in LM Studio with a **Context Length** of 32k:
+    the assistant's instructions alone fill most of 16k, and a follow-up question
+    runs out of room there. Each model has a **[en:tran:Sees pictures]** box — tick
+    it for a model that can look at a picture. If the server's computer is switched
+    off or goes to sleep in the middle of a question, the answer stops within a
+    minute or two and says to check that the computer is on and awake, instead of
+    waiting on for ten. 📸
     **A key that cannot answer does not leave you with the guide while another of
     yours can.** When the assistant you chose is out of credit, refused, or its
     service is down, the question goes to the next assistant whose key you have set —
@@ -5004,7 +5025,7 @@ it is describing.
     section and restart the app: the chatbot, its tools and the debugging endpoint they
     use are then never started.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, ST-67, ST-68, ST-69, ST-70._
 
 ### W-47 — Put messages on the screen
 
@@ -5455,3 +5476,67 @@ cable or a second copy of the app.
    and everyone watching is disconnected.
 
 _Verify: SP-30, SP-31._
+
+### W-52 — Move your settings to another computer (Export / Import Settings)
+
+**File → Export Data** moves your files — songs, slides, media. This moves how
+the app is SET UP: the language and theme, how a Bible looks on the screen, the
+marquee and the timers, the panel sizes, and the rest of what you have chosen
+over time.
+
+1. Open **[en:tran:Setting]**. At the bottom of the left sidebar, under
+   **[en:tran:Apply Settings]**, are **[en:tran:Export Settings]** and
+   **[en:tran:Import Settings]** — the same on every tab. 📸
+2. Click **[en:tran:Export Settings]**. A panel lists the settings in sections:
+   **[en:tran:General]**, **[en:tran:Bible]**, **[en:tran:Screens]**,
+   **[en:tran:Foreground]**, **[en:tran:Background]**,
+   **[en:tran:Documents & Lyrics]**, **[en:tran:Layout]**,
+   **[en:tran:AI & Assistant]**, **[en:tran:Connections]**,
+   **[en:tran:API Keys & Sign-ins]** and **[en:tran:Other Settings]**. Each says
+   how many settings it holds, or **[en:tran:All default]** when nothing in it
+   was ever changed. Everything starts ticked except the API keys. 📸
+3. The arrow at the left of a section opens it, and each part can be ticked on
+   its own — **[en:tran:General]** holds **[en:tran:Language]**,
+   **[en:tran:Theme]**, **[en:tran:Font]**, **[en:tran:Tips of the Day]**,
+   **[en:tran:Folders]** and **[en:tran:File Color Notes]**. A section with only
+   some parts ticked shows a dash in its box; ticking the section ticks all of
+   them. **[en:tran:Deselect All]** / **[en:tran:Select All]** does every
+   section at once.
+4. Below the list is the same **[en:tran:Password]** /
+   **[en:tran:Confirm Password]** pair as every other export. **API keys and
+   sign-ins only go into a file with a password**: their rows stay red with
+   **[en:tran:Type a password below to include these]** until one is typed, and
+   come back unticked if it is cleared. Typed differently, the two fields say
+   **[en:tran:Passwords do not match]** and the panel comes back holding what was
+   ticked.
+5. Click **Ok**. `Settings.owasetting.tar.gz` is written to the **Downloads**
+   folder (`Settings.owasetting.enc` with a password), and the folder opens on
+   it.
+6. On the other computer, open **[en:tran:Setting]**, click
+   **[en:tran:Import Settings]** and pick the file. A protected file asks for its
+   password first.
+7. A panel lists the sections the file holds, under the warning
+   **[en:tran:Each ticked section replaces the same section on this computer; what the file leaves out goes back to its default]**.
+   **[en:tran:Folders]**, **[en:tran:Screen Mirror & Virtual Displays]** and the
+   API keys start unticked — they reach past how the app looks. 📸
+8. Click **Ok**. A message says how many settings were written and how many went
+   back to their default. The app then offers to reload its windows
+   (**[en:tran:Apply Settings]**), or to restart when a ticked section is read
+   only at start-up (**[en:tran:Screens & Monitors]**,
+   **[en:tran:Screen Mirror & Virtual Displays]**).
+
+> Notes: an import REPLACES each ticked section rather than adding to it — a
+> marquee setting changed here but not in the file goes back to its default, and
+> a section left unticked is not touched at all. Never carried, whatever is
+> ticked: which data folder the app uses, this computer's identity on the
+> network and the devices it trusts, whether AI features are switched on,
+> conversations with the assistant, and what is on the screens right now. A
+> projector window that is open keeps its old look until it is opened again. A
+> SongSelect sign-in copied this way can sign one of the two computers out the
+> next time either refreshes it.
+
+Steps 1–2 and the Khmer labels were observed live 2026-10-09; steps 3–8 press
+inside the app's own dialog, which the MCP firewall leaves to a person, and are
+unit-tested until a person's run ticks them.
+
+_Verify: ST-61..ST-66._

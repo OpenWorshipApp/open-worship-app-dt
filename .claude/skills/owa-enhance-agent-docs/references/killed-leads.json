@@ -1,0 +1,482 @@
+[
+    {
+        "check": "paths",
+        "doc": ".claude/memory/appprovider-mock-node-env.md",
+        "name": "src/lang/langHelpers.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/appprovider-mock-node-env.md",
+        "name": "src/app-modal/floatingWidgetModalLayer.test.tsx",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/archive-password-protection.md",
+        "name": "src/setting/data-archive/DataFolderSelectorComp.tsx",
+        "why": "history: moved to popup-widget/ArchiveItemSelectorComp.tsx (11ea1777); the note says so"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/bible-note-floating-toolbar-width.md",
+        "name": "public/modules",
+        "why": "history: removed from the repo in July 2026; the note says it no longer exists"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/lookup-language-selection.md",
+        "name": "public/data",
+        "why": "history: moved out (e2acb3c0); the note says so"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/modal-layer-above-modal.md",
+        "name": "src/app-modal/floatingWidgetModalLayer.test.tsx",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/pack-release-from-snapshot.md",
+        "name": "resources/app-update.yml",
+        "why": "not a repo path: electron-builder output inside a packaged build"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-rename.md",
+        "name": "src/_screen/preview/preview.runtime.test.tsx",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/vitest-env-leak-flakes.md",
+        "name": "src/toast/toastHelpers.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/vitest-env-leak-flakes.md",
+        "name": "src/app-document-list/documentVariants.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/skills/owa-robot-test/references/knowledge-base.md",
+        "name": "resources/app.asar",
+        "why": "not a repo path: the packaged build's resources/"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/rules/chatbot-window.md",
+        "name": "autoHideHelpers.ts",
+        "why": "history: deleted 8051a4b7 (2026-09-11) on the user's request; the rule records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/rules/project-skills.md",
+        "name": "appProvider.mock.ts",
+        "why": "history: the deleted shared mock; the doc states the no-mock rule"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/appprovider-mock-node-env.md",
+        "name": "appProvider.mock.ts",
+        "why": "history: the deleted shared mock; the doc states the no-mock rule"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/chatbot-cost-measured-on-the-wire.md",
+        "name": "ask.mjs",
+        "why": "not a repo path: a session scratchpad driver, never tracked"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/chatbot-grade-on-the-window-default.md",
+        "name": "ask-corpus.mjs",
+        "why": "not a repo path: a session scratchpad driver, never tracked"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/chatbot-grade-panic-in-both-states.md",
+        "name": "ask-corpus.mjs",
+        "why": "not a repo path: a session scratchpad driver, never tracked"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/chatbot-grade-panic-in-both-states.md",
+        "name": "follow.mjs",
+        "why": "not a repo path: a session scratchpad driver, never tracked"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/chatbot-in-the-middle-of.md",
+        "name": "ask-corpus.mjs",
+        "why": "not a repo path: a session scratchpad driver, never tracked"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/coverage-number-is-loaded-files-only.md",
+        "name": "appProvider.mock.ts",
+        "why": "history: the deleted shared mock; the doc states the no-mock rule"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/help-search-known-question.md",
+        "name": "grade-retrieval.mjs",
+        "why": "not a repo path: a session scratchpad driver, never tracked"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/lyric-subsystem-architecture.md",
+        "name": "stageOpenLyricOptions.css",
+        "why": "not a file: the css field of LyricAppDocumentStage0's stageOpenLyricOptions getter"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/path-handling-lives-in-filehelpers.md",
+        "name": "portablePathHelpers.ts",
+        "why": "history: created then folded into fileHelpers on 2026-09-19, never committed"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-auto-next.md",
+        "name": "presentingFlowAutoNext.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-auto-next.md",
+        "name": "presentingFlowActionTime.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-auto-next.md",
+        "name": "presentingFlowCcPropagation.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-cc-elements.md",
+        "name": "presentingFlowReorder.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-keyboard-event.md",
+        "name": "presentingFlowActionKey.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-media-control.md",
+        "name": "presentingFlowMediaControl.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-media-control.md",
+        "name": "presentingFlowCcPropagation.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-preview-run-player.md",
+        "name": "presentingFlowPreviewFloatingHelpers.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/presenting-flow-rename.md",
+        "name": "presentingFlowRenameMigration.test.ts",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/renderer-has-no-clipboard-module.md",
+        "name": "electron.d.ts",
+        "why": "not a repo path: node_modules/electron/electron.d.ts"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/resources-panel.md",
+        "name": "ResourcesComp.tsx",
+        "why": "a true negative: the note says only ResourcesComp.scss exists"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/screen-focus-spotlight.md",
+        "name": "preview.runtime.test.tsx",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/virtual-displays.md",
+        "name": "screenShowProtocol.ts",
+        "why": "history: a past incident, never committed"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/skills/owa-robot-test/references/knowledge-base.md",
+        "name": "HandleAlertComp.test.tsx",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/skills/owa-upgrade-unit-test/SKILL.md",
+        "name": "appProvider.mock.ts",
+        "why": "history: the deleted shared mock; the doc states the no-mock rule"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/skills/owa-upgrade-unit-test/references/recipes.md",
+        "name": "appProvider.mock.ts",
+        "why": "history: the deleted shared mock; the doc states the no-mock rule"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/memory/onscreen-setting-parse-amplification.md",
+        "name": "preview.runtime.test.tsx",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/appprovider-mock-node-env.md",
+        "name": "documentVariants",
+        "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/bible-xml-cache-key-scoped.md",
+        "name": "invalidateBibleXMLCachedFolder",
+        "why": "history: removed 3a97acc4; the note says it is gone"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/chatbot-opens-the-window.md",
+        "name": "PAGE_SWITCH_HINTS",
+        "why": "history: removed 3996ccd3; the note is about removing it"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/foreground-blend-mode-stacking.md",
+        "name": "fullChildHeaders",
+        "why": "history: removed 5c916765; \"went with the card\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/foreground-blend-mode-stacking.md",
+        "name": "childHeadersOnHidden",
+        "why": "history: removed 5c916765; \"went with the card\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/foreground-effects-one-setting.md",
+        "name": "getDropExtraStyle",
+        "why": "history: removed 5c916765; \"the deleted getDropExtraStyle()\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-in-documents-list.md",
+        "name": "LyricListComp",
+        "why": "history: removed d2bd185a; the doc says it is deleted / the old slot"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-in-documents-list.md",
+        "name": "SelectedLyricContext",
+        "why": "history: removed d2bd185a; \"there is no …\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-in-documents-list.md",
+        "name": "useLyricContextValues",
+        "why": "history: removed b32e9e0c; \"there is no …\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-in-documents-list.md",
+        "name": "checkIsMarkdown",
+        "why": "history: removed d2bd185a; \"not carried over\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-subsystem-architecture.md",
+        "name": "slidePaddingPercentage",
+        "why": "history: the old LyricAppDocument fields (01bf0d14); \"used to be\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-subsystem-architecture.md",
+        "name": "slideBackgroundAlpha",
+        "why": "history: the old LyricAppDocument fields (01bf0d14); \"used to be\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/lyric-subsystem-architecture.md",
+        "name": "extraSlideFontSize",
+        "why": "history: the old LyricAppDocument fields (01bf0d14); \"used to be\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/mcp-model-hidden-tools.md",
+        "name": "CLIENT_ONLY_TOOL_MAP",
+        "why": "history: \"until 2026-09-02\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/monaco-css-test-failure-local-open-lyric.md",
+        "name": "initLyricMock",
+        "why": "history: a \"History:\" paragraph dated 2026-08-07"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/presenting-flow-cc-elements.md",
+        "name": "toPresentingFlowCcOriginKey",
+        "why": "history: \"are GONE; don't reintroduce\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/presenting-flow-keyboard-event.md",
+        "name": "checkIsEnterable",
+        "why": "history: the note says the gate was lost and the function is gone"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/presenting-flow-preview-run-player.md",
+        "name": "checkIsEnterable",
+        "why": "history: the note says the gate was lost and the function is gone"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/presenting-flow-preview-run-player.md",
+        "name": "checkPresentingFlowPreviewHasChildren",
+        "why": "history: the note says the function is gone"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/presenting-flow-rename.md",
+        "name": "displayListeners",
+        "why": "history: lived in a test deleted since"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/presenting-flow-rename.md",
+        "name": "playList",
+        "why": "not code: a letter-case illustration"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/reveal-original-context-menu.md",
+        "name": "isForceWidgetReveal",
+        "why": "history: \"both deleted\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/reveal-original-context-menu.md",
+        "name": "HOVER_NOTIFY_DELAY_MS",
+        "why": "history: \"both deleted\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/screen-focus-spotlight.md",
+        "name": "DrawRangeComp",
+        "why": "history: \"are gone\" (now OverlayRangeComp)"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/screen-focus-spotlight.md",
+        "name": "DrawStepButtonComp",
+        "why": "history: \"are gone\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/screen-focus-spotlight.md",
+        "name": "alphaToHex",
+        "why": "history: \"are gone\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/screen-focus-spotlight.md",
+        "name": "handleKeepCanvasFocus",
+        "why": "history: \"are gone\" (now handleKeepOverlayFocus)"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/tran-missing-key-throws-in-dev.md",
+        "name": "PositionSizeFieldComp",
+        "why": "history: removed 5c916765; a dated, past-tense example"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/SKILL.md",
+        "name": "PositionSizeFieldComp",
+        "why": "history: removed 5c916765; a dated, past-tense example"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/SKILL.md",
+        "name": "presentingFlows",
+        "why": "not code: a mode word the user types"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/SKILL.md",
+        "name": "workflowsVersion",
+        "why": "not code: the version field of user-workflows.md"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/coverage-expansion/README.md",
+        "name": "matrixVersion",
+        "why": "not code: the version field of the coverage matrix"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/references/components-path.md",
+        "name": "LyricListComp",
+        "why": "history: removed d2bd185a; the doc says it is deleted / the old slot"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/references/components-path.md",
+        "name": "BoxEditorControllingModeComp",
+        "why": "history: \"the old … is gone\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/references/knowledge-base.md",
+        "name": "PositionSizeFieldComp",
+        "why": "history: removed 5c916765; a dated, past-tense example"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/references/knowledge-base.md",
+        "name": "useDirSourceWatching",
+        "why": "history: \"(… is gone)\""
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/references/knowledge-base.md",
+        "name": "globalCacheManager1M",
+        "why": "history: a dated measurement before the rename (fe741a52)"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/skills/owa-robot-test/references/test-plan.md",
+        "name": "PositionSizeFieldComp",
+        "why": "history: removed 5c916765; a dated, past-tense example"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/pdf-preload-decodes-all-pages.md",
+        "name": "LazyMountVideoComp",
+        "why": "history: a FIXED note"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/skills/owa-enhance-agent-docs/references/checks.md",
+        "name": "lib.dom.d.ts",
+        "why": "not a repo path: TypeScript's typings under node_modules/"
+    }
+]

@@ -14,6 +14,15 @@
 // (its tab keeps its id), pauses every watcher (`vd:camera-end`), and sharing
 // again starts its encoder for them at once -- the camera on the screens
 // comes back on its own, like a call's video, with nothing re-added.
+//
+// And it follows the camera, not the tab: a screen page watching a camera
+// that is not shared names the camera as the screen does, and a camera
+// shared under exactly that name feeds it instead, its frames tagged with the
+// id the page asked for. A new tab, or a tab Safari threw away, is a new
+// viewer id; the presenter already found the camera again by its name
+// (`resolveCameraDeviceId`) while every browser drawing the display showed an
+// empty box for it (2026-10-09). The name starts with the browser's address,
+// which this computer writes, so no other device can take a camera over.
 
 export const VIEWER_CAMERA_PREFIX = 'vd-camera:';
 // One frame, base64 on the wire; a key frame of 640x360 is far under this.
@@ -59,6 +68,11 @@ export class ViewerCameras {
     private cameras = new Map<string, CameraType>();
     // What shows each viewer's camera, shared now or not.
     private watchers = new Map<string, Set<string>>();
+    // The name a screen gives a watched camera, for finding it again.
+    private expectedLabels = new Map<string, string>();
+    // Which shared camera feeds each watched one now (itself, one shared
+    // under its name, or none), worked out again on every change.
+    private routes = new Map<string, string | null>();
 
     constructor(private readonly host: ViewerCamerasHostType) {}
 
@@ -92,29 +106,36 @@ export class ViewerCameras {
             return;
         }
         const camera = this.cameras.get(viewerId);
-        const watchers = this.watchers.get(viewerId);
         const { data, key, timestamp } = packet;
         if (
             camera === undefined ||
-            watchers === undefined ||
             typeof data !== 'string' ||
             data.length === 0 ||
             data.length > MAX_VIEWER_FRAME_TEXT ||
             typeof timestamp !== 'number' ||
-            !Number.isFinite(timestamp) ||
-            !this.countFrame(camera)
+            !Number.isFinite(timestamp)
         ) {
             return;
         }
-        const frame = {
-            cameraId: toViewerCameraId(viewerId),
-            type: key === true ? 'key' : 'delta',
-            timestamp: Math.max(0, Math.round(timestamp)),
-            data: new Uint8Array(Buffer.from(data, 'base64')),
-            text: data,
-        };
-        for (const watcher of watchers) {
-            this.host.toWatcher(watcher, 'vd:camera-frame', frame);
+        // Every camera this one feeds: itself, and any shown under its name.
+        const fed = [...this.routes].filter(([, source]) => {
+            return source === viewerId;
+        });
+        if (fed.length === 0 || !this.countFrame(camera)) {
+            return;
+        }
+        const bytes = new Uint8Array(Buffer.from(data, 'base64'));
+        for (const [requested] of fed) {
+            const frame = {
+                cameraId: toViewerCameraId(requested),
+                type: key === true ? 'key' : 'delta',
+                timestamp: Math.max(0, Math.round(timestamp)),
+                data: bytes,
+                text: data,
+            };
+            for (const watcher of this.watchers.get(requested) ?? []) {
+                this.host.toWatcher(watcher, 'vd:camera-frame', frame);
+            }
         }
     }
 
@@ -124,6 +145,7 @@ export class ViewerCameras {
                 ? label.trim().slice(0, MAX_LABEL_LENGTH)
                 : 'Camera';
         const full = `Browser ${address}: ${name}`;
+        const before = this.snapshot();
         const camera = this.cameras.get(viewerId);
         if (camera !== undefined) {
             camera.label = full;
@@ -133,59 +155,76 @@ export class ViewerCameras {
                 windowStart: 0,
                 count: 0,
             });
-            // Shown somewhere while it was not shared: back on.
-            if (this.watchers.has(viewerId)) {
-                this.host.toViewer(viewerId, { type: 'camera-start' });
-            }
         }
+        // Shown somewhere while it was not shared: back on.
+        this.reconcile(before);
         this.host.onListChanged();
     }
 
     // Not shared any more, or the viewer gone: what shows it is told, and
     // keeps watching for it to come back.
     drop(viewerId: string) {
-        if (!this.cameras.delete(viewerId)) {
+        if (!this.cameras.has(viewerId)) {
             return;
         }
-        for (const watcher of this.watchers.get(viewerId) ?? []) {
-            this.host.toWatcher(watcher, 'vd:camera-end', {
-                cameraId: toViewerCameraId(viewerId),
-            });
-        }
+        const before = this.snapshot();
+        this.cameras.delete(viewerId);
+        this.reconcile(before);
         this.host.onListChanged();
     }
 
     // A watcher starts or stops showing a viewer's camera. The first one
     // starts the browser's encoder, each new one asks for a key frame, the
-    // last one stops it. One not shared now pauses the watcher at once.
-    watch(watcher: string, cameraId: string, isWatching: boolean) {
+    // last one stops it. One with nothing feeding it pauses at once. A
+    // screen page gives the camera's name (`label`): with it, a camera
+    // shared under that name feeds the watcher while its own is not shared.
+    watch(
+        watcher: string,
+        cameraId: string,
+        isWatching: boolean,
+        label?: string,
+    ) {
         if (!cameraId.startsWith(VIEWER_CAMERA_PREFIX)) {
             return false;
         }
         const viewerId = cameraId.slice(VIEWER_CAMERA_PREFIX.length);
-        const isShared = this.cameras.has(viewerId);
+        const before = this.snapshot();
         if (!isWatching) {
-            this.unwatch(watcher, viewerId);
-            return isShared;
+            this.unwatch(watcher, viewerId, before);
+            return this.routes.get(viewerId) != null;
         }
         let watchers = this.watchers.get(viewerId);
         if (watchers === undefined) {
-            if (!isShared && this.countUnshared() >= MAX_WATCHED_UNSHARED) {
+            if (
+                this.sourceOf(viewerId, label) === null &&
+                this.countUnshared() >= MAX_WATCHED_UNSHARED
+            ) {
                 this.host.toWatcher(watcher, 'vd:camera-end', { cameraId });
                 return false;
             }
             watchers = new Set();
             this.watchers.set(viewerId, watchers);
         }
-        const isFirst = watchers.size === 0;
+        if (label) {
+            this.expectedLabels.set(viewerId, label);
+        }
+        const isNew = !watchers.has(watcher);
         watchers.add(watcher);
-        if (!isShared) {
+        this.reconcile(before);
+        const source = this.routes.get(viewerId) ?? null;
+        if (source === null) {
             this.host.toWatcher(watcher, 'vd:camera-end', { cameraId });
             return false;
         }
-        this.host.toViewer(viewerId, {
-            type: isFirst ? 'camera-start' : 'camera-keyframe',
-        });
+        // Its encoder ran already for this camera: a key frame for the
+        // newcomer (a new route got one above).
+        if (
+            isNew &&
+            before.routes.get(viewerId) === source &&
+            (before.counts.get(source) ?? 0) > 0
+        ) {
+            this.host.toViewer(source, { type: 'camera-keyframe' });
+        }
         return true;
     }
 
@@ -193,28 +232,108 @@ export class ViewerCameras {
     // nothing any more.
     forgetWatcher(watcher: string) {
         for (const viewerId of [...this.watchers.keys()]) {
-            this.unwatch(watcher, viewerId);
+            this.unwatch(watcher, viewerId, this.snapshot());
         }
     }
 
-    private unwatch(watcher: string, viewerId: string) {
+    private unwatch(
+        watcher: string,
+        viewerId: string,
+        before: ReturnType<ViewerCameras['snapshot']>,
+    ) {
         const watchers = this.watchers.get(viewerId);
         if (watchers === undefined || !watchers.delete(watcher)) {
             return;
         }
-        if (watchers.size > 0) {
-            return;
+        if (watchers.size === 0) {
+            this.watchers.delete(viewerId);
+            this.expectedLabels.delete(viewerId);
         }
-        this.watchers.delete(viewerId);
+        this.reconcile(before);
+    }
+
+    // What feeds a watched camera: itself while shared, else a camera
+    // shared under the name the screen gives it, else nothing.
+    private sourceOf(viewerId: string, label?: string) {
         if (this.cameras.has(viewerId)) {
-            this.host.toViewer(viewerId, { type: 'camera-stop' });
+            return viewerId;
+        }
+        const expected = label || this.expectedLabels.get(viewerId);
+        if (!expected) {
+            return null;
+        }
+        for (const [sourceId, camera] of this.cameras) {
+            if (camera.label === expected) {
+                return sourceId;
+            }
+        }
+        return null;
+    }
+
+    private snapshot() {
+        const counts = new Map<string, number>();
+        for (const [viewerId, source] of this.routes) {
+            if (source !== null) {
+                counts.set(
+                    source,
+                    (counts.get(source) ?? 0) +
+                        (this.watchers.get(viewerId)?.size ?? 0),
+                );
+            }
+        }
+        return { routes: new Map(this.routes), counts };
+    }
+
+    // The routes worked out again, and what changed told: an encoder that
+    // now has something to show starts (with a key frame), one with nothing
+    // left stops, a watcher fed by a camera already running gets a key
+    // frame, and one left with nothing pauses.
+    private reconcile(before: ReturnType<ViewerCameras['snapshot']>) {
+        this.routes = new Map(
+            [...this.watchers.keys()].map((viewerId) => {
+                return [viewerId, this.sourceOf(viewerId)];
+            }),
+        );
+        const after = this.snapshot();
+        const keyWanted = new Set<string>();
+        for (const [viewerId, source] of this.routes) {
+            const previous = before.routes.get(viewerId) ?? null;
+            if (source === previous) {
+                continue;
+            }
+            if (source === null) {
+                for (const watcher of this.watchers.get(viewerId) ?? []) {
+                    this.host.toWatcher(watcher, 'vd:camera-end', {
+                        cameraId: toViewerCameraId(viewerId),
+                    });
+                }
+            } else if ((before.counts.get(source) ?? 0) > 0) {
+                keyWanted.add(source);
+            }
+        }
+        const sources = new Set([
+            ...before.counts.keys(),
+            ...after.counts.keys(),
+        ]);
+        for (const source of sources) {
+            const was = before.counts.get(source) ?? 0;
+            const now = after.counts.get(source) ?? 0;
+            if (was === 0 && now > 0) {
+                this.host.toViewer(source, { type: 'camera-start' });
+                keyWanted.delete(source);
+            } else if (was > 0 && now === 0 && this.cameras.has(source)) {
+                this.host.toViewer(source, { type: 'camera-stop' });
+            }
+        }
+        for (const source of keyWanted) {
+            this.host.toViewer(source, { type: 'camera-keyframe' });
         }
     }
 
     private countUnshared() {
         let count = 0;
-        for (const viewerId of this.watchers.keys()) {
-            if (!this.cameras.has(viewerId)) {
+        for (const source of this.routes.values()) {
+            if (source === null) {
                 count++;
             }
         }

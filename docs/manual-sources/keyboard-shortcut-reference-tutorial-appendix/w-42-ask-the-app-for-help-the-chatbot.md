@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71]
-screenshots: 41
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, ST-67, ST-68, ST-69, ST-70]
+screenshots: 42
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-08"
+workflowsVersion: "2026-10-09"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -379,6 +379,23 @@ it is describing.
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
+    **Your own AI server answers too** — LM Studio or Ollama on this computer or on
+    another computer in the church, or any service that speaks the OpenAI API. In
+    **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**, press
+    **[en:tran:Add server]**, give it a **[en:tran:Server name]** and its
+    **[en:tran:Base URL]** — for LM Studio `http://localhost:1234/v1`, or the other
+    computer's name in place of `localhost` — then press **[en:tran:Test]** and
+    **[en:tran:Load models from server]**. The server then shows in the **who answers**
+    list under its own name, with its models in the third list, and a question to it
+    costs nothing when it is on this computer or on the church's own network. On LM
+    Studio, **[en:tran:Test]** also writes under each model whether LM Studio has it
+    loaded right now. Load the model in LM Studio with a **Context Length** of 32k:
+    the assistant's instructions alone fill most of 16k, and a follow-up question
+    runs out of room there. Each model has a **[en:tran:Sees pictures]** box — tick
+    it for a model that can look at a picture. If the server's computer is switched
+    off or goes to sleep in the middle of a question, the answer stops within a
+    minute or two and says to check that the computer is on and awake, instead of
+    waiting on for ten. 📸
     **A key that cannot answer does not leave you with the guide while another of
     yours can.** When the assistant you chose is out of credit, refused, or its
     service is down, the question goes to the next assistant whose key you have set —
@@ -560,7 +577,7 @@ it is describing.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `ST-67` · `ST-68` · `ST-69` · `ST-70`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
 :::

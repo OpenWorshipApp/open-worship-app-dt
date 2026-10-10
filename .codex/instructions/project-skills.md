@@ -56,7 +56,9 @@ frontmatter and usage notes, everything else is copied exactly). `.claude/` is
 the source of truth: edit here first, then copy across in the SAME change.
 Mirrors have drifted before (one fell several revisions and seven memory files
 behind), so a mirror file that disagrees with its `.claude/` twin is stale by
-definition — re-copy it rather than reconciling the two by hand.
+definition — re-copy it with `node extra-work/sync-agent-mirror.mjs` rather
+than reconciling the two by hand (the gate's `agentDocsMirror.test.ts` fails on
+drift since 2026-10-08).
 
 **Screen controlling & presenting testing is mandatory in every run**, whatever
 the focus area — presenting to a screen is the app's core purpose and screen-only
@@ -300,9 +302,10 @@ Three things that run costs if they are not known: full instrumentation is
 `src/_screen/components.smoke.test.tsx` past the committed 10 s `testTimeout`,
 so the script passes `--testTimeout=60000`; **a failing test means vitest
 writes NO coverage report at all**, and the script says so rather than
-printing a stale number; and `lint:pre` is red on a Windows checkout for line
-endings alone (`core.autocrlf` true, no `endOfLine` in `.prettierrc` — ~1 270
-files), so check your own new files and never `npm run format` the tree.
+printing a stale number; and `npm run format` would rewrite ~1 350 CRLF files
+(`core.autocrlf` true, no `endOfLine` in `.prettierrc` — `lint:pre` is green on
+them only because it passes `--end-of-line auto`, since 2026-09-30), so check
+your own new files and never `npm run format` the tree.
 `lint:es` does not lint test files; prettier does.
 
 **The gap has a shape, and it names the cause.** By kind: `module` 70%,

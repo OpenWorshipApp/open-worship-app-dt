@@ -619,15 +619,35 @@ export function checkIsVirtualDisplayDevViewerFile(url: URL, appPath: string) {
     if (!pathname.startsWith(root)) {
         return false;
     }
-    return /^(?:src\/|node_modules\/(?:\.vite\/deps\/|[^./])|tools\/owa-devtools-mcp\/[\w-]+\.mjs$|electron\/(?:screenMirrorProtocol|virtualDisplayProtocol)\.ts$)/.test(
+    return /^(?:src\/|node_modules\/(?:\.vite\/deps\/|[^./])|tools\/owa-devtools-mcp\/[\w-]+\.mjs$|electron\/(?:screenMirrorProtocol|virtualDisplayProtocol|customLlmProtocol)\.ts$)/.test(
         pathname.slice(root.length),
     );
 }
 
 // `/vd/<n>/` the page, `/vd/<n>/video` the MP4, `/vd/<n>/ws` a viewer's
 // socket; nothing else.
+// The display's page, its MP4, its socket, the MP4 as HLS (`video.m3u8`,
+// what an iPhone or iPad can play), and a file of one HLS player's: its
+// playlist, an init segment or a segment, under the token it was given.
 export function parseVirtualDisplayPath(pathname: string) {
-    const match = /^\/vd\/(\d{1,4})(\/|\/video|\/ws)?$/.exec(pathname);
+    const hlsFile =
+        /^\/vd\/(\d{1,4})\/hls\/([a-f0-9]{32})\/(index\.m3u8|init-\d{1,6}\.mp4|seg-\d{1,9}\.m4s)$/.exec(
+            pathname,
+        );
+    if (hlsFile !== null) {
+        const number = Number(hlsFile[1]);
+        return number < 1
+            ? null
+            : ({
+                  number,
+                  kind: 'hls-file',
+                  token: hlsFile[2],
+                  file: hlsFile[3],
+              } as const);
+    }
+    const match = /^\/vd\/(\d{1,4})(\/|\/video|\/video\.m3u8|\/ws)?$/.exec(
+        pathname,
+    );
     if (match === null) {
         return null;
     }
@@ -636,7 +656,13 @@ export function parseVirtualDisplayPath(pathname: string) {
         return null;
     }
     const kind =
-        match[2] === '/video' ? 'video' : match[2] === '/ws' ? 'ws' : 'page';
+        match[2] === '/video'
+            ? 'video'
+            : match[2] === '/video.m3u8'
+              ? 'hls'
+              : match[2] === '/ws'
+                ? 'ws'
+                : 'page';
     return { number, kind } as const;
 }
 

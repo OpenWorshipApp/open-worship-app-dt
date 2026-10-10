@@ -221,10 +221,11 @@ raises that rather than printing a stale number.
 
 ## Two environmental facts about the gate
 
-- **`lint:pre` is red on this Windows checkout for line endings.**
-  `core.autocrlf` is `true` and `.prettierrc` sets no `endOfLine`, so
-  `prettier --check` flags ~1 270 files nobody touched. Do **not** run
-  `npm run format`. Check only your own new files.
+- **Line endings.** `core.autocrlf` is `true` and `.prettierrc` sets no
+  `endOfLine`, so ~1 350 files sit on disk as CRLF. `lint:pre` was red on
+  them until 2026-09-30 (`408ecbc3` added `--end-of-line auto`); `npm run
+  format` has no such flag, so do **not** run it. Check only your own new
+  files.
 - **`lint:es` does not lint test files** —
   `--ignore-pattern "src/**/*.test.ts*"`. New tests are not eslint-gated;
   they ARE prettier-gated.

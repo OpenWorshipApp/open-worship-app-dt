@@ -333,10 +333,12 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   driven run; (b) the cross-window scroll-sync send guard
   (`sendSyncScrollPercentage`) leans on it, so with DevTools open BOTH windows may
   pass the guard — the echo loop that allowed is now structurally suppressed
-  (`syncScrollPercentage` stamps `_remoteAppliedScroll` on the element it scrolls and
-  `registerScrollingSyncEvent` swallows that one position-matched event). A scroll in
+  (`syncScrollPercentage` marks the element through `applyRemoteScrollPercentage` and
+  `registerScrollingSyncEvent` swallows every scroll event for `REMOTE_SCROLL_QUIET_MS`
+  (1 s) after it, unless the operator wheeled or pressed that container since — the
+  one-event stamp it replaced on 2026-10-06 let a second listener echo). A scroll in
   one window reflecting in the other exactly ONCE per gesture is correct; a
-  self-sustaining scroll oscillation between windows is a regression on that stamp.
+  self-sustaining scroll oscillation between windows is a regression on that quiet window.
 - ⚠️ **Bible screen text color is a persisted STYLE, not inheritance** — measure
   `#bible-screen-view td span` / `tr`, never a container (verified 2026-08-30, cost a
   false High). The `screen-bible-style-text` setting (color/text-shadow/font-size) is
@@ -1463,7 +1465,7 @@ purpose.
 - **Download.** `initHttpRequest` is protocol-aware AND **follows up to 5 redirects**, so a
   `github.com/…/raw/…` link resolves to `raw.githubusercontent.com` on its own and a plain
   `http://host:8000/…` works too. The body is streamed to
-  `<appLocalStorage.defaultStorage>/temp-xml/<basename>.xml`, read, then **deleted** — an
+  `<appLocalStorage.defaultStorageDirPath>/temp-xml/<basename>.xml`, read, then **deleted** — an
   import that leaves anything in `temp-xml` failed partway.
 - **`Key is missing`.** Most published XMLs carry no `key`/`abbr`, so `guessingBibleKey`
   loops a `showAppInput` until it has one. The **Guessing keys** buttons are
@@ -1481,7 +1483,7 @@ purpose.
 
 ### 15.2 Where the file lands (do not assume the `-dev` folder)
 
-`bibles-data` is app-managed and hangs off `appLocalStorage.defaultStorage`, **not** off any
+`bibles-data` is app-managed and hangs off `appLocalStorage.defaultStorageDirPath`, **not** off any
 Path-Settings folder. On 2026-08-10 the running dev app wrote to
 `Desktop\open-worship-data\bibles-data` while its Bible-Reader folder was
 `Desktop\open-worship-data-dev\bibles-read` — so §14.15's "dev writes to `…-dev`" holds for
@@ -1508,7 +1510,7 @@ single file.
 
 Pencil → **Info** → right-click inside Monaco. `addMonacoBibleInfoActions` adds:
 
-1. **🌎 Choose Locale** — 229-entry `AppContextMenu` of `<locale> (<Language name>)`.
+1. **🌎 Choose Locale** — 229-entry `showAppContextMenu` menu of `<locale> (<Language name>)`.
 2. **#️⃣ Edit Numbers Map** — "Define numbers map for `<lang>`", with a **Translate** link and
    a **Use ១ ២ ៣** button that fills the locale's own digits.
 3. **📚 Edit Books Map** — a second Monaco holding the 66 names, line-numbered with the model

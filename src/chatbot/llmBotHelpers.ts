@@ -10,8 +10,9 @@
 // which one in the chatbot window -- they answer differently, they fail
 // differently (a rate limit, an expired card, a blocked domain), and having
 // another one a click away is what keeps the help window useful when one of
-// them is down. Kimi speaks OpenAI's protocol, so it shares that loop; only the
-// budget and the thinking setting differ.
+// them is down. Kimi and Amazon Bedrock speak OpenAI's protocol, so they share
+// that loop; only the budget, the thinking setting and the tool-call rules
+// differ.
 
 // With no key -- or when a call fails, which on a church machine mid-service
 // usually means the internet is down -- the caller falls back to the offline
@@ -21,12 +22,35 @@ import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 
 import type { AISecretKeyNameType } from '../helper/ai/aiHelpers';
-import { getAISetting } from '../helper/ai/aiHelpers';
+import { getAISetting, getBedrockRegion } from '../helper/ai/aiHelpers';
 
 import { getAnthropicInstance } from '../helper/ai/anthropicHelpers';
 import { getOpenAIInstance } from '../helper/ai/openAIHelpers';
 import { getKimiInstance } from '../helper/ai/kimiHelpers';
+import { getBedrockInstance } from '../helper/ai/bedrockHelpers';
 import { FREE_SERVICE_MAP, getFreeInstance } from '../helper/ai/freeHelpers';
+import {
+    getCustomServers,
+    getUsableCustomServers,
+    readLmStudioModels,
+} from '../helper/ai/customServerHelpers';
+import {
+    genContextTooSmallText,
+    getCustomServerInstance,
+    toCustomServerFailure,
+} from '../helper/ai/customServerClientHelpers';
+import {
+    CUSTOM_CONTEXT_MIN,
+    CustomServerError,
+    checkIsCustomServerError,
+    checkIsLocalNetworkUrl,
+    checkIsLoopbackUrl,
+    encodeCustomModel,
+    findCustomModel,
+    getUsableCustomModels,
+    toCustomModelLabel,
+    type LmStudioModelInfoType,
+} from '../../electron/customLlmProtocol';
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
@@ -98,6 +122,15 @@ export type LlmModelType = {
     note: string;
     speed: string;
     price: string;
+    // Where the model is served, for a provider that asks in ONE region of
+    // the user's choosing (Bedrock). Unset means it is not this build's to
+    // say -- every other provider, and a model off the account's own list.
+    regions?: readonly string[];
+    // A custom server's model only: the id the SERVER knows it by, shown on
+    // the hover in place of `id` (which is `<serverId>/<rowId>`, two uuids),
+    // and which server it belongs to, so the picker shows one server's.
+    wireId?: string;
+    serverId?: string;
 };
 
 // The provider's own list price, input then output. Spelled out on the hover
@@ -188,6 +221,107 @@ const KIMI_MODEL_LIST: LlmModelType[] = [
         price: toPriceLabel('kimi-k2.6'),
     },
 ];
+// Where each Bedrock model is served on `bedrock-mantle`, among the regions
+// the Settings picker offers -- off each model's own AWS card, 2026-10-09.
+const BEDROCK_US_REGIONS = ['us-east-1', 'us-east-2', 'us-west-2'] as const;
+const BEDROCK_ALL_REGIONS = [...BEDROCK_US_REGIONS, 'eu-central-1'] as const;
+
+/**
+ * Amazon Bedrock, through its OpenAI-shaped `bedrock-mantle` endpoint
+ * (`bedrockHelpers`): every chat model the account's catalogue showed on
+ * 2026-10-09 that can run this window at all. Each one's AWS card says it
+ * takes Chat Completions with tool calls and a picture on the same
+ * `/openai/v1` route, so one client asks them all.
+ *
+ * Ordered by what to RECOMMEND for this window, which is not the same as
+ * "most capable first": on this route an OpenAI model is billed for every
+ * token of every round (Bedrock caches their prompts on the Responses API
+ * only), the tool list and the prompt are ~16 000 tokens a round, and the
+ * spend guard stops at $1 an hour by default. So the everyday pick leads,
+ * the cheap-and-quick one next, and GPT-6 Astra -- the most capable, at about
+ * five times Terra's price, roughly half a dollar for a three-round question
+ * -- sits below the models a volunteer should reach for first. GPT-5.4 is below Terra because AWS's own
+ * card says Terra beats GPT-5.5 for less. Not measured on the question corpus
+ * yet; this is the vendors' positioning and the price list.
+ *
+ * Left out on purpose: Writer's Palmyra Vision 7B. Its whole context is 4 000
+ * tokens, which the tool list alone does not fit in, so every question would
+ * be refused.
+ */
+const BEDROCK_MODEL_LIST: LlmModelType[] = [
+    {
+        id: 'openai.gpt-5.6-terra',
+        label: 'GPT-5.6 Terra',
+        note: 'good answers, the everyday pick',
+        speed: 'quick',
+        price: toPriceLabel('openai.gpt-5.6-terra'),
+        regions: BEDROCK_US_REGIONS,
+    },
+    {
+        id: 'openai.gpt-5.6-luna',
+        label: 'GPT-5.6 Luna',
+        note: 'simple answers at a tenth of the price',
+        speed: 'quickest',
+        price: toPriceLabel('openai.gpt-5.6-luna'),
+        regions: BEDROCK_US_REGIONS,
+    },
+    {
+        id: 'xai.grok-4.3',
+        label: 'Grok 4.3',
+        note: 'good answers, strong with tools',
+        speed: '',
+        price: toPriceLabel('xai.grok-4.3'),
+        regions: BEDROCK_US_REGIONS,
+    },
+    {
+        id: 'xai.grok-4.6',
+        label: 'Grok 4.6',
+        note: 'better answers, us-west-2 only',
+        speed: '',
+        price: toPriceLabel('xai.grok-4.6'),
+        regions: ['us-west-2'],
+    },
+    {
+        id: 'google.gemma-4-31b',
+        label: 'Gemma 4 31B',
+        note: 'open model, lowest cost',
+        speed: '',
+        price: toPriceLabel('google.gemma-4-31b'),
+        regions: BEDROCK_ALL_REGIONS,
+    },
+    {
+        id: 'openai.gpt-6-astra',
+        label: 'GPT-6 Astra',
+        note: 'best answers, about five times the price of Terra',
+        speed: 'slower',
+        price: toPriceLabel('openai.gpt-6-astra'),
+        regions: ['us-east-1', 'us-west-2'],
+    },
+    {
+        id: 'openai.gpt-5.4',
+        label: 'GPT-5.4',
+        note: 'older; Terra answers better for less',
+        speed: '',
+        price: toPriceLabel('openai.gpt-5.4'),
+        regions: BEDROCK_US_REGIONS,
+    },
+    {
+        id: 'google.gemma-4-26b-a4b',
+        label: 'Gemma 4 26B-A4B',
+        note: 'open model, lighter',
+        speed: 'quick',
+        price: toPriceLabel('google.gemma-4-26b-a4b'),
+        regions: BEDROCK_ALL_REGIONS,
+    },
+    {
+        id: 'google.gemma-4-e2b',
+        label: 'Gemma 4 E2B',
+        note: 'tiny, simple answers only',
+        speed: 'quickest',
+        price: toPriceLabel('google.gemma-4-e2b'),
+        regions: BEDROCK_ALL_REGIONS,
+    },
+];
 
 /**
  * The keyless models, all on Kilo Code's free gateway (`freeHelpers`).
@@ -244,7 +378,7 @@ const FREE_MODEL_LIST: LlmModelType[] = [
  * this narrow with room for the units. The name alone goes on the line.
  */
 export function genLlmModelTitle(model: LlmModelType) {
-    const lines = [model.id];
+    const lines = [model.wireId ?? model.id];
     const summary = [model.note, model.speed]
         .filter((part) => {
             return part.length > 0;
@@ -395,16 +529,37 @@ export function toHistoryTurns(turns: ChatTurnType[]): ChatTurnType[] {
     return recent;
 }
 
-export type LlmProviderType = 'anthropic' | 'openai' | 'kimi' | 'free';
+export type LlmProviderType =
+    'anthropic' | 'openai' | 'kimi' | 'bedrock' | 'custom' | 'free';
+
+/**
+ * What a provider IS, said outright rather than inferred: a `paid` one asks
+ * the user's own account with their key; `custom` is a server the user added
+ * in Settings (LM Studio and the like), one provider standing for all of them;
+ * `free` is the keyless public service. "No key field" used to mean free, and
+ * a custom server needs no key either.
+ */
+type LlmProviderKindType = 'paid' | 'custom' | 'free';
 
 type LlmProviderInfoType = {
     label: string;
+    kind: LlmProviderKindType;
+    // Static for every provider but `custom`, whose models are the rows the
+    // user typed in Settings -- read live by `getLlmModelList`.
     models: LlmModelType[];
     // The setting field that has to hold a key before this one can answer.
     // UNSET means this one needs no key at all, which is a different thing
     // from a key that happens to be missing: it is always available, and it is
     // what the window falls back to when nobody has typed one.
     keyField?: AISecretKeyNameType;
+    /**
+     * The list above is all this provider is asked with: no *More models…*.
+     * The keyless one because its catalogue is mostly paid and partly
+     * toolless; Bedrock because the route it asks on has no catalogue to
+     * read (`/openai/v1/models` answers 404, measured 2026-10-09) and the
+     * list already carries the account's whole chat catalogue.
+     */
+    isModelListClosed?: true;
     /**
      * Said above the first answer of a session, when the thing that makes this
      * provider possible is also something the user should know about. Only the
@@ -442,26 +597,51 @@ type LlmProviderInfoType = {
 const LLM_PROVIDER_MAP: Record<LlmProviderType, LlmProviderInfoType> = {
     anthropic: {
         label: 'Claude',
+        kind: 'paid',
         models: ANTHROPIC_MODEL_LIST,
         keyField: 'anthropicAPIKey',
     },
     openai: {
         label: 'ChatGPT',
+        kind: 'paid',
         models: OPENAI_MODEL_LIST,
         keyField: 'openAIAPIKey',
     },
     kimi: {
         label: 'Kimi',
+        kind: 'paid',
         models: KIMI_MODEL_LIST,
         keyField: 'kimiAPIKey',
     },
+    bedrock: {
+        label: 'Bedrock',
+        kind: 'paid',
+        models: BEDROCK_MODEL_LIST,
+        keyField: 'bedrockAPIKey',
+        isModelListClosed: true,
+    },
+    // The servers the user added in Settings, standing as ONE provider: each
+    // still gets its own row in the window's head row (named as the user
+    // named it), and a model id says which server and which row it is
+    // (`<serverId>/<rowId>`). One key rather than one per server keeps every
+    // map here exhaustive, and a server deleted while a tab points at it can
+    // fail an ask but cannot break a lookup. Its list is closed: Settings has
+    // its own "Load models from server".
+    custom: {
+        label: 'Custom servers',
+        kind: 'custom',
+        models: [],
+        isModelListClosed: true,
+    },
     // LAST on purpose, in a list written best-first: it is the weakest of the
-    // four and it is also the only one everybody has. Being last is what makes
+    // six and it is also the only one everybody has. Being last is what makes
     // `getLlmProvider` pick a real key whenever there is one and land here
     // only when there is not.
     free: {
         label: 'Free',
+        kind: 'free',
         models: FREE_MODEL_LIST,
+        isModelListClosed: true,
         warning:
             'Answers are coming from a free public AI service' +
             ` (${FREE_SERVICE_MAP.kilo.label}), which needs no API key. Your ` +
@@ -492,11 +672,17 @@ const MODEL_SETTING_PREFIX = 'chatbot-llm-model-';
 
 /**
  * The providers that can actually answer, in preference order: the ones whose
- * key is set, and then the keyless one, which is always among them.
+ * key is set, the custom servers when at least one is usable, and then the
+ * keyless one, which is always among them.
  */
 export function getAvailableLlmProviders(): LlmProviderType[] {
     const aiSetting = getAISetting();
     return LLM_PROVIDER_LIST.filter((provider) => {
+        if (provider.kind === 'custom') {
+            // A name, an address and a model -- whether it ANSWERS is the
+            // Settings Test button's to find out, and a failed ask says so.
+            return getUsableCustomServers().length > 0;
+        }
         if (provider.keyField === undefined) {
             // Needs no key, so nothing can be missing. It sorts last by the
             // order of the map above, which is what makes it a fallback rather
@@ -526,9 +712,34 @@ export function getAvailableLlmProviders(): LlmProviderType[] {
  * than comparing against the string `'free'` in each of them.
  */
 export function checkIsFreeProvider(provider: LlmProviderType | null) {
-    return (
-        provider !== null && LLM_PROVIDER_MAP[provider].keyField === undefined
-    );
+    return provider !== null && LLM_PROVIDER_MAP[provider].kind === 'free';
+}
+
+/** Whether this is the user's own servers, added in Settings. */
+export function checkIsCustomProvider(provider: LlmProviderType | null) {
+    return provider !== null && LLM_PROVIDER_MAP[provider].kind === 'custom';
+}
+
+/**
+ * What to call the assistant that answers -- the server's own name for a
+ * custom one ("LM Studio could not answer"), the provider's otherwise.
+ */
+export function getLlmProviderLabel(
+    provider: LlmProviderType,
+    model?: string | null,
+) {
+    if (checkIsCustomProvider(provider)) {
+        return (
+            findCustomModel(getCustomServers(), model)?.server.name ||
+            LLM_PROVIDER_MAP[provider].label
+        );
+    }
+    return LLM_PROVIDER_MAP[provider].label;
+}
+
+/** Whether the model picker offers *More models…* for this provider. */
+export function checkHasMoreModels(provider: LlmProviderType | null) {
+    return provider !== null && !LLM_PROVIDER_MAP[provider].isModelListClosed;
 }
 
 /**
@@ -616,17 +827,22 @@ export function checkIsProviderFault(error: any) {
  * sending a paid question's words and attachments to a public service
  * because a card declined would make that trade for them. And a paid key
  * standing in for the free tier would spend money nobody asked to spend.
+ *
+ * The user's own servers are out of it both ways too: a question put to the
+ * model on this computer must not go to a paid account because the model was
+ * not loaded, nor a paid question to a server that may be on the internet.
  */
 export function getStandInLlmProvider(
     failedProvider: LlmProviderType,
 ): LlmProviderType | null {
-    if (checkIsFreeProvider(failedProvider)) {
+    if (LLM_PROVIDER_MAP[failedProvider].kind !== 'paid') {
         return null;
     }
     return (
         getAvailableLlmProviders().find((provider) => {
             return (
-                provider !== failedProvider && !checkIsFreeProvider(provider)
+                provider !== failedProvider &&
+                LLM_PROVIDER_MAP[provider].kind === 'paid'
             );
         }) ?? null
     );
@@ -651,8 +867,40 @@ export type LlmBotAnswerType = BotAnswerType & {
     };
 };
 
+function toCustomServerNote(name: string, baseUrl: string) {
+    if (checkIsLoopbackUrl(baseUrl)) {
+        return `${name}, on this computer`;
+    }
+    return checkIsLocalNetworkUrl(baseUrl) ? `${name}, on your network` : name;
+}
+
+/**
+ * Every model row of every usable custom server, in the order the user put
+ * them. Read fresh: the list is edited in the Settings window.
+ */
+function genCustomModelList(): LlmModelType[] {
+    return getUsableCustomServers().flatMap((server) => {
+        return getUsableCustomModels(server).map((row) => {
+            return {
+                id: encodeCustomModel(server.id, row.id),
+                label: toCustomModelLabel(row),
+                note:
+                    toCustomServerNote(server.name, server.baseUrl) +
+                    (row.canSeeImages === true ? ' · can see pictures' : ''),
+                speed: '',
+                price: '',
+                wireId: row.model,
+                serverId: server.id,
+            };
+        });
+    });
+}
+
 /** The models this build offers for a provider, best first. */
 export function getLlmModelList(provider: LlmProviderType): LlmModelType[] {
+    if (checkIsCustomProvider(provider)) {
+        return genCustomModelList();
+    }
     return (
         LLM_PROVIDER_LIST.find((item) => {
             return item.key === provider;
@@ -698,13 +946,23 @@ export function toUsableLlmModel(
     if (!model) {
         return firstModel;
     }
-    if (
-        checkIsFreeProvider(provider) &&
-        !modelList.some((one) => {
-            return one.id === model;
-        })
-    ) {
+    const isListed = modelList.some((one) => {
+        return one.id === model;
+    });
+    if (checkIsFreeProvider(provider) && !isListed) {
         return firstModel;
+    }
+    // A custom list is closed too: a row deleted in Settings, or a whole
+    // server, leaves a tab naming two ids nothing answers to. The same
+    // server's first model when the server is still there -- the user picked
+    // that server -- and the first one there is otherwise.
+    if (checkIsCustomProvider(provider) && !isListed) {
+        const serverId = model.split('/')[0];
+        return (
+            modelList.find((one) => {
+                return one.serverId === serverId;
+            })?.id ?? firstModel
+        );
     }
     return model;
 }
@@ -1141,6 +1399,40 @@ type OpenAiCompatProviderType = {
     // would be the quietest possible failure -- it rejects every `kimi-*` id,
     // so "More models..." would appear to succeed and show nothing new.
     checkIsChatModel?: (modelId: string) => boolean;
+    /**
+     * The model takes ONE tool call per turn. Gemma 4 on Bedrock says so in as
+     * many words ("requesting more than one tool call in a single turn is not
+     * currently supported"), and the OpenAI protocol's default is to ask for
+     * several. Sent beside `tools` and never without them: OpenAI refuses
+     * `parallel_tool_calls` on a request with no tools, which is what the
+     * last round of every question is.
+     */
+    checkIsOneToolCallPerTurn?: (model: string) => boolean;
+    /**
+     * Why this model cannot be asked with the user's current setup, in one
+     * line for the window, or null. Checked BEFORE a round is paid for: a
+     * Bedrock model asked in a region that does not serve it comes back as a
+     * bare 404 that reads as "not available to the account", when the fix is
+     * one setting away.
+     */
+    findModelProblem?: (model: string) => string | null;
+    /**
+     * The id the SERVER knows the model by, when it differs from the one the
+     * window keeps. A custom server's model is kept as `<serverId>/<rowId>`
+     * (so a renamed row keeps every tab asking it) and asked for as the
+     * row's own model id. Applied at the request only: the usage line, the
+     * price and the logs keep the window's id.
+     */
+    toWireModel?: (model: string) => string;
+    // Every round of this provider costs nothing -- a server on this very
+    // computer or on the church's own network. Without it, a model with no
+    // list price reads "price not known", which is right for a hosted custom
+    // server and wrong here.
+    isPricedAtZero?: boolean;
+    // The progress line for one round when it is not the usual "Thinking
+    // about it" -- a model the server has yet to load spends its first round
+    // loading, and a volunteer watching a minute of "thinking" presses Stop.
+    describeRound?: (round: number) => string | null;
 };
 
 async function listRemoteOpenAiCompatModels(
@@ -1211,6 +1503,12 @@ type McpToolType = { name: string; description?: string; inputSchema?: any };
  * markdown renderer eats the underscores in it for good measure.
  */
 export function describeLlmError(error: any): string {
+    // A custom server's failure comes with its sentence written: the generic
+    // reading of a request with no answer -- "the internet may be down" -- is
+    // wrong about a server on this very computer.
+    if (checkIsCustomServerError(error)) {
+        return error.message;
+    }
     const { kind, status, message } = readLlmIssue(error);
     switch (kind) {
         case 'workspace':
@@ -1634,6 +1932,14 @@ const IMAGE_CAPABLE_MODEL_MAP: Record<LlmProviderType, RegExp> = {
     anthropic: /^claude-/i,
     openai: /^(gpt-5|gpt-4o|gpt-4\.1|chatgpt-4o|o[1-9])/i,
     kimi: /(vision|kimi-latest|^kimi-k[3-9])/i,
+    // Never by name: a custom row sees only when its "Sees pictures" box is
+    // ticked (or LM Studio said so on "Load models from server") -- see
+    // `checkCanSeeImages`. A 400 here reads as the server being down.
+    custom: /(?!)/,
+    // Every model in the Bedrock list takes a picture (each one's model card).
+    // A model off the account's own list is treated as blind until it is
+    // known not to be.
+    bedrock: /^(google\.gemma-4|openai\.gpt-(5\.[4-9]|6)|xai\.grok-4)/i,
     // Exactly one of the free models takes a picture. Named outright rather
     // than by family: this list is short, closed and measured, and a pattern
     // that guessed wrong here would cost a 400 the window reports as the
@@ -1648,6 +1954,12 @@ export function checkCanSeeImages(
     if (provider === null) {
         return false;
     }
+    if (checkIsCustomProvider(provider)) {
+        return (
+            findCustomModel(getCustomServers(), model)?.row.canSeeImages ===
+            true
+        );
+    }
     return IMAGE_CAPABLE_MODEL_MAP[provider].test(model ?? '');
 }
 
@@ -1661,7 +1973,7 @@ export function getFirstImageCapableModel(provider: LlmProviderType | null) {
         return null;
     }
     return (
-        LLM_PROVIDER_MAP[provider].models.find((one) => {
+        getLlmModelList(provider).find((one) => {
             return checkCanSeeImages(provider, one.id);
         }) ?? null
     );
@@ -2020,6 +2332,13 @@ async function askOpenAiCompatible(
     signal?: AbortSignal | null,
     extra?: AskExtraType,
 ): Promise<BotAnswerType> {
+    const modelProblem = provider.findModelProblem?.(model) ?? null;
+    if (modelProblem !== null) {
+        // A 400, because that is what it is -- a request this setup cannot
+        // make -- so `describeLlmError` prints the sentence as it is and no
+        // other key is handed the question.
+        throw Object.assign(new Error(modelProblem), { status: 400 });
+    }
     const client = provider.getInstance(model);
     if (client === null) {
         throw new Error(`${provider.label} is not available`);
@@ -2040,6 +2359,9 @@ async function askOpenAiCompatible(
     // Worked out ONCE, like the system prompt: it is a function of the model,
     // and the model does not change while a question is being answered.
     const requestExtra = provider.genRequestExtra(model);
+    const toolRequest = provider.checkIsOneToolCallPerTurn?.(model)
+        ? { tools: openAITools, parallel_tool_calls: false }
+        : { tools: openAITools };
     const messages: any[] = [
         { role: 'system', content: genSystemPrompt(focus) },
         ...history.map((turn) => {
@@ -2070,14 +2392,16 @@ async function askOpenAiCompatible(
         // See the note on the same line in `askAnthropic`. Closed in the
         // `finally` so a rate-limited round that goes round again does not
         // leave its own step spinning behind the retry's.
-        const finishThinking = reportStep(genThinkingStep(round));
+        const finishThinking = reportStep(
+            provider.describeRound?.(round) ?? genThinkingStep(round),
+        );
         try {
             completion = await client.chat.completions.create(
                 {
-                    model,
+                    model: provider.toWireModel?.(model) ?? model,
                     ...requestExtra,
                     // Nothing left to look up: answer with what you have.
-                    ...(isLastRound ? {} : { tools: openAITools }),
+                    ...(isLastRound ? {} : toolRequest),
                     messages,
                 },
                 // See the note on the same option in `askAnthropic`. No SDK
@@ -2118,8 +2442,15 @@ async function askOpenAiCompatible(
         // See the same line in `askAnthropic`. Only a round that came back
         // reaches here; a rate-limited one threw or went round again above
         // and cost nothing the provider reports.
+        const roundUsage = toOpenAiRoundUsage(
+            provider.key,
+            model,
+            completion.usage,
+        );
         extra?.onUsage?.(
-            toOpenAiRoundUsage(provider.key, model, completion.usage),
+            provider.isPricedAtZero
+                ? { ...roundUsage, isPricedAtZero: true }
+                : roundUsage,
         );
 
         const choice = completion.choices[0]?.message;
@@ -2258,6 +2589,75 @@ const KIMI_PROVIDER: OpenAiCompatProviderType = {
     },
 };
 
+// Bedrock serves three vendors' models behind one route, and each vendor's
+// request rules come with it -- told apart by the vendor prefix on the id, so
+// a model added to the list later gets its family's rules with no new code.
+const BEDROCK_GEMMA_PATTERN = /^google\.gemma-4/;
+const BEDROCK_OPENAI_PATTERN = /^openai\.gpt-/;
+const BEDROCK_XAI_PATTERN = /^xai\.grok-/;
+
+/**
+ * Why a Bedrock model cannot be asked in the region Settings names, or null.
+ * Only for a model this build knows the regions of; one off the account's own
+ * list is left to the service to answer for.
+ */
+export function findBedrockRegionProblem(model: string, region: string) {
+    const known = BEDROCK_MODEL_LIST.find((one) => {
+        return one.id === model;
+    });
+    if (known?.regions === undefined || known.regions.includes(region)) {
+        return null;
+    }
+    const regions = known.regions;
+    const choices =
+        regions.length === 1
+            ? regions[0]
+            : `${regions.slice(0, -1).join(', ')} or ${regions.at(-1)}`;
+    return (
+        `${known.label} is not offered in ${region} — choose ${choices} ` +
+        'under Settings → Others → AWS Region'
+    );
+}
+
+const BEDROCK_PROVIDER: OpenAiCompatProviderType = {
+    key: 'bedrock',
+    label: 'Bedrock',
+    getInstance: getBedrockInstance,
+    // The bigger budget for every family: each of them reasons out of the
+    // same allowance, and it is a cap, not a spend.
+    genRequestExtra: (model) => {
+        if (BEDROCK_OPENAI_PATTERN.test(model)) {
+            // OpenAI's reasoning models refuse `max_tokens`, and a help
+            // lookup is not worth more than a little thinking -- the same
+            // two settings the ChatGPT descriptor sends its GPT-5 models.
+            return {
+                max_completion_tokens: OPENAI_MAX_TOKENS,
+                reasoning_effort: OPENAI_REASONING_EFFORT,
+            };
+        }
+        if (BEDROCK_XAI_PATTERN.test(model)) {
+            // The cap Grok's own card names (its default is 131 072). No
+            // effort setting: Grok reasons at `low` unless told otherwise.
+            return { max_completion_tokens: OPENAI_MAX_TOKENS };
+        }
+        if (model === 'google.gemma-4-e2b') {
+            // AWS's own advice for this one model: it reasons at length
+            // whatever it is told, and only a HIGH effort keeps that
+            // reasoning out of the answer the volunteer reads.
+            return { max_tokens: OPENAI_MAX_TOKENS, reasoning_effort: 'high' };
+        }
+        // `max_tokens` for the rest, for the reason the free descriptor
+        // gives: it is the cap every OpenAI-shaped host accepts.
+        return { max_tokens: OPENAI_MAX_TOKENS };
+    },
+    checkIsOneToolCallPerTurn: (model) => {
+        return BEDROCK_GEMMA_PATTERN.test(model);
+    },
+    findModelProblem: (model) => {
+        return findBedrockRegionProblem(model, getBedrockRegion());
+    },
+};
+
 const FREE_PROVIDER: OpenAiCompatProviderType = {
     key: 'free',
     label: 'Free',
@@ -2272,6 +2672,120 @@ const FREE_PROVIDER: OpenAiCompatProviderType = {
         return { max_tokens: MAX_TOKENS };
     },
     maxToolRounds: FREE_MAX_TOOL_ROUNDS,
+};
+
+function findCustomModelOrThrow(model: string) {
+    const found = findCustomModel(getCustomServers(), model);
+    if (found === null) {
+        throw new CustomServerError(
+            'this model is no longer in Settings — pick another one in the ' +
+                'row above',
+        );
+    }
+    return found;
+}
+
+/**
+ * One of the user's own servers, built per ask: which server, its name for
+ * the messages, and the model the SERVER knows. The plain budget and the free
+ * tier's round cap, for the free tier's reasons -- these are mostly small
+ * open models, and a local one pays for every extra round in minutes.
+ *
+ * `info` is what LM Studio said about the model just before the question,
+ * when the server is LM Studio and answered in time.
+ */
+function genCustomProvider(
+    model: string,
+    info: LmStudioModelInfoType | null = null,
+): OpenAiCompatProviderType {
+    const { server, row } = findCustomModelOrThrow(model);
+    const isLoading = info !== null && !info.isLoaded;
+    return {
+        key: 'custom',
+        label: server.name,
+        getInstance: () => {
+            return getCustomServerInstance(server.id);
+        },
+        genRequestExtra: () => {
+            return { max_tokens: MAX_TOKENS };
+        },
+        maxToolRounds: FREE_MAX_TOOL_ROUNDS,
+        toWireModel: () => {
+            return row.model;
+        },
+        isPricedAtZero: checkIsLocalNetworkUrl(server.baseUrl),
+        describeRound: (round) => {
+            return isLoading && round === 0
+                ? `Waiting for ${server.name} to load ` +
+                      `${toCustomModelLabel(row)} — the first answer takes longer`
+                : null;
+        },
+    };
+}
+
+// Long enough for a server on the same network to answer its own model list
+// -- a bare machine name ("super-computer") is looked up by Windows' own name
+// resolution, which took longer than 1.5 s cold on the first live try -- and
+// short enough that a machine which is switched off costs the question
+// little next to the 20 s its connection takes to fail anyway.
+const CUSTOM_INFO_WAIT_MILLISECONDS = 5000;
+
+/**
+ * What LM Studio says about the model about to be asked, or null when that is
+ * not known. Asked in front of every question rather than remembered: a model
+ * is loaded and unloaded in LM Studio whenever somebody uses it.
+ */
+async function readCustomModelInfo(model: string) {
+    const { server, row } = findCustomModelOrThrow(model);
+    const infoMap = await readLmStudioModels(
+        server,
+        CUSTOM_INFO_WAIT_MILLISECONDS,
+    );
+    return infoMap?.get(row.model) ?? null;
+}
+
+const askCustomServer: LlmProviderRuntimeType['ask'] = async (
+    question,
+    focus,
+    tools,
+    watch,
+    model,
+    history,
+    signal,
+    extra,
+) => {
+    const info = await readCustomModelInfo(model);
+    throwIfCancelled(signal);
+    const loadedContext = info?.loadedContext ?? null;
+    // Refused before a round is posted: a model loaded with a context that
+    // cannot hold the instructions spends a minute reading them and then
+    // fails, and the fix is one setting in LM Studio.
+    if (loadedContext !== null && loadedContext < CUSTOM_CONTEXT_MIN) {
+        throw new CustomServerError(genContextTooSmallText(loadedContext));
+    }
+    const provider = genCustomProvider(model, info);
+    try {
+        return await askOpenAiCompatible(
+            provider,
+            question,
+            focus,
+            tools,
+            watch,
+            model,
+            history,
+            signal,
+            extra,
+        );
+    } catch (error: any) {
+        // A stop stays a stop -- read off the SIGNAL, because the SDK's own
+        // abort error does not carry its class name as `name` -- and anything
+        // the relay or the server said about itself comes out as its own
+        // sentence (`describeLlmError`).
+        if (checkIsCancelError(error, signal)) {
+            throw error;
+        }
+        throw toCustomServerFailure(error, loadedContext) ?? error;
+    }
 };
 
 type LlmProviderRuntimeType = {
@@ -2326,6 +2840,27 @@ const LLM_PROVIDER_RUNTIME_MAP: Record<
                 KIMI_PROVIDER,
                 getLlmModel('kimi'),
             );
+        },
+    },
+    bedrock: {
+        ask: (...args) => {
+            return askOpenAiCompatible(BEDROCK_PROVIDER, ...args);
+        },
+        // Nothing to add: the route the questions go to has no catalogue
+        // (`/openai/v1/models` answers 404), and `/v1/models` names models
+        // this route refuses. See `isModelListClosed`.
+        listRemoteModels: () => {
+            return Promise.resolve([]);
+        },
+    },
+    custom: {
+        ask: (...args) => {
+            return askCustomServer(...args);
+        },
+        // The list is the user's own rows; Settings' "Load models from
+        // server" is where a server's catalogue is read.
+        listRemoteModels: () => {
+            return Promise.resolve([]);
         },
     },
     free: {

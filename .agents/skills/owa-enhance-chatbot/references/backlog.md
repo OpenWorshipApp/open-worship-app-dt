@@ -5471,3 +5471,98 @@ rename a key (renaming would orphan saved passages that name it).
 flow edits an installed Bible). Ask the corpus questions _How do I remove a
 Bible translation I installed?_ and _change the book names of KSV_ on a paid
 provider and grade: does it list first, confirm before delete, and say undo?
+
+## EC-198 · A local model server: what it needs, and what it does when it goes away — `done` 2026-10-09
+
+Asked by the user with a picture of _Create a lyric file from …_ waiting on
+_Thinking it over (2)…_ against their LM Studio on another computer
+(`http://super-computer:1237/v1`, qwen3.5-9b, loaded at 16k): _test everything
+important (all pages) then find anything we can update the app to make it work
+smoothly with the local llm_. Measured through the real window with a logpoint
+on `relayFetch` (the chatbot window has no `require`): the fixed request is
+~13 400 tokens (system prompt ~19.6k chars, 25 tool schemas ~31.9k chars); a
+Presenter and a Reader how-do-I each answered right in 3 rounds, 21.6 s and
+29.6 s, reaching 14 958 and 15 285 of the 16 384 loaded. Then the machine went
+away mid-question: the window waited 516 s and said _check that its server is
+running_. Shipped: the relay watches the server on a second connection (`lost`
+after two failed connections, 81 s live); a LAN address is told to check the
+COMPUTER; a LAN server is priced free (`checkIsLocalNetworkUrl`); LM Studio's
+own `/api/v0/models` is read by Settings' Test / Load (loaded, context, vision)
+and by the chatbot before each ask (under 16k refused, not-loaded says
+_Waiting for … to load_ on round 1); a row's **Sees pictures** box is the only
+way a custom model gets a picture; every context sentence asks for 32k. Axis:
+easier. Not proven live: the loaded-context lines, the round-1 loading line
+and a picture to a ticked model — the server went down three times under load,
+the last time 40 s after its model was loaded by hand.
+
+## EC-199 · The guide answers a question about the BIBLE with a page about the app — `open`, high
+
+Found in the user's own tabs the same evening, both with the local server
+down: _what bible verse talk about lover your enemy?_ was answered with **Keep
+your own files beside the verse (Resources)** and _what are names of 7 churches
+mentioned in the book of revelation in holy bible_ with **Add a Bible
+translation from the internet (XML)**, each under _Here is what the app's own
+guide says_ with **Show me step by step**. `owa_help_search` scores them 27 and
+45 — `MIN_HELP_HIT_SCORE` is 6 — because any Bible question shares its nouns
+with the manual; a floor cannot separate them. What is missing is a reading of
+the QUESTION: neither asks how to do anything in the app. A fallback that
+says _that is a question for the assistant, which is not answering — the guide
+only knows how to use this app_ and keeps **Ask again** would be honest; the
+closest page could stay as one option under it. A local server fails more
+often than a hosted one (asleep, switched off, model unloading), so its users
+meet this most. Needs the standing corpus re-graded before and after: the
+same change must not turn a how-do-I that passes today into a refusal.
+
+## EC-200 · A general-knowledge question costs a local model five rounds — `idea`
+
+The user's _7 churches_ question, answered right by qwen3.5-9b: 5 rounds,
+75 075 input tokens (each round re-reads the ~13 400-token prefix). The prompt
+sends every question through `owa_help_search` first, which is right for a
+how-do-I and waste for a question about the Bible's content. Measure which
+tools it called (the logpoint driver in this run's scratchpad shows them) and
+whether one sentence — _a question about what the Bible SAYS is answered from
+what you know, then offered as a passage_ — takes it to 1–2 rounds without
+costing a how-do-I its lookup.
+
+## EC-201 · A thinking model on a custom server: no way to turn it down — `idea`
+
+Measured raw on LM Studio: qwen3.5-9b spent 693 of 759 output tokens thinking
+on one plain answer (24 s); `reasoning_effort: "none"` answered in 1.4 s;
+`"low"` and `reasoning: {effort}` changed nothing. Inside the tool loop it
+thought only 30–120 tokens a round, so for this model the loop is not where
+the time goes — but the custom budget is `MAX_TOKENS` 2 000, thinking
+included, and a model that thinks at length (the same server lists one whose
+default is `xhigh`) will spend all of it and return no words, which the loop
+reports as no answer. Options to measure on a server that stays up: a
+per-server _thinking: model decides / off_ setting, or one retry with
+`reasoning_effort: "none"` when a round ends `length` with reasoning and no
+text. Not every OpenAI-shaped server takes `"none"`.
+
+## EC-202 · No streaming from a custom server — `idea`
+
+A round on a slow machine is minutes of one unchanging line. The relay could
+ask for `stream: true`, put the pieces back together into the completion the
+SDK expects, and report _writing the answer (120 words)_ through the
+progress channel `electronSendAsync` already has. It would also make "still
+alive" a fact rather than an inference from a second connection.
+
+## EC-203 · The 🤖 said _working on an answer_ with no help window open — `open`, low
+
+Seen once, 2026-10-09: the presenter's button read _App Assistant — working on
+an answer_ after the dev app had relaunched and the presenter had hot-reloaded,
+with no chatbot window in the instance and main answering `isBusy: false`
+(asking main again from the page put the button right). Not reproduced, and no
+path in `chatbotBusyHelpers` / `electronEventListener` explains it; a
+relaunch with a question in flight plus a renderer reload is the suspect.
+
+## EC-204 · A song page's credit lines are drafted into the last verse — `open`, low
+
+The page the user's picture asked about, `khmerworship.com/chords/47216`:
+`owa_lyric_validate` with `url` (no model) ends Verse 3 with two indented
+lines, _J. Mohr, 1818_ and _Guitar chords_, reporting them as _2 lines in a
+second language under the line they translate, kept as translations_ and
+naming _Guitar chords_ as the song's last words. They are the page's credit
+and a link label. The translation rule should not take a Latin-script line
+with a year or a known label for a translation of a Khmer line, and the
+author could go to the Config instead. The trailing empty slide named after
+the address is the attachment, as designed.

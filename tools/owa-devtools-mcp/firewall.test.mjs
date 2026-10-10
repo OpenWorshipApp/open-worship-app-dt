@@ -395,6 +395,10 @@ describe('redactSecrets', () => {
             'sk-ant-api03-Ab3dEf6hIj9kLmN0pQrStUvW_x-Yz12',
             'sk-or-v1-0123456789abcdef0123456789abcdef',
             'sk-Ab3dEf6hIj9kLmN0pQrStUvWxYz1234',
+            // Amazon Bedrock, long-term (base64, `+` `/` `=` included) and
+            // short-term (a presigned URL with `&Version=1` on the end).
+            'ABSKQmVkcm9ja0FQSUtleS1leGFtcGxlLWF0LTEyMzQ1Njc4OTA6ZXhh+/bXBsZQ==',
+            'bedrock-api-key-YmVkcm9jay5hbWF6b25hd3MuY29tLz9BY3Rpb249%3D&Version=1',
         ];
         for (const key of keyList) {
             expect(redactSecrets(`the key is ${key}.`)).toBe(

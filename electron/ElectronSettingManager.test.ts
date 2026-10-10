@@ -432,12 +432,28 @@ describe('ElectronSettingManager', () => {
         expect(writeFileSync).not.toHaveBeenCalled();
     });
 
-    test('reuses the process-wide manager', () => {
+    test('reuses the process-wide manager, and flushes it on quit', () => {
         readFileSync.mockReturnValue('{}');
 
-        expect(ElectronSettingManager.getInstance()).toBe(
-            ElectronSettingManager.getInstance(),
+        const manager = ElectronSettingManager.getInstance();
+        expect(ElectronSettingManager.getInstance()).toBe(manager);
+
+        // Registered once, by the one manager: a write still waiting out the
+        // save debounce must reach the disk when the app quits (a Restart
+        // pressed right after Import Settings).
+        const quitHandlers = electronMockState.app.on.mock.calls.filter(
+            ([eventName]: [string]) => {
+                return eventName === 'will-quit';
+            },
         );
+        expect(quitHandlers).toHaveLength(1);
+        manager.settingObject.clientSetting['ai-setting'] = '{}';
+        writeFileSync.mockClear();
+        quitHandlers[0][1]();
+        expect(writeFileSync).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(writeFileSync.mock.calls[0][1])).toMatchObject({
+            clientSetting: { 'ai-setting': '{}' },
+        });
     });
 
     test('strips legacy cleartext credentials on load, exactly once', () => {

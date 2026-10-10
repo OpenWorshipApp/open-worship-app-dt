@@ -1516,6 +1516,56 @@ const dictionary = {
     'Unable to read this bible file': 'មិនអាចអានឯកសារព្រះគម្ពីរនេះបានទេ',
     'Duplicate bible key in this archive':
         'លេខកូដព្រះគម្ពីរស្ទួនក្នុងឯកសារបណ្ណសារនេះ',
+    // Export Settings / Import Settings (the Settings window's sidebar), and
+    // the sections of its tree (`settingArchiveCatalog.ts`).
+    'Export Settings': 'នាំចេញការកំណត់',
+    'Import Settings': 'នាំចូលការកំណត់',
+    'Export settings to a file': 'នាំចេញការកំណត់ទៅជាឯកសារ',
+    'Import settings from a file': 'នាំចូលការកំណត់ពីឯកសារ',
+    'Choose the settings to export': 'ជ្រើសរើសការកំណត់ដែលត្រូវនាំចេញ',
+    'Choose the settings to import': 'ជ្រើសរើសការកំណត់ដែលត្រូវនាំចូល',
+    'Each ticked section replaces the same section on this computer; what the file leaves out goes back to its default':
+        'ផ្នែកនីមួយៗដែលបានធីក នឹងជំនួសផ្នែកដដែលនៅលើកុំព្យូទ័រនេះ។ ' +
+        'អ្វីដែលឯកសារមិនមាន នឹងត្រឡប់ទៅលំនាំដើមវិញ',
+    'Type a password below to include these':
+        'វាយពាក្យសម្ងាត់ខាងក្រោម ដើម្បីដាក់បញ្ចូលទាំងនេះ',
+    'This computer cannot keep them safely':
+        'កុំព្យូទ័រនេះមិនអាចរក្សាទុកវាដោយសុវត្ថិភាពបានទេ',
+    'Lets other devices connect to this computer':
+        'អនុញ្ញាតឲ្យឧបករណ៍ផ្សេងភ្ជាប់មកកុំព្យូទ័រនេះ',
+    'All default': 'លំនាំដើមទាំងអស់',
+    'Save or discard unsaved Bible changes before importing settings.':
+        'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
+        'មុនពេលនាំចូលការកំណត់។',
+    Folders: 'ថតឯកសារ',
+    'File Color Notes': 'ចំណាំពណ៌ឯកសារ',
+    'Reading View': 'ទិដ្ឋភាពអាន',
+    'Open Passages': 'បទគម្ពីរដែលកំពុងបើក',
+    'Bible on Screen': 'ព្រះគម្ពីរលើអេក្រង់',
+    'Screens & Monitors': 'អេក្រង់បង្ហាញ និងម៉ូនីទ័រ',
+    Transitions: 'ការផ្លាស់ប្តូរ',
+    'Drawing & Spotlight': 'ការគូរ និងពន្លឺបញ្ចាំង',
+    'PDF & Pages on Screen': 'PDF និងទំព័រលើអេក្រង់',
+    Marquee: 'អក្សររត់',
+    'Messages & Quick Text': 'សារ និងអត្ថបទរហ័ស',
+    'Timers & Clocks': 'ការរាប់ម៉ោង និងនាឡិកា',
+    'Image, Video & Web Shows': 'ការបង្ហាញរូបភាព វីដេអូ និងវេបសាយ',
+    'Foreground Panel': 'ផ្ទាំងផ្ទៃខាងមុខ',
+    'Background Panel': 'ផ្ទាំងផ្ទៃខាងក្រោយ',
+    'Documents & Lyrics': 'ឯកសារ និងអក្សរភ្លេង',
+    Editors: 'កម្មវិធីកែសម្រួល',
+    Layout: 'ប្លង់',
+    'Panel Sizes': 'ទំហំផ្ទាំង',
+    'Panel Sizes per Document': 'ទំហំផ្ទាំងតាមឯកសារនីមួយៗ',
+    'Windows & Pages': 'បង្អួច និងទំព័រ',
+    'AI & Assistant': 'AI និងជំនួយការ',
+    Connections: 'ការតភ្ជាប់',
+    'Screen Mirror & Virtual Displays': 'ការឆ្លុះអេក្រង់ និងម៉ូនីទ័រនិម្មិត',
+    'API Keys & Sign-ins': 'សោ API និងការចូលគណនី',
+    'AI Keys': 'សោ AI',
+    SongSelect: 'SongSelect',
+    'Connection Codes': 'លេខកូដតភ្ជាប់',
+    'Other Settings': 'ការកំណត់ផ្សេងទៀត',
     // The two bodies every export/import toast is built from. The path or the
     // name goes on AFTER the translation, never into the key.
     'Exported to': 'បាននាំចេញទៅ',
@@ -2114,6 +2164,65 @@ const dictionary = {
         'បញ្ចូល key ពីមួយក្នុងចំណោមនេះ។ ជួរនីមួយៗ បង្ហាញនូវការប្រើប្រាស់ key របស់វា។',
     'Fail to get Kimi instance': 'មិនអាចយក Kimi instance បាន',
     'Missing Kimi API Key.': 'ខ្វះ Kimi API Key។',
+    // --- Amazon Bedrock joins the chatbot (2026-10-09), Gemma 4 31B first.
+    'Amazon Bedrock': 'Amazon Bedrock',
+    'Amazon Bedrock API Key': 'Amazon Bedrock API Key',
+    'Create Amazon Bedrock api key': 'បង្កើត Amazon Bedrock api key',
+    'Fail to get Amazon Bedrock instance':
+        'មិនអាចយក Amazon Bedrock instance បាន',
+    'Missing Amazon Bedrock API Key.': 'ខ្វះ Amazon Bedrock API Key។',
+    'AWS Region': 'តំបន់ AWS',
+    'The region your Bedrock models are enabled in':
+        'តំបន់ដែលម៉ូដែល Bedrock របស់អ្នកត្រូវបានបើក',
+    // --- The user's own model servers (LM Studio, Ollama, ...) (2026-10-09).
+    'Custom servers': 'ម៉ាស៊ីនមេផ្ទាល់ខ្លួន',
+    'Your own AI server, such as LM Studio or Ollama on this computer, or any service that speaks the OpenAI API. Each server shows in the chatbot as its own assistant.':
+        'ម៉ាស៊ីនមេ AI ផ្ទាល់ខ្លួនរបស់អ្នក ដូចជា LM Studio ឬ Ollama នៅលើកុំព្យូទ័រនេះ ឬសេវាណាមួយដែលប្រើ OpenAI API។ ម៉ាស៊ីនមេនីមួយៗបង្ហាញក្នុង chatbot ជាជំនួយការមួយដាច់ដោយឡែក។',
+    'Add server': 'បន្ថែមម៉ាស៊ីនមេ',
+    'New server': 'ម៉ាស៊ីនមេថ្មី',
+    'Delete this server': 'លុបម៉ាស៊ីនមេនេះ',
+    'Server name': 'ឈ្មោះម៉ាស៊ីនមេ',
+    'The name the chatbot shows for this server, such as LM Studio':
+        'ឈ្មោះដែល chatbot បង្ហាញសម្រាប់ម៉ាស៊ីនមេនេះ ដូចជា LM Studio',
+    'Base URL': 'URL មូលដ្ឋាន',
+    'The address that ends in /v1, such as http://localhost:1234/v1 for LM Studio':
+        'អាសយដ្ឋានដែលបញ្ចប់ដោយ /v1 ដូចជា http://localhost:1234/v1 សម្រាប់ LM Studio',
+    'API key (optional)': 'API key (ស្រេចចិត្ត)',
+    'Only if the server asks for one. It is stored encrypted and never shown to the chatbot window.':
+        'តែក្នុងករណីម៉ាស៊ីនមេសុំវាប៉ុណ្ណោះ។ វាត្រូវបានរក្សាទុកដោយអ៊ិនគ្រីប ហើយមិនដែលបង្ហាញទៅផ្ទាំង chatbot ទេ។',
+    Test: 'សាកល្បង',
+    'Load models from server': 'ផ្ទុកម៉ូដែលពីម៉ាស៊ីនមេ',
+    'Asking the server…': 'កំពុងសួរម៉ាស៊ីនមេ…',
+    'The server answered. Chat models it has:':
+        'ម៉ាស៊ីនមេបានឆ្លើយ។ ម៉ូដែលជជែកដែលវាមាន៖',
+    'The server did not answer:': 'ម៉ាស៊ីនមេមិនបានឆ្លើយ៖',
+    'Models loaded from the server:': 'ម៉ូដែលដែលបានផ្ទុកពីម៉ាស៊ីនមេ៖',
+    'This is not a web address yet. It should look like http://localhost:1234/v1':
+        'នេះមិនទាន់ជាអាសយដ្ឋានវេបទេ។ វាគួរតែមានរាងដូច http://localhost:1234/v1',
+    'Offered in the chatbot': 'មានក្នុង chatbot',
+    'Give it a name, an address and at least one model to offer it in the chatbot.':
+        'ដាក់ឈ្មោះ អាសយដ្ឋាន និងម៉ូដែលយ៉ាងតិចមួយ ដើម្បីឱ្យវាមានក្នុង chatbot។',
+    Models: 'ម៉ូដែល',
+    'Add model': 'បន្ថែមម៉ូដែល',
+    'Model id': 'លេខសម្គាល់ម៉ូដែល',
+    'Model id, as the server names it':
+        'លេខសម្គាល់ម៉ូដែល ដូចដែលម៉ាស៊ីនមេដាក់ឈ្មោះ',
+    'Model name': 'ឈ្មោះម៉ូដែល',
+    'Name shown in the chatbot (optional)':
+        'ឈ្មោះដែលបង្ហាញក្នុង chatbot (ស្រេចចិត្ត)',
+    'Remove this model': 'ដកម៉ូដែលនេះចេញ',
+    'Sees pictures': 'មើលរូបភាពបាន',
+    'Tick only if this model can look at a picture. Load models from server ticks it for you on LM Studio.':
+        'គូសធីកតែពេលម៉ូដែលនេះអាចមើលរូបភាពបាន។ នៅលើ LM Studio ប៊ូតុង «ផ្ទុកម៉ូដែលពីម៉ាស៊ីនមេ» គូសវាឱ្យអ្នកដោយស្វ័យប្រវត្តិ។',
+    'Not loaded in LM Studio right now. The first question waits for it to load.':
+        'មិនទាន់បានផ្ទុកក្នុង LM Studio ទេពេលនេះ។ សំណួរដំបូងនឹងរង់ចាំវាផ្ទុក។',
+    'Loaded in LM Studio. Context length:':
+        'បានផ្ទុកក្នុង LM Studio។ ប្រវែងបរិបទ (Context Length)៖',
+    'In LM Studio, load this model again with a Context Length of':
+        'ក្នុង LM Studio សូមផ្ទុកម៉ូដែលនេះម្ដងទៀតដោយ Context Length',
+    'That is too small for the assistant.': 'វាតូចពេកសម្រាប់ជំនួយការ។',
+    'A follow-up question may not fit.': 'សំណួរបន្តអាចនឹងមិនសមល្មម។',
+    'working on an answer': 'កំពុងរៀបចំចម្លើយ',
     // --- The keyless assistant, for a user who has typed no key at all
     // (2026-09-01). It answers over free PUBLIC services, so the panel says so.
     'Fail to get free assistant': 'មិនអាចយកជំនួយការឥតគិតថ្លៃបាន',

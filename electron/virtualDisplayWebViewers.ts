@@ -100,11 +100,13 @@ export type WebViewersHostType = {
     // A viewer gone: nothing of its intercom stays on.
     onViewerGone: (viewerId: string) => void;
     // A browser's screen page shows a viewer's camera (`vd-camera:`), or
-    // stops; null for every camera it watched (the page left).
+    // stops; null for every camera it watched (the page left). `label` is
+    // the name the screen gives that camera.
     onScreenCamera: (
         watcher: string,
         cameraId: string | null,
         isWatching: boolean,
+        label?: string,
     ) => void;
     // A viewer that was let in shares its camera, or sends a frame of it.
     onViewerCamera: (
@@ -801,7 +803,12 @@ export class VirtualDisplayWebViewers {
                     } else {
                         watched.delete(cameraId);
                     }
-                    this.host.onScreenCamera(watcher, cameraId, isWatching);
+                    this.host.onScreenCamera(
+                        watcher,
+                        cameraId,
+                        isWatching,
+                        controller.cameraLabelOf(cameraId),
+                    );
                 }
                 return;
             }

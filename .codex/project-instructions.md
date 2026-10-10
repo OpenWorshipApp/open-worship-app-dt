@@ -58,7 +58,7 @@ debounce so rapid repeats collapse into one trailing execution. Exemplar:
 ## Naming conventions
 
 Every React function component must have a name ending in `Comp`
-(e.g. `FormComp`, `ForegroundCountDownComp`).
+(e.g. `ScreenCloseButtonComp`, `ForegroundCountDownComp`).
 
 Every label a user reads goes through `tran()` (in render, never at module
 scope) with its Khmer string in `src/lang/data/km/index.ts` AND its French
@@ -99,13 +99,15 @@ number: the project's `./.mcp.json` registers `owa-devtools` →
 `node tools/owa-devtools-mcp/bin.mjs`, which discovers the running instance
 itself (same thing per-user, if that file is missing:
 `claude mcp add owa-devtools -- node tools/owa-devtools-mcp/bin.mjs`). Its tools
-arrive as `mcp__owa-devtools__*`: every chrome-devtools tool (`list_pages`,
-`take_snapshot`, `click`, `evaluate_script`, …) PLUS app-level ones —
+arrive as `mcp__owa-devtools__*`: the chrome-devtools tools the firewall does
+not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 `owa_app_state`, `owa_find_ui`, `owa_list_ui`, `owa_click`, `owa_type`,
 `owa_goto_page`, `owa_list_screens`, `owa_hide_screens`, `owa_help_search` /
-`owa_help_page`, `owa_tran`, `owa_guide_start` / `_step` / `_status`,
-`owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
-`owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`.
+`owa_help_page`, `owa_list_questions`, `owa_tran`, `owa_guide_start` / `_step`
+/ `_status`, `owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
+`owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`,
+`owa_present_bible`, `owa_foreground`, `owa_bible_item` / `_note` / `_xml`,
+`owa_undo`.
 Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
 by its visible text, `owa_list_ui` enumerates the visible controls of a window,
 `owa_click` / `owa_type` act on a control by its label, `owa_goto_page`
@@ -343,10 +345,11 @@ isFile: true }), getAsFile: () => file}]}` — since React only forwards the
   when in doubt wait a real macrotask:
   `await new Promise((r) => setTimeout(r, 25))` inside `act(...)`.
 
-## Printing
+## Printing, Screen Mirror
 
 Printing slides to PDF — the hidden window, fonts, one slide per page and why
-scaling must use `zoom` — is in `.claude/rules/printing.md`.
+scaling must use `zoom` — is in `.claude/rules/printing.md`. Screen Mirror,
+virtual displays, intercom and casting are in `.claude/rules/screen-mirror.md`.
 
 ## Codebase patterns
 
@@ -416,10 +419,7 @@ all of them are in `.claude/rules/project-skills.md`.
   proposes `AD-xx` ways agents could help more. Code is the truth for facts,
   a doc for decisions; history stays history.
 
-**The Codex mirror.** `.claude/` is the source of truth; `AGENTS.md` at the repo
-root says how it is copied: `CLAUDE.md` → `.codex/project-instructions.md`,
-`rules/` → `.codex/instructions/` and `memory/` → `.codex/memory/` as exact
-copies, `skills/` → `.agents/skills/` (a mirrored `SKILL.md` keeps its Codex
-frontmatter and usage notes, everything else is exact). Copy across in the SAME
-change. A mirror file that disagrees with its `.claude/` twin is stale by
-definition — re-copy it rather than reconciling the two by hand.
+**The Codex mirror.** `.claude/` is the source of truth. After any edit under
+it, `node extra-work/sync-agent-mirror.mjs` copies it into `.codex/` and
+`.agents/skills/` (rules in `AGENTS.md`; a new skill's Codex preamble is written
+by hand), and the gate's `agentDocsMirror.test.ts` fails until you do.

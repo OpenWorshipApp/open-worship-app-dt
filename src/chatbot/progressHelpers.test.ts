@@ -5,14 +5,18 @@ import {
     clearProgressSteps,
     describeToolStep,
     genProgressReporter,
+    genSessionProgress,
     getProgressState,
-    pushProgressStep,
     subscribeProgress,
     type BotProgressType,
 } from './progressHelpers';
 
+// Every store test works in one tab; the per-tab test below uses two.
+const TAB = 'tab-1';
+
 beforeEach(() => {
-    clearProgressSteps();
+    clearProgressSteps(TAB);
+    clearProgressSteps('tab-2');
 });
 
 describe('describeToolStep', () => {
@@ -100,36 +104,36 @@ describe('describeToolStep', () => {
 
 describe('the progress store', () => {
     test('a finishing step replaces its own start rather than following it', () => {
-        const report = genProgressReporter(pushProgressStep);
+        const report = genProgressReporter(genSessionProgress(TAB));
         const finish = report('Reading the guide');
-        expect(getProgressState().steps).toHaveLength(1);
-        expect(getProgressState().steps[0].isDone).toBe(false);
+        expect(getProgressState(TAB).steps).toHaveLength(1);
+        expect(getProgressState(TAB).steps[0].isDone).toBe(false);
         finish();
-        expect(getProgressState().steps).toHaveLength(1);
-        expect(getProgressState().steps[0].isDone).toBe(true);
+        expect(getProgressState(TAB).steps).toHaveLength(1);
+        expect(getProgressState(TAB).steps[0].isDone).toBe(true);
     });
 
     test('two reporters in one question do not land on top of each other', () => {
         // The connect step and the provider loop's first round each come from
         // their own reporter. Per-reporter counters would both start at zero
         // and the second would overwrite the first.
-        const first = genProgressReporter(pushProgressStep);
-        const second = genProgressReporter(pushProgressStep);
+        const first = genProgressReporter(genSessionProgress(TAB));
+        const second = genProgressReporter(genSessionProgress(TAB));
         first('Connecting to the app');
         second('Thinking about it');
-        const texts = getProgressState().steps.map((step) => {
+        const texts = getProgressState(TAB).steps.map((step) => {
             return step.text;
         });
         expect(texts).toEqual(['Connecting to the app', 'Thinking about it']);
     });
 
     test('older steps are counted, not dropped in silence', () => {
-        const report = genProgressReporter(pushProgressStep);
+        const report = genProgressReporter(genSessionProgress(TAB));
         const extra = 3;
         for (let index = 0; index < PROGRESS_SHOWN_MAX + extra; index++) {
             report(`Step ${index}`)();
         }
-        const state = getProgressState();
+        const state = getProgressState(TAB);
         expect(state.steps).toHaveLength(PROGRESS_SHOWN_MAX);
         expect(state.droppedCount).toBe(extra);
         // The ones kept are the LAST ones: what is happening now is the point.
@@ -140,10 +144,10 @@ describe('the progress store', () => {
 
     test('subscribers are told, and stop being told once they leave', () => {
         const seen: BotProgressType[][] = [];
-        const unsubscribe = subscribeProgress((next) => {
-            seen.push(next.steps);
+        const unsubscribe = subscribeProgress((sessionId) => {
+            seen.push(getProgressState(sessionId).steps);
         });
-        const report = genProgressReporter(pushProgressStep);
+        const report = genProgressReporter(genSessionProgress(TAB));
         report('Thinking about it');
         expect(seen).toHaveLength(1);
         unsubscribe();
@@ -156,9 +160,28 @@ describe('the progress store', () => {
         const unsubscribe = subscribeProgress(() => {
             count += 1;
         });
-        clearProgressSteps();
+        clearProgressSteps(TAB);
         expect(count).toBe(0);
         unsubscribe();
+    });
+
+    // The tabs work independently: one tab's question must not show in
+    // another, and clearing one must leave the other's lines up.
+    test('each tab has its own lines', () => {
+        genProgressReporter(genSessionProgress(TAB))('Reading the guide');
+        genProgressReporter(genSessionProgress('tab-2'))('Thinking about it');
+        expect(
+            getProgressState(TAB).steps.map((step) => {
+                return step.text;
+            }),
+        ).toEqual(['Reading the guide']);
+        clearProgressSteps(TAB);
+        expect(getProgressState(TAB).steps).toHaveLength(0);
+        expect(
+            getProgressState('tab-2').steps.map((step) => {
+                return step.text;
+            }),
+        ).toEqual(['Thinking about it']);
     });
 
     test('a reporter with no callback is a no-op, not a crash', () => {
@@ -167,7 +190,7 @@ describe('the progress store', () => {
         expect(() => {
             report('Thinking about it')();
         }).not.toThrow();
-        expect(getProgressState().steps).toHaveLength(0);
+        expect(getProgressState(TAB).steps).toHaveLength(0);
     });
 });
 

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 90bec044-2730-4035-8c05-b8a837a6ecb3
-  modified: 2026-10-06T19:38:14.446Z
+  modified: 2026-10-09T03:04:16.979Z
 ---
 
 Since 2026-10-06 a slide document, PDF, PowerPoint and Word file get the song's
@@ -16,7 +16,7 @@ be no change at all, stage 1 same stage 0 but has indexing"_. No gear, no style
 panel, stages 0-5 only (6+ = stage 1), max six panes.
 
 **Stage is a VIEW, unlike a song's.** A song's stage rewrites slide data
-(`LyricAppDocumentStageN`, [[lyric-subsystem-architecture]]); a document's slide
+(`LyricAppDocumentStage0`…`Stage5`, [[lyric-subsystem-architecture]]); a document's slide
 stays the base slide everywhere -- click, drag, highlight (`filePath` + `id`),
 media, item transitions, on-screen map. The layout is composed when drawn:
 

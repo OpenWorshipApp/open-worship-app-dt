@@ -48,6 +48,8 @@ export const ARCHIVE_VERSION = 1;
  * without loading the bible XML readers behind that module.
  */
 export const BIBLE_XML_ARCHIVE_ITEM_KIND = 'bible-xml';
+/** The `itemKind` of an Export Settings file, for the same reason. */
+export const SETTING_ARCHIVE_ITEM_KIND = 'settings';
 export const BACKGROUND_META_DOT_EXTENSION = '.bg.json';
 // The document kinds whose JSON holds canvas items (see
 // `src/server/mime/app-document-types.json`). Lyric, PDF, PPTX and DOCX

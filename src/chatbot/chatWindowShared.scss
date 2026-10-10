@@ -353,6 +353,22 @@
 // Where the close button would be, saying why it is not. Not a control: a
 // lock that comes off with one stray press on the exact spot the close used
 // to be is not a lock.
+// A tab still working on an answer, seen from any other tab: a steady point
+// of colour (the progress line's own dot, held still -- it can stay up for
+// minutes over a slow local model).
+.chat-tab-busy {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+
+  .chat-status-dot {
+    width: 6px;
+    height: 6px;
+    animation: none;
+  }
+}
+
 .chat-tab-lock {
   flex: 0 0 auto;
   display: flex;

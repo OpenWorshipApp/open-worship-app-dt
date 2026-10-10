@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
-  modified: 2026-10-01T21:52:45.370Z
+  modified: 2026-10-09T03:04:23.376Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -36,5 +36,6 @@ files written around it (the app's `error-datetime-setting` holds the epoch).
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent
 reload. If one happened, `navigate_page` reload and re-run the whole
-open-then-drive sequence in ONE `evaluate_script` call. Related:
+open-then-drive sequence in ONE `evaluate_script` call (that tool is refused
+unless the MCP server was started with `OWA_MCP_FIREWALL=off`). Related:
 [[screen-draw-feature]].

@@ -164,3 +164,149 @@ test('a camera never shared is let go of without telling its browser, and only s
     cameras.receive('waiting-64', '', { type: 'camera-state', shared: true });
     expect(host.toViewer).not.toHaveBeenCalled();
 });
+
+// A screen still shows the camera of a tab that is gone; the same device
+// shares it again from a new tab (a new viewer id). The presenter found it by
+// its name; a browser drawing the display showed an empty box (2026-10-09).
+test('a screen page watching a camera no longer shared is fed the camera shared under its name', () => {
+    const { cameras, host } = genCameras();
+    const LABEL = 'Browser 192.168.1.5: Back Camera';
+    // The old tab's camera, on the screen, watched by a browser's page.
+    expect(cameras.watch('screen:p:0', 'vd-camera:old-tab', true, LABEL)).toBe(
+        false,
+    );
+    expect(host.toWatcher).toHaveBeenLastCalledWith(
+        'screen:p:0',
+        'vd:camera-end',
+        { cameraId: 'vd-camera:old-tab' },
+    );
+    // Another device under another name feeds nothing.
+    cameras.receive('other', '192.168.1.6', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Back Camera',
+    });
+    expect(host.toViewer).not.toHaveBeenCalled();
+    // The same device, from a new tab: its encoder starts for the page...
+    cameras.receive('new-tab', '192.168.1.5', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Back Camera',
+    });
+    expect(host.toViewer).toHaveBeenCalledWith('new-tab', {
+        type: 'camera-start',
+    });
+    // ...and its frames reach the page as the camera the page asked for.
+    host.toWatcher.mockClear();
+    cameras.receive('new-tab', '', {
+        type: 'video',
+        data: 'AQID',
+        key: true,
+        timestamp: 10,
+    });
+    expect(host.toWatcher).toHaveBeenCalledTimes(1);
+    expect(host.toWatcher).toHaveBeenCalledWith(
+        'screen:p:0',
+        'vd:camera-frame',
+        expect.objectContaining({ cameraId: 'vd-camera:old-tab', type: 'key' }),
+    );
+    // A window watching the new tab directly shares the running encoder.
+    cameras.watch('window:7', 'vd-camera:new-tab', true);
+    expect(host.toViewer).toHaveBeenLastCalledWith('new-tab', {
+        type: 'camera-keyframe',
+    });
+    host.toWatcher.mockClear();
+    cameras.receive('new-tab', '', {
+        type: 'video',
+        data: 'AQID',
+        timestamp: 20,
+    });
+    expect(
+        host.toWatcher.mock.calls.map((call) => [call[0], call[2].cameraId]),
+    ).toEqual([
+        ['screen:p:0', 'vd-camera:old-tab'],
+        ['window:7', 'vd-camera:new-tab'],
+    ]);
+
+    // The new tab stops sharing: both pause; nothing tells it to stop.
+    host.toWatcher.mockClear();
+    host.toViewer.mockClear();
+    cameras.receive('new-tab', '', { type: 'camera-state', shared: false });
+    expect(host.toWatcher.mock.calls.map((call) => [call[0], call[1]])).toEqual(
+        [
+            ['screen:p:0', 'vd:camera-end'],
+            ['window:7', 'vd:camera-end'],
+        ],
+    );
+    expect(host.toViewer).not.toHaveBeenCalled();
+});
+
+test('the old tab coming back feeds its own camera again; renamed, the follower pauses', () => {
+    const { cameras, host } = genCameras();
+    const LABEL = 'Browser 192.168.1.5: Back Camera';
+    cameras.watch('screen:p:0', 'vd-camera:old-tab', true, LABEL);
+    cameras.receive('new-tab', '192.168.1.5', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Back Camera',
+    });
+    // The old tab shares again: it feeds its own watcher, and the new tab,
+    // with nothing left to show, stops.
+    host.toViewer.mockClear();
+    cameras.receive('old-tab', '192.168.1.5', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Back Camera',
+    });
+    expect(host.toViewer).toHaveBeenCalledTimes(2);
+    expect(host.toViewer).toHaveBeenCalledWith('old-tab', {
+        type: 'camera-start',
+    });
+    expect(host.toViewer).toHaveBeenCalledWith('new-tab', {
+        type: 'camera-stop',
+    });
+    // The old tab gone again: the new tab, still shared under the name the
+    // screen gives it, feeds it at once -- never a paused box between...
+    host.toViewer.mockClear();
+    host.toWatcher.mockClear();
+    cameras.receive('old-tab', '', { type: 'camera-state', shared: false });
+    expect(host.toViewer.mock.calls).toEqual([
+        ['new-tab', { type: 'camera-start' }],
+    ]);
+    expect(host.toWatcher).not.toHaveBeenCalled();
+    // ...until it switches to another camera: another name, so the follower
+    // pauses and the new tab, shown nowhere now, stops.
+    cameras.receive('new-tab', '192.168.1.5', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Front Camera',
+    });
+    expect(host.toWatcher).toHaveBeenLastCalledWith(
+        'screen:p:0',
+        'vd:camera-end',
+        { cameraId: 'vd-camera:old-tab' },
+    );
+    expect(host.toViewer).toHaveBeenLastCalledWith('new-tab', {
+        type: 'camera-stop',
+    });
+    // The page leaves: nothing is watched, nothing more is said.
+    host.toViewer.mockClear();
+    cameras.forgetWatcher('screen:p:0');
+    cameras.receive('new-tab', '192.168.1.5', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Back Camera',
+    });
+    expect(host.toViewer).not.toHaveBeenCalled();
+});
+
+test('a window gives no name: it follows only the id it asked for', () => {
+    const { cameras, host } = genCameras();
+    cameras.watch('window:7', 'vd-camera:old-tab', true);
+    cameras.receive('new-tab', '192.168.1.5', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Back Camera',
+    });
+    expect(host.toViewer).not.toHaveBeenCalled();
+});

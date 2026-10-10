@@ -2,12 +2,16 @@
 name: glassy-popup-windows
 description: "The chatbot popup is frosted by the OS (`appGlassy` -> backgroundMaterial/vibrancy), not by CSS -- and DWM's blur never shows up in a BitBlt screenshot"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:11:24.803Z
 ---
 
 A popup is its own OS window, so `backdrop-filter` inside it has nothing of the
 app to blur. The frosted look comes from the compositor instead:
-`appGlassy: true` in `openChatbotPage` (`src/helper/domHelpers.ts`) →
+`appGlassy: true` in `openChatbotPage` (`src/helper/domHelpers.ts`; the AI Chat
+window's `openAiChatPage` sets it too) →
 `genGlassOptions` in `electron/electronHelpers.ts` → `backgroundMaterial:
 'acrylic'` on Windows, `vibrancy: 'under-window'` on macOS, with
 `backgroundColor: '#00000000'` so the backdrop can show through. It costs the
@@ -16,14 +20,15 @@ app no frames, which is why it was the only acceptable way to do it here.
 - **Opt-in, and capability-gated.** `isGlassCapable` (macOS, or Windows build
   ≥ 22621) decides; anywhere else the popup keeps `getAppThemeBackgroundColor()`
   and stays opaque. `appProvider.systemUtils.isGlassCapable` is the renderer's
-  copy of the same answer and is what puts `data-glassy` on `.chatbot-app`. The
+  copy of the same answer and is what puts `data-glassy` on `.chatbot-app` (and
+  `.aichat-app`). The
   two MUST agree: a translucent stylesheet over a window the OS did not frost is
   unreadable text on the desktop.
 - **One tinted ground, films above it.** Under `[data-glassy]` the sheet gives
   `--chat-ink` the alpha and turns `--chat-panel`/`--chat-panel-soft` into
   low-alpha white films. Two translucent slabs stacked add up to an opaque one.
   `--chat-solid`/`--chat-solid-soft` are the opaque twins kept for the surfaces
-  that cannot be see-through: `select.chat-engine` (Chromium paints the OS list
+  that cannot be see-through: `select.chat-pick` (Chromium paints the OS list
   from its computed background) and `.chat-menu`.
 - **A desktop screenshot will not show the blur.** `CopyFromScreen`/BitBlt (and
   anything built on it — PrintScreen, `ffmpeg -f gdigrab`) captures window

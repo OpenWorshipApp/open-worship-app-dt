@@ -213,7 +213,7 @@ touch any process it did not start.
 4. **Default to a scratch profile INSIDE `release/`** —
    `--user-data=release/robot-userdata-<runid>` on `enable-ai` and `launch` — unless the
    user asked for their own data to be tested. On a fresh profile
-   `selected-parent-dir` is unset, so `appLocalStorage.defaultStorage` falls back to
+   `selected-parent-dir` is unset, so `appLocalStorage.defaultStorageDirPath` falls back to
    `app.getPath('userData')` (which `OWA_USER_DATA_PATH` moves), and **every** write the
    run causes — settings, `bibles-data`, documents, downloaded media, the ~62 MB Extra
    Binaries pack, the single-instance lock — lands under `release/`. That is what makes
@@ -1003,7 +1003,7 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
    root attribute split on `[.,\s]` minus taken keys), type the scratch key, and check a taken
    key marks `is-invalid` / "Key is already taken".
 4. **`[ST-43]`** **Ok** → **Confirm Key for Bible** → **Yes**. Confirm on disk — and resolve
-   `bibles-data` first, it hangs off `appLocalStorage.defaultStorage` and is **not**
+   `bibles-data` first, it hangs off `appLocalStorage.defaultStorageDirPath` and is **not**
    necessarily the `-dev` dir (KB §15.2). `saveJsonDataToXMLfile` reports success without
    checking the write, so the toast is not evidence.
 5. **`[ST-44]`** Read the new `<key>.xml` head: it must show `locale="en-US"`, ASCII

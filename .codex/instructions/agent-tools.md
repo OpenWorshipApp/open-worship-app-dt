@@ -264,8 +264,10 @@ The doors and the firewall: `agent-access.md`.
   `max_tokens` with 2 000 tokens of thinking and NO text, which the window
   reported as "could not find an answer". `ANTHROPIC_MAX_TOKENS` is 6 000 now
   (the same figure OpenAI's and Kimi's budgets were raised to for the same
-  reason), `output_config.effort: "low"` goes to the models that take it
-  (`ANTHROPIC_EFFORT_MODEL_PATTERN`; Haiku 4.5 rejects it), and a final round
+  reason), the effort setting is deliberately LEFT at Anthropic's default (at
+  `low` and `medium` the model answered off a search excerpt and wrote steps
+  that are not true — the comment above `ANTHROPIC_MAX_TOKENS` in
+  `llmBotHelpers.ts`), and a final round
   with no text says it ran out of room rather than that the app has no answer.
 - **The state tool knows the RUN SHEET, a list row is words only, and steps
   off an excerpt go back once** (2026-09-09, `src/helper/agentRunSheetHelpers.ts`,

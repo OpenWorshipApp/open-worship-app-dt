@@ -1,11 +1,11 @@
 ---
 name: bash-heredoc-halves-backslashes
-description: "In this harness any Bash-tool command text delivers `\\\\` as `\\` — a heredoc (even a quoted <<'EOF') and a single-quoted argument such as node -e '...' alike; `\\\\r?\\\\n` lands as a real CR/LF and `\\\\b` as a backspace, while a single backslash passes intact. Write files with backslashes through Write/Edit, never through a shell command"
+description: "In this harness any Bash-tool command text delivers `\\\\` as `\\` — a heredoc (even a quoted <<'EOF') and a single-quoted argument such as node -e '...' alike; `\\\\r?\\\\n` lands as a real CR/LF and `\\\\b` as a backspace, while a single backslash passes intact. Write files with backslashes through Write/Edit, never through a shell command; an apostrophe inside a single-quoted node -e ends the quote (unexpected EOF) — a script file cures both"
 metadata: 
   node_type: memory
   type: feedback
   originSessionId: 7e78f17c-0c5c-4a56-b18a-3a7634da32e6
-  modified: 2026-09-14T22:06:51.994Z
+  modified: 2026-10-09T03:23:12.394Z
 ---
 
 On 2026-09-08 a python edit script fed through the Bash tool as a quoted
@@ -22,6 +22,12 @@ raw CR and LF, while `"\r\n"` written with single backslashes in the same
 command arrived intact. So the rewrite belongs to the Bash tool's command
 text, not to heredocs; the repair went through a script file written with the
 Write tool.
+
+The same door breaks QUOTING, loudly this time: an apostrophe inside a
+single-quoted `node -e '…'` or `python -c '…'` (a `don't` in a string, a `'`
+in a selector) ends the quote early and bash stops with `unexpected EOF while
+looking for matching` — about a third of sessions hit it in the week to
+2026-10-08, each paying a retry. Same cure as below.
 
 **Why:** the failure is silent — the file is written, the typecheck error
 points at an "unterminated regular expression", and nothing says the bytes

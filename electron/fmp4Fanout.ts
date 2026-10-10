@@ -196,6 +196,19 @@ type ClientType = {
     waitTimer?: ReturnType<typeof setTimeout>;
 };
 
+// Something else reading the same stream (`HlsSegmenter`): the init
+// segment, every whole fragment -- a video one with its start in seconds,
+// a sound one with null -- and the stream being forgotten.
+export type Fmp4FanoutSinkType = {
+    onInit: (init: Buffer) => void;
+    onFragment: (
+        fragment: Buffer,
+        isKey: boolean,
+        videoTime: number | null,
+    ) => void;
+    onReset: () => void;
+};
+
 export class Fmp4Fanout {
     private pending: Buffer = Buffer.alloc(0);
     private initParts: Buffer[] = [];
@@ -208,8 +221,11 @@ export class Fmp4Fanout {
     liveTime: number | null = null;
     private moof: Buffer | null = null;
     private isKeyMoof = false;
+    // The video start of the fragment being read; null for a sound one.
+    private moofVideoTime: number | null = null;
     private clients = new Map<string, ClientType>();
     private isBroken = false;
+    private sink: Fmp4FanoutSinkType | null = null;
     constructor(
         private onClientGone: (id: string) => void = () => {},
         private onKeyframeWanted: () => void = () => {},
@@ -221,6 +237,15 @@ export class Fmp4Fanout {
 
     get hasInit() {
         return this.init !== null;
+    }
+
+    // One reader besides the HTTP viewers, told of the stream as it is now
+    // and from then on; null lets it go.
+    setSink(sink: Fmp4FanoutSinkType | null) {
+        this.sink = sink;
+        if (sink !== null && this.init !== null) {
+            sink.onInit(this.init);
+        }
     }
 
     push(data: Uint8Array) {
@@ -272,6 +297,7 @@ export class Fmp4Fanout {
             this.videoTrackId = info.trackId;
             this.trexFlags = info.trexFlags;
             this.videoTimescale = info.timescale;
+            this.sink?.onInit(this.init);
         } else if (type === 'moof') {
             this.moof = box;
             this.isKeyMoof = checkIsKeyframeFragment(
@@ -279,16 +305,19 @@ export class Fmp4Fanout {
                 this.videoTrackId,
                 this.trexFlags,
             );
+            this.moofVideoTime = null;
             if (this.videoTrackId !== null && this.videoTimescale > 0) {
                 const time = readFragmentDecodeTime(box, this.videoTrackId);
                 if (time !== null) {
                     this.liveTime = time / this.videoTimescale;
+                    this.moofVideoTime = this.liveTime;
                 }
             }
         } else if (type === 'mdat' && this.moof !== null && this.init) {
             const fragment = Buffer.concat([this.moof, box]);
             this.moof = null;
             this.addFragment(fragment, this.isKeyMoof);
+            this.sink?.onFragment(fragment, this.isKeyMoof, this.moofVideoTime);
         }
     }
 
@@ -383,6 +412,7 @@ export class Fmp4Fanout {
         this.moof = null;
         this.liveTime = null;
         this.isBroken = false;
+        this.sink?.onReset();
         for (const [id, client] of this.clients) {
             if (client.isLive) {
                 this.removeClient(id);

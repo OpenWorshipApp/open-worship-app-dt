@@ -1563,6 +1563,56 @@ const dictionary = {
     'Unable to read this bible file': 'Impossible de lire ce fichier biblique',
     'Duplicate bible key in this archive':
         'Clé de Bible en double dans cette archive',
+    // Export Settings / Import Settings (the Settings window's sidebar), and
+    // the sections of its tree (`settingArchiveCatalog.ts`).
+    'Export Settings': 'Exporter les paramètres',
+    'Import Settings': 'Importer les paramètres',
+    'Export settings to a file': 'Exporter les paramètres dans un fichier',
+    'Import settings from a file': "Importer les paramètres d'un fichier",
+    'Choose the settings to export': 'Choisir les paramètres à exporter',
+    'Choose the settings to import': 'Choisir les paramètres à importer',
+    'Each ticked section replaces the same section on this computer; what the file leaves out goes back to its default':
+        'Chaque section cochée remplace la même section sur cet ordinateur ; ' +
+        'ce que le fichier omet revient à sa valeur par défaut',
+    'Type a password below to include these':
+        'Saisissez un mot de passe ci-dessous pour les inclure',
+    'This computer cannot keep them safely':
+        'Cet ordinateur ne peut pas les conserver en sécurité',
+    'Lets other devices connect to this computer':
+        "Permet à d'autres appareils de se connecter à cet ordinateur",
+    'All default': 'Tout par défaut',
+    'Save or discard unsaved Bible changes before importing settings.':
+        "Enregistrez ou abandonnez les modifications non enregistrées de la Bible avant d'importer les paramètres.",
+    Folders: 'Dossiers',
+    'File Color Notes': 'Couleurs des fichiers',
+    'Reading View': 'Vue de lecture',
+    'Open Passages': 'Passages ouverts',
+    'Bible on Screen': "Bible à l'écran",
+    'Screens & Monitors': 'Écrans et moniteurs',
+    Transitions: 'Transitions',
+    'Drawing & Spotlight': 'Dessin et projecteur',
+    'PDF & Pages on Screen': "PDF et pages à l'écran",
+    Marquee: 'Bandeau défilant',
+    'Messages & Quick Text': 'Messages et texte rapide',
+    'Timers & Clocks': 'Minuteurs et horloges',
+    'Image, Video & Web Shows':
+        "Affichages d'images, de vidéos et de sites web",
+    'Foreground Panel': 'Panneau de premier plan',
+    'Background Panel': "Panneau d'arrière-plan",
+    'Documents & Lyrics': 'Documents et chants',
+    Editors: 'Éditeurs',
+    Layout: 'Disposition',
+    'Panel Sizes': 'Tailles des panneaux',
+    'Panel Sizes per Document': 'Tailles des panneaux par document',
+    'Windows & Pages': 'Fenêtres et pages',
+    'AI & Assistant': 'IA et assistant',
+    Connections: 'Connexions',
+    'Screen Mirror & Virtual Displays': 'Écran miroir et affichages virtuels',
+    'API Keys & Sign-ins': 'Clés API et connexions',
+    'AI Keys': 'Clés IA',
+    SongSelect: 'SongSelect',
+    'Connection Codes': 'Codes de connexion',
+    'Other Settings': 'Autres paramètres',
     // The two bodies every export/import toast is built from. The path or the
     // name goes on AFTER the translation, never into the key.
     'Exported to': 'Exporté vers',
@@ -2183,6 +2233,67 @@ const dictionary = {
         "Ajoutez une clé de l'un de ces fournisseurs. Chaque ligne indique à quoi sert sa clé.",
     'Fail to get Kimi instance': "Impossible d'obtenir l'instance Kimi",
     'Missing Kimi API Key.': 'Clé API Kimi manquante.',
+    // --- Amazon Bedrock joins the chatbot (2026-10-09), Gemma 4 31B first.
+    'Amazon Bedrock': 'Amazon Bedrock',
+    'Amazon Bedrock API Key': 'Clé API Amazon Bedrock',
+    'Create Amazon Bedrock api key': 'Créer une clé API Amazon Bedrock',
+    'Fail to get Amazon Bedrock instance':
+        "Impossible d'obtenir l'instance Amazon Bedrock",
+    'Missing Amazon Bedrock API Key.': 'Clé API Amazon Bedrock manquante.',
+    'AWS Region': 'Région AWS',
+    'The region your Bedrock models are enabled in':
+        'La région où vos modèles Bedrock sont activés',
+    // --- The user's own model servers (LM Studio, Ollama, ...) (2026-10-09).
+    'Custom servers': 'Serveurs personnalisés',
+    'Your own AI server, such as LM Studio or Ollama on this computer, or any service that speaks the OpenAI API. Each server shows in the chatbot as its own assistant.':
+        "Votre propre serveur d'IA, comme LM Studio ou Ollama sur cet ordinateur, ou tout service compatible avec l'API OpenAI. Chaque serveur apparaît dans l'assistant conversationnel comme un assistant à part.",
+    'Add server': 'Ajouter un serveur',
+    'New server': 'Nouveau serveur',
+    'Delete this server': 'Supprimer ce serveur',
+    'Server name': 'Nom du serveur',
+    'The name the chatbot shows for this server, such as LM Studio':
+        "Le nom que l'assistant conversationnel affiche pour ce serveur, par exemple LM Studio",
+    'Base URL': 'URL de base',
+    'The address that ends in /v1, such as http://localhost:1234/v1 for LM Studio':
+        "L'adresse qui se termine par /v1, par exemple http://localhost:1234/v1 pour LM Studio",
+    'API key (optional)': 'Clé API (facultative)',
+    'Only if the server asks for one. It is stored encrypted and never shown to the chatbot window.':
+        "Seulement si le serveur en demande une. Elle est chiffrée et jamais transmise à la fenêtre de l'assistant.",
+    Test: 'Tester',
+    'Load models from server': 'Charger les modèles du serveur',
+    'Asking the server…': 'Interrogation du serveur…',
+    'The server answered. Chat models it has:':
+        'Le serveur a répondu. Modèles de conversation disponibles :',
+    'The server did not answer:': "Le serveur n'a pas répondu :",
+    'Models loaded from the server:': 'Modèles chargés depuis le serveur :',
+    'This is not a web address yet. It should look like http://localhost:1234/v1':
+        "Ce n'est pas encore une adresse web. Elle devrait ressembler à http://localhost:1234/v1",
+    'Offered in the chatbot': "Proposé dans l'assistant conversationnel",
+    'Give it a name, an address and at least one model to offer it in the chatbot.':
+        "Donnez-lui un nom, une adresse et au moins un modèle pour le proposer dans l'assistant conversationnel.",
+    Models: 'Modèles',
+    'Add model': 'Ajouter un modèle',
+    'Model id': 'Identifiant du modèle',
+    'Model id, as the server names it':
+        'Identifiant du modèle, tel que le serveur le nomme',
+    'Model name': 'Nom du modèle',
+    'Name shown in the chatbot (optional)':
+        "Nom affiché dans l'assistant conversationnel (facultatif)",
+    'Remove this model': 'Retirer ce modèle',
+    'Sees pictures': 'Voit les images',
+    'Tick only if this model can look at a picture. Load models from server ticks it for you on LM Studio.':
+        'Cochez seulement si ce modèle peut regarder une image. Sur LM Studio, « Charger les modèles du serveur » la coche pour vous.',
+    'Not loaded in LM Studio right now. The first question waits for it to load.':
+        "Pas chargé dans LM Studio pour l'instant. La première question attendra qu'il se charge.",
+    'Loaded in LM Studio. Context length:':
+        'Chargé dans LM Studio. Longueur de contexte :',
+    'In LM Studio, load this model again with a Context Length of':
+        'Dans LM Studio, rechargez ce modèle avec une longueur de contexte (Context Length) de',
+    'That is too small for the assistant.':
+        "C'est trop petit pour l'assistant.",
+    'A follow-up question may not fit.':
+        'Une question de suivi risque de ne pas tenir.',
+    'working on an answer': 'prépare une réponse',
     // --- The keyless assistant, for a user who has typed no key at all
     // (2026-09-01). It answers over free PUBLIC services, so the panel says so.
     'Fail to get free assistant': "Impossible d'obtenir l'assistant gratuit",

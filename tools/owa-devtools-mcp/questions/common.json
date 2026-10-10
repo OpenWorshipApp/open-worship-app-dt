@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-06",
+    "updated": "2026-10-09",
     "sections": [
         {
             "id": "panels",
@@ -822,7 +822,14 @@
                         "faster",
                         "cheaper",
                         "kimi",
-                        "moonshot"
+                        "moonshot",
+                        "bedrock",
+                        "gemma",
+                        "grok",
+                        "lm studio",
+                        "ollama",
+                        "local model",
+                        "custom server"
                     ],
                     "resources": {
                         "recipe": "W-42",

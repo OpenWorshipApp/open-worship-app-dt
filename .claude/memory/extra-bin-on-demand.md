@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 7cc13309-067b-48ac-94f6-322589474419
-  modified: 2026-09-19T17:27:35.582Z
+  modified: 2026-10-09T03:04:15.626Z
 ---
 
 As of refactor27 (2026-08-10) the three media binaries are **no longer bundled**.
@@ -56,7 +56,7 @@ app whose whole point is running on weak church hardware.
 - In dev the install is mocked from the locally built pack; `npm run dev` does NOT build
   it, only `npm i` does.
 - **The pack does NOT follow a change of parent data directory.** The path is recomputed
-  from `appLocalStorage.defaultStorage` on every call, so repointing the parent dir
+  from `appLocalStorage.defaultStorageDirPath` on every call, so repointing the parent dir
   silently orphans the whole ~28 MB install and the panel just says *Not installed* — with
   a perfectly good copy sitting under the old parent. Seen live on 2026-08-12: a QA run
   found the pack missing at `open-worship-data-dev\extra-bin` while a complete 0.0.2 sat in

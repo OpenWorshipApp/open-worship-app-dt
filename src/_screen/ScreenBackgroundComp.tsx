@@ -13,7 +13,11 @@ import {
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
 import type { BackgroundSrcType } from './screenTypeHelpers';
-import { getCameraStream, stopCameraStream } from '../helper/cameraHelpers';
+import {
+    createCameraCanvasView,
+    getCameraStream,
+    stopCameraStream,
+} from '../helper/cameraHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { playMediaElement } from '../helper/mediaHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
@@ -45,26 +49,40 @@ export function genHtmlBackground(
         promise = new Promise<() => void>((resolve) => {
             getCameraStream(backgroundSrc.src)
                 .then((mediaStream) => {
-                    video.srcObject = mediaStream;
+                    // In Safari and Firefox a camera shows in a canvas in
+                    // the video's place: an iPad never paints the video.
+                    const view = createCameraCanvasView(mediaStream);
+                    if (view === null) {
+                        video.srcObject = mediaStream;
+                    } else {
+                        view.element.style.cssText = video.style.cssText;
+                        video.replaceWith(view.element);
+                    }
+                    const shown = view?.element ?? video;
                     // A browser viewer's camera is hidden while it sends no
                     // pictures, and shows again when it does.
                     const stopListeningLive = listenViewerCameraLive(
                         mediaStream,
                         (isLive) => {
-                            video.style.visibility = isLive ? '' : 'hidden';
+                            shown.style.visibility = isLive ? '' : 'hidden';
                         },
                     );
                     const clearTracks = () => {
                         stopListeningLive();
+                        view?.release();
                         stopCameraStream(mediaStream);
                     };
                     video.onloadedmetadata = () => {
                         playMediaElement(video);
                         resolve(clearTracks);
                     };
-                    // One not shared yet has no picture to wait for: put up
-                    // now, it can still be let go of.
-                    if (checkIsViewerCameraId(backgroundSrc.src)) {
+                    // One not shared yet has no picture to wait for, and a
+                    // canvas no metadata: put up now, it can still be let go
+                    // of.
+                    if (
+                        view !== null ||
+                        checkIsViewerCameraId(backgroundSrc.src)
+                    ) {
                         resolve(clearTracks);
                     }
                 })

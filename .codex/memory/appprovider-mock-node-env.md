@@ -1,8 +1,11 @@
 ---
 name: appprovider-mock-node-env
-description: There is NO appProvider mock any more — a test that reaches it must `vi.mock` it in its own file, and it still touches `document` at module scope
+description: "There is NO appProvider mock any more — a test that reaches it must `vi.mock` it in its own file, and it still touches `document` at module scope"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:05:56.040Z
 ---
 
 `src/server/appProvider.ts` reads the Electron preload bridge off `globalThis.provider` and
@@ -29,7 +32,8 @@ zero tests remain there), server 4, bible-list/note 4, app-document-list 4,
 slide-editor/canvas 4, setting/bible-setting 3, app-modal 3, helper 3, plus
 `src/lang/data/{en,km}/index.test.ts` and `src/lang/langHelpers.test.ts` — so the
 km-translation completeness tests are gone, which matters given `tran()` throws on a
-missing key. What survived: tests that mock appProvider in-file, and every
+missing key. (Since rebuilt: `c24d3a43`, 2026-09-26, put a presenting-flow suite
+back, and `src/lang/tranKeyCoverage.test.ts` now gates km keys.) What survived: tests that mock appProvider in-file, and every
 `electron/*.test.ts` (separate config, never used the fake). Even a freshly written
 test isn't safe from it: `src/app-modal/floatingWidgetModalLayer.test.tsx` was added
 2026-08-16 (`3f7253ac`) and the prune deleted it a week later — the modal-layer

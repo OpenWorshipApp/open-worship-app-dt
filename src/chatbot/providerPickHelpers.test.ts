@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
-import { findSteppedProvider } from './providerPickHelpers';
+import {
+    findSteppedProvider,
+    genAssistantRows,
+    toAssistantRowValue,
+} from './providerPickHelpers';
 
 // The head row's order: best-known first, the keyless one last.
 const KEYS = ['anthropic', 'openai', 'kimi', 'free'];
@@ -38,5 +42,55 @@ describe('findSteppedProvider', () => {
 
     test('is null for a row that is not in the list', () => {
         expect(findSteppedProvider(KEYS, KEYS, 'nope', 1)).toBeNull();
+    });
+});
+
+// The user's own servers are ONE provider and one row EACH in the list.
+describe('genAssistantRows', () => {
+    const PROVIDER_LIST = [
+        { key: 'openai', label: 'ChatGPT' },
+        { key: 'custom', label: 'Custom servers' },
+        { key: 'free', label: 'Free' },
+    ];
+    const SERVERS = [
+        { id: 'lm', name: 'LM Studio' },
+        { id: 'ollama', name: 'Ollama' },
+    ];
+
+    test('puts each server in the custom provider’s place, by its own name', () => {
+        const rows = genAssistantRows(
+            PROVIDER_LIST,
+            ['custom', 'free'],
+            'custom',
+            SERVERS,
+        );
+        expect(
+            rows.map((row) => {
+                return [row.value, row.label, row.isAvailable];
+            }),
+        ).toEqual([
+            ['openai', 'ChatGPT', false],
+            ['custom/lm', 'LM Studio', true],
+            ['custom/ollama', 'Ollama', true],
+            ['free', 'Free', true],
+        ]);
+        expect(rows[1]).toMatchObject({ provider: 'custom', serverId: 'lm' });
+    });
+
+    test('shows no custom row at all with no usable server', () => {
+        const rows = genAssistantRows(PROVIDER_LIST, ['free'], 'custom', []);
+        expect(
+            rows.map((row) => {
+                return row.value;
+            }),
+        ).toEqual(['openai', 'free']);
+    });
+
+    test('finds the row a tab is on from its provider and model', () => {
+        expect(toAssistantRowValue('custom', 'lm/row-1', 'custom')).toBe(
+            'custom/lm',
+        );
+        expect(toAssistantRowValue('openai', 'gpt-5', 'custom')).toBe('openai');
+        expect(toAssistantRowValue(null, '', 'custom')).toBeNull();
     });
 });

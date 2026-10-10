@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-61, KB-62, KB-63, KB-64, KB-65]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-08"
+workflowsVersion: "2026-10-09"
 ---
 # W-49 — See every keyboard shortcut for this page (Help → Keyboard Shortcuts)
 
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-61` · `KB-62` · `KB-63` · `KB-64` · `KB-65`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
 :::

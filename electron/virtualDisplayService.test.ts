@@ -51,6 +51,13 @@ vi.mock('./castTargets', () => ({
     startCastSession: castMocks.start,
 }));
 
+import {
+    VIDEO_TIMESCALE,
+    VIDEO_TRACK_ID,
+    buildFragment,
+    buildInitSegment,
+    toAudioSpecificConfig,
+} from '../src/virtual-display/fmp4Muxer';
 import { createMockBrowserWindow } from './testUtils';
 import { electronMockState } from './testElectronModule';
 import type { ScreenMirrorService } from './screenMirrorService';
@@ -146,7 +153,9 @@ class FakeResponse extends EventEmitter {
     write() {
         return true;
     }
-    end() {
+    body: unknown = undefined;
+    end(body?: unknown) {
+        this.body = body;
         this.isEnded = true;
         return this;
     }
@@ -1081,5 +1090,204 @@ describe('casting to a TV', () => {
         expect(service.getLayout(1)?.castUrl).toBe(
             'http://192.168.1.5:40000/vd/1/video',
         );
+    });
+});
+
+describe('virtual display HLS for an iPhone or iPad', () => {
+    const IPHONE =
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) ' +
+        'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 ' +
+        'Mobile/15E148 Safari/604.1';
+    const PHONE = { network: 'local' as const, address: '192.168.1.5' };
+
+    function toBuffer(data: Uint8Array) {
+        return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+    }
+    const INIT = toBuffer(
+        buildInitSegment(
+            {
+                width: 1920,
+                height: 1080,
+                avcC: Uint8Array.of(1, 0x64, 0, 0x28, 0xff, 0xe1, 0, 0),
+            },
+            {
+                sampleRate: 48000,
+                channelCount: 2,
+                audioSpecificConfig: toAudioSpecificConfig(48000, 2),
+            },
+        ),
+    );
+    let sequence = 0;
+    function videoAt(second: number, isKey: boolean) {
+        sequence += 1;
+        return toBuffer(
+            buildFragment({
+                sequence,
+                trackId: VIDEO_TRACK_ID,
+                baseDecodeTime: Math.round(second * VIDEO_TIMESCALE),
+                samples: [
+                    {
+                        data: new Uint8Array(16).fill(sequence & 0xff),
+                        duration: 3000,
+                        isKey,
+                    },
+                ],
+            }),
+        );
+    }
+
+    // An iPhone opening the display's MP4 address.
+    async function startPhone(service: VirtualDisplayService) {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const master = await request(service, '/vd/1/video', {
+            ...PHONE,
+            headers: { 'user-agent': IPHONE },
+        });
+        const session = (service as any).sessions.get(1);
+        return { master, session };
+    }
+
+    function tokenOf(master: FakeResponse) {
+        return /^hls\/([a-f0-9]{32})\/index\.m3u8$/m.exec(
+            String(master.body),
+        )![1];
+    }
+
+    test('/video answers an iPhone with HLS once the stream names its codecs', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        // Held: nothing to name yet.
+        expect(master.statusCode).toBe(0);
+        expect(service.state().displays[0].clients).toMatchObject([
+            {
+                kind: 'video',
+                address: '192.168.1.5',
+                userAgent: IPHONE.slice(0, 120),
+            },
+        ]);
+        session.fanout.push(INIT);
+        expect(master.statusCode).toBe(200);
+        expect(master.headers['Content-Type']).toBe(
+            'application/vnd.apple.mpegurl',
+        );
+        const text = String(master.body);
+        expect(text).toContain('#EXT-X-STREAM-INF:');
+        expect(text).toContain('CODECS="avc1.640028,mp4a.40.2"');
+        expect(text).toMatch(/RESOLUTION=\d+x\d+/);
+        expect(tokenOf(master)).toMatch(/^[a-f0-9]{32}$/);
+        // Every other player still gets the MP4 itself.
+        expect(
+            (await request(service, '/vd/1/video', { method: 'HEAD' })).headers[
+                'Content-Type'
+            ],
+        ).toBe('video/mp4');
+    });
+
+    test('its playlist waits for two segments; its files answer only it', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        session.fanout.push(INIT);
+        const token = tokenOf(master);
+        const playlist = await request(
+            service,
+            `/vd/1/hls/${token}/index.m3u8`,
+            PHONE,
+        );
+        expect(playlist.statusCode).toBe(0);
+        session.fanout.push(videoAt(0, true));
+        session.fanout.push(videoAt(1, false));
+        session.fanout.push(videoAt(2, true));
+        session.fanout.push(videoAt(3, false));
+        // One segment is too close to the live end to start on.
+        expect(playlist.statusCode).toBe(0);
+        session.fanout.push(videoAt(4, true));
+        expect(playlist.statusCode).toBe(200);
+        expect(playlist.headers['Cache-Control']).toBe('no-store');
+        const text = String(playlist.body);
+        expect(text).toContain('#EXT-X-MAP:URI="init-0.mp4"');
+        expect(text).toContain('#EXTINF:2.000,\nseg-0.m4s');
+        expect(text).toContain('#EXTINF:2.000,\nseg-1.m4s');
+
+        const segment = await request(
+            service,
+            `/vd/1/hls/${token}/seg-0.m4s`,
+            PHONE,
+        );
+        expect(segment.statusCode).toBe(200);
+        expect(segment.headers['Content-Type']).toBe('video/mp4');
+        expect((segment.body as Buffer).toString('latin1', 4, 8)).toBe('moof');
+        const init = await request(
+            service,
+            `/vd/1/hls/${token}/init-0.mp4`,
+            PHONE,
+        );
+        expect(init.body).toEqual(INIT);
+
+        // Its token from another address, a token never given, a segment
+        // not held: nothing.
+        for (const [path, address] of [
+            [`/vd/1/hls/${token}/seg-0.m4s`, '192.168.1.6'],
+            [`/vd/1/hls/${'0'.repeat(32)}/seg-0.m4s`, '192.168.1.5'],
+            [`/vd/1/hls/${token}/seg-9.m4s`, '192.168.1.5'],
+        ]) {
+            expect(
+                (await request(service, path, { network: 'local', address }))
+                    .statusCode,
+            ).toBe(404);
+        }
+    });
+
+    test('silent for 30 s it is let go, and the segments with it', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        session.fanout.push(INIT);
+        const token = tokenOf(master);
+        vi.advanceTimersByTime(20000);
+        // Still asking: still watching.
+        await request(service, `/vd/1/hls/${token}/init-0.mp4`, PHONE);
+        vi.advanceTimersByTime(20000);
+        expect(session.hls).not.toBeNull();
+        vi.advanceTimersByTime(20000);
+        expect(session.hls).toBeNull();
+        expect(service.state().displays[0].clients).toEqual([]);
+        expect(
+            (await request(service, `/vd/1/hls/${token}/init-0.mp4`, PHONE))
+                .statusCode,
+        ).toBe(404);
+    });
+
+    test('a disconnected iPhone is ended and kept out', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        session.fanout.push(INIT);
+        const token = tokenOf(master);
+        const [client] = service.state().displays[0].clients;
+        service.disconnect(1, client.id);
+        expect(service.state().displays[0].clients).toEqual([]);
+        expect(session.hls).toBeNull();
+        expect(
+            (await request(service, `/vd/1/hls/${token}/init-0.mp4`, PHONE))
+                .statusCode,
+        ).toBe(404);
+        expect((await startPhone(service)).master.statusCode).toBe(403);
+    });
+
+    test('/video.m3u8 is HLS for any player; no stream in 20 s is a 503', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const head = await request(service, '/vd/1/video.m3u8', {
+            method: 'HEAD',
+        });
+        expect(head.headers['Content-Type']).toBe(
+            'application/vnd.apple.mpegurl',
+        );
+        const master = await request(service, '/vd/1/video.m3u8');
+        expect(master.statusCode).toBe(0);
+        vi.advanceTimersByTime(20001);
+        expect(master.statusCode).toBe(503);
     });
 });

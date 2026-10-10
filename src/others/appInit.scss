@@ -628,6 +628,24 @@ $app-context-menu-dots-opacity: 0.1;
   }
 }
 
+// The 🤖 in a window's top bar while the help window is working on an
+// answer: a point of colour on its corner, mounted only while it works and
+// never animated -- it can stay up for minutes over a slow local model.
+.app-assistant-button {
+  position: relative;
+}
+
+.app-assistant-busy-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--bs-warning);
+  pointer-events: none;
+}
+
 @keyframes app-notify-on-screen-highlight {
   0% {
     background-color: color-mix(in srgb, var(--app-on-air) 10%, transparent);

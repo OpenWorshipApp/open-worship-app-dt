@@ -1,8 +1,11 @@
 ---
 name: agent-access-mcp-chatbot
-description: No fixed CDP port any more — the app publishes both agent doors (CDP + its own MCP server) to a temp file, and ships an in-app self-help chatbot whose tabs each carry their own provider, model and conversation
+description: "No fixed CDP port any more — the app publishes both agent doors (CDP + its own MCP server) to a temp file, and ships an in-app self-help chatbot whose tabs each carry their own provider, model and conversation"
 metadata:
-    type: project
+  node_type: memory
+  type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:04:11.631Z
 ---
 
 Built 2026-08-31 (branch `enhance-after-release`). The app is now drivable by
@@ -193,9 +196,10 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
 - **A guide can only run where the window IS.** Focus says Presenter but the
   main window is the Bible Reader → `owa_guide_start` dies with "no open
   page matching" (the error now lists the pages that ARE open). The chatbot
-  turns that into "Go to the Presenter first" + an outlined switch control +
-  an "I'm there -- start it" retry button (`genPageSwitchAnswer` in
-  `helpBotHelpers.ts`); the LLM path is taught the same in the system prompt
+  opens that window itself (`owa_goto_page`) and retries once; only if that
+  fails does it answer "Open the Presenter first" + an outlined control +
+  an "I'm there -- start it" retry button (`genPageOpenAnswer` in
+  `helpBotHelpers.ts`, since 2026-09-08); the LLM path is taught the same in the system prompt
   and can switch the window itself with `owa_goto_page` (which is
   `location.pathname` assignment + target-list confirmation, since the
   navigation unloads the page before it can answer). The card itself can

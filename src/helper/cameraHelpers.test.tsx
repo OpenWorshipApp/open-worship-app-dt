@@ -485,6 +485,7 @@ describe('cameraHelpers', () => {
         const getViewerCameraStream = vi.fn(async () => stream);
         vi.doMock('../virtual-display/viewerCameraTransport', () => ({
             checkIsViewerCameraId: (id: string) => id.startsWith('vd-camera:'),
+            createViewerCameraView: () => null,
             getViewerCameraStream,
             listenViewerCameraLive: (
                 _stream: unknown,
@@ -522,5 +523,155 @@ describe('cameraHelpers', () => {
         } finally {
             vi.doUnmock('../virtual-display/viewerCameraTransport');
         }
+    });
+    test("Safari shows a browser viewer's camera in a canvas, styled as the video would be", async () => {
+        electronSendAsyncMock.mockResolvedValue(true);
+        enumerateDevicesMock.mockResolvedValue([]);
+        const stream = { getTracks: () => [] };
+        let setLive: (isLive: boolean) => void = () => {};
+        const canvas = document.createElement('canvas');
+        const releaseView = vi.fn();
+        vi.doMock('../virtual-display/viewerCameraTransport', () => ({
+            checkIsViewerCameraId: (id: string) => id.startsWith('vd-camera:'),
+            createViewerCameraView: (given: unknown) =>
+                given === stream
+                    ? { element: canvas, release: releaseView }
+                    : null,
+            getViewerCameraStream: vi.fn(async () => stream),
+            listenViewerCameraLive: (
+                _stream: unknown,
+                listener: (isLive: boolean) => void,
+            ) => {
+                setLive = listener;
+                listener(false);
+                return vi.fn();
+            },
+            releaseViewerCameraStream: vi.fn(),
+        }));
+        try {
+            const { getCameraAndShowMedia } = await import('./cameraHelpers');
+            const parentContainer = document.createElement('div');
+            const cleanup = await getCameraAndShowMedia({
+                id: 'vd-camera:viewer-1',
+                label: 'Browser 198.51.100.9: Phone',
+                parentContainer,
+                width: 200,
+                extraStyle: { borderRadius: '5px' },
+            } as any);
+
+            // No video for an iPhone to leave empty: the canvas, as styled.
+            expect(parentContainer.querySelector('video')).toBeNull();
+            expect(parentContainer.firstElementChild).toBe(canvas);
+            expect(canvas.style.width).toBe('200px');
+            expect(canvas.style.borderRadius).toBe('5px');
+            expect(canvas.style.visibility).toBe('hidden');
+            setLive(true);
+            expect(canvas.style.visibility).toBe('');
+            await cleanup();
+            expect(releaseView).toHaveBeenCalledOnce();
+        } finally {
+            vi.doUnmock('../virtual-display/viewerCameraTransport');
+        }
+    });
+    describe('createCameraCanvasView: Safari and Firefox draw a camera from a video nobody sees', () => {
+        const videoProto = globalThis.HTMLVideoElement.prototype as any;
+        let frameCallbacks: Map<number, () => void>;
+        let drawImage: ReturnType<typeof vi.fn>;
+        const restore: (() => void)[] = [];
+
+        function define(target: any, key: string, descriptor: object) {
+            const previous = Object.getOwnPropertyDescriptor(target, key);
+            Object.defineProperty(target, key, {
+                configurable: true,
+                ...descriptor,
+            });
+            restore.push(() => {
+                if (previous) {
+                    Object.defineProperty(target, key, previous);
+                } else {
+                    delete target[key];
+                }
+            });
+        }
+
+        beforeEach(() => {
+            frameCallbacks = new Map();
+            let nextId = 0;
+            define(videoProto, 'requestVideoFrameCallback', {
+                value: (callback: () => void) => {
+                    nextId += 1;
+                    frameCallbacks.set(nextId, callback);
+                    return nextId;
+                },
+            });
+            define(videoProto, 'cancelVideoFrameCallback', {
+                value: (id: number) => frameCallbacks.delete(id),
+            });
+            define(globalThis.HTMLMediaElement.prototype, 'pause', {
+                value: vi.fn(),
+            });
+            define(videoProto, 'videoWidth', { get: () => 640 });
+            define(videoProto, 'videoHeight', { get: () => 480 });
+            drawImage = vi.fn();
+            define(globalThis.HTMLCanvasElement.prototype, 'getContext', {
+                value: () => ({ drawImage }),
+            });
+        });
+
+        afterEach(() => {
+            for (const undo of restore.splice(0).reverse()) {
+                undo();
+            }
+            vi.unstubAllGlobals();
+        });
+
+        // The video gets one frame: whatever callback is waiting runs.
+        function presentFrame() {
+            const waiting = [...frameCallbacks.entries()];
+            frameCallbacks.clear();
+            for (const [, callback] of waiting) {
+                callback();
+            }
+        }
+
+        test('draws each frame the camera sends into the canvas, and stops when let go', async () => {
+            const { createCameraCanvasView } = await import('./cameraHelpers');
+            const stream = { getTracks: () => [] } as unknown as MediaStream;
+            const view = createCameraCanvasView(stream)!;
+            expect(view.element).toBeInstanceOf(HTMLCanvasElement);
+            const canvas = view.element as HTMLCanvasElement;
+            // Nothing is drawn per screen refresh: only per frame.
+            expect(drawImage).not.toHaveBeenCalled();
+            presentFrame();
+            presentFrame();
+            expect(drawImage).toHaveBeenCalledTimes(2);
+            const [video] = drawImage.mock.calls[0];
+            expect(video).toBeInstanceOf(HTMLVideoElement);
+            // Never put on the page; muted so a phone starts it untapped.
+            expect(video.isConnected).toBe(false);
+            expect(video.muted).toBe(true);
+            expect(video.srcObject).toBe(stream);
+            expect([canvas.width, canvas.height]).toEqual([640, 480]);
+            video.onloadedmetadata?.(new Event('loadedmetadata'));
+            expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+
+            view.release();
+            expect(frameCallbacks.size).toBe(0);
+            expect(video.srcObject).toBeNull();
+            presentFrame();
+            expect(drawImage).toHaveBeenCalledTimes(2);
+        });
+
+        test('Chromium (a track generator) and a browser without per-frame callbacks keep the video', async () => {
+            const stream = { getTracks: () => [] } as unknown as MediaStream;
+            vi.stubGlobal('MediaStreamTrackGenerator', function () {});
+            let helpers = await import('./cameraHelpers');
+            expect(helpers.createCameraCanvasView(stream)).toBeNull();
+            vi.unstubAllGlobals();
+            delete videoProto.requestVideoFrameCallback;
+            vi.resetModules();
+            helpers = await import('./cameraHelpers');
+            expect(helpers.createCameraCanvasView(stream)).toBeNull();
+        });
     });
 });

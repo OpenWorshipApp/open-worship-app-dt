@@ -15,6 +15,7 @@ import {
 } from '../screen-mirror/mirrorCameraTransport';
 import {
     checkIsViewerCameraId,
+    createViewerCameraView,
     getViewerCameraStream,
     listenViewerCameraLive,
     releaseViewerCameraStream,
@@ -238,6 +239,87 @@ export function stopCameraStream(mediaStream: MediaStream) {
     }
 }
 
+function createCameraVideo(mediaStream: MediaStream) {
+    const video = document.createElement('video');
+    // A camera brings no sound (it is opened \`audio: false\`), and a
+    // browser refuses to start an element that is not muted until the
+    // page is touched -- a phone watching a virtual display drew an empty
+    // box. Set as a PROPERTY: the attribute does not stop that.
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = mediaStream;
+    video.onloadedmetadata = () => {
+        playMediaElement(video);
+    };
+    return video;
+}
+
+// Safari on an iPad or iPhone leaves a camera's `<video>` in a screen page
+// empty: it plays, its time runs, WebRTC decodes every frame, and only the
+// element's own background is painted -- this computer's camera on an iPad,
+// measured live 2026-10-09, while every Android and computer showed it. A
+// fresh copy of the element painted or not depending on its style, so no
+// style can be trusted to fix it; a canvas drawn from the very same video
+// always showed the picture, even with that video nowhere on the page. So
+// where there is no track generator (Safari, Firefox) the stream plays in a
+// video nobody sees and each of its frames is drawn into a canvas that takes
+// the video's place -- once per frame the camera sends, never per screen
+// refresh. A browser with no per-frame callback keeps the `<video>`.
+function createVideoFedCameraView(mediaStream: MediaStream) {
+    if (
+        typeof (globalThis as any).MediaStreamTrackGenerator === 'function' ||
+        typeof HTMLVideoElement === 'undefined' ||
+        typeof HTMLVideoElement.prototype.requestVideoFrameCallback !==
+            'function'
+    ) {
+        return null;
+    }
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (context === null) {
+        return null;
+    }
+    const video = createCameraVideo(mediaStream);
+    // Started now, not on its metadata: a video on no page may load none
+    // until it plays, and an unplayed video has no frame to draw.
+    playMediaElement(video);
+    let callbackId: number | null = null;
+    const draw = () => {
+        const { videoWidth, videoHeight } = video;
+        if (videoWidth > 0 && videoHeight > 0) {
+            if (canvas.width !== videoWidth || canvas.height !== videoHeight) {
+                canvas.width = videoWidth;
+                canvas.height = videoHeight;
+            }
+            context.drawImage(video, 0, 0, videoWidth, videoHeight);
+        }
+        callbackId = video.requestVideoFrameCallback(draw);
+    };
+    callbackId = video.requestVideoFrameCallback(draw);
+    return {
+        element: canvas,
+        release: () => {
+            if (callbackId !== null) {
+                video.cancelVideoFrameCallback(callbackId);
+                callbackId = null;
+            }
+            video.pause();
+            video.srcObject = null;
+        },
+    };
+}
+
+// The element to show a camera in where a `<video>` of its stream would
+// stay empty: a canvas, until `release`. Null means a `<video>` shows it.
+// A browser viewer's camera comes as frames and is drawn as they come; any
+// other camera, in Safari and Firefox, from a video nobody sees.
+export function createCameraCanvasView(mediaStream: MediaStream) {
+    return (
+        createViewerCameraView(mediaStream) ??
+        createVideoFedCameraView(mediaStream)
+    );
+}
+
 export async function getCameraAndShowMedia(
     {
         id,
@@ -284,26 +366,19 @@ export async function getCameraAndShowMedia(
         // camera share ONE stream instead of re-handshaking the device.
         const mediaStream = await acquireCameraStream(resolvedId);
         acquiredDeviceId = resolvedId;
-        const video = document.createElement('video');
-        // A camera brings no sound (it is opened \`audio: false\`), and a
-        // browser refuses to start an element that is not muted until the
-        // page is touched -- a phone watching a virtual display drew an empty
-        // box. Set as a PROPERTY: the attribute does not stop that.
-        video.muted = true;
-        video.playsInline = true;
-        video.srcObject = mediaStream;
-        video.onloadedmetadata = () => {
-            playMediaElement(video);
-        };
+        // In Safari and Firefox a camera shows in a canvas: an iPad never
+        // paints the `<video>` it would otherwise be.
+        const view = createCameraCanvasView(mediaStream);
+        const element = view?.element ?? createCameraVideo(mediaStream);
         if (width !== undefined) {
-            video.style.width = `${width}px`;
+            element.style.width = `${width}px`;
         }
-        Object.assign(video.style, extraStyle ?? {});
+        Object.assign(element.style, extraStyle ?? {});
         // Hidden while a viewer's camera sends no pictures.
         const stopListeningLive = listenViewerCameraLive(
             mediaStream,
             (isLive) => {
-                video.style.visibility = isLive ? '' : 'hidden';
+                element.style.visibility = isLive ? '' : 'hidden';
             },
         );
         parentContainer.innerHTML = '';
@@ -312,16 +387,17 @@ export async function getCameraAndShowMedia(
                 return;
             }
             stopListeningLive();
+            view?.release();
             releaseCameraStream(acquiredDeviceId);
             acquiredDeviceId = null;
         };
         if (animData === undefined) {
-            parentContainer.appendChild(video);
+            parentContainer.appendChild(element);
             return releaseThisStream;
         }
-        animData.animIn(video, parentContainer);
+        animData.animIn(element, parentContainer);
         return async () => {
-            await animData.animOut(video);
+            await animData.animOut(element);
             releaseThisStream();
         };
     } catch (error) {

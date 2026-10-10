@@ -746,9 +746,9 @@ export function filterToolList(toolList) {
 }
 
 // Secrets that must not leave the machine inside a tool result. This is not
-// theoretical: the chatbot calls Anthropic, OpenAI and Moonshot FROM THE
-// RENDERER with the user's own key in a header, and the key sits in an input
-// on Settings -> Others. So `list_network_requests`, `list_console_messages`
+// theoretical: the chatbot calls Anthropic, OpenAI, Moonshot and Bedrock FROM
+// THE RENDERER with the user's own key in a header, and the key sits in an
+// input on Settings -> Others. So `list_network_requests`, `list_console_messages`
 // and a plain `take_snapshot` of the settings page will each hand the user's
 // key straight back to a model -- which is to say, off the machine.
 //
@@ -764,6 +764,12 @@ const SECRET_PATTERNS = [
     // hands out today went through whole. Twenty characters is past any word:
     // `sk-SK`, the Slovak locale tag, is left alone.
     /\bsk-[A-Za-z0-9_-]{20,}/g,
+    // Amazon Bedrock API keys: a long-term one is `ABSK` and a base64 body,
+    // `+` and `/` included, which the rule above would stop at; a short-term
+    // one is a base64 presigned URL behind `bedrock-api-key-`, with a
+    // `&Version=1` on the end.
+    /\bABSK[A-Za-z0-9+/]{40,}={0,2}/g,
+    /\bbedrock-api-key-[A-Za-z0-9+/%_=&-]{20,}/g,
     // JSON Web Tokens -- SongSelect's OAuth pair, among others.
     /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g,
     /\bBearer\s+[A-Za-z0-9._~+/-]{16,}=*/gi,

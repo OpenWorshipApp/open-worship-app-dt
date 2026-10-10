@@ -311,8 +311,13 @@ type ProviderPagesType = {
     workspaces?: string;
 };
 
+// The providers with an account and a console to send the user to. Not the
+// keyless service, and not the user's own servers: a server's address is
+// theirs, and the one door that helps there is the Settings panel it is in.
+type PaidProviderType = Exclude<LlmProviderType, 'free' | 'custom'>;
+
 export const PAID_PROVIDER_PAGE_MAP: Record<
-    Exclude<LlmProviderType, 'free'>,
+    PaidProviderType,
     ProviderPagesType
 > = {
     anthropic: {
@@ -332,6 +337,16 @@ export const PAID_PROVIDER_PAGE_MAP: Record<
         billing: 'https://platform.kimi.ai/console',
         keys: 'https://platform.kimi.ai/console/api-keys',
         limits: 'https://platform.kimi.ai/console',
+    },
+    // The AWS console's own front doors, region-free on purpose: the console
+    // sends a signed-in user on to their last region, and a deep link built
+    // with the wrong one opens an empty page. The keys page is the one the
+    // Gemma 4 model card links to create a long-term Bedrock API key.
+    bedrock: {
+        billing: 'https://console.aws.amazon.com/billing/home',
+        keys: 'https://console.aws.amazon.com/bedrock/home#/api-keys',
+        limits: 'https://console.aws.amazon.com/servicequotas/home/services/bedrock/quotas',
+        status: 'https://health.aws.amazon.com/health/status',
     },
 };
 
@@ -361,8 +376,7 @@ export function getLlmProviderPageUrl(
     ) {
         return null;
     }
-    const pages =
-        PAID_PROVIDER_PAGE_MAP[provider as Exclude<LlmProviderType, 'free'>];
+    const pages = PAID_PROVIDER_PAGE_MAP[provider as PaidProviderType];
     return pages[page as LlmProviderPageType] ?? null;
 }
 

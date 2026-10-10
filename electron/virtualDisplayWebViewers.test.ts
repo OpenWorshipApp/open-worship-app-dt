@@ -22,6 +22,7 @@ type ControllerType = {
     camerasChangedListeners: Set<() => void>;
     shownCameras: Set<string>;
     checkIsCameraShown: (id: string) => boolean;
+    cameraLabelOf: (id: string) => string;
 };
 type OpenedType = { ws: WebSocket; messages: any[] };
 const HOST_ID = '00000000-0000-4000-8000-000000000001';
@@ -144,6 +145,9 @@ beforeEach(async () => {
         camerasChangedListeners: new Set(),
         shownCameras,
         checkIsCameraShown: (id: string) => shownCameras.has(id),
+        cameraLabelOf: (id: string) => {
+            return shownCameras.has(id) ? `Name of ${id}` : '';
+        },
     };
     context = { screenId: 5, display: { id: -500001 } };
     host = {
@@ -734,6 +738,37 @@ describe('a screen socket', () => {
         screen!.ws.send(JSON.stringify(verse));
         await settle();
         expect(host.onFeedback).toHaveBeenCalledTimes(2);
+    });
+
+    // The name the screen gives a viewer's camera goes with the watch: a
+    // camera shared under it feeds the page when its own tab is gone.
+    test('a viewer camera on the screen is watched with the name the screen gives it', async () => {
+        await openViewer();
+        const screen = await connect(screenPath());
+        await vi.waitFor(() => expect(screen!.messages).toHaveLength(2));
+        const watch = (cameraId: string, isWatching = true) => {
+            screen!.ws.send(
+                JSON.stringify({ type: 'camera-watch', cameraId, isWatching }),
+            );
+        };
+        // Not on the screen: never watched.
+        watch('vd-camera:not-shown');
+        controller.shownCameras.add('vd-camera:old-tab');
+        watch('vd-camera:old-tab');
+        await vi.waitFor(() => {
+            expect(host.onScreenCamera).toHaveBeenCalledWith(
+                `screen:${VIEWER_ID}:5`,
+                'vd-camera:old-tab',
+                true,
+                'Name of vd-camera:old-tab',
+            );
+        });
+        expect(host.onScreenCamera).not.toHaveBeenCalledWith(
+            expect.anything(),
+            'vd-camera:not-shown',
+            expect.anything(),
+            expect.anything(),
+        );
     });
 
     // Watching, so no "Allow interaction" needed -- but only a camera this

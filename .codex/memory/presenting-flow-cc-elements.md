@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-cc-elements
-description: Presenting Flow CC elements ride along with their host's present; they are UUID references to a listed line, and they never choose a screen themselves
+description: "Presenting Flow CC elements ride along with their host's present; they are UUID references to a listed line, and they never choose a screen themselves"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:05:45.978Z
 ---
 
 A presenting flow entry can carry **CC elements** — followers that go to the screens with it.
@@ -72,8 +75,8 @@ as two clicks is exactly what an operator cannot spare mid-service.
   if both). `position` means MOVE for a row of this presenting flow and INSERT AT THAT INDEX for
   anything else, which is the only way to land an outside payload anywhere but the end of
   the sheet. The whole rule is `toPresentingFlowRowDropKind` in `presentingFlowHelpers`, pure and
-  WAS tested (`presentingFlowReorder.test.ts`, deleted 2026-08-24 — now
-  unguarded); the component only says whether the BANDS mean anything (they are a
+  tested again in `presentingFlowHelpers.coverage.test.ts` (`c24d3a43`, 2026-09-26;
+  its predecessor `presentingFlowReorder.test.ts` was deleted 2026-08-24); the component only says whether the BANDS mean anything (they are a
   same-presenting-flow affordance — an outside payload has no "between two lines" reading to
   discover by accident, so it attaches unless Ctrl is held). The handlers live on `PresentingFlowRowComp`, NOT
   on `PresentingFlowItemComp`'s wrapper — `event.currentTarget` has to be the row for the rect to

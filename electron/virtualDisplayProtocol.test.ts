@@ -158,6 +158,24 @@ describe('virtualDisplayProtocol', () => {
             number: 3,
             kind: 'ws',
         });
+        expect(parseVirtualDisplayPath('/vd/3/video.m3u8')).toEqual({
+            number: 3,
+            kind: 'hls',
+        });
+        const token = 'ab'.repeat(16);
+        for (const file of ['index.m3u8', 'init-2.mp4', 'seg-41.m4s']) {
+            expect(
+                parseVirtualDisplayPath(`/vd/3/hls/${token}/${file}`),
+            ).toEqual({ number: 3, kind: 'hls-file', token, file });
+        }
+        for (const path of [
+            `/vd/0/hls/${token}/index.m3u8`,
+            `/vd/3/hls/${token}/other.m3u8`,
+            `/vd/3/hls/${token.slice(1)}/index.m3u8`,
+            `/vd/3/hls/${token}/seg-1.m4s/x`,
+        ]) {
+            expect(parseVirtualDisplayPath(path)).toBeNull();
+        }
         expect(parseVirtualDisplayPath('/vd/3/other')).toBeNull();
         expect(parseVirtualDisplayPath('/vd/0/')).toBeNull();
         expect(

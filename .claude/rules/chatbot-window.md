@@ -17,8 +17,9 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   (`src/others/`) mounts `PresentingControlComp`, `AppAssistantComp` and
   `KeyboardShortcutsComp` (Help → Keyboard Shortcuts, memory
   `keyboard-shortcuts-panel`) on all
-  nine renderer entries — presenter, reader, appDocumentEditor, bibleNote,
-  setting, webEditor, lwShare, lyricEditor, experiment — and deliberately NOT on
+  ten renderer entries — presenter, reader, appDocumentEditor, bibleNote,
+  setting, webEditor, lwShare, lyricEditor, experiment, screen-mirror — and
+  deliberately NOT on
   `about`, `chatbot`, `finder`, `markdownPreview` or `screen` (an overlay or a
   help window on the projector is the one place they must never appear; the
   markdown preview is a locked-down reader that never calls `run()`). All draw nothing until
@@ -80,14 +81,48 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   - **Providers are declared ONCE, in `LLM_PROVIDER_MAP`**
     (`Record<LlmProviderType, …>` lookups and a `keyField`; ternaries once sent
     an unknown provider to OpenAI silently): Claude, ChatGPT, **Kimi**,
-    **Free**. The three OpenAI-shaped ones share one loop through
+    **Bedrock**, **Free**. The four OpenAI-shaped ones share one loop through
     `OpenAiCompatProviderType` (client, label, `genRequestExtra`, optional model
-    filter, optional round cap). `kimiHelpers.ts` is the OpenAI SDK at
-    `https://api.moonshot.ai/v1`; every Kimi model thinks, so all get the
-    6000-token budget, `reasoning_effort` goes only to `kimi-k3` (K2 rejects it
-    and takes `thinking`), and its catalogue gets no filter (OpenAI's pattern
-    returns nothing). `chatSessionHelpers` keeps its own
-    `Record<LlmProviderType, true>` so it need not import the SDKs.
+    filter, optional round cap, `isOneToolCallPerTurn`). `kimiHelpers.ts` is the
+    OpenAI SDK at `https://api.moonshot.ai/v1`; every Kimi model thinks, so all
+    get the 6000-token budget, `reasoning_effort` goes only to `kimi-k3` (K2
+    rejects it and takes `thinking`), and its catalogue gets no filter (OpenAI's
+    pattern returns nothing). **Bedrock** (2026-10-09, memory
+    `bedrock-llm-provider`) is the OpenAI SDK at
+    `https://bedrock-mantle.<region>.api.aws/openai/v1` with an `ABSK…` key as
+    the bearer: nine models from three vendors (GPT-5.6 Terra first, Palmyra
+    Vision 7B left out — 4K context), a CLOSED list like Free's (no _More
+    models…_: `/openai/v1/models` is 404), each with `regions`, request rules told
+    apart by the id's vendor prefix, and `findModelProblem` refusing a model
+    the chosen region does not serve before a round is paid for. The region is
+    a plaintext setting off the closed `BEDROCK_REGION_LIST` (us-west-2 first —
+    the only one serving all nine), each one named in `html/chatbot.html`'s
+    `connect-src`, a test holding the two together. `chatSessionHelpers` keeps
+    its own `Record<LlmProviderType, true>` so it need not import the SDKs.
+  - **Custom servers** (2026-10-09, memory `custom-llm-servers`): the user's
+    own OpenAI-compatible servers (LM Studio, Ollama, any URL), added in
+    Settings → Others → **Custom servers** with a name, a base URL, an
+    optional key and a model list (id + shown name; **Test** and **Load
+    models from server** read `/models`). ONE provider key `custom`, shown
+    as ONE ROW PER SERVER (`genAssistantRows`), a model id
+    `<serverId>/<rowId>` decoded to the row's model at the request
+    (`toWireModel`). Every call goes renderer → IPC → the MAIN-process relay
+    (`electron/customLlmRelayHelpers.ts`), which forwards only to the saved
+    address, only `GET /models` and `POST /chat/completions`, with the key
+    read in main — the chatbot CSP is NOT widened and a custom key never
+    enters the window. Never stands in or is stood in for; this computer AND
+    the church's own network (`checkIsLocalNetworkUrl`) are priced at $0; a
+    failure says its own sentence (`CustomServerError`). Measured against
+    the user's LM Studio box the same day: the fixed request is ~13 400
+    tokens, so a model LOADED under 16k is refused before a round and every
+    sentence asks for 32k; a machine that goes to sleep mid-question is
+    caught by the relay asking `/models` on a second connection every 20 s
+    (`lost` after two failed connections — a slow list is a busy server);
+    LM Studio's own `/api/v0/models` (root of a `/v1` address only) is read
+    by Settings' Test / Load — loaded, context, and **Sees pictures**
+    (`canSeeImages` on the row, the only way a custom model gets pictures)
+    — and by the chatbot before each ask, 1.5 s cap, for the too-small
+    refusal and a round-1 line _Waiting for <server> to load <model>_.
   - **Free needs no key** (`src/helper/ai/freeHelpers.ts`): Kilo Code
     (`api.kilo.ai`), three `:free` models each proven through the real tool
     loop (a test holds ids to `:free`; an unsuffixed Kilo id is paid and
@@ -128,9 +163,23 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     through `askLlmBot` into both providers' requests and every `callTool`
     fetch, and is checked before each round. Say it AT THE PRESS and never as a
     failure — `describeLlmError` reads an abort as an unreachable service, and
-    the offline bot would answer a question the user called off. Busy is the
-    pending list's length (asks overlap). A tool that already clicked is not
-    undone.
+    the offline bot would answer a question the user called off. A tool that
+    already clicked is not undone.
+  - **Each TAB works on its own** (2026-10-09, the user's ask: _while one
+    working another should be able to do different things_). Busy is a set of
+    tab ids (`busySessionIds`, from the pending asks' `sessionId`s plus
+    `busyHoldListRef` for an unstoppable song write); `isBusy` is the tab in
+    front's, so another tab keeps Ask, its own progress and no Stop. Progress
+    lines are per tab (`progressHelpers` keyed by session id, an entry deleted
+    when cleared), and Stop / Escape stop the tab in front only. **Three
+    points of colour while ANY tab works** (the user's ask, with a picture):
+    a steady dot after the busy tab's name, `🟠 ` in front of the window title
+    (the taskbar shows it), and an amber point on the 🤖 in every top-bar
+    window — told through main (`chatbotBusyHelpers.ts`,
+    `all:app:chatbot-busy` → `main:app:chatbot-busy`, cleared when the help
+    window is destroyed). The 🤖 ASKS on mount asynchronously: a synchronous
+    ask froze every window the one time main had no handler for it (a dev
+    renderer hot-reloaded ahead of its main process).
   - With no key at all the window says so and offers Settings → Others; a
     failed call falls back to the offline manual bot. Written for a
     non-technical volunteer, English-only: no ids, no paths, manual pages only;

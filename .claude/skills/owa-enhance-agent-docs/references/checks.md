@@ -52,8 +52,10 @@ and 148 notes whose named code moved since their last edit.
   methods, Win32 and macOS window APIs, React fiber internals, Prettier
   options and Claude Code's own tool names. The ones a run proved external
   are in the script's `EXTERNAL_NAME_SET`; add to it only with that proof.
-  Illustrative names, such as the example in CLAUDE.md's naming rule, are
-  another source.
+  A name that is history in one doc goes in `killed-leads.json` instead
+  (doc-scoped, so the same name turning up live elsewhere still reports).
+  Before 2026-10-08 the 2.3 MB `lib.dom.d.ts` sat over the script's read cap
+  and every DOM API came back as a lead; it is read whole now.
 - **Confirm.** `git log -S'<name>' --oneline -- src electron tools | head -3`.
   The newest commit that removed it says what it became. Then grep the
   likely successor.
@@ -147,8 +149,9 @@ and 148 notes whose named code moved since their last edit.
 - Exact-copy drift with direction. A **mirror newer** than its source means an
   edit landed on the wrong side: port it to `.claude/`, then copy again.
   `.mcp.json` servers must also be registered in `.codex/config.toml`.
-- **Fix.** Re-copy (**fix**). For a mirrored `SKILL.md`, rebuild the Codex
-  preamble from `AGENTS.md`'s rules: a short discovery description,
+- **Fix.** Re-copy with `node extra-work/sync-agent-mirror.mjs` (**fix**). It
+  keeps a mirrored `SKILL.md`'s preamble; for a NEW skill, write the Codex
+  preamble by hand from `AGENTS.md`'s rules: a short discovery description,
   `## Codex usage`, `Arguments:`, the full description under
   `### Full workflow scope (preserved from Claude)`, then the exact body.
 

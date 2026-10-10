@@ -1,12 +1,17 @@
 ---
 name: blob-download-pops-save-dialog
-description: An `<a download>` blob click in the renderer pops a native Save As dialog and orphans a .tmp — the app registers no will-download handler
+description: "An `<a download>` blob click in the renderer pops a native Save As dialog and orphans a .tmp — the app registers no will-download handler"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:11:18.687Z
 ---
 
 Browser-style downloads do **not** work silently in this app. `electron/` has no
-`session.on('will-download')` handler anywhere, so Chromium falls back to its
+`session.on('will-download')` handler on the app's own session (the two in
+`webPageHelpers.ts` / `webCaptureHelpers.ts` only cancel downloads in their
+private read/capture sessions), so Chromium falls back to its
 default: a native **Save As** dialog (`#32770` window titled with the `blob:`
 URL) for every `<a download>` click. Until it is answered the bytes sit in
 `~/Downloads/<uuid>.tmp` and no named file ever appears.
@@ -24,8 +29,6 @@ Consequences worth knowing:
 - A download triggered from `evaluate_script` without user activation is dropped
   entirely by Chromium — a CDP probe that "does nothing" is not proof the feature
   is broken. Drive the real button instead.
-- `downloadBibleJSON` in `src/setting/bible-setting/BibleXMLDataPreviewComp.tsx`
-  still uses this pattern, so exporting bible XML JSON hits the same dialog.
 
 **Why:** the bible MS Word export was rewritten to build the `.docx` in the
 renderer and hand it to the browser; it silently produced nothing but a `.tmp`.
@@ -33,8 +36,9 @@ renderer and hand it to the browser; it silently produced nothing but a `.tmp`.
 **How to apply:** to write a generated file from the renderer, use the app's own
 fs helpers — `fsWriteFile(pathJoin(getDownloadPath(), name), Buffer.from(bytes))`
 (exemplars: `exportBibleMSWord` in `src/ms-office/docxHelpers.ts`,
-`downloadImageBase64Data` in `src/server/appHelpers.ts`, and
-`src/graph-view/graphExportHelpers.ts:210`). That keeps the real
+`downloadImageBase64Data` in `src/server/appHelpers.ts`, `downloadBibleJSON` in
+`src/setting/bible-setting/bibleXMLDownloadHelpers.ts`, and `saveGraphImage` in
+`src/graph-view/graphExportHelpers.ts`). That keeps the real
 path, so `showFileOrDirExplorer` can reveal the file. Pass it the **file**, never
 the directory — `shell.showItemInFolder` on a directory selects it inside its
 parent instead of opening it. See [[tran-missing-key-throws-in-dev]] for the

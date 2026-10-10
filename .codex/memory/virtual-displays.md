@@ -4,7 +4,7 @@ description: "Virtual displays (W-51, SP-30/31): app-only monitors in the displa
 metadata:
   node_type: memory
   type: project
-  modified: 2026-10-09T01:44:39.424Z
+  modified: 2026-10-09T15:15:00.000Z
   originSessionId: d2d65105-9e71-4dd7-9744-fda3c4099ead
 ---
 
@@ -345,6 +345,29 @@ present; all absent on `http://`.
   certificate (WebKit has refused it in the past even after the page was
   accepted -- the http address still works); a browser's "Cast from this
   browser" from an https page hands the TV an https MP4 it may refuse.
+
+**An iPhone or iPad gets the MP4 as HLS, at the same address** (2026-10-09,
+reported _"`.../video` not working as well"_ from a phone; Android, VLC and
+computers played it). iOS plays a live video only as HLS: it asks `/video`
+for `Range: bytes=0-1`, gets an endless chunked MP4, and shows nothing.
+`/vd/<n>/video` answers Apple's player, every browser on an iPhone or iPad,
+and Safari on a Mac (`checkIsHlsOnlyUserAgent`; VLC never) with a master
+playlist, and `/vd/<n>/video.m3u8` gives it to any player.
+
+- `HlsSegmenter` (`electron/hlsSegmenter.ts`) is fed by the fan-out's sink
+  (`Fmp4Fanout.setSink`): fragments gathered into ~1.8 s segments, each
+  starting on a keyframe asked for at 1.7 s (the encoder makes one only when
+  asked); 8 s held (three target durations + one, so a slow phone still
+  finds the oldest it was offered); a restart is a discontinuity with its own
+  init. ONE per display, and only while an HLS player polls: about 4 MB.
+- Each player is a 32-hex token in its file addresses
+  (`/vd/<n>/hls/<token>/...`), let in once by the same rules as `/video`
+  (Allow or code, Disconnect, the viewer limits) and good only from the
+  address let in. Silent 30 s (a phone locked): dropped; the last one gone
+  drops the segmenter, and 5 s later the compositor stops.
+- Verified 2026-10-09: the user's iPad played it; `ffmpeg` decoded the master
+  -> playlist -> init -> segments live (1080p H.264 + AAC, ~1.8 s segments,
+  new segments followed); the token from another address got 404.
 
 **Driving it in dev:** the presenter deletes `globalThis.provider` after
 `appProvider` reads it; raw CDP in a scratch instance reaches IPC through

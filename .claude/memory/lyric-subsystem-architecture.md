@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: da5728a5-2e42-4a20-8512-65b8dc76a945
-  modified: 2026-09-27T16:00:27.191Z
+  modified: 2026-10-09T03:04:21.579Z
 ---
 
 Lyric documents (`src/lyric-list/`) are **not** ordinary slide documents. A
@@ -39,8 +39,10 @@ Things that bite:
   instance per stage, each with its own `openLyric` field and its own cache
   entries. `LYRIC_APP_DOCUMENT_STAGE_CLASSES` is the LAYOUT list, not the stage
   list: stage 0's `stageOpenLyricOptions.css` hides chords and section titles
-  (`display: none`), every stage from 1 up borrows the LAST entry
-  (`LyricAppDocumentStage1` — `isWithKeyNote: true`, no hiding) and differs only
+  (`display: none`), stages 1–5 have their own entries (`Stage2`–`Stage5`
+  since 2026-09-29), and a stage past the list falls back to
+  `FALLBACK_STAGE_CLASS` = `LyricAppDocumentStage1` — deliberately NOT the last
+  entry (`isWithKeyNote: true`, no hiding) — and differs only
   by its own `lyric-stage-style-<stage>` record. What makes that safe is
   `LyricAppDocumentStageAbstract.getStageInstance(filePath, stage)`: the
   instance cache keys on the CLASS NAME plus the path, so the stage goes in as

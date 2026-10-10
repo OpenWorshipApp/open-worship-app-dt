@@ -21,6 +21,12 @@ import type { ScreenMirrorService } from './screenMirrorService';
 import { toMirrorPlainAddress } from './screenMirrorProtocol';
 import { readRequestSender } from './mirrorRequestSender';
 import { Fmp4Fanout } from './fmp4Fanout';
+import {
+    HLS_READY_SEGMENTS,
+    HlsSegmenter,
+    checkIsHlsOnlyUserAgent,
+    toHlsMasterPlaylist,
+} from './hlsSegmenter';
 import { VirtualDisplayWebViewers } from './virtualDisplayWebViewers';
 import { ViewerCameras } from './virtualDisplayViewerCameras';
 import VirtualScreenController from './VirtualScreenController';
@@ -49,6 +55,7 @@ import {
     readVirtualDisplaySetting,
     sanitizeVirtualDisplayName,
     sanitizeWallpaper,
+    toVirtualDisplayBitrate,
     toVirtualDisplayId,
     toVirtualDisplayNumber,
     toVirtualDisplayStreamUrl,
@@ -152,6 +159,32 @@ const DEFAULT_VIEWER_LABELS: Record<string, string> = {
 // A media player from the internet waiting for the operator's Allow is
 // answered 403 after this long.
 const PLAYER_WAIT_MILLISECOND = 5 * 60 * 1000;
+// An HLS player asks for its playlist every couple of seconds; one silent
+// this long has gone (a phone locked, a tab closed).
+const HLS_IDLE_MILLISECOND = 30000;
+const HLS_SWEEP_MILLISECOND = 5000;
+// The most a first playlist waits for the stream to have started.
+const HLS_WAIT_MILLISECOND = 20000;
+const HLS_PLAYLIST_TYPE = 'application/vnd.apple.mpegurl';
+
+function writeHlsResponse(
+    res: http.ServerResponse,
+    contentType: string,
+    body: string | Buffer,
+    isHead = false,
+) {
+    const data = typeof body === 'string' ? Buffer.from(body) : body;
+    res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': data.length,
+        // A playlist changes with every segment; a segment never changes.
+        'Cache-Control':
+            contentType === HLS_PLAYLIST_TYPE ? 'no-store' : 'max-age=60',
+        'X-Content-Type-Options': 'nosniff',
+        'Access-Control-Allow-Origin': '*',
+    });
+    res.end(isHead ? undefined : data);
+}
 // Media players let in from the internet, by display and address.
 const MAX_PLAYER_GRANTS = 256;
 const MAX_CAST_TOKENS = 256;
@@ -168,17 +201,34 @@ type CastEntryType = {
     playbackRate: number;
 };
 
+// The display's MP4 as HLS, for an iPhone, an iPad or Safari (see
+// `HlsSegmenter`): there only while such a player watches. Each player is a
+// token in its file addresses, standing for the viewer it was let in as,
+// from the address it was let in from.
+type HlsStateType = {
+    segmenter: HlsSegmenter;
+    players: Map<string, { id: string; address: string; lastSeen: number }>;
+    // Answers waiting for the stream to start (`whenHls`).
+    waiters: Set<() => void>;
+    sweepTimer: ReturnType<typeof setInterval>;
+};
+
 type SessionType = {
     number: number;
     window: BrowserWindow | null;
     isReady: boolean;
     fanout: Fmp4Fanout;
+    hls: HlsStateType | null;
     viewers: Map<string, VirtualDisplayClient>;
     // Players from the internet held until the operator's Allow: listed in
     // `viewers` as waiting, answered once allowed, rejected or timed out.
     waitingPlayers: Map<
         string,
-        { res: http.ServerResponse; timer: ReturnType<typeof setTimeout> }
+        {
+            res: http.ServerResponse;
+            timer: ReturnType<typeof setTimeout>;
+            isHls: boolean;
+        }
     >;
     stream: VirtualDisplayStreamStatus;
     error: string | null;
@@ -366,11 +416,16 @@ export class VirtualDisplayService {
             onViewerCamera: (viewerId, address, packet) => {
                 this.viewerCameras.receive(viewerId, address, packet);
             },
-            onScreenCamera: (watcher, cameraId, isWatching) => {
+            onScreenCamera: (watcher, cameraId, isWatching, label) => {
                 if (cameraId === null) {
                     this.viewerCameras.forgetWatcher(watcher);
                 } else {
-                    this.viewerCameras.watch(watcher, cameraId, isWatching);
+                    this.viewerCameras.watch(
+                        watcher,
+                        cameraId,
+                        isWatching,
+                        label,
+                    );
                 }
             },
         });
@@ -973,6 +1028,7 @@ export class VirtualDisplayService {
                     (id) => this.onViewerGone(created, id),
                     () => this.requestKeyframe(created),
                 ),
+                hls: null,
                 viewers: new Map(),
                 waitingPlayers: new Map(),
                 stream: 'idle',
@@ -1141,7 +1197,19 @@ export class VirtualDisplayService {
         session.stream = 'error';
         session.error = error;
         session.fanout.reset();
+        this.endHlsPlayers(session);
         this.stopCompositor(session);
+    }
+
+    // Every HLS player ended, as `fanout.reset` ends every MP4 one.
+    private endHlsPlayers(session: SessionType) {
+        const ids = [...(session.hls?.players.values() ?? [])].map(
+            (player) => player.id,
+        );
+        this.dropHls(session);
+        for (const id of ids) {
+            this.onViewerGone(session, id);
+        }
     }
 
     // Ends every viewer of a display and its compositor (a new size, a
@@ -1152,6 +1220,7 @@ export class VirtualDisplayService {
             return;
         }
         session.fanout.reset();
+        this.endHlsPlayers(session);
         session.viewers.clear();
         this.stopCompositor(session);
         session.stream = 'idle';
@@ -1322,7 +1391,9 @@ export class VirtualDisplayService {
     private endPlayer(session: SessionType, id: string, status: number) {
         const waiting = session.waitingPlayers.get(id);
         if (waiting === undefined) {
-            session.fanout.removeClient(id);
+            if (!this.endHlsPlayer(session, id)) {
+                session.fanout.removeClient(id);
+            }
             return;
         }
         clearTimeout(waiting.timer);
@@ -1418,7 +1489,11 @@ export class VirtualDisplayService {
             this.onViewerGone(session, clientId);
             return;
         }
-        await this.startPlayer(session, clientId, waiting.res);
+        if (waiting.isHls) {
+            await this.startHlsPlayer(session, clientId, waiting.res);
+        } else {
+            await this.startPlayer(session, clientId, waiting.res);
+        }
     }
 
     // `/vd/<number>/video`: who may watch, then a seat in the fan-out.
@@ -1452,6 +1527,15 @@ export class VirtualDisplayService {
             return;
         }
         const address = toMirrorPlainAddress(readRequestSender(req).address);
+        if (target.kind === 'hls-file') {
+            this.serveHlsFile(req, res, record.number, target, address);
+            return;
+        }
+        // An iPhone, an iPad or Safari cannot play an endless MP4: the same
+        // address answers it with HLS, so every link and QR code works there.
+        const isHls =
+            target.kind === 'hls' ||
+            checkIsHlsOnlyUserAgent(String(req.headers['user-agent'] ?? ''));
         const isPreview =
             network === 'this-computer' &&
             url.searchParams.get('preview') === '1';
@@ -1520,15 +1604,15 @@ export class VirtualDisplayService {
             return;
         }
         // A DLNA TV asks how the stream may be played, and for it as a stream.
-        if (req.headers['getcontentfeatures.dlna.org'] === '1') {
+        if (!isHls && req.headers['getcontentfeatures.dlna.org'] === '1') {
             res.setHeader('contentFeatures.dlna.org', DLNA_CONTENT_FEATURES);
         }
-        if (req.headers['transfermode.dlna.org'] !== undefined) {
+        if (!isHls && req.headers['transfermode.dlna.org'] !== undefined) {
             res.setHeader('transferMode.dlna.org', 'Streaming');
         }
         if (req.method === 'HEAD') {
             res.writeHead(200, {
-                'Content-Type': 'video/mp4',
+                'Content-Type': isHls ? HLS_PLAYLIST_TYPE : 'video/mp4',
                 'Cache-Control': 'no-store',
             }).end();
             return;
@@ -1550,7 +1634,7 @@ export class VirtualDisplayService {
             const timer = setTimeout(() => {
                 this.endPlayer(session, id, 403);
             }, PLAYER_WAIT_MILLISECOND);
-            session.waitingPlayers.set(id, { res, timer });
+            session.waitingPlayers.set(id, { res, timer, isHls });
             res.on('close', () => {
                 if (session.waitingPlayers.get(id)?.res === res) {
                     clearTimeout(timer);
@@ -1561,7 +1645,238 @@ export class VirtualDisplayService {
             this.scheduleState();
             return;
         }
-        await this.startPlayer(session, id, res);
+        if (isHls) {
+            await this.startHlsPlayer(session, id, res);
+        } else {
+            await this.startPlayer(session, id, res);
+        }
+    }
+
+    // -- HLS ------------------------------------------------------------------
+
+    // The display's segmenter, fed by its fan-out, while an HLS player
+    // watches; the sweep lets go of players gone silent.
+    private ensureHls(session: SessionType) {
+        if (session.hls !== null) {
+            return session.hls;
+        }
+        const segmenter = new HlsSegmenter(() => {
+            this.requestKeyframe(session);
+        });
+        const hls: HlsStateType = {
+            segmenter,
+            players: new Map(),
+            waiters: new Set(),
+            sweepTimer: setInterval(() => {
+                this.sweepHls(session);
+            }, HLS_SWEEP_MILLISECOND),
+        };
+        segmenter.onChange = () => {
+            for (const waiter of [...hls.waiters]) {
+                waiter();
+            }
+        };
+        session.hls = hls;
+        session.fanout.setSink({
+            onInit: (init) => segmenter.setInit(init),
+            onFragment: (fragment, isKey, videoTime) => {
+                segmenter.addFragment(fragment, isKey, videoTime);
+            },
+            onReset: () => segmenter.reset(),
+        });
+        return hls;
+    }
+
+    // No HLS player left: the segments go with the segmenter.
+    private dropHls(session: SessionType) {
+        const hls = session.hls;
+        if (hls === null) {
+            return;
+        }
+        session.hls = null;
+        clearInterval(hls.sweepTimer);
+        session.fanout.setSink(null);
+        hls.players.clear();
+        for (const waiter of [...hls.waiters]) {
+            waiter();
+        }
+    }
+
+    private sweepHls(session: SessionType) {
+        const hls = session.hls;
+        if (hls === null) {
+            return;
+        }
+        const now = Date.now();
+        for (const [token, player] of [...hls.players]) {
+            if (now - player.lastSeen > HLS_IDLE_MILLISECOND) {
+                hls.players.delete(token);
+                this.onViewerGone(session, player.id);
+            }
+        }
+        if (hls.players.size === 0) {
+            this.dropHls(session);
+        }
+    }
+
+    // A viewer that is an HLS player, ended: false when it is not one.
+    private endHlsPlayer(session: SessionType, id: string) {
+        const hls = session.hls;
+        if (hls === null) {
+            return false;
+        }
+        for (const [token, player] of hls.players) {
+            if (player.id === id) {
+                hls.players.delete(token);
+                if (hls.players.size === 0) {
+                    this.dropHls(session);
+                }
+                this.onViewerGone(session, id);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Answers once `isReady` holds (checked again on every new init and
+    // segment), or 503 after a while; nothing if the player went away.
+    private whenHls(
+        session: SessionType,
+        res: http.ServerResponse,
+        isReady: (hls: HlsStateType) => boolean,
+        answer: (hls: HlsStateType) => void,
+    ) {
+        const hls = session.hls;
+        if (hls === null) {
+            res.writeHead(404, { 'Cache-Control': 'no-store' }).end();
+            return;
+        }
+        if (isReady(hls)) {
+            answer(hls);
+            return;
+        }
+        const finish = () => {
+            clearTimeout(timer);
+            hls.waiters.delete(check);
+            res.off('close', finish);
+        };
+        const check = () => {
+            if (session.hls !== hls) {
+                finish();
+                if (!res.headersSent) {
+                    res.writeHead(404, { 'Cache-Control': 'no-store' }).end();
+                }
+            } else if (isReady(hls)) {
+                finish();
+                answer(hls);
+            }
+        };
+        const timer = setTimeout(() => {
+            finish();
+            if (!res.headersSent) {
+                res.writeHead(503, { 'Cache-Control': 'no-store' }).end();
+            }
+        }, HLS_WAIT_MILLISECOND);
+        hls.waiters.add(check);
+        res.on('close', finish);
+    }
+
+    // A player let in: a token of its own, the compositor up, and -- once the
+    // stream has started and its codecs are known -- the master playlist.
+    private async startHlsPlayer(
+        session: SessionType,
+        id: string,
+        res: http.ServerResponse,
+    ) {
+        const record = this.getRecord(session.number);
+        const viewer = session.viewers.get(id);
+        if (record === null || viewer === undefined) {
+            res.writeHead(404, { 'Cache-Control': 'no-store' }).end();
+            return;
+        }
+        clearTimeout(session.releaseTimer);
+        const hls = this.ensureHls(session);
+        const token = randomBytes(16).toString('hex');
+        hls.players.set(token, {
+            id,
+            address: viewer.address,
+            lastSeen: Date.now(),
+        });
+        this.scheduleState();
+        this.whenHls(
+            session,
+            res,
+            (current) => current.segmenter.codecs !== null,
+            (current) => {
+                writeHlsResponse(
+                    res,
+                    HLS_PLAYLIST_TYPE,
+                    toHlsMasterPlaylist({
+                        codecs: current.segmenter.codecs!,
+                        width: record.width,
+                        height: record.height,
+                        bandwidth:
+                            toVirtualDisplayBitrate(
+                                record.width,
+                                record.height,
+                                FRAME_RATE,
+                            ) * 1.5,
+                        variant: `hls/${token}/index.m3u8`,
+                    }),
+                );
+            },
+        );
+        await this.startCompositor(session);
+    }
+
+    // A file of one HLS player's: only under its token, from the address it
+    // was let in from, while it is not blocked.
+    private serveHlsFile(
+        req: http.IncomingMessage,
+        res: http.ServerResponse,
+        number: number,
+        { token, file }: { token: string; file: string },
+        address: string,
+    ) {
+        const session = this.sessions.get(number);
+        const player = session?.hls?.players.get(token);
+        if (
+            session === undefined ||
+            player === undefined ||
+            player.address !== address ||
+            this.checkIsBlocked(number, 'video', address)
+        ) {
+            res.writeHead(404, { 'Cache-Control': 'no-store' }).end();
+            return;
+        }
+        player.lastSeen = Date.now();
+        const isHead = req.method === 'HEAD';
+        if (file === 'index.m3u8') {
+            this.whenHls(
+                session,
+                res,
+                (hls) => hls.segmenter.segmentCount >= HLS_READY_SEGMENTS,
+                (hls) => {
+                    writeHlsResponse(
+                        res,
+                        HLS_PLAYLIST_TYPE,
+                        hls.segmenter.toPlaylist(),
+                        isHead,
+                    );
+                },
+            );
+            return;
+        }
+        const segmenter = session.hls!.segmenter;
+        const index = Number(/\d+/.exec(file)![0]);
+        const data = file.startsWith('init-')
+            ? segmenter.getInit(index)
+            : segmenter.getSegment(index);
+        if (data === null) {
+            res.writeHead(404, { 'Cache-Control': 'no-store' }).end();
+            return;
+        }
+        writeHlsResponse(res, 'video/mp4', data, isHead);
     }
 
     private onViewerGone(session: SessionType, id: string) {
@@ -1931,6 +2246,7 @@ export class VirtualDisplayService {
         this.webViewers.closeAll();
         for (const session of this.sessions.values()) {
             session.fanout.reset();
+            this.endHlsPlayers(session);
             this.stopCompositor(session);
         }
     }

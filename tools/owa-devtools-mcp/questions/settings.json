@@ -4,12 +4,12 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-08",
+    "updated": "2026-10-09",
     "sections": [
         {
             "id": "general",
             "label": "Language, theme & fonts",
-            "recipes": ["W-16"],
+            "recipes": ["W-16", "W-52"],
             "questions": [
                 {
                     "id": "open-settings",
@@ -153,6 +153,41 @@
                     "resources": {
                         "recipe": "W-16",
                         "related": ["W-31"]
+                    }
+                },
+                {
+                    "id": "export-settings",
+                    "text": "How do I move my settings to another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "backup settings",
+                        "export settings",
+                        "save settings",
+                        "copy settings",
+                        "new computer",
+                        "transfer"
+                    ],
+                    "resources": {
+                        "recipe": "W-52",
+                        "find": "Export Settings",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "import-settings",
+                    "text": "How do I bring in settings exported from another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "import settings",
+                        "restore settings",
+                        "load settings",
+                        "owasetting",
+                        "replace settings"
+                    ],
+                    "resources": {
+                        "recipe": "W-52",
+                        "find": "Import Settings",
+                        "guide": true
                     }
                 }
             ]
@@ -322,12 +357,37 @@
                         "ai providers",
                         "kimi",
                         "moonshot",
+                        "bedrock",
+                        "aws",
+                        "amazon",
+                        "region",
                         "what is the key for"
                     ],
                     "resources": {
                         "recipe": "W-42",
                         "find": "AI Providers",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "custom-ai-server",
+                    "text": "How do I use my own LM Studio or Ollama with the assistant?",
+                    "kind": "howto",
+                    "keywords": [
+                        "lm studio",
+                        "ollama",
+                        "local model",
+                        "local llm",
+                        "own server",
+                        "custom server",
+                        "context length",
+                        "sees pictures",
+                        "base url",
+                        "on my network"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Add server"
                     }
                 },
                 {

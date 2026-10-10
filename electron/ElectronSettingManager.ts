@@ -418,7 +418,16 @@ export default class ElectronSettingManager {
     // One writer per process: two managers would each hold a full copy of
     // `settingObject` and overwrite each other's `setting.json`.
     static getInstance() {
-        instance ??= new this();
+        if (instance === null) {
+            const manager = new this();
+            instance = manager;
+            // `save()` waits a second for more changes, and a quit inside
+            // that second (a Restart pressed right after Import Settings)
+            // dropped every write still waiting.
+            electron.app.on('will-quit', () => {
+                manager.save(true);
+            });
+        }
         return instance;
     }
 }

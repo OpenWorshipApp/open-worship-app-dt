@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
     acquireCameraStreamMock,
+    createCameraCanvasViewMock,
     releaseCameraStreamMock,
     resolveCameraDeviceIdMock,
     handleErrorMock,
     playMediaElementMock,
 } = vi.hoisted(() => ({
     acquireCameraStreamMock: vi.fn(),
+    createCameraCanvasViewMock: vi.fn((_stream: unknown): any => null),
     releaseCameraStreamMock: vi.fn(),
     resolveCameraDeviceIdMock: vi.fn(),
     handleErrorMock: vi.fn(),
@@ -18,6 +20,7 @@ const {
 
 vi.mock('../../helper/cameraHelpers', () => ({
     acquireCameraStream: acquireCameraStreamMock,
+    createCameraCanvasView: createCameraCanvasViewMock,
     releaseCameraStream: releaseCameraStreamMock,
     resolveCameraDeviceId: resolveCameraDeviceIdMock,
 }));
@@ -160,5 +163,35 @@ describe('slideCameraSyncHelpers', () => {
             expect.objectContaining({ message: 'device busy' }),
         );
         expect(video.srcObject).toBeFalsy();
+    });
+
+    test('Safari: the camera shows in a canvas beside the hidden video, let go with the slide', async () => {
+        const mediaStream = {} as MediaStream;
+        acquireCameraStreamMock.mockResolvedValue(mediaStream);
+        const canvas = document.createElement('canvas');
+        const releaseView = vi.fn();
+        createCameraCanvasViewMock.mockImplementationOnce((stream) => {
+            return stream === mediaStream
+                ? { element: canvas, release: releaseView }
+                : null;
+        });
+        const attachment = new SlideCameraAttachment();
+        const { video, badge } = createCameraVideo();
+        video.style.objectFit = 'cover';
+
+        attachment.attach(video);
+        await flushPromises();
+
+        // Never given to the video an iPad leaves empty; the canvas has its
+        // look and its place.
+        expect(video.srcObject).toBeFalsy();
+        expect(video.style.display).toBe('none');
+        expect(video.nextElementSibling).toBe(canvas);
+        expect(canvas.style.objectFit).toBe('cover');
+        expect(badge.style.display).toBe('none');
+
+        attachment.releaseAll();
+        expect(releaseView).toHaveBeenCalledOnce();
+        expect(releaseCameraStreamMock).toHaveBeenCalledWith('device-1');
     });
 });

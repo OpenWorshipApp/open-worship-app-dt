@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-screen-actions
-description: Presenting Flow "actions" are a non-DragTypeEnum item kind added from a menu; two families now — screen actions and run actions — extend presentingFlowActionList, not the drag pipeline
+description: "Presenting Flow \"actions\" are a non-DragTypeEnum item kind added from a menu; two families now — screen actions and run actions — extend presentingFlowActionList, not the drag pipeline"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:13:29.240Z
 ---
 
 A presenting flow element can be an ACTION (added 2026-08-04, branch refactor23), not just
@@ -68,7 +71,7 @@ holds instructions, "carry on by yourself from here" is one too.
   is also where a run action is peeled off BEFORE `armPresentingFlowCcPropagation`: it
   resolves no screens, so a CC attached TO one could never fire (its menu offers no
   `Add CC Elements`). The other direction is open for the timeout only —
-  `toCcItemJson` reads `canBeCcItem`, and `applyPresentingFlowCcItemsOnScreenIds` fires it.
+  `PresentingFlowItem.resolveCcItemJson` reads `canBeCcItem`, and `applyPresentingFlowCcItemsOnScreenIds` fires it.
 - Colours mirror the clear bar's button variants EXCEPT the two `secondary` ones: the
   context menu's own background IS `--bs-secondary`, so those icons were invisible —
   they use `--bs-gray-500`. The run family wears no eraser and no ONE colour: timeout

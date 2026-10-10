@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-08"
+workflowsVersion: "2026-10-09"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -165,5 +165,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-09).
 :::
