@@ -4,6 +4,7 @@ import type { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { tran } from '../../lang/langHelpers';
 import type { SlidePropsType } from '../../app-document-list/Slide';
+import type { CanvasItemPropsType } from '../../slide-editor/canvas/CanvasItem';
 import type { CanvasItemBiblePropsType } from '../../slide-editor/canvas/CanvasItemBibleItem';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
 import { genPptxSlide } from '../../app-document-presenter/items/PptxSlideRenderComp';
@@ -83,9 +84,19 @@ import {
     checkStageLookAheadData,
     genStageLookAheadData,
 } from './screenStageLookAheadHelpers';
-import { wrapWithStageLookAhead } from '../stageLookAheadDomHelpers';
+import {
+    moveStageLookAhead,
+    wrapWithStageLookAhead,
+} from '../stageLookAheadDomHelpers';
+import {
+    moveLyricLookAhead,
+    registerLyricLookAhead,
+} from '../lyricLookAheadDomHelpers';
 import { resolveSlideTransitionEffect } from './screenSlideTransitionHelpers';
-import { withTransitionEffect } from '../transitionOverrideHelpers';
+import {
+    toValidTransitionEffect,
+    withTransitionEffect,
+} from '../transitionOverrideHelpers';
 import { CanvasItemTransitions } from './canvasItemTransitionHelpers';
 import {
     getStyleAnimForNode,
@@ -171,6 +182,17 @@ class ScreenVaryAppDocumentManager
     private _varySlideData: VarySlideScreenDataType | null = null;
     private _div: HTMLDivElement | null = null;
     private readonly canvasItemTransitions = new CanvasItemTransitions();
+    // The stage layout this screen is showing (`St:` 1 and up), kept so the
+    // next slide of the same document can move the slides already drawn
+    // rather than draw them again (`genStageMove`). `root` is a document's
+    // layout, or a song's stage slide, which is one already.
+    private stageScene: {
+        container: HTMLDivElement;
+        root: HTMLElement;
+        filePath: string;
+        width: number;
+        height: number;
+    } | null = null;
     private renderRevision = 0;
     private readonly syncAdjustedMediaElements =
         new WeakSet<HTMLMediaElement>();
@@ -206,6 +228,7 @@ class ScreenVaryAppDocumentManager
     set div(div: HTMLDivElement | null) {
         if (div !== this._div) {
             this.canvasItemTransitions.dispose();
+            this.stageScene = null;
         }
         this._div = div;
         this.render();
@@ -1329,7 +1352,130 @@ class ScreenVaryAppDocumentManager
             stageLookAhead,
             this.screenManagerBase.width,
             this.screenManagerBase.height,
+            itemJson,
         );
+    }
+
+    // A slide's items as the screen draws them, wired up like the slide's.
+    private genSlideContent(canvasItems: CanvasItemPropsType[]) {
+        const content = genSlideHtml(canvasItems);
+        this.cleanupSlideContent(content);
+        return content;
+    }
+
+    private checkIsNoTransition(slideData: VarySlideScreenDataType) {
+        return (
+            (slideData.transitionEffect ?? this.effectManager.effectType) ===
+            'none'
+        );
+    }
+
+    /**
+     * On "No Transition" a stage screen does not cut to the next slide of the
+     * document it is showing: the slides both layouts hold stay where they
+     * are in the DOM and only their style changes, so the coming slide is
+     * seen growing into the presented one's place (asked for by the user,
+     * with `transition: all` and no element changed -- `moveStageLookAhead`
+     * for a document, `moveLyricLookAhead` for a song).
+     *
+     * The move to make, or `null` when the layout is drawn anew as on every
+     * other screen: another effect, another document, another screen size, or
+     * a slide whose items come in with transitions of their own. It is tried
+     * with `null` before the slide is built and, for a document, once more
+     * with the slide built.
+     */
+    private genStageMove(
+        div: HTMLDivElement,
+        slideData: VarySlideScreenDataType,
+        stageLookAhead: StageLookAheadDataType | null,
+        backgroundColor: string | null,
+    ) {
+        const scene = this.stageScene;
+        const { itemJson } = slideData;
+        const { width, height } = this.screenManagerBase;
+        const canvasItems = (itemJson as SlidePropsType).canvasItems;
+        if (
+            scene === null ||
+            !this.checkIsNoTransition(slideData) ||
+            scene.filePath !== slideData.filePath ||
+            scene.width !== width ||
+            scene.height !== height ||
+            // Not the slide on top any more, or zoomed in inside a wrapper.
+            div.lastElementChild !== scene.container ||
+            this.canvasItemTransitions.has(scene.container) ||
+            (Array.isArray(canvasItems) &&
+                canvasItems.some((canvasItem) => {
+                    return (
+                        toValidTransitionEffect(canvasItem.transitionEffect) !==
+                        undefined
+                    );
+                }))
+        ) {
+            return null;
+        }
+        const size = (itemJson as SlidePropsType).metadata;
+        if (stageLookAhead === null) {
+            if (!Array.isArray(canvasItems)) {
+                return null;
+            }
+            // A song's stage slide: only the verses not on screen are built.
+            return (content: HTMLElement | null) => {
+                return (
+                    content === null &&
+                    moveLyricLookAhead(
+                        scene.root,
+                        canvasItems,
+                        size.width,
+                        size.height,
+                        (comingItems) => this.genSlideContent(comingItems),
+                    )
+                );
+            };
+        }
+        return (content: HTMLElement | null) => {
+            // Unbuilt, the slide is counted on as the coming one on screen
+            // draws it -- which is never with the preview colour a PDF or
+            // Word page is painted with when presented.
+            if (content === null && backgroundColor !== null) {
+                return false;
+            }
+            return moveStageLookAhead(
+                scene.root,
+                content,
+                size.width,
+                size.height,
+                stageLookAhead,
+                width,
+                height,
+                itemJson,
+            );
+        };
+    }
+
+    /**
+     * A song's stage slide is its own layout, coming verses included, so the
+     * slide just drawn is what the next one is moved from. Taken in only
+     * where a move can follow: each of its items is then given the md5 of
+     * what it draws, which is not free.
+     */
+    private genLyricSceneRoot(
+        slideData: VarySlideScreenDataType,
+        content: HTMLElement,
+    ) {
+        const { canvasItems, metadata } = slideData.itemJson as SlidePropsType;
+        if (
+            !this.checkIsNoTransition(slideData) ||
+            !Array.isArray(canvasItems) ||
+            !registerLyricLookAhead(
+                content,
+                canvasItems,
+                metadata.width,
+                metadata.height,
+            )
+        ) {
+            return null;
+        }
+        return content;
     }
 
     async clearJunk(div: HTMLDivElement) {
@@ -1365,7 +1511,31 @@ class ScreenVaryAppDocumentManager
         const div = this.div;
         const slideData = this.varySlideData;
         if (slideData === null) {
+            this.stageScene = null;
             this.clearJunk(div);
+            return;
+        }
+        const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
+            slideData;
+        const backgroundColor = virtualBackgroundColor ?? null;
+        // A stage screen (St: 1 and up) shares the screen between the page
+        // and what comes after it, so a PDF or Word page is fitted there even
+        // when pages are shown full width: a page that fills the width and
+        // scrolls has no room for the next one, and seeing the next one is
+        // what the stage screen is for.
+        const stageLookAhead = checkStageLookAheadData(
+            slideData.stageLookAhead,
+        );
+        const isFullWidth = isRenderFullWidth && stageLookAhead === null;
+        const moveStage = this.genStageMove(
+            div,
+            slideData,
+            stageLookAhead,
+            backgroundColor,
+        );
+        // First without building the slide at all: when it is already on
+        // screen as the coming one, moving it is the whole change.
+        if (moveStage?.(null)) {
             return;
         }
         const divContainer = document.createElement('div');
@@ -1379,19 +1549,6 @@ class ScreenVaryAppDocumentManager
                 isFromWheel,
             );
         });
-
-        const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
-            slideData;
-        const backgroundColor = virtualBackgroundColor ?? null;
-        // A stage screen (St: 1 and up) shares the screen between the page
-        // and what comes after it, so a PDF or Word page is fitted there even
-        // when pages are shown full width: a page that fills the width and
-        // scrolls has no room for the next one, and seeing the next one is
-        // what the stage screen is for.
-        const stageLookAhead = checkStageLookAheadData(
-            slideData.stageLookAhead,
-        );
-        const isFullWidth = isRenderFullWidth && stageLookAhead === null;
 
         let target;
         if (PdfSlide.tryValidate(itemJson)) {
@@ -1430,6 +1587,12 @@ class ScreenVaryAppDocumentManager
             // Native slides can await Bible fonts. Attach media only after the
             // revision check, so an older slide cannot reopen a camera/player.
             this.cleanupSlideContent(target.content);
+        }
+        // Built, because it was not on screen as it is drawn when presented
+        // (it holds something that plays, or was not there at all): the
+        // layout on screen is still moved, and takes this for the slide.
+        if (moveStage?.(target.content)) {
+            return;
         }
         // A stage screen sets the slide into its stage's layout -- the slide
         // smaller with the next one under it, the corner count. The slide's
@@ -1474,6 +1637,18 @@ class ScreenVaryAppDocumentManager
             transform: `scale(${scale},${scale}) translate(50%, 50%)`,
         });
         div.appendChild(divContainer);
+        const sceneRoot =
+            stageContent ?? this.genLyricSceneRoot(slideData, target.content);
+        this.stageScene =
+            sceneRoot === null
+                ? null
+                : {
+                      container: divContainer,
+                      root: sceneRoot,
+                      filePath: slideData.filePath,
+                      width: this.screenManagerBase.width,
+                      height: this.screenManagerBase.height,
+                  };
         const hasItemTransitions =
             Array.isArray((itemJson as SlidePropsType).canvasItems) &&
             this.canvasItemTransitions.enter(
@@ -1560,6 +1735,7 @@ class ScreenVaryAppDocumentManager
         // deleteScreenPersistedData.
         this.destroyYouTubePlayers();
         this.cameraAttachment.releaseAll();
+        this.stageScene = null;
         if (this._div !== null) {
             this._div.replaceChildren();
             this._div = null;

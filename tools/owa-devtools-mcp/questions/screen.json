@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-10",
+    "updated": "2026-10-11",
     "sections": [
         {
             "id": "screens",
@@ -299,6 +299,24 @@
                         "recipe": "W-48",
                         "related": ["W-09"],
                         "guide": true
+                    }
+                },
+                {
+                    "id": "stage-sets-transition-none",
+                    "text": "Why did the slide transition turn off when I changed the stage number?",
+                    "kind": "why",
+                    "keywords": [
+                        "stage number",
+                        "St:",
+                        "transition none",
+                        "fade stopped",
+                        "no fade on stage",
+                        "transition changed by itself"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "related": ["W-03", "W-05"],
+                        "find": "Slide transition"
                     }
                 },
                 {

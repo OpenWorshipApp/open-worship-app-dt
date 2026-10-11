@@ -15,11 +15,11 @@ import {
     DAILY_TIP_AUTO_CLOSE_MS,
     getDailyTipSessionKey,
     getDailyTipPageLabel,
-    disableDailyTips,
     getAreDailyTipsDisabled,
     getDailyTipAutoShowDelay,
     getDailyTipPage,
     getDailyTips,
+    hideDailyTips,
     pickDailyTipIndex,
     rememberDailyTip,
     startDailyTipGuide,
@@ -33,8 +33,9 @@ type DailyTipMenuClickType = {
     isBrowseDailyTips?: boolean;
 };
 
-// Read again when the delay ends: "Don't show again" may have been pressed in
-// Settings meanwhile, or a tip already opened from Help.
+// Read again when the delay ends: the tips may have been hidden from another
+// window's card or switched off in Settings meanwhile, or a tip already opened
+// from Help.
 function checkIsAutoTipBlocked(page: DailyTipPageType) {
     return (
         getAreDailyTipsDisabled() ||
@@ -225,8 +226,8 @@ export default function DailyTipComp() {
             return oldIndex === null ? 0 : (oldIndex + 1) % tips.length;
         });
     }, [tips.length]);
-    const handleDisable = useCallback(() => {
-        disableDailyTips();
+    const handleHide = useCallback(() => {
+        hideDailyTips();
         closeTip();
     }, [closeTip]);
     const handleShow = useCallback(async () => {
@@ -276,7 +277,7 @@ export default function DailyTipComp() {
                  * The page name is dropped from the card deliberately: the
                  * volunteer is standing in that page, and the header row it
                  * cost is the reason the card covered the controls behind it.
-                 * "Don't show again" sits here rather than beside the actions
+                 * "Hide for 30 days" sits here rather than beside the actions
                  * -- it is the least-wanted press and had equal weight with
                  * the one the card exists for.
                  */}
@@ -296,9 +297,9 @@ export default function DailyTipComp() {
                         type="button"
                         className="btn btn-link app-daily-tip-quiet"
                         disabled={isStarting}
-                        onClick={handleDisable}
+                        onClick={handleHide}
                     >
-                        {tran("Don't show again")}
+                        {tran('Hide for 30 days')}
                     </button>
                 )}
                 <button

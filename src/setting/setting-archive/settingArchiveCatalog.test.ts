@@ -24,6 +24,7 @@ const REAL_LOCAL_KEY_LEAF_MAP: Record<string, string> = {
     'language-locale': 'general.language',
     'app-font-family': 'general.font',
     'daily-tips-disabled': 'general.tips',
+    'daily-tips-hidden-until': 'general.tips',
     'daily-tip-last-presenter': 'general.tips',
     'select-dir-app-document': 'general.folders',
     'select-dir-image-bg': 'general.folders',

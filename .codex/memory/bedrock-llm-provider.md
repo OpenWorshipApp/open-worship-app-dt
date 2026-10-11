@@ -1,11 +1,11 @@
 ---
 name: bedrock-llm-provider
-description: "Amazon Bedrock in the chatbot — nine models on one /openai/v1 route, per-vendor request rules, per-model regions, and why an agent must not handle the key"
+description: "Amazon Bedrock in the chatbot — nine models on one /openai/v1 route, per-vendor request rules, per-model regions, and why an agent must not handle the key; which host serves Claude (bedrock-runtime, not Mantle), Nova (neither) and the open models (/v1 vs /openai/v1) — Haiku 5.5 is the best fit at the lowest cost"
 metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-09T16:32:23.568Z
+  modified: 2026-10-11T21:19:33.920Z
 ---
 
 Amazon Bedrock became the fifth chatbot provider on 2026-10-09
@@ -66,3 +66,54 @@ The key goes in through Settings → Others → **Amazon Bedrock API Key**, type
 by the person, into `appSecureStorage`; the app makes the call.
 Related: [[kimi-third-llm-provider]], [[secure-storage-safestorage]],
 [[free-keyless-chatbot-provider]], [[chatbot-spend-guard]].
+
+**Which Bedrock host serves what** (read off AWS's own model cards and the
+endpoints page, 2026-10-11, asked _find aws bedrock the best fit the chatbot
+and lowest cost_). Bedrock has TWO hosts and the app uses one:
+`bedrock-mantle.<region>.api.aws` (the chatbot's `/openai/v1` client) and
+`bedrock-runtime.<region>.amazonaws.com`. Both take the same `ABSK` key
+(`Authorization: Bearer`; `x-api-key` on the Anthropic route) and bill the
+same per token; only the runtime host does cross-region (`global.`/`us.`) ids.
+
+- **Claude is NOT on the route the app has.** Every Claude model is served on
+  the Anthropic Messages API — `…/anthropic/v1/messages` — never on Chat
+  Completions, and Haiku 5.5, Sonnet 5.5 and Fable 5.1 are on `bedrock-mantle`
+  in GovCloud ONLY. Everywhere else they are `bedrock-runtime`, cross-region ids
+  only: `global.anthropic.claude-haiku-5-5` (Global ✓ from all four regions the
+  app lists; `us.`/`eu.` geo ids too), the Anthropic SDK at
+  `baseURL: https://bedrock-runtime.<region>.amazonaws.com/anthropic` with the
+  ABSK key as `apiKey` (AWS's own sample). Prompt caching (512-token minimum;
+  system, messages and tools), tools, vision and adaptive thinking (effort
+  default `medium`) are all on that route, so `askAnthropic` would serve it as
+  it is; the chatbot CSP needs the four `bedrock-runtime` hosts added.
+  **Haiku 5.5** (launched 2026-10-07): $0.10 in / $0.50 out per 1M tokens
+  (Global; US geo $0.11/$0.55), cache read $0.01, 5-minute write $0.125, for
+  prompts ≤100K; 1M context, 128K output. About $0.002–0.004 for a three-round
+  question with the prefix cached — the best fit at the lowest cost on Bedrock
+  for this window (the one model of Claude's class at Gemma's price). Not yet
+  measured on the corpus; the first live ask must show
+  `cache_read_input_tokens` on round 2 and confirm the key header.
+  **Wired the same day** (the user: _add to model list for me_, then _name
+  it as best recommend_): `src/helper/ai/bedrockClaudeHelpers.ts` is the
+  Anthropic SDK at that base URL with the Bedrock key as `apiKey`, its own
+  module so Settings never pulls the SDK; `askAnthropic` became
+  `askAnthropicCompatible(provider, …)` over an `AnthropicCompatProviderType`
+  (`ANTHROPIC_PROVIDER`, `BEDROCK_CLAUDE_PROVIDER`), and the Bedrock entry of
+  `LLM_PROVIDER_RUNTIME_MAP` sends a `BEDROCK_CLAUDE_PATTERN` id down that
+  loop and everything else down the OpenAI one; the row is FIRST in
+  `BEDROCK_MODEL_LIST`, labelled _Claude Haiku 5.5 (best recommended)_, with
+  `regions: BEDROCK_ALL_REGIONS` (Global id), a `MODEL_PRICE_MAP` row, the
+  image map widened, and `html/chatbot.html` naming the four
+  `bedrock-runtime` hosts (the CSP test holds them beside the Mantle ones).
+  Unit-tested on a fake client; NOT yet asked live — that press is the
+  user's, and its usage line is the proof (round 2 reads, the key accepted).
+- **Nova (Micro, Lite, Pro, 2 Lite) is Converse/Invoke on `bedrock-runtime`
+  only** — no Chat Completions, no Mantle — so it would need a whole Converse
+  client, and Nova 2 Lite ($0.30/$2.50) costs more than Gemma 4 31B anyway.
+- **The open models on Mantle sit on two paths**: Gemma 4, the GPTs and Grok on
+  `/openai/v1`; Nemotron, gpt-oss, Qwen3, MiniMax, DeepSeek and Mistral on
+  `/v1` (the OpenAI SDK's `withOptions({ baseURL })` can pick it per model).
+  Nemotron Nano 3 30B (`nvidia.nemotron-nano-3-30b`, $0.06/$0.24, 256K,
+  client-side tool calling ✓, text only, us-west-2 in-region) is the cheapest
+  unmeasured candidate for the OpenAI loop; Gemma 4 31B stays the cheapest
+  measured one ($0.004 a question, one run). Related: [[chatbot-cost-measured-on-the-wire]].

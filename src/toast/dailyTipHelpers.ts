@@ -16,8 +16,10 @@ import {
 } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
 export {
     DAILY_TIPS_DISABLED_SETTING_NAME,
-    disableDailyTips,
+    DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME,
+    DAILY_TIPS_HIDE_MS,
     getAreDailyTipsDisabled,
+    hideDailyTips,
     setAreDailyTipsEnabled,
 } from './dailyTipSettingHelpers';
 

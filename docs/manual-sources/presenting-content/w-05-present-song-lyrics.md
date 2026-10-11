@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-10"
+workflowsVersion: "2026-10-11"
 ---
 # W-05 — Present song lyrics
 
@@ -53,7 +53,8 @@ workflowsVersion: "2026-10-10"
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    the verse sits flush in the screen's top left corner with the next one flush left
    under it, touching it — no margin around them and no gap between them, whatever **Slide Padding** says (the padding stays
-   inside each verse's own box).
+   inside each verse's own box). A screen moved to any stage above 0 has its **Slide:**
+   transition set to **none** (W-10).
 9. **Reset** puts that stage back to the defaults.
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
@@ -72,5 +73,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
 :::

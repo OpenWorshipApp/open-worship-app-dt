@@ -30,6 +30,7 @@ vi.mock('../server/appHelpers', () => ({
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: (key: string) => state.settings.get(key),
     setSetting: (key: string, value: string) => state.settings.set(key, value),
+    removeSetting: (key: string) => state.settings.delete(key),
 }));
 vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => text,
@@ -47,6 +48,7 @@ import DailyTipComp from './DailyTipComp';
 import {
     DAILY_TIP_AUTO_CLOSE_MS,
     DAILY_TIP_AUTO_SHOW_DELAY_MS,
+    DAILY_TIPS_HIDE_MS,
     getDailyTipSessionKey,
 } from './dailyTipHelpers';
 
@@ -119,6 +121,39 @@ describe('tips in each window', () => {
         );
         await act(async () => window.dispatchEvent(new Event('focus')));
         expect(container.textContent).toBe('');
+    });
+
+    it('hides the automatic tip for 30 days and shows it again after them', async () => {
+        // A launch is a fresh session: nothing shown yet, the wait from zero.
+        const launch = async () => {
+            await act(async () => root.unmount());
+            sessionStorage.clear();
+            root = createRoot(container);
+            await act(async () => root.render(<DailyTipComp />));
+            await act(async () =>
+                vi.advanceTimersByTime(DAILY_TIP_AUTO_SHOW_DELAY_MS),
+            );
+        };
+        await launch();
+        expect(container.textContent).toContain('Tip of the Day · Setting');
+        const button = [...container.querySelectorAll('button')].find(
+            (element) => element.textContent === 'Hide for 30 days',
+        )!;
+        await act(async () => button.click());
+        expect(container.textContent).toBe('');
+        expect(state.settings.has('daily-tips-disabled')).toBe(false);
+
+        await launch();
+        expect(container.textContent).toBe('');
+        // Help is never hidden, and asking there does not end the 30 days.
+        await sendMenu({ isOpenDailyTip: true });
+        expect(container.textContent).toContain('Tip of the Day · Setting');
+        await launch();
+        expect(container.textContent).toBe('');
+
+        vi.setSystemTime(Date.now() + DAILY_TIPS_HIDE_MS);
+        await launch();
+        expect(container.textContent).toContain('Tip of the Day · Setting');
     });
 
     it('takes the tip off after a minute and holds it under the pointer', async () => {

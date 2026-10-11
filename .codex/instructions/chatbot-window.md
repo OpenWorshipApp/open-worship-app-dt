@@ -113,15 +113,29 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     pattern returns nothing). **Bedrock** (2026-10-09, memory
     `bedrock-llm-provider`) is the OpenAI SDK at
     `https://bedrock-mantle.<region>.api.aws/openai/v1` with an `ABSK…` key as
-    the bearer: nine models from three vendors (GPT-5.6 Terra first, Palmyra
-    Vision 7B left out — 4K context), a CLOSED list like Free's (no _More
-    models…_: `/openai/v1/models` is 404), each with `regions`, request rules told
-    apart by the id's vendor prefix, and `findModelProblem` refusing a model
-    the chosen region does not serve before a round is paid for. The region is
-    a plaintext setting off the closed `BEDROCK_REGION_LIST` (us-west-2 first —
-    the only one serving all nine), each one named in `html/chatbot.html`'s
-    `connect-src`, a test holding the two together. `chatSessionHelpers` keeps
-    its own `Record<LlmProviderType, true>` so it need not import the SDKs.
+    the bearer: nine OpenAI-shaped models from three vendors (Palmyra Vision
+    7B left out — 4K context), a CLOSED list like Free's (no _More models…_:
+    `/openai/v1/models` is 404), each with `regions`, request rules told apart
+    by the id's vendor prefix, and `findModelProblem` refusing a model the
+    chosen region does not serve before a round is paid for. **Plus Claude
+    Haiku 5.5, FIRST in the list** (2026-10-11, the user's ask after the
+    research in `extra-work/local-llm/aws-bedrock-info.md`; labelled _Claude
+    Haiku 5.5 (best recommended)_ at the user's word): AWS serves every Claude
+    model on the Anthropic Messages API, never on Chat Completions, and
+    outside GovCloud serves the current ones on the `bedrock-runtime` host
+    only as cross-region ids — so that row is `global.anthropic.claude-haiku-5-5`
+    on the Anthropic SDK at `https://bedrock-runtime.<region>.amazonaws.com/anthropic`
+    with the same key (`bedrockClaudeHelpers.ts`), riding the ANTHROPIC loop
+    with its two cache markers (`askAnthropicCompatible` takes an
+    `AnthropicCompatProviderType`; the runtime map tells the two Bedrock
+    shapes apart by `BEDROCK_CLAUDE_PATTERN`). $0.10/$0.50 per million, cache
+    read $0.01: about a third of a cent for a three-round question. The region
+    is a plaintext setting off the closed `BEDROCK_REGION_LIST` (us-west-2
+    first — the only one serving every OpenAI-shaped row; the Global Claude id
+    is served from all four), each one named TWICE in `html/chatbot.html`'s
+    `connect-src` — the Mantle host and the runtime host — a test holding the
+    three together. `chatSessionHelpers` keeps its own
+    `Record<LlmProviderType, true>` so it need not import the SDKs.
   - **Custom servers** (2026-10-09, memory `custom-llm-servers`): the user's
     own OpenAI-compatible servers (LM Studio, Ollama, any URL), added in
     Settings → Others → **Custom servers** with a name, a base URL, an

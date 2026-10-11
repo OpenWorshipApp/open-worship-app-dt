@@ -2589,7 +2589,7 @@ const dictionary = {
     'Back to tip': 'ត្រឡប់ទៅគន្លឹះ',
     'Choose a tip to practise at your own pace.':
         'ជ្រើសរើសគន្លឹះមួយ ដើម្បីហាត់រៀនតាមល្បឿនរបស់អ្នក។',
-    "Don't show again": 'កុំបង្ហាញម្តងទៀត',
+    'Hide for 30 days': 'លាក់រយៈពេល ៣០ ថ្ងៃ',
     'Show Tips of the Day automatically':
         'បង្ហាញគន្លឹះប្រចាំថ្ងៃដោយស្វ័យប្រវត្តិ',
     'Applies to the Presenter and Bible Reader on the next app launch.':

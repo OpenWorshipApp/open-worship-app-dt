@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-149, PM-157, KB-05, KB-08]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-10"
+workflowsVersion: "2026-10-11"
 ---
 # W-03 — Present a slide from a document
 
@@ -42,7 +42,9 @@ workflowsVersion: "2026-10-10"
    On every stage that shows a count, **each** slide on the screen carries its own — the
    coming ones too (`2/7`, `3/7`) — in a large figure on a half-transparent dark pill.
 
-   Set a stage monitor's **St:** to **2** and the singer always sees what is coming. To see
+   Set a stage monitor's **St:** to **2** and the singer always sees what is coming.
+   Moving a screen to any stage above 0 also sets its **Slide:** transition to **none**
+   (W-10). To see
    it here first, click **[en:tran:Add Stage]** in the **[en:tran:Stage Previewer]** header
    above the slides and pick a stage: it arrives as its own chip and its own pane, side by
    side with **Stage 0**, which always stays. The **×** on a chip
@@ -71,5 +73,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-149` · `PM-157` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
 :::

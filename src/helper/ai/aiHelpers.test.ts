@@ -261,6 +261,12 @@ describe('aiHelpers secret splitting', () => {
             expect(connectSrc).toContain(
                 `https://bedrock-mantle.${region}.api.aws`,
             );
+            // Claude on Bedrock is served from the runtime host, on its
+            // Anthropic route (`bedrockClaudeHelpers`), so that host is
+            // named too -- and only that host, never `*.amazonaws.com`.
+            expect(connectSrc).toContain(
+                `https://bedrock-runtime.${region}.amazonaws.com`,
+            );
         }
     });
 

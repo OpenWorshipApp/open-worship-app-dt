@@ -164,7 +164,15 @@ The doors and the firewall: `agent-access.md`.
   Bible Note, Web Editor, Lyric Editor and Local Web Share. `DailyTipComp`
   listens for the focused-window Help menu in every supported window; only the
   main window owns the shared menu registration. Its automatic shown marker is
-  per page, with the existing five-minute delay and global opt-out. A hidden
+  per page, with the existing five-minute delay and global opt-out. **The
+  card's own link is a 30-day hide, not that opt-out** (2026-10-11, the user's
+  ask: _change from `Don't show again` to `Hide for 30 days`, will show again
+  after 30 days_): it stores the day the hide ends in
+  `daily-tips-hidden-until` (`dailyTipSettingHelpers.ts`) and the tips return
+  by themselves; the Settings switch reads off meanwhile, ends the hide when
+  turned on, and is the only lasting off. A stamp further off than twice the 30
+  days is not believed, so a press made while the clock ran ahead cannot hide
+  the tips for years. A hidden
   window waits for focus. `demoHelpers.mjs` routes built-in demos to their
   declared page and preserves an explicit same-page URL, so Show it stays in
   the originating popup; `pickTarget` prefers an exact URL before a substring.

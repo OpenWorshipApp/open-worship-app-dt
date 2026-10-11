@@ -112,6 +112,7 @@ class MockEffectManager {
     static readonly receiveSyncScreen = vi.fn();
 
     readonly target: string;
+    effectType = 'fade';
     sendSyncScreen = vi.fn();
     delete = vi.fn();
 
@@ -1038,6 +1039,38 @@ describe('ScreenManager runtime orchestration', () => {
 
         screenManager.stage = 0;
         expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(2);
+    });
+
+    test('a stage above 0 sets the slide transition to none, stage 0 leaves it alone', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(22);
+        const slideEffect = screenManager.varyAppDocumentEffectManager;
+        const varyManager = screenManager.screenVaryAppDocumentManager;
+
+        // Already a cut by the time the stage's own redraw is asked for.
+        let effectAtReapply: string | null = null;
+        (varyManager.reapplyForStage as any).mockImplementation(() => {
+            effectAtReapply = slideEffect.effectType;
+        });
+        screenManager.stage = 2;
+        expect(slideEffect.effectType).toBe('none');
+        expect(effectAtReapply).toBe('none');
+        // The Slide transition only: the other two layers keep their own.
+        expect(screenManager.backgroundEffectManager.effectType).toBe('fade');
+        expect(screenManager.foregroundEffectManager.effectType).toBe('fade');
+
+        // An effect picked again on a stage screen stays until the stage moves,
+        // and moving to another stage above 0 cuts it again.
+        slideEffect.effectType = 'zoom';
+        screenManager.stage = 2;
+        expect(slideEffect.effectType).toBe('zoom');
+        screenManager.stage = 3;
+        expect(slideEffect.effectType).toBe('none');
+
+        // Back on stage 0 the choice is the user's: nothing is written.
+        slideEffect.effectType = 'move';
+        screenManager.stage = 0;
+        expect(slideEffect.effectType).toBe('move');
     });
 
     test('an init message re-syncs once more after the screen has settled', async () => {

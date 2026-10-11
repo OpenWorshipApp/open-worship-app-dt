@@ -229,6 +229,16 @@ export default class ScreenManager extends ScreenManagerBase {
         const isChanged = super.stage !== stageNumber;
         super.stage = stageNumber;
         if (isChanged) {
+            // Moving a screen to any stage above 0 sets its Slide transition
+            // to `none` (asked for 2026-10-11). Before the re-apply, so the
+            // stage's own redraw is already a cut. Stage 0 leaves the choice
+            // alone, and another effect can still be picked afterwards.
+            if (
+                stageNumber > 0 &&
+                this.varyAppDocumentEffectManager.effectType !== 'none'
+            ) {
+                this.varyAppDocumentEffectManager.effectType = 'none';
+            }
             this.screenVaryAppDocumentManager.reapplyForStage();
         }
         saveScreenManagersSetting()

@@ -2,6 +2,13 @@
 
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
+// Pure geometry with no imports of its own: a song's stage slides are laid
+// out by the real thing.
+import {
+    genLookAheadItemsList,
+    genRowArrangement,
+} from '../../lyric-list/lyricLookAheadHelpers';
+
 const mocks = vi.hoisted(() => {
     class FakeSlideYouTubePlayer {
         static instances: FakeSlideYouTubePlayer[] = [];
@@ -108,7 +115,11 @@ const mocks = vi.hoisted(() => {
                 resolve: (...parts: string[]) => parts.join('/'),
                 sep: '/',
             },
-            systemUtils: { isDev: false },
+            systemUtils: {
+                isDev: false,
+                // What a stage screen names each thing it draws by.
+                generateMD5: (text: string) => `md5(${text})`,
+            },
             messageUtils: {
                 listenForData: vi.fn(),
                 sendData: vi.fn(),
@@ -1648,6 +1659,208 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
 
         expect(mocks.genPdfSlide).toHaveBeenLastCalledWith('/page-1.png', true);
         expect(host.querySelector('.stage-look-ahead-index')).toBeNull();
+        manager.div = null;
+    });
+
+    // A screen on `effect`, showing page `id` of a PDF with the next one
+    // under it (St: 2), in the window that is handed the look-ahead.
+    function genStageScreen(screenId: number, effectType: string) {
+        detachAllManagerDivs();
+        mocks.appProvider.isPageScreen = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(screenId),
+            {
+                effectType,
+                styleAnim: {
+                    animIn: (target: HTMLElement, parent: HTMLElement) => {
+                        parent.appendChild(target);
+                    },
+                    animOut: async () => {},
+                },
+            } as any,
+        );
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        manager.div = host;
+        const genPage = (id: number) => {
+            return {
+                id,
+                kind: 'pdf',
+                imagePreviewSrc: `/page-${id}.png`,
+                metadata: { width: 800, height: 600 },
+            } as any;
+        };
+        const present = async (id: number) => {
+            manager.varySlideData = {
+                filePath: '/slides/talk.pdf',
+                itemJson: genPage(id),
+                isRenderFullWidth: false,
+                stageLookAhead: {
+                    stage: 2,
+                    label: `${id}/3`,
+                    sideList: [
+                        {
+                            offset: 1,
+                            itemJson: genPage(id + 1),
+                            label: `${id + 1}/3`,
+                        },
+                    ],
+                },
+            };
+            await flushVarySlideData();
+        };
+        const toLabels = () => {
+            return Array.from(
+                host.querySelectorAll('.stage-look-ahead-index'),
+            ).map((label) => label.textContent);
+        };
+        return { manager, host, present, toLabels };
+    }
+
+    test('on No Transition a stage screen moves the slides it drew instead of drawing the next layout', async () => {
+        const { manager, host, present, toLabels } = genStageScreen(87, 'none');
+        await present(1);
+        const container = host.lastElementChild;
+        const comingPage = mocks.genPdfSlide.mock.results[1].value;
+        expect(toLabels()).toEqual(['1/3', '2/3']);
+        mocks.genPdfSlide.mockClear();
+
+        await present(2);
+
+        // The same layout, with page 2 still the element its coming box drew
+        // and nothing built for it; page 1 gone, page 3 not there yet.
+        expect(host.children).toHaveLength(1);
+        expect(host.lastElementChild).toBe(container);
+        expect(comingPage.isConnected).toBe(true);
+        expect(mocks.genPdfSlide).not.toHaveBeenCalled();
+        expect(toLabels()).toEqual(['2/3']);
+
+        await new Promise((resolve) => {
+            setTimeout(resolve, 550);
+        });
+        expect(toLabels()).toEqual(['2/3', '3/3']);
+        expect(mocks.genPdfSlide).toHaveBeenCalledTimes(1);
+        expect(mocks.genPdfSlide).toHaveBeenLastCalledWith('/page-3.png');
+        manager.div = null;
+    });
+
+    test('on any other transition a stage screen draws the next layout anew', async () => {
+        const { manager, host, present, toLabels } = genStageScreen(88, 'fade');
+        await present(1);
+        const container = host.lastElementChild;
+
+        await present(2);
+
+        expect(host.lastElementChild).not.toBe(container);
+        expect(container?.isConnected).toBe(false);
+        expect(toLabels()).toEqual(['2/3', '3/3']);
+        manager.div = null;
+    });
+
+    // A song's stage slide is not laid out by the screen: it arrives holding
+    // its coming verse itself, one canvas item beside the verse being sung.
+    function genSongStageScreen(screenId: number, effectType: string) {
+        const { manager, host } = genStageScreen(screenId, effectType);
+        const size = { width: 800, height: 600 };
+        const genItem = (html: string) => {
+            return { id: 0, left: 0, top: 0, ...size, type: 'html', html };
+        };
+        const slides = genLookAheadItemsList(
+            ['Verse 1', 'Chorus', 'Verse 2'].map((text) => {
+                return [genItem(`<p>${text}</p>`)];
+            }),
+            { x: 0, y: 0, ...size },
+            genRowArrangement([1]),
+            (box, html) => {
+                return {
+                    ...genItem(html),
+                    left: box.x,
+                    top: box.y,
+                    width: box.width,
+                    height: box.height,
+                };
+            },
+        );
+        // What the real one makes of canvas items: a box per item, in order.
+        mocks.genSlideHtml.mockImplementation((items: any[]) => {
+            const content = document.createElement('div');
+            for (const item of items) {
+                const node = document.createElement('div');
+                node.style.top = `${item.top}px`;
+                node.innerHTML = `<div>${item.html}</div>`;
+                content.appendChild(node);
+            }
+            return content;
+        });
+        const present = async (id: number) => {
+            manager.varySlideData = {
+                filePath: '/songs/grace.owl',
+                itemJson: {
+                    id,
+                    type: 'lyric-slide',
+                    metadata: size,
+                    canvasItems: slides[id],
+                } as any,
+                isRenderFullWidth: false,
+            };
+            await flushVarySlideData();
+        };
+        const findVerse = (text: string) => {
+            const verse = Array.from(host.querySelectorAll('p')).find((p) => {
+                return p.textContent === text;
+            });
+            return verse?.closest<HTMLElement>('[data-render-id]') ?? null;
+        };
+        return { manager, host, present, findVerse };
+    }
+
+    test("on No Transition a stage screen moves a song's coming verse instead of drawing the slide again", async () => {
+        const { manager, host, present, findVerse } = genSongStageScreen(
+            89,
+            'none',
+        );
+        await present(0);
+        const container = host.lastElementChild;
+        const comingVerse = findVerse('Chorus')!;
+        expect(comingVerse.style.top).not.toBe('0px');
+        mocks.genSlideHtml.mockClear();
+
+        await present(1);
+
+        // The same slide on screen, with the chorus still the element its
+        // coming box drew, now on top; Verse 1 gone, Verse 2 not there yet.
+        expect(host.children).toHaveLength(1);
+        expect(host.lastElementChild).toBe(container);
+        expect(findVerse('Chorus')).toBe(comingVerse);
+        expect(comingVerse.style.top).toBe('0px');
+        expect(findVerse('Verse 1')).toBeNull();
+        expect(mocks.genSlideHtml).not.toHaveBeenCalled();
+
+        await new Promise((resolve) => {
+            setTimeout(resolve, 550);
+        });
+        // Only the verse that was not on screen is drawn.
+        expect(findVerse('Verse 2')).not.toBeNull();
+        expect(mocks.genSlideHtml).toHaveBeenCalledTimes(1);
+        expect(mocks.genSlideHtml.mock.calls[0][0]).toHaveLength(1);
+        manager.div = null;
+    });
+
+    test("on any other transition a song's stage slide is drawn anew", async () => {
+        const { manager, host, present, findVerse } = genSongStageScreen(
+            90,
+            'fade',
+        );
+        await present(0);
+        const container = host.lastElementChild;
+
+        await present(1);
+
+        expect(host.lastElementChild).not.toBe(container);
+        expect(container?.isConnected).toBe(false);
+        // Drawn whole, and not taken in for a move nobody will make.
+        expect(host.querySelectorAll('p')).toHaveLength(2);
+        expect(findVerse('Chorus')).toBeNull();
         manager.div = null;
     });
 

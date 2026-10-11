@@ -12,8 +12,10 @@ const { fake } = vi.hoisted(() => ({
         // A fake OpenAI-shaped client, for the stand-in tests; null means the
         // provider is not set up, which is what the module answers then.
         openai: null as any,
-        // The same for Amazon Bedrock, which rides the same loop.
+        // The same for Amazon Bedrock, which rides the same loop -- and its
+        // Claude client, which rides the Anthropic one.
         bedrock: null as any,
+        bedrockClaude: null as any,
         // The AWS region Settings names; us-west-2 is the app's default.
         bedrockRegion: 'us-west-2',
         // The user's own servers (usable ones) and the fake client asked for
@@ -55,6 +57,9 @@ vi.mock('../helper/ai/kimiHelpers', () => ({
 }));
 vi.mock('../helper/ai/bedrockHelpers', () => ({
     getBedrockInstance: () => fake.bedrock,
+}));
+vi.mock('../helper/ai/bedrockClaudeHelpers', () => ({
+    getBedrockClaudeInstance: () => fake.bedrockClaude,
 }));
 // The user's own servers. The real modules reach the setting store and the
 // relay's IPC, neither of which a node-env suite has.
@@ -1975,6 +1980,7 @@ describe('the Bedrock provider', () => {
     afterEach(() => {
         fake.aiSetting = null;
         fake.bedrock = null;
+        fake.bedrockClaude = null;
         fake.bedrockRegion = 'us-west-2';
     });
 
@@ -2015,6 +2021,7 @@ describe('the Bedrock provider', () => {
                 return model.id;
             }),
         ).toEqual([
+            'global.anthropic.claude-haiku-5-5',
             'openai.gpt-5.6-terra',
             'openai.gpt-5.6-luna',
             'xai.grok-4.3',
@@ -2025,8 +2032,14 @@ describe('the Bedrock provider', () => {
             'google.gemma-4-26b-a4b',
             'google.gemma-4-e2b',
         ]);
-        // The first is what a fresh install asks with, so it is the pick.
-        expect(getLlmModel('bedrock')).toBe('openai.gpt-5.6-terra');
+        // The first is what a fresh install asks with, so it is the pick --
+        // Claude Haiku 5.5, the best fit at the lowest cost (2026-10-11,
+        // `extra-work/local-llm/aws-bedrock-info.md`), and its label says so
+        // because the picker shows the label and nothing else.
+        expect(getLlmModel('bedrock')).toBe(
+            'global.anthropic.claude-haiku-5-5',
+        );
+        expect(modelList[0].label).toBe('Claude Haiku 5.5 (best recommended)');
         for (const model of modelList) {
             // A list price on every one, so the cost line never goes quiet,
             // and the regions it is served in, so a wrong one is caught.
@@ -2037,6 +2050,87 @@ describe('the Bedrock provider', () => {
         }
         // A name off the account's own list is blind until known otherwise.
         expect(checkCanSeeImages('bedrock', 'openai.gpt-oss-120b')).toBe(false);
+    });
+
+    // Claude on Bedrock is served on the Anthropic Messages API and never on
+    // the OpenAI-shaped route (AWS's Haiku 5.5 card, 2026-10-11), so its row
+    // rides the Anthropic loop -- the runtime host's client, the same key,
+    // the prompt cached -- while the rest of the list is untouched.
+    test('a Claude row rides the Anthropic loop, prompt cached, never the OpenAI one', async () => {
+        const openAiCreate = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create: openAiCreate } } };
+        const create = vi.fn(async () => {
+            return {
+                content: [{ type: 'text', text: 'Press F5.' }],
+                stop_reason: 'end_turn',
+                usage: {
+                    input_tokens: 10,
+                    output_tokens: 5,
+                    cache_creation_input_tokens: 0,
+                    cache_read_input_tokens: 0,
+                },
+            };
+        });
+        fake.bedrockClaude = { messages: { create } };
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            'global.anthropic.claude-haiku-5-5',
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        expect(openAiCreate).not.toHaveBeenCalled();
+        const request: any = (create.mock.calls[0] as any[])[0];
+        expect(request.model).toBe('global.anthropic.claude-haiku-5-5');
+        // The Anthropic loop's two cache markers and its own tool shape.
+        expect(request.cache_control).toEqual({ type: 'ephemeral' });
+        expect(request.system[0].cache_control).toEqual({ type: 'ephemeral' });
+        expect(request.max_tokens).toBe(6000);
+        expect(request.tools[0]).toMatchObject({ name: 'owa_help_search' });
+        expect(request.tools[0].input_schema).toBeDefined();
+        // Not OpenAI's shape.
+        expect(request).not.toHaveProperty('max_completion_tokens');
+        expect(request.tools[0]).not.toHaveProperty('function');
+    });
+
+    // No Claude client is an error with no status, which `askLlmBot` words
+    // as the service being out of reach (memory `bedrock-llm-provider`); what
+    // matters here is that the OpenAI-shaped client was never tried for it.
+    test('a Claude row with no client fails without touching the OpenAI route', async () => {
+        const openAiCreate = vi.fn();
+        fake.bedrock = { chat: { completions: { create: openAiCreate } } };
+        fake.bedrockClaude = null;
+        await expect(
+            askLlmBot(
+                'Hello?',
+                'presenter',
+                'bedrock',
+                'global.anthropic.claude-haiku-5-5',
+            ),
+        ).rejects.toThrow();
+        expect(openAiCreate).not.toHaveBeenCalled();
+    });
+
+    // The Global cross-region id is served from every region the picker
+    // offers, so no region refuses it before the round -- Frankfurt included.
+    test('the Claude row is asked from any region in the list', () => {
+        for (const region of [
+            'us-west-2',
+            'us-east-1',
+            'us-east-2',
+            'eu-central-1',
+        ]) {
+            expect(
+                findBedrockRegionProblem(
+                    'global.anthropic.claude-haiku-5-5',
+                    region,
+                ),
+            ).toBeNull();
+        }
     });
 
     test('a GPT gets OpenAI budget and a little thinking, and may call several tools', async () => {

@@ -516,7 +516,7 @@ export const SECURE_SETTING_KEY_LIST: readonly string[] = Array.from(
 const LOCAL_EXACT_KEY_LIST: [string, string[]][] = [
     ['general.language', ['language-locale']],
     ['general.font', ['app-font-family', 'app-font-weight']],
-    ['general.tips', ['daily-tips-disabled']],
+    ['general.tips', ['daily-tips-disabled', 'daily-tips-hidden-until']],
     [
         // EXACT only: `select-dir-` also prefixes list sorts and filters,
         // per-session folders, audio repeat flags and color-note toggles.

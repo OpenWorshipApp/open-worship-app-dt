@@ -10,6 +10,9 @@ vi.mock('../helper/settingHelpers', () => ({
     setSetting: (key: string, value: string) => {
         settingValues.set(key, value);
     },
+    removeSetting: (key: string) => {
+        settingValues.delete(key);
+    },
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -20,13 +23,15 @@ import {
     DAILY_TIP_AUTO_SHOW_DELAY_MS,
     DAILY_TIP_LAUNCHED_AT_SESSION_KEY,
     DAILY_TIPS_DISABLED_SETTING_NAME,
-    disableDailyTips,
+    DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME,
+    DAILY_TIPS_HIDE_MS,
     getAreDailyTipsDisabled,
     getDailyTipAutoShowDelay,
     getDailyTipGuide,
     getDailyTipPage,
     getDailyTipSessionKey,
     getDailyTips,
+    hideDailyTips,
     pickDailyTipIndex,
     rememberDailyTip,
     setAreDailyTipsEnabled,
@@ -364,7 +369,7 @@ describe('daily tip helpers', () => {
 
     it('stores the global automatic-tip opt-out', () => {
         expect(getAreDailyTipsDisabled()).toBe(false);
-        disableDailyTips();
+        setAreDailyTipsEnabled(false);
         expect(settingValues.get(DAILY_TIPS_DISABLED_SETTING_NAME)).toBe(
             'true',
         );
@@ -374,6 +379,44 @@ describe('daily tip helpers', () => {
             'false',
         );
         expect(getAreDailyTipsDisabled()).toBe(false);
+    });
+
+    it('hides the automatic tips for 30 days and no longer', () => {
+        const now = 1_800_000_000_000;
+        expect(DAILY_TIPS_HIDE_MS).toBe(30 * 24 * 60 * 60 * 1000);
+        hideDailyTips(now);
+        expect(settingValues.get(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME)).toBe(
+            `${now + DAILY_TIPS_HIDE_MS}`,
+        );
+        // Hidden is not switched off: the opt-out is never written.
+        expect(settingValues.has(DAILY_TIPS_DISABLED_SETTING_NAME)).toBe(false);
+        expect(getAreDailyTipsDisabled(now)).toBe(true);
+        expect(getAreDailyTipsDisabled(now + DAILY_TIPS_HIDE_MS - 1)).toBe(
+            true,
+        );
+        expect(getAreDailyTipsDisabled(now + DAILY_TIPS_HIDE_MS)).toBe(false);
+        // A clock corrected backwards by hours keeps them hidden...
+        expect(getAreDailyTipsDisabled(now - 7 * 60 * 60 * 1000)).toBe(true);
+        // ...and a stamp the button could never have set is not believed.
+        expect(getAreDailyTipsDisabled(now - DAILY_TIPS_HIDE_MS - 1)).toBe(
+            false,
+        );
+        settingValues.set(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME, 'not a time');
+        expect(getAreDailyTipsDisabled(now)).toBe(false);
+    });
+
+    it('ends the 30 days early from the Settings switch', () => {
+        const now = 1_800_000_000_000;
+        hideDailyTips(now);
+        setAreDailyTipsEnabled(true);
+        expect(settingValues.has(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME)).toBe(
+            false,
+        );
+        expect(getAreDailyTipsDisabled(now)).toBe(false);
+        // Switched off there instead, the day passing does not bring them back.
+        hideDailyTips(now);
+        setAreDailyTipsEnabled(false);
+        expect(getAreDailyTipsDisabled(now + DAILY_TIPS_HIDE_MS)).toBe(true);
     });
 
     it('holds the automatic tip for five minutes from launch', () => {

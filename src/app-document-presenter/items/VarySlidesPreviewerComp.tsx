@@ -67,6 +67,12 @@ const DOCUMENT_MENU_BUTTON_ROOM = 26;
 // The width the sticky row's transition icon and `⋮` take at the right edge
 // (measured 62px), kept clear by the editing menu beside them.
 const DOCUMENT_MENU_ROW_WIDTH = 64;
+// The strip left free above the slides for that button where no editing menu
+// fills it. What leads the list -- a document's missing fonts -- takes it.
+const DOCUMENT_MENU_ROOM = {
+    height: DOCUMENT_MENU_BUTTON_ROOM,
+    width: DOCUMENT_MENU_ROW_WIDTH,
+};
 
 export default function VarySlidesPreviewerComp() {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -242,7 +248,7 @@ export default function VarySlidesPreviewerComp() {
                         // it scrolls away with the list.
                         paddingTop: isDisplayingEditingMenu
                             ? undefined
-                            : DOCUMENT_MENU_BUTTON_ROOM,
+                            : DOCUMENT_MENU_ROOM.height,
                     }}
                 >
                     {isDisplayingEditingMenu ? (
@@ -277,7 +283,11 @@ export default function VarySlidesPreviewerComp() {
                             </div>
                         </div>
                     ) : null}
-                    <VarySlidesComp />
+                    <VarySlidesComp
+                        menuRoom={
+                            isDisplayingEditingMenu ? null : DOCUMENT_MENU_ROOM
+                        }
+                    />
                 </div>
                 <ScrollingHandlerComp />
             </SlidesPreviewerScopeContext>

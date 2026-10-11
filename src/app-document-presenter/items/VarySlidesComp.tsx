@@ -38,7 +38,9 @@ import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
 import { removeDocxHtmlsPreview } from '../../server/docxHelpers';
-import MissingFontFamilyBannerComp from './MissingFontFamilyBannerComp';
+import MissingFontFamilyBannerComp, {
+    type DocumentMenuRoomType,
+} from './MissingFontFamilyBannerComp';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import { useFollowPresentedSlide } from './useFollowPresentedSlide';
 import {
@@ -240,7 +242,13 @@ function LoadingSlidesComp({
     );
 }
 
-export default function VarySlidesComp() {
+export default function VarySlidesComp({
+    menuRoom = null,
+}: Readonly<{
+    // The strip the previewer left free above these slides for the document's
+    // menu button, when it did: what leads the list can go in it.
+    menuRoom?: DocumentMenuRoomType | null;
+}>) {
     const [thumbSizeScale] = useVarySlideThumbnailSizeScale(
         useThumbnailScaleSettingOptions({
             defaultSize: MIN_THUMBNAIL_SCALE + 10,
@@ -366,6 +374,7 @@ export default function VarySlidesComp() {
         <div className="w-100 slide-auto-play-host">
             <MissingFontFamilyBannerComp
                 missingFontFamilyList={missingFontFamilyList ?? []}
+                menuRoom={menuRoom}
                 {...fontRefreshProps}
             />
             {/* Only the rows on screen are mounted. Every slide card carries a

@@ -28,6 +28,7 @@ import { getAnthropicInstance } from '../helper/ai/anthropicHelpers';
 import { getOpenAIInstance } from '../helper/ai/openAIHelpers';
 import { getKimiInstance } from '../helper/ai/kimiHelpers';
 import { getBedrockInstance } from '../helper/ai/bedrockHelpers';
+import { getBedrockClaudeInstance } from '../helper/ai/bedrockClaudeHelpers';
 import { FREE_SERVICE_MAP, getFreeInstance } from '../helper/ai/freeHelpers';
 import {
     findCustomModelInfo,
@@ -228,34 +229,63 @@ const KIMI_MODEL_LIST: LlmModelType[] = [
         price: toPriceLabel('kimi-k2.6'),
     },
 ];
-// Where each Bedrock model is served on `bedrock-mantle`, among the regions
-// the Settings picker offers -- off each model's own AWS card, 2026-10-09.
+// Where each Bedrock model is served, among the regions the Settings picker
+// offers -- off each model's own AWS card, 2026-10-09 (Claude: 2026-10-11).
 const BEDROCK_US_REGIONS = ['us-east-1', 'us-east-2', 'us-west-2'] as const;
 const BEDROCK_ALL_REGIONS = [...BEDROCK_US_REGIONS, 'eu-central-1'] as const;
 
 /**
- * Amazon Bedrock, through its OpenAI-shaped `bedrock-mantle` endpoint
- * (`bedrockHelpers`): every chat model the account's catalogue showed on
- * 2026-10-09 that can run this window at all. Each one's AWS card says it
- * takes Chat Completions with tool calls and a picture on the same
- * `/openai/v1` route, so one client asks them all.
+ * A Claude model on Bedrock, by its id: `anthropic.claude-…`, with or without
+ * a cross-region prefix. These do not ride the OpenAI-shaped route at all --
+ * AWS serves every Claude model on the Anthropic Messages API, and outside
+ * GovCloud serves the current ones on the `bedrock-runtime` host only, as
+ * cross-region ids -- so they take the ANTHROPIC loop through
+ * `bedrockClaudeHelpers` (see `LLM_PROVIDER_RUNTIME_MAP`). Declared up here,
+ * above `IMAGE_CAPABLE_MODEL_MAP`, which is a module-level const too.
+ */
+const BEDROCK_CLAUDE_PATTERN = /^((global|us|eu|au|jp)\.)?anthropic\.claude-/i;
+
+/**
+ * Amazon Bedrock: every chat model the account's catalogue showed on
+ * 2026-10-09 that can run this window at all, plus Claude Haiku 5.5 (added
+ * 2026-10-11, researched in `extra-work/local-llm/aws-bedrock-info.md`). The
+ * nine OpenAI-shaped ones take Chat Completions with tool calls and a picture
+ * on the one `/openai/v1` route of `bedrock-mantle` (`bedrockHelpers`), so one
+ * client asks them all; the Claude row takes the Anthropic Messages API on the
+ * `bedrock-runtime` host (`bedrockClaudeHelpers`) with the same key.
  *
  * Ordered by what to RECOMMEND for this window, which is not the same as
- * "most capable first": on this route an OpenAI model is billed for every
- * token of every round (Bedrock caches their prompts on the Responses API
+ * "most capable first": on the OpenAI route a model is billed for every
+ * token of every round (Bedrock caches those prompts on the Responses API
  * only), the tool list and the prompt are ~16 000 tokens a round, and the
- * spend guard stops at $1 an hour by default. So the everyday pick leads,
- * the cheap-and-quick one next, and GPT-6 Astra -- the most capable, at about
- * five times Terra's price, roughly half a dollar for a three-round question
- * -- sits below the models a volunteer should reach for first. GPT-5.4 is below Terra because AWS's own
- * card says Terra beats GPT-5.5 for less. Not measured on the question corpus
- * yet; this is the vendors' positioning and the price list.
+ * spend guard stops at $1 an hour by default. So Claude Haiku 5.5 leads -- a
+ * model of the class the standing corpus graded GOOD (Sonnet 5, 12 of 12),
+ * at $0.10 per million in and with the prompt CACHED by the Anthropic loop,
+ * so a three-round question is about a third of a cent -- then the everyday
+ * OpenAI pick, the cheap-and-quick one, and GPT-6 Astra -- the most capable,
+ * at about five times Terra's price, roughly half a dollar for a three-round
+ * question -- sits below the models a volunteer should reach for first.
+ * GPT-5.4 is below Terra because AWS's own card says Terra beats GPT-5.5 for
+ * less. Not measured on the question corpus yet; this is the vendors'
+ * positioning and the price list.
  *
  * Left out on purpose: Writer's Palmyra Vision 7B. Its whole context is 4 000
  * tokens, which the tool list alone does not fit in, so every question would
  * be refused.
  */
 const BEDROCK_MODEL_LIST: LlmModelType[] = [
+    {
+        // The Global cross-region id: served from every region the picker
+        // offers, at the Global rate (the `us.` geo id costs a cent more and
+        // stays in the US). The label says what the research concluded,
+        // because the picker shows the label and nothing else.
+        id: 'global.anthropic.claude-haiku-5-5',
+        label: 'Claude Haiku 5.5 (best recommended)',
+        note: 'good answers at the lowest cost, with the prompt cached',
+        speed: 'quick',
+        price: toPriceLabel('global.anthropic.claude-haiku-5-5'),
+        regions: BEDROCK_ALL_REGIONS,
+    },
     {
         id: 'openai.gpt-5.6-terra',
         label: 'GPT-5.6 Terra',
@@ -2036,10 +2066,13 @@ const IMAGE_CAPABLE_MODEL_MAP: Record<LlmProviderType, RegExp> = {
     // ticked (or LM Studio said so on "Load models from server") -- see
     // `checkCanSeeImages`. A 400 here reads as the server being down.
     custom: /(?!)/,
-    // Every model in the Bedrock list takes a picture (each one's model card).
-    // A model off the account's own list is treated as blind until it is
-    // known not to be.
-    bedrock: /^(google\.gemma-4|openai\.gpt-(5\.[4-9]|6)|xai\.grok-4)/i,
+    // Every model in the Bedrock list takes a picture (each one's model card),
+    // the Claude row included (its card: image in, text out). A model off the
+    // account's own list is treated as blind until it is known not to be.
+    // The Claude half is `BEDROCK_CLAUDE_PATTERN`, spelled out again here so
+    // this map stays one literal per provider.
+    bedrock:
+        /^((global|us|eu|au|jp)\.)?anthropic\.claude-|^(google\.gemma-4|openai\.gpt-(5\.[4-9]|6)|xai\.grok-4)/i,
     // Exactly one of the free models takes a picture. Named outright rather
     // than by family: this list is short, closed and measured, and a pattern
     // that guessed wrong here would cost a 400 the window reports as the
@@ -2276,7 +2309,24 @@ function genThinkingStep(round: number) {
         : `Thinking it over (${round + 1})`;
 }
 
-async function askAnthropic(
+/**
+ * What differs between two providers that speak Anthropic's wire protocol --
+ * Anthropic itself and Claude on Amazon Bedrock -- which is less than between
+ * the OpenAI-shaped ones (`OpenAiCompatProviderType`): whose client, what the
+ * volunteer is told it was when it fails, and whether this setup can ask the
+ * model at all. Everything else -- the two cache markers, the budget, the
+ * tools kept on the last round -- is the same request, and the point of
+ * sharing the loop is that Bedrock's Claude is cached the way Anthropic's is.
+ */
+type AnthropicCompatProviderType = {
+    label: string;
+    getInstance: () => Anthropic | null;
+    // See the same field on `OpenAiCompatProviderType`: a sentence, or null.
+    findModelProblem?: (model: string) => string | null;
+};
+
+async function askAnthropicCompatible(
+    provider: AnthropicCompatProviderType,
     question: string,
     focus: BotFocusType,
     tools: McpToolType[],
@@ -2286,9 +2336,15 @@ async function askAnthropic(
     signal?: AbortSignal | null,
     extra?: AskExtraType,
 ): Promise<BotAnswerType> {
-    const anthropic = getAnthropicInstance();
+    const modelProblem = provider.findModelProblem?.(model) ?? null;
+    if (modelProblem !== null) {
+        // A 400, for the reason `askOpenAiCompatible` gives: a request this
+        // setup cannot make, so no other key is handed the question.
+        throw Object.assign(new Error(modelProblem), { status: 400 });
+    }
+    const anthropic = provider.getInstance();
     if (anthropic === null) {
-        throw new Error('Anthropic is not available');
+        throw new Error(`${provider.label} is not available`);
     }
     const anthropicTools = tools.map((tool) => {
         return {
@@ -2883,9 +2939,11 @@ const KIMI_PROVIDER: OpenAiCompatProviderType = {
     },
 };
 
-// Bedrock serves three vendors' models behind one route, and each vendor's
-// request rules come with it -- told apart by the vendor prefix on the id, so
-// a model added to the list later gets its family's rules with no new code.
+// Bedrock serves three vendors' models behind one OpenAI-shaped route, and
+// each vendor's request rules come with it -- told apart by the vendor prefix
+// on the id, so a model added to the list later gets its family's rules with
+// no new code. (The fourth vendor, Anthropic, is `BEDROCK_CLAUDE_PATTERN` up
+// by the list: a different wire shape, not a different set of extras.)
 const BEDROCK_GEMMA_PATTERN = /^google\.gemma-4/;
 const BEDROCK_OPENAI_PATTERN = /^openai\.gpt-/;
 const BEDROCK_XAI_PATTERN = /^xai\.grok-/;
@@ -2947,6 +3005,24 @@ const BEDROCK_PROVIDER: OpenAiCompatProviderType = {
     checkIsOneToolCallPerTurn: (model) => {
         return BEDROCK_GEMMA_PATTERN.test(model);
     },
+    findModelProblem: (model) => {
+        return findBedrockRegionProblem(model, getBedrockRegion());
+    },
+};
+
+// The two providers that speak Anthropic's protocol. Anthropic's own client
+// first; then Claude on Bedrock -- the same loop, the same two cache markers,
+// a different host and the Bedrock key (`bedrockClaudeHelpers`). It is still
+// the Bedrock PROVIDER as far as the window is concerned: one key, one region
+// picker, one row in the Assistant list; only the wire shape differs, and the
+// runtime map below tells the two apart by the model id.
+const ANTHROPIC_PROVIDER: AnthropicCompatProviderType = {
+    label: 'Anthropic',
+    getInstance: getAnthropicInstance,
+};
+const BEDROCK_CLAUDE_PROVIDER: AnthropicCompatProviderType = {
+    label: 'Bedrock',
+    getInstance: getBedrockClaudeInstance,
     findModelProblem: (model) => {
         return findBedrockRegionProblem(model, getBedrockRegion());
     },
@@ -3202,7 +3278,9 @@ const LLM_PROVIDER_RUNTIME_MAP: Record<
     LlmProviderRuntimeType
 > = {
     anthropic: {
-        ask: askAnthropic,
+        ask: (...args) => {
+            return askAnthropicCompatible(ANTHROPIC_PROVIDER, ...args);
+        },
         listRemoteModels: listRemoteAnthropicModels,
     },
     openai: {
@@ -3228,8 +3306,14 @@ const LLM_PROVIDER_RUNTIME_MAP: Record<
         },
     },
     bedrock: {
+        // Two wire shapes behind one provider, told apart by the model id: a
+        // Claude row is served on the Anthropic Messages API (and on the
+        // runtime host), everything else on the OpenAI-shaped route.
         ask: (...args) => {
-            return askOpenAiCompatible(BEDROCK_PROVIDER, ...args);
+            const [, , , , model] = args;
+            return BEDROCK_CLAUDE_PATTERN.test(model)
+                ? askAnthropicCompatible(BEDROCK_CLAUDE_PROVIDER, ...args)
+                : askOpenAiCompatible(BEDROCK_PROVIDER, ...args);
         },
         // Nothing to add: the route the questions go to has no catalogue
         // (`/openai/v1/models` answers 404), and `/v1/models` names models

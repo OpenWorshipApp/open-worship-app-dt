@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-10"
+workflowsVersion: "2026-10-11"
 ---
 # W-46 — Learn the page with Tips of the Day
 
@@ -82,13 +82,16 @@ control without having to search the manual.
    congregation sees. If **AI features** is off, the app
    offers to open Settings → Others because the local walkthrough server is
    switched off with it.
-4. Click **Don't show again** to stop automatic tips on all operator pages in future app
-   launches. This does not remove the lessons: use **Help → Tips of the Day** to
+4. Click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
+   pages for 30 days; after that they come back by themselves. This does not
+   remove the lessons: use **Help → Tips of the Day** to
    open one suggestion, or **Help → All tips** to browse the whole learning list
-   for the page in front. Opening either from Help does not turn automatic tips
-   back on. To restore the automatic card, open **Settings → General → Other
+   for the page in front. Opening either from Help does not end the 30 days.
+   To bring the automatic card back sooner, open **Settings → General → Other
    General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
-   start the app again. The switch restores tips for every supported operator page.
+   start the app again; that switch reads off while the tips are hidden. Turned
+   off there instead, automatic tips stay off until the switch is turned on
+   again. The switch covers every supported operator page.
 
 The **File**, **Edit**, **Tools**, **Window**, and **Help** overviews name every
 row users can encounter, including conditional and macOS-only rows, so searching
@@ -112,5 +115,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-25`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
 :::

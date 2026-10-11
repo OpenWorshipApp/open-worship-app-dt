@@ -2654,7 +2654,7 @@ const dictionary = {
     'Back to tip': "Retour à l'astuce",
     'Choose a tip to practise at your own pace.':
         'Choisissez une astuce à pratiquer à votre rythme.',
-    "Don't show again": 'Ne plus afficher',
+    'Hide for 30 days': 'Masquer pendant 30 jours',
     'Show Tips of the Day automatically':
         'Afficher automatiquement les astuces du jour',
     'Applies to the Presenter and Bible Reader on the next app launch.':

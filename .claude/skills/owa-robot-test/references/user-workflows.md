@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-10g** (W-34, the easy way — **asking for a Bible in your own words works, and the list says which ones you have.** Asked for with a picture of the help window's three Bible rows circled — _importing bible data is the most important thing right now … make this prompt and mcp tool and action working smoothly_. Driven live first: `Import a Bible in Cambodia` found nothing (a country is how people name a language, and one works by luck only when it starts like the language's own name); `add bible verse John 3:16 to my bible list` was taken for an import and offered the Chewa, Polish and Turkmen Bibles of 2016; of the seven Khmer Bibles listed five were already installed and nothing said so; a typed `2` under the list drew the same list again; and _How do I import a Bible XML file?_ took a local model 31 s to list the Settings form's eight steps with no way to have it done. Now: a country or a people finds its language, `I want a Khmer bible` and `Do you have a Korean bible?` are requests, a sentence about a verse, a list, a note or the screen is left to the guide, a misspelt language is answered with **Did you mean**, an installed Bible is marked **you already have this one** in the list and said again before step 1, a typed `yes` / number / button word presses that choice, a link pasted alone under the language question is taken, and an answer about importing a Bible leads with **Import a Bible for me**. Seen live 2026-10-10 on the dev app: all of the above, a whole import answered by typing `yes` four times and `ok` (KM2023, New Testament only, John 3:16 read back, then **Undo**).)
+**workflowsVersion: 2026-10-11b** (W-10, W-03 step 5 and W-05 step 8 — **a screen moved to any stage above 0 has its Slide: transition set to none.** Asked for with a picture of a Mini Screen's footer, **Slide:** and **St: 5** circled: _"when change stage to any non-zero should change transition to non"_, then _"change to `none`"_. Only the **Slide:** transition and only on a change of stage: an effect picked afterwards stays until the stage moves again, and back on stage 0 nothing is written. Seen live on the dev presenter 2026-10-11, screen 0 not showing: **St: 0 → 1** turned **Slide:** from fade to none with the Background button untouched; fade picked again on stage 1, **St: 1 → 2** turned it to none again. Stage 0 leaving the transition alone is held by a unit test, not seen live. SP-07 expanded.)
+
+Previous: **workflowsVersion: 2026-10-11** (**W-46 step 4 — the card's quiet link is [en:tran:Hide for 30 days], and the tips come back by themselves.** Asked for with a picture of the card's **Don't show again** circled — _change from `Don't show again` to `Hide for 30 days`, will show again after 30 days_. The press stores the day the hide ends (`daily-tips-hidden-until`) and no longer switches the tips off for good; **[en:tran:Show Tips of the Day automatically]** reads off meanwhile and turning it on ends the 30 days early, while turning it off is still the lasting off. A profile that pressed the old **Don't show again** stays off until that switch is turned on. Seen live on the dev presenter 2026-10-11: the press closed the card and stored a day 30 days out, the Settings switch read off, **Help → Tips of the Day** still opened a tip without ending the hide, and the switch cleared it. The return after 30 days is proven by unit tests on a moved clock, not by waiting. GL-25 expanded.)
+
+Previous: **workflowsVersion: 2026-10-10g** (W-34, the easy way — **asking for a Bible in your own words works, and the list says which ones you have.** Asked for with a picture of the help window's three Bible rows circled — _importing bible data is the most important thing right now … make this prompt and mcp tool and action working smoothly_. Driven live first: `Import a Bible in Cambodia` found nothing (a country is how people name a language, and one works by luck only when it starts like the language's own name); `add bible verse John 3:16 to my bible list` was taken for an import and offered the Chewa, Polish and Turkmen Bibles of 2016; of the seven Khmer Bibles listed five were already installed and nothing said so; a typed `2` under the list drew the same list again; and _How do I import a Bible XML file?_ took a local model 31 s to list the Settings form's eight steps with no way to have it done. Now: a country or a people finds its language, `I want a Khmer bible` and `Do you have a Korean bible?` are requests, a sentence about a verse, a list, a note or the screen is left to the guide, a misspelt language is answered with **Did you mean**, an installed Bible is marked **you already have this one** in the list and said again before step 1, a typed `yes` / number / button word presses that choice, a link pasted alone under the language question is taken, and an answer about importing a Bible leads with **Import a Bible for me**. Seen live 2026-10-10 on the dev app: all of the above, a whole import answered by typing `yes` four times and `ok` (KM2023, New Testament only, John 3:16 read back, then **Undo**).)
 
 Previous: **workflowsVersion: 2026-10-10f** (W-42 step 13 — **the servers the project's site shares are listed in Settings, read-only.** Under **[en:tran:Custom servers]** there is now **[en:tran:Shared servers]**: every server of `openworship.app/llm/info.json` with a lock beside its name and, opened, its address and its models, nothing to type in or delete, and a **↻** of its own with the time of the last read written under it. Asked for with a picture of the help window's list beside the Settings tab — _in setting should have those llm endpoints (read-only) and have refresh icon as well_. Seen live in a dev app the same day: one shared server, its two models, a fresh read on the press. New ST-78; CB-97 now proven live.)
 
@@ -1503,7 +1507,9 @@ _Verify: NAV-01..04._
    On every stage that shows a count, **each** slide on the screen carries its own — the
    coming ones too (`2/7`, `3/7`) — in a large figure on a half-transparent dark pill.
 
-   Set a stage monitor's **St:** to **2** and the singer always sees what is coming. To see
+   Set a stage monitor's **St:** to **2** and the singer always sees what is coming.
+   Moving a screen to any stage above 0 also sets its **Slide:** transition to **none**
+   (W-10). To see
    it here first, click **[en:tran:Add Stage]** in the **[en:tran:Stage Previewer]** header
    above the slides and pick a stage: it arrives as its own chip and its own pane, side by
    side with **Stage 0**, which always stays. The **×** on a chip
@@ -1608,7 +1614,8 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    the verse sits flush in the screen's top left corner with the next one flush left
    under it, touching it — no margin around them and no gap between them, whatever **Slide Padding** says (the padding stays
-   inside each verse's own box).
+   inside each verse's own box). A screen moved to any stage above 0 has its **Slide:**
+   transition set to **none** (W-10).
 9. **Reset** puts that stage back to the defaults.
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
@@ -1936,7 +1943,10 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151
   is live): opens a small player per video to play/pause its audio in sync; the
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
-  (0–4, or increment/decrement) for stage-view setups.
+  (0–4, or increment/decrement) for stage-view setups. Moving a screen to any stage
+  above 0 also sets its **Slide:** transition to **none**; you can pick another one
+  afterwards, and going back to stage 0 leaves the transition as it is. A document's
+  or a slide's own transition (W-48) still wins over it.
 
 _Verify: PR-04..07, SP-01..09, SP-23, SP-24, KB-03..07, KB-13._
 
@@ -3587,13 +3597,16 @@ control without having to search the manual.
    congregation sees. If **AI features** is off, the app
    offers to open Settings → Others because the local walkthrough server is
    switched off with it.
-4. Click **Don't show again** to stop automatic tips on all operator pages in future app
-   launches. This does not remove the lessons: use **Help → Tips of the Day** to
+4. Click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
+   pages for 30 days; after that they come back by themselves. This does not
+   remove the lessons: use **Help → Tips of the Day** to
    open one suggestion, or **Help → All tips** to browse the whole learning list
-   for the page in front. Opening either from Help does not turn automatic tips
-   back on. To restore the automatic card, open **Settings → General → Other
+   for the page in front. Opening either from Help does not end the 30 days.
+   To bring the automatic card back sooner, open **Settings → General → Other
    General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
-   start the app again. The switch restores tips for every supported operator page.
+   start the app again; that switch reads off while the tips are hidden. Turned
+   off there instead, automatic tips stay off until the switch is turned on
+   again. The switch covers every supported operator page.
 
 The **File**, **Edit**, **Tools**, **Window**, and **Help** overviews name every
 row users can encounter, including conditional and macOS-only rows, so searching

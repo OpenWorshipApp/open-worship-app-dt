@@ -177,6 +177,17 @@ export const PREVIOUS_NEXT_ARRANGEMENT: LookAheadArrangementType = {
     isDimmed: false,
 };
 
+export const LOOK_AHEAD_BOX_CLASSNAME = 'lyric-look-ahead-box';
+const LOOK_AHEAD_BOX_END = '</div></div>';
+// The two tags `genLookAheadBoxHtml` opens. Anchored, so a slide's markup --
+// hundreds of kilobytes of it -- is never searched.
+const LOOK_AHEAD_BOX_PATTERN = new RegExp(
+    `^<div class="${LOOK_AHEAD_BOX_CLASSNAME}" style="[^"]*?` +
+        String.raw`(?: opacity: ([\d.e+-]+);)?"><div style="[^"]*?` +
+        String.raw`transform: scale\(([\d.e+-]+)\);[^"]*">`,
+);
+const LOOK_AHEAD_FRAME_START = '<div class="lyric-look-ahead-frame"';
+
 /**
  * A slide's html shown in a smaller box, drawn EXACTLY as it was laid out at
  * full size (`width` x `height`) and then shrunk as a picture.
@@ -200,13 +211,39 @@ export function genLookAheadBoxHtml(
 ) {
     const opacityStyle = opacity < 1 ? ` opacity: ${opacity};` : '';
     return (
-        `<div class="lyric-look-ahead-box" style="position: relative; ` +
+        `<div class="${LOOK_AHEAD_BOX_CLASSNAME}" style="position: relative; ` +
         `width: 100%; height: 100%; overflow: hidden;${opacityStyle}">` +
         `<div style="position: absolute; left: 0; top: 0; ` +
         `width: ${width}px; height: ${height}px; ` +
         `transform: scale(${scale}); transform-origin: 0 0;">` +
-        `${html}</div></div>`
+        `${html}${LOOK_AHEAD_BOX_END}`
     );
+}
+
+/**
+ * `genLookAheadBoxHtml` read back: the slide's own html, and the `scale` and
+ * `opacity` its box shows it at. `null` for markup that is not such a box.
+ *
+ * What a stage screen moves a verse by: the same verse in the coming box and
+ * in the current one is the same html in two boxes, so it is told to be the
+ * same by its html alone and taken from one to the other by its scale
+ * (`lyricLookAheadDomHelpers`).
+ */
+export function readLookAheadBoxHtml(boxHtml: string) {
+    const match = LOOK_AHEAD_BOX_PATTERN.exec(boxHtml);
+    if (match === null || !boxHtml.endsWith(LOOK_AHEAD_BOX_END)) {
+        return null;
+    }
+    const scale = Number(match[2]);
+    const opacity = match[1] === undefined ? 1 : Number(match[1]);
+    if (!Number.isFinite(scale) || !Number.isFinite(opacity)) {
+        return null;
+    }
+    return {
+        html: boxHtml.slice(match[0].length, -LOOK_AHEAD_BOX_END.length),
+        scale,
+        opacity,
+    };
 }
 
 // The frame's line, as a share of the slide's content height: ~4px on a
@@ -242,11 +279,25 @@ export function genLookAheadFrameHtml(
     const { width, radius } = getLookAheadFrameMetrics(bounds.height);
     const opacityStyle = opacity < 1 ? ` opacity: ${opacity};` : '';
     return (
-        `<div class="lyric-look-ahead-frame" style="width: 100%; ` +
+        `${LOOK_AHEAD_FRAME_START} style="width: 100%; ` +
         `height: 100%; box-sizing: border-box; ` +
         `border: ${width}px solid ${FRAME_COLOR}; ` +
         `border-radius: ${radius}px;${opacityStyle}"></div>`
     );
+}
+
+/**
+ * Whether `items` are a look-ahead slide's -- one `genLookAheadItemsList`
+ * laid out. Told by its frames: every such slide has the current box's, and
+ * no other slide has one.
+ */
+export function checkIsLookAheadItems(items: object[]) {
+    return items.some((item) => {
+        const { html } = item as { html?: unknown };
+        return (
+            typeof html === 'string' && html.startsWith(LOOK_AHEAD_FRAME_START)
+        );
+    });
 }
 
 // The few fields of a canvas item this layout moves; everything else rides

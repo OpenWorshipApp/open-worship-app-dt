@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-10"
+workflowsVersion: "2026-10-11"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
@@ -61,12 +61,15 @@ workflowsVersion: "2026-10-10"
   is live): opens a small player per video to play/pause its audio in sync; the
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
-  (0–4, or increment/decrement) for stage-view setups.
+  (0–4, or increment/decrement) for stage-view setups. Moving a screen to any stage
+  above 0 also sets its **Slide:** transition to **none**; you can pick another one
+  afterwards, and going back to stage 0 leaves the transition as it is. A document's
+  or a slide's own transition (W-48) still wins over it.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
 :::

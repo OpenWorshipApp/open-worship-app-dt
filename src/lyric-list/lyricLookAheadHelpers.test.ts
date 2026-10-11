@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    checkIsLookAheadItems,
     genLookAheadBoxHtml,
     genLookAheadFrameHtml,
     genLookAheadItemsList,
@@ -9,6 +10,7 @@ import {
     genRowArrangement,
     getLookAheadNextOpacity,
     PREVIOUS_NEXT_ARRANGEMENT,
+    readLookAheadBoxHtml,
 } from './lyricLookAheadHelpers';
 
 // A 1920x1080 display with the default 1% padding.
@@ -96,6 +98,51 @@ describe('genLookAheadBoxHtml', () => {
         expect(getLookAheadNextOpacity(1)).toBeLessThan(
             getLookAheadNextOpacity(0),
         );
+    });
+});
+
+// A stage screen moves a verse from the coming box to the current one by
+// reading back what the box was made from.
+describe('readLookAheadBoxHtml', () => {
+    const html = '<p style="color: red">Amazing "grace"</p><div></div>';
+
+    test('gives back the html and the scale a box was made with', () => {
+        const scale = 0.6134969325153374;
+        expect(
+            readLookAheadBoxHtml(genLookAheadBoxHtml(html, scale, 1882, 1042)),
+        ).toEqual({ html, scale, opacity: 1 });
+        expect(
+            readLookAheadBoxHtml(
+                genLookAheadBoxHtml(html, 0.38, 1882, 1042, 0.35),
+            ),
+        ).toEqual({ html, scale: 0.38, opacity: 0.35 });
+        expect(
+            readLookAheadBoxHtml(genLookAheadBoxHtml('', 1, 10, 10)),
+        ).toEqual({ html: '', scale: 1, opacity: 1 });
+    });
+
+    // The same verse in two boxes is the same html, whatever the boxes.
+    test('one verse reads the same out of the current and the coming box', () => {
+        const layout = genLookAheadLayout(BOUNDS, 1);
+        const current = readLookAheadBoxHtml(
+            genLookAheadBoxHtml(html, layout.currentScale, 1882, 1042),
+        );
+        const coming = readLookAheadBoxHtml(
+            genLookAheadBoxHtml(html, layout.sideScale, 1882, 1042),
+        );
+        expect(current?.html).toBe(coming?.html);
+        expect(current?.scale).toBe(layout.currentScale);
+        expect(coming?.scale).toBe(layout.sideScale);
+    });
+
+    test('anything else is not a box', () => {
+        expect(readLookAheadBoxHtml(html)).toBeNull();
+        expect(readLookAheadBoxHtml(genLookAheadFrameHtml(BOUNDS))).toBeNull();
+        expect(
+            readLookAheadBoxHtml(
+                genLookAheadBoxHtml(html, 0.5, 10, 10).slice(0, -3),
+            ),
+        ).toBeNull();
     });
 });
 
@@ -271,6 +318,23 @@ describe('look-ahead frames', () => {
         expect(toFrames(itemsList[2])).toHaveLength(1);
         // One from the end: its own + the one slide left.
         expect(toFrames(itemsList[1])).toHaveLength(2);
+    });
+
+    // What tells a look-ahead slide from any other: its frames.
+    test('a look-ahead slide is known by its frames', () => {
+        const itemsList = genLookAheadItemsList(
+            deck,
+            BOUNDS,
+            genRowArrangement([1]),
+            genFrame,
+        );
+        itemsList.forEach((items) => {
+            expect(checkIsLookAheadItems(items)).toBe(true);
+        });
+        deck.forEach((items) => {
+            expect(checkIsLookAheadItems(items)).toBe(false);
+        });
+        expect(checkIsLookAheadItems([{ type: 'image' }])).toBe(false);
     });
 
     test('an upcoming frame is dimmed like its slide', () => {

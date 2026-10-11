@@ -20,6 +20,10 @@
             to send it to. Bedrock is named one region at a time, never as
             `*.api.aws`, which would let this window speak to every AWS
             service; the list is `BEDROCK_REGION_LIST` in `aiHelpers.ts`.
+            Each region is named twice: the `bedrock-mantle` host the
+            OpenAI-shaped models answer on, and the `bedrock-runtime` host
+            Claude answers on (`bedrockClaudeHelpers.ts`) -- never
+            `*.amazonaws.com`, for the same reason.
 
             No 'unsafe-eval', and `object-src`/`frame-src`/`base-uri` are shut
             because nothing here uses them and each is a way to get script into
@@ -41,6 +45,10 @@
                     https://bedrock-mantle.us-east-2.api.aws
                     https://bedrock-mantle.us-west-2.api.aws
                     https://bedrock-mantle.eu-central-1.api.aws
+                    https://bedrock-runtime.us-east-1.amazonaws.com
+                    https://bedrock-runtime.us-east-2.amazonaws.com
+                    https://bedrock-runtime.us-west-2.amazonaws.com
+                    https://bedrock-runtime.eu-central-1.amazonaws.com
                     http://127.0.0.1:* http://localhost:*;
                 object-src 'none'; frame-src 'none'; child-src 'none';
                 base-uri 'none'; form-action 'none'">prod -->

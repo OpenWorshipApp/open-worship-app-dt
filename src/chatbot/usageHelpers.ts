@@ -74,6 +74,17 @@ const MODEL_PRICE_MAP: Record<string, LlmModelPriceType> = {
     // publishes no cached rate (the Gemmas, every cache write but OpenAI's) a
     // cached token is priced as a full one: the estimate can only come out
     // HIGH, never under the bill.
+    // Claude on Bedrock rides the `bedrock-runtime` host as a cross-region
+    // id, at the Global rate (the `us.` geo id is a cent more): cache read a
+    // tenth of input and cache write 1.25x, like Anthropic's own, for prompts
+    // of 100K tokens or fewer, which every question here is. AWS's Haiku 5.5
+    // card and its launch-day price list, 2026-10-11.
+    'global.anthropic.claude-haiku-5-5': {
+        input: 0.1,
+        cacheRead: 0.01,
+        cacheWrite: 0.125,
+        output: 0.5,
+    },
     'openai.gpt-6-astra': {
         input: 11,
         cacheRead: 1.1,

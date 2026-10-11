@@ -20,6 +20,7 @@ has neither.
 | `llm-info.json` | A registry to publish by hand. Empty: the tunnels add and remove their own entries on the site. |
 | `model-benchmarks.json` | Every measurement taken of a model answering for the chatbot, and what it says about which model fits whom. |
 | `model-benchmarks.mjs` | Checks that file's shape and prints it, best fit first. |
+| `aws-bedrock-info.md` | What Amazon Bedrock offers the chatbot and at what price: which host serves which model, why Claude Haiku 5.5 is the pick, and what wiring it in takes (read off AWS's cards 2026-10-11). |
 | `*.test.mjs` | Their tests, run by `npm test`. |
 
 ## Run a tunnel
