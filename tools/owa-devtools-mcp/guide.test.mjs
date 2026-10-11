@@ -6,6 +6,7 @@ import {
   detectRecipeWindow,
   dropStepsAlreadyDone,
   genGuideExpression,
+  selectGuideStepIndexForTopic,
   selectGuideStepsForTopic,
   stripInternalIds,
   toGuideSteps,
@@ -79,6 +80,14 @@ describe('selectGuideStepsForTopic', () => {
 
   it('keeps the whole recipe when the topic is too vague to choose safely', () => {
     expect(selectGuideStepsForTopic(steps, 'Please help me.')).toEqual(steps);
+  });
+
+  it('says which step it chose, so the caller can keep the way there', () => {
+    // A deep step's control is on screen only once the earlier steps have
+    // opened its panel; the tool starts from step 1 up to this index then.
+    expect(selectGuideStepIndexForTopic(steps, 'I lost the passage.')).toBe(3);
+    expect(selectGuideStepIndexForTopic(steps, 'Please help me.')).toBeNull();
+    expect(selectGuideStepIndexForTopic([steps[0]], 'passage')).toBeNull();
   });
 });
 
@@ -794,6 +803,120 @@ describe('the guide runtime', () => {
     });
     expect(status.isTargetFound).toBe(true);
     expect(status.find).toBe('KJV');
+  });
+
+  it('refuses to press a name that several controls carry, saying where they are', async () => {
+    // Every file row's dots and the Mini Screen's own are "More Options";
+    // the first in the page is the Documents list's, and pressing it
+    // opened the wrong menu for a step about the other one.
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<button id="rows" title="More Options">⋮</button></div>',
+      '<div data-widget-name="Mini Screen">',
+      '<button id="own" title="More Options">⋮</button></div>',
+    ].join('');
+    const clicked = [];
+    for (const id of ['rows', 'own']) {
+      document.getElementById(id).addEventListener('click', () => {
+        clicked.push(id);
+      });
+    }
+    const status = startGuide({
+      mode: 'demo',
+      steps: [
+        {
+          text: 'Click More Options at the bottom right.',
+          finds: ['More Options'],
+        },
+        { text: 'Done.', finds: [] },
+      ],
+    });
+    expect(status.isTargetFound).toBe(true);
+    expect(status.twins).toEqual({
+      count: 2,
+      panels: ['Document List', 'Mini Screen'],
+    });
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult.done).toBe(false);
+    expect(result.lastResult.reason).toBe(
+      '2 controls are called "More Options" (in Document List, Mini Screen) ' +
+        'and the step does not say which',
+    );
+    expect(clicked).toEqual([]);
+    expect(result.stepNumber).toBe(1);
+  });
+
+  it('presses the one of several that this walkthrough’s last press made', async () => {
+    // Two display cards each carry "Cast to a TV": the one the walkthrough
+    // just added is the one its next step means (2026-10-10). Judged
+    // against the window before the LAST press, not before the start: the
+    // panel holding the cards was itself opened by an earlier step.
+    document.body.innerHTML = [
+      '<div data-widget-name="Virtual Screens Manager">',
+      '<button id="add">Add Virtual Display</button>',
+      '<button id="old" title="Cast to a TV">cast</button></div>',
+    ].join('');
+    const clicked = [];
+    const panel = document.querySelector('[data-widget-name]');
+    document.getElementById('old').addEventListener('click', () => {
+      clicked.push('old');
+    });
+    // Pressing Add makes a card with its own cast icon.
+    document.getElementById('add').addEventListener('click', () => {
+      clicked.push('add');
+      const made = document.createElement('button');
+      made.id = 'new';
+      made.title = 'Cast to a TV';
+      made.textContent = 'cast';
+      made.addEventListener('click', () => {
+        clicked.push('new');
+      });
+      panel.appendChild(made);
+    });
+    startGuide({
+      mode: 'demo',
+      steps: [
+        { text: 'Click Add Virtual Display.', finds: ['Add Virtual Display'] },
+        { text: 'Click Cast to a TV.', finds: ['Cast to a TV'] },
+        { text: 'Done.', finds: [] },
+      ],
+    });
+    const added = await window.__owaGuide.act();
+    expect(added.lastResult.done).toBe(true);
+    window.__owaGuide.next();
+    const status = window.__owaGuide.status();
+    expect(status.stepNumber).toBe(2);
+    expect(status.isTargetFound).toBe(true);
+    expect(status.twins).toBeUndefined();
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult.done).toBe(true);
+    expect(clicked).toEqual(['add', 'new']);
+  });
+
+  it('presses the one of several that the step scopes to its panel', async () => {
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<button id="rows" title="More Options">⋮</button></div>',
+      '<div data-widget-name="Mini Screen">',
+      '<button id="own" title="More Options">⋮</button></div>',
+    ].join('');
+    const clicked = [];
+    for (const id of ['rows', 'own']) {
+      document.getElementById(id).addEventListener('click', () => {
+        clicked.push(id);
+      });
+    }
+    const status = startGuide({
+      mode: 'demo',
+      steps: [
+        { text: 'Click More Options.', finds: ['Mini Screen > More Options'] },
+        { text: 'Done.', finds: [] },
+      ],
+    });
+    expect(status.twins).toBeUndefined();
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult.done).toBe(true);
+    expect(clicked).toEqual(['own']);
   });
 
   it('acts on the control itself, not the row that contains its text', async () => {
@@ -1772,7 +1895,10 @@ describe('Do it presses at the control', () => {
     });
     startGuide({
       mode: 'demo',
-      steps: [{ text: 'Click Foreground.', finds: ['Foreground'] }, { text: 'Done.' }],
+      steps: [
+        { text: 'Click Foreground.', finds: ['Foreground'] },
+        { text: 'Done.' },
+      ],
     });
     const result = await window.__owaGuide.act();
     expect(result.lastResult).toMatchObject({ done: true, did: 'clicked' });

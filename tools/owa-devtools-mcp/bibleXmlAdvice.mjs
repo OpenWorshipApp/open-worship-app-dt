@@ -241,6 +241,122 @@ const NATIVE_LANGUAGE_MAP = {
   kiswahili: 'swahili',
 };
 
+// A country, its people, or another name the language goes by, to the word
+// the catalog's files are named with. A person asks for the Bible "in
+// Cambodia" as readily as "in Khmer" -- measured 2026-10-10 against the
+// catalog's 998 file names: "cambodia", "china", "france", "laos", "germany",
+// "myanmar" and "espanol" each found nothing. Only names that are not
+// already the START of the catalog's own word: "korea" finds `Korean…` by
+// itself. Every value is a word of `CATALOG_LANGUAGE_WORDS`; a test holds it.
+export const LANGUAGE_ALIAS_MAP = {
+  cambodia: 'khmer',
+  cambodian: 'khmer',
+  kampuchea: 'khmer',
+  china: 'chinese',
+  mandarin: 'chinese',
+  cantonese: 'chinese',
+  taiwan: 'chinese',
+  france: 'french',
+  francais: 'french',
+  thailand: 'thai',
+  laos: 'lao',
+  laotian: 'lao',
+  myanmar: 'burmese',
+  burma: 'burmese',
+  spain: 'spanish',
+  espanol: 'spanish',
+  mexico: 'spanish',
+  germany: 'german',
+  portugal: 'portuguese',
+  portugues: 'portuguese',
+  brazil: 'portuguese',
+  brasil: 'portuguese',
+  italy: 'italian',
+  italiano: 'italian',
+  greece: 'greek',
+  israel: 'hebrew',
+  netherlands: 'dutch',
+  holland: 'dutch',
+  nederlands: 'dutch',
+  england: 'english',
+  america: 'english',
+  american: 'english',
+  philippines: 'tagalog',
+  filipino: 'tagalog',
+  pilipino: 'tagalog',
+  iran: 'persian',
+  farsi: 'persian',
+  turkey: 'turkish',
+  sweden: 'swedish',
+  norway: 'norwegian',
+  denmark: 'danish',
+  finland: 'finnish',
+  poland: 'polish',
+  hungary: 'hungarian',
+  ukraine: 'ukrainian',
+  ireland: 'irish',
+  iceland: 'icelandic',
+  ethiopia: 'amharic',
+  madagascar: 'malagasy',
+  bangladesh: 'bengali',
+  bangla: 'bengali',
+  sinhalese: 'sinhala',
+  tibet: 'tibetian',
+  tibetan: 'tibetian',
+  azerbaijani: 'azerbaijan',
+  azeri: 'azerbaijan',
+  moldovan: 'moldovian',
+  galician: 'galacian',
+  oriya: 'odia',
+};
+
+// The two English Bibles everybody names by their letters and the catalog
+// files under other ones (`EnglishKJBible.xml`): "kjv" alone found the THAI
+// King James and nothing else. Only when it is the whole ask -- "Thai KJV"
+// means the Thai one.
+const VERSION_ALIAS_MAP = {
+  kjv: ['english', 'kj'],
+  nkjv: ['english', 'nkj'],
+};
+
+// The word each of the catalog's files is named for, as read off its 998
+// file names on 2026-10-10 (`Khmer2005Bible.xml` -> "khmer"). Only a HINT
+// for reading a request -- "add" or "want" beside one of these is somebody
+// asking for a Bible, beside anything else it is not -- and never what is
+// searched: the search reads the live file names. Spelt as the catalog
+// spells them ("tibetian", "galacian").
+const CATALOG_LANGUAGE_WORDS = new Set(
+  (
+    'aceh adilabad afrikaans ahirani albanian amharic arabic aramaic ' +
+    'armenian assamese avar awadhi aymara azerbaijan bagri balinese ' +
+    'balochi baoule bashkir basque bavarian belarusian bemba bengali ' +
+    'berber bhilali bodo bosnian braj bugis bulgarian bundeli burmese ' +
+    'catalan cebuano chechen chewa chhattisgarhi chibemba chin chinese ' +
+    'chuvash coptic croatian czech dagbani danish dinka dogri dutch dyula ' +
+    'edo english esperanto estonian ewe finnish fon french fulfulde ' +
+    'gaelic galacian garhwali georgian german ghomala greek guarani ' +
+    'gujarati gussi hadiyya haitian haryanvi hausa hebrew hindi hmong ' +
+    'hungarian iban ibibio icelandic igbo ika ilokano ilonggo indonesian ' +
+    'irish italian iu jamaican japanese javanese kabardian kabyle kachin ' +
+    'kalenjin kamba kangri kannada karakalpak kazakhstan kenya khmer ' +
+    'kiche kikuyu kikwango kimbundu kimiiru kinyarwanda kirundi kituba ' +
+    'konkani korean koya krio kumaoni kurdish kurukh kyrgyz lahu lambadi ' +
+    'lango lao latin latvian liberian lingala lithuanian lomwe luganda ' +
+    'lugbara luguru luo maasai macedonian madurese maithili makhuwa ' +
+    'makonde malagasy malayalam malaysian maori marathi marwari ' +
+    'mazanderani meitei mende mewari mizo moba moldovian mongolian ' +
+    'morisyen mossi munda nahuatl ndau ndebele nepali nigerian norwegian ' +
+    'nuer nyankole odia original oromo pampanga papua pashto persian ' +
+    'polish portuguese pular punjabi qeqchi quechuan romani romanian ' +
+    'russian sadri sanskrit santali sasak sena seraiki serbian shan ' +
+    'shekhawati shilluk shona sidamo sindhi sinhala siswati slovakian ' +
+    'slovenian soga somalian songe sotho spanish sukuma sundanese swahili ' +
+    'swedish sylheti tagalog tajik tamasheq tamil tarifit tashelhayt ' +
+    'tatar telugu teso thado thai tibetian tiv tshiluba tshivenda tsonga ' +
+    'tswana tulu turkana turkish turkmen twi ukrainian'
+  ).split(' '),
+);
+
 const ENGLISH_LANGUAGE_NAMES = new Intl.DisplayNames(['en'], {
   type: 'language',
 });
@@ -270,6 +386,9 @@ export function toCatalogLanguageWord(word, canBeCode = false) {
   if (Object.hasOwn(NATIVE_LANGUAGE_MAP, bare)) {
     return NATIVE_LANGUAGE_MAP[bare];
   }
+  if (Object.hasOwn(LANGUAGE_ALIAS_MAP, text)) {
+    return LANGUAGE_ALIAS_MAP[text];
+  }
   if (/^[a-z]+$/.test(text)) {
     return null;
   }
@@ -294,9 +413,32 @@ export function toCatalogLanguageWord(word, canBeCode = false) {
 /** The words of a request worth searching file names for. */
 export function toBibleSearchWords(text) {
   const words = toPlainSearchWords(text);
+  if (words.length === 1 && Object.hasOwn(VERSION_ALIAS_MAP, words[0])) {
+    return [...VERSION_ALIAS_MAP[words[0]]];
+  }
   return words.map((word) => {
     return toCatalogLanguageWord(word, words.length === 1) ?? word;
   });
+}
+
+/**
+ * Whether a word of a request names a language the catalog has Bibles in --
+ * as the catalog spells it, in its own script, or by its country. What tells
+ * "I want a Khmer bible" (a Bible to fetch) from "I want to add a bible
+ * verse" (nothing of the kind). Three table reads and no more: the words it
+ * is asked about come out of `toBibleSearchWords`, which has already turned
+ * any other language's own name into the catalog's word, and asking `Intl`
+ * again is 676 formatters built for every word that is not a language.
+ */
+export function checkIsBibleLanguageWord(word) {
+  const text = String(word ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    CATALOG_LANGUAGE_WORDS.has(text) ||
+    Object.hasOwn(NATIVE_LANGUAGE_MAP, text) ||
+    Object.hasOwn(LANGUAGE_ALIAS_MAP, text)
+  );
 }
 
 function toSearchWords(text) {
@@ -309,33 +451,147 @@ const STOP_WORDS = new Set(
   (
     'import install add get put download load open use want need please ' +
     'can could would you me my mine our the a an this that these those it ' +
-    'from to in on of for with and or into at by is be bible bibles holy ' +
+    'from to in on of for with and or into at by is are be bible bibles ' +
+    'holy ' +
     'xml file files url link address page site version translation one ' +
     'new old help how do does what which where there here github gitlab ' +
     'raw master main refs heads repo repository folder www com so ok yes ' +
-    'am as us we he she go language languages'
+    'am as us we he she go language languages another other different ' +
+    'more some any have has got like give find free online internet now ' +
+    'just also too here thanks thank hello hi church'
   ).split(' '),
 );
+
+function scoreBibleXmlLinks(links, wordList) {
+  return (links ?? []).map((link) => {
+    const name = link.name.toLowerCase();
+    const foundList = wordList.filter((word) => name.includes(word));
+    return {
+      link,
+      isAll: foundList.length === wordList.length,
+      score: foundList.reduce((sum, word) => sum + word.length, 0),
+    };
+  });
+}
+
+// The language a file is named for: `Khmer2005Bible.xml` -> "Khmer".
+function toFileLanguage(name) {
+  return /^\p{Lu}\p{Ll}+/u.exec(String(name ?? ''))?.[0] ?? null;
+}
+
+// How many letters have to change to make one word the other; past `max`
+// the exact figure is not worth working out.
+function countEdits(one, other, max) {
+  if (Math.abs(one.length - other.length) > max) {
+    return max + 1;
+  }
+  let previous = Array.from({ length: other.length + 1 }, (_, index) => index);
+  for (let row = 1; row <= one.length; row++) {
+    const current = [row];
+    for (let column = 1; column <= other.length; column++) {
+      current[column] = Math.min(
+        previous[column] + 1,
+        current[column - 1] + 1,
+        previous[column - 1] + (one[row - 1] === other[column - 1] ? 0 : 1),
+      );
+    }
+    previous = current;
+  }
+  return previous[other.length];
+}
+
+/**
+ * The languages the files are named for that a word nothing matched is
+ * CLOSE to: a slip of the keyboard ("kmer", "portugese") or a country no
+ * table here knows ("turkey" starts like Turkish). Read off the listing
+ * itself, so it can only ever suggest a language that has a file. Names with
+ * the most Bibles first among equals; `[]` when nothing is near.
+ */
+export function suggestBibleLanguages(links, words, limit = 4) {
+  const countMap = new Map();
+  for (const link of links ?? []) {
+    const language = toFileLanguage(link.name);
+    if (language !== null) {
+      countMap.set(language, (countMap.get(language) ?? 0) + 1);
+    }
+  }
+  const wantedList = (words ?? []).filter((word) => {
+    return /^\p{L}{3,}$/u.test(word);
+  });
+  const foundList = [];
+  for (const [language, count] of countMap) {
+    const name = language.toLowerCase();
+    let best = null;
+    for (const word of wantedList) {
+      let shared = 0;
+      while (
+        shared < name.length &&
+        shared < word.length &&
+        name[shared] === word[shared]
+      ) {
+        shared++;
+      }
+      const shorter = Math.min(name.length, word.length);
+      // The same first four letters, or the whole of a short name
+      // ("lao" in "laotian")...
+      const isStart = shared >= 4 || (shared === name.length && shared >= 3);
+      // ...or a letter or two out, which a three-letter name cannot spare.
+      const allowed = shorter >= 6 ? 2 : 1;
+      const edits =
+        shorter >= 4 ? countEdits(name, word, allowed) : allowed + 1;
+      if (!isStart && edits > allowed) {
+        continue;
+      }
+      const closeness = shared * 2 - Math.min(edits, allowed + 1);
+      if (best === null || closeness > best) {
+        best = closeness;
+      }
+    }
+    if (best !== null) {
+      foundList.push({ language, count, closeness: best });
+    }
+  }
+  return foundList
+    .sort((one, other) => {
+      return (
+        other.closeness - one.closeness ||
+        other.count - one.count ||
+        one.language.localeCompare(other.language)
+      );
+    })
+    .slice(0, limit)
+    .map((one) => {
+      return one.language;
+    });
+}
 
 /**
  * The files worth offering, best first. A word the user said ("Khmer",
  * "1954") must be in the file name; with no word, the first few by name and
- * the total, so the answer can ask which language.
+ * the total, so the answer can ask which language. `words` are the ones the
+ * files were matched on; `suggestions`, when nothing matched, the languages
+ * of the listing a word is close to.
  */
 export function rankBibleXmlLinks(links, words, limit = 6) {
-  const wanted = toSearchWords(words);
-  const all = (links ?? []).map((link) => {
-    const name = link.name.toLowerCase();
-    const foundList = wanted.filter((word) => name.includes(word));
-    return {
-      link,
-      isAll: foundList.length === wanted.length,
-      score: foundList.reduce((sum, word) => sum + word.length, 0),
-    };
-  });
+  let wanted = toSearchWords(words);
+  let all = scoreBibleXmlLinks(links, wanted);
   // Every word if any file has them all -- "Khmer 2019" is ONE file, not
   // every Khmer Bible and every Bible from 2019 -- else any of them.
-  const isAllFound = wanted.length > 1 && all.some((one) => one.isAll);
+  let isAllFound = wanted.length > 1 && all.some((one) => one.isAll);
+  if (wanted.length > 1 && !isAllFound) {
+    // A year no file of that language has ("Khmer 1999") only narrows: the
+    // words that NAME the Bible decide, or the answer fills up with every
+    // other language's Bible from that year (measured: "16" out of a verse
+    // reference offered Chewa, Polish and Turkmen).
+    const namedList = wanted.filter((word) => {
+      return !/^\p{N}+$/u.test(word);
+    });
+    if (namedList.length > 0 && namedList.length < wanted.length) {
+      wanted = namedList;
+      all = scoreBibleXmlLinks(links, wanted);
+      isAllFound = wanted.length > 1 && all.some((one) => one.isAll);
+    }
+  }
   const scored = all
     .filter((one) => {
       return wanted.length === 0 || (isAllFound ? one.isAll : one.score > 0);
@@ -347,6 +603,10 @@ export function rankBibleXmlLinks(links, words, limit = 6) {
         one.link.name.localeCompare(other.link.name)
       );
     });
+  const suggestions =
+    scored.length === 0 && wanted.length > 0
+      ? suggestBibleLanguages(links, wanted)
+      : [];
   return {
     links: scored.slice(0, limit).map((one) => {
       return one.link;
@@ -354,6 +614,7 @@ export function rankBibleXmlLinks(links, words, limit = 6) {
     matched: scored.length,
     total: (links ?? []).length,
     words: wanted,
+    ...(suggestions.length > 0 ? { suggestions } : {}),
   };
 }
 

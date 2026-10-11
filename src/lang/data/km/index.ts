@@ -1280,6 +1280,7 @@ const dictionary = {
     'Move To': 'ផ្លាស់ទីទៅ',
     'Move up': 'ផ្លាស់ទីឡើងលើ',
     'More Options': 'ជម្រើសបន្ថែម',
+    'Mini Screen Options': 'ជម្រើសអេក្រង់តូច',
     'New File Name': 'ឈ្មោះឯកសារថ្មី',
     'New File': 'ឯកសារថ្មី',
     'New App Document': 'ឯកសារកម្មវិធីថ្មី',
@@ -2179,6 +2180,17 @@ const dictionary = {
     'Your own AI server, such as LM Studio or Ollama on this computer, or any service that speaks the OpenAI API. Each server shows in the chatbot as its own assistant.':
         'ម៉ាស៊ីនមេ AI ផ្ទាល់ខ្លួនរបស់អ្នក ដូចជា LM Studio ឬ Ollama នៅលើកុំព្យូទ័រនេះ ឬសេវាណាមួយដែលប្រើ OpenAI API។ ម៉ាស៊ីនមេនីមួយៗបង្ហាញក្នុង chatbot ជាជំនួយការមួយដាច់ដោយឡែក។',
     'Add server': 'បន្ថែមម៉ាស៊ីនមេ',
+    // --- The servers the project's site shares, listed read-only (2026-10-10).
+    'Shared servers': 'ម៉ាស៊ីនមេដែលបានចែករំលែក',
+    'Servers that openworship.app shares with every copy of the app. They are read-only here, and each one shows in the chatbot as its own assistant.':
+        'ម៉ាស៊ីនមេដែល openworship.app ចែករំលែកជាមួយកម្មវិធីនេះគ្រប់ច្បាប់ចម្លង។ នៅទីនេះអានតែប៉ុណ្ណោះ ហើយម៉ាស៊ីនមេនីមួយៗបង្ហាញក្នុង chatbot ជាជំនួយការមួយដាច់ដោយឡែក។',
+    'Reload the shared servers': 'ផ្ទុកម៉ាស៊ីនមេដែលបានចែករំលែកឡើងវិញ',
+    'The last read failed:': 'ការអានចុងក្រោយបរាជ័យ៖',
+    'Last read at': 'អានចុងក្រោយនៅម៉ោង',
+    'No server is shared right now.':
+        'ពេលនេះគ្មានម៉ាស៊ីនមេណាត្រូវបានចែករំលែកទេ។',
+    'Shared by openworship.app. It cannot be changed here.':
+        'ចែករំលែកដោយ openworship.app។ មិនអាចផ្លាស់ប្តូរវានៅទីនេះបានទេ។',
     'New server': 'ម៉ាស៊ីនមេថ្មី',
     'Delete this server': 'លុបម៉ាស៊ីនមេនេះ',
     'Server name': 'ឈ្មោះម៉ាស៊ីនមេ',
@@ -2223,6 +2235,8 @@ const dictionary = {
         'ក្នុង LM Studio សូមផ្ទុកម៉ូដែលនេះម្ដងទៀតដោយ Context Length',
     // The same three for Ollama (2026-10-10), whose app has one context
     // length setting for every model rather than a load dialog per model.
+    'Not loaded in llama.cpp right now. The first question waits for it to load.':
+        'មិនទាន់បានផ្ទុកក្នុង llama.cpp ឥឡូវនេះទេ។ សំណួរដំបូងរង់ចាំវាផ្ទុក។',
     'Not loaded in Ollama right now. The first question waits for it to load.':
         'មិនទាន់បានផ្ទុកក្នុង Ollama ទេពេលនេះ។ សំណួរដំបូងនឹងរង់ចាំវាផ្ទុក។',
     'Loaded in Ollama. Context length:':
@@ -2281,6 +2295,8 @@ const dictionary = {
         'បានបិទ កុំព្យូទ័រនេះអាចដេកបាន ពេលគ្មានអេក្រង់ណាកំពុងបង្ហាញ',
     // --- The caution asked before either AI window opens (2026-09-12).
     'Be careful with AI': 'សូមប្រុងប្រយ័ត្នជាមួយ AI',
+    'Do not show this again for 30 days':
+        'កុំបង្ហាញសារនេះម្តងទៀតក្នុងរយៈពេល ៣០ ថ្ងៃ',
     'AI can be confidently wrong.':
         'AI អាចឆ្លើយខុស ទាំងដែលមើលទៅដូចជាត្រឹមត្រូវ។',
     'It can misread the app or describe a button that is not there, and what it offers to do can reach a live projector. Check anything that matters before a service, and read a step yourself before you press it.':

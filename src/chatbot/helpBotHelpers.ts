@@ -29,6 +29,10 @@ import {
 
 import { appError } from '../helper/loggerHelpers';
 import {
+    BIBLE_IMPORT_MANUAL_ID,
+    genBibleImportOfferAction,
+} from './bibleImportChatHelpers';
+import {
     checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
     keepDraftedLyric,
@@ -121,14 +125,19 @@ export function genGuideActions(
     // model is handed "do it for me" with no subject and can only ask back
     // what it should demo -- which is the button doing nothing, again.
     topic = '',
+    // The control the question is about, when the corpus knows it (the
+    // row's `find`): the card starts at the step naming it, that control
+    // first -- a page's header paragraph names eight (EC-215).
+    find: string | null = null,
 ): BotActionType[] {
+    const findArgs = find !== null && find.length > 0 ? { find } : {};
     const isReaderTextTooSmall =
         hit.id === 'W-11' &&
         focus === 'reader' &&
         /(?:(?:small|tiny).*(?:words?|text|font)|(?:words?|text|font).*(?:small|tiny|larger|bigger))/i.test(
             topic,
         );
-    return [
+    const guideActions = [
         {
             // A recipe can only mark a control by bolding it, and the words
             // it bolds are as often a keystroke or a stressed word. Worse,
@@ -153,6 +162,7 @@ export function genGuideActions(
                 page: `${focus}.html`,
                 mode: 'show',
                 ...(topic.length > 0 ? { topic } : {}),
+                ...findArgs,
             },
         },
         {
@@ -191,6 +201,7 @@ export function genGuideActions(
                       page: `${focus}.html`,
                       mode: 'demo',
                       ...(topic.length > 0 ? { topic } : {}),
+                      ...findArgs,
                   },
         },
     ].filter((_action, index) => {
@@ -199,6 +210,14 @@ export function genGuideActions(
         // button promises more than the app can deliver.
         return canAsk || index === 0;
     });
+    // The page about adding a Bible says the easy way is this conversation:
+    // the button that starts it goes first, ahead of a walk through the
+    // Settings form. Measured 2026-10-10 on a local model: "How do I import
+    // a Bible XML file?" took 31 s to list the form's eight steps and
+    // offered no way to have it done.
+    return hit.id === BIBLE_IMPORT_MANUAL_ID
+        ? [genBibleImportOfferAction(), ...guideActions]
+        : guideActions;
 }
 
 type ReaderButtonReferenceType = {

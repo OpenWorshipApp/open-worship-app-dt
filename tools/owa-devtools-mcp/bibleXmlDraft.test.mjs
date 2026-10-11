@@ -20,6 +20,7 @@ vi.mock('node:dns/promises', () => {
 
 const {
   BibleXmlProblem,
+  clearBibleListingCache,
   downloadBibleXml,
   findBibleNameList,
   readBibleDraftMeta,
@@ -38,6 +39,8 @@ const BIBLE_XML =
 let dirPath;
 beforeEach(async () => {
   dirPath = await mkdtemp(path.join(os.tmpdir(), 'owa-bible-draft-test-'));
+  // One listing is remembered for ten minutes: never across two tests.
+  clearBibleListingCache();
 });
 afterEach(async () => {
   await rm(dirPath, { recursive: true, force: true });
@@ -180,6 +183,19 @@ describe('downloading what a link points at', () => {
       url: 'https://bibles.example/x/KhmerBible.xml',
     });
     expect(result.matched).toBe(1);
+    expect(result.suggestions).toBeUndefined();
+    // A word no file has, close to a language the page does have: offered
+    // in the answer and in the note the model reads.
+    const slipped = await downloadBibleXml({
+      url: 'https://bibles.example/downloads',
+      find: 'kmer',
+      fetchImpl,
+      dirPath,
+    });
+    expect(slipped.matched).toBe(0);
+    expect(slipped.files).toEqual([]);
+    expect(slipped.suggestions).toEqual(['Khmer']);
+    expect(slipped.note).toContain('closest languages it has: Khmer');
     await expectProblem(
       downloadBibleXml({
         url: 'https://bibles.example/empty',
@@ -230,6 +246,95 @@ describe('downloading what a link points at', () => {
         title: 'Thai Standard 2011',
       },
     ]);
+  });
+
+  // Measured 2026-10-10: every look at the catalog was a 0.9 MB listing out
+  // of sixty unsigned reads an hour, and narrowing "Khmer" to "2016" is two.
+  test('a listing is read once for ten minutes of choosing, titles too', async () => {
+    const listingUrl =
+      'https://api.github.com/repos/Beblia/Holy-Bible-XML-Format/contents/';
+    const rawUrl = (name) => {
+      return `https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/${name}`;
+    };
+    const { fetchImpl, calledList } = genFetch({
+      [listingUrl]: () => {
+        return new Response(
+          JSON.stringify([
+            { download_url: rawUrl('ThaiBible.xml') },
+            { download_url: rawUrl('KhmerBible.xml') },
+          ]),
+          { status: 200 },
+        );
+      },
+      [rawUrl('ThaiBible.xml')]: () => {
+        return new Response('<bible translation="Thai Standard">', {
+          status: 206,
+        });
+      },
+      [rawUrl('KhmerBible.xml')]: () => {
+        return new Response('<bible translation="Khmer Standard">', {
+          status: 206,
+        });
+      },
+    });
+    const ask = (find, now) => {
+      return downloadBibleXml({
+        url: 'https://github.com/Beblia/Holy-Bible-XML-Format',
+        find,
+        fetchImpl,
+        dirPath,
+        now,
+      });
+    };
+    const startedAt = 1_000_000;
+    expect((await ask('thai', startedAt)).files[0].title).toBe('Thai Standard');
+    expect(calledList).toEqual([listingUrl, rawUrl('ThaiBible.xml')]);
+    // Another language a minute on: the listing is not asked for again...
+    const khmer = await ask('khmer', startedAt + 60 * 1000);
+    expect(khmer.files[0].title).toBe('Khmer Standard');
+    expect(calledList).toEqual([
+      listingUrl,
+      rawUrl('ThaiBible.xml'),
+      rawUrl('KhmerBible.xml'),
+    ]);
+    // ...nor a title already read.
+    await ask('thai', startedAt + 2 * 60 * 1000);
+    expect(calledList).toHaveLength(3);
+    // Ten minutes after it was read it is read again.
+    await ask('thai', startedAt + 10 * 60 * 1000);
+    expect(calledList.slice(3)).toEqual([listingUrl, rawUrl('ThaiBible.xml')]);
+  });
+
+  test('GitHub out of its hourly reads is "come back later", not "sign in"', async () => {
+    const { fetchImpl } = genFetch({
+      'https://api.github.com/repos/Beblia/Holy-Bible-XML-Format/contents/':
+        () => {
+          return new Response('{"message":"API rate limit exceeded"}', {
+            status: 403,
+            headers: { 'x-ratelimit-remaining': '0' },
+          });
+        },
+      'https://bibles.example/private.xml': () => {
+        return new Response('no', { status: 403 });
+      },
+    });
+    await expectProblem(
+      downloadBibleXml({
+        url: 'https://github.com/Beblia/Holy-Bible-XML-Format',
+        fetchImpl,
+        dirPath,
+      }),
+      'busy',
+    );
+    // A refusal with no such header is still a refusal.
+    await expectProblem(
+      downloadBibleXml({
+        url: 'https://bibles.example/private.xml',
+        fetchImpl,
+        dirPath,
+      }),
+      'denied',
+    );
   });
 });
 

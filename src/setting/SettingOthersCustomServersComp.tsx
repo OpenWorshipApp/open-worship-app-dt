@@ -99,9 +99,10 @@ function RenderModelInfoComp({
         return null;
     }
     if (!info.isLoaded || info.loadedContext === null) {
-        // llama.cpp's server IS its model: never "not loaded", and with no
-        // size said there is nothing to say.
-        if (kind === 'llama-cpp') {
+        // llama.cpp's one-model server IS its model: loaded, and with no
+        // size said there is nothing to say. Its ROUTER (b11540+) loads a
+        // model on the first question that names it, like Ollama.
+        if (kind === 'llama-cpp' && info.isLoaded) {
             return null;
         }
         return (
@@ -111,9 +112,13 @@ function RenderModelInfoComp({
                     ? tran(
                           'Not loaded in LM Studio right now. The first question waits for it to load.',
                       )
-                    : tran(
-                          'Not loaded in Ollama right now. The first question waits for it to load.',
-                      )}
+                    : kind === 'ollama'
+                      ? tran(
+                            'Not loaded in Ollama right now. The first question waits for it to load.',
+                        )
+                      : tran(
+                            'Not loaded in llama.cpp right now. The first question waits for it to load.',
+                        )}
             </div>
         );
     }

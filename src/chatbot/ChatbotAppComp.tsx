@@ -8,6 +8,10 @@ import { captureAppWindow } from '../helper/appCaptureHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { setSetting } from '../helper/settingHelpers';
+import {
+    checkIsAiCautionHidden,
+    hideAiCautionForAWhile,
+} from '../helper/ai/aiCautionHelpers';
 import type { AISecretKeyNameType } from '../helper/ai/aiHelpers';
 import { requestAIKeyFocus } from '../helper/ai/aiKeyFocusHelpers';
 import { findContactEmail, showFileOrDirExplorer } from '../server/appHelpers';
@@ -48,7 +52,30 @@ import {
     toAssistantRowValue,
     type AssistantRowType,
 } from './providerPickHelpers';
-import { getUsableCustomServers } from '../helper/ai/customServerHelpers';
+import {
+    getLlmRegistryStatus,
+    getUsableCustomServers,
+    loadLlmRegistry,
+} from '../helper/ai/customServerHelpers';
+import type { LlmRegistryStatusType } from '../../electron/customLlmProtocol';
+
+const REGISTRY_RELOAD_TITLE = 'Reload the assistants shared on openworship.app';
+
+/** The Reload button's title: how the last read of the registry went. */
+export function describeRegistryStatus(status: LlmRegistryStatusType | null) {
+    if (status === null) {
+        return REGISTRY_RELOAD_TITLE;
+    }
+    if (status.error !== null) {
+        return `${REGISTRY_RELOAD_TITLE} — the last read failed: ${status.error}`;
+    }
+    const count = status.servers.length;
+    const when =
+        status.fetchedAt === null
+            ? ''
+            : `, read at ${new Date(status.fetchedAt).toLocaleTimeString()}`;
+    return `${REGISTRY_RELOAD_TITLE} — ${count} shared${when}`;
+}
 import { notifyChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
 
 // In front of the window's title while any tab is working on an answer: the
@@ -126,6 +153,7 @@ import {
 } from './bibleImportChatHelpers';
 import { takeChatbotAsk } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
+    answerLyricTitle,
     askHelpBot,
     describeActionError,
     detectOpenerFocus,
@@ -177,6 +205,7 @@ import {
     DRAFT_GONE_TEXT,
     LYRIC_COPY_TOOL_NAME,
     LYRIC_CREATE_TOOL_NAME,
+    readSongTitleAsk,
     takeDraftedLyric,
 } from './lyricDraftHelpers';
 import {
@@ -222,6 +251,7 @@ import {
     FALLBACK_STARTERS,
     findKnownQuestion,
     genKnownQuestionHint,
+    readKnownQuestionPage,
     getAllQuestions,
     getStarterQuestions,
     suggestQuestions,
@@ -235,7 +265,14 @@ import {
     BUILTIN_TOOL_NAME,
     checkIsBuiltinCommand,
     matchBuiltinActions,
+    CLEAR_CHAT_COMMAND,
+    answerScreenToggleAsk,
+    answerSlideShowAsk,
+    parseBuiltinCommand,
     readGeneralQuestion,
+    readInheritedGeneralQuestion,
+    readScreenToggleAsk,
+    readSlideShowAsk,
     runBuiltinCommand,
     toBuiltinCommandText,
 } from './builtinActionHelpers';
@@ -2388,6 +2425,32 @@ export default function ChatbotAppComp() {
             window.removeEventListener('focus', handleFocusing);
         };
     }, []);
+    // The shared registry (`loadLlmRegistry`): what main holds, asked on
+    // mount so its rows are in the list without a restart, and read afresh
+    // from the site on the Reload button beside the assistant picker. The
+    // button's title says how the last read went -- a failed read keeps the
+    // servers of the one before, so the list alone would not show it.
+    const [isReloadingRegistry, setIsReloadingRegistry] = useState(false);
+    const [registryReloadTitle, setRegistryReloadTitle] = useState(
+        REGISTRY_RELOAD_TITLE,
+    );
+    const applyRegistryStatus = useCallback(() => {
+        refreshCustomServers();
+        refreshAvailableProviders();
+        setRegistryReloadTitle(describeRegistryStatus(getLlmRegistryStatus()));
+    }, [refreshCustomServers, refreshAvailableProviders]);
+    useAppEffect(() => {
+        loadLlmRegistry().then(applyRegistryStatus);
+    }, [applyRegistryStatus]);
+    const handleReloadingRegistry = useCallback(async () => {
+        setIsReloadingRegistry(true);
+        try {
+            await loadLlmRegistry(true);
+        } finally {
+            setIsReloadingRegistry(false);
+            applyRegistryStatus();
+        }
+    }, [applyRegistryStatus]);
     const assistantRows = useMemo(() => {
         return genAssistantRows(
             LLM_PROVIDER_LIST,
@@ -2748,6 +2811,16 @@ export default function ChatbotAppComp() {
     // Escape must not silence it for the rest of the conversation, so typing
     // again brings it back.
     const [isSuggestDismissed, setIsSuggestDismissed] = useState(false);
+    // The standing caution under the starter chips, put away for 30 days by
+    // its own button -- the same setting the opening caution's box writes
+    // (`aiCautionHelpers`), read once at mount.
+    const [isCautionHidden, setIsCautionHidden] = useState(() => {
+        return checkIsAiCautionHidden();
+    });
+    const handleHidingCaution = useCallback(() => {
+        hideAiCautionForAWhile();
+        setIsCautionHidden(true);
+    }, []);
     // What Report is waiting to be told to go ahead with -- the complaint it
     // quoted back, or null when nothing is being asked. See
     // `handleReportPressed`.
@@ -2767,9 +2840,12 @@ export default function ChatbotAppComp() {
             // is a command nobody has. The list's own length, not a number:
             // it was 20 when there were 25, and a bare `/` never offered
             // `/credit`, `/limit`, `/lyric`, `/btw` or `/commands`.
+            // For the page this tab asks about: a Presenter command under
+            // a Reader tab is not offered (`checkIsCommandOnPage`).
             return matchBuiltinActions(
                 question,
                 BUILTIN_ACTION_LIST.length,
+                focus,
             ).map((action) => {
                 return {
                     id: `command.${action.name}`,
@@ -2787,7 +2863,7 @@ export default function ChatbotAppComp() {
                 return !checkIsAlreadyTyped(question, row.text);
             })
             .map(toQuestionSuggestRow);
-    }, [isSuggestDismissed, isBusy, question, matchedQuestions]);
+    }, [isSuggestDismissed, isBusy, question, matchedQuestions, focus]);
     /**
      * A question this window was asked, put where the next one is walked back
      * from. Only what came out of the BOX reaches here -- not a starter chip,
@@ -3645,9 +3721,18 @@ export default function ChatbotAppComp() {
             // a general question, asked with no tools and no lookup in the
             // app (`readGeneralQuestion`). It takes the ordinary road below
             // with the frame on the ask; the transcript keeps what was typed.
+            // And a plain follow-up under one stays general -- "in Khmer
+            // please" under "/btw what is the Bible?" is about the Bible --
+            // read off the tab's last question (`readInheritedGeneralQuestion`).
             const generalQuestion =
                 options?.shownText === undefined
-                    ? readGeneralQuestion(trimmedAsked)
+                    ? (readGeneralQuestion(trimmedAsked) ??
+                      readInheritedGeneralQuestion(
+                          trimmedAsked,
+                          sessionStateRef.current.sessions.find((session) => {
+                              return session.id === activeSessionId;
+                          })?.messages ?? [],
+                      ))
                     : null;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
@@ -3663,6 +3748,48 @@ export default function ChatbotAppComp() {
                 const commandFocus = isFocusChosen
                     ? focus
                     : (detectOpenerFocus() ?? focus);
+                // `/clear` is the window's own (the user's ask, 2026-10-10:
+                // "add `/clear` to clear the chat session"): the tab in
+                // front is emptied here, before any message is written into
+                // it, and a locked tab keeps its messages the way its × is
+                // refused.
+                if (
+                    parseBuiltinCommand(trimmedAsked)?.action?.name ===
+                    CLEAR_CHAT_COMMAND
+                ) {
+                    const isLocked =
+                        sessionStateRef.current.sessions.find((session) => {
+                            return session.id === commandSessionId;
+                        })?.isLocked === true;
+                    if (isLocked) {
+                        addMessage(commandSessionId, {
+                            author: 'you',
+                            text: trimmedAsked,
+                        });
+                        addMessage(commandSessionId, {
+                            author: 'bot',
+                            text:
+                                'This chat is locked, so it keeps its ' +
+                                'messages. Unlock it from ⋮ on its tab ' +
+                                'first, then type `/clear` again.',
+                        });
+                        updateSession(commandSessionId, (session) => {
+                            return { ...session, draft: '' };
+                        });
+                        return;
+                    }
+                    clearProgressSteps(commandSessionId);
+                    updateSession(commandSessionId, (session) => {
+                        return {
+                            ...session,
+                            title: '',
+                            messages: [],
+                            draft: '',
+                            usage: undefined,
+                        };
+                    });
+                    return;
+                }
                 addMessage(commandSessionId, {
                     author: 'you',
                     text: trimmedAsked,
@@ -3726,6 +3853,99 @@ export default function ChatbotAppComp() {
                     return;
                 }
             }
+            // A song asked for by its TITLE -- the starter chip *Create a
+            // lyric file for song "Amazing Grace"* -- on a server of the
+            // user's own: drafted by the app's own finder with no model, the
+            // way the guide drafts it, and offered under its Create button.
+            // A local model is sent the essential tools only, the song tools
+            // not among them, so asked it wrote the steps for an EMPTY file
+            // (2026-10-10, the user's picture: "previous action is to auto
+            // generate song for user … assistant should follow up like just
+            // create a file or generate lyric file"). A paid assistant keeps
+            // the model road, which can read the song off the web.
+            if (
+                options?.shownText === undefined &&
+                attachments.length === 0 &&
+                generalQuestion === null &&
+                checkIsCustomProvider(provider)
+            ) {
+                const songTitle = readSongTitleAsk(trimmedAsked);
+                if (songTitle !== null) {
+                    const songSessionId = activeSessionId;
+                    addMessage(songSessionId, {
+                        author: 'you',
+                        text: trimmedAsked,
+                    });
+                    updateSession(songSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    const pending = genPendingAsk(
+                        songSessionId,
+                        undefined,
+                        false,
+                    );
+                    clearProgressSteps(songSessionId);
+                    syncBusy();
+                    try {
+                        const answer = await answerLyricTitle(songTitle);
+                        if (pending.controller.signal.aborted) {
+                            return;
+                        }
+                        addMessage(songSessionId, {
+                            author: 'bot',
+                            text: answer.text,
+                            actions: answer.actions,
+                            replies: answer.replies,
+                        });
+                    } finally {
+                        endPendingAsk(pending);
+                        settleSession(songSessionId);
+                    }
+                    return;
+                }
+            }
+            // A screen asked on or off, or a slide asked for by its words,
+            // on a server of the user's own: answered from the app's own
+            // state with ONE button that does it, and no model (the two
+            // wrong turns of 2026-10-10, EC-206 and EC-210: "Turn off the
+            // screen for me" with every screen off offered Clear All, and
+            // "show verse 1 on screen for me" ran a local model's six rounds
+            // to no answer). A slide the song does not have falls through
+            // to the model, as does everything else.
+            if (
+                options?.shownText === undefined &&
+                attachments.length === 0 &&
+                generalQuestion === null &&
+                checkIsCustomProvider(provider)
+            ) {
+                const screenToggle = readScreenToggleAsk(trimmedAsked);
+                const slideWords =
+                    screenToggle === null
+                        ? readSlideShowAsk(trimmedAsked)
+                        : null;
+                const directAnswer =
+                    screenToggle !== null
+                        ? await answerScreenToggleAsk(screenToggle)
+                        : slideWords !== null
+                          ? await answerSlideShowAsk(slideWords)
+                          : null;
+                if (directAnswer !== null) {
+                    const directSessionId = activeSessionId;
+                    addMessage(directSessionId, {
+                        author: 'you',
+                        text: trimmedAsked,
+                    });
+                    updateSession(directSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    addMessage(directSessionId, {
+                        author: 'bot',
+                        text: directAnswer.text,
+                        actions: directAnswer.actions,
+                    });
+                    return;
+                }
+            }
             const images = toBotImages(attachments);
             // Refused BEFORE a call is made rather than after one fails: a
             // model with no eyes answers a picture with a 400, which
@@ -3761,6 +3981,9 @@ export default function ChatbotAppComp() {
                     text: options?.shownText ?? trimmedAsked,
                     note: options?.note,
                     ...(attachments.length > 0 ? { attachments } : {}),
+                    // So the next plain question in this tab knows to stay
+                    // general (`readInheritedGeneralQuestion`).
+                    ...(generalQuestion !== null ? { isGeneral: true } : {}),
                 });
             }
             updateSession(askedSessionId, (session) => {
@@ -3832,10 +4055,20 @@ export default function ChatbotAppComp() {
                     options?.shownText === undefined && generalQuestion === null
                         ? await findKnownQuestion(trimmedAsked, activeFocus)
                         : null;
+                // The page itself goes with the hint, so the first round can
+                // answer from it (`genKnownQuestionHint`): a small local model
+                // told only the page's id went searching instead, opened the
+                // wrong page and invented the steps (2026-10-10, 63k tokens).
                 const knownHint =
                     knownQuestion === null
                         ? null
-                        : genKnownQuestionHint(knownQuestion);
+                        : genKnownQuestionHint(knownQuestion, {
+                              focus: activeFocus,
+                              pageText: await readKnownQuestionPage(
+                                  knownQuestion,
+                                  (id) => callTool('owa_help_page', { id }),
+                              ),
+                          });
                 const askedWithHint =
                     knownHint === null
                         ? askedOfModel
@@ -3895,6 +4128,22 @@ export default function ChatbotAppComp() {
                                 ...(generalQuestion === null
                                     ? {}
                                     : { isGeneral: true }),
+                                // The walkthrough buttons stand under the
+                                // answer to a known question whatever the
+                                // model opened (`AskExtraType.knownRecipeId`).
+                                ...(knownQuestion?.resources?.recipe
+                                    ? {
+                                          knownRecipeId:
+                                              knownQuestion.resources.recipe,
+                                      }
+                                    : {}),
+                                ...(knownQuestion?.resources?.find
+                                    ? {
+                                          knownFind:
+                                              knownQuestion.resources.find,
+                                      }
+                                    : {}),
+                                askedText: trimmedAsked,
                                 // Pulled by the loop between rounds. The
                                 // splice is the handover: what comes out of
                                 // the queue is what was folded in, so nothing
@@ -5211,11 +5460,40 @@ export default function ChatbotAppComp() {
                                 />
                             </RenderPickFieldComp>
                             <RenderPickFieldComp caption="Assistant">
-                                <RenderProviderSwitchComp
-                                    rows={assistantRows}
-                                    value={assistantRowValue}
-                                    onChange={handleProviderChanging}
-                                />
+                                {/* One row with the picker: the field stacks
+                                 * its caption over its control at this width,
+                                 * and a third child went under the picker
+                                 * (the user's picture, 2026-10-10: "refresh
+                                 * button should be inline"). */}
+                                <span className="d-inline-flex align-items-center gap-1">
+                                    <RenderProviderSwitchComp
+                                        rows={assistantRows}
+                                        value={assistantRowValue}
+                                        onChange={handleProviderChanging}
+                                    />
+                                    {/* The shared registry's servers come
+                                     * and go as an admin changes the file
+                                     * on the site; this re-reads it without
+                                     * a restart (the user's ask, 2026-10-10:
+                                     * "have reload button in chatbot
+                                     * page"). */}
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-link p-0 chat-registry-reload"
+                                        title={registryReloadTitle}
+                                        aria-label="Reload shared assistants"
+                                        disabled={isReloadingRegistry}
+                                        onClick={handleReloadingRegistry}
+                                    >
+                                        <i
+                                            className={
+                                                isReloadingRegistry
+                                                    ? 'spinner-border spinner-border-sm'
+                                                    : 'bi bi-arrow-clockwise'
+                                            }
+                                        />
+                                    </button>
+                                </span>
                             </RenderPickFieldComp>
                             {provider === null ? (
                                 // The head says WHAT is answering; the empty
@@ -5363,30 +5641,45 @@ export default function ChatbotAppComp() {
                          * never believed; a specific one is what makes
                          * somebody check.
                          *
-                         * Deliberately NOT dismissible and NOT auto-hidden
-                         * (see the note on auto-hide in this window): it
-                         * costs nothing during a conversation, because the
-                         * empty state it lives in is gone by then.
+                         * NOT auto-hidden (see the note on auto-hide in this
+                         * window): it costs nothing during a conversation,
+                         * because the empty state it lives in is gone by
+                         * then. It CAN be put away for 30 days by its own
+                         * button (2026-10-10, the user's ask: "it's annoying
+                         * for some users, let put any button to hide it for
+                         * a while, e.g. hide for 30 days") -- the same
+                         * setting the opening caution's box writes, and the
+                         * day comes round.
                          */}
-                        <p className="chat-caution" role="note">
-                            <span
-                                className="chat-caution-mark"
-                                aria-hidden="true"
-                            >
-                                {'⚠'}
-                            </span>
-                            <span>
-                                <strong>Be careful with AI answers.</strong>{' '}
-                                This assistant can be confidently wrong — it can
-                                misread the app, describe a button that is not
-                                there, or quote a verse inaccurately — and what
-                                it offers to do can reach a live projector.
-                                Check anything that matters before a service,
-                                and read a step yourself before you press it. It
-                                is here to help you use the app, not to replace
-                                knowing it.
-                            </span>
-                        </p>
+                        {isCautionHidden ? null : (
+                            <p className="chat-caution" role="note">
+                                <span
+                                    className="chat-caution-mark"
+                                    aria-hidden="true"
+                                >
+                                    {'⚠'}
+                                </span>
+                                <span>
+                                    <strong>Be careful with AI answers.</strong>{' '}
+                                    This assistant can be confidently wrong — it
+                                    can misread the app, describe a button that
+                                    is not there, or quote a verse inaccurately
+                                    — and what it offers to do can reach a live
+                                    projector. Check anything that matters
+                                    before a service, and read a step yourself
+                                    before you press it. It is here to help you
+                                    use the app, not to replace knowing it.{' '}
+                                    <button
+                                        type="button"
+                                        className="btn btn-link btn-sm p-0 align-baseline chat-caution-hide"
+                                        title="Put this caution away for 30 days; it comes back after that"
+                                        onClick={handleHidingCaution}
+                                    >
+                                        Hide for 30 days
+                                    </button>
+                                </span>
+                            </p>
+                        )}
                         {provider === null ? (
                             // Not an error -- the window works without a key.
                             // But the two names in the switch above are dead
@@ -5657,6 +5950,17 @@ export default function ChatbotAppComp() {
                             return;
                         }
                         if (suggestions.length === 0) {
+                            // No list to put away: Escape empties the box
+                            // (2026-10-10, the user's ask with a picture of
+                            // `/scree` left in it: "if no suggestion panel
+                            // and focusing then ESC key should clear the
+                            // input"). The window's own Escape -- Stop --
+                            // stands down while the caret is in a field, so
+                            // this is the one thing the key does here.
+                            if (event.key === 'Escape' && question.length > 0) {
+                                event.preventDefault();
+                                handleTypingQuestion('');
+                            }
                             return;
                         }
                         if (event.key === 'Escape') {

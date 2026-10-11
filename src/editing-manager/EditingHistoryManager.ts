@@ -19,6 +19,8 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 // From the LEAF, not from `DirSource`: this module is reachable from node-env
 // tests, and `DirSource` drags the browser-only `appProvider` in behind it.
 import { toEditingHistoryFolderPath } from './editingHistoryPathHelpers';
+// A leaf too: no imports of its own.
+import { ensureDocumentCanvasItemUuids } from '../slide-editor/canvas/canvasItemIdentityHelpers';
 
 type HistoryMovementType = 'undo' | 'redo' | 'discard';
 const HISTORY_MOVEMENT_TYPES: HistoryMovementType[] = [
@@ -31,10 +33,31 @@ export function checkIsHistoryMovementEventType(
 ): eventType is HistoryMovementType {
     return HISTORY_MOVEMENT_TYPES.includes(eventType as HistoryMovementType);
 }
+// A slide document's `items`. A note file and a run sheet have `items` too,
+// and none of theirs holds `canvasItems`.
+function checkIsSlideList(
+    items: unknown,
+): items is { canvasItems: { uuid?: string }[] }[] {
+    return (
+        Array.isArray(items) &&
+        items.every((item) => {
+            return Array.isArray(item?.canvasItems);
+        })
+    );
+}
+
 /**
  * The head and the file are compared to decide whether anything is unsaved,
  * and `metadata.lastEditDate` moves on its own -- so it is blanked on both
  * sides first or every document would read as modified forever.
+ *
+ * So is the other thing a Save changes by itself: a slide document written
+ * before canvas items had a `uuid` gets them filled in on the way to the file
+ * (`AppDocument.toJsonString`), while the head it was saved FROM is never
+ * rewritten. Compared raw, such a head differed from its own saved file for
+ * good -- the `*` and the Save button stayed on through every Save (reported
+ * 2026-10-10). The fill-in is deterministic, so both sides get it here and
+ * only a real edit is left to differ.
  *
  * Exported because the editing menu's Discard button and the Bible Notes
  * list's `Discard Change` item both ask the same question: a second copy of
@@ -48,6 +71,9 @@ export function sanitizeForUpdatingComparison(jsonText: string | null) {
         const jsonData = JSON.parse(jsonText);
         jsonData.metadata ??= {};
         jsonData.metadata.lastEditDate = '';
+        if (checkIsSlideList(jsonData.items)) {
+            jsonData.items = ensureDocumentCanvasItemUuids(jsonData.items);
+        }
         return JSON.stringify(jsonData);
     } catch (_error) {}
     return jsonText;

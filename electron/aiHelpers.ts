@@ -18,6 +18,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { isDev, toUnpackedPath } from './electronHelpers';
+import { refreshLlmRegistry } from './llmRegistryHelpers';
 
 const REMOTE_DEBUGGING_PORT_ARG_PREFIX = '--owa-remote-debugging-port=';
 const MCP_PORT_ARG_PREFIX = '--owa-mcp-port=';
@@ -359,6 +360,10 @@ export async function initAi() {
     }
     await startMcpHost();
     await publishAiEndpoints();
+    // The shared registry, read once the doors are open and never awaited:
+    // a slow or absent internet must not hold the launch, and a read that
+    // fails is a status the chatbot's Reload button can show and retry.
+    void refreshLlmRegistry();
 }
 
 export function getRemoteDebuggingPort() {

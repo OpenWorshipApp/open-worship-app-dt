@@ -898,6 +898,23 @@
                     }
                 },
                 {
+                    "id": "shared-assistant",
+                    "text": "Can the assistant use a server shared by openworship.app?",
+                    "kind": "what",
+                    "keywords": [
+                        "shared server",
+                        "registry",
+                        "llm info.json",
+                        "church computer",
+                        "reload assistants",
+                        "shared by openworship.app",
+                        "tunnel"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
                     "id": "offline-help",
                     "text": "Does the help still work without internet?",
                     "kind": "what",

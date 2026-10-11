@@ -13,9 +13,9 @@ A virtual display is a monitor that exists only inside the app. Screens are
 shown on it exactly as on a real monitor, and any phone, TV or computer can
 watch it — in a web browser, or as a video in a media player — without a
 cable or a second copy of the app.
-
-1. On the Presenter, open the Mini Screen list's bottom **⋮**, click
-   **[en:tran:Virtual Screens Manager]** and pick the floating panel's
+1. On the Presenter, click **[en:tran:Mini Screen Options]** — the ⋮ at the
+   bottom right of the Mini Screen list — and in the menu it opens click
+   **[en:tran:Virtual Screens Manager]**; the floating panel opens on its
    **[en:tran:Virtual Displays]** tab. The screen card's display picker gets
    there too: its last row, **[en:tran:Manage Virtual Displays]**, opens the
    same tab.
@@ -92,6 +92,7 @@ cable or a second copy of the app.
    (in Chrome, **Advanced**, then **Proceed**). **[en:tran:This computer]**,
    the tunnel's address and the MP4 are unchanged, and the `http://`
    addresses keep working.
+
 7. The browser page fits the display to its window. Its
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
@@ -103,20 +104,7 @@ cable or a second copy of the app.
    needed once, because a browser plays sound only after the page has been
    touched; until then the page plays everything silently. A camera put on
    the screen (Camera Show, or a camera background) is streamed from this
-   computer to the page, on this network. **[en:tran:Cast to a TV]** puts
-   the display on a TV:
-   - **[en:tran:Cast from this browser]** — a TV on the same network as the
-     device holding the page (at home, in another building), through the
-     browser's own picker: Chrome and Edge list Google Cast TVs, Safari
-     AirPlay ones. The app streams the display to the page for it, and the TV
-     then plays it from the app itself, without the operator's
-     **[en:tran:Allow connection]** or the connection code. When the browser
-     knows no TV, the list says so. A browser that cannot cast (Firefox)
-     says that too.
-   - On the app's own network, the list also shows the TVs the app found
-     there (Google Cast, DLNA, Roku): **[en:tran:Cast]** puts the display on
-     one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]** looks
-     once more.
+   computer to the page, on this network.
 
    On a page that may use a camera (an `https://` address from step 6, the
    tunnel's, or this computer's own), **[en:tran:Share my cameras]** opens a
@@ -132,7 +120,27 @@ cable or a second copy of the app.
    The page keeps the device from sleeping while it is open. If the app goes
    away, the page reads **[en:tran:Waiting for the display]** and joins again
    by itself.
-8. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
+
+8. To put the display on a TV, click **[en:tran:Cast to a TV]** — the cast
+   icon in the display card's header, beside its size. The list it opens
+   shows the TVs the app found on this network (Google Cast, DLNA, Roku),
+   looked for only when the list opens: **[en:tran:Cast]** puts the display
+   on one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]**
+   looks once more. It needs **[en:tran:Let other devices watch]** (step 6)
+   on, because the TV plays the display's MP4 address itself. The browser
+   page has the same button, with one more row:
+   - **[en:tran:Cast from this browser]** — a TV on the same network as the
+     device holding the page (at home, in another building), through the
+     browser's own picker: Chrome and Edge list Google Cast TVs, Safari
+     AirPlay ones. The app streams the display to the page for it, and the TV
+     then plays it from the app itself, without the operator's
+     **[en:tran:Allow connection]** or the connection code. When the browser
+     knows no TV, the list says so. A browser that cannot cast (Firefox)
+     says that too.
+   - On the app's own network, the page's list also shows the TVs the app
+     found there, with the same **[en:tran:Cast]**, **[en:tran:Stop]** and
+     **[en:tran:Search again]**.
+9. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
    or MP4, where they are (**[en:tran:This computer]**,
    **[en:tran:This network]** or **[en:tran:Internet]**), their address with
    their browser and device (such as `Chrome · Android` or `VLC`), and
@@ -155,9 +163,9 @@ cable or a second copy of the app.
    shown. A browser keeps
    the permission when its page reloads, until the switch is turned off, the
    viewer is disconnected, or the app restarts. A media player has no switch.
-9. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
-   hidden and go back to the main monitor, as when a monitor is unplugged,
-   and everyone watching is disconnected.
+10. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
+    hidden and go back to the main monitor, as when a monitor is unplugged,
+    and everyone watching is disconnected.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

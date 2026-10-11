@@ -1,11 +1,11 @@
 ---
 paths:
-  - "src/chatbot/**"
-  - "html/chatbot.html"
-  - "src/others/AppWindowToolsComp.tsx"
-  - "src/others/AppAssistantComp.tsx"
-  - "src/helper/ai/aiCautionHelpers.ts"
-  - "src/helper/ai/aiKeyFocusHelpers.ts"
+  - 'src/chatbot/**'
+  - 'html/chatbot.html'
+  - 'src/others/AppWindowToolsComp.tsx'
+  - 'src/others/AppAssistantComp.tsx'
+  - 'src/helper/ai/aiCautionHelpers.ts'
+  - 'src/helper/ai/aiKeyFocusHelpers.ts'
 ---
 
 # Chatbot window
@@ -90,7 +90,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     edge (`.chat-head-fold` — ONE button in both states, so the keyboard
     stays on it and it is pressed again where it was just pressed) folds the
     pickers, the limit and the credit line to `<window> · <assistant> ·
-    <model>` (`genHeadSummary`, the pickers' own chosen words) plus the spend
+<model>` (`genHeadSummary`, the pickers' own chosen words) plus the spend
     guard's corner (`describeSpendFolded`: the figure, else the cap; never
     ellipsised, amber when near or paused — **Allow more** is behind the fold
     then). The whole line opens it again. Remembered for the WINDOW
@@ -131,9 +131,15 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     `<serverId>/<rowId>` decoded to the row's model at the request
     (`toWireModel`). Every call goes renderer → IPC → the MAIN-process relay
     (`electron/customLlmRelayHelpers.ts`), which forwards only to the saved
-    address, only `GET /models` and `POST /chat/completions`, with the key
-    read in main — the chatbot CSP is NOT widened and a custom key never
-    enters the window. Never stands in or is stood in for; this computer AND
+    address — or, since 2026-10-10, to a server of the SHARED REGISTRY
+    (`electron/llmRegistryHelpers.ts`, `docs/llm-registry/README.md`:
+    `https://www.openworship.app/llm/info.json`, read by main at launch and
+    on the chatbot's ↻ beside the Assistant picker, its servers offered as
+    `registry-<id>` rows with their keys held in main, `isFree` pricing them
+    at $0; a failed read keeps the last good list and says why on the
+    button's tooltip) — only `GET /models` and `POST /chat/completions`, with
+    the key read in main — the chatbot CSP is NOT widened and a custom key
+    never enters the window. Never stands in or is stood in for; this computer AND
     the church's own network (`checkIsLocalNetworkUrl`) are priced at $0; a
     failure says its own sentence (`CustomServerError`). Measured against
     the user's LM Studio box the same day: the fixed request is ~13 400
@@ -152,7 +158,9 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     server's KIND is read off its root and never stored
     (`readCustomServerModelInfo` → `lm-studio` / `ollama` — `/api/tags` +
     `/api/ps`, `vision` ticks the box — / `llama-cpp` — `/props`, one
-    `commonInfo` for every row — / `other`: LocalAI, Jan, GPT4All, vLLM,
+    `commonInfo` for every row, or, for a ROUTER (`role: "router"`,
+    b11540+), each model's loaded state and `--ctx-size` off `/models`
+    (`toLlamaCppRouterModelInfoMap`, 2026-10-10) — / `other`: LocalAI, Jan, GPT4All, vLLM,
     SGLang, a LiteLLM proxy, which get the protocol alone); Settings' Test
     corrects an address one path off through the relay's `probeBaseUrl`
     (same origin, `GET /models` only — Ollama typed as `…/v1/systemone`
@@ -346,8 +354,17 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   once and never believed. It lives in the EMPTY STATE deliberately: read
   before the first question, gone by itself once one is asked, so it costs a
   conversation nothing and needs no dismiss button to mislearn — which is
-  how it stays clear of the auto-hide decision above. Do not merge the two,
-  make this one sticky, or give it a dismiss.
+  how it stays clear of the auto-hide decision above. Do not merge the two
+  or make this one sticky. **Both can be put away for 30 days** (2026-10-10,
+  the user's ask with both circled: _it's annoying for some users, let put
+  any button to hide it for a while, e.g. hide for 30 days_): a box on the
+  opening confirm (`AiCautionBodyComp`, written only on **Open** — ticked
+  and cancelled hides nothing) and a **Hide for 30 days** button on this
+  one, both writing ONE setting, `ai-caution-hidden-until` (a time;
+  `aiCautionHelpers.ts` reads it fresh at each open, the chat window once at
+  mount), because somebody who has read one has read the warning; the day
+  comes round and both are back — 30 days rather than a "never" box on
+  purpose. Not a dismiss for good, and not auto-hide.
 - **Opening either AI window asks the caution FIRST** (2026-09-12, `EC-175`,
   the user's own ask, both icons circled in a picture). `askAiCaution`
   (`src/helper/ai/aiCautionHelpers.ts`) is ONE confirm — _Be careful with AI_,
@@ -453,7 +470,11 @@ answer` under them opens all of it for that window (184 in the Presenter),
   a paid model spent two rounds and nine seconds saying nothing was showing, and
   the offline bot every failure fell through to said the same and offered no way
   to change it (4 of 12 right). `/screen`, `/screen-show`, `/screen-hide`,
-  `/clear-all` … `/clear-foreground`, `/find <words>`, `/goto <page>`,
+  `/screen-clear-all` … `/screen-clear-foreground` (2026-10-10, the user's
+  ask: the clears carry the screen's prefix, the old `/clear-all` spellings
+  stay as aliases, and `/clear` alone empties the tab in front — the WINDOW's
+  own, done before any message is written, a locked tab refused the way its ×
+  is), `/find <words>`, `/goto <page>`,
   `/here`, `/help <words>` and `/commands` run through the app's own MCP
   tools from `handleAsking` BEFORE any provider is chosen — no key, no history,
   no attachment, ~1.6 s — and typing `/` lists them in the suggestion list
@@ -506,6 +527,29 @@ answer` under them opens all of it for that window (184 in the Presenter),
   the answer says a general question needs an assistant and offers **Open
   AI settings** — the guide never answers it. The bare `/btw` runs as a
   command and says how; `/commands` names it as the exception.
+  **A plain follow-up under it stays general** (2026-10-10, the user's ask
+  with a picture of _in khmer please_ answered as an app question at 10.2k
+  tokens: _the follow up prompt should inherit command from previous_):
+  `readInheritedGeneralQuestion` reads the tab's last question — typed with
+  `/btw`, or carrying `isGeneral` on the message, so a chain holds and
+  survives a reopen — and any `/` line ends it. The prompt tells the model
+  to say _type `/btw` before it_ when asked something outside the app or how
+  to ask one, and a 💡 tip says the same. **Commands are offered where they
+  work** (`COMMAND_PAGE_MAP`, `checkIsCommandOnPage`): the Presenter's own —
+  screen show / hide / clears, `/selected`, `/run`, `/next`, `/previous`,
+  `/verse`, `/countdown`, `/marquee` — are listed only while the tab asks
+  about the Presenter and are refused elsewhere with **Go to the Presenter**;
+  `/commands` names them on one line there; the rest work everywhere (a
+  Reader command would be filed `['reader', 'presenter']`). **`/slide <n |
+  words>`** presents one slide of the selected song by its card's own
+  `find` (`presentSlideAndReport`, shared with `/next`); and **on a custom
+  server two asks in words skip the model** (EC-206, EC-210 — a 4B model
+  offered Clear All for "turn off the screen" with every screen off, and a
+  9B ran six rounds on "show verse 1 on screen"): `readScreenToggleAsk` →
+  `answerScreenToggleAsk` (the screens' state plus the ONE button that does
+  it, never a Clear) and `readSlideShowAsk` → `answerSlideShowAsk` (the
+  slide named, **Put "…" on the screen** running `/slide N`; a sentence
+  naming no slide of the song — a passage — falls through to the model).
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it
@@ -614,3 +658,31 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   answer (`watch.bibleImportCheck` in `llmBotHelpers.ts`). The Settings-form
   prefill (`bibleImportRequestHelpers.ts`) is what **Do it in Settings instead**
   and **A file on this computer** use.
+  **What counts as asking for one was re-read against the live window**
+  (2026-10-10, the user's ask with the three Bible rows of the suggestion list
+  circled: _importing bible data is the most important thing right now … make
+  this prompt and mcp tool and action working smoothly_). A custom server's
+  model is sent the lean tool list, which has no `owa_bible_xml`, so for a
+  local model THIS reader is the whole feature. Measured first: _Import a
+  Bible in Cambodia_ found nothing; _add bible verse John 3:16 to my bible
+  list_ was taken for an import and offered the Chewa, Polish and Turkmen
+  Bibles of 2016; five of the seven Khmer Bibles listed were installed and
+  nothing said so; a typed `2` drew the same list again; and _How do I import
+  a Bible XML file?_ took a local model 31 s to list the Settings form with no
+  way to have it done. Now `readBibleImportLanguageAsk` has two strengths of
+  verb — `import|install|download` ask by themselves; `add|get|load|want|need|
+  give` and _do you have / is there / are there_ only beside a language the
+  collection has (`checkIsBibleLanguageWord`) or with nothing else said —
+  and `OTHER_TOPIC_PATTERN` (a verse, a list, a note, the screen, the reader,
+  a `3:16`) hands the sentence to the guide whatever its verb; `put` and `use`
+  count only beside a link. A typed reply is the PRESS (`findTypedPress`: the
+  words on a button, the number of a choice, `yes` for the suggested one or
+  **Install it**, `cancel`) — before it `yes` at step 1 named the Bible
+  "yes" — and a link pasted alone answers the two answers that ask for one
+  (`awaits: 'find'` / `'link'`; the dead-link answer's Cancel carries the
+  second). An installed Bible is marked in the list and said before step 1
+  (`installedAs`, by TITLE; a retitled edition is not claimed), a word no file
+  has is answered with **Did you mean** buttons (`suggestions`), and
+  `genGuideActions` puts **Import a Bible for me** first on any answer whose
+  page is `BIBLE_IMPORT_MANUAL_ID` (W-34) — the how-to is still TOLD from the
+  guide, and the button is the guide's own "easy way".

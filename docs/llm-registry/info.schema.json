@@ -1,0 +1,90 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://www.openworship.app/llm/info.schema.json",
+    "title": "Open Worship shared LLM registry",
+    "description": "LLM servers every copy of the Open Worship app may offer in its help window. Read by the app at launch and on the help window's Reload button. Everything in it is public.",
+    "type": "object",
+    "required": ["version", "servers"],
+    "additionalProperties": true,
+    "properties": {
+        "version": {
+            "const": 1,
+            "description": "The shape of this file. A file of another version is ignored whole."
+        },
+        "updated": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "A date for people reading the file, e.g. 2026-10-10."
+        },
+        "servers": {
+            "type": "array",
+            "maxItems": 20,
+            "items": { "$ref": "#/$defs/server" }
+        }
+    },
+    "$defs": {
+        "server": {
+            "type": "object",
+            "required": ["id", "name", "baseUrl", "models"],
+            "additionalProperties": true,
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9-]{1,48}$",
+                    "description": "A stable slug, unique in the file. Shown in the app as registry-<id>."
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "description": "What the Assistant picker shows."
+                },
+                "baseUrl": {
+                    "type": "string",
+                    "pattern": "^https?://",
+                    "maxLength": 500,
+                    "description": "The OpenAI-compatible base address, usually ending in /v1."
+                },
+                "apiKey": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Sent as a Bearer token. Held in the app's main process only. Public: use a key that reaches only this server."
+                },
+                "isFree": {
+                    "type": "boolean",
+                    "description": "true prices the server's answers at nothing in the help window."
+                },
+                "note": {
+                    "type": "string",
+                    "maxLength": 300,
+                    "description": "For people reading the file; not shown in the app."
+                },
+                "models": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/$defs/model" }
+                }
+            }
+        },
+        "model": {
+            "type": "object",
+            "required": ["model"],
+            "additionalProperties": true,
+            "properties": {
+                "model": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The model id the server knows, e.g. qwen/qwen3.5-9b."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "What the Model picker shows; empty shows the id."
+                },
+                "canSeeImages": {
+                    "type": "boolean",
+                    "description": "true lets a picture be attached to a question."
+                }
+            }
+        }
+    }
+}

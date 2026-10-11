@@ -13,7 +13,8 @@ Use one app as the host and another as the guest. Both computers need the same
 app version and a reachable network connection — the same network, or the
 internet once the host opens to it (step 7).
 
-1. On the host's Presenter, open the Mini Screen list's bottom **⋮** and
+1. On the host's Presenter, click **[en:tran:Mini Screen Options]** — the ⋮
+   at the bottom right of the Mini Screen list — and in the menu it opens
    click **[en:tran:Virtual Screens Manager]**, then pick the floating
    panel's **[en:tran:Screen Mirror Connection]** tab. The panel remembers
    which tab was open and whether it was open at all. Hosting is off until you

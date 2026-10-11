@@ -14,12 +14,15 @@
 
 // `W-01b` is a real id: the optional letter is load-bearing, without it the
 // letter is left behind on its own.
-const RECIPE_ID_PATTERN = /\b[A-Z]{1,3}-\d{1,3}[a-z]?\b/g;
+// The hyphen is any a model types: a plain one, or the non-breaking one
+// (U+2011) qwen3.5-9b wrote "W‑42" with on 2026-10-10, which walked past the
+// scrub and reached the user; the figure dash, en dash and minus beside it.
+const RECIPE_ID_PATTERN = /\b[A-Z]{1,3}[-‐-–−]\d{1,3}[a-z]?\b/g;
 // "(W-08 step 1)", "[see W-28]": an aside built around an id carries nothing
 // the volunteer needed, so the whole bracket goes rather than leaving
 // "( step 1)" behind.
 const RECIPE_ID_ASIDE_PATTERN =
-    /[ \t]*[([][^)\]\n]*\b[A-Z]{1,3}-\d{1,3}[a-z]?\b[^)\]\n]*[)\]]/g;
+    /[ \t]*[([][^)\]\n]*\b[A-Z]{1,3}[-‐-–−]\d{1,3}[a-z]?\b[^)\]\n]*[)\]]/g;
 
 const UNKNOWN_PAGE_TEXT = 'the guide page';
 // The shape also fits a few real-world tokens an answer may legitimately
@@ -66,7 +69,9 @@ export function scrubAnswerRecipeIds(
                     if (checkIsNotAnId(id)) {
                         return id;
                     }
-                    const title = pageTitles[id];
+                    // The titles are keyed by the id as the manual writes
+                    // it, plain hyphen; the model's dash is read as one.
+                    const title = pageTitles[id.replace(/[‐-–−]/g, '-')];
                     const phrase =
                         title === undefined
                             ? UNKNOWN_PAGE_TEXT
@@ -84,7 +89,7 @@ export function scrubAnswerRecipeIds(
 }
 
 function checkIsNotAnId(id: string) {
-    return NOT_AN_ID_SET.has(id.split('-')[0]);
+    return NOT_AN_ID_SET.has(id.split(/[-‐-–−]/)[0]);
 }
 
 // "(isAnyShowing is false)", "(didChange: true)": a model citing a tool's

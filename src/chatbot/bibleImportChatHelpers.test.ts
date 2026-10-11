@@ -25,9 +25,11 @@ vi.mock('../setting/settingHelpers', () => {
 });
 
 import {
+    BIBLE_IMPORT_MANUAL_ID,
     BIBLE_IMPORT_STEP_TOOL_NAME,
     findBibleImportState,
     genBibleImportCheckAnswer,
+    genBibleImportOfferAction,
     readBibleImportLanguageAsk,
     readBibleImportLinkAsk,
     readBibleImportTypedReply,
@@ -446,6 +448,316 @@ describe('links that do not lead to a Bible', () => {
         expect(mocks.openBibleSetting).toHaveBeenCalled();
         expect(settings.text).toContain('Settings → Bible');
     });
+});
+
+describe('what is, and is not, somebody asking for a Bible', () => {
+    const CATALOG = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+
+    it('a sentence about a verse, a list or the screen is left to the guide', () => {
+        // Each of these used to search the collection for its own words.
+        for (const text of [
+            'add bible verse John 3:16 to my bible list',
+            'put the bible verse on the screen',
+            'use the bible reader',
+            'download bible audio',
+            'I want to read the bible',
+            'add a bible note',
+            'get the bible lookup',
+            'load the bible slides',
+            // "add" and "want" beside no language: about something else.
+            'get bible commentary',
+            'I need a bible for sunday',
+        ]) {
+            expect([text, readBibleImportLanguageAsk(text)]).toEqual([
+                text,
+                null,
+            ]);
+        }
+    });
+
+    it('a language beside "want", "need" or "add" is a Bible to look for', () => {
+        expect(readBibleImportLanguageAsk('I want a Khmer bible')).toEqual({
+            step: 'check',
+            url: CATALOG,
+            find: 'khmer',
+        });
+        expect(readBibleImportLanguageAsk('need thai bible')?.find).toBe(
+            'thai',
+        );
+        expect(
+            readBibleImportLanguageAsk('please add the French bible')?.find,
+        ).toBe('french');
+        // Nothing else said at all: which language?
+        expect(readBibleImportLanguageAsk('add a bible')).toEqual({
+            step: 'language',
+        });
+        expect(
+            readBibleImportLanguageAsk('I want another bible version'),
+        ).toEqual({ step: 'language' });
+        expect(
+            readBibleImportLanguageAsk('download a different bible'),
+        ).toEqual({ step: 'language' });
+    });
+
+    it('a country, a people and the letters of a version find the language', () => {
+        expect(
+            readBibleImportLanguageAsk('Import a Bible in Cambodia')?.find,
+        ).toBe('khmer');
+        expect(
+            readBibleImportLanguageAsk('Import a Bible in "korea"')?.find,
+        ).toBe('korea');
+        expect(
+            readBibleImportLanguageAsk('install bible for China')?.find,
+        ).toBe('chinese');
+        expect(readBibleImportLanguageAsk('import KJV bible')?.find).toBe(
+            'english kj',
+        );
+    });
+
+    it('"is there a Korean bible?" is a request; "is there a way…" a question', () => {
+        expect(
+            readBibleImportLanguageAsk('Do you have a Khmer bible?')?.find,
+        ).toBe('khmer');
+        expect(
+            readBibleImportLanguageAsk('Are there any Thai bibles?')?.find,
+        ).toBe('thai');
+        expect(
+            readBibleImportLanguageAsk('Is there a way to import a bible?'),
+        ).toBeNull();
+        expect(
+            readBibleImportLanguageAsk('Is there a bible verse about love?'),
+        ).toBeNull();
+    });
+});
+
+describe('typed instead of pressed', () => {
+    const PAGE = {
+        kind: 'page',
+        total: 998,
+        matched: 2,
+        searchedFor: ['khmer'],
+        files: [
+            { name: 'KhmerBible.xml', url: LINK, title: 'Khmer Standard' },
+            {
+                name: 'Khmer2005Bible.xml',
+                url: LINK.replace('Bible', '2005Bible'),
+                title: 'Khmer 2005',
+                installedAs: 'គខប',
+            },
+        ],
+    };
+    const CATALOG = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+
+    function pageActions() {
+        return genBibleImportCheckAnswer(PAGE, {
+            step: 'check',
+            url: CATALOG,
+            find: 'khmer',
+        }).actions;
+    }
+
+    it('the number of a choice is that choice', async () => {
+        expect(readBibleImportTypedReply(pageActions(), '2')).toMatchObject({
+            step: 'check',
+            url: LINK.replace('Bible', '2005Bible'),
+        });
+        expect(readBibleImportTypedReply(pageActions(), 'number 1.')?.url).toBe(
+            LINK,
+        );
+        // A number no choice has narrows the search of the PAGE, as any
+        // word does.
+        expect(readBibleImportTypedReply(pageActions(), '2016')).toMatchObject({
+            step: 'check',
+            pageUrl: CATALOG,
+            find: 'khmer 2016',
+        });
+        // "list 2" under the book names.
+        mocks.callTool.mockResolvedValueOnce(JSON.stringify(CHECKED));
+        const first = await runBibleImportStep({ step: 'check', url: LINK });
+        const names = await runBibleImportStep({
+            ...(first.actions?.[0].args as BibleImportStateType),
+            step: 'names',
+            locale: 'km-KH',
+            digits: 'local',
+        });
+        expect(
+            readBibleImportTypedReply(names.actions, 'list 2'),
+        ).toMatchObject({ step: 'confirm', bookNames: 'n7f91d3cb' });
+    });
+
+    it('"yes" takes what was suggested, "cancel" stops, a label is its button', async () => {
+        mocks.callTool.mockResolvedValueOnce(JSON.stringify(CHECKED));
+        const first = await runBibleImportStep({ step: 'check', url: LINK });
+        // Not a Bible named "yes".
+        expect(readBibleImportTypedReply(first.actions, 'yes')).toMatchObject({
+            step: 'locale',
+            key: 'KSV',
+        });
+        expect(readBibleImportTypedReply(first.actions, 'Cancel')?.step).toBe(
+            'cancel',
+        );
+        expect(
+            readBibleImportTypedReply(first.actions, 'km1954'),
+        ).toMatchObject({ step: 'locale', key: 'KM1954' });
+        const confirm = await runBibleImportStep({
+            ...(first.actions?.[0].args as BibleImportStateType),
+            step: 'confirm',
+            key: 'KSV',
+            locale: 'km-KH',
+            digits: 'local',
+            bookNames: 'nc4e26c5e',
+        });
+        expect(readBibleImportTypedReply(confirm.actions, 'ok')?.step).toBe(
+            'import',
+        );
+        // Under a list of files "yes" says nothing about which: the list is
+        // looked up again and drawn again, never the first file taken.
+        expect(readBibleImportTypedReply(pageActions(), 'yes')).toMatchObject({
+            step: 'check',
+            pageUrl: CATALOG,
+            find: 'khmer yes',
+        });
+    });
+
+    it('a link pasted alone answers "which Bible?" and "paste it here"', async () => {
+        const asked = await runBibleImportStep({ step: 'language' });
+        expect(asked.text).toContain('paste it here');
+        expect(
+            findBibleImportState(
+                [{ author: 'bot', actions: asked.actions }],
+                LINK,
+            ),
+        ).toEqual({ step: 'check', url: LINK, find: '' });
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ problem: 'not-xml', message: 'tool words' }),
+        );
+        const dead = await runBibleImportStep({ step: 'check', url: LINK });
+        expect(dead.actions?.map((one) => one.label)).toEqual([
+            'Look for a Bible by language',
+            'Cancel',
+        ]);
+        expect(readBibleImportTypedReply(dead.actions, `<${LINK}>.`)).toEqual({
+            step: 'check',
+            url: LINK,
+            find: '',
+        });
+        // Words under "paste the link" are not a link.
+        expect(readBibleImportTypedReply(dead.actions, 'Khmer')).toBeNull();
+        expect(
+            readBibleImportTypedReply(
+                dead.actions,
+                'https://user:pw@a.b/x.xml',
+            ),
+        ).toBeNull();
+    });
+});
+
+describe('a Bible they already have', () => {
+    it('is marked in the list, and said before the first question', async () => {
+        const page = genBibleImportCheckAnswer(
+            {
+                kind: 'page',
+                total: 998,
+                matched: 2,
+                searchedFor: ['khmer'],
+                files: [
+                    { name: 'KhmerBible.xml', url: LINK, title: 'Khmer 1954' },
+                    {
+                        name: 'Khmer2005Bible.xml',
+                        url: LINK.replace('Bible', '2005Bible'),
+                        title: 'Khmer 2005',
+                        installedAs: 'គខប',
+                    },
+                ],
+            },
+            {
+                step: 'check',
+                url: 'https://github.com/Beblia/x',
+                find: 'khmer',
+            },
+        );
+        expect(page.text).toContain('1. Khmer 1954 — Khmer Bible\n');
+        expect(page.text).toContain(
+            '2. Khmer 2005 — Khmer 2005 Bible — **you already have this one** (គខប)',
+        );
+        const checked = genBibleImportCheckAnswer(
+            { ...CHECKED, installedAs: 'គខប' },
+            { step: 'check', url: LINK },
+        );
+        expect(checked.text).toContain('**You already have this Bible**');
+        expect(checked.text).toContain('installed as **គខប**');
+        // ...and still a choice: a second copy under another name.
+        expect(checked.text).toContain('Step 1 of 4');
+        expect(
+            genBibleImportCheckAnswer(CHECKED, { step: 'check', url: LINK })
+                .text,
+        ).not.toContain('already have');
+    });
+});
+
+describe('a word the collection has no file for', () => {
+    it('offers the languages it is close to, as buttons', async () => {
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                kind: 'page',
+                total: 998,
+                matched: 0,
+                searchedFor: ['kmer'],
+                suggestions: ['Khmer'],
+                files: [],
+            }),
+        );
+        const url = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+        const answer = await runBibleImportStep({
+            step: 'check',
+            url,
+            find: 'kmer',
+        });
+        expect(answer.text).toContain('None of them has “kmer”');
+        expect(answer.text).toContain('Did you mean');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Khmer',
+            'Cancel',
+        ]);
+        expect(answer.actions?.[0].args).toMatchObject({
+            step: 'check',
+            url,
+            find: 'Khmer',
+        });
+        // Typing a language instead searches afresh, without "kmer".
+        expect(readBibleImportTypedReply(answer.actions, 'Thai')).toMatchObject(
+            { step: 'check', url, find: 'Thai' },
+        );
+    });
+
+    it('with nothing close, asks again and takes a link', async () => {
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                kind: 'page',
+                total: 998,
+                matched: 0,
+                searchedFor: ['vietnamese'],
+                files: [],
+            }),
+        );
+        const answer = await runBibleImportStep({
+            step: 'check',
+            url: 'https://github.com/Beblia/Holy-Bible-XML-Format',
+            find: 'vietnamese',
+        });
+        expect(answer.text).toContain('Type the language');
+        expect(answer.actions?.map((one) => one.label)).toEqual(['Cancel']);
+        expect(readBibleImportTypedReply(answer.actions, LINK)?.url).toBe(LINK);
+    });
+});
+
+it('an answer about importing a Bible offers to do it', () => {
+    expect(genBibleImportOfferAction()).toEqual({
+        label: 'Import a Bible for me',
+        toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+        args: { step: 'language' },
+    });
+    expect(BIBLE_IMPORT_MANUAL_ID).toBe('W-34');
 });
 
 it('shows a file name as words', () => {

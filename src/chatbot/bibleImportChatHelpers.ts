@@ -25,6 +25,7 @@
 import { getBibleNumberChoices } from '../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 import {
     BIBLE_XML_CATALOG_URL,
+    checkIsBibleLanguageWord,
     toBibleSearchWords,
 } from '../../tools/owa-devtools-mcp/bibleXmlAdvice.mjs';
 import { appError } from '../helper/loggerHelpers';
@@ -34,6 +35,11 @@ import { callTool, parseToolJson } from './mcpClient';
 // A pseudo tool, caught in the window's `handleActing`: no tool host ever
 // registers it, so no model can press these buttons for the person.
 export const BIBLE_IMPORT_STEP_TOOL_NAME = 'owa-bible-import-step';
+
+// The guide page about adding a Bible from XML. Its own "easy way" is this
+// conversation, so an answer written from it carries the button that starts
+// one (`genBibleImportOfferAction`).
+export const BIBLE_IMPORT_MANUAL_ID = 'W-34';
 
 type NameListType = {
     id: string;
@@ -65,7 +71,8 @@ export type BibleImportStepType =
 export type BibleImportStateType = {
     step: BibleImportStepType;
     // What a TYPED reply to the answer this state was drawn under means.
-    awaits?: 'key' | 'locale' | 'find';
+    // `link`: nothing but an address -- the answer asked for a better one.
+    awaits?: 'key' | 'locale' | 'find' | 'link';
     url?: string;
     // The page a list of files came from: a typed word searches it again.
     pageUrl?: string;
@@ -117,8 +124,27 @@ function toCount(value: unknown) {
 
 // --- reading what the person said ----------------------------------------------
 
-const IMPORT_WORD_PATTERN =
+// Beside a link the link says what is wanted, so any of these will do.
+const LINK_IMPORT_WORD_PATTERN =
     /\b(?:import|install|add|get|download|load|put|use)\b/i;
+// With no link: a Bible asked to be FETCHED, in so many words...
+const IMPORT_WORD_PATTERN = /\b(?:import|install|download)\b/i;
+// ...or in weaker ones. A Bible "added" or "wanted" is as often a verse added
+// to a list or the Reader wanted open, so these count only beside a language
+// the collection has ("I want a Khmer bible") or with nothing else said at
+// all ("add a bible").
+const ACQUIRE_WORD_PATTERN = /\b(?:add|get|load|want|need|give)\b/i;
+// "Is there a Korean bible?" is how an elderly person asks for one. A
+// question by its first word, a request all the same -- with the language
+// named, or it is a question about the app.
+const AVAILABILITY_PATTERN =
+    /^(?:do you have|have you got|is there|are there)\b/i;
+// What a sentence is about when it is NOT a whole Bible to fetch. Measured
+// 2026-10-10: "add bible verse John 3:16 to my bible list" searched the
+// collection for "verse john 16 list" and offered the Chewa, Polish and
+// Turkmen Bibles of 2016.
+const OTHER_TOPIC_PATTERN =
+    /\b(?:verses?|passages?|chapters?|slides?|screens?|projector|notes?|audio|lookup|reader|items?|lists?|songs?|lyrics?|backgrounds?|fonts?|flows?|read|search|study|present|show|display)\b|\d\s*:\s*\d/i;
 
 /**
  * A message asking for a Bible from ONE address: "Import bible from xml url
@@ -133,7 +159,7 @@ export function readBibleImportLinkAsk(
     if (text.length > 1200 || text.trimStart().startsWith('/')) {
         return null;
     }
-    if (!/\bbibles?\b/i.test(text) || !IMPORT_WORD_PATTERN.test(text)) {
+    if (!/\bbibles?\b/i.test(text) || !LINK_IMPORT_WORD_PATTERN.test(text)) {
         return null;
     }
     const urlList = text.match(/https?:\/\/[^\s<>"`]+/g) ?? [];
@@ -154,6 +180,75 @@ export function readBibleImportLinkAsk(
     }
 }
 
+// The whole message is one web address and nothing else.
+function readPastedLink(typed: string) {
+    const address = /^<?(https?:\/\/[^\s<>"`]+?)>?[),.;]*$/.exec(typed)?.[1];
+    if (address === undefined) {
+        return null;
+    }
+    try {
+        const url = new URL(address);
+        return url.username || url.password ? null : url.href;
+    } catch (_error) {
+        return null;
+    }
+}
+
+/**
+ * The button a typed reply stands for, or null. Somebody who types rather
+ * than presses types what the answer in front of them SAYS: the words on a
+ * button ("Khmer", "cancel"), the number of a choice ("2", "list 2"), or
+ * "yes" to what was suggested. Measured before this: "2" under a list of
+ * seven Bibles searched the collection again and drew the same seven, and
+ * "yes" under step 1 named the Bible "yes".
+ */
+function findTypedPress(actions: BotActionType[], typed: string) {
+    const said = typed
+        .toLowerCase()
+        .replace(/[.!]+$/, '')
+        .trim();
+    const labelOf = (action: BotActionType) => {
+        return toBibleImportEcho(action.label).toLowerCase();
+    };
+    const byLabel = actions.find((action) => {
+        return labelOf(action) === said;
+    });
+    if (byLabel !== undefined) {
+        return byLabel;
+    }
+    const number = /^(?:number|no\.?|list|#)?\s*(\d{1,2})$/.exec(said)?.[1];
+    if (number !== undefined) {
+        const wanted = Number(number);
+        return (
+            actions.find((action) => {
+                const label = labelOf(action);
+                return (
+                    label.startsWith(`${wanted}. `) ||
+                    label === `list ${wanted}`
+                );
+            }) ?? null
+        );
+    }
+    if (/^(?:yes|yeah|yep|ok|okay|sure|go ahead|do it|install)$/.test(said)) {
+        return (
+            actions.find((action) => {
+                return (
+                    /\(suggested\)$/.test(action.label) ||
+                    action.label === 'Install it'
+                );
+            }) ?? null
+        );
+    }
+    if (/^(?:no|stop|cancel|never mind|nevermind)$/.test(said)) {
+        return (
+            actions.find((action) => {
+                return action.label === 'Cancel';
+            }) ?? null
+        );
+    }
+    return null;
+}
+
 /**
  * The state the person's typed words continue, or null when what they typed
  * is not an answer to the step in front of them. Read off the LAST answer in
@@ -164,29 +259,41 @@ export function readBibleImportTypedReply(
     text: string,
 ): BibleImportStateType | null {
     const typed = text.trim();
-    if (
-        typed === '' ||
-        typed.length > 60 ||
-        typed.startsWith('/') ||
-        /https?:\/\//.test(typed)
-    ) {
+    if (typed === '' || typed.startsWith('/')) {
         return null;
     }
-    const waiting = (lastBotActions ?? []).find((action) => {
-        return (
-            action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
-            typeof action.args?.awaits === 'string'
-        );
+    const importActions = (lastBotActions ?? []).filter((action) => {
+        return action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME;
     });
-    if (waiting === undefined) {
+    const waiting = importActions.find((action) => {
+        return typeof action.args?.awaits === 'string';
+    });
+    // An address pasted on its own under "which Bible?" or "paste the right
+    // link here" is the Bible they mean. Anywhere else a bare link is
+    // nobody's answer -- it may as well be a song page.
+    const link = readPastedLink(typed);
+    if (link !== null) {
+        return ['find', 'link'].includes(waiting?.args?.awaits)
+            ? { step: 'check', url: link, find: '' }
+            : null;
+    }
+    if (typed.length > 60 || /https?:\/\//.test(typed)) {
         return null;
     }
-    const state = waiting.args as BibleImportStateType;
     // A question is not an answer: "what is a Bible key?" goes to whoever
     // answers questions.
     if (/\?$/.test(typed) || typed.split(/\s+/).length > 4) {
         return null;
     }
+    // The words of a button, its number, or "yes": typed is pressed.
+    const pressed = findTypedPress(importActions, typed);
+    if (pressed !== null) {
+        return pressed.args as BibleImportStateType;
+    }
+    if (waiting === undefined || waiting.args.awaits === 'link') {
+        return null;
+    }
+    const state = waiting.args as BibleImportStateType;
     if (state.awaits === 'key') {
         return carry(state, { step: 'key', typed });
     }
@@ -475,13 +582,10 @@ function genProblemAnswer(
     const text =
         PROBLEM_TEXT_MAP[problem] ?? 'That link did not lead to a Bible.';
     const canRetry = ['busy', 'server', 'unreachable', 'timeout', 'draft-gone'];
-    return {
-        text: [
+    if (canRetry.includes(problem)) {
+        return {
             text,
-            ...(canRetry.includes(problem) ? [] : [FIND_RIGHT_LINK_TEXT]),
-        ].join('\n\n'),
-        actions:
-            canRetry.includes(problem) && state.url
+            actions: state.url
                 ? [
                       toAction(
                           'Try again',
@@ -489,6 +593,16 @@ function genProblemAnswer(
                       ),
                   ]
                 : [],
+        };
+    }
+    return {
+        text: [text, FIND_RIGHT_LINK_TEXT].join('\n\n'),
+        // "Paste it here" has to be heard: the address alone, with no word
+        // about a Bible beside it, is the answer to this.
+        actions: [
+            toAction('Look for a Bible by language', { step: 'language' }),
+            toAction('Cancel', { step: 'cancel', awaits: 'link' }),
+        ],
     };
 }
 
@@ -520,9 +634,12 @@ function genPageAnswer(
     result: any,
     state: BibleImportStateType,
 ): BotAnswerType {
-    const files: { name: string; url: string; title?: string }[] = (
-        result.files ?? []
-    ).slice(0, MAX_FILE_BUTTONS);
+    const files: {
+        name: string;
+        url: string;
+        title?: string;
+        installedAs?: string;
+    }[] = (result.files ?? []).slice(0, MAX_FILE_BUTTONS);
     const words = (result.searchedFor ?? []).join(' ');
     const isCatalog = state.url === BIBLE_XML_CATALOG_URL;
     const matchedText =
@@ -540,22 +657,34 @@ function genPageAnswer(
                   : `It has **${toCount(result.total)}** Bible files.`),
     ];
     if (result.matched === 0 && words) {
+        // Languages the page HAS that the word is close to -- a slip of the
+        // keyboard, a country: offered to press, never assumed.
+        const suggestionList: string[] = (result.suggestions ?? []).slice(0, 4);
         lines.push(
-            `None of them has “${words}” in its name. Type the language in ` +
-                'English or in its own words — for example Khmer, ខ្មែរ or Thai.',
+            `None of them has “${words}” in its name. ` +
+                (suggestionList.length > 0
+                    ? 'Did you mean one of these? Press it, or type the ' +
+                      'language again.'
+                    : 'Type the language in English or in its own words — ' +
+                      'for example Khmer, ខ្មែរ or Thai. If you have a link ' +
+                      'to a Bible file, you can paste it here instead.'),
         );
-        return {
-            text: lines.join('\n\n'),
-            actions: [
-                {
-                    ...toAction('Cancel', carry(state, { step: 'cancel' })),
-                    args: {
-                        ...carry(state, { step: 'cancel' }),
-                        awaits: 'find',
-                    },
-                },
-            ],
+        const actions = [
+            ...suggestionList.map((language) => {
+                return toAction(
+                    language,
+                    carry(state, { step: 'check', find: language }),
+                );
+            }),
+            toAction('Cancel', carry(state, { step: 'cancel' })),
+        ];
+        // A typed word searches the page afresh, without the word that
+        // found nothing.
+        actions[0] = {
+            ...actions[0],
+            args: { ...actions[0].args, awaits: 'find' },
         };
+        return { text: lines.join('\n\n'), actions };
     }
     // Every one, with the title its own file gives -- a file name says
     // "Khmer2019Bible", the file says which Bible it is.
@@ -564,7 +693,10 @@ function genPageAnswer(
             .map((file, index) => {
                 return (
                     `${index + 1}. ${file.title ?? toFileLabel(file.name)}` +
-                    (file.title ? ` — ${toFileLabel(file.name)}` : '')
+                    (file.title ? ` — ${toFileLabel(file.name)}` : '') +
+                    (file.installedAs
+                        ? ` — **you already have this one** (${file.installedAs})`
+                        : '')
                 );
             })
             .join('\n'),
@@ -573,8 +705,8 @@ function genPageAnswer(
         files.length < result.matched
             ? 'Press the one you want, or type a word from its name — a ' +
                   'year, for example — to see others.'
-            : 'Press the one you want. Nothing is installed until you have ' +
-                  'chosen its name and language.',
+            : 'Press the one you want, or type its number. Nothing is ' +
+                  'installed until you have chosen its name and language.',
     );
     const actions = files.map((file, index) => {
         return toAction(
@@ -634,6 +766,15 @@ export function genBibleImportCheckAnswer(
     return genKeyStep(next, [
         `I downloaded **${result.title}** — ${summary}.` +
             (result.fixed ? ` (${result.fixed})` : ''),
+        // Before any question: they may not need this import at all.
+        ...(typeof result.installedAs === 'string'
+            ? [
+                  '**You already have this Bible** — it is installed as ' +
+                      `**${result.installedAs}**. There is no need to ` +
+                      'install it again: press **Cancel**. To keep a second ' +
+                      'copy anyway, choose a different short name below.',
+              ]
+            : []),
         ...(missingList.length === 0
             ? []
             : [
@@ -939,13 +1080,20 @@ export function readBibleImportLanguageAsk(
     text: string,
 ): BibleImportStateType | null {
     const trimmed = text.trim();
+    const isAvailabilityAsk = AVAILABILITY_PATTERN.test(trimmed);
+    const isFetchAsk = IMPORT_WORD_PATTERN.test(trimmed);
     if (
         trimmed.length > 200 ||
         trimmed.startsWith('/') ||
-        QUESTION_START_PATTERN.test(trimmed) ||
+        (QUESTION_START_PATTERN.test(trimmed) && !isAvailabilityAsk) ||
         /https?:\/\//i.test(trimmed) ||
         !/\bbibles?\b/i.test(trimmed) ||
-        !IMPORT_WORD_PATTERN.test(trimmed)
+        !(
+            isFetchAsk ||
+            isAvailabilityAsk ||
+            ACQUIRE_WORD_PATTERN.test(trimmed)
+        ) ||
+        OTHER_TOPIC_PATTERN.test(trimmed)
     ) {
         return null;
     }
@@ -953,9 +1101,29 @@ export function readBibleImportLanguageAsk(
         return { step: 'local-file' };
     }
     const words = toBibleSearchWords(trimmed);
-    return words.length === 0
-        ? { step: 'language' }
-        : { step: 'check', url: BIBLE_XML_CATALOG_URL, find: words.join(' ') };
+    const hasLanguage = words.some(checkIsBibleLanguageWord);
+    if (isAvailabilityAsk) {
+        return hasLanguage ? toCatalogSearch(words) : null;
+    }
+    if (words.length === 0) {
+        return { step: 'language' };
+    }
+    // "Add" and "want" are not "import": beside words that name no
+    // language the sentence is about something else, and is the guide's.
+    return isFetchAsk || hasLanguage ? toCatalogSearch(words) : null;
+}
+
+function toCatalogSearch(words: string[]): BibleImportStateType {
+    return { step: 'check', url: BIBLE_XML_CATALOG_URL, find: words.join(' ') };
+}
+
+/**
+ * The button that starts an import from an answer about importing one: the
+ * guide's own page for it says the easy way is this conversation, and a
+ * person who asked HOW should not have to work out what to type next.
+ */
+export function genBibleImportOfferAction(): BotActionType {
+    return toAction('Import a Bible for me', { step: 'language' });
 }
 
 function genLanguageStep(): BotAnswerType {
@@ -987,7 +1155,8 @@ function genLanguageStep(): BotAnswerType {
             '**Which language do you want the Bible in?** Press one, or type ' +
             'its name — in English or in its own words, for example Thai, ' +
             'ខ្មែរ or Español. I will look in a free collection of about a ' +
-            'thousand Bibles and show you every one in that language.',
+            'thousand Bibles and show you every one in that language. If ' +
+            'you have a link to a Bible file, you can paste it here instead.',
         actions,
     };
 }

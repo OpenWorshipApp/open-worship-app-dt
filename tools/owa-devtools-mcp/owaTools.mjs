@@ -40,7 +40,7 @@ import {
   detectRecipeWindow,
   dropStepsAlreadyDone,
   genGuideExpression,
-  selectGuideStepsForTopic,
+  selectGuideStepIndexForTopic,
   stripInternalIds,
   toGuideSteps,
   toKeyCode,
@@ -774,9 +774,11 @@ export function registerOwaTools(server) {
         'needs only its show button. `controls` carries the exact ' +
         "words on that screen's show/hide toggle and Clear buttons " +
         '(and whether each Clear has anything to clear), so press ' +
-        'them with `owa_click` by those words instead of searching; ' +
-        '`previewCard` says where the Mini Screen panel sits in the ' +
-        'window. Call it again after a press to CHECK what changed.',
+        'them with `owa_click` by those words, no search; ' +
+        '`previewCard` says where the Mini Screen panel sits. Call ' +
+        'again after a press to CHECK what changed. Off the Presenter ' +
+        'page it answers `needsPage: "presenter"` and `isAnyShowing` ' +
+        'only -- `owa_goto_page` there first.',
       inputSchema: {},
     },
     async () => {
@@ -2283,7 +2285,7 @@ export function registerOwaTools(server) {
         "card in the corner, each step's control ringed in red; the " +
         'user presses Next or just does the step. The default ' +
         '`show` presses NOTHING, so start it when they ask to be ' +
-        'walked through, whatever the task. Pass `manualId` ' +
+        'walked through. Pass `manualId` ' +
         '(a recipe id from owa_help_search), a built-in page ' +
         '`demoId`, or your own `steps`: ' +
         'each ONE plain instruction for a volunteer, its `find` the ' +
@@ -2293,12 +2295,10 @@ export function registerOwaTools(server) {
         '**Do it**, which performs one step per press: a click, ' +
         'a `type`/slider change with its `value`, a `hover` that ' +
         'reveals another control, a `rightClick` menu item, or a ' +
-        '`press` shortcut. Hover-hidden controls are held visible ' +
-        'automatically. A user who asked you to do it FOR them ' +
+        '`press` shortcut. A user who asked you to do it FOR them ' +
         'has said yes to the demo already. Never demo a step that ' +
         'changes what the congregation sees without asking first. ' +
-        "The answer is owa_guide_status's: whether step 1's control " +
-        'was found, with `nearMisses` when it was not.',
+        'Answers as owa_guide_status does.',
       inputSchema: {
         title: z.string().optional(),
         demoId: z
@@ -2314,7 +2314,14 @@ export function registerOwaTools(server) {
           .optional()
           .describe(
             "The user's task in their own words; with a manualId, " +
-              'start only the matching recipe step.',
+              'start at the matching recipe step.',
+          ),
+        find: z
+          .string()
+          .optional()
+          .describe(
+            'The exact words on the control the task is about: with a ' +
+              'manualId the step naming it starts, that control first.',
           ),
         steps: z
           .array(
@@ -2347,7 +2354,7 @@ export function registerOwaTools(server) {
         page: z.string().optional().describe(PAGE_TEXT),
       },
     },
-    async ({ title, demoId, manualId, topic, steps, page, mode }) => {
+    async ({ title, demoId, manualId, topic, find, steps, page, mode }) => {
       return await attempt(async () => {
         if (
           demoId !== undefined &&
@@ -2469,43 +2476,118 @@ export function registerOwaTools(server) {
           guideSteps,
           typeof pathname === 'string' ? pathname : '',
         );
+        // The WAY to a deep step, kept aside. A step deep in a recipe
+        // names a control that is on screen only once the earlier
+        // steps have opened the panel it lives in -- W-51's Cast to a
+        // TV sits in the Virtual Screens Manager, on a display row a
+        // volunteer may not have added yet. Started alone first: when
+        // its control is already on screen, the one step is the card
+        // they wanted. When it is not, the card starts again from step
+        // 1 of that recipe, up to the step asked for (the user's ask,
+        // 2026-10-10: "my goal is even small model can help user through
+        // complex tasks … from opening the panel, create vd and click
+        // casting icon").
+        let topicPathSteps = null;
+        const allSteps = guideSteps;
         if (manualId !== undefined && topic !== undefined) {
-          guideSteps = selectGuideStepsForTopic(guideSteps, topic);
+          const matchedIndex = selectGuideStepIndexForTopic(guideSteps, topic);
+          if (matchedIndex !== null) {
+            topicPathSteps = guideSteps.slice(0, matchedIndex + 1);
+            guideSteps = [guideSteps[matchedIndex]];
+          }
+        }
+        // The control the task is about, named outright -- a known
+        // question's own `find`, or the words the model settled on. The
+        // step naming it is the one started, and it goes FIRST among that
+        // step's controls: W-01's header paragraph bolds eight controls,
+        // and for a question about the eighth, the Stay Awake cup, the
+        // card ringed the panel the first one answered to (2026-10-10,
+        // the user's picture, EC-215).
+        const wantedFind =
+          manualId !== undefined && typeof find === 'string' ? find.trim() : '';
+        if (wantedFind.length > 0) {
+          const lowered = wantedFind.toLowerCase();
+          const namesIt = (step) => {
+            return (
+              (step.finds ?? []).some((one) => {
+                return String(one).toLowerCase() === lowered;
+              }) ||
+              String(step.text ?? '')
+                .toLowerCase()
+                .includes(lowered)
+            );
+          };
+          const at = allSteps.findIndex(namesIt);
+          if (at !== -1) {
+            topicPathSteps = allSteps.slice(0, at + 1);
+            guideSteps = [allSteps[at]];
+          }
+          const putFirst = (step) => {
+            return {
+              ...step,
+              finds: [
+                wantedFind,
+                ...(step.finds ?? []).filter((one) => {
+                  return String(one).toLowerCase() !== lowered;
+                }),
+              ],
+            };
+          };
+          guideSteps = guideSteps.map(putFirst);
+          if (topicPathSteps !== null) {
+            const lastAt = topicPathSteps.length - 1;
+            topicPathSteps = topicPathSteps.map((step, index) => {
+              return index === lastAt ? putFirst(step) : step;
+            });
+          }
         }
         // One choke point for both sources of steps: the model
         // writes an id into a step it invented as readily as a
         // recipe cites a sibling recipe, and neither belongs in
         // front of the volunteer reading the card.
-        guideSteps = guideSteps.map((step) => {
-          return {
-            ...step,
-            text: stripInternalIds(step.text),
-            // The same id, harvested as a control to RING. A
-            // recipe cites a sibling in bold ("see **W-31**") and
-            // every bold becomes a candidate, so three steps
-            // offered the card an id to look for -- which matches
-            // nothing, costs the real candidates their turn, and
-            // would be shown to the user in the "closest labels"
-            // line if anything came near it.
-            ...(step.finds === undefined
-              ? {}
-              : { finds: step.finds.filter(checkIsNotRecipeId) }),
-          };
-        });
+        const prepareSteps = (list) => {
+          return list.map((step) => {
+            return {
+              ...step,
+              text: stripInternalIds(step.text),
+              // The same id, harvested as a control to RING. A
+              // recipe cites a sibling in bold ("see **W-31**") and
+              // every bold becomes a candidate, so three steps
+              // offered the card an id to look for -- which matches
+              // nothing, costs the real candidates their turn, and
+              // would be shown to the user in the "closest labels"
+              // line if anything came near it.
+              ...(step.finds === undefined
+                ? {}
+                : { finds: step.finds.filter(checkIsNotRecipeId) }),
+            };
+          });
+        };
         guideTitle = guideTitle === null ? null : stripInternalIds(guideTitle);
-        const { value } = await evaluateInApp(
-          genGuideExpression(
-            `start(${JSON.stringify({
-              title: guideTitle ?? 'Step by step',
-              steps: guideSteps,
-              mode: wantedMode ?? 'show',
-              // What its Do it is judged by -- the card's own
-              // press as much as a tool's "do".
-              guard: genPressGuard(),
-            })})`,
-          ),
-          { match: wantedPage },
-        );
+        const startCard = async (list) => {
+          const { value } = await evaluateInApp(
+            genGuideExpression(
+              `start(${JSON.stringify({
+                title: guideTitle ?? 'Step by step',
+                steps: prepareSteps(list),
+                mode: wantedMode ?? 'show',
+                // What its Do it is judged by -- the card's own
+                // press as much as a tool's "do".
+                guard: genPressGuard(),
+              })})`,
+            ),
+            { match: wantedPage },
+          );
+          return value;
+        };
+        let value = await startCard(guideSteps);
+        if (
+          topicPathSteps !== null &&
+          topicPathSteps.length > 1 &&
+          value?.isTargetFound === false
+        ) {
+          value = await startCard(topicPathSteps);
+        }
         return value;
       });
     },

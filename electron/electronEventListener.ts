@@ -104,8 +104,11 @@ import {
 import {
     CUSTOM_LLM_CANCEL_CHANNEL,
     CUSTOM_LLM_FETCH_CHANNEL,
+    LLM_REGISTRY_GET_CHANNEL,
+    LLM_REGISTRY_RELOAD_CHANNEL,
     type CustomLlmFetchRequestType,
 } from './customLlmProtocol';
+import { getLlmRegistryStatus, refreshLlmRegistry } from './llmRegistryHelpers';
 import { STAY_AWAKE_SETTING_NAME } from './stayAwakeProtocol';
 import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
@@ -1116,6 +1119,16 @@ export function initEventOther(appController: ElectronAppController) {
     // Stop, sent with no reply wanted: the request's own reply settles it.
     ipcMain.on(CUSTOM_LLM_CANCEL_CHANNEL, (_event, data) => {
         cancelCustomLlmFetch(data?.requestId);
+    });
+    // The shared LLM registry (`llmRegistryHelpers.ts`): what main holds,
+    // keys left out, and a fresh read for the chatbot's Reload button. Both
+    // asynchronous -- the chatbot asks on mount, and a synchronous ask there
+    // once froze every window (memory `chatbot-tabs-work-independently`).
+    onAsync(ipcMain, LLM_REGISTRY_GET_CHANNEL, () => {
+        return getLlmRegistryStatus();
+    });
+    onAsync(ipcMain, LLM_REGISTRY_RELOAD_CHANNEL, async () => {
+        return await refreshLlmRegistry();
     });
 
     ipcMain.on('all:app:check-is-window-on-top', (event) => {

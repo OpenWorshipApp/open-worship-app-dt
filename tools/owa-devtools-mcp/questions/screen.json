@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-08",
+    "updated": "2026-10-10",
     "sections": [
         {
             "id": "screens",
@@ -806,17 +806,21 @@
                     "kind": "howto",
                     "keywords": [
                         "cast",
+                        "casting",
                         "chromecast",
                         "google cast",
                         "smart tv",
                         "dlna",
                         "roku",
-                        "airplay"
+                        "airplay",
+                        "put the screen on the tv",
+                        "cast icon"
                     ],
                     "resources": {
                         "recipe": "W-51",
                         "related": ["W-50"],
-                        "find": "Cast to a TV"
+                        "find": "Cast to a TV",
+                        "guide": true
                     }
                 },
                 {

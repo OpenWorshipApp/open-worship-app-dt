@@ -181,7 +181,20 @@ export async function writeBibleDraftMeta(
 
 // --- the network ------------------------------------------------------------
 
-function describeHttpStatus(status) {
+function describeHttpStatus(status, headers) {
+  // GitHub answers 403 -- not 429 -- once an address has used its sixty
+  // unsigned listing reads of the hour. That is "come back later", and said
+  // as "it may need a sign-in" it sends a volunteer looking for an account.
+  if (
+    (status === 403 || status === 429) &&
+    headers?.get('x-ratelimit-remaining') === '0'
+  ) {
+    return new BibleXmlProblem(
+      'busy',
+      'That site has answered too many requests from this network for now ' +
+        '(its hourly limit). Try again in a while.',
+    );
+  }
   if (status === 404 || status === 410) {
     return new BibleXmlProblem(
       'not-found',
@@ -255,7 +268,7 @@ export async function openBibleUrl(
     }
     if (!response.ok) {
       await response.body?.cancel?.().catch(() => {});
-      throw describeHttpStatus(response.status);
+      throw describeHttpStatus(response.status, response.headers);
     }
     return { response, finalUrl: verdict.href };
   }
@@ -282,11 +295,19 @@ async function readAllText(response, maxBytes) {
  * Each listed file's own title, off its first 2 KB -- a ranged request, so a
  * dozen of them cost less than one page of the catalog. Best effort and
  * bounded in time: a file that does not answer keeps its file name.
+ * `titleMap` remembers them for as long as its listing is kept.
  */
-export async function readBibleXmlTitles(files, { fetchImpl = fetch } = {}) {
+export async function readBibleXmlTitles(
+  files,
+  { fetchImpl = fetch, titleMap = null } = {},
+) {
   const signal = AbortSignal.timeout(TITLE_TIMEOUT_MS);
   return await Promise.all(
     files.map(async (file) => {
+      const known = titleMap?.get(file.url);
+      if (known !== undefined) {
+        return { ...file, title: known };
+      }
       try {
         const { response } = await openBibleUrl(file.url, {
           fetchImpl,
@@ -294,7 +315,11 @@ export async function readBibleXmlTitles(files, { fetchImpl = fetch } = {}) {
           headers: { Range: 'bytes=0-2047' },
         });
         const title = readBibleXmlTitle(await readAllText(response, 4096));
-        return title === null ? file : { ...file, title };
+        if (title === null) {
+          return file;
+        }
+        titleMap?.set(file.url, title);
+        return { ...file, title };
       } catch {
         return file;
       }
@@ -302,15 +327,52 @@ export async function readBibleXmlTitles(files, { fetchImpl = fetch } = {}) {
   );
 }
 
+// --- the listing of a repository, kept for a few minutes ---------------------
+
+// Choosing a Bible is several looks at ONE listing -- "Khmer", then "2016",
+// then another language after a Cancel -- and the catalog's is 0.9 MB out of
+// an allowance of sixty unsigned reads an hour for the whole network the
+// computer is on (measured 2026-10-10). So the file names of the LAST listing
+// read are kept, and the titles read off them: ~100 KB, one listing, ten
+// minutes, then let go whether or not anybody asks again.
+const LISTING_KEEP_MS = 10 * 60 * 1000;
+let keptListing = null;
+let keptListingTimer = null;
+
+export function clearBibleListingCache() {
+  clearTimeout(keptListingTimer);
+  keptListing = null;
+  keptListingTimer = null;
+}
+
+function readKeptListing(listingUrl, now) {
+  if (keptListing === null || keptListing.url !== listingUrl) {
+    return null;
+  }
+  if (now - keptListing.at >= LISTING_KEEP_MS) {
+    clearBibleListingCache();
+    return null;
+  }
+  return keptListing;
+}
+
+function keepListing(listingUrl, links, now) {
+  clearBibleListingCache();
+  keptListing = { url: listingUrl, links, titleMap: new Map(), at: now };
+  keptListingTimer = setTimeout(clearBibleListingCache, LISTING_KEEP_MS);
+  // Never what keeps the process alive.
+  keptListingTimer.unref?.();
+  return keptListing;
+}
+
 async function genPageAnswer({
-  text,
-  baseUrl,
+  links,
   source,
   find,
   fixed,
   fetchImpl,
+  titleMap = null,
 }) {
-  const links = extractBibleXmlLinks(text, baseUrl);
   if (links.length === 0) {
     throw new BibleXmlProblem(
       'page-without-files',
@@ -330,12 +392,19 @@ async function genPageAnswer({
     total: ranked.total,
     matched: ranked.matched,
     ...(ranked.words.length > 0 ? { searchedFor: ranked.words } : {}),
-    files: await readBibleXmlTitles(ranked.links, { fetchImpl }),
+    // Nothing matched, but a language of the listing is close to what was
+    // asked ("kmer", "germany"): offered, never assumed.
+    ...(ranked.suggestions ? { suggestions: ranked.suggestions } : {}),
+    files: await readBibleXmlTitles(ranked.links, { fetchImpl, titleMap }),
     note:
       ranked.matched === 0
         ? `None of the ${ranked.total} files is named with those words. ` +
-          'Ask the user which language or translation they want, and call ' +
-          'check again with the same url and that word in `find`.'
+          (ranked.suggestions
+            ? `The closest languages it has: ${ranked.suggestions.join(', ')}` +
+              ' -- ask the user whether they meant one of these, and call ' +
+              'check again with the same url and that word in `find`.'
+            : 'Ask the user which language or translation they want, and ' +
+              'call check again with the same url and that word in `find`.')
         : 'This is a page, not a Bible. Let the user pick a file, then call ' +
           'check with its url.',
   };
@@ -356,19 +425,36 @@ export async function downloadBibleXml({
   fetchImpl = fetch,
   dirPath = getBibleDraftDirPath(),
   timeoutMs = DOWNLOAD_TIMEOUT_MS,
+  now = Date.now(),
 } = {}) {
   const fixedUrl = toBibleXmlDownloadUrl(url);
   const signal = AbortSignal.timeout(timeoutMs);
   const listingUrl = toGithubListingUrl(fixedUrl.url);
   if (listingUrl !== null) {
-    const { response } = await openBibleUrl(listingUrl, { fetchImpl, signal });
+    let kept = readKeptListing(listingUrl, now);
+    if (kept === null) {
+      const { response } = await openBibleUrl(listingUrl, {
+        fetchImpl,
+        signal,
+      });
+      const links = extractBibleXmlLinks(
+        await readAllText(response, PAGE_MAX_BYTES),
+        listingUrl,
+      );
+      // A listing with no Bible in it is an answer about the link, not
+      // something to remember.
+      kept =
+        links.length === 0
+          ? { links, titleMap: null }
+          : keepListing(listingUrl, links, now);
+    }
     return await genPageAnswer({
-      text: await readAllText(response, PAGE_MAX_BYTES),
-      baseUrl: listingUrl,
+      links: kept.links,
       source: fixedUrl.url,
       find,
       fixed: null,
       fetchImpl,
+      titleMap: kept.titleMap,
     });
   }
   const { response, finalUrl } = await openBibleUrl(fixedUrl.url, {
@@ -414,8 +500,10 @@ export async function downloadBibleXml({
     }
     await iterator.return?.();
     return await genPageAnswer({
-      text: Buffer.concat(restList).toString('utf8'),
-      baseUrl: finalUrl,
+      links: extractBibleXmlLinks(
+        Buffer.concat(restList).toString('utf8'),
+        finalUrl,
+      ),
       source: fixedUrl.url,
       find,
       fixed: fixedUrl.note,

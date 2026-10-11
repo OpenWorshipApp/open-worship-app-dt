@@ -6,6 +6,7 @@ import {
     CUSTOM_LLM_KEYS_SETTING_KEY,
     CUSTOM_LLM_SERVERS_SETTING_KEY,
     checkIsAllowedCustomLlmCall,
+    checkIsRegistryServerId,
     checkIsSameOrigin,
     toCustomLlmCallUrl,
     toCustomServerBaseUrl,
@@ -13,7 +14,10 @@ import {
     toValidCustomServers,
     type CustomLlmFetchRequestType,
     type CustomLlmFetchResultType,
+    type CustomServerType,
+    type LlmRegistryServerType,
 } from './customLlmProtocol';
+import { getLlmRegistryServers } from './llmRegistryHelpers';
 
 /**
  * The chatbot's door to a CUSTOM server (LM Studio and the like), opened in
@@ -60,6 +64,9 @@ export type CustomLlmRelayDepsType = {
     isAiEnabled: () => boolean;
     readServersText: () => string | null;
     readKeysText: () => string | null;
+    // The shared registry's servers (`llmRegistryHelpers.ts`), keys and all:
+    // a window names one by its `registry-` id and never sees the key.
+    readRegistryServers?: () => readonly LlmRegistryServerType[];
     fetch: (url: string, init: RequestInit) => Promise<Response>;
 };
 
@@ -192,9 +199,17 @@ export async function runCustomLlmFetch(
             'that call is not one the chatbot makes',
         );
     }
-    const server = toValidCustomServers(deps.readServersText()).find((one) => {
-        return one.id === serverId;
-    });
+    // The saved list first, then the shared registry's: a registry id has a
+    // prefix no saved id can carry, so the two never name the same server.
+    const server: CustomServerType | LlmRegistryServerType | undefined =
+        toValidCustomServers(deps.readServersText()).find((one) => {
+            return one.id === serverId;
+        }) ??
+        (checkIsRegistryServerId(serverId)
+            ? (deps.readRegistryServers?.() ?? []).find((one) => {
+                  return one.id === serverId;
+              })
+            : undefined);
     if (server === undefined) {
         return genFailure('unknown-server', 'that server is not in Settings');
     }
@@ -225,7 +240,12 @@ export async function runCustomLlmFetch(
             'that call is not one the chatbot makes',
         );
     }
-    const apiKey = toValidCustomServerKeys(deps.readKeysText())[server.id];
+    // A saved server's key is in the secure store; a registry server carries
+    // its own, read by main from the registry file and nowhere else.
+    const apiKey =
+        server.source === 'registry'
+            ? (server as LlmRegistryServerType).apiKey || undefined
+            : toValidCustomServerKeys(deps.readKeysText())[server.id];
     const controller = new AbortController();
     // Registered before the first `await`: a cancel sent straight after the
     // request arrives after it on the same channel, and must find it here.
@@ -349,6 +369,9 @@ const relayDeps: CustomLlmRelayDepsType = {
         return ElectronSettingManager.getInstance().getSecureSetting(
             CUSTOM_LLM_KEYS_SETTING_KEY,
         );
+    },
+    readRegistryServers: () => {
+        return getLlmRegistryServers();
     },
     fetch: (url, init) => {
         return getRelaySession().fetch(url, init);

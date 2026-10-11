@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
+  LANGUAGE_ALIAS_MAP,
+  checkIsBibleLanguageWord,
   checkIsLikelyHtml,
   checkIsLikelyXml,
   extractBibleXmlLinks,
@@ -7,6 +9,7 @@ import {
   guessBibleLocalesFromText,
   rankBibleXmlLinks,
   scoreNameLists,
+  suggestBibleLanguages,
   toBibleSearchWords,
   toCatalogLanguageWord,
   toBibleNameListId,
@@ -111,6 +114,52 @@ describe('picking the Bible off a page of files', () => {
     expect(rankBibleXmlLinks(links, 'Khmer 1611').matched).toBe(2);
     expect(rankBibleXmlLinks(links, '').matched).toBe(3);
   });
+  test('a year no file of that language has only narrows, it never widens', () => {
+    const links = [
+      'KhmerBible.xml',
+      'Khmer2016Bible.xml',
+      'Polish2016Bible.xml',
+      'Chewa2016Bible.xml',
+    ].map((name) => ({ name, url: `https://x.example/${name}` }));
+    // No Khmer Bible of 1999: the Khmer ones, said as what they matched on.
+    const ranked = rankBibleXmlLinks(links, 'Khmer 1999');
+    expect(ranked.links.map((one) => one.name)).toEqual([
+      'KhmerBible.xml',
+      'Khmer2016Bible.xml',
+    ]);
+    expect(ranked.words).toEqual(['khmer']);
+    // A number out of a verse reference is not a Bible from that year.
+    expect(rankBibleXmlLinks(links, 'verse john 2016 list').matched).toBe(0);
+    // A year alone is still a search.
+    expect(rankBibleXmlLinks(links, '2016').matched).toBe(3);
+  });
+  test('a word nothing matched is answered with the languages it is close to', () => {
+    const links = [
+      'KhmerBible.xml',
+      'Khmer2005Bible.xml',
+      'KoreanBible.xml',
+      'PortugueseBible.xml',
+      'TurkishBible.xml',
+      'TurkmenBible.xml',
+      'Turkish2001Bible.xml',
+      'LaoBible.xml',
+    ].map((name) => ({ name, url: `https://x.example/${name}` }));
+    expect(rankBibleXmlLinks(links, 'kmer').suggestions).toEqual(['Khmer']);
+    expect(rankBibleXmlLinks(links, 'portugese').suggestions).toEqual([
+      'Portuguese',
+    ]);
+    expect(rankBibleXmlLinks(links, 'korian').suggestions).toEqual(['Korean']);
+    // The start of a name, the one with the most Bibles first...
+    expect(suggestBibleLanguages(links, ['turkiye'])).toEqual([
+      'Turkish',
+      'Turkmen',
+    ]);
+    // ...and the whole of a short one.
+    expect(suggestBibleLanguages(links, ['laotians'])).toEqual(['Lao']);
+    // Nothing near is nothing offered, and a match offers nothing either.
+    expect(rankBibleXmlLinks(links, 'vietnamese').suggestions).toBeUndefined();
+    expect(rankBibleXmlLinks(links, 'khmer').suggestions).toBeUndefined();
+  });
   test('tells a page from an XML file by its first bytes', () => {
     expect(checkIsLikelyHtml('<!DOCTYPE html><html>')).toBe(true);
     expect(checkIsLikelyXml('﻿<?xml version="1.0"?><bible>')).toBe(true);
@@ -130,6 +179,39 @@ describe('a language typed by name', () => {
     expect(toBibleSearchWords('km')).toEqual(['khmer']);
     expect(toBibleSearchWords('Khmer 2019')).toEqual(['khmer', '2019']);
     expect(toCatalogLanguageWord('khmer')).toBeNull();
+  });
+  test('by its country or its people, as readily as by its name', () => {
+    expect(toBibleSearchWords('Import a Bible in Cambodia')).toEqual(['khmer']);
+    expect(toBibleSearchWords('import bible in China')).toEqual(['chinese']);
+    expect(toBibleSearchWords('a bible for Thailand please')).toEqual(['thai']);
+    expect(toBibleSearchWords('import bible espanol')).toEqual(['spanish']);
+    // Already the start of the catalog's own word: left as typed.
+    expect(toBibleSearchWords('Import a Bible in "korea"')).toEqual(['korea']);
+    // Every one of them leads to a language the catalog has files for.
+    for (const [alias, language] of Object.entries(LANGUAGE_ALIAS_MAP)) {
+      expect([alias, checkIsBibleLanguageWord(language)]).toEqual([
+        alias,
+        true,
+      ]);
+    }
+  });
+  test('the English Bibles named by their letters are filed under others', () => {
+    expect(toBibleSearchWords('import KJV bible')).toEqual(['english', 'kj']);
+    expect(toBibleSearchWords('nkjv')).toEqual(['english', 'nkj']);
+    // Beside a language it is that language's own.
+    expect(toBibleSearchWords('Thai KJV')).toEqual(['thai', 'kjv']);
+    const links = ['EnglishKJBible.xml', 'EnglishNKJBible.xml', 'ThaiKJVBible.xml']
+      .map((name) => ({ name, url: `https://x.example/${name}` }));
+    expect(
+      rankBibleXmlLinks(links, 'import KJV bible').links.map((one) => one.name),
+    ).toEqual(['EnglishKJBible.xml', 'EnglishNKJBible.xml']);
+  });
+  test('which words of a request name a language with Bibles', () => {
+    expect(checkIsBibleLanguageWord('Khmer')).toBe(true);
+    expect(checkIsBibleLanguageWord('ខ្មែរ')).toBe(true);
+    expect(checkIsBibleLanguageWord('cambodia')).toBe(true);
+    expect(checkIsBibleLanguageWord('verse')).toBe(false);
+    expect(checkIsBibleLanguageWord('commentary')).toBe(false);
   });
 });
 

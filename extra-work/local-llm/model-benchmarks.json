@@ -1,0 +1,900 @@
+{
+    "version": 1,
+    "updated": "2026-10-10",
+    "about": "Every measurement taken of a model answering for the app's chatbot, copied from the notes of the day it was taken (each run names its source). A number that was not measured is null. `fit` is what the measurements say about offering the model for that job; `fitNote` is the sentence to tell somebody choosing.",
+    "machines": [
+        {
+            "id": "server-pc",
+            "what": "The stronger computer on the church's network: a desktop PC with one 8 GB graphics card (an RTX 3060 Ti, by the report of the session run on it), one model loaded at a time. LM Studio, Ollama, llama.cpp, llamafile and GPT4All were all run on it; the app was driven from the laptop.",
+            "vramGb": 8,
+            "ramGb": null
+        },
+        {
+            "id": "server-pc-cpu",
+            "what": "The same desktop PC with the model on its processor instead of its graphics card (GPT4All was run that way).",
+            "vramGb": 0,
+            "ramGb": null
+        },
+        {
+            "id": "laptop",
+            "what": "The developer's Windows ARM64 laptop, with no graphics card for a model: the CPU does the work. It drove the app in every run.",
+            "vramGb": 0,
+            "ramGb": null
+        }
+    ],
+    "rules": [
+        {
+            "rule": "The app's own request is about 13 400 tokens before a word of the question (system prompt + tool schemas), and it is read again every round. A model loaded under 16k is refused before a round; at 16k a follow-up runs out of room; load with 32k.",
+            "source": ".claude/memory/custom-llm-servers.md — \"The fixed request is ~13 400 tokens … CUSTOM_CONTEXT_MIN is 16k … every sentence recommends 32k\""
+        },
+        {
+            "rule": "A custom (local) server is sent a lean tool set — 14 of 26 tools, 4 234 tokens of schemas a round instead of 8 322 — because a local server pays for every schema in prompt-processing TIME.",
+            "source": ".claude/rules/chatbot-llm.md — \"A custom server is sent 14 of those 26 … 4 234 tokens of schemas a round instead of 8 322\""
+        },
+        {
+            "rule": "On a computer with no graphics card the number that decides is how fast the PROMPT is read, not how fast the answer is written: at 11 tokens a second the app's request is a twenty-minute round and the 10-minute clock runs out; a graphics card reads about 1 000 tokens a second.",
+            "source": ".claude/memory/custom-llm-servers.md — \"prompt processing is 11 tokens/s on qwen3.5:4b (2 335 tokens in 206 s) … a twenty-minute round on the 4B, and the SDK's 10-minute clock ran out\"; \"the user's LM Studio box reads ~1 000 tokens/s\""
+        },
+        {
+            "rule": "The program matters as much as the model on a slow computer: the same 4B model file was read at 11 tokens a second by Ollama and at 52.6 by llama.cpp's own server on the same laptop.",
+            "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"10 226 prompt tokens read in 194 s (52.6 tokens/s) on round 1 … Ollama's runner read the same file at 11 tokens/s\""
+        },
+        {
+            "rule": "A general question typed after /btw is the road for a slow computer or a small model: a ~60-token prompt, one round, no tools, and not held to the 16k rule.",
+            "source": ".claude/memory/chatbot-builtin-commands.md — \"under a SHORT system prompt of its own (~60 tokens) … ONE round, NO tools … NOT refused by a custom server's 16k context rule\""
+        },
+        {
+            "rule": "A thinking model can spend its whole answer budget (2 000 tokens, thinking included) on thinking and return no words. A general question's thinking is switched off on LM Studio and Ollama, and an answer that came back empty is asked for once more with thinking off.",
+            "source": ".claude/rules/chatbot-llm.md and .claude/memory/custom-llm-servers.md — \"A general question's thinking is OFF on LM Studio and Ollama\"; backlog EC-201 — \"the custom budget is MAX_TOKENS 2 000, thinking included\""
+        },
+        {
+            "rule": "One tool-using round in the app's request shape, on the server PC, by program: llama.cpp 20 s with the model's load at 45.6 tokens a second, Ollama 43 s with the load, llamafile 1.6 s at 67.7 tokens a second — all three made the right tool call. GPT4All's API server takes no tools at all (400), so its answers come from the guide text alone.",
+            "source": "docs/test-paths/coverage-matrix.md (ST-76) — \"llama.cpp 20 s with the load at 45.6 tok/s, Ollama 43 s with the load, llamafile 1.6 s at 67.7 tok/s\"; .claude/memory/custom-llm-servers.md — \"GPT4All's API server takes no `tools` at all\""
+        },
+        {
+            "rule": "An 8 GB graphics card holds a 4B or 9B model with room for its context; a 12B barely fits it with a 16k cache.",
+            "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-211) — \"a 12B barely fits 8 GB with a 16k cache\""
+        },
+        {
+            "rule": "Through a Cloudflare tunnel a request whose answer has not started within 100 seconds is ended. The app asks a custom server for a whole answer at once, so a slow round fails there where it works on the local network.",
+            "source": "extra-work/local-llm/README.md (Worth knowing); measured by the session on the server PC, 2026-10-10"
+        },
+        {
+            "rule": "A free model must be driven through the REAL loop on several questions before it is listed — a one-tool ping passes models that then return empty answers under the full schema. Free models are differently broken, not merely weaker.",
+            "source": ".claude/memory/free-keyless-chatbot-provider.md — \"Before listing a model, drive it through the REAL loop\"; \"Free models are differently BROKEN, not merely weaker\""
+        }
+    ],
+    "models": [
+        {
+            "model": "qwen/qwen3.5-9b",
+            "name": "Qwen 3.5 9B",
+            "kind": "local",
+            "sizeB": 9,
+            "canSeeImages": true,
+            "fit": "good",
+            "fitNote": "Answers app questions correctly through the tools in 20–30 seconds on an 8 GB graphics card. Load it with 32k: at 16k a first question fits and a follow-up runs out of room (it then writes its tool call as words, or no answer). It thinks at length on a plain question unless thinking is off, which the app does for /btw.",
+            "runs": [
+                {
+                    "date": "2026-10-09",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with tools",
+                    "asked": "a Presenter how-do-I",
+                    "seconds": 21.6,
+                    "rounds": 3,
+                    "outcome": "answered right; the conversation reached 14 958 of the 16 384 tokens loaded",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"a Presenter and a Reader how-do-I each answered right in 3 rounds, 21.6 s and 29.6 s, reaching 14 958 and 15 285 of the 16 384 loaded\""
+                },
+                {
+                    "date": "2026-10-09",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with tools",
+                    "asked": "a Reader how-do-I",
+                    "seconds": 29.6,
+                    "rounds": 3,
+                    "outcome": "answered right; the conversation reached 15 285 of the 16 384 tokens loaded",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — same sentence"
+                },
+                {
+                    "date": "2026-10-09",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "prompt processing",
+                    "promptTokensPerSecond": 1000,
+                    "outcome": "about 1 000 prompt tokens a second with the cached prefix reused; a change of window (a new system prompt) costs about 10 s more on round 1",
+                    "source": ".claude/memory/custom-llm-servers.md — \"prompt processing ~1 000 tok/s with LM Studio reusing the cached prefix, so a FOCUS change … costs ~10 s more on round 1\""
+                },
+                {
+                    "date": "2026-10-09",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "one plain answer, thinking on and off",
+                    "seconds": 24,
+                    "generatedTokens": 759,
+                    "outcome": "693 of 759 output tokens were thinking (24 s); with reasoning_effort \"none\" the same answer took 1.4 s. In the tool loop it thinks only 30–120 tokens a round",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-201) — \"qwen3.5-9b spent 693 of 759 output tokens thinking on one plain answer (24 s); `reasoning_effort: \\\"none\\\"` answered in 1.4 s\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with tools",
+                    "asked": "Is anything showing on the projector?",
+                    "seconds": 30,
+                    "secondsToFirstToken": 6.3,
+                    "rounds": 2,
+                    "outcome": "answered correctly in about 30 s: 6.3 s to the first token of a cold 10k-token round, under a second once cached, about 30 words a second",
+                    "source": ".claude/skills/owa-robot-test/references/user-workflows.md (W-42 step 13) — \"the projector question answered correctly in about 30 s (two rounds, 6.3 s to the first token of a cold 10k-token round, under a second once cached, ~30 words a second)\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with tools, a follow-up in the same tab",
+                    "seconds": 60,
+                    "rounds": 4,
+                    "outcome": "four rounds in about a minute",
+                    "source": ".claude/skills/owa-robot-test/references/user-workflows.md (W-42 step 13) — \"a follow-up in the same tab ran four rounds in about a minute\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "general question (/btw), thinking on",
+                    "asked": "/btw what is holy bible",
+                    "seconds": 27.5,
+                    "generatedTokens": 1069,
+                    "outcome": "1 069 generated tokens and 27.5 s for an answer of 150 tokens: the rest was thinking — why a general question's thinking is now off",
+                    "source": ".claude/memory/custom-llm-servers.md — \"qwen3.5-9b had spent 1 069 generated tokens and 27.5 s on \\\"what is the Bible\\\", 150 of them the answer\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with tools, round 5 of a follow-up",
+                    "rounds": 5,
+                    "outcome": "the context full, it wrote `<tool_call><function=owa_help_search>…` as prose and the window printed it (the app now reads such words as the call)",
+                    "source": ".claude/memory/custom-llm-servers.md — \"at round 5 of a follow-up on qwen3.5-9b at 16k the model answered `<tool_call><function=owa_help_search>…` as prose\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with tools",
+                    "asked": "show verse 1 on screen for me",
+                    "rounds": 6,
+                    "totalTokens": 71000,
+                    "outcome": "no answer after the six rounds, 65–71k tokens, twice (the app now answers this ask from its own state, without the model)",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-210) — \"each ended in _it wrote no answer this time_ after 65–71k tokens (the six rounds)\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "general-knowledge question sent down the app road",
+                    "asked": "the 7 churches question",
+                    "rounds": 5,
+                    "promptTokens": 75075,
+                    "outcome": "answered right, in 5 rounds and 75 075 input tokens — each round reads the ~13 400-token prefix again; /btw is the road for such a question",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-200) — \"answered right by qwen3.5-9b: 5 rounds, 75 075 input tokens\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question with tools, asked through the shared registry's server",
+                    "asked": "How do I present a Bible verse?",
+                    "totalTokens": 46900,
+                    "outcome": "a correct step-by-step answer with its walkthrough buttons, free · 46.9k tokens",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-97) — \"a question was answered through it (free · 46.9k tokens)\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio, through a Cloudflare quick tunnel",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "plain chat through the public address, streamed and not",
+                    "seconds": 33,
+                    "secondsToFirstToken": 0.9,
+                    "generatedTokens": 1079,
+                    "outcome": "the model list in 0.15 s; a streamed chat's first chunk at 0.9 s and 354 network chunks over 10 s (not buffered); an un-streamed chat 33 s for 1 079 completion tokens",
+                    "source": "measured from the server PC by the session run on it, 2026-10-10 (reported to this session; not in the notes)"
+                }
+            ]
+        },
+        {
+            "model": "google/gemma-4-e4b",
+            "name": "Gemma 4 E4B",
+            "kind": "local",
+            "sizeB": 4,
+            "canSeeImages": true,
+            "fit": "good",
+            "fitNote": "The small model that does the job on an 8 GB card: 8 of 10 right on the standing questions (7 by another count), the projector question in about 20 seconds, a how-do-I in 30–55. It copies a button's whole title into its sentence and once invented a control where the guide had the answer, so the walkthrough buttons are worth pressing.",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "the standing corpus, 10 asks",
+                    "score": "8 of 10 right (scoreboard); 7 of 10 right (memory note of the same day)",
+                    "rounds": 2,
+                    "outcome": "median 2 rounds (1–5; a known question 1). The projector question 2 rounds / ~20 s, a how-do-I 3–5 rounds / 30–55 s, /btw under 15 s. Wrong: _Turn off the screen for me_ with every screen off answered _Click Clear All_; _Can it stream to Facebook?_ answered _type /btw_ (both since fixed in the app)",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — \"gemma-4-e4b in the user's LM Studio over the church's network, 10 asks: 8 right\"; .claude/memory/custom-llm-servers.md — \"7 of 10 right; the projector question 2 rounds / ~20 s, a how-do-I 3–5 rounds / 30–55 s, `/btw` under 15 s\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question with tools",
+                    "asked": "Where do I type John 3:16? (the Reader's question, asked under the Presenter)",
+                    "totalTokens": 63000,
+                    "outcome": "searched, opened the wrong page, said it had no instructions and invented a \"Reference box\" and a \"Go\" button, over 63k tokens; with the page handed over beside the question it answers in one round",
+                    "source": ".claude/rules/agent-knowledge.md — \"a local model (gemma-4-e4b) searched, opened the Bible-XML import page, said it had no instructions and invented a \\\"Reference box\\\" and a \\\"Go\\\" button, over 63k tokens\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question with tools, a paraphrase of a known question",
+                    "asked": "How do I put a Bible verse on the screen?",
+                    "rounds": 5,
+                    "totalTokens": 55000,
+                    "outcome": "5 rounds / 55k tokens where the exact known question costs one round; it wrote _Click the **Bible Lookup Open bible lookup popup [Ctrl+B]** button_ — title and shortcut joined, pasted whole",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"cost 5 rounds / 55k tokens on the local model where the exact row costs one round\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question with tools, asked from the Bible Reader",
+                    "asked": "Is anything showing on the projector?",
+                    "totalTokens": 19800,
+                    "outcome": "the right sentence, the button and the switch of window, 19.8k tokens",
+                    "source": "docs/test-paths/coverage-matrix.md — \"live: the sentence, the button and the switch on gemma-4-e4b (19.8k tokens)\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "song draft by title",
+                    "asked": "Create a lyric file for song \"Amazing Grace\"",
+                    "totalTokens": 43000,
+                    "outcome": "wrote the steps for an EMPTY file in 43k tokens (the song-by-title chip is now drafted with no model on a custom server)",
+                    "source": ".claude/rules/chatbot-llm.md — \"asked, gemma-4-e4b wrote the steps for an EMPTY file in 43k tokens\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "general question (/btw), then a follow-up in Khmer",
+                    "asked": "/btw what is holy bible, then: in khmer please",
+                    "seconds": 15,
+                    "outcome": "answered in under 15 s; the follow-up answered in Khmer (705 tokens)",
+                    "source": "docs/test-paths/coverage-matrix.md — \"`/btw` under 15 s and the Khmer follow-up (705 tokens) on gemma-4-e4b over the LAN\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question with the guide page beside it",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "seconds": 32,
+                    "outcome": "answered in 32 s",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"gemma-4-e2b answered the same ask in one round in 13 s (160 reasoning tokens), e4b in 32 s\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 113920,
+                    "task": "loading",
+                    "outcome": "loaded on the first question (JIT) with an auto-fit context of 113 920: 6.3 of the card's 8 GB of video memory in use",
+                    "source": "reported by the session on the server PC, 2026-10-10 (not in the notes)"
+                }
+            ]
+        },
+        {
+            "model": "google/gemma-4-e2b",
+            "name": "Gemma 4 E2B",
+            "kind": "local",
+            "sizeB": null,
+            "canSeeImages": true,
+            "fit": "usable",
+            "fitNote": "The smallest model tried, and the fastest: a question the app knows was answered in ONE round (13 seconds, 11.5k tokens) with the right deep step, and Do it for me then walked the route. Measured on that kind of question only — the guide page rides with the ask there; nothing says how it does when it has to search.",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question with the guide page beside it",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "seconds": 13,
+                    "rounds": 1,
+                    "outcome": "answered in one round in 13 s (160 reasoning tokens)",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"gemma-4-e2b answered the same ask in one round in 13 s (160 reasoning tokens), e4b in 32 s\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": null,
+                    "task": "app question, then Do it for me",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "rounds": 1,
+                    "totalTokens": 11500,
+                    "outcome": "ONE round (free, 11.5k tokens) with the deep step; Do it for me put the walkthrough up and walked the menu, the panel and the tab by itself",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — \"gemma-4-e2b, the smallest model, answered … in ONE round (free, 11.5k tokens) with the deep step\""
+                }
+            ]
+        },
+        {
+            "model": "google/gemma-4-12b",
+            "name": "Gemma 4 12B",
+            "kind": "local",
+            "sizeB": 12,
+            "canSeeImages": true,
+            "fit": "usable",
+            "fitNote": "Too big for an 8 GB card to be comfortable: it barely fits with a 16k context. It answered the cast question correctly once thinking was kept from eating its budget (14 seconds with thinking off; 48.5k tokens over its rounds in the help window), and nothing measured says it answers better than the 4B model that fits.",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question with the guide page beside it, thinking on",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "generatedTokens": 700,
+                    "outcome": "no words: `finish_reason: length`, 697 of 700 completion tokens were reasoning — it thought its whole budget away",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-211) — \"697 of 700 completion tokens were reasoning — the model thought its whole budget away\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "the same ask with thinking off",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "seconds": 14,
+                    "generatedTokens": 111,
+                    "outcome": "a correct three-step answer in 14 s, 111 tokens",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-211) — \"The same ask with `reasoning_effort: \\\"none\\\"`: a correct three-step answer in 14 s, 111 tokens\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 16384,
+                    "task": "app question through the help window, evening rerun",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "totalTokens": 48500,
+                    "outcome": "a correct four-step route, 48.5k tokens over its rounds, where the same ask had come back empty in the morning",
+                    "source": "docs/test-paths/coverage-matrix.md — \"gemma-4-12b (explicit 16k load) answered the cast question with a correct four-step route, 48.5k tokens over its rounds\""
+                }
+            ]
+        },
+        {
+            "model": "qwen3.5:4b",
+            "name": "Qwen 3.5 4B",
+            "kind": "local",
+            "sizeB": 4,
+            "fit": "limited",
+            "fitNote": "On a laptop with no graphics card, only a general question after /btw is practical under Ollama (about 3 minutes); the app's own request is a twenty-minute round there and times out. The same model file under llama.cpp's own server answered an app question correctly in about three and a half minutes.",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "Ollama",
+                    "machine": "laptop",
+                    "contextLength": null,
+                    "task": "prompt processing",
+                    "seconds": 206,
+                    "promptTokens": 2335,
+                    "promptTokensPerSecond": 11,
+                    "outcome": "2 335 prompt tokens read in 206 s — 11 tokens a second; words are written at 37–49 tokens a second",
+                    "source": ".claude/memory/custom-llm-servers.md — \"prompt processing is 11 tokens/s on qwen3.5:4b (2 335 tokens in 206 s) and 206 tokens/s on qwen3:0.6b, generation 37-49 tokens/s\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "Ollama",
+                    "machine": "laptop",
+                    "contextLength": 16384,
+                    "task": "app question with tools",
+                    "asked": "Is anything showing on the projector?",
+                    "seconds": 600,
+                    "outcome": "no answer: the request ran out the window's 10-minute clock (a twenty-minute round at 11 tokens a second)",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"`qwen3.5-16k:4b` (a `num_ctx 16384` copy …) ran the full request out to the window's 10-minute clock\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "Ollama",
+                    "machine": "laptop",
+                    "contextLength": 4096,
+                    "task": "general question (/btw)",
+                    "asked": "/btw what is holy bible",
+                    "seconds": 184,
+                    "totalTokens": 967,
+                    "outcome": "answered in two paragraphs in 3 min 4 s, free · 967 tokens",
+                    "source": ".claude/memory/custom-llm-servers.md — \"`/btw` on the 4B at 4k answered in 3 min 4 s on that laptop\"; docs/test-paths/coverage-matrix.md (CB-89) — \"_free · 967 tokens_\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "llama.cpp (llama-server b11541)",
+                    "machine": "laptop",
+                    "contextLength": 16384,
+                    "task": "app question with tools",
+                    "asked": "Is anything showing on the projector?",
+                    "seconds": 210,
+                    "rounds": 2,
+                    "totalTokens": 20800,
+                    "promptTokens": 10226,
+                    "promptTokensPerSecond": 52.6,
+                    "outcome": "answered CORRECTLY with its own buttons: 10 226 prompt tokens read in 194 s on round 1, then 139 new tokens in 3.8 s on round 2 off the cached prefix — about three and a half minutes in all",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"10 226 prompt tokens read in 194 s (52.6 tokens/s) on round 1, then 139 new tokens in 3.8 s on round 2 off the cached prefix, about three and a half minutes in all\""
+                }
+            ]
+        },
+        {
+            "model": "qwen3:0.6b",
+            "name": "Qwen 3 0.6B",
+            "kind": "local",
+            "sizeB": 0.6,
+            "fit": "poor",
+            "fitNote": "Fast enough for a laptop (206 prompt tokens a second) and not able to do the job: it answered the projector question wrongly without calling a tool, and recited the opening of a guide page instead of the step asked for.",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "Ollama",
+                    "machine": "laptop",
+                    "contextLength": 16384,
+                    "task": "app question with the lean tool set",
+                    "asked": "Is anything showing on the projector?",
+                    "seconds": 199,
+                    "rounds": 1,
+                    "totalTokens": 9500,
+                    "promptTokensPerSecond": 206,
+                    "outcome": "a WRONG answer (_The projector is currently showing its preview_, no tool called) in one round, 3 min 19 s by Ollama's own log — a 0.6B model's limit, not the app's",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"`qwen3-16k:0.6b` (206 tokens/s) answered in ONE round, _free · 9.5k tokens_ … in 3 min 19 s by Ollama's own log — with a wrong answer\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "Ollama",
+                    "machine": "laptop",
+                    "contextLength": 16384,
+                    "task": "app question with the guide page beside it",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "outcome": "steps 1–2 of the page and nothing more; with the right step put under the question it recited the opening and ran out of words",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-216) — \"Measured on the laptop's 0.6B (qwen3-16k) with the page under the cast question: steps 1-2, then nothing\""
+                }
+            ]
+        },
+        {
+            "model": "phi-3.1-mini-128k-instruct",
+            "name": "Phi 3.1 Mini",
+            "kind": "local",
+            "sizeB": null,
+            "fit": "limited",
+            "fitNote": "The first local model the custom servers were tested against; the note of that day says only that small models like it are weak at tool calls. No timing was kept.",
+            "runs": [
+                {
+                    "date": "2026-10-09",
+                    "program": "LM Studio",
+                    "machine": null,
+                    "contextLength": null,
+                    "task": "the first test of a custom server",
+                    "outcome": "tested against; \"Local small models (Phi-3.1-mini) are weak at tool calls\"",
+                    "source": ".claude/memory/custom-llm-servers.md — \"tested against their LM Studio (`http://localhost:1234/v1`, `phi-3.1-mini-128k-instruct`)\"; \"Local small models (Phi-3.1-mini) are weak at tool calls\""
+                }
+            ]
+        },
+        {
+            "model": "Qwen2.5-7B (GPT4All)",
+            "name": "Qwen 2.5 7B",
+            "kind": "local",
+            "sizeB": 7,
+            "fit": "limited",
+            "fitNote": "Run by GPT4All, whose API server takes no tools: the answer comes from the guide page alone, with nothing checked in the window. On a CPU it took about 8 minutes for two correct steps.",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "GPT4All 3.10.0",
+                    "machine": "server-pc-cpu",
+                    "contextLength": null,
+                    "task": "app question answered with no tools, from the guide page",
+                    "asked": "How do I cast the virtual display to a TV from my phone?",
+                    "seconds": 480,
+                    "totalTokens": 6800,
+                    "outcome": "two correct steps from the page, opening with the note that nothing was checked in the window; 6.8k tokens, about 8 minutes on that computer's CPU. It also wrote a made-up file name under its steps",
+                    "source": "docs/test-paths/coverage-matrix.md — \"gave two correct steps from the page …, 6.8k tokens, ~8 min on that CPU\""
+                }
+            ]
+        },
+        {
+            "model": "nvidia/nemotron-3.5-lightning:free",
+            "name": "Nemotron Lightning (Kilo Code, free)",
+            "kind": "free",
+            "fit": "good",
+            "fitNote": "The free model to start on: 7 of 7 volunteer questions through the real tool loop in 8–20 seconds each, with no key. What is typed leaves the computer and may be kept by the service.",
+            "runs": [
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "7 of 7",
+                    "seconds": 20,
+                    "rounds": 3,
+                    "outcome": "7/7 in 8–20 s each; median 3 rounds",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Nemotron Lightning 7/7 (8–20 s), Nex Pro 7/7 (12–24 s), Step Flash 6/7 (one empty answer)\""
+                },
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "How do I present a Bible verse?",
+                    "seconds": 16,
+                    "rounds": 2,
+                    "totalTokens": 29000,
+                    "outcome": "six numbered steps off the manual with walkthrough buttons under them, free · 29k tokens",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"answered in 16 s — six numbered steps off the manual, two Kilo rounds, free · 29k tokens\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "Is anything showing on the projector?",
+                    "totalTokens": 33200,
+                    "outcome": "_No, nothing is currently showing on the projector._",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"Free (Kilo Code, Nemotron Lightning) _No, nothing is currently showing on the projector._ 33.2k\""
+                },
+                {
+                    "date": "2026-10-10",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "app question in the person's own words",
+                    "asked": "make computer stay awake",
+                    "outcome": "the first answer was Windows and macOS power settings and nothing about the app; told the guide page it opens it (5 rounds → 2)",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-215) — \"The first answer on that run — Windows and macOS power settings, nothing about the app\""
+                }
+            ]
+        },
+        {
+            "model": "Nex Pro (Kilo Code, free)",
+            "name": "Nex Pro",
+            "kind": "free",
+            "fit": "good",
+            "fitNote": "As right as the first free choice and a little slower: 7 of 7 volunteer questions in 12–24 seconds each.",
+            "runs": [
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "7 of 7",
+                    "seconds": 24,
+                    "outcome": "7/7 in 12–24 s each",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Nemotron Lightning 7/7 (8–20 s), Nex Pro 7/7 (12–24 s), Step Flash 6/7 (one empty answer)\""
+                }
+            ]
+        },
+        {
+            "model": "stepfun/step-3.7-flash:free",
+            "name": "Step Flash (Kilo Code, free)",
+            "kind": "free",
+            "canSeeImages": true,
+            "fit": "usable",
+            "fitNote": "The only free model that can look at a picture, which is why it is kept: 6 of 7 volunteer questions, one answer empty.",
+            "runs": [
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "6 of 7",
+                    "outcome": "6/7, one empty answer",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Step Flash 6/7 (one empty answer)\"; .claude/memory/free-keyless-chatbot-provider.md — \"Only `stepfun/step-3.7-flash:free` can see a picture\""
+                }
+            ]
+        },
+        {
+            "model": "Nemotron Super (Kilo Code, free)",
+            "name": "Nemotron Super",
+            "kind": "free",
+            "fit": "usable",
+            "fitNote": "Right, and slow: 3 of 3 questions, 33–52 seconds each. Not in the app's list.",
+            "runs": [
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "volunteer questions through the real loop",
+                    "score": "3 of 3",
+                    "seconds": 52,
+                    "outcome": "3/3 but 33–52 s each",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Nemotron Super 3/3 but 33–52 s\""
+                }
+            ]
+        },
+        {
+            "model": "openrouter/free",
+            "name": "OpenRouter free router (through Kilo Code)",
+            "kind": "free",
+            "fit": "poor",
+            "fitNote": "A router hands each question to a different model: 6 of 7, one answer a raw tool call, one 42-second wait. Left out of the app on purpose.",
+            "runs": [
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "6 of 7",
+                    "seconds": 42,
+                    "outcome": "6/7 with one raw `<tool_call>` for an answer and one 42 s wait",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"`openrouter/free` 6/7 with one raw `<tool_call>` for an answer and one 42 s wait\""
+                }
+            ]
+        },
+        {
+            "model": "kilo-auto/free",
+            "name": "Kilo auto router (free)",
+            "kind": "free",
+            "fit": "poor",
+            "fitNote": "4 of 7: two empty answers, one token-limit refusal, one plan narrated instead of an answer. Left out of the app on purpose.",
+            "runs": [
+                {
+                    "date": "2026-09-12",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "4 of 7",
+                    "outcome": "4/7 (two empty answers, one `TOKEN_LIMIT_EXCEEDED` 429, one plan narrated instead of answered)",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"`kilo-auto/free` 4/7 (two empty answers, one `TOKEN_LIMIT_EXCEEDED` 429, one plan narrated instead of answered)\""
+                }
+            ]
+        },
+        {
+            "model": "gpt-oss (LLM7)",
+            "name": "Open GPT on LLM7",
+            "kind": "free",
+            "fit": "poor",
+            "fitNote": "The first keyless default: 7 of 8 questions answered at a median of 4 rounds, until the service put a price on every model on 2026-09-12. Dropped.",
+            "runs": [
+                {
+                    "date": "2026-09-01",
+                    "program": "LLM7 (free, no key)",
+                    "machine": null,
+                    "task": "8 corpus shapes through the real 44-tool loop",
+                    "score": "7 of 8 answered",
+                    "rounds": 4,
+                    "outcome": "7/8 answered, 0 leaks in the prose, median 4 rounds; one option written in Chinese",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — \"Graded the keyless default (LLM7 `gpt-oss`) on 8 corpus shapes through the real 44-tool loop: 7/8 answered, 0 leaks, median 4 rounds\""
+                },
+                {
+                    "date": "2026-09-12",
+                    "program": "LLM7 (free, no key)",
+                    "machine": null,
+                    "task": "any question",
+                    "outcome": "`400 model_unavailable`: the service's anonymous catalogue now prices every model",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"LLM7's anonymous catalogue now prices every model. `gpt-oss` … answers `400 model_unavailable`\""
+                }
+            ]
+        },
+        {
+            "model": "Claude Sonnet 5",
+            "name": "Claude Sonnet 5",
+            "kind": "hosted",
+            "fit": "good",
+            "fitNote": "12 of 12 on the standing questions at a median of 3 rounds; with the prompt cached, twelve questions cost about $0.28 — a first question about 4 cents, a one-round follow-up under half a cent. Needs an Anthropic key.",
+            "runs": [
+                {
+                    "date": "2026-09-08",
+                    "program": "Anthropic API",
+                    "machine": null,
+                    "task": "the standing corpus, 12 questions, before prompt caching",
+                    "rounds": 44,
+                    "promptTokens": 813445,
+                    "outcome": "44 rounds, 813 445 input tokens, every one at full price — $1.63 at list",
+                    "source": ".claude/memory/chatbot-cost-measured-on-the-wire.md — \"44 rounds, 813 445 input tokens, every one billed at full price — $1.63 at list\""
+                },
+                {
+                    "date": "2026-09-08",
+                    "program": "Anthropic API",
+                    "machine": null,
+                    "task": "the same corpus with prompt caching",
+                    "rounds": 31,
+                    "outcome": "31 rounds, 62 full-price tokens, 41 613 written at 1.25× and 401 601 read at 0.1× — $0.18",
+                    "source": ".claude/memory/chatbot-cost-measured-on-the-wire.md — \"the same corpus was 31 rounds, 62 full-price tokens, 41 613 written at 1.25× and 401 601 read at 0.1× — $0.18\""
+                },
+                {
+                    "date": "2026-09-10",
+                    "program": "Anthropic API",
+                    "machine": null,
+                    "task": "the standing corpus, 12 questions",
+                    "score": "12 of 12",
+                    "rounds": 3,
+                    "outcome": "12/12, median 3 rounds; ≈ $0.28 in all, a cache-cold first ask ≈ $0.04 and a cache-warm one-round follow-up ≈ $0.004",
+                    "source": ".claude/rules/chatbot-llm.md — \"twelve questions on Sonnet 5 ≈ $0.28 in all, a cache-cold first ask ≈ $0.04 and a cache-warm one-round follow-up ≈ $0.004\""
+                },
+                {
+                    "date": "2026-09-08",
+                    "program": "Anthropic API",
+                    "machine": null,
+                    "task": "app question in broken English, before the tool list was cut",
+                    "asked": "the words no come out big screen",
+                    "seconds": 72,
+                    "rounds": 10,
+                    "totalTokens": 225000,
+                    "outcome": "three whole-page snapshots at ~8 000 tokens each, the ten-round cap, and \"I could not find an answer\" after 72 s and 225 000 tokens (the snapshot tools are withheld from the model since)",
+                    "source": ".claude/rules/chatbot-llm.md — \"ran to the ten-round cap and answered \\\"I could not find an answer\\\" after 72 s and 225 000 tokens\""
+                }
+            ]
+        },
+        {
+            "model": "Claude Haiku 4.5",
+            "name": "Claude Haiku 4.5",
+            "kind": "hosted",
+            "fit": "unrated",
+            "runs": [
+                {
+                    "date": "2026-09-22",
+                    "program": "Anthropic API",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "Where do I type John 3:16? (Reader)",
+                    "totalTokens": 28600,
+                    "outcome": "answered on the selected provider, $0.02 · 28.6k tokens",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — \"through Claude / Haiku 4.5 ($0.02, 28.6k tokens), ChatGPT / GPT-5 nano (under $0.001, 23k) and Kimi / Kimi K2.6 (price not known, 24.5k)\""
+                }
+            ]
+        },
+        {
+            "model": "GPT-5 nano",
+            "name": "GPT-5 nano",
+            "kind": "hosted",
+            "fit": "unrated",
+            "runs": [
+                {
+                    "date": "2026-09-22",
+                    "program": "OpenAI API",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "Where do I type John 3:16? (Reader)",
+                    "totalTokens": 23000,
+                    "outcome": "answered on the selected provider, under $0.001 · 23k tokens; on a second ask about a Khmer Bible it asked the person to read back Khmer",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — same sentence as Claude Haiku 4.5"
+                }
+            ]
+        },
+        {
+            "model": "GPT-5",
+            "name": "GPT-5",
+            "kind": "hosted",
+            "fit": "unrated",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "OpenAI API",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "Is anything showing on the projector?",
+                    "totalTokens": 25200,
+                    "outcome": "_No. The projector screen is off right now_ through the tool loop, ≈ $0.02 · 25.2k tokens",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"ChatGPT (GPT-5) _No. The projector screen is off right now_ through the tool loop, ≈ $0.02 · 25.2k tokens\""
+                },
+                {
+                    "date": "2026-09-01",
+                    "program": "OpenAI API",
+                    "machine": null,
+                    "task": "app question, before the answer was held to the guide",
+                    "asked": "Which API key is used for what?",
+                    "outcome": "invented a YouTube key and a SongSelect one that the app does not have",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"GPT-5 on the same question invents the same YouTube key plus a SongSelect one\""
+                }
+            ]
+        },
+        {
+            "model": "Kimi K2.6",
+            "name": "Kimi K2.6",
+            "kind": "hosted",
+            "fit": "usable",
+            "fitNote": "Answers, slowly: it thinks for 15–60 seconds a question, and on Moonshot's free tier there is room for about three rounds a minute — a follow-up inside the minute is refused. 5 of 9 exchanges passed on the starter questions followed through.",
+            "runs": [
+                {
+                    "date": "2026-09-08",
+                    "program": "Moonshot API, free tier",
+                    "machine": null,
+                    "task": "the four starter chips, followed through",
+                    "score": "5 of 9 exchanges",
+                    "seconds": 63,
+                    "rounds": 2,
+                    "outcome": "9 exchanges, 5 pass, 4 fail; median 2 rounds; 41 s on the first chip and 63 s on the page chip (thinking); three 429s in 3.6 s on a follow-up inside the minute",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — \"Kimi K2.6 on Moonshot's FREE tier … 9 exchanges, 5 pass, 4 fail\"; backlog — \"Kimi K2.6 spent 41 s on the first chip … and 63 s on the page chip\""
+                },
+                {
+                    "date": "2026-09-08",
+                    "program": "Moonshot API, free tier",
+                    "machine": null,
+                    "task": "request size against the free tier's budget",
+                    "promptTokens": 11000,
+                    "outcome": "about 11k tokens a round against roughly 32k tokens and 3 requests a minute: about three chatbot rounds a minute",
+                    "source": ".claude/memory/kimi-free-tier-round-budget.md — \"~11k tokens a round, and the free tier allows roughly 32k tokens and 3 requests a minute\""
+                },
+                {
+                    "date": "2026-09-22",
+                    "program": "Moonshot API",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "Where do I type John 3:16? (Reader)",
+                    "totalTokens": 24500,
+                    "outcome": "answered on the selected provider, price not known · 24.5k tokens",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — same sentence as Claude Haiku 4.5"
+                }
+            ]
+        },
+        {
+            "model": "Kimi K3",
+            "name": "Kimi K3",
+            "kind": "hosted",
+            "fit": "unrated",
+            "runs": [
+                {
+                    "date": "2026-09-01",
+                    "program": "Moonshot API",
+                    "machine": null,
+                    "task": "app questions on a real key",
+                    "rounds": 1,
+                    "outcome": "numbered steps naming real controls, answered on the first round after its tool calls",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — \"`kimi-k3` and `kimi-k2.6` both gave numbered steps naming real controls\""
+                },
+                {
+                    "date": "2026-09-01",
+                    "program": "Moonshot API",
+                    "machine": null,
+                    "task": "app question, before the answer was held to the guide",
+                    "asked": "Which API key is used for what?",
+                    "outcome": "invented a \"YouTube Data API key\" and a Settings → API panel the app does not have",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Verbatim, Kimi K3: _\\\"there is one optional API key ... YouTube Data API key\""
+                }
+            ]
+        },
+        {
+            "model": "Gemma 4 31B (Amazon Bedrock)",
+            "name": "Gemma 4 31B",
+            "kind": "hosted",
+            "sizeB": 31,
+            "fit": "unrated",
+            "runs": [
+                {
+                    "date": "2026-10-10",
+                    "program": "Amazon Bedrock",
+                    "machine": null,
+                    "task": "app question with tools",
+                    "asked": "Is anything showing on the projector?",
+                    "totalTokens": 27000,
+                    "outcome": "_No, nothing is showing on the projector right now._ ≈ $0.004 · 27k tokens",
+                    "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"Bedrock (Gemma 4 31B) _No, nothing is showing on the projector right now._ ≈ $0.004 · 27k\""
+                }
+            ]
+        }
+    ]
+}

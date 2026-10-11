@@ -58,6 +58,48 @@ describe('runCustomLlmFetch', () => {
         vi.useRealTimers();
     });
 
+    // The shared registry's servers are main's to know: a window names one
+    // by its `registry-` id and the key goes out from the registry itself.
+    it('asks a registry server by its id with the registry key, and no other', async () => {
+        const deps = genDeps({
+            readRegistryServers: () => [
+                {
+                    id: 'registry-super-computer',
+                    name: 'Church LM Studio',
+                    baseUrl: 'https://abc.trycloudflare.com/v1',
+                    models: [{ id: 'row-1', model: 'qwen', name: '' }],
+                    apiKey: 'sk-shared',
+                    isFree: true,
+                    note: '',
+                    source: 'registry',
+                },
+            ],
+        });
+        const result = await runCustomLlmFetch(
+            genRequest({ serverId: 'registry-super-computer' }),
+            deps,
+        );
+        expect(result.ok).toBe(true);
+        const [url, init] = deps.fetch.mock.calls[0] as any[];
+        expect(url).toBe('https://abc.trycloudflare.com/v1/models');
+        expect(init.headers.authorization).toBe('Bearer sk-shared');
+        // A registry id the registry does not carry is unknown, like any
+        // other; a saved-looking id never reaches the registry list.
+        const missing = await runCustomLlmFetch(
+            genRequest({ serverId: 'registry-nobody' }),
+            deps,
+        );
+        expect(missing).toMatchObject({ ok: false, reason: 'unknown-server' });
+        const noRegistry = await runCustomLlmFetch(
+            genRequest({ serverId: 'registry-super-computer' }),
+            genDeps(),
+        );
+        expect(noRegistry).toMatchObject({
+            ok: false,
+            reason: 'unknown-server',
+        });
+    });
+
     it('forwards to the SAVED address, with the key read here', async () => {
         const deps = genDeps({
             readKeysText: () => JSON.stringify({ [SERVER_ID]: 'sk-local' }),

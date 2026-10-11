@@ -549,7 +549,7 @@ function languageName(code: string) {
 
 async function runHelp({ argument, focus, report }: BuiltinRunContextType) {
     if (argument.length === 0) {
-        return genCommandList();
+        return genCommandList(focus);
     }
     const finish = report(`Searching the guide for “${argument}”`);
     try {
@@ -574,6 +574,7 @@ const COULD_NOT_REACH_APP =
 // keys' next and previous. Null when the main window is not the Presenter,
 // which every command below says in its own words.
 type SelectedDocumentType = AgentSelectedDocumentType;
+type SlideSummaryType = SelectedDocumentType['slides'][number];
 
 async function readSelectedDocument(): Promise<{
     isPresenter: boolean;
@@ -700,60 +701,331 @@ function genSlideStepper(isNext: boolean) {
                         : [genCommandAction('Show its first slide', '/next')],
                 };
             }
-            try {
-                await callTool('owa_click', { find: target.find });
-            } catch (error) {
-                appError(error, `builtin /${word}`);
-                return {
-                    text:
-                        `I could not find slide ${target.n} of ` +
-                        `"${selected.name}" on the screen to press. Click ` +
-                        'it in the slide list instead.',
-                };
-            }
-            await sleep(SCREEN_SETTLE_MS);
-            const after = await readSelectedDocument();
-            const upNow = after?.selected?.onScreen ?? null;
-            if (upNow === null || upNow.n !== target.n) {
-                return {
-                    text:
-                        `I pressed slide ${target.n} of "${selected.name}" ` +
-                        'but the app does not show it on a screen yet -- ' +
-                        'please look at the Mini Screen panel.',
-                    actions: [genCommandAction('Is the screen on?', '/screen')],
-                };
-            }
-            const screens = await readScreens();
-            const isShowing = screens?.isAnyShowing === true;
-            const slideWords = upNow.name
-                ? `Slide ${upNow.n} "${upNow.name}"`
-                : `Slide ${upNow.n}`;
-            const actions: BotActionType[] = [];
-            if (after?.selected?.next) {
-                actions.push(genCommandAction('Next slide', '/next'));
-            }
-            if (after?.selected?.previous) {
-                actions.push(genCommandAction('Back one', '/previous'));
-            }
-            if (!isShowing) {
-                actions.push(
-                    genCommandAction('Turn the screen on', '/screen-show'),
-                );
-            }
-            return {
-                text:
-                    `**${slideWords} of "${selected.name}" is on the screen ` +
-                    'now**' +
-                    (upNow.text ? ` -- "${upNow.text}"` : '') +
-                    (isShowing
-                        ? '.'
-                        : '. The screen itself is off, so the projector is ' +
-                          'not showing it yet.'),
-                actions,
-            };
+            return await presentSlideAndReport(selected, target, word);
         } finally {
             finish();
         }
+    };
+}
+
+/**
+ * The press and the read-back `/next`, `/previous` and `/slide` share: the
+ * card's own words pressed once, the selection read again, the screens read
+ * for the sentence -- what CHANGED, never what was pressed.
+ */
+async function presentSlideAndReport(
+    selected: SelectedDocumentType,
+    target: SlideSummaryType,
+    logName: string,
+): Promise<BotAnswerType> {
+    try {
+        await callTool('owa_click', { find: target.find });
+    } catch (error) {
+        appError(error, `builtin /${logName}`);
+        return {
+            text:
+                `I could not find slide ${target.n} of ` +
+                `"${selected.name}" on the screen to press. Click ` +
+                'it in the slide list instead.',
+        };
+    }
+    await sleep(SCREEN_SETTLE_MS);
+    const after = await readSelectedDocument();
+    const upNow = after?.selected?.onScreen ?? null;
+    if (upNow === null || upNow.n !== target.n) {
+        return {
+            text:
+                `I pressed slide ${target.n} of "${selected.name}" ` +
+                'but the app does not show it on a screen yet -- ' +
+                'please look at the Mini Screen panel.',
+            actions: [genCommandAction('Is the screen on?', '/screen')],
+        };
+    }
+    const screens = await readScreens();
+    const isShowing = screens?.isAnyShowing === true;
+    const slideWords = upNow.name
+        ? `Slide ${upNow.n} "${upNow.name}"`
+        : `Slide ${upNow.n}`;
+    const actions: BotActionType[] = [];
+    if (after?.selected?.next) {
+        actions.push(genCommandAction('Next slide', '/next'));
+    }
+    if (after?.selected?.previous) {
+        actions.push(genCommandAction('Back one', '/previous'));
+    }
+    if (!isShowing) {
+        actions.push(genCommandAction('Turn the screen on', '/screen-show'));
+    }
+    return {
+        text:
+            `**${slideWords} of "${selected.name}" is on the screen ` +
+            'now**' +
+            (upNow.text ? ` -- "${upNow.text}"` : '') +
+            (isShowing
+                ? '.'
+                : '. The screen itself is off, so the projector is ' +
+                  'not showing it yet.'),
+        actions,
+    };
+}
+
+function toSlideKey(text: string) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9ក-៿]+/g, ' ')
+        .trim();
+}
+
+/**
+ * The slide a person means by its words: a number ("3", "slide 3"), the
+ * card's exact name, a name holding the words ("verse 1" is in
+ * "(1)-Verse 1"), or words holding the name. Null when none does.
+ */
+export function findSlideByWords(
+    slides: readonly SlideSummaryType[],
+    words: string,
+): SlideSummaryType | null {
+    const asNumber = /^(?:slide\s+)?(\d{1,3})$/i.exec(words.trim());
+    if (asNumber !== null) {
+        const n = Number(asNumber[1]);
+        return (
+            slides.find((slide) => {
+                return slide.n === n;
+            }) ?? null
+        );
+    }
+    const wanted = toSlideKey(words.replace(/\s+of\s+.*$/i, ''));
+    if (wanted.length === 0) {
+        return null;
+    }
+    const named = slides.map((slide) => {
+        return { slide, key: toSlideKey(slide.name ?? '') };
+    });
+    return (
+        named.find(({ key }) => key === wanted)?.slide ??
+        named.find(({ key }) => key.length > 0 && key.includes(wanted))
+            ?.slide ??
+        named.find(({ key }) => key.length > 0 && wanted.includes(key))
+            ?.slide ??
+        null
+    );
+}
+
+function describeSlideList(selected: SelectedDocumentType) {
+    return selected.slides
+        .map((slide) => {
+            return slide.name ? `${slide.n} "${slide.name}"` : `${slide.n}`;
+        })
+        .join(', ');
+}
+
+/**
+ * `/slide 3`, `/slide verse 1`: one slide of the selected song on the
+ * screen by its number or its words, through the card's own `find`, the way
+ * `/next` does. Typing it is the consent (rule 2 above).
+ */
+async function runSlide({ argument, report }: BuiltinRunContextType) {
+    const finish = report('Putting the slide on the screen');
+    try {
+        const read = await readSelectedDocument();
+        if (read === null) {
+            return { text: COULD_NOT_REACH_APP };
+        }
+        if (!read.isPresenter) {
+            return {
+                text:
+                    '**The main window is not on the Presenter**, so there ' +
+                    'is no slide list to choose from.',
+                actions: NOT_ON_PRESENTER_ACTIONS,
+            };
+        }
+        const selected = read.selected;
+        if (selected === null) {
+            return {
+                text:
+                    '**Nothing is selected in the Documents list.** Click a ' +
+                    'song there first.',
+            };
+        }
+        if (argument.length === 0) {
+            return {
+                text:
+                    `Say which slide of "${selected.name}": \`/slide 2\` or ` +
+                    `\`/slide verse 1\`. Its slides: ${describeSlideList(selected)}.`,
+            };
+        }
+        const target = findSlideByWords(selected.slides, argument);
+        if (target === null) {
+            return {
+                text:
+                    `**"${selected.name}" has no slide called "${argument}".** ` +
+                    `Its slides: ${describeSlideList(selected)}.`,
+            };
+        }
+        return await presentSlideAndReport(selected, target, 'slide');
+    } finally {
+        finish();
+    }
+}
+
+// "show verse 1 on the screen for me", "put slide 3 on the projector",
+// "present (1)-Verse 1 on screen". The words between the verb and the
+// screen are the slide; "how" anywhere is a how-do-I and not this.
+const SLIDE_SHOW_ASK_PATTERN =
+    /^(?:please\s+)?(?:can\s+you\s+|could\s+you\s+)?(?:show|put|display|present)\s+(?:me\s+)?(?:the\s+)?(?:slide\s+(?:of\s+)?)?(?!how\b)(.+?)\s+(?:on|onto|up\s+on|to)\s+(?:the\s+)?(?:screen|screens|projector|wall)(?:\s+for\s+me)?(?:\s+please)?[.!?]*$/i;
+const SLIDE_SHORT_ASK_PATTERN =
+    /^(?:please\s+)?(?:show|put\s+up|display|present)\s+((?:slide|verse|chorus|bridge|intro|outro|tag)\s*\d{1,3}|slide\s+.+?)(?:\s+for\s+me)?[.!?]*$/i;
+
+/**
+ * A slide asked for by its words, or null. Measured 2026-10-10 in the user's
+ * own tab on qwen3.5-9b at 16k: "show verse 1 on screen for me" and "show
+ * (1)-Verse 1 on screen for me" each ran the six rounds (65-71k tokens) and
+ * ended in "it wrote no answer this time", when the app knows the card's own
+ * words (`selectedDocument.slides[].find`) and one press puts it up.
+ */
+export function readSlideShowAsk(text: string): string | null {
+    const trimmed = text.trim();
+    if (/\bhow\b/i.test(trimmed)) {
+        return null;
+    }
+    const match =
+        SLIDE_SHOW_ASK_PATTERN.exec(trimmed) ??
+        SLIDE_SHORT_ASK_PATTERN.exec(trimmed);
+    if (match === null) {
+        return null;
+    }
+    // "verse 1 of lyric file Amazing Grace": the song is the selected one.
+    const words = match[1]
+        .replace(
+            /\s+of\s+(?:the\s+)?(?:lyric\s+file|song|document|lyric)\b.*$/i,
+            '',
+        )
+        .trim();
+    return words.length > 0 ? words : null;
+}
+
+/**
+ * The answer to a slide asked for by its words, with no model: the slide
+ * named and ONE button that puts it up (`/slide <n>`, typed by the press),
+ * plus the screen's own show button when the screen is off. Null when the
+ * selected song has no such slide -- "put John 3:16 on the screen" is a
+ * verse, not a slide, and goes on to whoever answers verses.
+ */
+export async function answerSlideShowAsk(
+    words: string,
+): Promise<BotAnswerType | null> {
+    const read = await readSelectedDocument();
+    if (read === null) {
+        return null;
+    }
+    if (!read.isPresenter) {
+        return {
+            text:
+                '**The main window is not on the Presenter**, so there is ' +
+                'no slide list to choose from.',
+            actions: NOT_ON_PRESENTER_ACTIONS,
+        };
+    }
+    const selected = read.selected;
+    if (selected === null) {
+        return {
+            text:
+                '**Nothing is selected in the Documents list.** Click the ' +
+                'song there first, then ask again.',
+        };
+    }
+    const target = findSlideByWords(selected.slides, words);
+    if (target === null) {
+        return null;
+    }
+    const screens = await readScreens();
+    const isShowing = screens?.isAnyShowing === true;
+    const slideWords = target.name
+        ? `Slide ${target.n} "${target.name}"`
+        : `Slide ${target.n}`;
+    return {
+        text:
+            `**${slideWords} of "${selected.name}"** -- press the button and ` +
+            'it goes on the screen' +
+            (target.text ? ` ("${target.text}")` : '') +
+            (isShowing
+                ? '.'
+                : '. The screen is off, so it holds the slide until you turn ' +
+                  'it on.'),
+        actions: [
+            genCommandAction(
+                `Put ${target.name ? `"${target.name}"` : `slide ${target.n}`} on the screen`,
+                `/slide ${target.n}`,
+            ),
+            ...(isShowing
+                ? []
+                : [genCommandAction('Turn the screen on', '/screen-show')]),
+        ],
+    };
+}
+
+// "turn the screen off for me", "turn off the projector", "switch the
+// screens on", "hide the screen", "screen off".
+const SCREEN_OFF_ASK_PATTERN =
+    /^(?:please\s+)?(?:can\s+you\s+|could\s+you\s+)?(?:(?:turn|switch|put)\s+(?:the\s+)?(?:screens?|projector)\s+off|(?:turn|switch)\s+off\s+(?:the\s+)?(?:screens?|projector)|hide\s+(?:the\s+)?(?:screens?|projector)|(?:screens?|projector)\s+off)(?:\s+for\s+me)?(?:\s+please)?[.!?]*$/i;
+const SCREEN_ON_ASK_PATTERN =
+    /^(?:please\s+)?(?:can\s+you\s+|could\s+you\s+)?(?:(?:turn|switch|put)\s+(?:the\s+)?(?:screens?|projector)\s+on|(?:turn|switch)\s+on\s+(?:the\s+)?(?:screens?|projector)|show\s+(?:the\s+)?(?:screens?|projector)|(?:screens?|projector)\s+on)(?:\s+for\s+me)?(?:\s+please)?[.!?]*$/i;
+
+/**
+ * A screen asked on or off in words, or null. Measured 2026-10-10 on
+ * gemma-4-e4b with every screen already off: "Turn off the screen for me"
+ * was answered "First, we need to make sure everything is cleared from the
+ * projector. 1. Click the Clear All [F6] button" with a "Yes, clear all"
+ * option -- a turn-off read as a clear, which would wipe the verse and
+ * background held for the service.
+ */
+export function readScreenToggleAsk(text: string): 'show' | 'hide' | null {
+    const trimmed = text.trim();
+    if (SCREEN_OFF_ASK_PATTERN.test(trimmed)) {
+        return 'hide';
+    }
+    return SCREEN_ON_ASK_PATTERN.test(trimmed) ? 'show' : null;
+}
+
+/**
+ * The answer, with no model: the screens as they are, and the ONE button
+ * that does what was asked -- never a Clear. A typed sentence is not the
+ * consent a press is (rule 2 above), so the button does it, not the ask.
+ */
+export async function answerScreenToggleAsk(
+    kind: 'show' | 'hide',
+): Promise<BotAnswerType> {
+    const state = await readScreens();
+    if (state === null) {
+        return { text: COULD_NOT_REACH_APP };
+    }
+    if (kind === 'hide') {
+        if (!state.isAnyShowing) {
+            return {
+                text: `**Nothing to turn off.** ${describeScreens(state)}`,
+                actions: [
+                    genCommandAction('Turn the screen on', '/screen-show'),
+                ],
+            };
+        }
+        return {
+            text: `${describeScreens(state)} Press the button to turn it off.`,
+            actions: [
+                genCommandAction('Turn every screen off', '/screen-hide'),
+            ],
+        };
+    }
+    if (state.isAnyShowing) {
+        return {
+            text: `**The screen is already on.** ${describeScreens(state)}`,
+            actions: [
+                genCommandAction('Turn every screen off', '/screen-hide'),
+            ],
+        };
+    }
+    return {
+        text: `${describeScreens(state)} Press the button to turn it on.`,
+        actions: [genCommandAction('Turn the screen on', '/screen-show')],
     };
 }
 
@@ -1068,6 +1340,72 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
 /** The one command that goes to a model: see `readGeneralQuestion`. */
 export const GENERAL_QUESTION_COMMAND = 'btw';
 
+/** The one command the WINDOW runs: `/clear` empties the tab in front. */
+export const CLEAR_CHAT_COMMAND = 'clear';
+
+/**
+ * The commands that act on, or read, what the PRESENTER page alone holds --
+ * the screens' show / hide / clear buttons, the selected document and the
+ * run sheet, a verse or a countdown put up. Offered and run only where they
+ * work (2026-10-10, the user's ask with a picture of `/clear-all` offered
+ * under Bible Reader: "commands also have to be picky the page … but because
+ * bible reader also part of presenter so it should available in presenter as
+ * well"): these on the Presenter, every other command everywhere -- a
+ * command of the Reader's own would be filed `['reader', 'presenter']`, the
+ * Presenter holding the Reader's lookup too. `/screen` stays everywhere: it
+ * says whether a screen is on from any page, and offers the Presenter.
+ */
+const COMMAND_PAGE_MAP: Record<string, BotFocusType[]> = {
+    'screen-show': ['presenter'],
+    'screen-hide': ['presenter'],
+    'screen-clear-all': ['presenter'],
+    'screen-clear-background': ['presenter'],
+    'screen-clear-slide': ['presenter'],
+    'screen-clear-bible': ['presenter'],
+    'screen-clear-foreground': ['presenter'],
+    selected: ['presenter'],
+    run: ['presenter'],
+    next: ['presenter'],
+    previous: ['presenter'],
+    slide: ['presenter'],
+    verse: ['presenter'],
+    countdown: ['presenter'],
+    marquee: ['presenter'],
+    'marquee-top': ['presenter'],
+};
+
+/** Whether a command is offered and run for the page a tab is asking about. */
+export function checkIsCommandOnPage(
+    action: BuiltinActionType,
+    focus: BotFocusType | undefined,
+) {
+    const pages = COMMAND_PAGE_MAP[action.name];
+    return pages === undefined || focus === undefined || pages.includes(focus);
+}
+
+function toFocusLabel(focus: BotFocusType) {
+    return (
+        BOT_FOCUS_LIST.find((one) => {
+            return one.key === focus;
+        })?.label ?? focus
+    );
+}
+
+/** The refusal for a Presenter command typed under another page. */
+function genCommandOffPageAnswer(
+    action: BuiltinActionType,
+    focus: BotFocusType,
+): BotAnswerType {
+    return {
+        text:
+            `\`/${action.name}\` works on the Presenter page, and this chat ` +
+            `is asking about the ${toFocusLabel(focus)}. Switch the main ` +
+            'window to the Presenter, choose **Presenter** under ASKING ' +
+            'ABOUT at the top, and type it again.',
+        actions: [genCommandAction('Go to the Presenter', '/goto presenter')],
+    };
+}
+
 export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
     {
         name: 'screen',
@@ -1099,45 +1437,72 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         isActing: true,
         run: runScreenHide,
     },
+    // The clears carry the screen's prefix (2026-10-10, the user's ask:
+    // "command should have prefix, e.g. `/clear-all` should be
+    // `/screen-clear-all`, add `/clear` to clear the chat session"); the
+    // old spellings stay as aliases, so a habit and an old answer's button
+    // still work, and the bare `/clear` went to the chat.
     {
-        name: 'clear-all',
-        aliases: ['clear'],
+        name: 'screen-clear-all',
+        aliases: ['clear-all', 'screen-clear'],
         hint: 'Clear everything off the screen (F6)',
         takesArgument: false,
         isActing: true,
         run: genClearRunner('clear-all'),
     },
     {
-        name: 'clear-background',
-        aliases: ['clear-bg'],
+        name: 'screen-clear-background',
+        aliases: ['clear-background', 'clear-bg', 'screen-clear-bg'],
         hint: 'Clear the background (F7)',
         takesArgument: false,
         isActing: true,
         run: genClearRunner('clear-background'),
     },
     {
-        name: 'clear-slide',
-        aliases: ['clear-sl'],
+        name: 'screen-clear-slide',
+        aliases: ['clear-slide', 'clear-sl'],
         hint: 'Clear the slide (F8)',
         takesArgument: false,
         isActing: true,
         run: genClearRunner('clear-slide'),
     },
     {
-        name: 'clear-bible',
-        aliases: ['clear-bb', 'clear-verse'],
+        name: 'screen-clear-bible',
+        aliases: [
+            'clear-bible',
+            'clear-bb',
+            'clear-verse',
+            'screen-clear-verse',
+        ],
         hint: 'Clear the Bible text (F9)',
         takesArgument: false,
         isActing: true,
         run: genClearRunner('clear-bible'),
     },
     {
-        name: 'clear-foreground',
-        aliases: ['clear-fg'],
+        name: 'screen-clear-foreground',
+        aliases: ['clear-foreground', 'clear-fg', 'screen-clear-fg'],
         hint: 'Clear the countdown, marquee and clock (F10)',
         takesArgument: false,
         isActing: true,
         run: genClearRunner('clear-foreground'),
+    },
+    {
+        name: CLEAR_CHAT_COMMAND,
+        aliases: ['clear-chat', 'chat-clear'],
+        hint: 'Clear this chat — every message in this tab',
+        takesArgument: false,
+        isActing: false,
+        // The window itself empties the tab (`ChatbotAppComp`, before any
+        // message is written): a command module cannot reach the tabs, and
+        // an answer under an emptied tab would be its first message.
+        run: async () => {
+            return {
+                text:
+                    'Type `/clear` in the chat window to clear the chat in ' +
+                    'front of you.',
+            };
+        },
     },
     {
         name: 'find',
@@ -1194,6 +1559,14 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         takesArgument: false,
         isActing: true,
         run: genSlideStepper(false),
+    },
+    {
+        name: 'slide',
+        aliases: ['show-slide', 'slide-show', 'goto-slide'],
+        hint: 'Put one slide of the selected song up: /slide 3, /slide verse 1',
+        takesArgument: true,
+        isActing: true,
+        run: runSlide,
     },
     {
         name: 'verse',
@@ -1283,8 +1656,8 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         hint: 'List every command',
         takesArgument: false,
         isActing: false,
-        run: async () => {
-            return genCommandList();
+        run: async ({ focus }) => {
+            return genCommandList(focus);
         },
     },
 ];
@@ -1330,7 +1703,11 @@ export function parseBuiltinCommand(text: string): ParsedCommandType | null {
  * and `/screen-hide`). An ALIAS typed in full keeps its row: `/clear` under
  * the box does not say it means `/clear-all`, and the row is what does.
  */
-export function matchBuiltinActions(query: string, limit = 8) {
+export function matchBuiltinActions(
+    query: string,
+    limit = 8,
+    focus?: BotFocusType,
+) {
     const line = query.trimStart();
     if (!line.startsWith('/')) {
         return [];
@@ -1340,7 +1717,9 @@ export function matchBuiltinActions(query: string, limit = 8) {
         return [];
     }
     return BUILTIN_ACTION_LIST.filter((one) => {
-        if (one.name === typed) {
+        // Not where it does not work (`COMMAND_PAGE_MAP`): a Presenter
+        // command under a Reader tab is a button for a room nobody is in.
+        if (one.name === typed || !checkIsCommandOnPage(one, focus)) {
             return false;
         }
         return (
@@ -1385,6 +1764,71 @@ export function readGeneralQuestion(text: string): string | null {
     return words.length > 0 ? words : null;
 }
 
+/**
+ * A plain follow-up under a general question is a general question too:
+ * "in Khmer please" typed under "/btw what is the Bible?" is about the
+ * Bible, not about the app -- measured 2026-10-10 on the user's LM Studio
+ * (gemma-4-e4b), it went the app road, cost 10.2k tokens, and the model
+ * declined it as its helper "for the Open Worship App". The user's ask,
+ * with that picture: "the follow up prompt should inherit command from
+ * previous, e.g. the previous one is `/btw` then the next should be
+ * following".
+ *
+ * Read off the LAST question in the tab: one typed with `/btw`, or one that
+ * inherited it (`isGeneral` on the message), so a chain of follow-ups holds.
+ * A slash line of any kind is never inherited -- a command is a new thing to
+ * do, and it is also how a tab goes back to app questions -- and nor is an
+ * empty box. The words come back as they are; the frame is the caller's.
+ */
+// The app's own nouns. A follow-up under a `/btw` that names one is an app
+// question again, whatever came before it: "How do I cast the virtual
+// display to a TV from my phone?" typed under "/btw how do I screen cast my
+// screen on my TV?" was answered as general knowledge -- "casting a virtual
+// display from your phone isn't typically possible" -- when the app has that
+// very button (the user's ask, 2026-10-10, with a picture of it: "it should
+// guide through to the casting button … without `/btw` the chatbot should try
+// best to provide app guiding"). Words, not the corpus: a paraphrase the
+// corpus does not carry still says "display".
+const APP_WORD_PATTERN = new RegExp(
+    '\\b(?:app|open worship|window|button|menu|setting|settings|tab|panel|' +
+        'screen|screens|projector|display|displays|monitor|cast|casting|' +
+        'mirror|mirroring|slide|slides|song|songs|lyric|lyrics|hymn|' +
+        'bible|verse|verses|passage|chapter|reader|presenter|editor|' +
+        'background|foreground|countdown|stopwatch|marquee|clock|' +
+        'document|documents|folder|flow|run sheet|presenting|font|theme|' +
+        'shortcut|keyboard|camera|pdf|powerpoint|walkthrough)\\b',
+    'i',
+);
+
+/** Whether a line names something of this app, by its words alone. */
+export function checkLooksLikeAppQuestion(text: string) {
+    return APP_WORD_PATTERN.test(text);
+}
+
+export function readInheritedGeneralQuestion(
+    text: string,
+    messages: { author: 'you' | 'bot'; text: string; isGeneral?: true }[],
+): string | null {
+    const trimmed = text.trim();
+    if (
+        trimmed.length === 0 ||
+        trimmed.startsWith('/') ||
+        checkLooksLikeAppQuestion(trimmed)
+    ) {
+        return null;
+    }
+    const lastQuestion = [...messages].reverse().find((message) => {
+        return message.author === 'you';
+    });
+    if (lastQuestion === undefined) {
+        return null;
+    }
+    const wasGeneral =
+        lastQuestion.isGeneral === true ||
+        readGeneralQuestion(lastQuestion.text) !== null;
+    return wasGeneral ? trimmed : null;
+}
+
 async function runGeneralUsage(): Promise<BotAnswerType> {
     return {
         text:
@@ -1396,21 +1840,49 @@ async function runGeneralUsage(): Promise<BotAnswerType> {
     };
 }
 
-function genCommandList(): BotAnswerType {
-    const lines = BUILTIN_ACTION_LIST.map((one) => {
+function genCommandList(focus?: BotFocusType): BotAnswerType {
+    const here = BUILTIN_ACTION_LIST.filter((one) => {
+        return checkIsCommandOnPage(one, focus);
+    });
+    const elsewhere = BUILTIN_ACTION_LIST.filter((one) => {
+        return !checkIsCommandOnPage(one, focus);
+    });
+    const lines = here.map((one) => {
         return `- \`/${one.name}\` -- ${one.hint}`;
     });
+    // The Presenter's own, named so they are not a secret from a Reader tab
+    // -- one line, not a second list.
+    const elsewhereText =
+        elsewhere.length === 0
+            ? ''
+            : '\n\n**On the Presenter page** (switch there first): ' +
+              elsewhere
+                  .map((one) => {
+                      return `\`/${one.name}\``;
+                  })
+                  .join(', ') +
+              '.';
     return {
         text:
             '**Commands you can type** -- each one runs on the spot, with no ' +
             'assistant and no internet (except `/btw`, which puts a general ' +
             'question to the assistant):\n\n' +
             lines.join('\n') +
+            elsewhereText +
             '\n\nType `/` and the list appears as you type.',
-        actions: [
-            genCommandAction('Is the screen on?', '/screen'),
-            genCommandAction('Turn the screen on', '/screen-show'),
-        ],
+        actions:
+            elsewhere.length === 0
+                ? [
+                      genCommandAction('Is the screen on?', '/screen'),
+                      genCommandAction('Turn the screen on', '/screen-show'),
+                  ]
+                : [
+                      genCommandAction('Is the screen on?', '/screen'),
+                      genCommandAction(
+                          'Go to the Presenter',
+                          '/goto presenter',
+                      ),
+                  ],
     };
 }
 
@@ -1524,7 +1996,7 @@ export async function runBuiltinCommand(
 ): Promise<BotAnswerType> {
     const parsed = parseBuiltinCommand(text);
     if (parsed === null || parsed.action === null) {
-        const list = genCommandList();
+        const list = genCommandList(focus);
         return {
             ...list,
             text:
@@ -1533,6 +2005,11 @@ export async function runBuiltinCommand(
                     : `I do not know a command called \`/${parsed.name}\`.\n\n`) +
                 list.text,
         };
+    }
+    // Typed under a page it does not work on: said, with the way there,
+    // rather than a press that finds no button (`COMMAND_PAGE_MAP`).
+    if (!checkIsCommandOnPage(parsed.action, focus)) {
+        return genCommandOffPageAnswer(parsed.action, focus);
     }
     const report = genProgressReporter(onProgress);
     try {

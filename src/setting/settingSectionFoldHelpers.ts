@@ -34,6 +34,7 @@ export type SettingSectionFoldNameType =
     | 'ai-kimi'
     | 'ai-bedrock'
     | 'ai-custom-servers'
+    | 'ai-shared-servers'
     | `ai-custom-server-${string}`;
 
 // Claimed by `layout.windows` in `settingArchiveCatalog` by this prefix.

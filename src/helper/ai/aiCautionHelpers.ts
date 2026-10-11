@@ -1,8 +1,11 @@
+import { createElement } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import {
     popupWidgetManager,
     showAppConfirm,
 } from '../../popup-widget/popupWidgetHelpers';
+import AiCautionBodyComp from './AiCautionBodyComp';
 
 /**
  * The caution shown BEFORE either AI window opens, asked for by the user:
@@ -21,8 +24,80 @@ import {
  * the projector, while the AI Chat window is a stranger's website where the
  * words leave the machine and nothing knows about this app at all -- and one
  * warning vague enough to cover both would have warned about neither.
+ *
+ * **Either caution can be put away for 30 days** (2026-10-10, the user's ask
+ * with both circled in a picture: *it's annoying for some users, let put
+ * any button to hide it for a while, e.g. hide for 30 days*). A box on this
+ * dialog, a button on the standing one; both write the same setting, the
+ * time until which both stay hidden, because somebody who has read one has
+ * read the warning. Nothing is hidden for good: the day comes round and the
+ * caution is back, which is the point of 30 days rather than a checkbox
+ * that means never.
  */
 export type AiWindowKindType = 'assistant' | 'aichat';
+
+/** The key: the time (ms since the epoch) until which both cautions stay hidden. */
+export const AI_CAUTION_HIDDEN_UNTIL_SETTING = 'ai-caution-hidden-until';
+export const AI_CAUTION_HIDE_DAYS = 30;
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+
+// The browser's own storage, not the app's setting files: this module is
+// reached by every window's toolbar and IPC receivers, and the setting store
+// drags the file-storage chain (`appLocalStorage` → `storageFileHelpers` →
+// `appProvider.pathUtils`) into their static closure -- memory
+// `renderer-entry-static-closure` -- which also broke every suite that mocks
+// `appProvider` without it. Every page of the app is one origin
+// (`https://localhost:3000` in dev, `owa://local` packaged), so a stamp
+// written here by the help window is read by the presenter's 🤖. Read and
+// written in a try, because the accessor can throw in a private window.
+function readHiddenUntilText(): string | null {
+    try {
+        return (
+            globalThis.localStorage?.getItem(AI_CAUTION_HIDDEN_UNTIL_SETTING) ??
+            null
+        );
+    } catch (_error) {
+        return null;
+    }
+}
+
+function writeHiddenUntilText(value: string) {
+    try {
+        globalThis.localStorage?.setItem(
+            AI_CAUTION_HIDDEN_UNTIL_SETTING,
+            value,
+        );
+    } catch (_error) {
+        // A window that cannot keep it asks again next time, which is safe.
+    }
+}
+
+/**
+ * The time the caution is hidden until, out of the stored value, or null
+ * when it is not hidden: nothing stored, a value that is not a time, or one
+ * that has passed.
+ */
+export function readAiCautionHiddenUntil(
+    raw: string | null | undefined,
+    now = Date.now(),
+): number | null {
+    if (typeof raw !== 'string' || raw.trim().length === 0) {
+        return null;
+    }
+    const until = Number(raw);
+    return Number.isFinite(until) && until > now ? until : null;
+}
+
+export function checkIsAiCautionHidden(now = Date.now()) {
+    return readAiCautionHiddenUntil(readHiddenUntilText(), now) !== null;
+}
+
+/** Hides both cautions for `AI_CAUTION_HIDE_DAYS` from now; answers the time they come back. */
+export function hideAiCautionForAWhile(now = Date.now()) {
+    const until = now + AI_CAUTION_HIDE_DAYS * DAY_MILLISECONDS;
+    writeHiddenUntilText(String(until));
+    return until;
+}
 
 export async function askAiCaution(kind: AiWindowKindType) {
     // Fails OPEN, deliberately. `showAppConfirm` answers `false` when the
@@ -33,6 +108,11 @@ export async function askAiCaution(kind: AiWindowKindType) {
     // which reads as a broken app rather than as a warning. A window that
     // cannot ask is a window that opens.
     if (popupWidgetManager.openConfirm === null) {
+        return true;
+    }
+    // Put away for a while by the user: the window opens as though it had
+    // been answered Open. Read fresh, because the chat window writes it too.
+    if (checkIsAiCautionHidden()) {
         return true;
     }
     // Each kind carries its own risk AND its own closing advice. "Read a step
@@ -53,13 +133,25 @@ export async function askAiCaution(kind: AiWindowKindType) {
                       ' projector. Check anything that matters before a' +
                       ' service, and read a step yourself before you press it.',
               );
-    return await showAppConfirm(
+    let isHideTicked = false;
+    const isOk = await showAppConfirm(
         tran('Be careful with AI'),
-        `${tran('AI can be confidently wrong.')} ${risk}`,
+        createElement(AiCautionBodyComp, {
+            text: `${tran('AI can be confidently wrong.')} ${risk}`,
+            onHideChange: (isHidden: boolean) => {
+                isHideTicked = isHidden;
+            },
+        }),
         {
             escToCancel: true,
             cancelButtonLabel: 'Cancel',
             confirmButtonLabel: 'Open',
         },
     );
+    // Only an Open hides it: a box ticked and then cancelled was a change
+    // of mind, not a request.
+    if (isOk && isHideTicked) {
+        hideAiCautionForAWhile();
+    }
+    return isOk;
 }

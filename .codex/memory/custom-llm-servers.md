@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-10T16:31:17.633Z
+  modified: 2026-10-11T02:24:35.084Z
 ---
 
 Added 2026-10-09 at the user's ask, tested against their LM Studio
@@ -113,11 +113,11 @@ read that 404 as _this model is not available to the account_.
   panel saves the one that answered and says _Address corrected to …_;
   when none answers, the sentence names the two usual addresses.
 - **A 404 is read two ways** (`toCustomServerFailure(error, {loadedContext,
-  kind, baseUrl, model})`): a 404 the server WROTE (Ollama's `not_found_error`
+kind, baseUrl, model})`): a 404 the server WROTE (Ollama's `not_found_error`
   JSON — the SDK puts it on `error.error`) is _this server has no model
   called “x”_ (+ `ollama pull x`); a bare page is _nothing speaks the OpenAI
   API at … — check the address and press Test_. A 400 saying `does not
-  support tools` is _this model cannot use tools_. Ollama's context 400
+support tools` is _this model cannot use tools_. Ollama's context 400
   (`exceed_context_size_error`, "exceeds the available context size") matches
   the existing pattern.
 - **The rest of the family** (the user's list: _Ollama, LocalAI, Llamafile,
@@ -127,16 +127,33 @@ read that 404 as _this model is not available to the account_.
   they needed: **llama.cpp's `/props`** (kind `llama-cpp`, llamafile too —
   `default_generation_settings.n_ctx` is the context the server was started
   with, 4096 unless `-c`; `modalities.vision`; ONE model, so the info is
-  `commonInfo` for every row, `findCustomModelInfo`); **error bodies in
+  `commonInfo` for every row, `findCustomModelInfo` — **unless it is a
+  ROUTER**, b11540+ started on a models folder: `/props` says `role:
+  "router"` with `n_ctx` 0 and no model path, nothing is loaded until a
+  question names a model, and `/models` carries each model's `status`
+  (loaded / unloaded) and the arguments it starts with, `--ctx-size`
+  among them; `checkIsLlamaCppRouter` + `toLlamaCppRouterModelInfoMap`
+  read that into the `infoMap`, the root's word is _not loaded, no size_,
+  and Settings says **Not loaded in llama.cpp right now** (km + fr) —
+  measured 2026-10-10 on the user's server PC, where the old reading
+  would have called every model loaded with no size); **error bodies in
   other shapes** — vLLM / SGLang write `{object:"error", message, type,
-  code}` with no `error` key and a FastAPI server `{detail}`, which the SDK
+code}` with no `error` key and a FastAPI server `{detail}`, which the SDK
   reports as "404 status code (no body)", so `toReadableErrorText` rewraps a
   ≥400 JSON body as `{error:{message,type,code}}` before the SDK sees it;
   and **tool calling that is off server-side** — llama.cpp answers 500
   `tools param requires --jinja flag`, vLLM / SGLang 400 naming
   `--enable-auto-tool-choice` / `--tool-call-parser`
   (`NO_TOOLS_ERROR_LIST`, each with its fix sentence). Usual ports are in
-  W-42 step 13. Not measured live: none of them was installed here.
+  W-42 step 13. Measured live 2026-10-10 on the user's server PC: llama.cpp
+  (a ROUTER), Ollama and llamafile all listed in Settings and answered a
+  tool-using round; **GPT4All's API server takes no `tools` at all** (400
+  `'tools' is not supported`, the server, not the model), so the chat loop
+  asks such a server once more with no tools and the answer says it came
+  from the guide text alone (`checkIsToolsRefused`, `TOOLS_REFUSED_NOTE`);
+  LiteLLM wants its master key as the bearer (a wrong key is a 400 _No
+  connected db_, read as a bad key); Jan's API server is a switch inside
+  the app.
 - **A local server is sent the essential tools only, and a slow one is told
   it is slow** (2026-10-10, the user's goal: _make the app chatbot work
   smoothly with local llm_). Measured on the user's laptop under Ollama:
@@ -163,13 +180,62 @@ read that 404 as _this model is not available to the account_.
   Ollama keeps a model's loaded context per model: `ollama create` (or
   `POST /api/create` with `parameters.num_ctx`) derives `qwen3.5-16k:4b`
   from `qwen3.5:4b` without new weights, which is how a 16k model was had
-  without the app's Settings.
+  without the app's Settings. **The same 4B GGUF under llama.cpp's own
+  `llama-server` (b11541, native ARM64) read 52.6 tokens/s on this laptop —
+  Ollama's runner 11 — and answered the projector question CORRECTLY through
+  the tool loop: 10 226 prompt tokens in 194 s on round 1, 139 new tokens
+  in 3.8 s on round 2 off the cached prefix, ~3.5 min in all, free.** So on
+  a machine where Ollama is slow, llama.cpp's server (`winget install
+ggml.llamacpp`, `llama-server -m <gguf> -c 16384`) is the local path that
+  works; Ollama's own GGUF blobs under `~/.ollama/models/blobs` load in it.
 - **Ollama facts measured:** the OpenAI door ignores `options.num_ctx` and a
   top-level `num_ctx` — the context is the server's (or the Modelfile's: the
   user's `tev1:4b` pins `num_ctx 2050`, which no request can raise); unknown
   body fields are ignored, not refused; `reasoning_effort: "none"` turns a
   thinking model's reasoning off (686 ms against 5.3 s), `think: false` is
   ignored there; `/v1/models` lists every pulled model with `owned_by:
-  library`. Not shipped: sending `reasoning_effort` to custom servers.
+library`. Not shipped: sending `reasoning_effort` to custom servers.
+  **Smoke-tested over the church's network, 2026-10-10 (the user's ask: a
+  session on their stronger computer served the models, this laptop drove the
+  app).** LM Studio on `super-computer` (192.168.1.12, through the user's own
+  proxy on 1237, 8 GB VRAM — one model loaded at a time) passed Settings' Test
+  and Load and the chat end to end; Ollama and llama.cpp there were blocked on
+  the user's approval in that session, and the other families (Jan, GPT4All,
+  LiteLLM, llamafile, LocalAI, vLLM, SGLang, Respawn) stay stand-in-only.
+  What that run changed:
+
+- **A general question's thinking is OFF on LM Studio and Ollama**
+  (`genCustomProvider` with the server's kind sends `reasoning_effort:
+"none"`): qwen3.5-9b had spent 1 069 generated tokens and 27.5 s on "what
+  is the Bible", 150 of them the answer. Not in the tool loop, not to other
+  kinds.
+- **A tool call written as words is read as the call**
+  (`textToolCallHelpers.ts`): at round 5 of a follow-up on qwen3.5-9b at 16k
+  the model answered `<tool_call><function=owa_help_search>…` as prose and
+  the window printed it. Every grammar a small model drifts into is parsed,
+  only names the request offered run, and on the last round it is _it wrote
+  no answer this time_.
+- **A follow-up under `/btw` stays general unless it names the app**
+  (`readInheritedGeneralQuestion`, `checkLooksLikeAppQuestion`); a known
+  question filed under another window is still known and its page rides
+  with the ask (`readKnownQuestionPage`); the prompt says every question is
+  the app's until a search comes back empty — a local model had sent _can it
+  stream to Facebook?_ and _how can do screen cast on my tv_ to `/btw`.
+- **The song-by-title chip is drafted with no model on a custom server**:
+  the lean tool set has no song tools, and gemma-4-e4b wrote the steps for
+  an empty file instead.
+- **Measured on gemma-4-e4b (LM Studio, LAN), the standing corpus**: 7 of
+  10 right; the projector question 2 rounds / ~20 s, a how-do-I 3–5 rounds /
+  30–55 s, `/btw` under 15 s. The two wrong ones: _Turn off the screen for
+  me_ with every screen already off answered _Click Clear All_ (EC-206), and
+  the `/btw` regression above (fixed).
+- **The shared registry** (`docs/llm-registry/README.md`): servers an admin
+  publishes at `https://www.openworship.app/llm/info.json` are offered
+  beside the saved ones, read by main at launch and on the chatbot's ↻;
+  memory [[llm-registry]]. The live publish is the user's
+  (`node extra-work/local-llm/s3-push-llm-registry.mjs extra-work/local-llm/llm-info.json` —
+  done from a session when the admin asks, never unasked).
+
 Related: [[bedrock-llm-provider]], [[kimi-third-llm-provider]],
-[[secure-storage-safestorage]], [[scratch-dev-instance-beside-user-app]].
+[[secure-storage-safestorage]], [[scratch-dev-instance-beside-user-app]],
+[[llm-registry]].

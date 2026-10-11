@@ -10,8 +10,13 @@ import {
     MAX_CUSTOM_SERVERS,
     OLLAMA_PS_PATH,
     OLLAMA_TAGS_PATH,
+    MAX_REGISTRY_SERVERS,
+    REGISTRY_SERVER_ID_PREFIX,
     checkIsAllowedCustomLlmCall,
     checkIsCustomServerError,
+    checkIsRegistryServerId,
+    toPublicRegistryServers,
+    toValidLlmRegistry,
     checkIsLocalNetworkUrl,
     checkIsLoopbackUrl,
     checkIsSameOrigin,
@@ -19,7 +24,9 @@ import {
     toContextLabel,
     toCustomLlmCallUrl,
     toCustomServerKindLabel,
+    checkIsLlamaCppRouter,
     toLlamaCppModelInfo,
+    toLlamaCppRouterModelInfoMap,
     toLmStudioModelInfoMap,
     toOllamaModelInfoMap,
     checkIsUsableCustomServer,
@@ -338,6 +345,92 @@ describe('toLlamaCppModelInfo', () => {
         expect(toLlamaCppModelInfo('{"data":[]}')).toBeNull();
         expect(toLlamaCppModelInfo('{"version":"0.40.2"}')).toBeNull();
     });
+
+    it('reads a router as nothing loaded at the root', () => {
+        // b11540 on the user's server PC, 2026-10-10.
+        const props = JSON.stringify({
+            role: 'router',
+            max_instances: 1,
+            models_autoload: true,
+            model_alias: 'llama-server',
+            model_path: 'none',
+            default_generation_settings: { params: null, n_ctx: 0 },
+        });
+        expect(checkIsLlamaCppRouter(props)).toBe(true);
+        expect(toLlamaCppModelInfo(props)).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: null,
+            canSeeImages: false,
+        });
+        expect(
+            checkIsLlamaCppRouter(
+                JSON.stringify({
+                    default_generation_settings: { n_ctx: 4096 },
+                }),
+            ),
+        ).toBe(false);
+        expect(checkIsLlamaCppRouter('<html>')).toBe(false);
+    });
+});
+
+describe('toLlamaCppRouterModelInfoMap', () => {
+    it('reads each model’s loaded state and the size it starts with', () => {
+        const infoMap = toLlamaCppRouterModelInfoMap(
+            JSON.stringify({
+                data: [
+                    {
+                        id: 'qwen3.5-9b',
+                        object: 'model',
+                        owned_by: 'llamacpp',
+                        status: {
+                            value: 'loaded',
+                            args: [
+                                'llama-server.exe',
+                                '--alias',
+                                'qwen3.5-9b',
+                                '--ctx-size',
+                                '16384',
+                                '--mmproj',
+                                'D:\\models\\mmproj.gguf',
+                            ],
+                        },
+                    },
+                    {
+                        id: 'qwen2.5-7b-instruct',
+                        object: 'model',
+                        status: {
+                            value: 'unloaded',
+                            args: ['llama-server.exe', '-c', '8192'],
+                        },
+                    },
+                    { id: 'no-status', object: 'model' },
+                ],
+            }),
+        );
+        expect(infoMap?.get('qwen3.5-9b')).toEqual({
+            isLoaded: true,
+            loadedContext: 16384,
+            maxContext: null,
+            canSeeImages: true,
+        });
+        expect(infoMap?.get('qwen2.5-7b-instruct')).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: null,
+            canSeeImages: false,
+        });
+        expect(infoMap?.has('no-status')).toBe(false);
+    });
+
+    it('is null for a plain OpenAI list, which says nothing of this', () => {
+        expect(
+            toLlamaCppRouterModelInfoMap(
+                JSON.stringify({ data: [{ id: 'gpt-4o', object: 'model' }] }),
+            ),
+        ).toBeNull();
+        expect(toLlamaCppRouterModelInfoMap('<html>')).toBeNull();
+    });
 });
 
 describe('toLmStudioModelInfoMap', () => {
@@ -580,5 +673,100 @@ describe('CustomServerError', () => {
         ).toBe(true);
         expect(checkIsCustomServerError(new Error('z'))).toBe(false);
         expect(checkIsCustomServerError(null)).toBe(false);
+    });
+});
+
+describe('the shared LLM registry file', () => {
+    const entry = {
+        id: 'super-computer',
+        name: 'Church LM Studio',
+        baseUrl: 'https://abc.trycloudflare.com/v1',
+        apiKey: ' sk-shared ',
+        isFree: true,
+        note: 'behind a Cloudflare tunnel',
+        models: [
+            { model: 'qwen/qwen3.5-9b', name: 'Qwen', canSeeImages: true },
+        ],
+    };
+
+    it('reads a file of the known version, prefixing every id', () => {
+        const registry = toValidLlmRegistry(
+            JSON.stringify({
+                version: 1,
+                updated: '2026-10-10',
+                servers: [entry],
+            }),
+        )!;
+        expect(registry.updated).toBe('2026-10-10');
+        expect(registry.servers).toHaveLength(1);
+        expect(registry.servers[0]).toMatchObject({
+            id: `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
+            name: 'Church LM Studio',
+            baseUrl: 'https://abc.trycloudflare.com/v1',
+            apiKey: 'sk-shared',
+            isFree: true,
+            note: 'behind a Cloudflare tunnel',
+            source: 'registry',
+        });
+        expect(registry.servers[0].models[0]).toMatchObject({
+            model: 'qwen/qwen3.5-9b',
+            name: 'Qwen',
+            canSeeImages: true,
+        });
+        expect(checkIsRegistryServerId(registry.servers[0].id)).toBe(true);
+        expect(
+            checkIsRegistryServerId('11111111-2222-3333-4444-555555555555'),
+        ).toBe(false);
+    });
+
+    it('is nothing when the shape or the version is not the known one', () => {
+        expect(toValidLlmRegistry('not json')).toBeNull();
+        expect(toValidLlmRegistry(null)).toBeNull();
+        expect(toValidLlmRegistry([])).toBeNull();
+        expect(toValidLlmRegistry({ version: 2, servers: [] })).toBeNull();
+        expect(toValidLlmRegistry({ version: 1 })).toBeNull();
+        expect(toValidLlmRegistry({ version: 1, servers: [] })).toEqual({
+            version: 1,
+            updated: '',
+            servers: [],
+        });
+    });
+
+    it('drops a server that cannot be asked, a bad id, a twin, and the overflow', () => {
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                entry,
+                { ...entry, id: 'super-computer' },
+                { ...entry, id: 'no models', models: [] },
+                { ...entry, id: 'bad id!' },
+                { ...entry, id: 'no-url', baseUrl: 'not a url' },
+                { ...entry, id: 'no-name', name: '' },
+                { ...entry, id: 'no-models', models: [] },
+                ...Array.from({ length: 30 }, (_, index) => {
+                    return { ...entry, id: `extra-${index}` };
+                }),
+            ],
+        })!;
+        expect(registry.servers.map((one) => one.id)).toEqual([
+            `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
+            ...Array.from({ length: MAX_REGISTRY_SERVERS - 1 }, (_, index) => {
+                return `${REGISTRY_SERVER_ID_PREFIX}extra-${index}`;
+            }),
+        ]);
+    });
+
+    it('hands a window the servers without their keys or notes', () => {
+        const registry = toValidLlmRegistry({ version: 1, servers: [entry] })!;
+        const shown = toPublicRegistryServers(registry.servers);
+        expect(shown[0]).toEqual({
+            id: `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
+            name: 'Church LM Studio',
+            baseUrl: 'https://abc.trycloudflare.com/v1',
+            models: registry.servers[0].models,
+            isFree: true,
+            source: 'registry',
+        });
+        expect(JSON.stringify(shown)).not.toContain('sk-shared');
     });
 });

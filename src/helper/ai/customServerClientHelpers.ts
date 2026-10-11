@@ -251,7 +251,33 @@ const NO_TOOLS_ERROR_LIST: { pattern: RegExp; fixText: string }[] = [
             'this model cannot use tools, which the assistant needs to look ' +
             'things up — pick a model that supports tools',
     },
+    {
+        // GPT4All's API server (3.10, measured 2026-10-10): the SERVER takes
+        // no `tools` at all, whatever the model -- 400 "'tools' is not
+        // supported". The chat loop asks once more without them first
+        // (`checkIsToolsRefused`); this sentence is for when that fails too.
+        pattern: /['"‘’“”]tools['"‘’“”] (?:is |are )?not supported/i,
+        fixText:
+            'this server’s API does not take tools at all (GPT4All’s does ' +
+            'not), so the assistant can only answer from the guide text — ' +
+            'for presses and live answers use LM Studio, Ollama or llama.cpp',
+    },
 ];
+
+/**
+ * Whether the server refused the TOOLS rather than the question: GPT4All's
+ * API server takes none, a `llama-server` without `--jinja` answers 500, a
+ * model Ollama did not mark for tools 400. Read off the message, whatever
+ * the status, because the three say it under three statuses. The chat loop
+ * asks such a server once more with no tools, so a question whose guide
+ * page already rides on the ask is still answered.
+ */
+export function checkIsToolsRefused(error: any): boolean {
+    const message = String(error?.message ?? error ?? '');
+    return NO_TOOLS_ERROR_LIST.some(({ pattern }) => {
+        return pattern.test(message);
+    });
+}
 
 /**
  * What to say when the model's context cannot hold the conversation: the

@@ -11,16 +11,20 @@ import {
     CUSTOM_LLM_FETCH_CHANNEL,
     CUSTOM_LLM_KEYS_SETTING_KEY,
     CUSTOM_LLM_SERVERS_SETTING_KEY,
+    LLM_REGISTRY_GET_CHANNEL,
+    LLM_REGISTRY_RELOAD_CHANNEL,
     LLAMA_CPP_PROPS_PATH,
     LM_STUDIO_MODELS_PATH,
     OLLAMA_PS_PATH,
     OLLAMA_TAGS_PATH,
+    checkIsLlamaCppRouter,
     checkIsLoopbackUrl,
     checkIsUsableCustomServer,
     genCustomServerAddressCandidates,
     toCustomLlmCallUrl,
     toCustomServerBaseUrl,
     toLlamaCppModelInfo,
+    toLlamaCppRouterModelInfoMap,
     toLmStudioModelInfoMap,
     toOllamaModelInfoMap,
     toCustomServersText,
@@ -32,6 +36,7 @@ import {
     type CustomModelType,
     type CustomServerKindType,
     type CustomServerType,
+    type LlmRegistryStatusType,
 } from '../../../electron/customLlmProtocol';
 
 /**
@@ -50,8 +55,52 @@ export function getCustomServers(): CustomServerType[] {
     );
 }
 
+// The shared registry's servers (`electron/llmRegistryHelpers.ts`), as main
+// last told this window -- keys never among them. A module-level copy on
+// purpose: it is a few rows, read on every render of the assistant list, and
+// an IPC round trip per read is the one thing a help box must not do. Filled
+// by `loadLlmRegistry`, which the chatbot calls on mount and on its Reload.
+let registryServers: CustomServerType[] = [];
+let registryStatus: LlmRegistryStatusType | null = null;
+
+export function getRegistryServers(): CustomServerType[] {
+    return registryServers;
+}
+
+export function getLlmRegistryStatus(): LlmRegistryStatusType | null {
+    return registryStatus;
+}
+
+/** The saved servers and the registry's, for the chatbot. Settings edits the saved ones alone. */
+export function getAllCustomServers(): CustomServerType[] {
+    return [...getCustomServers(), ...registryServers];
+}
+
 export function getUsableCustomServers(): CustomServerType[] {
-    return getCustomServers().filter(checkIsUsableCustomServer);
+    return getAllCustomServers().filter(checkIsUsableCustomServer);
+}
+
+/**
+ * Asks main for the registry -- what it holds (`isReload` false, no
+ * network) or a fresh read of the file -- and tells every listener. Never
+ * rejects: a window that cannot reach main keeps the servers it had.
+ */
+export async function loadLlmRegistry(
+    isReload = false,
+): Promise<LlmRegistryStatusType | null> {
+    try {
+        const status = await electronSendAsync<LlmRegistryStatusType>(
+            isReload ? LLM_REGISTRY_RELOAD_CHANNEL : LLM_REGISTRY_GET_CHANNEL,
+        );
+        registryServers = (status?.servers ?? []).map((server) => {
+            return { ...server, source: 'registry' as const };
+        });
+        registryStatus = status ?? null;
+        notifyChanging();
+        return registryStatus;
+    } catch (_error) {
+        return registryStatus;
+    }
 }
 
 const changingListener = new Set<() => void>();
@@ -60,6 +109,36 @@ function notifyChanging() {
     for (const listener of changingListener) {
         listener();
     }
+}
+
+/**
+ * The registry's servers and how its last read went, for a window that lists
+ * them. When the list first shows, main is asked for what it holds -- no
+ * network: it read the file at launch -- so the rows are there without a
+ * restart.
+ */
+export function useLlmRegistry() {
+    const [registry, setRegistry] = useState(() => {
+        return { servers: registryServers, status: registryStatus };
+    });
+    useAppEffect(() => {
+        const listener = () => {
+            // These listeners hear every edit of a SAVED server too: nothing
+            // of the registry changed then, and nothing is drawn again.
+            setRegistry((old) => {
+                return old.servers === registryServers &&
+                    old.status === registryStatus
+                    ? old
+                    : { servers: registryServers, status: registryStatus };
+            });
+        };
+        changingListener.add(listener);
+        void loadLlmRegistry();
+        return () => {
+            changingListener.delete(listener);
+        };
+    }, []);
+    return registry;
 }
 
 export function setCustomServers(servers: CustomServerType[]) {
@@ -444,7 +523,22 @@ export async function readCustomServerModelInfo(
     if (propsText !== null) {
         const commonInfo = toLlamaCppModelInfo(propsText);
         if (commonInfo !== null) {
-            return { kind: 'llama-cpp', infoMap: new Map(), commonInfo };
+            // A router says nothing of a model at its root: each one is
+            // listed at the OpenAI door with whether it is loaded and the
+            // size it starts with (`toLlamaCppRouterModelInfoMap`); a row
+            // the list does not carry keeps the root's word -- not loaded,
+            // no size.
+            const infoMap = checkIsLlamaCppRouter(propsText)
+                ? toLlamaCppRouterModelInfoMap(
+                      (await readRootCallText(server, '/models', deadline)) ??
+                          '',
+                  )
+                : null;
+            return {
+                kind: 'llama-cpp',
+                infoMap: infoMap ?? new Map(),
+                commonInfo,
+            };
         }
     }
     // Every door asked and none answered in time: the server is away, which

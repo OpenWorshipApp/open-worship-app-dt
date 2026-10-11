@@ -1032,6 +1032,83 @@ describe('controls the app hides until the mouse is over them', () => {
 // control and cannot describe it, so what comes back has to be re-findable.
 // The rule the tests hold it to is that it is TESTED before it is returned --
 // a selector matching two things is worse than none, because it looks right.
+describe('a control whose title restates its name with a state', () => {
+  // The Stay Awake cup: an icon-only button, aria-label "Stay Awake", title
+  // "Stay Awake — <state>". A walkthrough step read the sentence cut at 80
+  // characters as the control's name, and no press could land (2026-10-10).
+  function install2() {
+    document.body.innerHTML = [
+      '<button id="cup" aria-label="Stay Awake" aria-pressed="false" ',
+      'title="Stay Awake — turned off, this computer may sleep when no ',
+      'screen is showing"><i aria-hidden="true"></i></button>',
+      '<button id="gear" title="Setting">⚙</button>',
+    ].join('');
+    return install();
+  }
+
+  it('calls the control by its name, first and alone', () => {
+    const dm = install2();
+    const cup = document.getElementById('cup');
+    expect(dm.labelPartsOf(cup)[0]).toBe('Stay Awake');
+    expect(dm.shownLabelOf(cup)).toBe('Stay Awake');
+    expect(dm.describe(cup).label).toBe('Stay Awake');
+  });
+
+  it('is pressed by its name, with a kind noun, or by the sentence quoted back', () => {
+    const dm = install2();
+    const cup = document.getElementById('cup');
+    for (const needle of [
+      'Stay Awake',
+      'Stay Awake cup',
+      'Stay Awake icon',
+      'Stay Awake — turned off, this computer may sleep when no screen is showing Stay',
+      'Stay Awake — turned off, this computer may sleep when no screen is showing',
+    ]) {
+      const found = dm.findBest([needle], { preferPressSafe: true });
+      expect(found?.element, needle).toBe(cup);
+      expect(found?.isPressSafe, needle).toBe(true);
+    }
+    // A hyphen is a name's own: nothing is cut off it, so these words are
+    // not the control's name and no press lands by them.
+    expect(
+      dm.findBest(['Stay - Awake'], { preferPressSafe: true })?.isPressSafe,
+    ).not.toBe(true);
+  });
+});
+
+describe('the twins of a control', () => {
+  it('counts the shown controls carrying the same exact words, by panel', () => {
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<button title="More Options">1</button>',
+      '<button title="More Options" style="display:none">2</button>',
+      '</div>',
+      '<div data-widget-name="Mini Screen">',
+      '<button title="More Options">3</button>',
+      '<button title="Mini Screen Options">4</button>',
+      '</div>',
+    ].join('');
+    const dm = install();
+    const first = document.querySelector(
+      '[data-widget-name="Document List"] button',
+    );
+    expect(dm.twinsOf(first, 'More Options')).toEqual({
+      count: 2,
+      panels: ['Document List', 'Mini Screen'],
+    });
+    // A scope narrows the count the way it narrows the match.
+    expect(dm.twinsOf(first, 'Document List > More Options')).toEqual({
+      count: 1,
+      panels: ['Document List'],
+    });
+    const own = document.querySelector('[title="Mini Screen Options"]');
+    expect(dm.twinsOf(own, 'Mini Screen Options')).toEqual({
+      count: 1,
+      panels: ['Mini Screen'],
+    });
+  });
+});
+
 describe('selectorOf', () => {
   it('prefers the words the app chose over the position', () => {
     document.body.innerHTML = `

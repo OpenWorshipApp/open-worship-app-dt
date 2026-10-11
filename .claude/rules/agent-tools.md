@@ -88,6 +88,60 @@ The doors and the firewall: `agent-access.md`.
   W-17) walk their bold-led bullets and paragraphs. Do it across the manual:
   wrong presses ≥10 → 0, recipes that start 33 → 37, honest refusals go UP
   because a wrong press is now a refusal that names what it found.
+  **A topic keeps the WAY to a deep step** (2026-10-10, the user's ask with a
+  picture of the Virtual Screens Manager: _my goal is even small model can
+  help user through complex tasks … from opening the panel, create vd and
+  click casting icon_): `owa_guide_start` with `manualId` + `topic` starts
+  the one matching step as before, and when that step's control is NOT on
+  screen (`isTargetFound: false` — W-51's **Cast to a TV** lives in a panel
+  nobody has opened) starts again from the recipe's step 1 up to it
+  (`selectGuideStepIndexForTopic`, `topicPathSteps` in `owaTools.mjs`), so
+  the card reads 1/7 at **More Options** rather than 1/1 at a control it
+  cannot ring. W-51 step 1 names the Mini Screen's ⋮ by its title, because
+  a bold glyph is not a label the matcher reads, and the menu item it opens
+  is the next press (`withMore`). **That title is its own**,
+  **[en:tran:Mini Screen Options]**: as **[en:tran:More Options]** it was one
+  of forty (every file row's dots, each screen card's), the card pressed the
+  first in the page — the Documents list's menu opened for a step about the
+  Mini Screen's — and marched on to step 2 with it open. **A name several
+  shown controls carry is no aim** (`twinsOf` in `domMatch.mjs`): the card
+  refuses the press with the panels the twins sit in (_2 controls are
+  called "More Options" (in Document List, Mini Screen) and the step does
+  not say which_), its status carries `twins`, and the ring's hint says it
+  may be on the wrong one; a step that scopes the control to its panel
+  (**Background** panel … **Videos**) or a `pendingFind` is never counted.
+  Measured 2026-10-10 on the Presenter: `More Options` ×40 in the page, ×3
+  inside the Mini Screen alone. **One twin is not a guess: the one the
+  walkthrough's LAST press made** (`resolveTwins`, `knownAtStart` — a
+  WeakSet of every control on the window, taken before each press and at
+  the start). W-51's step 2 adds a display and its card opens; step 8's
+  **Cast to a TV** is on THAT card, and with two cards already there the
+  press had been refused. Judged against the window before the last press,
+  not before the start: step 1 opens the panel, and then every card's icon
+  is new at once (measured: three twins, all "fresh", refusal). Proven
+  through the 🤖 window on gemma-4-e2b the same evening: menu → panel →
+  tab → Add Virtual Display → the new card's cast icon, `did: clicked`. **A title that restates the name with its
+  STATE is a sentence, not the name** (2026-10-10, EC-215, the user's own
+  **Do it for me** on _Keep computer awake_): the Stay Awake cup's title is
+  `Stay Awake — turned off, …` beside an aria-label of `Stay Awake`, and the
+  card called it the sentence, cut at 80 characters, which no press could
+  land on. `labelPartsOf` puts the name first, `shownLabelOf` hands out the
+  name alone, `checkIsNamedNearly` cuts the state after an em or en dash on
+  both sides (a hyphen stays), and `cup`, `icon`, `gear` are kind nouns like
+  `button` — so _Click the Stay Awake cup_, a model's own step, presses.
+  **And the card is told which control the question is about**
+  (`owa_guide_start`'s `find`, 2026-10-10, the user's second picture): the
+  window's **Show me step by step** / **Do it for me** carry a known
+  question's `find` (`AskExtraType.knownFind` → `genGuideActions`), the
+  step naming it is the one started and it goes first among that step's
+  controls — W-01's header paragraph bolds eight, and the card had ringed
+  the panel the first answered to for a question about the eighth; and the
+  buttons re-ask with the words the person typed (`askedText`), not the
+  ask the model was given, which had put the hint, the page and a recipe
+  id in the transcript as the user's own message. **The
+  card never outgrows the window** (`.card { max-height }`, `.body {
+  overflow: auto }`): a whole-paragraph step had pushed its title and
+  buttons off screen.
 - **Guide steps and hidden controls**: A guide can also use `action: "hover"`
   when an event-driven surface creates another control; it dispatches
   pointer/mouse hover events without moving the person's real pointer. A
@@ -226,7 +280,21 @@ The doors and the firewall: `agent-access.md`.
   content through `describeScreenContent` with no model. Re-asked: the state
   answers name the verse on the wall, the "yes" is 3 rounds, +124 tokens a
   round (all description). Rung 5 is measured now, and "what the user is in
-  the middle of" is the half still open.
+  the middle of" is the half still open. **Off the Presenter the answer says
+  which page it needs** (2026-10-10, the user's ask: _some questions is picky
+  the page, e.g. "Is anything showing on the projector?" work in
+  presenter.html only … should recommend changing page first_):
+  `needsPage: "presenter"` beside the `note` on `owa_list_screens` and on
+  `owa_app_state`'s selection, both notes now saying to switch the main
+  window first (`owa_goto_page`) or to tell the user to, and the
+  `owa_list_screens` description saying so in a line. The chatbot reads the
+  FIELD (`ToolWatchType.needsPage`, cleared when the model takes the window
+  there itself), adds one sentence under the answer and a **Go to the
+  Presenter** button (the window's own `/goto presenter`), and the prompt's
+  symptom rule names it — a small local model had read "no screen is on" off
+  the Reader as "nothing is showing" with not a word about the page. The
+  description cost ~20 tokens; two older phrases were trimmed to keep the
+  ratchet (8 344 of 8 350).
 - **The state tool says what the user is in the MIDDLE of** (2026-09-09,
   `src/helper/agentPresenterHelpers.ts` + `tools/owa-devtools-mcp/agentPresenter.mjs`).
   `owa_list_screens` says what the projector holds; nothing said what the user
@@ -675,3 +743,27 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   the English name the files use (`toCatalogLanguageWord`), and when some
   file has every word only those are listed. Verified live through the
   isolated profile: the sample installed (1.5 s), info, update, delete, undo.
+  **A country is a language too, and a `check` says what the user already
+  has** (2026-10-10, measured against the catalog's 998 file names):
+  `LANGUAGE_ALIAS_MAP` takes _cambodia_, _china_, _france_, _laos_, _myanmar_,
+  _espanol_ … to the catalog's own word (only names that are not already its
+  START — _korea_ finds `Korean…` by itself; a test holds every value to a
+  language the catalog has), `kjv` / `nkjv` ALONE mean the English ones
+  (`EnglishKJBible.xml`; the bare word found the Thai King James only), and a
+  year no file of that language has only narrows — the words that name the
+  Bible decide, where "any word" had answered _Khmer 1999_ with every other
+  language's Bible of 1999. With nothing matched the page answers
+  `suggestions`, the languages of the LISTING a word is close to
+  (`suggestBibleLanguages`: the same first four letters, the whole of a short
+  name, or a letter or two out), so it can only offer a language that has a
+  file. A page's `files[]` and a downloaded file carry `installedAs` — the
+  key of an installed Bible with the same TITLE (`readInstalledTitleMap`
+  over the worker's `list`, a 4 KB head per installed file; `Unknown Title`
+  is nobody's twin), best effort. **The listing is kept ten minutes**
+  (`keptListing` in `bibleXmlDraft.mjs`: ONE listing's file names and the
+  titles read off them, ~100 KB, let go on a timer): each look at the catalog
+  had been 0.9 MB out of sixty unsigned GitHub reads an hour for the whole
+  network the computer is on, and GitHub out of reads answers 403 with
+  `x-ratelimit-remaining: 0` — `busy` now, where `denied` told a volunteer it
+  may need a sign-in. None of it touched the schema: the model's bill is
+  unchanged.

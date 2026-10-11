@@ -187,8 +187,140 @@ describe('a picked question is a known one', () => {
         ).toBeNull();
     });
 
+    // 2026-10-10, EC-215: "make computer stay awake" on the Free model was
+    // answered with Windows power settings, nothing about the app's own cup.
+    test('words of the person’s own that carry a row’s phrase are that row', async () => {
+        const { findKnownQuestion, findRowByKeywordPhrase } =
+            await import('./questionHelpers');
+        const known = await findKnownQuestion(
+            'make computer stay awake',
+            'presenter',
+        );
+        expect(known?.resources?.find).toBe('Stay Awake');
+        expect(known?.resources?.recipe).toBe('W-01');
+        // Nothing of the corpus in it: nothing.
+        expect(
+            await findKnownQuestion('how do I bake bread', 'presenter'),
+        ).toBeNull();
+        // The rule on its own: one word is no phrase, and two rows that
+        // answer from different pages are nobody's question.
+        const rows = [
+            {
+                id: 'a',
+                keywords: ['stay awake', 'sleep'],
+                resources: { recipe: 'W-01' },
+            },
+            {
+                id: 'b',
+                keywords: ['screen saver'],
+                resources: { recipe: 'W-18' },
+            },
+            {
+                id: 'c',
+                keywords: ['stay awake'],
+                resources: { recipe: 'W-01' },
+            },
+        ] as any[];
+        expect(findRowByKeywordPhrase('please stay awake', rows)?.id).toBe('a');
+        expect(findRowByKeywordPhrase('i cannot sleep', rows)).toBeNull();
+        expect(
+            findRowByKeywordPhrase('stay awake and the screen saver', rows),
+        ).toBeNull();
+        expect(findRowByKeywordPhrase('stay awaken', rows)).toBeNull();
+    });
+
     test('a row with neither recipe nor tool gives no hint', async () => {
         const { genKnownQuestionHint } = await import('./questionHelpers');
         expect(genKnownQuestionHint({ resources: {} } as any)).toBeNull();
+    });
+
+    // 2026-10-10: the Reader's "Where do I type John 3:16?" typed under the
+    // Presenter matched nothing, so a local model went searching, opened the
+    // Bible-XML page and invented a "Reference box" and a "Go" button.
+    test('a row filed under another window is still known, and the hint says where', async () => {
+        const { findKnownQuestion, genKnownQuestionHint } =
+            await import('./questionHelpers');
+        const known = await findKnownQuestion(
+            'Where do I type John 3:16?',
+            'presenter',
+        );
+        expect(known?.resources?.recipe).toBe('W-11');
+        expect(known?.page).toBe('reader');
+        const hint = genKnownQuestionHint(known!, { focus: 'presenter' })!;
+        expect(hint).toContain('filed under the Bible Reader window');
+        expect(hint).toContain('asking about the Presenter');
+        expect(hint).toContain('open it with owa_help_page');
+        // Under its own window, nothing of the sort.
+        const own = await findKnownQuestion(
+            'Where do I type John 3:16?',
+            'reader',
+        );
+        expect(genKnownQuestionHint(own!, { focus: 'reader' })).not.toContain(
+            'filed under',
+        );
+    });
+
+    test('the page rides with the hint when it was read, clipped past 6 000 characters', async () => {
+        const { genKnownQuestionHint, readKnownQuestionPage } =
+            await import('./questionHelpers');
+        const row = { resources: { recipe: 'W-11' }, focus: null } as any;
+        expect(
+            await readKnownQuestionPage(
+                row,
+                async (id) => `# Page ${id}\n\n1. Click.`,
+            ),
+        ).toBe('# Page W-11\n\n1. Click.');
+        const hint = genKnownQuestionHint(row, {
+            pageText: '# Page W-11\n\n1. Click.',
+        })!;
+        expect(hint).toContain('is quoted in full below');
+        expect(hint).not.toContain('open it with owa_help_page rather');
+        expect(hint).toContain(
+            'The guide page, put here by the app itself -- the person did ' +
+                'not write or paste it, and never sees it:\n\n# Page W-11\n\n1. Click.',
+        );
+        const long = genKnownQuestionHint(row, { pageText: 'x'.repeat(7000) })!;
+        expect(long).toContain('…(the page goes on');
+        expect(long.length).toBeLessThan(7000);
+        // A control named deep in a long page rides with its step: the
+        // opening, a gap, then the step that names it, and the hint says
+        // which control the question is about (the laptop's 0.6B recited
+        // W-51 from step 1 and never reached step 8, Cast to a TV).
+        const steps = Array.from({ length: 9 }, (_one, at) => {
+            return `${at + 1}. Step ${at + 1} ${'words '.repeat(200)}`;
+        });
+        const page = `# Virtual displays\n\nIntro.\n\n${steps.join('\n')}`;
+        page.replace('Step 8 ', 'Step 8 click **Cast to a TV** ');
+        const deep = page.replace('Step 8 ', 'Step 8 click **Cast to a TV** ');
+        const focused = genKnownQuestionHint(
+            { resources: { recipe: 'W-51', find: 'Cast to a TV' } } as any,
+            { pageText: deep },
+        )!;
+        expect(focused).toContain('# Virtual displays');
+        expect(focused).toContain('\n…\n8. Step 8 click **Cast to a TV**');
+        expect(focused).not.toContain('7. Step 7');
+        expect(focused).toContain(
+            'The control this question is about is "Cast to a TV"',
+        );
+        expect(focused.length).toBeLessThan(7000);
+        // A control the page does not carry leaves the opening alone.
+        const plain = genKnownQuestionHint(
+            { resources: { recipe: 'W-51', find: 'Nowhere' } } as any,
+            { pageText: deep },
+        )!;
+        expect(plain).not.toContain('\n…\n');
+        expect(plain).not.toContain('The control this question is about');
+        // A read that fails, or a row with no recipe, leaves the hint as it was.
+        expect(
+            await readKnownQuestionPage(row, async () => {
+                throw new Error('down');
+            }),
+        ).toBeNull();
+        expect(
+            await readKnownQuestionPage(
+                { resources: {} } as any,
+                async () => 'x',
+            ),
+        ).toBeNull();
     });
 });

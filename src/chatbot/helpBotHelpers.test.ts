@@ -58,6 +58,70 @@ describe('walkthrough actions', () => {
         expect(actions[1].ask).toBeUndefined();
     });
 
+    // 2026-10-10, EC-215: for "make computer stay awake" the card opened
+    // W-01 at its header paragraph and ringed the first bold's panel, not
+    // the cup eight bolds later, and re-asked with the whole hint as the
+    // user's words.
+    test('carry the control the question is about, in the user’s own words', () => {
+        const actions = genGuideActions(
+            { id: 'W-01' },
+            'presenter',
+            true,
+            'make computer stay awake',
+            'Stay Awake',
+        );
+        expect(actions[0].args).toEqual({
+            manualId: 'W-01',
+            page: 'presenter.html',
+            mode: 'show',
+            topic: 'make computer stay awake',
+            find: 'Stay Awake',
+        });
+        expect(actions[1].args).toMatchObject({
+            mode: 'demo',
+            find: 'Stay Awake',
+        });
+        expect(actions[1].ask).toContain('make computer stay awake');
+        // No control known: nothing is passed on.
+        expect(
+            genGuideActions({ id: 'W-01' }, 'presenter', true, 'x')[0].args,
+        ).not.toHaveProperty('find');
+    });
+
+    // 2026-10-10: "How do I import a Bible XML file?" was answered with the
+    // Settings form's eight steps and no way to have it done, on the page
+    // whose own first section is "let the assistant do it".
+    test('the page about adding a Bible leads with the button that does it', () => {
+        const withModel = genGuideActions(
+            { id: 'W-34' },
+            'presenter',
+            true,
+            'How do I import a Bible XML file?',
+        );
+        expect(withModel.map((action) => action.label)).toEqual([
+            'Import a Bible for me',
+            'Show me step by step',
+            'Do it for me',
+        ]);
+        expect(withModel[0]).toMatchObject({
+            toolName: 'owa-bible-import-step',
+            args: { step: 'language' },
+        });
+        // No model asks it: the press starts the import in the window.
+        expect(withModel[0].ask).toBeUndefined();
+        expect(
+            genGuideActions({ id: 'W-34' }, 'setting', false).map((action) => {
+                return action.label;
+            }),
+        ).toEqual(['Import a Bible for me', 'Show me step by step']);
+        // Any other page is as it was.
+        expect(
+            genGuideActions({ id: 'W-33' }, 'setting', false).map((action) => {
+                return action.label;
+            }),
+        ).toEqual(['Show me step by step']);
+    });
+
     test('offline help offers a walkthrough but never a recipe-built demo', () => {
         const actions = genGuideActions(
             { id: 'W-11' },

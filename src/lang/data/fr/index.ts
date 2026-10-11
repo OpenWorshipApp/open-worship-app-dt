@@ -1324,6 +1324,7 @@ const dictionary = {
     'Move To': 'Déplacer vers',
     'Move up': 'Monter',
     'More Options': "Plus d'options",
+    'Mini Screen Options': 'Options du mini-écran',
     'New File Name': 'Nom du nouveau fichier',
     'New File': 'Nouveau fichier',
     'New App Document': 'Nouveau document',
@@ -2248,6 +2249,17 @@ const dictionary = {
     'Your own AI server, such as LM Studio or Ollama on this computer, or any service that speaks the OpenAI API. Each server shows in the chatbot as its own assistant.':
         "Votre propre serveur d'IA, comme LM Studio ou Ollama sur cet ordinateur, ou tout service compatible avec l'API OpenAI. Chaque serveur apparaît dans l'assistant conversationnel comme un assistant à part.",
     'Add server': 'Ajouter un serveur',
+    // --- The servers the project's site shares, listed read-only (2026-10-10).
+    'Shared servers': 'Serveurs partagés',
+    'Servers that openworship.app shares with every copy of the app. They are read-only here, and each one shows in the chatbot as its own assistant.':
+        "Serveurs qu'openworship.app partage avec chaque copie de l'application. Ils sont en lecture seule ici, et chacun apparaît dans l'assistant conversationnel comme un assistant à part.",
+    'Reload the shared servers': 'Recharger les serveurs partagés',
+    'The last read failed:': 'La dernière lecture a échoué :',
+    'Last read at': 'Dernière lecture à',
+    'No server is shared right now.':
+        "Aucun serveur n'est partagé pour le moment.",
+    'Shared by openworship.app. It cannot be changed here.':
+        'Partagé par openworship.app. Il ne peut pas être modifié ici.',
     'New server': 'Nouveau serveur',
     'Delete this server': 'Supprimer ce serveur',
     'Server name': 'Nom du serveur',
@@ -2290,6 +2302,8 @@ const dictionary = {
         'Chargé dans LM Studio. Longueur de contexte :',
     'In LM Studio, load this model again with a Context Length of':
         'Dans LM Studio, rechargez ce modèle avec une longueur de contexte (Context Length) de',
+    'Not loaded in llama.cpp right now. The first question waits for it to load.':
+        'Pas chargé dans llama.cpp pour le moment. La première question attend son chargement.',
     'Not loaded in Ollama right now. The first question waits for it to load.':
         "Pas chargé dans Ollama pour l'instant. La première question attendra qu'il se charge.",
     'Loaded in Ollama. Context length:':
@@ -2346,6 +2360,8 @@ const dictionary = {
         "désactivé, cet ordinateur peut se mettre en veille quand aucun écran n'est affiché",
     // --- The caution asked before either AI window opens (2026-09-12).
     'Be careful with AI': "Soyez prudent avec l'IA",
+    'Do not show this again for 30 days':
+        'Ne plus afficher ceci pendant 30 jours',
     'AI can be confidently wrong.': "L'IA peut se tromper avec assurance.",
     'It can misread the app or describe a button that is not there, and what it offers to do can reach a live projector. Check anything that matters before a service, and read a step yourself before you press it.':
         "Elle peut mal interpréter l'application ou décrire un bouton inexistant, et ce qu'elle propose de faire peut atteindre un projecteur en direct. Vérifiez tout ce qui compte avant un culte, et lisez vous-même chaque étape avant d'appuyer.",

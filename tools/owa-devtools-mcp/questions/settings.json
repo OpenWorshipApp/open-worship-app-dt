@@ -279,9 +279,12 @@
                         "install",
                         "download",
                         "language",
+                        "country",
                         "khmer",
+                        "cambodia",
                         "translation",
-                        "add bible"
+                        "add bible",
+                        "want a bible"
                     ],
                     "resources": {
                         "recipe": "W-34",

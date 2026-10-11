@@ -19,6 +19,7 @@ import type {
     QuestionRowType,
 } from '../../tools/owa-devtools-mcp/questionMatch.d.mts';
 
+import { BOT_FOCUS_LIST } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 import type { BotFocusType } from './helpBotHelpers';
 
 export type { QuestionRowType };
@@ -353,11 +354,166 @@ export async function findKnownQuestion(
     // Ranked, so the exact row is at the top when it exists at all; eight is
     // room for the near-duplicates that share every word with it.
     const rows = await suggestQuestions(asked, focus, 8);
-    return (
-        rows.find((row) => {
-            return toFollowUpKey(row.text) === key;
-        }) ?? null
+    const own = rows.find((row) => {
+        return toFollowUpKey(row.text) === key;
+    });
+    if (own !== undefined) {
+        return own;
+    }
+    // Filed under ANOTHER window: still a known question, and the hint says
+    // where it is filed (`genKnownQuestionHint`). Measured 2026-10-10 on the
+    // user's LM Studio (gemma-4-e4b): "Where do I type John 3:16?" -- the
+    // Reader's own starter chip -- typed under the Presenter matched nothing
+    // here, so the model got no hint, searched, opened the Bible-XML import
+    // page, said it had no instructions, and invented a "Reference box" and a
+    // "Go" button, over 63k tokens.
+    const corpus = await getCorpus();
+    if (corpus === null) {
+        return null;
+    }
+    const elsewhere =
+        corpus
+            .match(asked, { pages: corpus.pages, focus: null, limit: 8 })
+            .find((row) => {
+                return toFollowUpKey(row.text) === key;
+            }) ?? null;
+    if (elsewhere !== null) {
+        return elsewhere;
+    }
+    // Typed in the person's own words, but carrying a row's own PHRASE whole
+    // -- "make computer stay awake" holds the stay-awake row's keyword "stay
+    // awake" -- is that row (2026-10-10, EC-215: the Free model answered
+    // Windows power settings, nothing about the app, because nothing had
+    // told it the app has a Stay Awake cup; the ranking alone put "make a
+    // song" first on the word "make"). The same chunk the corpus came from.
+    const { flattenQuestions } =
+        await import('../../tools/owa-devtools-mcp/questionMatch.mjs');
+    return findRowByKeywordPhrase(key, flattenQuestions(corpus.pages));
+}
+
+/**
+ * The one row whose keyword PHRASE the typed words carry whole. A phrase is
+ * two words or more -- one word ("sleep", "cast") is on too many rows -- and
+ * rows that answer with different pages are nobody's question: a hint that
+ * names the wrong page is worse than none. Several rows on ONE page (the
+ * virtual-display rows all answer from W-51) are that page.
+ */
+export function findRowByKeywordPhrase(
+    key: string,
+    rows: QuestionRowType[],
+): QuestionRowType | null {
+    const padded = ` ${key} `;
+    const hits = rows.filter((row) => {
+        return (row.keywords ?? []).some((keyword) => {
+            const phrase = toFollowUpKey(keyword);
+            return phrase.includes(' ') && padded.includes(` ${phrase} `);
+        });
+    });
+    const answers = new Set(
+        hits.map((row) => {
+            return row.resources?.recipe ?? row.id;
+        }),
     );
+    return answers.size === 1 ? hits[0] : null;
+}
+
+/** Whether a page's focus (one, several or every window) takes in this one. */
+function checkFocusTakesIn(
+    pageFocus: QuestionRowType['focus'],
+    focus: BotFocusType,
+) {
+    if (pageFocus === null) {
+        return true;
+    }
+    return Array.isArray(pageFocus)
+        ? pageFocus.includes(focus)
+        : pageFocus === focus;
+}
+
+function toFocusLabel(focus: BotFocusType) {
+    return (
+        BOT_FOCUS_LIST.find((one) => {
+            return one.key === focus;
+        })?.label ?? focus
+    );
+}
+
+// How much of the guide page rides on the ask. Most recipes are 2-6 KB; the
+// help window's own page runs past 30 KB and must not.
+const KNOWN_PAGE_CHAR_LIMIT = 6000;
+// Of that, what the page's opening keeps when the question names a control
+// deep in it: the intro and step 1 (how to get there) still ride, and the
+// step that names the control takes the rest.
+const KNOWN_PAGE_HEAD_LIMIT = 2000;
+const KNOWN_PAGE_TAIL_NOTE =
+    '\n…(the page goes on: open it with owa_help_page for the rest)';
+const STEP_START_PATTERN = /^\s*\d+\.\s/gm;
+
+/**
+ * The part of the page that rides on the ask: all of it when it fits, else
+ * its opening -- and, when the question names a control (`find`), the STEP
+ * that names that control, because a deep step is why the question was
+ * filed under the page at all. The first 6 000 characters of W-51 never
+ * reach step 8, Cast to a TV: measured 2026-10-10 on the laptop's 0.6B
+ * model, the cast question got steps 1-2 and stopped, which was all it had
+ * been shown. A `find` the page does not carry (a Khmer page under an
+ * English `find`) leaves the opening alone.
+ */
+export function clipKnownPage(
+    pageText: string,
+    find: string | null = null,
+): string {
+    const text = pageText.trim();
+    if (text.length <= KNOWN_PAGE_CHAR_LIMIT) {
+        return text;
+    }
+    const head = text.slice(0, KNOWN_PAGE_CHAR_LIMIT).trimEnd();
+    const wanted = (find ?? '').trim();
+    const at = wanted.length === 0 ? -1 : text.indexOf(wanted);
+    if (at === -1 || at < head.length) {
+        return head + KNOWN_PAGE_TAIL_NOTE;
+    }
+    // The step the control is named in: the last numbered line before it,
+    // or a window in front of it on a page with no numbered steps.
+    let stepStart = Math.max(0, at - 800);
+    for (const match of text.matchAll(STEP_START_PATTERN)) {
+        if (match.index === undefined || match.index > at) {
+            break;
+        }
+        stepStart = match.index;
+    }
+    const opening = text.slice(0, KNOWN_PAGE_HEAD_LIMIT).trimEnd();
+    const stepBudget = KNOWN_PAGE_CHAR_LIMIT - opening.length;
+    const stepEnd = Math.min(text.length, stepStart + stepBudget);
+    const step = text.slice(stepStart, stepEnd).trim();
+    return (
+        opening +
+        '\n…\n' +
+        step +
+        (stepEnd < text.length ? KNOWN_PAGE_TAIL_NOTE : '')
+    );
+}
+
+/**
+ * The guide page a known question is filed under, read through the app's own
+ * `owa_help_page` (handed in, so this module needs no tool client), or null
+ * when there is no recipe or the read fails -- the hint then names the page
+ * as before and the model opens it.
+ */
+export async function readKnownQuestionPage(
+    row: QuestionRowType,
+    readPage: (id: string) => Promise<string>,
+): Promise<string | null> {
+    const recipe = row.resources?.recipe ?? null;
+    if (recipe === null) {
+        return null;
+    }
+    try {
+        const text = await readPage(recipe);
+        return typeof text === 'string' && text.trim().length > 0 ? text : null;
+    } catch (_error) {
+        return null;
+    }
 }
 
 /**
@@ -368,17 +524,25 @@ export async function findKnownQuestion(
  * the page, it opens it, one round earlier and right by construction. Goes on
  * the ask only, never the transcript: the words shown are the user's own.
  */
-export function genKnownQuestionHint(row: QuestionRowType): string | null {
+export function genKnownQuestionHint(
+    row: QuestionRowType,
+    extra: { focus?: BotFocusType; pageText?: string | null } = {},
+): string | null {
     const recipe = row.resources?.recipe ?? null;
     const tools = row.resources?.tools ?? [];
     if (recipe === null && tools.length === 0) {
         return null;
     }
+    const { focus, pageText = null } = extra;
     const parts: string[] = [];
     if (recipe !== null) {
         parts.push(
-            `the guide page that answers it is ${recipe} -- open it with ` +
-                'owa_help_page rather than searching',
+            pageText === null
+                ? `the guide page that answers it is ${recipe} -- open it ` +
+                      'with owa_help_page rather than searching'
+                : `the guide page that answers it, ${recipe}, is quoted ` +
+                      'in full below -- write the answer from it and open ' +
+                      'nothing else unless it does not answer',
         );
     }
     if (tools.length > 0) {
@@ -387,5 +551,41 @@ export function genKnownQuestionHint(row: QuestionRowType): string | null {
                 tools.join(', '),
         );
     }
-    return `(This is one of the app's own supported questions; ${parts.join('; ')}.)`;
+    // Filed under another window than the one they are asking about: say
+    // so, and ask for the answer in THEIR window where it has its own way --
+    // the Presenter has a Bible Lookup where the Reader has a reference box.
+    const filedUnder =
+        focus !== undefined && !checkFocusTakesIn(row.focus, focus)
+            ? `, filed under the ${row.pageLabel} window -- they are asking ` +
+              `about the ${toFocusLabel(focus)}, so answer for the ` +
+              `${toFocusLabel(focus)} where it has its own control for ` +
+              'this, and otherwise say which window to switch to'
+            : '';
+    const head =
+        `(This is one of the app's own supported questions${filedUnder}; ` +
+        `${parts.join('; ')}.)`;
+    if (pageText === null) {
+        return head;
+    }
+    const find = row.resources?.find ?? null;
+    const clipped = clipKnownPage(pageText, find);
+    // Said when the page had to be cut around the control: a small model
+    // handed the opening and the step recited the page from step 1 and ran
+    // out of words before the step that answers (the laptop's 0.6B,
+    // 2026-10-10, twice).
+    const focusText =
+        find !== null && clipped.includes('\n…\n')
+            ? ` The control this question is about is "${find}", in the ` +
+              'step quoted after the opening; the opening only says how to ' +
+              'get there, so answer with that step and name the way there ' +
+              'in one line.'
+            : '';
+    // Said to be the APP's doing: a model handed the page under the question
+    // read it as something the person had pasted ("what you shared is text
+    // from the app's help guide, not a screenshot" -- qwen3.5-9b,
+    // 2026-10-10) and answered them about it.
+    return (
+        `${head}${focusText}\n\nThe guide page, put here by the app itself -- ` +
+        `the person did not write or paste it, and never sees it:\n\n${clipped}`
+    );
 }

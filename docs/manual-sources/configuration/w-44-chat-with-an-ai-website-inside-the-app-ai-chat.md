@@ -39,17 +39,16 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    sites. Tabs are kept when the window and the app close, up to eight of them, and each
    comes back on the conversation it was on. 📸 **Drag a tab** along the strip to put it
    somewhere else among the others.
-
    **Closed one by mistake?** A closed tab is not lost: it goes to **Recently closed**,
    listed on the card a new tab opens on and behind the **🕘** (**Recently closed tabs**) in
    the row above the page. Click it and it opens again on the conversation it was on;
    **Ctrl+Shift+T** brings back the last one. The list is shared by every AI Chat window,
    keeps the last twenty, and **Clear this list** under it empties it. 📸
+
 5. Only three tabs keep their site loaded at once — the one in front and the two you used
    most recently. The others unload to save memory and load their last page again when
    you click them, which takes a second and loses nothing: the conversation lives on the
    site, under your account.
-
    **More than one window.** Each press of the **✨** opens another AI Chat window, and so
    does the **New window** button right of **+** in the strip — up to three at once; a
    fourth press brings the open ones forward instead, because every open site takes
@@ -58,6 +57,7 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    from its **⋮**: a new window opens holding that tab, on the conversation it was on, and
    the tab leaves the first window. You stay signed in, because every window shares the
    same sign-ins. 📸
+
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
    browser, never in the app — and only when you pressed something in the site just before.
    A page that tries to open one on its own is stopped, and a line under the row above the

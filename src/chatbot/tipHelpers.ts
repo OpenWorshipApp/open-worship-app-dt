@@ -70,6 +70,18 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
             'the projector on, /screen-hide turns it off.',
     },
     {
+        id: 'btw',
+        text:
+            'Not about the app? Put /btw in front — /btw what is the ' +
+            'Bible? — and that tab’s next question stays general.',
+    },
+    {
+        id: 'clear',
+        text:
+            '/clear empties this chat. The projector’s clears are ' +
+            '/screen-clear-all, /screen-clear-slide and friends.',
+    },
+    {
         id: 'lock',
         text:
             'Right-click a tab to rename it, or lock it so clearing the ' +

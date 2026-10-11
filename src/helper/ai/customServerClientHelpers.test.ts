@@ -31,6 +31,7 @@ vi.mock('./customServerHelpers', () => ({
 import {
     getCustomServerInstance,
     relayFetch,
+    checkIsToolsRefused,
     toCustomServerFailure,
     toReadableErrorText,
 } from './customServerClientHelpers';
@@ -105,6 +106,42 @@ describe('the custom-server client', () => {
         expect(failure?.message).toBe(
             'unreachable at http://localhost:1234/v1',
         );
+    });
+
+    it('reads a server that takes no tools at all, GPT4All’s among them', () => {
+        // GPT4All 3.10's API server, measured 2026-10-10 on the user's
+        // server PC: a 400 to every request that carries `tools`.
+        const error: any = new Error(
+            '400 {"error":{"message":"\'tools\' is not supported","type":"invalid_request_error"}}',
+        );
+        error.status = 400;
+        expect(checkIsToolsRefused(error)).toBe(true);
+        expect(toCustomServerFailure(error)?.message).toBe(
+            'this server’s API does not take tools at all (GPT4All’s does ' +
+                'not), so the assistant can only answer from the guide text — ' +
+                'for presses and live answers use LM Studio, Ollama or llama.cpp',
+        );
+        // The other refusals are read the same way, whatever their status.
+        expect(
+            checkIsToolsRefused(
+                Object.assign(
+                    new Error('500 tools param requires --jinja flag'),
+                    { status: 500 },
+                ),
+            ),
+        ).toBe(true);
+        expect(
+            checkIsToolsRefused(
+                new Error(
+                    '400 registry.ollama.ai/library/gemma3:4b does not support tools',
+                ),
+            ),
+        ).toBe(true);
+        // A refusal of something else is not one of these.
+        expect(checkIsToolsRefused(new Error('404 model not found'))).toBe(
+            false,
+        );
+        expect(checkIsToolsRefused(null)).toBe(false);
     });
 
     it('turns a context too small for the conversation into the fix', async () => {

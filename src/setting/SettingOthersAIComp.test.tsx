@@ -99,6 +99,10 @@ vi.mock('./SettingOthersSecureStorageWarningComp', () => ({
 vi.mock('./SettingOthersCustomServersComp', () => ({
     default: () => null,
 }));
+// So has the list of the servers the site shares.
+vi.mock('./SettingOthersSharedServersComp', () => ({
+    default: () => null,
+}));
 vi.mock('../helper/ai/customServerHelpers', () => ({
     useCustomServers: () => [],
 }));

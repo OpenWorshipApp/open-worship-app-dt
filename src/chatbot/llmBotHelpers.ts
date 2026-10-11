@@ -31,13 +31,14 @@ import { getBedrockInstance } from '../helper/ai/bedrockHelpers';
 import { FREE_SERVICE_MAP, getFreeInstance } from '../helper/ai/freeHelpers';
 import {
     findCustomModelInfo,
-    getCustomServers,
+    getAllCustomServers,
     getUsableCustomServers,
     readCustomServerModelInfo,
 } from '../helper/ai/customServerHelpers';
 import {
     genContextTooSmallText,
     getCustomServerInstance,
+    checkIsToolsRefused,
     toCustomServerFailure,
 } from '../helper/ai/customServerClientHelpers';
 import {
@@ -74,12 +75,14 @@ import {
 } from './providerIssueHelpers';
 import {
     BOT_FOCUS_LIST,
+    BUILTIN_TOOL_NAME,
     MIN_HELP_HIT_SCORE,
     genBackToPresenterRoute,
     genGuideActions,
     genReaderButtonReferenceAnswer,
     getBotFocus,
 } from './helpBotHelpers';
+import { parseTextToolCalls } from './textToolCallHelpers';
 import type {
     BotAnswerType,
     BotFocusType,
@@ -734,7 +737,7 @@ export function getLlmProviderLabel(
 ) {
     if (checkIsCustomProvider(provider)) {
         return (
-            findCustomModel(getCustomServers(), model)?.server.name ||
+            findCustomModel(getAllCustomServers(), model)?.server.name ||
             LLM_PROVIDER_MAP[provider].label
         );
     }
@@ -871,7 +874,17 @@ export type LlmBotAnswerType = BotAnswerType & {
     };
 };
 
-function toCustomServerNote(name: string, baseUrl: string) {
+function toCustomServerNote(server: {
+    name: string;
+    baseUrl: string;
+    source?: 'registry';
+    isFree?: boolean;
+}) {
+    const { name, baseUrl } = server;
+    if (server.source === 'registry') {
+        // Shared through the project's site: say so, and whether it costs.
+        return `${name}, shared by openworship.app${server.isFree ? ' · free' : ''}`;
+    }
     if (checkIsLoopbackUrl(baseUrl)) {
         return `${name}, on this computer`;
     }
@@ -889,7 +902,7 @@ function genCustomModelList(): LlmModelType[] {
                 id: encodeCustomModel(server.id, row.id),
                 label: toCustomModelLabel(row),
                 note:
-                    toCustomServerNote(server.name, server.baseUrl) +
+                    toCustomServerNote(server) +
                     (row.canSeeImages === true ? ' · can see pictures' : ''),
                 speed: '',
                 price: '',
@@ -1072,6 +1085,18 @@ Everything you say must survive that:
   congregation.
 - ALWAYS answer in English, whatever language the question is in. This window
   is English-only.
+- EVERY question is about this app unless it plainly cannot be, and you
+  treat it so: search the guide, look at the app, write the steps. The app
+  does more than you may think -- virtual displays, casting to a TV, mirroring
+  to another computer, songs from a web page, Bibles from the internet -- so
+  never answer that it cannot do a thing, and never send them elsewhere,
+  before a search has come back empty; when it has, say plainly that the app
+  cannot do it. Only a question with nothing to do with the app at all --
+  what the Bible is, who wrote the Psalms, a word's meaning -- or one asking
+  how to put such a question here gets this instead: say the guide covers
+  this app only, and that typing \`/btw\` before a question (\`/btw what is
+  the Bible?\`) asks you about anything else, answered from your own
+  knowledge, the next question in that tab staying general.
 - **Button names are the one exception, and you do not translate them.** The
   app can run in another language, so a control the manual calls **Clear
   Bible** may read \`លុបព្រះគម្ពីរ\` on their screen. Whatever a help page, a
@@ -1184,7 +1209,11 @@ Rules:
   words not coming out, it froze, the audience is seeing the wrong thing --
   LOOK before you answer: \`owa_list_screens\` says whether each screen is
   showing AND what it holds -- the slide and its first words, the passage, the
-  background, the lock -- and \`owa_app_state\` says where they are. Answer
+  background, the lock -- and \`owa_app_state\` says where they are. Either
+  answering \`needsPage\` means the main window is on another page and knows
+  only whether a screen is on: say that and tell them to switch to the
+  Presenter page first (a button for it goes under your answer), never call
+  the projector blank from it. Answer
   from what you find there, and SAY what is on the screen ("it is on, showing
   verse 2 of Amazing Grace") so they can check it against the wall. A screen
   that is showing and holds a slide IS showing those words: never call it
@@ -1420,6 +1449,10 @@ type OpenAiCompatProviderType = {
      * provider sends the essentials only (`LOCAL_TOOL_NAME_LIST`).
      */
     filterTools?: (tools: McpToolType[]) => McpToolType[];
+    // Whether `reasoning_effort: "none"` is honoured by the server (LM
+    // Studio and Ollama, measured): an answer that was all thinking and no
+    // words is asked for once more with it off.
+    canTurnReasoningOff?: boolean;
     /**
      * Why this model cannot be asked with the user's current setup, in one
      * line for the window, or null. Checked BEFORE a round is paid for: a
@@ -1520,6 +1553,16 @@ export function describeLlmError(error: any): string {
     // wrong about a server on this very computer.
     if (checkIsCustomServerError(error)) {
         return error.message;
+    }
+    // The model answered with nothing -- or, on its last step, with a tool
+    // call written as words (`askOpenAiCompatible`). A plain Error carries no
+    // status, and no status reads as the network below, which is wrong about
+    // a round that came back.
+    if (/returned no answer/.test(String(error?.message ?? ''))) {
+        return (
+            'it wrote no answer this time — a smaller question, or a ' +
+            'larger model, usually helps'
+        );
     }
     const { kind, status, message } = readLlmIssue(error);
     switch (kind) {
@@ -1625,6 +1668,16 @@ type ToolWatchType = {
      */
     isPageNudged: boolean;
     /**
+     * A tool answered that the question needs the main window on the
+     * Presenter page (`needsPage` on `owa_list_screens` / `owa_app_state`:
+     * what the projector holds and what is selected are that page's alone),
+     * and the model did not take it there. The answer then says so and
+     * offers the way there -- the user's own ask, 2026-10-10: "mcp tool
+     * should aware that some questions is picky the page … should recommend
+     * changing page first".
+     */
+    needsPage: 'presenter' | null;
+    /**
      * Control labels proved against the live window during this ask. SHOWS is
      * model output, so without this structural check a guessed category such
      * as "Bible Version buttons" becomes a bright dead chip. Per ask only and
@@ -1663,6 +1716,22 @@ export function toWatchedManualId(watch: ToolWatchType) {
     return watch.readId ?? watch.searchedId;
 }
 
+// Under an answer written with the main window off the Presenter when the
+// question was the projector's or the selection's (`ToolWatchType.needsPage`).
+const PRESENTER_PAGE_NEEDED_TEXT =
+    'To see what is on the projector or what is selected, the main window ' +
+    'needs to be on the Presenter page — switch to it and ask again.';
+
+function genGoToPresenterAction() {
+    // The window's own `/goto presenter`, which reports the page it reached;
+    // the same button the offline bot and `/screen` offer off the Presenter.
+    return {
+        label: 'Go to the Presenter',
+        toolName: BUILTIN_TOOL_NAME,
+        args: { command: '/goto presenter' },
+    };
+}
+
 export function genToolWatch(): ToolWatchType {
     return {
         readId: null,
@@ -1674,6 +1743,7 @@ export function genToolWatch(): ToolWatchType {
         bibleImportCheck: null,
         pageTitles: {},
         isPageNudged: false,
+        needsPage: null,
         verifiedControlNames: new Set<string>(),
     };
 }
@@ -1799,6 +1869,24 @@ export function applyToolWatch(
     }
     if (name === 'owa_guide_start') {
         watch.isGuideStarted = true;
+    }
+    // The page the question needs, off the RESULT: the tool itself says when
+    // the Presenter alone knows the answer. Cleared when the model takes the
+    // window there itself -- the offer under the answer would then be a
+    // button for a trip already made.
+    if (
+        (name === 'owa_list_screens' || name === 'owa_app_state') &&
+        /"needsPage":\s*"presenter"/.test(text)
+    ) {
+        watch.needsPage = 'presenter';
+    }
+    if (
+        name === 'owa_goto_page' &&
+        args?.page === 'presenter' &&
+        /presenter/.test(text) &&
+        !/"error"|refused|cannot/i.test(text)
+    ) {
+        watch.needsPage = null;
     }
     // Read off the RESULT, never the call: a refused or checked passage did
     // nothing, and the walkthrough offer under it is still the right one.
@@ -1968,7 +2056,7 @@ export function checkCanSeeImages(
     }
     if (checkIsCustomProvider(provider)) {
         return (
-            findCustomModel(getCustomServers(), model)?.row.canSeeImages ===
+            findCustomModel(getAllCustomServers(), model)?.row.canSeeImages ===
             true
         );
     }
@@ -2027,6 +2115,25 @@ export type AskExtraType = {
      * round, and it runs on the same thread as the answer.
      */
     onProgress?: BotProgressCallbackType;
+    /**
+     * The recipe a KNOWN question is filed under (`findKnownQuestion`), whose
+     * page rides with the ask. Seeded onto the tool watch as the recipe the
+     * answer was written from, so the walkthrough buttons stand under the
+     * answer whether or not the model opened a page: a small model handed
+     * the page opens nothing, and the card is what carries the complex task
+     * for it (2026-10-10, the user's ask: "even small model like gemma 4 e2b
+     * can help the complex tasks").
+     */
+    knownRecipeId?: string;
+    // The control that question is about (the row's `find`), handed to the
+    // walkthrough buttons so the card starts at the step naming it.
+    knownFind?: string;
+    // The words the person typed, as against the ask the model is given
+    // (hint and page under it): what the walkthrough buttons re-ask with,
+    // and what the transcript shows as theirs. The ask was shown instead
+    // (2026-10-10, the user's run: the hint, the page and a recipe id, as
+    // the user's own message).
+    askedText?: string;
     /**
      * Told what each model round USED, the moment its response lands --
      * tokens in and out, cached and not, on which model. Pushed per round
@@ -2455,6 +2562,12 @@ async function askOpenAiCompatible(
     // no tools at all, which is the one request a throttled service is most
     // likely to accept and the only one that can still produce an answer.
     let isSalvaging = false;
+    // The server took no tools at all (GPT4All's API server, a llama-server
+    // without --jinja): asked once more with none, and the answer says so.
+    let isToolsRefused = false;
+    // The model thought its whole budget away and said nothing: asked once
+    // more with thinking off (EC-211).
+    let isReasoningOff = false;
     const reportStep = genProgressReporter(extra?.onProgress);
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back -- and the
@@ -2474,6 +2587,7 @@ async function askOpenAiCompatible(
                 {
                     model: provider.toWireModel?.(model) ?? model,
                     ...requestExtra,
+                    ...(isReasoningOff ? { reasoning_effort: 'none' } : {}),
                     // Nothing left to look up: answer with what you have.
                     ...(isLastRound ? {} : toolRequest),
                     messages,
@@ -2493,6 +2607,27 @@ async function askOpenAiCompatible(
                 { signal: signal ?? undefined, maxRetries: 0 },
             );
         } catch (error: any) {
+            // A server that refuses the TOOLS has not refused the question.
+            // GPT4All's API server answers 400 "'tools' is not supported" to
+            // every request that carries them (measured 2026-10-10 on the
+            // user's server PC), so the assistant could not answer there at
+            // all -- while the guide page a known question carries was
+            // already in the ask. Once more with no tools, told so, and the
+            // answer says what it could not check. Only on the first round:
+            // past it the tools have already been taken.
+            if (
+                !isSalvaging &&
+                round === 0 &&
+                providerTools.length > 0 &&
+                !checkIsCancelError(error) &&
+                checkIsToolsRefused(error)
+            ) {
+                isSalvaging = true;
+                isToolsRefused = true;
+                appendToolsRefusedNudge(messages);
+                round -= 1;
+                continue;
+            }
             // A rate limit on the FIRST round is just a busy service, and the
             // caller's fallback to the offline manual bot is the right answer.
             // One that arrives after the tools have done their work is not: the
@@ -2527,14 +2662,65 @@ async function askOpenAiCompatible(
                 : roundUsage,
         );
 
-        const choice = completion.choices[0]?.message;
-        const toolCalls = choice?.tool_calls ?? [];
+        let choice = completion.choices[0]?.message;
+        let toolCalls: any[] = choice?.tool_calls ?? [];
+        if (toolCalls.length === 0) {
+            // A tool call written as WORDS (`textToolCallHelpers`): a small
+            // local model drifts into another tool-call grammar and the
+            // server hands it through as prose, which the window printed as
+            // the answer. Read as the call it is while tools are still on
+            // offer; on the last round the model was told to answer with
+            // what it had and asked for more instead, which is no answer --
+            // thrown, like an empty one, so the manual answers.
+            const written = parseTextToolCalls(choice?.content, providerTools);
+            if (written !== null) {
+                if (isLastRound) {
+                    throw new Error(
+                        `${provider.label} returned no answer ` +
+                            '(it wrote a tool call as words on its last step)',
+                    );
+                }
+                toolCalls = written.calls;
+                choice = {
+                    role: 'assistant',
+                    content: written.text.length > 0 ? written.text : null,
+                    tool_calls: written.calls,
+                } as any;
+            }
+        }
         if (toolCalls.length === 0) {
             const text = choice?.content?.trim();
             if (!text) {
-                // Reasoning ate the budget, or the model simply said nothing.
-                // Thrown rather than shown, so the caller falls back to the
-                // manual instead of printing a shrug.
+                // Reasoning ate the budget: gemma-4-12b on the user's LM
+                // Studio spent 697 of 700 completion tokens thinking about
+                // a 5.7k-token ask and answered with nothing (EC-211,
+                // measured 2026-10-10, explicit 16k load); the same ask
+                // with `reasoning_effort: "none"` answered in 14 s. Once
+                // more with thinking off, on a server measured to honour
+                // the field, before the manual is handed the question.
+                const finishReason =
+                    completion.choices[0]?.finish_reason ?? 'unknown';
+                const usageAny = completion.usage as any;
+                const reasoningTokens = Number(
+                    usageAny?.completion_tokens_details?.reasoning_tokens ?? 0,
+                );
+                const choiceAny = choice as any;
+                const hasReasoning =
+                    reasoningTokens > 0 ||
+                    typeof choiceAny?.reasoning_content === 'string' ||
+                    typeof choiceAny?.reasoning === 'string';
+                if (
+                    !isReasoningOff &&
+                    provider.canTurnReasoningOff === true &&
+                    (finishReason === 'length' || hasReasoning)
+                ) {
+                    isReasoningOff = true;
+                    round -= 1;
+                    continue;
+                }
+                // Or the model simply said nothing. Thrown rather than
+                // shown, so the caller falls back to the manual instead of
+                // printing a shrug.
                 throw new Error(
                     `${provider.label} returned no answer ` +
                         `(${completion.choices[0]?.finish_reason ?? 'unknown'})`,
@@ -2552,7 +2738,11 @@ async function askOpenAiCompatible(
                 });
                 continue;
             }
-            return { text };
+            return {
+                text: isToolsRefused
+                    ? `${TOOLS_REFUSED_NOTE}\n\n${text}`
+                    : text,
+            };
         }
         messages.push(choice);
         for (const toolCall of toolCalls) {
@@ -2591,6 +2781,36 @@ async function askOpenAiCompatible(
             'I looked several things up but could not settle on an answer. ' +
             'Try asking about one step at a time.',
     };
+}
+
+/**
+ * What the answer opens with when the server took no tools: a volunteer
+ * reading steps the assistant could not check against the window must know
+ * it, and which server to use for the assistant that can.
+ */
+const TOOLS_REFUSED_NOTE =
+    'This assistant’s server cannot use the app’s tools, so this comes from ' +
+    'the guide text alone and nothing was checked in the window — for ' +
+    'presses and live answers, use LM Studio, Ollama or llama.cpp.';
+
+/**
+ * Told on the ask itself, where the model reads it last: the tools it was
+ * promised are gone, so it must not write a call as words (which the loop
+ * would read as no answer) or claim to have looked. Appended to the last
+ * user turn when that is plain text, a turn of its own after a picture.
+ */
+function appendToolsRefusedNudge(messages: any[]) {
+    const nudge =
+        '(The app’s tools are not available on this server. Answer from ' +
+        'the guide text in this conversation, name the buttons it names, ' +
+        'and say plainly when something could not be checked in the ' +
+        'window. Do not write a tool call.)';
+    const last = messages[messages.length - 1];
+    if (last?.role === 'user' && typeof last.content === 'string') {
+        last.content = `${last.content}\n\n${nudge}`;
+        return;
+    }
+    messages.push({ role: 'user', content: nudge });
 }
 
 /**
@@ -2783,7 +3003,7 @@ export function filterLocalToolList(tools: McpToolType[]) {
 }
 
 function findCustomModelOrThrow(model: string) {
-    const found = findCustomModel(getCustomServers(), model);
+    const found = findCustomModel(getAllCustomServers(), model);
     if (found === null) {
         throw new CustomServerError(
             'this model is no longer in Settings — pick another one in the ' +
@@ -2805,9 +3025,11 @@ function findCustomModelOrThrow(model: string) {
 function genCustomProvider(
     model: string,
     info: CustomModelInfoType | null = null,
+    options: { kind?: CustomServerKindType; isGeneral?: boolean } = {},
 ): OpenAiCompatProviderType {
     const { server, row } = findCustomModelOrThrow(model);
     const isLoading = info !== null && !info.isLoaded;
+    const { kind = 'other', isGeneral = false } = options;
     return {
         key: 'custom',
         label: server.name,
@@ -2815,13 +3037,32 @@ function genCustomProvider(
             return getCustomServerInstance(server.id);
         },
         genRequestExtra: () => {
-            return { max_tokens: MAX_TOKENS };
+            return {
+                max_tokens: MAX_TOKENS,
+                // A general question goes out with its thinking OFF on the
+                // two programs measured to honour the field (LM Studio and
+                // Ollama, a thinking model and a plain one alike -- Ollama
+                // answered gemma4 and qwen3 200 with it). Measured
+                // 2026-10-10 on the user's LM Studio: qwen3.5-9b spent
+                // 1 069 generated tokens and 27.5 s on "what is the Bible",
+                // 150 of them the answer; with the field, 1.4 s on the same
+                // model the day before. Not in the tool loop, where the same
+                // model reasons 30-120 tokens a round and a call may need
+                // them; not to llama.cpp or an unknown server, unmeasured.
+                ...(isGeneral && (kind === 'lm-studio' || kind === 'ollama')
+                    ? { reasoning_effort: 'none' }
+                    : {}),
+            };
         },
         maxToolRounds: FREE_MAX_TOOL_ROUNDS,
+        canTurnReasoningOff: kind === 'lm-studio' || kind === 'ollama',
         toWireModel: () => {
             return row.model;
         },
-        isPricedAtZero: checkIsLocalNetworkUrl(server.baseUrl),
+        // A registry server says itself whether it is metered (`isFree`);
+        // one on this machine or the church's network never is.
+        isPricedAtZero:
+            server.isFree === true || checkIsLocalNetworkUrl(server.baseUrl),
         filterTools: filterLocalToolList,
         describeRound: (round) => {
             if (round !== 0) {
@@ -2897,7 +3138,10 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
             genContextTooSmallText(loadedContext, kind),
         );
     }
-    const provider = genCustomProvider(model, info);
+    const provider = genCustomProvider(model, info, {
+        kind,
+        isGeneral: extra?.isGeneral === true,
+    });
     try {
         return await askOpenAiCompatible(
             provider,
@@ -3277,7 +3521,16 @@ export async function askLlmBot(
             finishConnecting();
         }
     }
-    let watch = genToolWatch();
+    // The known recipe, when there is one, is the search hit the model
+    // would have had (`searchedId`: a guess the page it opens overrides).
+    const genSeededWatch = () => {
+        const seeded = genToolWatch();
+        if (extra?.knownRecipeId !== undefined) {
+            seeded.searchedId = extra.knownRecipeId;
+        }
+        return seeded;
+    };
+    let watch = genSeededWatch();
     const history = toHistoryTurns(priorTurns);
     const modelTools = filterModelToolList(tools);
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
@@ -3343,7 +3596,7 @@ export async function askLlmBot(
             // A fresh watch: the failed attempt may have read pages before
             // it was refused, and a walkthrough offered off THOSE would be
             // one the answering model never looked at.
-            watch = genToolWatch();
+            watch = genSeededWatch();
             const finishStandingIn = genProgressReporter(extra?.onProgress)(
                 `${LLM_PROVIDER_MAP[provider].label} could not answer — ` +
                     `asking ${LLM_PROVIDER_MAP[standInProvider].label} instead`,
@@ -3450,6 +3703,17 @@ export async function askLlmBot(
                 answer.actions = actions;
             }
         }
+        // A question the Presenter alone can answer, asked with the main
+        // window on another page and left there: say so under the answer
+        // and offer the way -- the user's ask, 2026-10-10, after a local
+        // model read "no screen is on" off the Reader as "nothing is
+        // showing" with not a word about the page.
+        if (watch.needsPage === 'presenter') {
+            answer.text = `${answer.text.trimEnd()}\n\n${PRESENTER_PAGE_NEEDED_TEXT}`;
+            if (answer.actions === undefined) {
+                answer.actions = [genGoToPresenterAction()];
+            }
+        }
         const manualId = toWatchedManualId(watch);
         if (answer.actions === undefined && manualId !== null) {
             answer.actions = genGuideActions(
@@ -3458,7 +3722,8 @@ export async function askLlmBot(
                 // A model answered this, so a model can be asked to work
                 // the demo out too -- see the note in `genGuideActions`.
                 true,
-                question,
+                extra?.askedText ?? question,
+                extra?.knownFind ?? null,
             );
         }
         return answer;

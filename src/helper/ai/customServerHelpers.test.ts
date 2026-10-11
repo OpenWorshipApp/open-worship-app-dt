@@ -28,15 +28,84 @@ vi.mock('../../server/electronSendHelpers', () => ({
 import {
     describeCustomLlmFailure,
     findCustomModelInfo,
+    getAllCustomServers,
+    getLlmRegistryStatus,
+    getRegistryServers,
+    getUsableCustomServers,
     listCustomServerModels,
+    loadLlmRegistry,
     mergeCustomServerModels,
     readCustomServerModelInfo,
 } from './customServerHelpers';
 import {
     CUSTOM_LLM_CANCEL_CHANNEL,
+    LLM_REGISTRY_GET_CHANNEL,
+    LLM_REGISTRY_RELOAD_CHANNEL,
     type CustomModelInfoType,
     type CustomServerType,
 } from '../../../electron/customLlmProtocol';
+
+describe('the shared registry in a window', () => {
+    const registryServer: CustomServerType = {
+        id: 'registry-super-computer',
+        name: 'Church LM Studio',
+        baseUrl: 'https://abc.trycloudflare.com/v1',
+        models: [{ id: 'row-1', model: 'qwen/qwen3.5-9b', name: 'Qwen' }],
+        isFree: true,
+    };
+
+    afterEach(() => {
+        h.send.mockReset();
+    });
+
+    it('asks main for what it holds, then for a fresh read, and offers the servers beside the saved ones', async () => {
+        h.send.mockResolvedValueOnce({
+            url: 'https://www.openworship.app/llm/info.json',
+            servers: [registryServer],
+            fetchedAt: 5,
+            error: null,
+        });
+        const status = await loadLlmRegistry();
+        expect(h.send).toHaveBeenCalledWith(LLM_REGISTRY_GET_CHANNEL);
+        expect(status?.servers).toHaveLength(1);
+        expect(getRegistryServers()[0]).toMatchObject({
+            id: 'registry-super-computer',
+            source: 'registry',
+            isFree: true,
+        });
+        expect(getAllCustomServers().map((one) => one.id)).toContain(
+            'registry-super-computer',
+        );
+        expect(getUsableCustomServers().map((one) => one.id)).toContain(
+            'registry-super-computer',
+        );
+        h.send.mockResolvedValueOnce({
+            url: 'https://www.openworship.app/llm/info.json',
+            servers: [],
+            fetchedAt: 5,
+            error: 'openworship.app did not answer in time',
+        });
+        await loadLlmRegistry(true);
+        expect(h.send).toHaveBeenLastCalledWith(LLM_REGISTRY_RELOAD_CHANNEL);
+        expect(getLlmRegistryStatus()?.error).toContain('did not answer');
+        expect(getRegistryServers()).toEqual([]);
+    });
+
+    it('keeps what it had when main cannot be reached', async () => {
+        h.send.mockResolvedValueOnce({
+            url: 'x',
+            servers: [registryServer],
+            fetchedAt: 1,
+            error: null,
+        });
+        await loadLlmRegistry();
+        h.send.mockRejectedValueOnce(new Error('no main'));
+        await expect(loadLlmRegistry(true)).resolves.toMatchObject({
+            fetchedAt: 1,
+        });
+        expect(getRegistryServers()).toHaveLength(1);
+    });
+});
 
 function genServer(value: Partial<CustomServerType> = {}): CustomServerType {
     return {
@@ -287,6 +356,52 @@ describe('readCustomServerModelInfo', () => {
                 return call[1].path;
             }),
         ).toEqual(['/api/v0/models', '/api/tags', '/props']);
+    });
+
+    it('reads a llama.cpp router’s models off its OpenAI list', async () => {
+        // b11540 on the user's server PC, 2026-10-10: the root runs no
+        // model, each one loads on the first question that names it.
+        answerByPath({
+            '/props': genAnswer(200, {
+                role: 'router',
+                model_path: 'none',
+                default_generation_settings: { params: null, n_ctx: 0 },
+            }),
+            '/models': genAnswer(200, {
+                data: [
+                    {
+                        id: 'qwen3.5-9b',
+                        object: 'model',
+                        status: {
+                            value: 'unloaded',
+                            args: ['llama-server.exe', '--ctx-size', '16384'],
+                        },
+                    },
+                ],
+            }),
+        });
+        const info = await readCustomServerModelInfo(
+            genServer({ baseUrl: 'http://192.168.1.12:8080/v1' }),
+        );
+        expect(info?.kind).toBe('llama-cpp');
+        expect(info?.infoMap.get('qwen3.5-9b')).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: null,
+            canSeeImages: false,
+        });
+        // A row the list does not carry keeps the root's word.
+        expect(findCustomModelInfo(info, 'anything')).toEqual({
+            isLoaded: false,
+            loadedContext: null,
+            maxContext: null,
+            canSeeImages: false,
+        });
+        expect(
+            h.send.mock.calls.map((call: any[]) => {
+                return call[1].path;
+            }),
+        ).toEqual(['/api/v0/models', '/api/tags', '/props', '/models']);
     });
 
     it('calls a server that answers no door something else', async () => {

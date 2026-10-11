@@ -1,14 +1,14 @@
 ---
 paths:
-  - "extra-work/build-knowledge.mjs"
-  - "docs/manual-sources/**"
-  - "tools/owa-devtools-mcp/questions/**"
-  - "tools/owa-devtools-mcp/help*.mjs"
-  - "tools/owa-devtools-mcp/tran*.mjs"
-  - "tools/owa-devtools-mcp/question*.mjs"
-  - "src/chatbot/questionHelpers.ts"
-  - "src/chatbot/recipeIdHelpers.ts"
-  - ".claude/skills/owa-robot-test/references/user-workflows.md"
+  - 'extra-work/build-knowledge.mjs'
+  - 'docs/manual-sources/**'
+  - 'tools/owa-devtools-mcp/questions/**'
+  - 'tools/owa-devtools-mcp/help*.mjs'
+  - 'tools/owa-devtools-mcp/tran*.mjs'
+  - 'tools/owa-devtools-mcp/question*.mjs'
+  - 'src/chatbot/questionHelpers.ts'
+  - 'src/chatbot/recipeIdHelpers.ts'
+  - '.claude/skills/owa-robot-test/references/user-workflows.md'
 ---
 
 # Agent knowledge: the manual, labels and the question corpus
@@ -120,8 +120,34 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `genKnownQuestionHint` (`questionHelpers.ts`) append the recipe and the
   live tools to the ASK (never the transcript) when the typed text is a corpus
   row — a chip, a suggestion, the More… list — because the model rewrites
-  every query in its own words and would search anyway; told the page, it
-  opens it (5 rounds → 2 on the panic chip). And `MIN_HELP_HIT_SCORE` (6,
+  every query in its own words and would search anyway; **and, since
+  2026-10-10 (EC-215), when the typed words carry one row's keyword PHRASE
+  whole** (`findRowByKeywordPhrase`: two words or more, and only when every
+  row that fits answers from one page) — _make computer stay awake_ on the
+  Free model had been answered with Windows power settings, because the
+  ranking put _make a song_ first on the word _make_ and nothing told the
+  model the app has a Stay Awake cup; told the page, it
+  opens it (5 rounds → 2 on the panic chip). **Since 2026-10-10 the page
+  itself rides with the hint and a row filed under another window still
+  counts**: the Reader's own chip _Where do I type John 3:16?_ typed under
+  the Presenter matched nothing (the lookup was per focus), so a local model
+  (gemma-4-e4b) searched, opened the Bible-XML import page, said it had no
+  instructions and invented a "Reference box" and a "Go" button, over 63k
+  tokens. `findKnownQuestion` now falls back to every page, the hint says
+  _filed under the Bible Reader window — answer for the Presenter where it
+  has its own control_, and `readKnownQuestionPage` (the window reading
+  `owa_help_page` before the ask) puts the page's text under the hint,
+  clipped at 6 000 characters — **the opening and the step that names the
+  row's `find`** when the page is longer (`clipKnownPage`, EC-216: W-51's
+  cast step is its last, and a 0.6B model shown the first 6 000 characters
+  answered with steps 1-2), with a sentence saying which control the
+  question is about — so the first round can answer from it and
+  open nothing. The row's recipe id rides on the ask as `knownRecipeId`
+  too, and `genSeededWatch` starts the tool watch on it, so an answer
+  written from the pre-read page — no search, no page opened — still ends
+  with **Show me step by step** and its demo button (the watch had learnt
+  recipes only from the pages the model opened, and the better the hint
+  worked the fewer buttons there were). And `MIN_HELP_HIT_SCORE` (6,
   `helpBotHelpers`) is the floor under which a hit is not a hit — no right
   top hit in 258 scored under it, three wrong ones did — read by the offline
   `answerFromManual` and by `applyToolWatch`, so _Can it stream to

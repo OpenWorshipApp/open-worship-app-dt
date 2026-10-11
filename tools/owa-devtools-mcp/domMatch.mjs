@@ -208,7 +208,37 @@ export const DOM_MATCH_RUNTIME = `
                 }
                 seen.add(part);
                 return true;
+            })
+            // A title that restates a name with its STATE after a dash --
+            // "Stay Awake — turned off, this computer may sleep when no
+            // screen is showing" beside an aria-label of "Stay Awake" -- is
+            // a sentence about the control, not its name. The name goes
+            // first, so a card and a chip call the control what it is called
+            // (2026-10-10: a walkthrough step read "Click the Stay Awake —
+            // turned off, this computer may sleep when no screen is showing
+            // Stay", the sentence cut at 80 characters, and no press by
+            // those words could ever land).
+            .sort((one, other) => {
+                return (
+                    Number(checkIsStatusOf(one, parts)) -
+                    Number(checkIsStatusOf(other, parts))
+                );
             });
+    };
+    // Whether the part is a sentence that restates another of the parts with
+    // a state after an em or en dash. A hyphen is left alone: "Stage 0 -
+    // Verse" is a name.
+    const STATUS_DASH_PATTERN = /^\\s[\\u2014\\u2013]\\s/;
+    const checkIsStatusOf = (part, parts) => {
+        return parts.some((name) => {
+            return (
+                typeof name === 'string' &&
+                name.length > 0 &&
+                part.length > name.length &&
+                part.startsWith(name) &&
+                STATUS_DASH_PATTERN.test(part.slice(name.length))
+            );
+        });
     };
     // A Windows drive, a UNC share, or the usual roots of a Unix home. Written
     // for the runtime's template literal, so every backslash is doubled here.
@@ -277,16 +307,25 @@ export const DOM_MATCH_RUNTIME = `
     const withoutExtension = (bare) => {
         return bare.replace(/\\.[a-z][a-z0-9]{0,4}$/, '');
     };
+    // The state a title carries after an em or en dash is not part of the
+    // name ("Stay Awake — turned off, …"), on the control AND on the needle:
+    // a model quotes a label back, cut at 80 characters, and that is still
+    // the control it means.
+    const withoutStatus = (bare) => {
+        return bare.replace(/\\s[\\u2014\\u2013]\\s.*$/, '');
+    };
     const checkIsNamedNearly = (element, needle) => {
         const bare = normaliseLabelPart(needle);
         if (bare.length === 0) {
             return false;
         }
         const stem = withoutExtension(bare);
+        const name = withoutStatus(bare);
         return labelPartsOf(element).some((part) => {
             const barePart = normaliseLabelPart(part);
             return barePart === bare ||
-                (stem.length > 0 && withoutExtension(barePart) === stem);
+                (stem.length > 0 && withoutExtension(barePart) === stem) ||
+                (name.length > 0 && withoutStatus(barePart) === name);
         });
     };
 
@@ -302,6 +341,13 @@ export const DOM_MATCH_RUNTIME = `
         const parts = labelPartsOf(element);
         return parts.filter((part) => {
             const bare = normaliseLabelPart(part);
+            // Nor the sentence that restates a name with its state: handed
+            // out, it was cut at 80 characters and quoted back as words no
+            // press could land on. The name stays; the state is read off
+            // the control (aria-pressed) by the tools that report it.
+            if (checkIsStatusOf(part, parts)) {
+                return false;
+            }
             return !parts.some((other) => {
                 return other.length > part.length &&
                     normaliseLabelPart(other) === bare;
@@ -531,6 +577,11 @@ export const DOM_MATCH_RUNTIME = `
     const KIND_NOUNS = [
         'panel', 'pane', 'section', 'area', 'widget', 'sidebar',
         'tab', 'button', 'box', 'field', 'list', 'menu',
+        // What the manual and a model call an icon-only control: "the Stay
+        // Awake cup", "the Settings gear", "the help icon" (2026-10-10, a
+        // walkthrough step written as "Click the Stay Awake cup" could not
+        // be pressed).
+        'icon', 'cup', 'gear',
     ];
     const REGION_NOUNS = [
         'panel', 'pane', 'section', 'area', 'widget', 'sidebar',
@@ -1109,6 +1160,54 @@ export const DOM_MATCH_RUNTIME = `
         return null;
     };
 
+    // Every SHOWN control called exactly what this one is called, with the
+    // panels they sit in -- the one thing a label cannot settle. "More
+    // Options" is on forty controls of the Presenter (every file row's
+    // dots, each screen card's, two lists' own); the first in the page is
+    // the Documents list's, and a walkthrough step about the Mini Screen's
+    // opened the Documents menu (2026-10-10). A scope in the needle ("Mini
+    // Screen > More Options") narrows the count the way it narrows the
+    // match. Walked on demand, for the one element about to be pressed or
+    // ringed -- never for every candidate of a draw.
+    // The twins themselves, the element among them, in page order.
+    const twinElementsOf = (element, needle) => {
+        const parsed = parseNeedle(String(needle ?? ''));
+        const wanted = parsed.text.toLowerCase();
+        if (wanted.length === 0) {
+            return [element];
+        }
+        const twins = [];
+        for (const other of collect()) {
+            if (other !== element) {
+                if (!checkIsNamedExactly(other, wanted)) {
+                    continue;
+                }
+                if (visibilityOf(other) !== 'shown') {
+                    continue;
+                }
+            }
+            if (
+                parsed.scope !== null &&
+                !checkIsInScope(containerPathOf(other), parsed.scope)
+            ) {
+                continue;
+            }
+            twins.push(other);
+        }
+        return twins;
+    };
+    const twinsOf = (element, needle) => {
+        const twins = twinElementsOf(element, needle);
+        const panels = [];
+        for (const one of twins) {
+            const panel = containerPathOf(one)[0] ?? null;
+            if (panel !== null && !panels.includes(panel)) {
+                panels.push(panel);
+            }
+        }
+        return { count: twins.length, panels };
+    };
+
     const describe = (element) => {
         const rect = element.getBoundingClientRect();
         const seen = visibilityOf(element);
@@ -1363,7 +1462,8 @@ export const DOM_MATCH_RUNTIME = `
         checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
         openContextMenu, waitForBest, nearMisses, describe, flash,
         listControls, parseNeedle, containerPathOf, checkIsRegion,
-        checkIsInScope, pathTier, checkIsBetter, selectorOf,
+        checkIsInScope, pathTier, checkIsBetter, selectorOf, twinsOf,
+        twinElementsOf,
     };
     return window.__owaDomMatch;
 })()`;

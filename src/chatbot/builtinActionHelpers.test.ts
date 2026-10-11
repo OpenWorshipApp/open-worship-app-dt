@@ -32,9 +32,15 @@ import {
     BUILTIN_TOOL_NAME,
     checkIsBuiltinCommand,
     GENERAL_QUESTION_COMMAND,
+    answerScreenToggleAsk,
+    answerSlideShowAsk,
+    findSlideByWords,
     matchBuiltinActions,
     parseBuiltinCommand,
+    readScreenToggleAsk,
+    readSlideShowAsk,
     readGeneralQuestion,
+    readInheritedGeneralQuestion,
     readCountdownArgument,
     runBuiltinCommand,
     toBuiltinCommandText,
@@ -101,6 +107,123 @@ describe('the command list', () => {
     });
 });
 
+describe('commands and the page they work on', () => {
+    test('a Presenter command is not offered under a Reader tab, and every command is on the Presenter', () => {
+        const underReader = matchBuiltinActions('/', 50, 'reader').map(
+            (one) => one.name,
+        );
+        expect(underReader).not.toContain('screen-clear-all');
+        expect(underReader).not.toContain('screen-show');
+        expect(underReader).not.toContain('next');
+        expect(underReader).not.toContain('verse');
+        expect(underReader).not.toContain('countdown');
+        // The ones that work anywhere stay: the screen's state, the
+        // window's own, the general question.
+        expect(underReader).toEqual(
+            expect.arrayContaining([
+                'screen',
+                'find',
+                'goto',
+                'clear',
+                'btw',
+                'commands',
+            ]),
+        );
+        const underPresenter = matchBuiltinActions('/', 50, 'presenter').map(
+            (one) => one.name,
+        );
+        expect(underPresenter).toEqual(
+            matchBuiltinActions('/', 50).map((one) => one.name),
+        );
+        expect(underPresenter).toContain('screen-clear-all');
+        // Without a page, as before: everything (`/clear-chat` is the
+        // chat's alias, so the chat clear is the last row here).
+        expect(
+            matchBuiltinActions('/clear-', 50).map((one) => one.name),
+        ).toEqual([
+            'screen-clear-all',
+            'screen-clear-background',
+            'screen-clear-slide',
+            'screen-clear-bible',
+            'screen-clear-foreground',
+            'clear',
+        ]);
+        expect(
+            matchBuiltinActions('/clear-', 50, 'reader').map((one) => one.name),
+        ).toEqual(['clear']);
+    });
+
+    test('a Presenter command typed under another page is refused with the way there', async () => {
+        const answer = await runBuiltinCommand('/screen-clear-all', 'reader');
+        expect(answer.text).toContain(
+            '`/screen-clear-all` works on the Presenter page',
+        );
+        expect(answer.text).toContain('asking about the Bible Reader');
+        expect(answer.actions).toEqual([
+            {
+                label: 'Go to the Presenter',
+                toolName: 'builtin-command',
+                args: { command: '/goto presenter' },
+            },
+        ]);
+        // The old spelling reaches the same refusal, under its new name.
+        const old = await runBuiltinCommand('/clear-all', 'reader');
+        expect(old.text).toContain(
+            '`/screen-clear-all` works on the Presenter page',
+        );
+    });
+
+    test('the clears carry the screen prefix, the old spellings reach them, and /clear is the chat', () => {
+        expect(parseBuiltinCommand('/screen-clear-all')?.action?.name).toBe(
+            'screen-clear-all',
+        );
+        expect(parseBuiltinCommand('/clear-all')?.action?.name).toBe(
+            'screen-clear-all',
+        );
+        expect(parseBuiltinCommand('/clear-bg')?.action?.name).toBe(
+            'screen-clear-background',
+        );
+        expect(parseBuiltinCommand('/clear-verse')?.action?.name).toBe(
+            'screen-clear-bible',
+        );
+        expect(parseBuiltinCommand('/clear-fg')?.action?.name).toBe(
+            'screen-clear-foreground',
+        );
+        expect(parseBuiltinCommand('/clear')?.action?.name).toBe('clear');
+        expect(parseBuiltinCommand('/clear-chat')?.action?.name).toBe('clear');
+        expect(parseBuiltinCommand('/clear')?.action?.isActing).toBe(false);
+        // Typed in full, the chat clear is not offered back; the screen's
+        // clears, whose old spellings start with it, are -- under their
+        // new names, which is what tells the user the name.
+        expect(
+            matchBuiltinActions('/clear', 50).map((one) => one.name),
+        ).toEqual([
+            'screen-clear-all',
+            'screen-clear-background',
+            'screen-clear-slide',
+            'screen-clear-bible',
+            'screen-clear-foreground',
+        ]);
+    });
+
+    test('/commands under a Reader tab names the Presenter commands on one line', async () => {
+        const answer = await runBuiltinCommand('/commands', 'reader');
+        expect(answer.text).toContain('- `/clear` --');
+        expect(answer.text).not.toContain('- `/screen-clear-all` --');
+        expect(answer.text).toContain(
+            '**On the Presenter page** (switch there first): `/screen-show`, ' +
+                '`/screen-hide`, `/screen-clear-all`',
+        );
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Is the screen on?',
+            'Go to the Presenter',
+        ]);
+        const onPresenter = await runBuiltinCommand('/commands', 'presenter');
+        expect(onPresenter.text).toContain('- `/screen-clear-all` --');
+        expect(onPresenter.text).not.toContain('On the Presenter page');
+    });
+});
+
 describe('/btw', () => {
     test('reads a general question off the line, quotes and all', () => {
         expect(readGeneralQuestion('/btw "what is holy bible"')).toBe(
@@ -117,6 +240,64 @@ describe('/btw', () => {
         expect(readGeneralQuestion('/btw ""')).toBeNull();
         expect(readGeneralQuestion('/screen')).toBeNull();
         expect(readGeneralQuestion('what is the Bible?')).toBeNull();
+    });
+
+    test('a plain follow-up under a general question stays general', () => {
+        const underBtw = [
+            { author: 'you' as const, text: '/btw what is holy bible?' },
+            { author: 'bot' as const, text: 'The Bible is …' },
+        ];
+        expect(readInheritedGeneralQuestion('in khmer please', underBtw)).toBe(
+            'in khmer please',
+        );
+        // A chain holds: the follow-up carries the flag, not the words.
+        const chain = [
+            ...underBtw,
+            {
+                author: 'you' as const,
+                text: 'in khmer please',
+                isGeneral: true as const,
+            },
+            { author: 'bot' as const, text: 'ព្រះគម្ពីរ …' },
+        ];
+        expect(readInheritedGeneralQuestion('shorter', chain)).toBe('shorter');
+        // A slash line is a new thing to do, and the way back to the app.
+        expect(readInheritedGeneralQuestion('/screen', chain)).toBeNull();
+        expect(readInheritedGeneralQuestion('   ', chain)).toBeNull();
+        // And so is anything that names the app's own things: a question
+        // about casting a display is the app's, whatever came before it.
+        expect(
+            readInheritedGeneralQuestion(
+                'How do I cast the virtual display to a TV from my phone?',
+                chain,
+            ),
+        ).toBeNull();
+        expect(
+            readInheritedGeneralQuestion('and the screen?', chain),
+        ).toBeNull();
+        expect(readInheritedGeneralQuestion('in French please', chain)).toBe(
+            'in French please',
+        );
+        expect(readInheritedGeneralQuestion('who wrote it?', chain)).toBe(
+            'who wrote it?',
+        );
+        // Nothing general before it: an app question is an app question.
+        expect(
+            readInheritedGeneralQuestion('in khmer please', [
+                { author: 'you', text: 'How do I show the screen?' },
+                { author: 'bot', text: 'Press F5.' },
+            ]),
+        ).toBeNull();
+        expect(readInheritedGeneralQuestion('in khmer please', [])).toBeNull();
+        // The last QUESTION decides, whatever the bot said after it.
+        expect(
+            readInheritedGeneralQuestion('and then?', [
+                { author: 'you', text: '/btw who wrote Psalms' },
+                { author: 'bot', text: 'Mostly David.' },
+                { author: 'you', text: '/screen' },
+                { author: 'bot', text: 'Nothing is showing.' },
+            ]),
+        ).toBeNull();
     });
 
     test('is offered with the commands, and the bare word says how', async () => {
@@ -139,7 +320,16 @@ describe('the suggestion list', () => {
             BUILTIN_ACTION_LIST.length,
         );
         const names = matchBuiltinActions('/scr').map((one) => one.name);
-        expect(names).toEqual(['screen', 'screen-show', 'screen-hide']);
+        expect(names).toEqual([
+            'screen',
+            'screen-show',
+            'screen-hide',
+            'screen-clear-all',
+            'screen-clear-background',
+            'screen-clear-slide',
+            'screen-clear-bible',
+            'screen-clear-foreground',
+        ]);
         // An alias reaches its command too.
         expect(matchBuiltinActions('/presenter-')[0].name).toBe('screen-show');
         expect(matchBuiltinActions('how do I')).toEqual([]);
@@ -162,7 +352,15 @@ describe('the suggestion list', () => {
         expect(matchBuiltinActions('/BTW')).toEqual([]);
         // A longer name starting with it is still something to finish.
         const names = matchBuiltinActions('/screen').map((one) => one.name);
-        expect(names).toEqual(['screen-show', 'screen-hide']);
+        expect(names).toEqual([
+            'screen-show',
+            'screen-hide',
+            'screen-clear-all',
+            'screen-clear-background',
+            'screen-clear-slide',
+            'screen-clear-bible',
+            'screen-clear-foreground',
+        ]);
         // An alias in full keeps its row: that row is what says which
         // command the alias is.
         expect(matchBuiltinActions('/general')[0].name).toBe(
@@ -354,6 +552,210 @@ const SELECTED = {
     },
     previous: { n: 3, name: 'Verse 3', find: 'Slide 3: Verse 3', text: null },
 };
+
+// The song with its slide list, as `owa_app_state` lists it.
+const LISTED = {
+    ...SELECTED,
+    slideCount: 4,
+    slides: [
+        { n: 1, name: 'First', find: 'Slide 1: First', text: null },
+        { n: 2, name: 'Info', find: 'Slide 2: Info', text: 'John Newton' },
+        {
+            n: 3,
+            name: '(1)-Verse 1',
+            find: 'Slide 3: (1)-Verse 1',
+            text: 'Amazing grace',
+        },
+        {
+            n: 4,
+            name: '(2)-Verse 2',
+            find: 'Slide 4: (2)-Verse 2',
+            text: 'Twas grace',
+        },
+    ],
+    onScreen: null,
+    next: { n: 1, name: 'First', find: 'Slide 1: First', text: null },
+    previous: null,
+};
+
+describe('a slide or the screen asked for in words, with no model', () => {
+    test('reads a slide asked for by its words, and leaves a how-do-I and a verse alone', () => {
+        expect(readSlideShowAsk('show verse 1 on screen for me')).toBe(
+            'verse 1',
+        );
+        expect(readSlideShowAsk('Show (1)-Verse 1 on the screen')).toBe(
+            '(1)-Verse 1',
+        );
+        expect(readSlideShowAsk('put slide 3 on the projector please')).toBe(
+            '3',
+        );
+        expect(
+            readSlideShowAsk(
+                'show slide of verse 1 of lyric file Amazing Grace on screen for me',
+            ),
+        ).toBe('verse 1');
+        expect(readSlideShowAsk('show verse 2')).toBe('verse 2');
+        expect(
+            readSlideShowAsk('How do I put a verse on the screen?'),
+        ).toBeNull();
+        expect(
+            readSlideShowAsk('show me how to put a slide on the screen'),
+        ).toBeNull();
+        expect(
+            readSlideShowAsk('Is anything showing on the projector?'),
+        ).toBeNull();
+        // A passage reads like a slide ask; the slide list decides (below).
+        expect(readSlideShowAsk('Put John 3:16 on the screen')).toBe(
+            'John 3:16',
+        );
+    });
+
+    test('finds a slide by number, by its exact name, or by the words in its name', () => {
+        const slides = LISTED.slides;
+        expect(findSlideByWords(slides, '3')?.n).toBe(3);
+        expect(findSlideByWords(slides, 'slide 4')?.n).toBe(4);
+        expect(findSlideByWords(slides, '(1)-Verse 1')?.n).toBe(3);
+        expect(findSlideByWords(slides, 'verse 2')?.n).toBe(4);
+        expect(findSlideByWords(slides, 'Verse 1 of the song')?.n).toBe(3);
+        expect(findSlideByWords(slides, 'John 3:16')).toBeNull();
+        expect(findSlideByWords(slides, '9')).toBeNull();
+        expect(findSlideByWords(slides, '')).toBeNull();
+    });
+
+    test('a slide asked for in words is offered as one press, never pressed by the ask', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_app_state') {
+                return genAppState(LISTED);
+            }
+            if (name === 'owa_list_screens') {
+                return genScreens([]);
+            }
+            return '';
+        });
+        const answer = await answerSlideShowAsk('verse 1');
+        expect(answer?.text).toContain(
+            'Slide 3 "(1)-Verse 1" of "Amazing Grace"',
+        );
+        expect(answer?.text).toContain('The screen is off');
+        expect(answer?.actions).toEqual([
+            {
+                label: 'Put "(1)-Verse 1" on the screen',
+                toolName: BUILTIN_TOOL_NAME,
+                args: { command: '/slide 3' },
+            },
+            {
+                label: 'Turn the screen on',
+                toolName: BUILTIN_TOOL_NAME,
+                args: { command: '/screen-show' },
+            },
+        ]);
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_click',
+            expect.anything(),
+        );
+        // A passage is not a slide of the song: nothing, so the verse road answers.
+        expect(await answerSlideShowAsk('John 3:16')).toBeNull();
+        // Nothing selected, and the Reader page, are said.
+        callTool.mockResolvedValue(genAppState(null));
+        expect((await answerSlideShowAsk('verse 1'))?.text).toContain(
+            'Nothing is selected',
+        );
+        callTool.mockResolvedValue(genAppState(null, 'reader.html'));
+        expect(
+            (await answerSlideShowAsk('verse 1'))?.actions?.[0].args,
+        ).toEqual({
+            command: '/goto presenter',
+        });
+    });
+
+    test('/slide presses the slide by its words and reports what went up', async () => {
+        let upN: number | null = null;
+        callTool.mockImplementation(async (name: string, args?: any) => {
+            if (name === 'owa_app_state') {
+                const up =
+                    LISTED.slides.find((slide) => slide.n === upN) ?? null;
+                return genAppState({
+                    ...LISTED,
+                    onScreen: up === null ? null : { ...up, onScreens: [0] },
+                });
+            }
+            if (name === 'owa_click') {
+                expect(args).toEqual({ find: 'Slide 3: (1)-Verse 1' });
+                upN = 3;
+                return JSON.stringify({ didChange: true });
+            }
+            if (name === 'owa_list_screens') {
+                return genScreens([]);
+            }
+            return '';
+        });
+        const answer = await runBuiltinCommand('/slide verse 1', 'presenter');
+        expect(answer.text).toContain(
+            'Slide 3 "(1)-Verse 1" of "Amazing Grace" is on the screen now',
+        );
+        expect(answer.text).toContain('screen itself is off');
+        expect(answer.actions?.map((one) => one.args)).toEqual([
+            { command: '/next' },
+            { command: '/screen-show' },
+        ]);
+        callTool.mockResolvedValue(genAppState(LISTED));
+        const missing = await runBuiltinCommand('/slide chorus', 'presenter');
+        expect(missing.text).toContain('has no slide called "chorus"');
+        expect(missing.text).toContain('3 "(1)-Verse 1"');
+        const bare = await runBuiltinCommand('/slide', 'presenter');
+        expect(bare.text).toContain('Say which slide of "Amazing Grace"');
+        // Off the Presenter it is not offered, and refused with the way there.
+        expect(matchBuiltinActions('/sli', 50, 'reader')).toEqual([]);
+        expect(
+            (await runBuiltinCommand('/slide 2', 'reader')).actions?.[0].args,
+        ).toEqual({ command: '/goto presenter' });
+    });
+
+    test('reads a screen asked on or off in words', () => {
+        expect(readScreenToggleAsk('Turn off the screen for me')).toBe('hide');
+        expect(readScreenToggleAsk('turn the projector off')).toBe('hide');
+        expect(readScreenToggleAsk('hide the screens please')).toBe('hide');
+        expect(readScreenToggleAsk('Turn the screen on')).toBe('show');
+        expect(readScreenToggleAsk('can you switch on the projector?')).toBe(
+            'show',
+        );
+        expect(readScreenToggleAsk('How do I turn the screen off?')).toBeNull();
+        expect(readScreenToggleAsk('Is the screen on?')).toBeNull();
+        expect(readScreenToggleAsk('turn off the countdown')).toBeNull();
+    });
+
+    test('a turn-off with every screen off is nothing to do, never a Clear', async () => {
+        callTool.mockResolvedValue(genScreens([]));
+        const answer = await answerScreenToggleAsk('hide');
+        expect(answer.text).toContain('Nothing to turn off');
+        expect(answer.text).toContain('Nothing is showing on the projector');
+        expect(JSON.stringify(answer.actions)).not.toContain('clear');
+        expect(answer.actions?.map((one) => one.args)).toEqual([
+            { command: '/screen-show' },
+        ]);
+        // On: the one button that turns it off, and nothing pressed by the ask.
+        callTool.mockResolvedValue(genScreens([0]));
+        const on = await answerScreenToggleAsk('hide');
+        expect(on.text).toContain('Press the button to turn it off');
+        expect(on.actions?.map((one) => one.args)).toEqual([
+            { command: '/screen-hide' },
+        ]);
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_click',
+            expect.anything(),
+        );
+        // Asked on while on, and on while off.
+        expect((await answerScreenToggleAsk('show')).text).toContain(
+            'already on',
+        );
+        callTool.mockResolvedValue(genScreens([]));
+        const off = await answerScreenToggleAsk('show');
+        expect(off.text).toContain('Press the button to turn it on');
+        expect(off.actions?.map((one) => one.args)).toEqual([
+            { command: '/screen-show' },
+        ]);
+    });
+});
 
 describe('/selected, /next and /previous', () => {
     test('/selected says the song, the slide up and the next, with buttons that step', async () => {

@@ -1,0 +1,37 @@
+{
+    "version": 1,
+    "updated": "2026-10-10",
+    "servers": [
+        {
+            "id": "church-lmstudio",
+            "name": "Church LM Studio",
+            "baseUrl": "https://quiet-river-1234.trycloudflare.com/v1",
+            "apiKey": "",
+            "isFree": true,
+            "note": "LM Studio on the church's computer, through a Cloudflare quick tunnel; the address changes when the tunnel is restarted",
+            "models": [
+                {
+                    "model": "qwen/qwen3.5-9b",
+                    "name": "Qwen 3.5 9B",
+                    "canSeeImages": true
+                },
+                {
+                    "model": "google/gemma-4-e4b",
+                    "name": "Gemma 4 E4B",
+                    "canSeeImages": true
+                }
+            ]
+        },
+        {
+            "id": "church-ollama",
+            "name": "Church Ollama",
+            "baseUrl": "https://ollama.example.church/v1",
+            "apiKey": "ollama-key-that-reaches-only-this-server",
+            "isFree": true,
+            "note": "Ollama behind a named Cloudflare tunnel with a fixed hostname",
+            "models": [
+                { "model": "qwen3-16k:8b", "name": "Qwen 3 8B (16k)" }
+            ]
+        }
+    ]
+}

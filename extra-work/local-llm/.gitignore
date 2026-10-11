@@ -1,0 +1,11 @@
+# What llm-tunnel.mjs writes while it runs. tunnel-key.txt IS the API key.
+tunnel-key.txt
+# One lock, one cloudflared pid and one log per tunnel, by its server id.
+tunnel*.pid
+tunnel*.log
+tunnel*.log.1
+# A runnable copy of cloudflared, made when the one found has no executable bit.
+cloudflared
+cloudflared.exe
+# The connection file and the live entry of each tunnel, when there is no Desktop.
+run/

@@ -108,7 +108,7 @@ function returnFocusAfter<T>(openPopup: () => Promise<T>): Promise<T> {
 
 export function showAppConfirm(
     title: string,
-    body: string,
+    body: string | ReactElement,
     options?: {
         escToCancel?: boolean;
         enterToOk?: boolean;

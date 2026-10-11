@@ -43,6 +43,12 @@ export type CustomServerType = {
     // fixing it sees their own words; `toCustomServerBaseUrl` decides use.
     baseUrl: string;
     models: CustomModelType[];
+    // Set on a server that came from the shared registry (below), never on
+    // one typed into Settings: `isFree` prices its answers at nothing (a
+    // church's own machine behind a tunnel is not a metered service), and
+    // `source` is what keeps it out of the Settings editor.
+    isFree?: boolean;
+    source?: 'registry';
 };
 
 /**
@@ -498,10 +504,12 @@ export function toOllamaModelInfoMap(
 /**
  * What llama.cpp's server says about the one model it runs
  * (`LLAMA_CPP_PROPS_PATH`), read as untrusted: null when the text is not
- * that answer. It is always loaded -- the server IS the model -- with the
+ * that answer. It is loaded -- the server IS the model -- with the
  * context each slot was started with, which is what the conversation has
  * to fit; the model's own ceiling is not said. Pictures when the server
  * was started with a projector (`modalities.vision`, newer builds).
+ * A ROUTER (`checkIsLlamaCppRouter`) runs no model at its root: nothing is
+ * loaded until a question names one, and the root says no size.
  */
 export function toLlamaCppModelInfo(text: string): CustomModelInfoType | null {
     let data: any;
@@ -514,12 +522,101 @@ export function toLlamaCppModelInfo(text: string): CustomModelInfoType | null {
     if (settings === null || typeof settings !== 'object') {
         return null;
     }
+    const isRouter = data?.role === 'router';
     return {
-        isLoaded: true,
-        loadedContext: toPositiveInteger(settings.n_ctx),
+        isLoaded: !isRouter,
+        loadedContext: isRouter ? null : toPositiveInteger(settings.n_ctx),
         maxContext: null,
         canSeeImages: data?.modalities?.vision === true,
     };
+}
+
+/**
+ * Whether llama.cpp's server is a ROUTER (b11540+, started with a models
+ * directory and `--models-autoload`, or by a launcher such as the one the
+ * user's server PC runs): `/props` says `role: "router"` with `n_ctx` 0 and
+ * no model path, every model is listed at `/models` with a `status` --
+ * loaded or unloaded -- and the arguments it is started with on the first
+ * question that names it. Measured 2026-10-10 on the user's server PC: read
+ * as the one-model server it used to be, every model there would have been
+ * "loaded" with no size, and the chat would have waited on a load nothing
+ * had announced.
+ */
+export function checkIsLlamaCppRouter(text: string): boolean {
+    try {
+        return JSON.parse(text)?.role === 'router';
+    } catch (_error) {
+        return false;
+    }
+}
+
+/**
+ * The context size a router starts a model with, read off the arguments it
+ * says it will start it with (`--ctx-size 16384`, `-c 16384`, `--ctx-size=16384`)
+ * -- the size the conversation has to fit once it is loaded.
+ */
+function toLlamaCppArgsContext(args: unknown): number | null {
+    if (!Array.isArray(args)) {
+        return null;
+    }
+    for (let i = 0; i < args.length; i++) {
+        const arg = typeof args[i] === 'string' ? args[i] : '';
+        const match = /^(?:--ctx-size|--ctx_size|-c)(?:=(\d+))?$/.exec(arg);
+        if (match === null) {
+            continue;
+        }
+        const value = match[1] ?? args[i + 1];
+        return toPositiveInteger(Number(value));
+    }
+    return null;
+}
+
+/**
+ * A router's model list (`/models`, the OpenAI door), read as untrusted,
+ * by model id: whether each is loaded now, the context it starts with and
+ * whether it was given a projector (`--mmproj`). Null when no row carries a
+ * `status` -- a plain OpenAI list, which says nothing of this.
+ */
+export function toLlamaCppRouterModelInfoMap(
+    text: string,
+): Map<string, CustomModelInfoType> | null {
+    let data: any;
+    try {
+        data = JSON.parse(text);
+    } catch (_error) {
+        return null;
+    }
+    const rows: unknown[] = Array.isArray(data?.data) ? data.data : [];
+    const infoMap = new Map<string, CustomModelInfoType>();
+    for (const row of rows as any[]) {
+        const id = row?.id;
+        const status = row?.status;
+        if (
+            typeof id !== 'string' ||
+            id.length === 0 ||
+            id.length > CUSTOM_MODEL_MAX ||
+            status === null ||
+            typeof status !== 'object'
+        ) {
+            continue;
+        }
+        const args: unknown[] = Array.isArray(status.args) ? status.args : [];
+        const context = toLlamaCppArgsContext(args);
+        const isLoaded = status.value === 'loaded';
+        infoMap.set(id, {
+            isLoaded,
+            // Said for a loaded model only, like every other kind: the size
+            // it WILL start with is the same number, but a not-loaded one
+            // is a wait, and that is what the chat has to say first.
+            loadedContext: isLoaded ? context : null,
+            maxContext: null,
+            canSeeImages: args.indexOf('--mmproj') !== -1,
+        });
+        if (infoMap.size >= MAX_CUSTOM_MODELS * 4) {
+            break;
+        }
+    }
+    return infoMap.size === 0 ? null : infoMap;
 }
 
 function toValidModels(raw: unknown): CustomModelType[] {
@@ -618,6 +715,161 @@ export function toValidCustomServerKeys(raw: unknown): Record<string, string> {
 export function getUsableCustomModels(server: CustomServerType) {
     return server.models.filter((one) => {
         return one.model.length > 0;
+    });
+}
+
+// ---------------------------------------------------------------------------
+// The shared LLM registry (2026-10-10, the user's ask: "as an admin I want to
+// store any available llm endpoints so owa app should be able to use it
+// freshly real-time … I can do tunnelling my super-computer to cloudflare
+// then store the llm endpoint online then all users can use my
+// super-computer llm real-time"). One JSON file on the project's own site,
+// read by the main process at launch and on the chatbot's Reload button,
+// its servers offered in the assistant list beside the ones typed into
+// Settings. The schema is documented in `docs/llm-registry/README.md` and
+// held by `docs/llm-registry/info.schema.json`.
+// ---------------------------------------------------------------------------
+
+export const LLM_REGISTRY_URL = 'https://www.openworship.app/llm/info.json';
+export const LLM_REGISTRY_GET_CHANNEL = 'main:app:llm-registry';
+export const LLM_REGISTRY_RELOAD_CHANNEL = 'main:app:llm-registry-reload';
+/** A registry server's id in the app: never a uuid, so never a saved one's. */
+export const REGISTRY_SERVER_ID_PREFIX = 'registry-';
+export const MAX_REGISTRY_SERVERS = 20;
+export const LLM_REGISTRY_VERSION = 1;
+const REGISTRY_ENTRY_ID_PATTERN = /^[A-Za-z0-9-]{1,48}$/;
+const REGISTRY_NOTE_MAX = 300;
+
+/** A registry server as main holds it: the key stays in main, never a window. */
+export type LlmRegistryServerType = CustomServerType & {
+    apiKey: string;
+    isFree: boolean;
+    note: string;
+    source: 'registry';
+};
+
+export type LlmRegistryType = {
+    version: number;
+    updated: string;
+    servers: LlmRegistryServerType[];
+};
+
+/** What a window is told: the servers without their keys, and the read's fate. */
+export type LlmRegistryStatusType = {
+    url: string;
+    servers: CustomServerType[];
+    fetchedAt: number | null;
+    error: string | null;
+};
+
+export function checkIsRegistryServerId(id: unknown) {
+    return typeof id === 'string' && id.startsWith(REGISTRY_SERVER_ID_PREFIX);
+}
+
+/**
+ * A registry model's row id, which the file does not carry (a saved row's is
+ * a uuid the Settings panel minted): made from the model's own name, so it is
+ * the same on every read and a tab left on the model keeps it across a
+ * Reload. The position is in it too, so two rows naming one model stay two.
+ */
+function toRegistryRowId(model: string, index: number) {
+    const slug = model.replace(/[^A-Za-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+    return `m${index}-${slug}`.slice(0, 64);
+}
+
+/** The registry file's models: `model` required, the row id made here. */
+function toRegistryModels(raw: unknown): CustomModelType[] {
+    if (!Array.isArray(raw)) {
+        return [];
+    }
+    const models: CustomModelType[] = [];
+    for (const item of raw) {
+        if (models.length >= MAX_CUSTOM_MODELS) {
+            break;
+        }
+        const model = toTrimmedString(item?.model, CUSTOM_MODEL_MAX);
+        if (model.length === 0) {
+            continue;
+        }
+        models.push({
+            id: toRegistryRowId(model, models.length),
+            model,
+            name: toTrimmedString(item.name, CUSTOM_NAME_MAX),
+            ...(item.canSeeImages === true ? { canSeeImages: true } : {}),
+        });
+    }
+    return models;
+}
+
+/**
+ * The registry file, read as untrusted: null unless it is an object of the
+ * known version with a `servers` list; a server is kept when its id is a
+ * slug, its address a web address and it names at least one model -- a row
+ * that cannot be asked is not offered. Capped, like the saved list.
+ */
+export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
+    let data = raw;
+    if (typeof data === 'string') {
+        try {
+            data = JSON.parse(data);
+        } catch (_error) {
+            return null;
+        }
+    }
+    const record = data as any;
+    if (
+        record === null ||
+        typeof record !== 'object' ||
+        Array.isArray(record) ||
+        record.version !== LLM_REGISTRY_VERSION ||
+        !Array.isArray(record.servers)
+    ) {
+        return null;
+    }
+    const seenIds = new Set<string>();
+    const servers: LlmRegistryServerType[] = [];
+    for (const item of record.servers) {
+        if (servers.length >= MAX_REGISTRY_SERVERS) {
+            break;
+        }
+        const entryId = item?.id;
+        if (
+            typeof entryId !== 'string' ||
+            !REGISTRY_ENTRY_ID_PATTERN.test(entryId) ||
+            seenIds.has(entryId)
+        ) {
+            continue;
+        }
+        const server: LlmRegistryServerType = {
+            id: `${REGISTRY_SERVER_ID_PREFIX}${entryId}`,
+            name: toTrimmedString(item.name, CUSTOM_NAME_MAX),
+            baseUrl: toTrimmedString(item.baseUrl, CUSTOM_URL_MAX),
+            models: toRegistryModels(item.models),
+            apiKey: toTrimmedString(item.apiKey, CUSTOM_KEY_MAX),
+            isFree: item.isFree === true,
+            note: toTrimmedString(item.note, REGISTRY_NOTE_MAX),
+            source: 'registry',
+        };
+        if (!checkIsUsableCustomServer(server)) {
+            continue;
+        }
+        seenIds.add(entryId);
+        servers.push(server);
+    }
+    return {
+        version: LLM_REGISTRY_VERSION,
+        updated: toTrimmedString(record.updated, 40),
+        servers,
+    };
+}
+
+/** The registry's servers as a window may see them: no key. */
+export function toPublicRegistryServers(
+    servers: readonly LlmRegistryServerType[],
+): CustomServerType[] {
+    return servers.map((server) => {
+        const { apiKey: _apiKey, note: _note, ...rest } = server;
+        return rest;
     });
 }
 

@@ -19,7 +19,14 @@ export function rankBibleXmlLinks(
   matched: number;
   total: number;
   words: string[];
+  suggestions?: string[];
 };
+export function suggestBibleLanguages(
+  links: { name: string; url: string }[],
+  words: string[],
+  limit?: number,
+): string[];
+export function checkIsBibleLanguageWord(word: string): boolean;
 export function checkIsLikelyHtml(head: string): boolean;
 export function checkIsLikelyXml(head: string): boolean;
 export function guessBibleLocalesFromText(sample: string): {

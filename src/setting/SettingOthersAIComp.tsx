@@ -26,6 +26,7 @@ import { applyStore } from './SettingApplyComp';
 import { relaunchApp } from './settingHelpers';
 import SettingOthersFieldComp from './SettingOthersFieldComp';
 import SettingOthersCustomServersComp from './SettingOthersCustomServersComp';
+import SettingOthersSharedServersComp from './SettingOthersSharedServersComp';
 import { useCustomServers } from '../helper/ai/customServerHelpers';
 import { checkIsUsableCustomServer } from '../../electron/customLlmProtocol';
 import SettingOthersSecureStorageWarningComp from './SettingOthersSecureStorageWarningComp';
@@ -659,6 +660,7 @@ export default function SettingOthersAIComp() {
                     <RenderBedrockRegionComp />
                 </RenderProviderGroupComp>
                 <SettingOthersCustomServersComp />
+                <SettingOthersSharedServersComp />
             </div>
             {isEnabled && !isAnyKeySet ? <RenderFreeFallbackComp /> : null}
         </SettingOthersSectionComp>

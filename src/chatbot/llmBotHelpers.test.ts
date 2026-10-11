@@ -60,6 +60,7 @@ vi.mock('../helper/ai/bedrockHelpers', () => ({
 // relay's IPC, neither of which a node-env suite has.
 vi.mock('../helper/ai/customServerHelpers', () => ({
     getCustomServers: () => fake.customServers,
+    getAllCustomServers: () => fake.customServers,
     getUsableCustomServers: () => fake.customServers,
     readCustomServerModelInfo: async () => {
         return fake.lmStudioInfoMap === null
@@ -81,6 +82,14 @@ vi.mock('../helper/ai/customServerClientHelpers', () => ({
         return `context ${loadedContext} is too small`;
     },
     getCustomServerInstance: () => fake.custom,
+    // The real one's patterns, in short: what the loop reads a tools
+    // refusal by (GPT4All's server, llama-server without --jinja, a model
+    // Ollama did not mark for tools).
+    checkIsToolsRefused: (error: any) => {
+        return /not supported|--jinja|does not support tools/i.test(
+            String(error?.message ?? ''),
+        );
+    },
     toCustomServerFailure: (error: any) => {
         if (error?.name === 'CustomServerError') {
             return error;
@@ -2294,6 +2303,54 @@ describe('the custom servers', () => {
         });
     });
 
+    // EC-211, measured 2026-10-10 on the user's LM Studio: gemma-4-12b spent
+    // 697 of 700 completion tokens thinking about a 5.7k-token ask and said
+    // nothing; the same ask with reasoning_effort none answered in 14 s.
+    test('an answer that was all thinking is asked for once more with thinking off', async () => {
+        fake.lmStudioInfoMap = new Map();
+        const create = vi.fn(async (request: any) => {
+            if (request.reasoning_effort === 'none') {
+                return genTextResponse();
+            }
+            return {
+                choices: [
+                    {
+                        finish_reason: 'length',
+                        message: {
+                            role: 'assistant',
+                            content: '',
+                            reasoning_content: 'The user wants to know…',
+                        },
+                    },
+                ],
+                usage: {
+                    prompt_tokens: 5670,
+                    completion_tokens: 700,
+                    completion_tokens_details: { reasoning_tokens: 697 },
+                },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+
+        const answer = await askLlmBot(
+            'How do I cast the virtual display to a TV?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        expect(create).toHaveBeenCalledTimes(2);
+        const [first, second] = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        // The tool loop keeps its thinking on; only the retry turns it off.
+        expect(first.reasoning_effort).toBeUndefined();
+        expect(second).toMatchObject({ reasoning_effort: 'none' });
+    });
+
     test('prices a server elsewhere as not known', async () => {
         fake.customServers = [
             genServer({ baseUrl: 'https://llm.example.org/v1' }),
@@ -2540,6 +2597,271 @@ describe('the custom servers', () => {
         expect(steps).not.toContain('Connecting to the app');
     });
 
+    test('a known question keeps its walkthrough buttons when the model opens no page', async () => {
+        // The page rode with the ask, so a small model wrote the answer
+        // from it and called no tool; the recipe still stands under it.
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Where do I type John 3:16?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-11' },
+        );
+        expect(answer.text).toBe('Press F5.');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Show me step by step',
+            'Do it for me',
+        ]);
+        expect(answer.actions?.[0].args).toMatchObject({ manualId: 'W-11' });
+        // Without it, as before: no page opened, nothing to walk.
+        const bare = await askLlmBot(
+            'Where do I type John 3:16?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(bare.actions).toBeUndefined();
+    });
+
+    test('a general question on LM Studio goes out with its thinking off; an app question keeps it', async () => {
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 32768,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        await askLlmBot(
+            toGeneralQuestionAsk('what is holy bible'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { isGeneral: true },
+        );
+        expect((create.mock.calls[0] as any[])[0]).toMatchObject({
+            reasoning_effort: 'none',
+        });
+        // An app question keeps its reasoning: the tool calls may need it.
+        create.mockClear();
+        await askLlmBot('Is the screen on?', 'presenter', 'custom', PHI_MODEL);
+        expect((create.mock.calls[0] as any[])[0]).not.toHaveProperty(
+            'reasoning_effort',
+        );
+        // A server of a kind not measured to take the field is sent nothing
+        // it may refuse.
+        fake.lmStudioInfoMap = null;
+        create.mockClear();
+        await askLlmBot(
+            toGeneralQuestionAsk('what is holy bible'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { isGeneral: true },
+        );
+        expect((create.mock.calls[0] as any[])[0]).not.toHaveProperty(
+            'reasoning_effort',
+        );
+    });
+
+    function genCallResponse(name: string, args: Record<string, any> = {}) {
+        return {
+            choices: [
+                {
+                    message: {
+                        role: 'assistant',
+                        content: null,
+                        tool_calls: [
+                            {
+                                id: `c-${name}`,
+                                type: 'function',
+                                function: {
+                                    name,
+                                    arguments: JSON.stringify(args),
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+            usage: { prompt_tokens: 900, completion_tokens: 30 },
+        };
+    }
+
+    test('reads a tool call the model wrote as words, runs it, and answers on', async () => {
+        fake.toolList = [
+            {
+                name: 'owa_help_search',
+                inputSchema: {
+                    type: 'object',
+                    properties: { query: { type: 'string' } },
+                },
+            } as any,
+            { name: 'owa_list_screens' },
+        ];
+        fake.toolResultMap = { owa_list_screens: '{"isAnyShowing": false}' };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            return round === 1
+                ? {
+                      choices: [
+                          {
+                              message: {
+                                  role: 'assistant',
+                                  content:
+                                      'Let me look.\n<tool_call>\n' +
+                                      '<function=owa_list_screens>\n' +
+                                      '</function>\n</tool_call>',
+                              },
+                          },
+                      ],
+                      usage: { prompt_tokens: 900, completion_tokens: 30 },
+                  }
+                : genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Is the screen on?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(answer.text).toBe('Press F5.');
+        expect(fake.toolCallList).toEqual(['owa_list_screens']);
+        // Into the conversation as a real tool call with its words kept,
+        // answered by a tool message under the call's own id.
+        const second = (create.mock.calls[1] as any[])[0];
+        const assistantTurn = second.messages.find((message: any) => {
+            return message.role === 'assistant' && message.tool_calls;
+        });
+        expect(assistantTurn.content).toBe('Let me look.');
+        expect(assistantTurn.tool_calls[0].function.name).toBe(
+            'owa_list_screens',
+        );
+        const toolTurn = second.messages.find((message: any) => {
+            return message.role === 'tool';
+        });
+        expect(toolTurn.tool_call_id).toBe('text_call_1');
+        expect(toolTurn.content).toContain('isAnyShowing');
+        fake.toolResultMap = null;
+    });
+
+    test('a tool call written as words on the last step is no answer', async () => {
+        fake.toolList = [{ name: 'owa_list_screens' }];
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            // Five real calls, then words where the answer should be.
+            return round < 6
+                ? genCallResponse('owa_list_screens')
+                : {
+                      choices: [
+                          {
+                              message: {
+                                  role: 'assistant',
+                                  content:
+                                      '<tool_call>{"name": "owa_list_screens", "arguments": {}}</tool_call>',
+                              },
+                          },
+                      ],
+                      usage: { prompt_tokens: 900, completion_tokens: 30 },
+                  };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        // Said as what it is, not as the network: a plain error with no
+        // status used to read "it could not be reached".
+        await expect(
+            askLlmBot('Is the screen on?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow('it wrote no answer this time');
+        expect(create).toHaveBeenCalledTimes(6);
+    });
+
+    test('an answer written off the Presenter says so and offers the way there', async () => {
+        fake.toolList = [{ name: 'owa_list_screens' }];
+        fake.toolResultMap = {
+            owa_list_screens:
+                '{"isAnyShowing":false,"showingScreenIds":[],' +
+                '"needsPage":"presenter","note":"What each screen holds …"}',
+        };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            return round === 1
+                ? genCallResponse('owa_list_screens')
+                : genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Is anything showing on the projector?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(answer.text).toBe(
+            'Press F5.\n\nTo see what is on the projector or what is ' +
+                'selected, the main window needs to be on the Presenter ' +
+                'page — switch to it and ask again.',
+        );
+        expect(answer.actions).toEqual([
+            {
+                label: 'Go to the Presenter',
+                toolName: 'builtin-command',
+                args: { command: '/goto presenter' },
+            },
+        ]);
+        fake.toolResultMap = null;
+    });
+
+    test('…but not when the model took the window there itself', async () => {
+        fake.toolList = [
+            { name: 'owa_list_screens' },
+            { name: 'owa_goto_page' },
+        ];
+        fake.toolResultMap = {
+            owa_list_screens: '{"isAnyShowing":false,"needsPage":"presenter"}',
+            owa_goto_page: '{"page":"presenter.html","isMainWindow":true}',
+        };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            if (round === 1) {
+                return genCallResponse('owa_list_screens');
+            }
+            if (round === 2) {
+                return genCallResponse('owa_goto_page', { page: 'presenter' });
+            }
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Is anything showing on the projector?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(answer.text).toBe('Press F5.');
+        expect(answer.actions).toBeUndefined();
+        fake.toolResultMap = null;
+    });
+
     test('sends a local server the essential tools only, and says it is reading them', async () => {
         fake.toolList = [
             { name: 'owa_slide_file' },
@@ -2715,6 +3037,70 @@ describe('askLlmBot, standing in for a dead key', () => {
         expect(steps).toContain(
             'ChatGPT could not answer — asking Claude instead',
         );
+    });
+
+    test('a server that takes no tools is asked once more without them', async () => {
+        // GPT4All's API server (2026-10-10): 400 "'tools' is not supported"
+        // to the first round. The same model answers the same question with
+        // no tools, from the guide text the ask carries, and the answer
+        // says what it could not check.
+        const create = vi.fn(async (request: any) => {
+            if (request.tools !== undefined) {
+                const error: any = new Error(
+                    '400 {"error":{"message":"\'tools\' is not supported","type":"invalid_request_error"}}',
+                );
+                error.status = 400;
+                throw error;
+            }
+            return {
+                choices: [
+                    {
+                        finish_reason: 'stop',
+                        message: {
+                            role: 'assistant',
+                            content:
+                                'Click **Cast to a TV** on the display card.',
+                        },
+                    },
+                ],
+            };
+        });
+        fake.openai = { chat: { completions: { create } } };
+        fake.aiSetting = {
+            openAIAPIKey: 'sk-x',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+        };
+
+        const answer = await askLlmBot(
+            'How do I cast the virtual display to a TV?',
+            'presenter',
+            'openai',
+            'gpt-5',
+            [],
+            null,
+        );
+
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(create.mock.calls[0][0].tools).toBeDefined();
+        // The second post carries no tools and tells the model so, on the
+        // ask itself.
+        const retry = create.mock.calls[1][0];
+        expect(retry.tools).toBeUndefined();
+        const lastUser = [...retry.messages]
+            .reverse()
+            .find((one: any) => one.role === 'user');
+        expect(lastUser.content).toContain(
+            'The app’s tools are not available on this server',
+        );
+        expect(answer.text).toBe(
+            'This assistant’s server cannot use the app’s tools, so this comes ' +
+                'from the guide text alone and nothing was checked in the ' +
+                'window — for presses and live answers, use LM Studio, Ollama ' +
+                'or llama.cpp.\n\nClick **Cast to a TV** on the display card.',
+        );
+        // Not a provider fault, so no other key was asked.
+        expect(answer.standIn).toBeUndefined();
     });
 
     test('a bad REQUEST is not stood in for', async () => {

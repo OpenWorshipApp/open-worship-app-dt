@@ -87,6 +87,12 @@ export type ChatMessageType = {
     // rather than derived later, because the tab's total below survives the
     // message cap and the per-answer figure has to be read off the answer.
     usage?: ChatUsageType;
+    // A question that went to the assistant as a GENERAL one (`/btw`, or a
+    // follow-up under one -- `readInheritedGeneralQuestion`), so the next
+    // plain question in the tab stays general too. On the question, because
+    // the transcript keeps the words as typed and a follow-up carries no
+    // `/btw` of its own to read it off.
+    isGeneral?: true;
 };
 
 export type ChatSessionType = {
@@ -383,6 +389,9 @@ function toValidMessage(raw: any): ChatMessageType | null {
         author: raw.author,
         text: raw.author === 'bot' ? toCleanStoredBotText(raw.text) : raw.text,
         ...(typeof raw.note === 'string' ? { note: raw.note } : {}),
+        ...(raw.author === 'you' && raw.isGeneral === true
+            ? { isGeneral: true as const }
+            : {}),
         ...(Array.isArray(raw.actions) ? { actions: raw.actions } : {}),
         ...toValidReplies(raw.replies),
         ...toValidAttachments(raw.attachments),

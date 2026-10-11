@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-10c** (W-42 step 6 — **the list above the ask box is worked from the keyboard.** **Tab** takes a suggestion — the row the arrows walked to, or the first — and only ever FILLS the box, never sends: `/bt` then **Tab** reads `/btw ` with the cursor after it, and `/scr` then **Tab** reads `/screen` with nothing run. **↑** and **↓** bring their row into view: the list scrolls, and **↑** from the box lit the bottom row out of sight, so the arrows looked dead. The list closes once it has nothing left to offer — a command typed in full (`/screen` leaves **/screen-show** and **/screen-hide**), or the first word after one (`/btw what is`). And a bare `/` lists every command: it stopped at twenty of twenty-five, so **/credit**, **/limit**, **/lyric**, **/btw** and **/commands** were never offered. Asked for by the user with two pictures: _"tab key should auto select the suggestion"_, _"up/down arrow should move selection"_, _"should close suggestion when user type more extra, or already in input text"_. Observed live 2026-10-10 on the dev app's help window, each of the above, and **Tab** with no list open still moving on to **Ask**. CB-90.)
+**workflowsVersion: 2026-10-10g** (W-34, the easy way — **asking for a Bible in your own words works, and the list says which ones you have.** Asked for with a picture of the help window's three Bible rows circled — _importing bible data is the most important thing right now … make this prompt and mcp tool and action working smoothly_. Driven live first: `Import a Bible in Cambodia` found nothing (a country is how people name a language, and one works by luck only when it starts like the language's own name); `add bible verse John 3:16 to my bible list` was taken for an import and offered the Chewa, Polish and Turkmen Bibles of 2016; of the seven Khmer Bibles listed five were already installed and nothing said so; a typed `2` under the list drew the same list again; and _How do I import a Bible XML file?_ took a local model 31 s to list the Settings form's eight steps with no way to have it done. Now: a country or a people finds its language, `I want a Khmer bible` and `Do you have a Korean bible?` are requests, a sentence about a verse, a list, a note or the screen is left to the guide, a misspelt language is answered with **Did you mean**, an installed Bible is marked **you already have this one** in the list and said again before step 1, a typed `yes` / number / button word presses that choice, a link pasted alone under the language question is taken, and an answer about importing a Bible leads with **Import a Bible for me**. Seen live 2026-10-10 on the dev app: all of the above, a whole import answered by typing `yes` four times and `ok` (KM2023, New Testament only, John 3:16 read back, then **Undo**).)
+
+Previous: **workflowsVersion: 2026-10-10f** (W-42 step 13 — **the servers the project's site shares are listed in Settings, read-only.** Under **[en:tran:Custom servers]** there is now **[en:tran:Shared servers]**: every server of `openworship.app/llm/info.json` with a lock beside its name and, opened, its address and its models, nothing to type in or delete, and a **↻** of its own with the time of the last read written under it. Asked for with a picture of the help window's list beside the Settings tab — _in setting should have those llm endpoints (read-only) and have refresh icon as well_. Seen live in a dev app the same day: one shared server, its two models, a fresh read on the press. New ST-78; CB-97 now proven live.)
+
+Previous: **workflowsVersion: 2026-10-10e** (W-51 steps 1 and 8, W-50 step 1 — **the Mini Screen's ⋮ has a name of its own, and the cast icon is a step of its own.** Step 1 names **[en:tran:Mini Screen Options]**: as **[en:tran:More Options]** it was one of forty on the Presenter (every file row's dots, each screen card's), and the walkthrough's **Do it** pressed the first in the page — the Documents list's menu opened for a step about the Mini Screen's. The card now refuses a press whose words are on several shown controls and says which panels they are in. Step 8 is **[en:tran:Cast to a TV]** on the display card's header, split out of the browser-page paragraph so a walkthrough started on _cast to a TV_ opens on a short step; the browser page's own button, with **[en:tran:Cast from this browser]**, follows it; the old steps 8 and 9 are 9 and 10. W-50 step 1 names the same control the same way (it bolded the glyph, which no walkthrough could ring). Observed live 2026-10-10 through the app's own MCP door, panel closed: 1/8 → menu → panel → **[en:tran:Add Virtual Display]** → the cast icon.)
+
+Previous: **workflowsVersion: 2026-10-10d** (W-42 steps 6 and 13 — **the help window is page-aware, a general question is cheap and sticks, the clears carry the screen's name, and a local model's tool call written as words still runs.** From the Bible Reader, _Is anything showing on the projector?_ now ends with the sentence that the main window needs to be on the Presenter page to see what the projector holds, under a **Go to the Presenter** button (the screens and state tools answer `needsPage` off the Presenter — asked for by the user: _"mcp tool should aware that some questions is picky the page … should recommend changing page first"_); the Presenter's own commands are offered only while **Asking about** is **Presenter** and refused with the same button elsewhere, **/commands** naming them on one line (_"commands also have to be picky the page … bible reader also part of presenter so it should available in presenter as well"_); the five clears are **/screen-clear-all** … **/screen-clear-foreground** with the old spellings as aliases, and **/clear** empties the chat in front of you (_"command should have prefix, e.g. `/clear-all` should be `/screen-clear-all`, add `/clear` to clear the chat session"_); a plain question under a **/btw** stays general (_"the follow up prompt should inherit command from previous"_, with a picture of _in khmer please_ answered as an app question at 10.2k tokens), an app-road answer to a general question says to put **/btw** in front and the 💡 line carries a tip for it (_"question like this should let user know they have to start with `/btw`, and should have in tip regularly"_), and on LM Studio and Ollama a general question goes out with the model's thinking off; and a tool call a local model writes as words is read as the call (the user's picture: _"got an error rendering"_ — a `<function=owa_help_search>` block printed as the answer). Observed live 2026-10-10 on the dev app against the user's LM Studio on another computer (gemma-4-e4b and qwen3.5-9b at 16k): the Reader-page projector answer with its sentence and button, the button switching the main window to the Presenter, `/clear-` under the Reader offering only **/clear**, **/clear** emptying the tab, **/btw what is holy bible** in under 15 s and _in khmer please_ under it answered in Khmer at 705 tokens. The words-as-tool-call reading, the Presenter-only refusal and the no-answer sentence are unit tested. Later the same day: **servers shared on the project's site** stand in the **who answers** list with a **↻** beside it (`https://www.openworship.app/llm/info.json`, the user's ask: _"as an admin I want to store any available llm endpoints so owa app should be able to use it freshly real-time"_); **Escape** in the box with no list open empties it (_"if no suggestion panel and focusing then ESC key should clear the input"_); the song-by-title chip is drafted with no model on a server of your own (_"assistant should follow up like just create a file or generate lyric file"_); a **/btw** chain yields to a question that names the app (_"it should guide through to the casting button … without `/btw` the chatbot should try best to provide app guiding"_); and either AI caution can be put away for 30 days (_"it's annoying for some users, let put any button to hide it for a while, e.g. hide for 30 days"_). Those five are unit tested and read in code; the registry's publish and the ↻ press are the user's. CB-91 to CB-100.)
+
+Previous: **workflowsVersion: 2026-10-10c** (W-42 step 6 — **the list above the ask box is worked from the keyboard.** **Tab** takes a suggestion — the row the arrows walked to, or the first — and only ever FILLS the box, never sends: `/bt` then **Tab** reads `/btw ` with the cursor after it, and `/scr` then **Tab** reads `/screen` with nothing run. **↑** and **↓** bring their row into view: the list scrolls, and **↑** from the box lit the bottom row out of sight, so the arrows looked dead. The list closes once it has nothing left to offer — a command typed in full (`/screen` leaves **/screen-show** and **/screen-hide**), or the first word after one (`/btw what is`). And a bare `/` lists every command: it stopped at twenty of twenty-five, so **/credit**, **/limit**, **/lyric**, **/btw** and **/commands** were never offered. Asked for by the user with two pictures: _"tab key should auto select the suggestion"_, _"up/down arrow should move selection"_, _"should close suggestion when user type more extra, or already in input text"_. Observed live 2026-10-10 on the dev app's help window, each of the above, and **Tab** with no list open still moving on to **Ask**. CB-90.)
 
 Previous: **workflowsVersion: 2026-10-10b** (W-42 steps 6 and 13 — **your own AI server works with Ollama and the rest, and `/btw` asks a general question.** In **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]**, **[en:tran:Test]** and **[en:tran:Load models from server]** now find the OpenAI door of a server whose address was typed one path off — Ollama's root `http://localhost:11434`, an address without its `/v1`, Ollama's own `/v1/systemone` — on the same computer and port only, save the right one and say _Address corrected to …_; the lines under each model speak in the server's own words — **Loaded in Ollama. Context length: …** with the Ollama app's **Settings → Context length** as the fix, beside LM Studio's reload — and Ollama's `vision` models get **[en:tran:Sees pictures]** ticked by Load; a wrong address or a model the server does not have is said as that in the chat, never as _not available to the account_. And **/btw what is the Bible?** puts a general question, not about the app, to the assistant in one go with nothing looked up. Asked for by the user: _"make the custom assistant work genericly … it's not working with ollama now … work with most popular llm server like lmstudio ollama"_ and _"add command `/btw` … e.g. `/btw "what is holy bible"`"_. Observed live 2026-10-10 on the dev app against Ollama 0.40 on this computer (`tev1:4b`, then `gemma4:e4b`): the row typed as `…/v1/systemone` answered `404 page not found` to every call and the chat read it as _not available to the account_; after the change, Test corrected the address to `http://localhost:11434/v1`, listed 2 chat models and Load ticked **[en:tran:Sees pictures]** on `gemma4:e4b` from Ollama's own `vision` capability. The chat's `/btw` answer was proven in unit tests only — the help window's caution is a person's to press. The same change takes in the rest of the family — llama.cpp's `llama-server` and llamafile (their `/props` says the context the server was started with), LocalAI, Jan, GPT4All, vLLM, SGLang and a LiteLLM proxy — with their usual addresses in step 13, a refusal written in vLLM's or a FastAPI shape read as one, and the flag that switches tool calling on named per server. The Settings half of those was observed live the same day on a scratch profile — against the REAL llama.cpp (`llama-server` b11541 for Windows ARM64, serving one of Ollama's GGUF files at `-c 4096`): typed as its bare `http://127.0.0.1:18090`, which it answers at, Test listed the model and wrote **Loaded in llama.cpp. Context length: 4k** with the `-c` fix (a bare address gets the root doors asked too, not only a `/v1` one — found by that run); and against stand-in servers answering each program's own shapes: a llama.cpp-shaped address typed without its `/v1` corrected, a LiteLLM proxy at its ROOT address refusing without its key and listing 2 models with it, vLLM's and GPT4All's lists loaded (the embedding model left out), and a wrong port answered _nothing answered at …_; the chat-side sentences (no such model, the tool-calling flags, the context fixes) are unit tested only — none of those programs is installed here. Respawn is a gateway that adds the OpenAI Responses API in front of Ollama and keeps a `/v1/chat/completions` compatibility wrapper, so its `/v1` address is asked like any other server's; it ships as a Docker stack, which this machine had no daemon for, so it is unverified. And **/btw** on a local model loaded at Ollama's default 4k now answers: a general question goes out with a short system prompt instead of the app's and is not refused by the 16k rule — the user's _/btw what is holy bible_ on qwen3.5:4b had been refused as not fitting the 4k context, with the question needing none of the app's instructions. And at the top of **[en:tran:Custom servers]**, under **[en:tran:Watch how to set up a free AI assistant on your own computer]**, the **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]** buttons each open a page of YouTube videos in the browser — asked for by the user: _"add link … in ai provider setting somewhere to let user know they can setup local ai assistant"_, then _"add … ollama as well"_. ST-75, ST-76, CB-89.)
 
@@ -3446,17 +3454,16 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    sites. Tabs are kept when the window and the app close, up to eight of them, and each
    comes back on the conversation it was on. 📸 **Drag a tab** along the strip to put it
    somewhere else among the others.
-
    **Closed one by mistake?** A closed tab is not lost: it goes to **Recently closed**,
    listed on the card a new tab opens on and behind the **🕘** (**Recently closed tabs**) in
    the row above the page. Click it and it opens again on the conversation it was on;
    **Ctrl+Shift+T** brings back the last one. The list is shared by every AI Chat window,
    keeps the last twenty, and **Clear this list** under it empties it. 📸
+
 5. Only three tabs keep their site loaded at once — the one in front and the two you used
    most recently. The others unload to save memory and load their last page again when
    you click them, which takes a second and loses nothing: the conversation lives on the
    site, under your account.
-
    **More than one window.** Each press of the **✨** opens another AI Chat window, and so
    does the **New window** button right of **+** in the strip — up to three at once; a
    fourth press brings the open ones forward instead, because every open site takes
@@ -3465,6 +3472,7 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    from its **⋮**: a new window opens holding that tab, on the conversation it was on, and
    the tab leaves the first window. You stay signed in, because every window shares the
    same sign-ins. 📸
+
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
    browser, never in the app — and only when you pressed something in the site just before.
    A page that tries to open one on its own is stopped, and a line under the row above the
@@ -3830,19 +3838,26 @@ You do not need a link, and you do not need an AI key: this runs on buttons.
 1. Open **[en:tran:Settings]** → **[en:tran:Bible]** and press the blue
    **[en:tran:Let the assistant import a Bible for me]** at the top of
    **[en:tran:Import XML File]**. (Or open the assistant 🤖 and type
-   `Import bible for khmer`, `Import bible`, or `Import bible from` and a link.)
-   Answer the _Be careful with AI_ question with **Open**. 📸
+   `Import bible for khmer`, `Import bible`, or `Import bible from` and a link. Say it
+   your own way: `I want a Khmer bible`, `Do you have a Korean bible?` and a country —
+   `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
+   import a Bible, the answer has an **Import a Bible for me** button that starts
+   here.) Answer the _Be careful with AI_ question with **Open**. 📸
 2. The assistant opens in a new tab and asks **Which language do you want the Bible
    in?** Press **Khmer**, **English** or **French**, or type the language — in English
-   or in its own words (`Thai`, `ខ្មែរ`, `Español`). **A file on this computer** opens
-   the form below instead.
+   or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
+   **A file on this computer** opens the form below instead. A word it cannot find
+   (`kmer`) is answered with **Did you mean** and the nearest languages to press.
 3. It lists **every** Bible in that language from a free collection of about a
    thousand (Beblia, on GitHub), each with the title its own file gives — for Khmer,
    seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer 2023
-   (ព្រះគម្ពីរខ្មែរសាកល)_. Press the one you want. 📸
+   (ព្រះគម្ពីរខ្មែរសាកល)_. One you have installed is marked **you already have this
+   one**, with its short name. Press the one you want, or type its number. 📸
 4. It downloads and reads it, then says what it is — for example _66 books, 1,189
-   chapters, 31,102 verses_, or _It has the New Testament only_. Nothing is installed
-   yet.
+   chapters, 31,102 verses_, or _It has the New Testament only_ — and, when it is one
+   you have, **You already have this Bible** with the name it is installed under
+   (press **Cancel**, or go on to keep a second copy under another name). Nothing is
+   installed yet.
 5. **Step 1 — a short name**: press a suggestion (**KSV**, **KM1954** …) or type your
    own, letters and numbers with no spaces. A name you already have is refused and
    asked again.
@@ -3858,10 +3873,15 @@ You do not need a link, and you do not need an AI key: this runs on buttons.
    choose it from the Bible version button. **Undo** under that answer moves it to
    the trash again. **Cancel** at any step stops with nothing installed.
 
+You can type instead of pressing at every step: `yes` (or `ok`) takes the suggested
+choice — and at the end, **Install it** — a number takes that line of a list (`2`,
+`list 2`), the words on a button press it, and `cancel` stops.
+
 Pasting a link works the same way, and the link does not have to be the file: a
 GitHub **page** of the file is turned into its download address, and a GitHub
 **repository** lists its Bible files — type a word (`Khmer`, then `2019`) to narrow
-the list.
+the list. Under the language question, and under an answer that says a link did not
+lead to a Bible, the link can be pasted on its own.
 
 **Import a Bible XML file with the form**
 
@@ -3922,7 +3942,7 @@ existing Bible, then use its pencil instead.
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
 > because there is nothing left to create.
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, CB-80..CB-82, LT-01._
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, CB-80..CB-82, CB-107..CB-109, LT-01._
 
 ### W-35 — Bring a song in from CCLI SongSelect
 
@@ -4668,12 +4688,18 @@ it is describing.
    that_ is the answer rather than a bare _nothing is showing_; **/screen-show**
    turns the screen on and **/screen-hide** turns every screen off, and both read
    the screens back afterwards, so _the screen is on now_ is never a guess;
-   **/clear-all**, **/clear-background**, **/clear-slide**, **/clear-bible** and
-   **/clear-foreground** press the five clear buttons (**F6**–**F10**);
+   **/screen-clear-all**, **/screen-clear-background**, **/screen-clear-slide**,
+   **/screen-clear-bible** and **/screen-clear-foreground** press the five clear
+   buttons (**F6**–**F10**; the older **/clear-all** … **/clear-foreground**
+   spellings still reach them, and **/clear** on its own empties the chat in
+   front of you — a locked tab keeps its messages and says so);
    **/selected** says which song is selected, which of its slides is up and
    which comes next; **/next** and **/previous** put the next or the previous
    slide of the selected song on the screen — the arrow keys, from the ask box —
    and read the screens back afterwards, saying so when the screen itself is off;
+   **/slide 3** or **/slide verse 1** puts one slide of the selected song on
+   the screen by its number or by the words in its name, and reads the screens
+   back the same way (with no slide named it lists them);
    **/run** says which run sheet (presenting flow) is open in its run player,
    the line the run is on — and the slide inside it — and what the next press
    puts up, or names the sheets there are to open when none is (it presses
@@ -4694,8 +4720,19 @@ it is describing.
    and _Take it off again_ beside it. Asking in words does the same: _Start a 5
    minute countdown on the screen_ or _Put the time on the screen_ starts it
    straight away with an assistant and offers the screen's own show button, and
-   without one the guide offers one button that starts it; the five **/clear-**
-   commands clear a layer the screen HOLDS even while it is off;
+   without one the guide offers one button that starts it; the five
+   **/screen-clear-** commands clear a layer the screen HOLDS even while it is
+   off. **The commands that work on the Presenter alone** — the screen's show,
+   hide and clears, **/selected**, **/next**, **/previous**, **/run**,
+   **/verse**, **/countdown**, **/marquee** — are offered in the list only while
+   **Asking about** is **Presenter**, and typed under another page they answer
+   _works on the Presenter page_ with **Go to the Presenter** under it
+   (**/commands** names them on one line there); the rest work everywhere,
+   and anything the Reader has is on the Presenter too. Asked in words from
+   the Bible Reader, _Is anything showing on the projector?_ says whether a
+   screen is on and, under the answer, that the main window needs to be on the
+   Presenter page to see what it holds — with the same **Go to the Presenter**
+   button, which switches the main window and leaves the projector untouched;
    **/find Clear Bible** outlines a control in red; **/goto reader** switches the
    main window (the projector is untouched); **/here** says which window is in
    front; **/help clear bible** searches this guide without an assistant;
@@ -4722,8 +4759,31 @@ it is describing.
    — "by the way", a general question that is not about this app: it is
    answered from the assistant's own knowledge in one go, with nothing of the
    app looked up and no walkthrough offered (the quotes in `/btw "what is
-   holy bible"` are fine), and with no assistant to ask it says so and offers
-   **Open AI settings**, because the built-in guide only knows this app;
+holy bible"` are fine), and with no assistant to ask it says so and offers
+   **Open AI settings**, because the built-in guide only knows this app. A
+   plain question typed under it — _in Khmer please_ — stays general, so the
+   conversation goes on without retyping **/btw** (any **/** command ends
+   that, and a new tab starts fresh); ask the assistant something not about
+   the app without it — or _how can I ask a general question_ — and it tells
+   you to put **/btw** in front, which the 💡 tip line above the box says too;
+   on LM Studio and Ollama a general question goes out with the model's
+   thinking switched off, so it answers in seconds rather than in half a
+   minute; a follow-up that names something of the app — a screen, a
+   display, a slide, a verse — leaves the general chain and is answered as
+   an app question, which is how _How do I cast the virtual display to a TV
+   from my phone?_ under a **/btw** about casting still reaches the
+   **[en:tran:Cast to a TV]** button; and **Escape** in the box, with no
+   suggestion list open, empties it (with the list open it only closes the
+   list). On a server of your own, _Create a lyric file for song "Amazing
+   Grace"_ is looked up and written out by the app itself, with the same
+   **Create** button, because a small local model is not handed the song
+   tools; and on such a server _Turn off the screen for me_, _Turn the screen
+   on_, _show verse 1 on screen for me_ or _put slide 3 on the projector_ are
+   answered from the app's own state at once, with ONE button that does it —
+   _Nothing to turn off_ when no screen is on (never a Clear), **Turn every
+   screen off** when one is, **Put "(1)-Verse 1" on the screen** for a slide
+   the selected song has — and a sentence that is not a slide of the song
+   (_Put John 3:16 on the screen_) goes on to the assistant as before;
    **/commands**
    lists them all. The square buttons under a command's answer are
    commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
@@ -4915,7 +4975,9 @@ it is describing.
     on the church's own network. On LM Studio, Ollama and llama.cpp,
     **[en:tran:Test]** also writes under each model what that program says of it
     in its own words: **Not loaded in LM Studio right now** / **Not loaded in
-    Ollama right now**, or **Loaded in Ollama. Context length: 4k** with the fix
+    Ollama right now** / **Not loaded in llama.cpp right now** (a `llama-server`
+    started on a folder of models loads one on the first question that names
+    it), or **Loaded in Ollama. Context length: 4k** with the fix
     beside it — load the model again in LM Studio with a **Context Length** of
     32k, set **Settings → Context length** in the Ollama app (or start Ollama with
     `OLLAMA_CONTEXT_LENGTH=32768`), start `llama-server` again with `-c 32768` —
@@ -4927,14 +4989,49 @@ it is describing.
     a local model_, and a computer that takes more than ten minutes over it is
     told so — _this computer is too slow for that; a general question typed after
     /btw is small enough to answer here_ — rather than that the internet is down.
-    How long a local answer takes is the computer's: a laptop's Ollama read 11
-    words a second on a 4-billion-parameter model and 200 on a 0.6-billion one;
-    a computer with a graphics card reads thousands. Each model has a **[en:tran:Sees pictures]** box
+    A small local model sometimes writes its tool call as words — a
+    `<tool_call>` or `<function=…>` block where the answer should be — and the
+    window reads it as the call it is and carries on, instead of printing the
+    block as the answer; one that does so on its last step is told as _it wrote
+    no answer this time — a smaller question, or a larger model, usually
+    helps_. Measured 2026-10-10 on the user's LM Studio box over the church's
+    network (qwen/qwen3.5-9b at 16k through a proxy on another computer): the
+    projector question answered correctly in about 30 s (two rounds, 6.3 s to
+    the first token of a cold 10k-token round, under a second once cached,
+    ~30 words a second), a follow-up in the same tab ran four rounds in about a
+    minute, and **/btw what is holy bible** took 27.5 s with the model's
+    thinking on (1 069 generated tokens for a 150-token answer) — which is why
+    a general question's thinking is now switched off there.
+    **A server shared by the project's own site needs no typing at all.** An
+    admin who runs a capable computer can put its address in one file,
+    `https://www.openworship.app/llm/info.json` (its shape is in the
+    project's `docs/llm-registry` folder), and every copy of the app reads
+    it when it starts: each server in it stands in the **who answers** list
+    beside your own, its models in the third list, marked _shared by
+    openworship.app_ and _free_ when the file says so, and never appears in
+    **[en:tran:Custom servers]** — it is not yours to edit. It is listed
+    right below that box instead, under **[en:tran:Shared servers]**
+    (**[en:tran:Settings]** → **[en:tran:Others]**): each shared server with
+    a lock beside its name and, opened, its address and its models — to
+    read, with nothing to type in and nothing to delete. The small **↻**
+    beside the **who answers** list reads the file again without a restart
+    (hold the mouse over it to see when it was last read, or why a read
+    failed — a failed read keeps the servers of the last good one), and the
+    **↻** in **[en:tran:Shared servers]** does the same from Settings, with
+    the time of the last read written under it. A key the file carries
+    stays on the computer's own side; neither window ever sees it. 📸
+    How long a local answer takes is the computer's and the program's: one laptop's
+    Ollama read 11 words a second on a 4-billion-parameter model, llama.cpp's own
+    `llama-server` read the very same model file at 53 on the same laptop and
+    answered an app question correctly in three and a half minutes, and a computer
+    with a graphics card reads thousands. Each model has a **[en:tran:Sees pictures]** box
     — tick it for a model that can look at a picture;
     **[en:tran:Load models from server]** ticks it for you from LM Studio's and
     Ollama's own word (a `vision` model). A model the server does not have, an
     address that answers nothing, and
-    a model that cannot use tools (Ollama says so; llama.cpp wants `--jinja`, vLLM
+    a server whose API takes no tools at all (GPT4All's) is asked once more
+    without them and the answer says it came from the guide text alone, with
+    nothing checked in the window; a model that cannot use tools (Ollama says so; llama.cpp wants `--jinja`, vLLM
     and SGLang `--enable-auto-tool-choice --tool-call-parser`) are each said in the
     chat as that, never as _not available to the account_. If the server's computer
     is switched off or goes to sleep in the middle of a question, the answer stops
@@ -5118,7 +5215,7 @@ it is describing.
     section and restart the app: the chatbot, its tools and the debugging endpoint they
     use are then never started.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 
@@ -5307,7 +5404,8 @@ Use one app as the host and another as the guest. Both computers need the same
 app version and a reachable network connection — the same network, or the
 internet once the host opens to it (step 7).
 
-1. On the host's Presenter, open the Mini Screen list's bottom **⋮** and
+1. On the host's Presenter, click **[en:tran:Mini Screen Options]** — the ⋮
+   at the bottom right of the Mini Screen list — and in the menu it opens
    click **[en:tran:Virtual Screens Manager]**, then pick the floating
    panel's **[en:tran:Screen Mirror Connection]** tab. The panel remembers
    which tab was open and whether it was open at all. Hosting is off until you
@@ -5425,9 +5523,9 @@ A virtual display is a monitor that exists only inside the app. Screens are
 shown on it exactly as on a real monitor, and any phone, TV or computer can
 watch it — in a web browser, or as a video in a media player — without a
 cable or a second copy of the app.
-
-1. On the Presenter, open the Mini Screen list's bottom **⋮**, click
-   **[en:tran:Virtual Screens Manager]** and pick the floating panel's
+1. On the Presenter, click **[en:tran:Mini Screen Options]** — the ⋮ at the
+   bottom right of the Mini Screen list — and in the menu it opens click
+   **[en:tran:Virtual Screens Manager]**; the floating panel opens on its
    **[en:tran:Virtual Displays]** tab. The screen card's display picker gets
    there too: its last row, **[en:tran:Manage Virtual Displays]**, opens the
    same tab.
@@ -5504,6 +5602,7 @@ cable or a second copy of the app.
    (in Chrome, **Advanced**, then **Proceed**). **[en:tran:This computer]**,
    the tunnel's address and the MP4 are unchanged, and the `http://`
    addresses keep working.
+
 7. The browser page fits the display to its window. Its
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
@@ -5515,20 +5614,7 @@ cable or a second copy of the app.
    needed once, because a browser plays sound only after the page has been
    touched; until then the page plays everything silently. A camera put on
    the screen (Camera Show, or a camera background) is streamed from this
-   computer to the page, on this network. **[en:tran:Cast to a TV]** puts
-   the display on a TV:
-   - **[en:tran:Cast from this browser]** — a TV on the same network as the
-     device holding the page (at home, in another building), through the
-     browser's own picker: Chrome and Edge list Google Cast TVs, Safari
-     AirPlay ones. The app streams the display to the page for it, and the TV
-     then plays it from the app itself, without the operator's
-     **[en:tran:Allow connection]** or the connection code. When the browser
-     knows no TV, the list says so. A browser that cannot cast (Firefox)
-     says that too.
-   - On the app's own network, the list also shows the TVs the app found
-     there (Google Cast, DLNA, Roku): **[en:tran:Cast]** puts the display on
-     one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]** looks
-     once more.
+   computer to the page, on this network.
 
    On a page that may use a camera (an `https://` address from step 6, the
    tunnel's, or this computer's own), **[en:tran:Share my cameras]** opens a
@@ -5544,7 +5630,27 @@ cable or a second copy of the app.
    The page keeps the device from sleeping while it is open. If the app goes
    away, the page reads **[en:tran:Waiting for the display]** and joins again
    by itself.
-8. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
+
+8. To put the display on a TV, click **[en:tran:Cast to a TV]** — the cast
+   icon in the display card's header, beside its size. The list it opens
+   shows the TVs the app found on this network (Google Cast, DLNA, Roku),
+   looked for only when the list opens: **[en:tran:Cast]** puts the display
+   on one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]**
+   looks once more. It needs **[en:tran:Let other devices watch]** (step 6)
+   on, because the TV plays the display's MP4 address itself. The browser
+   page has the same button, with one more row:
+   - **[en:tran:Cast from this browser]** — a TV on the same network as the
+     device holding the page (at home, in another building), through the
+     browser's own picker: Chrome and Edge list Google Cast TVs, Safari
+     AirPlay ones. The app streams the display to the page for it, and the TV
+     then plays it from the app itself, without the operator's
+     **[en:tran:Allow connection]** or the connection code. When the browser
+     knows no TV, the list says so. A browser that cannot cast (Firefox)
+     says that too.
+   - On the app's own network, the page's list also shows the TVs the app
+     found there, with the same **[en:tran:Cast]**, **[en:tran:Stop]** and
+     **[en:tran:Search again]**.
+9. **[en:tran:Watching now]** lists everyone watching: **[en:tran:Browser]**
    or MP4, where they are (**[en:tran:This computer]**,
    **[en:tran:This network]** or **[en:tran:Internet]**), their address with
    their browser and device (such as `Chrome · Android` or `VLC`), and
@@ -5567,9 +5673,9 @@ cable or a second copy of the app.
    shown. A browser keeps
    the permission when its page reloads, until the switch is turned off, the
    viewer is disconnected, or the app restarts. A media player has no switch.
-9. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
-   hidden and go back to the main monitor, as when a monitor is unplugged,
-   and everyone watching is disconnected.
+10. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
+    hidden and go back to the main monitor, as when a monitor is unplugged,
+    and everyone watching is disconnected.
 
 _Verify: SP-30, SP-31._
 

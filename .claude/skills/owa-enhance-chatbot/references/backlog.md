@@ -149,7 +149,6 @@ or provider cost. Live, font size went 17 → 25 → 17; a Khmer Bible opened Jo
 the panel remembering Resources by choosing Find before focusing Search verses.
 The first search run exposed that remembered-tab dead end; the second completed.
 
-
 ## EC-186 · Model metadata became dead buttons and leaked into senior-facing answers — `done` 2026-09-22
 
 Measured in the live Reader: GPT-5 nano emitted pressable `none`,
@@ -5566,3 +5565,223 @@ and a link label. The translation rule should not take a Latin-script line
 with a year or a known label for a translation of a Khmer line, and the
 author could go to the Config instead. The trailing empty slide named after
 the address is the attachment, as designed.
+
+## EC-205 · A control named by its JOINED tool label — `open`, low
+
+Measured 2026-10-10 on gemma-4-e4b (LM Studio, LAN): _How do I put a Bible
+verse on the screen?_ wrote _Click the **Bible Lookup Open bible lookup popup
+[Ctrl+B]** button_ — the `label` an `owa_find_ui` / `owa_list_ui` row
+carries, title and shortcut joined, pasted whole. A small model copies the
+field; the prompt's "the words on the button" is not read as "the first
+part". A code pass over the answer could shorten a bolded label that begins
+with a verified control name to that name.
+
+## EC-206 · "Turn off the screen for me" with every screen off offers Clear All — `fixed 2026-10-10`, high
+
+Fixed the same day on a custom server: `readScreenToggleAsk` /
+`answerScreenToggleAsk` (`builtinActionHelpers.ts`) answer a screen asked on
+or off in words from the screens' own state with the ONE button that does it,
+no model — _Nothing to turn off_ with every screen off, never a Clear.
+
+Same run: with no screen showing, the ask was answered _First, we need to
+make sure everything is cleared from the projector. 1. Click the **Clear All
+[F6]** button_, with a **Yes, clear all** option — a turn-off read as a clear,
+which would wipe the verse and background held for the service. Offered, not
+done, so the one safety held. The right answer is _no screen is on — nothing
+to turn off_. A deterministic route for turn-on / turn-off asks (the shape
+`/screen-hide` already answers with no model: screens read before and after)
+would take this away from the model, as the countdown and verse asks were.
+
+## EC-207 · The page nudge is thanked in the answer — `open`, low
+
+Same run: _How do I edit a slide?_ (asked about the Reader) opened with
+_Thank you for pointing that out._ — the model answering the
+`checkIsStepsWithoutPage` user turn as though a person had written it. The
+nudge text could say not to acknowledge it, or the answer's first sentence
+be dropped in code when it thanks.
+
+## EC-208 · The mechanism named in the answer — `open`, low
+
+Same run: _Here are the steps based on the full manual page:_ and _The list
+confirms that nothing is currently being projected_ — the page handed over
+with the ask and a tool result referred to as "the list". Harmless to a
+reader, but the prompt forbids naming the plumbing; a scrub of the two
+openers, like the recipe-id scrub, is the cheap fix.
+
+## EC-209 · A paraphrase of a known question gets no page — `open`, medium
+
+Same run: _How do I put a Bible verse on the screen?_ is not an exact corpus
+row (the row is _How do I present a Bible verse?_), so it got no hint and no
+page, and cost 5 rounds / 55k tokens on the local model where the exact row
+costs one round. The exact-label rule exists so a typed question is never
+mis-filed (held-out 22/45); a HIGH-confidence top match (every content word
+of the row present) could carry the page too, marked as a guess the model
+may put down.
+
+## EC-210 · "Show verse 1 on screen for me" exhausts a local model's rounds — `fixed 2026-10-10`, medium
+
+Fixed the same day: `/slide <number or words>` presents one slide of the
+selected song through the card's own `find` (the press-and-read-back `/next`
+uses, now shared as `presentSlideAndReport`), and on a custom server the
+words — `readSlideShowAsk` / `answerSlideShowAsk` — are answered with the
+slide named and one **Put "…" on the screen** button; a sentence naming no
+slide of the song falls through to the model.
+
+Seen in the user's own tab, 2026-10-10, qwen3.5-9b at 16k: _show verse 1 on
+screen for me_ and _show (1)-Verse 1 on screen for me_ each ended in _it
+wrote no answer this time_ after 65–71k tokens (the six rounds), and the
+offline fallback said the screens were off. The app already knows the slide
+by its card's own words (`selectedDocument.slides[].find`, "Slide 4:
+(1)-Verse 1") and `owa_click` on it presents it; a small model does not get
+there in six rounds. A deterministic route — a `/slide <name or number>`
+command, or the window matching "show verse N" against the selected
+document's slides and offering the one press — would do for this what
+`/verse` and `/countdown` did for theirs.
+
+## EC-211 · gemma-4-12b answered its first round with EMPTY content — `fixed` 2026-10-10
+
+2026-10-10, the user's LM Studio box (8 GB), JIT-loaded at 16k: _How do I
+cast the virtual display to a TV from my phone?_ with the W-51 page riding
+on the ask (13k tokens) came back with no content and no tool call, read as
+_it wrote no answer this time_; the guide's own W-51 answer and its
+walkthrough buttons stood in. gemma-4-e4b answered the same shape. Not
+reproduced on a second ask; LM Studio's server log on that machine would say
+whether the generation stopped at once (a 12B barely fits 8 GB with a 16k
+cache) or produced only a channel the bridge dropped. Until then: a smaller
+model, or 32k only on a card that holds it.
+
+**Reproduced and explained the same evening**, explicit load at 16k, the
+app's own request shape (14 tool schemas, the page clipped around the cast
+step): `finish_reason: length`, content empty, **697 of 700 completion
+tokens were reasoning** — the model thought its whole budget away. The same
+ask with `reasoning_effort: "none"`: a correct three-step answer in 14 s,
+111 tokens. gemma-4-e2b answered the same ask in one round in 13 s (160
+reasoning tokens), e4b in 32 s. Now `askOpenAiCompatible` asks ONCE more
+with thinking off when an answer is empty and either ran out of budget or
+carried reasoning, on a server measured to honour the field
+(`canTurnReasoningOff`: LM Studio, Ollama); the tool loop keeps its
+thinking otherwise. Unit proven; the live round through the window waits
+on the 🤖 window.
+
+
+## EC-212 · A walkthrough pressed the first of forty "More Options" — `fixed` 2026-10-10
+
+Asked with the Virtual Screens Manager closed, _How do I cast the virtual
+display to a TV from my phone?_ → **Show me step by step** started W-51 at
+step 1, **[en:tran:More Options]** (the Mini Screen's ⋮, named by its title
+because a bold glyph is not a label). **Do it** pressed the first control
+called that in the page — the Documents list's menu button — the wrong menu
+opened, and the card marched on to step 2 with it open: `withMore` waits for
+the step's other words to APPEAR, and nothing did. Measured: `More Options`
+×40 on the Presenter, ×3 inside the Mini Screen alone (two screen cards'
+dots and the list's own). Two fixes, both proven live through the app's own
+MCP door: the Mini Screen's ⋮ is **[en:tran:Mini Screen Options]** (unique,
+tier 0; km + fr), and a press whose exact words are on several shown
+controls is REFUSED with their panels (`twinsOf`, `twinsAt`; `twins` in
+`owa_guide_status`; the ring's hint says it may be on the wrong one). After:
+1/8 at Mini Screen Options → menu → panel → tab → Add Virtual Display (made
+Virtual Display 3) → … → step 8, the card header's **[en:tran:Cast to a TV]**,
+split out of the browser-page paragraph into a step of its own. With two
+display cards open that step reports `twins: {count: 2}` and Do it refuses —
+right, and the chatbot should then ask which display (open).
+
+## EC-213 · A llama.cpp ROUTER read as "loaded, no size" for every model — `fixed` 2026-10-10
+
+The user's server PC runs `llama-server` b11540 on a folder of models: `/props`
+answers `role: "router"`, `n_ctx` 0 and no model path, and `/v1/models` lists
+each model with a `status` (loaded / unloaded) and the arguments it starts
+with (`--ctx-size 16384`). `toLlamaCppModelInfo` read that as the one-model
+server it used to be — every row loaded, no size — so Settings drew nothing
+under the models and the chat would have waited on a load nothing announced.
+`checkIsLlamaCppRouter` and `toLlamaCppRouterModelInfoMap` read the list into
+the `infoMap`, the root's word is _not loaded, no size_, and Settings says
+**Not loaded in llama.cpp right now** (km + fr). Proven through the real relay
+over the LAN: two models listed, both lines drawn; one tool-using round in the
+app's shape answered a correct `owa_list_screens` call in 20 s including the
+load. Ollama's four models on the same PC listed and answered the same way.
+
+
+## EC-214 · GPT4All's API server refuses every request carrying `tools` — `fixed` 2026-10-10
+
+Measured on the user's server PC (GPT4All 3.10.0, `http://192.168.1.12:14891/v1`):
+`GET /v1/models` 200, plain chat 200, any request with a `tools` array 400
+`{"error":{"message":"'tools' is not supported","type":"invalid_request_error"}}`
+— the SERVER, whatever the model. The chat loop threw on round 1, so the
+assistant could not answer there at all, while the guide page a known
+question carries was already in the ask. Now `checkIsToolsRefused` (the
+`NO_TOOLS_ERROR_LIST` patterns, GPT4All's added, read off the message under
+any status) turns that first-round refusal into ONE round with no tools, the
+ask carries a line saying the tools are gone, and the answer opens with a
+note that nothing was checked in the window and which servers can. Unit
+proven (the second post has no `tools`, the note leads the answer); the live
+round waits on the server PC's LAN coming back.
+
+## EC-215 · "Do it for me" could not press the Stay Awake cup — `fixed` 2026-10-10
+
+The user's own run on the Free assistant (Nemotron Lightning), with two
+pictures: _make computer stay awake_ → the model's plan **Do it for me** →
+a card _Keep computer awake_, step 1 _Click the Stay Awake cup_ → **Do it**
+did nothing, the rescue asked the model, and the card's hint became _Click
+the Stay Awake — turned off, this computer may sleep when no screen is
+showing Stay_. Three causes, all in `domMatch.mjs`: the cup's TITLE is a
+sentence (`Stay Awake — <state>`) and its aria-label the name, so the
+control's first label part and its shown label were the sentence, cut at
+80 characters when handed to the model, which quoted it back as a needle no
+press could land on; a kind noun the manual and models use for an icon-only
+control (_cup_, _icon_, _gear_) was not stripped; and nothing read the name
+before the dash. Now the name goes first and alone in the parts the card and
+the chips use, `checkIsNamedNearly` cuts the state after an em or en dash on
+both sides (a hyphen stays a name's own), and the three nouns are kind nouns.
+Proven live through the app's door: a card from the model's own words
+pressed the cup (`did: clicked`). The first answer on that run — Windows and
+macOS power settings, nothing about the app — is the known-question gap:
+_make computer stay awake_ is not the corpus row's text, and a fuzzy match
+would have put _Can you make a song from words I paste in?_ first. Closed the
+same evening without a fuzzy match: a typed question that carries ONE row's
+keyword phrase whole ("stay awake", two words or more, every fitting row
+answering from one page) is that row (`findRowByKeywordPhrase`), so the
+Stay Awake page and the cup's `find` ride on that ask; a one-word keyword
+never fires it, and two pages' rows fitting is nobody's question. The
+user's second picture, the same evening: **Do it for me** had put up W-01
+at its header paragraph with the ring on the panel its first bold answered
+to, and re-asked with the whole hint and page as the user's words. Now
+`owa_guide_start` takes `find`, the window passes the known question's
+(`knownFind`), the card opens at the step naming it with that control
+first, and the buttons re-ask with the typed words (`askedText`).
+
+## EC-216 · The page a known question carries never reached its deep step — `fixed` 2026-10-10
+
+`genKnownQuestionHint` quoted the first 6 000 characters of the page; W-51
+runs to 10 900 and its cast step is the last. Measured on the laptop's 0.6B
+(qwen3-16k) with the page under the cast question: steps 1-2, then nothing,
+which was all it had been shown. `clipKnownPage` now keeps the opening (2 000
+characters: the intro and the way there) and the STEP that names the row's
+`find`, and the hint says which control the question is about, because the
+same model then recited the opening from step 1 and ran out of words. A
+`find` the page does not carry (a Khmer page under an English `find`) leaves
+the opening alone. Unit proven; the live rerun on the 0.6B was stopped by
+the user, and the server PC's models wait on its LAN.
+
+## EC-217 · A tools-less model's made-up file name became a chip — `open`, low
+
+GPT4All's Qwen2.5-7B, answering with no tools from the guide page (EC-214,
+live 2026-10-10 evening), wrote ` virtual-screens-manager.html` under its
+two steps and the window drew it as a file chip (_press to open it_). A
+`SHOWS:` frame or a bare file-looking token should become a chip only when
+the path exists or the name was handed to the model by a tool result; a
+model that was told it has no tools cannot have been given one.
+
+## EC-218 · The cast icon on the card the walkthrough just added was refused as a twin — `fixed` 2026-10-10
+
+Through the 🤖 window on gemma-4-e2b, **Do it for me** walked W-51 to step 8
+and the press of **Cast to a TV** was refused: two display cards (then
+three) each carry one, and the twin rule (EC-212) does not guess. But the
+walkthrough's own step 2 had just added a display and opened its card — the
+icon on THAT card is the one the recipe means. `resolveTwins` in
+`guide.mjs` keeps a WeakSet of every control on the window before each
+press (`knownAtStart`, taken at the start too) and, among twins, takes the
+one that was not there — exactly one, or no resolution. Not "since the
+start": step 1 opens the panel, after which every card's icon is new at
+once (measured: three fresh twins, refusal). Proven end to end through the
+window the same evening: the smallest model's one-round answer, then the
+card from the menu to the new card's cast icon, `did: clicked`.

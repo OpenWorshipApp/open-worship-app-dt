@@ -1,15 +1,15 @@
 ---
 paths:
-  - "src/chatbot/llm*.ts"
-  - "src/chatbot/usage*.ts"
-  - "src/chatbot/spendGuard*.ts"
-  - "src/chatbot/providerIssue*.ts"
-  - "src/chatbot/providerPick*.ts"
-  - "src/chatbot/cancel*.ts"
-  - "src/chatbot/mcpClient*.ts"
-  - "src/helper/ai/**"
-  - "tools/owa-devtools-mcp/modelTools.mjs"
-  - ".claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs"
+  - 'src/chatbot/llm*.ts'
+  - 'src/chatbot/usage*.ts'
+  - 'src/chatbot/spendGuard*.ts'
+  - 'src/chatbot/providerIssue*.ts'
+  - 'src/chatbot/providerPick*.ts'
+  - 'src/chatbot/cancel*.ts'
+  - 'src/chatbot/mcpClient*.ts'
+  - 'src/helper/ai/**'
+  - 'tools/owa-devtools-mcp/modelTools.mjs'
+  - '.claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs'
 ---
 
 # Chatbot model loop: providers, tools, cost
@@ -61,7 +61,67 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   schemas a round instead of 8 322, because a local server pays for every
   schema in prompt-processing TIME — measured 11 tokens/s on the user's
   laptop under Ollama (a 4B model), 1 000 on their LM Studio box; memory
-  `custom-llm-servers`.
+  `custom-llm-servers`. **A general question's thinking is OFF on LM Studio
+  and Ollama** (2026-10-10, `genCustomProvider` with the server's kind:
+  `reasoning_effort: "none"`, measured to be honoured by both — a plain
+  model too, Ollama answering gemma4 and qwen3 200 with it; qwen3.5-9b had
+  spent 1 069 generated tokens and 27.5 s thinking about what the Bible is,
+  150 of them the answer), never in the tool loop (the same model reasons
+  30-120 tokens a round there and a call may need them) and never to
+  llama.cpp or an unknown kind, unmeasured — **except as the one retry of
+  an answer that was all thinking** (EC-211, 2026-10-10: gemma-4-12b on the
+  user's LM Studio spent 697 of 700 completion tokens reasoning about a
+  5.7k-token ask and said nothing, and answered the same ask in 14 s with
+  the field; `canTurnReasoningOff` on the custom provider, `isReasoningOff`
+  in the loop, only when the answer is empty and ran out of budget or
+  carried reasoning). **A tool call written as WORDS
+  is read as the call** (`src/chatbot/textToolCallHelpers.ts`, in
+  `askOpenAiCompatible` for every OpenAI-shaped provider): a small model
+  drifts into another tool-call grammar once the context fills — measured on
+  qwen3.5-9b at 16k, round 5, a `<function=owa_help_search>` block printed as
+  the answer — so `<tool_call>` JSON, `<function=…><parameter=…>` XML,
+  `[TOOL_CALLS]` and a bare or fenced JSON object are parsed (only a name the
+  request offered; values by the tool's own schema), sent on as a real
+  `tool_calls` turn with the words around them kept, and the loop goes on;
+  on the LAST round it is the no-answer error, which `describeLlmError` now
+  words as _it wrote no answer this time_ — a plain Error has no status, and
+  no status read as _could not be reached_. **A server that refuses the
+  TOOLS is asked once more without them** (2026-10-10, GPT4All 3.10 on the
+  user's server PC: 400 `'tools' is not supported` to EVERY request that
+  carries them, so the assistant could not answer there at all while the
+  guide page a known question carries was already in the ask):
+  `checkIsToolsRefused` (`customServerClientHelpers.ts`, the same
+  `NO_TOOLS_ERROR_LIST` patterns — GPT4All's, `--jinja`, _does not support
+  tools_ — read off the message whatever the status) turns the first round's
+  refusal into the salvage round with no tools, the ask gets a line saying
+  the tools are gone (`appendToolsRefusedNudge`, so the model neither claims
+  to have looked nor writes a call as words), and the answer opens with
+  `TOOLS_REFUSED_NOTE` — nothing was checked in the window, use LM Studio,
+  Ollama or llama.cpp for presses. Only the first round, only once. **The lean set leaves the song
+  tools out, so the song-by-title chip is drafted with no model on a custom
+  server** (`handleAsking` → `answerLyricTitle`, the guide's own finder, the
+  same Create button): asked, gemma-4-e4b wrote the steps for an EMPTY file
+  in 43k tokens. **The shared LLM registry** (2026-10-10, the user's ask —
+  _as an admin I want to store any available llm endpoints so owa app should
+  be able to use it freshly real-time_): `https://www.openworship.app/llm/info.json`,
+  shape in `docs/llm-registry/README.md` + `info.schema.json`, validated by
+  `toValidLlmRegistry` (version 1, slug ids prefixed `registry-`, http(s)
+  address, at least one model, row ids made from the model name so a tab
+  keeps its model across reloads), held in MAIN (`llmRegistryHelpers.ts`:
+  read once after `initAi`, never on a timer, 8 s, 256 KB; a failed read
+  keeps the last list and says why), handed to a window without keys over
+  `LLM_REGISTRY_GET_CHANNEL` / `LLM_REGISTRY_RELOAD_CHANNEL`, accepted by the
+  relay by id with the registry's own key, and listed through
+  `getAllCustomServers` (`getCustomServers` stays the saved list, so
+  Settings never edits a registry row — it LISTS them, read-only, in a
+  **Shared servers** group of their own under Custom servers, with a ↻:
+  `SettingOthersSharedServersComp`, fed by `useLlmRegistry`). `OWA_LLM_REGISTRY_URL` points a dev
+  app at a stand-in; `extra-work/local-llm/s3-push-llm-registry.mjs` validates and
+  publishes (`www/llm/info.json`, `max-age=60`, CloudFront invalidated). The
+  admin kit beside it (`extra-work/local-llm/`, its README): `llm-tunnel.mjs`,
+  a key-checking door behind a Cloudflare quick tunnel that looks at itself
+  every minute and can publish its own address, and `llm-tunnel-startup.mjs`,
+  which starts it with the computer on Linux, macOS and Windows.
 - **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropic` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
   standing corpus, 12 questions, 44 rounds, **813 000 input tokens every one

@@ -226,6 +226,43 @@ async function resolveBookNames(value, fallbackId) {
   return { names: list.names };
 }
 
+// Titles compare without case or spacing: the same words, read off two
+// files. A file with no title of its own is nobody's twin -- the app calls
+// every one of those "Unknown Title".
+function toTitleKey(title) {
+  const key = String(title ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return key === 'unknown title' ? '' : key;
+}
+
+/**
+ * The Bibles already installed, by title. A person choosing among seven
+ * Khmer Bibles has five of them already and no way to tell which: measured
+ * 2026-10-10, the list said nothing and a second copy was three presses
+ * away. Best effort -- the answer about a link must not fail because the
+ * installed list could not be read.
+ */
+async function readInstalledTitleMap() {
+  const titleMap = new Map();
+  try {
+    const result = await runBibleWorker({ action: 'list' });
+    for (const bible of [
+      ...(result.bibles ?? []),
+      ...(result.downloaded ?? []),
+    ]) {
+      const titleKey = toTitleKey(bible.title);
+      if (titleKey !== '' && !titleMap.has(titleKey)) {
+        titleMap.set(titleKey, bible.key);
+      }
+    }
+  } catch {
+    // Unmarked is still a list to choose from.
+  }
+  return titleMap;
+}
+
 async function handleCheck({ url, find }) {
   let downloaded;
   try {
@@ -240,7 +277,17 @@ async function handleCheck({ url, find }) {
     throw error;
   }
   if (downloaded.kind === 'page') {
-    return toTextResult(downloaded);
+    if (downloaded.files.length === 0) {
+      return toTextResult(downloaded);
+    }
+    const titleMap = await readInstalledTitleMap();
+    return toTextResult({
+      ...downloaded,
+      files: downloaded.files.map((file) => {
+        const installedAs = titleMap.get(toTitleKey(file.title));
+        return installedAs === undefined ? file : { ...file, installedAs };
+      }),
+    });
   }
   let analysis;
   try {
@@ -279,10 +326,15 @@ async function handleCheck({ url, find }) {
     recommended,
     fileListId,
   });
+  const installedAs = (await readInstalledTitleMap()).get(
+    toTitleKey(analysis.title),
+  );
   return toTextResult({
     kind: 'xml',
     draftId: downloaded.draftId,
     title: analysis.title,
+    // Said FIRST when it is there: the user may not need this import at all.
+    ...(installedAs === undefined ? {} : { installedAs }),
     source: downloaded.source,
     ...(downloaded.fixed ? { fixed: downloaded.fixed } : {}),
     sizeMB: Math.round((downloaded.bytes / 1048576) * 10) / 10,
@@ -299,6 +351,11 @@ async function handleCheck({ url, find }) {
     nameLists: toListPreviews(nameLists),
     recommended,
     note:
+      (installedAs === undefined
+        ? ''
+        : `A Bible with this title is ALREADY installed as "${installedAs}"` +
+          ': tell the user first, and go on only if they want a second ' +
+          'copy under another key. ') +
       'Nothing is installed yet. Ask the user, one choice at a time: the ' +
       'key (a short name such as KJV, shown on the Bible buttons), the ' +
       'language, the digits and the book-name list -- recommended first. ' +

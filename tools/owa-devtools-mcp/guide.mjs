@@ -99,12 +99,23 @@ function topicTokens(text) {
 }
 
 export function selectGuideStepsForTopic(steps, topic = '') {
+  const index = selectGuideStepIndexForTopic(steps, topic);
+  return index === null ? steps : [steps[index]];
+}
+
+/**
+ * The index of the one step a topic names, or null when the topic is too
+ * vague to choose safely. The caller that keeps the WAY to a deep step
+ * (`owa_guide_start`: the steps before it, when its control is not on
+ * screen yet) needs the index, not the step.
+ */
+export function selectGuideStepIndexForTopic(steps, topic = '') {
   if (!Array.isArray(steps) || steps.length < 2) {
-    return steps;
+    return null;
   }
   const wanted = [...new Set(topicTokens(topic))];
   if (wanted.length === 0) {
-    return steps;
+    return null;
   }
   const ranked = steps
     .map((step, index) => {
@@ -121,7 +132,7 @@ export function selectGuideStepsForTopic(steps, topic = '') {
     .sort((one, other) => {
       return other.score - one.score || one.index - other.index;
     });
-  return ranked[0].score >= 2 ? [steps[ranked[0].index]] : steps;
+  return ranked[0].score >= 2 ? ranked[0].index : null;
 }
 
 // The system prompt tells the model never to show a volunteer an id like
@@ -171,6 +182,19 @@ const GUIDE_RUNTIME = `
         // still answers to the FIRST of them, which by then is usually
         // some other control that shares the word.
         pendingFind: null,
+        // The other controls carrying the ringed control's exact words,
+        // read once per ringed element: the walk reads every control on
+        // the window, and the card redraws on a timer.
+        twinsFor: null,
+        // Every control on the window before the walkthrough's LAST press
+        // (at the start, before any), so a control that press brought into
+        // being can be told from the ones already there. Before the last
+        // press, not before the start: step 1 opens the panel, and then
+        // every card's icon is new at once (a WeakSet: holds nothing alive,
+        // dropped on stop).
+        knownAtStart: null,
+        // The one twin resolution per ringed element, for the redraw timer.
+        twinResolveFor: null,
         // A step the card could not do. The chat window this walkthrough was
         // asked from is one relay away, it can look at the real window, and
         // it wrote these steps in the first place -- so a stuck step goes and
@@ -267,6 +291,12 @@ const GUIDE_RUNTIME = `
                     inset 0 1px 0 rgba(255, 255, 255, 0.1);
                 font: 14px/1.45 system-ui, -apple-system, sans-serif;
                 pointer-events: auto; display: none; overflow: hidden;
+                /* Never taller than the window: a recipe step that is a whole
+                   paragraph (W-51's casting step) pushed the title off the
+                   top and the buttons off the bottom (the user's picture,
+                   2026-10-10, "assistant guiding is overflow and cut"). The
+                   body scrolls; the head and the buttons stay in reach. */
+                max-height: calc(100vh - 32px);
             }
             @supports not (backdrop-filter: blur(1px)) {
                 .card { background: #10151c; }
@@ -280,7 +310,10 @@ const GUIDE_RUNTIME = `
             }
             .title { font-weight: 600; font-size: 13px; }
             .count { font-size: 12px; opacity: 0.7; white-space: nowrap; }
-            .body { padding: 12px; }
+            .body {
+                padding: 12px; overflow: auto;
+                max-height: min(45vh, calc(100vh - 150px));
+            }
             .text { margin: 0 0 4px; }
             .hint { margin: 6px 0 0; font-size: 12px; opacity: 0.65; }
             /* Except when it carries an answer the assistant went and got:
@@ -727,6 +760,73 @@ const GUIDE_RUNTIME = `
     // Every candidate the step offered, in order, until one is actually on
     // screen: a step reads "Press Ctrl+B (or click Bible Lookup in the
     // header)", and only the second half of that is a thing to point at.
+    // One name on forty controls is no aim at all: every file row's dots
+    // and each screen card's are "More Options", the first in the page is
+    // the Documents list's, and a step about the Mini Screen's opened the
+    // Documents menu (2026-10-10). The ring says so, the status says so,
+    // and a press is refused with where the twins are, so the step -- or
+    // the user -- can say which. A pendingFind is the one thing the last
+    // press brought up and is never counted. Cached per element for the
+    // redraw timer; a press reads it fresh.
+    const twinsAt = (match, isFresh) => {
+        if (match === null || match.element === null) {
+            return null;
+        }
+        if (match.isTwinResolved === true) {
+            return { count: 1, panels: [] };
+        }
+        if (isFresh === true || state.twinsFor === null ||
+            state.twinsFor.element !== match.element) {
+            state.twinsFor = {
+                element: match.element,
+                twins: state.pendingFind !== null
+                    ? { count: 1, panels: [] }
+                    : dm.twinsOf(match.element, match.needle),
+            };
+        }
+        return state.twinsFor.twins;
+    };
+    const toTwinWords = (twins, named) => {
+        return twins.count + ' controls are called "' + named + '"' +
+            (twins.panels.length > 0
+                ? ' (in ' + twins.panels.slice(0, 4).join(', ') + ')'
+                : '');
+    };
+
+    // Among controls carrying the same words, the one this walkthrough's
+    // LAST press MADE: a step that adds a display opens its card, and the
+    // next step's "Cast to a TV" is on that card, not on the ones that were
+    // there before (2026-10-10, two display cards on the user's window and
+    // the press refused). Nothing else can tell twins apart, and nothing
+    // else should: one that was already there is a guess either way. Cached
+    // per element for the redraw timer; a press drops the cache, because a
+    // press is what makes things.
+    const resolveTwins = (match) => {
+        if (match === null || match.element === null ||
+            state.knownAtStart === null || state.pendingFind !== null) {
+            return match;
+        }
+        if (state.twinResolveFor !== null &&
+            state.twinResolveFor.element === match.element) {
+            return state.twinResolveFor.result;
+        }
+        let result = match;
+        const twins = dm.twinElementsOf(match.element, match.needle);
+        if (twins.length > 1) {
+            const fresh = twins.filter((one) => {
+                return !state.knownAtStart.has(one);
+            });
+            if (fresh.length === 1) {
+                result = Object.assign({}, match, {
+                    element: fresh[0],
+                    isTwinResolved: true,
+                });
+            }
+        }
+        state.twinResolveFor = { element: match.element, result };
+        return result;
+    };
+
     const findMatch = (step) => {
         if (state.pendingFind !== null) {
             const pending = dm.findBest([state.pendingFind]);
@@ -738,14 +838,14 @@ const GUIDE_RUNTIME = `
         if (wanted.length === 0) {
             return null;
         }
-        return dm.findBest(wanted, {
+        return resolveTwins(dm.findBest(wanted, {
             preferPressSafe: true,
             // A value is only ever written into a value-bearing control. A
             // nearby label can be the best visual match and still cannot
             // accept the value (Font Size's visible words sit beside its
             // range input), so do not let the guide press the label instead.
             onlyBoxes: step.action === 'type',
-        });
+        }));
     };
     const findElement = (step) => {
         const match = findMatch(step);
@@ -1111,7 +1211,15 @@ const GUIDE_RUNTIME = `
             (shown.x < innerWidth / 3 ? 'left' :
                 (shown.x > innerWidth * 2 / 3 ? 'right' : 'center')) +
             ' of this window.' + (layer === null ? '' :
-                ' Something is in front of it right now — close that first.');
+                ' Something is in front of it right now — close that first.') +
+            (() => {
+                const twins = twinsAt(match);
+                return twins === null || twins.count <= 1
+                    ? ''
+                    : ' ' + toTwinWords(twins, named) +
+                        ', so the ring may be on the wrong one — the step ' +
+                        'says which.';
+            })();
         watchedElement = target;
         target.addEventListener(
             isHover ? 'mouseover' : 'click',
@@ -1312,6 +1420,11 @@ const GUIDE_RUNTIME = `
         };
         let match = findMatch(step);
         let target = match === null ? null : match.element;
+        // Matched against the window as the LAST press left it; now, before
+        // this press, the window as it is becomes what the next step's twins
+        // are judged against, and the cache goes with it.
+        state.knownAtStart = new WeakSet(dm.collect());
+        state.twinResolveFor = null;
         // A step reading "right-click the list and choose X" is two actions.
         // While X is not on screen the press opens the menu; once it is, the
         // very same press chooses it. One press, one action, either way --
@@ -1395,6 +1508,17 @@ const GUIDE_RUNTIME = `
                     (step.finds ?? [step.find]).filter(Boolean),
                 ),
             };
+        }
+        if (match !== null) {
+            const twins = twinsAt(match, true);
+            if (twins !== null && twins.count > 1) {
+                return {
+                    done: false,
+                    reason: toTwinWords(twins, nameOf(step, match)) +
+                        ' and the step does not say which',
+                    twins,
+                };
+            }
         }
         // Judged before anything is closed out of its way: a control that is
         // not the card's to press must not cost the user a popup first.
@@ -1622,6 +1746,8 @@ const GUIDE_RUNTIME = `
             state.isDemo = state.wasDemoAsked && state.canDemo;
             state.index = 0;
             state.pendingFind = null;
+            state.knownAtStart = new WeakSet(dm.collect());
+            state.twinResolveFor = null;
             // A restart is usually the assistant's OWN answer to a stuck step
             // -- the fix landing, not a leftover to carry over. Dropping the
             // token here is also what stops a late answer writing on the card
@@ -1666,6 +1792,9 @@ const GUIDE_RUNTIME = `
         stop(reason) {
             state.isRunning = false;
             state.isActing = false;
+            state.twinsFor = null;
+            state.knownAtStart = null;
+            state.twinResolveFor = null;
             state.lastAction = reason ?? 'stopped';
             unwatch();
             // Not left to lapse: a guide that is stopped should
@@ -1731,12 +1860,17 @@ const GUIDE_RUNTIME = `
             const found = match === null || isLoose ? null : match.element;
             const named = step === undefined ? null : nameOf(step, match);
             const foundCover = found === null ? null : coverOf(found);
+            const twins = found === null ? null : twinsAt(match);
             return {
                 isRunning: state.isRunning,
                 isDemo: state.isDemo,
                 canDemo: state.canDemo,
                 find: named,
                 isTargetFound: found !== null,
+                // Found, and so are others with the same words: the ring
+                // and a press may be on the wrong one. Said with the panels
+                // they sit in, for whoever writes the next step.
+                ...(twins !== null && twins.count > 1 ? { twins } : {}),
                 nearest: isLoose
                     ? (dm.labelPartsOf(match.element)[0] ?? '').slice(0, 60)
                     : null,

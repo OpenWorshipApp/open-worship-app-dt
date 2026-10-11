@@ -667,6 +667,34 @@ describe('attachments on a message', () => {
         expect(message.attachRequests).toEqual(['screenshot', 'file']);
     });
 
+    test('a question’s general flag survives a reopen, on a question only', () => {
+        // The follow-up chain under `/btw` is read off it after a restart.
+        expect(
+            loadOneMessage({
+                id: 1,
+                author: 'you',
+                text: 'in khmer please',
+                isGeneral: true,
+            }).isGeneral,
+        ).toBe(true);
+        expect(
+            loadOneMessage({
+                id: 1,
+                author: 'you',
+                text: 'hello',
+                isGeneral: 'yes',
+            }).isGeneral,
+        ).toBeUndefined();
+        expect(
+            loadOneMessage({
+                id: 2,
+                author: 'bot',
+                text: 'hi',
+                isGeneral: true,
+            }).isGeneral,
+        ).toBeUndefined();
+    });
+
     test('old assistant machinery and dead show chips are cleaned on load', () => {
         const message = loadOneMessage({
             id: 1,

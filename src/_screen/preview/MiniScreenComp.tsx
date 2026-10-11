@@ -98,7 +98,12 @@ export default function MiniScreenComp() {
                 keyboard, and had no uid for anything driving the app.
                 `pressElementLikeButton` dispatches the click at the icon's own
                 centre, which is what gives the context menu coordinates to
-                position against -- a plain `.click()` opens it at 0,0. */}
+                position against -- a plain `.click()` opens it at 0,0.
+                Its own name, not `More Options`: that title is on every
+                file row's dots and on each screen card's, and a walkthrough
+                or an agent aiming by the words pressed the first of forty
+                (the Documents list's menu opened for a step about THIS one,
+                2026-10-10). A name with a twin cannot be pressed on purpose. */}
             <i
                 className={
                     'bi bi-three-dots-vertical' +
@@ -106,8 +111,8 @@ export default function MiniScreenComp() {
                 }
                 role="button"
                 tabIndex={0}
-                title={tran('More Options')}
-                aria-label={tran('More Options')}
+                title={tran('Mini Screen Options')}
+                aria-label={tran('Mini Screen Options')}
                 aria-haspopup="menu"
                 onClick={openMiniScreenContextMenu}
                 onKeyDown={pressElementLikeButton}

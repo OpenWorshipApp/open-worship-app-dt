@@ -2,8 +2,8 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74]
-screenshots: 44
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
+screenshots: 45
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-10-10"
 ---
@@ -199,12 +199,18 @@ it is describing.
    that_ is the answer rather than a bare _nothing is showing_; **/screen-show**
    turns the screen on and **/screen-hide** turns every screen off, and both read
    the screens back afterwards, so _the screen is on now_ is never a guess;
-   **/clear-all**, **/clear-background**, **/clear-slide**, **/clear-bible** and
-   **/clear-foreground** press the five clear buttons (**F6**–**F10**);
+   **/screen-clear-all**, **/screen-clear-background**, **/screen-clear-slide**,
+   **/screen-clear-bible** and **/screen-clear-foreground** press the five clear
+   buttons (**F6**–**F10**; the older **/clear-all** … **/clear-foreground**
+   spellings still reach them, and **/clear** on its own empties the chat in
+   front of you — a locked tab keeps its messages and says so);
    **/selected** says which song is selected, which of its slides is up and
    which comes next; **/next** and **/previous** put the next or the previous
    slide of the selected song on the screen — the arrow keys, from the ask box —
    and read the screens back afterwards, saying so when the screen itself is off;
+   **/slide 3** or **/slide verse 1** puts one slide of the selected song on
+   the screen by its number or by the words in its name, and reads the screens
+   back the same way (with no slide named it lists them);
    **/run** says which run sheet (presenting flow) is open in its run player,
    the line the run is on — and the slide inside it — and what the next press
    puts up, or names the sheets there are to open when none is (it presses
@@ -225,8 +231,19 @@ it is describing.
    and _Take it off again_ beside it. Asking in words does the same: _Start a 5
    minute countdown on the screen_ or _Put the time on the screen_ starts it
    straight away with an assistant and offers the screen's own show button, and
-   without one the guide offers one button that starts it; the five **/clear-**
-   commands clear a layer the screen HOLDS even while it is off;
+   without one the guide offers one button that starts it; the five
+   **/screen-clear-** commands clear a layer the screen HOLDS even while it is
+   off. **The commands that work on the Presenter alone** — the screen's show,
+   hide and clears, **/selected**, **/next**, **/previous**, **/run**,
+   **/verse**, **/countdown**, **/marquee** — are offered in the list only while
+   **Asking about** is **Presenter**, and typed under another page they answer
+   _works on the Presenter page_ with **Go to the Presenter** under it
+   (**/commands** names them on one line there); the rest work everywhere,
+   and anything the Reader has is on the Presenter too. Asked in words from
+   the Bible Reader, _Is anything showing on the projector?_ says whether a
+   screen is on and, under the answer, that the main window needs to be on the
+   Presenter page to see what it holds — with the same **Go to the Presenter**
+   button, which switches the main window and leaves the projector untouched;
    **/find Clear Bible** outlines a control in red; **/goto reader** switches the
    main window (the projector is untouched); **/here** says which window is in
    front; **/help clear bible** searches this guide without an assistant;
@@ -253,8 +270,31 @@ it is describing.
    — "by the way", a general question that is not about this app: it is
    answered from the assistant's own knowledge in one go, with nothing of the
    app looked up and no walkthrough offered (the quotes in `/btw "what is
-   holy bible"` are fine), and with no assistant to ask it says so and offers
-   **Open AI settings**, because the built-in guide only knows this app;
+holy bible"` are fine), and with no assistant to ask it says so and offers
+   **Open AI settings**, because the built-in guide only knows this app. A
+   plain question typed under it — _in Khmer please_ — stays general, so the
+   conversation goes on without retyping **/btw** (any **/** command ends
+   that, and a new tab starts fresh); ask the assistant something not about
+   the app without it — or _how can I ask a general question_ — and it tells
+   you to put **/btw** in front, which the 💡 tip line above the box says too;
+   on LM Studio and Ollama a general question goes out with the model's
+   thinking switched off, so it answers in seconds rather than in half a
+   minute; a follow-up that names something of the app — a screen, a
+   display, a slide, a verse — leaves the general chain and is answered as
+   an app question, which is how _How do I cast the virtual display to a TV
+   from my phone?_ under a **/btw** about casting still reaches the
+   **[en:tran:Cast to a TV]** button; and **Escape** in the box, with no
+   suggestion list open, empties it (with the list open it only closes the
+   list). On a server of your own, _Create a lyric file for song "Amazing
+   Grace"_ is looked up and written out by the app itself, with the same
+   **Create** button, because a small local model is not handed the song
+   tools; and on such a server _Turn off the screen for me_, _Turn the screen
+   on_, _show verse 1 on screen for me_ or _put slide 3 on the projector_ are
+   answered from the app's own state at once, with ONE button that does it —
+   _Nothing to turn off_ when no screen is on (never a Clear), **Turn every
+   screen off** when one is, **Put "(1)-Verse 1" on the screen** for a slide
+   the selected song has — and a sentence that is not a slide of the song
+   (_Put John 3:16 on the screen_) goes on to the assistant as before;
    **/commands**
    lists them all. The square buttons under a command's answer are
    commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
@@ -446,7 +486,9 @@ it is describing.
     on the church's own network. On LM Studio, Ollama and llama.cpp,
     **[en:tran:Test]** also writes under each model what that program says of it
     in its own words: **Not loaded in LM Studio right now** / **Not loaded in
-    Ollama right now**, or **Loaded in Ollama. Context length: 4k** with the fix
+    Ollama right now** / **Not loaded in llama.cpp right now** (a `llama-server`
+    started on a folder of models loads one on the first question that names
+    it), or **Loaded in Ollama. Context length: 4k** with the fix
     beside it — load the model again in LM Studio with a **Context Length** of
     32k, set **Settings → Context length** in the Ollama app (or start Ollama with
     `OLLAMA_CONTEXT_LENGTH=32768`), start `llama-server` again with `-c 32768` —
@@ -458,14 +500,49 @@ it is describing.
     a local model_, and a computer that takes more than ten minutes over it is
     told so — _this computer is too slow for that; a general question typed after
     /btw is small enough to answer here_ — rather than that the internet is down.
-    How long a local answer takes is the computer's: a laptop's Ollama read 11
-    words a second on a 4-billion-parameter model and 200 on a 0.6-billion one;
-    a computer with a graphics card reads thousands. Each model has a **[en:tran:Sees pictures]** box
+    A small local model sometimes writes its tool call as words — a
+    `<tool_call>` or `<function=…>` block where the answer should be — and the
+    window reads it as the call it is and carries on, instead of printing the
+    block as the answer; one that does so on its last step is told as _it wrote
+    no answer this time — a smaller question, or a larger model, usually
+    helps_. Measured 2026-10-10 on the user's LM Studio box over the church's
+    network (qwen/qwen3.5-9b at 16k through a proxy on another computer): the
+    projector question answered correctly in about 30 s (two rounds, 6.3 s to
+    the first token of a cold 10k-token round, under a second once cached,
+    ~30 words a second), a follow-up in the same tab ran four rounds in about a
+    minute, and **/btw what is holy bible** took 27.5 s with the model's
+    thinking on (1 069 generated tokens for a 150-token answer) — which is why
+    a general question's thinking is now switched off there.
+    **A server shared by the project's own site needs no typing at all.** An
+    admin who runs a capable computer can put its address in one file,
+    `https://www.openworship.app/llm/info.json` (its shape is in the
+    project's `docs/llm-registry` folder), and every copy of the app reads
+    it when it starts: each server in it stands in the **who answers** list
+    beside your own, its models in the third list, marked _shared by
+    openworship.app_ and _free_ when the file says so, and never appears in
+    **[en:tran:Custom servers]** — it is not yours to edit. It is listed
+    right below that box instead, under **[en:tran:Shared servers]**
+    (**[en:tran:Settings]** → **[en:tran:Others]**): each shared server with
+    a lock beside its name and, opened, its address and its models — to
+    read, with nothing to type in and nothing to delete. The small **↻**
+    beside the **who answers** list reads the file again without a restart
+    (hold the mouse over it to see when it was last read, or why a read
+    failed — a failed read keeps the servers of the last good one), and the
+    **↻** in **[en:tran:Shared servers]** does the same from Settings, with
+    the time of the last read written under it. A key the file carries
+    stays on the computer's own side; neither window ever sees it. 📸
+    How long a local answer takes is the computer's and the program's: one laptop's
+    Ollama read 11 words a second on a 4-billion-parameter model, llama.cpp's own
+    `llama-server` read the very same model file at 53 on the same laptop and
+    answered an app question correctly in three and a half minutes, and a computer
+    with a graphics card reads thousands. Each model has a **[en:tran:Sees pictures]** box
     — tick it for a model that can look at a picture;
     **[en:tran:Load models from server]** ticks it for you from LM Studio's and
     Ollama's own word (a `vision` model). A model the server does not have, an
     address that answers nothing, and
-    a model that cannot use tools (Ollama says so; llama.cpp wants `--jinja`, vLLM
+    a server whose API takes no tools at all (GPT4All's) is asked once more
+    without them and the answer says it came from the guide text alone, with
+    nothing checked in the window; a model that cannot use tools (Ollama says so; llama.cpp wants `--jinja`, vLLM
     and SGLang `--enable-auto-tool-choice --tool-call-parser`) are each said in the
     chat as that, never as _not available to the account_. If the server's computer
     is switched off or goes to sleep in the middle of a question, the answer stops
@@ -652,7 +729,7 @@ it is describing.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-10-10).
 :::
