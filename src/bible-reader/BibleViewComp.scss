@@ -58,6 +58,11 @@ $bible-view-actions-fade: 20px;
     // passage's own type size, so the row follows it.
     height: auto;
     min-height: var(--app-action-rail-line);
+    // Never shrunk by the card's column. An explicit `min-height` replaces a
+    // flex item's automatic content floor, so a chapter longer than the pane
+    // squeezed this row down to that 34px and the title, at any larger type
+    // size, was cut off top and bottom.
+    flex: none;
     // What the header paints over the card: Bootstrap's cap wash on the
     // reader's `.card-header`, nothing on the lookup's. The actions' ground
     // re-composes the same two layers, because the wash is translucent -- a
