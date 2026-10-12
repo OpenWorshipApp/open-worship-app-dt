@@ -705,7 +705,7 @@ export function genNoticeWords(
 // and a window first given an older one (by a server started before the
 // change) must be given this one instead of being handed words it cannot
 // read.
-const NOTICE_RUNTIME_VERSION = 2;
+const NOTICE_RUNTIME_VERSION = 3;
 
 const NOTICE_RUNTIME = `
 (() => {
@@ -730,23 +730,61 @@ const NOTICE_RUNTIME = `
     // edge nothing else of this kind uses.
     root.innerHTML = \`
         <style>
+            /* Glass, not a slab (2026-10-11, the user's picture of the pill
+               over the Reader's footer: "I want to see through"). It lands
+               on the bottom row of whatever panel is there, and at 94% it
+               hid the very control the assistant had just pointed out. The
+               blur and the words' own shadow keep it readable over a busy
+               row; where the engine cannot blur, the tint goes back to
+               solid rather than leaving text floating on the app.
+               Taken out of paint at rest, not only faded: the pill stays
+               mounted for the life of the page, and a blur under a pill
+               nobody can see is work a weak machine may still pay for. */
             .pill {
                 position: fixed; bottom: 14px; left: 50%; translate: -50% 0;
                 display: flex; align-items: center; gap: 8px;
                 max-width: calc(100vw - 32px); box-sizing: border-box;
                 padding: 6px 14px 6px 10px; border-radius: 999px;
-                background: rgba(16, 21, 28, 0.94); color: #f2f5f8;
+                background: rgba(16, 21, 28, 0.4); color: #f2f5f8;
+                backdrop-filter: blur(10px) saturate(150%);
+                -webkit-backdrop-filter: blur(10px) saturate(150%);
                 border: 1px solid rgba(255, 187, 51, 0.55);
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.12);
                 font: 13px/1.45 system-ui, -apple-system, sans-serif;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
                 white-space: nowrap; pointer-events: none;
-                opacity: 0; transition: opacity 0.2s ease-out;
+                opacity: 0; visibility: hidden;
+                transition: opacity 0.2s ease-out, visibility 0s linear 0.2s;
             }
-            .pill[data-shown="yes"] { opacity: 1; }
+            .pill[data-shown="yes"] {
+                opacity: 1; visibility: visible;
+                transition: opacity 0.2s ease-out;
+            }
             .dot {
                 width: 8px; height: 8px; border-radius: 50%;
                 background: #ffbb33; flex: 0 0 auto;
                 animation: beat 1s ease-in-out infinite;
+            }
+            /* A light shell gets light glass: white words on a see-through
+               pill over a white panel are a guess. The app's own theme
+               setting is what this query answers to in every window
+               (nativeTheme.themeSource). */
+            @media (prefers-color-scheme: light) {
+                .pill {
+                    background: rgba(248, 249, 251, 0.45); color: #10151c;
+                    border-color: rgba(176, 112, 0, 0.75);
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+                    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+                }
+                .dot { background: #c77d00; }
+            }
+            @supports not (backdrop-filter: blur(1px)) {
+                .pill { background: rgba(16, 21, 28, 0.94); }
+                @media (prefers-color-scheme: light) {
+                    .pill { background: rgba(248, 249, 251, 0.96); }
+                }
             }
             /* A faded pill stays mounted for the life of the page, and a
                beat nobody can see is work a weak machine still pays for. */
@@ -755,7 +793,7 @@ const NOTICE_RUNTIME = `
                 0%, 100% { opacity: 1; } 50% { opacity: 0.25; }
             }
             .words { overflow: hidden; text-overflow: ellipsis; }
-            .what { opacity: 0.75; }
+            .what { opacity: 0.85; }
         </style>
         <div class="pill">
             <span class="dot"></span>

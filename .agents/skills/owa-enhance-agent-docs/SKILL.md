@@ -57,10 +57,11 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    `.claude/` with `node extra-work/sync-agent-mirror.mjs` (the gate's
    `agentDocsMirror.test.ts` fails until it matches); never reconcile it by
    hand. Then run
-   `node extra-work/build-knowledge.mjs`, with one condition: under
-   `npm run electron:dev` the rebuild relaunches the dev app. When a dev app is
-   up and another session may be driving it, defer the rebuild and say so in
-   the report. Change `tools/owa-devtools-mcp/questions/*.json` only when
+   `node extra-work/build-knowledge.mjs`. It clears only
+   `electron-build/knowledge`, needs no restart, and relaunches nothing:
+   `electron:watch` ignores that folder since 2026-10-11 (`AD-16`; an
+   `electron:dev` started before that change still relaunches until it is
+   restarted). Change `tools/owa-devtools-mcp/questions/*.json` only when
    user-facing knowledge moved (a recipe, a control, a feature). An agent-only
    note does not move it.
 5. **Ships in plaintext.** Everything under `.claude/` lands on every operator's
@@ -75,6 +76,12 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    someone else has dirtied only with exact, minimal Edits, and never rewrite
    it whole. If a file in mirror drift has someone else's uncommitted
    `.claude/` edit, report it and leave it: they copy it when they finish.
+   The same for CODE nobody has committed: the audit lists a note or a recipe
+   that is due *only because of an uncommitted file* apart from the ones a
+   commit moved (2026-10-11, `AD-18`). Your own file: read the note now and
+   stamp it with `--allow-dirty`. Another session's: name the file in the
+   report and leave the note — a stamp against it is refused, because it
+   would not outlive their next save.
 
 ## Invocation
 
@@ -141,8 +148,7 @@ to `owa-enhance`. This skill files the lead and names where it went.
    -10`. Record the dirty docs and whose they look like.
 2. Is an app published? Check `<temp>/open-worship-app-cdp/*.json` and whether
    `electron:dev` / `nodemon` is running. You need an app only to confirm
-   runtime claims live. Knowing whether one runs also tells you whether the
-   knowledge rebuild is safe now.
+   runtime claims live.
 3. What is already known: [the backlog](./references/backlog.md), the newest
    report under `test-results/owa-enhance-agent-docs/`, and the `docs` items
    in `owa-enhance`'s backlog.
@@ -156,7 +162,8 @@ node .claude/skills/owa-enhance-agent-docs/scripts/session-friction.mjs       # 
 
 Both are read-only, need no app and no network, and write nothing.
 `audit-agent-docs.mjs` takes `--check=<a,b>`, `--doc=<path prefix>`, `--all`,
-`--with-ledgers` and `--json`. `session-friction.mjs` takes `--sessions=N`,
+`--with-ledgers` and `--json` (and `--allow-dirty` beside a stamp).
+`session-friction.mjs` takes `--sessions=N`,
 `--since=YYYY-MM-DD`, `--dir=`, `--all` and `--json`. Every line either prints
 is a **lead**.
 
@@ -272,7 +279,9 @@ check prints 0 — `paths`, `symbols`, `tools`, `scripts`, `env`, `ids`,
 when each lead still printed is
 accounted for in one of three places: `references/killed-leads.json` with its
 *why*, the report's *needs a decision* list, or a regression routed to its
-skill. A lead that was only *reported* is the next run's same lead. That is
+skill. A note or a recipe listed as *due only because of an uncommitted file*
+is accounted for by naming that file in the report, when the file is not this
+session's own. A lead that was only *reported* is the next run's same lead. That is
 how documents stayed out of date through several runs: each one fixed the
 first few lines of every list and described the rest.
 
@@ -346,7 +355,7 @@ then ask.
 - Scan: <n> docs · <n> leads → <n> confirmed (<fixed> fixed · <asked> to ask · <reg> regressions · <hist> history)
 - Manual: <n> recipes read · <n> edited · <n> stamped · <n> steps need a live look (routed)
 - Audit after the fixes: <every drift check 0 | what is left, and where each lead is filed>
-- Knowledge rebuild: done | DEFERRED (<why>) · mirror: in sync | <n> left (<why>)
+- Knowledge rebuild: done | not run (<why>) · mirror: in sync | <n> left (<why>)
 
 ## 1. Drift fixed            — doc:line · was → now · the evidence (commit, file)
 ## 2. Drift needing a decision — the same, plus the choice
@@ -417,7 +426,9 @@ restates the code, or a lead nobody confirmed.
   `manual` (the recipes and the coverage rows they are verified by). The
   leverage signals are `budget`, `coverage` and `prose-rules`; `staleness`
   is the notes due a read. `--stamp-manual=<ids | all>` and
-  `--stamp-notes=<paths | @list>` are its only writes: the review ledgers.
+  `--stamp-notes=<paths | @list>` are its only writes: the review ledgers;
+  either is refused against uncommitted code unless `--allow-dirty` says the
+  changes are the stamper's own.
 - [scripts/apply-manual-edits.mjs](./scripts/apply-manual-edits.mjs): checks
   proposed manual or matrix edits (each `old` once, no overlap, every proof in
   the code), then writes them. [scripts/find-label.mjs](./scripts/find-label.mjs):

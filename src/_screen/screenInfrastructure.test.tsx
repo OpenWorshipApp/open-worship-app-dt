@@ -91,11 +91,6 @@ vi.mock('../server/appHelpers', () => ({
     electronSendAsync: electronSendAsyncMock,
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppEffect: vi.fn(),
-    useAppStateAsync: vi.fn(() => [false, vi.fn()]),
-}));
-
 vi.mock('../bible-list/BibleItem', () => ({
     default: class BibleItem {
         static readonly validate = vi.fn();

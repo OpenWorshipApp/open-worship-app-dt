@@ -76,10 +76,6 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     },
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppEffect: (effect: any) => effect,
-}));
-
 describe('AppDocumentEditorComp', () => {
     let container: HTMLDivElement;
     let root: Root;

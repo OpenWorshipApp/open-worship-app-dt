@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, useEffect } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -162,10 +162,6 @@ vi.mock('../helper/loggerHelpers', () => ({
 
 vi.mock('../lang/langHelpers', () => ({
     tran: tranMock,
-}));
-
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppEffect: useEffect,
 }));
 
 // The yt-dlp callers resolve the media pack through a dynamic import; `vi.mock`

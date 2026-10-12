@@ -208,9 +208,9 @@ npx vitest run --config vitest.config.ts --sequence.shuffle   # order dependence
 npx vitest run --config vitest.config.ts --no-file-parallelism
 ```
 
-Also sweep the dead mocks CLAUDE.md names: four test files still
-`vi.mock('.../debuggerHelpers')`, a module that became `appHooks` — inert, and
-it silently fails to stub `useAppEffect`.
+A `vi.mock('.../debuggerHelpers')` is a dead path — that module became
+`appHooks` — and stubs nothing; the four that were left went on 2026-10-11
+(`references/recipes.md` §7 says how to stub `useAppEffect` for real).
 
 ### 6. Prove it, then gate
 

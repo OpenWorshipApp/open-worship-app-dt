@@ -206,8 +206,8 @@ What holds everywhere:
 - **Every edit under `.claude/` — `CLAUDE.md`, `rules/`, `memory/`, `skills/` —
   re-runs `node extra-work/build-knowledge.mjs` in the SAME change**, or the
   chatbot keeps answering from the old text. Run it alone while the app is up
-  (`npm run build` deletes `electron-build/`); under `npm run electron:dev` it
-  relaunches the dev app. **Whenever the knowledge changes,
+  (`npm run build` deletes `electron-build/`); it needs no restart and
+  relaunches nothing. **Whenever the knowledge changes,
   `tools/owa-devtools-mcp/questions/*.json` changes in the same commit**, and the
   manual names a control as `[en:tran:Clear Bible]`, never as an English label.
 - **An edited MCP `.mjs` needs a fresh server**: the running host cached its
@@ -296,7 +296,9 @@ that OPENS a panel carries the same words as the panel it opened.
   `shown` / `hidden` (painted away, revealable) / `gone` (no box) — reports
   `showsOnHover` on a match, and FORCES the hover before ringing, clicking
   or typing: the page's own `:hover` rules re-aimed at a `data-owa-hover`
-  attribute, one reveal at a time, always released. Driving the app by
+  attribute, one reveal at a time, always released. One shut behind a
+  footer's three dots answers `revealBy` instead: no hover opens it, press
+  that control first. Driving the app by
   hand, remember a control can be real, clickable and invisible at once.
   How a walkthrough step hovers, types into a range or runs a demo:
   `.claude/rules/agent-tools.md`.
@@ -374,18 +376,6 @@ virtual displays, intercom and casting are in `.claude/rules/screen-mirror.md`.
   purpose. The hook also has a second, semantically different use as a
   **staleness oracle** for post-`await` state — see the memory
   `useappcurrentref-race-guard`; do not "clean up" such refs as redundant.
-- **Test-suite mock gotcha.** Four test files still
-  `vi.mock('.../debuggerHelpers')` — a dead path since that module became
-  `appHooks`; inert but confusing, and it silently fails to stub `useAppEffect`:
-  `src/_screen/screenInfrastructure.test.tsx`,
-  `src/app-document-editor/AppDocumentEditorComp.test.tsx`,
-  `src/server/appHelpers.test.tsx`, `src/event/KeyboardEventListener.test.tsx`
-  (plus a stale `describe('debuggerHelpers')` label in
-  `src/helper/appHooks.test.tsx`). Repoint them to `appHooks` via a partial mock
-  (`importOriginal`) so `useAppEffect` is overridden to plain `useEffect` while
-  sibling exports like `useAppCurrentRef` (used by `useWindowEvent`) survive.
-  `appProvider` mocks need `systemUtils.isDev` because `appHooks` reads it at
-  module load.
 
 ## Project skills
 

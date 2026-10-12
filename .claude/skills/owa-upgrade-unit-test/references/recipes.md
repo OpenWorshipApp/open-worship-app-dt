@@ -213,18 +213,23 @@ parameterised test on any module of the same shape.
   `mockReturnValue` set in one test leaks into the next when the instance is
   pinned.
 
-## 7. Dead mocks to clean up as you pass
+## 7. Stubbing `useAppEffect`, and the dead mocks that were here
 
-Four test files still `vi.mock('.../debuggerHelpers')` — a module that became
-`appHooks`. Inert, but it silently fails to stub `useAppEffect`:
+`useAppEffect` is plain `useEffect` unless the `appProvider` mock says
+`systemUtils.isDev: true` — `appHooks` reads that at module load, so the mock
+needs `systemUtils` at all. To stub it, mock `appHooks` partially
+(`importOriginal`) so sibling exports like `useAppCurrentRef` survive. A
+`vi.mock('.../debuggerHelpers')` is a dead path: that module became
+`appHooks`, and the mock stubs nothing.
+
+Four test files carried one until 2026-10-11 (`AD-17`):
 `src/_screen/screenInfrastructure.test.tsx`,
 `src/app-document-editor/AppDocumentEditorComp.test.tsx`,
-`src/server/appHelpers.test.tsx`, `src/event/KeyboardEventListener.test.tsx`
-(plus a stale `describe('debuggerHelpers')` label in
-`src/helper/appHooks.test.tsx`). Repoint to `appHooks` via a partial mock
-(`importOriginal`) so `useAppEffect` becomes plain `useEffect` while sibling
-exports like `useAppCurrentRef` survive. `appProvider` mocks need
-`systemUtils.isDev`, because `appHooks` reads it at module load.
+`src/server/appHelpers.test.tsx`, `src/event/KeyboardEventListener.test.tsx`.
+They were DELETED, not repointed: every one of those suites has `isDev` false
+or unset, so the hook was already plain `useEffect` there and a repointed stub
+would have been one no test could fail on. The five suites ran 43 tests
+before and after.
 
 ## 8. Event timing
 

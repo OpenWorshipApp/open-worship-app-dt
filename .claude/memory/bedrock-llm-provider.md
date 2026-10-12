@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-11T21:19:33.920Z
+  modified: 2026-10-12T02:43:52.232Z
 ---
 
 Amazon Bedrock became the fifth chatbot provider on 2026-10-09
@@ -43,7 +43,7 @@ remembered:
 - **Ordered by recommendation, not capability**: on this route OpenAI models
   get no prompt caching on Chat Completions (Responses only), a round is
   ~16 000 tokens, and the spend guard stops at $1/hour — so GPT-6 Astra
-  ($11/$55) sits sixth. Not yet graded on the question corpus.
+  ($11/$55) sits sixth of the route's nine. Not yet graded on the question corpus.
 - Prices are the US Standard In-Region rates; where AWS publishes no cached
   rate a cached token is priced as a full one (errs high).
 - The key is a bearer, no SigV4: long-term `ABSK` + base64 (`BedrockAPIKey-…`

@@ -516,6 +516,29 @@ describe('the banner in the page', () => {
     expect(pillRule).not.toMatch(/\btop:/);
   });
 
+  // "I want to see through" (2026-10-11): at 94% the pill hid the bottom row
+  // of whatever panel it landed on.
+  it('is glass, and solid only where the engine cannot blur', () => {
+    show(words);
+    const { css } = readPill();
+    const pillRule = /\.pill \{([^}]*)\}/.exec(css)[1];
+    expect(pillRule).toMatch(/\n\s*backdrop-filter: blur\(/);
+    const alpha = /background: rgba\([^)]*,\s*([\d.]+)\)/.exec(pillRule)[1];
+    expect(Number(alpha)).toBeLessThanOrEqual(0.5);
+    const fallback = /@supports not \(backdrop-filter: blur\(1px\)\) \{([^}]*)\}/;
+    expect(fallback.exec(css)[1]).toContain('rgba(16, 21, 28, 0.94)');
+  });
+
+  // The pill is never unmounted, so the blur must not outlive the fade.
+  it('paints nothing at rest', () => {
+    show(words);
+    const { css } = readPill();
+    expect(/\.pill \{([^}]*)\}/.exec(css)[1]).toContain('visibility: hidden');
+    expect(/\.pill\[data-shown="yes"\] \{([^}]*)\}/.exec(css)[1]).toContain(
+      'visibility: visible',
+    );
+  });
+
   it('replaces a banner an older server left in the page', () => {
     window.__owaAgentNotice = {
       show() {

@@ -17,7 +17,7 @@
         "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs && node extra-work/build-knowledge.mjs && node extra-work/build-info.mjs",
         "electron:build:watch": "tsc -p electron.tsconfig.json -w",
         "electron": "cross-env NODE_ENV=development electron .",
-        "electron:watch": "nodemon --exec \"npm run electron\" --watch electron-build --watch tools/owa-devtools-mcp",
+        "electron:watch": "nodemon --exec \"npm run electron\" --watch electron-build --watch tools/owa-devtools-mcp --ignore electron-build/knowledge",
         "electron:dev": "npm run electron:build && concurrently -k \"npm run electron:build:watch\" \"npm run electron:watch\"",
         "install": "bash extra-work/build.sh",
         "build": "npm run vite:build && npm run electron:build",

@@ -262,7 +262,10 @@ ledger), the notes due a read (`staleness`), and three leverage signals
 hash of each recipe or note and of the code it names, written by
 `--stamp-manual` / `--stamp-notes`, so a document found correct leaves the
 list until its words or its code move — before that the same 29 recipes and
-139 notes were listed run after run and the top few read. A run is done when
+139 notes were listed run after run and the top few read. One that is due
+only because of an uncommitted file is listed apart, and a stamp against
+uncommitted code is refused without `--allow-dirty` (`AD-18`: eight notes went
+due mid-run from a file another session had not committed). A run is done when
 the audit prints 0, and `src/test-setup/manualRecipes.test.ts` holds the
 manual's two hard signals in the gate. **A big run ends with a second read**
 (`scripts/second-read.mjs`, `references/second-read.md`): every correction

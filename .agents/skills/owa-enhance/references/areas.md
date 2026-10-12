@@ -291,8 +291,8 @@ agent tooling (`.mcp.json`, `tools/owa-devtools-mcp/bin.mjs`, discovery).
 `.github/` holds no CI workflow when `triage.mjs` finds none —
 then `npm run lint` on one machine is the only gate the code ever passes.
 
-**Leads:** CI workflows; `.only` / `.skip` left in tests; dead
-`debuggerHelpers` mocks; test files per root (`triage.mjs`); and, from `docs`,
+**Leads:** CI workflows; `.only` / `.skip` left in tests; a mock of a module
+path that is gone; test files per root (`triage.mjs`); and, from `docs`,
 mirror drift and a stale knowledge index — the second a chore done by hand.
 
 **Research** — wall-clock is the measure, so write every duration down:

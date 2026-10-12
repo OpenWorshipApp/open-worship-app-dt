@@ -22,13 +22,6 @@ vi.mock('../helper/helpers', () => ({
     cloneJson: <T,>(value: T) => structuredClone(value),
 }));
 
-vi.mock('../helper/debuggerHelpers', async () => {
-    const React = (await vi.importActual('react')) as any;
-    return {
-        useAppEffect: React.useEffect,
-    };
-});
-
 import KeyboardEventListener, {
     KeyboardLayerContext,
     PlatformEnum,

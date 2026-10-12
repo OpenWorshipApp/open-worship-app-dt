@@ -72,7 +72,10 @@ heredoc while applying AD-01. **Change.** The always-loaded index line for
 the scratchpad, run the file), and the note covers the quote half. **Cost.**
 +75 always-loaded bytes. **Proof on apply.** The mechanism. Re-run
 `session-friction.mjs` after a week against 13/40. **Route.** This skill.
-Found and applied in run `20261008-2315`.
+Found and applied in run `20261008-2315`. **Re-measured** in run
+`20261011-2249`: 9 of the 29 sessions since 2026-10-09 (31%, against 32%),
+once each. The index line has not moved it; a hook for one retry a session
+was judged not worth every session's cost.
 
 ## AD-04 · `owa_click` loses its target when a press opens or closes a window — `open` · S3 · L4
 
@@ -80,7 +83,12 @@ Found and applied in run `20261008-2315`.
 `owa_screenshot` "UnknownVizError" in 4/40. Neither is in the MC or EC
 backlog. **Change.** File both as `MC-xx` with the masked signatures. **Cost.**
 0. **Proof on apply.** The MC items exist. **Route.** `owa-enhance-mcp`. Found
-in run `20261008-2315`.
+in run `20261008-2315`. **Re-measured** in run `20261011-2249`: the click
+signature in 5/40 (×11), the screenshot one in 3/40 (×4). One more wall for
+the same filing: `owa_screenshot` aimed at the chatbot window is refused in 4
+of the 29 sessions since 2026-10-09, and the refusal's way out (leave the page
+argument unset) pictures a different window, where `select_page` +
+`take_screenshot` is what works.
 
 ## AD-05 · `user-workflows.md` is re-read whole — `open` · S3 · L4 · L2
 
@@ -88,7 +96,11 @@ in run `20261008-2315`.
 line alone is 1 420 characters. **Change.** A `W-xx` → line index at the top,
 or a SKILL.md line: `grep -n '^### W-'`, then Read with an offset. **Cost.**
 0. **Proof on apply.** The hot-read count at the next friction run. **Route.**
-`owa-robot-test`. Found in run `20261008-2315`.
+`owa-robot-test`. Found in run `20261008-2315`. **Re-measured** in run
+`20261011-2249`: 542 KB, read in 12/40 sessions (×27). The dated head — the
+1 410 lines before the first recipe — is 220 659 B, 40% of the file, and
+`docs:gen` reads one line of it (`workflowsVersion:`). The sharper change:
+move all but the newest entry to a history file beside it.
 
 ## AD-06 · Screen Mirror area gets a scoped rule; its index lines become hooks — `done` · S3 · L1 · L2
 
@@ -222,3 +234,62 @@ exactly what to watch (12 of them need a second device, a TV, an account,
 PowerPoint, a person or a model). And the read of a guide page's newest copy,
 held by 33 unit tests, failed on every real page and would have handed an
 older page over as the newest (`EC-222`, `MC-58`).
+
+## AD-16 · A knowledge rebuild no longer relaunches the dev app — `done` 2026-10-11 · S3 · L4 · L3
+
+**Signal.** `build-knowledge.mjs` ran in 23 of 40 sessions (×37). Under
+`electron:dev`, nodemon's `--watch electron-build` relaunched the app on every
+one, for a bundle `help.mjs` and `tran.mjs` read per call. "The browser was
+restarted… page ids have changed" hit 6 of 40 sessions (×8), and run
+`20261011-2249` could not rebuild beside another session. **Change.**
+`--ignore electron-build/knowledge` on `electron:watch`. The relaunch caveat
+left CLAUDE.md, `rules/agent-knowledge.md`, memory
+`claude-dir-edits-need-knowledge-rebuild` and this skill's Non-negotiable 4.
+**Cost.** 0 on the gate. **Proof.** The repo's own nodemon in a scratch folder
+shaped like the repo, given each script's arguments: the old script restarted
+its program on a write to `electron-build/knowledge` (1 → 2 launches), the new
+one did not (1 → 1) and still did for `electron-build/main.js` and for the MCP
+package (→ 2 → 3). **Not seen.** The running `electron:dev` was another
+session's and was not restarted, so the same-pid check on the real app is
+still owed; that instance keeps the old watch until it is restarted.
+
+## AD-17 · The four dead `debuggerHelpers` mocks are gone, and so is the paragraph — `done` 2026-10-11 · S3 · L2 · L3
+
+**Signal.** CLAUDE.md "Test-suite mock gotcha": 783 B in every session for a
+fix nobody had made; four test files still mocked the dead path. **Change.**
+The four mocks DELETED, not repointed as the paragraph asked: each of those
+suites has `isDev` false or unset, so `useAppEffect` was already plain
+`useEffect` there, and a repointed stub would have been one no test could
+fail on. The stale `describe` label reads `appHooks`. The paragraph left
+CLAUDE.md; `owa-upgrade-unit-test/references/recipes.md` §7 keeps what
+lasts (how to stub the hook, and that the mock needs `systemUtils`).
+**Proof.** The five suites ran 43 tests before and 43 after; the grep finds 0.
+With AD-16's clause and this run's drift fix, CLAUDE.md went 28 129 → 27 440 B.
+**Route.** `owa-upgrade-unit-test`.
+
+## AD-18 · A note due only because of an uncommitted file is listed apart — `done` 2026-10-11 · S3 · L3
+
+**Signal.** Run `20261011-2249`: eight notes went due mid-run, all from one
+file another session had not committed. §3b could not print 0 while anyone
+was mid-work on a file the notes name, and a stamp taken then would not have
+outlived that session's next save. **Change.** `audit-agent-docs.mjs` reads
+the note's code again with every uncommitted file as the last commit has it;
+when that is the hash in the ledger, the lead goes on a line of its own
+(*due only because of an uncommitted file*), for notes and for recipes. A
+stamp against uncommitted CODE is refused unless `--allow-dirty` says the
+changes are the stamper's own; documents a note names do not count, or every
+docs run would pass the flag. **Cost.** 0 always-loaded; one `git show` per
+uncommitted named file. **Proof.** On the live tree the eight moved to the new
+line and *due* read 0; a stamp of one of them exited 2 and left the ledger
+byte for byte. With two ledger hashes set wrong, both were listed as DUE —
+the one naming the uncommitted file included — and the other seven stayed
+apart; the ledger was then restored. **Limit.** The script cannot tell whose
+the work is: the line says what to do for each case.
+
+## AD-19 · A comment that miscounted the Add Action menu — `done` 2026-10-11 · S4 · drift
+
+`presentingFlowActionHelpers.ts` said seventeen of the menu's *nineteen*
+entries clear something. The menu holds twenty-four (17 clears, Show and Hide,
+5 run actions); nineteen is its screen actions. It came in with the rewrite of
+"thirteen of the menu's twenty" in the first full pass. Asked, then fixed in
+run `20261011-2249`.

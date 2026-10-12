@@ -40,18 +40,16 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   the app is up (`npm run build` / `electron:build` `rm -rf`s all of
   `electron-build/`, the running app's own main entry; this one clears only
   `knowledge/`). No restart is needed — `listKnowledgeEntries()` re-reads
-  `index.json` per call — unlike a change to the MCP `.mjs` modules. **Under
-  `npm run electron:dev` it restarts the app anyway**: `electron:watch` is
-  nodemon on `electron-build` AND `tools/owa-devtools-mcp`, so a knowledge
-  rebuild — or any save in that package — relaunches a dev app another session
-  may be driving, and that relaunch can quit at once; touch a watched file to
-  get it back (2026-09-14, three sessions on one dev app). With no nodemon
-  config it watches `js,mjs,cjs,json` only, so what relaunches it is the
-  rebuild's `index.json`. An edit that leaves a note's index entry alone —
-  past its first 3 000 characters of body and 1 500 of `#`/`**` lines, title
-  and front matter untouched — can be copied as that one `.md` to the same
-  path under `electron-build/knowledge/internal/` instead: the same bundle,
-  and no relaunch (2026-09-19).
+  `index.json` per call — unlike a change to the MCP `.mjs` modules. **Nor
+  does it relaunch a dev app any more** (2026-10-11, `AD-16`):
+  `electron:watch` is nodemon on `electron-build` AND `tools/owa-devtools-mcp`
+  with `--ignore electron-build/knowledge`. Until then the rebuild's
+  `index.json` restarted an app another session might be driving (2026-09-14,
+  three sessions on one dev app; the rebuild ran in 23 of 40 sessions), for a
+  bundle read per call. Any save in the MCP package still relaunches it, and
+  that relaunch can quit at once; touch a watched file to get it back. An
+  `electron:dev` started before the change keeps the old watch until it is
+  restarted.
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Bible]`, never as an English
   label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in

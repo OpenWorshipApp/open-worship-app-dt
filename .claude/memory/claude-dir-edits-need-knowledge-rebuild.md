@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95a672a-48b7-47e0-a94d-10946a3ee48d
-  modified: 2026-09-14T17:48:11.678Z
+  modified: 2026-10-12T02:59:26.955Z
 ---
 
 Every change to `.claude/CLAUDE.md`, `.claude/rules/**`, `.claude/memory/**` or
@@ -25,12 +25,14 @@ PREVIOUS text and the chatbot keeps answering from notes that no longer exist.
   which is the running app's own main entry (see
   [[build-kills-running-dev-app]]). `build-knowledge.mjs` only clears
   `electron-build/knowledge/`, so the live app survives it — under
-  `npm run dev`. **Under `npm run electron:dev` it does not**: `electron:watch`
-  is nodemon on `electron-build` AND `tools/owa-devtools-mcp`, so the rebuild
-  relaunches the app, and that relaunch can quit at once (touch a watched file
-  to bring it back; [[mcp-tool-edit-two-processes]]). A peer session reported
-  exactly that on 2026-09-14 — nodemon, `tsc -w` and Vite still up, no
-  `electron.exe` — so tell anyone else driving that dev app before running it.
+  `npm run dev`, and since 2026-10-11 under `npm run electron:dev` too:
+  `electron:watch` (nodemon on `electron-build` AND `tools/owa-devtools-mcp`)
+  now carries `--ignore electron-build/knowledge`. Before that the rebuild
+  relaunched the app, and that relaunch could quit at once — a peer session
+  reported exactly that on 2026-09-14, nodemon, `tsc -w` and Vite still up, no
+  `electron.exe`. A save in the MCP package still relaunches it
+  ([[mcp-tool-edit-two-processes]]), and an `electron:dev` started before the
+  change keeps the old watch until it is restarted.
 - **No app restart is needed** for a knowledge-only refresh:
   `listKnowledgeEntries()` in `tools/owa-devtools-mcp/help.mjs` re-reads
   `index.json` on every `owa_help_search` / `owa_help_page` call and caches

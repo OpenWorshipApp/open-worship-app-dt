@@ -826,7 +826,7 @@ export function checkIsPresentingFlowActionGroup(
  * The `Add Action` menu, as it is READ.
  *
  * Everything that ERASES is folded behind one `Clear Screen` row, and nothing
- * else is: seventeen of the menu's nineteen entries clear something, so left
+ * else is: seventeen of the menu's twenty-four entries clear something, so left
  * inline they were the menu, and the two questions an operator opens it with —
  * "clear something" or "do something" — could not be told apart at a glance.
  * Inside it, the five whole-layer clears first, in the mini screen bar's own

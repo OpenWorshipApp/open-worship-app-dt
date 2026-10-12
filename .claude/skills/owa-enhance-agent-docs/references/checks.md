@@ -213,6 +213,14 @@ a run is not done while one is above 0; the gate holds the first two
   commit rule: whoever edited it wrote that against the day's code. *Fix:* read it against
   the code (the reading checks below), fix it, `--stamp-notes=<path>`. Hot
   data files (`src/lang/data/**`, `package*.json`) are ignored.
+  **Due only because of an uncommitted file** is a line of its own (`AD-18`,
+  2026-10-11; the manual's *recipes due* has the same one): read with every
+  uncommitted file as the last commit has it, the note's code is what it was
+  checked against, so only work in progress moved under it. The script cannot
+  tell whose. Yours: read the note and stamp with `--allow-dirty`. Another
+  session's: leave it and name the file in the report — a stamp against
+  uncommitted CODE is refused (documents a note names do not count: they are
+  the run's own to edit).
 - `prose-rules`: paragraphs in CLAUDE.md and the rules that say *must /
   never / always / same change* and name no test, script, gate or hook.
 

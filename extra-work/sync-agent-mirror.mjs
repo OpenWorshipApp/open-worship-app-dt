@@ -23,7 +23,7 @@
 //
 // What it never does: write a Codex preamble for a new skill (that is a
 // judgement -- AGENTS.md says what goes in it), rebuild the chatbot's
-// knowledge (`node extra-work/build-knowledge.mjs` relaunches a dev app), or
+// knowledge (`node extra-work/build-knowledge.mjs`, a step of its own), or
 // touch `.codex/config.toml` beyond checking it names every `.mcp.json` server.
 
 import {

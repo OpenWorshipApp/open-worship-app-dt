@@ -11,6 +11,8 @@
 //                                    as checked against the code (or `all`)
 //   node .../audit-agent-docs.mjs --stamp-notes=<path,path | @list.txt>   the
 //                                    same for notes, rules and skill files
+//   node .../audit-agent-docs.mjs --stamp-notes=… --allow-dirty   also when the
+//                                    code they name is uncommitted (your own)
 //
 // The agent documents are what `extra-work/build-knowledge.mjs` ships as the
 // chatbot's internal corpus and what every Claude Code / Codex session reads:
@@ -36,6 +38,12 @@
 // and `references/notes-reviewed.json`, that a recipe or a note was read
 // against the code as both are now. It works with the app shut and costs
 // nothing to re-run.
+//
+// Uncommitted work is somebody's work in progress, and may be another
+// session's. A note or a recipe that is due ONLY because of it is listed apart
+// (read with those files as the last commit has them, it is the code it was
+// checked against), and a stamp against uncommitted code is refused unless
+// --allow-dirty says the changes are the stamper's own.
 //
 // A lead a run already confirmed as history or as an external name is listed
 // in the skill's `references/killed-leads.json` (check + doc + name, never a
@@ -78,6 +86,7 @@ const argList = process.argv.slice(2);
 const isJson = argList.includes('--json');
 const isAll = argList.includes('--all');
 const isWithLedgers = argList.includes('--with-ledgers');
+const isAllowDirty = argList.includes('--allow-dirty');
 const readArgValue = (name) => {
     return argList
         .find((arg) => arg.startsWith(`--${name}=`))
@@ -260,6 +269,58 @@ function runGit(gitArgs) {
     } catch {
         return '';
     }
+}
+
+// Paths with an uncommitted change, staged or not.
+let dirtySetCache = null;
+function readDirtySet() {
+    if (dirtySetCache === null) {
+        dirtySetCache = new Set(
+            runGit(['status', '--porcelain'])
+                .split('\n')
+                .filter(Boolean)
+                .map((line) => line.slice(3).replace(/^"|"$/g, '')),
+        );
+    }
+    return dirtySetCache;
+}
+
+// A file as the last commit has it, or null when it was not there -- or is
+// too big to read, which is what `readText` answers for the copy on disk.
+function readHeadText(relPath, maxBytes = MAX_READ_BYTES) {
+    try {
+        const text = execFileSync('git', ['show', `HEAD:${relPath}`], {
+            cwd: REPO_ROOT,
+            encoding: 'utf-8',
+            maxBuffer: 256 * 1024 * 1024,
+            stdio: ['ignore', 'pipe', 'ignore'],
+        });
+        return Buffer.byteLength(text) > maxBytes ? null : text;
+    } catch {
+        return null;
+    }
+}
+
+// The script cannot tell whose work it is; the session reading this can.
+const UNCOMMITTED_TEXT =
+    'only uncommitted work moved under them. Your own: read them now and ' +
+    "stamp with --allow-dirty. Another session's: leave them until it is committed";
+
+function describeDirtyList(dirtyList) {
+    return (
+        `uncommitted: ${dirtyList.slice(0, 3).join(' ')}` +
+        (dirtyList.length > 3 ? ' …' : '')
+    );
+}
+
+function refuseDirtyStamp(rowList) {
+    console.error(
+        'Not stamped -- the code these name has uncommitted changes, so a ' +
+            'read against it may be a read against unfinished work:\n' +
+            rowList.map((row) => `  ${row}`).join('\n') +
+            "\nPass --allow-dirty when those changes are this session's own.",
+    );
+    process.exit(2);
 }
 
 function toRepoPath(fullPath) {
@@ -1837,6 +1898,30 @@ function hashRepoFile(relPath) {
     return fileHashCache.get(relPath);
 }
 
+const headHashCache = new Map();
+function hashHeadFile(relPath) {
+    if (!headHashCache.has(relPath)) {
+        const text = readHeadText(relPath, NOTE_READ_BYTES);
+        headHashCache.set(relPath, text === null ? 'gone' : hashNoteText(text));
+    }
+    return headHashCache.get(relPath);
+}
+
+// What is in the files a note names. With `headSet`, those files are read as
+// the last commit has them and the rest as they are on disk.
+function hashNoteCode(fileList, headSet = null) {
+    return hashNoteText(
+        fileList
+            .map((one) => {
+                const hash = headSet?.has(one)
+                    ? hashHeadFile(one)
+                    : hashRepoFile(one);
+                return `${one}\n${hash}`;
+            })
+            .join('\0'),
+    );
+}
+
 function readNoteState(relPath, relPathSet) {
     // Files only. A note that says `tools/` names a folder, which has no
     // content to hash and, handed to `git diff`, lists everything under it.
@@ -1850,23 +1935,17 @@ function readNoteState(relPath, relPathSet) {
         // Which files it names, apart from what is in them: a note reworded
         // without naming anything new is still a note read against that code.
         files: hashNoteText(fileList.join('\0')),
-        code: hashNoteText(
-            fileList.map((one) => `${one}\n${hashRepoFile(one)}`).join('\0'),
-        ),
+        code: hashNoteCode(fileList),
     };
 }
 
 function runStalenessCheck(docList, claimList) {
     const referenceMap = collectDocReferences(docList, claimList);
     const reviewMap = readNotesReviewMap();
-    const dirtySet = new Set(
-        runGit(['status', '--porcelain'])
-            .split('\n')
-            .filter(Boolean)
-            .map((line) => line.slice(3).replace(/^"|"$/g, '')),
-    );
+    const dirtySet = readDirtySet();
     const commitList = readCommitList();
     const rowList = [];
+    const uncommittedRowList = [];
     for (const doc of docList) {
         if (!checkIsAudited(doc) || doc.kind === 'historical') {
             continue;
@@ -1883,6 +1962,26 @@ function runStalenessCheck(docList, claimList) {
             // decides, whatever was reworded since.
             if (review.text === state.text || review.files === state.files) {
                 if (review.code !== state.code) {
+                    // Only work in progress moved under it: with every
+                    // uncommitted file read as the last commit has it, this
+                    // is the very code it was checked against. Reading it now
+                    // would be reading unfinished work, maybe another
+                    // session's, and the stamp would not outlive their next
+                    // save -- eight notes went due this way mid-run on
+                    // 2026-10-11, from one file nobody had committed.
+                    const dirtyList = state.fileList.filter((one) => {
+                        return dirtySet.has(one);
+                    });
+                    if (
+                        dirtyList.length > 0 &&
+                        hashNoteCode(state.fileList, dirtySet) === review.code
+                    ) {
+                        uncommittedRowList.push({
+                            at: doc.relPath,
+                            text: describeDirtyList(dirtyList),
+                        });
+                        continue;
+                    }
                     const changedList = runGit([
                         'diff',
                         '--name-only',
@@ -1950,6 +2049,11 @@ function runStalenessCheck(docList, claimList) {
                 (one, other) => other.commitCount - one.commitCount,
             ),
         },
+        {
+            label: 'notes due only because of an uncommitted file',
+            text: UNCOMMITTED_TEXT,
+            items: uncommittedRowList,
+        },
     ];
 }
 
@@ -1970,6 +2074,22 @@ function stampNotesReview(pathArg, docList, claimList) {
         process.exit(2);
     }
     const referenceMap = collectDocReferences(docList, claimList);
+    if (!isAllowDirty) {
+        // CODE only: the documents a note names are this run's own to edit,
+        // and a flag every docs run has to pass would say nothing.
+        const dirtySet = readDirtySet();
+        const refusedList = wantedList.flatMap((relPath) => {
+            const dirtyList = [...(referenceMap.get(relPath) ?? [])]
+                .filter((one) => dirtySet.has(one) && !docSet.has(one))
+                .sort();
+            return dirtyList.length > 0
+                ? [`${relPath}: ${dirtyList.join(', ')}`]
+                : [];
+        });
+        if (refusedList.length > 0) {
+            refuseDirtyStamp(refusedList);
+        }
+    }
     const reviewMap = readNotesReviewMap();
     const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
     const reviewed = new Date().toLocaleDateString('sv-SE');
@@ -2232,8 +2352,8 @@ function hashText(text) {
 }
 
 // What a recipe is checked AGAINST: its own words, and the files its Verify
-// rows cite.
-function readRecipeState(recipe, sourceMap) {
+// rows cite. With `headSet`, those files are read as the last commit has them.
+function readRecipeState(recipe, sourceMap, headSet = null) {
     let verifyIdList = [];
     for (const line of recipe.lines) {
         if (/^_?Verify:/.test(line.trim())) {
@@ -2247,7 +2367,10 @@ function readRecipeState(recipe, sourceMap) {
     ].sort();
     const codeText = fileList
         .map((relPath) => {
-            return `${relPath}\n${readText(relPath, MANUAL_READ_BYTES) ?? 'gone'}`;
+            const text = headSet?.has(relPath)
+                ? readHeadText(relPath, MANUAL_READ_BYTES)
+                : readText(relPath, MANUAL_READ_BYTES);
+            return `${relPath}\n${text ?? 'gone'}`;
         })
         .join('\0');
     return {
@@ -2305,9 +2428,11 @@ function runManualCheck() {
     const at = (recipe, offset = 0) => {
         return `${MANUAL_PATH}:${recipe.start + offset + 1}`;
     };
+    const dirtySet = readDirtySet();
     const dead = [];
     const plain = [];
     const due = [];
+    const uncommitted = [];
     for (const recipe of recipeList) {
         const deadSet = new Set();
         const plainSet = new Set();
@@ -2357,14 +2482,28 @@ function runManualCheck() {
                 }
             }
         });
-        const reason = readReviewReason(
-            reviewMap[recipe.id],
-            readRecipeState(recipe, sourceMap),
-        );
+        const review = reviewMap[recipe.id];
+        const state = readRecipeState(recipe, sourceMap);
+        const reason = readReviewReason(review, state);
         if (reason === null) {
             // Read against these very words: what is still plain was left
             // plain on purpose (another program's label, the English-only
             // help window, a word leaned on).
+            continue;
+        }
+        // The notes' rule, for a recipe: its words as checked, and its code
+        // moved only by work nobody has committed.
+        const dirtyList = state.fileList.filter((one) => dirtySet.has(one));
+        if (
+            review !== undefined &&
+            review.text === state.text &&
+            dirtyList.length > 0 &&
+            readRecipeState(recipe, sourceMap, dirtySet).code === review.code
+        ) {
+            uncommitted.push({
+                at: at(recipe),
+                text: `${recipe.id}: ${describeDirtyList(dirtyList)}`,
+            });
             continue;
         }
         due.push({ at: at(recipe), text: `${recipe.id}: ${reason}` });
@@ -2410,6 +2549,11 @@ function runManualCheck() {
             items: due,
         },
         {
+            label: 'manual recipes due only because of an uncommitted file',
+            text: UNCOMMITTED_TEXT,
+            items: uncommitted,
+        },
+        {
             label: 'controls those recipes name in plain English',
             text: 'make each a template or leave it on purpose; the stamp settles it',
             items: plain.sort((one, other) => other.count - one.count),
@@ -2442,6 +2586,24 @@ function stampManualReview(idArg, deadItemList) {
         process.exit(2);
     }
     const sourceMap = readMatrixSourceMap();
+    if (!isAllowDirty) {
+        const dirtySet = readDirtySet();
+        const refusedList = recipeList.flatMap((recipe) => {
+            if (!idList.includes(recipe.id)) {
+                return [];
+            }
+            const dirtyList = readRecipeState(
+                recipe,
+                sourceMap,
+            ).fileList.filter((one) => dirtySet.has(one));
+            return dirtyList.length > 0
+                ? [`${recipe.id}: ${dirtyList.join(', ')}`]
+                : [];
+        });
+        if (refusedList.length > 0) {
+            refuseDirtyStamp(refusedList);
+        }
+    }
     const reviewMap = readManualReviewMap();
     const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
     const reviewed = new Date().toLocaleDateString('sv-SE');
