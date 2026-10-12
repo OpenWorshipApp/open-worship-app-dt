@@ -23,12 +23,12 @@ workflowsVersion: "2026-10-11"
    searched for marked** in each one, so you can see at a glance why a verse is there.
    The reference — _Psalm 23:1_ — leads each result; clicking anywhere on the result
    opens that verse. 📸
-3. The bar under the search box says how many verses matched — **74 verses found**.
+3. The bar under the results, at the bottom of the panel, says how many verses matched — **74 [en:tran:verses found]**.
    Use it to judge whether to narrow the search: a common word runs to tens of
    thousands. If a completed search has no matches, the panel says
    **[en:tran:No verses found]**. Try different words or widen the book filter.
    Clearing the search shows **[en:tran:No data available]**. 📸
-4. Results arrive in blocks of twenty, each headed **Results 1–20**, **Results 21–40**
+4. Results arrive in blocks of twenty, each headed **[en:tran:Results] 1–20**, **[en:tran:Results] 21–40**
    and so on. The numbers at the bottom right move you through them: a **filled** number
    is a block already on screen, so clicking it scrolls straight there; a **plain**
    number has not been fetched yet, and clicking it loads that block in below. Only the
@@ -39,12 +39,12 @@ workflowsVersion: "2026-10-11"
    **…** between two steps opens that stretch — so any block is a click or two away
    without the app ever drawing a thousand numbers at once. 📸
 5. To search part of the Bible only, click the **[en:tran:All Books]** button
-   and pick a book — **Shift**-click to pick several, or choose **Old Testament** /
-   **New Testament** for a whole half. Once a filter is on, the button shows a funnel
-   and the books you chose; while it says **All Books** it stays plain, so a narrowed
+   and pick a book — **Shift**-click to pick several, or choose **[en:tran:Old Testament]** /
+   **[en:tran:New Testament]** for a whole half. Once a filter is on, the button shows a funnel
+   and the books you chose; while it says **[en:tran:All Books]** it stays plain, so a narrowed
    search never hides in plain sight. 📸
-   The **⋮ More Options** button beside it offers **Reset Selected Books** to go back
-   to the whole Bible, and **Reset Search Data**, which rebuilds the search index —
+   The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
+   to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
 
 ::: details 🤖 Robot-verified — coverage traceability

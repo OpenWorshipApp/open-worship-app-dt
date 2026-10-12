@@ -1,13 +1,13 @@
 import { useCanvasItemContext } from '../CanvasItem';
 import { BoxEditorNormalImageRenderComp } from './BoxEditorNormalViewImageModeComp';
 import { BoxEditorNormalHtmlRenderComp } from './BoxEditorNormalViewHtmlModeComp';
-import { BoxEditorNormalTextRender } from './BoxEditorNormalViewTextModeComp';
-import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
-import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
-import { BoxEditorNormalAudioRender } from './BoxEditorNormalViewAudioModeComp';
-import { BoxEditorNormalYouTubeRender } from './BoxEditorNormalViewYouTubeModeComp';
-import { BoxEditorNormalWebsiteRender } from './BoxEditorNormalViewWebsiteModeComp';
-import { BoxEditorNormalCameraRender } from './BoxEditorNormalViewCameraModeComp';
+import { BoxEditorNormalTextRenderComp } from './BoxEditorNormalViewTextModeComp';
+import { BoxEditorNormalBibleRenderComp } from './BoxEditorNormalViewBibleModeComp';
+import { BoxEditorNormalVideoRenderComp } from './BoxEditorNormalViewVideoModeComp';
+import { BoxEditorNormalAudioRenderComp } from './BoxEditorNormalViewAudioModeComp';
+import { BoxEditorNormalYouTubeRenderComp } from './BoxEditorNormalViewYouTubeModeComp';
+import { BoxEditorNormalWebsiteRenderComp } from './BoxEditorNormalViewWebsiteModeComp';
+import { BoxEditorNormalCameraRenderComp } from './BoxEditorNormalViewCameraModeComp';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 
 // The one and only place a canvas item's content is rendered inside the
@@ -21,21 +21,21 @@ export default function BoxEditorCanvasItemRenderComp() {
         case 'image':
             return <BoxEditorNormalImageRenderComp />;
         case 'video':
-            return <BoxEditorNormalVideoRender />;
+            return <BoxEditorNormalVideoRenderComp />;
         case 'audio':
-            return <BoxEditorNormalAudioRender />;
+            return <BoxEditorNormalAudioRenderComp />;
         case 'youtube':
-            return <BoxEditorNormalYouTubeRender />;
+            return <BoxEditorNormalYouTubeRenderComp />;
         case 'website':
-            return <BoxEditorNormalWebsiteRender />;
+            return <BoxEditorNormalWebsiteRenderComp />;
         case 'camera':
-            return <BoxEditorNormalCameraRender />;
+            return <BoxEditorNormalCameraRenderComp />;
         case 'text':
-            return <BoxEditorNormalTextRender />;
+            return <BoxEditorNormalTextRenderComp />;
         case 'html':
             return <BoxEditorNormalHtmlRenderComp />;
         case 'bible':
-            return <BoxEditorNormalBibleRender />;
+            return <BoxEditorNormalBibleRenderComp />;
         default:
             return <BoxEditorNormalViewErrorRenderComp />;
     }

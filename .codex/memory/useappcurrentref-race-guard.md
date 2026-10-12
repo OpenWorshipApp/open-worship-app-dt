@@ -7,7 +7,7 @@ metadata:
   modified: 2026-08-30T00:00:00.000Z
 ---
 
-CLAUDE.md documents `useAppCurrentRef` only as the callback-identity codemod.
+CLAUDE.md documents `useAppCurrentRef` as the callback-identity codemod and points here for the rest.
 Since `c68236c4` ("handle all racing value", 2026-08-15) it has a second,
 semantically different job that looks identical in a diff: a **staleness
 oracle** for state set after an `await`.

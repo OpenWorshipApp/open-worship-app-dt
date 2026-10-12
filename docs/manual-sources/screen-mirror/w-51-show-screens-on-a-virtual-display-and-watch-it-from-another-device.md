@@ -15,8 +15,8 @@ watch it — in a web browser, or as a video in a media player — without a
 cable or a second copy of the app.
 1. On the Presenter, click **[en:tran:Mini Screen Options]** — the ⋮ at the
    bottom right of the Mini Screen list — and in the menu it opens click
-   **[en:tran:Virtual Screens Manager]**; the floating panel opens on its
-   **[en:tran:Virtual Displays]** tab. The screen card's display picker gets
+   **[en:tran:Virtual Screens Manager]**, then pick the floating panel's
+   **[en:tran:Virtual Displays]** tab (it opens on the tab it was last on). The screen card's display picker gets
    there too: its last row, **[en:tran:Manage Virtual Displays]**, opens the
    same tab.
 2. Click **[en:tran:Add Virtual Display]**. A display named
@@ -64,8 +64,9 @@ cable or a second copy of the app.
    marked with a star and its QR code already open: this computer's best
    network (a router's 192.168 before a VPN or a virtual adapter), and any
    internet address you opened. Each address has **[en:tran:Copy address]**
-   and **[en:tran:QR code]** (the code holds the whole link). Everything else
-   folds under **[en:tran:More addresses]**:
+   and **[en:tran:QR code]** (the code holds the whole link). The starred
+   address sits under **[en:tran:Watch in a browser]**; every other address,
+   and the MP4 ones, fold under **[en:tran:More addresses]**. The two kinds:
    - **[en:tran:Watch in a browser]** — `http://<address>:<port>/vd/<number>/`.
      The browser draws the display itself from what the app sends it, so it is
      the fastest way to watch, and this computer encodes nothing for it.
@@ -80,8 +81,12 @@ cable or a second copy of the app.
    only **[en:tran:This computer]** addresses are listed and nobody else can
    watch. Turned on, it lists **[en:tran:This network]** addresses; turning
    on **[en:tran:Open to the internet]** as well (the same option as Screen
-   Mirror's, with the same warning) lists **[en:tran:Internet]** ones. No code
-   is asked for: anyone who has the address can watch.
+   Mirror's, with the same warning) lists **[en:tran:Internet]** ones. On this
+   computer's own networks no code is asked for: anyone who has the address
+   can watch. A viewer from the internet is sent nothing until you click
+   **[en:tran:Allow connection]** on its row under **[en:tran:Watching now]**
+   — or, with **[en:tran:Guest access]** set to
+   **[en:tran:Require connection code]**, until it gives the code.
 
    **[en:tran:Use HTTPS]**, under it (off until turned on), lists the browser
    addresses for other devices as `https://`, on the same port. A phone's
@@ -164,7 +169,7 @@ cable or a second copy of the app.
    the permission when its page reloads, until the switch is turned off, the
    viewer is disconnected, or the app restarts. A media player has no switch.
 10. **[en:tran:Delete Virtual Display]** asks first. The screens on it are
-    hidden and go back to the main monitor, as when a monitor is unplugged,
+    hidden and go back to a real monitor — the first one other than the main monitor, or the main monitor when there is no other — as when a monitor is unplugged,
     and everyone watching is disconnected.
 
 ::: details 🤖 Robot-verified — coverage traceability

@@ -115,7 +115,7 @@ by its visible text, `owa_list_ui` enumerates the visible controls of a window,
 `owa_click` / `owa_type` act on a control by its label (`owa_click` right-
 or double-clicks with `button` / `clicks`; `owa_press_key`, `owa_drag` and
 `owa_menu` press a shortcut, drag by label and use the menu bar), `owa_goto_page`
-switches the main window between presenter and reader, and `owa_app_state`
+switches the main window between presenter, reader and editor, and `owa_app_state`
 reports which window, page, language and theme are live — all without a
 snapshot. `owa_hide_screens` takes content
 off a projector, so confirm with the user before calling it. For a client pinned
@@ -419,9 +419,12 @@ all of them are in `.claude/rules/project-skills.md`.
   loaded files only (memory `coverage-number-is-loaded-files-only`). No shared
   `appProvider` mock may come back, and a test must be able to fail.
 - **`owa-enhance-agent-docs`** — the agent docs themselves (this file, rules,
-  memory, skills, the Codex mirror): fixes what the code contradicts and
+  memory, skills, the Codex mirror) and the manual's recipes the 🤖 answers
+  from: fixes what the code contradicts and
   proposes `AD-xx` ways agents could help more. Code is the truth for facts,
   a doc for decisions; history stays history.
+- **`review-stagged-change`** / **`review-unstagged-change`** — review only the
+  staged diff (the index), or only what is not staged yet; performance first.
 
 **The Codex mirror.** `.claude/` is the source of truth. After any edit under
 it, `node extra-work/sync-agent-mirror.mjs` copies it into `.codex/` and

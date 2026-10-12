@@ -17,7 +17,7 @@ fetched from hymnary.org / Cyber Hymnal / Timeless Truths by web agents,
 2026-08-24) as `{id, title, authors, year, sources[], verses[], refrain}`; the
 `.ts` of the same name is now only the type plus a re-export of that JSON, so
 every importer and the lazy chunk are untouched by the move. The Documents
-**Add Items** menu always shows **Import From Public Domain Songs** — no
+list's ⋮ menu always shows **Import From Public Domain Songs** — no
 sign-in, no network, production builds included. The catalog loads lazily
 behind the popup's lazy panel; the search filter is deliberately UNdebounced
 (local data, the debounce rule is for expensive work).

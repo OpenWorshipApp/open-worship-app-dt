@@ -31,7 +31,8 @@ a **Widgets** submenu with a checkbox per collapsible pane, and
   window whose widgets the items describe.
 - **`isDisableQuickResize` actors are excluded** — they cannot collapse at all, so
   the background media/audio split, the presenter control-center, the bible
-  previewer, the lyric stage previewer and the bible-lookup body never appear.
+  previewer and the lyric and document stage previewers never appear (the bible-lookup
+  body dropped the flag and registers its panes).
 - **Panes inside a floating panel are excluded too** (2026-10-06):
   `FloatingWidgetComp` wraps its content in `WidgetMenuExcludedContext`
   (`src/resize-actor/widgetMenuContext.ts`), read by `RenderResizeActorItemComp`.

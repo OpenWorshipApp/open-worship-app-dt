@@ -30,6 +30,22 @@ because `scripts/triage.mjs` reads it from there:
 
 ---
 
+## EN-49 · A slide rendered from inside the sanitizer crashed the one in flight — `done` · S1 · reliability
+
+**Evidence.** Reported with a screenshot: `TypeError: Cannot set properties of null (setting 'memoizedState')` in `BoxEditorNormalHtmlRenderComp`, then "Reload is needed". React runs off Node's `setImmediate` in every window here, and on such a stack Chromium's parser runs waiting promise callbacks before `DOMParser.parseFromString` returns; EN-39 had put `sanitizeHtml` inside a hook of `genSlideHtml`'s static render, so a second slide's render landed inside the first one's `useMemo`. **Shipped.** The raw policy runs before the static render and is handed down through `CanvasItemSafeHtmlContext`; memory `static-render-must-not-parse-html`. **Proof.** `basicItems.coverage.test.tsx` throws the same TypeError on the old shape; an offscreen Electron renderer does too (old shape from `setImmediate`: throws; new: both slides render); both render paths read back correct on a scratch instance.
+
+## EN-50 · Fifteen function components were not named `*Comp` — `done` · S4 · code-health
+
+**Evidence.** CLAUDE.md: every React function component ends in `Comp`. Read against the code on 2026-10-11: `BiblePreview`, `NotePreview`, `MenuIsModifying`, `RenderApp`, `SelectDefaultDirButton`, `RenderFileItemsWithColorNote`, `RenderItem`, `RenderScreenBackground` and seven `BoxEditorNormal*Render` do not, so the dev server stamps none of them with `data-react-comp-name`. **Shipped** (the same run, `20261011-2330`): all fifteen renamed with their imports, mocks and the one coverage row that named one — 92 whole-word replacements in 23 files. **Proof.** Typecheck and the full gate; on a scratch instance the text box of a presented slide now carries `data-react-comp-name="BoxEditorNormalTextRenderComp"`, where it had no stamp.
+
+## EN-51 · A text box being edited animated `outline-color` without end — `done` · S4 · performance
+
+**Evidence.** `.app-box-editor.editable` in `src/slide-editor/canvas/box/boxEditorHelpers.tsx` runs an `infinite` animation of a paint property, which CLAUDE.md forbids on anything mounted at rest (EN-09, EN-10, EN-19). It ran for as long as a box was left open for typing. **Shipped** (the same run, `20261011-2330`): three blinks, then the steady outline and glow — the remedy EN-09, EN-10 and EN-19 used. **Proof.** The rule read back from a scratch instance's Slide Editor carries `animation-iteration-count: 3`; no trace was taken.
+
+## EN-52 · `cameraHelpers` reached `tran` and the toast helpers through a broad import — `done` · S3 · performance
+
+**Evidence.** Memory `foreground-camera-deviceid-rotates`: the module loads in the screen window and must stay a leaf. It took `electronSendAsync` from `server/appHelpers`, which imports `showSimpleToast`, `tran` and so `SettingManager`. **Shipped.** The import is the leaf `server/electronSendHelpers`, which holds the same function. **Proof.** Typecheck; `cameraHelpers.test.tsx` (its mock moved with the import).
+
 ## EN-40 · Refused virtual-display sockets need error handling — `done` · S2 · security
 
 **Shipped (2026-10-07).** The blocked-viewer upgrade installs an error handler

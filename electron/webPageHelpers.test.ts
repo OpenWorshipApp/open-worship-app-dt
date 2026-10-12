@@ -48,6 +48,7 @@ function createWindow() {
                 toDataURL: () => 'data:image/png;base64,picture',
             })),
             executeJavaScript: vi.fn(),
+            executeJavaScriptInIsolatedWorld: vi.fn(),
             on: vi.fn((name: string, callback: (...args: any[]) => unknown) => {
                 listeners.set(name, callback);
             }),
@@ -204,6 +205,65 @@ describe('readWebPage', () => {
         expect(state.window.setContentSize).not.toHaveBeenCalled();
         expect(result.text).toBe('still readable');
         expect(result.imageDataUrl).toContain('data:image/png');
+    });
+
+    // A raw.githubusercontent.com file is served with a policy that forbids
+    // all script in the page, the reader's included.
+    test('reads a page that forbids scripts from an isolated world', async () => {
+        state.window.webContents.executeJavaScript.mockRejectedValue(
+            new Error('Script failed to execute'),
+        );
+        state.window.webContents.executeJavaScriptInIsolatedWorld.mockResolvedValue(
+            { title: '', text: 'the newest copy', totalWords: 3 },
+        );
+
+        const result = await finishRead(
+            readWebPage('https://example.com', { maxChars: 20000 }),
+        );
+
+        expect(result.text).toBe('the newest copy');
+        const [worldId, scripts, userGesture] =
+            state.window.webContents.executeJavaScriptInIsolatedWorld.mock
+                .calls[0];
+        // Never the page's own world, nor Electron's isolation world.
+        expect([0, 999]).not.toContain(worldId);
+        expect(scripts).toEqual([
+            {
+                code: state.window.webContents.executeJavaScript.mock
+                    .calls[0][0],
+            },
+        ]);
+        expect(userGesture).toBe(true);
+        expect(mocks.attemptClosing).toHaveBeenCalledWith(state.window);
+    });
+
+    test('leaves the isolated world alone when the page runs the read', async () => {
+        state.window.webContents.executeJavaScript.mockResolvedValue({
+            text: 'answer',
+        });
+
+        await finishRead(readWebPage('https://example.com'));
+
+        expect(
+            state.window.webContents.executeJavaScriptInIsolatedWorld,
+        ).not.toHaveBeenCalled();
+    });
+
+    test('says so in a sentence when neither world can read the page', async () => {
+        state.window.webContents.executeJavaScript.mockRejectedValue(
+            new Error('Script failed to execute'),
+        );
+        state.window.webContents.executeJavaScriptInIsolatedWorld.mockRejectedValue(
+            new Error('Script failed to execute'),
+        );
+
+        const pending = readWebPage('https://example.com');
+        const assertion = expect(pending).rejects.toThrow(
+            'would not let its text be read',
+        );
+        await vi.runAllTimersAsync();
+        await assertion;
+        expect(mocks.attemptClosing).toHaveBeenCalledWith(state.window);
     });
 
     test('refuses an address before creating a browser window', async () => {

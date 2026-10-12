@@ -171,7 +171,9 @@ W-37 step 8.
 opens the Markdown Preview window, and a `.own` row expands onto its notes (each
 opening the Bible Note window read-only) and its marked verses with their
 highlights and comments — see [[markdown-preview-window]].
-Everything else still follows the rule below.
+Since 2026-09-21 a `.pdf` row is a third: its press opens the app's own popup on
+Chromium's PDF viewer (`openPdfPreview`, `src/helper/pdfPreviewHelpers.ts`), and **Open**
+in its menu is the OS route. Everything else still follows the rule below.
 
 **Using a row: single click → `appProvider.systemUtils.openFile(filePath)`**
 (OS default app). No drag payload, no double-click-present, no screen

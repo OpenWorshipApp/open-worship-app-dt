@@ -16,23 +16,23 @@ vi.mock('./canvas/box/BoxEditorNormalViewImageModeComp', () => ({
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewVideoModeComp', () => ({
-    BoxEditorNormalVideoRender: () => <div>video-render</div>,
+    BoxEditorNormalVideoRenderComp: () => <div>video-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewAudioModeComp', () => ({
-    BoxEditorNormalAudioRender: () => <div>audio-render</div>,
+    BoxEditorNormalAudioRenderComp: () => <div>audio-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewYouTubeModeComp', () => ({
-    BoxEditorNormalYouTubeRender: () => <div>youtube-render</div>,
+    BoxEditorNormalYouTubeRenderComp: () => <div>youtube-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewWebsiteModeComp', () => ({
-    BoxEditorNormalWebsiteRender: () => <div>website-render</div>,
+    BoxEditorNormalWebsiteRenderComp: () => <div>website-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewCameraModeComp', () => ({
-    BoxEditorNormalCameraRender: () => <div>camera-render</div>,
+    BoxEditorNormalCameraRenderComp: () => <div>camera-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewHtmlModeComp', () => ({
@@ -40,11 +40,11 @@ vi.mock('./canvas/box/BoxEditorNormalViewHtmlModeComp', () => ({
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewTextModeComp', () => ({
-    BoxEditorNormalTextRender: () => <div>text-render</div>,
+    BoxEditorNormalTextRenderComp: () => <div>text-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewBibleModeComp', () => ({
-    BoxEditorNormalBibleRender: () => <div>bible-render</div>,
+    BoxEditorNormalBibleRenderComp: () => <div>bible-render</div>,
 }));
 
 import CanvasItemRendererComp from './CanvasItemRendererComp';

@@ -10,7 +10,6 @@ const fileSourceGetInstance = vi.fn((filePath: string) => ({
 }));
 const playMediaElementMock = vi.fn();
 const releaseMediaElementMock = vi.fn();
-const applyTextStyleMock = vi.fn();
 const getLangDataAsyncMock = vi.fn(async (locale: string) => ({
     fontFamily: `Font-${locale}`,
     genCss: () => `@font-face { font-family: Font-${locale}; }`,
@@ -145,11 +144,6 @@ vi.mock('./managers/screenEventHelpers', () => ({
 vi.mock('./managers/ScreenBibleManager', () => ({
     default: class ScreenBibleManager {
         static readonly textStyleTextColor = '#123456';
-        static readonly textStyleTextFontSize = 64;
-
-        static applyTextStyle(style: unknown) {
-            applyTextStyleMock(style);
-        }
     },
 }));
 
@@ -239,6 +233,11 @@ describe('screen render helpers', () => {
         expect(html).toContain('Genesis 1:1-2');
         expect(html).toContain('data-kjv-verse-key="GEN-1-1"');
         expect(html).toContain('data-kjv-verse-key="GEN-1-2"');
+        // The family chosen in Bible Properties first, the language's own
+        // behind it -- and alone while nothing is chosen.
+        expect(html).toContain(
+            'font-family:var(--bible-font-family, Font-en-US), Font-en-US',
+        );
     });
 
     test('builds Bible screen markup and wires verse selection handlers', async () => {
@@ -756,38 +755,6 @@ describe('screen render helpers', () => {
         } finally {
             vi.unstubAllGlobals();
         }
-    });
-
-    test('styling helpers expose current Bible style and apply updates', async () => {
-        const { useStylingColor, useStylingFontSize } =
-            await import('./preview/stylingHelpers');
-
-        let setColorToStyle: ((color: `#${string}`) => void) | undefined;
-        let setFontSizeToStyle: ((size: number) => void) | undefined;
-
-        function HookHost() {
-            const [color, setColor] = useStylingColor();
-            const [fontSize, setFontSize] = useStylingFontSize();
-            setColorToStyle = setColor;
-            setFontSizeToStyle = setFontSize;
-            return (
-                <div data-color={color} data-font-size={fontSize.toString()} />
-            );
-        }
-
-        const html = renderToStaticMarkup(<HookHost />);
-        expect(html).toContain('data-color="#123456"');
-        expect(html).toContain('data-font-size="64"');
-
-        setColorToStyle?.('#abcdef');
-        setFontSizeToStyle?.(72);
-
-        expect(applyTextStyleMock).toHaveBeenNthCalledWith(1, {
-            color: '#abcdef',
-        });
-        expect(applyTextStyleMock).toHaveBeenNthCalledWith(2, {
-            fontSize: 72,
-        });
     });
 
     test('shows deterministic preview icon colors per screen id', async () => {

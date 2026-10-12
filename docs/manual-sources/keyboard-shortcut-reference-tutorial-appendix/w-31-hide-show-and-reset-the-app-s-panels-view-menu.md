@@ -19,7 +19,7 @@ menu bar does the same thing by name, which is easier when the strip is hard to 
 And the divider itself has a right-click menu that does it in place (steps 7–9) —
 the only way in a popup window, whose menu bar is hidden.
 
-1. Open **View** on the top menu bar → **Widgets** (Widgets). 📸
+1. Open **View** on the top menu bar → **[en:tran:Widgets]**. 📸
    You get one tick-box per panel on the page you are looking at, e.g. on the
    presenter: `App Presenter Left` / `App Presenter Middle` / `App Presenter Right`,
    `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
@@ -41,11 +41,11 @@ the only way in a popup window, whose menu bar is hidden.
 
 **Put everything back:**
 
-5. **[en:tran:Reset Widgets Size]**. Answer **Yes** to
+5. **[en:tran:Reset Widgets Size]**. Answer **[en:tran:Yes]** to
    `Are you sure to reset every widget size and reopen the widgets?` 📸
 6. Every panel returns to the width and height it had when the app was installed, and
    **any panel you had collapsed is reopened**. This happens immediately — no reload.
-   Answer **No** and nothing changes.
+   Answer **[en:tran:No]** and nothing changes.
 
 **Or use the divider between two panels** — no menu bar needed, so this also works
 in a popup window:
@@ -60,7 +60,7 @@ in a popup window:
    or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
    divider between an upper and a lower panel. A collapsed panel has no divider — if
    one of the two is already a strip, click the strip first.
-8. Click the green **Document List** strip — the panel comes straight back.
+8. Click the green **[en:tran:Document List]** strip — the panel comes straight back.
 9. Right-click the **divider between Document List and Presenting Flow List** again and
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
    shipped with. Double-clicking the divider does the same. The View menu's

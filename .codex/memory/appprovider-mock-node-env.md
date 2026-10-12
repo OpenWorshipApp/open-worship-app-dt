@@ -41,18 +41,19 @@ invariants are unit-untested today. The same commit added
 `server.deps.inline: ['open-lyric', /monaco-editor/]` to `vitest.config.ts`;
 `package.json` test scripts were unchanged.
 
-**Why it matters:** with nothing on `globalThis.provider`, the module throws
-`TypeError: Cannot read properties of undefined (reading 'isPageReader')` at line 239 while
-the test file is still being IMPORTED. Every test in that file dies at once and the stack
-points at `appProvider`, not at the import that reached it. A node-env test hits the same
-wall one step earlier with `ReferenceError: document is not defined`.
+**Why it matters:** with nothing on `globalThis.provider`, every preload field on it is `undefined`
+(the module itself stopped throwing on `isPageReader` on 2026-09-27: `providerSource?.`), so
+the first module to read one at load throws — e.g. `pathSeparator = appProvider.pathUtils.sep`
+in `storageFileHelpers.ts` — while the test file is still being IMPORTED. Every test in that
+file dies at once and the stack points at that reader, not at the import that reached it. A
+node-env test hits a wall one step earlier, in `appProvider` itself, with
+`ReferenceError: document is not defined`.
 
 **How to apply:**
 
 - A new test whose import graph reaches `appProvider` must stub it in its own file:
   `vi.mock('../server/appProvider', () => ({ default: { …only what it calls… } }))`.
-  100 of the current 183 src test files do exactly this (12 test files added since the
-  prune; the suite grew back past its pre-prune 171) — copy the nearest one rather than
+  176 of the 440 src test files did exactly this on 2026-10-11 — copy the nearest one rather than
   inventing a shape. `src/others/CacheManager.test.ts` (hoisted, mutable flags) and
   `src/bible-list/Bible.test.ts` are good models.
 - `src/server/appProvider.test.ts` is the exception that must NOT mock it: it sets

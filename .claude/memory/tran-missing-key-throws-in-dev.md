@@ -81,7 +81,7 @@ Khmer.**
 
 Separately: ~66 user-facing strings never reached `tran()` at all (hardcoded
 `title=`/`aria-label=`/`placeholder=` JSX literals, plus wrappers like
-`SlideEditorToolTitleComp` and `RenderCardComp` that render `title` raw). Those
+`SlideEditorToolTitleComp` that render `title` raw). Those
 stay English in Khmer mode and are a pre-existing gap, not a dictionary problem
 — and the test above cannot see them, because they never call `tran()`.
 2026-09-18 (`EN-21`) routed the 13 a volunteer meets most: the Reader's lookup

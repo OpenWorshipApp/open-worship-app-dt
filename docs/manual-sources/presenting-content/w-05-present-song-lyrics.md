@@ -12,10 +12,10 @@ workflowsVersion: "2026-10-11"
 **Goal:** put a song's lyrics on the screen.
 
 1. In the left column, click a song in the **[en:tran:Documents]** list — songs carry a
-   music-note icon. The middle **Documents** tab switches to the song view: the lyric
-   **Previewer** on top and the **Stage Previewer** verses under it. Only one file in the
+   music-note icon. The middle **[en:tran:Documents]** tab switches to the song view: the lyric
+   **[en:tran:Previewer]** on top and the **[en:tran:Stage Previewer]** verses under it. Only one file in the
    list is ever highlighted, so picking a song releases whatever was selected before. 📸
-2. **Double-click** a verse to send it to the screen.
+2. **Click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
 4. If the song's `ol:Config` block lists an **`- Attachments:`** field — one link per
    line — each link also becomes its **own slide at the end** of the Stage Previewer,
@@ -28,20 +28,20 @@ workflowsVersion: "2026-10-11"
    their named slide, just an empty one.
 6. **One song can be previewed at several stages at once.** **[en:tran:Add Stage]** in
     the Stage Previewer header opens the same menu the mini screen's **St:** badge does:
-    **Stage 0** to **Stage 4** — a stage already on screen is listed but greyed out — and
-    **Increment · Stage N** at the foot, which adds one past the highest stage you have.
-    Increment is how you get past Stage 4, and it is what matches a screen whose **St:**
+    **[en:tran:Stage] 0** to **[en:tran:Stage] 5** — a stage already on screen is listed but greyed out — and
+    **[en:tran:Increment] · [en:tran:Stage] N** at the foot, which adds one past the highest stage you have.
+    Increment is how you get past Stage 5, and it is what matches a screen whose **St:**
     number you have already pushed up there. Each stage arrives as its own chip and its
     own pane, in its own colour; the **×** on a chip (**[en:tran:Hide Stage] N**) hides
     that stage's pane again — its look under **⚙** is kept for when you add it back — and
-    the padlocked **Stage 0** stays. 📸
+    the padlocked **[en:tran:Stage] 0** stays. 📸
 7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
-   (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **Stage Style** window
-   opens — drag it anywhere, it remembers where you left it. It sets **Slide Padding**,
-   **Background Opacity**, **Extra Font Size**, a **Light/Dark** theme, and a
-   **Custom CSS** box for anything else. 📸
+   (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **[en:tran:Stage Style]** window
+   opens — drag it anywhere, it remembers where you left it. It sets **[en:tran:Slide Padding (%)]**,
+   **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, a **[en:tran:Light]/[en:tran:Dark]** theme, and a
+   **[en:tran:Custom CSS]** box for anything else. 📸
 8. These settings belong to the **stage**, not to the song — every song you open uses
-   them, which is why the panel says _Applies to every song_. **Every stage number keeps
+   them, which is why the panel says _[en:tran:Applies to every song]_. **Every stage number keeps
    its own settings**, so you can leave the projected stage plain, make the chord stage
    larger, and give a third stage a dark theme for the person on the sound desk. Stage 0
    is the plain lyrics-only look; every stage from 1 up starts from the chord-and-notes
@@ -52,20 +52,20 @@ workflowsVersion: "2026-10-11"
    under it, 3 the next two, 4 like 2 in the plain look, 5 the previous one top left and
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    the verse sits flush in the screen's top left corner with the next one flush left
-   under it, touching it — no margin around them and no gap between them, whatever **Slide Padding** says (the padding stays
-   inside each verse's own box). A screen moved to any stage above 0 has its **Slide:**
+   under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Padding (%)]** says (the padding stays
+   inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
-9. **Reset** puts that stage back to the defaults.
+9. **[en:tran:Reset]** puts that stage back to the defaults.
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
 11. **Edit the words while the song is open and the verses follow by themselves.** Change the
-    song in the **Lyric Editor** (right-click the song → **edit**) — or in any other window —
+    song in the **Lyric Editor** (right-click the song → **[en:tran:Edit]**) — or in any other window —
     and within a second or two the rendered song **and every Stage Previewer pane** show the
     new words. You do not have to re-pick the song, and you do not have to save first: the
     editor keeps your unsaved work on disk, and that is what the verses render. 📸
 12. If you ever need to force it — a song changed by something outside the app, say — the
-    **⋮** at the right end of the Stage Previewer header holds **Reload**, which re-renders
-    every stage at once. The same **Reload** sits in the right-click menu of a stage pane and
+    **⋮** at the right end of the Stage Previewer header holds **[en:tran:Reload]**, which re-renders
+    every stage at once. The same **[en:tran:Reload]** sits in the right-click menu of a stage pane and
     of the rendered song above it.
 
 ::: details 🤖 Robot-verified — coverage traceability

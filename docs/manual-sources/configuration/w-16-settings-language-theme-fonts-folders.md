@@ -11,42 +11,42 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** configure the app.
 
-1. Click the **gear** ([en:tran:Settings]) in the header — Settings opens in its own window. 📸
-2. **General** tab:
-   - **Language:** click **English** or **ខ្មែរ**. Each language is listed under its
+1. Click the **gear** ([en:tran:Setting]) in the header — Settings opens in its own window. 📸
+2. **[en:tran:General]** tab:
+   - **[en:tran:Language]:** click **English**, **ខ្មែរ** or **Français**. Each language is listed under its
      OWN name, whatever locale you are currently in — so if a mis-click leaves you in
      a script you cannot read, the way back is still legible. (Hover a button and its
      `title` gives the English name.) Some
      labels change straight away, but the switch is only complete once you click
      **[en:tran:Apply Settings]** at the bottom-left — that reloads every open
      window. Unsaved edits in the Slide Editor are kept.
-   - **Theme:** system / light / dark.
-   - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
+   - **[en:tran:Theme]:** system / light / dark.
+   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
      configured but not installed on this computer. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
-   - **[en:tran:Recent Folders]** (under **Parent Directory:**): every data folder
+   - **[en:tran:Recent Folders]** (under **[en:tran:Parent Directory:]**): every data folder
      this computer has used is listed there, newest first — not the one in use. Press
      **[en:tran:Switch]** beside one to go back to it: the app asks first, because every
      open window reloads onto that folder. A folder that is not there (a stick that is
      not plugged in) reads **[en:tran:Missing]** and cannot be switched to. **✕** takes
      a folder off the list; the folder itself is not touched. The list keeps the last
      10 and appears once a second folder has been used. 📸
-   - **[en:tran:Repair Links]** (beside **Reset All Child Directories**): after you
+   - **[en:tran:Repair Links]** (beside **[en:tran:Reset All Child Directories]**): after you
      bring the data folder from another computer — a USB stick, a copied folder — press
      it once. Pictures, videos and songs still pointing at where the folder USED to be
      are pointed at where it is now; a link to something that still exists is left as it
      is. A box says how many links it repaired, and the app reloads to show them. 📸
    - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
      **these erase configuration; use with care.** Both ask for confirmation first.
-   - **Show Tips of the Day automatically:** controls whether the Presenter and Bible
+   - **[en:tran:Show Tips of the Day automatically]:** controls whether the Presenter and Bible
      Reader show an automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
-3. **Bible** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
-   or export/import a **Bible Data** archive. The old online version list is
+3. **[en:tran:Bible]** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
+   or export/import a **[en:tran:Bible Data]** archive. The old online version list is
    development-only and can be unavailable. 📸
-4. Click **Apply Settings** (bottom-left) to apply — the app windows reload.
+4. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

@@ -1,4 +1,4 @@
-import { use, useMemo } from 'react';
+import { use } from 'react';
 
 import type { CanvasItemBiblePropsType } from '../CanvasItemBibleItem';
 import CanvasItemBibleItem from '../CanvasItemBibleItem';
@@ -10,7 +10,7 @@ import { CanvasControllerContext } from '../CanvasController';
 import type CanvasController from '../CanvasController';
 import BibleItem from '../../../bible-list/BibleItem';
 import { showBibleKeyOption } from '../../../bible-lookup/BibleKeySelectionComp';
-import { sanitizeHtml } from '../../../helper/sanitizeHelpers';
+import { useCanvasItemSafeHtml } from '../canvasItemSafeHtmlHelpers';
 
 export function formatBibleKeys(
     div: HTMLElement,
@@ -63,12 +63,9 @@ export function formatBibleKeys(
     });
 }
 
-export function BoxEditorNormalBibleRender() {
+export function BoxEditorNormalBibleRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemBiblePropsType>();
-    const html = useMemo(
-        () => (typeof props.html === 'string' ? sanitizeHtml(props.html) : ''),
-        [props.html],
-    );
+    const html = useCanvasItemSafeHtml(props.html);
     try {
         CanvasItemBibleItem.validate(props);
     } catch (error) {

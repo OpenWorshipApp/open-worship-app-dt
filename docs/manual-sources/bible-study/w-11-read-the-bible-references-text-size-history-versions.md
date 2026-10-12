@@ -13,8 +13,8 @@ workflowsVersion: "2026-10-11"
 quick lookup, and where you look a verse up when you are not presenting.
 **Where:** header tab **[en:tran:Bible Reader]**.
 
-1. In **Bible Reader**, click the **Bible Reference** box at the top. If it already
-   contains a reference, click **Clear input**. Click the book, then the chapter, then
+1. In **[en:tran:Bible Reader]**, click the **[en:tran:Bible Reference]** box at the top. If it already
+   contains a reference, click **[en:tran:Clear input]**. Click the book, then the chapter, then
    the verse from the buttons that appear; the passage opens. This is the preferred
    route for a non-English Bible because the buttons use that Bible's own names and
    numbers. 📸
@@ -41,17 +41,19 @@ quick lookup, and where you look a verse up when you are not presenting.
    clicked, without needing another scroll.
    The choice is remembered for that color group, and the toggle appears only
    while the group has at least two panes.
-4. If you lose a passage, you do not need to remember and type it again. Click one of
+4. If you lose a passage, you do not need to remember and type it again. Double-click one of
    the recent reference rows near the top to go back to it.
 5. To change the main Bible version, click its short name in the header and choose a
    version from the list. 📸
 6. To read without the side panels, click the small **⋯** at the bottom-left if the
    footer is hidden, then click **[en:tran:Full]** at the bottom-right. Click
    **[en:tran:Exit Full]** to bring the panels back.
-7. To put a verse on the audience screen, double-click that verse. A double-click
-   means pressing the left mouse button twice quickly in the same place.
+7. The Bible Reader does not put a verse on the audience screen: double-clicking a verse
+   here only selects it. (A double-click means pressing the left mouse button twice
+   quickly in the same place.) To show a verse to the audience, go back to the Presenter
+   and present it from there (W-06).
 8. To let supported passages start their generated audio automatically, open
-   **[en:tran:Settings]** → **Others** → **AI Providers**. After an **OpenAI API
+   **[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:AI Providers]**. After an **OpenAI API
    Key** is saved, turn on **[en:tran:Auto Play Audio AI when available]** under
    the OpenAI key. The switch lives with the provider setting, not in the Bible
    Reference toolbar.

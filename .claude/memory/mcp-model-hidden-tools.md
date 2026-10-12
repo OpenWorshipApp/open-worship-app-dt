@@ -1,6 +1,6 @@
 ---
 name: mcp-model-hidden-tools
-description: "The chatbot's model is offered owa_* tools only — 24 of 53 since 2026-09-14, 29 withheld by tools/owa-devtools-mcp/modelTools.mjs, NOTHING of chrome-devtools' — filtered AND refused; the last ten went after press_key put the projector on unasked"
+description: "The chatbot's model is offered owa_* tools only — 26 of 60 since 2026-10-10, 34 withheld by tools/owa-devtools-mcp/modelTools.mjs, NOTHING of chrome-devtools' — filtered AND refused; the last ten went after press_key put the projector on unasked"
 metadata: 
   node_type: memory
   type: project
@@ -31,7 +31,7 @@ Two things that were only visible once someone looked:
 - **Check for the sibling.** `owa_screenshot` was withheld for a stated reason
   while `take_screenshot` sat in the list beside it doing the same job.
 
-The six groups and the reason each gets told live in that file. `owa_click`
+The groups and the reason each gets told live in that file. `owa_click`
 and `owa_type` must never join them — they are the model's only way to act, and
 the only presses the interlock can read ([[mcp-uid-interlock]]).
 

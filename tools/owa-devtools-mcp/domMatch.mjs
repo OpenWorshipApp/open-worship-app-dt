@@ -718,6 +718,28 @@ export const DOM_MATCH_RUNTIME = `
         return element.checkVisibility() ? 'hidden' : 'gone';
     };
 
+    // A footer the app keeps SHUT behind a three-dot control
+    // (handleAutoHide): no :hover rule opens it, only a press on that
+    // control, which adds auto-hide-show. Painted away like a hover-hidden
+    // control, and a different answer -- "move the mouse there" brings up
+    // nothing. Reported as showsOnHover it sent the assistant's ring onto
+    // an empty corner of the Bible panel and its steps past the three dots
+    // (the user's picture, 2026-10-11: "it should tell user to click the
+    // 3 dots first").
+    const autoHideOf = (element) => {
+        const panel = element.closest('.app-auto-hide');
+        if (panel === null || panel.classList.contains('auto-hide-show')) {
+            return null;
+        }
+        const parent = panel.parentElement;
+        const opener = parent === null
+            ? null
+            : [...parent.children].find((one) => {
+                return one.classList.contains('auto-hide-button');
+            }) ?? null;
+        return { panel, opener };
+    };
+
     const HOVER_ATTR = 'data-owa-hover';
     // Far past any real nesting; a guard against a cycle, not a budget.
     const MAX_HOVER_CHAIN = 40;
@@ -782,7 +804,19 @@ export const DOM_MATCH_RUNTIME = `
         for (const node of held.chain) {
             node.removeAttribute(HOVER_ATTR);
         }
-        held.style.remove();
+        if (held.style !== null) {
+            held.style.remove();
+        }
+        // Shut again -- unless the person pressed the three dots meanwhile:
+        // the app hides that control while ITS press holds the footer open,
+        // and that footer is theirs now, not ours to close under the mouse.
+        if (
+            held.autoHide !== null &&
+            (held.autoHide.opener === null ||
+                held.autoHide.opener.style.display !== 'none')
+        ) {
+            held.autoHide.panel.classList.remove('auto-hide-show');
+        }
         held = null;
     };
 
@@ -808,7 +842,15 @@ export const DOM_MATCH_RUNTIME = `
     // levels up (the icons over a bible view are revealed by the bible
     // view itself). Only rules that match something on that chain are
     // injected, so a reveal is five rules, not the page's 162.
-    const revealHidden = (element, holdMs = 4000) => {
+    //
+    // canOpenAutoHide is for POINTING (owa_find_ui's ring): a footer shut
+    // behind its three dots is held open the way a press on them leaves it,
+    // so the ring lands on a control somebody can see. The walkthrough card
+    // does not pass it -- there the three dots are a press of their own, the
+    // step before the one asked for.
+    const revealHidden = (
+        element, holdMs = 4000, canOpenAutoHide = false,
+    ) => {
         if (held !== null && held.element === element) {
             clearTimeout(held.timeoutId);
             held.timeoutId = setTimeout(releaseHidden, holdMs);
@@ -817,6 +859,19 @@ export const DOM_MATCH_RUNTIME = `
         releaseHidden();
         if (visibilityOf(element) !== 'hidden') {
             return false;
+        }
+        const autoHide = canOpenAutoHide ? autoHideOf(element) : null;
+        if (autoHide !== null) {
+            autoHide.panel.classList.add('auto-hide-show');
+            if (!element.checkVisibility({ checkVisibilityCSS: true })) {
+                autoHide.panel.classList.remove('auto-hide-show');
+                return false;
+            }
+            held = {
+                element, chain: [], style: null, autoHide,
+                timeoutId: setTimeout(releaseHidden, holdMs),
+            };
+            return true;
         }
         const chain = [];
         let node = element;
@@ -870,7 +925,7 @@ export const DOM_MATCH_RUNTIME = `
             return false;
         }
         held = {
-            element, chain, style,
+            element, chain, style, autoHide: null,
             timeoutId: setTimeout(releaseHidden, holdMs),
         };
         return true;
@@ -1211,6 +1266,8 @@ export const DOM_MATCH_RUNTIME = `
     const describe = (element) => {
         const rect = element.getBoundingClientRect();
         const seen = visibilityOf(element);
+        const autoHide = seen === 'hidden' ? autoHideOf(element) : null;
+        const opener = autoHide === null ? null : autoHide.opener;
         const owner = element.closest('[data-react-comp-fp]');
         // Said in words, because the person being pointed at the control is
         // looking at a window, not at a coordinate system.
@@ -1240,7 +1297,14 @@ export const DOM_MATCH_RUNTIME = `
             // Said only when it is true, so an ordinary control costs
             // the reader nothing: this one appears when the mouse is
             // over the part of the window it lives in.
-            showsOnHover: seen === 'hidden' ? true : undefined,
+            showsOnHover: seen === 'hidden' && opener === null
+                ? true
+                : undefined,
+            // Shut behind another control, and no mouse brings it up: the
+            // words on the one to press FIRST.
+            revealBy: opener === null
+                ? undefined
+                : shownLabelOf(opener).slice(0, 80),
             isEnabled: element.disabled !== true &&
                 element.getAttribute('aria-disabled') !== 'true',
             position: {
@@ -1448,6 +1512,9 @@ export const DOM_MATCH_RUNTIME = `
         };
         if (full.showsOnHover === true) {
             row.showsOnHover = true;
+        }
+        if (full.revealBy !== undefined) {
+            row.revealBy = full.revealBy;
         }
         if (full.isEnabled === false) {
             row.isDisabled = true;
@@ -2351,7 +2418,7 @@ export function genHighlightSelectorExpression(selector, isHighlighting) {
         }
         let isRevealed = false;
         if (${isHighlighting ? 'true' : 'false'}) {
-            isRevealed = dm.revealHidden(element, 4000);
+            isRevealed = dm.revealHidden(element, 4000, true);
             dm.flash(element);
         }
         return {
@@ -2425,7 +2492,7 @@ export function genFindUiExpression(text, isHighlighting) {
         // anybody could recognise.
         let isRevealed = false;
         if (${isHighlighting ? 'true' : 'false'} && shown.length > 0) {
-            isRevealed = dm.revealHidden(shown[0].element, 4000);
+            isRevealed = dm.revealHidden(shown[0].element, 4000, true);
         }
         if (${isHighlighting ? 'true' : 'false'}) {
             for (const one of shown) {

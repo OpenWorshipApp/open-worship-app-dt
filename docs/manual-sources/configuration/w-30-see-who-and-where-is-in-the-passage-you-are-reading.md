@@ -12,13 +12,13 @@ workflowsVersion: "2026-10-11"
 **Goal:** while you read, get the list of every person and place the Bible names in
 those exact verses — without searching for them one by one.
 
-1. Open the **Bible Reader** (or the **Bible Lookup** popup in the Presenter) and read
-   a passage. At the top right, click **Advance Bible Lookup** (the magnifier). A panel
+1. Open the **[en:tran:Bible Reader]** (or the **[en:tran:Bible Lookup]** popup in the Presenter) and read
+   a passage. At the top right, click **[en:tran:Advance Bible Lookup]** (the binoculars). A panel
    opens on the right, its header a **drop-down** listing four views: **[en:tran:Find]**, **[en:tran:Cross Reference]**, **[en:tran:Location-Name (KJV)]** and **[en:tran:Resources]**. Pick **[en:tran:Location-Name (KJV)]** — by its name, not by its place in the list, which moves as views are added. 📸
    _The icon to the left of the drop-down changes with your pick — a signpost for cross
    references, a map pin for names and locations — so you can tell at a glance which
    view the panel is showing._
-2. Under the heading **Names and locations in your reading** — it says **(KJV)** too
+2. Under the heading **[en:tran:Names and locations in your reading]** — it says **(KJV)** too
    while you are reading these records in English; see the note at the end — you get
    **one block
    per passage you have open**. Each block is titled with the passage it belongs to,

@@ -232,7 +232,7 @@ async function initMain() {
     await appProvider.init();
 }
 
-export function RenderApp({
+export function RenderAppComp({
     children,
 }: Readonly<{
     children: ReactNode;
@@ -305,6 +305,6 @@ export async function run(children?: ReactNode) {
     }
     if (children !== undefined) {
         const root = getReactRoot();
-        root.render(<RenderApp>{children}</RenderApp>);
+        root.render(<RenderAppComp>{children}</RenderAppComp>);
     }
 }

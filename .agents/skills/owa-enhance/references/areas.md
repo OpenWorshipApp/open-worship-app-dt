@@ -87,9 +87,9 @@ ids.
 7. **Credentials.** Where each key lives, and whether any reaches a log, a bug
    report, the knowledge bundle, or a window that does not need it (`MC-04`).
 
-**Already known:** `MC-01` (the MCP HTTP door has no credential), `MC-03`
+**Already known:** `MC-01` (the MCP HTTP door had no credential; a per-launch bearer token since 2026-09-23), `MC-03`
 (`window.open` reaches a node-integrated popup), `MC-04` (full `fs` in the
-chatbot window), `MC-16` (`captureWebScreenShot`); memory
+chatbot window), `MC-16` (`captureWebScreenShot`, boxed 2026-09-17); memory
 `injected-app-document-file-param` (FIXED), `secure-storage-safestorage`,
 `archive-password-protection`, `http-downloads-protocol-aware`,
 `evaluate-script-disposablestack`.
@@ -204,11 +204,11 @@ reads and writes — the presenter, one renderer per shown screen, the popups.
 6. **The robot run's rows** — each FAIL, PARTIAL and FINDING re-checked against
    HEAD: does it still happen?
 
-**Already known:** memory `settings-write-race-corrupts-onscreen-map`, **OPEN
-since 2026-08-07**: a per-renderer lock (`src/server/unlockingHelpers.ts`) and
+**Already known:** memory `settings-write-race-corrupts-onscreen-map`, **FIXED
+2026-09-24** (`EN-38`): a per-renderer lock (`src/server/unlockingHelpers.ts`) and
 an in-place write let the presenter and a screen window corrupt the on-screen
-map, and every screen goes blank after the next reload. Re-verify it before
-anything else; if it holds, it is an S1 candidate. Also
+map, and every screen went blank after the next reload; only non-screen windows
+write those maps now (`persistOnScreenEntry`), atomically. Also
 `history-read-cache-stale-paths` (FIXED, `MC-25`),
 `screen-sync-group-echo-guard`, `apply-settings-skips-popups` (FIXED),
 `screen-change-bible-dead-ipc` (FIXED), and `qa-intentional-not-bugs` —
@@ -293,7 +293,7 @@ then `npm run lint` on one machine is the only gate the code ever passes.
 
 **Leads:** CI workflows; `.only` / `.skip` left in tests; dead
 `debuggerHelpers` mocks; test files per root (`triage.mjs`); and, from `docs`,
-mirror drift and a stale knowledge index — both chores done by hand.
+mirror drift and a stale knowledge index — the second a chore done by hand.
 
 **Research** — wall-clock is the measure, so write every duration down:
 
@@ -310,8 +310,7 @@ mirror drift and a stale knowledge index — both chores done by hand.
    `vite-caches-failed-import-resolution`, `vitest-env-leak-flakes`,
    `dont-taskkill-all-electron`, `bash-heredoc-halves-backslashes`. A trap that
    has bitten more than once and has a mechanical cure is a finding.
-4. **Chores done by hand that rot in silence** — copying the Codex mirror,
-   rebuilding the knowledge, bumping the question corpus's `updated` date and
+4. **Chores done by hand that rot in silence** — rebuilding the knowledge, bumping the question corpus's `updated` date and
    the matrix version: could a test or a check catch the miss instead of a
    reviewer's memory?
 5. **The dev start.** `npm run dev` runs `electron:build` (knowledge build

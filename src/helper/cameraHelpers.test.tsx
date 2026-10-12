@@ -24,7 +24,7 @@ const {
     getUserMediaMock: vi.fn(),
 }));
 
-vi.mock('../server/appHelpers', () => ({
+vi.mock('../server/electronSendHelpers', () => ({
     electronSendAsync: electronSendAsyncMock,
 }));
 

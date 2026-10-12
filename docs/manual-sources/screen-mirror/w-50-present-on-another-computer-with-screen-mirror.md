@@ -62,7 +62,9 @@ internet once the host opens to it (step 7).
    host lists it under
    **[en:tran:Connected guests]** above the Mini Screen previews and at the
    top of their list menu. Each guest has a stable prefix such as a1 or a2;
-   click its header button to open the connection panel. In the panel every
+   click its header button to open the floating panel, on the tab it was last
+   on (the guest's row in the list menu opens it on
+   **[en:tran:Screen Mirror Connection]**). In the panel every
    guest and every request carries where it came from:
    **[en:tran:This network]** for a computer on one of the host's own
    networks, or **[en:tran:Internet]** — a globe and an amber border — for
@@ -85,7 +87,10 @@ internet once the host opens to it (step 7).
    connected guests' cameras with their prefixes. Selecting a camera streams
    it to the host preview and to the selected guest output. Selecting an
    image instead releases the camera stream. Camera access must be available
-   on the computer providing it.
+   on the computer providing it, and a guest offers its cameras only once
+   **[en:tran:Share my cameras]** — the camera button in that host's panel on
+   the guest's **[en:tran:Screen Mirror]** page, off for every new link — is
+   turned on.
 7. To let a guest connect from outside this network, turn on
    **[en:tran:Open to the internet]** under
    **[en:tran:Let other computers connect]**. It is off until you turn it

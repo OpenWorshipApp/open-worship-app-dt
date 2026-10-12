@@ -11,7 +11,7 @@ FreeShow-style **Focus / spotlight** on the screen output, a sibling of
 **What it is:** press and hold on a mini-screen preview → the whole output dims
 and a clear circle follows the pointer; release → undim. Nothing is stored about
 what was on screen: no strokes, no undo history, no persisted "what is drawn".
-Only three tunables persist (size / dim / edge blur).
+Only five tunables persist (size / dim colour / dim / edge blur / contrast).
 
 **It is a SEPARATE LAYER, not a draw mode.** The first implementation tagged
 focus strokes onto `ScreenDrawManager`'s stroke list and rendered them as a
@@ -83,7 +83,7 @@ press-and-hold instead.
 
 **Sync:** new screen type `'focus'` (`screenTypeList`,
 `ScreenManager.getSyncGroupScreenEventHandler`), `FocusDataType` =
-`{isSpotlighting, point, size, dimOpacity, edgeBlur}` — the whole state fits in
+`{isSpotlighting, point, size, dimColor, dimOpacity, edgeBlur, isContrast}` — the whole state fits in
 one tiny message, so there is no incremental protocol. Moves are throttled to
 40ms on the wire and never throttled locally. Same two gotchas as the draw
 manager, same fixes: `enableSyncGroup(screenId)` before every local send (echo
@@ -187,8 +187,8 @@ a trap).
 **Verified live** on the presenter, a sync-group member and the real
 `screen.html?screenId=0` output window: dim + hole, cursor follow, undim on
 release, blur 0 = hard edge, and all three shortcut families. Two CDP-testing traps cost real time here:
-- `EventHandler.addPropEvent` runs every fired event through a 10ms
-  `setTimeout`, so a synthetic `keydown` and the state read must not be in the
+- `EventHandler.addPropEvent` runs its listeners on a microtask (async
+  `checkOnEvent`; there is no `setTimeout`), so a synthetic `keydown` and the state read must not be in the
   same `evaluate_script` call — the first read looks unchanged and the shortcuts
   look dead.
 - `ScreenManager.syncScreenManagerGroup` is **async** (it awaits

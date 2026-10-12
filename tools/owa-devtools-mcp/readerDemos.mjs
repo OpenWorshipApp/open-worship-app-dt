@@ -271,17 +271,19 @@ export const READER_DEMO_LIST = [
   },
   {
     id: 'reader-present-passage',
-    label: 'Present a passage from the Reader',
+    label: 'Put a passage on the audience screens',
     detail:
-      'Double-click a verse to send it to selected screens; use F9 to clear it.',
-    title: 'Present a passage from the Reader',
+      'The Bible Reader only reads: present a passage from the Presenter, and use F9 there to clear it.',
+    title: 'Put a passage on the audience screens',
     isFeatured: false,
     steps: [
       {
-        text: 'Double-click a verse, or Alt+click it, to send that passage to the selected audience screens. This lesson will not press it for you.',
+        // Every route to a screen is the Presenter page's: a double-click on
+        // a verse here selects it and nothing more.
+        text: 'The Bible Reader shows a passage to you alone: a double-click on a verse here only selects it, and nothing goes to the audience screens. To present, press Go Back to Presenter at the top and open Bible Lookup there. This lesson will not press it for you.',
       },
       {
-        text: 'Use F9 when you are ready to clear the Bible layer from the audience screens.',
+        text: 'In the Bible Lookup of the Presenter, point at the title of the passage and press Save bible item and show on screen, the cast icon. Use F9 when you are ready to clear the Bible layer from the audience screens.',
       },
     ],
   },

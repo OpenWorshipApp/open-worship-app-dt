@@ -987,6 +987,76 @@ describe('controls the app hides until the mouse is over them', () => {
     expect(document.querySelectorAll('[data-owa-hover-style]').length).toBe(0);
   });
 
+  // A footer shut behind its three dots (handleAutoHide) is NOT a hover:
+  // nothing but a press on the dots opens it. Reported as showsOnHover,
+  // the assistant told a user to look for a button no mouse would bring
+  // up and ringed an empty corner of the panel.
+  const AUTO_HIDE_MARKUP = [
+    '<style>',
+    '.app-auto-hide > div { visibility: hidden; }',
+    '.app-auto-hide.auto-hide-show > div { visibility: visible; }',
+    '</style>',
+    '<div id="preview">',
+    '<div id="footer" class="app-auto-hide"><div>',
+    '<button id="props" title="Bible Properties">B</button>',
+    '</div></div>',
+    '<i id="dots" class="auto-hide-button" title="Reveal Hidden Controls"></i>',
+    '</div>',
+  ].join('');
+
+  it('says what to press first for a control shut behind three dots', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    const dm = install();
+    const described = dm.describe(document.getElementById('props'));
+    expect(described.isVisible).toBe(false);
+    expect(described.revealBy).toBe('Reveal Hidden Controls');
+    // Not a hover: moving the mouse there brings up nothing.
+    expect(described.showsOnHover).toBeUndefined();
+    const row = dm
+      .listControls('Bible Properties', 50)
+      .find((one) => one.label === 'B Bible Properties');
+    expect(row.revealBy).toBe('Reveal Hidden Controls');
+    expect(row.showsOnHover).toBeUndefined();
+  });
+
+  it('says nothing of the dots once the footer is open', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    document.getElementById('footer').classList.add('auto-hide-show');
+    const dm = install();
+    const described = dm.describe(document.getElementById('props'));
+    expect(described.isVisible).toBe(true);
+    expect(described.revealBy).toBeUndefined();
+  });
+
+  it('holds that footer open while pointing, and shuts it again', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    const dm = install();
+    const target = document.getElementById('props');
+    const footer = document.getElementById('footer');
+    // The walkthrough card's own call: the dots stay a press of their own.
+    expect(dm.revealHidden(target, 5000)).toBe(false);
+    expect(footer.classList.contains('auto-hide-show')).toBe(false);
+    // Pointing: the ring has to land on something a person can see.
+    expect(dm.revealHidden(target, 5000, true)).toBe(true);
+    expect(dm.visibilityOf(target)).toBe('shown');
+    dm.releaseHidden();
+    expect(footer.classList.contains('auto-hide-show')).toBe(false);
+    expect(dm.visibilityOf(target)).toBe('hidden');
+  });
+
+  it('leaves a footer the person opened meanwhile to them', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    const dm = install();
+    const target = document.getElementById('props');
+    expect(dm.revealHidden(target, 5000, true)).toBe(true);
+    // The app hides its dots while its own press holds the footer up.
+    document.getElementById('dots').style.display = 'none';
+    dm.releaseHidden();
+    expect(
+      document.getElementById('footer').classList.contains('auto-hide-show'),
+    ).toBe(true);
+  });
+
   // What owa_list_ui answers with. Leaving these off the list is what
   // stopped the assistant ever mentioning them; a control with no box
   // at all stays off it.

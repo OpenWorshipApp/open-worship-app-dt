@@ -12,24 +12,24 @@ workflowsVersion: "2026-10-11"
 **Goal:** get rid of a file you no longer want — a song, a slide document, a PDF, a
 background picture or video, a presenting flow, a Bible note — without losing it for good.
 
-There is no **Delete** anywhere in the app. Every file row has **[en:tran:Move to Trash]**
+No file row has a **[en:tran:Delete]**. Every file row has **[en:tran:Move to Trash]**
 instead, and it does what it says: the file goes to your computer's own Recycle Bin (Trash
 on a Mac), where it can be brought back if you change your mind.
 
-1. Find the row in its list — a song or slide document in **Documents**, a picture or video
-   in the **Background** panel, a run sheet in **Presenting Flows**. 📸
-2. Right-click the row, or point at it and click the **⋮** that appears at its right-hand
+1. Find the row in its list — a song or slide document in **[en:tran:Documents]**, a picture or video
+   in the **[en:tran:Background]** panel, a run sheet in **[en:tran:Presenting Flows]**. 📸
+2. Right-click the row, or click the faint **⋮** at its right-hand
    end (W-01b). The row's menu opens.
 3. Choose **[en:tran:Move to Trash]** — the last item, with a red trash icon. 📸
 4. A small window asks **[en:tran:Moving File to Trash]** — _Are you sure you want to move
-   "…" to trash?_ Click **Yes**. (**No** leaves everything as it was.)
+   "…" to trash?_ Click **[en:tran:Yes]**. (**[en:tran:No]** leaves everything as it was.)
 5. The row disappears from the list. The file, and any pictures or media that belonged only
    to it, are in the Recycle Bin / Trash — open that from your desktop to restore them.
 
-**Not there?** A background item that is **on a screen right now** has no **Move to Trash**
+**Not there?** A background item that is **on a screen right now** has no **[en:tran:Move to Trash]**
 in its menu — clear it from the screen first (**[en:tran:Clear Background]** on the
-Mini Screen panel, W-06), then try again. A slide INSIDE a document is not a file: to
-remove one, open the document in the **Slide Editor** and right-click the slide in the
+Mini Screen panel, W-10), then try again. A slide INSIDE a document is not a file: to
+remove one, open the document in the **[en:tran:Slide Editor]** and right-click the slide in the
 left-hand list (W-15).
 
 ::: details 🤖 Robot-verified — coverage traceability

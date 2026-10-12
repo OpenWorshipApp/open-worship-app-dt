@@ -23,7 +23,7 @@ findable by reading either file alone: each looks complete.
 - Anything that asks "how does a user get to window X" reads the descriptor:
   `isMainWindow` (navigate with `owa_goto_page`, whose enum is DERIVED as
   `BOT_MAIN_WINDOW_PAGES` — it used to refuse the Document Editor its own system
-  prompt promised), `openFind` (press that control; only Settings has one, since
+  prompt promised), `openFind` (press that control; of the five windows of their own only Settings has one, since
   three windows need something selected first and one lives in the native menu
   bar), `howToOpen` (say it in words). Never write a second map beside it.
 - `runBotAction` takes `canOpenPage`, false on the retry: one attempt to open,

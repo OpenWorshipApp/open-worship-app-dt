@@ -24,7 +24,7 @@
 //                         `ELECTRON_RUN_AS_NODE` and `NODE_ENV` stripped from
 //                         the environment (VS Code's shell exports the first,
 //                         which makes ANY Electron binary run as plain Node).
-//                         Records pid + exe in `test-results/robot-test/
+//                         Records pid + exe in `release/.robot-test/
 //                         prod-app.json` so `stop` can find exactly this one.
 //   stop                  Quit the instance `launch` recorded (gracefully, then
 //                         force after 8 s). Nothing else is ever killed.

@@ -51,7 +51,12 @@ import {
   BOT_FOCUS_LIST,
   BOT_MAIN_WINDOW_PAGES,
 } from './botFocus.mjs';
-import { readHelpPage, scrubRecipeIds, searchHelp } from './help.mjs';
+import {
+  genFreshPageUrl,
+  readHelpPage,
+  scrubRecipeIds,
+  searchHelp,
+} from './help.mjs';
 import { checkOpenLyricText, validateOpenLyric } from './openLyric.mjs';
 import { draftOpenLyricText } from './openLyricDraft.mjs';
 import { formatSongLookup } from './songLookup.mjs';
@@ -93,6 +98,7 @@ import {
   genAgentDataExpression,
 } from './agentData.mjs';
 import {
+  WEBSITE_READ_EVALUATE_TIMEOUT,
   WEBSITE_TEXT_DEFAULT_CHARS,
   WEBSITE_TEXT_MAX_CHARS,
   formatWebPageRead,
@@ -674,7 +680,29 @@ export function registerOwaTools(server) {
         // through, since 2026-09-08: the excerpt was NOT scrubbed,
         // and a two-round answer is written from the excerpt.
         const body = scrubRecipeIds(page.body.replace(/^#\s+.*(\r?\n)+/, ''));
-        return `# ${page.title}${kindNote}\n\n${body}`;
+        // The way out when the person says the page is WRONG for what is
+        // on their window: the copy on this computer is as old as its
+        // release. Said at the foot of the page it belongs to, so the model
+        // is handed the one address it may read for how this app works and
+        // never has to make one up. With this copy's own day, because the
+        // repository's is the newer one only when ITS day is later: a build
+        // from a branch ahead of `main` carries pages `main` does not have
+        // yet, and read as "newest" the older page took a corrected answer
+        // back to the wrong one (measured 2026-10-11, the first time the
+        // read was run against the real address).
+        const freshUrl = genFreshPageUrl(page);
+        const dateNote = page.date
+          ? `-- this copy is dated ${page.date}; the other names its own ` +
+            'day on its workflowsVersion line, and is the newer one only ' +
+            'when that day is later '
+          : '';
+        const freshNote =
+          freshUrl === null
+            ? ''
+            : '\n\n_(If they say this page does not match their window, ' +
+              'read its newest copy with owa_read_website: ' +
+              `${freshUrl} ${dateNote})_`;
+        return `# ${page.title}${kindNote}\n\n${body}${freshNote}`;
       });
     },
   );
@@ -1040,7 +1068,7 @@ export function registerOwaTools(server) {
             wantsScreenshot: screenshot === true,
             maxChars: toReadableCharCount(maxChars),
           }),
-          { match: page },
+          { match: page, timeout: WEBSITE_READ_EVALUATE_TIMEOUT },
         );
         const text = formatWebPageRead(value, {
           wantsLinks: links === true,
@@ -1062,10 +1090,12 @@ export function registerOwaTools(server) {
     },
   );
 
-  // The one tool here that asks the app nothing. A song is text, the rules
-  // it has to follow are known, and the answer to "why won't it save?" is a
-  // line number -- so this needs no window, no CDP and no live app, and
-  // answers while the user is still typing.
+  // Checking a song asks the app nothing. A song is text, the rules it has
+  // to follow are known, and the answer to "why won't it save?" is a line
+  // number -- so a check or a draft from pasted words needs no window, no CDP
+  // and no live app, and answers while the user is still typing. Only a
+  // `url` (the page is read through the app) and `mode: "find"` (their own
+  // songs are the app's to list) ask it something.
   server.registerTool(
     'owa_lyric_validate',
     {
@@ -1171,6 +1201,7 @@ export function registerOwaTools(server) {
               url: address,
               maxChars: WEBSITE_TEXT_MAX_CHARS,
             }),
+            { timeout: WEBSITE_READ_EVALUATE_TIMEOUT },
           );
           // Handed over exactly as `owa_read_website` would have
           // handed it, header line and fence included: the header

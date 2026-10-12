@@ -61,9 +61,8 @@ for a reader who loads it and remembers it.
 - **Research.** For each, ask whether a machine can tell when the rule is
   broken. If it can, it is a candidate. Some already have precedents:
   - Every `*Comp` name → an eslint rule or a test over the component files.
-  - Mirror copied in the same change → a `--check` script the gate runs, or a
-    test like `lintGateScripts.test.ts` that fails on drift (a sync script
-    with a check mode removes a manual step from every `.claude/` edit).
+  - Mirror copied in the same change → already `agentDocsMirror.test.ts` over
+    `extra-work/sync-agent-mirror.mjs --check` (`AD-02`).
   - Knowledge rebuilt after `.claude/` edits → a test comparing
     `index.json`'s inputs, or a hook (ask).
   - `tran()` keys with km and fr → already `tranKeyCoverage.test.ts`. This is

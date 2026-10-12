@@ -12,53 +12,55 @@ workflowsVersion: "2026-10-11"
 The record window tells you _who_ someone is. The graph shows you _how they connect_ —
 parents, spouses, children, cousins and places, all on one canvas you can explore.
 
-1. Open the **Names and locations lookup** (`👤📍`) from the Bible Lookup header and find
+1. Open the **[en:tran:Names and locations lookup]** (`👤📍`) from the Bible Lookup header and find
    a person — try **Jacob** (យ៉ាកុប). 📸
 2. Click the **⋮** at the right end of the row — or **right-click** the row — and
    choose **[en:tran:Open Graph Preview]**. A floating window opens with
    that person in the middle.
    > You can right-click a name anywhere it is already clickable — in the list, in the
-   > **names and locations in your reading** panel, underlined inside a verse, or in the
+   > **[en:tran:Names and locations in your reading]** panel, underlined inside a verse, or in the
    > related-names list of a record window. The **⋮** is on the rows of the first two,
-   > which is where you would go looking for it; a record window also has a `⛶`-style
-   > graph icon beside its title.
+   > which is where you would go looking for it; a record window also has a small
+   > diagram icon (`bi-diagram-3`) beside its title.
 3. Each box shows a number next to a small diagram icon — that is how many related
-   records it has. **Click the number.** A menu opens listing **All (47)** first, then
+   records it has. **Click the number.** A menu opens listing **[en:tran:All] (47)** first, then
    only the kinds this record actually has: _Parents (2)_, _Spouses (4)_, _Siblings (2)_,
    _Children (16)_, _Cousins (22)_, _Locations (1)_. 📸
-4. Pick one kind — say **Children** — and just those boxes appear, ringed around the
+4. Pick one kind — say **[en:tran:Children]** — and just those boxes appear, ringed around the
    person and joined by curved lines. Each line is labelled with the relationship as you
    would say it: _son_, _daughter_, _wife_, _father_, _located at_.
-   > Choosing **All** on a record with many relations asks you to confirm first, because
+   > Choosing **[en:tran:All]** on a record with many relations asks you to confirm first, because
    > forty-odd boxes at once is a lot to read.
 5. Explore: **drag** any box to move it (it stays where you put it), **drag the empty
    canvas** to pan, and **scroll** to zoom in and out around your pointer.
    **Double-click** a box to make it the new centre.
-   > **Right-click a box** for a menu of everything that box can do: **Open detail**,
-   > **Verses (8)**, **Open all Related (23)**, **Collapse**, **Set as centre**,
-   > **Use as root** and **Remove**. _Set as centre_ re-arranges the whole graph around
+   > **Right-click a box** for a menu of everything that box can do: **[en:tran:Open detail]**,
+   > **[en:tran:Verses] (8)**, **[en:tran:Open all Related] (23)**, **[en:tran:Collapse]**, **[en:tran:Set as centre]**,
+   > **[en:tran:Use as root]** and **[en:tran:Remove]**. _Set as centre_ re-arranges the whole graph around
    > that box; _Use as root_ clears everything else away and leaves just it, so you can
    > start exploring again from a record already in front of you. It is the same set as the small buttons along the bottom of the box, but
    > it also works on a box you have collapsed, which shows no buttons at all. Rows you
    > could not use are simply absent — the centre box offers no _Remove_, and a record
    > with no relations offers no _Open all Related_.
-   > The **Verses** list names each verse the way YOUR Bible names it —
+   > The **[en:tran:Verses]** list names each verse the way YOUR Bible names it —
    > _លោកុប្បត្តិ ២៤:២៩-៣០_, not `GEN 24:29-30` — and picking one opens it.
 6. Too busy? The coloured chips along the top switch each kind of connection on and off —
-   turning **Cousins** off is usually the difference between a tangle and a family tree.
+   turning **[en:tran:Cousins]** off is usually the difference between a tangle and a family tree.
    **Right-click a chip** to show _only_ that kind, and right-click it again to bring
    everything back. 📸
-7. Bottom-right: **↺ Undo** and **↻ Redo** step through everything you have done to the
+7. Bottom-right: **↺ [en:tran:Undo]** and **↻ [en:tran:Redo]** step through everything you have done to the
    graph — a box you dragged, a zoom, an expansion, a filter — and **Ctrl+Z** / **Ctrl+Y**
    do the same. One wheel gesture is one step, however many notches it took.
-   **Fit to view** (`⛶`) brings every box back on screen, **Re-layout** (✨) tidies the
+   **[en:tran:Fit to view]** (`⛶`) brings every box back on screen, **[en:tran:Re-layout]** (✨) tidies the
    whole arrangement — a family fan back into rings, a found path back into its chain —
    and the `^` button collapses every box to a single line so a big graph fits.
    > Nothing here is one-way: if a tidy-up is not what you wanted, Undo puts every box
    > back where it was.
 8. **Find the line from this person to another.** Click the signpost icon at the top
    right. The graph's own centre is already the starting point — it sits there as a chip —
-   so you only say where you want to get TO: type **jesus**, pick **យេស៊ូវ (Jesus)** from
+   so you only say where you want to get TO. For this example open the graph on **David**
+   (step 2, from his row) rather than on Jacob — from Jacob the chain is longer than the
+   search allows, as the note below says — then type **jesus**, pick **យេស៊ូវ (Jesus)** from
    the list (every name is offered with its English name beside it), and press
    **[en:tran:Find Connection]**. The canvas fills with the generations from David
    down to Jesus, the connecting line highlighted, and every box on it still expandable. 📸
@@ -70,9 +72,9 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > steps** — that is an answer, not an error. The search stops there, so two people
    > further apart than that (Jacob and Jesus are about forty generations apart) are not
    > shown as connected even though they are.
-9. Keep it: the `⋯` menu at the top right offers **Save as image** (a PNG saved to your
-   Downloads folder and revealed for you), **Print** (which prints on white paper
-   whatever theme the app is using), and **Save preset** to name an arrangement and come
+9. Keep it: the `⋯` menu at the top right offers **[en:tran:Save as image]** (a PNG saved to your
+   Downloads folder and revealed for you), **[en:tran:Print]** (which prints on white paper
+   whatever theme the app is using), and **[en:tran:Save preset]** to name an arrangement and come
    back to it later.
    > **[en:tran:Fullscreen]** gives the graph the whole window. Its
    > **[en:tran:Presets]** and **[en:tran:Copy]** menus still work there,
@@ -119,7 +121,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
     > browser and paste it into the address bar.
 12. Opening a record always starts you at that record, with one box — every time, however
     you left the window last time. 📸
-    > If an arrangement is worth coming back to, say so: `⋯` → **Save preset**, name it,
+    > If an arrangement is worth coming back to, say so: `⋯` → **[en:tran:Save preset]**, name it,
     > and it is waiting in that same menu next time.
 
 ::: details 🤖 Robot-verified — coverage traceability

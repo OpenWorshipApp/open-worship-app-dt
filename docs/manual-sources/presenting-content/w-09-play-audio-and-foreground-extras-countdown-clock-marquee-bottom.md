@@ -11,8 +11,8 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** run service extras.
 
-**Audio:** in the Background panel, toggle the **[en:tran:Audios]** tab open, click play
-on a track — the tab is marked while playing; click stop to end. 📸
+**Audio:** in the Background panel, toggle the **[en:tran:Audios]** tab open, click a track
+to open its player and press play — the tab is marked while playing; pause it to end. 📸
 
 **Foreground widgets** — press the middle **[en:tran:Foreground]** tab and a menu
 opens **at the cursor** listing every component. Pick one and it opens in **its own
@@ -26,13 +26,14 @@ itself has no second title bar to collapse: its own header carries the name, the
 on-screen mark and the close button. Each panel has its own controls and a Show/Start
 button:
 
-- **Marquee Top:** type the scrolling text, click Show — it scrolls along the top edge.
-- **Marquee Bottom:** type the scrolling text, click Show — it scrolls along the bottom
-  edge. Top and bottom can be shown at the same time.
+- **[en:tran:Marquee Top]:** type the scrolling text, click
+  **[en:tran:Show Marquee Top]** — it scrolls along the top edge.
+- **[en:tran:Marquee Bottom]:** type the scrolling text, click
+  **[en:tran:Show Marquee Bottom]** — it scrolls along the bottom edge. Top and bottom can be shown at the same time.
 - Both marquees expose a **scroll speed** (%) under _Properties_: `100%` is the default
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
-- **Quick Text:** type a short message, click Show.
+- **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes and press
@@ -42,8 +43,9 @@ button:
   (back to the full length, stopped) sit under the button, with a word saying whether it
   is _[en:tran:Not started]_, _[en:tran:Running]_ or _[en:tran:Paused]_. Turn on
   **[en:tran:Auto-start]** and the button reads **[en:tran:Start Countdown]** and it counts
-  the moment it is shown. When it reaches zero it flashes red, holds `00:00:00` for one
-  second, then stays red and counts the time OVER behind a **+** (`+00:01:23`) until you
+  the moment it is shown. When it reaches zero the digits flash red five times (about ten
+  seconds) and then stay red; they hold `00:00:00` for one
+  second, then count the time OVER behind a **+** (`+00:01:23`) until you
   hide it. The audience sees only the digits — a paused countdown simply stops. Hide
   with its Hide button. 📸
 - **[en:tran:Stopwatch]:** the same controls. **[en:tran:Show Stopwatch]** puts it up on
@@ -54,7 +56,7 @@ button:
   of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
-- **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Time]** (the clock), **[en:tran:Camera Show]**: same pattern — configure, Show, Hide.
 - **[en:tran:Screen Show]:** what one screen holds, shown on another —
   screen 1's slide in the corner of screen 0. The panel has one card per
   screen, in that screen's own colour with its number. Click a card to
@@ -76,8 +78,9 @@ button:
   folder of thousands opens as fast as a folder of ten. Click a tile to put it up,
   click it again to take it off, right-click to choose a display. A clip plays muted
   and loops.
-- **Sessions — every foreground component keeps them.** They are the row of buttons
-  pinned at the top of the panel, with **＋** to add one, and a session is one saved
+- **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
+  [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
+  the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
   set-up of that panel: its **own** words or numbers **and** its **own**
   _Properties_ (size, place, colours, effects). So **[en:tran:Messages]** holds the
   pre-service notice board in one session and the mid-service alerts in another;
@@ -85,8 +88,8 @@ button:
   the one counting to a date; **[en:tran:Marquee Bottom]** holds the standing welcome
   beside this morning's car-park notice; **[en:tran:Time]** holds a wall of world
   clocks beside the single service clock. Nothing has to be retyped over the set-up
-  that was working. On **[en:tran:Video Show]**, **[en:tran:Image Show]**,
-  **[en:tran:Camera Show]** and **[en:tran:Web Show]** a session also owns its **own
+  that was working. On **[en:tran:Video Show]**, **[en:tran:Image Show]**
+  and **[en:tran:Web Show]** a session also owns its **own
   folder** and its **own slide show**, so one can run a show over your backgrounds
   folder while another holds a logo from somewhere else, both on screen at once.
 - Right-click a session (or press its **⋮**) to rename or remove it. Only one session
@@ -101,7 +104,7 @@ button:
   Hide button at all. To take down what another session put up, press the session
   button carrying the on-screen dot and use the Hide button there. Something that
   went up with no session (a dragged run-sheet row, the assistant) belongs to the
-  first session button, which is **Default** unless Default was removed.
+  first session button, which is **[en:tran:Default]** unless Default was removed.
 - **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
   (several message editors, several clocks), so two sessions can each have something
   up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
@@ -122,7 +125,7 @@ button:
   back over the slide. A slide that fills the whole screen with its own picture hides
   it completely, which is the point. While it is ticked, _Always on Top_ is greyed out:
   an item behind the slide stays behind it, whatever its number.
-- The **stopwatch** button in that same row opens the slide show:
+- The slide show sits in that same row once the session has something on a screen:
   **[en:tran:Start Slide Show]** and the seconds beside it. It keeps running while you
   are looking at another session, or with the whole Foreground panel closed, and stops
   by itself when that session's item is cleared. The file list is **not** scrolled to
@@ -150,7 +153,7 @@ button:
 - Power move: **drag** a widget's Show button and **drop it on the mini screen** to
   start it there; **right-click** the button to choose a specific display.
 
-Press **F10** (Clear Foreground) to clear all foreground widgets, or **F6** to clear
+Press **F10** ([en:tran:Clear Foreground]) to clear all foreground widgets, or **F6** to clear
 everything at once.
 
 **Or ask for it.** In the help window (🤖), _Start a 5 minute countdown on the

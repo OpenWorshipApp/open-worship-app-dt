@@ -1,11 +1,11 @@
 ---
 name: dev-hmr-stale-state-qa
-description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays — re-verify after a full reload before calling it a regression
+description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays, can blank the page on an import cycle, and Vite can serve the save before the last one — re-verify after a full reload (and curl the served module) before calling it a regression
 metadata:
   node_type: memory
   type: feedback
   originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
-  modified: 2026-10-09T03:04:23.376Z
+  modified: 2026-10-12T01:26:30.549Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -32,6 +32,24 @@ BibleItemViewControllerContext` from `<BibleItemRenderComp>`, the _Reload is
 needed_ path and a page reload — a context module replaced mid-render. Before
 filing a "must be used within" error, compare its time with `date -r` on the
 files written around it (the app's `error-datetime-setting` holds the epoch).
+
+**Two more shapes of the same thing** (2026-10-11, adding a Bible Properties
+font row):
+
+- **A blank presenter with nothing in the console.** Edits to modules under
+  `src/_screen/` left the page black; `owa_app_state` answered _Cannot access
+  'SCREEN_BIBLE_SETTING_PREFIX' before initialization_ and `owa_list_ui` zero
+  controls. `ScreenBibleManager` and `screenBibleHelpers` import each other, and
+  a hot re-evaluation enters that cycle from the other side. A `navigate_page`
+  reload loaded clean — it was never the edit.
+- **Vite serving the save BEFORE the last one.** Two edits to one file a few
+  milliseconds apart (two `Edit` calls in one batch): the dev server kept the
+  transform of the first, so half of a change was live and half was not (a
+  verse took the new inline style, its heading the old one), through a page
+  reload. Compare what is served with what is on disk —
+  `curl -sk https://localhost:3000/src/<path> | grep <new name>` — and `touch`
+  the file when they differ. Do this before reasoning about why half a change
+  "does not work".
 
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent

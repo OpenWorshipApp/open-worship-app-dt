@@ -30,7 +30,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   endpoint. Packaged builds open it too (the chatbot needs it), bound to
   `127.0.0.1`.
 - **MCP**: `startMcpHost()` serves `owa-devtools-mcp` over streamable HTTP on
-  `OWA_MCP_PORT` (default 39223, next free port if taken). Only `node:http`
+  `OWA_MCP_PORT` (default 39223, any free port if taken). Only `node:http`
   loads at startup; chrome-devtools-mcp and puppeteer are imported on the first
   MCP session. The SAME server is what `./.mcp.json` spawns over stdio for an
   outside agent (as `owa-devtools`), so the chatbot and the agent share one tool
@@ -172,7 +172,7 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   SDK in that window probes `process.env` on start-up and would throw instead
   of shrugging, and the empty `env` also closes reading the launch
   environment's secrets plus `binding`/`dlopen`/`mainModule`. A global that
-  will not delete is redefined as a thrower; one that survives that is reported
+  will not delete is emptied by assignment; one that survives that is reported
   as NOT revoked, because a lockdown that quietly did nothing is worse than
   none. `html/chatbot.html` also carries its own CSP, tighter than the app-wide
   one: `connect-src` names the assistants it may speak to plus the loopback MCP
@@ -190,10 +190,11 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   and the chatbot opened on _Standing by_ with no provider; it is built on the
   first call now, which only the main process makes (memory
   `preload-must-not-eval-at-load`).
-- **Reaching OUT is `owa_read_website`** (2026-09-02), the only tool here that
+- **Reaching OUT is `owa_read_website`** (2026-09-02), the first tool here that
   opens a socket to somewhere a MODEL chose rather than driving a window the
-  operator is already looking at. It answers with a page's text, optionally its
-  links and a picture of it, for questions about the world outside the app — a
+  operator is already looking at (`owa_lyric_validate` and `owa_bible_xml`
+  given a `url` now do too, under the same address policy and budget). It
+  answers with a page's text, optionally its links and a picture of it, for questions about the world outside the app — a
   link the user pasted, what a Bible translation is. It is NOT a second source
   for how the app works; the system prompt says so, because a page about some
   other worship program handed over as though it were this one is worse than
@@ -276,6 +277,20 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   TypeScript template literal or it reaches the page as `s` (which silently
   turned `replace(/\s+/g, ' ')` into "replace runs of the letter s"), and the
   text is cut IN the page so ~80 KB of a long article never crosses the IPC.
+  **A page that forbids its own scripts is read from an isolated world**
+  (2026-10-11, `runReadExpression` in `webPageHelpers.ts`). A
+  `Content-Security-Policy` of `sandbox` with no `allow-scripts` -- every
+  `raw.githubusercontent.com` file -- refuses `executeJavaScript` in the
+  page's main world with Electron's catch-all _Script failed to execute_; the
+  read is tried there first, as on every other page, then in an isolated
+  world, which sees the same document and is not bound by the page's rule
+  against its own scripts. Neither working is a sentence for the model. And
+  **the tool waits longer than what it waits for**: 35 s for the asking
+  window (`WEBSITE_READ_EVALUATE_TIMEOUT` in `website.mjs`), which waits 30 s
+  for the loader, which gives a page 20 s. `evaluateInApp` waits 15 s unless
+  told, and the read tool and the song drafter had left it there, so a slow
+  site answered `Timed out evaluating in <the app's own page>`; a test holds
+  every caller to the longer wait.
 
 `chrome-devtools-mcp`'s `usageStatistics` is forced off in `server.mjs`: its
 telemetry is a process-wide singleton that throws on the second

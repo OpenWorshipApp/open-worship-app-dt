@@ -7,6 +7,10 @@
 //   node .../audit-agent-docs.mjs --all                 every hit, not the first few
 //   node .../audit-agent-docs.mjs --with-ledgers        also the history ledgers
 //   node .../audit-agent-docs.mjs --json
+//   node .../audit-agent-docs.mjs --stamp-manual=W-07,W-14   record those recipes
+//                                    as checked against the code (or `all`)
+//   node .../audit-agent-docs.mjs --stamp-notes=<path,path | @list.txt>   the
+//                                    same for notes, rules and skill files
 //
 // The agent documents are what `extra-work/build-knowledge.mjs` ships as the
 // chatbot's internal corpus and what every Claude Code / Codex session reads:
@@ -18,14 +22,20 @@
 // deliberately removed. Every hit is confirmed by reading the code and the
 // note before anything is edited -- the skill's checks.md says how per check.
 //
-// Ledgers -- backlogs, scoreboards, plans, the manual source `user-workflows.md`
-// -- are HISTORY: an entry that names a file deleted since is still true about
-// the day it was written. They are skipped unless --with-ledgers.
+// Ledgers -- backlogs, scoreboards, plans, the dated head of the manual source
+// `user-workflows.md` -- are HISTORY: an entry that names a file deleted since
+// is still true about the day it was written. They are skipped unless
+// --with-ledgers. The manual's RECIPES are not history: the `manual` check
+// reads them, and the coverage matrix they are verified by, against the code.
 //
 // What it reads: the file listing (`git ls-files -co --exclude-standard`, so
 // nothing ignored leaks in), the code under it, one `git log`, and the knowledge
-// index's timestamp. What it never does: write a file, reach the app, or use
-// the network. It works with the app shut and costs nothing to re-run.
+// index's timestamp. What it never does: reach the app or use the network.
+// It writes nothing either, with one exception that has to be asked for:
+// `--stamp-manual` and `--stamp-notes` record, in `references/manual-reviewed.json`
+// and `references/notes-reviewed.json`, that a recipe or a note was read
+// against the code as both are now. It works with the app shut and costs
+// nothing to re-run.
 //
 // A lead a run already confirmed as history or as an external name is listed
 // in the skill's `references/killed-leads.json` (check + doc + name, never a
@@ -33,10 +43,11 @@
 // symbols checks set those aside, and report an entry whose doc no longer
 // names it, so the list cannot rot into a blanket exemption.
 //
-// Exit code: 0, or 2 for a --check it does not know.
+// Exit code: 0, or 2 for a --check it does not know or a stamp it refuses.
 
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,6 +67,7 @@ const CHECK_LIST = [
     'skills',
     'mirror',
     'knowledge',
+    'manual',
     'budget',
     'coverage',
     'staleness',
@@ -73,6 +85,8 @@ const readArgValue = (name) => {
 };
 const checkArg = readArgValue('check');
 const docArg = readArgValue('doc')?.replace(/\\/g, '/');
+const stampManualArg = readArgValue('stamp-manual');
+const stampNotesArg = readArgValue('stamp-notes');
 // The checks that read claims doc by doc -- all --doc narrows by default.
 const CLAIM_CHECK_LIST = [
     'paths',
@@ -142,6 +156,12 @@ const EXTERNAL_NAME_SET = new Set([
     'ignoreCache',
     'runIfWaitingForDebugger',
     'setWindowBounds',
+    // The OpenAI SDK's own method.
+    'withOptions',
+    // React's and DOMPurify's own internals, named by the note on why a
+    // static render must not parse HTML.
+    'scheduleImmediateRootScheduleTask',
+    '_initDocument',
     'BM_CLICK',
     'CopyFromScreen',
     'EnumWindows',
@@ -208,6 +228,8 @@ const LEDGER_NAME_SET = new Set([
     'plan.md',
     'baseline.md',
     'user-workflows.md',
+    // What only the running app can settle, as filed on the day it was read.
+    'live-checks.md',
 ]);
 // Research artifacts their own README declares frozen at a past sweep.
 const FROZEN_DOC_PATTERN =
@@ -418,8 +440,35 @@ function listAgentDocs() {
                     : 'skill',
         });
     }
+    // The repository's documents for PEOPLE, read for the same claims: a
+    // README naming an `npm run` script that was removed misleads a
+    // contributor the way a stale note misleads an agent, and the root
+    // README went on documenting `pack:mac:uni` after the script was gone
+    // because nothing here read it. Never mirrored and not in the knowledge.
+    for (const relPath of repoFileList) {
+        if (
+            relPath.endsWith('.md') &&
+            !PROJECT_DOC_SKIP_PATTERN.test(relPath) &&
+            checkExists(relPath)
+        ) {
+            docList.push({
+                relPath,
+                kind: PROJECT_SCRATCH_PATTERN.test(relPath)
+                    ? 'ledger'
+                    : 'project',
+            });
+        }
+    }
     return docList;
 }
+
+// Not project documents: the agent docs and their mirror (listed above, or
+// copies), what a script generates, the coverage matrix (the `manual` check
+// reads it), and a third party's own README.
+const PROJECT_DOC_SKIP_PATTERN =
+    /^(?:\.claude|\.codex|\.agents|node_modules|test-results|release)\/|^docs\/(?:manual-sources|test-paths|\.vitepress)\/|^src\/lang\/data\/|^extra-work\/experiment-building\//;
+// Somebody's running to-do list is true about its day, like a backlog.
+const PROJECT_SCRATCH_PATTERN = /(?:^|\/)(?:TODO|note)\.md$/;
 
 // --doc narrows whose claims are read; the leverage signals (coverage,
 // staleness) still weigh every document.
@@ -605,10 +654,12 @@ function setKilledLeadsAside(checkName, signalList, targetDocList) {
     const entryList = readKilledLeadList().filter((entry) => {
         return entry.check === checkName;
     });
-    const keyOf = (doc, name) => `${doc}\0${name}`;
+    // `where` narrows an entry to one recipe: W-45 bolds PowerPoint's own
+    // **Notes**, and setting that aside must not hide the same word in W-14.
+    const keyOf = (doc, name, where) => `${doc}\0${name}\0${where ?? ''}`;
     const killedKeySet = new Set(
         entryList.map((entry) => {
-            return keyOf(entry.doc, entry.name);
+            return keyOf(entry.doc, entry.name, entry.where);
         }),
     );
     let setAsideCount = 0;
@@ -616,7 +667,8 @@ function setKilledLeadsAside(checkName, signalList, targetDocList) {
         signal.items = signal.items.filter((item) => {
             const isKilled =
                 item.name !== null &&
-                killedKeySet.has(keyOf(item.doc, item.name));
+                item.name !== undefined &&
+                killedKeySet.has(keyOf(item.doc, item.name, item.where));
             setAsideCount += isKilled ? 1 : 0;
             return !isKilled;
         });
@@ -1750,8 +1802,63 @@ function runCoverageCheck(docList, claimList) {
     ];
 }
 
+// The notes' own review ledger, the twin of the manual's (see `the manual`
+// below for why a READ has to be recorded): per note, a hash of its words and
+// one of the files it names. "Commits since the note was last edited" could
+// never clear for a note found correct, so every run ranked the same 139 and
+// read the top ten.
+const NOTES_REVIEW_PATH =
+    '.claude/skills/owa-enhance-agent-docs/references/notes-reviewed.json';
+const NOTE_READ_BYTES = 16 * 1024 * 1024;
+
+function readNotesReviewMap() {
+    try {
+        const fullPath = path.join(REPO_ROOT, NOTES_REVIEW_PATH);
+        return JSON.parse(readFileSync(fullPath, 'utf-8')).notes ?? {};
+    } catch {
+        return {};
+    }
+}
+
+function hashNoteText(text) {
+    // A line-ending flip is not a change.
+    return createHash('sha1')
+        .update(text.replace(/\r\n/g, '\n'))
+        .digest('hex')
+        .slice(0, 16);
+}
+
+const fileHashCache = new Map();
+function hashRepoFile(relPath) {
+    if (!fileHashCache.has(relPath)) {
+        const text = readText(relPath, NOTE_READ_BYTES);
+        fileHashCache.set(relPath, text === null ? 'gone' : hashNoteText(text));
+    }
+    return fileHashCache.get(relPath);
+}
+
+function readNoteState(relPath, relPathSet) {
+    // Files only. A note that says `tools/` names a folder, which has no
+    // content to hash and, handed to `git diff`, lists everything under it.
+    // A file that is gone stays: that IS a change.
+    const fileList = [...(relPathSet ?? [])]
+        .filter((one) => repoFileSet.has(one) || !checkExists(one))
+        .sort();
+    return {
+        fileList,
+        text: hashNoteText(readText(relPath, NOTE_READ_BYTES) ?? ''),
+        // Which files it names, apart from what is in them: a note reworded
+        // without naming anything new is still a note read against that code.
+        files: hashNoteText(fileList.join('\0')),
+        code: hashNoteText(
+            fileList.map((one) => `${one}\n${hashRepoFile(one)}`).join('\0'),
+        ),
+    };
+}
+
 function runStalenessCheck(docList, claimList) {
     const referenceMap = collectDocReferences(docList, claimList);
+    const reviewMap = readNotesReviewMap();
     const dirtySet = new Set(
         runGit(['status', '--porcelain'])
             .split('\n')
@@ -1767,6 +1874,41 @@ function runStalenessCheck(docList, claimList) {
         const relPathSet = referenceMap.get(doc.relPath);
         if (!relPathSet || relPathSet.size === 0) {
             continue;
+        }
+        const review = reviewMap[doc.relPath];
+        if (review !== undefined) {
+            const state = readNoteState(doc.relPath, relPathSet);
+            // A one-line edit to a 60 KB rule must not pass for a re-read of
+            // it: while the note names the same files, it is the CODE that
+            // decides, whatever was reworded since.
+            if (review.text === state.text || review.files === state.files) {
+                if (review.code !== state.code) {
+                    const changedList = runGit([
+                        'diff',
+                        '--name-only',
+                        review.at,
+                        '--',
+                        ...state.fileList,
+                    ])
+                        .split('\n')
+                        .filter(Boolean);
+                    rowList.push({
+                        at: doc.relPath,
+                        text:
+                            `the code it names changed since it was checked on ${review.reviewed}` +
+                            (changedList.length > 0
+                                ? ` -- git diff ${review.at} -- ${changedList.slice(0, 3).join(' ')}` +
+                                  (changedList.length > 3 ? ' …' : '')
+                                : ''),
+                        commitCount: Math.max(1, changedList.length),
+                    });
+                }
+                // Read against this very code: due only when the code moves.
+                continue;
+            }
+            // Edited to name other files since it was checked: whoever edited
+            // it wrote that against the code of the day, so it is judged like
+            // a note never checked.
         }
         const docMs = dirtySet.has(doc.relPath)
             ? Date.now()
@@ -1802,12 +1944,67 @@ function runStalenessCheck(docList, claimList) {
     }
     return [
         {
-            label: `notes whose code moved since they were last edited (${STALENESS_WINDOW_DAYS} d)`,
+            label: 'notes due a read against the code',
+            text: 'the code a note names moved after it was last edited or checked; read it, fix it, then --stamp-notes=<path>',
             items: rowList.sort(
                 (one, other) => other.commitCount - one.commitCount,
             ),
         },
     ];
+}
+
+// The notes' twin of `stampManualReview`: these files were read against the
+// code they name, as both are now.
+function stampNotesReview(pathArg, docList, claimList) {
+    const wantedList = (
+        pathArg.startsWith('@')
+            ? readFileSync(pathArg.slice(1), 'utf-8').split(LINE_BREAK_PATTERN)
+            : pathArg.split(',')
+    )
+        .map((one) => one.trim().replace(/\\/g, '/'))
+        .filter(Boolean);
+    const docSet = new Set(docList.map((doc) => doc.relPath));
+    const unknownList = wantedList.filter((relPath) => !docSet.has(relPath));
+    if (unknownList.length > 0) {
+        console.error(`Not an agent document: ${unknownList.join(', ')}`);
+        process.exit(2);
+    }
+    const referenceMap = collectDocReferences(docList, claimList);
+    const reviewMap = readNotesReviewMap();
+    const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
+    const reviewed = new Date().toLocaleDateString('sv-SE');
+    for (const relPath of wantedList) {
+        const { text, files, code } = readNoteState(
+            relPath,
+            referenceMap.get(relPath),
+        );
+        reviewMap[relPath] = { reviewed, at: head, text, files, code };
+    }
+    // A note that is gone takes its entry with it.
+    const rowList = Object.keys(reviewMap)
+        .filter((relPath) => docSet.has(relPath))
+        .sort()
+        .map((relPath) => {
+            const { reviewed: day, at, text, files, code } =
+                reviewMap[relPath];
+            return (
+                `        ${JSON.stringify(relPath)}: { "reviewed": "${day}", ` +
+                `"at": "${at}", "text": "${text}", "files": "${files}", ` +
+                `"code": "${code}" }`
+            );
+        });
+    const note =
+        'Which notes, rules and skill files were read against the code, and ' +
+        'against what: a hash of the file, of the list of files it names, and ' +
+        'of what is in them. Written only by audit-agent-docs.mjs --stamp-notes.';
+    writeFileSync(
+        path.join(REPO_ROOT, NOTES_REVIEW_PATH),
+        `{\n    "note": ${JSON.stringify(note)},\n    "notes": {\n` +
+            `${rowList.join(',\n')}\n    }\n}\n`,
+    );
+    console.log(
+        `Stamped ${wantedList.length} document(s) as checked on ${reviewed} @ ${head}.`,
+    );
 }
 
 function readLastCommitMsFromList(commitList, relPath) {
@@ -1863,10 +2060,440 @@ function runProseRulesCheck(docList) {
     ];
 }
 
+// ---- the manual -----------------------------------------------------------------
+//
+// `user-workflows.md` is two documents in one file. Its head is a ledger: one
+// dated entry per change, true about its day. Everything from the first
+// `### W-` heading on is the MANUAL -- present-tense steps `docs:gen` turns
+// into the pages a volunteer reads and the in-app assistant answers from.
+// Skipping the whole file as history (it is in `LEDGER_NAME_SET`, rightly, for
+// the claim checks) is how W-07 went on sending people to a "settings split"
+// and an "Appearance card" for six weeks after both were gone, through several
+// runs of this audit, until the assistant repeated it to a user.
+//
+// A recipe has no backticked names to check -- it is written in the words on
+// the controls. So it is checked by those: a label the code no longer holds,
+// a coverage row whose source file is gone, and -- what no pattern can see --
+// whether its steps are still what the code does. That last one is a READ, so
+// it is kept as a ledger: `references/manual-reviewed.json` holds, per recipe,
+// a hash of its words and one of the files its Verify rows cite, written by
+// `--stamp-manual` once somebody has read the two against each other. A
+// recipe is due again the moment either moves, and never before. Until that
+// ledger existed the signal was "commits since the recipe was last edited",
+// which a recipe found CORRECT could never clear: run after run listed the
+// same 29 and read the top few.
+
+const MANUAL_PATH = ID_OWNER_MAP.W;
+const MANUAL_REVIEW_PATH =
+    '.claude/skills/owa-enhance-agent-docs/references/manual-reviewed.json';
+const DICTIONARY_PATH = 'src/lang/data/km/index.ts';
+const RECIPE_HEADING_PATTERN = /^###\s+(W-\d+[a-z]?)\b/;
+const LABEL_TEMPLATE_PATTERN = /\[en:tran:([^\]]+)\]/g;
+const BOLD_PATTERN = /\*\*([^*\n]{1,60})\*\*/g;
+const MATRIX_ROW_PATTERN = /^\|\s*([A-Z]{2,4}-\d+[a-z]?)\s*\|/;
+const SOURCE_PATH_PATTERN =
+    /\b(?:src|electron|tools|html|extra-work)\/[\w./@-]+\.[A-Za-z]{2,5}\b/g;
+const STRING_LITERAL_PATTERN =
+    /'((?:[^'\\\n]|\\.){1,120})'|"((?:[^"\\\n]|\\.){1,120})"|`([^`$\n]{1,120})`/g;
+// A label put together at run time -- `Reveal in ${fileManagerName}`,
+// `${isLineSync ? 'Unset' : 'Set'} Line Sync` -- is in the code as its fixed
+// end only.
+const TEMPLATE_PART_PATTERN =
+    /`([^`$\n]{0,80})\$\{[^`\n]*\}([^`$\n]{0,80})`/g;
+const MIN_TEMPLATE_PART_LENGTH = 6;
+const LABEL_CODE_ROOT_LIST = ['src', 'electron', 'tools'];
+// The matrix and the dictionary are both past the default read cap.
+const MANUAL_READ_BYTES = 16 * 1024 * 1024;
+
+function readDictionaryKeySet() {
+    const keySet = new Set();
+    const text = readText(DICTIONARY_PATH, MANUAL_READ_BYTES) ?? '';
+    for (const line of text.split(LINE_BREAK_PATTERN)) {
+        const match = line.match(
+            /^\s+(?:'((?:[^'\\]|\\.)+)'|"((?:[^"\\]|\\.)+)"|([A-Za-z_$][\w$]*)):/,
+        );
+        if (match) {
+            keySet.add((match[1] ?? match[2] ?? match[3]).trim().toLowerCase());
+        }
+    }
+    return keySet;
+}
+
+// Every string the code can put on a control: one pass, kept as a set, so a
+// label is a lookup and not a search of a thousand files.
+function readCodeLiteralSet() {
+    const literalSet = new Set();
+    const headList = [];
+    const tailList = [];
+    for (const root of LABEL_CODE_ROOT_LIST) {
+        for (const name of listFilesUnder(path.join(REPO_ROOT, root))) {
+            const relPath = `${root}/${name}`;
+            if (
+                !/\.(?:tsx?|mjs|cjs|js)$/.test(name) ||
+                /\.test\.|\/node_modules\//.test(relPath) ||
+                relPath.startsWith('src/lang/data/')
+            ) {
+                continue;
+            }
+            const text = readText(relPath) ?? '';
+            for (const match of text.matchAll(STRING_LITERAL_PATTERN)) {
+                literalSet.add(
+                    (match[1] ?? match[2] ?? match[3]).trim().toLowerCase(),
+                );
+            }
+            for (const match of text.matchAll(TEMPLATE_PART_PATTERN)) {
+                const head = match[1].trimStart().toLowerCase();
+                const tail = match[2].trimEnd().toLowerCase();
+                if (head.trim().length >= MIN_TEMPLATE_PART_LENGTH) {
+                    headList.push(head);
+                }
+                if (tail.trim().length >= MIN_TEMPLATE_PART_LENGTH) {
+                    tailList.push(tail);
+                }
+            }
+        }
+    }
+    return {
+        checkIsDrawn: (label) => {
+            const key = label.trim().toLowerCase();
+            return (
+                literalSet.has(key) ||
+                headList.some((head) => key.startsWith(head)) ||
+                tailList.some((tail) => key.endsWith(tail))
+            );
+        },
+    };
+}
+
+function readRecipeList() {
+    const lineList = readDocLines(MANUAL_PATH);
+    const recipeList = [];
+    lineList.forEach((line, index) => {
+        const match = line.match(RECIPE_HEADING_PATTERN);
+        if (match) {
+            recipeList.push({ id: match[1], start: index, lines: [] });
+        } else if (recipeList.length > 0 && /^#{1,2}\s/.test(line)) {
+            // A chapter heading ends the recipe above it.
+            recipeList.at(-1).isClosed = true;
+        }
+        const recipe = recipeList.at(-1);
+        if (recipe && !recipe.isClosed) {
+            recipe.lines.push(line);
+        }
+    });
+    return recipeList;
+}
+
+// `PM-13..14`, `NAV-06..07`, `CB-61` -> every row id the line stands for.
+function expandVerifyIds(line) {
+    const idList = [];
+    const pattern = /\b([A-Z]{2,4})-(\d+)([a-z]?)(?:\.\.(\d+))?/g;
+    for (const match of line.matchAll(pattern)) {
+        const [, prefix, first, letter, last] = match;
+        const end = last === undefined ? Number(first) : Number(last);
+        if (end < Number(first) || end - Number(first) > 60) {
+            continue;
+        }
+        for (let number = Number(first); number <= end; number++) {
+            idList.push(
+                `${prefix}-${String(number).padStart(first.length, '0')}` +
+                    (last === undefined ? letter : ''),
+            );
+        }
+    }
+    return idList;
+}
+
+function readMatrixSourceMap() {
+    const sourceMap = new Map();
+    const matrixText = readText(MATRIX_PATH, MANUAL_READ_BYTES) ?? '';
+    matrixText.split(LINE_BREAK_PATTERN).forEach((line, index) => {
+        const match = line.match(MATRIX_ROW_PATTERN);
+        const sourceStart = line.indexOf('(src:');
+        if (!match || sourceStart === -1) {
+            return;
+        }
+        sourceMap.set(match[1], {
+            line: index + 1,
+            fileList: [
+                ...new Set(line.slice(sourceStart).match(SOURCE_PATH_PATTERN)),
+            ],
+        });
+    });
+    return sourceMap;
+}
+
+// A line-ending flip is not a change.
+function hashText(text) {
+    return createHash('sha1')
+        .update(text.replace(/\r\n/g, '\n'))
+        .digest('hex')
+        .slice(0, 16);
+}
+
+// What a recipe is checked AGAINST: its own words, and the files its Verify
+// rows cite.
+function readRecipeState(recipe, sourceMap) {
+    let verifyIdList = [];
+    for (const line of recipe.lines) {
+        if (/^_?Verify:/.test(line.trim())) {
+            verifyIdList = expandVerifyIds(line);
+        }
+    }
+    const fileList = [
+        ...new Set(
+            verifyIdList.flatMap((id) => sourceMap.get(id)?.fileList ?? []),
+        ),
+    ].sort();
+    const codeText = fileList
+        .map((relPath) => {
+            return `${relPath}\n${readText(relPath, MANUAL_READ_BYTES) ?? 'gone'}`;
+        })
+        .join('\0');
+    return {
+        fileList,
+        text: hashText(recipe.lines.join('\n').trimEnd()),
+        code: hashText(codeText),
+    };
+}
+
+function readManualReviewMap() {
+    try {
+        const fullPath = path.join(REPO_ROOT, MANUAL_REVIEW_PATH);
+        return JSON.parse(readFileSync(fullPath, 'utf-8')).recipes ?? {};
+    } catch {
+        return {};
+    }
+}
+
+// Why a recipe is due a read, or null when the ledger says it was read
+// against exactly these words and this code.
+function readReviewReason(review, state) {
+    if (review === undefined) {
+        return 'never checked against the code';
+    }
+    if (review.text !== state.text) {
+        return `edited since it was checked on ${review.reviewed}`;
+    }
+    if (review.code === state.code) {
+        return null;
+    }
+    const changedList = runGit([
+        'diff',
+        '--name-only',
+        review.at,
+        '--',
+        ...state.fileList,
+    ])
+        .split('\n')
+        .filter(Boolean);
+    return (
+        `the code it describes changed since it was checked on ${review.reviewed}` +
+        (changedList.length > 0
+            ? ` -- git diff ${review.at} -- ${changedList.slice(0, 3).join(' ')}` +
+              (changedList.length > 3 ? ' …' : '')
+            : '')
+    );
+}
+
+function runManualCheck() {
+    const recipeList = readRecipeList();
+    const dictionaryKeySet = readDictionaryKeySet();
+    const { checkIsDrawn } = readCodeLiteralSet();
+    const sourceMap = readMatrixSourceMap();
+    const reviewMap = readManualReviewMap();
+    const at = (recipe, offset = 0) => {
+        return `${MANUAL_PATH}:${recipe.start + offset + 1}`;
+    };
+    const dead = [];
+    const plain = [];
+    const due = [];
+    for (const recipe of recipeList) {
+        const deadSet = new Set();
+        const plainSet = new Set();
+        recipe.lines.forEach((line, offset) => {
+            for (const match of line.matchAll(LABEL_TEMPLATE_PATTERN)) {
+                const key = match[1].trim().toLowerCase();
+                if (!checkIsDrawn(key) && !deadSet.has(key)) {
+                    deadSet.add(key);
+                    dead.push({
+                        at: at(recipe, offset),
+                        doc: MANUAL_PATH,
+                        name: `[en:tran:${match[1].trim()}]`,
+                        where: recipe.id,
+                        kind: 'live',
+                        text: `${recipe.id} names [en:tran:${match[1]}] -- no code draws that label`,
+                    });
+                }
+            }
+            for (const match of line.matchAll(BOLD_PATTERN)) {
+                const words = match[1].trim();
+                const key = words.toLowerCase();
+                // Only a phrase that IS one of the app's labels, written the
+                // way a label is: bold is also how a recipe leans on a word
+                // ("**all** of them"), and `or`, `key` and `empty` are
+                // dictionary keys too.
+                if (
+                    words.includes('[en:tran:') ||
+                    !/^[A-Z]/.test(words) ||
+                    words.length < 3 ||
+                    !dictionaryKeySet.has(key) ||
+                    deadSet.has(key)
+                ) {
+                    continue;
+                }
+                if (!checkIsDrawn(key)) {
+                    deadSet.add(key);
+                    dead.push({
+                        at: at(recipe, offset),
+                        doc: MANUAL_PATH,
+                        name: `**${words}**`,
+                        where: recipe.id,
+                        kind: 'live',
+                        text: `${recipe.id} names **${words}** -- no code draws that label`,
+                    });
+                } else {
+                    plainSet.add(words);
+                }
+            }
+        });
+        const reason = readReviewReason(
+            reviewMap[recipe.id],
+            readRecipeState(recipe, sourceMap),
+        );
+        if (reason === null) {
+            // Read against these very words: what is still plain was left
+            // plain on purpose (another program's label, the English-only
+            // help window, a word leaned on).
+            continue;
+        }
+        due.push({ at: at(recipe), text: `${recipe.id}: ${reason}` });
+        if (plainSet.size > 0) {
+            plain.push({
+                at: at(recipe),
+                text:
+                    `${recipe.id} names ${plainSet.size} control(s) in plain English, ` +
+                    `not as [en:tran:…]: ${[...plainSet].slice(0, 5).join(', ')}` +
+                    (plainSet.size > 5 ? ', …' : ''),
+                count: plainSet.size,
+            });
+        }
+    }
+    const gone = [];
+    for (const [id, { line, fileList }] of sourceMap) {
+        for (const relPath of fileList) {
+            if (!checkExists(relPath)) {
+                gone.push({
+                    at: `${MATRIX_PATH}:${line}`,
+                    text: `${id} cites ${relPath} -- gone`,
+                });
+            }
+        }
+    }
+    return [
+        // `key` is what `src/test-setup/manualRecipes.test.ts` finds these two
+        // by: the gate holds them at 0.
+        {
+            key: 'dead-label',
+            label: 'manual recipes naming a label no code draws',
+            text: `${recipeList.length} recipes read; the assistant answers from these`,
+            items: dead,
+        },
+        {
+            key: 'gone-file',
+            label: 'coverage rows citing a source file that is gone',
+            items: gone,
+        },
+        {
+            label: 'manual recipes due a read against the code',
+            text: 'read it, fix it, then --stamp-manual=<id>; a run is not done while this is above 0',
+            items: due,
+        },
+        {
+            label: 'controls those recipes name in plain English',
+            text: 'make each a template or leave it on purpose; the stamp settles it',
+            items: plain.sort((one, other) => other.count - one.count),
+        },
+    ];
+}
+
+// The one write this script makes, and only when asked: these recipes were
+// read against the code as both are now. A recipe still naming a label no
+// code draws is refused -- a stamp must never bless a dead step.
+function stampManualReview(idArg, deadItemList) {
+    const recipeList = readRecipeList();
+    const idList =
+        idArg === 'all'
+            ? recipeList.map((recipe) => recipe.id)
+            : idArg.split(',').filter(Boolean);
+    const unknownList = idList.filter((id) => {
+        return !recipeList.some((recipe) => recipe.id === id);
+    });
+    if (unknownList.length > 0) {
+        console.error(`No such recipe: ${unknownList.join(', ')}`);
+        process.exit(2);
+    }
+    const deadList = deadItemList.filter((item) => idList.includes(item.where));
+    if (deadList.length > 0) {
+        console.error(
+            'Not stamped -- fix these first (or file them in killed-leads.json):\n' +
+                deadList.map((item) => `  ${item.at}  ${item.text}`).join('\n'),
+        );
+        process.exit(2);
+    }
+    const sourceMap = readMatrixSourceMap();
+    const reviewMap = readManualReviewMap();
+    const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
+    const reviewed = new Date().toLocaleDateString('sv-SE');
+    for (const recipe of recipeList) {
+        if (idList.includes(recipe.id)) {
+            const { text, code } = readRecipeState(recipe, sourceMap);
+            reviewMap[recipe.id] = { reviewed, at: head, text, code };
+        }
+    }
+    // One line a recipe, in the manual's own order, so a diff reads as a list
+    // of what was checked.
+    const rowList = recipeList
+        .filter((recipe) => reviewMap[recipe.id] !== undefined)
+        .map((recipe) => {
+            const { reviewed: day, at, text, code } = reviewMap[recipe.id];
+            return (
+                `        ${JSON.stringify(recipe.id)}: { "reviewed": "${day}", ` +
+                `"at": "${at}", "text": "${text}", "code": "${code}" }`
+            );
+        });
+    const note =
+        'Which manual recipes were read against the code, and against what: ' +
+        'a hash of the recipe and one of the files its Verify rows cite. ' +
+        'Written only by audit-agent-docs.mjs --stamp-manual.';
+    writeFileSync(
+        path.join(REPO_ROOT, MANUAL_REVIEW_PATH),
+        `{\n    "note": ${JSON.stringify(note)},\n    "recipes": {\n` +
+            `${rowList.join(',\n')}\n    }\n}\n`,
+    );
+    console.log(
+        `Stamped ${idList.length} recipe(s) as checked on ${reviewed} @ ${head}: ` +
+            idList.join(', '),
+    );
+}
+
 // ---- running --------------------------------------------------------------------
 
 const docList = listAgentDocs();
+if (stampManualArg !== undefined) {
+    const [deadSignal] = setKilledLeadsAside(
+        'manual',
+        runManualCheck(),
+        docList,
+    );
+    stampManualReview(stampManualArg, deadSignal.items);
+    process.exit(0);
+}
 const claimList = collectClaims(docList);
+if (stampNotesArg !== undefined) {
+    stampNotesReview(stampNotesArg, docList, claimList);
+    process.exit(0);
+}
 const targetDocList = docList.filter(checkIsInDocArg);
 const targetClaimList = claimList.filter((claim) => {
     return checkIsInDocArg(claim.doc);
@@ -1894,9 +2521,23 @@ const RUNNER_MAP = {
     rules: () => runRulesCheck(),
     skills: () => runSkillsCheck(),
     mirror: () => runMirrorCheck(),
-    knowledge: () => runKnowledgeCheck(docList),
+    knowledge: () => {
+        return runKnowledgeCheck(
+            docList.filter((doc) => doc.kind !== 'project'),
+        );
+    },
+    manual: () => {
+        return setKilledLeadsAside('manual', runManualCheck(), docList);
+    },
     budget: () => runBudgetCheck(),
-    coverage: () => runCoverageCheck(docList, claimList),
+    // Which code the AGENT docs cover: a README does not make an area known
+    // to an agent.
+    coverage: () => {
+        return runCoverageCheck(
+            docList.filter((doc) => doc.kind !== 'project'),
+            claimList.filter((claim) => claim.doc.kind !== 'project'),
+        );
+    },
     staleness: () => runStalenessCheck(docList, claimList),
     'prose-rules': () => runProseRulesCheck(docList),
 };

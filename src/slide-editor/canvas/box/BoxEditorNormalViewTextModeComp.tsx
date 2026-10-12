@@ -5,7 +5,7 @@ import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import { escapeHtmlText } from '../../../helper/sanitizeHelpers';
 
-export function BoxEditorNormalTextRender() {
+export function BoxEditorNormalTextRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();
     try {
         CanvasItemText.validate(props);

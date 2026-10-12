@@ -14,6 +14,15 @@ How each app-level MCP tool behaves and why — the walkthrough card, the demos,
 the state and screens readers, the acting tools, the document and data tools.
 The doors and the firewall: `agent-access.md`.
 
+Not every tool has its notes here. Each has a paragraph in
+`tools/owa-devtools-mcp/README.md`; `owa_help_search`, `owa_help_page`,
+`owa_list_questions` and `owa_tran` are in `agent-knowledge.md`,
+`owa_read_website` in `agent-access.md`, `owa_screenshot` and
+`owa_highlight_selector` in `chatbot-window.md`. `owa_type` finds its box the
+way `owa_click` finds a control, `owa_guide_step` moves on the card
+`owa_guide_start` put up, and `owa_hide_screens` takes content off a
+projector, so it is offered and never done unasked.
+
 - **A press is reported as what it CHANGED, not as what it hit** (2026-09-03).
   `owa_click` used to answer `clicked: <the control>` and stop, which is a tool
   reporting its own ACTION where the caller needs the action's EFFECT — and a
@@ -24,7 +33,8 @@ The doors and the firewall: `agent-access.md`.
   `unverified` — a SENTENCE, not a flag, because a missing key is something a
   model infers past. The control is read back ~250 ms AFTER the press: this app
   re-renders on an event, so reading it straight away reports the state before.
-  Three kinds of evidence, weakest last — a control that is GONE did something, a
+  Four kinds of evidence, weakest last — a layer the press brought up or took
+  down (the next bullet), a control that is GONE did something, a
   toggle that flipped is the state itself, a label that turned Show into Hide is
   the same fact in words. The other half was the AIM: `handleAutoHide` injected
   four `<i title="Show">` decorations into the presenter's auto-hide footers, and
@@ -330,7 +340,7 @@ The doors and the firewall: `agent-access.md`.
   7.6 s, proven on the wall); `/selected`, `/next` and `/previous` do the same
   with no model (1.5--3 s), and the offline bot answers the same questions from
   the field (`answerSelection`, before the how-do-I gate; a run-sheet question
-  is excluded because no tool reads the run sheet yet -- `EC-132`).
+  goes to `answerRunSheet` and the `runSheet` field instead -- `EC-132`).
   `owa_app_state` also dropped the forty dev-only component names and the
   instance's `userDataPath` (a path with the account name in it, to the model
   on every call). **Off the Presenter the field is a `note`, never absent.**
@@ -492,7 +502,8 @@ isMainWindow, howToOpen, openFind}`, and the `key` is NOT a label: it is
   for — a recipe about Settings walked in the Presenter rings whatever word
   happens to match there, reported as a card about Settings ringing a Bible
   version off “Language: click **English**”, that button reading `KJV English
-KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
+KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
+  caller's page.
   Between them those fields are why a walkthrough of a window nobody
   opened now opens it instead of reporting that it is not there: the chatbot's
   `genPageOpenAnswer` navigates or presses, starts the walkthrough it was asked
@@ -682,8 +693,9 @@ KJV`. 5 of the 44 recipes name one window; the rest keep the caller's page.
   un-right-clickable); and **`owa_scroll`** (`MC-54`) — the long lists are
   windowed, so a row past the fold is not in the DOM until the list has
   moved; it pages the nearest scroller of the control named (or inside the
-  panel named, else `findListRegion`'s nearest list), fires `scroll` so the
-  windowed rows render, and answers `inView`, the labels pressable afterwards.
+  panel named, else `findListRegion`'s nearest list), sets `scrollTop` (the
+  browser's own `scroll` event renders the windowed rows; a synthetic one
+  rendered them twice), and answers `inView`, the labels pressable afterwards.
   Withheld from the model: the file tools find a file by name whether or not
   its row is on screen. And **the Background tabs' files** (`owa_media_file`,
   `src/helper/agentMediaFileHelpers.ts`, domain `media`; `MC-52` / `MC-53` /
@@ -775,3 +787,19 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   `x-ratelimit-remaining: 0` — `busy` now, where `denied` told a volunteer it
   may need a sign-in. None of it touched the schema: the model's bill is
   unchanged.
+
+- **A control shut behind three dots answers `revealBy`, not `showsOnHover`**
+  (2026-10-11, `autoHideOf` in `domMatch.mjs`). The footers `handleAutoHide`
+  makes -- under the Mini Screen, the Bibles previewer, the Background panel,
+  the presenting-flow preview -- have no `:hover` rule: only a press on their
+  **[en:tran:Reveal Hidden Controls]** adds `auto-hide-show`. `describe`
+  called such a control `showsOnHover`, so the assistant told a user to look
+  for **[en:tran:Bible Properties]** where no mouse would bring it up and its
+  ring landed on an empty corner (the user's pictures: _it should tell user to
+  click the 3 dots first_, _then find out how to show to element to user_).
+  A match and a list row now carry `revealBy`, the words on the control to
+  press FIRST, and `owa_find_ui`'s ring holds the footer open for its four
+  seconds (`revealHidden(element, ms, true)`) and shuts it again unless the
+  person pressed the dots meanwhile. The walkthrough card does not pass the
+  flag: there the dots stay a press of their own (`autoHideRevealOf` in
+  `guide.mjs`). No schema changed, so the model's bill did not.

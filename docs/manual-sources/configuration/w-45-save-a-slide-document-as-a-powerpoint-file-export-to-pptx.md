@@ -11,10 +11,10 @@ workflowsVersion: "2026-10-11"
 
 For when a slide document has to be shown or edited where this app is not — a guest
 speaker's laptop, a church that uses PowerPoint, Google Slides or Keynote. Unlike
-**Export** (W-23), which carries the document to another Open Worship app, this makes a
+**[en:tran:Export]** (W-23), which carries the document to another Open Worship app, this makes a
 PowerPoint file anyone can open.
 
-1. In the **Documents** list, right-click an Open Worship slide document (or press the
+1. In the **[en:tran:Documents]** list, right-click an Open Worship slide document (or press the
    **⋮** at the end of its row) and choose **[en:tran:Export to PPTX]**. It sits just
    under **[en:tran:Export]**. 📸
 2. For a lyric, select its row so the **[en:tran:Stage Previewer]** opens. Add or remove
@@ -37,7 +37,7 @@ PowerPoint file anyone can open.
    - behind each slide is the background the screen would be showing: the slide's own,
      else the document's, else the one the slide before it left up — so the slides that
      follow a video background keep it, as they do when you present them in order. 📸
-5. Anything you wrote in a slide's **Slide Note** is in that slide's **Notes** in
+5. Anything you wrote in a slide's **[en:tran:Slide Note]** is in that slide's **Notes** in
    PowerPoint, and a slide you disabled comes out as a **hidden** slide, skipped when the
    show runs.
 

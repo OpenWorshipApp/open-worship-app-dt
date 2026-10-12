@@ -7,7 +7,7 @@ import type {
     ForegroundCameraDataType,
     StyleAnimType,
 } from '../_screen/screenTypeHelpers';
-import { electronSendAsync } from '../server/appHelpers';
+import { electronSendAsync } from '../server/electronSendHelpers';
 import appProvider from '../server/appProvider';
 import {
     getMirrorCameraStream,

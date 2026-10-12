@@ -214,7 +214,7 @@ export type QuestionGroupType = {
  * do not answer the question a volunteer actually has, which is what this
  * window is FOR -- and a help window whose scope you have to guess at gets
  * used for the one thing somebody once saw it do. This is the list behind the
- * chips: around 180 questions for the presenter, every one of which has a
+ * chips: around 300 questions for the presenter, every one of which has a
  * manual page or a tool behind it, so nothing here can be pressed and come
  * back with a shrug.
  *

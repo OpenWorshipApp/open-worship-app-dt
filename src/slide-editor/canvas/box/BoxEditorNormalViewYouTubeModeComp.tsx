@@ -98,7 +98,7 @@ function BoxEditorNormalYouTubeThumbnailComp({
     );
 }
 
-export function BoxEditorNormalYouTubeRender() {
+export function BoxEditorNormalYouTubeRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemYouTubePropsType>();
     const isThumbnail = use(SlideThumbnailContext);
     try {

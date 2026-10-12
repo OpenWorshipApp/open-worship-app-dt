@@ -13,7 +13,7 @@ workflowsVersion: "2026-10-11"
 
 Almost everything in the app — a file in a list, a Bible verse in your reading list, a
 note, a slide, a background, a line of a presenting flow, a screen preview, a folder in
-**Resources**, a box in a connection graph — has more it can do than the click on it
+**[en:tran:Resources]**, a box in a connection graph — has more it can do than the click on it
 does. Those extras live in a small menu.
 
 1. Look at the right-hand end of the row, or the top-right of the card. There is a

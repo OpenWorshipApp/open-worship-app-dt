@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-A `.note` file now holds two kinds of item. An item with a `verseKey`
+A note file (`.own`) now holds two kinds of item. An item with a `verseKey`
 (`"(KJV) GEN 22:1"`) is a **verse item**: the highlights and comments made on that
 one verse, each with its own uuid and `[start, end]` character offsets. Everything
 without a `verseKey` is an ordinary bible note and behaves as it always did. Written

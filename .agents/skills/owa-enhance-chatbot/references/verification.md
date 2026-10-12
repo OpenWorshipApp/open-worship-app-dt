@@ -9,11 +9,11 @@ typechecks. This file is the how.
   `electron-build/`, the running app's own main entry, and kills it. The `npm run
   lint` gate no longer does (`EN-16`: its build check goes to a temp dir), but it
   still goes last.
-- **Except knowledge work**, which needs a build to be visible at all. Plan for
-  the restart: build, relaunch, then verify.
-- **`mcp__owa-devtools__evaluate_script` is dead under Node 22**
-  ("DisposableStack is not defined"). Drive pages over raw CDP `Runtime.evaluate`
-  instead. Everything else in the MCP works.
+- **Except knowledge work**, which needs `node extra-work/build-knowledge.mjs` to
+  be visible at all — run alone it leaves the app up, so rebuild, then verify.
+- **`evaluate_script` is refused by the MCP firewall** and dropped from
+  `tools/list`, with `take_heapsnapshot` and `upload_file`. Drive pages over raw
+  CDP `Runtime.evaluate` instead.
 - **Never `import()` an app module** in an evaluated expression — it re-runs
   `document.onkeydown` and kills every keyboard shortcut in the app.
 - **Reload before calling something a regression.** Dev HMR leaves stale state,
@@ -38,8 +38,10 @@ node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs
 Both endpoints come from the same published file — one per live instance:
 
 ```bash
-cat "$(node -p "require('path').join(require('os').tmpdir(),'open-worship-app-cdp')")"/*.json
-# { "port": <cdp>, "url": "http://127.0.0.1:<cdp>", "mcpUrl": "http://127.0.0.1:<mcp>/mcp", ... }
+# Never `cat` it: the file also holds `mcpToken`, which must not enter a log
+# or a model's context. Print the fields that are safe to see.
+node -e "const fs=require('fs'),p=require('path'),d=p.join(require('os').tmpdir(),'open-worship-app-cdp');for(const f of fs.readdirSync(d)){const j=JSON.parse(fs.readFileSync(p.join(d,f),'utf8'));console.log(j.pid,j.port,j.mcpUrl,j.isDev,j.version)}"
+# <pid> <cdp port> http://127.0.0.1:<mcp>/mcp <isDev> <version>
 ```
 
 Not running? `env -u ELECTRON_RUN_AS_NODE npm run dev` (the harness exports
@@ -60,7 +62,7 @@ chatbot window. Screenshot before and after any UI change.
 
 ## Driving the chatbot window over raw CDP
 
-The pattern both `extra-work/verify-chatbot-*.mjs` scripts use: find the target,
+The pattern `extra-work/verify-chatbot-e2e.mjs` uses: find the target,
 open a websocket, `Runtime.evaluate`. In a scratch `.mjs`:
 
 ```js
@@ -105,8 +107,8 @@ plus a guide card per provider:
 node extra-work/verify-chatbot-e2e.mjs       # spends REAL API credit — ask first
 ```
 
-> Both still hardcode `http://127.0.0.1:39223/mcp` (backlog `EC-05`). If they say
-> the app is down and the audit script says otherwise, that is why.
+> Both read `mcpUrl` and `mcpToken` from the published instance file, as the audit
+> script does.
 
 ## The checks that are easy to forget
 
@@ -115,10 +117,10 @@ node extra-work/verify-chatbot-e2e.mjs       # spends REAL API credit — ask fi
 | An acting tool ANNOUNCES itself | Call it; the banner appears in the app window. `describeToolCall(name, args)` from `notify.mjs` must return a phrase. |
 | A guide lands on the real control | `owa_guide_start`, then look: the red ring must be on the control the step names. `owa_guide_status` reports `isTargetFound` and `nearMisses`. |
 | The answer contains no internals | No file path, id, setting key or component name in what the user sees — including when the model read an `internal` page. |
-| The offline path still works | Ask with the provider deliberately broken (wrong key). The manual answer must come back with a note naming the provider that failed. |
-| The empty state | Clear the keys in Settings → Others and reopen: the window must say so and offer the button that opens Settings. |
+| The offline path still works | Ask with the provider deliberately broken (wrong key) and no other paid key set, or that one stands in. The manual answer must come back with a note naming the provider that failed. |
+| The empty state | Clear the keys in Settings → Others and reopen: the window must open on the Free assistant, under the notice about the free public service, with an **Open AI settings** button that opens Settings → Others. |
 | Tabs survive a reopen | Open two tabs, ask in both, close and reopen the window: both come back (`local-storage/chatbot-sessions`). |
-| The other window | An answer for the presenter must not describe reader controls, and vice versa. The Bible Reader has one reference box and a version button — no Book/Chapter/Verse buttons. |
+| The other window | An answer for the presenter must not describe reader controls, and vice versa. The Bible Reader has one reference box and a version button; clearing the box (**Clear input**) shows its book, then chapter, then verse buttons. |
 | Cost | Re-run the audit script and quote before/after. |
 
 ## Where the logs are

@@ -283,12 +283,29 @@ const DATA_STEP_MAP: Record<string, Record<string, string>> = {
         list: 'Looking through the recent changes',
         undo: 'Putting back an earlier change',
     },
+    // The model has had this tool since 2026-10-10 and its steps read
+    // "Looking something up" until the day the notes were checked against
+    // the code: a tool added to the server and not here says nothing.
+    owa_presenting_flow: {
+        list: 'Looking through your run sheets',
+        info: 'Reading a run sheet',
+        create: 'Making a run sheet',
+        rename: 'Renaming a run sheet',
+        delete: 'Moving a run sheet to the trash',
+        add: 'Adding a line to a run sheet',
+        remove: 'Taking a line off a run sheet',
+        move: 'Moving a line of a run sheet',
+        duplicate: 'Copying a line of a run sheet',
+        park: 'Parking a line of a run sheet',
+        unpark: 'Putting a parked line back in the run',
+    },
 };
 
 const DATA_STEP_FALLBACK_MAP: Record<string, string> = {
     owa_bible_item: 'Working on your saved Bible passages',
     owa_bible_note: 'Working on your Bible notes',
     owa_undo: 'Looking through the recent changes',
+    owa_presenting_flow: 'Working on a run sheet',
 };
 
 function describeDataStep(name: string, args: any) {
@@ -454,6 +471,7 @@ export function describeToolStep(name: string, args: any): string {
         case 'owa_bible_item':
         case 'owa_bible_note':
         case 'owa_undo':
+        case 'owa_presenting_flow':
             return describeDataStep(name, args);
         case 'owa_guide_start':
             return 'Setting up a walkthrough';

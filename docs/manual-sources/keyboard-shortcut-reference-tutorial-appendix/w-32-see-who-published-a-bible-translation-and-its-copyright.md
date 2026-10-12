@@ -16,7 +16,7 @@ You do not need Settings for this. The information is one click away, but only w
 you are still choosing what to read: once a verse is on screen the header gives that
 space to the verse buttons instead.
 
-1. Open **Bible Reader** (see W-11) and make sure the lookup box at the top is
+1. Open **[en:tran:Bible Reader]** (see W-11) and make sure the lookup box at the top is
    **empty**, so the pane shows the grid of book names (**លោកុប្បត្តិ (Genesis)**,
    **និក្ខមនំ (Exodus)**, …). 📸
 2. Look at the **top-right corner of that pane**, on the same line as the small
@@ -53,7 +53,7 @@ space to the verse buttons instead.
    it returns.
 
 > Want to change any of this rather than just read it? That is still
-> **Settings → Bible**, the pencil next to the translation, then the **Info** tab.
+> **Settings → [en:tran:Bible]**, the pencil next to the translation, then the **[en:tran:Info]** tab.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

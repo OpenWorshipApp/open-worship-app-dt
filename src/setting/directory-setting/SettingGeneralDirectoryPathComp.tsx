@@ -31,7 +31,7 @@ import {
     appLocalStorage,
     SELECTED_PARENT_DIR_SETTING_NAME,
 } from './appLocalStorage';
-import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
+import { SelectDefaultDirButtonComp } from '../../others/NoDirSelectedComp';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import { unwatchDataDir, watchDataDir } from '../../helper/dirWatchingHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
@@ -105,7 +105,7 @@ function RenderPathElementComp({
                 </div>
                 {isValidDirPath ? null : (
                     <div className="m-1">
-                        <SelectDefaultDirButton
+                        <SelectDefaultDirButtonComp
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />

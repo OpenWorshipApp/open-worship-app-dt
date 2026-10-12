@@ -26,9 +26,10 @@ extension, but the file dialog accepts any `gz/tgz/tar`). The field was called `
 before bible lists shared the format and is still read under that name.
 
 **The machinery moved.** `src/helper/appArchiveHelpers.ts` now owns everything both
-features share — `ArchiveFileCollector` (`addDocument` = file + `.bg.json` sidecar +
+features share — `ArchiveFileCollector` (`addDocument` = file + `.bg.json` and `.transition.json` sidecars +
 canvas media), `stageArchiveFiles`, `resolveKindDirPaths`, `importArchiveFiles`
-(reuse-by-MD5), `applyImportedCanvasMedia`, `importBackgroundMetas`, the sanitizer and
+(a collision policy per destination folder, `getImportCollisionPolicy`: a document or
+note is `always-new`, a bible list `merge-items`, media `reuse-if-same`), `applyImportedCanvasMedia`, `importBackgroundMetas`, the sanitizer and
 the temp work dirs. `presentingFlowArchiveHelpers.ts` kept only presenting-flow-specific parts
 (`toItemPathRefs`, the bible-item re-creation, its manifest). Change a rule ONCE, there.
 Side effect: the archive-path guard now throws the generic `Invalid archive file path`,
@@ -43,11 +44,12 @@ Document-only additions:
   carries its OWN note inside its JSON metadata, but a PDF/PPTX/DOCX does not, and NO
   document carries its per-slide notes.
 - Color notes and canvas re-pointing are applied **only to a document this import WROTE**.
-  A reused one (identical MD5) is the operator's own file and keeps their colors, exactly
+  A reused one (today only a bible list merged into its namesake; a document or note is
+  `always-new`) is the operator's own file and keeps their colors, exactly
   as an existing `.bg.json` is never clobbered.
 - UI: **Export** on every `VaryAppDocumentFileComp` row AND `LyricFileComp`;
-  **Import** / **Import From URL** in the Documents list's **Add Items** submenu (that
-  list puts its actions there, unlike the Presenting Flows list's top-level menu); a dropped
+  **Import** / **Import From URL** at the top level of the Documents list's own menu (the **Add Items** submenu that
+  held them is gone: `genItemsAddingMenuItems` is spread into the menu itself); a dropped
   `.owadoc.tar.gz` is taken by `handleFileTaking` before the office-convert branch.
 
 **The note file (2026-08-30) is the kind that needed the config to grow.** Everything
@@ -85,9 +87,10 @@ Per item kind:
   `BIBLE_READ` on the reader), which is why `resolveKindDirPaths` takes a preset map and
   `kindDirSettingNameMap.bible` is only a fallback.
 
-Known wart, shared with presenting flows: a re-export collides to `<name>.owadoc.tar (1).gz`
-(`genNextFilePath` splits at the LAST dot), which no longer matches the drop-gate suffix
-check — that copy must go through **Import** instead of being dragged in.
+Old wart, fixed 2026-08-06: a re-export collided to `<name>.owadoc.tar (1).gz`
+(`genNextFilePath` splits at the LAST dot), which the drop gate refused. Every export now
+names itself through `genNextArchiveFilePath` (`<name> (1).owadoc.tar.gz`), and
+`checkIsArchiveFileFullName` still takes the old shape for bundles already on disk.
 
 Docs: matrix rows PL-77..PL-80 + PR-27..PR-31 + CM-36..CM-39 + CM-69/CM-98/CM-99,
 workflows W-23 / W-24 / W-41.

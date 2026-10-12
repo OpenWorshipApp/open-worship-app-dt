@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { getBotFocus } from './botFocus.mjs';
+import { readManualPageDate, toManualPageBody } from './manualPage.mjs';
 import { flattenQuestions } from './questionMatch.mjs';
 import { loadQuestionPages } from './questions.mjs';
 import { loadTranBundle, resolveTranTemplates } from './tran.mjs';
@@ -90,20 +91,6 @@ function parseFrontMatter(content) {
   return data;
 }
 
-function toBody(content) {
-  return (
-    content
-      .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
-      .replace(/:::\s*details[\s\S]*?:::\s*/g, '')
-      // The manual's own mark for "a screenshot belongs here". It means
-      // something on the documentation site and nothing in a chat, and a
-      // model handed it pastes it into the answer, where it reads as an
-      // instruction to look at a picture that does not exist.
-      .replace(/[ \t]*📸/g, '')
-      .trim()
-  );
-}
-
 // Fallback for a source checkout with no build yet: the manual only.
 function listSourceManualEntries() {
   const manualDirPath = path.join(REPO_ROOT, 'docs', 'manual-sources');
@@ -125,7 +112,7 @@ function listSourceManualEntries() {
   return filePaths.map((filePath) => {
     const content = readFileSync(filePath, 'utf-8').slice(0, MAX_PAGE_BYTES);
     const frontMatter = parseFrontMatter(content);
-    const body = toBody(content);
+    const body = toManualPageBody(content);
     return {
       id: frontMatter.id ?? path.basename(filePath, '.md'),
       title: frontMatter.title ?? path.basename(filePath, '.md'),
@@ -672,6 +659,36 @@ export function searchHelp(
   });
 }
 
+// Where the NEWEST copy of a manual page is: the project's own repository.
+// The pages on this computer were written when its release was built; a
+// control renamed since, or a page that was wrong and has been fixed, is
+// right there first. Only a manual page has one -- the address is put
+// together here from the index, never from anything a model wrote, and the
+// developer notes are not what a volunteer's answer comes from.
+const MANUAL_REPO_RAW_URL =
+  'https://raw.githubusercontent.com/OpenWorshipApp/open-worship-app-dt/' +
+  'main/docs/manual-sources/';
+const MANUAL_FILE_PREFIX = 'manual/';
+
+export function genFreshPageUrl(entry) {
+  if (
+    entry.kind !== 'manual' ||
+    typeof entry.file !== 'string' ||
+    !entry.file.startsWith(MANUAL_FILE_PREFIX) ||
+    entry.file.includes('..')
+  ) {
+    return null;
+  }
+  return (
+    MANUAL_REPO_RAW_URL +
+    entry.file
+      .slice(MANUAL_FILE_PREFIX.length)
+      .split('/')
+      .map(encodeURIComponent)
+      .join('/')
+  );
+}
+
 export function readHelpPage(id, langCode = null) {
   const wantedId = id.trim().toLowerCase();
   const entry = listKnowledgeEntries().find((item) => {
@@ -698,10 +715,15 @@ export function readHelpPage(id, langCode = null) {
       0,
       MAX_PAGE_BYTES,
     );
-    return { ...entry, body: toPageBody(toBody(content)) };
+    return {
+      ...entry,
+      body: toPageBody(toManualPageBody(content)),
+      // The day this copy was generated, for telling it from the newest one.
+      date: readManualPageDate(content),
+    };
   } catch (_error) {
     // Indexed but unreadable (a partial install): the index copy still
     // answers something rather than nothing.
-    return { ...entry, body: toPageBody(entry.searchText) };
+    return { ...entry, body: toPageBody(entry.searchText), date: null };
   }
 }

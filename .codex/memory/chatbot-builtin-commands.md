@@ -10,7 +10,8 @@ metadata:
 
 The chatbot window takes **commands** (2026-09-02,
 `src/chatbot/builtinActionHelpers.ts`): `/screen`, `/screen-show`,
-`/screen-hide`, `/clear-all` … `/clear-foreground`, `/find <words>`,
+`/screen-hide`, `/screen-clear-all` … `/screen-clear-foreground` (the old `/clear-*`
+spellings are aliases; `/clear` alone empties the chat in front), `/find <words>`,
 `/goto <page>`, `/here`, `/help <words>`, `/commands`, plus aliases such
 as `/presenter-screen-show` — and since 2026-09-10 `/lyric <address>` (a
 song from a page, no model; see [[chatbot-lyric-command]]). `handleAsking` runs them BEFORE any provider is

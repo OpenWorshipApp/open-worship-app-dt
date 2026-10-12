@@ -15,15 +15,15 @@ thing to another machine.
 
 1. Find the **[en:tran:Presenting Flows]** panel — it is the lower of the two lists on the
    left, under **[en:tran:Documents]**. If the list is empty, right-click its empty area (or
-   use the **⋮ More Options** button in its title bar) → **New File** to create one. 📸
+   use the **⋮ [en:tran:More Options]** button in its title bar) → **[en:tran:New File]** to create one. 📸
 2. **Drag things onto the presenting flow's NAME row to add them.** (Dropping onto a _line_ of an
    open presenting flow does something else — see step 5.) Anything you can present can go in:
    - a **background** — a colour, image, video, camera or website;
    - a **document** — drag its row out of the Documents list;
    - a **single slide** — from the previewer, or from a document already in the presenting flow;
    - a **Bible verse** — from the Bible list;
-   - a **foreground preset** — drag the blue **Show Marquee Top** / **Start Countdown** /
-     **Show Time** button itself. Whatever you typed and styled travels with it, so the
+   - a **foreground preset** — drag the blue **[en:tran:Show Marquee Top]** / **[en:tran:Start Countdown]** /
+     **[en:tran:Show Time]** button itself. Whatever you typed and styled travels with it, so the
      presenting flow remembers _that_ announcement, not just "a marquee". 📸
    - an **audio track** — drag it out of the **[en:tran:Audios]** split.
 
@@ -38,18 +38,16 @@ thing to another machine.
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
-   marquee running: **Clear FG Messages** (`MS`), **Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown** (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Video Show** (`VD`), **Image Show** (`IM`), **Camera Show** (`CM`), **Screen Show** (`SS`) and **Web Show** (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
-   The panel's **Background Images Slide Show** has no action of its own — it is a
-   _background_ despite sitting in that panel, so **Clear Background** is what stops it.
+   marquee running: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) and **[en:tran:Clear FG Web Show]** (`WB`). Each does exactly what that widget's own hide button in the **[en:tran:Foreground]** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
 
-   **Let the running order walk itself.** Back on the first menu — beside **Clear Screen**,
+   **Let the running order walk itself.** Back on the first menu — beside **[en:tran:Clear Screen]**,
    not inside it — are two actions that move the RUN on instead of touching a screen: **[en:tran:Next: Interval]**
    and **[en:tran:Next: Timeout]**. Each asks how many **[en:tran:Seconds]** when you add it, and the answer is part of the line — `⏱ Next: Timeout (5)` —
    so a glance at the sheet tells you how long it waits. Got it wrong? Right-click the
    line → **[en:tran:Change Seconds]**; it opens on the number it is holding
    now. 📸
 
-   - **Next: Timeout** waits once. When the run reaches it, it counts down and then moves
+   - **[en:tran:Next: Timeout]** waits once. When the run reaches it, it counts down and then moves
      the run on by itself — a slide that should linger ten seconds and then go on without
      you. **Going somewhere yourself calls it off**: click another line, or press the next
      key, and the wait is over and you are driving again. Anything else — clicking a
@@ -58,23 +56,23 @@ thing to another machine.
 
      **Or wait until a time on the clock.** A timeout is the one that does not have to be
      counted in seconds: the left-hand side of its question is a chooser, and switching it
-     from **Seconds** to **[en:tran:At Time]** lets you type the time you want the run to
+     from **[en:tran:Seconds]** to **[en:tran:At Time]** lets you type the time you want the run to
      move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
      the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
      of seconds. Use it for the notice board before a service: put it on the last
      announcement and the run leaves it exactly when the service starts, whether you armed
-     it an hour or five minutes before. Its menu entry is **[en:tran:Change Timing]** rather than **Change Seconds**, and it opens on whichever half
+     it an hour or five minutes before. Its menu entry is **[en:tran:Change Timing]** rather than **[en:tran:Change Seconds]**, and it opens on whichever half
      you armed it with — the two are alternatives, so choosing one clears the other. If the
-     time you set has **already gone by**, the app says so (**The set time is already due**)
+     time you set has **already gone by**, the app says so (**[en:tran:The set time is already due]**)
      and starts nothing: it will not quietly wait until tomorrow. Set a new time, or arm it
      in seconds. 📸
 
-   - **Next: Interval** keeps going. It moves the run on every so many seconds — a loop of
+   - **[en:tran:Next: Interval]** keeps going. It moves the run on every so many seconds — a loop of
      announcement slides before the service. Going somewhere yourself does not stop it, it
      **starts the count again from there**, so a line you step to by hand gets the whole
      interval rather than the second that was left of the last one. To stop it, click the
-     ⊗ pill it puts at the top-right of the preview panel (it shows the seconds left, in
-     the same colour as the line that started it). Closing the panel stops it too, as does
+     ⊗ (**[en:tran:Stop Auto Next]**) on the pill it puts at the top-right of the preview panel (it shows the seconds left, in
+     the same colour as the line that started it); the ⏸ on the same pill (**[en:tran:Pause Auto Next]**) holds the count where it is until you press it again. Closing the panel stops it too, as does
      reaching the end of the sheet.
 
    - **[en:tran:Next: Clear Interval]** stops that loop, and it is the
@@ -82,23 +80,22 @@ thing to another machine.
      all you being at the machine. Add it — it asks nothing, there being only ever one clock
      running — and the line reads `⊘ Next: Clear Interval` in the interval's own colour,
      because it is that same thing undone. Put it after a looping set (an interval, a few
-     slides, a **Jump to** pointing back at the interval) and the loop runs until the run
+     slides, a **[en:tran:Jump to]** pointing back at the interval) and the loop runs until the run
      reaches this line, then stops and waits for you. Firing it when nothing is looping does
      nothing at all and says nothing, so it is safe to leave in a sheet you re-run. It stops
-     an interval you have PAUSED as well; a **Next: Timeout** it leaves alone, so a wait
+     an interval you have PAUSED as well; a **[en:tran:Next: Timeout]** it leaves alone, so a wait
      attached to a slide is never killed by a line that only meant to end a loop. 📸
 
-   Both only mean something while that presenting flow's **preview panel** is open (step 8) —
+   Both only mean something while that presenting flow's **preview panel** is open (step 9) —
    that panel is what walks the running order. Click one with the panel closed and the app
-   says so (**Open the presenting flow preview to use this action**) rather than looking as
-   though it did something. They never go to a screen, so they have no **Apply on
-   Screens** and no **Set Specific Screen**, and nothing can be attached to them.
+   says so (**[en:tran:Open the presenting flow preview to use this action]**) rather than looking as
+   though it did something. They never go to a screen, so they have no **[en:tran:Apply on Screens]** and no **[en:tran:Set Specific Screen]**, and nothing can be attached to them.
 
-   **A timeout does not have to be a line of its own.** Attach it to a line instead — a
+   **A timeout can also ride along with another line.** Attach it to a line — a
    slide, a song, a verse — as a **CC element** (step 5), and that line means "show this,
-   and go on by yourself N seconds later". Add the **Next: Timeout** once, right-click the
-   line you want it on → **Add CC Elements** and pick it, and then you can delete the
-   `Next: Timeout` line itself if you only wanted the follower: a CC is a copy. Attached to
+   and go on by yourself N seconds later". Add the **[en:tran:Next: Timeout]** once, right-click the
+   line you want it on → **[en:tran:Add CC Elements]** and pick it. Keep the
+   `Next: Timeout` line itself in the list, though: a CC points at that line rather than copying it, so removing the line removes every follower of it as well (park it with **[en:tran:Disable]** if the run should not stop there — its followers still fire). Attached to
    a whole SONG it rides every slide of it, which is how a song advances by itself. 📸
 
    **Each line may wait for its own length.** A CC element normally reads whatever the
@@ -115,22 +112,21 @@ thing to another machine.
    **A Next: Interval cannot be attached to anything** and is simply not in that list —
    an interval is not stopped by anything you do, so one riding a slide would keep moving
    the running order on with nothing to call it off but the panel's own pill. A
-   **Next: Clear Interval** CAN be attached, for the opposite reason: "put this last slide
+   **[en:tran:Next: Clear Interval]** CAN be attached, for the opposite reason: "put this last slide
    up **and** stop the loop" is one click, and something that stops a loop can never run
    away with the running order.
 
    **Go back, not just forward.** The third one, **[en:tran:Jump to]**, is how a running
    order reaches a line that is not the next one. Add it, then right-click it →
-   **Add CC Elements** and pick the line it should go to — its list is everything in the
+   **[en:tran:Add CC Elements]** and pick the line it should go to — its list is everything in the
    presenting flow, **a whole song included**, because here the attached line is not something
    that rides along, it is the destination. It takes exactly one, so once you have picked
-   the **Add CC Elements** entry is gone; to re-aim it, remove the CC and pick another. 📸
+   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another. 📸
 
    **It is the next key aimed at a line of your choosing**: when the run reaches it — or
    you click it — the panel goes to that line and does there exactly what stepping onto it
-   would have done. A song opens at its first slide; a **Next: Interval** or **Next:
-   Timeout** it lands on is STARTED. That last one is how a set loops: put the slides
-   under a **Next: Interval**, and a **Jump to** at the end of them pointing back at that
+   would have done. A song opens at its first slide; a **[en:tran:Next: Interval]** or **[en:tran:Next: Timeout]** it lands on is STARTED. That last one is how a set loops: put the slides
+   under a **[en:tran:Next: Interval]**, and a **[en:tran:Jump to]** at the end of them pointing back at that
    interval — the set then plays round and round on its own until you stop it with the
    pill. (A jump that lands on another jump stops there rather than jumping again, so a
    pair of them cannot send the run back and forth for ever.) If it has nothing attached,
@@ -142,14 +138,14 @@ thing to another machine.
    or **Shift** (those two only, and at least one of them, so the shortcut means the same
    thing on any machine and cannot take a key the running order already uses) and press
    the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
-   **Change Shortcut**. Two lines may not share a shortcut — the second one is refused
+   **[en:tran:Change Shortcut]**. Two lines may not share a shortcut — the second one is refused
    out loud — and duplicating a line leaves the copy without one. 📸
 
-   Now attach what it should put up, with **Add CC Elements** — as many as you like, which
+   Now attach what it should put up, with **[en:tran:Add CC Elements]** — as many as you like, which
    is what makes one key worth more than one click: a slide _and_ its marquee together,
-   say. Then, with the preview panel open (step 6), pressing **Shift+A** sends the run to
+   say. Then, with the preview panel open (step 9), pressing **Shift+A** sends the run to
    that line and puts all of it on the screens at once, wherever the run had got to.
-   Pin the line to a screen with **Set Specific Screen** if it should always go to the
+   Pin the line to a screen with **[en:tran:Set Specific Screen]** if it should always go to the
    same one. The shortcut only answers while the preview panel has the keyboard, exactly
    as its arrow keys do — the panel takes it the moment you open it, so there is nothing
    to click first. With nothing attached yet it says so rather than doing nothing. 📸
@@ -158,32 +154,32 @@ thing to another machine.
    screen but about whether there is one: **[en:tran:Screen: Show]** and
    **[en:tran:Screen: Hide]**, the same thing the slides button on each mini screen
    does by hand. Use them when the running order has to work with nobody at the machine —
-   a **Screen: Show** at the top of a pre-service loop, a **Screen: Hide** at the end of
+   a **[en:tran:Screen: Show]** at the top of a pre-service loop, a **[en:tran:Screen: Hide]** at the end of
    it, and the screen goes dark on its own instead of holding the last announcement until
    someone notices.
 
    **These two ask which screen** when you add them, and that is the whole point: a
    checklist of the screens you have open appears (**Screen id: 0**, **Screen id: 1**, …,
    each in that screen's own colour), and the line remembers your answer as its pin — the
-   line shows the pin badge, and **Set Specific Screen** re-aims it later. Unlike every
+   line shows the pin badge, and **[en:tran:Set Specific Screen]** re-aims it later. Unlike every
    other line, it goes to those screens and _only_ those: it will not fall back to
    whichever screen you happened to have selected, and it will never stop to ask, because
    at 7:05 on an unattended sheet there is nobody there to answer. Tick nothing and the
-   app says **Please choose at least one screen** rather than adding a line that would do
-   nothing. Firing one twice is harmless — a **Screen: Show** on a screen that is already
+   app says **[en:tran:Please choose at least one screen]** rather than adding a line that would do
+   nothing. Firing one twice is harmless — a **[en:tran:Screen: Show]** on a screen that is already
    up does nothing at all, so it is safe inside a loop. Nothing can be attached to them
    either, though they can themselves be attached to another line — "put this last slide
    up **and** light the screen" in one click. 📸
 
-   **Where the actions live in the menu.** **Add Action** opens with **Clear Screen** —
-   one row that adds nothing and opens the five clears, with **Other Clear FG Items**
-   under them for the eleven per-widget foreground clears — then **Screen: Show** / **Screen: Hide**, then the five that drive the run.
+   **Where the actions live in the menu.** **[en:tran:Add Action]** opens with **[en:tran:Clear Screen]** —
+   one row that adds nothing and opens the five clears, with **[en:tran:Other Clear FG Items]**
+   under them for the twelve per-widget foreground clears — then **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, then the five that drive the run.
 
 3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to
    see that document's slides underneath. 📸
 4. **Click an element to put it on the screen** (a document opens its previewer instead;
-   an **audio track** opens the **♫Audios♫** split and flashes the track there — the
+   an **audio track** opens the **[en:tran:Audios]** split and flashes the track there — the
    presenting flow never plays audio itself, so that you keep the panel's safeguards like
    "one track at a time").
    You can also **drag an element onto a mini screen**, or **right-click → Show on
@@ -191,14 +187,14 @@ thing to another machine.
    A **screen action** works the same way, except it is _run_ rather than shown: click it
    to clear, drag it onto one mini screen to clear only that one, or right-click →
    **[en:tran:Apply on Screens]** to choose. It never lights up as "live",
-   because there is nothing of it on the screen to be live. **Screen: Show** /
-   **Screen: Hide** are the exception to the first of those: clicking one goes to the
-   screens it names and nowhere else. **Apply on Screens** still asks, since that entry
+   because there is nothing of it on the screen to be live. **[en:tran:Screen: Show]** /
+   **[en:tran:Screen: Hide]** are the exception to the first of those: clicking one goes to the
+   screens it names and nowhere else. **[en:tran:Apply on Screens]** still asks, since that entry
    is you saying "send this one somewhere else" — but it does not change what the line
    is pinned to.
    The two **`Next:`** actions are the exception: they drive the RUN, not a screen, so
    they have none of that — clicking one starts its countdown in the preview panel
-   (step 8), and with that panel closed the app simply tells you to open it.
+   (step 9), and with that panel closed the app simply tells you to open it.
 
    **Send a line to one particular screen, every time.** If a lyric always belongs on the
    stage screen and the sermon slides on the main one, you do not have to drag them there
@@ -215,7 +211,7 @@ thing to another machine.
 
    Two things deliberately still override a pin, so you are never stuck: **dragging** the
    line onto a mini screen puts it on _that_ screen just this once, and right-click →
-   **Show on Screens** still asks which screen you mean. If the pinned screen has been
+   **[en:tran:Show on Screens]** still asks which screen you mean. If the pinned screen has been
    closed, nothing is projected anywhere and the app tells you so ("Please make sure the
    screen is open") rather than quietly using a different screen.
 
@@ -229,7 +225,9 @@ thing to another machine.
      dashed amber as you hover it). Dropping onto a **document's slide** attaches it to
      that one slide; dropping onto the document's own line attaches it to the whole song.
      You can also drag a line **already in the presenting flow** — a clear action included — onto
-     another line.
+     another line. Something dragged in from another panel is also added as a line of its
+     own at the end of the list — a CC points at a line of the running order — so leave that
+     line in place: removing it removes the CC with it.
 
      **Aim at the middle of a line to attach, at its top or bottom edge to move.** A line
      of the running order does both jobs, and it tells you which one it is about to do:
@@ -257,14 +255,14 @@ thing to another machine.
    - A CC on a **document line** rides with _every_ slide of that song (a document line has
      nothing of its own to show, so this is what "keep this marquee up for this song"
      means); a CC on **one slide** rides with that slide only.
-   - A CC can have a screen of its own: right-click it → **Set Specific Screen** to send it
-     somewhere else while its line goes to the usual place. **No Specific Screen** hands it
+   - A CC can have a screen of its own: right-click it → **[en:tran:Set Specific Screen]** to send it
+     somewhere else while its line goes to the usual place. **[en:tran:No Specific Screen]** hands it
      back to following the line.
-   - **Clicking a CC line never projects it.** It scrolls the element it is a copy of into
+   - **Clicking a CC line never projects it.** It scrolls the element it points at into
      view and flashes it — in the presenting flow and in the preview window at once — so you can
      always find what a short label refers to.
    - Right-click a CC line for **[en:tran:Remove CC Element]**. There is no
-     **Disable** on a CC: parking takes a _line_ out of the running order, and a CC is not
+     **[en:tran:Disable]** on a CC: parking takes a _line_ out of the running order, and a CC is not
      a line of the running order — one you do not want is simply removed. (So attaching a
      line you have parked gives you a CC that _does_ fire, while the parked line itself
      stays parked.) A whole document and an audio track cannot be CC elements — neither
@@ -277,31 +275,33 @@ thing to another machine.
    a video or an audio clip of its own, and normally you press play on it by hand on the
    mini screen. Right-click the slide (or the document line, or the line of a slide inside
    a document) → **[en:tran:Add Media Control]** and the running order does it
-   for you. A settings panel opens first — nothing is added until you press **Ok**:
+   for you. A settings panel opens first — nothing is added until you press **[en:tran:Ok]**:
 
-   - **Action** — **Play**, **Pause** or **Stop**. Play starts the media; Pause leaves it
+   - **[en:tran:Action]** — **[en:tran:Play]**, **[en:tran:Pause]** or **[en:tran:Stop]**. Play starts the media; Pause leaves it
      where it is; Stop pauses it and winds it back to the start point, so the same line can
      be used again. Put a Pause or a Stop on a later line to cut a clip short.
-   - **Delay Before** — wait this many seconds after the slide goes up before doing
+   - **[en:tran:Delay Before]** — wait this many seconds after the slide goes up before doing
      anything. Leave it at 0 to act at once.
-   - **Media Start At** — where in the clip to begin, in seconds.
-   - **Then Pause** — **Never**, **After** so many seconds of playing, or **At Media Time**
+   - **[en:tran:Media Start At]** — where in the clip to begin, in seconds.
+   - **[en:tran:Then Pause]** — **[en:tran:Never]**, **[en:tran:After]** so many seconds of playing, or **[en:tran:At Media Time]**
      to stop at a point of the clip itself (so "play 0:10 to 1:10" is two numbers, not a
      stopwatch).
-   - **Volume** and **Speed** — each behind a tick box, because leaving one un-ticked means
+   - **[en:tran:Volume]** and **[en:tran:Speed]** — each behind a tick box, because leaving one un-ticked means
      "don't touch it": the level you set by hand on the mini screen stays as it is.
-   - **Set Specific Screen** — leave every box clear and it works on whatever screens the
+   - **[en:tran:Set Specific Screen]** — leave every box clear and it works on whatever screens the
      slide went to. Tick one and it works **only** where the slide also landed. It is
      controlling the media the slide put on a screen, so a screen the slide never reached
      has nothing on it to control.
 
    The new line appears as a CC element under the slide, reading what it will do —
    `Slide: Media Control (Play +3s 10s→70s 70% 2x)` — with a small **cyan gear** at its
-   right. Click the gear (or right-click → **Media Control Settings**) to change it later;
-   it opens on what you set last time. 📸
+   right. Click the gear (or right-click → **[en:tran:Media Control Settings]**) to change it later;
+   it opens on what you set last time. A plain `Slide: Media Control` line is also added at
+   the end of the list: the CC points at that line, so leave it there — removing it removes
+   the control with it. 📸
 
    Every video and audio clip in that slide is driven together. The sound comes out of the
-   presenter machine, exactly as it does when you press play by hand, so the **Volume** is
+   presenter machine, exactly as it does when you press play by hand, so the **[en:tran:Volume]** is
    the level you hear at the desk; the projected screen stays silent and simply keeps in
    step, at the same speed.
 
@@ -310,10 +310,10 @@ thing to another machine.
    (a "stop at 1:10", a delayed start) is dropped, so nothing carries over to whatever you
    put up next. This is what lets the running order carry on: a clip you started **by
    hand** on the mini screen blocks the next slide until you pause it (the app says
-   **Media is Playing**), because there the app cannot know you meant to leave it — but a
+   **[en:tran:Media is Playing]**), because there the app cannot know you meant to leave it — but a
    clip the running order started is the running order's to stop. 📸
 
-   This one is only ever attached to a slide: you will not find it under **Add Action** on
+   This one is only ever attached to a slide: you will not find it under **[en:tran:Add Action]** on
    the running order itself, because "start this video ten seconds in" is a sentence about
    one particular slide.
 
@@ -332,7 +332,7 @@ thing to another machine.
    is projected, and a document line does not even open. Dragging it onto a mini screen puts nothing there,
    and the arrow/Space keys in the preview panel step straight past it. Right-click →
    **[en:tran:Enable]** puts it back. (While a line is parked its menu drops
-   **Show on Screens** — an entry that could no longer do anything — but everything else
+   **[en:tran:Show on Screens]** — an entry that could no longer do anything — but everything else
    stays, so you can still recolour it, move it, or turn it back on.) 📸
    You can park **one slide of a document** the same way: open the document's arrow and
    right-click the slide. Park the **document itself** and every slide under it is parked
@@ -347,13 +347,13 @@ thing to another machine.
    turned off; open the document and enable the slide there. In the preview panel the same
    two marks sit in the **bottom-left corner** of each dimmed thumbnail. 📸
 
-6. Right-click an element for **Move up** / **Move down**, **[en:tran:Choose Color]**
-   to group your running order by colour, or **Remove from Presenting Flow**. To move a line a long
+6. Right-click an element for **[en:tran:Move up]** / **[en:tran:Move down]**, **[en:tran:Choose Color]**
+   to group your running order by colour, or **[en:tran:Remove from Presenting Flow]**. To move a line a long
    way, use **[en:tran:Move to Top]** or **[en:tran:Move to Bottom]** instead of
-   clicking **Move up** over and over — the line jumps straight to that end and everything
-   else keeps its order. (A line that is already at the top is not offered **Move up** or
-   **Move to Top**, and one already at the bottom is not offered **Move down** or
-   **Move to Bottom**.) **[en:tran:Duplicate]** puts a copy of the line **directly below** it,
+   clicking **[en:tran:Move up]** over and over — the line jumps straight to that end and everything
+   else keeps its order. (A line that is already at the top is not offered **[en:tran:Move up]** or
+   **[en:tran:Move to Top]**, and one already at the bottom is not offered **[en:tran:Move down]** or
+   **[en:tran:Move to Bottom]**.) **[en:tran:Duplicate]** puts a copy of the line **directly below** it,
    with its colour, its pinned screens and its parked slides already on the copy — the quick
    way to sing a song twice in one service, then change only the second one. The two copies
    are separate from then on: parking or recolouring one leaves the other alone. 📸
@@ -365,18 +365,18 @@ thing to another machine.
    _is_ the meaning here. The colour belongs to that presenting flow alone, so the same song can
    be marked differently in two services. Changes are saved as you make them — there is
    **no save button** anywhere in this panel.
-7. Whatever is **live on the screen right now** is marked with a green `*` — on the
+7. Whatever is **live on the screen right now** is marked with a magenta `●` — on the
    element itself, on the document it belongs to, on the presenting flow, and on the
-   **Presenting Flows** heading — so you can see at a glance where you are in the running order.
+   **[en:tran:Presenting Flows]** heading — so you can see at a glance where you are in the running order.
 8. Not sure which "5.jpg" a line means? Right-click it → **[en:tran:Reveal Original]** — the app scrolls to the real item elsewhere in the window and
    flashes it. This works on the slides inside an opened document too. A colour or a
    camera has no original to point at, and the panel holding the original has to be
    open already.
 9. To see the whole service at a glance, click the **window** icon on the presenting flow row (or
-   right-click → **Open Preview**). A floating panel shows every element with its real
+   right-click → **[en:tran:Open Preview]**). A floating panel shows every element with its real
    preview — slides look exactly as they will project, and a document shows all of its
    slides. Collapse the ones you are not working on — or fold the whole running order
-   away at once with the **[en:tran:Collapse All]** icon at the bottom-right of the
+   away at once with the **[en:tran:Collapse All]** icon at the bottom-left of the
    panel, and open it all again with **[en:tran:Expand All]** beside it. Whichever
    of the two has nothing left to do fades out. Whatever you folded away is remembered for
    that presenting flow, so a running order trimmed down to the few things you are working on
@@ -388,8 +388,9 @@ thing to another machine.
    Documents tab — and it is shared by every one of these panels, so zooming one resizes
    them all.
    **You can have several of these panels open at once**, one per running order — the
-   songs in one and the sermon in another, side by side. Each opens beside the last rather
-   than on top of it, remembers its own size and place, and is closed on its own with its
+   songs in one and the sermon in another, side by side once you drag them apart. Each opens a little below and to
+   the left of the last, so it never lands exactly on top of it; each remembers its own
+   size and place, and is closed on its own with its
    ✕ (or by clicking its window icon in the list again). Each is its own run, too: where
    you are, what you have folded away and any countdown belong to that panel alone, and
    the keys below always drive the one you last clicked into. 📸
@@ -405,36 +406,35 @@ thing to another machine.
    the mouse. A **folded-away** element is not passed over: the run **opens it** when it
    gets there, and a song folded away is unfolded and walked from its first slide like any
    other. Folding is how you _read_ a long running order; it never decides what is in the
-   service. **The only line the keys step over is one you have parked** (step 9) — an audio
+   service. **The only line the keys step over is one you have parked** (step 5) — an audio
    track and a damaged line still take the marker, so you can see where the run has got to,
    they simply have nothing to show. The last element is the end — it does not start over.
    The keys work while you are in this panel, and it takes them the moment you open it, so
    there is nothing to click first; click into the slides list and they drive that list
    again, as before. 📸
    **A screen action is stopped on and fired** like anything else — so putting a
-   **Clear All** between the last song and the sermon means one more press of the same
+   **[en:tran:Clear All]** between the last song and the sermon means one more press of the same
    key blanks the screen at exactly that point in the running order.
 
    **And the run can walk itself.** The two `Next:` actions of step 2 are stopped on and
-   fired the same way, but what they fire is this panel: a **Next: Timeout** waits its
+   fired the same way, but what they fire is this panel: a **[en:tran:Next: Timeout]** waits its
    seconds and then makes the very same move the next key would have made, and a
-   **Next: Interval** keeps making it. While either is counting, a small pill at the
-   panel's top-right shows the seconds left — click it to stop. Remember the difference:
-   a timeout gets out of your way the moment you click or press anything, an interval
+   **[en:tran:Next: Interval]** keeps making it. While either is counting, a small pill at the
+   panel's top-right shows the seconds left — click its ⊗ to stop it, or its ⏸ to hold it. Remember the difference:
+   a timeout gets out of your way the moment you go somewhere yourself (click another line, or
+   press the next key), an interval
    keeps going until you stop it there. 📸
 
    **Everything you can right-click in the list, you can right-click here.** The menus in
    this panel are the very same menus — right-click an element's **title line** (or any
-   empty part of its box) and you get its full menu: **Reveal Original**, **Show on
-   Screens** / **Apply on Screens**, **Set Specific Screen**, **Add CC Elements**, the four
-   moves, **Duplicate**, **Choose Color**, **Disable** / **Enable** and **Remove from
-   Presenting Flow**, gated exactly as they are in the list. So you can tidy and re-order the
+   empty part of its box) and you get its full menu: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, the four
+   moves, **[en:tran:Duplicate]**, **[en:tran:Choose Color]**, **[en:tran:Disable]** / **[en:tran:Enable]** and **[en:tran:Remove from Presenting Flow]**, gated exactly as they are in the list. So you can tidy and re-order the
    running order from the panel you are actually watching during the service, without
    going back to the list — and the list behind it follows immediately. 📸
    Two things inside a box keep menus of their own, because they are not the element:
-   a **slide thumbnail** gets the slide's menu (**Reveal Original**, **Show on Screens**,
-   **Set Specific Screen**, **Disable**, **Add CC Elements**), and a **CC line** gets its
-   short one (**Reveal Original**, **Set Specific Screen**, **Remove CC Element**).
+   a **slide thumbnail** gets the slide's menu (**[en:tran:Reveal Original]**, **[en:tran:Show on Screens]**,
+   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**), and a **CC line** gets its
+   short one (**[en:tran:Reveal Original]**, **[en:tran:Set Specific Screen]**, **[en:tran:Remove CC Element]**).
 
 **Sharing it with another machine**
 
@@ -446,7 +446,7 @@ thing to another machine.
     slides, the images and videos, and any background attached to those documents.
     (See step 10a to put a password on it instead.)
     10a. **To protect it with a password**, type the same password in both fields and press
-    **Ok**. **[en:tran:Show Password]** reveals what you typed if you want to
+    **[en:tran:Ok]**. **[en:tran:Show Password]** reveals what you typed if you want to
     check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
     fields do not match the panel says **[en:tran:Passwords do not match]** and asks again rather than exporting, keeping what you
     already typed so you only fix the half that is wrong. Clearing both fields is always
@@ -457,7 +457,7 @@ thing to another machine.
     > somewhere safe before you hand the file over, and send it by a different route than
     > the file itself.
 
-11. On the other machine, right-click an empty part of the **Presenting Flows** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+11. On the other machine, right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
     file from your file manager onto the Presenting Flows list**, which imports it the same way.
     A protected bundle asks for its password first, saying **This archive is password
     protected** ([en:tran:This archive is password protected]); get it wrong and it says
@@ -467,8 +467,8 @@ thing to another machine.
     **Default** list, and every link inside the presenting flow is re-pointed at the local
     copies. 📸
 12. If the bundle is on a web server or a machine sharing it over the local network,
-    you can skip copying the file about: right-click the **Presenting Flows** list →
-    **[en:tran:Import From URL]**, paste the link and press **Ok**. (If the link is
+    you can skip copying the file about: right-click the **[en:tran:Presenting Flows]** list →
+    **[en:tran:Import From URL]**, paste the link and press **[en:tran:Ok]**. (If the link is
     already on your clipboard it is filled in for you.) The app downloads the bundle to a
     temporary folder, imports it exactly as above and then deletes the download — you end
     up with the presenting flow and nothing else left over. A plain `http://…` address with a
@@ -490,7 +490,7 @@ thing to another machine.
 > Videos folder has been picked yet and the bundle carries a video, the import stops
 > before it copies anything and tells you which folder to choose first. Nothing is
 > half-imported. And if a line in a presenting flow ever shows a warning triangle reading
-> **Invalid item**, that one entry is damaged (usually a hand-edited file) — the rest of
+> **[en:tran:Invalid item]**, that one entry is damaged (usually a hand-edited file) — the rest of
 > the running order still works; remove that line and re-add it.
 
 ::: details 🤖 Robot-verified — coverage traceability

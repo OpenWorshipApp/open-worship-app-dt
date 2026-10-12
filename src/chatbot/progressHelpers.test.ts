@@ -20,6 +20,19 @@ beforeEach(() => {
 });
 
 describe('describeToolStep', () => {
+    test('a run sheet change says what it is doing to the sheet', () => {
+        expect(describeToolStep('owa_presenting_flow', { action: 'add' })).toBe(
+            'Adding a line to a run sheet',
+        );
+        expect(
+            describeToolStep('owa_presenting_flow', { action: 'delete' }),
+        ).toBe('Moving a run sheet to the trash');
+        // An action added to the tool later still says which thing it is on.
+        expect(describeToolStep('owa_presenting_flow', {})).toBe(
+            'Working on a run sheet',
+        );
+    });
+
     test('never lets a tool name reach the line', () => {
         // The one rule this window has. A step reading `owa_list_ui` tells a
         // volunteer nothing and is the app's insides on their screen.

@@ -136,8 +136,9 @@ Then pick batches by **uncovered lines per hour of work**, which usually means:
    has ~1 500 uncovered lines across files that share one domain and were all
    orphaned by the same prune — one mock surface serves the folder.
 2. **The single biggest untested helpers.** `agentFileHelpers`,
-   `agentBibleListHelpers`, `agentNoteHelpers`, `agentBackupHelpers` are ~900
-   lines of pure logic at 0%, and they are the tools that write the user's files.
+   `agentBibleListHelpers`, `agentNoteHelpers`, `agentBackupHelpers` were ~900
+   lines of pure logic at 0% on 2026-09-26 (`UT-03a` and `UT-03b` have since tested
+   their lifecycles), and they are the tools that write the user's files.
 3. **The half-covered heavyweights**, where the uncovered half is the error
    paths: `fileHelpers` (41%), `bibleXMLJsonDataHelpers` (1%),
    `BoxEditorController` (11%), `langHelpers` (14%).

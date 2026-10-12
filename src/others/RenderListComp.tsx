@@ -76,7 +76,7 @@ function ColorNoteGroupComp({
     );
 }
 
-function RenderFileItemsWithColorNote({
+function RenderFileItemsWithColorNoteComp({
     dirSource,
     filePaths,
     bodyHandler,
@@ -215,7 +215,7 @@ export default function RenderListComp({
         return bodyHandler(newFilePaths);
     }
     return (
-        <RenderFileItemsWithColorNote
+        <RenderFileItemsWithColorNoteComp
             dirSource={dirSource}
             filePaths={filteredFilePaths}
             bodyHandler={bodyHandler}

@@ -1367,8 +1367,6 @@ const dictionary = {
     'Repeat this audio': 'Répéter cet audio',
     'Reset All Child Directories': 'Réinitialiser tous les sous-dossiers',
     'Reset Rotate': 'Réinitialiser la rotation',
-    'Reset White': 'Réinitialiser le blanc',
-    'Reset Black': 'Réinitialiser le noir',
     'Reset to default display dimension':
         "Réinitialiser à la dimension d'affichage par défaut",
     'Reset Widgets Size': 'Réinitialiser la taille des panneaux',
@@ -3008,10 +3006,10 @@ const dictionary = {
     'Save this passage in Bibles': 'Enregistrer ce passage dans Bibles',
     'Keep the passage in your Bibles list for later.':
         'Conservez le passage dans votre liste Bibles pour plus tard.',
-    'Present a passage from the Reader':
-        'Présenter un passage depuis le Lecteur',
-    'Double-click a verse to send it to selected screens; use F9 to clear it.':
-        "Double-cliquez un verset pour l'envoyer aux écrans choisis; utilisez F9 pour l'effacer.",
+    'Put a passage on the audience screens':
+        'Mettre un passage sur les écrans du public',
+    'The Bible Reader only reads: present a passage from the Presenter, and use F9 there to clear it.':
+        "Le Lecteur biblique ne fait que lire : présentez un passage depuis le Présentateur, et utilisez F9 là-bas pour l'effacer.",
     'Start automatic scrolling': 'Démarrer le défilement automatique',
     'Let a long passage move down by itself.':
         'Laissez un long passage défiler tout seul.',
@@ -3436,6 +3434,38 @@ const dictionary = {
     'renamed a notes file': 'a renommé un fichier de notes',
     'moved a notes file to the trash':
         'a mis un fichier de notes à la corbeille',
+    // --- Bible Properties, redesigned (2026-10-11): a stage, the looks as
+    // pictures, and one row per value. `Aa` is the two letters a look is shown
+    // on, in the script this window is read in.
+    'For God so loved the world, that he gave his only begotten Son':
+        "Car Dieu a tant aimé le monde qu'il a donné son Fils unique",
+    'Light words for a dark background': 'Texte clair pour un fond sombre',
+    'Dark words for a light background': 'Texte sombre pour un fond clair',
+    Aa: 'Aa',
+    'Thin Outline': 'Contour fin',
+    'Heavy Outline': 'Contour épais',
+    'Soft Shadow': 'Ombre douce',
+    'Deep Shadow': 'Ombre profonde',
+    'Hard Shadow': 'Ombre nette',
+    Lifted: 'En relief',
+    Haze: 'Brume',
+    Halo: 'Auréole',
+    'Blue Edge': 'Bord bleu',
+    Bold: 'Gras',
+    Justify: 'Justifier',
+    'Outline Color': 'Couleur du contour',
+    'Glow Color': 'Couleur du halo',
+    'A CSS text-shadow of your own': 'Votre propre text-shadow CSS',
+    'Plain words again; the size stays':
+        'Retour au texte simple ; la taille reste',
+    // A look somebody made can be kept as a tile of its own.
+    Preset: 'Préréglage',
+    'Save as Preset': 'Enregistrer comme préréglage',
+    'Rename Preset': 'Renommer le préréglage',
+    'Replace with Current Look': "Remplacer par l'apparence actuelle",
+    'Remove Preset': 'Supprimer le préréglage',
+    'Remove a preset to save a new one':
+        'Supprimez un préréglage pour en enregistrer un nouveau',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

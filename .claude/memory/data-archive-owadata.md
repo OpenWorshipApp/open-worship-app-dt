@@ -56,8 +56,11 @@ Other non-obvious bits:
   `<doc>.histories`, `<doc>.pdf-images`, `<doc>.pptx-htmls` and `<doc>.docx-docx-htmls` —
   a plain suffix list misses the docx one, and requiring the `.<ext>` is what keeps a
   user folder called `wedding-images`.
-- Import **never overwrites**: identical contents (MD5) are skipped, a same-name file with
-  different contents is kept and the archived one lands beside it as `name (1).ext`.
+- Import **never overwrites**, and a name already taken is settled by the destination
+  folder's `getImportCollisionPolicy`: a document, presenting flow or bible note always
+  lands beside yours as `name (1).ext`, a bible list is merged into its namesake, and
+  every other folder skips identical contents (size, then MD5) and lands different ones
+  as `name (1).ext`.
 - **A protected export's plain tar must not be `<archive>.part` (fixed 2026-09-19).** That
   is where `encryptFile` opens its OWN output, so the tar was truncated before it was read:
   every password-protected Export Data from 2026-08-07 on is an 80-byte container around

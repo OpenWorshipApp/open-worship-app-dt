@@ -89,7 +89,7 @@ recorded in the matrix. (The matrix lives at
 **Those three binaries are NOT bundled with the app** (refactor27). They ship as
 a separate `bin-<ver>.tar.gz` the user installs from **Settings → Others → Extra
 Binaries** into `<data parent dir>/extra-bin/<platform>/` (`yt/`, `ffmpeg/bin/`,
-`qjs/`, plus `info.json` and the archive itself, which is kept on purpose so a
+`qjs/`, also `cloudflared/` for Screen Mirror's tunnel, plus `info.json` and the archive itself, which is kept on purpose so a
 corrupted binary can be re-extracted offline). `<platform>` is the build's own
 name for the pack (`win`, `mac`, `mac-int`, `linux-arm64` …): the data folder
 travels between OSes on a stick, and one shared folder mixed their packs
@@ -124,7 +124,7 @@ the user's own library holds real downloads whose names also end in `- YouTube`.
 ## owa-enhance-chatbot skill
 
 `.claude/skills/owa-enhance-chatbot` is the counterpart to owa-robot-test for the
-**AI subsystem**: robot-test QAs the chatbot (`CB-01..CB-14`), this one changes
+**AI subsystem**: robot-test QAs the chatbot (`CB-xx`), this one changes
 it. Scope is everything in _Agent access_ (`.claude/CLAUDE.md` and
 `.claude/rules/agent-*.md`, `chatbot-*.md`) — `src/chatbot/*`,
 `tools/owa-devtools-mcp/*`, `electron/aiHelpers.ts`,
@@ -141,7 +141,7 @@ current design _caps_ a rung, the finding is that — size the structural change
 put it to the user rather than shaving another 200 tokens off a description.
 
 - **Tool surface IS chatbot performance.** `llmBotHelpers.ts` sends every tool
-  `tools/list` returns to the model on EVERY round of the loop
+  `modelTools.mjs` does not withhold to the model on EVERY round of the loop
   (`MAX_TOOL_ROUNDS` 10). Measured 2026-08-31: **42 tools, ~8.5k tokens/round,
   ~85k worst case for one question** — 29 of those tools are chrome-devtools' and
   include `evaluate_script`. Baseline it with
@@ -184,7 +184,7 @@ chatbot** answering a volunteer over HTTP. Preference order for any change is
 (the window a slide's website loads in) are CLOSED, the latter down to a
 documented `webSecurity: false` residual. `MC-14` put a RATCHET on the token
 bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses
-`MODEL_TOKEN_CEILING` (7 800 after EC-196, the Bible importer that replaced MC-48's lookup; ~7 787 measured, against 7 253 since `MC-07` cut the
+`MODEL_TOKEN_CEILING` (8 350 since `MC-50` on 2026-10-10; 7 800 after EC-196, the Bible importer that replaced MC-48's lookup; ~7 787 measured, against 7 253 since `MC-07` cut the
 descriptions on 2026-09-18 — two of which contradicted the chatbot's prompt),
 so a tool added without a decision cannot land quietly. Tool results are
 compact JSON (`MC-33`): a result rides every later round, and indentation was
@@ -249,12 +249,29 @@ agent-doc work here.
 
 The skill has two jobs. **Drift**: `scripts/audit-agent-docs.mjs` reads
 ~16 000 code spans and links out of ~245 documents in ~1 s, with no app, no
-network and no writes. It runs 15 checks: paths and `file:line` anchors, code
+network and no writes. It runs 16 checks: paths and `file:line` anchors, code
 names, the `owa_*` listings against `server.registerTool`, `npm run` and script
 flags, `OWA_*` variables, ledger ids, the memory index and front matter, rule
 `paths:` globs, skill wiring and mirrored `SKILL.md` bodies, mirror drift with
-direction, knowledge freshness, and four leverage signals (`budget`,
-`coverage`, `staleness`, `prose-rules`). A confirmed lead is fixed in the doc
+direction, knowledge freshness, the manual's recipes (`manual`, since
+2026-10-11: labels no code draws, coverage rows citing a file that is gone,
+recipes due a read — `user-workflows.md` had been skipped whole as a
+ledger), the notes due a read (`staleness`), and three leverage signals
+(`budget`, `coverage`, `prose-rules`). **A read is recorded** (2026-10-11):
+`references/manual-reviewed.json` and `references/notes-reviewed.json` hold a
+hash of each recipe or note and of the code it names, written by
+`--stamp-manual` / `--stamp-notes`, so a document found correct leaves the
+list until its words or its code move — before that the same 29 recipes and
+139 notes were listed run after run and the top few read. A run is done when
+the audit prints 0, and `src/test-setup/manualRecipes.test.ts` holds the
+manual's two hard signals in the gate. **A big run ends with a second read**
+(`scripts/second-read.mjs`, `references/second-read.md`): every correction
+goes to a reader told no reason and ordered to refute it, every statement set
+aside for the running app gets a deeper look at stylesheets, libraries and
+arithmetic, and what a note says works is run once against the real thing —
+measured 2026-10-11, 4 of 559 corrections were wrong, 45 of 80 set-aside
+statements were settled from files (18 of them wrong), and a fallback held by
+33 unit tests had never worked on a real page. A confirmed lead is fixed in the doc
 in the same run, inside the safe classes `references/checks.md` lists, with
 the mirror copied and the knowledge rebuilt. **Leverage**: eight lenses
 (`references/leverage.md`) turn blind spots, always-loaded context cost, prose
@@ -273,6 +290,24 @@ calibration run, 2026-10-08: the skill listing cuts a description at ~1 530
 characters, so `owa-robot-test`'s 3 932-character description loses most of
 its triggers. CLAUDE.md + MEMORY.md cost ≈ 11.5k tokens in every session.
 Same mirror rule: `.agents/skills/owa-enhance-agent-docs` is a copy.
+
+## review-stagged-change skill
+
+`.claude/skills/review-stagged-change` reviews ONLY what is staged — the index,
+`git diff --cached`, each file read as `git show :path` — so unstaged edits and
+untracked files are out of scope and a partially staged file is called out. It
+sweeps its dimensions in priority order with performance and memory first
+(this app's first requirement), reports findings, and changes nothing unless
+asked to `fix`. A generic review skill with no ledger of its own. Same mirror
+rule: `.agents/skills/review-stagged-change` is a copy.
+
+## review-unstagged-change skill
+
+`.claude/skills/review-unstagged-change` is the twin of the skill above for
+work in progress: the unstaged worktree delta plus untracked files that are
+not ignored, the file ON DISK judged against its index version. Same
+dimensions, same order, same `fix`. Same mirror rule:
+`.agents/skills/review-unstagged-change` is a copy.
 
 ## owa-upgrade-unit-test skill
 

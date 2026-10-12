@@ -13,14 +13,13 @@ Arguments: [research (research only, ship nothing) | tools | prompt | knowledge 
 
 ### Full workflow scope (preserved from Claude)
 
-Raise the Open Worship App in-app help chatbot toward being genuinely great — it is NOT there yet, and this skill is the repeatable climb that keeps making it better, run after run, against a stated ladder (it answers → it answers correctly → it acts reliably → it is trustworthy under pressure → it is situational → it is the fastest way to use the app) and a scoreboard that carries the score across runs so a regression is visible. Covers everything belonging to that chatbot and the MCP tool surface it runs on — `src/chatbot/*` (the window, the LLM loop, the offline fallback, the session tabs, the MCP client), `tools/owa-devtools-mcp/*` (the `owa_*` tools, the guide cards, the knowledge search, the HTTP host, the "something is driving your app" banner), `electron/aiHelpers.ts` (the CDP + MCP doors, the master switch, endpoint discovery) and `extra-work/build-knowledge.mjs` (the manual + internal corpora the answers come from). Use when asked to enhance / improve / extend / fix / speed up / harden the chatbot, the assistant, the help bot, the 🤖 button, `chatbot.html`, the AI answers, the walkthrough guide cards, or the app help; and ESPECIALLY when asked to enhance the MCP tools — add a new `owa_*` tool, sharpen a tool description or schema, cut the tool-schema token cost the model pays on every round, fix a tool that misfires or returns unusable output, or make the tool set safer for a volunteer running a live service. Every `tools/list` schema is sent to the model on EVERY round of EVERY question (measure it with `scripts/audit-mcp-tools.mjs` — 42 tools, ~8.5k tokens per round today), so tool surface IS chatbot performance. Also use it for the open-ended ask — "make the chatbot smarter / easier to use / more impressive", "what could the assistant do better", "research how to improve the help bot" — because EVERY run RESEARCHES BEFORE IT BUILDS (references/research.md): it interrogates the live assistant with a standing corpus of real volunteer questions and grades each answer (correct? actionable? internals leaked? how many tool rounds? did the walkthrough ring land on the real control?), mines the app for capability gaps the assistant cannot see or do, looks outside via WebSearch/WebFetch and the claude-api skill when the problem is a known one, and files every evidenced opportunity as a stable EC-xx backlog id — then builds the top-ranked one. The workflow baselines the live tool surface, picks work off that research plus the tracked backlog (references/backlog.md, EC-xx ids), implements against the project rules that bind this subsystem (low-spec-first performance, `Comp` naming, no app-module imports from injected page scripts, English-only chatbot window), verifies LIVE against the running app through the app own owa-devtools MCP — a chatbot change that only typechecks is not done — then runs the `npm run lint` gate and updates the paper trail: the CB rows in docs/test-paths/coverage-matrix.md, the W-42 manual recipe, the MCP package README, CLAUDE.md and the Codex mirror.
+Raise the Open Worship App in-app help chatbot toward being genuinely great — it is NOT there yet, and this skill is the repeatable climb that keeps making it better, run after run, against a stated ladder (it answers → it answers correctly → it acts reliably → it is trustworthy under pressure → it is situational → it is the fastest way to use the app) and a scoreboard that carries the score across runs so a regression is visible. Covers everything belonging to that chatbot and the MCP tool surface it runs on — `src/chatbot/*` (the window, the LLM loop, the offline fallback, the session tabs, the MCP client), `tools/owa-devtools-mcp/*` (the `owa_*` tools, the guide cards, the knowledge search, the HTTP host, the "something is driving your app" banner), `electron/aiHelpers.ts` (the CDP + MCP doors, the master switch, endpoint discovery) and `extra-work/build-knowledge.mjs` (the manual + internal corpora the answers come from). Use when asked to enhance / improve / extend / fix / speed up / harden the chatbot, the assistant, the help bot, the 🤖 button, `chatbot.html`, the AI answers, the walkthrough guide cards, or the app help; and ESPECIALLY when asked to enhance the MCP tools — add a new `owa_*` tool, sharpen a tool description or schema, cut the tool-schema token cost the model pays on every round, fix a tool that misfires or returns unusable output, or make the tool set safer for a volunteer running a live service. Every tool schema the model is offered is sent on EVERY round of EVERY question (measure it with `scripts/audit-mcp-tools.mjs` — 26 tools under an 8 350-token ceiling today), so tool surface IS chatbot performance. Also use it for the open-ended ask — "make the chatbot smarter / easier to use / more impressive", "what could the assistant do better", "research how to improve the help bot" — because EVERY run RESEARCHES BEFORE IT BUILDS (references/research.md): it interrogates the live assistant with a standing corpus of real volunteer questions and grades each answer (correct? actionable? internals leaked? how many tool rounds? did the walkthrough ring land on the real control?), mines the app for capability gaps the assistant cannot see or do, looks outside via WebSearch/WebFetch and the claude-api skill when the problem is a known one, and files every evidenced opportunity as a stable EC-xx backlog id — then builds the top-ranked one. The workflow baselines the live tool surface, picks work off that research plus the tracked backlog (references/backlog.md, EC-xx ids), implements against the project rules that bind this subsystem (low-spec-first performance, `Comp` naming, no app-module imports from injected page scripts, English-only chatbot window), verifies LIVE against the running app through the app own owa-devtools MCP — a chatbot change that only typechecks is not done — then runs the `npm run lint` gate and updates the paper trail: the CB rows in docs/test-paths/coverage-matrix.md, the W-42 manual recipe, the MCP package README, CLAUDE.md and the Codex mirror.
 
 # OWA Enhance Chatbot — the assistant and its MCP tools
 
 **The chatbot is not good enough yet.** It answers, it can point at a control, it
 can walk someone through a task — and it still hands a volunteer the wrong
-window's steps, burns rounds looking things up, ships 42 tool schemas per round,
-and can pour 52 000 tokens of developer notes into one answer. This skill exists
+window's steps, burns rounds looking things up and ships 26 tool schemas per round. This skill exists
 to close that gap, run after run, until asking the app is genuinely the fastest
 way to operate it.
 
@@ -70,7 +69,7 @@ Update the Status column when the evidence changes — up **or** down. A rung is
 - The tool loop burns rounds, tokens, or money → §D.
 - Something in the chatbot window itself: tabs, model picker, copy, layout → §E.
 
-Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-14`),
+Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-110`),
 and app features that merely happen to be *described* by the manual.
 
 ## The subsystem, in one list
@@ -79,10 +78,10 @@ and app features that merely happen to be *described* by the manual.
 | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | The window                        | `html/chatbot.html` → `src/chatbot/ChatbotAppComp.tsx` (+ `.scss`)                                       |
 | Conversation tabs                 | `src/chatbot/chatSessionHelpers.ts` — `local-storage/chatbot-sessions`, 12 tabs × 60 messages             |
-| Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — manual search only, plus `genGuideActions` / `runBotAction`             |
-| LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic + OpenAI + Kimi) |
+| Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — no model: manual search and state answers read off the app's tools, plus `genGuideActions` / `runBotAction`             |
+| LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic, OpenAI, Kimi, Bedrock, custom servers, Free) |
 | MCP client                        | `src/chatbot/mcpClient.ts` — one session, re-opened on a 404 sweep                                       |
-| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 23 `owa_*` tools (20 of them sent to the model)                |
+| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 34 `owa_*` tools (26 of them sent to the model)                |
 | DOM matching for `find/click/type`| `tools/owa-devtools-mcp/domMatch.mjs` (+ test)                                                          |
 | Walkthrough cards                 | `tools/owa-devtools-mcp/guide.mjs` (+ test) — shadow-root card, `demo` mode                              |
 | Knowledge search                  | `tools/owa-devtools-mcp/help.mjs` — reads `electron-build/knowledge/index.json`                          |
@@ -108,12 +107,12 @@ feature works.
    the other. Never fork behaviour on the caller without saying so in the code.
 2. **A tool that acts must announce itself.** Add it to `ACTING_TOOLS` in
    `notify.mjs` or it changes the operator's window with no banner. The audit
-   script fails you on this.
+   script warns on this.
 3. **Never `import()` an app module from an injected page expression.** It re-runs
    module top-level code and kills every keyboard shortcut in the app (memory:
    `cdp-dynamic-import-hijack`). Page expressions stay dependency-free strings.
 4. **The chatbot window is English-only, on purpose.** No `tran()` in
-   `src/chatbot/*`. The 🤖 button and the Help menu item live OUTSIDE it and do
+   `src/chatbot/*`. The 🤖 button and the Tools menu item live OUTSIDE it and do
    go through `tran()` — a missing Khmer key there throws and blanks the page.
 5. **Performance outranks elegance** (CLAUDE.md). Nothing is cached between
    questions; the knowledge corpus is read one file at a time. Do not introduce a
@@ -167,8 +166,8 @@ With the app down, editing that key on disk is safe and is the fastest way in.
 **Order matters:** `npm run build` / `electron:build` deletes `electron-build/`,
 which is the running app's own main entry — it kills the app (memory:
 `build-kills-running-dev-app`). So **verify live FIRST, build last**. The one
-exception is knowledge work (§C), which needs a rebuild to take effect; there,
-plan for the restart.
+exception is knowledge work (§C), which needs a rebuild to take effect — of
+`knowledge/` alone, which leaves the app up.
 
 ### 1. RESEARCH — mandatory, every run
 
@@ -194,7 +193,7 @@ short form, all four tracks, in a run:
   provider behaviour, retrieval ranking — with `WebSearch`/`WebFetch` and the
   `claude-api` skill (never answer model/pricing questions from memory). Bring
   back a specific applicable change, not a summary.
-- **D · Read the seams** when chasing a defect: the dev terminal's tool log, the
+- **D · Read the seams** when chasing a defect: the dev terminal (MCP sessions, firewall refusals), the
   comments in these files (they record why the obvious alternative was wrong), and
   the offline bot, which sometimes answers better than the model does.
 
@@ -274,10 +273,10 @@ minimum for any change:
 `extra-work/verify-chatbot-e2e.mjs` (drives the real window, spends real API
 credit — ask the user first) are the ready-made harnesses.
 
-> `mcp__owa-devtools__evaluate_script` currently fails with "DisposableStack is
-> not defined" under Node 22 (memory: `evaluate-script-disposablestack`). Drive
-> pages over raw CDP `Runtime.evaluate` instead — `cdp.mjs` and both verify
-> scripts already do.
+> `evaluate_script` is refused by the MCP firewall and dropped from `tools/list`
+> (memory: `evaluate-script-disposablestack`). Drive pages over raw CDP
+> `Runtime.evaluate` instead — `cdp.mjs` and `extra-work/verify-chatbot-e2e.mjs`
+> already do.
 
 ### 5. Run the gate
 
@@ -368,8 +367,9 @@ long because every paragraph in it was earned by a bad answer. Rules:
 - The prompt is built ONCE per question, not per round — keep it that way.
 - Do not grow it without cutting: it is sent on every round, and it competes for
   the same budget as the tool schemas.
-- `MAX_TOOL_ROUNDS` (10) with tools dropped on the last round is what stops a
-  runaway loop. If a change makes the model need more rounds, the change is
+- `MAX_TOOL_ROUNDS` (10) with no tool call allowed on the last round (the tools
+  dropped, or for Anthropic kept under `tool_choice: none` so the prompt cache
+  holds) is what stops a runaway loop. If a change makes the model need more rounds, the change is
   wrong — make the tools answer better instead.
 
 ### C. Knowledge — what the assistant is allowed to know
@@ -382,8 +382,9 @@ Answers come from `electron-build/knowledge/`, built by
 - The manual is generated from `user-workflows.md`. Fix the workflow recipe, run
   `npm run docs:gen`, then rebuild the knowledge bundle — do not hand-edit the
   generated page.
-- A knowledge change needs `npm run electron:build` (or the `dev` script's build
-  step) before the app can see it, and that restarts the app.
+- A knowledge change needs `node extra-work/build-knowledge.mjs` before the app can
+  see it — run alone it leaves the app up (the index is re-read per search), where
+  `npm run electron:build` deletes `electron-build/` and kills it.
 - The `internal` allowlist is an allowlist for a reason: it lands in plaintext in
   the installer. Adding a directory to it is a distribution decision, not a
   convenience — raise it with the user.
@@ -397,9 +398,9 @@ user's own API credit.
 
 - Tool schema is the biggest line item: measure with the audit script, and treat
   tokens/round as a budget, not a curiosity.
-- `MAX_TOKENS` 2000 (Anthropic) / `OPENAI_MAX_TOKENS` 6000 with
-  `reasoning_effort: 'low'`, and no `reasoning_effort` at all for a non-reasoning
-  OpenAI model — those splits exist; do not flatten them.
+- `ANTHROPIC_MAX_TOKENS` 6000 / `OPENAI_MAX_TOKENS` 6000 with
+  `reasoning_effort: 'low'`, and `MAX_TOKENS` 2000 with no `reasoning_effort` at
+  all for a non-reasoning OpenAI model — those splits exist; do not flatten them.
 - Nothing is cached between questions on purpose. If you add a cache, it must be
   short-lived and bounded, and you must say why in a comment.
 - The session tab store is capped (12 × 60) with a debounced save and a
@@ -407,15 +408,17 @@ user's own API credit.
 
 ### E. The window
 
-`ChatbotAppComp.tsx` is one file with the tab strip, head row (three `<select>`s
-— Presenter/Reader, provider, model picker), message list and ask form.
+`ChatbotAppComp.tsx` holds the head row (four `<select>`s — the window asked
+about, assistant, model, and the window-wide limit per hour), message list and
+ask form; the tab strip is `RenderSessionTabsComp.tsx`.
 
 - The ENTIRE head row belongs to the tab in front, not to the window. The stored
   provider/model settings are only what a NEW tab starts on. Do not "fix" this
   into a window-level setting.
 - Every answer has **Copy**, every question **Ask again**. Keep both when
   reshaping a message row.
-- With no key at all the window says so and offers a button into
+- With no key at all the window opens on the Free assistant, under a notice
+  that names the free service and offers a button into
   Settings → Others. That empty state is the first thing a new user sees — test it
   by clearing the keys, not by imagining it.
 - Screenshot before and after. A layout change with no screenshot is not verified.
@@ -453,10 +456,10 @@ knows the app's internals.
 - **Building kills the app.** Verify first, build last (except knowledge work).
 - **The knowledge bundle is stale until a build.** A manual edit that "did
   nothing" usually just is not built yet.
-- **`evaluate_script` is dead under Node 22** — use raw CDP `Runtime.evaluate`.
+- **`evaluate_script` is refused by the MCP firewall** — use raw CDP `Runtime.evaluate`.
 - **The MCP port is a default, not a promise.** 39223 is where it usually lands;
   read `mcpUrl` from the published instance file. (Both `extra-work/verify-*`
-  scripts still hardcode it — see `EC-05`.)
+  scripts read it from there, with `mcpToken`.)
 - **Two `list_pages` targets can look alike.** The chatbot window is
   `chatbot.html?uuid=chatbot`; a showing projector screen appears as
   `screen.html?screenId=N` and vanishes when hidden.
@@ -500,4 +503,4 @@ knows the app's internals.
   with the exact-label route defeated. **The ranking's ratchet**: run it
   against the built index before and after touching `help.mjs`,
   `build-knowledge.mjs` or the manual (2026-09-10: 267 rows, 54% / 78%).
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-14`.
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-110`.

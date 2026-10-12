@@ -13,39 +13,39 @@ workflowsVersion: "2026-10-11"
 control without having to search the manual.
 
 1. Five minutes after the window starts, the operator page in
-   front shows one **Tip of the Day** in the top-right corner — never at launch,
+   front shows one **[en:tran:Tip of the Day]** in the top-right corner — never at launch,
    when it would cover the controls you reach for while opening the service.
    Reloading or switching between Presenter and Reader does not restart those
    five minutes. The card then takes itself off after one minute: a thin bar
    along its bottom edge drains over that minute, and resting the mouse
    pointer on the card freezes the bar and the minute with it, so nothing
    disappears while you are reading it. Moving away carries on from where the
-   bar stopped. **Next tip** starts the minute again, browsing **All tips**
+   bar stopped. **[en:tran:Next tip]** starts the minute again, browsing **[en:tran:All tips]**
    holds it, and **×** closes the card at once. The tip
    belongs to that page only, and the first tip is chosen at random without
-   repeating the last automatic tip shown for that page. **Help → Tips of the
-   Day** opens one at once, and a tip opened that way stands in for that
+   repeating the last automatic tip shown for that page. **Help → [en:tran:Tips of the Day]**
+   opens one at once, and a tip opened that way stands in for that
    page's automatic card. Settings, Slide Editor, Bible Note, Web Editor, Lyric
    Editor, and Local Web Share also have their own tips. Each page remembers
    whether its automatic tip has already appeared; visiting another page lets
    you learn that page too. Audience screens and help-only windows show no tips.
-2. Click **Next tip** to move through that page's tips in order. The list wraps to
-   the first tip after the last. Click **All tips** to open the numbered learning
+2. Click **[en:tran:Next tip]** to move through that page's tips in order. The list wraps to
+   the first tip after the last. Click **[en:tran:All tips]** to open the numbered learning
    list for the current page. Search by a control or task, or scan the topic name
    that leads each lesson's line;
    the counter shows how many lessons match. Each lesson says what it teaches;
    choose one to return to its card and practise it at your own pace. The
-   Presenter has **89 topics**: 79 start with a safe **Do it** for a visible
+   Presenter has **91 topics**: 81 start with a safe **Do it** for a visible
    control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
    planning, app help, and every native application menu from **File** through
-   **Help**. _Write a note on a document or slide_ opens the previewer's **Note**
+   **Help**. _Write a note on a document or slide_ opens the previewer's **[en:tran:Note]**
    panel, which ships closed (W-03, W-31). Presenter lessons also cover lookup references and history, study
    tools inside Bible Lookup, media folder filtering and sorting, finding a service
    flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
    Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
    slide show; output and style changes stay in your hands.
-   The Reader has **99 topics**: 49 start with a safe **Do it** and
+   The Reader has **100 topics**: 50 start with a safe **Do it** and
    50 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
    self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
@@ -55,10 +55,10 @@ control without having to search the manual.
    for now; reloading a page does not show its automatic card again in the same
    window session. A page whose delay expires while it is behind another window
    waits until you focus it.
-3. In Settings, **Help → All tips** shows three lessons for **General**,
-   **Bible**, and **Others**. Choose **Explore General settings**, then **Show it**:
+3. In Settings, **Help → [en:tran:All tips]** shows three lessons for **[en:tran:General]**,
+   **[en:tran:Bible]**, and **[en:tran:Others]**. Choose **[en:tran:Explore General settings]**, then **[en:tran:Show it]**:
    the demo card and its red outline appear inside Settings.
-   **Show it** always starts in the originating window, even when a popup and
+   **[en:tran:Show it]** always starts in the originating window, even when a popup and
    the main window show the same kind of page. With an actionable lesson, the control
    is ringed in red. This uses a checked-in walkthrough and no model or provider
    credit. The deterministic walkthroughs open, copy, toggle, or
@@ -74,7 +74,7 @@ control without having to search the manual.
    lists and Bible Notes have separate folder, creation, organization and
    import/export tips; graph and Resources tools have their own lessons too.
    Use **Back** to revisit a guide step. If a panel is hidden, reopen it through
-   **View → Widgets** before practising. An older walkthrough service can
+   **View → [en:tran:Widgets]** before practising. An older walkthrough service can
    show the complete Reader lesson as a self-guided fallback.
    Reader lessons that depend on selected text, files, a graph, or the native
    menu are self-guided too. They explain the exact action but do not reload,
@@ -84,11 +84,10 @@ control without having to search the manual.
    switched off with it.
 4. Click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
    pages for 30 days; after that they come back by themselves. This does not
-   remove the lessons: use **Help → Tips of the Day** to
-   open one suggestion, or **Help → All tips** to browse the whole learning list
+   remove the lessons: use **Help → [en:tran:Tips of the Day]** to
+   open one suggestion, or **Help → [en:tran:All tips]** to browse the whole learning list
    for the page in front. Opening either from Help does not end the 30 days.
-   To bring the automatic card back sooner, open **Settings → General → Other
-   General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
+   To bring the automatic card back sooner, open **Settings → [en:tran:General] → [en:tran:Other General Options]**, turn on **[en:tran:Show Tips of the Day automatically]**, and
    start the app again; that switch reads off while the tips are hidden. Turned
    off there instead, automatic tips stay off until the switch is turned on
    again. The switch covers every supported operator page.
@@ -101,13 +100,13 @@ ring or press it. The detailed **View** lessons remain separate so each View
 command can explain its effect and risk.
 
 The Presenter and Reader catalogs deliberately keep **Reload**, **Force Reload**,
-**Relaunch** and **Toggle Developer Tools** under the **View menu** topic for
+**Relaunch** and **Toggle Developer Tools** under the **[en:tran:View menu]** topic for
 completeness, but do not put those troubleshooting commands into the random
 daily rotation.
 **Actual Size / Zoom In / Zoom Out** are taught as whole-window zoom, separately
-from the passage's **Font Size**. **Toggle Full Screen** is taught as whole-window
-full screen, separately from the passage's **Full** button. **Widgets** explains
-the checked pane list; **Reset Widgets Size** explains its confirmation and that
+from the passage's **[en:tran:Font Size]**. **Toggle Full Screen** is taught as whole-window
+full screen, separately from the passage's **[en:tran:Full]** button. **[en:tran:Widgets]** explains
+the checked pane list; **[en:tran:Reset Widgets Size]** explains its confirmation and that
 it both restores default sizes and reopens collapsed panes.
 
 ::: details 🤖 Robot-verified — coverage traceability

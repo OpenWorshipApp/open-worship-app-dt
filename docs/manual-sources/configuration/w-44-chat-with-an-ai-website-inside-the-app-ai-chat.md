@@ -18,7 +18,7 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
 
 1. Click the **✨** ([en:tran:AI Chat]) button in the top-right corner of the window, right
    of the **🤖** and left of the **?**, or open **Help** → **AI Chat** in the menu bar. From
-   a window with no top bar, use **Tools** → **AI Chat**. A narrow window opens beside the
+   a window with no top bar, use **Tools** → **[en:tran:AI Chat]**. A narrow window opens beside the
    app, the same size and place as the help window. 📸 It works whether or not **AI
    features** is switched on in Settings → Others: this window holds no key and opens no
    door of the app's.
@@ -33,8 +33,8 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    and **↤** (**Sign out of every site**), which is step 7.
 4. The strip of **tabs** along the top works like the help window's (W-42 step 2): **+**
    starts another tab (it opens on the card again), **×** closes one, a **double-click on a
-   tab's name** renames it, and the **⋮** on a tab (or a right-click) opens **Rename**,
-   **Lock**, **Close**, **Close other chats…** and **Clear all chats…**. Until you rename
+   tab's name** renames it, and the **⋮** on a tab (or a right-click) opens **Rename this chat**,
+   **Lock this chat**, **Close this chat**, **Close other chats…** and **Clear all chats…**. Until you rename
    it, a tab is called after the page — the conversation's own name, on most of these
    sites. Tabs are kept when the window and the app close, up to eight of them, and each
    comes back on the conversation it was on. 📸 **Drag a tab** along the strip to put it

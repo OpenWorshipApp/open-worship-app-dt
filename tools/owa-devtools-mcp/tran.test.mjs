@@ -120,10 +120,14 @@ describe('the language packs', () => {
 // page shows it up, so it is caught here instead: every key written in the
 // corpus has to be a key the app can actually translate.
 describe('the knowledge corpus', () => {
+    // Everything the knowledge bundle ships: the rules and the project
+    // instructions name controls as templates too, and were walked by nothing
+    // until the notes were read against the code (2026-10-11).
     const SOURCES = [
         path.join(REPO_ROOT, 'docs', 'manual-sources'),
         path.join(REPO_ROOT, '.claude', 'memory'),
         path.join(REPO_ROOT, '.claude', 'skills'),
+        path.join(REPO_ROOT, '.claude', 'rules'),
     ];
     const listMarkdown = (dirPath) => {
         const filePaths = [];
@@ -140,7 +144,10 @@ describe('the knowledge corpus', () => {
         walk(dirPath);
         return filePaths;
     };
-    const filePaths = SOURCES.flatMap(listMarkdown);
+    const filePaths = [
+        ...SOURCES.flatMap(listMarkdown),
+        path.join(REPO_ROOT, '.claude', 'CLAUDE.md'),
+    ];
 
     it('writes label templates that the app can actually translate', () => {
         const bundle = loadTranBundle();
@@ -158,6 +165,11 @@ describe('the knowledge corpus', () => {
         for (const filePath of filePaths) {
             const content = readFileSync(filePath, 'utf-8');
             for (const token of listTranTemplateKeys(content)) {
+                // `[en:tran:…]` is how a note writes "any template": the
+                // shape, with no key in it to translate.
+                if (token.key.trim() === '…') {
+                    continue;
+                }
                 total += 1;
                 if (token.sourceLang !== 'en' || token.kind !== 'tran') {
                     broken.push(

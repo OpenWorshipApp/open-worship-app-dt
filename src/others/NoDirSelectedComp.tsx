@@ -3,7 +3,7 @@ import type DirSource from '../helper/DirSource';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
 
-export function SelectDefaultDirButton({
+export function SelectDefaultDirButtonComp({
     dirSource,
     defaultFolderName,
 }: Readonly<{
@@ -71,7 +71,7 @@ export default function NoDirSelectedComp({
                 </div>
                 <div className="w-100 d-flex flex-column align-items-center justify-content-center">
                     <div className="m-1">
-                        <SelectDefaultDirButton
+                        <SelectDefaultDirButtonComp
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />

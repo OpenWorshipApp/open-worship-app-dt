@@ -12,7 +12,7 @@ schemas plus the system prompt, byte-identical across every round of every
 question about the same window. The audit script
 (`.claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs`) had put
 the model's schema at ~7 400 tokens a round: its chars-per-token estimate
-undercounts the provider by about half. After prompt caching (`askAnthropic`
+undercounts the provider by about half. After prompt caching (`askAnthropicCompatible`
 in `src/chatbot/llmBotHelpers.ts`: an explicit `cache_control` on the system
 block, which caches tools + system for the NEXT question too, plus the
 request-level automatic breakpoint for the growing conversation; the last

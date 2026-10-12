@@ -24,6 +24,10 @@ kept. React memoization holds only the current mounted item's sanitized content,
 so moving/resizing a box does not parse it again. Clear DOMPurify's removed-node
 list after every call, since it can retain the parsed document tree.
 
+The raw policy runs BEFORE `genSlideHtml`'s static render, never inside it
+(2026-10-11): a sanitizer call inside `renderToStaticMarkup` crashed the
+Presenter, see [[static-render-must-not-parse-html]].
+
 Live checks used an isolated development profile. Pin `OWA_CDP_PORT` on a
 dedicated MCP client: another session can restart the user's app, causing
 newest-first app tools to leave the scratch process while chrome page ids still

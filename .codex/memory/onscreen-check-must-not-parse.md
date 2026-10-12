@@ -8,7 +8,8 @@ metadata:
   modified: 2026-08-03T13:28:26.802Z
 ---
 
-`checkIsVaryAppDocumentOnScreen` (`src/app-document-list/appDocumentHelpers.tsx`)
+`checkIsVaryAppDocumentFilePathOnScreen` (`src/app-document-list/appDocumentHelpers.tsx`;
+`checkIsVaryAppDocumentOnScreen` is now a wrapper over it that only a test calls)
 feeds the on-screen dot of **every row of every document/lyric list**, via
 `FileItemHandlerComp` → `useFileSourceIsOnScreen`, which re-runs on **every
 screen update** (debounced 500 ms per instance).

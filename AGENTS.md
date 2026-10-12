@@ -46,8 +46,9 @@ match:
 - `.claude/skills/` -> `.agents/skills/` (copy resources exactly; retain Codex
   adaptations in each `SKILL.md`: concise discovery description, full original
   description in the body, argument hints in the body, and Codex usage notes).
-- `.mcp.json` and enabled-server settings -> `.codex/config.toml` (translate
-  the relevant MCP configuration; do not copy Claude settings JSON).
+- `.mcp.json` and enabled-server settings -> `.codex/config.toml` (by hand — the
+  script only checks that every server is named: translate the relevant MCP
+  configuration; do not copy Claude settings JSON).
 
 Follow the canonical knowledge-rebuild rule when changing its source inputs.
 A change only to the Codex mirrors does not change the application's knowledge

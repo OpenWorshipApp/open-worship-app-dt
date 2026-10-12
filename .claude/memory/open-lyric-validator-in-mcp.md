@@ -7,9 +7,10 @@ metadata:
 
 `owa_lyric_validate` (`tools/owa-devtools-mcp/openLyric.mjs`, added 2026-09-02)
 checks song text and answers with every mistake — line, section, what to write
-instead — then what the song IS: title, key, tempo, sections, play order. It is
-the one tool in that package that reaches nothing: no CDP, no window, no
-network, so it works with the app shut.
+instead — then what the song IS: title, key, tempo, sections, play order. Checking
+or drafting `text` it is the one tool in that package that reaches nothing: no
+CDP, no window, no network, so it works with the app shut; a `url` or
+`mode: "find"` asks the app.
 
 **It deliberately does not call open-lyric**, and that is the decision to know
 before "fixing" it:
@@ -34,7 +35,7 @@ above it:
   pattern character for character, and every chord and repeat suffix the schema
   names valid or invalid. An `npm i` that bumps open-lyric fails here instead
   of in a volunteer's answer. Plain node.
-- `openLyricOracle.test.mjs` runs 122 documents through open-lyric's OWN
+- `openLyricOracle.test.mjs` runs 123 documents (2026-10-11) through open-lyric's OWN
   `checkMarkdown` and through ours, failing on a disagreement. jsdom, and the
   only test in the package that needs it — see
   [[monaco-css-test-failure-local-open-lyric]] for the recipe.

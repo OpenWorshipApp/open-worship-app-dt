@@ -408,8 +408,8 @@ must be re-measured there before committing.
 
 1. **The effect layer is a rewrite, not a port.**
    [transitionEffectHelpers.ts](src/_screen/transitionEffectHelpers.ts) builds
-   `fade`, `zoom` and `none` out of `@keyframes` on `opacity` and
-   `transform: scale()`, applied to the container that would become the drawn
+   `fade`, `move`, `zoom` and `none` out of `@keyframes` on `opacity`,
+   `translate` and `transform: scale()`, applied to the container that would become the drawn
    child. Those are precisely the two properties that are invisible through
    `drawElementImage`. `move` (which animates `left` via rAF) _would_ still
    render, since `left` is a layout property — but at the cost of relayout per
@@ -575,7 +575,7 @@ children of the <canvas> element…`), so a second canvas cannot share the
 
 ## 10. Reproducing the probes
 
-Everything above is demonstrated live in `./HtmlInCanvasComp.tsx` — 23 demos
+Everything above is demonstrated live in `./HtmlInCanvasComp.tsx` — 26 demos
 (transitions, per-item animation, the staging matrix, the benchmark, the error
 cases). Run the app with the switch from §2 and open
 `https://localhost:3000/experiment.html`.

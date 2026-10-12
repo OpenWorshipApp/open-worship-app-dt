@@ -32,7 +32,7 @@ export default function AppWindowToolsComp() {
     const { theme } = useThemeSource();
     // `display: contents` so the wrapper is layout-neutral -- custom properties
     // still inherit through it, and the overlay it hosts is `position: fixed`
-    // anyway. On the six pages that already render inside `RenderApp`'s own
+    // anyway. On the six pages that already render inside `RenderAppComp`'s own
     // `.app` this is a harmless second declaration of the same tokens; on
     // `lwShare`, `lyricEditor` and `experiment` it is the only one there is.
     return (

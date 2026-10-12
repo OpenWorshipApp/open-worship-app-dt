@@ -12,11 +12,12 @@ workflowsVersion: "2026-10-11"
 **Goal:** find out who someone in the Bible was, or where a place is, without leaving
 your Bible reading.
 
-1. Open the **Bible Reader**, or the **Bible Lookup** popup in the Presenter. At the
+1. Open the **[en:tran:Bible Reader]**, or the **[en:tran:Bible Lookup]** popup in the Presenter. At the
    right-hand end of the reference box, click the person-and-pin button
    **[en:tran:Names and locations lookup]**. A small floating
-   window opens. The first open takes a few seconds while the dictionary loads — after
-   that it is instant. It is a floating window like any other: drag it by its title bar,
+   window opens. The first open takes a few seconds while the dictionary loads. While the
+   window stays open it is instant; once you close it the dictionary is let go
+   after about ten seconds, and the next open waits for it again. It is a floating window like any other: drag it by its title bar,
    resize it from any edge, and **double-click the title bar** to make it fill the app
    window when you want to read a long list — double-click again to put it back where
    it was. 📸
@@ -43,28 +44,28 @@ your Bible reading.
    looking for, and type in the search box. Each tab remembers what you typed, so you
    can switch back and forth. The list updates as you type. You may type in **either
    language** — with Khmer records on screen, `Moses` and `ម៉ូសេ` both find him.
-4. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
+4. On the **[en:tran:Names]** tab the dropdown beside the tabs narrows the list by kind —
    **[en:tran:All Types]**, **[en:tran:People]**, **[en:tran:Groups]**,
    **[en:tran:Places]** and so on. These follow the **lookup** language from step 2,
    not the app's, so they read the same way as the records they filter. It is greyed
-   out on the **Locations** tab, where there is nothing to filter.
+   out on the **[en:tran:Locations]** tab, where there is nothing to filter.
 5. Use the arrows at the bottom to page through results, or type a page number in the
    little box and press **Enter**. Starting a new search always takes you back to
    page 1. 📸
 6. Click a result to open it in its own small window: a small icon for what kind of
    record it is — a person, a place, a book for a verse — then a short description, then
-   a **[en:tran:Details]** section with things like **Also called**, **Type**,
-   **Gender**, **Parents**, **Children** and **[en:tran:Verses]**. 📸
+   a **[en:tran:Details]** section with things like **[en:tran:Also called]**, **[en:tran:Type]**,
+   **[en:tran:Gender]**, **[en:tran:Parents]**, **[en:tran:Children]** and **[en:tran:Verses]**. 📸
    The language code in its header, **[en:tran:Names and locations language]**,
    opens the same language menu. Pick another language to open that same record
    in a second window while keeping the first one open. If that record is
    already open in the chosen language, its window comes to the front. This
    choice leaves the language beside the person-and-pin button unchanged.
-   > Every row in the list — and in the **names and locations in your reading** panel —
+   > Every row in the list — and in the **[en:tran:Names and locations in your reading]** panel —
    > also carries a **⋮** button at its right end. It opens the same short menu that
    > right-clicking the row gives you, so you never need a right mouse button
    > (see **W-38**).
-7. **Verses** starts closed and shows how many there are — some entries have hundreds
+7. **[en:tran:Verses]** starts closed and shows how many there are — some entries have hundreds
    (Jerusalem has 712). Click it to open, and the references turn into readable
    titles like _Joshua 10:1-43_.
 8. Any underlined name or place — in the description or in a list — opens as another
@@ -85,21 +86,20 @@ your Bible reading.
    window's title bar, **[en:tran:Open in bible lookup]**, loads
    that passage into the reference box behind it. 📸
 10. For a place that has coordinates, a map appears at the bottom of its window under
-    **Approximate location, the marker is an estimated point**, with an **Open in
-    Google Maps** link. The map needs an internet connection; places without
+    **[en:tran:Approximate location, the marker is an estimated point]**, with an **[en:tran:Open in Google Maps]** link. The map needs an internet connection; places without
     coordinates (Egypt, for example) simply show no map. 📸
 11. The copy button in a record window's title bar copies the whole entry — its name
     with the English one in brackets, and all of its verse references whether or not you
-    opened the **Verses** section — ready to paste into a note or a document.
+    opened the **[en:tran:Verses]** section — ready to paste into a note or a document.
 12. Closing the lookup window leaves the record windows you opened where they are.
     Each has its own **×**.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 
-**A note on what is translated:** a person's kind and **Gender** and a place's **Type**
+**A note on what is translated:** a person's kind and **[en:tran:Gender]** and a place's **[en:tran:Type]**
 come in the lookup language — Jacob is **ប្រុស**, the Pool of Siloam a **ស្រះ** — because each
-is one word out of a short, fixed list. A person's **Age** is shown exactly as the
+is one word out of a short, fixed list. A person's **[en:tran:Age]** is shown exactly as the
 dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
 
 ::: details 🤖 Robot-verified — coverage traceability

@@ -9,7 +9,7 @@ workflowsVersion: "2026-10-11"
 ---
 # W-52 — Move your settings to another computer (Export / Import Settings)
 
-**File → Export Data** moves your files — songs, slides, media. This moves how
+**File → [en:tran:Export Data]** moves your files — songs, slides, media. This moves how
 the app is SET UP: the language and theme, how a Bible looks on the screen, the
 marquee and the timers, the panel sizes, and the rest of what you have chosen
 over time.
@@ -39,7 +39,7 @@ over time.
    come back unticked if it is cleared. Typed differently, the two fields say
    **[en:tran:Passwords do not match]** and the panel comes back holding what was
    ticked.
-5. Click **Ok**. `Settings.owasetting.tar.gz` is written to the **Downloads**
+5. Click **[en:tran:Ok]**. `Settings.owasetting.tar.gz` is written to the **Downloads**
    folder (`Settings.owasetting.enc` with a password), and the folder opens on
    it.
 6. On the other computer, open **[en:tran:Setting]**, click
@@ -49,7 +49,7 @@ over time.
    **[en:tran:Each ticked section replaces the same section on this computer; what the file leaves out goes back to its default]**.
    **[en:tran:Folders]**, **[en:tran:Screen Mirror & Virtual Displays]** and the
    API keys start unticked — they reach past how the app looks. 📸
-8. Click **Ok**. A message says how many settings were written and how many went
+8. Click **[en:tran:Ok]**. A message says how many settings were written and how many went
    back to their default. The app then offers to reload its windows
    (**[en:tran:Apply Settings]**), or to restart when a ticked section is read
    only at start-up (**[en:tran:Screens & Monitors]**,

@@ -18,9 +18,9 @@ What the chatbot sends a provider, what it withholds, what it costs and what
 happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **The chatbot's model sees the app's own `owa_*` tools and nothing of
-  chrome-devtools' at all** — 29 of 48 withheld, declared ONCE in
+  chrome-devtools' at all** — 34 of 60 withheld, declared ONCE in
   `tools/owa-devtools-mcp/modelTools.mjs` (no `node:fs`, so the renderer
-  bundles the module the audit script reads). All 48 stay registered on the
+  bundles the module the audit script reads). All 60 stay registered on the
   server, so the developer's door is whole — what is withheld is withheld from
   the MODEL, which is the untrusted party. Same two enforcement points as the
   firewall and for the same reason: `askLlmBot` filters the list, and
@@ -52,9 +52,9 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   model (was 29 / ~7 366).
   `audit-mcp-tools.mjs` reports both and prints a withheld tool as `(name)`;
   reporting only the total is how a tool added "for the developer" ends up
-  billed to every volunteer. Since 2026-10-10 three `owa_*` tools are the
-  developer's too — `owa_press_key`, `owa_drag`, `owa_menu` (`MC-50`,
-  `MC-56`) — so "the model sees every `owa_*` tool" is no longer the rule;
+  billed to every volunteer. Since 2026-10-10 five `owa_*` tools are the
+  developer's too — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
+  `owa_media_file` (`MC-50`, `MC-56`) — so "the model sees every `owa_*` tool" is no longer the rule;
   `modelTools.mjs` is, and it says what to use instead of each. **A custom
   server is sent 14 of those 26** (`LOCAL_TOOL_NAME_LIST`,
   `OpenAiCompatProviderType.filterTools`, 2026-10-10): 4 234 tokens of
@@ -122,7 +122,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   a key-checking door behind a Cloudflare quick tunnel that looks at itself
   every minute and can publish its own address, and `llm-tunnel-startup.mjs`,
   which starts it with the computer on Linux, macOS and Windows.
-- **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropic` in
+- **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropicCompatible` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
   standing corpus, 12 questions, 44 rounds, **813 000 input tokens every one
   at full price**, ~15 900 of the ~16 000 a round costs being the tool schemas
@@ -226,8 +226,9 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   is; this one was `insufficient_quota`), waited 3–5 s, and answered from
   the offline bot under _"ChatGPT could not answer"_ — with a live Claude key
   one option along in the head row. Now a failure that is the PROVIDER's
-  (`checkIsProviderFault`: 401/403, 429, 5xx — never a 400 and never a
-  no-status network error, which another key would share) is retried ONCE on
+  (`checkIsProviderFault`, now by `readLlmIssue`'s kind: 401/403, 429, 5xx and
+  an empty account's 402 or 400 — not an ordinary 400 and never a no-status
+  network error, which another key would share) is retried ONCE on
   the best other provider whose key is set (`getStandInLlmProvider`), and
   the answer carries `standIn`; the window writes the note naming both and
   the reason and moves the TAB to the stand-in (the stored new-tab default

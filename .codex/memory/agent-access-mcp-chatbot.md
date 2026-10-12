@@ -21,8 +21,9 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   how anything finds the app, and `bin.mjs --bridge --listen=9223` serves a
   client that can only take a fixed URL. `./.mcp.json` is back (2026-08-31) but
   holds NO url — it just spawns `node tools/owa-devtools-mcp/bin.mjs` over stdio
-  as **`owa-devtools`**, so an agent gets `mcp__owa-devtools__*`: the whole
-  chrome-devtools tool set plus `owa_app_state`, `owa_find_ui`, `owa_list_ui`,
+  as **`owa-devtools`**, so an agent gets `mcp__owa-devtools__*`: the
+  chrome-devtools tools the firewall does not hide plus, among others,
+  `owa_app_state`, `owa_find_ui`, `owa_list_ui`,
   `owa_click`, `owa_type`, `owa_goto_page`, `owa_list_screens`,
   `owa_hide_screens`, `owa_help_search`/`owa_help_page` and
   `owa_guide_*`. The path in it is repo-relative, so the client must be started
@@ -52,19 +53,22 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   control in the window, which is how the chatbot answers "where is …".
 - **Knowledge is bundled at build time**: `extra-work/build-knowledge.mjs`
   (in `electron:build`) copies `docs/manual-sources/**` (`manual`) and
-  `.claude/**` (`internal`) into `electron-build/knowledge/` plus a search
+  an allowlist of `.claude/` — `CLAUDE.md`, `rules/`, `memory/`, `skills/` —
+  (`internal`) into `electron-build/knowledge/` plus a search
   index, so a question is one file read, not 140. Internal hits are labelled —
   they are notes for whoever builds the app, not user instructions.
-- **Reachable from every window, two providers, many models.** The **🤖**
+- **Reachable from every window, six providers, many models.** The **🤖**
   button is in the top-right toolbar (left of **?**) of the three windows that
   have one — presenter, slide editor, reader — as `ChatbotButtonComp` in
   `src/others/commonButtons.tsx`. Everywhere else the way in is
   `Tools → App Assistant` / **Ctrl+Shift+A**, from `AppAssistantComp`, which
-  `AppWindowToolsComp` mounts on all nine pages beside the presenting control
+  `AppWindowToolsComp` mounts on all ten pages beside the presenting control
   (never on `about`, `chatbot`, `finder` or `screen`). Help →
-  *App Help (Chatbot)* still works too. All of them go quiet with the master
-  switch. Inside, **Claude** / **ChatGPT** picks the provider and
-  a `<select>` beside it picks the model: three per provider, best first, with
+  *App Help (Chatbot)* still works too. With the master switch off the menu
+  entries withdraw and the 🤖 stays, its press offering Settings → Others.
+  Inside, the assistant `<select>` (`LLM_PROVIDER_MAP`) picks the provider and
+  a `<select>` beside it picks the model: three per provider (ten on Bedrock, a
+  custom server its own rows), best first, with
   what each is good for, how quick it is and its list price on the HOVER (the
   line itself shows the name only — the window is 460px). **More models…** asks
   the account's own catalogue (`models.list`) and appends everything else the
@@ -89,9 +93,12 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   answers a question; they are only what the next NEW tab starts on. A stored
   tab whose provider's key was removed is put back on one that can answer
   (`genInitialSessionState`), rather than on a dead one.
-- **A key is a thing the user has to be told about.** With no key at all,
-  `app guide · offline` in the head is a BUTTON and the empty state adds a line
-  and an **Open AI settings** button; both write `setting-tabs` = `o` and open
+- **A key is a thing the user has to be told about.** With no key at all a
+  tab opens on the keyless Free assistant, whose sticky notice carries **Open
+  AI settings** (the `app guide · offline` BUTTON in the head and the
+  empty-state line with its own button are drawn for a tab with NO provider,
+  which `getAvailableLlmProviders` no longer produces: Free is always
+  listed); every such button writes `setting-tabs` = `o` and opens
   `setting.html` themselves rather than importing `openOthersSetting` — that
   module registers a `go-to-setting-home` listener at module scope, and a popup
   that also listens opens a SECOND settings window on one menu press.
@@ -107,7 +114,7 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   a recipe for the other half is dropped unless nothing else matches: the
   reader has no Ctrl+B lookup popup, so being handed W-06 there is being told
   to press something that does not exist. Ranking is word-boundary + IDF +
-  three weight bands (title 14 / headings 6-10 / body 1, capped) -- substring
+  three weight bands (title 14 / headings 10 / body 1, capped) -- substring
   matching once answered "how do I look up a verse?" with a robot-test note
   about keyboard shortcuts, because "up" is inside "coverage-expansion".
 - **`owa_guide_*` is the walkthrough**: a numbered card drawn in the app window
@@ -204,7 +211,9 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   `location.pathname` assignment + target-list confirmation, since the
   navigation unloads the page before it can answer). The card itself can
   NEVER cross a page change -- it lives in the page's DOM and dies with it.
-- **`MAX_TOOL_ROUNDS` is 10, and the last round goes out with no tools.** At
+- **`MAX_TOOL_ROUNDS` is 10, and the last round may call none** (Anthropic keeps the
+  tools and sends `tool_choice: none`, for the cache prefix; the OpenAI-shaped
+  loop leaves them out). At
   6 a walkthrough (search, page read, one look, start) ran the budget out
   mid-answer and the user got "I looked several things up but could not
   settle on an answer" having paid for the whole run.

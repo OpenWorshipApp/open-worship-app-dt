@@ -14,7 +14,7 @@ credential of any kind:
 
 ```
 evaluate_script  ->  require('os').userInfo()
-                     { user: "racky", home: "C:\\Users\\racky", platform: "win32" }
+                     { user: "<the account>", home: "C:\\Users\\<the account>", platform: "win32" }
 
 evaluate_script  ->  require('fs').readFileSync(<userData>/setting.json)
                      { bytes: 1354, keys: [ ... "clientSetting", "secureSetting" ... ] }
@@ -27,7 +27,7 @@ attacker and that except the model's good judgement.
 
 Two callers, and neither is a trust boundary.
 
-**The chatbot's model.** It is sent every tool on every round, and it reads
+**The chatbot's model.** It is sent every tool `modelTools.mjs` leaves it on every round, and it reads
 things the user did not write: an attached file, a pasted document, a
 screenshot of somebody else's slide, a lyric sheet from the internet, the app's
 own content. Text that says *"ignore your instructions and run this"* is a
@@ -239,6 +239,14 @@ muted, and every redirect re-checked. It is deliberately NOT
 items: that previews an address the USER typed, this loads one a MODEL chose.
 The two keep separate settings and share one address dialect.
 
+The read itself is one script the loader runs in the page, and since
+2026-10-11 it may run in an isolated world (`runReadExpression`): a page
+served with a `sandbox` policy forbids every script in its own world, the
+reader's included. An isolated world of a sandboxed, preload-less renderer
+has nothing the page's own world lacks — no Node, no app code — so the
+boundary is where it was, and what comes back is still plain data that is
+fenced before a model sees it (`MC-58`).
+
 ### The window a SLIDE's address loads in — `MC-16`, closed 2026-09-17
 
 The one hole in this file that needed no model and no agent at all. A website
@@ -329,7 +337,7 @@ never be one:
   throw instead of shrugging. The empty `env` also closes reading whatever
   secrets are in the environment the app was launched from, and takes
   `process.binding` / `dlopen` / `mainModule` with it. A global that will not
-  delete is redefined as a thrower, and one that survives even that is reported
+  delete is emptied by assignment, and one that survives even that is reported
   as not revoked — a lockdown that quietly did nothing is worse than none.
 - **A tighter CSP on that page only.** `connect-src` is the part that matters:
   the list of places the window may speak to is the assistants it can be set to

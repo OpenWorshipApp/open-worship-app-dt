@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 import { checkIsRtl } from '../lang/langHelpers';
+import { BIBLE_TEXT_FONT_FAMILY_VAR } from './bibleTextStyleHelpers';
 
 export type BibleRenderVerseType = {
     num: string;
@@ -37,6 +38,18 @@ function genDirectionStyle(locale: LocaleType) {
     return { dir: 'rtl', style: { textAlign: 'right' as const } };
 }
 
+// The font a language brings (Khmer's Battambang) is said inline, so the
+// family chosen in Bible Properties has to be read here to win at all. The
+// language's own stays behind it: a Latin family picked for the English column
+// must not leave the Khmer one beside it in whatever the system falls back to.
+// With nothing chosen the variable is unset and this is the font it always was.
+function genLangFontFamily({ fontFamily }: LanguageDataType) {
+    if (!fontFamily) {
+        return undefined;
+    }
+    return `var(${BIBLE_TEXT_FONT_FAMILY_VAR}, ${fontFamily}), ${fontFamily}`;
+}
+
 function VerseTextElementComp({
     langData,
     verseInfo,
@@ -50,7 +63,7 @@ function VerseTextElementComp({
             data-kjv-verse-key={verseInfo.kjvVerseKey}
             data-verse-key={verseInfo.verseKey}
             style={{
-                fontFamily: langData.fontFamily,
+                fontFamily: genLangFontFamily(langData),
             }}
         >
             <div className="verse-number">{verseInfo.num}</div>
@@ -84,7 +97,7 @@ export function BibleBibleTableComp({
                 className="header"
                 dir={direction?.dir}
                 style={{
-                    fontFamily: langData.fontFamily,
+                    fontFamily: genLangFontFamily(langData),
                     height: '118px',
                     overflow: 'hidden',
                     ...direction?.style,

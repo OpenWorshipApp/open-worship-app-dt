@@ -19,7 +19,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 > sign-in hand-off to CCLI's real consent page is source-verified but **not observed**
 > end-to-end, for want of real credentials.
 
-1. Open **[en:tran:Others]**. Between the AI-key card and **Extra Binaries**
+1. Open **[en:tran:Settings]** → **[en:tran:Others]**. Between the AI-key card and **[en:tran:Extra Binaries]**
    there is a card headed **[en:tran:SongSelect Integration]**, with a
    **SongSelect ↗** button that opens songselect.ccli.com in your browser. A card
    showing only its heading is folded — click the heading to open it. 📸
@@ -27,14 +27,14 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
    if you have one). Each field saves the moment you click away from it and gains a
    green ✓. Until all three are filled, **[en:tran:Sign In]** stays grey — hovering it
    tells you what is missing.
-3. Click **Sign In**. A CCLI window opens for you to log in and approve. If you close
+3. Click **[en:tran:Sign In]**. A CCLI window opens for you to log in and approve. If you close
    it instead, the app says **Sign in failed — Sign in was canceled** ([en:tran:Sign in was canceled]) and nothing changes. Once signed in, the card shows a
    green **[en:tran:Signed in]** with a **[en:tran:Sign Out]** button, and the
    app keeps the session refreshed by itself.
-4. Back in the presenter, open the **Documents** list's **⋮ More Options**. A new entry,
+4. Back in the presenter, open the **[en:tran:Documents]** list's **⋮ [en:tran:More Options]**. A new entry,
    **[en:tran:Import From SongSelect]**, now sits under
-   **Download From URL** — it is only there while you are signed in. 📸
-5. Click it. A floating **Import From SongSelect** panel opens (drag it anywhere; the
+   **[en:tran:Import From Public Domain Songs]** — it is only there while you are signed in. 📸
+5. Click it. A floating **[en:tran:Import From SongSelect]** panel opens (drag it anywhere; the
    app remembers where you put it). Type in **[en:tran:Search songs]** — results
    appear as you pause, with the writers, the CCLI song number, a line of the lyrics,
    and a **[en:tran:Public Domain]** badge where it applies. Page through
@@ -42,7 +42,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
    licensed to take has its download button greyed out. 📸
 6. Click a song's ☁⬇ download button. A moment later the app confirms **Lyric document
    created successfully** ([en:tran:Lyric document created successfully]) and the song appears
-   in your **Documents** list as a lyric (♪), named after its title. The panel stays
+   in your **[en:tran:Documents]** list as a lyric (♪), named after its title. The panel stays
    open, so you can keep downloading; pulling the same song twice keeps both —
    the second becomes `<Title> (1)`. 📸
 7. Click the new row: it previews slide by slide — an **Info** slide with the title,
@@ -52,8 +52,8 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 
 > **If a search or download fails**, the reason shows right in the panel or as a toast:
 > too many requests in a row asks you to wait a moment; a lapsed session says
-> **SongSelect sign-in expired, please sign in again in Settings**; no internet says
-> **Could not reach SongSelect**.
+> **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**; no internet says
+> **[en:tran:Could not reach SongSelect]**.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

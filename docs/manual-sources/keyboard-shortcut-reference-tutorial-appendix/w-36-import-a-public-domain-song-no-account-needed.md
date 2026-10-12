@@ -14,15 +14,15 @@ It Is Well with My Soul, Holy Holy Holy, and some three dozen more. They import 
 documents with **no sign-in, no credentials and no internet**, so this works on a fresh
 install anywhere.
 
-1. In the presenter, open the **Documents** list's **⋮ More Options** →
-   **[en:tran:Import From Public Domain Songs]**. Unlike the SongSelect entry above it is
+1. In the presenter, open the **[en:tran:Documents]** list's **⋮ [en:tran:More Options]** →
+   **[en:tran:Import From Public Domain Songs]**. Unlike the SongSelect entry (W-35) it is
    _always_ there. 📸
 2. A floating panel opens listing the whole catalog straight away — each row shows the
    title, the writers, the year, and the first line, with a count at the top right of the
    search box (36 at the time of writing). Scroll to browse, or type in **[en:tran:Search songs]** to filter instantly by title or writer — the count follows. 📸
 3. Click a song's ☁⬇ download button. The app confirms **Lyric document created
    successfully** ([en:tran:Lyric document created successfully]) and the song appears in your
-   **Documents** list as a lyric (♪) named after its title. The panel stays open so you
+   **[en:tran:Documents]** list as a lyric (♪) named after its title. The panel stays open so you
    can keep importing.
 4. Click the new row: it previews an **Info** slide (title, writer, `Public Domain` with
    the year) and then the song in **real singing order** — a hymn with a refrain repeats

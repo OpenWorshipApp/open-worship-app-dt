@@ -29,7 +29,7 @@ paragraph closes that too.
 
 **The editor writes the editing history, never the file** (the user's ask, and
 the same rule the agent file tools follow). `saveData` → `note.updateNoteItem`
-+ `note.addEditingHistory()`, debounced 1s per window; the window opens on
++ `note.addItemEditingHistory()` (the item written onto the CURRENT head), debounced 1s per window; the window opens on
 `Note.fromFilePathEditing` (the head, falling back to the file), so a window
 closed with unsaved text comes back holding it. `BibleNoteEditingMenuComp` puts
 `FileEditingMenuComp` in the editor's own footer — Undo / Redo / Discard / Save,

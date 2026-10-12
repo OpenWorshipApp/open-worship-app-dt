@@ -1451,6 +1451,31 @@ describe('the request is cache-shaped', () => {
         expect(body.tool_choice).toBeUndefined();
     });
 
+    // Reported with two pictures: asked to change the Bible text colour the
+    // assistant named a card that is not there, and told so it named it again
+    // and ringed a button shut behind a panel's three dots.
+    test('told an answer was wrong, it looks before it says it again', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'ok' }] };
+        });
+        useFakeAnthropic(createMock);
+
+        await askLlmBot('I do not see Appearance', 'presenter', 'anthropic');
+
+        const prompt = createMock.mock.calls[0][0].system[0].text;
+        expect(prompt).toContain('never\n  say it again');
+        // What is shut behind another control is opened by pressing that one.
+        expect(prompt).toContain('`revealBy`');
+        expect(prompt).toContain('say to press THAT first');
+        // Then a picture of the window, which is the person's to send...
+        expect(prompt).toContain('Ask for a picture of their window');
+        // ...and the page's newest copy, the one web read about this app.
+        expect(prompt).toContain('read the copy at the address');
+        // ...which is the newer one only when its day is later.
+        expect(prompt).toContain('when its day is later');
+        expect(prompt).toContain('The one exception is the');
+    });
+
     test('gives Reader users short, mouse-first help without talking down to them', async () => {
         const createMock = vi.fn(async (_body: any) => {
             return {
@@ -2940,7 +2965,10 @@ describe('the custom servers', () => {
                 return genCallResponse('owa_list_screens');
             }
             if (round === 2) {
-                return genCallResponse('owa_goto_page', { page: 'presenter' });
+                // The value the tool's own list of pages holds.
+                return genCallResponse('owa_goto_page', {
+                    page: 'presenter.html',
+                });
             }
             return genTextResponse();
         });

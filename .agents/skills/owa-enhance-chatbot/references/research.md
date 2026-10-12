@@ -74,7 +74,7 @@ Per answer, record:
 | Correct? | Against the manual and the real app — not against plausibility |
 | Actionable? | Numbered steps, each one a control they can press |
 | Any internals leaked? | A path, id, setting key or component name = a defect, always |
-| Rounds used | From the dev terminal. 1–2 good, 5+ means the tools are not answering |
+| Rounds used | From the hover on the answer's cost figure (`N model rounds`). 1–2 good, 5+ means the tools are not answering |
 | Tools called, in order | Wrong turns are the cheapest thing to fix |
 | Offered a walkthrough? | Multi-step answers should end in a guide, not a paragraph |
 | Guide landed? | Red ring on the right control, or `nearMisses` |
@@ -110,7 +110,7 @@ Then cross them against the tool surface:
 - **Neither**: whole areas with no `owa_*` reach at all. Check whether the
   question is even common before adding a tool (§*The filter* below).
 - **Knows nothing**: a shipped feature with no `W-xx` recipe — that is knowledge
-  work (SKILL.md §6c), not a tool.
+  work (SKILL.md §C), not a tool.
 
 Always ask the cheaper question first: *would a better description of an existing
 tool fix this?*
@@ -134,8 +134,9 @@ useful; "here is an article about agents" is not.
 
 ## Track D — Read the seams (when chasing a specific defect)
 
-- The dev terminal: the MCP host logs every tool call; a bad answer usually has a
-  `Tool error:` behind it that the model quietly routed around.
+- The dev terminal: the MCP host logs its sessions and the firewall its refusals,
+  not every tool call; a bad answer usually has a `Tool error:` in a tool result
+  that the model quietly routed around — call the tool by hand to read it.
 - `git log -S` on the chatbot files: the comments in this subsystem record *why*
   the obvious alternative was wrong. A "fix" that reverts one of them is a
   regression with a nice diff.

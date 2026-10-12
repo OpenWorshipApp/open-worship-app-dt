@@ -39,7 +39,7 @@ out and the lookup happens on the way in. Four choices worth not undoing:
 
 The model does not get those tools at all any more
 ([[mcp-model-hidden-tools]]), so this is the guard for the developer's door and
-for any other HTTP client (`MC-01`: that door still has no credential).
+for any other HTTP client (`MC-01`: that door has asked for a per-launch bearer token since 2026-09-23).
 
 The rows are no longer read in English only: since 2026-09-14 the label rule is
 derived from the app's own `tran()` dictionary, so a Khmer snapshot row is

@@ -44,10 +44,10 @@
  *    point, the human presses" applied to content rather than to a button. It
  *    also leaves anything already ON a screen alone — a presented slide is a
  *    snapshot until re-presented.
- *  - **A name is REFUSED, never quietly cleaned.** `createNewFileDetail` still
- *    carries a `// TODO: verify file name before create`, so a separator or a
- *    `..` in a name would land wherever it pointed. Writing to a different
- *    file than the caller named is worse than saying no.
+ *  - **A name is REFUSED, never quietly cleaned.** `createNewFileDetail`
+ *    refuses a bad name itself now (`getPortableFileNameProblem`); the check
+ *    here comes first so the refusal is the tool's own sentence. Writing to a
+ *    different file than the caller named is worse than saying no.
  *  - **Content must satisfy the app's own validator** before any write —
  *    open-lyric's for a song, `AppDocument.validate` for a slide document, and
  *    the canvas item classes for every box a slide action writes. A file the

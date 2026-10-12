@@ -57,6 +57,13 @@ import {
 } from '../../others/color/colorHelpers';
 import { showBibleTextColorChangedToast } from './bibleTextColorToastHelpers';
 import { tran } from '../../lang/langHelpers';
+import {
+    MAX_BIBLE_TEXT_FONT_SIZE,
+    genBibleTextStyleCss,
+    readBibleTextColor,
+    readBibleTextFontSize,
+    readBibleTextShadow,
+} from '../bibleTextStyleHelpers';
 
 const textStyleSettingManager = new SettingManager<AnyObjectType>({
     settingName: `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
@@ -403,10 +410,9 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         ScreenBibleManager.fireUpdateEvent();
     }
 
-    static readonly maxTextStyleTextFontSize = 200;
+    static readonly maxTextStyleTextFontSize = MAX_BIBLE_TEXT_FONT_SIZE;
     static get textStyleTextFontSize() {
-        const textStyle = this.textStyle;
-        return typeof textStyle.fontSize === 'number' ? textStyle.fontSize : 65;
+        return readBibleTextFontSize(this.textStyle);
     }
 
     static changeTextStyleTextFontSize(isUp: boolean) {
@@ -421,25 +427,15 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static get textStyleTextColor(): string {
-        const textStyle = this.textStyle;
-        return typeof textStyle.color === 'string'
-            ? textStyle.color
-            : HEX_COLOR_WHITE;
+        return readBibleTextColor(this.textStyle);
     }
 
     static get textStyleTextTextShadow(): string {
-        const textStyle = this.textStyle;
-        return typeof textStyle.textShadow === 'string'
-            ? textStyle.textShadow
-            : 'none';
+        return readBibleTextShadow(this.textStyle);
     }
 
     static get textStyleText(): string {
-        return `
-            font-size: ${this.textStyleTextFontSize}px;
-            color: ${this.textStyleTextColor};
-            text-shadow: ${this.textStyleTextTextShadow};
-        `;
+        return genBibleTextStyleCss(this.textStyle);
     }
 
     static get textStyle(): AnyObjectType {

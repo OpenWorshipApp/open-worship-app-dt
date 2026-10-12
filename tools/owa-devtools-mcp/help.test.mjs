@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  genFreshPageUrl,
   readHelpPage,
   scrubRecipeIds,
   searchHelp,
@@ -165,6 +166,39 @@ describe('searchHelp ranking', () => {
   ])('understands a plain Reader question: %s', (question) => {
     const hits = searchHelp(question, 3, 'manual', 'reader');
     expect(hits[0].id).toBe('W-11');
+  });
+});
+
+describe('genFreshPageUrl', () => {
+  it('is the page in the project repository, for a manual page only', () => {
+    expect(
+      genFreshPageUrl({
+        kind: 'manual',
+        file: 'manual/presenting-content/w-07-style-the-on-screen-bible-text.md',
+      }),
+    ).toBe(
+      'https://raw.githubusercontent.com/OpenWorshipApp/open-worship-app-dt/' +
+        'main/docs/manual-sources/presenting-content/' +
+        'w-07-style-the-on-screen-bible-text.md',
+    );
+    // A developer note is not what a volunteer's answer comes from.
+    expect(
+      genFreshPageUrl({ kind: 'internal', file: 'internal/memory/x.md' }),
+    ).toBeNull();
+    // Nothing is put together from a path that climbs, or from no path.
+    expect(
+      genFreshPageUrl({ kind: 'manual', file: 'manual/../../secret.md' }),
+    ).toBeNull();
+    expect(genFreshPageUrl({ kind: 'manual' })).toBeNull();
+  });
+
+  it('every manual page on this computer has one', () => {
+    const page = readHelpPage('W-10');
+    if (typeof page.file === 'string') {
+      expect(genFreshPageUrl(page)).toMatch(
+        /^https:\/\/raw\.githubusercontent\.com\/OpenWorshipApp\/open-worship-app-dt\/main\/docs\/manual-sources\/.+\.md$/,
+      );
+    }
   });
 });
 

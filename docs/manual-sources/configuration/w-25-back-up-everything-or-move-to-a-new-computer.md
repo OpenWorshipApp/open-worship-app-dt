@@ -14,20 +14,21 @@ or to set up a second machine — use the app's **File** menu.
 
 1. Open the **File** menu at the top of the window and choose **[en:tran:Export Data]**. 📸
 2. A panel lists every data folder you have set up — Documents, Presenting Flows, Background
-   Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, **Bibles XML** and
-   **Resources** — with the folder each one points at. **They all start ticked.** Untick
+   Images, Videos, Audios and Webs, Foreground Images and Videos, Bible Present, Bible Reader,
+   Bible Notes, **[en:tran:Bibles XML]** and
+   **[en:tran:Resources]** — with the folder each one points at. **They all start ticked.** Untick
    anything you do not want (the videos folder is usually the big one), or use
-   **Select All** / **Deselect All**. 📸
+   **[en:tran:Select All]** / **[en:tran:Deselect All]**. 📸
 
-   > **Bibles XML** and **Resources** are the two folders you never chose yourself — the
+   > **[en:tran:Bibles XML]** and **[en:tran:Resources]** are the two folders you never chose yourself — the
    > app keeps them.
    >
-   > **Bibles XML** carries the Bible XML files you added by hand (Settings → Bible →
+   > **[en:tran:Bibles XML]** carries the Bible XML files you added by hand (Settings → Bible →
    > Bibles XML), and **only those**: the Bible versions you downloaded in the app are
    > left out, because you simply download them again on the other machine. If you have
    > never added an XML Bible, the row is not offered at all.
    >
-   > **Resources** is the `resources` folder inside your data folder — where
+   > **[en:tran:Resources]** is the `resources` folder inside your data folder — where
    > **[en:tran:Copy to Data Directory]** in the Resources panel (W-37) puts a folder of
    > chapter PDFs, notes or links. All of it goes in, so it can be big; untick it like the videos if you do
    > not need it. A folder you left somewhere else on the computer and only listed in the
@@ -41,7 +42,7 @@ or to set up a second machine — use the app's **File** menu.
    > **There is no way to recover a forgotten password**, and this file is everything you
    > have. Write it down somewhere that is not the same USB stick.
 
-3. Press **Ok**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
+3. Press **[en:tran:Ok]**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
    folder — or `open-worship-data.owadata.enc` if you set a password — and the folder
    opens. Copy it to a USB stick or the other machine.
 4. On the other machine, choose **[en:tran:Import Data]** and pick that
@@ -53,8 +54,8 @@ or to set up a second machine — use the app's **File** menu.
    > one takes a moment longer to open than an ordinary one. An ordinary backup is read
    > as quickly as it always was.
 
-5. Press **Ok**. When it finishes you are told how many files were brought in and how
-   many were already up to date. Every folder the **Resources** row brought back is also
+5. Press **[en:tran:Ok]**. When it finishes you are told how many files were brought in and how
+   many were already up to date. Every folder the **[en:tran:Resources]** row brought back is also
    added to the Resources panel's list, so it shows up there without being added by hand
    (press **[en:tran:Reload]** in the panel's ⋮ menu if the panel was already open).
 

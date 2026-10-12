@@ -46,7 +46,7 @@ legacy inline `history` form). Loaded in the constructor (`loadPersisted`);
 enable/disable + `receiveSyncScreen` sync/commit/clear) — NEVER per pointer-move
 — and is **trailing-debounced 500ms** (`saveAttempt = genTimeoutAttempt(500)`)
 so a burst collapses into one `fsWriteFileSync` off the pointer-up critical path;
-`delete()` flushes it immediately (`saveAttempt(fn, true)`). Writes gated to
+`delete()` cancels a pending write without running it (`saveAttempt(() => {}, true)`) and removes both setting keys — screen ids are reused. Writes gated to
 `appProvider.isPagePresenter` (settings are a shared file — output windows
 restore via the presenter's init re-sync, avoiding write races). The footer's
 `isDrawHandlersVisible` initializes from `screenDrawManager?.isDrawEnabled` (the
@@ -153,7 +153,7 @@ combos. Design points that matter:
 history (`history`/`historyIndex`, cap 50; shallow copies sharing immutable
 stroke refs). It's kept in LOCKSTEP across sync-group members: a finished stroke
 broadcasts a lightweight `{action:'commit'}` (no data — receivers snapshot their
-already-synced drawData), `clear` records an empty snapshot on receivers too,
+already-synced drawData), `clear` collapses the stack to before/after on BOTH sides (`collapseHistoryForClear`: one Undo restores what it wiped, nothing older),
 and `undo`/`redo` + `toSyncMessage` send the FULL history on the `'sync'` action
 (`history`+`historyIndex`). So undo/redo on any member affects all members, and a
 screen enabling later ADOPTS the full undo stack (answered "can history be shared
@@ -161,8 +161,8 @@ to newly enabled drawing" — yes). Buttons: undo/redo icons + icon-only eraser.
 
 **Group→output-window gotcha (fixed):** the `screenMessage` IPC is TARGETED —
 `electron/electronEventListener.ts` routes a presenter message only to
-`ElectronScreenController.getInstance(screenId)` (the ORIGIN screen's output
-window). So group-syncing to another member updates its presenter mini-screen
+`getScreenOutput(screenId)` (the ORIGIN screen's own output: its window, or its
+page on a virtual display). So group-syncing to another member updates its presenter mini-screen
 (in-process `syncScreenManagerGroup`) but NOT its output window. Fix: draw's
 `receiveSyncScreen` calls `forwardToOwnScreenOutput(data)` — presenter-only, a
 RAW `sendScreenMessage` (no `enableSyncGroup`, so the echo-guard flag stays set
@@ -180,7 +180,7 @@ quadratic-curve smoothing through sampled midpoints + `imageSmoothingQuality:
 'high'`. Backing-store resolution is per-canvas so quality is manager-level (NOT
 per-stroke like straight/3d/dots). Persisted per screen under shared key
 `draw-paint-quality-<screenId>` (read by BOTH presenter + output managers on load
-via `DRAW_QUALITY_PREFIX`, and by the panel's `useStateSettingBoolean`). Live
+via `DRAW_QUALITY_PREFIX`; the panel seeds from the manager — see Quality single-writer below). Live
 toggle: panel calls `setRenderQuality(bool)` → persists, `scheduleRender`
 (setupContainer resizes the backing store), and broadcasts a full `buildSyncAction`
 carrying `isHighQuality` so the output window + group members switch fidelity in

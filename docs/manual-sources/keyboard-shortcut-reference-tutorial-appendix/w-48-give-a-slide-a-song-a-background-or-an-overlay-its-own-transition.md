@@ -54,8 +54,8 @@ its slide, then its document, then the screen when its own choice is unticked.
    after its name.
 5. **One background.** Press the ⋮ on a picture, video or web tile (right-click
    a colour swatch, a camera or a web link) and choose
-   **[en:tran:Transition]**. It follows its tab until you tick it; the tile then
-   shows the effect's icon in its corner.
+   **[en:tran:Transition]**. It follows its tab until you tick it; a picture or
+   video tile then shows the effect's icon in its corner.
 6. **A foreground panel, all its sessions.** Each foreground panel
    (**[en:tran:Countdown]**, **[en:tran:Quick Text]**, **[en:tran:Marquee Top]**
    …) has a transition button in its title bar, next to the collapse arrow.

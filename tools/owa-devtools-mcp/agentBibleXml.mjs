@@ -26,7 +26,10 @@ import { zod as z } from 'chrome-devtools-mcp/build/src/third_party/index.js';
 
 import { evaluateInApp, evaluateInTarget } from './cdp.mjs';
 import { checkToolCall } from './firewall.mjs';
-import { genReadWebPageExpression } from './website.mjs';
+import {
+  WEBSITE_READ_EVALUATE_TIMEOUT,
+  genReadWebPageExpression,
+} from './website.mjs';
 import { AGENT_UNDO_TEXT, genAgentDataExpression } from './agentData.mjs';
 import { findKnowledgeDirPath } from './help.mjs';
 import {
@@ -201,7 +204,7 @@ async function searchNameLists({ locale, offset, page }) {
       return await evaluateInTarget(
         target,
         genReadWebPageExpression({ url, bibleCatalog: true, maxChars: 200 }),
-        35000,
+        WEBSITE_READ_EVALUATE_TIMEOUT,
       );
     },
   });

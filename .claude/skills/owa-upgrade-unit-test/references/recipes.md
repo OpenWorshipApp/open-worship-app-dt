@@ -14,7 +14,7 @@ polyfill**. Anything a test needs, that test builds.
 
 | | `vitest.config.ts` | `vitest.electron.config.ts` |
 | --- | --- | --- |
-| Runs | `src/**/*.test.ts(x)`, `tools/**/*.test.mjs` | `electron/**/*.test.ts` |
+| Runs | `src/**/*.test.ts(x)`, `tools/**/*.test.mjs`, `extra-work/local-llm/**/*.test.mjs` | `electron/**/*.test.ts` |
 | Environment | `node`, jsdom **per file** via pragma | `node` |
 | Setup | `src/test-setup/localStoragePolyfill.ts` | none |
 | Inlined deps | `open-lyric`, `monaco-editor` | none |
@@ -157,12 +157,12 @@ test('presses the button', async () => {
 });
 ```
 
-48 test files use this shape. Everything goes through `act`, including the
+Some 110 test files use this shape. Everything goes through `act`, including the
 initial render and the unmount.
 
 ### The batched harness — the pattern for breadth
 
-`src/_screen/components.smoke.test.tsx` (664 lines) builds **one** mock surface
+`src/_screen/components.smoke.test.tsx` (~700 lines) builds **one** mock surface
 — a fake screen manager, a fake settings store, a fake display list — and then
 renders many components against it. That is the shape that pays for 417
 components: one expensive mock surface amortised over a folder, instead of 40
@@ -191,7 +191,7 @@ parameterised test on any module of the same shape.
 | **A settings write race** clobbering a map (memory `settings-write-race-corrupts-onscreen-map`) | Two concurrent writers; assert both entries survive |
 | **A parse that drops the whole map on one bad entry** (memory `screen-onscreen-setting-all-or-nothing`) | Feed one invalid entry among valid ones; assert only the invalid one is dropped |
 | **A missing `tran()` key** — throws in dev and blanks the page | Render with the key; a throw is a real bug, not a test to mock away |
-| **`%` keeps the sign**, so stepping back off index 0 lands at -1 (CLAUDE.md, the chat tips) | Step backwards from the first element; assert it wraps to the last |
+| **`%` keeps the sign**, so stepping back off index 0 lands at -1 (rule `chatbot-window.md`, the chat tips) | Step backwards from the first element; assert it wraps to the last |
 | **A regex over repo text on a CRLF checkout** (memory `crlf-checkout-line-regex`) | Feed the function `\r\n` text; assert it still matches |
 
 ## 6. Special imports
@@ -201,7 +201,7 @@ parameterised test on any module of the same shape.
   `document.execCommand ??= () => false` (monaco's clipboard contrib probes
   both at module-eval time), then **dynamic-import** the module under test
   AFTER the patch — static imports hoist above it. Copy
-  `src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts:17-24`.
+  `src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts:39-44`.
   A node-env test must never import it at all. Memory
   `monaco-css-test-failure-local-open-lyric`.
 - **`tools/owa-devtools-mcp/*.mjs`** — plain ESM, no app imports, no `node:fs`

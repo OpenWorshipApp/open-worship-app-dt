@@ -12,11 +12,11 @@ workflowsVersion: "2026-10-11"
 **Goal:** stop a stray click in the Documents list from swapping the document you are
 half-way through.
 
-**Preconditions:** a document selected in the middle **Documents** tab.
+**Preconditions:** a document selected in the middle **[en:tran:Documents]** tab.
 
 1. Look at the middle **[en:tran:Documents]** tab heading. With a document selected, a
-   faint **pin** sits just after the word — nothing selected, no pin. 📸
-2. Click the pin. It fills in and turns amber: the document is now **pinned**. Hovering it
+   faint **pin** (drawn as an open padlock) sits just after the word — nothing selected, no pin. 📸
+2. Click the pin. The padlock closes and turns solid amber: the document is now **pinned**. Hovering it
    reads **[en:tran:Unpin document]**. 📸
 3. Click a different document in the left list. **Nothing changes** — the previewer keeps
    your document. A message says **Document is pinned** / _Unpin the document to preview

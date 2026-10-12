@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as sanitizeHelpers from '../../helper/sanitizeHelpers';
 
 const {
     useScreenVaryAppDocumentManagerEventsMock,
@@ -364,6 +365,43 @@ describe('presenter item basic coverage', () => {
         expect(
             generated.querySelector('[onload],iframe,[data-website-item]'),
         ).toBeNull();
+    });
+
+    test('a slide rendered from inside the sanitizer leaves the one in flight intact', async () => {
+        const { genSlideHtml } = await import('./SlideRendererComp');
+        const sanitizeHtml = sanitizeHelpers.sanitizeHtml;
+        // What Chromium does in the app: React runs off Node's setImmediate
+        // there, and the HTML parser then runs every waiting promise callback
+        // before it returns. Here one of them renders another slide.
+        let innerSlide: HTMLDivElement | null = null;
+        let isInnerStarted = false;
+        const sanitizeSpy = vi
+            .spyOn(sanitizeHelpers, 'sanitizeHtml')
+            .mockImplementation((dirty: string) => {
+                if (!isInnerStarted) {
+                    isInnerStarted = true;
+                    innerSlide = genSlideHtml([
+                        { id: 2, type: 'html', html: '<em>Inner</em>' },
+                    ] as any);
+                }
+                return sanitizeHtml(dirty);
+            });
+        try {
+            const outerSlide = genSlideHtml([
+                { id: 1, type: 'html', html: '<strong>Outer</strong>' },
+            ] as any);
+            expect(outerSlide.querySelector('strong')?.textContent).toBe(
+                'Outer',
+            );
+            expect(
+                (innerSlide as HTMLDivElement | null)?.querySelector('em')
+                    ?.textContent,
+            ).toBe('Inner');
+            // Once per item, and never a second time inside the render.
+            expect(sanitizeSpy).toHaveBeenCalledTimes(2);
+        } finally {
+            sanitizeSpy.mockRestore();
+        }
     });
 
     test('creates centered slides from dropped media and skips invalid items', async () => {

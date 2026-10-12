@@ -67,7 +67,7 @@ TRIMMED (`owa_app_state` carries the user's data directory, and the tab's transc
 is capped at 8 turns), keep the prepared report in the bounded in-memory map rather
 than in `chatbot-sessions` (see [[chatbot-attachments]]), and keep the model's frame
 parsed off the way `OPTIONS:` is (see [[chatbot-answer-options]]). The Send button
-and the three under a saved report ride pseudo tool names caught in `handleActing`;
+and the five under a saved report ride pseudo tool names caught in `handleActing`;
 they are deliberately not registered on the MCP server, so nothing outside the window
 can file a report or reach the clipboard in the user's name. Never put the address
 on a button or in the session file — it is found at the press; never cache the

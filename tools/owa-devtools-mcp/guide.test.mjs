@@ -389,6 +389,19 @@ describe('detectRecipeWindow', () => {
     ).toBeNull();
   });
 
+  it('reads only the sentence that says where the step goes', () => {
+    expect(
+      detectRecipeWindow([
+        {
+          text:
+            'Click the AI Chat button in the top-right corner of the ' +
+            'window. It works whether or not AI features is switched on ' +
+            'in Settings.',
+        },
+      ]),
+    ).toBeNull();
+  });
+
   // The recipe has to be TELLING you to go there. A step that merely
   // mentions a window is describing it.
   it('says nothing when the first step is not a go-there step', () => {

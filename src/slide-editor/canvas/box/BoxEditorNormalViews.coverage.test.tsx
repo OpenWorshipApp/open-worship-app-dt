@@ -217,18 +217,18 @@ vi.mock('../../../server/calcHelpers', () => ({
     pathToFileURL: (filePath: string) => `file://${filePath}`,
 }));
 
-import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
+import { BoxEditorNormalBibleRenderComp } from './BoxEditorNormalViewBibleModeComp';
 import {
     BoxEditorNormalViewErrorRenderComp,
     genErrorContextMenuHandler,
 } from './BoxEditorNormalViewErrorComp';
 import { BoxEditorNormalHtmlRenderComp } from './BoxEditorNormalViewHtmlModeComp';
 import { BoxEditorNormalImageRenderComp } from './BoxEditorNormalViewImageModeComp';
-import { BoxEditorNormalTextRender } from './BoxEditorNormalViewTextModeComp';
-import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
-import { BoxEditorNormalCameraRender } from './BoxEditorNormalViewCameraModeComp';
-import { BoxEditorNormalAudioRender } from './BoxEditorNormalViewAudioModeComp';
-import { BoxEditorNormalWebsiteRender } from './BoxEditorNormalViewWebsiteModeComp';
+import { BoxEditorNormalTextRenderComp } from './BoxEditorNormalViewTextModeComp';
+import { BoxEditorNormalVideoRenderComp } from './BoxEditorNormalViewVideoModeComp';
+import { BoxEditorNormalCameraRenderComp } from './BoxEditorNormalViewCameraModeComp';
+import { BoxEditorNormalAudioRenderComp } from './BoxEditorNormalViewAudioModeComp';
+import { BoxEditorNormalWebsiteRenderComp } from './BoxEditorNormalViewWebsiteModeComp';
 import { CanvasControllerContext } from '../CanvasController';
 
 // jsdom ships no `IntersectionObserver`, and the website view uses one to hold
@@ -366,7 +366,7 @@ describe('BoxEditor normal view components', () => {
                 '<div><div>John 3:16</div>' +
                 '<div>For God so loved the world</div></div>',
         };
-        await render(<BoxEditorNormalBibleRender />);
+        await render(<BoxEditorNormalBibleRenderComp />);
 
         const renderedBible =
             container?.querySelector<HTMLDivElement>('[title="11"]');
@@ -388,7 +388,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalBibleRender />);
+        await render(<BoxEditorNormalBibleRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
@@ -399,7 +399,7 @@ describe('BoxEditor normal view components', () => {
             ...canvasItemPropsState.value,
             html: '<span data-bible-key="NIV">Verse</span><img onerror="globalThis.__en39Marker=true">',
         };
-        await render(<BoxEditorNormalBibleRender />);
+        await render(<BoxEditorNormalBibleRenderComp />);
         expect(container?.querySelector('[data-bible-key]')?.textContent).toBe(
             'Verse',
         );
@@ -411,7 +411,7 @@ describe('BoxEditor normal view components', () => {
             ...canvasItemPropsState.value,
             text: '<strong>Literal</strong> & text\n<img onerror="globalThis.__en39Marker=true">',
         };
-        await render(<BoxEditorNormalTextRender />);
+        await render(<BoxEditorNormalTextRenderComp />);
         expect(container?.querySelector('strong,img')).toBeNull();
         expect(container?.textContent).toContain(
             '<strong>Literal</strong> & text',
@@ -462,7 +462,7 @@ describe('BoxEditor normal view components', () => {
     });
 
     test('renders text content with line breaks and HTML content separately', async () => {
-        await render(<BoxEditorNormalTextRender />);
+        await render(<BoxEditorNormalTextRenderComp />);
 
         const textNode =
             container?.querySelector<HTMLDivElement>('[title="11"]');
@@ -496,7 +496,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalTextRender />);
+        await render(<BoxEditorNormalTextRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
@@ -553,7 +553,7 @@ describe('BoxEditor normal view components', () => {
             ...canvasItemPropsState.value,
             filePath: '/videos/clip.mp4',
         };
-        await render(<BoxEditorNormalVideoRender />);
+        await render(<BoxEditorNormalVideoRenderComp />);
 
         const video = container?.querySelector<HTMLVideoElement>('video');
         const playIcon = container?.querySelector<SVGSVGElement>('svg');
@@ -571,7 +571,7 @@ describe('BoxEditor normal view components', () => {
             ...canvasItemPropsState.value,
             filePath: '',
         };
-        await render(<BoxEditorNormalVideoRender />);
+        await render(<BoxEditorNormalVideoRenderComp />);
 
         const fallbackVideo =
             container?.querySelector<HTMLVideoElement>('video');
@@ -587,7 +587,7 @@ describe('BoxEditor normal view components', () => {
             objectFit: 'contain',
         };
 
-        await render(<BoxEditorNormalCameraRender />);
+        await render(<BoxEditorNormalCameraRenderComp />);
 
         const video = container?.querySelector<HTMLVideoElement>('video');
         expect(cameraValidateMock).toHaveBeenCalledWith(
@@ -626,7 +626,7 @@ describe('BoxEditor normal view components', () => {
             height: 600,
         };
 
-        await render(<BoxEditorNormalWebsiteRender />);
+        await render(<BoxEditorNormalWebsiteRenderComp />);
 
         expect(websiteValidateMock).toHaveBeenCalledWith(
             canvasItemPropsState.value,
@@ -676,7 +676,7 @@ describe('BoxEditor normal view components', () => {
             height: 1080,
         };
 
-        await render(<BoxEditorNormalWebsiteRender />);
+        await render(<BoxEditorNormalWebsiteRenderComp />);
 
         expect(useWebCapturingMock).toHaveBeenCalledWith(
             'https://example.com/wide',
@@ -697,7 +697,7 @@ describe('BoxEditor normal view components', () => {
             height: 600,
         };
 
-        await render(<BoxEditorNormalWebsiteRender />);
+        await render(<BoxEditorNormalWebsiteRenderComp />);
 
         expect(useWebCapturingMock).toHaveBeenCalledWith(
             'https://example.com/offscreen',
@@ -714,7 +714,7 @@ describe('BoxEditor normal view components', () => {
             height: 600,
         };
 
-        await render(<BoxEditorNormalWebsiteRender />);
+        await render(<BoxEditorNormalWebsiteRenderComp />);
 
         expect(container?.querySelector('img')).toBeNull();
         // Inline svg, NOT the `bi` icon font: this markup also has to survive
@@ -735,7 +735,7 @@ describe('BoxEditor normal view components', () => {
             height: 600,
         };
 
-        await render(<BoxEditorNormalWebsiteRender />);
+        await render(<BoxEditorNormalWebsiteRenderComp />);
 
         const image = container?.querySelector<HTMLImageElement>('img');
         expect(image?.getAttribute('src')).toBe('data:image/png;base64,shot');
@@ -753,7 +753,7 @@ describe('BoxEditor normal view components', () => {
         };
         await render(
             <CanvasControllerContext value={canvasControllerState.value}>
-                <BoxEditorNormalWebsiteRender />
+                <BoxEditorNormalWebsiteRenderComp />
             </CanvasControllerContext>,
         );
         return container?.querySelector<HTMLDivElement>('[data-website-item]');
@@ -863,7 +863,7 @@ describe('BoxEditor normal view components', () => {
                 width: 800,
                 height: 600,
             };
-            await render(<BoxEditorNormalWebsiteRender />);
+            await render(<BoxEditorNormalWebsiteRenderComp />);
             const frame = container?.querySelector<HTMLDivElement>(
                 '[data-website-item]',
             );
@@ -893,7 +893,9 @@ describe('BoxEditor normal view components', () => {
             height: 600,
         };
 
-        const markup = renderToStaticMarkup(<BoxEditorNormalWebsiteRender />);
+        const markup = renderToStaticMarkup(
+            <BoxEditorNormalWebsiteRenderComp />,
+        );
 
         expect(markup).toContain('data-website-item');
         expect(markup).toContain(
@@ -912,7 +914,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalWebsiteRender />);
+        await render(<BoxEditorNormalWebsiteRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
@@ -926,7 +928,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalCameraRender />);
+        await render(<BoxEditorNormalCameraRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
@@ -940,7 +942,7 @@ describe('BoxEditor normal view components', () => {
             height: 300,
         };
 
-        await render(<BoxEditorNormalAudioRender />);
+        await render(<BoxEditorNormalAudioRenderComp />);
 
         const audio = container?.querySelector<HTMLAudioElement>('audio');
         expect(audioValidateMock).toHaveBeenCalledWith(
@@ -967,7 +969,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalAudioRender />);
+        await render(<BoxEditorNormalAudioRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
@@ -979,7 +981,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalVideoRender />);
+        await render(<BoxEditorNormalVideoRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');

@@ -11,19 +11,19 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** see what else in scripture speaks to the verse you are reading.
 
-1. In the bible lookup, click **Advance Bible Lookup** (`bi-search`, top right) to open
+1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (`bi-binoculars`, top right) to open
    the side panel, then pick **[en:tran:Cross Reference]** from the panel's dropdown —
-   the second entry, after **Find**. 📸
+   the second entry, after **[en:tran:Find]**. 📸
    You can also get here from the verse itself: right-click any verse in the lookup body
-   and choose **Open in Cross Reference**. That opens the panel on this view AND on that
+   and choose **[en:tran:Open in Cross Reference]**. That opens the panel on this view AND on that
    verse.
-   Until you have picked a verse the view says **No verse selected** and tells you what to
+   Until you have picked a verse the view says **[en:tran:No verse selected]** and tells you what to
    do about it.
 2. The top of the view shows the verse it is working from — its version, its reference and
-   its text, exactly as **Resources** shows it. Click the reference to move to another
+   its text, exactly as **[en:tran:Resources]** shows it. Click the reference to move to another
    verse, or the version chip to read the references in another translation. 📸
-3. Under it, **AI Cross References** with the version it is quoting on the right, and a
-   line saying how much there is: **7 Themes · 35 Verses**. Click the title to collapse the
+3. Under it, **AI [en:tran:Cross References]** with the version it is quoting on the right, and a
+   line saying how much there is: **7 [en:tran:Themes] · 35 [en:tran:Verses]**. Click the title to collapse the
    whole section; right-click it for **[en:tran:Refresh]**, which re-fetches.
 4. The references are grouped by **theme** — a sentence such as _Genealogy from Adam to
    Noah_ — set flush left, with that theme's verses hanging off a single vertical line

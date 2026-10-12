@@ -89,7 +89,7 @@ function genDisabledStyle(isDisabled: boolean) {
     };
 }
 
-function MenuIsModifying({
+function MenuIsModifyingComp({
     editableDocument,
     caDiscard,
     canSave,
@@ -223,7 +223,7 @@ export function FileEditingMenuComp({
             >
                 <i className="bi bi-arrow-90deg-right" />
             </button>
-            <MenuIsModifying
+            <MenuIsModifyingComp
                 editableDocument={editableDocument}
                 caDiscard={isShowingTools}
                 canSave={canSave}

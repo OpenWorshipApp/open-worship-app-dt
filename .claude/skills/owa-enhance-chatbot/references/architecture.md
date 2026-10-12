@@ -13,15 +13,15 @@ user types in chatbot.html
           │                                              (one MCP server per session)
           ├─ genSystemPrompt(focus)          built ONCE per question
           └─ loop, max 10 rounds:
-         provider call (Anthropic | OpenAI | Kimi) with ALL tools
+         provider call (Anthropic | OpenAI | Kimi | Bedrock | custom | Free), tools filtered by modelTools.mjs
                   └─ tool_use ──▶ callTool() ──▶ owaTools.mjs handler
                                      ├─ help.mjs      reads electron-build/knowledge/
                                      ├─ cdp.mjs       Runtime.evaluate in the app page
                                      ├─ domMatch.mjs  builds the find/click/type expression
                                      ├─ guide.mjs     draws the walkthrough card
                                      └─ notify.mjs    banner, if the tool ACTS
-                last round drops the tools: answer with what you have
-  └─ on any throw ▶ askHelpBot()  helpBotHelpers.ts — offline manual search
+                last round takes no tool call: answer with what you have
+  └─ on a throw that is not a Stop ▶ askHelpBot()  helpBotHelpers.ts — offline manual search
 ```
 
 The failure path matters as much as the happy one: a provider outage, a bad key
@@ -36,7 +36,7 @@ volunteer gets when the building's wifi dies mid-service.
 | Door | Opened by | Used by |
 | --- | --- | --- |
 | CDP (`--remote-debugging-port=0`) | `enableRemoteDebugging()` — synchronous, before `ready`, after the single-instance lock | every tool that touches a page, via `cdp.mjs` |
-| MCP over streamable HTTP | `startMcpHost()` → `host.mjs`, `OWA_MCP_PORT` (default 39223, next free if taken) | the in-app chatbot |
+| MCP over streamable HTTP | `startMcpHost()` → `host.mjs`, `OWA_MCP_PORT` (default 39223, any free port if taken) | the in-app chatbot |
 | MCP over stdio | `bin.mjs`, registered in `./.mcp.json` as `owa-devtools` | an outside agent (Claude Code, robot-test) |
 
 `enableRemoteDebugging()` **must stay synchronous**: Chromium reads the switch
@@ -61,7 +61,7 @@ added for one is shipped to the other.
 
 ```json
 { "pid": 3824, "port": 65138, "url": "http://127.0.0.1:65138",
-  "mcpUrl": "http://127.0.0.1:39223/mcp", "isDev": true,
+  "mcpUrl": "http://127.0.0.1:39223/mcp", "mcpToken": "…", "isDev": true,
   "version": "…", "userDataPath": "…", "startedAt": "…" }
 ```
 
@@ -69,7 +69,8 @@ One file per live instance, swept when a pid is gone, removed on `will-quit`.
 Chromium reports its chosen port through `<userData>/DevToolsActivePort`, polled
 after `ready`. `discovery.mjs` reads these files for the stdio side.
 
-**Read `mcpUrl` from here.** 39223 is where the host usually lands, not a promise.
+**Read `mcpUrl` and `mcpToken` from here.** 39223 is where the host usually lands, not a
+promise, and the door answers 401 without the token.
 
 ## The master switch
 
@@ -82,8 +83,9 @@ in `<userData>/setting.json`.
   **must agree**, or the toggle, the 🤖 button and the provider clients contradict
   a process that opened no door.
 - **Unset = OFF packaged, ON in dev.**
-- Off means: no CDP endpoint, no MCP host, no Help menu item, no 🤖 button, and
-  the renderer's AI providers refuse to hand out a client.
+- Off means: no CDP endpoint, no MCP host, no Help menu item, a 🤖 button that
+  only offers to turn it back on, and the renderer's AI providers refuse to hand
+  out a client.
 - It takes effect on the next launch only. That is the point — the doors are
   opened before anything can ask.
 
@@ -104,7 +106,7 @@ directory, every `.md` comes along. It is copied verbatim into the installer and
 lands in plaintext on every operator's disk, which is why it is a named list and
 not a denylist, and why anything you write under `.claude/skills/` ships.
 
-A query reads ONE index file rather than opening ~140 markdown files, and reads a
+A query reads ONE index file rather than opening ~330 markdown files, and reads a
 document in full only when it is actually opened. Nothing is held between
 questions: this runs inside the app, on machines where a cached corpus would be
 felt.
@@ -114,7 +116,7 @@ felt.
 `html/chatbot.html` → `src/chatbot/ChatbotAppComp.tsx`, opened by the 🤖 toolbar
 button (`ChatbotButtonComp`, left of Help on the presenter, the slide editor and
 the reader — the only three windows with a top bar), by Help →
-*App Help (Chatbot)*, or from any of the nine app pages by `AppAssistantComp`
+*App Help (Chatbot)*, or from any of the ten app pages by `AppAssistantComp`
 (`Tools → App Assistant`, `Ctrl+Shift+A`), which `src/others/AppWindowToolsComp.tsx`
 mounts beside the presenting control. See the `app-window-tools-everywhere`
 memory for the theme wrapper and the focused-window menu routing both of those
@@ -128,18 +130,20 @@ depend on.
   switch (eight windows, from `tools/owa-devtools-mcp/botFocus.mjs` — the ONE
   declaration the picker, both MCP tool schemas, the manual's focus filter and
   the session validator all read; it follows the opener window until the user
-  picks one), the assistant switch, and the model picker. Their `aria-label`s must stay
+  picks one), the assistant switch, and the model picker (a fourth `<select>` in the row,
+  **Limit per hour**, is the window's own). Their `aria-label`s must stay
   distinct — `extra-work/verify-chatbot-e2e.mjs` addresses each by its label,
   and the provider and model pickers shared one string until 2026-09-01. The
   stored settings
   (`chatbot-llm-provider`, `chatbot-llm-model-<provider>`) are only what a NEW tab
   starts on.
-- The model picker lists three models per provider with speed and list price on
-  hover, plus *More models…* which asks the account's own `models.list`. A
+- The model picker lists three models for Claude, ChatGPT, Kimi and Free (ten for
+  Bedrock, a custom server's own rows) with speed and list price on hover, plus
+  *More models…* — the account's own `models.list` — for Claude, ChatGPT and Kimi. A
   non-reasoning OpenAI model is sent no `reasoning_effort`.
 - Every answer has **Copy**; every question **Ask again**.
-- With no key at all the window says so and offers a button into
-  Settings → Others.
+- With no key at all the window opens on the Free assistant, under a notice
+  that names the free service and offers a button into Settings → Others.
 - English-only by design — no `tran()` anywhere in `src/chatbot/*`.
 
 ## The guide cards
@@ -148,11 +152,11 @@ depend on.
 root (`#owa-guide-host`), with the current step's control ringed in red. Clicking
 the real control advances the card (`lastAction: "user-did-it"`).
 
-- Steps come from a `manualId` recipe or from steps the model writes. A recipe
-  only marks controls by **bolding**, and it bolds keystrokes and stressed words
-  too — so a demo built from one often cannot press anything, and
-  `owa_guide_start` answers `canDemo: false` and quietly degrades to a plain
-  walkthrough.
+- Steps come from a `manualId` recipe, a built-in `demoId` lesson or steps the
+  model writes. A recipe only marks controls by **bolding**, and it bolds
+  keystrokes and stressed words too — so a `manualId` is show-only:
+  `owa_guide_start` refuses to demo one and asks for explicit live `steps`. Steps
+  naming no control answer `canDemo: false` and run as a plain walkthrough.
 - `mode: "demo"` performs each step on a press of **Do it**.
 - A recipe runs in the window it is ABOUT. `detectRecipeWindow` reads that off
   the recipe’s own first step (the same sentence the drop rule below throws
@@ -209,6 +213,5 @@ in-page runtime is versioned (`NOTICE_RUNTIME_VERSION`).
 | ✔ | `src/chatbot/llmBotHelpers.test.ts` |
 
 `tools/**/*.test.mjs` is in the `include` list of `vitest.config.ts`, so MCP
-package tests are part of the gate. Untested today: `help.mjs` ranking,
-`discovery.mjs`, `host.mjs` session lifecycle, `mcpClient.ts` retry, and
-`helpBotHelpers.ts`.
+package tests are part of the gate. Untested today: `host.mjs` session
+lifecycle and `mcpClient.ts` retry.

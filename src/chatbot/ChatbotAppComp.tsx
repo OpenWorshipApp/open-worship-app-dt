@@ -246,6 +246,8 @@ import {
     getLlmProviderPageUrl,
     readLlmIssue,
 } from './providerIssueHelpers';
+import { readDisputeHint } from './disputeHelpers';
+import { describeAttachError } from './attachErrorHelpers';
 import {
     checkIsAlreadyTyped,
     FALLBACK_STARTERS,
@@ -3137,7 +3139,7 @@ export default function ChatbotAppComp() {
             setAttachError(null);
             addAttachments([genElementAttachment(result.element)]);
         } catch (error: any) {
-            setAttachError(`I could not do that: ${error.message}`);
+            setAttachError(describeAttachError(error, 'owa_pick_element'));
         }
     }, [addAttachments]);
     // "Where is it?" -- the question a chip reading a control's name raises
@@ -3167,9 +3169,7 @@ export default function ChatbotAppComp() {
                         );
                     }
                 } catch (error: any) {
-                    setAttachError(
-                        `I could not point at that: ${error.message}`,
-                    );
+                    setAttachError(describeAttachError(error, 'owa_find_ui'));
                 }
                 return;
             }
@@ -3195,9 +3195,7 @@ export default function ChatbotAppComp() {
                         );
                     }
                 } catch (error: any) {
-                    setAttachError(
-                        `I could not point at that: ${error.message}`,
-                    );
+                    setAttachError(describeAttachError(error, 'owa_find_ui'));
                 }
                 return;
             }
@@ -3968,13 +3966,12 @@ export default function ChatbotAppComp() {
             // rebuilt when a message lands, so the session it closed over is
             // whatever the tab held when it was made. Without it every
             // question was asked on its own and "yes" meant nothing.
-            const priorTurns = options?.withoutHistory
+            const priorMessages = options?.withoutHistory
                 ? []
-                : (
-                      sessionStateRef.current.sessions.find((session) => {
-                          return session.id === askedSessionId;
-                      })?.messages ?? []
-                  ).map(toHistoryTurn);
+                : (sessionStateRef.current.sessions.find((session) => {
+                      return session.id === askedSessionId;
+                  })?.messages ?? []);
+            const priorTurns = priorMessages.map(toHistoryTurn);
             if (options?.withoutEcho !== true) {
                 addMessage(askedSessionId, {
                     author: 'you',
@@ -4069,10 +4066,36 @@ export default function ChatbotAppComp() {
                                   (id) => callTool('owa_help_page', { id }),
                               ),
                           });
-                const askedWithHint =
-                    knownHint === null
-                        ? askedOfModel
-                        : `${askedOfModel}\n\n${knownHint}`;
+                // "That is wrong", under an answer written from a guide
+                // page: the page's newest copy is read off the project's
+                // repository HERE, before the model is asked, and rides the
+                // ask the same way (`disputeHelpers`). Left to the model it
+                // was a choice, and a model told it was wrong mostly says
+                // the same thing again in other words. Only with a model to
+                // read it to: the offline bot cannot compare two pages.
+                const disputeHint =
+                    provider !== null &&
+                    knownHint === null &&
+                    generalQuestion === null &&
+                    options?.shownText === undefined
+                        ? await readDisputeHint(
+                              trimmedAsked,
+                              priorMessages,
+                              (name, args) => callTool(name, args, signal),
+                              () => {
+                                  return genProgressReporter(
+                                      genSessionProgress(askedSessionId),
+                                  )(
+                                      'Reading the newest copy of that guide page',
+                                  );
+                              },
+                          )
+                        : null;
+                const askedWithHint = [askedOfModel, knownHint, disputeHint]
+                    .filter((part) => {
+                        return part !== null;
+                    })
+                    .join('\n\n');
                 // The offline bot searches the manual, which cannot answer a
                 // picture: it has no eyes, and the stand-in question above is
                 // not something to search for either -- handed it, it answers

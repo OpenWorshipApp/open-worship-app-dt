@@ -68,7 +68,8 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
 - **Questions**: `tools/owa-devtools-mcp/questions/*.json` is the curated list of
   questions the assistant is prepared to be asked — one file per page
   (`presenter`, `reader`, `editor`, `settings`, `screen`, `presenting-flow`,
-  `troubleshooting`, and `common` for what is true everywhere), split into
+  `bible-note`, `lyric-editor`, `web-editor`, `troubleshooting`, and `common`
+  for what is true everywhere), split into
   sections
   matching the panel the user is looking at, each entry carrying the resources
   that answer it (`recipe` `W-xx`, `related`, `find`, `menu`, `shortcut`,
@@ -97,7 +98,7 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `listQuestionPageIds()` (names only, no parse). `starterRank` is the one
   field that is not local to its file: the empty window sorts every starter a
   focus can see, so ranks must be unique ACROSS the files sharing a focus, and
-  a rank in a `focus: null` file (`common`, `troubleshooting`) competes in
+  a rank in a `focus: null` file (`common`, `settings`, `troubleshooting`) competes in
   EVERY window. A new question is safest with no rank at all. A page file's
   `focus` may also be a LIST, for one that belongs to several windows.
   `questions.test.mjs` now enforces the uniqueness rule (it was prose only, and
@@ -174,3 +175,61 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   Beside it, `checkIsWalkthroughEcho` drops a model option that says **Show
   me step by step** in other words (_Yes, walk me through it_ sat beside it on
   7 of 7 walkthrough answers), only ever when those buttons are present.
+
+- **A manual page carries the address of its newest copy** (2026-10-11,
+  `genFreshPageUrl` in `help.mjs`, asked for by the user: _if user still
+  claiming that the answers are incorrect then try to read from repo … to get
+  a fresh knowledge_). The pages on a computer are as old as its release;
+  `owa_help_page` ends a manual page with one line naming its file under
+  `docs/manual-sources/` on the project's public repository
+  (`raw.githubusercontent.com/OpenWorshipApp/open-worship-app-dt/main/…`),
+  built from the index, never from words a model wrote, and absent on a
+  developer note. The prompt's rule for an answer the person says is wrong is
+  a ladder: find the control (`revealBy` says what to press first), ask for a
+  picture of the window -- theirs to send, the window has the button --, then
+  read that address with `owa_read_website`, the ONE web read about this app
+  the prompt allows, and -- when that copy's day is later than the page's own
+  -- say the built-in guide was behind. A raw page still
+  has its `[en:tran:Name]` templates; the prompt says to read them as Name.
+  The page must be pushed to `main` to be read there, so a fix to
+  `user-workflows.md` reaches an installed app only after `docs:gen` is
+  committed and pushed.
+  **The window does that read itself, since later the same day**
+  (`src/chatbot/disputeHelpers.ts`; the user's ask: _make the repo fallback
+  automatic on a complaint rather than the model's choice_). A message that
+  disputes the last answer (`checkIsDisputingAnswer`: short, and in the
+  shapes of _that is wrong_, _there is no …_, _I can't find it_, _it does not
+  work_, with their Khmer and French twins) under an answer whose walkthrough
+  button names a guide page (`findDisputedPage`) has that page's newest copy
+  read BEFORE the model is asked: `owa_help_page` for the address — taken
+  only in the repository's own shape — then `owa_read_website`, so the
+  address check, the budget and the banner are the firewall's existing ones
+  and no tool or schema was added. It is clipped by `clipKnownPage` and put
+  under the ASK, never the transcript, with a hint to compare it with what
+  was said: differs → answer from it and say the built-in guide was behind;
+  the same → do not repeat, find the control or ask for a picture. A read
+  that fails says so and tells the model not to try again. The waiting line
+  reads _Reading the newest copy of that guide page_. Not for a known
+  question, a general one, a rescue, or with no assistant; the model's own
+  read stays as the rule for a dispute the pattern misses.
+  **Run against the real address for the first time, it had never once
+  worked** (2026-10-11, `EC-222`; the real `readDisputeHint` driven through a
+  scratch instance's own MCP door). Three things, none of which a unit test
+  fed a made-up result could see. Every `raw.githubusercontent.com` file is
+  served with a `Content-Security-Policy` of `sandbox`, which forbids ALL
+  script in the page, the reader's included, so every read came back
+  _Script failed to execute_ and the hint said "could not reach it just now"
+  -- the loader now reads from an isolated world (`agent-access.md`). The
+  tool waited 15 s for a read the loader gives 20 s (same note). And the copy
+  on `main` was ten days OLDER than the built-in one -- a tree ahead of
+  `main` -- which the hint called the NEWEST: handed over, it would have
+  taken a corrected answer back to the wrong one. Both copies say their day
+  now: a page's front matter carries `workflowsVersion`, `owa_help_page`
+  prints the built-in copy's beside the address (`readManualPageDate` in
+  `tools/owa-devtools-mcp/manualPage.mjs`, shared with the window), and a
+  copy dated EARLIER is not quoted -- the hint says the built-in guide is the
+  newest there is, and the ladder goes on. An equal or unknown day keeps the
+  repository's copy as the newer. The page that rides is cleaned as the
+  built-in one is (`toManualPageBody`: no front matter, no robot block, no
+  heading with the recipe's id). Still not asked in the window with an
+  assistant: the caution is a person's press.

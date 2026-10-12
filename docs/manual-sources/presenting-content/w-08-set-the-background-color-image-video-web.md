@@ -11,33 +11,37 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** put something behind your content.
 
-1. At the bottom of the middle column, click the thin **[en:tran:Background]**
-   bar — the panel expands to show its tabs. 📸
+1. Find the **[en:tran:Background]** panel at the bottom of the middle column,
+   open with its tabs showing. If it has been folded to a thin bar, click the
+   bar and the panel opens again. 📸
 2. Pick a tab: **[en:tran:Colors] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
-   - **Colors:** click a swatch. If the color could clash with the text, the app asks
-     whether to adjust the text color too — choose **Ok** or **Cancel**.
-   - **Images / Videos:** **double-click** an item to make it the live background. 📸
-   - **Cameras:** pick a connected camera device.
-   - **Web:** click a saved page, or use the **⋮** next to the folder path (or
-     right-click the empty list) → **Add URL** to add one (opens the Web Editor, W-15).
-3. The live background's tab shows a `*` prefix (e.g. `*Videos`).
-4. Press **F7** (Clear Background) to remove it.
+   - **[en:tran:Colors]:** click a swatch. If the color could clash with the Bible text, the app
+     changes the text color so it stays visible and says so in a message with its own
+     **[en:tran:Undo]** — it asks nothing.
+   - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
+     click the same item again to take it off. 📸
+   - **[en:tran:Cameras]:** pick a connected camera device.
+   - **[en:tran:Webs]:** click a saved page, or use the **⋮** next to the folder path (or
+     right-click the empty list) → **[en:tran:Add URL]** to add one (a small box asks for the
+     web address; the Web Editor, W-15, is for a page file of your own).
+3. The live background's tab carries the on-screen dot before its name (e.g. `● Videos`).
+4. Press **F7** ([en:tran:Clear Background]) to remove it.
 
 **Thumbnail view vs list view (Images / Videos / Web).** By default each tab shows
 picture previews. If you have a lot of files — or the app feels slow on an older
-machine — switch to a plain name list: hover the bottom edge of the Background panel
-(or click the small **⋯** button at its bottom-left) to bring up the footer bar, then
-click the **list** icon (`☰`) at the far left; the **grid** icon next to it switches
-back. 📸 The list shows each file's full name (with its extension), which screens it is
+machine — switch to a plain name list: click the small **⋯** button at the bottom-left of the Background panel
+(**[en:tran:Reveal Hidden Controls]**) to bring up the footer bar, then
+click the **list** icon (`☰`, **[en:tran:List View]**) at its far right; the **grid** icon
+beside it (**[en:tran:Thumbnail View]**) switches back. 📸 The list shows each file's full name (with its extension), which screens it is
 showing on, and its colour dot — clicking a row still puts it on screen exactly like a
 thumbnail. Each tab remembers its own choice, and it survives restarting the app. The
 thumbnail-size slider only appears in thumbnail view.
 
 **Folder sessions (Images / Videos / Webs / Audios).** Above each of those lists is a
-row of small buttons: **Default**, then any you add with **＋**. Each one is a folder of
+row of small buttons: **[en:tran:Default]**, then any you add with **＋**. Each one is a folder of
 its own — with its own view mode, sort and slide show — so you can flick between this
 Sunday's pictures on a memory stick and your standing set of backgrounds without ever
-re-pointing the folder the app was set up with. **Default** IS that folder: it is the
+re-pointing the folder the app was set up with. **[en:tran:Default]** IS that folder: it is the
 one Path Settings names, and adding sessions never touches it. A new session starts with
 no folder and offers to use the default one; the **⋮** on the session you are on (or a
 right-click on any of them) renames or removes it. Removing forgets that session's

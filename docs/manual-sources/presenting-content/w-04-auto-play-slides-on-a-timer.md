@@ -11,7 +11,8 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** advance slides hands-free.
 
-1. Open a document's slides (W-03 step 1).
+1. Open a document's slides and put one on the screen (W-03 steps 1–2) — the
+   stopwatch is only there while a slide of that document is live.
 2. Click the **stopwatch icon** at the bottom left of the slides previewer — a small
    strip opens: **✕**, play, the seconds box, the countdown, and a sliders button. 📸
 3. Type the interval in seconds, then click **play**. Slides advance on the timer and
@@ -32,9 +33,9 @@ workflowsVersion: "2026-10-11"
 
 5. Click **pause** to stop, or the strip's **✕** to collapse it back to the stopwatch.
 
-The same strip runs a show over a **Background** list — **[en:tran:Images]**,
+The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Images]**,
 **[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
-screen — and over each **Image Show** / **Video Show** / **Web Show** session, where it
+screen — and over each **[en:tran:Image Show]** / **[en:tran:Video Show]** / **[en:tran:Web Show]** session, where it
 rides the panel's top row. On the Webs list a saved **URL** is stepped just like a page
 file.
 

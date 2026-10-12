@@ -1271,3 +1271,21 @@ per setting (the pattern the data tools set) or the person's own
 `OWA_MCP_FIREWALL=off` run; relaxing the default policy to press them was
 written and reverted three times under the auto-mode safety check and is
 the user's call, not a session's.
+
+### `MC-58` — `owa_read_website` could not read a page that forbids scripts, and gave up before its own loader · done 2026-10-11
+
+Found by running the help window's read of a guide page's newest copy against
+the real address (chatbot backlog `EC-222`). A `Content-Security-Policy` of
+`sandbox` — every `raw.githubusercontent.com` file, and any host that serves
+user files that way — refuses `executeJavaScript` in the page's main world:
+the tool answered Electron's _Script failed to execute, this normally means an
+error was thrown_, which says nothing a model can act on. `readWebPage` tries
+the page's own world first and an isolated one second
+(`runReadExpression`); both refusing is a sentence. And the tool evaluated its
+expression with `evaluateInApp`'s default 15 s while the asking window waits
+30 s and the loader gives a page 20 s, so a slow site was reported as _Timed
+out evaluating in_ the app's own page; `WEBSITE_READ_EVALUATE_TIMEOUT` (35 s)
+is passed by all three callers, held by `website.test.mjs`. No schema
+changed: the model's bill is the same. **Proof:** the raw page read before —
+`isError: true`; after — 1 070 characters in 1.6 s; `example.com` reads the
+same 133 words both before and after.

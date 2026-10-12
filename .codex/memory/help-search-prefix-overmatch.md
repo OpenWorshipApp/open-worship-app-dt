@@ -20,9 +20,11 @@ The tail is capped at three characters now. If a legitimate match ever goes
 missing, this cap is why — and the base word still matches, which is the trade
 that was chosen: a wrong page costs more than a missed inflection.
 
-**The question corpus is a labelled test set, and `help.mjs` has never seen it.**
+**The question corpus is a labelled test set, and `help.mjs` had never seen it**
+(since 2026-09-03 it looks an exact corpus question up — [[help-search-known-question]] —
+so corpus top-1 is right by construction and only a paraphrase grades the ranker).
 `tools/owa-devtools-mcp/questions/*.json` pins every one of its questions to the
-`W-xx` that answers it, so it grades retrieval without circularity. It said
+`W-xx` that answers it, so it graded retrieval without circularity. It said
 **136/236 top-1 (58%)** before this work and 140 (59%) after — i.e. the search
 hands the model the wrong page around 40% of the time, which is the ceiling on
 answer quality and is filed as `EC-50`. Those absolutes are over the 236

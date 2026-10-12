@@ -1,6 +1,6 @@
 ---
 name: owa-enhance-agent-docs
-description: 'Keep the Open Worship App agent documents true to the code, and make agents more useful across the whole repo. Use when asked to audit, fix, refresh or slim the agent docs: `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/` + MEMORY.md, `.claude/skills/`, the Codex mirror (`AGENTS.md`, `.codex/`, `.agents/skills/`), `.mcp.json`. Also use for stale notes, doc-vs-code mismatches, mirror drift, and questions like "what should the agent know" or "how can the agent help more". Two jobs. DRIFT: scripts/audit-agent-docs.mjs lists every claim the code contradicts; each lead is confirmed against code and git history, then the doc is fixed in place, with the mirror re-copied and the knowledge rebuilt. LEVERAGE: blind spots, context cost, prose rules a test or hook could enforce, and repeated session friction (scripts/session-friction.mjs) become AD-xx proposals, reported and applied only on `apply`. Code is the truth for facts; a doc is the truth for decisions; history stays history.'
+description: 'Keep the Open Worship App agent documents true to the code, and make agents more useful across the whole repo. Use when asked to audit, fix, refresh or slim the agent docs: `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/` + MEMORY.md, `.claude/skills/`, the Codex mirror (`AGENTS.md`, `.codex/`, `.agents/skills/`), `.mcp.json` — and the user manual's recipes (`user-workflows.md` → `docs/manual-sources`), which the in-app 🤖 answers from: an outdated guide page, or the chatbot answering with steps that no longer exist. Also use for stale notes, doc-vs-code mismatches, mirror drift, and questions like "what should the agent know" or "how can the agent help more". Two jobs. DRIFT: scripts/audit-agent-docs.mjs lists every claim the code contradicts; each lead is confirmed against code and git history, then the doc is fixed in place, with the mirror re-copied and the knowledge rebuilt. LEVERAGE: blind spots, context cost, prose rules a test or hook could enforce, and repeated session friction (scripts/session-friction.mjs) become AD-xx proposals, reported and applied only on `apply`. Code is the truth for facts; a doc is the truth for decisions; history stays history.'
 argument-hint: '[auto (default) | audit | drift | leverage | friction | <doc or code path> | apply AD-xx … | file]'
 ---
 
@@ -69,7 +69,7 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
 
 | Argument | What happens |
 | --- | --- |
-| *(none)* or `auto` | Scan → confirm → fix the safe drift → leverage report → stop and ask |
+| *(none)* or `auto` | Scan → confirm → fix the safe drift, the manual included, until the audit is clean (§3b) → leverage report → stop and ask |
 | `audit` | Read-only: scan and confirm, then report the drift fixes it WOULD make. No edits |
 | `drift` | Job 1 only: confirmed safe drift fixed, the rest reported |
 | `leverage` | Job 2 only: proposals reported, then stop |
@@ -79,8 +79,27 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
 | `apply AD-xx AD-yy` · `apply all` | §6, for exactly those proposals |
 | `file` | Record the report's findings in [the backlog](./references/backlog.md) |
 
-**Routed, not done here.** A user-facing recipe against the live app goes to
-`/owa-robot-test`. It owns `user-workflows.md` and never publishes an
+**The manual is in scope** (2026-10-11). `user-workflows.md` from its first
+`### W-` heading on is what `docs:gen` turns into the pages the 🤖 answers
+from, and a recipe naming a control or a file that is GONE is drift like any
+other. The `manual` check finds it; this skill fixes it (§3), from the code
+and from what the read-only tools show in the running app. Until that date the
+whole file was skipped as a ledger, and W-07 sent people to a card that had
+been gone for six weeks, through several runs, until the assistant repeated it
+to a user. Only its dated head is history.
+
+**A recipe is read, and the read is recorded.** No pattern can tell whether a
+step is still what the code does, so `references/manual-reviewed.json` keeps,
+per recipe, a hash of its words and one of the files its `Verify:` rows cite.
+The `manual` check lists a recipe as *due a read* when it has no entry or
+either hash has moved, and `audit-agent-docs.mjs --stamp-manual=<ids>` writes
+the entry once the recipe has been read against that code. Before the ledger
+the signal was "commits since the recipe was last edited", which a recipe
+found correct could never clear, so every run listed the same 29 and read the
+top few.
+
+**Routed, not done here.** A NEW recipe, or a step only a press can prove,
+goes to `/owa-robot-test`, which never publishes an
 unobserved step. Chatbot answer quality goes to `owa-enhance-chatbot`, an MCP
 tool's behaviour or cost to `owa-enhance-mcp`, and tests to
 `owa-upgrade-unit-test`. App code, and a regression found through a note, go
@@ -101,6 +120,7 @@ to `owa-enhance`. This skill files the lead and names where it went.
 | `tools/owa-devtools-mcp/README.md` | humans and agents choosing a tool | — | the tool table |
 | `electron-build/knowledge/` | the in-app 🤖 | built | internal notes indexed to their first 3 000 characters |
 | `.claude/settings.local.json` | this machine's Claude Code | — | personal and untracked: read it, never edit it unasked |
+| `README.md`, `RELEASE.md`, `docs/*.md`, every other tracked `.md` | people | — | read for the same claims since 2026-10-11 (the README named an `npm run` script removed weeks before); never mirrored, not in the knowledge; `TODO.md` / `note.md` are history |
 
 ## Procedure
 
@@ -140,10 +160,16 @@ positives and its confirmation. The moves that settle most leads:
 - Read the code where the name lives now. The claim must survive the swap with
   its meaning intact, or it is not a rename.
 - **The claims no script can see** come from reading. In `auto`, read all of
-  `CLAUDE.md`, because a wrong line there costs every session. Also read the
-  ten notes the `staleness` check ranks highest, and each rule whose `paths:`
-  area changed most. For each, check its most concrete claims (a name, a
-  number, a behaviour, a command) against the code.
+  `CLAUDE.md`, because a wrong line there costs every session, and **every
+  note the `staleness` check lists as due a read** — not the first ten. For
+  each, check its concrete present-tense claims (a name, a number, a
+  behaviour, a command) against the code, fix what the code contradicts, and
+  record the read: `--stamp-notes=<path,…>`. The ledger
+  (`references/notes-reviewed.json`, the notes' twin of the manual's) is what
+  lets the list reach 0: a note read against these words and this code is not
+  listed again until one of them moves. More than about eight due: readers
+  that only propose, one writer (`scripts/apply-manual-edits.mjs`), as for the
+  manual in §3.
 - **Runtime claims** (what a tool returns, what a window shows) get
   `owa-enhance`'s research contract. Use read-only calls only: `owa_app_state`,
   `owa_find_ui`, `owa_list_ui`, `take_snapshot`, `owa_screenshot`. Nothing
@@ -178,13 +204,45 @@ Safe classes, fixed without asking:
 - **Mirror drift**: copy again from `.claude/`. If the mirror side is newer,
   port that edit into `.claude/` first, then copy. Ask when the two sides
   disagree in substance.
+- **The manual** (`manual` check), all three of its drift signals:
+  - A recipe that **names a control or a file that is gone**. Rewrite the
+    step to what the code draws now, and write only what the code or a
+    read-only look at the running app shows (`owa_find_ui`, `owa_list_ui`,
+    `owa_screenshot`).
+  - A **coverage row citing a file that is gone**. Re-aim it where the
+    history says the file went, without the line number; when the control is
+    gone, rewrite the row to say what does the job now. Never delete a row.
+  - **Every recipe listed as due a read** — all of them, not the first few.
+    Read it step by step against the files its `Verify:` rows cite: each
+    control (its exact label and where it is), what the press does, keys,
+    numbers. Fix what the code contradicts. Name every app control drawn
+    through `tran()` as `**[en:tran:Key]**` (`scripts/find-label.mjs` says
+    whether a word is a key and where it is drawn); leave plain another
+    program's label, the English-only help window's, and a word that is only
+    leaned on. A step only a press can prove stays as written and is added
+    to `references/live-checks.md` — a tracked ledger, because a report is
+    gitignored and the statement would be lost with it — for
+    `/owa-robot-test`; it does not hold the stamp back. What a read-only look
+    or a scratch dev instance CAN settle is settled in the run (memory
+    `scratch-dev-instance-beside-user-app`), never on the user's own app.
+    Then `--stamp-manual=<ids>`.
+
+  More than about eight recipes due: split them among readers that only
+  PROPOSE (the JSON `scripts/apply-manual-edits.mjs` documents — old text,
+  new text, the code line that proves it), and apply through that script,
+  which refuses a proposal whose proof is not in the code. One writer.
+
+  In the same change: a dated entry at the head of `user-workflows.md` saying
+  what was read and what was not seen live, `npm run docs:gen`, the questions
+  corpus when a control was renamed, and the knowledge rebuild.
 
 Ask before:
 
 - deleting or merging notes or sections, or moving text between `CLAUDE.md`
   and a rule
 - changing a *never*, *always* or *deliberately* rule
-- touching another skill's ledger, or `user-workflows.md`
+- touching another skill's ledger, the dated head of `user-workflows.md`
+  included
 - a **guard that is gone**: a note says *"pinned by `<name>.test.ts`"* and the
   test is deleted. Mark the guard as gone, then propose rebuilding it through
   `owa-upgrade-unit-test`.
@@ -193,6 +251,54 @@ Ask before:
 Edit in the doc's own voice. Use minimal Edits and leave unchanged paragraphs
 alone, since nothing formats `.claude/` and a small diff stays reviewable. Write
 dates as absolute dates, and keep the *why*.
+
+### 3b. Done is what the audit prints
+
+Run the audit again after the fixes. A drift run is done when every drift
+check prints 0 — `paths`, `symbols`, `tools`, `scripts`, `env`, `ids`,
+`memory`, `rules`, `skills` (wiring), `mirror`, `knowledge`, `manual`
+(labels, coverage files, recipes due) and `staleness` (notes due a read) — or
+when each lead still printed is
+accounted for in one of three places: `references/killed-leads.json` with its
+*why*, the report's *needs a decision* list, or a regression routed to its
+skill. A lead that was only *reported* is the next run's same lead. That is
+how documents stayed out of date through several runs: each one fixed the
+first few lines of every list and described the rest.
+
+`src/test-setup/manualRecipes.test.ts` holds the first two manual signals in
+the gate: `npm run lint` fails on a recipe naming a label no code draws and on
+a coverage row citing a file that is gone.
+
+### 3c. A second reader, and one real run
+
+The audit sees what a script can see, and a proposal is checked by its own
+evidence quote: the line it cites is in the code. Neither proves the claim.
+So a run that applied more than about twenty corrections through readers
+ends with a second read ([references/second-read.md](./references/second-read.md),
+`scripts/second-read.mjs`):
+
+- **Every correction goes to a reader that is told no reason.** It gets the
+  passage before and the passage now, and is told to refute it from the code.
+  A `wrong` is read by the session itself before a document changes, since a
+  second reader can be wrong too. An edit that only wrapped a control's name
+  in a template is checked by `second-read.mjs templates` instead: it must
+  change nothing but the wrapper.
+- **Every statement set aside for the running app gets a deeper look.** Most
+  were set aside because the code was a stylesheet, a library under
+  `node_modules`, a data file or arithmetic nobody followed to the end. What
+  the files decide is settled; what a single running copy can show is tried
+  on a scratch dev instance (memory `scratch-dev-instance-beside-user-app`,
+  never the user's own app); only the rest stays in `live-checks.md`, each
+  with exactly what to watch and what it needs.
+- **What a note says WORKS is run once against the real thing.** A tool or a
+  fallback proven by unit tests fed a made-up result is a claim nobody has
+  checked. Run the real function against a scratch instance's own door and
+  the real address before the note says so.
+
+Measured on 2026-10-11: of 559 corrections 4 were wrong; of 80 statements set
+aside 45 were settled from files, 18 of them wrong; and the read of a guide
+page's newest copy, held by 33 unit tests, had failed on every real page and
+would have handed an older page over as the newest.
 
 ### 4. Leverage: how the agent could help more
 
@@ -227,6 +333,8 @@ then ask.
 
 - Code: HEAD `<sha>` · <n> dirty paths (<whose>) · app: <dev pid | none>
 - Scan: <n> docs · <n> leads → <n> confirmed (<fixed> fixed · <asked> to ask · <reg> regressions · <hist> history)
+- Manual: <n> recipes read · <n> edited · <n> stamped · <n> steps need a live look (routed)
+- Audit after the fixes: <every drift check 0 | what is left, and where each lead is filed>
 - Knowledge rebuild: done | DEFERRED (<why>) · mirror: in sync | <n> left (<why>)
 
 ## 1. Drift fixed            — doc:line · was → now · the evidence (commit, file)
@@ -292,10 +400,26 @@ restates the code, or a lead nobody confirmed.
 
 ## Resources
 
-- [scripts/audit-agent-docs.mjs](./scripts/audit-agent-docs.mjs): 15 checks
+- [scripts/audit-agent-docs.mjs](./scripts/audit-agent-docs.mjs): 16 checks
   over the docs. The drift checks are `paths`, `symbols`, `tools`, `scripts`,
-  `env`, `ids`, `memory`, `rules`, `skills`, `mirror` and `knowledge`. The
-  leverage signals are `budget`, `coverage`, `staleness` and `prose-rules`.
+  `env`, `ids`, `memory`, `rules`, `skills`, `mirror`, `knowledge` and
+  `manual` (the recipes and the coverage rows they are verified by). The
+  leverage signals are `budget`, `coverage` and `prose-rules`; `staleness`
+  is the notes due a read. `--stamp-manual=<ids | all>` and
+  `--stamp-notes=<paths | @list>` are its only writes: the review ledgers.
+- [scripts/apply-manual-edits.mjs](./scripts/apply-manual-edits.mjs): checks
+  proposed manual or matrix edits (each `old` once, no overlap, every proof in
+  the code), then writes them. [scripts/find-label.mjs](./scripts/find-label.mjs):
+  is this word a `tran()` key, and where is it drawn.
+- [references/live-checks.md](./references/live-checks.md): the statements
+  only the running app can settle, by document; a line leaves when a run
+  observes it.
+- [references/second-read.md](./references/second-read.md) and
+  [scripts/second-read.mjs](./scripts/second-read.mjs): §3c — what a second
+  reader is handed and told, and the checker of what it answers.
+- [references/manual-reviewed.json](./references/manual-reviewed.json) and
+  [references/notes-reviewed.json](./references/notes-reviewed.json): which
+  recipes and which notes were read against the code, and against what.
 - [scripts/session-friction.mjs](./scripts/session-friction.mjs): repeated
   errors by masked signature and session count, rejected calls, interrupts,
   hot reads and hot commands, from the local Claude Code transcripts.

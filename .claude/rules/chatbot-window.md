@@ -81,7 +81,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     request for the panel alone (`keyName: null`) is kept for that reason. A
     fold by hand forgets the request (`onCollapse`), or the box would take the
     cursor back on every reopening. `chatbot-llm-provider` / `chatbot-llm-model-<provider>`
-    only seed a NEW tab. Three models per provider (speed + list price on
+    only seed a NEW tab. Three models each for Claude, ChatGPT and Kimi (speed + list price on
     hover) plus _More models…_ (the account's `models.list`); a non-reasoning
     OpenAI model gets no `reasoning_effort`.
   - **The head folds to ONE line, by hand** (2026-10-09, the user's ask with a
@@ -104,9 +104,9 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   - **Providers are declared ONCE, in `LLM_PROVIDER_MAP`**
     (`Record<LlmProviderType, …>` lookups and a `keyField`; ternaries once sent
     an unknown provider to OpenAI silently): Claude, ChatGPT, **Kimi**,
-    **Bedrock**, **Free**. The four OpenAI-shaped ones share one loop through
+    **Bedrock**, **Custom servers** (below), **Free**. The five OpenAI-shaped ones share one loop through
     `OpenAiCompatProviderType` (client, label, `genRequestExtra`, optional model
-    filter, optional round cap, `isOneToolCallPerTurn`). `kimiHelpers.ts` is the
+    filter, optional round cap, `checkIsOneToolCallPerTurn`). `kimiHelpers.ts` is the
     OpenAI SDK at `https://api.moonshot.ai/v1`; every Kimi model thinks, so all
     get the 6000-token budget, `reasoning_effort` goes only to `kimi-k3` (K2
     rejects it and takes `thinking`), and its catalogue gets no filter (OpenAI's
@@ -151,7 +151,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     on the chatbot's ↻ beside the Assistant picker, its servers offered as
     `registry-<id>` rows with their keys held in main, `isFree` pricing them
     at $0; a failed read keeps the last good list and says why on the
-    button's tooltip) — only `GET /models` and `POST /chat/completions`, with
+    button's tooltip) — only `GET /models`, the four root reads below and `POST /chat/completions`, with
     the key read in main — the chatbot CSP is NOT widened and a custom key
     never enters the window. Never stands in or is stood in for; this computer AND
     the church's own network (`checkIsLocalNetworkUrl`) are priced at $0; a
@@ -164,7 +164,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     LM Studio's own `/api/v0/models` (root of a `/v1` or a bare address,
     never under a longer path) is read by Settings' Test / Load — loaded, context, and **Sees pictures**
     (`canSeeImages` on the row, the only way a custom model gets pictures)
-    — and by the chatbot before each ask, 1.5 s cap, for the too-small
+    — and by the chatbot before each ask, 5 s cap, for the too-small
     refusal and a round-1 line _Waiting for <server> to load <model>_.
     **Generic since 2026-10-10** (the user's ask, with Ollama failing:
     _make the custom assistant work generically … work with most popular
@@ -243,8 +243,9 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     window is destroyed). The 🤖 ASKS on mount asynchronously: a synchronous
     ask froze every window the one time main had no handler for it (a dev
     renderer hot-reloaded ahead of its main process).
-  - With no key at all the window says so and offers Settings → Others; a
-    failed call falls back to the offline manual bot. Written for a
+  - With no key at all the window opens on the Free assistant (above), whose
+    sticky notice offers Settings → Others; a failed call falls back to the
+    offline manual bot. Written for a
     non-technical volunteer, English-only: no ids, no paths, manual pages only;
     `owa_guide_*` walks a task with a numbered card in the app window.
   - **A step the card cannot press asks the model**: `owa-guide-help` (card) →
@@ -338,7 +339,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   follows the name (the words have started) and never offers back a NAME typed
   in full — a longer one starting with it stays (`/screen` leaves
   `/screen-show`, `/screen-hide`), and an ALIAS in full keeps its row, because
-  that row is what says `/clear` means `/clear-all`; `checkIsAlreadyTyped`
+  that row is what says `/clear-all` means `/screen-clear-all`; `checkIsAlreadyTyped`
   (`questionHelpers.ts`) drops a question row the box already starts with.
 - **Nothing in the chatbot window auto-hides, and that is a decision**
   (2026-09-11). The head row and the ask form were made to tuck away while
@@ -374,7 +375,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   any button to hide it for a while, e.g. hide for 30 days_): a box on the
   opening confirm (`AiCautionBodyComp`, written only on **Open** — ticked
   and cancelled hides nothing) and a **Hide for 30 days** button on this
-  one, both writing ONE setting, `ai-caution-hidden-until` (a time;
+  one, both writing ONE key, `ai-caution-hidden-until`, in the browser’s `localStorage` — not a setting file (a time;
   `aiCautionHelpers.ts` reads it fresh at each open, the chat window once at
   mount), because somebody who has read one has read the warning; the day
   comes round and both are back — 30 days rather than a "never" box on
@@ -386,7 +387,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   and the ✨: the two toolbar buttons, the two Tools entries (Ctrl+Shift+A
   included) and the two native Help items, which land on the IPC receivers in
   `domHelpers`. A caution a menu item walks around is a caution nobody is
-  given. Two of its three sentences are shared and one is NOT, because the
+  given. One of its three sentences is shared and two — the risk and the closing advice — are NOT, because the
   risks differ: the assistant reads THIS app and can offer a press that
   reaches a live projector, the ✨ is a stranger's website where the words
   leave the machine and nothing knows about this app — one warning vague
@@ -401,7 +402,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   window that is not going to open. The Presenting Control's _hand this
   snapshot to the help window_ is NOT gated — that press carries its own
   intent, and a Cancel would strand the snapshot the main process is holding.
-  Its four strings need Khmer keys like any other label outside
+  Its five strings need Khmer keys like any other label outside
   `src/chatbot/`; a missing one THROWS in dev.
   For automated chatbot verification, this caution remains person-only by
   default. A narrow exception applies only when `owa_app_state` confirms a
@@ -419,8 +420,8 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   like `takeAdditions` — the whole value is timing), `runMcpTool` opens a step
   before the call and closes it in a `finally`, and both provider loops do the
   same around every model round. Three rules. The phrase is written for a
-  volunteer and NEVER derived from the tool name — `describeToolStep` maps all
-  29 model-visible tools by hand and an unmapped one falls back to
+  volunteer and NEVER derived from the tool name — `describeToolStep` maps every
+  model-visible tool by hand and an unmapped one falls back to
   `Looking something up`, with a test that fails on an underscore reaching the
   line. It says what it is working ON (`Searching the guide for “background”`,
   `Reading example.com` — the site, not the query string —
@@ -437,7 +438,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   conversation, and a twenty-step question would otherwise re-render the whole
   message list twenty times.
 - **The four starter chips are not the corpus** — `More… — everything it can
-answer` under them opens all of it for that window (184 in the Presenter),
+answer` under them opens all of it for that window (302 in the Presenter on 2026-10-11),
   grouped by SECTION label, which is a panel of the app, merged across pages so
   two `Screens` headings do not show the filing through. `getAllQuestions` in
   `questionHelpers.ts`; `RenderAllQuestionsComp` mounts only once pressed, so a
@@ -551,7 +552,7 @@ answer` under them opens all of it for that window (184 in the Presenter),
   to ask one, and a 💡 tip says the same. **Commands are offered where they
   work** (`COMMAND_PAGE_MAP`, `checkIsCommandOnPage`): the Presenter's own —
   screen show / hide / clears, `/selected`, `/run`, `/next`, `/previous`,
-  `/verse`, `/countdown`, `/marquee` — are listed only while the tab asks
+  `/slide`, `/verse`, `/countdown`, `/marquee`, `/marquee-top` — are listed only while the tab asks
   about the Presenter and are refused elsewhere with **Go to the Presenter**;
   `/commands` names them on one line there; the rest work everywhere (a
   Reader command would be filed `['reader', 'presenter']`). **`/slide <n |
@@ -568,8 +569,8 @@ answer` under them opens all of it for that window (184 in the Presenter),
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it
   takes a picture BEFORE investigating, reads the build, window, screens and
-  console itself — trimmed, since `owa_app_state` carries the data directory
-  and dev component names — then asks the model through `askLlmBot` DIRECTLY,
+  console itself — trimmed, since `owa_app_state` carried the data directory
+  and dev component names until 2026-09-09 — then asks the model through `askLlmBot` DIRECTLY,
   not `handleAsking` (which would add "show me step by step" under a bug). The
   answer is a `REPORT:`/`TITLE:`/`STEPS:` frame parsed like `OPTIONS:`; no
   frame is not an error. **Nothing is sent by that**: the report waits on
@@ -629,9 +630,9 @@ answer` under them opens all of it for that window (184 in the Presenter),
 name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   other two and drawn as the same chips: pressing a control name rings it
   through `owa_find_ui` AT PRESS TIME (against the window as it is now, not as
-  it was when the answer was written), and a path opens its folder or, for a
-  picture, the preview. A selector never becomes the words on a chip. The
-  preview carries **Copy** and **Save a copy** (`downloadImageBase64Data`, the
+  it was when the answer was written), and a path opens the same preview
+  (**Open folder** is in it). A selector never becomes the words on a chip. The
+  preview carries **Copy** and **Download** (`downloadImageBase64Data`, the
   app's own save-and-reveal), so a picture worth opening is a picture the user
   can keep. **And every picture chip carries a copy icon** (2026-09-12, the
   user's ask: _for all images preview in chatbot should have icon to copy
@@ -646,7 +647,7 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
 - **A Bible is installed IN the chat, one question at a time, by buttons and
   with no model** (2026-10-06, `src/chatbot/bibleImportChatHelpers.ts`; asked
   for _for old and non-technical users_ — it used to open Settings with the
-  link typed in, leaving four fields nobody had heard of). Three ways in, all
+  link typed in, leaving four fields nobody had heard of). Three ways in, the typed two
   caught in `handleAsking` ahead of any provider, like a `/` command: a
   message with a Bible word and ONE link (`readBibleImportLinkAsk` — a file, a
   GitHub file page, a repository); a Bible word with NO link

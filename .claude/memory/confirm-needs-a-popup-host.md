@@ -15,10 +15,11 @@ indistinguishable from the user pressing Cancel.**
 
 `HandleAlertComp` is what registers the host, and it is mounted in only four
 places: `src/reader.tsx`, `src/router/AppLayoutComp.tsx` (the main window),
-`src/router/PopupLayoutComp.tsx` and `src/setting.tsx`. **`lwShare` and
-`lyricEditor` mount none** — yet `AppWindowToolsComp` puts `AppAssistantComp`
-(Ctrl+Shift+A, opens the assistant) on all nine renderer entries, so those two
-windows have the feature and no way to ask about it.
+`src/router/PopupLayoutComp.tsx` and `src/setting.tsx`. **`lwShare`,
+`lyricEditor`, `screen-mirror` and dev's `experiment` mount none** — yet
+`AppWindowToolsComp` puts `AppAssistantComp` (Ctrl+Shift+A, opens the assistant)
+on all ten renderer entries, so those windows have the feature and no way to
+ask about it.
 
 So any code that gates an action on a confirm must decide what a `false`
 means, and for a WARNING the answer is **fail open**: check

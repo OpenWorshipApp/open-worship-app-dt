@@ -19,7 +19,8 @@ anything else on the local network.**
 flow — a memory stick, a `.owapf.tar.gz` from another church — was the whole
 delivery, with no model and no agent involved. Measured live before the change:
 a captured page reached `127.0.0.1` and `localhost`, where this app's CDP and
-MCP doors live with no credential (the pair [[aichat-guest-cannot-reach-loopback]]
+MCP doors lived with no credential then (MCP has needed a bearer token since
+2026-09-23; the pair [[aichat-guest-cannot-reach-loopback]]
 walled the AI Chat guest off from), and `file:///…/package.json` captured 58 622
 characters of the operator's disk, because `webSecurity: false` lets a `file:`
 page read its neighbours.

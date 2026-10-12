@@ -17,7 +17,7 @@ workflowsVersion: "2026-10-11"
   The audience screen is a transparent window, so wherever you have put nothing
   up this is genuinely what the room would see. Right-click an empty part of the
   mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
-  turns it off and puts the plain checkered pattern back; **Refresh Preview** in
+  turns it off and puts the plain checkered pattern back; **[en:tran:Refresh Preview]** in
   the same menu re-reads it after you change your desktop background. A machine
   that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
@@ -45,14 +45,14 @@ workflowsVersion: "2026-10-11"
   picture back and start one by hand — the card picks up exactly what is on the
   screen, and a clip that was playing carries on. The card remembers the choice for
   that screen, even after a restart. 📸
-- **Lock** (header, the padlock): when locked (red), the screen refuses slide changes —
+- **[en:tran:Lock]** (header, the padlock): when locked (red), the screen refuses slide changes —
   handy during a live moment; click again (green) to unlock. A change it refuses says
-  _Screen Manager is locked_ in a message with its own **[en:tran:Unlock]**: pressing it
+  _[en:tran:Screen Manager is locked]_ in a message with its own **[en:tran:Unlock]**: pressing it
   unlocks the screens and closes the message.
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
-- **Transitions** (footer, `Tr:`): the **Slide:**, **Background:** and
+- **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
   **[en:tran:Foreground]:** buttons choose the change animation for that screen —
   **none / fade / move / zoom**. They are the fallback: a document, a slide, a
   Background tab, one background, a foreground panel or one of its sessions can
@@ -61,8 +61,8 @@ workflowsVersion: "2026-10-11"
   is live): opens a small player per video to play/pause its audio in sync; the
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
-  (0–4, or increment/decrement) for stage-view setups. Moving a screen to any stage
-  above 0 also sets its **Slide:** transition to **none**; you can pick another one
+  (0–5, or increment/decrement) for stage-view setups. Moving a screen to any stage
+  above 0 also sets its **[en:tran:Slide]:** transition to **none**; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.
 

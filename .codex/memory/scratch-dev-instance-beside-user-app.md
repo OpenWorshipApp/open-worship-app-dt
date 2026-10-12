@@ -29,6 +29,18 @@ and `<scratch>\data` created.
   `prod-app.mjs status` lists both. Newest-first discovery aims `owa_*` (and a chrome-devtools
   half that reconnects) at the scratch one — prove it with a screenshot of a fresh-profile state
   before the first click.
+- **Only the `owa_*` half follows the scratch instance** (2026-10-11).
+  `take_screenshot`, `click`, `fill` and `list_pages` stayed on the app that
+  was up first, so a uid press meant for the scratch window lands in the
+  user's. Use the `owa_*` tools there and nothing aimed by uid.
+- **A scratch window the user's own window covers stops painting**, and
+  `owa_screenshot` then hands back its last frame as if it were now. Trust
+  the DOM tools (`owa_list_ui`, a click's `isOnNow`) and the files under the
+  scratch `data/local-storage/`; for a picture, draw the CSS in an offscreen
+  `BrowserWindow` (`show: false`, `offscreen: true`) instead.
+- A name box or a confirm is the person's to answer there too: seed the
+  state it would have made as a `local-storage` file and reopen the panel
+  (a setting read as absent is believed for 10 s).
 - It shares the user's Vite: touching a file to clear a stale transform
   ([[vite-caches-failed-import-resolution]]) reloads THEIR windows too.
 - Settings → General raises **Set according paths** the first time; **Yes** creates the child

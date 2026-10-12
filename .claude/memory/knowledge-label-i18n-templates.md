@@ -33,8 +33,9 @@ to `សៀវភៅទាំងអស់`, and six labels were wrong when this l
   the drift, and neither can a test that only reads English.
 - The key must EXIST. An unknown key falls back to its own English text, so it
   looks perfect in English and silently hands a Khmer volunteer a label they
-  cannot find. `tools/owa-devtools-mcp/tran.test.mjs` walks the whole corpus and
-  fails on that, and on a twin coming back.
+  cannot find. `tools/owa-devtools-mcp/tran.test.mjs` walks the manual,
+  `.claude/memory`, `.claude/skills`, `.claude/rules` and `CLAUDE.md` and fails
+  on that, and on a twin coming back.
 - Khmer that is CONTENT — a bible's name, a Khmer book title, a translation key
   like `ពគប`, or a name to type into the lookup — stays verbatim. Only labels
   are templated.

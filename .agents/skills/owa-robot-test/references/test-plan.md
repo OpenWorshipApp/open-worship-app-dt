@@ -32,14 +32,14 @@ anything abnormal using the severity scale and report template below.
 > "Change to the page / route under test"). After every navigation, re-run the readiness
 > check and reset the console/network baseline before running that page's scenarios.
 
-### S0 — Load & baseline (always run) `[GL-01..24]`
+### S0 — Load & baseline (always run) `[GL-01..25]`
 - App reaches ready state (page-agnostic ready check passes; on `presenter.html`,
   `#app-header` present); `.loading` image gone.
 - No uncaught console errors/warnings at load.
 - No failed network requests (`4xx`/`5xx`) at load.
 - Baseline screenshot captured.
 
-### S1 — Top navigation & routing `[NAV-01..21]`
+### S1 — Top navigation & routing `[NAV-01..24]`
 - Click each header tab: `Presenter`, `Bible Reader`, `Slide Editor` (if enabled) and
   verify the window URL changes to the matching `.html` (navigation uses `location.href`).
 - `Slide Editor` with no document selected: expect the "No slide selected" alert, not a
@@ -56,7 +56,7 @@ anything abnormal using the severity scale and report template below.
   updates.
 - Drag the thumbnail size range slider → thumbnails rescale.
 - Arrow-key navigation of thumbnails (focus the container first).
-- Double-click a thumbnail → slide goes live; clear with `F8`.
+- Click a thumbnail (ONE click) → slide goes live; clear with `F8`.
 - Right-click a document / a thumbnail → context menu renders (full coverage: create a
   scratch document, rename it, delete it — self-cleaning).
 - Slide auto-play widget (stopwatch icon in the Documents footer): expand, set seconds,
@@ -79,36 +79,38 @@ anything abnormal using the severity scale and report template below.
 - Open lookup via `Bible Lookup` button and via **Ctrl+B**; `#modal-container` appears.
 - Type a reference (e.g. `John 3:16`), submit, verify results render.
 - Close via the modal close button and via **Ctrl+Q**.
-- Presenter `Bibles` tab shows selected verse; `Bibles`/`Notes` right-column sub-tabs
-  switch correctly.
-- The Bibles-tab split also hosts **bible appearance settings** (`Appearance` +
-  `Text Shadow` cards): adjust one control each, confirm the preview restyles, restore.
-- **Notes** sub-tab: a note FILE's ⋮/🖱️R carries **Export** → `.owanote.tar.gz`
+- Presenter `Bibles` tab shows selected verse; the right column's `Bibles` / `Bible Notes` panes
+  (a split, not tabs) both render.
+- The Bibles tab's footer carries the **Bible Properties** toggle (a floating
+  panel, also in the Mini Screen's footer): flip **Dark** / **Light**, press one
+  look tile and change one row, confirm the sample and the preview restyle, then
+  **Reset** and put the size back (PM-13, PM-14).
+- **Bible Notes** pane: a note FILE's ⋮/🖱️R carries **Export** → `.owanote.tar.gz`
   (PR-30, CM-98); the list body/header offers **Import** / **Import From URL** and takes
   a dropped bundle (PR-31, CM-99). Recipe: **W-41**. The single-ITEM `.owabn` import
   (CM-69) sits on a note file's own menu and is no longer gated on `Default`.
 
 ### S5 — Foreground `[PM-15..25]`
-- Presenter `Foreground` tab: exercise **all nine** widgets — marquee top, marquee bottom, quick text,
-  countdown (both datetime and duration modes), stopwatch, clock, images slideshow,
-  camera (skip → BLOCKED if no device), web overlay — confirm each shows on the mini
+- Presenter `Foreground` tab: exercise **all twelve** components (the tab opens a menu; each pick opens its own floating panel) — messages, marquee top, marquee bottom, quick text,
+  countdown (both datetime and duration modes), stopwatch, clock, video show, image show,
+  camera show (skip → BLOCKED if no device), screen show, web show — confirm each shows on the mini
   screen preview without console errors, then hide it.
 - Common properties (font size / color / position) restyle the live foreground.
 - One widget's Show button: right-click (force choose screen) and drag→drop onto the
   mini-screen.
 
 ### S6 — Background `[PM-26..35]`
-- **Expand the collapsed Background panel first** (the tab bar isn't in the DOM until
-  expanded — KB §5).
-- Switch background tabs: `Colors`, `Images`, `Videos`, `Cameras`, `Web`, `Audios`.
+- **If the Background panel is folded, expand it first** (it ships open; folded, the
+  tab bar isn't in the DOM — KB §5).
+- Switch background tabs: `Colors`, `Images`, `Videos`, `Cameras`, `Webs`, `Audios`.
 - Selecting a color/image/video updates the mini screen preview (handle the contrast
   confirm; **restore the original background after**).
 - `Audios` playback toggles `.app-on-screen`; toggling the split off while playing pops
   a toast.
-- `Web` tab `+` opens the **Web Editor popup** (S12).
+- `Webs` tab: 🖱️R the list → **New File**; that file's 🖱️R → **Edit** opens the **Web Editor popup** (S12).
 - Right-click background items → context menu.
 
-### S7 — Screen controlling & presenting `[PR-04..07, SP-01..22, SC-01..08]` — **MANDATORY, every run**
+### S7 — Screen controlling & presenting `[PR-04..07, SP-01..32, SC-01..08]` — **MANDATORY, every run**
 
 This is the app's core flow and runs in **every** session, whatever the focus area
 (SKILL.md §6a). Everything here is self-restoring — end with the screen hidden (unless
@@ -133,7 +135,7 @@ it started showing) and all changed state restored.
   is locked" toast; unlock restores (SP-03).
 - Screen-id badge + color note round-trip (SP-04); display-choosing context menu lists
   every display, `*` on current — re-select current as a safe no-op (SP-05).
-- Transitions `Tr: Slide:/Background:` — pick a different effect (none/fade/move/zoom),
+- Transitions `Tr: Slide:/Background:/Foreground:` — pick a different effect (none/fade/move/zoom),
   present, observe, restore (SP-06). Stage number `St:` menu round-trip (SP-07).
 - With a video background live: `bi-soundwave` toggles the audio-handler rows; play/
   pause syncs the bg video; repeat toggle flips; off-while-playing pops a toast
@@ -152,14 +154,14 @@ it started showing) and all changed state restored.
 saying the display is in live use — is excluded. In that case skip the show step,
 assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 
-### S8 — Settings `[ST-01..51]`
+### S8 — Settings `[ST-01..78]`
 - Open settings via the **gear button** (it opens a **popup window**); then `list_pages` →
   `select_page` the new `setting.html` target. Do **not** `navigate_page` the main window to
   `setting.html` (popup trap — see [knowledge-base.md](./knowledge-base.md) §2–§3).
-  Title matches `/Settings/`.
+  Title matches `/Setting/`.
 - `General` + `Apply Settings` visible and clickable. (`Set Default Data` from older builds is
   gone — the current General tab has `Reset All Child Directories` /
-  `Clear All Settings`; the `Khmer`/`English` language toggle lives here too.
+  `Clear All Settings`; the `English`/`Khmer`/`French` language buttons live here too.
   `Reset Widgets Size` is **not** here any more — it is a native View-menu entry,
   covered by NAV-20/NAV-21, so "Other General Options" must show a single button.)
 - Full coverage: theme + font pickers (restore after); destructive resets → confirm
@@ -182,8 +184,8 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   `press_key F6` + `includeSnapshot` → exactly ONE `alert` (*Screen Manager is locked*), not
   one per layer → `hover` it (holds it open) → `press_key F6` + `includeSnapshot` → TWO
   `alert`s **stacked**, oldest on top; `Close` on one removes only that one; moving the
-  mouse off lets the held one go ~2 s later; the container unmounts once the last toast is
-  gone → **Unlock**. Screenshot the stack. The 5-toast cap has no cheap organic trigger
+  mouse off lets the held one go ~2 s later; no `alert` is left once the last toast is
+  gone (the `.app-toast-stack` container itself stays mounted) → **Unlock**. Screenshot the stack. The 5-toast cap has no cheap organic trigger
   (five refusals ≥1 s apart, each hovered) — mark it PARTIAL unless done. See ui-map
   "Toasts". ⚠️ A toast lives **4 s**, so the `hover` must be the very next tool call after
   the press with nothing else in that turn; when the session is slower than that (three
@@ -195,8 +197,8 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - No clipped/overflowing text, overlapping controls, or broken images in screenshots.
 - Optional: performance trace around a heavy action (document load) — flag long tasks.
 
-### S10 — Slide / Doc Editor deep-dive `[ED-01..46]`
-- Select an Open-Worship document, enter the editor (header tab or double-click).
+### S10 — Slide / Doc Editor deep-dive `[ED-01..54]`
+- Select an Open-Worship document, enter the editor (header tab).
 - Slide list: select / duplicate via context menu / delete the duplicate / drag-reorder.
 - Canvas: select a box, drag-move, resize by handle, `Shift`/`Ctrl` multi-select.
 - Double-click a text box → edit mode → type → click away → text persists; `Ctrl+S`
@@ -206,7 +208,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Tools: add a new box / drag a tool onto the canvas — then delete the added item.
 - Bottom Background panel behaves as in S6.
 
-### S11 — Bible Reader deep-dive `[RD-01..112]`
+### S11 — Bible Reader deep-dive `[RD-01..121]`
 - Incremental picker: char-by-char book → chapter → verse; `Tab` completes, `Escape`
   removes the last chunk, `Shift+Escape` clears the whole input; extra buttons mirror the keys.
 - Full ref `John 3:16` **does** resolve here — and in the modal; both share
@@ -235,7 +237,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - **Find bar** (`Ctrl/Cmd+F` or Edit → Find): query, `<current>/<total>` counter, prev/next (`Enter` / `Shift+Enter`), `Aa` case toggle, grip drag on the x axis, `Esc` to close. It is a `WebContentsView` PINNED into the searched window, so its own `finder.html` target has a 452×40 viewport and a probe string that exists only in its query box must report `0/0`.
 - **Lyric Editor** (from S3): edit → `Ctrl+S` → **restore the original text**.
 - **Bible Note** (from S4 Notes): type in `#bible-note-root`, save, restore.
-- **Web Editor** (from S6 `+`): URL + title → save → item appears → delete it (cleanup).
+- **Web Editor** (from S6 **Edit**): the scratch file's HTML in a code editor beside its previewer; it writes as you type, no save → remove the scratch file (cleanup).
 - **About**: version renders; don't follow external links (EX-04).
 
 ### S13 — Drag/drop, resizers & responsive `[GL-12..13, PM-25, ED-04/09]`
@@ -244,7 +246,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - `resize_page` to a small (~1024×700) and large size: right column flips layout,
   nothing overlaps.
 
-### S14 — Keyboard matrix `[KB-01..60]`
+### S14 — Keyboard matrix `[KB-01..65]`
 - Run every row of the KB table in the matrix explicitly (many will already be PASS from
   earlier scenarios — just fill in the gaps).
 
@@ -318,7 +320,7 @@ before continuing.
 1. **MD-01 video** — Background → **Videos** → 🖱️R the empty list area → **Download From
    URL** → fill the link → **Ok**. Watch the progress bar; then assert a new file in the
    videos dir and its thumbnail in the tab. This covers the ffmpeg **merge** path.
-2. **MD-02 audio** — Background → **♫Audios♫** → same menu; confirm the popup says
+2. **MD-02 audio** — Background → **Audios** → same menu; confirm the popup says
    **Audio URL:** → **Ok**. Assert an **`.mp3`** lands in the audios dir. This is the only
    check of the ffmpeg **mp3 encoder** (`-x --audio-format mp3` → `libmp3lame`).
 3. **MD-03** — reopen the popup, enter a non-`http` string → **Ok** → toast "Invalid URL",
@@ -378,7 +380,7 @@ Documents-list rows outside deep-mode scope, and `GL-24` is the app-wide `⋮` b
    PL-62, PL-86..88]`
 4. **P3 actions** — the four-level **Add Action** menu (**Clear Screen** ▸ **Other Clear FG
    Items**);
-   **fire all 13 clear actions against a showing screen**; the two `Screen: Show` /
+   **fire all 17 clear actions against a showing screen**; the two `Screen: Show` /
    `Screen: Hide` lines, which ask WHICH SCREENS before they are added and then run on
    those and no others; then the 5 run actions and their menus, which must offer no screen
    family; and `Slide: Media Control`, which is reached from a SLIDE row's menu rather than
@@ -427,7 +429,7 @@ the wrong thing in front of a congregation. A stale label or an untranslated str
 - Bible key not downloaded → `BibleNotAvailableComp` renders instead of a crash.
 - Empty find query / no find results → sane empty state, no console errors.
 
-### S17 — Context-menu items `[CM-01..99]`
+### S17 — Context-menu items `[CM-01..101]`
 - For each host that opens a right-click menu (document / lyric / bible / background / note
   items, slide thumbnails, editor slide list, mini-screen previewer card, display / stage /
   transition controls, generic file lists), 🖱️R to open it and assert the item set via
@@ -491,8 +493,9 @@ document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
       (**XW-09**). Do the same with the Documents list widget hidden — propagation must not
       depend on a mounted list.
    4. `cp` a second scratch file in, then delete both → the list must add and drop the rows on
-      its own (**XW-10**). ⚠️ **Known FAIL on refactor28** — a deleted file stays listed even
-      through the list menu's **Reload**; check the matrix row before filing it as new.
+      its own (**XW-10**). **Was a known FAIL on refactor28** (fixed in code since; XW-10 was re-verified
+      live as passing on 2026-08-13) — a deleted file that stays listed even
+      through the list menu's **Reload** is a regression; check the matrix row before filing it.
    5. **Teardown:** `rm -rf` both scratch `.owl`s and the `.histories` dir, re-select the
       document that was selected before, and re-hide any widget you revealed.
    Also exercise the header's **⋮ → Reload** (**PM-127**) *after* the assertions above — it is a
@@ -558,13 +561,13 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 - Fixture: `zz-robot-<runid>` · torn down: <yes / what was left behind and why>
 - Phases: P0 <status> · P1 <status> · P2 <status> · P3 <status> · P4 <status> ·
   P5 <status> · P6 <status> · P7 <status> · P8 <status> · P9 <status> · P10 <status>
-- Screen actions fired against a SHOWING screen: <n>/13 (PL-72/74)
+- Screen actions fired against a SHOWING screen: <n>/17 (PL-72/74)
 - Folded-sheet walk (PL-99): <lines visited> / <lines in sheet>, stepped over: <the parked ones>
 - Performance (PL-63/70): <the numbers — update-depth errors, idle `.owpf` reads, row-click repaints>
 
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 761 − EXCLUDED (or 69 − EXCLUDED in presentingFlow deep mode — see its scope set)
+- Matrix version: <date> · rows total: <the matrix's §Row counts total> − EXCLUDED (or 69 − EXCLUDED in presentingFlow deep mode — see its scope set)
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

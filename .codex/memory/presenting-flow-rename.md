@@ -32,10 +32,13 @@ false of the translations, and an English-only grep cannot see the difference. S
 **One survivor is NOT the subsystem and must never be renamed:**
 
 - `--no-playlist` in [src/server/appHelpers.ts](../../src/server/appHelpers.ts)
-  (line 301, plus assertions in `appHelpers.test.tsx:531,597`) — yt-dlp's own
+  (plus assertions in `appHelpers.test.tsx`) — yt-dlp's own
   CLI flag. Renaming it breaks every media download
-  ([[owa-robot-test-presenting-flow-mode]] rows `MD-01..04`). It is now the ONLY
-  `playlist` hit in src/+electron/, so a rename sweep is trivially verifiable.
+  ([[owa-robot-test-presenting-flow-mode]] rows `MD-01..04`). It is no longer the only
+  `playlist` hit in src/+electron/: HLS's own playlists (`electron/hlsSegmenter.ts`,
+  `electron/virtualDisplayService.ts`) are a format's word like this flag, and
+  `RUN_SHEET_PATTERN` (`src/chatbot/helpBotHelpers.ts`) matches the word as one a user may type —
+  kept on purpose (the user's decision, 2026-10-11): it is a volunteer's vocabulary, not a name in the app.
 - (The second lookalike, `displayListeners` — the letters `playList` inside
   `di-splayList-eners` — lived in `src/_screen/preview/preview.runtime.test.tsx`,
   which has since been deleted.)
@@ -59,6 +62,6 @@ lookalike, or by reintroducing the old word "just for the migration".
 first. If the migration ever needs extending, extend the discovery, not a
 hard-coded name. Its test (`presentingFlowRenameMigration.test.ts`) was deleted
 in the 2026-08-24 test prune (47053c9d); the migration itself is intact
-(`src/helper/presentingFlowRenameMigration.ts`, claimed in `src/boot.ts:48-51`).
+(`src/helper/presentingFlowRenameMigration.ts`, claimed in `initPresentingFlowRenameMigration`, `src/boot.ts`).
 See [[presenting-flow-drag-and-settings-rules]] for the setting-name sanitizing
 rules the key rewrite depends on.

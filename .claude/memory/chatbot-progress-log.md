@@ -21,7 +21,7 @@ question nobody had asked out loud: *is it doing what I meant?* — a step readi
 **How to apply:**
 
 - A step's words are **hand-written per tool** in `describeToolStep`, never
-  derived from the tool name. All 29 model-visible tools are mapped; an unmapped
+  derived from the tool name. All 29 model-visible tools were mapped on 2026-09-04; an unmapped
   one falls back to `Looking something up`. A test fails on an underscore
   reaching the line — printing the tool name is the cheap implementation and it
   breaks the window's one rule (see [[knowledge-label-i18n-templates]] for the

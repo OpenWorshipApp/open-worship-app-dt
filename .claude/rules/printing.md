@@ -18,7 +18,8 @@ paths:
   `document.fonts.ready` before `printToPDF`, or glyphs rasterize as fallback.
 - Layout: one slide per PDF page, page size == slide px size via
   `@page page-WxH { size: Wpx Hpx; margin: 0 }` + the inline style
-  `breakAfter: 'page'` (`appDocumentPrintHelpers.ts:245`, not a raw CSS rule),
+  `breakAfter: 'page'` (`genSlidePageHtml` in
+  `appDocumentPrintHelpers.ts`, not a raw CSS rule),
   with `preferCSSPageSize: true`. Slides render UNSCALED.
 - **If slide HTML ever needs scaling for print, use CSS `zoom`, not
   `transform: scale()`.** Transform only scales painting; the element keeps its

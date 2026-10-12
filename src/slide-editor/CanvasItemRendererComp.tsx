@@ -1,13 +1,13 @@
 import { BoxEditorNormalImageRenderComp } from './canvas/box/BoxEditorNormalViewImageModeComp';
 import { BoxEditorNormalHtmlRenderComp } from './canvas/box/BoxEditorNormalViewHtmlModeComp';
-import { BoxEditorNormalTextRender } from './canvas/box/BoxEditorNormalViewTextModeComp';
-import { BoxEditorNormalBibleRender } from './canvas/box/BoxEditorNormalViewBibleModeComp';
+import { BoxEditorNormalTextRenderComp } from './canvas/box/BoxEditorNormalViewTextModeComp';
+import { BoxEditorNormalBibleRenderComp } from './canvas/box/BoxEditorNormalViewBibleModeComp';
 import { useCanvasItemContext } from './canvas/CanvasItem';
-import { BoxEditorNormalVideoRender } from './canvas/box/BoxEditorNormalViewVideoModeComp';
-import { BoxEditorNormalAudioRender } from './canvas/box/BoxEditorNormalViewAudioModeComp';
-import { BoxEditorNormalYouTubeRender } from './canvas/box/BoxEditorNormalViewYouTubeModeComp';
-import { BoxEditorNormalWebsiteRender } from './canvas/box/BoxEditorNormalViewWebsiteModeComp';
-import { BoxEditorNormalCameraRender } from './canvas/box/BoxEditorNormalViewCameraModeComp';
+import { BoxEditorNormalVideoRenderComp } from './canvas/box/BoxEditorNormalViewVideoModeComp';
+import { BoxEditorNormalAudioRenderComp } from './canvas/box/BoxEditorNormalViewAudioModeComp';
+import { BoxEditorNormalYouTubeRenderComp } from './canvas/box/BoxEditorNormalViewYouTubeModeComp';
+import { BoxEditorNormalWebsiteRenderComp } from './canvas/box/BoxEditorNormalViewWebsiteModeComp';
+import { BoxEditorNormalCameraRenderComp } from './canvas/box/BoxEditorNormalViewCameraModeComp';
 
 export default function CanvasItemRendererComp() {
     const canvasItem = useCanvasItemContext();
@@ -15,21 +15,21 @@ export default function CanvasItemRendererComp() {
         case 'image':
             return <BoxEditorNormalImageRenderComp />;
         case 'video':
-            return <BoxEditorNormalVideoRender />;
+            return <BoxEditorNormalVideoRenderComp />;
         case 'audio':
-            return <BoxEditorNormalAudioRender />;
+            return <BoxEditorNormalAudioRenderComp />;
         case 'youtube':
-            return <BoxEditorNormalYouTubeRender />;
+            return <BoxEditorNormalYouTubeRenderComp />;
         case 'website':
-            return <BoxEditorNormalWebsiteRender />;
+            return <BoxEditorNormalWebsiteRenderComp />;
         case 'camera':
-            return <BoxEditorNormalCameraRender />;
+            return <BoxEditorNormalCameraRenderComp />;
         case 'text':
-            return <BoxEditorNormalTextRender />;
+            return <BoxEditorNormalTextRenderComp />;
         case 'html':
             return <BoxEditorNormalHtmlRenderComp />;
         case 'bible':
-            return <BoxEditorNormalBibleRender />;
+            return <BoxEditorNormalBibleRenderComp />;
     }
     return null;
 }

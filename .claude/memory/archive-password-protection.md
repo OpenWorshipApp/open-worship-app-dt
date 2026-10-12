@@ -8,7 +8,7 @@ metadata:
   modified: 2026-08-10T17:40:33.438Z
 ---
 
-Every export (`.owadata.tar`, `.owadoc/.owapf/.owbible/.owabn/.owabdata.tar.gz`) asks for
+Every export (`.owadata.tar`, `.owadoc/.owapf/.owbible/.owanote/.owabn/.owabdata/.owasetting.tar.gz`) asks for
 an optional password first. Empty is the default answer and writes byte-for-byte the bundle
 that was always written; a password wraps that finished file whole in an `OWAENC`
 container (`electron/archiveCryptoHelpers.ts`) and writes `<name>.<kind>.enc` instead.
@@ -26,7 +26,7 @@ someone's disk still imports and an unprotected export is unchanged. Added 2026-
   mail client still opens, and a plain one renamed to `.enc` is never prompted for.
   Extensions route; the header decides.
 - **The dialog is loaded on demand.** `src/popup-widget/ArchivePasswordComp.tsx` reaches
-  React and `tran` (and through `tran` the whole language pack); the five archive modules
+  React and `tran` (and through `tran` the whole language pack); the archive modules
   import only `src/helper/archivePasswordHelpers.ts`, which `import()`s it at call time.
   A static edge here dragged the note editor's dependencies into the bible-note bundle
   helper and blew the test worker's heap.
@@ -77,7 +77,7 @@ data with no dictionary entry, and `tran()` THROWS on a missing key in dev. A
   "unpack only `manifest.json`" fast path only survives for plain archives.
   `dataArchiveMenuHelpers.handleImporting` opens it ONCE and passes the plain path to both
   `readDataArchiveManifest` and `importDataArchive` — do not re-introduce a second open.
-- A protected data export writes its plain tar to `<final>.part` BESIDE the destination,
+- A protected data export writes its plain tar to `<final>.plain.part` BESIDE the destination,
   not in `%TEMP%`: this archive has no staging copy by design and can be gigabytes.
 
 Container: 64-byte plaintext header (`OWAENC\0`, version, KDF id, log2N/r/p, salt, IV,

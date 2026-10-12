@@ -30,9 +30,10 @@ driven by a Claude session on that machine over Remote Control.
 - **A pending request shows only inside the panel**: the Mini Screen header lists
   approved guests alone. Reach the panel through the Mini Screen list's bottom ⋮
   (`aria-haspopup="menu"`; a twin `More Options` sits on the card).
-- **The guest's output opens in front of the guest's own window**
-  (`moveTop` + `focus` after load) but not above other applications: Windows will
-  not hand focus to a window opened from a network message.
+- **The guest's output opens in front** (after load: `setAlwaysOnTop(true)` →
+  `moveTop` → `setAlwaysOnTop(false)` → `focus`, since 2026-10-05): `moveTop` alone
+  lost to another app's focused window under Windows' foreground lock. It is not
+  pinned there: a click on the main window still brings that forward.
 - `release/mirror-check/launch*.cjs` harness instances from an earlier session ran
   pre-change code (hosting on) and ignored a polite `taskkill`; stop them by their
   own pid with `/F /T`, never by image name ([[dont-taskkill-all-electron]]).

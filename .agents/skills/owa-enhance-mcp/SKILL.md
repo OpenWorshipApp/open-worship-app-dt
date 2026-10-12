@@ -72,7 +72,7 @@ Breaking one of these is a regression even when the feature works.
    the change is wrong.
 3. **A tool that acts must announce itself** — `ACTING_TOOLS` in `notify.mjs`,
    or it changes the operator's window with no banner. `audit-mcp-tools.mjs`
-   fails you on this.
+   warns you about this.
 4. **A tool that acts must be in `firewall.mjs`'s `ACTING_TOOL_SET`** too, or
    it is outside the rate limit and a loop can hammer a live service with it.
    The two lists are deliberately separate — one decides what to SAY, one what
@@ -217,12 +217,12 @@ schema instead — that is exactly why `owa_app_state`, `owa_list_ui` and
 
 ### B. Performance — the bill the chatbot pays every round
 
-`llmBotHelpers.ts` sends every tool `tools/list` returns to the model on EVERY
-round of the loop (`MAX_TOOL_ROUNDS` 10). Read
+`llmBotHelpers.ts` sends every tool `modelTools.mjs` does not withhold to the
+model on EVERY round of the loop (`MAX_TOOL_ROUNDS` 10). Read
 [references/tool-budget.md](./references/tool-budget.md) for the measurements
 and the levers. In order of size:
 
-1. **Fewer tools.** 29 of them are chrome-devtools'. Each one removed is its
+1. **Fewer tools.** None of chrome-devtools' reach the model now (§D). Each one removed is its
    whole schema off every round of every question.
 2. **Shorter schemas.** Description length is the model's reading cost and
    yours; say what the tool is FOR and when to reach for it, not how it works.
@@ -256,7 +256,7 @@ server. What makes it good for them:
 
 ### D. The chatbot's door — a volunteer, mid-service
 
-- **A tool description has two readers**: a model choosing between 44 of them,
+- **A tool description has two readers**: a model choosing between 26 of them,
   and — through what the model then says — a volunteer about to be acted upon.
 - **Labels are i18n templates.** The knowledge is English, the buttons are not:
   `[en:tran:Clear Bible]` is filled in with what that key reads as in the

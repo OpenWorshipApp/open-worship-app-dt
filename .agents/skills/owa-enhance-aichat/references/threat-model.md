@@ -125,7 +125,7 @@ with a frozen decoy holding an empty `env`. The page draws a tab strip, a
 chooser and a head row; it opens links with a plain `window.open`, which
 the popup handler sends to the system browser. Its production CSP
 (`html/aichat.html`, prod-only markers) allows `frame-src https:` so the
-guest element can exist and `connect-src 'self'` only — the host talks to
+guest element can exist and `connect-src 'self' data: blob:` only — the host talks to
 nobody; the guest does its own talking on its own session.
 
 Measured on the host: `typeof require === 'undefined'`; at most three

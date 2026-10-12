@@ -27,7 +27,7 @@ You do not need a link, and you do not need an AI key: this runs on buttons.
    your own way: `I want a Khmer bible`, `Do you have a Korean bible?` and a country —
    `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
    import a Bible, the answer has an **Import a Bible for me** button that starts
-   here.) Answer the _Be careful with AI_ question with **Open**. 📸
+   here.) Answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
 2. The assistant opens in a new tab and asks **Which language do you want the Bible
    in?** Press **Khmer**, **English** or **French**, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
@@ -35,8 +35,7 @@ You do not need a link, and you do not need an AI key: this runs on buttons.
    (`kmer`) is answered with **Did you mean** and the nearest languages to press.
 3. It lists **every** Bible in that language from a free collection of about a
    thousand (Beblia, on GitHub), each with the title its own file gives — for Khmer,
-   seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer 2023
-   (ព្រះគម្ពីរខ្មែរសាកល)_. One you have installed is marked **you already have this
+   seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)_. One you have installed is marked **you already have this
    one**, with its short name. Press the one you want, or type its number. 📸
 4. It downloads and reads it, then says what it is — for example _66 books, 1,189
    chapters, 31,102 verses_, or _It has the New Testament only_ — and, when it is one
@@ -94,11 +93,11 @@ lead to a Bible, the link can be pasted on its own.
 7. Press **[en:tran:Import]** in the review. The new translation appears in
    **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
 
-Later changes remain available through the translation's pencil → **Info** editor:
-**🌎 Choose Locale**, then **#️⃣ Edit Numbers Map**, then **📚 Edit Books Map**.
+Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
+**🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
 Those editor actions use the locale currently in the editor buffer; save after editing.
 
-**Key is already taken**
+**[en:tran:Key is already taken]**
 
 If it says the Bible key is already taken, choose a different unused key in the review.
 The installed translation is kept. Import does not replace it, even if another window
@@ -106,24 +105,24 @@ installed that key while you were choosing mappings. Cancel if you meant to edit
 existing Bible, then use its pencil instead.
 
 > **Removing one.** The 🗑 next to a translation asks _Are you sure to delete bible XML
-> "…"?_ — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
+> "…"?_ — **[en:tran:Yes]** sends the file to the Recycle Bin. Its badge disappears from every bible
 > menu. The sibling `…​.xml.cache` folder is removed too, so stale parsed data cannot
 > reappear if the same key is imported later.
 
 > **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
 > orange ↺ button, **[en:tran:Reset Bible XML]**, to the LEFT of the ✏️ pencil.
 > It asks _Reset this bible XML with the app embedded KJV? All your changes will be
-> lost._ — **Yes** throws away the KJV file you have and writes the copy that ships inside
-> the app (the same copy the **Create KJV Bible XML** row below writes),
+> lost._ — **[en:tran:Yes]** throws away the KJV file you have and writes the copy that ships inside
+> the app (the same copy the **[en:tran:Create KJV Bible XML]** row below writes),
 > then reloads the windows. Use it when your KJV has been edited into a state you no longer
 > want, or looks broken; there is no undo, so export it first (W-33) if you want it back.
 > If the KJV editor is open with unsaved changes the button refuses and warns
-> **Unsaved Bible Data** — save or discard first.
+> **[en:tran:Unsaved Bible Data]** — save or discard first.
 >
 > **Deleted it by mistake?** The KJV is the one translation the app carries inside
 > itself, so it can always be rebuilt. Whenever your list has no **KJV**, a green
 > **[en:tran:Create KJV Bible XML]** row sits at the TOP
-> of the **Bibles XML** list, above the translations — not only on a brand-new install
+> of the **[en:tran:Bibles XML]** list, above the translations — not only on a brand-new install
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
 > because there is nothing left to create.
 

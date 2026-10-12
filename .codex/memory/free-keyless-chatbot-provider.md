@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-The chatbot has a fourth provider, `Free`, that needs no API key: **Kilo Code**
+The chatbot has a provider, `Free`, that needs no API key: **Kilo Code**
 (`api.kilo.ai/api/gateway`), keyless and speaking OpenAI's protocol, so it
 rides the existing `askOpenAiCompatible` loop. Added 2026-09-01 with LLM7
 (`api.llm7.io`) as the default; **LLM7 was dropped 2026-09-12** when its
@@ -20,11 +20,11 @@ cannot converse, look at the app, or walk anyone through anything.
 **How to apply:**
 
 - The mechanism is `keyField` being UNSET on `LLM_PROVIDER_MAP.free`. Unset
-  means always-available; the map's ORDER puts it last, so a real key still
+  means always-available (`custom`, keyless too, is told apart by its `kind`); the map's ORDER puts it last, so a real key still
   wins and a keyless install lands on it by itself. Do not "fix" that into a
   flag or a default.
 - **Free catalogues churn inside weeks.** Before listing a model, drive it
-  through the REAL loop (the ~21 model-visible tools, read-only tools against
+  through the REAL loop (the model-visible tools, read-only tools against
   the live app, six rounds) on several corpus questions — a one-tool ping
   passes models that then return empty answers under the full schema. The
   2026-09-12 list: Nemotron Lightning 7/7 (first), Nex Pro 7/7, Step Flash 6/7

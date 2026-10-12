@@ -47,6 +47,7 @@ const REAL_LOCAL_KEY_LEAF_MAP: Record<string, string> = {
     'model-bible-info': 'bible.view',
     'show-ai-bible-ref': 'bible.view',
     'screen-bible--style-text': 'bible.screenStyle',
+    'screen-bible--style-presets': 'bible.screenStyle',
     'bible-custom-style-floating': 'bible.screenStyle',
     'bible-note-bible-key': 'bible.notes',
     'excalidraw-libraries': 'bible.notes',

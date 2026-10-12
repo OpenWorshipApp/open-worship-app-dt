@@ -21,8 +21,8 @@ differs from [[foreground-blend-mode-stacking]], and the difference is not a
 choice — it is forced by how a slide is scaled:
 
 - On the projector, `ScreenVaryAppDocumentManager.render` mounts the slide in
-  `divContainer` (`transform: scale(...) translate(...)`) inside
-  `divHaftScale` (`transform: translate(-50%, -50%)`). **Both transforms make a
+  `divHaftScale` (`transform: translate(-50%, -50%)`) inside
+  `divContainer` (`transform: scale(...) translate(...)`). **Both transforms make a
   stacking context**, so an item can never reach `#background`.
 - The editor canvas (`.slide-canvas-editor`) and every preview scale the same
   way, so they isolate identically. Editor and projector therefore agree.

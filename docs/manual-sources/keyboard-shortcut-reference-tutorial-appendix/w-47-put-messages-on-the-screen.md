@@ -42,7 +42,8 @@ slides — a parking notice, an offering notice, a call for the next speaker.
    **[en:tran:Text Shadow]** of **[en:tran:Outline]** when the message has to be
    read over a busy photograph or a moving video. Changing any of them while
    messages are showing restyles them where they stand and keeps them stacked. 📸
-7. **F4** is the shortcut: with a screen ticked it puts the session up, and
+7. **F4** is the shortcut while the **[en:tran:Messages]** panel is open: with a
+   screen ticked it puts the session up, and
    pressing it again takes everything down. If no screen is ticked it tells you
    so rather than guessing.
 8. The text is plain. Typing `<b>loud</b>` puts those angle brackets on the

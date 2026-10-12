@@ -29,7 +29,7 @@ canvases and no attachment slide); every slide card carries `aria-label`
 (`toSlideAccessibleName`, one function for the DOM and the field's `find`);
 `owa_click "Slide 5: …"` PRESENTS that slide; `/selected`, `/next`,
 `/previous` do it with no model; the offline bot answers from the field.
-The Anthropic loop has `ANTHROPIC_MAX_TOKENS` 6 000 + `effort: "low"` and an
+The Anthropic loop has `ANTHROPIC_MAX_TOKENS` 6 000, the effort left at the provider's default, and an
 honest "ran out of room" fallback. `EC-128`, `EC-129` in the chatbot
 backlog; `EC-130`–`EC-135` filed.
 
@@ -45,5 +45,5 @@ the next slide*, and follows the confirmation through. The driver
 (`ask-corpus.mjs` in [[chatbot-cdp-driver-gotchas]]) records each round's
 content block types — read them whenever an answer is the fallback sentence.
 A control an agent must press needs an accessible name the state hands over
-verbatim. The run sheet is the next field of this shape (`EC-132`). Related:
+verbatim. The run sheet has since become one (`runSheet`, `EC-132`). Related:
 [[click-reports-effect-not-action]], [[mcp-model-hidden-tools]].

@@ -146,7 +146,7 @@ function attachHoverPreview(frame: HTMLElement, url: string) {
 
 /**
  * A website canvas item ships as a STATIC screenshot placeholder
- * (`BoxEditorNormalWebsiteRender`). The editor canvas, the tool item list,
+ * (`BoxEditorNormalWebsiteRenderComp`). The editor canvas, the tool item list,
  * slide thumbnails and print never load a live page: an iframe keeps that
  * page's scripts, timers and media running for as long as it is in the DOM, and
  * a document full of website slides would run all of them at once.

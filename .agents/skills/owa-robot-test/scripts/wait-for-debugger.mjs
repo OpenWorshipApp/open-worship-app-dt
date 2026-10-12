@@ -44,7 +44,7 @@ import {
 // Written by `prod-app.mjs launch`; read when `--prod` is asked for.
 const PROD_RECORD_FILE_PATH = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
-    '../../../../test-results/robot-test/prod-app.json',
+    '../../../../release/.robot-test/prod-app.json',
 );
 
 const args = Object.fromEntries(

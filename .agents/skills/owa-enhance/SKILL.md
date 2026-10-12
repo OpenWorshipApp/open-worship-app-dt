@@ -17,7 +17,7 @@ Research-first improvement of the WHOLE Open Worship App — find what is most w
 
 # OWA Enhance — find the improvement worth the most, prove it, then ask
 
-The app-wide sibling of the three `owa-enhance-*` skills. Each of those owns one
+The app-wide sibling of the four `owa-enhance-*` skills. Each of those owns one
 subsystem and changes it; this one looks across **the whole app**, finds where
 an improvement is worth the most, and hands the decision back before a single
 file moves. Asked for on 2026-09-14 in so many words: *research (planning
@@ -217,7 +217,7 @@ decide, I will start on the obvious one".
    fails before the change and passes after it.
 4. **Implement** under CLAUDE.md: performance first; `Comp` names; a
    per-instance `genTimeoutAttempt(500)` on a multi-instance event hook; every
-   new label a `tran()` key with its Khmer string; no app-module `import()` from
+   new label a `tran()` key with its Khmer and French strings; no app-module `import()` from
    an injected page expression.
 5. **Prove it live** with the finding's *Proof on apply*: the report's baseline
    measurement re-taken the same way, a screenshot, the reproduced failure no
@@ -227,8 +227,9 @@ decide, I will start on the obvious one".
    code — it is `&&`-chained, so the first failure hides every stage after it.
    It only checks (`EN-16`): nothing is reformatted and nothing is built into
    `electron-build/`, so it is safe beside a running app and another session's
-   uncommitted work. A `lint:pre` failure means `npm run format` — over your
-   own files only when the tree holds someone else's (`MC-29`).
+   uncommitted work. A `lint:pre` failure means `npx prettier --write` on your
+   own files — not `npm run format`, which lacks `lint:pre`'s `--end-of-line auto` and
+   rewrites the line endings of the whole CRLF checkout (`MC-29`).
 7. **Paper trail, in the same change:** the backlog (`done` with before → after
    and the proof; every finding of the report NOT applied filed `open`); for
    behaviour a user sees, `user-workflows.md` and `coverage-matrix.md` with

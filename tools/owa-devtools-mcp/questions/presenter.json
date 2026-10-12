@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-09",
+    "updated": "2026-10-11",
     "sections": [
         {
             "id": "orientation",
@@ -1202,15 +1202,52 @@
                     "kind": "howto",
                     "keywords": [
                         "font size",
-                        "appearance",
+                        "bible properties",
                         "readable",
                         "too small",
                         "bigger",
-                        "colour"
+                        "smaller"
                     ],
                     "resources": {
                         "recipe": "W-07",
-                        "find": "Bibles",
+                        "find": "Font Size",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-color",
+                    "text": "How do I change the Bible text color?",
+                    "kind": "howto",
+                    "keywords": [
+                        "change text color",
+                        "bible text color",
+                        "text colour",
+                        "font color",
+                        "white words",
+                        "black words",
+                        "bible properties"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Text Color",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-dark-light",
+                    "text": "How do I switch the verse text between white and black?",
+                    "kind": "howto",
+                    "keywords": [
+                        "dark background",
+                        "light background",
+                        "white text",
+                        "black text",
+                        "reset white",
+                        "reset black"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Dark",
                         "guide": true
                     }
                 },
@@ -1220,14 +1257,65 @@
                     "kind": "howto",
                     "keywords": [
                         "text shadow",
-                        "outline",
+                        "soft shadow",
                         "hard to read",
                         "contrast",
-                        "background too busy"
+                        "background too busy",
+                        "glow behind the verse"
                     ],
                     "resources": {
                         "recipe": "W-07",
-                        "find": "Bibles",
+                        "find": "Soft Shadow",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-outline",
+                    "text": "How do I put an outline around the verse text?",
+                    "kind": "howto",
+                    "keywords": [
+                        "outline",
+                        "edge the letters",
+                        "border around the words",
+                        "thick outline"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Outline",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-preset",
+                    "text": "How do I save my Bible text style as a preset?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save as preset",
+                        "save the style",
+                        "my own look",
+                        "reuse a style",
+                        "bible text preset"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Save as Preset",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-font",
+                    "text": "How do I change the font of the Bible text on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bible font",
+                        "verse font",
+                        "font of the verse",
+                        "scripture font",
+                        "khmer font for the bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Font Family",
                         "guide": true
                     }
                 },

@@ -19,7 +19,7 @@ cleared on a delete made from the card).
 - Records in the client setting `virtual-displays` (`{nextNumber, list}`; a
   number is NEVER reused — screens remember a display id and QR codes carry the
   number). Display ids are `-500000 - n` (`toVirtualDisplayId`), inside
-  `(-1000000, -500000)`, below every mirror guest range. Never the default
+  `(-1000000, -500000)`, above every mirror guest id (-1000000 and down). Never the default
   display. Max 8.
 - A screen on one is a `VirtualScreenController` (`electron/screenOutputRegistry.ts`
   `getScreenOutput` picks it before an `ElectronScreenController`): no OS window.
@@ -37,8 +37,8 @@ cleared on a delete made from the card).
   admitted viewer (the user turned the internet on and expected it to work —
   2026-10-07) but only the viewer's module graph —
   `checkIsVirtualDisplayDevViewerFile` (two pages, `/@fs/<repo>/src/`,
-  `node_modules/` minus dot-dirs except `.vite/deps`, two `tools/` modules, two
-  protocol files, the Vite client; no `..`, `\`, `?raw`). Measure the graph
+  `node_modules/` minus dot-dirs except `.vite/deps`, `tools/owa-devtools-mcp/*.mjs`, the four
+  `electron/` protocol files `src/` imports, the Vite client; no `..`, `\`, `?raw`). Measure the graph
   again with a resource log if the screen page starts importing elsewhere: the
   first symptom is a 404 in that list, and on a phone just the wallpaper.
   Off this computer `/@vite/client` is answered with a stand-in
@@ -70,7 +70,8 @@ cleared on a delete made from the card).
   fragment per frame; MediaRecorder only cut at keyframes, ~1.1 s), fanned out by
   `electron/fmp4Fanout.ts` holding ONLY the init segment — a joiner asks for a
   keyframe. Created on the first MP4 viewer, destroyed 5 s after the last. A
-  static picture yields ~1 frame a second (capture is damage-driven).
+  static picture is CAPTURED ~once a second (capture is damage-driven); the
+  encoder repeats it every 100 ms ([[cast-to-tv]]).
 - **Sound is stream-only**: `ScreenManagerBase.isOnVirtualDisplay` +
   `checkIsSoundHere` (`src/_screen/screenSoundHelpers.ts`) flip which window
   sounds — the screen page plays it (captured per guest via the display-media

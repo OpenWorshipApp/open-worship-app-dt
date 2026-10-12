@@ -5785,3 +5785,93 @@ start": step 1 opens the panel, after which every card's icon is new at
 once (measured: three fresh twins, refusal). Proven end to end through the
 window the same evening: the smallest model's one-round answer, then the
 card from the menu to the new card's cast icon, `did: clicked`.
+
+## EC-219 · Told its answer was wrong, it said it again — `fixed` 2026-10-11, not yet asked live
+
+Reported with pictures. _change text color_ answered with an **Appearance** card and a verse-number colour the
+app does not have; _I don't see Appearance_ got the same card again and a
+ring on a button shut behind the Bible panel's three dots. Four causes, four
+changes: the page was six weeks stale and is rewritten (W-07, the dots as its
+step 1); the corpus gained the rows that carry it (`verse-color`,
+`verse-dark-light`, `verse-outline`, `verse-preset`; _change text color_ is a
+keyword phrase now); `owa_find_ui` reports `revealBy` for a control behind
+three dots and its ring holds that footer open; and the prompt has a rule for
+"that is wrong / I cannot see it" — find it, ask for a picture of the window,
+then read the page's newest copy from the project's repository
+(`genFreshPageUrl`). **Proof so far:** `owa_help_search` puts the rewritten
+page first for the reported words, and unit tests hold the prompt rule, the
+address and the matcher. **Not done:** the same two questions asked in the
+window on both providers — the caution is a person's press and the credit is
+theirs. **Open:** the reads are the model's choice; a window-side trigger on a
+complaint (pre-reading the fresh page the way a known question's page is
+pre-read) would make it certain.
+
+## EC-220 · A complaint reads the newest guide page before the model is asked — `fixed` 2026-10-11, not yet asked live
+
+EC-219 left the read of a page's newest copy to the model, and the user asked
+for it to be certain: _make the repo fallback automatic on a complaint rather
+than the model's choice_. `src/chatbot/disputeHelpers.ts`: a short message in
+the shape of a dispute, under an answer whose walkthrough button names a guide
+page, has that page read off the project's repository by the WINDOW —
+`owa_help_page` for the address, `owa_read_website` for the page — and put
+under the ask with a hint to compare the two before answering. No tool, no
+schema and no firewall rule was added: the read is the existing network tool's,
+with its address check, budget and banner. **Proof so far:** 33 unit tests
+(what counts as a dispute and what does not, the address taken only in the
+repository's own shape, a failed read becoming a sentence and never an error),
+typecheck, the gate. **Not done:** asked in the window with an assistant — the
+caution is a person's press and the credit is theirs; and the newest copy is
+only newer once `docs:gen`'s pages are pushed to `main`. **Cost when it
+fires:** one web read (of ten per five minutes) and the page under the ask,
+about 1 500 tokens for an ordinary recipe.
+
+## EC-221 · Five things the notes said and the code did not do — `fixed` 2026-10-11, unit-tested
+
+Found by reading every note against the code (the agent-docs run
+`20261011-2330`), each a recorded rule the code had drifted from. **(1)
+`owa_help_page` answered `genFreshPageUrl is not defined` for every page** in a
+freshly started server: EC-219 added the call and not the import, and nothing
+lints `tools/` — `undeclaredNames.test.mjs` now fails on any name an MCP module
+uses without declaring or importing it. **(2) The waiting line had no phrase
+for `owa_presenting_flow`** ("adding a tool means adding a phrase"); it has
+eleven. **(3) The row under the ask box printed a tool's own error text**
+(`I could not do that: <message>`), against "a tool's error text may never
+reach the user"; `describeAttachError` says a plain sentence and logs the
+reason. **(4) `needsPage` was cleared only for `owa_goto_page {page:
+"presenter"}`**, a value the tool refuses, so a real crossing kept the *Go to
+the Presenter* offer; `presenter.html` clears it. **(5) `detectRecipeWindow`
+read a recipe's whole first step**, so the AI Chat recipe — which mentions
+Settings two sentences on — was walked in Settings; it reads the first
+sentence, as `dropStepsAlreadyDone` does. **Not driven live:** a fresh MCP
+server is needed for 1 and 5, and the assistant for 2 to 4.
+
+## EC-222 · The read of a page's newest copy had never worked, and could bring back an older page — `fixed` 2026-10-11, driven live below the window
+
+EC-220 was proven by unit tests fed a made-up result. Run for the first time
+against the real address — the real `readDisputeHint` from
+`src/chatbot/disputeHelpers.ts`, through a scratch dev instance's own MCP door,
+the way `mcpClient.ts` calls it — every read failed, and the hint said the
+page _could not be reached just now_. **(1)** `raw.githubusercontent.com`
+serves every file with a `Content-Security-Policy` of `sandbox`: no script
+runs in the page, the reader's included, and `owa_read_website` answered
+_Script failed to execute_. The loader now reads from an isolated world when
+the page's own refuses (`runReadExpression`, `electron/webPageHelpers.ts`).
+**(2)** The read tool waited 15 s for a read the loader gives 20 s, so a slow
+site answered _Timed out evaluating in_ the app's own page; it waits 35 s
+(`WEBSITE_READ_EVALUATE_TIMEOUT`), and a test holds every caller to it.
+**(3)** With the read working, the copy on `main` was ten days OLDER than the
+built-in one (a tree ahead of `main`) and was handed to the model as _the
+NEWEST copy_ — it would have taken the corrected answer of EC-219 back to the
+wrong one. Both copies say their day now (`workflowsVersion`; `owa_help_page`
+prints the built-in copy's, `manualPage.mjs` reads the other), an older copy
+is not quoted and the model is told the built-in guide is the newest there
+is; the copy that does ride is cleaned like the built-in page (no front
+matter, no robot block, no id heading). **Proof:** before — `owa_read_website
+isError=true`, hint 446 characters, _could not reach it_; after — `isError=
+false`, 1.8 s, and the hint reads _that copy is OLDER than the one built into
+this app_; with the built-in day unknown the same run quoted the page. Unit
+tests for each (an isolated-world read, both worlds refusing, an older, an
+equal and an undated copy, a robot block cut short). **Not done:** the
+window's own wiring — the waiting line, the hint joined to the ask — and a
+model's answer to it; the caution is a person's press and the credit is
+theirs.

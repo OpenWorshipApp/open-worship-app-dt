@@ -14,9 +14,11 @@ workflowsVersion: "2026-10-11"
 
 The Presenter has a header and three resizable columns:
 
-- **Header:** page tabs — **Presenter** / **[en:tran:Bible Reader]** /
-  **[en:tran:Slide Editor]** — the **[en:tran:Bible Lookup]** button
-  (center, `Ctrl+B`), and the **[en:tran:Settings]** gear + Help buttons (right). 📸
+- **Header:** page tabs — **[en:tran:Slide Editor]** / **[en:tran:Bible Reader]** /
+  **[en:tran:Screen Mirror]** (the page you are on has no tab of its own;
+  **[en:tran:Presenter]** is the tab that brings you back from the Slide Editor) — the
+  **[en:tran:Bible Lookup]** button
+  (center, `Ctrl+B`), and the **[en:tran:Setting]** gear + Help buttons (right). 📸
   Left of the gear, the cup is **[en:tran:Stay Awake]**: while it is on — and
   it is, unless you switch it off — this computer does not go to sleep or
   turn its display off for as long as the Presenter is open. Click the cup to
@@ -25,13 +27,13 @@ The Presenter has a header and three resizable columns:
   never hold the computer awake, so they have no cup. A screen that is
   showing keeps the display on by itself, whatever the cup says.
 - **Left column:** your content libraries — the **[en:tran:Documents]** list (songs live
-  here too, marked with a music note) and **Presenting Flows**.
-- **Middle column:** the working area — **Documents / Bibles** preview tabs plus the
-  **Foreground** button on top, and the collapsible **Background** panel at the bottom.
+  here too, marked with a music note) and **[en:tran:Presenting Flows]**.
+- **Middle column:** the working area — **[en:tran:Documents] / [en:tran:Bibles]** preview tabs plus the
+  **[en:tran:Foreground]** button on top, and the collapsible **[en:tran:Background]** panel at the bottom.
   The Documents tab shows whatever kind of file you picked: slides for a slide document,
   pages for a PDF, and the song view for a lyric.
-- **Right column:** **Bibles / Notes** lists and the **mini screen** — a live preview
-  of exactly what the audience sees, with clear buttons and a zoom slider under it.
+- **Right column:** **[en:tran:Bibles] / [en:tran:Bible Notes]** lists and the **mini screen** — a live preview
+  of exactly what the audience sees, with clear buttons in its header and a zoom slider under it.
 
 Drag any divider between panels to resize them; the size is remembered. 📸
 

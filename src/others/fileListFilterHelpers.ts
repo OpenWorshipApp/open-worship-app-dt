@@ -167,7 +167,7 @@ export function toDisplayedFilePaths(
             : sortFilePaths(somePaths);
     };
     const colorNoteMap = genFilePathColorMap(newFilePaths);
-    // Same test as `RenderFileItemsWithColorNote`: the "unknown" group is
+    // Same test as `RenderFileItemsWithColorNoteComp`: the "unknown" group is
     // always seeded, so one key means nothing is grouped and the list is drawn
     // flat. A colour note nobody has read yet counts as unknown, which is
     // exactly what the panel would draw in that state too.

@@ -116,7 +116,7 @@ function genContextMenu(
     ];
 }
 
-function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
+function BiblePreviewComp({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     const isOnScreen = useIsOnScreen(bible.items);
     const bibleRef = useAppCurrentRef(bible);
@@ -195,7 +195,7 @@ export default function BibleFileComp({
         { setData: setBible },
     );
     const handlerChildRendering = useCallback((bible: AppDocumentSourceAbs) => {
-        return <BiblePreview bible={bible as Bible} />;
+        return <BiblePreviewComp bible={bible as Bible} />;
     }, []);
     const handleReloading = useCallback(() => {
         setBible(undefined);

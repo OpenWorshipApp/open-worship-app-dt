@@ -2298,7 +2298,10 @@ function genHereNames(pathname) {
 // the 44 manual documents: 5 recipes name exactly one window and all 5 are
 // right, 5 name more than one, 29 name none.
 export function detectRecipeWindow(steps) {
-  const first = steps?.[0]?.text ?? '';
+  // The FIRST sentence, as `dropStepsAlreadyDone` reads it: the AI Chat
+  // recipe opens "Click the AI Chat button ... It works whether or not AI
+  // features is switched on in Settings", and its card was aimed at Settings.
+  const first = toFirstSentence(steps?.[0]?.text ?? '');
   const goingPattern = /^(click|open|go to|switch to|choose|select|press)\b/i;
   if (!goingPattern.test(first)) {
     return null;

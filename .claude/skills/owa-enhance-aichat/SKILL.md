@@ -285,7 +285,7 @@ bot-detection page (the probe reads the same signals):
   other trait says Chromium is exactly the mismatch a bot check scores on.
   With Electron's own user agent claude.ai opened straight to its sign-in
   page, and `accounts.google.com` showed its ordinary email prompt. So the
-  browser tells the truth (non-negotiable 6). Should Google ever refuse a
+  browser tells the truth (non-negotiable 7). Should Google ever refuse a
   sign-in, rewrite the `User-Agent` **header** for its sign-in hosts in
   `webRequest.onBeforeSendHeaders`, never `navigator.userAgent`.
 - A first visit to claude.ai or DeepSeek may still show a human check on a
@@ -304,7 +304,7 @@ bot-detection page (the probe reads the same signals):
   `src/chatbot/chatWindowShared.scss`. A change to either is a change to both
   windows — verify in both.
 - The popup is opened with the chatbot's features (`openAiChatPage` in
-  `src/helper/domHelpers.ts`: 460×640, glassy, right/centre, bounds
+  `src/helper/popupWindowHelpers.ts`: 460×640, glassy, right/centre, bounds
   remembered under `aichat.html`). Three ways in: the ✨ button
   (`AiChatButtonComp`, `src/others/commonButtons.tsx`, on the three
   headers), **Help → AI Chat** (`electron/electronMenu.ts`), **Tools → AI

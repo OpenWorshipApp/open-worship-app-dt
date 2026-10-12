@@ -11,7 +11,10 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** attach your own notes to study.
 
-1. In the right column (Presenter) or the Reader, switch to the **[en:tran:Notes]** sub-tab.
+1. Find the **[en:tran:Bible Notes]** panel. It is a panel, not a tab: it sits beside
+   **[en:tran:Bibles]** (under it when the column is narrow) inside the
+   **[en:tran:Bible and Notes]** section — at the top of the right column in the Presenter,
+   on the left in the Bible Reader.
 2. Open a note for editing — the **Bible Note** editor opens in its own window. 📸
 3. Type your note. Nothing is written to the note file yet — your typing is kept
    in an editing history, and the row of buttons that appears at the bottom

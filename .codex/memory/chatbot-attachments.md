@@ -51,12 +51,13 @@ backlog is a bill for guessing instead.
   400, and `describeLlmError` reads that as an unreachable service — it would
   tell a volunteer their internet is down. `checkCanSeeImages` is an allowlist
   per PROVIDER, because a model chosen through *More models…* has no entry to
-  carry a per-model flag.
+  carry a per-model flag (a custom server's row is the exception: its own
+  `canSeeImages` tick decides).
 - **`owa_screenshot` and `owa_pick_element` are on the server and NOT in the
   model's list** (`modelTools.mjs`, see [[mcp-model-hidden-tools]]). The window
   calls them on a button press; an outside agent still gets the full set. That
-  filter is also the choke point [[agent-access-mcp-chatbot]] wants for pruning
-  the 29 chrome-devtools tools.
+  filter is also the choke point [[agent-access-mcp-chatbot]] wanted, and since
+  2026-09-09 it withholds every chrome-devtools tool from the model.
 - **The picker swallows the choosing click in the CAPTURE phase**, mousedown as
   well as click — a Bootstrap dropdown opens on mousedown — so pointing at
   *Clear Bible* to ask what it does never clears the bible.
@@ -64,7 +65,7 @@ backlog is a bill for guessing instead.
 - **Every chip is pressable** and shows what it stands for: a control is rung
   by its STORED SELECTOR (`owa_highlight_selector`, the third client-only tool)
   rather than by its words, a picture opens full-window, and anything with a
-  `filePath` opens its folder. The path is persisted where the bytes are not.
+  `filePath` opens the preview (below), its folder one press on. The path is persisted where the bytes are not.
 - **The chip's name comes from `labelPartsOf`, not `describe`'s `label`.** The
   matcher JOINS every way an element is named, which is right for matching and
   unreadable on a chip: the settings button comes back "Setting Setting".

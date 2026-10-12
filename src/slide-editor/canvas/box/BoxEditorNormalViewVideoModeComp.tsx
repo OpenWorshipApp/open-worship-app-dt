@@ -37,7 +37,7 @@ function genPlayIcon(width: number) {
     );
 }
 
-export function BoxEditorNormalVideoRender() {
+export function BoxEditorNormalVideoRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemVideoPropsType>();
     try {
         CanvasItemVideo.validate(props);

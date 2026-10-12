@@ -10,8 +10,8 @@ import {
 } from './bibleCustomStyleFloatingHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 
-// The heavy style panel (renderToStaticMarkup shadow demos) stays lazy so it is
-// only loaded when the user actually opens the floating widget.
+// The style panel (its stage, looks and control rows) stays lazy so it is only
+// loaded when the user actually opens the floating widget.
 const LazyBibleCustomStyleComp = lazy(() => {
     return import('./BibleCustomStyleComp');
 });
@@ -42,8 +42,10 @@ export default function BibleCustomStyleFloatingComp() {
                     setIsBibleCustomStyleFloatingShowing(false);
                 }}
                 options={{
-                    width: 420,
-                    height: 560,
+                    // Wide enough for four looks across, tall enough to
+                    // show them and the first rows without scrolling.
+                    width: 440,
+                    height: 640,
                     minWidth: 300,
                     minHeight: 220,
                 }}

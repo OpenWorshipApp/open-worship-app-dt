@@ -10,7 +10,7 @@ them for 3 s. That affordance was replaced (2026-08-04, branch refactor23) by an
 explicit context-menu item — **Reveal Original** (km `បង្ហាញកន្លែងដើម`, `eye` icon).
 
 - The factory is `genRevealOriginal(reveal: () => void)` in
-  `src/others/FileItemHandlerComp.tsx:118`, alongside `genCommonMenu` /
+  `src/others/FileItemHandlerComp.tsx`, alongside `genCommonMenu` /
   `genShowOnScreensContextMenu` — shared so any row type can take the item. It
   takes the whole ACTION, not an element getter — some origins must open their
   panel before they have an element at all.

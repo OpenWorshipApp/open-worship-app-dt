@@ -1321,8 +1321,6 @@ const dictionary = {
     'Repeat this audio': 'ធ្វើសំលេងនេះម្តងទៀត',
     'Reset All Child Directories': 'កំណត់ថតកូនទាំងអស់ឡើងវិញ',
     'Reset Rotate': 'កំណត់ការបង្វិលឡើងវិញ',
-    'Reset White': 'កំណត់ពណ៌សឡើងវិញ',
-    'Reset Black': 'កំណត់ពណ៌ខ្មៅឡើងវិញ',
     'Reset to default display dimension': 'កំណត់ទៅវិមាត្របង្ហាញលំនាំដើម',
     'Reset Widgets Size': 'កំណត់ទំហំ Widgets ឡើងវិញ',
     'Are you sure to reset every widget size and reopen the widgets?':
@@ -2914,9 +2912,9 @@ const dictionary = {
     'Save this passage in Bibles': 'រក្សាទុកអត្ថបទនេះក្នុង ព្រះគម្ពីរ',
     'Keep the passage in your Bibles list for later.':
         'ទុកអត្ថបទក្នុងបញ្ជីព្រះគម្ពីរ ដើម្បីអាននៅពេលក្រោយ។',
-    'Present a passage from the Reader': 'បង្ហាញអត្ថបទពីអ្នកអាន',
-    'Double-click a verse to send it to selected screens; use F9 to clear it.':
-        'ចុចពីរដងលើខ ដើម្បីផ្ញើទៅអេក្រង់ដែលបានជ្រើស; ប្រើ F9 ដើម្បីលុបវា។',
+    'Put a passage on the audience screens': 'ដាក់អត្ថបទលើអេក្រង់អ្នកទស្សនា',
+    'The Bible Reader only reads: present a passage from the Presenter, and use F9 there to clear it.':
+        'អានព្រះគម្ពីរគ្រាន់តែសម្រាប់អានប៉ុណ្ណោះ៖ បង្ហាញអត្ថបទពីកម្មវិធីបង្ហាញ ហើយប្រើ F9 នៅទីនោះដើម្បីលុបវា។',
     'Start automatic scrolling': 'ចាប់ផ្ដើមរំកិលដោយស្វ័យប្រវត្តិ',
     'Let a long passage move down by itself.':
         'ឱ្យអត្ថបទវែងរំកិលចុះដោយខ្លួនឯង។',
@@ -3303,6 +3301,36 @@ const dictionary = {
     'made a notes file': 'បានបង្កើតឯកសារកំណត់ត្រាមួយ',
     'renamed a notes file': 'បានកែឈ្មោះឯកសារកំណត់ត្រាមួយ',
     'moved a notes file to the trash': 'បានផ្លាស់ទីឯកសារកំណត់ត្រាមួយទៅធុងសំរាម',
+    // --- Bible Properties, redesigned (2026-10-11): a stage, the looks as
+    // pictures, and one row per value. `Aa` is the two letters a look is shown
+    // on, in the script this window is read in.
+    'For God so loved the world, that he gave his only begotten Son':
+        'ដ្បិតព្រះទ្រង់ស្រឡាញ់មនុស្សលោក ដល់ម៉្លេះបានជាទ្រង់ប្រទានព្រះរាជបុត្រាទ្រង់តែ១',
+    'Light words for a dark background': 'អក្សរភ្លឺ សម្រាប់ផ្ទៃខាងក្រោយងងឹត',
+    'Dark words for a light background': 'អក្សរងងឹត សម្រាប់ផ្ទៃខាងក្រោយភ្លឺ',
+    Aa: 'កខ',
+    'Thin Outline': 'គែមស្ដើង',
+    'Heavy Outline': 'គែមក្រាស់',
+    'Soft Shadow': 'ស្រមោលស្រាល',
+    'Deep Shadow': 'ស្រមោលជ្រៅ',
+    'Hard Shadow': 'ស្រមោលច្បាស់',
+    Lifted: 'លេចឡើង',
+    Haze: 'អ័ព្ទ',
+    Halo: 'រង្វង់រស្មី',
+    'Blue Edge': 'គែមខៀវ',
+    Bold: 'អក្សរដិត',
+    Justify: 'តម្រឹមសងខាង',
+    'Outline Color': 'ពណ៌គែមអក្សរ',
+    'Glow Color': 'ពណ៌ពន្លឺរស្មី',
+    'A CSS text-shadow of your own': 'CSS text-shadow ផ្ទាល់ខ្លួនរបស់អ្នក',
+    'Plain words again; the size stays': 'ត្រឡប់ទៅអក្សរធម្មតាវិញ ទំហំនៅដដែល',
+    // A look somebody made can be kept as a tile of its own.
+    Preset: 'គំរូ',
+    'Save as Preset': 'រក្សាទុកជាគំរូ',
+    'Rename Preset': 'ប្តូរឈ្មោះគំរូ',
+    'Replace with Current Look': 'ជំនួសដោយរូបរាងបច្ចុប្បន្ន',
+    'Remove Preset': 'លុបគំរូ',
+    'Remove a preset to save a new one': 'លុបគំរូមួយចេញ ដើម្បីរក្សាទុកគំរូថ្មី',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

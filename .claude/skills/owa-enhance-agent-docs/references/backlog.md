@@ -114,7 +114,7 @@ and keep each Codex preserved description in step (`sync-agent-mirror.mjs`
 does this now). **Cost.** ~0. **Proof on apply.** `--check=skills`. **Route.**
 Each owning skill, on ask. Found in run `20261008-2315`.
 
-## AD-08 · The review skills are in neither skill index — `open` · S4 · L6
+## AD-08 · The review skills are in neither skill index — `done` 2026-10-11 · S4 · L6
 
 **Signal.** `--check=skills`: `review-stagged-change` and
 `review-unstagged-change` were never in CLAUDE.md "Project skills" or
@@ -122,7 +122,10 @@ Each owning skill, on ask. Found in run `20261008-2315`.
 `rules/project-skills.md` (on demand), not CLAUDE.md (the listing already
 shows them), or an audit exemption for generic skills. **Cost.** 0
 always-loaded. **Proof on apply.** `--check=skills` 4 → 0. **Route.** This
-skill. Found in run `20261008-2315`.
+skill. Found in run `20261008-2315`. **Done** in run `20261011-2330`: a section
+each in `rules/project-skills.md` and one line for the pair in CLAUDE.md
+(+150 B always-loaded, the user's ask being every document current);
+`--check=skills` wiring 4 → 0.
 
 ## AD-09 · Four guards the notes say are missing — `open` · S3 · L5
 
@@ -132,3 +135,90 @@ skill. Found in run `20261008-2315`.
 **Change.** Behavioural tests, with no shared appProvider mock. **Cost.** Gate
 time. **Proof on apply.** Each test fails on a broken invariant, and the notes
 then name it. **Route.** `owa-upgrade-unit-test`. Found in run `20261008-2315`.
+
+## AD-10 · The scan never read the manual — `done` 2026-10-11 · S2 · L3
+
+**Signal.** A user asked the 🤖 how to change the Bible text colour and was
+told to open an **Appearance** card: W-07 still described a panel that became
+a floating one in August. `user-workflows.md` is in `LEDGER_NAME_SET`, so every
+check skipped it, and the coverage matrix was outside the audited surface.
+**Change.** A `manual` check (recipes, not the dated head; the matrix's
+`src:` anchors), §3's manual class, the routing paragraph in `SKILL.md`.
+**Cost.** 0 always-loaded; +0.3 s per scan. **Proof.** On the tree before the
+doc fix: 6 dead labels (W-07's **Appearance** among them), 43 gone files
+(PM-14's), 29 recipes behind their code; after W-07, PM-13 and PM-14 were
+rewritten: 2 / 42 / 29, W-07 on none of the lists. **Left open.** The 42
+coverage rows whose source file moved, W-14's `[en:tran:Notes]`, and reading
+the 29 recipes in order — the next runs' leads. Run `20261011-1900`.
+
+## AD-11 · The coverage rows whose source file was gone — `done` 2026-10-11 · S3 · L3
+
+**Signal.** `--check=manual`: 42 rows of `docs/test-paths/coverage-matrix.md`
+cited a file that no longer exists, 17 paths in all. **Change.** 24 rows
+re-aimed where the history says the file went (`Presenting-Flow.ts` →
+`PresentingFlow.ts`, the previewer files into `items/`, `editingHelpers.tsx`
+into `src/editing-manager/`, four colour components renamed `…Comp`), line
+numbers dropped; 18 rows whose component was deleted read against today's code
+and rewritten, ids kept. **Proof.** The signal at 0, held by the gate
+(AD-13). Asked for by the user: _do all 3_.
+
+## AD-12 · Every recipe is read against the code, and the read is recorded — `done` 2026-10-11 · S2 · L3
+
+**Signal.** 29 recipes "behind" and 46 naming controls in plain English, the
+same lists run after run: the signal was commits since the recipe's last edit,
+which a recipe found correct could never clear, and plain names were converted
+only "while fixing a recipe for another reason". The user: _I made
+`/owa-enhance-agent-docs` to fix error like this, but after run several time
+it still have out-dated documents_. **Change.** `references/manual-reviewed.json`
+— per recipe a hash of its words and one of the files its Verify rows cite —
+written by `audit-agent-docs.mjs --stamp-manual=<ids>`; the check lists a
+recipe as due a read when it has no entry or either hash moved, and plain
+names only for those. §3 makes reading EVERY due recipe a safe class, §3b says
+a run is done when the audit says so, `scripts/apply-manual-edits.mjs` is the
+single writer behind several readers and `scripts/find-label.mjs` answers "is
+this a `tran()` key". The first full pass read all 53 recipes. **Cost.** 0
+always-loaded; the ledger is ~5 KB. **Proof.** _recipes due a read_ 53 → 0.
+
+## AD-13 · The gate holds the manual's two hard signals — `done` 2026-10-11 · S2 · L3
+
+**Signal.** Nothing failed when a recipe named a control that was deleted.
+**Change.** `src/test-setup/manualRecipes.test.ts` runs the `manual` check and
+fails on a label no code draws and on a coverage row citing a file that is
+gone; a false positive is filed in `killed-leads.json` with `where: "<recipe>"`
+so the same word elsewhere is still caught. **Proof.** The test failed on the
+tree before the fixes (W-14's `[en:tran:Notes]`, the 42 rows) and passes after.
+
+## AD-14 · The notes get the recipes' ledger, and the READMEs are read too — `done` 2026-10-11 · S2 · L3
+
+**Signal.** `staleness`: 139 notes "whose code moved since they were last
+edited", ranked, the top ten read each run — the recipes' fault again (AD-12).
+And no check read a document outside `.claude/`: `README.md` documented
+`npm run pack:mac:uni` after the script was removed, `RELEASE.md` said a dry
+run does the git steps it skips. **Change.** `references/notes-reviewed.json`
+and `--stamp-notes` (a hash of the note, of the list of files it names and of
+what is in them — a reworded note stays tied to its code, a folder it mentions
+is not hashed); every tracked `.md` outside the agent docs, generated pages and
+third-party folders is audited as a `project` document. **Proof.** First full
+pass, run `20261011-2330`: 152 notes, rules, skill files and READMEs read by
+readers that only proposed; the ledger at 0 due afterwards. The same reading
+found six places where the CODE had left a recorded decision — five fixed with
+tests (`EC-221`, `EN-52`), the rest filed (`EN-50`, `EN-51`).
+
+## AD-15 · A big run ends with a second read, and one real run — `done` 2026-10-11 · S2 · L5
+
+**Signal.** The first full pass applied 559 corrections, each checked by its
+own evidence quote, and left 80 statements "for the running app"; the audit
+printed 0. Nothing had checked a correction against anything but the line its
+own reader chose, and nothing had run what the notes said worked.
+**Change.** `SKILL.md` §3c, `references/second-read.md`,
+`scripts/second-read.mjs` (`inputs` turns the readers' edit files into work
+with no reason attached; `check` refuses an answer that skips an item or
+proves it with a line the file does not hold). **Proof.** Run the same day:
+nine readers told to refute — 555 of 559 held, 4 were wrong and are fixed;
+three readers on the 80 statements — 45 settled from stylesheets, bundled
+libraries, data and arithmetic, 18 of them wrong and fixed, 4 more settled on
+a scratch instance or from the handler, 31 left in `live-checks.md` with
+exactly what to watch (12 of them need a second device, a TV, an account,
+PowerPoint, a person or a model). And the read of a guide page's newest copy,
+held by 33 unit tests, failed on every real page and would have handed an
+older page over as the newest (`EC-222`, `MC-58`).

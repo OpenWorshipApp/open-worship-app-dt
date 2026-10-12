@@ -478,5 +478,84 @@
         "doc": ".claude/skills/owa-enhance-agent-docs/references/checks.md",
         "name": "lib.dom.d.ts",
         "why": "not a repo path: TypeScript's typings under node_modules/"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/custom-llm-servers.md",
+        "name": "LmStudioModelInfoType",
+        "why": "history: the note says `CustomModelInfoType` replaced it"
+    },
+    {
+        "check": "manual",
+        "doc": ".claude/skills/owa-robot-test/references/user-workflows.md",
+        "name": "**Notes**",
+        "where": "W-45",
+        "why": "another program's label: PowerPoint's own Notes pane, which the exported file is opened in"
+    },
+    {
+        "check": "paths",
+        "doc": "RELEASE.md",
+        "name": "extra-work/fake-s3/www/download/win/info.json",
+        "why": "not a path: an example of where a release dry run writes; the folder is gitignored output"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/pdf-js/README.md",
+        "name": "appCallback",
+        "why": "external: the reader's own callback in a code sample; the README says so"
+    },
+    {
+        "check": "symbols",
+        "doc": "extra-work/local-llm/aws-bedrock-info.md",
+        "name": "authToken",
+        "why": "external: an option of Anthropic's SDK client"
+    },
+    {
+        "check": "symbols",
+        "doc": "extra-work/local-llm/aws-bedrock-info.md",
+        "name": "toolConfig",
+        "why": "external: a field of AWS Bedrock's Converse API"
+    },
+    {
+        "check": "symbols",
+        "doc": "extra-work/local-llm/aws-bedrock-info.md",
+        "name": "inferenceConfig",
+        "why": "external: a field of AWS Bedrock's Converse API"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/html-in-canvas/README.md",
+        "name": "drawElement",
+        "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/html-in-canvas/README.md",
+        "name": "PaintEvent",
+        "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/html-in-canvas/README.md",
+        "name": "elementImage",
+        "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/html-in-canvas/README.md",
+        "name": "texElementImage2D",
+        "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/html-in-canvas/README.md",
+        "name": "screenPixelRatio",
+        "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/experiments/html-in-canvas/README.md",
+        "name": "InteractionManager",
+        "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
     }
 ]

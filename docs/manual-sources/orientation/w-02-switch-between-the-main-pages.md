@@ -11,10 +11,12 @@ workflowsVersion: "2026-10-11"
 
 **Goal:** move between Presenter, Bible Reader, and Slide Editor.
 
-1. Click a header tab — the window switches to that page in place.
-2. The **Slide Editor** tab opens the editor only for a selected slide document:
+1. Click a header tab — the window switches to that page in place. A page has no tab
+   for itself, and the Bible Reader has no tabs at all: come back from it with its 🖥️
+   **[en:tran:Go Back to Presenter]** button.
+2. The **[en:tran:Slide Editor]** tab opens the editor only for a selected slide document:
    select one in the left list first (W-03), then click the tab; with nothing
-   selected the app shows an alert ("No slide selected") and stays put.
+   selected the app shows an alert ("[en:tran:No slide selected]") and stays put.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

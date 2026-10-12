@@ -40,7 +40,7 @@ back into a folder by a program either.
   history discarded only once the file is really gone.
 - The store is SHARED by every agent on the machine: a script checking undo
   must pass each change's own `undoId`, or it may undo another session's work.
-- The firewall rations removals (every `delete*` and `undo`) at 10 per 5 min,
+- The firewall rations removals (every `delete*`, a run sheet's `remove` and `undo`) at 10 per 5 min,
   apart from the 25 presses a minute. `owa_bible_note` refuses a write while
   that file is open in a `bibleNote.html` window, which saves its stale copy
   back over it.

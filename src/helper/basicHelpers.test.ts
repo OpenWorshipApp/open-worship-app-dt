@@ -6,7 +6,7 @@ import {
     sanitizeHtml,
     sanitizeSlideHtml,
 } from './sanitizeHelpers';
-import { genTimeoutAttempt } from './timeoutHelpers';
+import { genThrottleAttempt, genTimeoutAttempt } from './timeoutHelpers';
 
 describe('sanitizeHelpers', () => {
     test.each([sanitizeHtml, sanitizeSlideHtml])(
@@ -95,5 +95,62 @@ describe('timeoutHelpers', () => {
 
         vi.advanceTimersByTime(1000);
         expect(delayed).toHaveBeenCalledTimes(1);
+    });
+
+    test('a throttle runs the first call at once', () => {
+        const callback = vi.fn();
+        const attempt = genThrottleAttempt(80);
+
+        attempt(callback);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        vi.runAllTimers();
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test('a throttle collapses a burst into its last call, run as the window closes', () => {
+        const first = vi.fn();
+        const second = vi.fn();
+        const third = vi.fn();
+        const attempt = genThrottleAttempt(80);
+
+        attempt(first);
+        vi.advanceTimersByTime(20);
+        attempt(second);
+        vi.advanceTimersByTime(20);
+        attempt(third);
+        expect(first).toHaveBeenCalledTimes(1);
+        expect(third).not.toHaveBeenCalled();
+
+        vi.advanceTimersByTime(40);
+        expect(second).not.toHaveBeenCalled();
+        expect(third).toHaveBeenCalledTimes(1);
+    });
+
+    test('a throttle keeps following a drag that outlasts one window', () => {
+        const callback = vi.fn();
+        const attempt = genThrottleAttempt(80);
+
+        // A call every 16ms for half a second, as a slider fires them.
+        for (let i = 0; i < 31; i++) {
+            attempt(callback);
+            vi.advanceTimersByTime(16);
+        }
+        vi.runAllTimers();
+
+        // Once at the start, once per window after it: followed, not flooded.
+        expect(callback.mock.calls.length).toBeGreaterThanOrEqual(6);
+        expect(callback.mock.calls.length).toBeLessThanOrEqual(8);
+    });
+
+    test('a throttle that went quiet runs the next call at once again', () => {
+        const callback = vi.fn();
+        const attempt = genThrottleAttempt(80);
+
+        attempt(callback);
+        vi.advanceTimersByTime(81);
+        attempt(callback);
+
+        expect(callback).toHaveBeenCalledTimes(2);
     });
 });

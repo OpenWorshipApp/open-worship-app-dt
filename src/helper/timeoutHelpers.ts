@@ -24,3 +24,35 @@ export function genTimeoutAttempt(
     };
     return caller;
 }
+
+/**
+ * At most one run per window, and always the LAST one asked for: the first
+ * call runs at once, the calls landing inside the window collapse into the
+ * one that runs as it closes. For work that should FOLLOW a drag -- a slider
+ * the projector tracks -- where `genTimeoutAttempt` would hold everything
+ * back until the hand stops.
+ */
+export function genThrottleAttempt(timeMilliseconds: number) {
+    let timeoutId: any = null;
+    let pendingFunc: (() => void) | null = null;
+    const openWindow = () => {
+        timeoutId = setTimeout(() => {
+            timeoutId = null;
+            if (pendingFunc === null) {
+                return;
+            }
+            const func = pendingFunc;
+            pendingFunc = null;
+            openWindow();
+            func();
+        }, timeMilliseconds);
+    };
+    return function (func: () => void) {
+        if (timeoutId !== null) {
+            pendingFunc = func;
+            return;
+        }
+        openWindow();
+        func();
+    };
+}

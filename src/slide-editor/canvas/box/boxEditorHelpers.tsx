@@ -59,7 +59,10 @@ const editorStyle = `
   box-shadow: 0 0 20px rgb(65, 255, 8);
   animation-duration: 2s;
   animation-name: outline-blink;
-  animation-iteration-count: infinite;
+  /* Three blinks, then the steady outline and glow: an endless animation of a
+     paint property repaints the whole canvas layer for as long as a box is
+     left open for typing (EN-51; CLAUDE.md, "No infinite CSS animation"). */
+  animation-iteration-count: 3;
   cursor: pointer;
 }
 .app-box-editor.controllable {

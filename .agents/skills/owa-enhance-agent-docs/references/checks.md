@@ -161,22 +161,65 @@ and 148 notes whose named code moved since their last edit.
   assistant answers from the old text. Rebuild after the run's edits
   (Non-negotiable 4). If a dev app may be in use, defer the rebuild and say so.
 
+### `manual` — the recipes the 🤖 answers from
+
+`user-workflows.md` from its first `### W-` heading on, and the coverage rows
+each recipe's `Verify:` line cites. Four signals. The first three are drift and
+a run is not done while one is above 0; the gate holds the first two
+(`src/test-setup/manualRecipes.test.ts`):
+
+- **A label no code draws.** An `[en:tran:Key]`, or a bolded phrase that is a
+  dictionary key, that is no string in `src/`, `electron/` or `tools/`. A label
+  built at run time (`Reveal in ${…}`) is matched by its fixed end.
+  *False positives:* another program's own label (W-45 bolds PowerPoint's
+  **Notes**); a label drawn only as JSX text. *Confirm:* grep the words
+  (`scripts/find-label.mjs`), then `owa_find_ui` them in the running app.
+  *Fix:* §3's manual class. A confirmed false positive is filed in
+  `killed-leads.json` with `check: "manual"`, the `name` as the audit prints it
+  (`**Notes**`, or `[en:tran:Notes]`) and `where: "W-45"`, so the same word in
+  another recipe is still caught.
+- **A coverage row citing a file that is gone.** `(src: …)` in
+  `docs/test-paths/coverage-matrix.md`. *Confirm:* `git log --follow` /
+  `--diff-filter=D`. *Fix:* re-aim a moved file; a row whose control is gone is
+  rewritten with its recipe, never deleted (ids are stable).
+- **A recipe due a read against the code.** It has no entry in
+  `manual-reviewed.json`, or its words changed since the entry, or one of the
+  files its Verify rows cite did (the line then carries the `git diff` to
+  read). *Not a false positive, ever:* it says nobody has read these words
+  against this code. *Fix:* read it (§3), fix what the code contradicts, then
+  `--stamp-manual=<id>`. The stamp is refused while the recipe still names a
+  dead label. Edit a stamped recipe and it is due again, which is the point:
+  a recipe changed by a feature session gets a second reader here.
+- **Controls those recipes name in plain English.** A bolded dictionary key
+  that is not a template: `tran.test.mjs` cannot follow it, so nothing notices
+  when the control is renamed. Listed only for recipes due a read, and settled
+  by the same read: make it a template, or leave it plain on purpose (another
+  program's label, the English-only help window, a word leaned on). The stamp
+  records that the choice was made.
+
 ## Leverage signals (see leverage.md)
 
 - `budget`: always-loaded bytes (≈ tokens), CLAUDE.md sections by size,
   MEMORY.md long lines, rule sizes.
 - `coverage`: code areas ranked by *(commits + 2 × fix commits + files ÷ 5) ÷
   (1 + docs naming them + 3 × rules covering them)* over 60 days.
-- `staleness`: per note, the commits since its last edit that touched the
-  files it names. Hot data files (`src/lang/data/**`, `package*.json`) are
-  ignored.
+- `staleness`: **the notes due a read** — drift, not leverage, since
+  2026-10-11. A note is listed when the files it names were committed to after
+  its own last edit, or, once it has an entry in `notes-reviewed.json`, when
+  one of those files changed since the entry (the line carries the `git diff`
+  to read). Rewording a checked note does not reset that — while it names
+  the same files, the code decides, so a one-line edit to a long rule cannot
+  pass for a re-read. Only a note edited to name OTHER files goes back to the
+  commit rule: whoever edited it wrote that against the day's code. *Fix:* read it against
+  the code (the reading checks below), fix it, `--stamp-notes=<path>`. Hot
+  data files (`src/lang/data/**`, `package*.json`) are ignored.
 - `prose-rules`: paragraphs in CLAUDE.md and the rules that say *must /
   never / always / same change* and name no test, script, gate or hook.
 
 ## Reading checks: what no script sees
 
-Do these by hand. In `auto`, cover CLAUDE.md fully, plus the top of the
-`staleness` list.
+Do these by hand. In `auto`, cover CLAUDE.md fully, plus EVERY note on the
+`staleness` list, and stamp each one read.
 
 1. **Numbers.** Ceilings, limits, counts and ports (`MODEL_TOKEN_CEILING`,
    `MAX_TOOL_ROUNDS`, the MCP port, rate limits): read the constant. A

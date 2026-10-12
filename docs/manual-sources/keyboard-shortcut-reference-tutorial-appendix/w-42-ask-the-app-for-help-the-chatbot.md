@@ -10,9 +10,10 @@ workflowsVersion: "2026-10-11"
 # W-42 — Ask the app for help (the chatbot)
 
 You can also start a Bible import with `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
-The **Bible versions** section under **More** contains this editable sample. Asking it opens Settings
-with the URL ready; you choose the key and review the language, digits and book-name
-options there before importing (W-34). This direct request needs no model call.
+The **Bible versions** section under **More** contains this editable sample. Asking it downloads
+the file and asks a few quick questions in the chat, each with buttons to press — a short
+name, the language, the digits and the book names — and installs nothing until you press
+**Install it**, with **Undo** under the answer afterwards (W-34). This direct request needs no model call.
 
 The app can answer its own "how do I …?" questions. It reads the same manual you are
 reading now, looks at what the app is doing at that moment, and can point at the button
@@ -20,17 +21,21 @@ it is describing.
 
 1. Click the **🤖** button in the top-right corner of the window, between the gear
    and the **✨** (the AI Chat window, W-44 — a different thing: a company's chat site
-   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar. A narrow
-   window opens beside the app. 📸
+   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar. Answer
+   the **[en:tran:Be careful with AI]** question with **[en:tran:Open]** — ticking
+   **[en:tran:Do not show this again for 30 days]** first puts the question away for that
+   long — and a narrow window opens beside the app. 📸
    **The 🤖 button is only on the three windows with a top bar** — the Presenter, the
    Bible Reader and the Slide Editor. Everywhere else, and on those three as well, the
-   way in is the **Tools** menu → **App Assistant**, or **Ctrl+Shift+A**
+   way in is the **Tools** menu → **[en:tran:App Assistant]**, or **Ctrl+Shift+A**
    (**⌘+Shift+A** on Mac). That works from a Bible Note, Settings, the Web Editor, the
    Lyric Editor and Local Web Share — the windows a volunteer is most likely to be
    stuck in — and the menu bar is hidden on those, so the shortcut is the way in. If a
    help window is already open it comes to the front rather than a second one opening.
-   With **AI features** switched off in Settings → Others, the button, the menu entry
-   and the shortcut all go quiet together.
+   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries
+   and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
+   features are turned off and offers to open Settings, where the switch is (it takes
+   effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
    a browser holds several pages. **+** starts another, **×** closes one, and a
    **double-click on a tab's name** renames it (useful once three of them start "how do
@@ -50,8 +55,9 @@ it is describing.
    The lock is remembered with everything else, so it is still locked next Sunday. 📸
 5. The rest of the top line belongs to the tab in front, and it is three **drop-down
    lists**, each with its own small grey caption saying what it is for —
-   **ASKING ABOUT**, **ASSISTANT** and **MODEL**. (Narrow the window and the captions
-   move to sit above their lists instead of beside them.) The first,
+   **ASKING ABOUT**, **ASSISTANT** and **MODEL**. (While the window is narrower than about 560 pixels — and it opens at 460 —
+   each caption sits above its list; drag the window wider and the captions move
+   beside their lists.) The first,
    **ASKING ABOUT**, says which window of the app you are asking about —
    **Presenter**, **Bible Reader**, **Document Editor**, **Bible Note**, **Settings**,
    **Web Editor**, **Lyric Editor** or **Local Web Share**. Every time you open the
@@ -63,8 +69,9 @@ it is describing.
    offers the language and the Bible downloads. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is
    left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
-   its models; with no API key at all the third one reads **app guide · offline** under
-   **ANSWERS FROM**, and clicking it opens the settings panel that takes a key. 📸
+   its models; with no API key at all **ASSISTANT** starts on **Free**, a shared public
+   service that needs no key, and a notice pinned above the conversation says so and
+   carries **Open AI settings**, which opens the settings panel that takes a key. 📸
    **Short of room? Fold those lists to one line.** A small arrow sits at the left
    edge of the lists. Click it and the lists — with the **LIMIT PER HOUR** list and
    the **CREDIT USED** line of step 8 — fold into a single line that still says
@@ -91,8 +98,8 @@ it is describing.
    rest.** Under the **Try asking** chips on an empty chat is a small
    **More… — everything it can answer** button. It opens the whole list for the
    window you are asking about, sorted under the panel each question belongs to
-   — _Bible_, _Backgrounds_, _The screen the audience sees_, _Nothing on the
-   projector_, and so on. There are 184 of them for the Presenter, and every one
+   — _Bible verses on screen_, _Backgrounds_, _The screen the audience sees_, _Nothing on the
+   projector_, and so on. There are about 300 of them for the Presenter, and every one
    has a page of this guide or a look at the live app behind it, so nothing on
    that list can be pressed and come back with a shrug. It is worth a scroll
    once: most people use this window for the one thing they first saw it do.
@@ -101,11 +108,11 @@ it is describing.
    **The Bible Reader also has 30 guided demos that need no AI model, key or
    account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
    use **Try a guided demo**. The original four practise text size, opening
-   John 3:16 with buttons and finding Bible words. Twenty more cover passage
+   John 3:16 with buttons and finding Bible words. Nineteen more cover passage
    history, clearing the reference, people and places, two Bible versions,
    distraction-free reading, copy/split/save, automatic scrolling, line
-   layout, cross references, names in the current passage, Resources, book
-   filters and the Bibles/Notes side panel. Seven more practise typing a
+   layout, cross references, names in the current passage, Resources and book
+   filters. Seven more practise typing a
    complete reference, removing only its last part, automatic Bible audio,
    note filtering and sorting, Settings and Help. The full Tips list also
    explains how View > Widgets shows or hides the whole saved-passages panel,
@@ -169,7 +176,7 @@ it is describing.
    moment to press **Stop**. 📸
    **Changed your mind? Press Stop.** While an answer is on its way the **Ask**
    button becomes **Stop**, and the last line under the steps says so —
-   _press Stop to give up on it._ Pressing it (or **Esc**) calls
+   _press Stop to give up on it._ Pressing it (or **Esc**, while the cursor is not in the box) calls
    the question off there and then: the chat says **Stopped**, nothing arrives
    afterwards, and your question is still sitting above it with **Ask again**
    under it. Use it for a question asked by mistake, one taking longer than you
@@ -177,7 +184,7 @@ it is describing.
    round the houses. 📸
    **And you can keep talking while it works.** The box is not locked while an
    answer is coming: type the thing you forgot to say and press **Add** (or
-   Enter) and it goes into the answer that is already being written, rather than
+   **Ctrl+Enter**) and it goes into the answer that is already being written, rather than
    starting a second question — the line joins the conversation marked _Added
    while it was working_. If it arrives too late to be worked in, it is answered
    on its own and the reply says so. Press **Stop** instead and every word you
@@ -234,7 +241,7 @@ it is describing.
    without one the guide offers one button that starts it; the five
    **/screen-clear-** commands clear a layer the screen HOLDS even while it is
    off. **The commands that work on the Presenter alone** — the screen's show,
-   hide and clears, **/selected**, **/next**, **/previous**, **/run**,
+   hide and clears, **/selected**, **/next**, **/previous**, **/slide**, **/run**,
    **/verse**, **/countdown**, **/marquee** — are offered in the list only while
    **Asking about** is **Presenter**, and typed under another page they answer
    _works on the Presenter page_ with **Go to the Presenter** under it
@@ -256,11 +263,11 @@ it is describing.
    **/hymn**, **/new-song**); either answers in a few seconds with what the
    song is and the two buttons — **Create "…"** and **Copy song text** — and
    the song text as it will be saved drawn above them, and NOTHING is saved
-   until you press Create (a _page on hymnary.org was read_ notice appears in
+   until you press Create (an _Assistant read a page on hymnary.org_ notice appears in
    the app window while the page is read). **/lyric Amazing Grace** — a song's
    NAME on one line — looks it up instead: in your own songs, and in the
-   app's collection of public-domain hymns (the ones **Import From Public
-   Domain Songs** brings in), and offers it under the same two buttons; a song
+   app's collection of public-domain hymns (the ones
+   **[en:tran:Import From Public Domain Songs]** brings in), and offers it under the same two buttons; a song
    that is in neither is said so, with a request for its words or a page,
    because the help window never writes a song out from memory. Asking in
    words does the same without an assistant — _Create a lyric file from
@@ -321,7 +328,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    onto the window. Whatever you attach shows as a small chip above the box, with
    an **×** to take it off again, and up to four can ride one question. Clicking a
    control to point at it does **not** press it — the app does not act on that
-   click, so it is safe to point at **Clear Bible** and ask what it does. 📸
+   click, so it is safe to point at **[en:tran:Clear Bible]** and ask what it does. 📸
    **Press a chip to see what it stands for.** A control you pointed at is
    **circled in red** in the app window again, so you can find it after looking
    away; and **every file or picture opens** — big enough to read, right here
@@ -417,15 +424,17 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
 11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
     not the manual — with a **Hide every screen** button offered, never pressed for you.
-12. With an **AI key** set in **[en:tran:Settings]** → **Others** → **AI Providers**, the
+12. With an **AI key** set in **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:AI Providers]**, the
     same window becomes a real conversation: the model answers, using the same app
-    knowledge and the same tools. Without a key — or when the internet is down — it
-    still answers from the manual, and says so; with no key at all it also tells you that
-    Claude, ChatGPT and Kimi need one, and gives you an **Open AI settings** button that
-    goes straight to the panel that takes it. That panel has one card per provider, and
+    knowledge and the same tools. Without a key the **Free** assistant answers instead — a
+    shared public service, weaker and sometimes busy — and when no assistant can answer
+    (the internet is down, the service is busy) it still answers from the manual, and says
+    so. A notice at the top of a **Free** conversation says that your questions leave this
+    computer, and gives you an **Open AI settings** button that goes straight to the panel
+    that takes a key. That panel has one card per provider, and
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
-    Bible Cross Reference, **Kimi** answers here only — so you can tell which key is
+    Bible Cross Reference, **Kimi** and **Amazon Bedrock** answer here only — so you can tell which key is
     worth getting before you go and fetch one. Once the OpenAI key is saved, its card
     also shows **[en:tran:Auto Play Audio AI when available]**; turn that switch on when
     supported Reader passages should begin their generated audio automatically.
@@ -433,22 +442,23 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**,
     **[en:tran:Extra Binaries]** — and it folds to one row, which still says whether it
     is set up (**[en:tran:Key set]**, **[en:tran:Installed]**) and keeps its buttons;
-    click the title again to open it. Inside **AI Providers**, each provider's card,
+    click the title again to open it. Inside **[en:tran:AI Providers]**, each provider's card,
     **[en:tran:Custom servers]** and each server in it fold the same way: a folded
     card shows a green ✓ beside its name when its key is saved, a folded server when
     the chatbot is offering it. The app remembers what you folded. So when a key box
     or **[en:tran:Add server]** is not where this page says, the part holding it is
     folded — click its title. Choosing an assistant that needs a key (the next step)
     opens whatever is folded in front of its key box by itself.
-13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
+13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi**, **Bedrock**, and
+    **Free**, which needs no key — and you
     can change your mind between two questions. The ones whose key you have set can be
     chosen; the others are still in the list, in a quieter colour and reading
     **needs an API key**, so you can see they are there and what they want. Choose one of
     those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
-    opens on **Others** with the cursor already in that assistant's key box — for Kimi,
+    opens on **[en:tran:Others]** with the cursor already in that assistant's key box — for Kimi,
     **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
     already open on another page, that same window comes to the front and turns to
-    **Others**. Beside it is the third list, the
+    **[en:tran:Others]**. Beside it is the third list, the
     **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
     you can change.
     Hold the mouse over a name to see what it is good for, how quick it is and what it
@@ -461,7 +471,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
-    OpenAI API. In **[en:tran:Settings]** → **Others** → **[en:tran:Custom servers]** —
+    OpenAI API. In **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:Custom servers]** —
     where, for anyone who has no server yet,
     **[en:tran:Watch how to set up a free AI assistant on your own computer]** is
     followed by **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]**, each
@@ -623,8 +633,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     It follows you: switch the app to the other page and the next answer follows,
     unless you have chosen a half yourself in the first list. Answers are in English.
 
-> Nothing here leaves the machine unless you set a key. The manual is bundled inside
-> the app.
+> With no key set, the **Free** assistant answers through a shared public service, so your
+> questions and anything you attach leave this computer — the notice at the top of the
+> conversation says so. The manual is bundled inside the app.
 
 18. **It can turn words you already have into a song.** Paste the verses of a song
     into the box — from an email, from a hymn sheet, from a page you found — and ask
@@ -640,7 +651,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **Create** writes a real song into your documents list, ready to put on a screen,
     and answers with two things to press: **Show it in the list**, which draws a red
     ring round the new song's row in the app window behind, so you can see exactly
-    where it landed; and the song's name, which opens the folder it was written to.
+    where it landed; and the song's name, which opens it over the conversation, with
+    **Open folder** under it for the folder it was written to.
     📸 It never replaces a song you already have: press it twice and the second is
     saved beside the first with `(1)` after the name. **Copy song text** puts the same thing on the clipboard, to paste
     straight into the Lyric Editor.
@@ -656,8 +668,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     the buttons in other words — _Create the file_ or _Copy the text_ are not
     offered, because the real buttons are right there and do the job without
     asking anybody. 📸
-    **Pasted words become a song even when the assistant cannot answer.** With no
-    key set, out of credit, or refused for asking too often in a minute (a free
+    **Pasted words become a song even when the assistant cannot answer.** With the
+    assistant out of credit, or refused for asking too often in a minute (a free
     Kimi account allows about three questions a minute), a paste of song words is
     written out by the app itself in a second or two, under a note that reads
     _I wrote the song out myself instead_ — with the same **Create** and **Copy
@@ -670,8 +682,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     A song asked for by its NAME is looked up, never remembered: first in your own
     songs (if you already have it, the answer says so before making a second copy),
     then in the app's collection of public-domain hymns — the same texts, with the
-    same link back to where they were transcribed from, that **Import From Public
-    Domain Songs** brings in. A song that is in neither — most songs written in the
+    same link back to where they were transcribed from, that
+    **[en:tran:Import From Public Domain Songs]** brings in. A song that is in neither — most songs written in the
     last seventy years — is said so plainly, with the nearest hymn titles when there
     are any, and a request for its words or for the address of a page with it on.
     The address is the other way in: _Create a lyric file from
@@ -722,7 +734,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     "…"_ — and ask again. Everything else is the same as pasting the words yourself:
     the two buttons underneath, and nothing written to disk until you press
     **Create**.
-20. To turn the whole feature off, untick **Enable AI features** in the same settings
+20. To turn the whole feature off, untick **[en:tran:Enable AI features]** in the same settings
     section and restart the app: the chatbot, its tools and the debugging endpoint they
     use are then never started.
 

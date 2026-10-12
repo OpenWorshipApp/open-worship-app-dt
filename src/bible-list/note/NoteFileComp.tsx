@@ -124,7 +124,7 @@ function genContextMenu(
     return contextMenus;
 }
 
-function NotePreview({ note }: Readonly<{ note: Note }>) {
+function NotePreviewComp({ note }: Readonly<{ note: Note }>) {
     const fileSource = FileSource.getInstance(note.filePath);
     const noteRef = useAppCurrentRef(note);
     const handleToggleOpened = useCallback(() => {
@@ -247,7 +247,7 @@ export default function NoteFileComp({
         { setData: setNote },
     );
     const handlerChildRendering = useCallback((note: AppDocumentSourceAbs) => {
-        return <NotePreview note={note as Note} />;
+        return <NotePreviewComp note={note as Note} />;
     }, []);
     const handleReloading = useCallback(() => {
         setNote(undefined);

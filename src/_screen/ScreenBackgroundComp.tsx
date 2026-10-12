@@ -138,12 +138,12 @@ export function RenderBackgroundComp({
                 ...screenBackgroundManager.containerStyle,
             }}
         >
-            <RenderScreenBackground backgroundSrc={backgroundSrc} />
+            <RenderScreenBackgroundComp backgroundSrc={backgroundSrc} />
         </div>
     );
 }
 
-function RenderScreenBackground({
+function RenderScreenBackgroundComp({
     backgroundSrc,
 }: Readonly<{
     backgroundSrc: BackgroundSrcType;
