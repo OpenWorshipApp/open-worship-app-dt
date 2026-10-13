@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -41,7 +41,10 @@ the only way in a popup window, whose menu bar is hidden.
 
 **Put everything back:**
 
-5. **[en:tran:Reset Widgets Size]**. Answer **[en:tran:Yes]** to
+5. Open **View** on the top menu bar again and click
+   **[en:tran:Reset Widgets Size]**. Do not open **Widgets** for this one:
+   **[en:tran:Reset Widgets Size]** is a row of the **View** menu itself, the row
+   right under **Widgets**. Answer **[en:tran:Yes]** to
    `Are you sure to reset every widget size and reopen the widgets?` 📸
 6. Every panel returns to the width and height it had when the app was installed, and
    **any panel you had collapsed is reopened**. This happens immediately — no reload.
@@ -81,5 +84,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

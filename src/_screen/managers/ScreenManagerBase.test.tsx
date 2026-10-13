@@ -91,8 +91,8 @@ vi.mock('./ScreenVaryAppDocumentManager', () => ({
     },
 }));
 
-vi.mock('./ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static enableSyncGroup = mocks.enableBibleSyncGroup;
     },
 }));

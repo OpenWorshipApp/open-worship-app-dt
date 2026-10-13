@@ -63,9 +63,9 @@ describe('describeToolStep', () => {
                 query: 'background',
             }).toLowerCase(),
         ).toContain('background');
-        expect(describeToolStep('owa_click', { label: 'Clear Bible' })).toBe(
-            'Pressing “Clear Bible”',
-        );
+        expect(
+            describeToolStep('owa_click', { label: 'Clear Long Text' }),
+        ).toBe('Pressing “Clear Long Text”');
         expect(
             describeToolStep('owa_lyric_file', {
                 action: 'create',

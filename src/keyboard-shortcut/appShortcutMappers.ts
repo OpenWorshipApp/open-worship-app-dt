@@ -32,7 +32,7 @@ export const toggleScreenEventMapper: EventMapperType = { key: 'F5' };
 export const clearAllEventMapper: EventMapperType = { key: 'F6' };
 export const clearBackgroundEventMapper: EventMapperType = { key: 'F7' };
 export const clearSlideEventMapper: EventMapperType = { key: 'F8' };
-export const clearBibleEventMapper: EventMapperType = { key: 'F9' };
+export const clearLongTextEventMapper: EventMapperType = { key: 'F9' };
 export const clearForegroundEventMapper: EventMapperType = { key: 'F10' };
 export const toggleMessagesEventMapper: EventMapperType = { key: 'F4' };
 

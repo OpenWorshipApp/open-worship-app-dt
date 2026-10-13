@@ -12,7 +12,7 @@ metadata:
 its REFERENCE.** `owa_present_bible` (2026-09-10) takes "John 3:16" as the
 user said it, resolves it with `BibleItem.fromTitleText` (the lookup box's
 own parser) in the version the lookup is on, then any installed one that
-reads it, presents through `ScreenBibleManager.handleBibleItemSelecting`
+reads it, presents through `ScreenLongTextManager.handleBibleItemSelecting`
 with a null event (the ticked screens, exactly like the lookup's **Show
 bible item**; nothing saved to the Bibles list) and reads the screens back.
 `/verse John 3:16` and the offline bot (`VERSE_ASK_PATTERN`, check first,
@@ -34,7 +34,7 @@ pressable (`EC-148`, still open for every other recipe that types).
   does; with an orphaned app holding the single-instance lock, close its
   main window over CDP (`window.close()`), then touch a file under
   `tools/owa-devtools-mcp/` so nodemon relaunches. `taskkill` is refused.
-- `owa_click` by a title WITH its shortcut (`Clear Bible [F9]`, the words
+- `owa_click` by a title WITH its shortcut (`Clear Long Text [F9]`, the words
   `owa_list_screens` hands back) is press-safe since `EC-135`:
   `checkIsNamedNearly` strips the bracket off both sides.
 - The version that goes up is whatever the lookup is on (Amplified on the

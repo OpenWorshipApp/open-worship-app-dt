@@ -35,6 +35,19 @@ const dictionary = {
         'វាស្វែងរកព្រះគម្ពីរជាភាសារបស់អ្នក ហើយសួរសំណួរងាយៗតែពីរបីប៉ុណ្ណោះ។',
     'It will use the link you typed below.':
         'វានឹងប្រើតំណដែលអ្នកបានវាយខាងក្រោម។',
+    // --- The "Bible key … is not available!" card: the assistant imports
+    // that Bible. `Install it` is a button of the help window, which is
+    // English only, so it stays as it reads there.
+    'Or let the assistant import this Bible for you:':
+        'ឬឱ្យជំនួយការនាំចូលព្រះគម្ពីរនេះជំនួសអ្នក៖',
+    'Press the button below. The assistant opens and looks for this Bible in a free collection online.':
+        'ចុចប៊ូតុងខាងក្រោម។ ជំនួយការនឹងបើក ហើយស្វែងរកព្រះគម្ពីរនេះក្នុងបណ្ណសារឥតគិតថ្លៃនៅលើអ៊ីនធឺណិត។',
+    'Press the Bible you want in its list, or type its language when it asks.':
+        'ចុចព្រះគម្ពីរដែលអ្នកចង់បានក្នុងបញ្ជីរបស់វា ឬវាយភាសារបស់ព្រះគម្ពីរនៅពេលវាសួរ។',
+    'Keep the short name it suggests, answer its other questions, then press Install it. The Bible shows here by itself.':
+        'រក្សាឈ្មោះខ្លីដែលវាស្នើ ឆ្លើយសំណួរផ្សេងទៀតរបស់វា រួចចុច «Install it»។ ព្រះគម្ពីរនឹងបង្ហាញនៅទីនេះដោយខ្លួនឯង។',
+    'Let the assistant import this Bible for me':
+        'ឱ្យជំនួយការនាំចូលព្រះគម្ពីរនេះជំនួសខ្ញុំ',
     'Could not check installed Bible keys':
         'មិនអាចពិនិត្យកូនសោព្រះគម្ពីរដែលបានដំឡើង',
     'Saving...': 'កំពុងរក្សាទុក...',
@@ -981,6 +994,11 @@ const dictionary = {
     Paused: 'បានផ្អាក',
     'Not started': 'មិនទាន់ចាប់ផ្តើម',
     Loading: 'កំពុងផ្ទុក',
+    'Something Went Wrong': 'មានបញ្ហាកើតឡើង',
+    "The app ran into a problem. The assistant can look into it and write a report for you, with this computer's system information and the app's console log in it. Nothing is sent until you say so. Open the assistant to report it?":
+        'កម្មវិធីបានជួបបញ្ហា។ ជំនួយការអាចពិនិត្យមើល ហើយសរសេររបាយការណ៍ជូនអ្នក ដោយមានព័ត៌មានប្រព័ន្ធរបស់កុំព្យូទ័រនេះ និងកំណត់ហេតុកុងសូលរបស់កម្មវិធីនៅក្នុងនោះ។ គ្មានអ្វីត្រូវបានផ្ញើទេ រហូតដល់អ្នកយល់ព្រម។ បើកជំនួយការដើម្បីរាយការណ៍បញ្ហានេះ?',
+    'Report a Problem': 'រាយការណ៍បញ្ហា',
+    'Not Now': 'មិនមែនឥឡូវនេះ',
     'Reload is needed': 'ត្រូវការការផ្ទុកឡើងវិញ',
     'Sorry, an internal process error occurred. Please refresh the app.':
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
@@ -1159,7 +1177,7 @@ const dictionary = {
     'Clear All Settings': 'លុបការកំណត់ទាំងអស់',
     'Clear All': 'លុបទាំងអស់',
     'Clear Background': 'លុបផ្ទៃខាងក្រោយ',
-    'Clear Bible': 'លុបព្រះគម្ពីរ',
+    'Clear Long Text': 'លុបអត្ថបទវែង',
     'Clear Cache': 'លុប Cache',
     'Clear Color Note': 'លុបកំណត់សម្គាល់ពណ៌',
     'Clear Foreground': 'លុបផ្ទៃខាងមុខ',
@@ -1175,6 +1193,36 @@ const dictionary = {
     'Show Message': 'បង្ហាញសារ',
     'Hide Message': 'លាក់សារ',
     'Remove Message': 'ដកសារចេញ',
+    'Long Text Show': 'ការបង្ហាញអត្ថបទវែង',
+    'Show Long Text': 'បង្ហាញអត្ថបទវែង',
+    'Hide Long Text': 'លាក់អត្ថបទវែង',
+    'Add Language': 'បន្ថែមភាសា',
+    'Remove Language': 'ដកភាសាចេញ',
+    'Choose Language': 'ជ្រើសរើសភាសា',
+    'No language yet': 'មិនទាន់មានភាសានៅឡើយ',
+    Source: 'ប្រភព',
+    'Raw Text': 'អត្ថបទវាយផ្ទាល់',
+    'Lyric File': 'ឯកសារចំរៀង',
+    'Choose Lyric': 'ជ្រើសរើសចំរៀង',
+    'No lyric file chosen': 'មិនទាន់បានជ្រើសរើសឯកសារចំរៀង',
+    'No lyric file in the Documents folder': 'គ្មានឯកសារចំរៀងក្នុងថតឯកសារ',
+    'This lyric file could not be read': 'មិនអាចអានឯកសារចំរៀងនេះបានទេ',
+    'This lyric file names a part it does not have':
+        'ឯកសារចំរៀងនេះហៅផ្នែកដែលវាគ្មាន',
+    'The songs do not have the same structure':
+        'ចំរៀងទាំងនេះមានរចនាសម្ព័ន្ធមិនដូចគ្នា',
+    'Every language needs the same number of sections':
+        'គ្រប់ភាសាត្រូវមានចំនួនផ្នែកស្មើគ្នា',
+    Section: 'ផ្នែក',
+    Sections: 'ផ្នែក',
+    'Add Section': 'បន្ថែមផ្នែក',
+    'Remove Section': 'ដកផ្នែកចេញ',
+    'Type a section': 'វាយផ្នែកនៅទីនេះ',
+    'No section yet': 'មិនទាន់មានផ្នែកនៅឡើយ',
+    'This section is empty': 'ផ្នែកនេះនៅទទេ',
+    'Text Size (%)': 'ទំហំអក្សរ (%)',
+    'Bring to Middle': 'នាំមកកណ្តាលអេក្រង់',
+    'View as Text Cards': 'មើលជាកាតអត្ថបទ',
     'Remove Time': 'ដកម៉ោងចេញ',
     Rotate: 'ផ្លាស់ប្តូរ',
     'Show each message in turn': 'បង្ហាញសារនីមួយៗតាមវេន',
@@ -2283,6 +2331,10 @@ const dictionary = {
         'ត្រូវការតែពេល key Anthropic របស់អ្នកជាប្រភេទ identity-linked ប៉ុណ្ណោះ',
     'App Assistant': 'ជំនួយការកម្មវិធី',
     'AI Chat': 'ជជែក AI',
+    // --- The Help button's two answers, and Help -> Open Online Help
+    // (2026-10-12).
+    'Open Online Help': 'បើកជំនួយតាមអ៊ីនធឺណិត',
+    'Open Chatbot': 'បើក Chatbot',
     // --- The stay-awake switch in the Presenter's and the Screen Mirror
     // page's header (2026-10-09). The two sentences follow the name on the
     // hover, after a dash, so they start in lower case.
@@ -3176,6 +3228,10 @@ const dictionary = {
     'While a Presenting Flow preview has focus':
         'ពេលផ្ទាំងមើលតារាងកម្មវិធីកំពុងសកម្ម',
     'Go to the next item': 'ទៅធាតុបន្ទាប់',
+    'Take the keys back to what is being presented':
+        'ប្រគល់គ្រាប់ចុចត្រឡប់ទៅអ្វីដែលកំពុងបង្ហាញ',
+    'Pressed 3 times quickly while another part of the app has focus':
+        'ចុច ៣ ដងយ៉ាងរហ័ស ពេលផ្នែកផ្សេងនៃកម្មវិធីកំពុងសកម្ម',
     "While a mini screen's Drawing panel has focus":
         'ពេលផ្ទាំងគូររបស់អេក្រង់តូចកំពុងសកម្ម',
     'Back to painting': 'ត្រឡប់ទៅគូរវិញ',

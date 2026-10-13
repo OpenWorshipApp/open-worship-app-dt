@@ -536,6 +536,57 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(h.showBibleKeyOptionMock).toHaveBeenCalledTimes(2);
         });
 
+        // Asked for by the user: a view in a colour group hands its colour
+        // to the view split off it, so its split button asks which version.
+        test('a split button splits a plain view at once, in the same version', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const item = ctl.straightBibleItems[0];
+            const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
+            const addBottom = vi.spyOn(ctl, 'addBibleItemBottom');
+
+            expect(ctl.checkIsSplitAskingBibleKey(item)).toBe(false);
+            ctl.splitBibleItemOnPress({}, item, true);
+            expect(addLeft).toHaveBeenCalledExactlyOnceWith(item, item);
+            ctl.splitBibleItemOnPress({}, item, false);
+            expect(addBottom).toHaveBeenCalledExactlyOnceWith(item, item);
+            expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+        });
+
+        test('a split button of a grouped view asks which version first', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const item = ctl.straightBibleItems[0];
+            ctl.setColorNote(item, 'red');
+            const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
+            const addBottom = vi.spyOn(ctl, 'addBibleItemBottom');
+            const event = { clientX: 5, clientY: 6 };
+
+            expect(ctl.checkIsSplitAskingBibleKey(item)).toBe(true);
+            ctl.splitBibleItemOnPress(event, item, true);
+            // Nothing is split until a version is chosen.
+            expect(addLeft).not.toHaveBeenCalled();
+            const [openedAt, onBibleKey, excluded, title] =
+                h.showBibleKeyOptionMock.mock.calls[0];
+            expect(openedAt).toBe(event);
+            expect(excluded).toEqual([]);
+            expect(title).toBe('Split Horizontal to');
+            onBibleKey('ESV');
+            expect(addLeft).toHaveBeenCalledTimes(1);
+            const [source, added] = addLeft.mock.calls[0];
+            expect(source).toBe(item);
+            expect(added).not.toBe(item);
+            expect(added.bibleKey).toBe('ESV');
+
+            ctl.splitBibleItemOnPress(event, item, false);
+            expect(h.showBibleKeyOptionMock.mock.calls[1][3]).toBe(
+                'Split Vertical to',
+            );
+            h.showBibleKeyOptionMock.mock.calls[1][1]('NIV');
+            expect(addBottom.mock.calls[0][1].bibleKey).toBe('NIV');
+            expect(addLeft).toHaveBeenCalledTimes(1);
+        });
+
         test('genContextMenu toggle full view targets the uuid element', async () => {
             const ctl = genController();
             ctl.nestedBibleItems = [genItem(1)];

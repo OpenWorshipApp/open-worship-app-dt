@@ -504,7 +504,7 @@ Minimum pass (≈5 minutes, self-restoring):
    second click on the same card only **re-applies** it, it does NOT clear — KB §5) or
    double-click a bible verse. Verify `.app-on-screen` appears and the mini-screen
    preview renders it (`PR-04`). Un-present with `F8`, never with a second click.
-2. **Check the clear-control states** — the matching `BG`/`SL`/`BB`/`FG` button in the
+2. **Check the clear-control states** — the matching `BG`/`SL`/`LT`/`FG` button in the
    previewer header flips from outline (disabled-look) to solid (`SP-02`).
 3. **Show the screen** — click `ShowHideScreen` (or ⌨️ `F5`). A
    `screen.html?screenId=N` target MUST appear in `list_pages`; `select_page` it,

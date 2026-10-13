@@ -25,8 +25,13 @@
     "$defs": {
         "server": {
             "type": "object",
-            "required": ["id", "name", "baseUrl", "models"],
+            "required": ["id", "name", "baseUrl"],
             "additionalProperties": true,
+            "if": {
+                "required": ["isAcceptingReport"],
+                "properties": { "isAcceptingReport": { "const": true } }
+            },
+            "else": { "required": ["models"] },
             "properties": {
                 "id": {
                     "type": "string",
@@ -58,6 +63,10 @@
                     "type": "string",
                     "maxLength": 300,
                     "description": "For people reading the file; not shown in the app."
+                },
+                "isAcceptingReport": {
+                    "type": "boolean",
+                    "description": "true makes baseUrl the address the help window's Send report posts to: one JSON object -- {version, reference, prompt, attachments} with the report under prompt and its files (the picture of the app, and the pictures, PDFs and text files the person attached) under attachments as {name, mimeType, data (base64)} -- sent with POST to baseUrl exactly as written, with apiKey as a Bearer token. With no models the entry is that and nothing else: never offered as an assistant, listed in no window. With models it is an assistant as well, at the same address (one tunnel doing both, llm-tunnel.mjs --with-reports), and is listed as the assistant only. baseUrl must carry no query and no fragment. The first three such entries are kept."
                 },
                 "models": {
                     "type": "array",

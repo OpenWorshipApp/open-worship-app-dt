@@ -336,6 +336,63 @@ describe('titles', () => {
         expect(title.endsWith('…')).toBe(true);
     });
 
+    // "I don't see title start with `Report:`": among a dozen tabs, the
+    // one a problem is being reported in has to say so.
+    test('a tab a problem is being reported in is called Report', () => {
+        const offer = {
+            id: 1,
+            author: 'bot' as const,
+            text: 'Tell me what went wrong',
+            actions: [
+                { label: 'Report', toolName: 'owa-report-start', args: {} },
+            ],
+        };
+        // Opened to report, nothing said yet.
+        expect(genChatSessionTitle(genSession({ messages: [offer] }))).toBe(
+            'Report: new',
+        );
+        // What they said for it, whichever button sent it.
+        expect(
+            genChatSessionTitle(
+                genSession({
+                    messages: [
+                        offer,
+                        { id: 2, author: 'you', text: 'the screen went black' },
+                    ],
+                }),
+            ),
+        ).toBe('Report: the screen went b…');
+        // Report pressed under an ordinary question: named after the
+        // report's own words, not the question before it.
+        const later = genChatSessionTitle(
+            genSession({
+                messages: [
+                    { id: 1, author: 'you', text: 'How do I add a song?' },
+                    { id: 2, author: 'bot', text: 'Like this.' },
+                    {
+                        id: 3,
+                        author: 'you',
+                        text: 'it crashed',
+                        note: 'Reporting a problem.',
+                    },
+                ],
+            }),
+        );
+        expect(later).toBe('Report: it crashed');
+        // Still a report once it is written up and sent; a typed name wins.
+        expect(
+            genChatSessionTitle(
+                genSession({
+                    title: 'Sunday',
+                    messages: [offer],
+                }),
+            ),
+        ).toBe('Sunday');
+        expect(
+            genChatSessionTitle(genSession({ messages: [offer] })).length,
+        ).toBeLessThanOrEqual(26);
+    });
+
     test('a tab with nothing asked in it yet has a name anyway', () => {
         expect(genChatSessionTitle(genSession())).toBe('New chat');
     });
@@ -657,6 +714,32 @@ describe('attachments on a message', () => {
         expect(message.attachments).toBeUndefined();
     });
 
+    // "In 2 the button is missing" must still mean something after a
+    // reopen.
+    test('the number on a chip survives, and only a real one', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'in 2 the button is missing',
+            attachments: [
+                { id: 'a1', kind: 'image', name: 'my screen', number: 1 },
+                { id: 'a2', kind: 'file', name: 'order.pdf', number: 2 },
+                { id: 'a3', kind: 'image', name: 'x', number: 'three' },
+                { id: 'a4', kind: 'image', name: 'y', number: -1 },
+            ],
+        });
+        expect(
+            message.attachments?.map((one) => {
+                return [one.kind, one.number];
+            }),
+        ).toEqual([
+            ['image', 1],
+            ['file', 2],
+            ['image', undefined],
+            ['image', undefined],
+        ]);
+    });
+
     test('only the three real attach requests come back', () => {
         const message = loadOneMessage({
             id: 1,
@@ -693,6 +776,50 @@ describe('attachments on a message', () => {
                 isGeneral: true,
             }).isGeneral,
         ).toBeUndefined();
+    });
+
+    test('a thumb and its follow-up survive a reopen, on an answer only', () => {
+        // The filled thumb is drawn off `rating`; `isFollowedUp` is what
+        // stops a second follow-up to the same answer; `isFollowUp` keeps
+        // the window's own line out of the history and the dispute read.
+        const answer = loadOneMessage({
+            id: 2,
+            author: 'bot',
+            text: 'Right-click the list.',
+            rating: 'dislike',
+            isFollowedUp: true,
+        });
+        expect(answer.rating).toBe('dislike');
+        expect(answer.isFollowedUp).toBe(true);
+        expect(
+            loadOneMessage({
+                id: 3,
+                author: 'bot',
+                text: 'Sorry...',
+                isFollowUp: true,
+            }).isFollowUp,
+        ).toBe(true);
+        // A hand-edited file: no third kind of thumb, and none on a question.
+        const junk = loadOneMessage({
+            id: 2,
+            author: 'bot',
+            text: 'hi',
+            rating: 'love',
+            isFollowedUp: 'yes',
+            isFollowUp: 1,
+        });
+        expect(junk.rating).toBeUndefined();
+        expect(junk.isFollowedUp).toBeUndefined();
+        expect(junk.isFollowUp).toBeUndefined();
+        const asked = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'hello',
+            rating: 'like',
+            isFollowUp: true,
+        });
+        expect(asked.rating).toBeUndefined();
+        expect(asked.isFollowUp).toBeUndefined();
     });
 
     test('old assistant machinery and dead show chips are cleaned on load', () => {
@@ -807,5 +934,70 @@ describe('what a tab has spent', () => {
         });
         expect(edited).not.toHaveProperty('usage');
         expect(edited.messages[0]).not.toHaveProperty('usage');
+    });
+});
+
+describe('a tab on Auto', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    test('stays on Auto across a save and a load, with who it asked last', () => {
+        const auto = genSession({
+            isAuto: true,
+            autoPick: 'LM Studio super-computer · Gemma 4 12B',
+            provider: 'custom',
+            model: 'server-1/row-1',
+        });
+        saveChatSessions({
+            sessions: [auto, genSession()],
+            activeId: auto.id,
+        });
+
+        const state = loadChatSessions('presenter', 'anthropic', 'claude-x');
+
+        expect(state.sessions[0].isAuto).toBe(true);
+        expect(state.sessions[0].autoPick).toBe(
+            'LM Studio super-computer · Gemma 4 12B',
+        );
+        expect(state.sessions[0].provider).toBe('custom');
+        expect(state.sessions[1].isAuto).toBeUndefined();
+    });
+
+    test('a first run can start on Auto', () => {
+        const state = loadChatSessions('presenter', 'free', 'x:free', true);
+        expect(state.sessions[0].isAuto).toBe(true);
+        expect(state.sessions[0].autoPick).toBeUndefined();
+        expect(
+            genNewChatSession('presenter', 'free', 'x:free').isAuto,
+        ).toBeUndefined();
+    });
+
+    test('a pick with no Auto beside it is dropped, and an absurd one is cut', () => {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    { id: 'named', messages: [], autoPick: 'Free · First' },
+                    {
+                        id: 'long',
+                        messages: [],
+                        isAuto: true,
+                        autoPick: 'x'.repeat(5000),
+                    },
+                    { id: 'junk', messages: [], isAuto: 'yes', autoPick: 7 },
+                ],
+                activeId: 'named',
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        expect(state.sessions[0].isAuto).toBeUndefined();
+        expect(state.sessions[0].autoPick).toBeUndefined();
+        expect(state.sessions[1].isAuto).toBe(true);
+        expect(state.sessions[1].autoPick?.length).toBeLessThanOrEqual(160);
+        expect(state.sessions[2].isAuto).toBeUndefined();
+        expect(state.sessions[2].autoPick).toBeUndefined();
     });
 });

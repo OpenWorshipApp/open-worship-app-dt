@@ -2,10 +2,10 @@
 id: W-01
 title: "Understand the Presenter window"
 section: "Orientation"
-verify: [GL-12, NAV-01, NAV-02, NAV-24, PL-01, PR-04]
+verify: [GL-12, NAV-01, NAV-02, NAV-10, NAV-24, NAV-25, PL-01, PR-04]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-01 — Understand the Presenter window
 
@@ -26,6 +26,11 @@ The Presenter has a header and three resizable columns:
   choice is kept for the next launch. The Bible Reader and the Slide Editor
   never hold the computer awake, so they have no cup. A screen that is
   showing keeps the display on by itself, whatever the cup says.
+  The **?** at the far right (**[en:tran:Help]**) opens a small menu of two rows:
+  **[en:tran:Open Online Help]** opens the app's help page on its website, in
+  your web browser, and **[en:tran:Open Chatbot]** opens the help window that
+  answers inside the app (W-42). The first is in the menu bar too, as **Help** →
+  **[en:tran:Open Online Help]**.
 - **Left column:** your content libraries — the **[en:tran:Documents]** list (songs live
   here too, marked with a music note) and **[en:tran:Presenting Flows]**.
 - **Middle column:** the working area — **[en:tran:Documents] / [en:tran:Bibles]** preview tabs plus the
@@ -40,7 +45,7 @@ Drag any divider between panels to resize them; the size is remembered. 📸
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`GL-12` · `NAV-01` · `NAV-02` · `NAV-24` · `PL-01` · `PR-04`
+`GL-12` · `NAV-01` · `NAV-02` · `NAV-10` · `NAV-24` · `NAV-25` · `PL-01` · `PR-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

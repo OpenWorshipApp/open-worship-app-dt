@@ -737,6 +737,72 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
 
     /**
+     * Split `bibleItem`'s view: `newBibleKey` is the version the new view
+     * opens in, `null` for the same one.
+     */
+    splitBibleItem(
+        bibleItem: ReadIdOnlyBibleItem,
+        isHorizontal: boolean,
+        newBibleKey: string | null,
+    ) {
+        let newBibleItem = bibleItem;
+        if (newBibleKey !== null) {
+            newBibleItem = ReadIdOnlyBibleItem.fromJson(bibleItem.toJson());
+            newBibleItem.bibleKey = newBibleKey;
+        }
+        if (isHorizontal) {
+            this.addBibleItemLeft(bibleItem, newBibleItem);
+        } else {
+            this.addBibleItemBottom(bibleItem, newBibleItem);
+        }
+    }
+
+    /**
+     * Whether a view's split button asks which version first. A view in a
+     * colour group hands its colour to the view split off it, and the two then
+     * follow the same passage for good -- the same version twice would show
+     * nothing the first did not.
+     */
+    checkIsSplitAskingBibleKey(bibleItem: ReadIdOnlyBibleItem) {
+        return !!this.getColorNote(bibleItem);
+    }
+
+    /** The version list a grouped view's split opens, named for the split. */
+    protected askSplitBibleKey(
+        event: any,
+        isHorizontal: boolean,
+        split: (newBibleKey: string) => void,
+    ) {
+        showBibleKeyOption(
+            event,
+            split,
+            [],
+            isHorizontal
+                ? tran('Split Horizontal to')
+                : tran('Split Vertical to'),
+        );
+    }
+
+    /**
+     * What a view's split button and its key do: `Split Horizontal` /
+     * `Split Vertical`, or the `… to` item beside each for a view in a colour
+     * group. The version list opens where `event` points.
+     */
+    splitBibleItemOnPress(
+        event: any,
+        bibleItem: ReadIdOnlyBibleItem,
+        isHorizontal: boolean,
+    ) {
+        if (!this.checkIsSplitAskingBibleKey(bibleItem)) {
+            this.splitBibleItem(bibleItem, isHorizontal, null);
+            return;
+        }
+        this.askSplitBibleKey(event, isHorizontal, (newBibleKey) => {
+            this.splitBibleItem(bibleItem, isHorizontal, newBibleKey);
+        });
+    }
+
+    /**
      * The four split items. `split` gets `null` for the same version and the
      * chosen key for a "… to" item, so a pane with no passage of its own (the
      * lookup's book and chapter grids) can offer the same menu.
@@ -807,18 +873,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 menuElement: elementDivider,
             },
             ...this.genSplitContextMenu((isHorizontal, newBibleKey) => {
-                let newBibleItem = bibleItem;
-                if (newBibleKey !== null) {
-                    newBibleItem = ReadIdOnlyBibleItem.fromJson(
-                        bibleItem.toJson(),
-                    );
-                    newBibleItem.bibleKey = newBibleKey;
-                }
-                if (isHorizontal) {
-                    this.addBibleItemLeft(bibleItem, newBibleItem);
-                } else {
-                    this.addBibleItemBottom(bibleItem, newBibleItem);
-                }
+                this.splitBibleItem(bibleItem, isHorizontal, newBibleKey);
             }),
             ...(langData
                 ? langData.extraBibleContextMenuItems(bibleItem, appProvider)

@@ -100,6 +100,65 @@ describe('runCustomLlmFetch', () => {
         });
     });
 
+    // A window is never told where a shared server lives, so what the server
+    // (or the tunnel in front of it) writes about itself must not tell it.
+    it('takes a registry server’s host out of what comes back, and leaves a saved server’s alone', async () => {
+        const registryServer = {
+            id: 'registry-super-computer',
+            name: 'Church LM Studio',
+            baseUrl: 'https://abc.trycloudflare.com/v1',
+            models: [{ id: 'row-1', model: 'qwen', name: '' }],
+            apiKey: 'sk-shared',
+            isFree: true,
+            note: '',
+            source: 'registry' as const,
+        };
+        const answered = await runCustomLlmFetch(
+            genRequest({ serverId: 'registry-super-computer' }),
+            genDeps({
+                readRegistryServers: () => [registryServer],
+                fetch: vi.fn(async () => {
+                    return new Response(
+                        'Tunnel abc.trycloudflare.com is not running',
+                        { status: 530 },
+                    );
+                }),
+            }),
+        );
+        expect(answered).toMatchObject({
+            ok: true,
+            status: 530,
+            text: 'Tunnel shared-server.invalid is not running',
+        });
+        const refused = await runCustomLlmFetch(
+            genRequest({ serverId: 'registry-super-computer' }),
+            genDeps({
+                readRegistryServers: () => [registryServer],
+                fetch: vi.fn(async () => {
+                    throw new Error(
+                        'getaddrinfo ENOTFOUND abc.trycloudflare.com',
+                    );
+                }),
+            }),
+        );
+        expect(refused).toEqual({
+            ok: false,
+            reason: 'unreachable',
+            detail: 'getaddrinfo ENOTFOUND shared-server.invalid',
+        });
+        const saved = await runCustomLlmFetch(
+            genRequest(),
+            genDeps({
+                fetch: vi.fn(async () => {
+                    throw new Error('connect ECONNREFUSED localhost:1234');
+                }),
+            }),
+        );
+        expect(saved).toMatchObject({
+            detail: 'connect ECONNREFUSED localhost:1234',
+        });
+    });
+
     it('forwards to the SAVED address, with the key read here', async () => {
         const deps = genDeps({
             readKeysText: () => JSON.stringify({ [SERVER_ID]: 'sk-local' }),

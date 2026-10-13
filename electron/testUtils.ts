@@ -19,6 +19,7 @@ export type MockWebContents = {
     focus: ReturnType<typeof vi.fn>;
     id: number;
     capturePage: ReturnType<typeof vi.fn>;
+    invalidate: ReturnType<typeof vi.fn>;
     print: ReturnType<typeof vi.fn>;
     printToPDF: ReturnType<typeof vi.fn>;
 };
@@ -86,6 +87,7 @@ export function createMockWebContents(
         focus: vi.fn(),
         id: (lastMockWebContentsId += 1),
         capturePage: vi.fn(),
+        invalidate: vi.fn(),
         print: vi.fn(),
         printToPDF: vi.fn(async () => Buffer.from('%PDF')),
         ...overrides,

@@ -79,6 +79,7 @@ import {
     BUILTIN_TOOL_NAME,
     MIN_HELP_HIT_SCORE,
     genBackToPresenterRoute,
+    genOwnWindowFact,
     genGuideActions,
     genReaderButtonReferenceAnswer,
     getBotFocus,
@@ -90,6 +91,7 @@ import type {
     ChatTurnType,
 } from './helpBotHelpers';
 import {
+    checkIsModelHiddenTool,
     filterModelToolList,
     findModelHiddenReason,
 } from '../../tools/owa-devtools-mcp/modelTools.mjs';
@@ -598,6 +600,14 @@ type LlmProviderInfoType = {
      */
     isModelListClosed?: true;
     /**
+     * The list is one family written BEST FIRST, so the model above another
+     * is the smarter of the two -- what a thumb down offers to ask again
+     * with (`answerRatingHelpers`). Not Bedrock, whose list is in the order
+     * a volunteer should reach for them (its most capable model is fourth),
+     * nor the keyless one, whose three are three different makers' models.
+     */
+    isModelListRanked?: true;
+    /**
      * Said above the first answer of a session, when the thing that makes this
      * provider possible is also something the user should know about. Only the
      * keyless one carries it: its answers travel through a shared public
@@ -637,18 +647,21 @@ const LLM_PROVIDER_MAP: Record<LlmProviderType, LlmProviderInfoType> = {
         kind: 'paid',
         models: ANTHROPIC_MODEL_LIST,
         keyField: 'anthropicAPIKey',
+        isModelListRanked: true,
     },
     openai: {
         label: 'ChatGPT',
         kind: 'paid',
         models: OPENAI_MODEL_LIST,
         keyField: 'openAIAPIKey',
+        isModelListRanked: true,
     },
     kimi: {
         label: 'Kimi',
         kind: 'paid',
         models: KIMI_MODEL_LIST,
         keyField: 'kimiAPIKey',
+        isModelListRanked: true,
     },
     bedrock: {
         label: 'Bedrock',
@@ -774,6 +787,21 @@ export function getLlmProviderLabel(
     return LLM_PROVIDER_MAP[provider].label;
 }
 
+/**
+ * The provider's own models when its list is written best first, and nothing
+ * when it is in some other order (or there is no provider): the one list in
+ * which "the one above" means "the smarter one".
+ */
+export function getRankedLlmModelList(
+    provider: LlmProviderType | null,
+): LlmModelType[] {
+    if (provider === null) {
+        return [];
+    }
+    const info = LLM_PROVIDER_MAP[provider];
+    return info.isModelListRanked === true ? info.models : [];
+}
+
 /** Whether the model picker offers *More models…* for this provider. */
 export function checkHasMoreModels(provider: LlmProviderType | null) {
     return provider !== null && !LLM_PROVIDER_MAP[provider].isModelListClosed;
@@ -833,6 +861,72 @@ export function getLlmProvider(): LlmProviderType | null {
 export function setLlmProvider(provider: LlmProviderType) {
     setSetting(PROVIDER_SETTING_NAME, provider);
 }
+
+// Whether a NEW tab starts on Auto (`autoAssistantHelpers`). A setting of its
+// own rather than a seventh provider: Auto is not somebody to ask, it is the
+// window choosing among the ones there are, and a name in the provider
+// setting that no `Record<LlmProviderType, …>` carries is a crashed lookup.
+const AUTO_SETTING_NAME = 'chatbot-llm-auto';
+
+/**
+ * Auto is the DEFAULT (2026-10-13, the user's ask with the row circled:
+ * _make `Auto` be selected by default_): a new tab starts on it until
+ * somebody picks an assistant by name, which is remembered as that
+ * (`setIsLlmAuto(false)`) and picking Auto again brings it back.
+ *
+ * One pick has to be read off the OTHER setting: an assistant picked by name
+ * before Auto existed wrote the provider and nothing here, and an update
+ * must not take that tab's owner off the assistant they chose. With neither
+ * written -- a first run -- it is Auto.
+ */
+export function toIsLlmAuto(
+    storedAuto: string | null,
+    storedProvider: string | null,
+) {
+    if (storedAuto === 'true' || storedAuto === 'false') {
+        return storedAuto === 'true';
+    }
+    return storedProvider === null || storedProvider === '';
+}
+
+export function getIsLlmAuto() {
+    return toIsLlmAuto(
+        getSetting(AUTO_SETTING_NAME),
+        getSetting(PROVIDER_SETTING_NAME),
+    );
+}
+
+export function setIsLlmAuto(isAuto: boolean) {
+    setSetting(AUTO_SETTING_NAME, isAuto ? 'true' : 'false');
+}
+
+/**
+ * Whether a question to this server of the user's costs nothing: a shared
+ * server says so itself (`isFree`), and one on this computer or the church's
+ * own network is nobody's meter. ONE place, because it decides two things
+ * that must agree -- what an answer is priced at, and whether Auto may ask
+ * the server without anybody having chosen to spend on it.
+ */
+export function checkIsNoCostCustomServer(server: {
+    baseUrl: string;
+    isFree?: boolean;
+}) {
+    return server.isFree === true || checkIsLocalNetworkUrl(server.baseUrl);
+}
+
+/**
+ * Said above an Auto conversation, for as long as it is one: the keyless
+ * service is always among the assistants Auto may ask, so the trade its own
+ * warning describes is one this tab can make at any question -- and it is
+ * told BEFORE the first one, not found out from the answer.
+ */
+export const AUTO_ASSISTANT_WARNING =
+    'Auto picks an assistant that costs nothing for each question: one of ' +
+    'your own servers when it is up to it, otherwise a free public AI ' +
+    `service (${FREE_SERVICE_MAP.kilo.label}). When that service answers, ` +
+    'your questions and anything you attach leave this computer and may be ' +
+    'kept by it, so do not send anything private. Pick one of your own ' +
+    'servers in the row above to keep every question in the building.';
 
 /**
  * Whether a failed call is the PROVIDER's fault rather than the question's:
@@ -1157,7 +1251,7 @@ The user is currently asking about the **${descriptor.label}**, and they are
 LOOKING AT IT while they ask. Never tell them to open the window they are
 already in -- no "click the Bible Reader tab" when they are in the Bible
 Reader; start at the first step they have not done. \`owa_app_state\` with
-\`page: "${focus}.html"\` says what is on their screen if you are unsure.${notHereText}
+\`page: "${focus}.html"\` says what is on their screen if you are unsure.${notHereText}${genOwnWindowFact(focus)}
 ${readerAudienceText}
 
 **The window may not be showing it.** If a tool answers that the app has no
@@ -2172,6 +2266,21 @@ export type AskExtraType = {
      * can help the complex tasks").
      */
     knownRecipeId?: string;
+    /**
+     * That page was QUOTED in the ask -- whole, or cut to the part that
+     * answers (`checkIsKnownPageQuoted`) -- so the tool watch starts with it
+     * already READ, not merely found. Measured 2026-10-12 on the first
+     * forty-seven corpus questions asked of a local model (gemma-4-e4b):
+     * twenty-five took three rounds or more and a median of 33 000 tokens,
+     * because the watch held the recipe as a search hit with no page opened
+     * -- so the model's steps, written from the page in front of it, were
+     * handed back as "written from a search excerpt without opening the
+     * page" (`checkIsStepsWithoutPage`), it opened the same page again, and
+     * wrote the answer a second time. A long page of which no part matched
+     * the question is left as a hit: the step that answers may be anywhere
+     * in it, and there the nudge is right.
+     */
+    isKnownPageQuoted?: boolean;
     // The control that question is about (the row's `find`), handed to the
     // walkthrough buttons so the card starts at the step naming it.
     knownFind?: string;
@@ -3086,11 +3195,54 @@ const LOCAL_TOOL_NAME_LIST = [
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 
+/**
+ * Whether a tool the app's own model list carries is left OUT of what this
+ * provider's model is sent -- today, a custom server's lean list. The window
+ * tells a known question's hint (`genKnownQuestionHint`), so a model is
+ * never told "the live tool for it" about a tool it was not given.
+ */
+export function checkIsToolLeftOut(
+    provider: LlmProviderType | null,
+    toolName: string,
+) {
+    return (
+        provider === 'custom' &&
+        !checkIsModelHiddenTool(toolName) &&
+        !LOCAL_TOOL_NAME_SET.has(toolName)
+    );
+}
+
 export function filterLocalToolList(tools: McpToolType[]) {
     return tools.filter((tool) => {
         return LOCAL_TOOL_NAME_SET.has(tool.name);
     });
 }
+
+/**
+ * A local program is asked to pick the likeliest word every time
+ * (`temperature: 0`), where it used to be left to its own default -- a
+ * sampling one on every program here.
+ *
+ * Found by asking every supported question of a 4B model more than once
+ * (2026-10-12, `EC-258`): with the right part of the guide in front of it,
+ * about one answer in seven on the dense pages changed a noun or added a
+ * clause the page does not have, and NOT the same questions twice -- a
+ * reworded page ended the answer it was written for and another went wrong
+ * at the next asking. That is sampling: the job here is to say what a page
+ * says, and a draw from the model's distribution is the wrong tool for it.
+ * At 0 the same question gets the same answer, so a fix to a page stays
+ * fixed and one asking is evidence about the next.
+ *
+ * Only to the three programs known to take the field as the protocol writes
+ * it. An unknown server may be a gateway in front of a model that fixes its
+ * own temperature and refuses the field outright; it keeps its default.
+ */
+const LOCAL_TEMPERATURE = 0;
+const LOCAL_TEMPERATURE_KIND_SET: ReadonlySet<CustomServerKindType> = new Set([
+    'lm-studio',
+    'ollama',
+    'llama-cpp',
+]);
 
 function findCustomModelOrThrow(model: string) {
     const found = findCustomModel(getAllCustomServers(), model);
@@ -3129,6 +3281,9 @@ function genCustomProvider(
         genRequestExtra: () => {
             return {
                 max_tokens: MAX_TOKENS,
+                ...(LOCAL_TEMPERATURE_KIND_SET.has(kind)
+                    ? { temperature: LOCAL_TEMPERATURE }
+                    : {}),
                 // A general question goes out with its thinking OFF on the
                 // two programs measured to honour the field (LM Studio and
                 // Ollama, a thinking model and a plain one alike -- Ollama
@@ -3151,8 +3306,7 @@ function genCustomProvider(
         },
         // A registry server says itself whether it is metered (`isFree`);
         // one on this machine or the church's network never is.
-        isPricedAtZero:
-            server.isFree === true || checkIsLocalNetworkUrl(server.baseUrl),
+        isPricedAtZero: checkIsNoCostCustomServer(server),
         filterTools: filterLocalToolList,
         describeRound: (round) => {
             if (round !== 0) {
@@ -3178,6 +3332,11 @@ function genCustomProvider(
 // little next to the 20 s its connection takes to fail anyway.
 const CUSTOM_INFO_WAIT_MILLISECONDS = 5000;
 
+// The program each of the user's servers last said it is: one short word a
+// server, for the servers asked in this window -- as many entries as there
+// are servers in Settings, never more.
+const lastServerKindMap = new Map<string, CustomServerKindType>();
+
 /**
  * What the server says about the model about to be asked -- which program it
  * is, and the model's state when it says (LM Studio and Ollama do; `info` is
@@ -3193,8 +3352,15 @@ async function readCustomModelInfo(
         server,
         CUSTOM_INFO_WAIT_MILLISECONDS,
     );
+    if (serverInfo !== null) {
+        lastServerKindMap.set(server.id, serverInfo.kind);
+    }
     return {
-        kind: serverInfo?.kind ?? 'other',
+        // A server that is slow to say which program it is THIS once is
+        // still the program it was a question ago: without that, the one
+        // question in a while whose look timed out went out with no
+        // temperature and was sampled (`LOCAL_TEMPERATURE`).
+        kind: serverInfo?.kind ?? lastServerKindMap.get(server.id) ?? 'other',
         info: findCustomModelInfo(serverInfo, row.model),
     };
 }
@@ -3597,9 +3763,18 @@ export async function askLlmBot(
     // and type back the Khmer button label -- precisely the task they could
     // not do. It needs neither the network nor a model round. Not for a
     // general question, which is about nothing in this app.
+    //
+    // Read off the words the person TYPED, never the ask: a supported
+    // question carries its guide page under it, and three of the Reader's
+    // pages say "non-English" or "Khmer" beside a reference of their own.
+    // Measured 2026-10-12 over the whole corpus: seventeen of the Reader's
+    // seventy-one supported questions -- "The words are too small", "What
+    // are verse marks?", "How do I put two Bible versions side by side?" --
+    // were answered in 0.7 s with how to open John 3:16 by its book buttons,
+    // whichever assistant the tab was on.
     const readerButtonAnswer = isGeneral
         ? null
-        : genReaderButtonReferenceAnswer(asked, focus);
+        : genReaderButtonReferenceAnswer(extra?.askedText ?? asked, focus);
     if (readerButtonAnswer !== null) {
         return readerButtonAnswer;
     }
@@ -3625,6 +3800,10 @@ export async function askLlmBot(
         const seeded = genToolWatch();
         if (extra?.knownRecipeId !== undefined) {
             seeded.searchedId = extra.knownRecipeId;
+            // Quoted in the ask: read, as far as the watch goes.
+            if (extra.isKnownPageQuoted === true) {
+                seeded.readId = extra.knownRecipeId;
+            }
         }
         return seeded;
     };

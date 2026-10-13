@@ -12,8 +12,8 @@
 // - **The app must not react to the pick.** The click that chooses a control is
 //   swallowed in the capture phase -- pointer-down, pointer-up and click alike,
 //   because a Bootstrap dropdown opens on mousedown and would be open before a
-//   click handler ever ran. Someone pointing at "Clear Bible" to ask what it
-//   does must not clear the bible.
+//   click handler ever ran. Someone pointing at "Clear Long Text" to ask what
+//   it does must not clear the screen.
 // - **It is a string evaluated in the page**, like `domMatch` and `guide`:
 //   dependency free, never importing an app module (that re-runs
 //   `document.onkeydown` and kills every shortcut), and leaving nothing behind.

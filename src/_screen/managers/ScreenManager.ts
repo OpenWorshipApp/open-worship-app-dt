@@ -4,7 +4,7 @@ import { appLog } from '../../helper/loggerHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
-import ScreenBibleManager from './ScreenBibleManager';
+import ScreenLongTextManager from './ScreenLongTextManager';
 import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
 import ScreenEffectManager from './ScreenEffectManager';
 import {
@@ -83,7 +83,7 @@ const SCREEN_SHOW_UNRELAYED_TYPES = new Set<ScreenType>([
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;
     readonly screenVaryAppDocumentManager: ScreenVaryAppDocumentManager;
-    readonly screenBibleManager: ScreenBibleManager;
+    readonly screenLongTextManager: ScreenLongTextManager;
     readonly screenForegroundManager: ScreenForegroundManager;
     readonly screenDrawManager: ScreenDrawManager;
     readonly screenFocusManager: ScreenFocusManager;
@@ -138,7 +138,7 @@ export default class ScreenManager extends ScreenManagerBase {
                     .screenVaryAppDocumentManager;
             },
         );
-        this.screenBibleManager = new ScreenBibleManager(this);
+        this.screenLongTextManager = new ScreenLongTextManager(this);
         this.screenForegroundManager = new ScreenForegroundManager(
             this,
             this.foregroundEffectManager,
@@ -167,15 +167,18 @@ export default class ScreenManager extends ScreenManagerBase {
                 ['update'],
                 () => {
                     if (this.screenVaryAppDocumentManager.isShowing) {
-                        this.screenBibleManager.clear();
+                        this.screenLongTextManager.clear();
                     }
                 },
             ),
-            ...this.screenBibleManager.registerEventListener(['update'], () => {
-                if (this.screenBibleManager.isShowing) {
-                    this.screenVaryAppDocumentManager.clear();
-                }
-            }),
+            ...this.screenLongTextManager.registerEventListener(
+                ['update'],
+                () => {
+                    if (this.screenLongTextManager.isShowing) {
+                        this.screenVaryAppDocumentManager.clear();
+                    }
+                },
+            ),
         );
 
         this.initEvent();
@@ -192,7 +195,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBackgroundManager.registerEventListener(
             ['color-set'],
             (color: string) => {
-                this.screenBibleManager.reflectBackgroundColor(color);
+                this.screenLongTextManager.reflectBackgroundColor(color);
             },
         );
     }
@@ -300,7 +303,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 return;
             }
         }
-        ScreenBibleManager.sendSynTextStyle();
+        ScreenLongTextManager.sendSynTextStyle();
         this.backgroundEffectManager.sendSyncScreen();
         this.screenBackgroundManager.sendSyncScreen();
         // Before the foreground itself: an overlay with no transition of its
@@ -309,7 +312,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenForegroundManager.sendSyncScreen();
         this.screenVaryAppDocumentManager.sendSyncScreen();
         this.varyAppDocumentEffectManager.sendSyncScreen();
-        this.screenBibleManager.sendSyncScreen();
+        this.screenLongTextManager.sendSyncScreen();
         this.screenDrawManager.sendSyncScreen();
         this.screenFocusManager.sendSyncScreen();
         // And the whole state of every screen this one shows: its window may
@@ -333,7 +336,7 @@ export default class ScreenManager extends ScreenManagerBase {
             this.screenBackgroundManager,
             this.screenForegroundManager,
             this.screenVaryAppDocumentManager,
-            this.screenBibleManager,
+            this.screenLongTextManager,
             this.screenDrawManager,
             this.screenFocusManager,
         ];
@@ -355,7 +358,7 @@ export default class ScreenManager extends ScreenManagerBase {
             {
                 screenId: this.screenId,
                 type: 'bible-screen-view-text-style',
-                data: { textStyle: ScreenBibleManager.textStyle },
+                data: { textStyle: ScreenLongTextManager.textStyle },
             },
         ];
         for (const handler of handlers) {
@@ -399,8 +402,27 @@ export default class ScreenManager extends ScreenManagerBase {
         }
     }
 
+    // A long text is put up from a Foreground panel (Long Text Show) and
+    // drawn in the long-text layer, so it answers to both names: to an
+    // operator it is one of the foreground extras, and Clear Foreground
+    // that left it on the wall would be the one extra it did not clear.
+    // A Bible passage in that layer is not the foreground's to touch.
+    get isShowingForeground() {
+        return (
+            this.screenForegroundManager.isShowing ||
+            this.screenLongTextManager.isShowingLongText
+        );
+    }
+
+    clearForeground() {
+        this.screenForegroundManager.clear();
+        if (this.screenLongTextManager.isShowingLongText) {
+            this.screenLongTextManager.clear();
+        }
+    }
+
     clear() {
-        this.screenBibleManager.clear();
+        this.screenLongTextManager.clear();
         this.screenVaryAppDocumentManager.clear();
         this.screenForegroundManager.clear();
         this.screenBackgroundManager.clear();
@@ -437,7 +459,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.foregroundEffectManager.delete();
         this.screenBackgroundManager.delete();
         this.screenVaryAppDocumentManager.delete();
-        this.screenBibleManager.delete();
+        this.screenLongTextManager.delete();
         this.screenForegroundManager.delete();
         // Its id goes to the next screen added: no other screen may keep
         // showing "screen N" and quietly pick up that one instead.
@@ -462,7 +484,7 @@ export default class ScreenManager extends ScreenManagerBase {
         // badges keep advertising a screen that no longer exists.
         ScreenBackgroundManager.fireUpdateEvent();
         ScreenVaryAppDocumentManager.fireUpdateEvent();
-        ScreenBibleManager.fireUpdateEvent();
+        ScreenLongTextManager.fireUpdateEvent();
         ScreenForegroundManager.fireUpdateEvent();
         // Instance for the previewer list, update for anything showing
         // "is this on screen?" state for the content this screen was holding.
@@ -504,7 +526,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 droppedData.type,
             )
         ) {
-            return this.screenBibleManager.receiveScreenDropped(droppedData);
+            return this.screenLongTextManager.receiveScreenDropped(droppedData);
         } else if (droppedData.type === DragTypeEnum.FOREGROUND) {
             return applyForegroundDragData(
                 this.screenForegroundManager,
@@ -522,7 +544,7 @@ export default class ScreenManager extends ScreenManagerBase {
         } else if (type === 'vary-app-document') {
             return ScreenVaryAppDocumentManager;
         } else if (type === 'bible-screen-view') {
-            return ScreenBibleManager;
+            return ScreenLongTextManager;
         } else if (type === 'foreground') {
             return ScreenForegroundManager;
         } else if (type === 'draw') {
@@ -559,9 +581,9 @@ export default class ScreenManager extends ScreenManagerBase {
         } else if (type === 'effect') {
             ScreenEffectManager.receiveSyncScreen(message);
         } else if (type === 'bible-screen-view-selected-index') {
-            ScreenBibleManager.receiveSyncSelectedIndex(message);
+            ScreenLongTextManager.receiveSyncSelectedIndex(message);
         } else if (type === 'bible-screen-view-text-style') {
-            ScreenBibleManager.receiveSyncTextStyle(message);
+            ScreenLongTextManager.receiveSyncTextStyle(message);
         } else if (type === 'background-video-time') {
             ScreenBackgroundManager.receiveSyncVideoTime(message);
         } else if (type === 'background-video-sound') {

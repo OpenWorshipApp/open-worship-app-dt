@@ -7,7 +7,7 @@ import {
     useScreenEvents,
     useScreenBackgroundManagerEvents,
     useScreenVaryAppDocumentManagerEvents,
-    useScreenBibleManagerEvents,
+    useScreenLongTextManagerEvents,
     useScreenForegroundManagerEvents,
     useScreenDrawManagerEvents,
     useScreenFocusManagerEvents,
@@ -82,7 +82,7 @@ export function useScreenUpdateEvents(
         undefined,
         callback?.bind(null, 'varyAppDocument'),
     );
-    useScreenBibleManagerEvents(
+    useScreenLongTextManagerEvents(
         ['update'],
         undefined,
         callback?.bind(null, 'bible'),

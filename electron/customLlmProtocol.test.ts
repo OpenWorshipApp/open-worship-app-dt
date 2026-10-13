@@ -11,10 +11,14 @@ import {
     OLLAMA_PS_PATH,
     OLLAMA_TAGS_PATH,
     MAX_REGISTRY_SERVERS,
+    MAX_REPORT_SERVERS,
+    REGISTRY_HIDDEN_HOST,
     REGISTRY_SERVER_ID_PREFIX,
     checkIsAllowedCustomLlmCall,
     checkIsCustomServerError,
+    checkIsHiddenServerAddress,
     checkIsRegistryServerId,
+    hideRegistryServerHost,
     toPublicRegistryServers,
     toValidLlmRegistry,
     checkIsLocalNetworkUrl,
@@ -729,7 +733,103 @@ describe('the shared LLM registry file', () => {
             version: 1,
             updated: '',
             servers: [],
+            reportServers: [],
         });
+    });
+
+    // An entry that takes reports is not an assistant: it names no model,
+    // and nothing that lists the servers may list it.
+    it('keeps an entry that takes reports apart from the servers', () => {
+        const reporting = {
+            id: 'reporting',
+            name: 'Reports',
+            baseUrl: 'https://abc.trycloudflare.com/report/',
+            apiKey: ' sk-report ',
+            isAcceptingReport: true,
+            note: 'For reporting',
+        };
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [reporting, entry],
+        })!;
+        expect(registry.reportServers).toEqual([
+            {
+                id: `${REGISTRY_SERVER_ID_PREFIX}reporting`,
+                name: 'Reports',
+                baseUrl: 'https://abc.trycloudflare.com/report/',
+                apiKey: 'sk-report',
+                note: 'For reporting',
+            },
+        ]);
+        expect(registry.servers.map((one) => one.id)).toEqual([
+            `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
+        ]);
+        const shown = JSON.stringify(toPublicRegistryServers(registry.servers));
+        expect(shown).not.toContain('Reports');
+        expect(shown).not.toContain('sk-report');
+        // With models on it too, the same address does both -- one
+        // tunnel -- and is an assistant as well as where reports go. What
+        // a window is told of it is the assistant alone.
+        const both = toValidLlmRegistry({
+            version: 1,
+            servers: [{ ...entry, isAcceptingReport: true }],
+        })!;
+        expect(both.servers.map((one) => one.id)).toEqual([
+            `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
+        ]);
+        expect(both.reportServers).toEqual([
+            {
+                id: `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
+                name: 'Church LM Studio',
+                baseUrl: 'https://abc.trycloudflare.com/v1',
+                apiKey: 'sk-shared',
+                note: 'behind a Cloudflare tunnel',
+            },
+        ]);
+        expect(
+            JSON.stringify(toPublicRegistryServers(both.servers)),
+        ).not.toContain('isAcceptingReport');
+    });
+
+    it('drops a report entry with no name or no web address, a twin, and the overflow', () => {
+        const reporting = {
+            id: 'reporting',
+            name: 'Reports',
+            baseUrl: 'https://abc.trycloudflare.com/report',
+            isAcceptingReport: true,
+        };
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                { ...reporting, id: 'no-name', name: ' ' },
+                { ...reporting, id: 'no-url', baseUrl: 'ftp://abc/report' },
+                {
+                    ...reporting,
+                    id: 'with-query',
+                    baseUrl: 'https://a.b/r?x=1',
+                },
+                reporting,
+                { ...reporting },
+                ...Array.from(
+                    { length: MAX_REPORT_SERVERS + 2 },
+                    (_, index) => {
+                        return { ...reporting, id: `more-${index}` };
+                    },
+                ),
+                // A chat server may reuse an id only a dropped entry had.
+                { ...entry, id: 'no-name' },
+            ],
+        })!;
+        expect(registry.reportServers.map((one) => one.id)).toEqual([
+            `${REGISTRY_SERVER_ID_PREFIX}reporting`,
+            ...Array.from({ length: MAX_REPORT_SERVERS - 1 }, (_, index) => {
+                return `${REGISTRY_SERVER_ID_PREFIX}more-${index}`;
+            }),
+        ]);
+        expect(registry.reportServers[0].apiKey).toBe('');
+        expect(registry.servers.map((one) => one.id)).toEqual([
+            `${REGISTRY_SERVER_ID_PREFIX}no-name`,
+        ]);
     });
 
     it('drops a server that cannot be asked, a bad id, a twin, and the overflow', () => {
@@ -756,17 +856,102 @@ describe('the shared LLM registry file', () => {
         ]);
     });
 
-    it('hands a window the servers without their keys or notes', () => {
+    it('hands a window the servers without their keys, notes or addresses', () => {
         const registry = toValidLlmRegistry({ version: 1, servers: [entry] })!;
         const shown = toPublicRegistryServers(registry.servers);
         expect(shown[0]).toEqual({
             id: `${REGISTRY_SERVER_ID_PREFIX}super-computer`,
             name: 'Church LM Studio',
-            baseUrl: 'https://abc.trycloudflare.com/v1',
+            // A stand-in nothing answers at, with the server's own path.
+            baseUrl: `https://${REGISTRY_HIDDEN_HOST}/v1`,
             models: registry.servers[0].models,
             isFree: true,
             source: 'registry',
         });
         expect(JSON.stringify(shown)).not.toContain('sk-shared');
+        expect(JSON.stringify(shown)).not.toContain('trycloudflare');
+        // What main holds for the relay is as the file wrote it.
+        expect(registry.servers[0].baseUrl).toBe(
+            'https://abc.trycloudflare.com/v1',
+        );
+    });
+
+    it('keeps what a window reads off an address: its path, and that it is usable', () => {
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                entry,
+                { ...entry, id: 'bare', baseUrl: 'https://llm.example.com/' },
+                {
+                    ...entry,
+                    id: 'proxy',
+                    baseUrl: 'http://llm.example.com:8443/team/v1',
+                },
+            ],
+        })!;
+        const shown = toPublicRegistryServers(registry.servers);
+        expect(shown.map((one) => one.baseUrl)).toEqual([
+            `https://${REGISTRY_HIDDEN_HOST}/v1`,
+            `https://${REGISTRY_HIDDEN_HOST}`,
+            `https://${REGISTRY_HIDDEN_HOST}/team/v1`,
+        ]);
+        for (const server of shown) {
+            expect(checkIsUsableCustomServer(server)).toBe(true);
+            expect(checkIsHiddenServerAddress(server.baseUrl)).toBe(true);
+        }
+        // Only a `/v1` or a bare address has a root worth asking, and the
+        // stand-in answers that the way the real address does.
+        expect(
+            toCustomLlmCallUrl(shown[0].baseUrl, LM_STUDIO_MODELS_PATH),
+        ).not.toBeNull();
+        expect(
+            toCustomLlmCallUrl(shown[1].baseUrl, LM_STUDIO_MODELS_PATH),
+        ).not.toBeNull();
+        expect(
+            toCustomLlmCallUrl(shown[2].baseUrl, LM_STUDIO_MODELS_PATH),
+        ).toBeNull();
+        expect(checkIsHiddenServerAddress('http://localhost:1234/v1')).toBe(
+            false,
+        );
+        expect(checkIsHiddenServerAddress('')).toBe(false);
+    });
+
+    it('says a server on the local network costs nothing, the address being gone', () => {
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                {
+                    ...entry,
+                    id: 'lan',
+                    baseUrl: 'http://192.168.1.20:1234/v1',
+                    isFree: false,
+                },
+                { ...entry, id: 'metered', isFree: false },
+            ],
+        })!;
+        const shown = toPublicRegistryServers(registry.servers);
+        expect(shown.map((one) => one.isFree)).toEqual([true, false]);
+        expect(JSON.stringify(shown)).not.toContain('192.168');
+    });
+
+    it('takes a shared server’s host out of what it wrote', () => {
+        const baseUrl = 'https://abc.trycloudflare.com/v1';
+        expect(
+            hideRegistryServerHost(
+                'Cloudflare Tunnel error: ABC.trycloudflare.com is down, ' +
+                    'see https://abc.trycloudflare.com/v1/models',
+                baseUrl,
+            ),
+        ).toBe(
+            `Cloudflare Tunnel error: ${REGISTRY_HIDDEN_HOST} is down, ` +
+                `see https://${REGISTRY_HIDDEN_HOST}/v1/models`,
+        );
+        expect(hideRegistryServerHost('{"data":[]}', baseUrl)).toBe(
+            '{"data":[]}',
+        );
+        // A bare machine name is a word an answer may use.
+        expect(
+            hideRegistryServerHost('a super answer', 'http://super:1234/v1'),
+        ).toBe('a super answer');
     });
 });

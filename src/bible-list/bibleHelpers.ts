@@ -29,12 +29,13 @@ import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
+import { getBibleItemData } from '../_screen/screenLongTextTypeHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import { useAppCurrentRef, useAppEffectAsync } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -242,7 +243,11 @@ export async function openBibleItemContextMenu(
                   },
               ]),
         ...genShowOnScreensContextMenu((event) => {
-            ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
+            ScreenLongTextManager.handleBibleItemSelecting(
+                event,
+                bibleItem,
+                true,
+            );
         }),
         ...(bible === null
             ? []
@@ -310,10 +315,11 @@ export async function getOnScreenBibleItems() {
     const allScreenManager = getAllScreenManagers();
     const keySet = new Set<string>();
     for (const screenManager of allScreenManager) {
-        for (const bibleItemDataList of Object.values(
-            screenManager.screenBibleManager.screenViewData?.bibleItemData ??
-                {},
-        )) {
+        // Nothing while the screen holds a long text: it is no passage.
+        const bibleItemData = getBibleItemData(
+            screenManager.screenLongTextManager.screenViewData,
+        );
+        for (const bibleItemDataList of Object.values(bibleItemData ?? {})) {
             if (Array.isArray(bibleItemDataList)) {
                 for (const bibleItemData of bibleItemDataList) {
                     keySet.add(

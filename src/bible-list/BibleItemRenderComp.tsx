@@ -22,7 +22,7 @@ import {
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -59,7 +59,7 @@ function handleOpening(
     bibleItem: BibleItem,
 ) {
     if (appProvider.isPagePresenter) {
-        ScreenBibleManager.handleBibleItemSelecting(event, bibleItem);
+        ScreenLongTextManager.handleBibleItemSelecting(event, bibleItem);
     } else if (appProvider.isPageReader) {
         if (!viewController.isLookup) {
             const lastBibleItem = viewController.straightBibleItems.pop();

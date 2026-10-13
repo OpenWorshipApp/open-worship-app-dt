@@ -32,6 +32,15 @@ export function findSteppedProvider<T extends string>(
 }
 
 /**
+ * The value of the Auto row -- the window choosing among the assistants that
+ * cost nothing, again for every question (`autoAssistantHelpers`). Not a row
+ * of `genAssistantRows`: it is no provider and no server, and it is drawn
+ * LAST, under the keyless one. A provider key has no colon in it and a server
+ * row is `custom/<id>`, so nothing else can be this.
+ */
+export const AUTO_ASSISTANT_VALUE = '::auto::';
+
+/**
  * One row of the assistant list. Usually a provider; for the user's own
  * servers, ONE ROW PER SERVER under the name they gave it ("LM Studio"),
  * all of them standing for the one `custom` provider -- `serverId` says

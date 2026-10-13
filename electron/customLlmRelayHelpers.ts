@@ -8,6 +8,7 @@ import {
     checkIsAllowedCustomLlmCall,
     checkIsRegistryServerId,
     checkIsSameOrigin,
+    hideRegistryServerHost,
     toCustomLlmCallUrl,
     toCustomServerBaseUrl,
     toValidCustomServerKeys,
@@ -257,6 +258,13 @@ export async function runCustomLlmFetch(
     }, RELAY_TIMEOUT_MILLISECONDS);
     const authHeaders: Record<string, string> =
         apiKey === undefined ? {} : { authorization: `Bearer ${apiKey}` };
+    // A shared server's address stays in this process, also when the server
+    // or the tunnel in front of it writes it into what comes back.
+    const toShownText = (text: string) => {
+        return server.source === 'registry'
+            ? hideRegistryServerHost(text, savedBaseUrl)
+            : text;
+    };
     let isLost = false;
     // Only a question is watched: it is the one call that can take minutes.
     const stopWatching =
@@ -307,7 +315,7 @@ export async function runCustomLlmFetch(
             ok: true,
             status: response.status,
             contentType: response.headers.get('content-type') ?? '',
-            text,
+            text: toShownText(text),
         };
     } catch (error: any) {
         if (controller.signal.aborted) {
@@ -323,7 +331,7 @@ export async function runCustomLlmFetch(
         }
         return genFailure(
             'unreachable',
-            String(error?.message ?? error).slice(0, 200),
+            toShownText(String(error?.message ?? error)).slice(0, 200),
         );
     } finally {
         stopWatching();
@@ -351,6 +359,15 @@ function getRelaySession() {
         event.preventDefault();
     });
     return relaySession;
+}
+
+/**
+ * One request on the relay's own session, for the other door that sends to
+ * a registry server (`llmReportHelpers.ts`): no cookie jar, no CORS rewrite
+ * and no referrer of the app's go with it.
+ */
+export function fetchOnRelaySession(url: string, init: RequestInit) {
+    return getRelaySession().fetch(url, init);
 }
 
 // Every dependency read inside a function, never at module load: a load-time

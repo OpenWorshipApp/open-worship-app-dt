@@ -209,7 +209,7 @@ What holds everywhere:
   (`npm run build` deletes `electron-build/`); it needs no restart and
   relaunches nothing. **Whenever the knowledge changes,
   `tools/owa-devtools-mcp/questions/*.json` changes in the same commit**, and the
-  manual names a control as `[en:tran:Clear Bible]`, never as an English label.
+  manual names a control as `[en:tran:Clear Long Text]`, never as an English label.
 - **An edited MCP `.mjs` needs a fresh server**: the running host cached its
   modules on its first session (memory `mcp-tool-edit-two-processes`), and
   under `electron:dev` nodemon relaunches the app on any save in

@@ -12,8 +12,8 @@ import {
     appAssistantEventMappers,
     clearAllEventMapper,
     clearBackgroundEventMapper,
-    clearBibleEventMapper,
     clearForegroundEventMapper,
+    clearLongTextEventMapper,
     clearSlideEventMapper,
     closeBibleLookupEventMapper,
     closeEventMapper,
@@ -272,9 +272,9 @@ function genScreenGroup(): KeyboardShortcutGroupType {
                 label: tran('Clear Slide'),
             },
             {
-                id: 'screen-clear-bible',
-                keys: [clearBibleEventMapper],
-                label: tran('Clear Bible'),
+                id: 'screen-clear-long-text',
+                keys: [clearLongTextEventMapper],
+                label: tran('Clear Long Text'),
             },
             {
                 id: 'screen-clear-foreground',
@@ -311,6 +311,17 @@ function genSlideListGroup(
                 id: 'slide-previous',
                 keys: previousSlideEventMappers,
                 label: tran('Previous slide'),
+            },
+            // The one row here that works WITHOUT the panel's focus -- it is
+            // how the focus is got back (`keyingAreaHelpers`), which is why it
+            // carries a note of its own under the group's.
+            {
+                id: 'keying-take-over',
+                keys: nextSlideEventMappers,
+                label: tran('Take the keys back to what is being presented'),
+                note: tran(
+                    'Pressed 3 times quickly while another part of the app has focus',
+                ),
             },
         );
     }

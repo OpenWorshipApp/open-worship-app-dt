@@ -32,6 +32,14 @@
             "models": [
                 { "model": "qwen3-16k:8b", "name": "Qwen 3 8B (16k)" }
             ]
+        },
+        {
+            "id": "reporting",
+            "name": "Report inbox",
+            "baseUrl": "https://reports.example.church/report",
+            "apiKey": "report-key-that-reaches-only-this-address",
+            "isAcceptingReport": true,
+            "note": "Takes the help window's problem reports: a POST of JSON, the report under prompt and its files under attachments. Not an assistant, so it names no model"
         }
     ]
 }

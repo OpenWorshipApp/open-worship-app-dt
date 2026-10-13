@@ -3,6 +3,23 @@ import { useMemo } from 'react';
 import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 import { checkIsRtl } from '../lang/langHelpers';
 import { BIBLE_TEXT_FONT_FAMILY_VAR } from './bibleTextStyleHelpers';
+import {
+    SCREEN_BIBLE_COLUMNS_CLASSNAME,
+    SCREEN_BIBLE_COLUMN_CLASSNAME,
+    toScreenBibleColumnClassName,
+} from './screenBibleColumnHelpers';
+import type {
+    LongTextColumnType,
+    LongTextSectionType,
+} from './screenLongTextTypeHelpers';
+import {
+    SCREEN_LONG_TEXT_CLASSNAME,
+    genLongTextColumnCss,
+    genLongTextFontFamilyCss,
+    readLongTextColumnStyle,
+    toBibleLongTextColumns,
+    toLongTextColumnClassName,
+} from './screenLongTextTypeHelpers';
 
 export type BibleRenderVerseType = {
     num: string;
@@ -19,12 +36,8 @@ export type BibleItemRenderingType = {
 export type BibleItemRenderingLangType = BibleItemRenderingType & {
     langData: LanguageDataType;
 };
-export type LyricRenderedType = {
-    title: string;
-    items: {
-        num: number;
-        text: string;
-    }[];
+export type LongTextColumnLangType = LongTextColumnType & {
+    langData: LanguageDataType;
 };
 
 // A column reads the way its own Bible does, whatever the rest of the screen
@@ -50,54 +63,101 @@ function genLangFontFamily({ fontFamily }: LanguageDataType) {
     return `var(${BIBLE_TEXT_FONT_FAMILY_VAR}, ${fontFamily}), ${fontFamily}`;
 }
 
-function VerseTextElementComp({
-    langData,
-    verseInfo,
+// A column that names a family of its own says THAT inline instead, without
+// the variable: it is this column's, whatever the screen's is.
+function genColumnFontFamily({ style, langData }: LongTextColumnLangType) {
+    if (style?.fontFamily === undefined) {
+        return genLangFontFamily(langData);
+    }
+    return genLongTextFontFamilyCss(style.fontFamily, langData.fontFamily);
+}
+
+function SectionTextElementComp({
+    fontFamily,
+    section,
 }: Readonly<{
-    langData: LanguageDataType;
-    verseInfo: BibleRenderVerseType;
+    fontFamily: string | undefined;
+    section: LongTextSectionType;
 }>) {
     return (
         <span
             className="highlight"
-            data-kjv-verse-key={verseInfo.kjvVerseKey}
-            data-verse-key={verseInfo.verseKey}
-            style={{
-                fontFamily: genLangFontFamily(langData),
-            }}
+            data-kjv-verse-key={section.key}
+            data-verse-key={section.verseKey}
+            style={{ fontFamily }}
         >
-            <div className="verse-number">{verseInfo.num}</div>
-            {verseInfo.text}
+            <div className="verse-number">{section.num}</div>
+            {section.text}
         </span>
     );
 }
 
-export function BibleBibleTableComp({
-    bibleRenderingList,
+/**
+ * Columns of numbered sections under a title: several Bibles, or one long
+ * text in several languages.
+ *
+ * `isLongText` is what a long text does differently: its header chip is a
+ * language code and opens nothing (a Bible's opens the versions menu), and
+ * each column may carry a style of its own.
+ */
+export function LongTextTableComp({
+    columns: rawColumns,
     isLineSync,
-    versesCount,
+    isLongText,
 }: Readonly<{
-    bibleRenderingList: BibleItemRenderingLangType[];
+    columns: LongTextColumnLangType[];
     isLineSync: boolean;
-    versesCount: number;
+    isLongText: boolean;
 }>) {
-    const fontFaceList = useMemo(() => {
-        return bibleRenderingList.map(({ langData }) => {
-            return langData.genCss();
+    // Read once, here: a style reaches a screen from a setting file or a
+    // Screen Mirror peer, and all of it is about to be written into CSS.
+    const columns = useMemo(() => {
+        if (!isLongText) {
+            return rawColumns;
+        }
+        return rawColumns.map((column) => {
+            return { ...column, style: readLongTextColumnStyle(column.style) };
         });
-    }, [bibleRenderingList]);
-    const rendTableHeader = (
-        { langData, bibleKey, title, locale }: BibleItemRenderingLangType,
-        i: number,
-    ) => {
-        const direction = genDirectionStyle(locale);
+    }, [rawColumns, isLongText]);
+    const styleText = useMemo(() => {
+        return columns
+            .flatMap(({ langData, style, locale }, i) => {
+                return [
+                    langData.genCss(),
+                    isLongText
+                        ? genLongTextColumnCss(i, style, checkIsRtl(locale))
+                        : '',
+                ];
+            })
+            .filter((text) => {
+                return text !== '';
+            })
+            .join('\n');
+    }, [columns, isLongText]);
+    // The longest column: a shorter one is drawn with blank cells under it,
+    // never read past its end.
+    const rowCount = Math.max(
+        0,
+        ...columns.map(({ sections }) => {
+            return sections.length;
+        }),
+    );
+    const genColumnClassName = (i: number) => {
+        return isLongText ? toLongTextColumnClassName(i) : undefined;
+    };
+    const rendTableHeader = (column: LongTextColumnLangType, i: number) => {
+        const direction = genDirectionStyle(column.locale);
+        const columnClassName = genColumnClassName(i);
         return (
             <th
-                key={title}
-                className="header"
+                key={i}
+                className={
+                    'header' +
+                    (columnClassName === undefined ? '' : ` ${columnClassName}`)
+                }
                 dir={direction?.dir}
                 style={{
-                    fontFamily: genLangFontFamily(langData),
+                    fontFamily: genColumnFontFamily(column),
                     height: '118px',
                     overflow: 'hidden',
                     ...direction?.style,
@@ -109,13 +169,17 @@ export function BibleBibleTableComp({
                     }}
                 >
                     <div
-                        className="bible highlight bible-name bible-key"
+                        className={
+                            isLongText
+                                ? 'bible bible-key'
+                                : 'bible highlight bible-name bible-key'
+                        }
                         data-index={i}
                     >
-                        {bibleKey}
+                        {column.code}
                     </div>
                     <div className="title">
-                        <div>{title}</div>
+                        <div>{column.title}</div>
                     </div>
                 </div>
             </th>
@@ -124,62 +188,131 @@ export function BibleBibleTableComp({
     const renderTrBody = (_: any, i: number) => {
         return (
             <tr key={i}>
-                {bibleRenderingList.map(({ langData, verses, locale }, j) => {
-                    const direction = genDirectionStyle(locale);
+                {columns.map((column, j) => {
+                    const direction = genDirectionStyle(column.locale);
+                    const section = column.sections[i];
                     return (
                         <td
                             key={j}
+                            className={genColumnClassName(j)}
                             dir={direction?.dir}
                             style={direction?.style}
                         >
-                            <VerseTextElementComp
-                                langData={langData}
-                                verseInfo={verses[i]}
-                            />
+                            {section === undefined ? null : (
+                                <SectionTextElementComp
+                                    fontFamily={genColumnFontFamily(column)}
+                                    section={section}
+                                />
+                            )}
                         </td>
                     );
                 })}
             </tr>
         );
     };
-    const renderTdBody = (
-        { langData, verses, locale }: BibleItemRenderingLangType,
-        i: number,
-    ) => {
-        const direction = genDirectionStyle(locale);
+    const renderTdBody = (column: LongTextColumnLangType, i: number) => {
+        const direction = genDirectionStyle(column.locale);
+        const fontFamily = genColumnFontFamily(column);
         return (
-            <td key={i} dir={direction?.dir} style={direction?.style}>
-                {verses.map((verseInfo, j) => {
+            <td
+                key={i}
+                className={genColumnClassName(i)}
+                dir={direction?.dir}
+                style={direction?.style}
+            >
+                {column.sections.map((section, j) => {
                     return (
-                        <VerseTextElementComp
+                        <SectionTextElementComp
                             key={j}
-                            langData={langData}
-                            verseInfo={verseInfo}
+                            fontFamily={fontFamily}
+                            section={section}
                         />
                     );
                 })}
             </td>
         );
     };
+    const styleElement = (
+        <style
+            dangerouslySetInnerHTML={{
+                __html: styleText,
+            }}
+        />
+    );
+    // Without Line Sync the Bibles are not row by row, so each one is a
+    // table -- and a scroller -- of its own: in one table the shorter
+    // translation ended while the longer was still verses away
+    // (`screenBibleColumnHelpers`).
+    if (!isLineSync && columns.length > 1) {
+        const width = 100 / columns.length;
+        return (
+            <div className={SCREEN_BIBLE_COLUMNS_CLASSNAME}>
+                {styleElement}
+                {columns.map((column, i) => {
+                    return (
+                        <div
+                            key={i}
+                            className={
+                                `${SCREEN_BIBLE_COLUMN_CLASSNAME} ` +
+                                toScreenBibleColumnClassName(i)
+                            }
+                            data-column-index={i}
+                            style={{
+                                left: `${width * i}%`,
+                                width: `${width}%`,
+                            }}
+                        >
+                            <table>
+                                <thead>
+                                    <tr>{rendTableHeader(column, i)}</tr>
+                                </thead>
+                                <tbody>
+                                    <tr>{renderTdBody(column, i)}</tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
     return (
-        <div>
-            <style
-                dangerouslySetInnerHTML={{
-                    __html: fontFaceList.join('\n'),
-                }}
-            />
+        <div className={isLongText ? SCREEN_LONG_TEXT_CLASSNAME : undefined}>
+            {styleElement}
             <table>
                 <thead>
-                    <tr>{bibleRenderingList.map(rendTableHeader)}</tr>
+                    <tr>{columns.map(rendTableHeader)}</tr>
                 </thead>
                 <tbody>
                     {isLineSync ? (
-                        Array.from({ length: versesCount }).map(renderTrBody)
+                        Array.from({ length: rowCount }).map(renderTrBody)
                     ) : (
-                        <tr>{bibleRenderingList.map(renderTdBody)}</tr>
+                        <tr>{columns.map(renderTdBody)}</tr>
                     )}
                 </tbody>
             </table>
         </div>
+    );
+}
+
+/** Several Bibles, as the columns `LongTextTableComp` draws. */
+export function BibleBibleTableComp({
+    bibleRenderingList,
+    isLineSync,
+}: Readonly<{
+    bibleRenderingList: BibleItemRenderingLangType[];
+    isLineSync: boolean;
+}>) {
+    const columns = useMemo(() => {
+        return toBibleLongTextColumns(bibleRenderingList).map((column, i) => {
+            return { ...column, langData: bibleRenderingList[i].langData };
+        });
+    }, [bibleRenderingList]);
+    return (
+        <LongTextTableComp
+            columns={columns}
+            isLineSync={isLineSync}
+            isLongText={false}
+        />
     );
 }

@@ -59,8 +59,10 @@ function readEnvFile(filePath) {
 
 /**
  * The app's own rules, in short: version 1, a `servers` list, each with a
- * slug id, a name, an http(s) address and at least one model id. Answers
- * the problems found, empty when the file is good.
+ * slug id, a name, an http(s) address and at least one model id -- or, in
+ * place of the models, `isAcceptingReport: true`: an address that takes the
+ * app's problem reports and is no assistant. Answers the problems found,
+ * empty when the file is good.
  */
 export function findRegistryProblems(data) {
     const problems = [];
@@ -104,6 +106,20 @@ export function findRegistryProblems(data) {
             !/^https?:\/\//.test(server.baseUrl.trim())
         ) {
             problems.push(`${where}.baseUrl must be an http(s) address`);
+        }
+        if (server.isAcceptingReport === true) {
+            // The app posts the report to this address exactly as written,
+            // and refuses one it cannot write that way.
+            if (/[?#]/.test(String(server.baseUrl ?? ''))) {
+                problems.push(
+                    `${where}.baseUrl takes reports and must carry no "?" or "#"`,
+                );
+            }
+            // Only that: it needs no models. With models on it the same
+            // address is an assistant too, held to the rule below.
+            if (!Array.isArray(server.models) || server.models.length === 0) {
+                return;
+            }
         }
         const models = Array.isArray(server.models) ? server.models : [];
         if (
@@ -184,6 +200,16 @@ export async function readPublishedRegistry() {
 }
 
 /**
+ * The registry as the site is sent it: without the `$schema` line a file
+ * kept by hand may open with for its editor (`llm-info.schema.json`) -- a
+ * path beside that file, which names nothing on the site.
+ */
+export function toPublishedRegistry(data) {
+    const { $schema: _schema, ...published } = data;
+    return published;
+}
+
+/**
  * Checks `data` the way the app does, writes it to the site and clears the
  * CDN's copy. Throws with a sentence to show when it cannot: a registry the
  * app would ignore, a missing credential, or the AWS packages not installed
@@ -205,7 +231,7 @@ export async function publishRegistry(data, log = console.log) {
         new PutObjectCommand({
             Bucket: env.AWS_BUCKET_NAME,
             Key: OBJECT_KEY,
-            Body: JSON.stringify(data, null, 2) + '\n',
+            Body: JSON.stringify(toPublishedRegistry(data), null, 2) + '\n',
             ContentType: 'application/json; charset=utf-8',
             // A Reload in the app should see a change within a minute.
             CacheControl: 'max-age=60',

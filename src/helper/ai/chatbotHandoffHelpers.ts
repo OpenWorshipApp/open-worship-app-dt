@@ -20,17 +20,40 @@ import { askAiCaution } from './aiCautionHelpers';
 import { askToEnableAI } from './aiEnableHelpers';
 import { getIsAIEnabled } from './aiHelpers';
 import { openChatbotPage } from '../domHelpers';
-import { requestChatbotAsk } from './chatbotHandoffStoreHelpers';
+import {
+    requestChatbotAsk,
+    requestChatbotReport,
+} from './chatbotHandoffStoreHelpers';
 
-export async function openChatbotAsking(text: string) {
+async function askToOpenChatbot() {
     if (!getIsAIEnabled()) {
         void askToEnableAI();
         return false;
     }
-    if (!(await askAiCaution('assistant'))) {
+    return await askAiCaution('assistant');
+}
+
+export async function openChatbotAsking(text: string) {
+    if (!(await askToOpenChatbot())) {
         return false;
     }
     requestChatbotAsk(text);
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant to REPORT A PROBLEM: from the Help button's third
+ * row (`problem` empty -- the person is asked what happened) and from the
+ * dialog an error raises (`problem` is the error). The same two questions
+ * first; the assistant then offers, and only a press there looks into
+ * anything, and only a second one sends.
+ */
+export async function openChatbotReporting(problem = '') {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotReport(problem);
     openChatbotPage();
     return true;
 }

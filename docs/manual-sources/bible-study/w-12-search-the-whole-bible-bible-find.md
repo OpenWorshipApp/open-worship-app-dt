@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-08, RD-09, RD-45, RD-46, RD-47]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -46,11 +46,15 @@ workflowsVersion: "2026-10-11"
    The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
    to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
+   **To put a result on the screen.** A result has no show button of its own. Click it —
+   it opens as a passage in the lookup — then, in the Presenter, point at that passage's
+   title and press the cast icon, **[en:tran:Save bible item and show on screen]**, as for
+   any passage (W-06 step 3).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

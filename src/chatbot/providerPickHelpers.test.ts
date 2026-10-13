@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    AUTO_ASSISTANT_VALUE,
     findSteppedProvider,
     genAssistantRows,
     toAssistantRowValue,
@@ -92,5 +93,28 @@ describe('genAssistantRows', () => {
         );
         expect(toAssistantRowValue('openai', 'gpt-5', 'custom')).toBe('openai');
         expect(toAssistantRowValue(null, '', 'custom')).toBeNull();
+    });
+});
+
+describe('the Auto row', () => {
+    test('has a value no provider and no server row can have', () => {
+        const rows = genAssistantRows(
+            [
+                { key: 'anthropic', label: 'Claude' },
+                { key: 'custom', label: 'Custom servers' },
+                { key: 'free', label: 'Free' },
+            ],
+            ['anthropic', 'custom', 'free'],
+            'custom',
+            [{ id: 'auto', name: 'Auto' }],
+        );
+        expect(
+            rows.map((row) => {
+                return row.value;
+            }),
+        ).not.toContain(AUTO_ASSISTANT_VALUE);
+        expect(toAssistantRowValue('custom', 'auto/row', 'custom')).not.toBe(
+            AUTO_ASSISTANT_VALUE,
+        );
     });
 });

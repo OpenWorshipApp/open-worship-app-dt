@@ -66,14 +66,31 @@ const OPTIONS_MARKER = /(^|[\s>*_(.!?-])OPTIONS:[ \t]*/i;
 // that and it is something else -- a quoted example, a step in a recipe.
 const OPTIONS_LOOKBACK = 2;
 
+// An option the model put in quote marks: a pair around the whole of it, with
+// none of the same kind inside (`"Yes" or "No"` is two things, left alone).
+const WRAPPED_REPLY_PATTERN = /^(?:["“]([^"“”]+)["”]|['‘]([^'‘’]+)['’])$/;
+// A model with nothing to offer sometimes says so IN the options line. That
+// is the absence of an option, not an option.
+const EMPTY_REPLY_PATTERN =
+    /^(?:none|n\/?a|nothing|not applicable|no (?:other |further |more )?(?:options?|questions?|replies|suggestions?)(?: (?:are )?(?:available|needed))?)[.!]?$/i;
+// A decline answers an offer standing beside it; alone it offers nothing.
+const DECLINE_REPLY_PATTERN = /^no(?:,? thanks?|,? thank you)?[.!]?$/i;
+
 function toCleanReply(raw: string) {
-    return raw
-        .replace(/`{1,3}/g, '')
-        .replace(/[*_#>[\]]/g, '')
-        .replace(/^\s*\d+[.)]\s*/, '')
-        .replace(/^\s*[-•]\s*/, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+    return (
+        raw
+            .replace(/`{1,3}/g, '')
+            .replace(/[*_#>[\]]/g, '')
+            .replace(/^\s*\d+[.)]\s*/, '')
+            .replace(/^\s*[-•]\s*/, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            // The quote marks are the model's punctuation, not the button's
+            // words: measured 2026-10-12 on a local model (gemma-4-e4b), a
+            // chip read `"Where is the View menu?"`, marks and all.
+            .replace(WRAPPED_REPLY_PATTERN, '$1$2')
+            .trim()
+    );
 }
 
 /**
@@ -111,6 +128,12 @@ function toReplyList(raw: string) {
         if (!checkIsReadableReply(reply)) {
             continue;
         }
+        // "OPTIONS: No options available" was drawn as a button under a
+        // state answer (the same run): pressed, it asks the assistant
+        // "No options available".
+        if (EMPTY_REPLY_PATTERN.test(reply)) {
+            continue;
+        }
         if (seen.has(key)) {
             continue;
         }
@@ -119,6 +142,11 @@ function toReplyList(raw: string) {
         if (replies.length >= MAX_REPLY_COUNT) {
             break;
         }
+    }
+    // "No thanks" with nothing beside it to decline is a button whose only
+    // effect is a model round spent on being told nothing was wanted.
+    if (replies.length === 1 && DECLINE_REPLY_PATTERN.test(replies[0])) {
+        return [];
     }
     return replies;
 }

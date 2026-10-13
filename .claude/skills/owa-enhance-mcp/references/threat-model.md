@@ -115,11 +115,11 @@ resolved, immediately before `click()`. Four choices in it:
   or a list row carries a hymn, and "erase my sin" must not refuse its card.
 - **A key is judged by the control that names it.** This app writes a control's
   shortcut into its title, so `F6` is as destructive as *Clear All [F6]* and
-  `F9` as ordinary as *Clear Bible [F9]* — with no list of keys to keep in step.
+  `F9` as ordinary as *Clear Long Text [F9]* — with no list of keys to keep in step.
 - **A question is the user's.** Anything inside the confirm, alert or input
   popup is refused, which needs no language at all — and is what stands behind
   the one gap left by design: a translation the dictionary also uses for an
-  allowed control (Khmer *Clear Bible* IS *Delete Bible*) is pressable, and the
+  allowed control (Khmer *Clear Background* IS *Remove Background*) is pressable, and the
   app confirms the destructive reading.
 - **The card's Do it and a tool's `do` are one rule.** The card shows words the
   model wrote, and a step reading *Press Do it to save* aimed at Move to Trash

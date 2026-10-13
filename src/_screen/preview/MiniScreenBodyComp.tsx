@@ -15,7 +15,8 @@ import { useBibleItemsViewControllerContext } from '../../bible-reader/BibleItem
 import BibleItem from '../../bible-list/BibleItem';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
-import type { BibleItemDataType } from '../screenTypeHelpers';
+import type { LongTextDataType } from '../screenTypeHelpers';
+import { getBibleItemData } from '../screenLongTextTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { Fragment, useCallback, useMemo } from 'react';
 import {
@@ -109,25 +110,32 @@ function viewControllerAndScreenManagers(
         kjvVerseKey: string,
         isToTop: boolean,
     ) => {
-        for (const { screenBibleManager } of screenManagers) {
-            screenBibleManager.handleScreenVersesHighlighting(
+        for (const { screenLongTextManager } of screenManagers) {
+            // A verse clicked in the Reader is no row of a long text:
+            // writing it there would only drop that screen's own
+            // selected section.
+            if (screenLongTextManager.isShowingLongText) {
+                continue;
+            }
+            screenLongTextManager.handleScreenVersesHighlighting(
                 kjvVerseKey,
                 isToTop,
             );
         }
     };
-    for (const { screenBibleManager } of screenManagers) {
-        screenBibleManager.applyBibleViewData = (
-            bibleData: BibleItemDataType | null,
+    for (const { screenLongTextManager } of screenManagers) {
+        screenLongTextManager.applyBibleViewData = (
+            viewData: LongTextDataType | null,
         ) => {
+            // Only a Bible passage is the Reader's to follow.
+            const bibleItemData = getBibleItemData(viewData);
             if (
-                bibleData?.bibleItemData?.bibleItem.target &&
-                bibleData.bibleItemData.renderedList.length > 0
+                bibleItemData?.bibleItem.target &&
+                bibleItemData.renderedList.length > 0
             ) {
                 bibleItemViewController.nestedBibleItems = [];
-                const { target } = bibleData.bibleItemData.bibleItem;
-                for (const { bibleKey } of bibleData.bibleItemData
-                    .renderedList) {
+                const { target } = bibleItemData.bibleItem;
+                for (const { bibleKey } of bibleItemData.renderedList) {
                     const bibleItem = BibleItem.fromJson({
                         id: -1,
                         bibleKey: bibleKey,
@@ -138,7 +146,7 @@ function viewControllerAndScreenManagers(
                 }
             }
         };
-        screenBibleManager.handleBibleViewVersesHighlighting = (
+        screenLongTextManager.handleBibleViewVersesHighlighting = (
             kjvVerseKey: string,
             isToTop: boolean,
         ) => {

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-61, KB-62, KB-63, KB-64, KB-65]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-49 — See every keyboard shortcut for this page (Help → Keyboard Shortcuts)
 
@@ -22,7 +22,9 @@ learn the keys of the page you are on.
    (**[en:tran:Redo]** is `Ctrl+Shift+Z` and `Ctrl+Y`). A grey line under a
    heading or a row says when the key works — for example
    **[en:tran:While the slides panel has focus]**: the slide arrows only move
-   the slides after you click into the slides panel.
+   the slides after you click into the slides panel — or after three quick
+   presses, the row
+   **[en:tran:Take the keys back to what is being presented]** (W-49b).
 3. Each page lists its own keys. The Presenter starts with
    **[en:tran:Screens]** (`F5` shows or hides the selected screens, `F6`–`F10` clear them,
    `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
@@ -60,5 +62,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-61` · `KB-62` · `KB-63` · `KB-64` · `KB-65`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

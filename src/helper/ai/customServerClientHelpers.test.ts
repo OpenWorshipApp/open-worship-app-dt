@@ -16,12 +16,21 @@ vi.mock('./aiHelpers', () => ({
 vi.mock('./customServerHelpers', () => ({
     requestCustomLlm: relay.requestCustomLlm,
     cancelCustomLlmRequest: relay.cancelCustomLlmRequest,
-    getCustomServers: () => [
+    getAllCustomServers: () => [
         {
             id: 'server-1',
             name: 'LM Studio',
             baseUrl: 'http://localhost:1234/v1',
             models: [],
+        },
+        // A shared server, as main hands it to a window: its address a
+        // stand-in, never the one the registry file carries.
+        {
+            id: 'registry-church',
+            name: 'Church LM Studio',
+            baseUrl: 'https://shared-server.invalid/v1',
+            models: [],
+            source: 'registry',
         },
     ],
     describeCustomLlmFailure: (result: { reason: string }, baseUrl: string) =>
@@ -105,6 +114,25 @@ describe('the custom-server client', () => {
         expect(checkIsCustomServerError(failure)).toBe(true);
         expect(failure?.message).toBe(
             'unreachable at http://localhost:1234/v1',
+        );
+    });
+
+    it('finds a shared server too, by the stand-in a window holds for it', async () => {
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: false,
+            reason: 'unreachable',
+            detail: 'net::ERR_NAME_NOT_RESOLVED',
+        });
+
+        const error = await getCustomServerInstance('registry-church')
+            .chat.completions.create({
+                model: 'qwen',
+                messages: [{ role: 'user', content: 'hi' }],
+            })
+            .catch((caught) => caught);
+
+        expect(toCustomServerFailure(error)?.message).toBe(
+            'unreachable at https://shared-server.invalid/v1',
         );
     });
 
@@ -266,6 +294,18 @@ describe('the custom-server client', () => {
                 'Custom servers, check the address and press Test (Ollama: ' +
                 'http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)',
         );
+        // A shared server's address is not the person's to check, nor this
+        // window's to print: not even the stand-in is written out.
+        const sharedMessage = toCustomServerFailure(error, {
+            baseUrl: 'https://shared-server.invalid/v1',
+        })?.message;
+        expect(sharedMessage).toBe(
+            'this shared server did not answer the way the app expects — ' +
+                'its address is openworship.app’s to correct; press ↻ beside ' +
+                'the list of assistants to read the shared servers again, or ' +
+                'pick another assistant',
+        );
+        expect(sharedMessage).not.toContain('invalid');
     });
 
     it('says a model that cannot take tools cannot', async () => {

@@ -4,7 +4,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { DEFAULT_LANG_CODE, tran } from '../lang/langHelpers';
 import type { BibleItemRenderingType } from './bibleScreenComps';
 import bibleScreenHelper from './bibleScreenHelpers';
-import type ScreenBibleManager from './managers/ScreenBibleManager';
+import type ScreenLongTextManager from './managers/ScreenLongTextManager';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { addPlayToBottom, addToTheTop } from './screenHelpers';
 import { getDisplayByScreenId } from './managers/screenHelpers';
@@ -14,24 +14,40 @@ import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { genContextMenuBibleKeys } from '../bible-lookup/BibleKeySelectionComp';
 import type { BibleItemDataType } from './screenTypeHelpers';
+import {
+    checkIsLongTextData,
+    getBibleItemData,
+    toLongTextColumns,
+} from './screenLongTextTypeHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
+import type { ScrollPercentageType } from './managers/screenScrollSyncHelpers';
+import {
+    alignScreenBibleColumns,
+    followScreenBibleHost,
+    getScreenBibleColumns,
+    wireScreenBibleColumns,
+} from './screenBibleColumnHelpers';
 
-export type ScreenBibleManagerEventType = 'update' | 'text-style';
+// `selected` is a long text's alone: the row its panel lights a button for.
+// A Bible verse is marked far more often (the Reader follows it) and nothing
+// outside the layer draws that mark, so it fires nothing.
+export type ScreenLongTextManagerEventType =
+    'update' | 'text-style' | 'selected';
 
 export const SCREEN_BIBLE_SETTING_PREFIX = 'screen-bible-';
 
 export function onSelectKey(
-    screenBibleManager: ScreenBibleManager,
+    screenLongTextManager: ScreenLongTextManager,
     selectedKJVVerseKey: string | null,
     isToTop: boolean,
 ) {
-    screenBibleManager.isToTop = isToTop;
-    screenBibleManager.selectedKJVVerseKey = selectedKJVVerseKey;
-    screenBibleManager.sendSyncSelectedIndex();
+    screenLongTextManager.isToTop = isToTop;
+    screenLongTextManager.selectedKJVVerseKey = selectedKJVVerseKey;
+    screenLongTextManager.sendSyncSelectedIndex();
 }
 
 async function applyBibleItems(
-    screenBibleManager: ScreenBibleManager,
+    screenLongTextManager: ScreenLongTextManager,
     bibleItemData: BibleItemDataType,
     newBibleKeys: string[],
 ) {
@@ -48,11 +64,11 @@ async function applyBibleItems(
         bibleItemJson,
         newBibleKeys,
     );
-    screenBibleManager.screenViewData = newScreenViewItemData;
+    screenLongTextManager.screenViewData = newScreenViewItemData;
 }
 
 async function onBibleSelect(
-    screenBibleManager: ScreenBibleManager,
+    screenLongTextManager: ScreenLongTextManager,
     event: any,
     index: number,
     bibleItemData: BibleItemDataType,
@@ -68,7 +84,7 @@ async function onBibleSelect(
         } else {
             excludeBibleKeys[index] = bibleKey;
         }
-        applyBibleItems(screenBibleManager, bibleItemData, excludeBibleKeys);
+        applyBibleItems(screenLongTextManager, bibleItemData, excludeBibleKeys);
     };
     const bibleKeyMenuItems = await genContextMenuBibleKeys(
         handleBibleKeySelection,
@@ -98,7 +114,7 @@ async function onBibleSelect(
                       onSelect: async () => {
                           excludeBibleKeys.splice(index, 1);
                           applyBibleItems(
-                              screenBibleManager,
+                              screenLongTextManager,
                               bibleItemData,
                               excludeBibleKeys,
                           );
@@ -122,53 +138,24 @@ async function onBibleSelect(
     showAppContextMenu(event, menuItems);
 }
 
-export async function renderScreenBibleManager(
-    screenBibleManager: ScreenBibleManager,
+// The content is laid out at the display's size and scaled to the box it is
+// shown in: `parent*` is that box, `width` x `height` the layout.
+function genScaledContainer(
+    content: Element,
+    {
+        parentWidth,
+        parentHeight,
+        width,
+        height,
+    }: {
+        parentWidth: number;
+        parentHeight: number;
+        width: number;
+        height: number;
+    },
 ) {
-    const { div } = screenBibleManager;
-    if (div === null) {
-        return;
-    }
-    const screenViewData = screenBibleManager.screenViewData;
-    if (screenViewData === null) {
-        if (div.lastChild !== null) {
-            for (const child of Array.from(div.children)) {
-                child.remove();
-            }
-        }
-        div.style.pointerEvents = 'none';
-        return;
-    }
-    div.style.pointerEvents = 'auto';
-    let newDiv: HTMLDivElement | null = null;
-    if (
-        screenViewData.type === 'bible-item' &&
-        screenViewData.bibleItemData !== undefined
-    ) {
-        newDiv = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
-            screenViewData.bibleItemData.renderedList,
-            screenBibleManager.isLineSync,
-        );
-    }
-    if (newDiv === null) {
-        return;
-    }
-    bibleScreenHelper.registerHighlight(newDiv, {
-        onSelectKey: (selectedKJVVerseKey, isToTop) => {
-            onSelectKey(screenBibleManager, selectedKJVVerseKey, isToTop);
-        },
-        onBibleSelect: (event: any, index) => {
-            onBibleSelect(screenBibleManager, event, index, screenViewData);
-        },
-    });
     const divHaftScale = document.createElement('div');
-    divHaftScale.appendChild(newDiv);
-    const { screenManagerBase } = screenBibleManager;
-    const parentWidth = screenManagerBase.width;
-    const parentHeight = screenManagerBase.height;
-    const { bounds } = getDisplayByScreenId(screenBibleManager.screenId);
-    const width = bounds.width;
-    const height = bounds.height;
+    divHaftScale.appendChild(content);
     Object.assign(divHaftScale.style, {
         width: `${width}px`,
         height: `${height}px`,
@@ -183,16 +170,138 @@ export async function renderScreenBibleManager(
         height: `${parentHeight}px`,
         transform: `scale(${scale},${scale}) translate(50%, 50%)`,
     });
+    return divContainer;
+}
+
+export async function renderScreenLongTextManager(
+    screenLongTextManager: ScreenLongTextManager,
+) {
+    const { div } = screenLongTextManager;
+    if (div === null) {
+        return;
+    }
+    const sendScroll = (
+        domSelector: string,
+        scroll: ScrollPercentageType,
+        isFromWheel: boolean,
+    ) => {
+        screenLongTextManager.sendSyncScrollPercentage(
+            domSelector,
+            scroll,
+            isFromWheel,
+        );
+    };
+    const screenViewData = screenLongTextManager.screenViewData;
+    const clearDiv = () => {
+        if (div.lastChild !== null) {
+            for (const child of Array.from(div.children)) {
+                child.remove();
+            }
+        }
+        wireScreenBibleColumns(div, [], sendScroll);
+        div.style.pointerEvents = 'none';
+    };
+    if (screenViewData === null) {
+        clearDiv();
+        return;
+    }
+    div.style.pointerEvents = 'auto';
+    let newDiv: HTMLDivElement | null = null;
+    const bibleItemData = getBibleItemData(screenViewData);
+    if (checkIsLongTextData(screenViewData)) {
+        // Row by row whatever this screen's Line Sync says: the languages
+        // of one text are read side by side, section for section. Decided
+        // by what it IS, because the setting is each page's own copy and a
+        // showing screen would not hear it change.
+        newDiv = await bibleScreenHelper.genHtmlFromLongTextColumns(
+            toLongTextColumns(screenViewData),
+            { isLineSync: true, isLongText: true },
+        );
+    } else if (bibleItemData !== undefined) {
+        newDiv = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+            bibleItemData.renderedList,
+            screenLongTextManager.isLineSync,
+        );
+    }
+    if (newDiv === null) {
+        // Something this build cannot draw (a kind a newer one sent): an
+        // empty layer, not the passage that was up before it.
+        clearDiv();
+        return;
+    }
+    bibleScreenHelper.registerHighlight(newDiv, {
+        onSelectKey: (selectedKJVVerseKey, isToTop) => {
+            onSelectKey(screenLongTextManager, selectedKJVVerseKey, isToTop);
+        },
+        // Only a Bible's header chip is wired (`div.bible-name`); a long
+        // text's is a language code and opens nothing.
+        onBibleSelect: (event: any, index) => {
+            if (screenViewData.type === 'bible-item') {
+                onBibleSelect(
+                    screenLongTextManager,
+                    event,
+                    index,
+                    screenViewData,
+                );
+            }
+        },
+    });
+    const { screenManagerBase } = screenLongTextManager;
+    const parentWidth = screenManagerBase.width;
+    const parentHeight = screenManagerBase.height;
+    const { bounds } = getDisplayByScreenId(screenLongTextManager.screenId);
+    const width = bounds.width;
+    const height = bounds.height;
+    // Several Bibles, not row by row: every column scrolls by itself, so
+    // each is scaled inside its own scroller.
+    const columns = getScreenBibleColumns(newDiv);
+    let content: HTMLElement = newDiv;
+    if (columns.length > 1) {
+        for (const column of columns) {
+            const table = column.firstElementChild;
+            if (table !== null) {
+                column.appendChild(
+                    genScaledContainer(table, {
+                        parentWidth: parentWidth / columns.length,
+                        parentHeight,
+                        width: width / columns.length,
+                        height,
+                    }),
+                );
+            }
+        }
+    } else {
+        content = genScaledContainer(newDiv, {
+            parentWidth,
+            parentHeight,
+            width,
+            height,
+        });
+    }
     for (const child of Array.from(div.children)) {
         child.remove();
     }
-    div.appendChild(divContainer);
-    screenBibleManager.renderSelectedIndex();
-    div.scrollTop =
-        screenBibleManager.scroll * (div.scrollHeight - div.clientHeight);
-    addToTheTop(div);
-    addPlayToBottom(div, (scrollTop, isPlaying) => {
-        screenBibleManager.sendAutoScrollPosition(div, scrollTop, isPlaying);
+    div.appendChild(content);
+    // The host column, or `div` itself when everything scrolls as one.
+    const scroller = wireScreenBibleColumns(
+        div,
+        columns,
+        sendScroll,
+        toLongTextColumns(screenViewData).length,
+    );
+    screenLongTextManager.renderSelectedIndex();
+    scroller.scrollTop =
+        screenLongTextManager.scroll *
+        (scroller.scrollHeight - scroller.clientHeight);
+    alignScreenBibleColumns(div);
+    addToTheTop(scroller);
+    addPlayToBottom(scroller, (scrollTop, isPlaying) => {
+        screenLongTextManager.sendAutoScrollPosition(
+            scroller,
+            scrollTop,
+            isPlaying,
+        );
+        followScreenBibleHost(div);
     });
 }
 

@@ -75,7 +75,7 @@ function genManager(overrides: Record<string, any> = {}) {
         displayId: 42,
         screenBackgroundManager: { backgroundSrc: null },
         screenVaryAppDocumentManager: { varySlideData: null },
-        screenBibleManager: { screenViewData: null },
+        screenLongTextManager: { screenViewData: null },
         screenForegroundManager: {
             foregroundData: {
                 countdownData: null,
@@ -301,7 +301,7 @@ describe('describeScreensForAgent', () => {
             genManager({ screenId: 1, isShowing: true }),
             genManager({
                 screenId: 0,
-                screenBibleManager: {
+                screenLongTextManager: {
                     screenViewData: {
                         type: 'bible-item',
                         locale: 'en',
@@ -332,6 +332,44 @@ describe('describeScreensForAgent', () => {
         expect(result.screens[0].isBlank).toBe(false);
         expect(result.screens[1].isBlank).toBe(true);
         expect(result.screens[1].isShowing).toBe(true);
+    });
+    it('says a long text among the foreground extras, never as a passage', () => {
+        h.isPagePresenter = true;
+        const screenViewData: any = {
+            type: 'long-text',
+            locale: 'km-KH',
+            scroll: 0,
+            selectedKJVVerseKey: null,
+            longTextData: {
+                sourceId: 'long-text',
+                renderedList: [
+                    {
+                        locale: 'km-KH',
+                        code: 'KM',
+                        title: 'ព្រះគុណ',
+                        sections: [],
+                    },
+                    {
+                        locale: 'en-US',
+                        code: 'EN',
+                        title: 'Amazing Grace',
+                        sections: [],
+                    },
+                ],
+            },
+        };
+        h.managers = [
+            genManager({
+                screenId: 0,
+                screenLongTextManager: { screenViewData },
+            }),
+        ];
+        // `KM` is a language here, not a Bible version to report.
+        expect(toBibleSummary(screenViewData)).toBeNull();
+        const [screen] = describeScreensForAgent().screens;
+        expect(screen.bible).toBeNull();
+        expect(screen.foreground).toEqual(['long text "ព្រះគុណ" in KM, EN']);
+        expect(screen.isBlank).toBe(false);
     });
     it('says when it is not the presenter answering', () => {
         h.isPagePresenter = false;

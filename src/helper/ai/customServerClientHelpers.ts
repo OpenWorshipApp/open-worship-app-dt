@@ -4,13 +4,14 @@ import { getIsAIEnabled } from './aiHelpers';
 import {
     cancelCustomLlmRequest,
     describeCustomLlmFailure,
-    getCustomServers,
+    getAllCustomServers,
     requestCustomLlm,
 } from './customServerHelpers';
 import {
     CUSTOM_CONTEXT_COMFORTABLE,
     CustomServerError,
     checkIsCustomServerError,
+    checkIsHiddenServerAddress,
     checkIsLoopbackUrl,
     toContextLabel,
     toCustomServerBaseUrl,
@@ -47,9 +48,11 @@ function toRelayTarget(url: string) {
     return { serverId: rest.slice(0, slashIndex), path };
 }
 
+// The saved servers and the shared ones: a shared server's is the stand-in
+// main hands a window, which is what tells its failure's sentence apart.
 function getServerBaseUrl(serverId: string) {
     return (
-        getCustomServers().find((one) => {
+        getAllCustomServers().find((one) => {
             return one.id === serverId;
         })?.baseUrl ?? ''
     );
@@ -332,8 +335,19 @@ export function genModelMissingText(
  * What to say when the address answered, but with a 404 page rather than the
  * protocol: the path is wrong, and Settings' Test is what finds the right
  * one. Measured 2026-10-10 on Ollama typed as `…/v1/systemone`.
+ *
+ * A shared server's address is neither this window's to print nor the
+ * person's to correct: the file on the site is, and the ↻ reads it again.
  */
 export function genWrongAddressText(baseUrl: string) {
+    if (checkIsHiddenServerAddress(baseUrl)) {
+        return (
+            'this shared server did not answer the way the app expects — ' +
+            'its address is openworship.app’s to correct; press ↻ beside ' +
+            'the list of assistants to read the shared servers again, or ' +
+            'pick another assistant'
+        );
+    }
     return (
         `nothing speaks the OpenAI API at ${toCustomServerBaseUrl(baseUrl) ?? baseUrl}` +
         ' — in Settings → Others → Custom servers, check the address and ' +

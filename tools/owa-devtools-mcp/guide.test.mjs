@@ -1801,7 +1801,7 @@ describe('a step that is not the card to press', () => {
   it('will not press the key a destructive control is named by', async () => {
     document.body.innerHTML =
       '<button title="Clear All [F6]">A</button>' +
-      '<button title="Clear Bible [F9]">B</button>';
+      '<button title="Clear Long Text [F9]">B</button>';
     const seen = [];
     document.addEventListener('keydown', (event) => {
       seen.push(event.key);

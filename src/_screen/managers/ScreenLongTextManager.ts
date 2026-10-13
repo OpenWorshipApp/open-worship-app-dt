@@ -17,10 +17,10 @@ import {
     setSetting,
 } from '../../helper/settingHelpers';
 import bibleScreenHelper from '../bibleScreenHelpers';
-import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
+import type { ScreenLongTextManagerEventType } from '../screenBibleHelpers';
 import {
     SCREEN_BIBLE_SETTING_PREFIX,
-    renderScreenBibleManager,
+    renderScreenLongTextManager,
     bibleItemJsonToScreenViewData,
     onSelectKey,
 } from '../screenBibleHelpers';
@@ -46,9 +46,17 @@ import type { AnyObjectType } from '../../helper/typeHelpers';
 import SettingManager from '../../helper/SettingManager';
 import type {
     BasicScreenMessageType,
-    BibleItemDataType,
+    LongTextDataType,
+    LongTextItemDataType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
+import type { LongTextColumnStyleType } from '../screenLongTextTypeHelpers';
+import {
+    checkIsLongTextData,
+    getBibleItemData,
+    toLongTextSectionKey,
+    withLongTextColumnStyles,
+} from '../screenLongTextTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 import {
     HEX_COLOR_BLACK,
@@ -57,6 +65,13 @@ import {
 } from '../../others/color/colorHelpers';
 import { showBibleTextColorChangedToast } from './bibleTextColorToastHelpers';
 import { tran } from '../../lang/langHelpers';
+import {
+    SCREEN_BIBLE_SCROLL_CLASSNAME,
+    getScreenBibleScrollTop,
+    getScreenBibleScroller,
+    steerScreenBibleAutoScroll,
+    toScreenBibleScrollSelector,
+} from '../screenBibleColumnHelpers';
 import {
     MAX_BIBLE_TEXT_FONT_SIZE,
     genBibleTextStyleCss,
@@ -83,15 +98,25 @@ const textStyleSettingManager = new SettingManager<AnyObjectType>({
 // Weak: a div is dropped with the card that rendered it (`releaseDiv`).
 const wiredDivMap = new WeakMap<
     HTMLDivElement,
-    { manager: ScreenBibleManager; abortController: AbortController }
+    { manager: ScreenLongTextManager; abortController: AbortController }
 >();
 
-class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
+/**
+ * A screen's long-text layer: columns of numbered sections under a title,
+ * scrolled together. A Bible passage is one thing it holds (a column per
+ * version, a section per verse); a long text in several languages -- a song to
+ * sing along to -- is the other (`handleLongTextShowing`). One layer, so one
+ * of them at a time, and either one takes the slide down.
+ */
+class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
-    private _screenViewData: BibleItemDataType | null = null;
+    private _screenViewData: LongTextDataType | null = null;
     private _div: HTMLDivElement | null = null;
     public isToTop = false;
-    applyBibleViewData = (_bibleData: BibleItemDataType | null) => {};
+    // The next selection is brought to the vertical MIDDLE of the screen,
+    // wherever it is now (`bringSectionToMiddle`).
+    public isToMiddle = false;
+    applyBibleViewData = (_bibleData: LongTextDataType | null) => {};
     handleBibleViewVersesHighlighting = (
         _kjvVerseKey: string,
         _isToTop: boolean,
@@ -105,7 +130,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     // (`persistOnScreenEntry`).
     private readonly collectLiveBibleList = () => {
         return collectLiveOnScreenMap(
-            ScreenBibleManager.getAllInstancesBase<ScreenBibleManager>(),
+            ScreenLongTextManager.getAllInstancesBase<ScreenLongTextManager>(),
             (instance) => {
                 return instance.screenViewData;
             },
@@ -124,12 +149,20 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         return this.screenViewData !== null;
     }
 
+    // A long text, not a Bible passage -- which is what its Foreground panel,
+    // Clear Foreground and the Foreground tab's mark each need to know.
+    get isShowingLongText() {
+        return checkIsLongTextData(this._screenViewData);
+    }
+
     applyHeaderEffectOnScroll(div: HTMLDivElement) {
         // multiple bibles view wil have multiple header,
         // so apply effect on all headers
         const thElements = div.querySelectorAll<HTMLElement>('th.header');
+        // One measure for all of them: columns that scroll by themselves are
+        // at different offsets, and their headers must not be different sizes.
+        const percentage = Math.min(getScreenBibleScrollTop(div), 118) / 118;
         for (const thElement of thElements) {
-            const percentage = Math.min(div.scrollTop, 118) / 118;
             const fontSize = `${1 - 0.5 * percentage}em`;
             if (thElement.style.fontSize !== fontSize) {
                 thElement.style.fontSize = fontSize;
@@ -195,28 +228,37 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             'wheel',
             (event) => {
                 if (!event.ctrlKey) {
+                    steerScreenBibleAutoScroll(div, event);
                     return;
                 }
                 event.preventDefault();
                 event.stopPropagation();
                 const isUp = event.deltaY < 0;
-                ScreenBibleManager.changeTextStyleTextFontSize(isUp);
+                ScreenLongTextManager.changeTextStyleTextFontSize(isUp);
             },
             { signal },
         );
+        // Captured: a scroll event does not bubble, and with several Bibles
+        // side by side it is their columns that scroll, not this div
+        // (`screenBibleColumnHelpers`).
         div.addEventListener(
             'scroll',
-            () => {
-                this.scroll =
-                    div.scrollTop / (div.scrollHeight - div.clientHeight);
+            (event) => {
+                const scroller = getScreenBibleScroller(div);
+                // The screen remembers one position: its host column's.
+                if (event.target === scroller) {
+                    this.scroll =
+                        scroller.scrollTop /
+                        (scroller.scrollHeight - scroller.clientHeight);
+                }
                 this.applyHeaderEffectOnScroll(div);
             },
-            { signal },
+            { signal, capture: true },
         );
-        div.classList.add('screen-bible-container-scroll');
+        div.classList.add(SCREEN_BIBLE_SCROLL_CLASSNAME);
         registerScrollingSyncEvent(div, (scroll, isFromWheel) => {
             this.sendSyncScrollPercentage(
-                '.screen-bible-container-scroll',
+                toScreenBibleScrollSelector(div),
                 scroll,
                 isFromWheel,
             );
@@ -231,6 +273,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
      * operator's click, so it goes out like a wheel scroll, even with the
      * mouse off the window. While `isPlaying`, the projector slides by the
      * same fractions of a pixel the preview does; the last one lets go.
+     * `div` is whatever the auto-scroll moves: the bible div, or the host
+     * column when several Bibles scroll side by side.
      */
     sendAutoScrollPosition(
         div: HTMLDivElement,
@@ -243,7 +287,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
         const rangeX = div.scrollWidth - div.clientWidth;
         this.sendSyncScrollPercentage(
-            '.screen-bible-container-scroll',
+            toScreenBibleScrollSelector(div),
             {
                 x: rangeX > 0 ? div.scrollLeft / rangeX : 0,
                 y: scrollTop / rangeY,
@@ -272,7 +316,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         return this._screenViewData;
     }
 
-    set screenViewData(screenViewData: BibleItemDataType | null) {
+    set screenViewData(screenViewData: LongTextDataType | null) {
         this._screenViewData = screenViewData;
         this.applyBibleViewData(screenViewData);
         this.render();
@@ -290,11 +334,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         this.sendSyncScreen();
     }
 
+    // The versions on the screen, carried over to the next passage. None
+    // while it holds a long text: its columns are languages, and a Bible
+    // presented after it must not go looking for a version named `KM`.
     getRenderedBibleKeys() {
-        if (this._screenViewData === null) {
-            return [];
-        }
-        return (this._screenViewData.bibleItemData?.renderedList ?? []).map(
+        return (getBibleItemData(this._screenViewData)?.renderedList ?? []).map(
             ({ bibleKey }) => bibleKey,
         );
     }
@@ -352,6 +396,12 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     set selectedKJVVerseKey(selectedKJVVerseKey: string | null) {
         this._setMetadata('selectedKJVVerseKey', selectedKJVVerseKey);
         this.renderSelectedIndex();
+        if (this.isShowingLongText) {
+            // Its panel lights the button of the row that is marked, whether
+            // the mark was made there or by a click on the text itself.
+            this.addPropEvent('selected');
+            ScreenLongTextManager.addPropEvent('selected');
+        }
     }
 
     get scroll() {
@@ -361,13 +411,17 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     set scroll(scroll: number) {
         this._setMetadata('scroll', scroll);
     }
-    sendSyncSelectedIndex() {
+    // `isToMiddle` rides along only when it is asked for: the screen then
+    // brings the row to ITS middle, which is another pixel than the mini
+    // preview's.
+    sendSyncSelectedIndex(isToMiddle = false) {
         this.screenManagerBase.sendScreenMessage(
             {
                 screenId: this.screenId,
                 type: 'bible-screen-view-selected-index',
                 data: {
                     selectedKJVVerseKey: this.selectedKJVVerseKey,
+                    ...(isToMiddle ? { isToMiddle: true } : {}),
                 },
             },
             true,
@@ -376,11 +430,26 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     static receiveSyncSelectedIndex(message: ScreenMessageType) {
         const { data, screenId } = message;
-        const screenBibleManager = this.getInstance(screenId);
-        if (screenBibleManager === null) {
+        const screenLongTextManager = this.getInstance(screenId);
+        if (screenLongTextManager === null) {
             return;
         }
-        screenBibleManager.selectedKJVVerseKey = data.selectedKJVVerseKey;
+        if (data.isToMiddle === true) {
+            screenLongTextManager.isToMiddle = true;
+        }
+        screenLongTextManager.selectedKJVVerseKey = data.selectedKJVVerseKey;
+    }
+
+    /**
+     * Select a section and bring it to the vertical middle, here and on
+     * the projector: where the eyes of a room singing along already are.
+     * A row already selected is brought back there too -- the operator
+     * pressed for the scroll, not for the mark.
+     */
+    bringSectionToMiddle(sectionKey: string) {
+        this.isToMiddle = true;
+        this.selectedKJVVerseKey = sectionKey;
+        this.sendSyncSelectedIndex(true);
     }
 
     toSyncMessage(): BasicScreenMessageType {
@@ -390,11 +459,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         };
     }
 
-    applyFullDataSrcWithSyncGroup(bibleData: BibleItemDataType | null) {
+    applyFullDataSrcWithSyncGroup(bibleData: LongTextDataType | null) {
         if (this.screenManagerBase.checkIsLockedWithMessage()) {
             return;
         }
-        ScreenBibleManager.enableSyncGroup(this.screenId);
+        ScreenLongTextManager.enableSyncGroup(this.screenId);
         this.screenViewData = bibleData;
     }
 
@@ -407,7 +476,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     fireUpdateEvent() {
         super.fireUpdateEvent();
-        ScreenBibleManager.fireUpdateEvent();
+        ScreenLongTextManager.fireUpdateEvent();
     }
 
     static readonly maxTextStyleTextFontSize = MAX_BIBLE_TEXT_FONT_SIZE;
@@ -512,8 +581,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             filePath = defaultBible?.filePath ?? undefined;
         }
         for (const screenId of screenIds) {
-            const screenBibleManager = this.getInstance(screenId);
-            if (screenBibleManager === null) {
+            const screenLongTextManager = this.getInstance(screenId);
+            if (screenLongTextManager === null) {
                 showSimpleToast(
                     tran(
                         'Failed to apply to screen. Please make sure the screen is open.',
@@ -522,15 +591,187 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 );
                 continue;
             }
-            await screenBibleManager.applyNewBibleItemJson(
+            await screenLongTextManager.applyNewBibleItemJson(
                 bibleItemJson,
                 filePath,
             );
         }
     }
 
+    /**
+     * Put a long text on the screens the operator meant.
+     *
+     * The Bible's own door (`handleBibleItemSelecting`) without what is only
+     * a Bible's: no version is carried over and no background is attached.
+     * `applyFullDataSrcWithSyncGroup` is what refuses a locked screen and
+     * takes the colour-note group along. Answers with the screens that hold
+     * it afterwards.
+     */
+    static async handleLongTextShowing(
+        event: MouseEvent | null,
+        longTextData: LongTextItemDataType,
+        isForceChoosing = false,
+    ) {
+        const screenIds = await this.chooseScreenIds(
+            genScreenMouseEvent(event) as any,
+            isForceChoosing,
+        );
+        const { sourceId } = longTextData.longTextData;
+        const shownScreenIds: number[] = [];
+        for (const screenId of screenIds) {
+            const screenLongTextManager = this.getInstance(screenId);
+            if (screenLongTextManager === null) {
+                showSimpleToast(
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
+                    tran('Error'),
+                );
+                continue;
+            }
+            screenLongTextManager.applyFullDataSrcWithSyncGroup(
+                cloneJson(longTextData),
+            );
+            if (screenLongTextManager.checkIsLongTextSource(sourceId)) {
+                shownScreenIds.push(screenId);
+            }
+        }
+        return shownScreenIds;
+    }
+
+    checkIsLongTextSource(sourceId: string) {
+        const screenViewData = this._screenViewData;
+        return (
+            checkIsLongTextData(screenViewData) &&
+            screenViewData.longTextData.sourceId === sourceId
+        );
+    }
+
+    /**
+     * Every screen holding a long text, or only that source's -- what a
+     * panel draws its on-screen marks and Hide chips from.
+     *
+     * Read off the on-screen setting, as the foreground panels read
+     * theirs: the managers do not exist yet when a panel is first drawn
+     * after a reload, and a text restored to a screen was then marked
+     * nowhere until something else changed. The reader is memoized on the
+     * setting's raw string, so asking on every render parses nothing; and
+     * the update event a panel redraws on is fired AFTER that setting is
+     * written.
+     */
+    static getLongTextShowingList(sourceId?: string) {
+        const showingList: [number, LongTextItemDataType][] = [];
+        const onScreenMap = getBibleListOnScreenSetting();
+        for (const [key, screenViewData] of Object.entries(onScreenMap)) {
+            if (
+                checkIsLongTextData(screenViewData) &&
+                (sourceId === undefined ||
+                    screenViewData.longTextData.sourceId === sourceId)
+            ) {
+                showingList.push([Number(key), screenViewData]);
+            }
+        }
+        return showingList;
+    }
+
+    // The LIVE managers holding that source's text, for what acts on it:
+    // their data is the screen's own, position and selected row included,
+    // which the setting only catches up with half a second later.
+    private static getLongTextSourceInstances(sourceId: string) {
+        return this.getAllInstancesBase<ScreenLongTextManager>().filter(
+            (instance) => {
+                return instance.checkIsLongTextSource(sourceId);
+            },
+        );
+    }
+
+    /**
+     * Take that source's long text off one screen, or off every one. Only
+     * ITS: the same layer may be holding a Bible passage, or another
+     * session's text, by the time a stale Hide button is pressed.
+     */
+    static hideLongText(sourceId: string, screenId?: number) {
+        for (const instance of this.getLongTextSourceInstances(sourceId)) {
+            if (screenId === undefined || screenId === instance.screenId) {
+                instance.clear();
+            }
+        }
+    }
+
+    /**
+     * Bring one ROW of that source's text to the middle of every screen it
+     * is on. A row, not a part: a Chorus sung twice is two rows, and the
+     * second press goes to the second.
+     */
+    static bringLongTextRowToMiddle(sourceId: string, rowIndex: number) {
+        const sectionKey = toLongTextSectionKey(rowIndex);
+        for (const instance of this.getLongTextSourceInstances(sourceId)) {
+            instance.bringSectionToMiddle(sectionKey);
+        }
+    }
+
+    /**
+     * The rows of that source's text that are marked, on any screen it is
+     * on -- what its panel lights the matching buttons from.
+     *
+     * The live managers' word where there are any: the mark is theirs, and
+     * the setting only catches up with it half a second later. The setting
+     * stands in while there is no manager yet, which is how a panel drawn
+     * straight after a reload still shows where the song had got to.
+     */
+    static getLongTextSelectedSectionKeys(sourceId: string) {
+        const instances = this.getLongTextSourceInstances(sourceId);
+        const keys =
+            instances.length > 0
+                ? instances.map((instance) => {
+                      return instance.selectedKJVVerseKey;
+                  })
+                : this.getLongTextShowingList(sourceId).map(([, data]) => {
+                      return data.selectedKJVVerseKey;
+                  });
+        return Array.from(
+            new Set(
+                keys.filter((key): key is string => {
+                    return typeof key === 'string';
+                }),
+            ),
+        );
+    }
+
+    /**
+     * Restyle that source's columns where they are showing, matched by their
+     * code. The words, the position and the selected row are the screen's
+     * own; a locked screen is passed over without a word, because nobody
+     * pressed anything on it.
+     */
+    static restyleLongText(
+        sourceId: string,
+        styleByCode: { [code: string]: LongTextColumnStyleType | undefined },
+    ) {
+        for (const instance of this.getLongTextSourceInstances(sourceId)) {
+            const screenViewData = instance.screenViewData;
+            if (
+                !checkIsLongTextData(screenViewData) ||
+                instance.screenManagerBase.isLocked
+            ) {
+                continue;
+            }
+            const newScreenViewData = withLongTextColumnStyles(
+                screenViewData,
+                styleByCode,
+            );
+            if (
+                JSON.stringify(newScreenViewData) ===
+                JSON.stringify(screenViewData)
+            ) {
+                continue;
+            }
+            instance.applyFullDataSrcWithSyncGroup(newScreenViewData);
+        }
+    }
+
     render() {
-        renderScreenBibleManager(this);
+        renderScreenLongTextManager(this);
     }
 
     handleScreenVersesHighlighting(kjvVerseKey: string, isToTop: boolean) {
@@ -544,12 +785,26 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         bibleScreenHelper.removeClassName(this.div, 'selected');
         const isToTop = this.isToTop;
         this.isToTop = false;
+        const isToMiddle = this.isToMiddle;
+        this.isToMiddle = false;
         const selectedBlockDoms = bibleScreenHelper.resetClassName(
             this.div,
             'selected',
             true,
             `${this.selectedKJVVerseKey}`,
         );
+        if (isToMiddle) {
+            // The ROW, once. The cells of one row are other heights in each
+            // language, and centring them one after another left the last
+            // cell centred and the row wherever that happened to put it.
+            const firstBlockDom = selectedBlockDoms[0];
+            if (firstBlockDom !== undefined) {
+                bringDomToCenterView(
+                    firstBlockDom.closest('tr') ?? firstBlockDom,
+                );
+            }
+            return;
+        }
         for (const blockDom of selectedBlockDoms) {
             if (isToTop) {
                 bringDomToTopView(blockDom);
@@ -578,7 +833,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     reflectBackgroundColor(backgroundColor: string) {
         const isBackgroundColorDark = checkIsColorDark(backgroundColor);
         const isTextColorDark = checkIsColorDark(
-            ScreenBibleManager.textStyleTextColor,
+            ScreenLongTextManager.textStyleTextColor,
         );
         if (isBackgroundColorDark !== isTextColorDark) {
             return;
@@ -590,15 +845,15 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         // is looking at the operator's screen. And it is SAID, with an Undo,
         // not asked: a blocking question here stopped a run sheet walking onto
         // a colour line until somebody answered it.
-        const previousColor = ScreenBibleManager.textStyle.color;
+        const previousColor = ScreenLongTextManager.textStyle.color;
         const contrastingColor = isBackgroundColorDark
             ? HEX_COLOR_WHITE
             : HEX_COLOR_BLACK;
-        ScreenBibleManager.applyTextStyle({
+        ScreenLongTextManager.applyTextStyle({
             color: contrastingColor,
         });
         showBibleTextColorChangedToast(() => {
-            ScreenBibleManager.applyTextStyle({
+            ScreenLongTextManager.applyTextStyle({
                 color: previousColor,
             });
         });
@@ -618,8 +873,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
-        const screenBibleManager = this.getInstance(screenId);
-        if (screenBibleManager === null) {
+        const screenLongTextManager = this.getInstance(screenId);
+        if (screenLongTextManager === null) {
             // English on purpose: this receiver also runs in the screen
             // window, and a `tran()` there before its language data has loaded
             // throws in dev (see `ScreenCloseButtonComp`).
@@ -629,7 +884,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             );
             return;
         }
-        screenBibleManager.receiveSyncScreen(message);
+        screenLongTextManager.receiveSyncScreen(message);
     }
 
     clear() {
@@ -652,8 +907,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static getInstance(screenId: number) {
-        return super.getInstanceBase<ScreenBibleManager>(screenId);
+        return super.getInstanceBase<ScreenLongTextManager>(screenId);
     }
 }
 
-export default ScreenBibleManager;
+export default ScreenLongTextManager;

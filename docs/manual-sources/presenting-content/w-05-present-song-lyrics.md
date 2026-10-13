@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-05 — Present song lyrics
 
@@ -61,17 +61,32 @@ workflowsVersion: "2026-10-11"
 11. **Edit the words while the song is open and the verses follow by themselves.** Change the
     song in the **Lyric Editor** (right-click the song → **[en:tran:Edit]**) — or in any other window —
     and within a second or two the rendered song **and every Stage Previewer pane** show the
-    new words. You do not have to re-pick the song, and you do not have to save first: the
-    editor keeps your unsaved work on disk, and that is what the verses render. 📸
+    new words, once the editor has saved them (**Ctrl+S**): the verses render what the
+    song's file holds. You do not have to re-pick the song. 📸
 12. If you ever need to force it — a song changed by something outside the app, say — the
     **⋮** at the right end of the Stage Previewer header holds **[en:tran:Reload]**, which re-renders
     every stage at once. The same **[en:tran:Reload]** sits in the right-click menu of a stage pane and
     of the rendered song above it.
+    **How a song is written: its parts, and the order they are sung in.** In the Lyric
+    Editor a song is plain text in blocks. Each part is a block of its own: a line of three
+    backticks followed by `ol:` and the part's name — `ol:Verse 1`, `ol:Verse 2`,
+    `ol:Chorus`, `ol:Bridge` — then its words, then a line of three backticks to close it.
+    A chord goes in square brackets just before the syllable it falls on, like `[G]`.
+    The first block, `ol:Config`, holds the song's **Title** and its **Structure**, and
+    the Structure line IS the order the song is sung and shown in: short codes run together
+    with NO spaces. `- Structure: V1CV2C` is verse 1, chorus, verse 2, chorus; `x2` after
+    a code repeats it (`Cx2`). To change the order, change that line — the parts
+    themselves stay where they are. The codes: Verse `V`, Chorus `C`, Pre-Chorus `P`,
+    Bridge `B`, Intro `I`, Outro `O`, Tag `T`, Interlude `L`, Instrumental `IS`; a
+    numbered part takes its number (`V2`), Intro and Outro take none. The editor marks a
+    mistake in red where it is: a Structure line that is empty, has spaces in it or names a
+    part that has no block (`V3` with no `Verse 3`), two parts with the same name, a
+    chord it does not know (`[Cm7]` is one, `[Cm7b5]` is not).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

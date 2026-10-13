@@ -259,7 +259,7 @@ server. What makes it good for them:
 - **A tool description has two readers**: a model choosing between 26 of them,
   and — through what the model then says — a volunteer about to be acted upon.
 - **Labels are i18n templates.** The knowledge is English, the buttons are not:
-  `[en:tran:Clear Bible]` is filled in with what that key reads as in the
+  `[en:tran:Clear Long Text]` is filled in with what that key reads as in the
   language the app is DISPLAYING, so a `find` matches the DOM in a Khmer
   window. `owa_tran` answers the same question for a label the model wrote.
 - **`questions/*.json` changes in the SAME commit as any recipe or UI it

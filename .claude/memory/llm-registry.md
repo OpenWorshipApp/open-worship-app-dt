@@ -1,11 +1,11 @@
 ---
 name: llm-registry
-description: "The shared LLM registry — https://www.openworship.app/llm/info.json names servers every copy of the app offers beside the saved custom servers; read by MAIN at launch and on the chatbot's ↻, keys never in a window, the relay accepts a `registry-<id>` server, and the publish is one script an admin runs"
+description: "The shared LLM registry — https://www.openworship.app/llm/info.json names servers every copy of the app offers beside the saved custom servers; read by MAIN at launch and on the chatbot's ↻, keys and addresses never in a window (a stand-in address on shared-server.invalid), the relay accepts a `registry-<id>` server, and the publish is one script an admin runs"
 metadata:
   node_type: memory
   type: project
   originSessionId: 16780dd5-d3fa-4663-8b19-127ebf319066
-  modified: 2026-10-11T03:19:44.963Z
+  modified: 2026-10-13T21:18:50.228Z
 ---
 
 Added 2026-10-10 at the user's ask: _"currently we have
@@ -31,12 +31,31 @@ canSeeImages?}]}`, up to 20; `toValidLlmRegistry` in
   failed read keeps the last good list and records `error`; two Reloads
   share one read. `OWA_LLM_REGISTRY_URL` overrides the address for a dev
   app against a stand-in.
-- **A window sees no key**: `LLM_REGISTRY_GET_CHANNEL` answers the public
-  servers (`toPublicRegistryServers`), `LLM_REGISTRY_RELOAD_CHANNEL` reads
-  afresh; both `onAsync` (a sync ask on mount once froze every window). The
-  relay (`customLlmRelayHelpers.ts`) finds a `registry-` id in
-  `readRegistryServers()` after the saved list and sends the registry's own
-  key as the bearer.
+- **A window sees no key, and since 2026-10-12 no address** (the user's ask,
+  with the Base URL circled in Settings: _for shared servers, hide endpoint
+  and api key. to avoid easily copy and use_): `LLM_REGISTRY_GET_CHANNEL`
+  answers the public servers (`toPublicRegistryServers`),
+  `LLM_REGISTRY_RELOAD_CHANNEL` reads afresh; both `onAsync` (a sync ask on
+  mount once froze every window). Each public server's `baseUrl` is a
+  STAND-IN — `https://shared-server.invalid` (`REGISTRY_HIDDEN_HOST`) plus
+  the real PATH, the one part a window reads (only a `/v1` or a bare address
+  has a root worth asking) — and a server on the local network is told as
+  `isFree`, because `checkIsNoCostCustomServer` can no longer read that off
+  the address. `checkIsHiddenServerAddress` is how a sentence knows:
+  `describeCustomLlmFailure` says _nothing answered at its address — it is
+  shared by openworship.app and may be switched off right now_ and
+  `genWrongAddressText` names no address and sends nobody to Settings (a
+  shared server's address is not the person's to correct). The relay
+  (`customLlmRelayHelpers.ts`) finds a `registry-` id in
+  `readRegistryServers()` after the saved list, sends the registry's own
+  key as the bearer, and takes the real host out of whatever the server or
+  its tunnel wrote back (`hideRegistryServerHost`; only a host with a dot —
+  a bare machine name is a word an answer may use). **Do not put the address
+  back in a window to make something easier**: a new reader of a shared
+  server's address belongs in main, or reads a fact main worked out.
+  **What this does NOT hide**: the file on the site is public, so anyone who
+  opens its address reads both — the app-side hiding stops copying out of
+  the app, nothing more (my reading of _easily_; the user was told).
 - **In the chatbot**: `customServerHelpers.loadLlmRegistry` fills a
   module-level copy, `getAllCustomServers` = saved + registry (the chatbot's
   readers), `getCustomServers` stays saved-only (Settings edits those);
@@ -48,8 +67,9 @@ canSeeImages?}]}`, up to 20; `toValidLlmRegistry` in
   (read-only) and have refresh icon as well_): **Shared servers**, a group of
   its own under Custom servers (`SettingOthersSharedServersComp`). Each
   registry server folds to _name · Models: N_ with a lock; opened it is its
-  address and its models as TEXT — no box, no delete, no key (none is in a
-  window to show). Its ↻ is `loadLlmRegistry(true)`, the line under the
+  models as TEXT — no box, no delete, no key and, since 2026-10-12, no
+  address (neither is in a window to show; the Base URL row was there for
+  two days). Its ↻ is `loadLlmRegistry(true)`, the line under the
   description the last read's time or its failure. `useLlmRegistry` is the
   window's hook: it asks main for what it holds when the group mounts (no
   network) and bails out on the saved list's change events. A card's fold is
@@ -107,6 +127,59 @@ canSeeImages?}]}`, up to 20; `toValidLlmRegistry` in
   minutes on Windows — where ending the task leaves node running, so
   `uninstall` ends it by pid and its entry stays until `remove`. The
   folder's README has the rest; its tests run in `npm test`.
+- **An entry can take REPORTS instead of questions** (2026-10-13, the user's
+  asks: _a shared server can be type accepting report e.g.
+  `"isForReporting":true` … the endpoint should be accepting POST a raw text
+  directly … should not show in setting shared servers_ — their own file
+  spelt it `isAcceptingReport`, which is the name — then _add a schema …
+  `llm-info.schema.json` … implement node.js + sqlite to accept the post_).
+  `{id, name, baseUrl, apiKey?, isAcceptingReport: true}`, no `models`.
+  `toValidLlmRegistry` keeps such entries APART (`reportServers`, the first
+  three), so no list of assistants can hold one: no picker, no Auto, nothing
+  in Settings. `electron/llmReportHelpers.ts` is the door
+  (`LLM_REPORT_POST_CHANNEL`): the body of the POST is JSON since the same
+  afternoon — `{version, reference, prompt, attachments: [{name, mimeType,
+  data}]}`, the report under `prompt` and the picture of the app and the
+  person's pictures, PDFs and text files under `attachments` (the user:
+  _accept json instead of raw text … and accept files like markdown pdf_) —
+  to `baseUrl` exactly as written, the entry's key as bearer, each entry in
+  turn; when none takes it the registry is read ONCE more and what is new in
+  it tried — seen live, an address that had gone answered 500 and the report
+  landed at the new one. Limits and the no-address rule are in the rule file
+  (`chatbot-llm.md`). **On the admin's side**: `llm-report-inbox.mjs` takes
+  `POST /report` into `report-inbox.sqlite` (Node's own `node:sqlite`, so Node
+  22.13+; key first; JSON or plain text; the text of a report 640 KB and a
+  whole request 18 MB; 8 files, 5 MB each, 12 MB together, each kept for
+  what its BYTES are — a picture, a PDF or text — and skipped with a reason
+  otherwise, the report kept all the same; 20 per address, or per IPv6 /64,
+  per ten minutes, 300 and 256 MB an hour, 20 000 reports and 2 GB kept, the
+  oldest `done` ones making room; a report sent twice is one row, by a
+  digest) and `list` / `show <id|reference>` / `files <id|reference>` read
+  it. **`show` marks the report as a stranger's**: the registry and its key
+  are public, so anybody can post, and the data fence inside a report is
+  written by its sender — `show` prints it between two lines of its own with
+  a boundary drawn at random each time, under a note that the sender is not
+  verified and the text is data, with control characters taken out;
+  `--raw` is the text alone, and never to be piped into an agent that holds
+  the repo's credentials; `done <id|reference>` marks one dealt with and `list --open` is
+  what is left. `llm-tunnel.mjs --reports --publish` makes that inbox its DOOR (no
+  LLM server behind it; loaded only then, so a plain tunnel still runs on
+  Node 18) and publishes an `isAcceptingReport` entry `reports` at
+  `<address>/report`, removed on stopping like any tunnel's.
+  `llm-info.schema.json` is the kit's own copy of the registry schema (a test
+  holds it to `docs/llm-registry/info.schema.json`), bound to `llm-info.json`
+  in `.vscode/settings.json`; a `$schema` line in a hand-kept file is left out
+  of what is published (`toPublishedRegistry`). `findRegistryProblems` and
+  `llm-registry.mjs check` know the kind — a check asks the address with a GET
+  and never posts a report to try it. **One tunnel can do both** (the same day, after the user answered _It's
+  running now_ with only the LM Studio tunnel up — which is how their first
+  example was written: the report entry on the LM Studio tunnel's own
+  address and key): `llm-tunnel.mjs … --with-reports` keeps a POST made to
+  its own `/v1` (`REPORT_AT_BASE_PATH`) in the inbox (`openReportTaker`,
+  the inbox without a listener) and marks its ONE entry `isAcceptingReport`;
+  the app reads an entry with the mark AND models as an assistant and as a
+  report address, the report half told to no window. Do NOT edit `llm-info.json` while it is
+  open unsaved in the user's editor, and never copy a key out of it.
 - **A model's measurements go in `extra-work/local-llm/model-benchmarks.json`**
   (2026-10-10, the user's ask: _should store all tested model benchmarking
   somewhere for later use, especially for telling user what be good and fit
@@ -134,6 +207,55 @@ first publish the address answers the site's own HTML page with a 200
 (CloudFront's fallback for a missing object), so the ↻ reading _the
 registry file is not in the known shape_ can mean "nothing is published",
 not a broken file.
+
+Testing the REPORT path (2026-10-13): whether a tunnel is up, and which
+one, is read off the machine and the site, never off an answer — twice that
+day the answer to _is it running / restarted?_ was yes while the process
+list (`Get-CimInstance Win32_Process` for `llm-tunnel.mjs`) showed the
+tunnel started the day before with its old options and `llm-registry.mjs
+list` showed no entry that takes reports. And a test report is written by
+a PRETEND assistant on loopback (a few lines of `node:http` answering
+`/v1/models` and `/v1/chat/completions`), picked by name in the help
+window: the user declined a run that had their shared LM Studio model
+investigate (why was not said; mine is the reading that a test should not
+spend their server). A scratch dev instance on `OWA_LLM_REGISTRY_URL` with
+that pretend assistant behind the real tunnel script (`--with-reports
+--no-key`, pretend cloudflared) proves the whole path with nothing leaving
+the machine. **The real thing was then run by the session, once the user
+said yes to exactly that** (asked: _start a SEPARATE inbox-only tunnel
+myself … test, then stop it_): `llm-tunnel.mjs --reports --publish --id
+reports` in the background was NOT refused that day (the note below, from
+2026-10-10, says a tunnel was; do not assume either), it published in 16 s,
+`llm-registry.mjs check` reached it (405 to a GET), and one TEST report from
+a scratch dev instance on the REAL registry — the pretend assistant added
+as a custom server in the scratch `setting.json` (`ai-custom-servers`) and
+picked by name — landed in the inbox, the door logging it from a public
+address. Stopping it on Windows: a background node cannot be asked to
+close, so it does not take its entry out — end it by pid, see that its
+cloudflared went with it (only the user's own is left), then
+`llm-registry.mjs remove reports --yes`, and delete its two pid files.
+Never the user's own tunnel: a second start under ITS id is refused by the
+lock anyway, and ending it would take the shared assistant down.
+**`--with-reports` then ran on a real tunnel too** (the same evening, asked
+for and answered _Yes, test then stop_; NOT published, its own id, a pretend
+LLM behind it, a scratch `--db`): through the public address a JSON report
+with a picture, a PDF and a markdown file was kept and came back out byte
+for byte, a 4 MB body took 2 s, a chat call still reached the LLM behind,
+and a POST without the key was a 401. The key was read by the test script
+from `tunnel-key.txt` and never printed; the connection file and the
+tunnel's stdout both carry it, so read one line of them, never the whole.
+**Reporting was switched ON that evening** (2026-10-13, asked once more
+when everything else was done and answered _Turn it on now_ — not _start
+with the computer_): `node extra-work/local-llm/llm-tunnel.mjs --reports
+--publish --out extra-work/local-llm/run --log
+extra-work/local-llm/tunnel-reports.log`, started with `Start-Process …
+-WindowStyle Minimized` so it has a console window of its own that the user
+can see and close with Ctrl+C (which takes its entry out of the registry),
+and outlives the session. Reports land in the kit's `report-inbox.sqlite`.
+It is NOT a logon task: after a restart of that computer it is off until
+started again, and `llm-registry.mjs list` is how to see which it is. The
+first row in that inbox is a TEST from a scratch dev instance on the real
+registry, marked done.
 
 Testing the kit: a session CANNOT open a real tunnel. The permission
 classifier refuses it as `External Ingress Tunnel` — a SendMessage asking

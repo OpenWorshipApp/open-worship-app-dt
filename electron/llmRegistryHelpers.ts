@@ -5,6 +5,7 @@ import {
     type LlmRegistryServerType,
     type LlmRegistryStatusType,
     type LlmRegistryType,
+    type LlmReportServerType,
 } from './customLlmProtocol';
 
 /**
@@ -17,8 +18,9 @@ import {
  *
  * Held here rather than in a window because the relay
  * (`customLlmRelayHelpers.ts`) forwards only to addresses main knows, and a
- * registry server's key must never enter a renderer: a window is told the
- * servers through `getLlmRegistryStatus`, keys left out.
+ * registry server's key and address must never enter a renderer (an address
+ * read off a window is an address copied and used from somewhere else): a
+ * window is told the servers through `getLlmRegistryStatus`, both left out.
  *
  * A read that fails keeps the servers of the last read that worked, and
  * says why in `error`: a volunteer whose internet dropped should not lose
@@ -126,12 +128,21 @@ async function readLlmRegistry(
     return getLlmRegistryStatus();
 }
 
-/** For the relay: the servers WITH their keys. Never sent to a window. */
+/** For the relay: the servers WITH their keys and addresses. Never sent to a window. */
 export function getLlmRegistryServers(): LlmRegistryServerType[] {
     return state.registry?.servers ?? [];
 }
 
-/** For a window: the servers without their keys, and how the read went. */
+/**
+ * For the report door (`llmReportHelpers.ts`): the entries that take a
+ * problem report, keys and addresses and all. Never sent to a window, and
+ * never among the servers a window is told of -- they are not assistants.
+ */
+export function getLlmReportServers(): LlmReportServerType[] {
+    return state.registry?.reportServers ?? [];
+}
+
+/** For a window: the servers without their keys or addresses, and how the read went. */
 export function getLlmRegistryStatus(): LlmRegistryStatusType {
     return {
         url: getLlmRegistryUrl(),

@@ -125,7 +125,13 @@ const CLEAR_MAP = {
         what: 'the background',
     },
     'clear-slide': { label: 'Clear Slide', key: 'F8', what: 'the slide' },
-    'clear-bible': { label: 'Clear Bible', key: 'F9', what: 'the Bible text' },
+    // `LT` on the bar: the layer a Bible passage and a Long Text Show's
+    // text are both drawn in. The command keeps the name people type.
+    'clear-bible': {
+        label: 'Clear Long Text',
+        key: 'F9',
+        what: 'the Bible passage or long text',
+    },
     'clear-foreground': {
         label: 'Clear Foreground',
         key: 'F10',
@@ -431,7 +437,7 @@ async function runFind({ argument, focus, report }: BuiltinRunContextType) {
         return {
             text:
                 'Tell me the words written on the control -- for example ' +
-                '`/find Clear Bible` -- and I will outline it in the app window.',
+                '`/find Clear Long Text` -- and I will outline it in the app window.',
         };
     }
     const finish = report(`Looking for “${argument}”`);
@@ -938,6 +944,15 @@ export async function answerSlideShowAsk(
     if (target === null) {
         return null;
     }
+    return await genSlideOfferAnswer(selected, target);
+}
+
+// The slide named, and the ONE button that puts it up -- shared by a slide
+// asked for by its words and by "the next one".
+async function genSlideOfferAnswer(
+    selected: SelectedDocumentType,
+    target: SlideSummaryType,
+): Promise<BotAnswerType> {
     const screens = await readScreens();
     const isShowing = screens?.isAnyShowing === true;
     const slideWords = target.name
@@ -962,6 +977,149 @@ export async function answerSlideShowAsk(
                 : [genCommandAction('Turn the screen on', '/screen-show')]),
         ],
     };
+}
+
+// "show the next slide", "go to the next slide", "put the next verse up",
+// "next slide please", "show the previous slide".
+const SLIDE_STEP_ASK_PATTERN =
+    /^(?:please\s+)?(?:can\s+you\s+|could\s+you\s+)?(?:(?:show|put\s+up|put|display|present|go\s+to|move\s+(?:on\s+)?to|advance\s+to)\s+(?:me\s+)?)?(?:the\s+)?(next|previous)\s+(?:slide|verse|one)(?:\s+up)?(?:\s+(?:on|onto|to)\s+(?:the\s+)?(?:screens?|projector|wall))?(?:\s+for\s+me)?(?:\s+please)?[.!?]*$/i;
+
+/**
+ * The next slide, or the one before, asked for in words -- or null. Asked
+ * _Show the next slide?_ on a server of the user's own (gemma-4-e4b,
+ * 2026-10-13, at temperature 0 so every time), the model pressed **Slide 1**
+ * itself, said nothing of it, and told the volunteer to click **Slide 2**.
+ * The app knows which slide is next (`selectedDocument.next`, worked out the
+ * arrow keys' way) and one press puts it up. A how-do-I is left alone.
+ */
+export function readSlideStepAsk(text: string): 'next' | 'previous' | null {
+    const trimmed = text.trim();
+    if (/\bhow\b/i.test(trimmed)) {
+        return null;
+    }
+    const match = SLIDE_STEP_ASK_PATTERN.exec(trimmed);
+    if (match === null) {
+        return null;
+    }
+    return match[1].toLowerCase() === 'next' ? 'next' : 'previous';
+}
+
+/**
+ * The answer, with no model: which slide that is and the ONE button that
+ * puts it up -- a typed sentence is not the consent a press is. Null when
+ * the app cannot be read, so the question goes on to whoever answers.
+ */
+export async function answerSlideStepAsk(
+    direction: 'next' | 'previous',
+): Promise<BotAnswerType | null> {
+    const read = await readSelectedDocument();
+    if (read === null) {
+        return null;
+    }
+    if (!read.isPresenter) {
+        return {
+            text:
+                '**The main window is not on the Presenter**, so there is ' +
+                'no slide list to choose from.',
+            actions: NOT_ON_PRESENTER_ACTIONS,
+        };
+    }
+    const selected = read.selected;
+    if (selected === null) {
+        return {
+            text:
+                '**Nothing is selected in the Documents list.** Click the ' +
+                'song there first, then ask again.',
+        };
+    }
+    const target = direction === 'next' ? selected.next : selected.previous;
+    if (target === null) {
+        return {
+            text:
+                direction === 'next'
+                    ? `**"${selected.name}" has no slide to go on to.**`
+                    : `**No slide of "${selected.name}" is on a screen ` +
+                      'yet**, so there is none before it. Its slides: ' +
+                      `${describeSlideList(selected)}.`,
+        };
+    }
+    return await genSlideOfferAnswer(selected, target);
+}
+
+// "where is the button for Clear All", "where is the Clear All button",
+// "where's Bible Lookup?", "where are the settings".
+const WHERE_IS_ASK_PATTERN =
+    /^(?:please\s+)?where(?:\s+is|\s+are|'s)\s+(?:the\s+|a\s+|my\s+)?(?:(?:button|control|icon|tab|box|switch|option)s?\s+(?:for|called|named|labell?ed|that\s+says)\s+)?(.+?)[\s.!?]*$/i;
+const WHERE_IS_QUOTE_PATTERN = /^["'“”‘’]+|["'“”‘’]+$/g;
+// A control's name, not a sentence: "where is the thing that puts the verse
+// on the wall" is a question for whoever answers.
+const WHERE_IS_MAX_WORDS = 6;
+const WHERE_IS_MAX_LENGTH = 48;
+
+/**
+ * The control a where-is names, or null. The list's own fill-in, _Where is
+ * the button for ..._, finished as _Clear All_ and asked of a local model
+ * (gemma-4-e4b, 2026-10-13): four rounds and 42 500 tokens of reading the
+ * guide, never a look at the window, and _the Clear All button is located in
+ * the header section of the Presenter window_ -- it is in the Mini Screen
+ * panel, bottom right. The window can look for itself in a tenth of the
+ * time (`answerWhereIsAsk`).
+ */
+export function readWhereIsAsk(text: string): string | null {
+    const match = WHERE_IS_ASK_PATTERN.exec(text.trim());
+    if (match === null) {
+        return null;
+    }
+    const target = match[1].replace(WHERE_IS_QUOTE_PATTERN, '').trim();
+    if (
+        !/[\p{L}\p{N}]/u.test(target) ||
+        target.length > WHERE_IS_MAX_LENGTH ||
+        target.split(/\s+/).length > WHERE_IS_MAX_WORDS
+    ) {
+        return null;
+    }
+    return target;
+}
+
+/**
+ * The answer, with no model: the control outlined where it is, in the
+ * guide's own words (`answerWhereIs`). ONLY when the window has a control
+ * CALLED that on show -- an exact name, or the one control the words fit
+ * (**Clear All [F6]** for _Clear All_). A looser fit is some other control,
+ * and nothing found may be a thing the guide explains: both go on to whoever
+ * answers, as does a look that could not be made.
+ */
+export async function answerWhereIsAsk(
+    target: string,
+    focus: BotFocusType,
+): Promise<BotAnswerType | null> {
+    try {
+        const found = parseToolJson(
+            await callTool('owa_find_ui', {
+                text: target,
+                page: `${focus}.html`,
+            }),
+        );
+        const matches: any[] = Array.isArray(found?.matches)
+            ? found.matches
+            : [];
+        const visible = matches.filter((match) => {
+            return match?.isVisible === true;
+        });
+        const isNamedSo =
+            visible.some((match) => {
+                return match.tier === 0;
+            }) ||
+            (found?.count === 1 &&
+                visible.length === 1 &&
+                visible[0].tier === 1);
+        if (!isNamedSo) {
+            return null;
+        }
+        return await answerWhereIs(target, focus);
+    } catch (_error) {
+        return null;
+    }
 }
 
 // "turn the screen off for me", "turn off the projector", "switch the
@@ -1473,8 +1631,12 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
             'clear-bb',
             'clear-verse',
             'screen-clear-verse',
+            // The button reads `LT` / Clear Long Text since 2026-10-13.
+            'screen-clear-long-text',
+            'clear-long-text',
+            'clear-lt',
         ],
-        hint: 'Clear the Bible text (F9)',
+        hint: 'Clear the Bible passage or long text (F9)',
         takesArgument: false,
         isActing: true,
         run: genClearRunner('clear-bible'),
@@ -1507,7 +1669,7 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
     {
         name: 'find',
         aliases: ['where', 'point'],
-        hint: 'Outline a control in the app: /find Clear Bible',
+        hint: 'Outline a control in the app: /find Clear Long Text',
         takesArgument: true,
         isActing: false,
         run: runFind,

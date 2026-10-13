@@ -26,6 +26,7 @@ vi.mock('../../server/electronSendHelpers', () => ({
 }));
 
 import {
+    checkIsCustomServerAnswering,
     describeCustomLlmFailure,
     findCustomModelInfo,
     getAllCustomServers,
@@ -165,6 +166,28 @@ describe('describeCustomLlmFailure', () => {
         ).toMatch(
             /^it went quiet in the middle of the question — check that the computer/,
         );
+    });
+
+    it('never prints a shared server’s address, nor sends anybody to its machine', () => {
+        // What a window holds for a shared server's address is a stand-in.
+        const sharedBaseUrl = 'https://shared-server.invalid/v1';
+        const unreachable = describeCustomLlmFailure(
+            { ok: false, reason: 'unreachable', detail: '' },
+            sharedBaseUrl,
+        );
+        expect(unreachable).toBe(
+            'nothing answered at its address — it is shared by ' +
+                'openworship.app and may be switched off right now; try ' +
+                'again later or pick another assistant',
+        );
+        const lost = describeCustomLlmFailure(
+            { ok: false, reason: 'lost', detail: '' },
+            sharedBaseUrl,
+        );
+        expect(lost).toMatch(
+            /^it went quiet in the middle of the question — it is shared by openworship\.app/,
+        );
+        expect(unreachable + lost).not.toContain('invalid');
     });
 });
 
@@ -428,6 +451,48 @@ describe('readCustomServerModelInfo', () => {
         expect(h.sendData).toHaveBeenCalledWith(CUSTOM_LLM_CANCEL_CHANNEL, {
             requestId: expect.any(String),
         });
+    });
+});
+
+describe('checkIsCustomServerAnswering', () => {
+    it('is true for a server whose model list answers', async () => {
+        answerByPath({ '/models': MODEL_LIST });
+        expect(await checkIsCustomServerAnswering(genServer(), 1500)).toBe(
+            true,
+        );
+        expect(h.send.mock.calls[0][1]).toMatchObject({
+            serverId: 'server-1',
+            method: 'GET',
+            path: '/models',
+        });
+    });
+
+    it('is false for a machine that is on with no server running', async () => {
+        // Refused at once: `readCustomServerModelInfo` reads this as some
+        // other program, which is why Auto asks this door as well.
+        h.send.mockResolvedValue({ ok: false, reason: 'unreachable' });
+        expect(await checkIsCustomServerAnswering(genServer(), 1500)).toBe(
+            false,
+        );
+    });
+
+    it('is false for an address that answers, but not with the protocol', async () => {
+        answerByPath({});
+        expect(await checkIsCustomServerAnswering(genServer(), 1500)).toBe(
+            false,
+        );
+    });
+
+    it('gives up on a machine that is off, and tells the relay to', async () => {
+        vi.useFakeTimers();
+        h.send.mockReturnValue(new Promise(() => {}));
+        const pending = checkIsCustomServerAnswering(genServer(), 1500);
+        await vi.advanceTimersByTimeAsync(1500);
+        expect(await pending).toBe(false);
+        expect(h.sendData).toHaveBeenCalledWith(CUSTOM_LLM_CANCEL_CHANNEL, {
+            requestId: expect.any(String),
+        });
+        vi.useRealTimers();
     });
 });
 

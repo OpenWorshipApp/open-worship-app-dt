@@ -726,6 +726,39 @@ describe('bible-reader LookupBibleItemController', () => {
         expect(h.getVersesCountMock).toHaveBeenCalledWith('NIV', 'MAT', 1);
     });
 
+    test('the grid view split button splits at once outside a colour group', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+
+        ctl.splitWithoutPassageOnPress({}, 'EXO', true);
+
+        expect(splitSpy).toHaveBeenCalledExactlyOnceWith('EXO', true);
+        expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+    });
+
+    // Asked for by the user: grouped views follow one passage, so a split of
+    // one asks which version the new view reads it in.
+    test('the grid view split button asks which version in a colour group', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+        vi.spyOn(ctl, 'getColorNote').mockReturnValue('red');
+        const event = { clientX: 5, clientY: 6 };
+
+        ctl.splitWithoutPassageOnPress(event, 'EXO', false);
+
+        expect(splitSpy).not.toHaveBeenCalled();
+        const [openedAt, onBibleKey, , title] =
+            h.showBibleKeyOptionMock.mock.calls[0];
+        expect(openedAt).toBe(event);
+        expect(title).toBe('Split Vertical to');
+        onBibleKey('NIV');
+        expect(splitSpy).toHaveBeenCalledExactlyOnceWith('EXO', false, 'NIV');
+    });
+
     test('the grid view menu offers the splits with their keys, and no close alone', () => {
         const ctl = genController();
         const splitSpy = vi

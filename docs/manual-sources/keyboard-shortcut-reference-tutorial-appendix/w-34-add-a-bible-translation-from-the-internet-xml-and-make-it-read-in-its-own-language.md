@@ -2,10 +2,10 @@
 id: W-34
 title: "Add a Bible translation from the internet (XML), and make it read in its own language"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, LT-01]
-screenshots: 5
+verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, LT-01]
+screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -67,6 +67,26 @@ GitHub **page** of the file is turned into its download address, and a GitHub
 the list. Under the language question, and under an answer that says a link did not
 lead to a Bible, the link can be pasted on its own.
 
+**When a window says a Bible is not available**
+
+The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
+it is set to a Bible this computer does not have — on a new computer, the KJV. The card
+says how the assistant gets it, in three steps, and carries the button:
+
+1. Press **[en:tran:Let the assistant import this Bible for me]** on that card and
+   answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
+2. The assistant opens in a new tab already looking for that Bible in the free
+   collection: for KJV it lists _English KJV_ and _English NKJ 1982_. Press the one you
+   want. A name the collection has no file for is answered with _None of them has … in
+   its name_: type the Bible's language (`Khmer`) and press one from that list.
+3. It downloads the Bible and says _The app is looking for a Bible called **KJV**_. At
+   **Step 1 — a short name** that name comes first, **KJV (suggested)**: keep it.
+   Installed under any other name, the card stays where it is.
+4. Answer the language and the book names as above, then press **Install it**. _Done
+   — KJV is installed_, and the card goes away by itself: the passage shows. 📸
+
+Typing `Import the Bible called "KJV"` in the assistant does the same.
+
 **Import a Bible XML file with the form**
 
 1. Open **[en:tran:Settings]** → **[en:tran:Bible]**. In
@@ -93,7 +113,8 @@ lead to a Bible, the link can be pasted on its own.
 7. Press **[en:tran:Import]** in the review. The new translation appears in
    **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
 
-Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
+A Bible already installed whose book names or numbers still read in English needs no
+second import. Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
 **🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
 Those editor actions use the locale currently in the editor buffer; save after editing.
 
@@ -129,7 +150,7 @@ existing Bible, then use its pencil instead.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `RD-11` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `LT-01`
+`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

@@ -4,15 +4,18 @@ vi.mock('./questionHelpers', () => ({
     clipKnownPage: (text: string, find: string | null) => {
         return find === null ? text : `${text} [clipped around ${find}]`;
     },
+    HELP_WINDOW_MANUAL_ID: 'W-42',
 }));
 
 import type { ChatMessageType } from './chatSessionHelpers';
 import {
     checkIsDisputingAnswer,
     findBuiltInPageDate,
+    findComplainedControl,
     findDisputedPage,
     findFreshPageUrl,
     genDisputeHint,
+    locateDisputedControl,
     readDisputeHint,
     readFreshGuidePage,
     readWebsiteText,
@@ -349,5 +352,243 @@ describe('genDisputeHint', () => {
         expect(hint).toContain('Compare it with what you said');
         expect(hint).toContain('owa_find_ui');
         expect(hint.endsWith('1. Press Bible Properties.')).toBe(true);
+    });
+});
+
+// EC-260: handed a ladder to walk, a small local model recited it -- "look
+// for a control labeled ? in your window". The window looks, and says.
+describe('the look for the control a disputed answer starts at', () => {
+    const PAGE = { manualId: 'W-07', find: 'Bible Properties' };
+    const genFind = (value: Record<string, any>) => {
+        return vi.fn(async () => {
+            return JSON.stringify(value);
+        });
+    };
+
+    test('says it is there, and where', async () => {
+        const callTool = genFind({
+            matches: [
+                {
+                    label: 'Bible Properties',
+                    inPanel: 'Mini Screen',
+                    where: 'at the bottom right of the window',
+                    tier: 0,
+                },
+            ],
+            nearMisses: [],
+        });
+        const located = await locateDisputedControl(
+            PAGE,
+            'presenter.html',
+            callTool,
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', {
+            text: 'Bible Properties',
+            page: 'presenter.html',
+        });
+        expect(located).toEqual({
+            state: 'shown',
+            find: 'Bible Properties',
+            where: 'in the Mini Screen panel, at the bottom right of the window',
+        });
+        const hint = genDisputeHint(null, located);
+        expect(hint).toContain('it IS there (in the Mini Screen panel');
+        expect(hint).toContain('do not look again');
+        // The ladder is not handed over as well: it is what got recited.
+        expect(hint).not.toContain('revealBy');
+    });
+
+    test('says what has to be pressed first when it is shut away', async () => {
+        const located = await locateDisputedControl(
+            PAGE,
+            'presenter.html',
+            genFind({
+                matches: [
+                    {
+                        label: 'Bible Properties',
+                        revealBy: 'Reveal Hidden Controls',
+                        tier: 0,
+                    },
+                ],
+            }),
+        );
+        expect(located).toEqual({
+            state: 'tucked',
+            find: 'Bible Properties',
+            revealBy: 'Reveal Hidden Controls',
+        });
+        expect(genDisputeHint(null, located)).toContain(
+            '"Reveal Hidden Controls" has to be pressed first',
+        );
+    });
+
+    test('says the mouse has to be over it when it is drawn under the mouse alone', async () => {
+        const located = await locateDisputedControl(
+            PAGE,
+            'presenter.html',
+            genFind({
+                matches: [
+                    { label: 'Bible Properties', showsOnHover: true, tier: 0 },
+                ],
+            }),
+        );
+        expect(located?.state).toBe('hover');
+        expect(genDisputeHint(null, located)).toContain(
+            'only drawn while the mouse is over',
+        );
+    });
+
+    test('says it is NOT there, by a looser fit or by nothing at all', async () => {
+        // A looser fit is some other control.
+        const loose = await locateDisputedControl(
+            PAGE,
+            'presenter.html',
+            genFind({
+                matches: [{ label: 'Bible Properties Editor', tier: 2 }],
+                nearMisses: ['Bible Presets'],
+            }),
+        );
+        expect(loose).toEqual({
+            state: 'missing',
+            find: 'Bible Properties',
+            nearest: 'Bible Presets',
+        });
+        const hint = genDisputeHint(null, loose);
+        expect(hint).toContain('there is NO control called that');
+        expect(hint).toContain('the closest name there is "Bible Presets"');
+        expect(hint).toContain('Do not tell them to press it again');
+        const none = await locateDisputedControl(
+            PAGE,
+            'presenter.html',
+            genFind({ matches: [], nearMisses: [] }),
+        );
+        expect(none).toEqual({
+            state: 'missing',
+            find: 'Bible Properties',
+            nearest: null,
+        });
+    });
+
+    test('looks nowhere when there is nothing to look for, or for the help window’s own page', async () => {
+        const callTool = genFind({ matches: [] });
+        expect(
+            await locateDisputedControl(
+                { manualId: 'W-07', find: null },
+                'presenter.html',
+                callTool,
+            ),
+        ).toBeNull();
+        expect(await locateDisputedControl(PAGE, null, callTool)).toBeNull();
+        // That page's controls are in the help window, where the tool
+        // does not look: "not on their window" would be false. Said as
+        // what it is, with no control to go looking for.
+        const own = await locateDisputedControl(
+            { manualId: 'W-42', find: 'Ask' },
+            'presenter.html',
+            callTool,
+        );
+        expect(own).toEqual({ state: 'help-window' });
+        expect(callTool).not.toHaveBeenCalled();
+        const hint = genDisputeHint(null, own);
+        expect(hint).toContain('this help window itself');
+        expect(hint).toContain('name no control to look for');
+        expect(hint).not.toContain('owa_find_ui');
+    });
+
+    test('a look that cannot be made leaves the model to look, as before', async () => {
+        const failing = vi.fn(async () => {
+            throw new Error('The app has no open page matching "setting.html"');
+        });
+        expect(
+            await locateDisputedControl(PAGE, 'setting.html', failing),
+        ).toBeNull();
+        expect(
+            await locateDisputedControl(
+                PAGE,
+                'presenter.html',
+                vi.fn(async () => {
+                    return 'not json';
+                }),
+            ),
+        ).toBeNull();
+        expect(genDisputeHint(null, null)).toContain('owa_find_ui');
+    });
+
+    test('rides the dispute hint, beside the newest copy of the page', async () => {
+        const callTool = vi.fn(async (name: string) => {
+            if (name === 'owa_find_ui') {
+                return JSON.stringify({ matches: [], nearMisses: [] });
+            }
+            return name === 'owa_help_page' ? LOCAL_PAGE : WEB_READ;
+        });
+        const hint = await readDisputeHint(
+            'there is no Bible Properties button',
+            genMessages(),
+            callTool,
+            undefined,
+            'presenter.html',
+        );
+        expect(hint).toContain('NEWEST copy');
+        expect(hint).toContain('there is NO control called that');
+    });
+
+    test('looks for the control the complaint NAMES, before the one the walkthrough starts at', async () => {
+        const messages: ChatMessageType[] = [
+            { id: 1, author: 'you', text: 'How do I change the text color?' },
+            {
+                id: 2,
+                author: 'bot',
+                text:
+                    '1. Press the **Bible** tab.\n2. Press **Bible Properties**.\n' +
+                    '3. Pick a colour beside **Text Color**.',
+                actions: [
+                    {
+                        label: 'Show me step by step',
+                        toolName: 'owa_guide_start',
+                        args: { manualId: 'W-07', find: 'Appearance' },
+                    },
+                ],
+            },
+        ];
+        // The longest name the complaint says again: not "Bible".
+        expect(
+            findComplainedControl(
+                'There is no bible properties button',
+                messages,
+            ),
+        ).toBe('Bible Properties');
+        // A complaint about no one control looks for the walkthrough's.
+        expect(
+            findComplainedControl('The steps did not work', messages),
+        ).toBeNull();
+        expect(findComplainedControl('that is wrong', [])).toBeNull();
+        const callTool = vi.fn(async (name: string, _args: any) => {
+            if (name === 'owa_find_ui') {
+                return JSON.stringify({
+                    matches: [
+                        {
+                            label: 'Bible Properties',
+                            revealBy: 'Reveal Hidden Controls',
+                            tier: 0,
+                        },
+                    ],
+                });
+            }
+            return name === 'owa_help_page' ? LOCAL_PAGE : WEB_READ;
+        });
+        const hint = await readDisputeHint(
+            'There is no Bible Properties button',
+            messages,
+            callTool,
+            undefined,
+            'presenter.html',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', {
+            text: 'Bible Properties',
+            page: 'presenter.html',
+        });
+        expect(hint).toContain(
+            '"Reveal Hidden Controls" has to be pressed first',
+        );
     });
 });

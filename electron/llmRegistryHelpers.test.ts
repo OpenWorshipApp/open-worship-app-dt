@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     getLlmRegistryServers,
     getLlmRegistryStatus,
+    getLlmReportServers,
     getLlmRegistryUrl,
     refreshLlmRegistry,
     resetLlmRegistryForTests,
@@ -67,7 +68,8 @@ describe('the shared LLM registry in main', () => {
                 {
                     id: 'registry-super-computer',
                     name: 'Church LM Studio',
-                    baseUrl: 'https://abc.trycloudflare.com/v1',
+                    // Never the address the file carries: a stand-in.
+                    baseUrl: 'https://shared-server.invalid/v1',
                     isFree: true,
                     source: 'registry',
                     models: [
@@ -82,11 +84,51 @@ describe('the shared LLM registry in main', () => {
             ],
         });
         expect(JSON.stringify(status)).not.toContain('sk-shared');
+        expect(JSON.stringify(status)).not.toContain('trycloudflare');
         expect(getLlmRegistryServers()[0]).toMatchObject({
             id: 'registry-super-computer',
+            baseUrl: 'https://abc.trycloudflare.com/v1',
             apiKey: 'sk-shared',
             note: 'LM Studio on the church computer',
         });
+    });
+
+    // "Should not show in setting shared servers": what a window lists is
+    // the status, and an entry that takes reports is never in it.
+    it('holds an entry that takes reports for the report door, and tells no window of it', async () => {
+        const text = JSON.stringify({
+            version: 1,
+            servers: [
+                {
+                    id: 'reporting',
+                    name: 'Report inbox',
+                    baseUrl: 'https://reports.trycloudflare.com/v1',
+                    apiKey: 'sk-report',
+                    isAcceptingReport: true,
+                    note: 'For reporting',
+                },
+                ...JSON.parse(REGISTRY_TEXT).servers,
+            ],
+        });
+        const status = await refreshLlmRegistry({ fetch: genFetch(text) });
+        expect(status.servers.map((one) => one.id)).toEqual([
+            'registry-super-computer',
+        ]);
+        expect(JSON.stringify(status)).not.toContain('Report inbox');
+        expect(JSON.stringify(status)).not.toContain('sk-report');
+        expect(JSON.stringify(status)).not.toContain('reports.trycloudflare');
+        expect(getLlmRegistryServers()).toHaveLength(1);
+        expect(getLlmReportServers()).toEqual([
+            {
+                id: 'registry-reporting',
+                name: 'Report inbox',
+                baseUrl: 'https://reports.trycloudflare.com/v1',
+                apiKey: 'sk-report',
+                note: 'For reporting',
+            },
+        ]);
+        resetLlmRegistryForTests();
+        expect(getLlmReportServers()).toEqual([]);
     });
 
     it('keeps the last good list through a failed read, and says why', async () => {

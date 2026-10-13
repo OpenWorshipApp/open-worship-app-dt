@@ -16,7 +16,7 @@ function checkIsEmpty(screenManager: ScreenManager) {
     return ![
         screenManager.screenBackgroundManager,
         screenManager.screenVaryAppDocumentManager,
-        screenManager.screenBibleManager,
+        screenManager.screenLongTextManager,
         screenManager.screenForegroundManager,
         screenManager.screenDrawManager,
         screenManager.screenFocusManager,
@@ -43,7 +43,7 @@ function watch(screenManager: ScreenManager) {
     for (const manager of [
         screenManager.screenBackgroundManager,
         screenManager.screenVaryAppDocumentManager,
-        screenManager.screenBibleManager,
+        screenManager.screenLongTextManager,
         screenManager.screenForegroundManager,
         screenManager.screenDrawManager,
         screenManager.screenFocusManager,

@@ -9,3 +9,7 @@ cloudflared
 cloudflared.exe
 # The connection file and the live entry of each tunnel, when there is no Desktop.
 run/
+# What llm-report-inbox.mjs keeps: the problem reports people sent, their words in them.
+report-inbox.sqlite*
+# ...and the files that came with them, written out by its `files` command.
+report-files/

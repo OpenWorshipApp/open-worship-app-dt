@@ -65,7 +65,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   the window in front of it); `owa_click`/`owa_type`
   refuse a label that cannot be undone (delete, trash, discard, erase, remove,
   uninstall, overwrite, _clear all_, _reset all_, factory, sign/log out — NOT
-  bare `reset` or `clear`, which are `Reset Widgets Size` and `Clear Bible`)
+  bare `reset` or `clear`, which are `Reset Widgets Size` and `Clear Long Text`)
   **in every language the app is shown in, read on the CONTROL as well as on
   the words** (2026-09-14, `MC-23`, `destructiveLabel.mjs`): the list was
   English regexes on a call's `find`, and every Khmer destructive label, a
@@ -80,7 +80,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   alert / input popups, which are the user's to answer. An element's own TEXT
   is read only on a control, so a slide card saying "erase my sin" stays
   pressable, and so does a translation the dictionary shares with an allowed
-  control (Khmer _Clear Bible_ is _Delete Bible_), the app's confirm behind it;
+  control (Khmer _Clear Background_ is _Remove Background_), the app's confirm
+  behind it;
   **and so do `click`/`fill`/`fill_form`/`drag`, which carry no label at all**
   — they aim by a uid out of a snapshot, so the interlock was two
   `take_snapshot` lines away from being irrelevant, and the label is now

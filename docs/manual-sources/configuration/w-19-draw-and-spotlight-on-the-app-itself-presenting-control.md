@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-19 — Draw and spotlight on the app itself (Presenting Control)
 
@@ -14,8 +14,8 @@ to other people (a training session, a screen share, a projector mirroring your 
 The audience screen has its own Draw and Focus tools on the mini-screen card (W-10);
 this is the same pair of tools pointed at the app.
 
-1. Open the **Tools** menu → **[en:tran:Start Controlling]** (**Ctrl+Shift+P**, **⌘+Shift+P** on
-   Mac). **Every window of the app answers it** — the Presenter, the Bible Reader, the
+1. Open the **Tools** menu → **[en:tran:Start Controlling]**, or press **Ctrl+Shift+P**
+   instead (**⌘+Shift+P** on Mac) — one or the other. **Every window of the app answers it** — the Presenter, the Bible Reader, the
    Slide Editor, a Bible Note, Settings, the Web Editor, the Lyric Editor and Local Web
    Share — and the one you are looking at is the one that gets the panel. (The projector
    output, the About box and the Find bar deliberately do not: an overlay on what the

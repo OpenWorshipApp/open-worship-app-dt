@@ -79,7 +79,10 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
   **Ctrl+B** (Cmd+B on mac). Opens the lookup modal.
 - **Settings** button (top-right): icon `bi bi-gear-wide-connected`, title `Setting`.
   Opens `setting.html`.
-- **Help** button (top-right): icon `bi bi-question-circle` (opens external help).
+- **Help** button (top-right): icon `bi bi-question-circle`. Opens a two-row
+  menu under itself — `Open Online Help` (external help, EX-04) and
+  `Open Chatbot` (the 🤖's own press). The first is also Help → `Open Online
+  Help` in the menu bar.
 
 ## Presenter window layout (3 resizable columns)
 
@@ -137,7 +140,7 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
   - Foreground **launcher** (`ForegroundFloatingComp`, a `Foreground` tab beside these two): a
-    menu of the 12 components, each opening in its own floating panel (`persistKey`
+    menu of the 13 components, each opening in its own floating panel (`persistKey`
     `floating-widget-rect-foreground-<key>`).
 - **Fullscreen toggle** (presenter header, top-right): icon `bi bi-arrows-fullscreen` /
   `bi bi-fullscreen-exit`.
@@ -152,7 +155,7 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
   **per screen** (`.mini-screen.card`, `data-screen-key`); footer zoom range slider.
   Each card is the **screen-controlling surface** (testing it is mandatory — SKILL §6a):
   - Header: show/hide screen toggle (`F5`, `.showing` when on) · clear buttons
-    eraser/`BG`/`SL`/`BB`/`FG` (`F6`–`F10`; outline = layer empty, solid = live) ·
+    eraser/`BG`/`SL`/`LT`/`FG` (`F6`–`F10`; outline = layer empty, solid = live) ·
     screen-id badge (`data-screen-id`) · color-note dot · lock icon
     (`bi-unlock` green / `bi-lock-fill` red).
   - Footer: display button `label(screenId):displayId` (menu of OS displays) ·

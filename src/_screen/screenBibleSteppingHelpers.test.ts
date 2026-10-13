@@ -31,7 +31,7 @@ vi.mock('../bible-list/bibleRenderHelpers', () => ({
     bibleRenderHelper: { getJumpingChapter: getJumpingChapterMock },
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
+vi.mock('./managers/ScreenLongTextManager', () => ({
     default: { getInstance: getInstanceMock },
 }));
 

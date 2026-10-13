@@ -46,7 +46,7 @@ test('a screen in a browser tells its viewer page whether it shows anything', as
         screenId: 3,
         screenBackgroundManager: background,
         screenVaryAppDocumentManager: slide,
-        screenBibleManager: bible,
+        screenLongTextManager: bible,
         screenForegroundManager: foreground,
         screenDrawManager: draw,
         screenFocusManager: focus,

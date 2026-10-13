@@ -353,7 +353,7 @@ export default function ScreenPreviewerFooterComp() {
                         wrapper, so anything reading a control by its words got
                         it twice ("St:0 Stage 0: Click to change Stage Number").
                         `St:` itself stays an untranslated mnemonic, like the
-                        BG/SL/BB/FG codes above it and `Tr:` beside it -- the
+                        BG/SL/LT/FG codes above it and `Tr:` beside it -- the
                         row is one line tall, and translating abbreviations is
                         what blanked the slide editor's tools panel once. It is
                         aria-hidden so the translated name is announced instead

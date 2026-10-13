@@ -9,8 +9,8 @@ import type { KeyboardListenerType } from '../event/KeyboardEventListener';
 const { controller, keyboard } = vi.hoisted(() => ({
     controller: {
         isMinimized: true,
-        addBibleItemLeft: vi.fn(),
-        addBibleItemBottom: vi.fn(),
+        splitBibleItemOnPress: vi.fn(),
+        checkIsSplitAskingBibleKey: vi.fn(() => false),
     },
     keyboard: { listener: undefined as KeyboardListenerType | undefined },
 }));
@@ -56,6 +56,7 @@ import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
 
 beforeEach(() => {
     vi.clearAllMocks();
+    controller.checkIsSplitAskingBibleKey.mockReturnValue(false);
     keyboard.listener = undefined;
 });
 
@@ -76,11 +77,37 @@ test.each(['v', 'V', 's', 'S'])(
         keyboard.listener!(event);
 
         expect(event.defaultPrevented).toBe(true);
-        const [split, otherSplit] =
-            key.toLowerCase() === 'v'
-                ? [controller.addBibleItemBottom, controller.addBibleItemLeft]
-                : [controller.addBibleItemLeft, controller.addBibleItemBottom];
-        expect(split).toHaveBeenCalledExactlyOnceWith(bibleItem, bibleItem);
-        expect(otherSplit).not.toHaveBeenCalled();
+        // A static render mounts no button to hang a version list under, so
+        // the key's own event is what the controller is handed.
+        expect(
+            controller.splitBibleItemOnPress,
+        ).toHaveBeenCalledExactlyOnceWith(
+            event,
+            bibleItem,
+            key.toLowerCase() === 's',
+        );
     },
 );
+
+// Asked for by the user: a view in a colour group splits into another
+// version, so its buttons are the menu's `… to` items.
+test('the split buttons of a grouped view say they ask for a version', () => {
+    const bibleItem = { id: 'selected-passage' } as unknown as BibleItem;
+    const plain = renderToStaticMarkup(
+        <RenderEditingActionButtonsComp bibleItem={bibleItem} />,
+    );
+    expect(plain).toContain('aria-label="Split horizontal"');
+    expect(plain).toContain('aria-label="Split vertical"');
+    expect(plain).not.toContain('aria-haspopup');
+
+    controller.checkIsSplitAskingBibleKey.mockReturnValue(true);
+    const grouped = renderToStaticMarkup(
+        <RenderEditingActionButtonsComp bibleItem={bibleItem} />,
+    );
+    expect(controller.checkIsSplitAskingBibleKey).toHaveBeenLastCalledWith(
+        bibleItem,
+    );
+    expect(grouped).toContain('aria-label="Split Horizontal to"');
+    expect(grouped).toContain('aria-label="Split Vertical to"');
+    expect(grouped.match(/aria-haspopup="menu"/g)).toHaveLength(2);
+});

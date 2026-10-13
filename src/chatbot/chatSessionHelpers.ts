@@ -37,6 +37,13 @@ import {
 // the usage module imports nothing but a type of its own, so it costs the
 // mount path arithmetic and a price table.
 import { toValidUsage, type ChatUsageType } from './usageHelpers';
+import {
+    REPORT_NOTE,
+    REPORT_SEND_TOOL_NAME,
+    REPORT_START_TOOL_NAME,
+    REPORT_STILL_TOOL_NAME,
+    REPORT_TITLE_PREFIX,
+} from './reportMarks';
 
 /**
  * A type-only import of the union above, deliberately: this module is read at
@@ -93,6 +100,15 @@ export type ChatMessageType = {
     // the transcript keeps the words as typed and a follow-up carries no
     // `/btw` of its own to read it off.
     isGeneral?: true;
+    // The thumb the person pressed under this answer (`answerRatingHelpers`).
+    // On the answer, so a reopened tab still shows which ones helped.
+    rating?: 'like' | 'dislike';
+    // This answer has had its follow-up: a thumb taken off and put down again
+    // must not ask "what was wrong?" a second time.
+    isFollowedUp?: true;
+    // The window's own follow-up to a thumb down -- not an answer: it carries
+    // no thumbs, and a complaint typed under it is about the answer above.
+    isFollowUp?: true;
 };
 
 export type ChatSessionType = {
@@ -115,6 +131,13 @@ export type ChatSessionType = {
     isFocusChosen: boolean;
     provider: LlmProviderType | null;
     model: string;
+    // The tab is on **Auto** (`autoAssistantHelpers`): the window settles
+    // who is asked in front of every question. `provider` and `model` then
+    // hold whoever was asked LAST -- a guess until the first question -- so
+    // everything that reads them has something to read, and `autoPick` is
+    // that assistant in words, set only once a question has been put to it.
+    isAuto?: true;
+    autoPick?: string;
     // "Do not throw this one away." A locked tab has no close button, and it
     // is the one thing the two sweeping actions -- close the others, clear
     // them all -- step around. It exists because those two actions exist: the
@@ -151,6 +174,9 @@ const MAX_TITLE_LENGTH = 26;
 // cutting one in half would be worse than showing it wrapped.
 const MAX_REPLY_COUNT = 3;
 const MAX_REPLY_LENGTH = 120;
+// "LM Studio super-computer · Gemma 4 12B": a server's name and a model's,
+// both of which are capped where they are typed. A guard, like the reply's.
+const MAX_AUTO_PICK_LENGTH = 160;
 // A typed name may be longer than a derived one -- the user chose it -- but
 // not without end: it is stored in the same file and drawn in the same strip.
 const MAX_TYPED_TITLE_LENGTH = 40;
@@ -172,6 +198,7 @@ export function genNewChatSession(
     provider: LlmProviderType | null,
     model: string,
     isFocusChosen = false,
+    isAuto = false,
 ): ChatSessionType {
     return {
         id: genSessionId(),
@@ -182,6 +209,7 @@ export function genNewChatSession(
         isFocusChosen,
         provider,
         model,
+        ...(isAuto ? { isAuto: true as const } : {}),
         isLocked: false,
     };
 }
@@ -237,17 +265,43 @@ export function genChatSessionTitle(session: ChatSessionType) {
     if (session.title.length > 0) {
         return session.title;
     }
-    const firstAsked = session.messages.find((message) => {
-        return message.author === 'you';
-    });
+    // A tab a problem is being reported in says so before anything else
+    // (2026-10-13, the user's ask with the strip circled: _I don't see title
+    // start with `Report:`_): it is the one tab whose words go to the people
+    // who maintain the app, and among a dozen it has to be findable.
+    const reportStart = session.messages.findIndex(checkIsReportMessage);
+    const isReport = reportStart !== -1;
+    const firstAsked = session.messages
+        .slice(isReport ? reportStart : 0)
+        .find((message) => {
+            return message.author === 'you';
+        });
+    const prefix = isReport ? REPORT_TITLE_PREFIX : '';
     if (firstAsked === undefined) {
-        return 'New chat';
+        return isReport ? `${prefix}new` : 'New chat';
     }
-    const text = firstAsked.text.trim().replace(/\s+/g, ' ');
+    const text = prefix + firstAsked.text.trim().replace(/\s+/g, ' ');
     if (text.length <= MAX_TITLE_LENGTH) {
         return text;
     }
     return text.slice(0, MAX_TITLE_LENGTH - 1) + '…';
+}
+
+/**
+ * Whether a message belongs to a problem report: what the person added to
+ * one, the card that offers one, or the write-up waiting on Send.
+ */
+function checkIsReportMessage(message: ChatMessageType) {
+    return (
+        message.note === REPORT_NOTE ||
+        message.actions?.some((action) => {
+            return (
+                action.toolName === REPORT_START_TOOL_NAME ||
+                action.toolName === REPORT_STILL_TOOL_NAME ||
+                action.toolName === REPORT_SEND_TOOL_NAME
+            );
+        }) === true
+    );
 }
 
 /**
@@ -332,7 +386,8 @@ function toValidAttachments(raw: any) {
                 typeof one?.name === 'string' &&
                 (one.kind === 'image' ||
                     one.kind === 'text' ||
-                    one.kind === 'element')
+                    one.kind === 'element' ||
+                    one.kind === 'file')
             );
         })
         .slice(0, MAX_ATTACHMENT_COUNT)
@@ -354,6 +409,13 @@ function toValidAttachments(raw: any) {
                     : {}),
                 ...(typeof one.summary === 'string'
                     ? { summary: one.summary }
+                    : {}),
+                // The number on its chip, which the words beside it may
+                // name: kept, or "in 2" stops meaning anything on reopening.
+                ...(Number.isInteger(one.number) &&
+                one.number > 0 &&
+                one.number < 100000
+                    ? { number: one.number }
                     : {}),
             };
         });
@@ -391,6 +453,16 @@ function toValidMessage(raw: any): ChatMessageType | null {
         ...(typeof raw.note === 'string' ? { note: raw.note } : {}),
         ...(raw.author === 'you' && raw.isGeneral === true
             ? { isGeneral: true as const }
+            : {}),
+        ...(raw.author === 'bot' &&
+        (raw.rating === 'like' || raw.rating === 'dislike')
+            ? { rating: raw.rating as 'like' | 'dislike' }
+            : {}),
+        ...(raw.author === 'bot' && raw.isFollowedUp === true
+            ? { isFollowedUp: true as const }
+            : {}),
+        ...(raw.author === 'bot' && raw.isFollowUp === true
+            ? { isFollowUp: true as const }
             : {}),
         ...(Array.isArray(raw.actions) ? { actions: raw.actions } : {}),
         ...toValidReplies(raw.replies),
@@ -461,6 +533,22 @@ function toValidSession(raw: any): ChatSessionType | null {
                 ? raw.provider
                 : null,
         model: typeof raw.model === 'string' ? raw.model : '',
+        // The words of the last pick only beside the flag they belong to:
+        // a tab taken off Auto must not come back naming an assistant it
+        // is not asking.
+        ...(raw.isAuto === true
+            ? {
+                  isAuto: true as const,
+                  ...(typeof raw.autoPick === 'string' &&
+                  raw.autoPick.trim().length > 0
+                      ? {
+                            autoPick: raw.autoPick
+                                .trim()
+                                .slice(0, MAX_AUTO_PICK_LENGTH),
+                        }
+                      : {}),
+              }
+            : {}),
         isLocked: raw.isLocked === true,
         ...toValidUsageField(raw.usage),
     };
@@ -474,6 +562,7 @@ export function loadChatSessions(
     focus: BotFocusType,
     provider: LlmProviderType | null,
     model: string,
+    isAuto = false,
 ): ChatSessionStateType {
     const stored = getSetting(SESSIONS_SETTING_NAME);
     let sessions: ChatSessionType[] = [];
@@ -496,7 +585,7 @@ export function loadChatSessions(
         }
     }
     if (sessions.length === 0) {
-        sessions = [genNewChatSession(focus, provider, model)];
+        sessions = [genNewChatSession(focus, provider, model, false, isAuto)];
     }
     const isActiveIdKnown = sessions.some((session) => {
         return session.id === activeId;

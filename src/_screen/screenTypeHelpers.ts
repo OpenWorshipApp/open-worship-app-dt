@@ -2,6 +2,7 @@ import type { DOMAttributes, CSSProperties } from 'react';
 
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import type { BibleItemRenderingType } from './bibleScreenComps';
+import type { LongTextColumnType } from './screenLongTextTypeHelpers';
 import { type TransitionEffectType } from './transitionEffectHelpers';
 
 export type CustomEvents<K extends string> = {
@@ -26,20 +27,38 @@ export type StyleAnimType = {
 
 export type PTFEventType = 'update';
 
-export const bibleDataTypeList = ['bible-item', 'lyric'] as const;
+// What `ScreenLongTextManager` holds for a screen: a Bible passage, or a long
+// text in several languages. One layer, so one of them at a time. The Bible's
+// own shape is the one it has always been persisted and sent in.
+export const bibleDataTypeList = ['bible-item', 'long-text'] as const;
 export type BibleDataType = (typeof bibleDataTypeList)[number];
 export type BibleItemDataType = {
     locale: string;
-    type: BibleDataType;
+    type: 'bible-item';
     bibleItemData?: {
         renderedList: BibleItemRenderingType[];
         bibleItem: BibleItemType;
     };
     scroll: number;
+    // The selected row's key: a KJV verse key for a Bible, a section key for a
+    // long text. The name is the wire's, and stays.
     selectedKJVVerseKey: string | null;
 };
+export type LongTextItemDataType = {
+    locale: string;
+    type: 'long-text';
+    longTextData: {
+        renderedList: LongTextColumnType[];
+        // Who put it up -- the panel session -- so that one, and nothing else,
+        // marks it on screen, restyles it and takes it down.
+        sourceId: string;
+    };
+    scroll: number;
+    selectedKJVVerseKey: string | null;
+};
+export type LongTextDataType = BibleItemDataType | LongTextItemDataType;
 export type BibleListType = {
-    [key: string]: BibleItemDataType;
+    [key: string]: LongTextDataType;
 };
 
 export const scaleTypeList = [

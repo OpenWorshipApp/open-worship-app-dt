@@ -2,10 +2,10 @@
 id: W-01b
 title: "The `⋮` button: everything a thing can do"
 section: "Orientation"
-verify: [GL-24, GL-06]
+verify: [GL-24, GL-06, CM-04, PL-31]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-01b — The `⋮` button: everything a thing can do
 
@@ -32,10 +32,21 @@ does. Those extras live in a small menu.
 > machines and browsers keep that button for a menu of their own. The `⋮` is the same
 > menu with a button you can see.
 
+**To rename a file** — a document, a song, a picture, a clip — open its menu and pick
+**[en:tran:Rename]**. The name turns into a box holding the name it has: change it and
+press **Enter** (or click the ✓). The file is renamed where it lives, and it stays
+selected.
+
+**A name Windows keeps for itself is refused**, when a file is made or given a new name.
+`CON`, `PRN`, `AUX`, `NUL`, `COM1`…, `LPT1`… — with or without something after a dot,
+such as `NUL.old` — cannot name a file on Windows, so the app refuses them on every
+computer (**[en:tran:Invalid file name]**: _This name is reserved by Windows. Please
+choose another one._) and a file made here can always be moved to another machine.
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`GL-24` · `GL-06`
+`GL-24` · `GL-06` · `CM-04` · `PL-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

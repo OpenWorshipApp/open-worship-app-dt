@@ -112,4 +112,7 @@ Related: [[chatbot-builtin-commands]].
   *Put Blessed Assurance on the screen* → *Yes, put it up* pressed the show
   toggle, and with one display the screen window is that display. Read
   `owa_list_screens` straight after any acting follow-through and hide what
-  the driver turned on before doing anything else.
+  the driver turned on before doing anything else — **what the driver's own
+  press turned on, and only with nothing else using the app**: on 2026-10-12 a
+  driver that hid "what came on during its question" hid another session's
+  test screen four times ([[corpus-run-in-a-shared-dev-app]]).

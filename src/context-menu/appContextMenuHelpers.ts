@@ -46,15 +46,8 @@ export type AppContextMenuPropsType = {
     options?: AppContextMenuOptionsType;
 };
 
-export function createMouseEvent(clientX: number, clientY: number) {
-    return new MouseEvent('click', {
-        clientX,
-        clientY,
-        bubbles: true,
-        cancelable: true,
-        view: window,
-    });
-}
+// Lives in a leaf module; re-exported for the existing callers.
+export { createMouseEvent } from './contextMenuEventHelpers';
 
 export const setPositionMenu = (
     menu: HTMLElement,

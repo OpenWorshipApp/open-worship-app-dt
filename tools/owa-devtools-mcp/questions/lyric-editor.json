@@ -4,7 +4,7 @@
     "window": "lyricEditor.html",
     "focus": "lyricEditor",
     "description": "The window a song's words and chords are written in: the text on one side, the verses it becomes on the other.",
-    "updated": "2026-09-03",
+    "updated": "2026-10-12",
     "sections": [
         {
             "id": "writing",
@@ -30,6 +30,7 @@
                     "starterRank": 1,
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "How a song is written",
                         "related": [
                             "W-15"
                         ],
@@ -83,6 +84,8 @@
                         "write the notation for me"
                     ],
                     "resources": {
+                        "recipe": "W-42",
+                        "passage": "It can turn words you already have into a song",
                         "tools": [
                             "owa_lyric_validate",
                             "owa_lyric_file"
@@ -201,6 +204,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "How a song is written",
                         "related": [
                             "W-15"
                         ],

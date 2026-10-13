@@ -62,10 +62,12 @@ import {
 } from '../../electron/customLlmProtocol';
 import SettingOthersSharedServersComp from './SettingOthersSharedServersComp';
 
+// As main hands them to a window: each address a stand-in on a reserved
+// name, never the one the registry file carries.
 const CHURCH_SERVER = {
     id: 'registry-church-lmstudio',
     name: 'Church LM Studio',
-    baseUrl: 'https://quiet-river-1234.trycloudflare.com/v1',
+    baseUrl: 'https://shared-server.invalid/v1',
     models: [
         {
             id: 'm0-qwen',
@@ -81,7 +83,7 @@ const CHURCH_SERVER = {
 const OTHER_SERVER = {
     id: 'registry-other',
     name: 'Other server',
-    baseUrl: 'https://other.example.com/v1',
+    baseUrl: 'https://shared-server.invalid/v1',
     models: [{ id: 'm0-x', model: 'x/model', name: '' }],
     source: 'registry',
 };
@@ -146,7 +148,6 @@ describe('SettingOthersSharedServersComp', () => {
         expect(h.send).toHaveBeenCalledWith(LLM_REGISTRY_GET_CHANNEL);
         expect(findFoldButton('Church LM Studio · Models: 2')).toBeDefined();
         expect(findFoldButton('Other server · Models: 1')).toBeDefined();
-        expect(container.textContent).not.toContain('trycloudflare.com');
         expect(container.textContent).toContain('Last read at');
     });
 
@@ -176,14 +177,18 @@ describe('SettingOthersSharedServersComp', () => {
         ).not.toBeNull();
     });
 
-    test('opened, a server shows its address and what each model is', async () => {
+    test('opened, a server shows what each model is, and no address at all', async () => {
         h.send.mockResolvedValue(genStatus([CHURCH_SERVER]));
         await render();
         await act(async () => {
             findFoldButton('Church LM Studio · Models: 2').click();
         });
         const text = container.textContent ?? '';
-        expect(text).toContain('https://quiet-river-1234.trycloudflare.com/v1');
+        // Not the stand-in either, and no row that would hold one: an
+        // address on screen is an address copied and used elsewhere.
+        expect(container.innerHTML).not.toContain('shared-server.invalid');
+        expect(text).not.toContain('Base URL');
+        expect(text).not.toContain('://');
         expect(text).toContain('qwen/qwen3.5-9b · Qwen 3.5 9B · Sees pictures');
         expect(text).toContain('google/gemma-4-e4b');
         expect(text).not.toContain('google/gemma-4-e4b · Sees pictures');

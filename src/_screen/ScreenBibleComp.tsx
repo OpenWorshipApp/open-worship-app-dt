@@ -2,11 +2,11 @@ import { useRef } from 'react';
 
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import {
-    useScreenBibleManagerEvents,
+    useScreenLongTextManagerEvents,
     useScreenForegroundManagerEvents,
 } from './managers/screenEventHelpers';
 import { getMarqueeBandHeight } from './marqueeBandHelpers';
-import ScreenBibleManager from './managers/ScreenBibleManager';
+import ScreenLongTextManager from './managers/ScreenLongTextManager';
 import {
     useScreenManagerContext,
     useScreenManagerEvents,
@@ -14,6 +14,11 @@ import {
 import { getColorParts } from '../others/themeHelpers';
 import { checkIsZoomed } from '../helper/domHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
+import {
+    SCREEN_BIBLE_COLUMNS_CLASSNAME,
+    SCREEN_BIBLE_COLUMN_CLASSNAME,
+} from './screenBibleColumnHelpers';
+import { SCREEN_LONG_TEXT_CLASSNAME } from './screenLongTextTypeHelpers';
 
 function getStyleText(textColor?: string) {
     const { colorPart, invertColorPart } = getColorParts(textColor);
@@ -30,15 +35,37 @@ function getStyleText(textColor?: string) {
     display: inline-block;
 }
 
-#bible-screen-view::-webkit-scrollbar {
+/* Several Bibles side by side, each a scroller of its own. */
+#bible-screen-view .${SCREEN_BIBLE_COLUMNS_CLASSNAME} {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#bible-screen-view .${SCREEN_BIBLE_COLUMN_CLASSNAME} {
+    display: block;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#bible-screen-view::-webkit-scrollbar,
+#bible-screen-view .${SCREEN_BIBLE_COLUMN_CLASSNAME}::-webkit-scrollbar {
     width: 0.2em;
 }
 
-#bible-screen-view::-webkit-scrollbar-track {
+#bible-screen-view::-webkit-scrollbar-track,
+#bible-screen-view .${SCREEN_BIBLE_COLUMN_CLASSNAME}::-webkit-scrollbar-track {
     background-color: ${colorPart}42;
 }
 
-#bible-screen-view::-webkit-scrollbar-thumb {
+#bible-screen-view::-webkit-scrollbar-thumb,
+#bible-screen-view .${SCREEN_BIBLE_COLUMN_CLASSNAME}::-webkit-scrollbar-thumb {
     background-color: ${invertColorPart};
 }
 
@@ -86,6 +113,11 @@ function getStyleText(textColor?: string) {
     padding-right: 0.2em;
 }
 
+/* A long text's section is several lines, and keeps its line breaks. */
+#bible-screen-view .${SCREEN_LONG_TEXT_CLASSNAME} td > span {
+    white-space: pre-line;
+}
+
 #bible-screen-view td .verse-number {
     -webkit-text-stroke: 0.01em greenyellow;
     color: rgba(172, 255, 47, 0.645);
@@ -128,22 +160,25 @@ function getStyleText(textColor?: string) {
     border-bottom-color: ${invertColorPart}1a;
 }
 
+/* Faint on purpose, for a verse and for a song's section alike: it marks
+   every line of what is selected, and at 0.6 that was a band of colour over
+   the words a room is reading. It still says where the reading is. */
 #bible-screen-view .highlight.selected {
     background: ${
         'linear-gradient(transparent, transparent, ' +
-        'rgba(255, 0, 157, 0.6), transparent);'
+        'rgba(255, 0, 157, 0.2), transparent);'
     }
 }`;
 }
 
 export default function ScreenBibleComp() {
     const screenManager = useScreenManagerContext();
-    const { screenBibleManager } = screenManager;
-    const screenBibleManagerRef = useAppCurrentRef(screenBibleManager);
+    const { screenLongTextManager } = screenManager;
+    const screenLongTextManagerRef = useAppCurrentRef(screenLongTextManager);
     useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenBibleManagerRef.current.render();
+        screenLongTextManagerRef.current.render();
     });
-    useScreenBibleManagerEvents(['text-style']);
+    useScreenLongTextManagerEvents(['text-style']);
     // Re-render when this screen's foreground changes, so a top marquee
     // pushes the passage down (and releases it when it comes off).
     const { screenForegroundManager } = screenManager;
@@ -154,24 +189,26 @@ export default function ScreenBibleComp() {
         if (element === null) {
             return;
         }
-        screenBibleManager.div = element;
+        screenLongTextManager.div = element;
         return () => {
-            screenBibleManager.releaseDiv(element);
+            screenLongTextManager.releaseDiv(element);
         };
-    }, [screenBibleManager, div.current]);
+    }, [screenLongTextManager, div.current]);
     const marqueeTopData =
         screenForegroundManager.foregroundData.marqueeTopData;
-    const containerStyle = screenBibleManager.containerStyle;
+    const containerStyle = screenLongTextManager.containerStyle;
     const topInset =
         marqueeTopData === null
             ? 0
             : getMarqueeBandHeight(marqueeTopData, screenManager.height);
     return (
         <>
-            <style>{getStyleText(ScreenBibleManager.textStyleTextColor)}</style>
+            <style>
+                {getStyleText(ScreenLongTextManager.textStyleTextColor)}
+            </style>
             <style>
                 {`#bible-screen-view tr {
-                    ${ScreenBibleManager.textStyleText}
+                    ${ScreenLongTextManager.textStyleText}
                 }`}
             </style>
             <div

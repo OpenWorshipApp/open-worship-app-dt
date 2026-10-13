@@ -4,14 +4,15 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The running order for a service: what happens, in what order, on which screen. Built in the Presenting Flows panel and run from its own preview.",
-    "updated": "2026-10-10",
+    "updated": "2026-10-12",
     "sections": [
         {
             "id": "building",
             "label": "Building the running order",
             "panel": "Presenting Flows",
             "recipes": [
-                "W-22"
+                "W-22",
+                "W-22g"
             ],
             "questions": [
                 {
@@ -63,6 +64,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22",
+                        "passage": "Drag things onto the presenting flow's NAME row to add them",
                         "guide": true,
                         "tools": [
                             "owa_presenting_flow"
@@ -82,6 +84,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22",
+                        "passage": "Drag things onto the presenting flow's NAME row to add them",
                         "tools": [
                             "owa_presenting_flow",
                             "owa_undo"
@@ -117,6 +120,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22",
+                        "passage": "Remove from Presenting Flow",
                         "guide": true
                     }
                 },
@@ -132,6 +136,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22",
+                        "passage": "line has its own arrow",
                         "related": [
                             "W-05"
                         ]
@@ -149,7 +154,8 @@
                         "drop on top"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22g",
+                        "passage": "Aim at the middle of a line to attach"
                     }
                 }
             ]
@@ -159,7 +165,9 @@
             "label": "Running the service from it",
             "panel": "Presenting Flows",
             "recipes": [
-                "W-22"
+                "W-22",
+                "W-22b",
+                "W-22e"
             ],
             "questions": [
                 {
@@ -175,7 +183,7 @@
                         "run sheet"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22b",
                         "guide": true
                     }
                 },
@@ -191,7 +199,8 @@
                         "run player"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22b",
+                        "passage": "To see the whole service at a glance"
                     }
                 },
                 {
@@ -205,7 +214,7 @@
                         "side by side"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22b",
                         "related": [
                             "W-26"
                         ]
@@ -223,7 +232,7 @@
                         "go back"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22e"
                     }
                 }
             ]
@@ -233,7 +242,10 @@
             "label": "Making it advance by itself",
             "panel": "Presenting Flows",
             "recipes": [
-                "W-22"
+                "W-22",
+                "W-22d",
+                "W-22e",
+                "W-22f"
             ],
             "questions": [
                 {
@@ -249,7 +261,8 @@
                         "walk itself"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22d",
+                        "passage": "Let the running order walk itself",
                         "guide": true
                     }
                 },
@@ -265,7 +278,8 @@
                         "timeout"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22d",
+                        "passage": "Or wait until a time on the clock"
                     }
                 },
                 {
@@ -280,7 +294,8 @@
                         "cycle"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22e",
+                        "passage": "A loop of slides before the service, from start to finish",
                         "related": [
                             "W-04"
                         ]
@@ -298,7 +313,8 @@
                         "seconds"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22d",
+                        "passage": "Each line may wait for its own length"
                     }
                 },
                 {
@@ -313,7 +329,7 @@
                         "jump to"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22f",
                         "guide": true
                     }
                 }
@@ -324,7 +340,11 @@
             "label": "Lines that do something",
             "panel": "Presenting Flows",
             "recipes": [
-                "W-22"
+                "W-22",
+                "W-22c",
+                "W-22g",
+                "W-22h",
+                "W-22i"
             ],
             "questions": [
                 {
@@ -339,7 +359,8 @@
                         "automatic action"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22c",
+                        "passage": "Add a screen action",
                         "guide": true
                     }
                 },
@@ -354,7 +375,8 @@
                         "blank at the end"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22c",
+                        "passage": "Put the screen itself up and down",
                         "related": [
                             "W-10"
                         ],
@@ -375,7 +397,7 @@
                         "attach"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22g"
                     }
                 },
                 {
@@ -390,7 +412,7 @@
                         "stage"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22i",
                         "related": [
                             "W-18"
                         ],
@@ -410,7 +432,7 @@
                         "video"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22h",
                         "guide": true
                     }
                 }
@@ -422,7 +444,8 @@
             "panel": "Presenting Flows",
             "recipes": [
                 "W-22",
-                "W-23"
+                "W-23",
+                "W-22j"
             ],
             "questions": [
                 {
@@ -438,7 +461,8 @@
                         "usb"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22j",
+                        "passage": "Right-click the presenting flow → Export",
                         "related": [
                             "W-23",
                             "W-25"
@@ -458,7 +482,7 @@
                         "lock file"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22j",
                         "related": [
                             "W-23",
                             "W-25"
@@ -478,7 +502,7 @@
                         "from usb"
                     ],
                     "resources": {
-                        "recipe": "W-22",
+                        "recipe": "W-22j",
                         "related": [
                             "W-23"
                         ]

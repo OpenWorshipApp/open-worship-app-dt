@@ -23,6 +23,7 @@ import {
     describeActionError,
     genBackToPresenterLead,
     genBackToPresenterRoute,
+    genOwnWindowFact,
     genGuideActions,
     genReaderButtonReferenceAnswer,
     readCountdownAsk,
@@ -474,6 +475,90 @@ describe('a walkthrough of a window that is not open', () => {
             return call[0] === 'owa_click';
         });
         expect(clicks).toHaveLength(1);
+    });
+});
+
+// 2026-10-12, the every-window questions asked with no assistant as each of
+// the five windows of their own, none of them open: _Where are the
+// settings?_ and _Where is the button that does this?_ were answered "I could
+// not answer that: The app has no open page matching "setting.html". The open
+// pages are: chatbot.html?uuid=chatbot, presenter.html." -- ten of 540.
+describe('a "where is" about a window that is not open', () => {
+    const genNoPageError = (page: string) => {
+        return new Error(
+            `The app has no open page matching "${page}". The open pages ` +
+                'are: chatbot.html?uuid=chatbot, presenter.html.',
+        );
+    };
+
+    beforeEach(() => {
+        parseToolJson.mockImplementation((text: any) => {
+            return typeof text === 'string' && text.length > 0
+                ? JSON.parse(text)
+                : null;
+        });
+    });
+
+    test('names the way into it and outlines the control, pressing nothing', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name, toolArgs] = args as [string, any];
+            if (name === 'owa_find_ui' && toolArgs.page === 'setting.html') {
+                throw genNoPageError('setting.html');
+            }
+            if (name === 'owa_find_ui' && toolArgs.anyPage === true) {
+                return JSON.stringify({
+                    count: 1,
+                    matches: [{ label: 'Setting', isVisible: true }],
+                });
+            }
+            return '';
+        });
+        const answer = await askHelpBot('Where are the settings?', 'setting');
+        expect(answer.text).toContain('**Settings is not open**');
+        expect(answer.text).toContain(
+            'the ⚙️ button at the top right of the window — I have outlined it in red',
+        );
+        expect(answer.text).not.toContain('no open page');
+        expect(answer.text).not.toContain('.html');
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', {
+            text: 'Setting',
+            highlight: true,
+            anyPage: true,
+        });
+        // A question is not a request to change what the window shows.
+        const pressed = callTool.mock.calls.filter((call: any[]) => {
+            return call[0] === 'owa_click' || call[0] === 'owa_goto_page';
+        });
+        expect(pressed).toHaveLength(0);
+    });
+
+    test('says the way in words where no one control opens it', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string, any];
+            if (name === 'owa_find_ui') {
+                throw genNoPageError('lyricEditor.html');
+            }
+            return '';
+        });
+        const answer = await askHelpBot(
+            'Where is the button that does this?',
+            'lyricEditor',
+        );
+        expect(answer.text).toContain('**Lyric Editor is not open**');
+        expect(answer.text).toContain(
+            'open a song from the Documents panel and press Edit. Then ask me again',
+        );
+        expect(answer.text).not.toContain('outlined');
+        expect(answer.text).not.toContain('.html');
+        // One call: the refused one. Nothing to outline, nothing pressed.
+        expect(callTool).toHaveBeenCalledTimes(1);
+    });
+
+    test('any other failure is still a failure', async () => {
+        callTool.mockRejectedValue(new Error('The assistant service is down'));
+        await expect(
+            askHelpBot('Where is the clear button?', 'presenter'),
+        ).rejects.toThrow('The assistant service is down');
     });
 });
 
@@ -1022,6 +1107,27 @@ describe('the offline bot names the way back to the Presenter', () => {
         expect(genBackToPresenterRoute('setting')).toBeNull();
     });
 
+    // "How do I see what a song will look like on screen?" asked from the
+    // Lyric Editor came back as steps "while you are in the Lyric Editor"
+    // (a local model, 2026-10-13): no prompt said that window has no panels.
+    test('a window of its own is told it has none of the panels, a page of the main window is not', () => {
+        const fact = genOwnWindowFact('lyricEditor');
+        expect(fact).toContain('**Lyric Editor** is a window of its own');
+        expect(fact).toContain("NONE of the Presenter's panels");
+        expect(fact).toContain('still open behind this one');
+        for (const focus of ['bibleNote', 'webEditor', 'setting'] as const) {
+            expect(genOwnWindowFact(focus)).toContain('window of its own');
+        }
+        // These three are told their own way across, or need none.
+        for (const focus of [
+            'presenter',
+            'reader',
+            'appDocumentEditor',
+        ] as const) {
+            expect(genOwnWindowFact(focus)).toBe('');
+        }
+    });
+
     test('a Presenter recipe read from the Reader leads with the way across', () => {
         const lead = genBackToPresenterLead('reader', SLIDES_EXCERPT);
         expect(lead).toContain('Bible Reader page has none of these panels');
@@ -1058,6 +1164,55 @@ describe('the offline bot names the way back to the Presenter', () => {
         );
         expect(answer.text).toContain('Go Back to Presenter');
         expect(answer.text).toContain(SLIDES_EXCERPT);
+    });
+
+    // 2026-10-12, every supported question asked with no assistant: 22 of
+    // the Reader's 70 and 16 of the Slide Editor's 21 were sent to the
+    // Presenter, because the Reader has a **Bible Lookup** of its own and
+    // every Slide Editor page says **Slide Editor**.
+    test('a question the window itself offers is not sent to the Presenter', async () => {
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        callTool.mockResolvedValue(
+            JSON.stringify([
+                {
+                    id: 'W-12',
+                    title: 'Search the whole Bible (Bible Find)',
+                    section: 's',
+                    excerpt:
+                        'Open **Bible Lookup** and pick **Find**, then type a word.',
+                    score: 40,
+                },
+            ]),
+        );
+        const own = await askHelpBot(
+            'How do I search the Bible for a word?',
+            'reader',
+        );
+        expect(own.text).not.toContain('This is done in the Presenter');
+        expect(own.text).toContain('pick **Find**');
+        // The same page under a question the Reader does NOT offer keeps it.
+        const other = await askHelpBot('How do I find a word?', 'reader');
+        expect(other.text.startsWith('This is done in the Presenter')).toBe(
+            true,
+        );
+        // And a Slide Editor question asked in the Slide Editor.
+        callTool.mockResolvedValue(
+            JSON.stringify([
+                {
+                    id: 'W-15',
+                    title: 'Create and edit slides / lyrics / web backgrounds',
+                    section: 's',
+                    excerpt:
+                        'Select a slide document, then click the **Slide Editor** header tab.',
+                    score: 40,
+                },
+            ]),
+        );
+        const editor = await askHelpBot(
+            'How do I add a slide?',
+            'appDocumentEditor',
+        );
+        expect(editor.text).not.toContain('This is done in the Presenter');
     });
 });
 
@@ -1248,5 +1403,51 @@ describe('the offline bot offers to start a countdown', () => {
         );
         expect(answer.text).toContain('started from the Presenter page');
         expect(answer.actions).toBeUndefined();
+    });
+});
+
+describe('a guide page a person asked to read', () => {
+    // "Read the whole thing" printed the page as the page tool returns it:
+    // with the address of its newest copy "to read with owa_read_website",
+    // and, on a long page, a note that it had been shortened -- both written
+    // for a model.
+    test('is shown whole, with nothing of what the page tool says to a model', async () => {
+        const foot =
+            '\n\n_(If they say this page does not match their window, read ' +
+            'its newest copy with owa_read_website: ' +
+            'https://example.com/w-42.md )_';
+        callTool
+            .mockImplementationOnce(async () => {
+                return (
+                    '# Ask the app for help\n\n1. Click the robot button.' +
+                    '\n\n[This page goes on: this is part 1 of 2. When what ' +
+                    'is asked is not in this part, read the next with ' +
+                    'owa_help_page and "part": 2. Do not tell the user ' +
+                    `anything was shortened.]${foot}`
+                );
+            })
+            .mockImplementationOnce(async () => {
+                return (
+                    '# Ask the app for help (part 2 of 2)\n\n' +
+                    `14. Press **Show me step by step**.${foot}`
+                );
+            });
+        const result = await runBotAction({
+            label: 'Read the whole thing',
+            toolName: 'owa_help_page',
+            args: { id: 'W-42' },
+        });
+        expect(result.text).toBe(
+            '# Ask the app for help\n\n1. Click the robot button.\n' +
+                '14. Press **Show me step by step**.',
+        );
+        expect(result.isNeedingModel).toBe(false);
+        expect(callTool).toHaveBeenNthCalledWith(1, 'owa_help_page', {
+            id: 'W-42',
+        });
+        expect(callTool).toHaveBeenNthCalledWith(2, 'owa_help_page', {
+            id: 'W-42',
+            part: 2,
+        });
     });
 });

@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "updated": "2026-10-10",
+    "updated": "2026-10-12",
     "about": "Every measurement taken of a model answering for the app's chatbot, copied from the notes of the day it was taken (each run names its source). A number that was not measured is null. `fit` is what the measurements say about offering the model for that job; `fitNote` is the sentence to tell somebody choosing.",
     "machines": [
         {
@@ -221,7 +221,7 @@
             "sizeB": 4,
             "canSeeImages": true,
             "fit": "good",
-            "fitNote": "The small model that does the job on an 8 GB card: 8 of 10 right on the standing questions (7 by another count), the projector question in about 20 seconds, a how-do-I in 30–55. It copies a button's whole title into its sentence and once invented a control where the guide had the answer, so the walkthrough buttons are worth pressing.",
+            "fitNote": "The small model that does the job on an 8 GB card. A question picked from the help window's list is answered in one round, about 14.2 seconds (2026-10-12). Over every supported question it was 70% right and 0% wrong or empty (283 right, 123 partly, 0 wrong, 1 with no usable answer of 407): right where the guide page says the answer and the part that says it is what it is handed, and it writes an answer anyway when the page does not. It copies a button's whole title into its sentence and says \"the guide page shows\", so the walkthrough buttons are worth pressing.",
             "runs": [
                 {
                     "date": "2026-10-10",
@@ -309,6 +309,43 @@
                     "task": "loading",
                     "outcome": "loaded on the first question (JIT) with an auto-fit context of 113 920: 6.3 of the card's 8 GB of video memory in use",
                     "source": "reported by the session on the server PC, 2026-10-10 (not in the notes)"
+                },
+                {
+                    "date": "2026-10-12",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 32768,
+                    "task": "the supported-question corpus, its first 47 questions, each pressed in the help window's own list (the guide page rides with the question)",
+                    "score": "26 right, 10 partly, 9 wrong, 2 with no usable answer — graded against the guide pages by two readers; 24 right and free of any word about the mechanism",
+                    "rounds": 3,
+                    "seconds": 23.5,
+                    "promptTokens": 33088,
+                    "outcome": "median 3 rounds, 33 088 prompt tokens and 23.5 s an answer (rounds 1 ×13, 2 ×7, 3 ×21, 4 ×4). Where the page rode whole it was never wrong (14 right, 4 partly of 18); every failure was a question filed under a page longer than what rides (8, all on the help window's own page), a tool a local server is not sent (2) or an app question sent to /btw (1). Twenty-one answers had opened the page a second time — the app's doing, not the model's, fixed the same day",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — row corpus-local, 2026-10-12; raw answers in test-results/chatbot-quality/score-2026-10-12-local-corpus.json"
+                },
+                {
+                    "date": "2026-10-12",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 32768,
+                    "task": "the same corpus, 23 of those questions asked again after the app stopped handing a known question's steps back to be written twice",
+                    "score": null,
+                    "rounds": 1,
+                    "seconds": 12.1,
+                    "promptTokens": 10877,
+                    "outcome": "median 1 round, 10 877 prompt tokens and 12.1 s an answer (rounds 1 ×14, 2 ×5, 3 ×3, 4 ×1; 61 rounds for the 23 before, 37 after). Not graded for correctness: the app's spend guard paused the assistant at 150 model calls in the hour before the pass was over",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — row corpus-local, 2026-10-12; raw answers in test-results/chatbot-quality/score-2026-10-12-local-corpus.json"
+                },
+                {
+                    "date": "2026-10-12",
+                    "program": "LM Studio",
+                    "machine": "server-pc",
+                    "contextLength": 32768,
+                    "task": "every supported question, through the help window",
+                    "score": "283 right, 123 partly, 0 wrong, 1 with no usable answer of 407 (first asking: 230 right, 107 partly, 68 wrong, 2 with no usable answer)",
+                    "rounds": 1,
+                    "outcome": "407 questions from the window's own list, every page, each answer graded against its guide page. 342 answered in one round, a median of 14.2 s and 11197 input tokens; two askings came back with no answer (one under a reload of the window) and were asked again. By page: Presenter 85 of 113 right, Bible Reader 43 of 71 right, every window 44 of 59 right, Screen 37 of 50 right, Troubleshooting 15 of 27 right, Presenting Flow 16 of 25 right, Settings 16 of 23 right, Slide Editor 13 of 21 right, Lyric Editor 7 of 9 right, Bible Note 5 of 5 right, web editor 2 of 4 right. Of the eight fill-in questions, 8 were asked with a sample typed in (6 right, 2 partly, 0 wrong; 4 of them the window answers itself, with buttons and no model). Right where the part of the page that rides is the part that answers; wrong on a page that does not say it (it writes an answer anyway) and when it misreads a short page (_Right-click a card_ told as _right-click an empty area_).",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — row corpus-local-all; .claude/skills/owa-enhance-chatbot/references/backlog.md — EC-249, EC-250, EC-251"
                 }
             ]
         },

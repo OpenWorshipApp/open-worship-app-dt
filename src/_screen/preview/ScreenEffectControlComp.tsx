@@ -6,7 +6,7 @@ export default function ScreenEffectControlComp() {
     const screenManager = useScreenManagerContext();
     return (
         <div className="mx-1" title={tran('Transition')}>
-            {/* An untranslated mnemonic, like the BG/SL/BB/FG codes and `St:`
+            {/* An untranslated mnemonic, like the BG/SL/LT/FG codes and `St:`
                 -- the row is one line tall. The group's own title carries the
                 translated word, so hide the letters from a screen reader
                 rather than have it announce "Tr colon". */}

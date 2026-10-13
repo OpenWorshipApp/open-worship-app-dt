@@ -1,4 +1,4 @@
-import { useCallback, type MouseEvent } from 'react';
+import { useCallback, useRef, type MouseEvent } from 'react';
 
 import {
     toShortcutKey,
@@ -26,6 +26,7 @@ import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp'
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
+import { createMouseEventUnder } from '../context-menu/contextMenuEventHelpers';
 
 function SaveButtonComp({
     handleSaveBibleItem,
@@ -135,34 +136,54 @@ export default function RenderEditingActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const viewController = useLookupBibleItemControllerContext();
+    const splitHorizontalRef = useRef<HTMLButtonElement>(null);
+    const splitVerticalRef = useRef<HTMLButtonElement>(null);
     useKeyboardRegistering(
         splitEventMappers,
         (event) => {
             event.preventDefault();
-            if (event.key.toLowerCase() === 's') {
-                viewController.addBibleItemLeft(bibleItem, bibleItem);
-            } else {
-                viewController.addBibleItemBottom(bibleItem, bibleItem);
-            }
+            const isHorizontal = event.key.toLowerCase() === 's';
+            const button = (
+                isHorizontal ? splitHorizontalRef : splitVerticalRef
+            ).current;
+            viewController.splitBibleItemOnPress(
+                // A key has no pointer position: the version list a grouped
+                // view asks with hangs under the key's own button.
+                button === null ? event : createMouseEventUnder(button),
+                bibleItem,
+                isHorizontal,
+            );
         },
         [],
     );
     const viewControllerRef = useAppCurrentRef(viewController);
     const bibleItemRef = useAppCurrentRef(bibleItem);
-    const handleSplitHorizontal = useCallback(() => {
-        viewControllerRef.current.addBibleItemLeft(
+    const handleSplitHorizontal = useCallback((event: MouseEvent) => {
+        viewControllerRef.current.splitBibleItemOnPress(
+            event,
             bibleItemRef.current,
-            bibleItemRef.current,
+            true,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleSplitVertical = useCallback(() => {
-        viewControllerRef.current.addBibleItemBottom(
+    const handleSplitVertical = useCallback((event: MouseEvent) => {
+        viewControllerRef.current.splitBibleItemOnPress(
+            event,
             bibleItemRef.current,
-            bibleItemRef.current,
+            false,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // In a colour group the split asks which version first, and the buttons
+    // say so: they are the menu's `… to` items then.
+    const isAskingBibleKey =
+        viewController.checkIsSplitAskingBibleKey(bibleItem);
+    const splitHorizontalLabel = isAskingBibleKey
+        ? tran('Split Horizontal to')
+        : tran('Split horizontal');
+    const splitVerticalLabel = isAskingBibleKey
+        ? tran('Split Vertical to')
+        : tran('Split vertical');
     const onDone = useCallback(() => {
         viewControllerRef.current.onLookupSaveBibleItem();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -192,10 +213,12 @@ export default function RenderEditingActionButtonsComp({
                 type="button"
                 className="btn btn-sm btn-info"
                 title={
-                    tran('Split horizontal') +
+                    splitHorizontalLabel +
                     ` [${toShortcutKey(splitHorizontalEventMapper)}]`
                 }
-                aria-label={tran('Split horizontal')}
+                aria-label={splitHorizontalLabel}
+                aria-haspopup={isAskingBibleKey ? 'menu' : undefined}
+                ref={splitHorizontalRef}
                 onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
@@ -204,10 +227,12 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={
-                    tran('Split vertical') +
+                    splitVerticalLabel +
                     ` [${toShortcutKey(splitVerticalEventMapper)}]`
                 }
-                aria-label={tran('Split vertical')}
+                aria-label={splitVerticalLabel}
+                aria-haspopup={isAskingBibleKey ? 'menu' : undefined}
+                ref={splitVerticalRef}
                 onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />

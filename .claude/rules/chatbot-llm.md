@@ -5,6 +5,7 @@ paths:
   - 'src/chatbot/spendGuard*.ts'
   - 'src/chatbot/providerIssue*.ts'
   - 'src/chatbot/providerPick*.ts'
+  - 'src/chatbot/autoAssistant*.ts'
   - 'src/chatbot/cancel*.ts'
   - 'src/chatbot/mcpClient*.ts'
   - 'src/helper/ai/**'
@@ -101,7 +102,11 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   tools out, so the song-by-title chip is drafted with no model on a custom
   server** (`handleAsking` → `answerLyricTitle`, the guide's own finder, the
   same Create button): asked, gemma-4-e4b wrote the steps for an EMPTY file
-  in 43k tokens. **The shared LLM registry** (2026-10-10, the user's ask —
+  in 43k tokens. **And the song-by-LINK chip, since 2026-10-12** (`EC-254`;
+  `readSongLinkAsk` → `answerLyricLink`, the link read before the title, as
+  the guide reads them): it had gone to the local model, which said _I
+  apologize, but I cannot create a lyric file directly from this chat
+  window_ -- to words the guide drafts by itself when no assistant answers. **The shared LLM registry** (2026-10-10, the user's ask —
   _as an admin I want to store any available llm endpoints so owa app should
   be able to use it freshly real-time_): `https://www.openworship.app/llm/info.json`,
   shape in `docs/llm-registry/README.md` + `info.schema.json`, validated by
@@ -109,7 +114,13 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   address, at least one model, row ids made from the model name so a tab
   keeps its model across reloads), held in MAIN (`llmRegistryHelpers.ts`:
   read once after `initAi`, never on a timer, 8 s, 256 KB; a failed read
-  keeps the last list and says why), handed to a window without keys over
+  keeps the last list and says why), handed to a window without keys **and,
+  since 2026-10-12, without addresses** (the user's ask: _hide endpoint and
+  api key, to avoid easily copy and use_ — `toPublicRegistryServers` puts a
+  stand-in on `shared-server.invalid` with the real path in `baseUrl` and
+  tells a local-network server as `isFree`; no failure sentence quotes a
+  shared server's address, and the relay takes the real host out of what a
+  server writes back; memory `llm-registry`) over
   `LLM_REGISTRY_GET_CHANNEL` / `LLM_REGISTRY_RELOAD_CHANNEL`, accepted by the
   relay by id with the registry's own key, and listed through
   `getAllCustomServers` (`getCustomServers` stays the saved list, so
@@ -122,6 +133,48 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   a key-checking door behind a Cloudflare quick tunnel that looks at itself
   every minute and can publish its own address, and `llm-tunnel-startup.mjs`,
   which starts it with the computer on Linux, macOS and Windows.
+  **A registry entry can take REPORTS instead of questions** (2026-10-13,
+  the user's ask; memory `llm-registry`): `isAcceptingReport: true` needs a
+  name and an address and no model, and `toValidLlmRegistry` keeps it APART
+  (`reportServers`, the first three) — never in `servers`, so no picker, no
+  Auto pick and no Settings list can show it, and `toPublicRegistryServers`
+  never sees it. An entry with the mark AND models is both: an assistant in
+  `servers` and a report address in `reportServers` (one tunnel carrying
+  an LLM server and the inbox, `llm-tunnel.mjs --with-reports`), the report
+  half told to no window. `electron/llmReportHelpers.ts` is its one door
+  (`LLM_REPORT_POST_CHANNEL`): the help window's **Send report** hands over
+  the report's TEXT and its FILES, and main POSTs them — the entry's
+  key as the bearer, to `baseUrl` exactly as written, on the relay's own
+  session, no redirect followed — to each such entry in turn until one
+  answers 2xx. **The body is JSON** (the same day, the user again: _the
+  posting endpoint maybe have to accept json instead of raw text …
+  `{"prompt":"…", "attachments":["base64 data", …]}` … and accept files like
+  markdown pdf_; it was the text alone, `text/plain`, for a few hours):
+  `genReportPostBody` in `customLlmProtocol.ts` is the one place that
+  writes it — `{version, reference, prompt, attachments: [{name, mimeType,
+  data}]}`, `attachments` always there. A file's kind is read off its NAME
+  in main (`REPORT_FILE_TYPE_MAP`: pictures, PDF, text kinds; nothing that
+  runs, no `.html` / `.svg`), never taken from the window, and
+  `toValidReportFiles` refuses a name with a path in it, bytes that are not
+  base64, more than 8 files, one over 5 MB or 12 MB together. When none
+  takes it, or none is known, the registry is read ONCE
+  more and whatever is new in it tried (a quick tunnel's address changes per
+  start). Ten seconds an address, forty in all — plus, for a body past 64 KB,
+  a second for every 32 KB up to three minutes (`toReportUploadAllowance`:
+  a picture and a PDF over a church hall's uplink) — five reports in ten
+  minutes, 200 000 characters of text; a failure comes back as a sentence
+  written in main — never the server's words, never an error that names the
+  host. Three answers are read apart: **413** is `too-large`, said first
+  whoever else was asked, and the window sends the words alone; a **2xx
+  whose JSON says `ok: false` or carries an `error`** is NOT sent (an LLM
+  server answers an unknown POST with 200 and an error object, and an entry
+  mis-set onto one must not read as _Sent_ — only the first 4 KB is looked
+  at); and a registry that **could not be read** with no server known is
+  _the list of report servers could not be read_, not _no report server is
+  shared_. What takes it on the admin's side is the kit's
+  `llm-report-inbox.mjs` (Node's own SQLite; the same three numbers and the
+  same kinds, held together by a test), put online by `llm-tunnel.mjs
+  --reports --publish`.
 - **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropicCompatible` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
   standing corpus, 12 questions, 44 rounds, **813 000 input tokens every one
@@ -217,7 +270,20 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   runaway by this definition** — five corpus runs in an hour is the pace cap;
   `/limit more` or the head-row button lifts it, and a driver that seeds the
   ledger file must reload the window first (the ledger is held in memory
-  after its first read).
+  after its first read). A run over the WHOLE corpus reaches the cap in
+  about forty-five minutes (2026-10-12, 404 questions at three rounds each):
+  the kept driver counts its own rounds and waits (`corpus-run.mjs
+  --pace=135`), marks the rows the guide answered while paused to be asked
+  again, and leaves the press to the person. **The note says what paused it,
+  not the hour as it now stands** (same day, `checkIsCapStillReached`):
+  nothing is spent while paused, so the rolling hour empties under a latch
+  time does not lift, and of 1 111 guide answers given under the note in that
+  run not one named a count that reached the cap — 894 read _it has made 0
+  model calls in the last hour, which is more than a person would ask for_.
+  Once the hour no longer shows what set the latch, the note reads _it made
+  150 model calls within one hour_ (or _within one hour it reached the $1
+  limit_) and the head row _paused · limit reached_; the latch, the caps and
+  the ledger are as they were.
 - **A dead key hands the question to another of the user's own** (2026-09-09,
   `askLlmBot` in `src/chatbot/llmBotHelpers.ts`). Measured by opening the help
   window on its OWN default rather than a hand-picked Claude: it was a ChatGPT
@@ -246,6 +312,62 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   the Reader leads with the 🖥️ **Go Back to Presenter** route
   (`genBackToPresenterRoute`, ONE source for the prompt and the offline bot;
   the manual's `**bold**` is stripped before its panel names are looked for).
+- **Auto asks the best assistant that costs nothing, chosen again for every
+  question** (2026-10-12, `src/chatbot/autoAssistantHelpers.ts` — the policy,
+  no SDK and no store, every rule a test — and
+  `autoAssistantSourceHelpers.ts`, which reads the live lists and asks the
+  servers; the user's ask with the space under **Free** circled: _add `Auto`
+  option, the chatbot should choose best no cost for user … check which one
+  not busy and smarter and no cost then use it in asking_, then _keep `Auto`
+  selected but do dynamic endpoint+model_). **Auto is not a provider**: it is
+  `isAuto` on the tab and `chatbot-llm-auto` for a new one, because a seventh
+  name in `LlmProviderType` is a crashed lookup in every exhaustive
+  `Record`; the tab's `provider` / `model` hold whoever was asked LAST (a
+  guess, `guessAutoPick`, until the first question), so everything that reads
+  them still has one. **No cost**: the candidates are the custom servers
+  `checkIsNoCostCustomServer` prices at nothing (this computer, the church's
+  network, a registry server marked `isFree` — the ONE test `genCustomProvider`
+  prices an answer by too) and the keyless models; a paid key is never spent
+  by a choice nobody made, and a server on the internet that does not say it
+  is free is out. **Not busy**: before the ask each server is asked
+  `GET /models` and its own lists at once, 4 s for the lot
+  (`checkIsCustomServerAnswering` — `readCustomServerModelInfo` cannot say
+  it: a machine that is on with no server running refuses every door at once
+  and reads there as "some other program"); one that answers nothing is out
+  and is not asked again for five minutes (the ↻ beside the list forgets
+  that); one this window is already asking in another tab
+  (`PendingAskType.assistantKey`, the whole server), and one that failed or
+  took over three minutes in the last ten (`markAutoSetback`), go to the BACK
+  rather than out — when they are all there is, the best of them is still
+  asked. No server says how long its queue is through the doors the relay
+  forwards, so "busy" is those three things and no more. **Smarter**: the
+  bigger model first, read off the size in its name (`readModelSize`: `9b`,
+  `e4b`, `270m`; never a `128k` context) — the name is all there is to go
+  by. The keyless models count as `FREE_MODEL_SIZE` 8, the one constant that
+  draws the line between the user's own server and the public service, set
+  from `extra-work/local-llm/model-benchmarks.json`: the free models 7 of 7
+  in 8-20 s, a 9B on the church's card right in 20-30 s, a 4B right on 26 of
+  47. So an 8B-or-bigger server model is asked before Free (as good, and the
+  words stay in the building) and a smaller or unnamed one after it — there
+  for the Sunday the internet is down. **LM Studio serves what is loaded**:
+  while one of its models is loaded only loaded ones are candidates, and with
+  none loaded its rows are the last resort — its list is every file ever
+  downloaded (a 27B beside an 8 GB card on the user's own server), and a
+  model it loads by itself comes up at 4k. Ollama and a llama.cpp router
+  load on the question and offer every row at its size. A model loaded under
+  `CUSTOM_CONTEXT_MIN` is out (the ask would refuse it) except for `/btw`,
+  and a question with a picture is put only to a model that sees.
+  **One that fails before answering hands the question on**
+  (`askWithAutoAssistant`, three attempts): never after a model round came
+  back — the model may have pressed something by then — and never for a
+  Stop, the spend guard's pause or the app's own tool host. Each attempt's
+  hint is worked out for the provider ASKED (`genKnownHint`: a local
+  server's lean tool list). The answer carries a note only when somebody
+  could not answer or the pick changed (`genAutoAnswerNote`); the wait says
+  _Auto is checking which assistants can answer_ then _Auto picked …_.
+  Report asks Auto's first pick once. Seen live 2026-10-12: eight servers,
+  one answering (LM Studio with gemma-4-e4b loaded at 32k), four timing out
+  at 4 s — _Auto picked Free · Nemotron Lightning_.
 - **An unusual answer from a provider comes with the door to it** (2026-09-10,
   `src/chatbot/providerIssueHelpers.ts`; asked for by the user — _if there
   any unusual response from api then give buttons for user to go to the api
@@ -283,3 +405,41 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   guessed deep link. Re-asked on the same dead key: _"the AI account is out
   of credit"_ and **Open ChatGPT billing**, the press opening the page and
   saying so in the transcript.
+- **A local program is asked at temperature 0** (2026-10-13,
+  `LOCAL_TEMPERATURE` in `genCustomProvider`, `EC-258`). No request of the
+  chatbot's carried a temperature, so a server of the user's own sampled at
+  its program's default — and that, not the wording of any one page, is why
+  asking every supported question of a 4B model more than once kept moving
+  the wrong answers about: a reworded page ended the answer it was written
+  for and another went wrong at the next asking (27 running-order questions,
+  about one answer in seven wrong per asking, never the same ones). Measured
+  on the user's LM Studio (gemma-4-e4b at 32k), the 27 asked twice through the
+  window: at the default, not one of the 28 answers re-asked the night
+  before had come back in the same words (some of those across a reworded
+  page); at 0, on an unchanged page, **26 of 27 were word for word the
+  same** —
+  the 27th being whichever question is asked first after something else (the
+  server's cached prefix differs, and a tie in the arithmetic falls the
+  other way). Graded, that asking was 19 right, 6 partly, 2 wrong, against
+  14 right, 9 partly, 4 wrong on the same pages the night before; and the
+  two still wrong were now the SAME two at every asking, so they could be
+  ended — their page reworded and the hint's own-words sentence
+  (`agent-knowledge.md`): 18 right, 9 partly, 0 wrong. The job
+  here is to say what a page says; a draw from the model's distribution is
+  the wrong tool for it, and at 0 a fix to a page STAYS fixed and one asking
+  is evidence about the next. Sent to LM Studio, Ollama and llama.cpp only
+  (`LOCAL_TEMPERATURE_KIND_SET`): an unknown server may be a gateway in
+  front of a model that fixes its own temperature and refuses the field.
+  The kind is read in front of every question with a five-second wait, so
+  the kind a server LAST said is kept (`lastServerKindMap`, one word a
+  server) — a look that ran out once must not send that one question out
+  sampled. The paid providers are left alone: the GPT-5 family and the
+  thinking models take no temperature but their own. **What it does not
+  do**: make a small model right. The same answer every time is the same
+  WRONG answer every time until the page or the hint changes — and a change
+  to a page re-rolls every answer written from it, so a page edit is
+  followed by asking that page's rows again, not only the one it was for.
+  **And the same answer needs the same words to the byte**: the foot note
+  that rode with a page said the day of the copy, and a regenerated manual
+  with no page edited changed all 27 answers — it no longer rides
+  (`agent-knowledge.md`, _nothing that changes with a release may ride_).

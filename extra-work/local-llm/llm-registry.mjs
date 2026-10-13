@@ -89,7 +89,11 @@ export function describeServer(server) {
     return [
         `  ${server.id}   ${server.name ?? ''}`,
         `      ${server.baseUrl ?? ''}   key: ${server.apiKey ? 'yes' : 'none'}${server.isFree === true ? '   free' : ''}`,
-        `      models: ${models.length === 0 ? '(none)' : models.join(', ')}`,
+        // Not an assistant: the app posts its problem reports there and
+        // shows it in no list.
+        server.isAcceptingReport === true && models.length === 0
+            ? '      takes reports (not offered as an assistant)'
+            : `      models: ${models.length === 0 ? '(none)' : models.join(', ')}${server.isAcceptingReport === true ? '   also takes reports' : ''}`,
     ];
 }
 
@@ -113,12 +117,67 @@ export function checkIsLocalAddress(baseUrl) {
 }
 
 /**
+ * Whether an address that takes reports is there. It has no model list to
+ * ask for, and a check must not file a report of its own: the address is
+ * asked with a GET, and anything it answers itself -- a 404 or a 405 from a
+ * door that only takes a POST included -- says something is listening. A
+ * 5xx is what a tunnel with nothing behind it answers.
+ */
+async function checkReportServer(server, baseUrl, fetchUrl) {
+    try {
+        const response = await fetchUrl(baseUrl, {
+            signal: AbortSignal.timeout(CHECK_TIMEOUT_MILLISECOND),
+            headers: server.apiKey
+                ? { authorization: `Bearer ${server.apiKey}` }
+                : {},
+            redirect: 'manual',
+        });
+        await response.body?.cancel();
+        if (response.status === 401 || response.status === 403) {
+            return {
+                isReachable: true,
+                detail: `takes reports; answers, but refuses the key in the registry (${response.status})`,
+            };
+        }
+        return response.status < 500
+            ? {
+                  isReachable: true,
+                  detail: `takes reports; answers (${response.status} to a GET — no report was sent to try it)`,
+              }
+            : { isReachable: false, detail: `answered ${response.status}` };
+    } catch (error) {
+        return {
+            isReachable: false,
+            detail: describeNoAnswer(error, baseUrl),
+        };
+    }
+}
+
+function describeNoAnswer(error, baseUrl) {
+    const reason =
+        error?.name === 'TimeoutError'
+            ? `no answer in ${CHECK_TIMEOUT_MILLISECOND / 1000} s`
+            : `could not be reached (${error?.cause?.code ?? error?.message ?? error})`;
+    return checkIsLocalAddress(baseUrl)
+        ? `${reason} — a local-network address, which answers only on its own network`
+        : reason;
+}
+
+/**
  * Whether a shared server answers: its model list is asked for with the key
  * the registry carries. A server that answers and refuses that key is there
  * -- the entry is wrong, not the server gone -- and is said so.
  */
 export async function checkSharedServer(server, fetchUrl = fetch) {
     const baseUrl = String(server?.baseUrl ?? '').replace(/\/+$/, '');
+    // One that is an assistant as well is asked the assistant's way: the
+    // same door answers both.
+    if (
+        server?.isAcceptingReport === true &&
+        !(Array.isArray(server.models) && server.models.length > 0)
+    ) {
+        return checkReportServer(server, baseUrl, fetchUrl);
+    }
     try {
         const response = await fetchUrl(`${baseUrl}/models`, {
             signal: AbortSignal.timeout(CHECK_TIMEOUT_MILLISECOND),
@@ -142,15 +201,9 @@ export async function checkSharedServer(server, fetchUrl = fetch) {
         }
         return { isReachable: false, detail: `answered ${response.status}` };
     } catch (error) {
-        const reason =
-            error?.name === 'TimeoutError'
-                ? `no answer in ${CHECK_TIMEOUT_MILLISECOND / 1000} s`
-                : `could not be reached (${error?.cause?.code ?? error?.message ?? error})`;
         return {
             isReachable: false,
-            detail: checkIsLocalAddress(baseUrl)
-                ? `${reason} — a local-network address, which answers only on its own network`
-                : reason,
+            detail: describeNoAnswer(error, baseUrl),
         };
     }
 }

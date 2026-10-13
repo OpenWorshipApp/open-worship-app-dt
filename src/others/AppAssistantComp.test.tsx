@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     openChatbotPageMock: vi.fn(),
     openAiChatPageMock: vi.fn(),
+    openOnlineHelpMock: vi.fn(),
     getIsAIEnabledMock: vi.fn(() => true),
     showAppConfirmMock: vi.fn(async () => true),
     popupWidgetManager: { openConfirm: vi.fn() },
@@ -41,6 +42,11 @@ vi.mock('../helper/domHelpers', () => ({
 }));
 vi.mock('../helper/ai/aiHelpers', () => ({
     getIsAIEnabled: h.getIsAIEnabledMock,
+}));
+// Which page it opens is `commonButtons.test.tsx`'s to prove; here it is
+// whether the menu reaches it.
+vi.mock('../server/onlineHelpHelpers', () => ({
+    openOnlineHelp: h.openOnlineHelpMock,
 }));
 // The AI caution runs for real here; only its dialog is stubbed, so these
 // tests prove the gate rather than the fail-open shortcut behind it.
@@ -95,6 +101,11 @@ function getMenuItems(): any[] {
 
 function getMenuItem() {
     return getMenuItems()[0];
+}
+
+function getHelpMenuItems(): any[] {
+    const call = h.setAppMenuItemsMock.mock.calls.at(-1);
+    return call?.[1]?.help ?? [];
 }
 
 function getMenuClickHandler() {
@@ -202,6 +213,39 @@ describe('AppAssistantComp', () => {
         h.appProvider.getIsWindowFocused.mockReturnValue(false);
         getMenuClickHandler()(null, { isOpenAiChat: true });
         expect(h.openAiChatPageMock).not.toHaveBeenCalled();
+    });
+
+    // Asked for by the user: the menu bar opens what the question mark does.
+    test('contributes Help -> Open Online Help', async () => {
+        await render(<AppAssistantComp />);
+        expect(getHelpMenuItems()).toEqual([
+            {
+                label: 'Open Online Help',
+                clickData: { isOpenOnlineHelp: true },
+            },
+        ]);
+        getMenuClickHandler()(null, { isOpenOnlineHelp: true });
+        await settle();
+        expect(h.openOnlineHelpMock).toHaveBeenCalledTimes(1);
+        // A web page: no assistant, so no caution and no window of the app's.
+        expect(h.showAppConfirmMock).not.toHaveBeenCalled();
+        expect(h.openChatbotPageMock).not.toHaveBeenCalled();
+        expect(h.openAiChatPageMock).not.toHaveBeenCalled();
+    });
+
+    test('ignores the Online Help click when another window is in front', async () => {
+        await render(<AppAssistantComp />);
+        h.appProvider.getIsWindowFocused.mockReturnValue(false);
+        getMenuClickHandler()(null, { isOpenOnlineHelp: true });
+        expect(h.openOnlineHelpMock).not.toHaveBeenCalled();
+    });
+
+    test('keeps Open Online Help when AI is switched off', async () => {
+        h.getIsAIEnabledMock.mockReturnValue(false);
+        await render(<AppAssistantComp />);
+        expect(getHelpMenuItems()).toHaveLength(1);
+        getMenuClickHandler()(null, { isOpenOnlineHelp: true });
+        expect(h.openOnlineHelpMock).toHaveBeenCalledTimes(1);
     });
 
     test('keeps only the AI Chat entry when AI is switched off', async () => {

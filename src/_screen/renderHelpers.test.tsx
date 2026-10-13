@@ -120,11 +120,19 @@ vi.mock('./managers/screenWebsiteHelpers', () => ({
     genWebScreenShotElement: genWebScreenShotElementMock,
 }));
 
-vi.mock('../helper/sanitizeHelpers', () => ({
-    sanitizeHtml: (html: string) => {
-        return html.replaceAll(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-    },
-}));
+vi.mock('../helper/sanitizeHelpers', async () => {
+    const actual = await vi.importActual<
+        typeof import('../helper/sanitizeHelpers')
+    >('../helper/sanitizeHelpers');
+    return {
+        // The real one: a long text column's style goes through it on
+        // its way into the table's CSS.
+        sanitizeCssValue: actual.sanitizeCssValue,
+        sanitizeHtml: (html: string) => {
+            return html.replaceAll(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+        },
+    };
+});
 
 vi.mock('../others/color/colorHelpers', () => ({
     HEX_COLOR_BLACK: '#000000',
@@ -138,11 +146,11 @@ vi.mock('../server/appProvider', () => ({
 }));
 
 vi.mock('./managers/screenEventHelpers', () => ({
-    useScreenBibleManagerEvents: vi.fn(),
+    useScreenLongTextManagerEvents: vi.fn(),
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly textStyleTextColor = '#123456';
     },
 }));
@@ -226,7 +234,6 @@ describe('screen render helpers', () => {
                     },
                 ]}
                 isLineSync
-                versesCount={2}
             />,
         );
 
@@ -238,6 +245,210 @@ describe('screen render helpers', () => {
         expect(html).toContain(
             'font-family:var(--bible-font-family, Font-en-US), Font-en-US',
         );
+    });
+
+    test('draws each Bible as its own column unless they are row by row', async () => {
+        const { BibleBibleTableComp } = await import('./bibleScreenComps');
+        const genRendering = (bibleKey: string) => {
+            return {
+                locale: 'en-US' as any,
+                bibleKey,
+                title: `${bibleKey} Genesis 1:1-2`,
+                langData: {
+                    fontFamily: 'Font-en-US',
+                    genCss: () => '',
+                } as any,
+                verses: [1, 2].map((verse) => {
+                    return {
+                        num: `${verse}`,
+                        text: `${bibleKey} verse ${verse}`,
+                        verseKey: `${bibleKey}-GEN-1-${verse}`,
+                        kjvVerseKey: `GEN-1-${verse}`,
+                    };
+                }),
+            };
+        };
+        const render = (bibleKeys: string[], isLineSync: boolean) => {
+            const host = document.createElement('div');
+            host.innerHTML = renderToStaticMarkup(
+                <BibleBibleTableComp
+                    bibleRenderingList={bibleKeys.map(genRendering)}
+                    isLineSync={isLineSync}
+                />,
+            );
+            return host;
+        };
+
+        const columns = render(['KJV', 'NIV', 'ESV'], false);
+        const root = columns.firstElementChild as HTMLElement;
+        expect(root.className).toBe('screen-bible-columns');
+        const columnList = Array.from(
+            root.querySelectorAll<HTMLElement>(':scope > .screen-bible-column'),
+        );
+        expect(columnList.map((column) => column.className)).toEqual([
+            'screen-bible-column screen-bible-column-0',
+            'screen-bible-column screen-bible-column-1',
+            'screen-bible-column screen-bible-column-2',
+        ]);
+        // Side by side in equal shares, each a table with its own header.
+        expect(columnList.map((column) => column.style.width)).toEqual(
+            Array.from({ length: 3 }, () => `${100 / 3}%`),
+        );
+        expect(columnList[2].style.left).toBe(`${(100 / 3) * 2}%`);
+        columnList.forEach((column, i) => {
+            expect(column.dataset.columnIndex).toBe(`${i}`);
+            expect(column.querySelectorAll('table')).toHaveLength(1);
+            expect(column.querySelectorAll('th.header')).toHaveLength(1);
+            // The header still says which Bible of the row it is.
+            expect(
+                column.querySelector<HTMLElement>('.bible-name')?.dataset.index,
+            ).toBe(`${i}`);
+            expect(column.querySelectorAll('span.highlight')).toHaveLength(2);
+        });
+
+        // Row by row is one table: a row cannot be split between scrollers.
+        const rows = render(['KJV', 'NIV'], true);
+        expect(rows.querySelector('.screen-bible-column')).toBeNull();
+        expect(rows.querySelectorAll('table')).toHaveLength(1);
+        expect(rows.querySelectorAll('tbody tr')).toHaveLength(2);
+        // And a single Bible has nothing to keep in step with.
+        const single = render(['KJV'], false);
+        expect(single.querySelector('.screen-bible-column')).toBeNull();
+        expect(single.querySelectorAll('table')).toHaveLength(1);
+    });
+
+    test('draws a long text: language chips that open nothing, a style per column', async () => {
+        const { LongTextTableComp } = await import('./bibleScreenComps');
+        const genColumn = (code: string, sectionCount: number, style?: any) => {
+            return {
+                locale: (code === 'AR' ? 'arc' : 'en-US') as any,
+                code,
+                // The same title in every language, as a song often has.
+                title: 'Amazing Grace',
+                langData: {
+                    fontFamily: `Font-${code}`,
+                    genCss: () => '',
+                } as any,
+                sections: Array.from({ length: sectionCount }, (_, i) => {
+                    return {
+                        num: `${i + 1}`,
+                        text: `${code} line a\n${code} line b`,
+                        key: `lt-${i + 1}`,
+                    };
+                }),
+                ...(style === undefined ? {} : { style }),
+            };
+        };
+        const host = document.createElement('div');
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[
+                    genColumn('KM', 3),
+                    // One section short: drawn with a blank cell, never read
+                    // past its end.
+                    genColumn('EN', 2, {
+                        fontFamily: 'Georgia',
+                        fontWeight: '300',
+                        color: '#ff0000',
+                        fontSizeScale: 0.8,
+                        textAlign: 'center',
+                        // Not a style this layer draws: it never reaches CSS.
+                        background: 'url(x)',
+                    }),
+                ]}
+                isLineSync
+                isLongText
+            />,
+        );
+        const root = host.firstElementChild as HTMLElement;
+        expect(root.className).toBe('screen-long-text');
+        // Both columns are there although they share a title.
+        const headers = Array.from(root.querySelectorAll<HTMLElement>('th'));
+        expect(headers).toHaveLength(2);
+        expect(headers.map((header) => header.className)).toEqual([
+            'header screen-long-text-column-0',
+            'header screen-long-text-column-1',
+        ]);
+        // A language code, with no Bible versions menu to hang on it.
+        expect(root.querySelector('.bible-name')).toBeNull();
+        expect(
+            Array.from(root.querySelectorAll('.bible-key')).map((chip) => {
+                return chip.textContent;
+            }),
+        ).toEqual(['KM', 'EN']);
+        expect(root.querySelector('th .highlight')).toBeNull();
+
+        const rows = Array.from(root.querySelectorAll('tbody tr'));
+        expect(rows).toHaveLength(3);
+        expect(rows[2].querySelectorAll('td')).toHaveLength(2);
+        expect(rows[2].querySelectorAll('span.highlight')).toHaveLength(1);
+        // One key per row, shared by its languages, and no Bible verse key.
+        const firstRowSpans =
+            rows[0].querySelectorAll<HTMLElement>('span.highlight');
+        expect(
+            Array.from(firstRowSpans).map((span) => span.dataset.kjvVerseKey),
+        ).toEqual(['lt-1', 'lt-1']);
+        expect(firstRowSpans[0].hasAttribute('data-verse-key')).toBe(false);
+
+        // KM keeps the screen's family ahead of its own; EN says its own,
+        // and the screen's cannot win over it.
+        expect(firstRowSpans[0].style.fontFamily).toContain(
+            'var(--bible-font-family, Font-KM)',
+        );
+        expect(firstRowSpans[1].style.fontFamily).not.toContain('var(');
+        expect(
+            firstRowSpans[1].style.fontFamily.startsWith('"Georgia", Font-EN'),
+        ).toBe(true);
+        const styleText = root.querySelector('style')?.textContent ?? '';
+        expect(styleText).toContain(
+            'td.screen-long-text-column-1 ' +
+                '{ font-size: 0.8em; text-align: center !important; }',
+        );
+        expect(styleText).toContain('color: #ff0000; font-weight: 300;');
+        expect(styleText).not.toContain('column-0');
+        expect(styleText).not.toContain('url(');
+    });
+
+    test('draws a Bible exactly as before: the versions chip, no column classes', async () => {
+        const { BibleBibleTableComp } = await import('./bibleScreenComps');
+        const host = document.createElement('div');
+        host.innerHTML = renderToStaticMarkup(
+            <BibleBibleTableComp
+                bibleRenderingList={['KJV', 'NIV'].map((bibleKey, i) => {
+                    return {
+                        locale: 'en-US' as any,
+                        bibleKey,
+                        title: 'Genesis 1:1-2',
+                        langData: {
+                            fontFamily: 'Font-en-US',
+                            genCss: () => '',
+                        } as any,
+                        // The second version is a verse short.
+                        verses: [1, 2].slice(0, 2 - i).map((verse) => {
+                            return {
+                                num: `${verse}`,
+                                text: `${bibleKey} verse ${verse}`,
+                                verseKey: `${bibleKey}-GEN-1-${verse}`,
+                                kjvVerseKey: `GEN-1-${verse}`,
+                            };
+                        }),
+                    };
+                })}
+                isLineSync
+            />,
+        );
+        const root = host.firstElementChild as HTMLElement;
+        expect(root.className).toBe('');
+        expect(root.querySelectorAll('.bible-name')).toHaveLength(2);
+        expect(root.querySelector('th')?.className).toBe('header');
+        expect(root.querySelector('td')?.className).toBe('');
+        // Rows run to the LONGER version; the shorter one's cell is blank.
+        const rows = root.querySelectorAll('tbody tr');
+        expect(rows).toHaveLength(2);
+        expect(rows[1].querySelectorAll('span.highlight')).toHaveLength(1);
+        expect(
+            root.querySelector<HTMLElement>('span.highlight')?.dataset.verseKey,
+        ).toBe('KJV-GEN-1-1');
     });
 
     test('builds Bible screen markup and wires verse selection handlers', async () => {

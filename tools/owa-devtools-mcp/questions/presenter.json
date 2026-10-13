@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-11",
+    "updated": "2026-10-13",
     "sections": [
         {
             "id": "orientation",
@@ -159,6 +159,26 @@
                     }
                 },
                 {
+                    "id": "online-help",
+                    "text": "How do I open the online help?",
+                    "kind": "howto",
+                    "keywords": [
+                        "help website",
+                        "question mark",
+                        "help button",
+                        "open online help",
+                        "help page",
+                        "web help",
+                        "manual online"
+                    ],
+                    "resources": {
+                        "recipe": "W-01",
+                        "related": ["W-42"],
+                        "menu": "Help → Open Online Help",
+                        "find": "Help"
+                    }
+                },
+                {
                     "id": "presenter-practice-library",
                     "text": "Where can I practise Presenter tasks with guided demos?",
                     "kind": "howto",
@@ -237,6 +257,8 @@
                     "starter": true,
                     "starterRank": 3,
                     "resources": {
+                        "recipe": "W-42",
+                        "passage": "It can turn words you already have into a song",
                         "tools": ["owa_lyric_validate", "owa_lyric_file"],
                         "related": ["W-15"]
                     }
@@ -337,6 +359,8 @@
                         "invalid file name"
                     ],
                     "resources": {
+                        "recipe": "W-01b",
+                        "passage": "A name Windows keeps for itself is refused",
                         "tools": ["owa_slide_file", "owa_lyric_file"]
                     }
                 },
@@ -353,6 +377,7 @@
                     ],
                     "resources": {
                         "recipe": "W-01b",
+                        "passage": "To rename a file",
                         "related": ["W-15"],
                         "guide": true
                     }
@@ -370,7 +395,8 @@
                         "tidy"
                     ],
                     "resources": {
-                        "recipe": "W-01b",
+                        "recipe": "W-43",
+                        "related": ["W-01b"],
                         "guide": true
                     }
                 },
@@ -396,7 +422,7 @@
             "id": "documents",
             "label": "Documents & slides",
             "panel": "Documents",
-            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45", "W-48"],
+            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45", "W-48", "W-49b"],
             "questions": [
                 {
                     "id": "document-transition",
@@ -548,6 +574,25 @@
                         "recipe": "W-03",
                         "shortcut": "Arrow keys / PageUp",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "remote-keys-back",
+                    "text": "My presenter remote stopped changing the slide. How do I get it working again without clicking?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remote",
+                        "clicker",
+                        "presenter remote",
+                        "keys do nothing",
+                        "arrows stopped",
+                        "space does nothing",
+                        "lost focus",
+                        "three times"
+                    ],
+                    "resources": {
+                        "recipe": "W-49b",
+                        "related": ["W-03", "W-22b"]
                     }
                 },
                 {
@@ -960,6 +1005,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "How a song is written",
                         "guide": true
                     }
                 },
@@ -1067,6 +1113,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
+                        "passage": "To make an editable slide document from a saved passage",
                         "find": "Generate Slides",
                         "guide": true
                     }
@@ -1122,6 +1169,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
+                        "passage": "More than one verse",
                         "shortcut": "Ctrl+B",
                         "guide": true
                     }
@@ -1140,6 +1188,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
+                        "passage": "Another version on the screen",
                         "related": ["W-32", "W-34"],
                         "guide": true
                     }
@@ -1174,7 +1223,8 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "shortcut": "Ctrl/Alt+ArrowRight (on the output screen)",
+                        "passage": "The next verses, from the projector window",
+                        "shortcut": "Ctrl + Right Arrow (Alt + Right Arrow does the same), pressed in the projector window",
                         "guide": true
                     }
                 },
@@ -1183,7 +1233,9 @@
                     "text": "How do I take the verse off the screen?",
                     "kind": "howto",
                     "keywords": [
+                        "clear long text",
                         "clear bible",
+                        "lt button",
                         "remove verse",
                         "blank",
                         "stop showing",
@@ -1502,6 +1554,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
+                        "passage": "Clear buttons",
                         "related": ["W-08"],
                         "shortcut": "F7",
                         "guide": true
@@ -1520,8 +1573,9 @@
                         "empty list"
                     ],
                     "resources": {
-                        "recipe": "W-16",
-                        "related": ["W-08"],
+                        "recipe": "W-08",
+                        "passage": "Each one is a folder of its own",
+                        "related": ["W-16"],
                         "guide": true
                     }
                 },
@@ -1601,7 +1655,7 @@
             "id": "foreground",
             "label": "Foreground extras & audio",
             "panel": "Foreground",
-            "recipes": ["W-09"],
+            "recipes": ["W-09", "W-53"],
             "questions": [
                 {
                     "id": "foreground-what",
@@ -1838,6 +1892,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "The slide show sits in that same row",
                         "find": "Image Show",
                         "guide": true
                     }
@@ -1874,6 +1929,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "The volume of what is playing",
                         "related": ["W-22"],
                         "guide": true
                     }
@@ -1930,6 +1986,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "Sessions — every foreground component keeps them",
                         "find": "Countdown",
                         "guide": true
                     }
@@ -2077,9 +2134,62 @@
                     ],
                     "resources": {
                         "recipe": "W-46",
+                        "passage": "for separate notices, rotation and spacing",
                         "related": ["W-09"],
                         "menu": "Help → All tips",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "long-text-languages",
+                    "text": "How do I show a song in two languages side by side?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bilingual",
+                        "translation beside it",
+                        "khmer and english",
+                        "sing along",
+                        "long text",
+                        "lyrics that scroll"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "find": "Long Text Show",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "long-text-refused",
+                    "text": "Why is Show Long Text switched off?",
+                    "kind": "howto",
+                    "keywords": [
+                        "cannot show",
+                        "greyed out",
+                        "same structure",
+                        "same number of sections",
+                        "languages do not match"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "The languages have to line up",
+                        "find": "Show Long Text"
+                    }
+                },
+                {
+                    "id": "long-text-jump",
+                    "text": "How do I jump to the chorus while everyone is singing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bring to middle",
+                        "go to verse",
+                        "skip to bridge",
+                        "scroll to a part",
+                        "current section"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "Jump to a part",
+                        "find": "Long Text Show"
                     }
                 }
             ]

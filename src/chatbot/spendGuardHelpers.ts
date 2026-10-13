@@ -430,6 +430,24 @@ export function parseSpendLimitValue(value: string): number | null | undefined {
 }
 
 /**
+ * Whether the hour as it stands NOW still shows what set the latch. It stops
+ * doing so by itself: nothing is spent while paused, so the rolling hour
+ * empties under a latch that time does not lift, and the figures that said
+ * why go with it. Measured 2026-10-12, the whole corpus asked of the guide
+ * while paused: of 1 111 answers under the pause note not one named a count
+ * that reached the cap, and 894 stood under _it has made 0 model calls in
+ * the last hour, which is more than a person would ask for_ (the head row's
+ * figure is the same count: _paused · 0 calls this hour_). What paused it
+ * is then said as what it was -- the cap, reached -- and never as a count
+ * of an hour that has since emptied.
+ */
+function checkIsCapStillReached(state: SpendStateType) {
+    return state.trippedBy === 'pace'
+        ? state.spentRounds >= MAX_SPEND_ROUNDS_PER_HOUR
+        : state.limitUsd !== null && state.spentUsd >= state.limitUsd;
+}
+
+/**
  * The head row's figure: what this hour has cost against the cap, or that
  * the assistant is paused. Short, because it sits beside three pickers in a
  * 460px window; the sentences are on the hover.
@@ -437,6 +455,9 @@ export function parseSpendLimitValue(value: string): number | null | undefined {
 export function describeSpendState(state: SpendStateType) {
     const calls = `${state.spentRounds} call${state.spentRounds === 1 ? '' : 's'}`;
     if (state.isTripped) {
+        if (!checkIsCapStillReached(state)) {
+            return 'paused · limit reached';
+        }
         return state.trippedBy === 'pace'
             ? `paused · ${calls} this hour`
             : `paused · ≈ ${toUsdLabel(state.spentUsd)} this hour`;
@@ -504,18 +525,27 @@ export function describeSpendPause(state: SpendStateType) {
             ? ''
             : ', or raise the limit under Limit per hour at the top') +
         '. Until then the built-in guide answers for free.';
+    // The hour's own figure only while it still says why: see
+    // `checkIsCapStillReached`.
+    const isStillReached = checkIsCapStillReached(state);
     if (state.trippedBy === 'pace') {
         return (
-            `I have paused the assistant: it has made ${state.spentRounds} ` +
-            'model calls in the last hour, which is more than a person ' +
-            'would ask for, so something may be running away with your ' +
-            `credit. ${lift}`
+            'I have paused the assistant: it ' +
+            (isStillReached
+                ? `has made ${state.spentRounds} model calls in the last hour`
+                : `made ${MAX_SPEND_ROUNDS_PER_HOUR} model calls within one hour`) +
+            ', which is more than a person would ask for, so something may ' +
+            `be running away with your credit. ${lift}`
         );
     }
     return (
-        'I have paused the assistant to protect your credit: it has spent ' +
-        `about ${toUsdLabel(state.spentUsd)} in the last hour, which reaches ` +
-        `the ${toSpendLimitLabel(state.limitUsd)} limit set for this window. ` +
+        'I have paused the assistant to protect your credit: ' +
+        (isStillReached
+            ? `it has spent about ${toUsdLabel(state.spentUsd)} in the last ` +
+              `hour, which reaches the ${toSpendLimitLabel(state.limitUsd)} ` +
+              'limit set for this window. '
+            : `within one hour it reached the ${toSpendLimitLabel(state.limitUsd)} ` +
+              'limit set for this window. ') +
         lift
     );
 }

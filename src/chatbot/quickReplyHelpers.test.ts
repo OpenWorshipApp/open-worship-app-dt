@@ -141,6 +141,60 @@ describe('parseAnswerOptions', () => {
             options: [],
         });
     });
+
+    // 2026-10-12, a local model (gemma-4-e4b) over the question corpus.
+    test('an option keeps its words and loses the quote marks around them', () => {
+        expect(
+            parseAnswerOptions(
+                'Done.\nOPTIONS: "Where is the View menu?" | “Which divider?” | \'All tips\'',
+            ).options,
+        ).toEqual(['Where is the View menu?', 'Which divider?', 'All tips']);
+        // Marks INSIDE an option are its own, and two quoted things are two.
+        expect(
+            parseAnswerOptions(
+                'Done.\nOPTIONS: What does \'All tips\' show? | "Yes" or "No"',
+            ).options,
+        ).toEqual(["What does 'All tips' show?", '"Yes" or "No"']);
+    });
+
+    test('saying there is no option is not an option', () => {
+        for (const empty of [
+            'No options available',
+            'None',
+            'N/A',
+            'No further questions.',
+            'no other options',
+        ]) {
+            expect(
+                parseAnswerOptions(`Done.\nOPTIONS: ${empty}`).options,
+                empty,
+            ).toEqual([]);
+        }
+        expect(
+            parseAnswerOptions('Done.\nOPTIONS: None | Show it now').options,
+        ).toEqual(['Show it now']);
+        // Words that merely start the same way are still options.
+        expect(
+            parseAnswerOptions('Done.\nOPTIONS: No options for a PDF?').options,
+        ).toEqual(['No options for a PDF?']);
+    });
+
+    test('a decline with nothing beside it to decline is dropped', () => {
+        expect(parseAnswerOptions('Done.\nOPTIONS: No thanks').options).toEqual(
+            [],
+        );
+        expect(
+            parseAnswerOptions('Done.\nOPTIONS: No, thank you.').options,
+        ).toEqual([]);
+        expect(
+            parseAnswerOptions('Shall I?\nOPTIONS: Yes, show it | No thanks')
+                .options,
+        ).toEqual(['Yes, show it', 'No thanks']);
+        // "No" to something is an answer, not a decline of nothing.
+        expect(
+            parseAnswerOptions('Done.\nOPTIONS: No, keep the old one').options,
+        ).toEqual(['No, keep the old one']);
+    });
 });
 
 // The reported case, and the shapes around it. No model involved: this is what

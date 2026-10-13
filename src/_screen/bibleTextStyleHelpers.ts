@@ -8,7 +8,7 @@ import { SCREEN_FONT_FAMILY } from './screenFontFamily';
 
 // The on-screen Bible text style: what the one setting object may hold, and
 // the CSS it becomes on a screen. Every screen page loads this through
-// `ScreenBibleManager`, so it imports nothing a screen does not already have.
+// `ScreenLongTextManager`, so it imports nothing a screen does not already have.
 //
 // The object is kept the shape it always had (`fontSize`, `color`,
 // `textShadow`) so a style saved by an earlier release, an imported

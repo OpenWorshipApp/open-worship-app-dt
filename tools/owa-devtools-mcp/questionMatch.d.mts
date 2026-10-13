@@ -20,6 +20,8 @@ export type QuestionResourcesType = {
     related?: string[];
     /** The exact visible control to ring, in `owa_find_ui`'s syntax. */
     find?: string;
+    /** Words the passage of the recipe that answers it opens on. */
+    passage?: string;
     /** A native menu path, which cannot be ringed: `"View → Widgets"`. */
     menu?: string;
     /** The keystroke that does it, written the way the manual writes it. */

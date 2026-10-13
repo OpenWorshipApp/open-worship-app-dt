@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { readManualPageDate, toManualPageBody } from './manualPage.mjs';
+import {
+  FRESH_PAGE_NOTE_LEAD,
+  genPagePartNote,
+  readManualPageDate,
+  readPagePartNote,
+  toManualPageBody,
+  toShownPage,
+} from './manualPage.mjs';
 
 const PAGE = [
   '---',
@@ -58,5 +65,35 @@ describe('toManualPageBody', () => {
     expect(body).toContain('1. Press **Bible Properties**.');
     expect(body).not.toContain('Robot-ver');
     expect(body).not.toContain('click [data');
+  });
+});
+
+describe('the notes at the foot of a page', () => {
+  const HEAD = '# A page\n\n1. A step.';
+  const FOOT =
+    `\n\n${FRESH_PAGE_NOTE_LEAD}read its newest copy with ` +
+    'owa_read_website: https://example.com/a-page.md )_';
+
+  it('says a long page goes on, and reads its own note back', () => {
+    const note = genPagePartNote(1, 2);
+    expect(note).toContain('this is part 1 of 2');
+    expect(note).toContain('"part": 2');
+    expect(readPagePartNote(HEAD + note + FOOT)).toEqual({
+      at: HEAD.length,
+      part: 1,
+      total: 2,
+    });
+    // The last part goes nowhere, and a page in one part says nothing.
+    expect(genPagePartNote(2, 2)).toBe('');
+    expect(genPagePartNote(1, 1)).toBe('');
+    expect(readPagePartNote(HEAD + FOOT)).toBeNull();
+  });
+
+  it('shows a person the page, and nothing of what was said to the model', () => {
+    // "Read the whole thing" printed both under the page: an address "to
+    // read with owa_read_website", and that the page had been shortened.
+    expect(toShownPage(HEAD + genPagePartNote(1, 2) + FOOT)).toBe(HEAD);
+    expect(toShownPage(HEAD + FOOT)).toBe(HEAD);
+    expect(toShownPage(HEAD)).toBe(HEAD);
   });
 });

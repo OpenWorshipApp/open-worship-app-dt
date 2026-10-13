@@ -267,7 +267,7 @@ describe('pressing a key', () => {
 
   it('lets a key whose control is ordinary through', async () => {
     document.body.innerHTML =
-      '<button title="Clear Bible [F9]">Clear Bible</button>';
+      '<button title="Clear Long Text [F9]">Clear Long Text</button>';
     const result = await run(
       genPressKeyExpression(toKeystroke('F9'), { guard: GUARD, settleMs: 10 }),
     );

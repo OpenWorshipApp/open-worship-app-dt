@@ -530,6 +530,188 @@ describe('what is, and is not, somebody asking for a Bible', () => {
     });
 });
 
+describe('a Bible asked for by the name the app is looking for', () => {
+    const CATALOG = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+    // What the Reader's "Bible key "KJV" is not available!" card asks with.
+    const ASK = 'Import the Bible called "KJV"';
+    const ENGLISH = {
+        ...CHECKED,
+        title: 'English King James Version',
+        keys: ['EKJV', 'EN1769', 'KJ'],
+        takenKeys: ['KSV'],
+    };
+
+    it('is looked for by that name, and the name is kept', () => {
+        expect(readBibleImportLanguageAsk(ASK)).toEqual({
+            step: 'check',
+            url: CATALOG,
+            find: 'english kj',
+            wantedKey: 'KJV',
+        });
+        // The way the window starts it: with no conversation yet.
+        expect(findBibleImportState([], ASK)?.wantedKey).toBe('KJV');
+        // A name the collection files nothing under is searched as it is.
+        expect(
+            readBibleImportLanguageAsk('Import the Bible called "NIV"'),
+        ).toEqual({
+            step: 'check',
+            url: CATALOG,
+            find: 'niv',
+            wantedKey: 'NIV',
+        });
+        // One made of nothing to search by asks the language, name in hand.
+        expect(
+            readBibleImportLanguageAsk('Import the Bible called "NEW"'),
+        ).toEqual({ step: 'language', wantedKey: 'NEW' });
+        // The name is not what the sentence is about...
+        expect(
+            readBibleImportLanguageAsk('Import the Bible called "LIST"')
+                ?.wantedKey,
+        ).toBe('LIST');
+        // ...and the rest of it still has to be a request.
+        expect(
+            readBibleImportLanguageAsk('What is the Bible called "KJV"'),
+        ).toBeNull();
+        expect(
+            readBibleImportLanguageAsk('show the bible called KJV'),
+        ).toBeNull();
+    });
+
+    it('is the first short name offered, and the answer says why', async () => {
+        const state = readBibleImportLanguageAsk(ASK) as BibleImportStateType;
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                kind: 'page',
+                total: 998,
+                matched: 1,
+                searchedFor: ['english', 'kj'],
+                files: [{ name: 'EnglishKJBible.xml', url: LINK }],
+            }),
+        );
+        const page = await runBibleImportStep(state);
+        expect(mocks.callTool).toHaveBeenLastCalledWith('owa_bible_xml', {
+            action: 'check',
+            url: CATALOG,
+            find: 'english kj',
+        });
+
+        // Through the list of files, to the file.
+        mocks.callTool.mockResolvedValueOnce(JSON.stringify(ENGLISH));
+        const first = await pressByLabel(page, '1. English KJ Bible');
+        expect(first.actions?.map((one) => one.label)).toEqual([
+            'KJV (suggested)',
+            'EKJV',
+            'EN1769',
+            'KJ',
+            'Cancel',
+        ]);
+        expect(first.text).toContain(
+            'The app is looking for a Bible called **KJV**',
+        );
+
+        const second = await pressByLabel(first, 'KJV (suggested)');
+        expect(second.actions?.[0].args.key).toBe('KJV');
+        // "yes" is the suggested one: the name the app is waiting for.
+        expect(readBibleImportTypedReply(first.actions, 'yes')).toMatchObject({
+            step: 'locale',
+            key: 'KJV',
+        });
+    });
+
+    it('is offered once, however the file spells it', () => {
+        const answer = genBibleImportCheckAnswer(
+            { ...ENGLISH, keys: ['EKJV', 'kjv', 'KJ'] },
+            { step: 'check', url: LINK, wantedKey: 'KJV' },
+        );
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'KJV (suggested)',
+            'EKJV',
+            'KJ',
+            'Cancel',
+        ]);
+    });
+
+    it('is not offered when it is taken, or cannot be a short name', () => {
+        const taken = genBibleImportCheckAnswer(
+            { ...ENGLISH, takenKeys: ['kjv'] },
+            { step: 'check', url: LINK, wantedKey: 'KJV' },
+        );
+        expect(taken.actions?.[0].label).toBe('EKJV (suggested)');
+        expect(taken.text).not.toContain('The app is looking for');
+
+        const unusable = genBibleImportCheckAnswer(ENGLISH, {
+            step: 'check',
+            url: LINK,
+            wantedKey: 'K.J/V',
+        });
+        expect(unusable.actions?.[0].label).toBe('EKJV (suggested)');
+        expect(unusable.text).not.toContain('The app is looking for');
+
+        // A Bible they already have is found by choosing ITS name: the two
+        // sentences would say opposite things.
+        const owned = genBibleImportCheckAnswer(
+            { ...ENGLISH, installedAs: 'EKJ' },
+            { step: 'check', url: LINK, wantedKey: 'KJV' },
+        );
+        expect(owned.text).toContain('You already have this Bible');
+        expect(owned.text).not.toContain('The app is looking for');
+        // An ordinary import says nothing of it.
+        expect(
+            genBibleImportCheckAnswer(ENGLISH, { step: 'check', url: LINK })
+                .text,
+        ).not.toContain('The app is looking for');
+    });
+
+    it('stays with the import when the collection has no such name', async () => {
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                kind: 'page',
+                total: 998,
+                matched: 0,
+                searchedFor: ['niv'],
+                files: [],
+            }),
+        );
+        const none = await runBibleImportStep(
+            readBibleImportLanguageAsk(
+                'Import the Bible called "NIV"',
+            ) as BibleImportStateType,
+        );
+        expect(none.text).toContain('None of them has “niv” in its name');
+        // A language typed under that, a link pasted under it, and a dead
+        // link's own two buttons all keep the name.
+        expect(readBibleImportTypedReply(none.actions, 'Khmer')).toMatchObject({
+            step: 'check',
+            find: 'Khmer',
+            wantedKey: 'NIV',
+        });
+        expect(readBibleImportTypedReply(none.actions, LINK)).toEqual({
+            step: 'check',
+            url: LINK,
+            find: '',
+            wantedKey: 'NIV',
+        });
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ problem: 'not-xml', message: 'tool words' }),
+        );
+        const dead = await runBibleImportStep({
+            step: 'check',
+            url: LINK,
+            wantedKey: 'NIV',
+        });
+        expect(dead.actions?.map((one) => one.args.wantedKey)).toEqual([
+            'NIV',
+            'NIV',
+        ]);
+        const asked = await pressByLabel(dead, 'Look for a Bible by language');
+        expect(
+            asked.actions
+                ?.filter((one) => one.args.step === 'check')
+                .map((one) => one.args.wantedKey),
+        ).toEqual(['NIV', 'NIV', 'NIV']);
+    });
+});
+
 describe('typed instead of pressed', () => {
     const PAGE = {
         kind: 'page',

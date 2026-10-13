@@ -570,6 +570,25 @@ class LookupBibleItemController extends BibleItemsViewController {
         }
     }
 
+    /**
+     * The grid view's split button and its key: `splitWithoutPassage`, asking
+     * which version first while the view is in a colour group
+     * (`splitBibleItemOnPress`).
+     */
+    splitWithoutPassageOnPress(
+        event: any,
+        bookKey: string | null,
+        isHorizontal: boolean,
+    ) {
+        if (!this.checkIsSplitAskingBibleKey(this.selectedBibleItem)) {
+            this.splitWithoutPassage(bookKey, isHorizontal);
+            return;
+        }
+        this.askSplitBibleKey(event, isHorizontal, (newBibleKey) => {
+            this.splitWithoutPassage(bookKey, isHorizontal, newBibleKey);
+        });
+    }
+
     private applySplitShortcutKeys(menuItems: ContextMenuItemType[]) {
         for (const menuItem of menuItems) {
             if (menuItem.id === splitHorizontalId) {

@@ -17,6 +17,19 @@ const dictionary = {
         'Il trouve des Bibles dans votre langue et vous pose quelques questions simples.',
     'It will use the link you typed below.':
         'Il utilisera le lien saisi ci-dessous.',
+    // --- The "Bible key … is not available!" card: the assistant imports
+    // that Bible. `Install it` is a button of the help window, which is
+    // English only, so it stays as it reads there.
+    'Or let the assistant import this Bible for you:':
+        'Ou laissez l’assistant importer cette Bible pour vous :',
+    'Press the button below. The assistant opens and looks for this Bible in a free collection online.':
+        'Appuyez sur le bouton ci-dessous. L’assistant s’ouvre et cherche cette Bible dans une collection gratuite en ligne.',
+    'Press the Bible you want in its list, or type its language when it asks.':
+        'Appuyez sur la Bible voulue dans sa liste, ou saisissez sa langue quand il la demande.',
+    'Keep the short name it suggests, answer its other questions, then press Install it. The Bible shows here by itself.':
+        'Gardez le nom court qu’il propose, répondez à ses autres questions, puis appuyez sur « Install it ». La Bible s’affiche ici d’elle-même.',
+    'Let the assistant import this Bible for me':
+        'Laisser l’assistant importer cette Bible pour moi',
     'Could not check installed Bible keys':
         'Impossible de vérifier les clés bibliques installées',
     'Saving...': 'Enregistrement...',
@@ -1018,6 +1031,11 @@ const dictionary = {
     Paused: 'En pause',
     'Not started': 'Pas démarré',
     Loading: 'Chargement',
+    'Something Went Wrong': 'Un problème est survenu',
+    "The app ran into a problem. The assistant can look into it and write a report for you, with this computer's system information and the app's console log in it. Nothing is sent until you say so. Open the assistant to report it?":
+        "L'application a rencontré un problème. L'assistant peut l'examiner et rédiger un rapport pour vous, avec les informations système de cet ordinateur et le journal de la console de l'application. Rien n'est envoyé tant que vous ne l'avez pas décidé. Ouvrir l'assistant pour le signaler ?",
+    'Report a Problem': 'Signaler un problème',
+    'Not Now': 'Pas maintenant',
     'Reload is needed': 'Rechargement nécessaire',
     'Sorry, an internal process error occurred. Please refresh the app.':
         "Désolé, une erreur interne s'est produite. Veuillez actualiser l'application.",
@@ -1201,7 +1219,7 @@ const dictionary = {
     'Clear All Settings': 'Effacer tous les paramètres',
     'Clear All': 'Tout effacer',
     'Clear Background': "Effacer l'arrière-plan",
-    'Clear Bible': 'Effacer la Bible',
+    'Clear Long Text': 'Effacer le texte long',
     'Clear Cache': 'Vider le cache',
     'Clear Color Note': 'Effacer la note de couleur',
     'Clear Foreground': 'Effacer le premier plan',
@@ -1217,6 +1235,38 @@ const dictionary = {
     'Show Message': 'Afficher le message',
     'Hide Message': 'Masquer le message',
     'Remove Message': 'Supprimer le message',
+    'Long Text Show': 'Affichage de texte long',
+    'Show Long Text': 'Afficher le texte long',
+    'Hide Long Text': 'Masquer le texte long',
+    'Add Language': 'Ajouter une langue',
+    'Remove Language': 'Supprimer la langue',
+    'Choose Language': 'Choisir la langue',
+    'No language yet': 'Aucune langue pour le moment',
+    Source: 'Source',
+    'Raw Text': 'Texte saisi',
+    'Lyric File': 'Fichier de chant',
+    'Choose Lyric': 'Choisir un chant',
+    'No lyric file chosen': 'Aucun fichier de chant choisi',
+    'No lyric file in the Documents folder':
+        'Aucun fichier de chant dans le dossier Documents',
+    'This lyric file could not be read':
+        'Ce fichier de chant n’a pas pu être lu',
+    'This lyric file names a part it does not have':
+        'Ce fichier de chant nomme une partie qu’il ne contient pas',
+    'The songs do not have the same structure':
+        'Les chants n’ont pas la même structure',
+    'Every language needs the same number of sections':
+        'Chaque langue doit avoir le même nombre de sections',
+    Section: 'Section',
+    Sections: 'Sections',
+    'Add Section': 'Ajouter une section',
+    'Remove Section': 'Supprimer la section',
+    'Type a section': 'Saisissez une section',
+    'No section yet': 'Aucune section pour le moment',
+    'This section is empty': 'Cette section est vide',
+    'Text Size (%)': 'Taille du texte (%)',
+    'Bring to Middle': 'Amener au milieu de l’écran',
+    'View as Text Cards': 'Afficher en cartes de texte',
     'Remove Time': 'Supprimer l’horloge',
     Rotate: 'Alterner',
     'Show each message in turn': 'Afficher chaque message à tour de rôle',
@@ -2348,6 +2398,10 @@ const dictionary = {
         'Requis uniquement si votre clé Anthropic est liée à une identité',
     'App Assistant': "Assistant de l'application",
     'AI Chat': 'Chat IA',
+    // --- The Help button's two answers, and Help -> Open Online Help
+    // (2026-10-12).
+    'Open Online Help': "Ouvrir l'aide en ligne",
+    'Open Chatbot': "Ouvrir l'assistant conversationnel",
     // --- The stay-awake switch in the Presenter's and the Screen Mirror
     // page's header (2026-10-09). The two sentences follow the name on the
     // hover, after a dash, so they start in lower case.
@@ -3293,6 +3347,10 @@ const dictionary = {
     'While a Presenting Flow preview has focus':
         "Quand l'aperçu d'un déroulé a le focus",
     'Go to the next item': "Passer à l'élément suivant",
+    'Take the keys back to what is being presented':
+        'Rendre les touches à ce qui est présenté',
+    'Pressed 3 times quickly while another part of the app has focus':
+        "Appuyé 3 fois rapidement quand une autre partie de l'application a le focus",
     "While a mini screen's Drawing panel has focus":
         "Quand le panneau Dessin d'un mini-écran a le focus",
     'Back to painting': 'Revenir au pinceau',

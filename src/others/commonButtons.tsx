@@ -1,5 +1,7 @@
-import { createContext, use, useCallback, useMemo } from 'react';
+import { createContext, use, useCallback, type MouseEvent } from 'react';
 
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import KeyboardEventListener, {
     toShortcutKey,
@@ -9,14 +11,15 @@ import { askAiCaution } from '../helper/ai/aiCautionHelpers';
 import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useIsChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
+import { openChatbotReporting } from '../helper/ai/chatbotHandoffHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { openBibleLookupEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { openSettingPage } from '../setting/settingHelpers';
-import appProvider from '../server/appProvider';
-import { checkIsMainWindow, getHelpPageUrl } from '../server/appHelpers';
+import { checkIsMainWindow } from '../server/appHelpers';
+import { openOnlineHelp } from '../server/onlineHelpHelpers';
 
 export function QuitCurrentPageComp({
     title,
@@ -64,31 +67,40 @@ export function SettingButtonComp() {
 }
 
 /**
+ * A press that asks for the in-app assistant: the 🤖 and the Help button's
+ * *Open Chatbot*. One function, so the second way in asks the same two
+ * questions as the first and cannot walk around either.
+ */
+async function openChatbotOnPress() {
+    // The switch is read at the PRESS, not at render. The button used to
+    // disappear with it, which left a volunteer who never turned AI on --
+    // the packaged default -- with nothing to press and nothing saying
+    // why the assistant everyone talks about is not there. It says what is
+    // off and offers the one place that turns it back on instead; that
+    // only takes effect on the next launch, so the dialog says so too.
+    if (!getIsAIEnabled()) {
+        void askToEnableAI();
+        return;
+    }
+    // The switch is asked FIRST and the caution second: there is nothing
+    // to be careful about in a window that is not going to open, and
+    // warning about an assistant before saying it is turned off is two
+    // dialogs to reach one piece of news.
+    if (!(await askAiCaution('assistant'))) {
+        return;
+    }
+    openChatbotPage();
+}
+
+/**
  * Opens the in-app assistant, beside the Help button that goes to the website:
  * the two answer the same question, one from the manual bundled in this build
  * and from what the app is doing right now, the other from a browser and an
  * internet connection this machine may not have.
  */
 export function ChatbotButtonComp() {
-    const handleClick = useCallback(async () => {
-        // The switch is read at the PRESS, not at render. The button used to
-        // disappear with it, which left a volunteer who never turned AI on --
-        // the packaged default -- with nothing to press and nothing saying
-        // why the assistant everyone talks about is not there. It says what is
-        // off and offers the one place that turns it back on instead; that
-        // only takes effect on the next launch, so the dialog says so too.
-        if (!getIsAIEnabled()) {
-            void askToEnableAI();
-            return;
-        }
-        // The switch is asked FIRST and the caution second: there is nothing
-        // to be careful about in a window that is not going to open, and
-        // warning about an assistant before saying it is turned off is two
-        // dialogs to reach one piece of news.
-        if (!(await askAiCaution('assistant'))) {
-            return;
-        }
-        openChatbotPage();
+    const handleClick = useCallback(() => {
+        void openChatbotOnPress();
     }, []);
     // A point of colour while the help window works on an answer -- the
     // window is often behind the app, and a slow local model takes minutes.
@@ -137,24 +149,54 @@ export function AiChatButtonComp() {
     );
 }
 
+/**
+ * Asks which help: the website's page about this window, or the assistant in
+ * this build. The press used to go straight to the website, which a machine
+ * with no internet cannot open and which knows nothing of what the app is
+ * doing -- the other answer was one button to the left, with nothing here
+ * saying so.
+ */
 export function HelpButtonComp() {
-    const url = useMemo(() => {
-        const helpPageUrl = getHelpPageUrl();
-        const helpKey = appProvider.currentHomePage
-            .replace(/^\//, '')
-            .replace(/\.html$/, '');
-        return `${helpPageUrl}#${helpKey}`;
-    }, []);
-    const urlRef = useAppCurrentRef(url);
-    const handleClick = useCallback(() => {
-        appProvider.browserUtils.openExternalURL(urlRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    const handleClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+        // Hung under the button, not at the pointer: a press from the
+        // keyboard carries no coordinates, and the menu would open in the
+        // window's top-left corner.
+        const { right, bottom } = event.currentTarget.getBoundingClientRect();
+        showAppContextMenu(
+            event as any,
+            [
+                {
+                    childBefore: genContextMenuItemIcon('box-arrow-up-right'),
+                    menuElement: tran('Open Online Help'),
+                    onSelect: openOnlineHelp,
+                },
+                {
+                    childBefore: genContextMenuItemIcon('robot'),
+                    menuElement: tran('Open Chatbot'),
+                    onSelect: () => {
+                        void openChatbotOnPress();
+                    },
+                },
+                // The third way: the assistant opened already asking what
+                // went wrong, to write the report up and send it
+                // (2026-10-13, the user's ask with this button circled).
+                {
+                    childBefore: genContextMenuItemIcon('bug'),
+                    menuElement: tran('Report a Problem'),
+                    onSelect: () => {
+                        void openChatbotReporting();
+                    },
+                },
+            ],
+            { coord: { x: right, y: bottom } },
+        );
     }, []);
     return (
         <button
             className="btn btn-outline-info"
             title={tran('Help')}
             aria-label={tran('Help')}
+            aria-haspopup="menu"
             onClick={handleClick}
         >
             <i className="bi bi-question-circle" />

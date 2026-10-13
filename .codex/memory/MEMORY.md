@@ -8,6 +8,8 @@
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) · [Sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky
 - [Countdown/stopwatch state in the datum](foreground-timer-state-in-datum.md) — updated in place, no remount
 - [Screen draw](screen-draw-feature.md) · [Focus spotlight](screen-focus-spotlight.md) — its own `#focus` layer
+- [Screen Bible columns](screen-bible-columns.md) — one scroller per Bible, same verse; only the leader is sent
+- [Long Text Show](long-text-show.md) — a song in several languages in the Bible’s layer; checked before Show
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — fixed 2026-07-22
 - [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — a write can throw "must be used within", blank the page, or leave Vite on the previous save
 - [`build` kills the running dev app](build-kills-running-dev-app.md) — rm -rf's `electron-build/`
@@ -97,20 +99,22 @@
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md)
 - [Help → Keyboard Shortcuts](keyboard-shortcuts-panel.md) — a new key needs a row
 - [A leaked keyboard layer kills every shortcut](keyboard-layer-stack-leak.md)
-- [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md)
+- [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md) · [Remote key take-over](remote-key-take-over.md) — 3 quick presses hand the keys to what is presented; focus only
 - [An undo must not overtake its edit](document-write-then-undo-race.md) — register the write where it starts
 - [Glassy popup windows](glassy-popup-windows.md) — OS compositor, not CSS
 - [Panels are named in the DOM](panel-name-in-dom.md) — floating ones too
 - [Mini screen draws the monitor's wallpaper](mini-screen-monitor-wallpaper.md) — never a desktopCapturer shot
 - [A guide tucks the help window away](guide-tucks-help-window.md)
 - [Hover-hidden controls](hover-hidden-controls.md) — painted only under the mouse
-- [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Bible]`
+- [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Long Text]`
 - [Chatbot question corpus](question-corpus-maintenance.md) · [A supported question is a label](help-search-known-question.md) · [Manual search prefix overmatch](help-search-prefix-overmatch.md)
 - [Stuck guide step asks the chatbot](guide-stuck-step-rescue.md) · [Guide press safety & covers](guide-press-safety-and-covers.md) · [Walkthrough followed the first search](chatbot-walkthrough-follows-first-search.md)
 - [Window tools on every page](app-window-tools-everywhere.md) · [The chatbot opens the window](chatbot-opens-the-window.md)
+- [Local models are asked at temperature 0](local-model-temperature-zero.md) — sampling, not wording, moved the wrong answers; a page edit re-rolls its rows
+- [Thumbs under an answer](chatbot-answer-thumbs.md) — a thumb down is followed up with no model; "next model up" only for three providers
 - [Chatbot answer options](chatbot-answer-options.md) · [Stop aborts on the wire](chatbot-stop-answer.md) · [Adding to an answer in flight](chatbot-mid-flight-additions.md) · [Recipe ids scrubbed in code](chatbot-recipe-id-scrub.md)
-- [Kimi provider](kimi-third-llm-provider.md) · [Kimi free tier ~3 rounds/min](kimi-free-tier-round-budget.md) · [Free keyless provider](free-keyless-chatbot-provider.md) — Kilo Code only · [Bedrock provider](bedrock-llm-provider.md) — `/openai/v1`; Claude on `bedrock-runtime` · [Custom servers](custom-llm-servers.md) — LM Studio, Ollama & co. through a main-process relay · [Shared LLM registry](llm-registry.md) — `openworship.app/llm/info.json`; admin kit in `extra-work/local-llm/`
-- [Chatbot attachments](chatbot-attachments.md) · [Report button](chatbot-report-button.md)
+- [Kimi provider](kimi-third-llm-provider.md) · [Kimi free tier ~3 rounds/min](kimi-free-tier-round-budget.md) · [Free keyless provider](free-keyless-chatbot-provider.md) — Kilo Code only · [Bedrock provider](bedrock-llm-provider.md) — `/openai/v1`; Claude on `bedrock-runtime` · [Custom servers](custom-llm-servers.md) — LM Studio, Ollama & co. through a main-process relay · [Shared LLM registry](llm-registry.md) — `openworship.app/llm/info.json`; an `isAcceptingReport` entry takes reports, never listed; admin kit in `extra-work/local-llm/` (SQLite report inbox, `--reports`)
+- [Chatbot attachments](chatbot-attachments.md) · [Report button](chatbot-report-button.md) — Send posts to the registry’s report server; also from Help and an error
 - [Chatbot tabs work independently](chatbot-tabs-work-independently.md) — never sendSync on mount
 - [The wait says what it is doing](chatbot-progress-log.md) · [Ask history & tips](chatbot-ask-history-and-tips.md) · [Built-in commands](chatbot-builtin-commands.md) — no model, except `/btw`
 - [Chatbot cost on the wire](chatbot-cost-measured-on-the-wire.md) · [Spend guard](chatbot-spend-guard.md) · [Provider failure comes with its door](chatbot-provider-issue-door.md)
@@ -122,6 +126,9 @@
 - [A press says what it CHANGED](click-reports-effect-not-action.md) · [An exact label beats everything](dom-match-exact-label-beats-everything.md) · [Kind noun trimmed off an exact name](dom-match-kind-noun-exact.md) · [A name with a twin has no selector](selector-name-with-a-twin.md)
 - [Checking a song](open-lyric-validator-in-mcp.md) · [A model cannot write Open Lyric](model-cannot-write-open-lyric.md) · [A song page goes in as a URL](song-page-goes-in-as-url.md) · [/lyric offline](chatbot-lyric-command.md)
 - [Driving the chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen` · [Bash halves `\\`, breaks on `'`](bash-heredoc-halves-backslashes.md) — run a script file
+- [A corpus run in a shared dev app](corpus-run-in-a-shared-dev-app.md) — own the tab, type nothing, undo only your own doing, pace under the spend guard
+- [The discovery file holds the token](discovery-file-holds-the-token.md) — list the directory or print one field, never the file
+- [Corpus test: the goal means failures fixed](corpus-test-goal-means-failures-fixed.md) — test, fix, re-test; ask whether the goal is MET, once, early
 - [No user-entered references in notes](no-user-specific-references-in-notes.md)
 - Grading: [panic shapes in both screen states](chatbot-grade-panic-in-both-states.md) · [on the window's own default](chatbot-grade-on-the-window-default.md)
 - [What the user is in the middle of](chatbot-in-the-middle-of.md) · [Wrong-window route is a page fact](chatbot-wrong-window-route-is-a-page-fact.md)
@@ -129,6 +136,7 @@
 - [AI Chat window](aichat-window.md) — sandboxed `<webview>` · [Guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md)
 - [A confirm needs a popup host](confirm-needs-a-popup-host.md) — fails open · [Popup deep link rides a setting](popup-deep-link-by-setting.md)
 - [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split on `/\r?\n/`
+- [Prettier reindents a `.mjs` outside `src/`](prettier-reindents-mjs-outside-src.md) — pass `--tab-width 4`
 - [Canvas item blend mode](canvas-item-blend-mode.md) · [Canvas item shadow](canvas-item-shadow.md)
 - [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — no z-index/isolation on `#foreground`
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19

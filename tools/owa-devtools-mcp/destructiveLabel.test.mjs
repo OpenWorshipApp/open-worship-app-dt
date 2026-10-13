@@ -69,7 +69,7 @@ describe('checkIsDestructiveLabelText, in English', () => {
 
     it('leaves the ordinary controls alone', () => {
         for (const label of [
-            'Clear Bible [F9]',
+            'Clear Long Text [F9]',
             'Clear Slide [F8]',
             'Clear',
             'Reset Widgets Size',
@@ -137,15 +137,36 @@ describe('the rule, derived from the app dictionary', () => {
         expect(refusedList).toEqual([]);
     });
 
-    // `លុបព្រះគម្ពីរ` is both Delete Bible and Clear Bible. The window cannot
-    // tell them apart, so the allowed reading wins and the app's own confirm
-    // stands behind the other.
+    // `លុបផ្ទៃខាងក្រោយ` is both Remove Background and Clear Background. The
+    // window cannot tell them apart, so the allowed reading wins and the
+    // app's own confirm stands behind the other.
     it('leaves a translation shared with an allowed control to the app', () => {
-        expect(KHMER['clear bible']).toBe(KHMER['delete bible']);
+        expect(KHMER['clear background']).toBe(KHMER['remove background']);
         expect(
-            checkIsDestructiveLabelText(`${KHMER['clear bible']} [F9]`, REAL_RULE),
+            checkIsDestructiveLabelText(
+                `${KHMER['clear background']} [F7]`,
+                REAL_RULE,
+            ),
         ).toBe(false);
         expect(checkIsDestructiveLabelText(KHMER.clear, REAL_RULE)).toBe(false);
+    });
+
+    // Until 2026-10-13 the F9 button was Clear Bible, and its Khmer was
+    // Delete Bible's too. It is Clear Long Text now, with words of its own:
+    // the ordinary press stays ordinary, and the phrase it left behind is
+    // Delete Bible's alone, so it is refused.
+    it('refuses a translation once no allowed control shares it', () => {
+        expect(KHMER['clear long text']).toBeTruthy();
+        expect(KHMER['clear long text']).not.toBe(KHMER['delete bible']);
+        expect(
+            checkIsDestructiveLabelText(
+                `${KHMER['clear long text']} [F9]`,
+                REAL_RULE,
+            ),
+        ).toBe(false);
+        expect(
+            checkIsDestructiveLabelText(KHMER['delete bible'], REAL_RULE),
+        ).toBe(true);
     });
 
     it('keeps a phrase found inside an ordinary sentence to a whole label', () => {
@@ -187,10 +208,10 @@ describe('the guard the page is sent', () => {
         const page = new Function(`return (${PRESS_GUARD_SOURCE})`)();
         for (const label of [
             'Clear All',
-            'Clear Bible [F9]',
+            'Clear Long Text [F9]',
             'Undelete',
             KHMER['move to trash'],
-            KHMER['clear bible'],
+            KHMER['clear long text'],
         ]) {
             expect(page.checkIsDestructiveLabelText(label, REAL_RULE), label).toBe(
                 checkIsDestructiveLabelText(label, REAL_RULE),
@@ -260,11 +281,11 @@ describe('findPressRefusal', () => {
 
 describe('findKeyRefusal', () => {
     // A key has no label, so it is as destructive as the control whose title
-    // names it: F6 is Clear All, F9 is Clear Bible.
+    // names it: F6 is Clear All, F9 is Clear Long Text.
     it('judges a key by the control whose title names it', () => {
         document.body.innerHTML =
             '<button title="Clear All [F6]">A</button>' +
-            '<button title="Clear Bible [F9]">B</button>';
+            '<button title="Clear Long Text [F9]">B</button>';
         expect(findKeyRefusal({ label: 'F6' }, REAL_RULE, document)).toEqual({
             refused: 'destructive',
             label: 'Clear All [F6]',

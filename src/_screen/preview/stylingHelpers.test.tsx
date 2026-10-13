@@ -13,8 +13,8 @@ const h = vi.hoisted(() => ({
     broadcast: null as (() => void) | null,
 }));
 
-vi.mock('../managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('../managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static get textStyle() {
             return { ...h.committed };
         }
@@ -26,7 +26,7 @@ vi.mock('../managers/ScreenBibleManager', () => ({
 }));
 
 vi.mock('../managers/screenEventHelpers', () => ({
-    useScreenBibleManagerEvents: (
+    useScreenLongTextManagerEvents: (
         _events: string[],
         _manager: unknown,
         callback: () => void,

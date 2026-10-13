@@ -7,10 +7,10 @@
 //
 // So the docs carry a TEMPLATE instead of a label:
 //
-//     Press **F9** ([en:tran:Clear Bible]) to take the verse off screen.
+//     Press **F9** ([en:tran:Clear Long Text]) to take the verse off screen.
 //
 // and this module fills it in with whatever that key reads as in the running
-// app's interface language -- `Clear Bible` in English, `លុបព្រះគម្ពីរ` in
+// app's interface language -- `Clear Long Text` in English, `លុបអត្ថបទវែង` in
 // Khmer. One source text, every language, and the doc can never drift from the
 // app the way a hand-copied twin does (the manual still said `គ្រប់កណ្ឌគម្ពីរ`
 // for **All Books** long after the app started saying `សៀវភៅទាំងអស់`).

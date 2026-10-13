@@ -109,7 +109,7 @@ vi.mock('../server/fileHelpers', () => ({
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: h.showAppContextMenuMock,
 }));
-vi.mock('../_screen/managers/ScreenBibleManager', () => ({
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
     default: { handleBibleItemSelecting: h.screenBibleHandleSelectingMock },
 }));
 vi.mock('../bible-reader/LookupBibleItemController', () => ({
@@ -483,7 +483,7 @@ describe('bible-list bibleHelpers', () => {
     test('getOnScreenBibleItems collects each version of each passage from screen managers', async () => {
         h.getAllScreenManagersMock.mockReturnValue([
             {
-                screenBibleManager: {
+                screenLongTextManager: {
                     screenViewData: {
                         bibleItemData: {
                             a: [
@@ -497,7 +497,7 @@ describe('bible-list bibleHelpers', () => {
                 },
             },
             {
-                screenBibleManager: { screenViewData: undefined },
+                screenLongTextManager: { screenViewData: undefined },
             },
         ]);
         const keys = await getOnScreenBibleItems();
@@ -511,7 +511,7 @@ describe('bible-list bibleHelpers', () => {
     test('checkIsBibleItemOnScreen matches the passage AND its version', async () => {
         h.getAllScreenManagersMock.mockReturnValue([
             {
-                screenBibleManager: {
+                screenLongTextManager: {
                     screenViewData: {
                         bibleItemData: {
                             a: [{ bibleKey: 'niv', title: 'Match' }],
@@ -542,7 +542,7 @@ describe('bible-list bibleHelpers', () => {
     test('useIsOnScreen resolves the on-screen state via effects', async () => {
         h.getAllScreenManagersMock.mockReturnValue([
             {
-                screenBibleManager: {
+                screenLongTextManager: {
                     screenViewData: {
                         bibleItemData: {
                             a: [{ bibleKey: 'kjv', title: 'Match' }],

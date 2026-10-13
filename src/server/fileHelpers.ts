@@ -57,6 +57,10 @@ export {
     toPortableFileText,
     toRealFileText,
 } from './storageFileHelpers';
+// The account's name taken out of a path in a line of text. Defined in a
+// leaf of its own -- it needs nothing -- and asked for here like every
+// other path rule.
+export { toPathScrubbed } from './accountPathHelpers';
 
 for (const ml of [
     mimeBibleList,

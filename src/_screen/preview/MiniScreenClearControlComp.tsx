@@ -13,8 +13,8 @@ import {
 import {
     clearAllEventMapper,
     clearBackgroundEventMapper,
-    clearBibleEventMapper,
     clearForegroundEventMapper,
+    clearLongTextEventMapper,
     clearSlideEventMapper,
 } from '../../keyboard-shortcut/appShortcutMappers';
 
@@ -50,22 +50,24 @@ function genBtnMaps(screenManager: ScreenManager) {
     const {
         screenBackgroundManager,
         screenVaryAppDocumentManager,
-        screenBibleManager,
-        screenForegroundManager,
+        screenLongTextManager,
         screenDrawManager,
         screenFocusManager,
     } = screenManager;
 
     const isShowingBackground = screenBackgroundManager.isShowing;
     const isShowingSlide = screenVaryAppDocumentManager.isShowing;
-    const isShowingBible = screenBibleManager.isShowing;
-    const isShowingForeground = screenForegroundManager.isShowing;
+    // The long-text LAYER, whatever it holds: a Bible passage or the
+    // text of a Long Text Show.
+    const isShowingLongTextLayer = screenLongTextManager.isShowing;
+    // A long text counts: Long Text Show is a Foreground panel.
+    const isShowingForeground = screenManager.isShowingForeground;
     // draw/focus have no dedicated clear button but Clear All clears them,
     // so a drawing or spotlight alone must still enable it
     const isShowing =
         isShowingBackground ||
         isShowingSlide ||
-        isShowingBible ||
+        isShowingLongTextLayer ||
         isShowingForeground ||
         screenDrawManager.isShowing ||
         screenFocusManager.isShowing;
@@ -101,13 +103,15 @@ function genBtnMaps(screenManager: ScreenManager) {
             },
         },
         {
-            text: 'BB',
-            title: tran('Clear Bible'),
+            // `LT`, the layer `ScreenLongTextManager` draws -- it was `BB`
+            // while a Bible passage was all that layer could hold.
+            text: 'LT',
+            title: tran('Clear Long Text'),
             btnType: 'primary',
-            isEnabled: isShowingBible,
-            eventMap: clearBibleEventMapper,
+            isEnabled: isShowingLongTextLayer,
+            eventMap: clearLongTextEventMapper,
             onClick: () => {
-                screenBibleManager.clear();
+                screenLongTextManager.clear();
             },
         },
         {
@@ -117,7 +121,7 @@ function genBtnMaps(screenManager: ScreenManager) {
             isEnabled: isShowingForeground,
             eventMap: clearForegroundEventMapper,
             onClick: () => {
-                screenForegroundManager.clear();
+                screenManager.clearForeground();
             },
         },
     ];

@@ -24,7 +24,7 @@ const enableSyncGroupMocks = {
 const useScreenEventsSpy = vi.fn();
 const useScreenBackgroundManagerEventsSpy = vi.fn();
 const useScreenVaryAppDocumentManagerEventsSpy = vi.fn();
-const useScreenBibleManagerEventsSpy = vi.fn();
+const useScreenLongTextManagerEventsSpy = vi.fn();
 const useScreenForegroundManagerEventsSpy = vi.fn();
 
 const appProviderMock = {
@@ -123,8 +123,8 @@ vi.mock('./managers/ScreenForegroundManager', () => ({
     },
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly eventNamePrefix = 'screen-bible';
         static readonly enableSyncGroup = enableSyncGroupMocks.bible;
     },
@@ -201,7 +201,7 @@ vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBackgroundManagerEvents: useScreenBackgroundManagerEventsSpy,
     useScreenVaryAppDocumentManagerEvents:
         useScreenVaryAppDocumentManagerEventsSpy,
-    useScreenBibleManagerEvents: useScreenBibleManagerEventsSpy,
+    useScreenLongTextManagerEvents: useScreenLongTextManagerEventsSpy,
     useScreenForegroundManagerEvents: useScreenForegroundManagerEventsSpy,
     useScreenDrawManagerEvents: vi.fn(),
     useScreenFocusManagerEvents: vi.fn(),
@@ -435,46 +435,81 @@ describe('screen infrastructure', () => {
         );
     });
 
-    test('clears invalid stored Bible screen data', async () => {
+    test('drops only the invalid entries of the stored long-text layer', async () => {
         const { screenManagerSettingNames } =
             await import('../helper/constants');
         const screenHelpers = await import('./screenHelpers');
 
+        const genBible = (verseNum: unknown) => {
+            return {
+                type: 'bible-item',
+                locale: 'en-US',
+                bibleItemData: {
+                    renderedList: [
+                        {
+                            locale: 'en-US',
+                            bibleKey: 'KJV',
+                            title: 'Genesis 1:1',
+                            verses: [{ num: verseNum, text: 'A verse' }],
+                        },
+                    ],
+                    bibleItem: { id: 1 },
+                },
+                scroll: 0,
+                selectedKJVVerseKey: null,
+            };
+        };
+        const genLongText = (sectionNum: unknown) => {
+            return {
+                type: 'long-text',
+                locale: 'en-US',
+                longTextData: {
+                    sourceId: 'long-text',
+                    renderedList: [
+                        {
+                            locale: 'en-US',
+                            code: 'EN',
+                            title: 'Song',
+                            sections: [
+                                { num: sectionNum, text: 'Line', key: 'lt-1' },
+                            ],
+                        },
+                    ],
+                },
+                scroll: 0,
+                selectedKJVVerseKey: null,
+            };
+        };
         getSettingMock.mockImplementation((key: string) => {
             if (key === screenManagerSettingNames.MANAGERS) {
-                return JSON.stringify([{ screenId: 1 }]);
+                return JSON.stringify(
+                    [1, 2, 3, 4, 5].map((screenId) => {
+                        return { screenId };
+                    }),
+                );
             }
             if (key === screenManagerSettingNames.FULL_TEXT) {
                 return JSON.stringify({
-                    1: {
-                        type: 'bible-item',
-                        locale: 'en-US',
-                        bibleItemData: {
-                            renderedList: [
-                                {
-                                    locale: 'en-US',
-                                    bibleKey: 'KJV',
-                                    title: 'Genesis 1:1',
-                                    verses: [
-                                        {
-                                            num: 1,
-                                            text: 'Invalid verse number',
-                                        },
-                                    ],
-                                },
-                            ],
-                            bibleItem: { id: 1 },
-                        },
-                        scroll: 0,
-                        selectedKJVVerseKey: null,
-                    },
+                    // A verse number that is not a string.
+                    1: genBible(1),
+                    2: genBible('1'),
+                    3: genLongText('1'),
+                    // A section number that is not a string.
+                    4: genLongText(1),
+                    // A kind this build does not draw.
+                    5: { type: 'lyric', scroll: 0, selectedKJVVerseKey: null },
                 });
             }
             return undefined;
         });
 
-        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({});
-        expect(setSettingMock).toHaveBeenCalledWith(
+        // One bad entry used to blank the whole setting, and with it every
+        // OTHER screen's passage on the next write.
+        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({
+            2: genBible('1'),
+            3: genLongText('1'),
+        });
+        expect(setSettingMock).not.toHaveBeenCalledWith(
             screenManagerSettingNames.FULL_TEXT,
             '',
         );
@@ -908,7 +943,7 @@ describe('screen infrastructure', () => {
         expect(useScreenEventsSpy).toHaveBeenCalled();
         expect(useScreenBackgroundManagerEventsSpy).toHaveBeenCalled();
         expect(useScreenVaryAppDocumentManagerEventsSpy).toHaveBeenCalled();
-        expect(useScreenBibleManagerEventsSpy).toHaveBeenCalled();
+        expect(useScreenLongTextManagerEventsSpy).toHaveBeenCalled();
         expect(useScreenForegroundManagerEventsSpy).toHaveBeenCalled();
     });
 });

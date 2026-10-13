@@ -34,11 +34,15 @@ import {
     GENERAL_QUESTION_COMMAND,
     answerScreenToggleAsk,
     answerSlideShowAsk,
+    answerSlideStepAsk,
+    answerWhereIsAsk,
     findSlideByWords,
     matchBuiltinActions,
     parseBuiltinCommand,
     readScreenToggleAsk,
     readSlideShowAsk,
+    readSlideStepAsk,
+    readWhereIsAsk,
     readGeneralQuestion,
     readInheritedGeneralQuestion,
     readCountdownArgument,
@@ -91,9 +95,9 @@ describe('the command list', () => {
     });
 
     test('parsing keeps the argument case and reads the name loosely', () => {
-        const parsed = parseBuiltinCommand('  /FIND Clear Bible ');
+        const parsed = parseBuiltinCommand('  /FIND Clear Long Text ');
         expect(parsed?.action?.name).toBe('find');
-        expect(parsed?.argument).toBe('Clear Bible');
+        expect(parsed?.argument).toBe('Clear Long Text');
         expect(parseBuiltinCommand('not a command')).toBeNull();
         expect(parseBuiltinCommand('/nope')?.action).toBeNull();
     });
@@ -340,7 +344,7 @@ describe('the suggestion list', () => {
         // The space alone is the name being finished with.
         expect(matchBuiltinActions('/btw ')).toEqual([]);
         expect(matchBuiltinActions('/screen now')).toEqual([]);
-        expect(matchBuiltinActions('/find\nClear Bible')).toEqual([]);
+        expect(matchBuiltinActions('/find\nClear Long Text')).toEqual([]);
         // Space BEFORE the slash is not a word after the name.
         expect(matchBuiltinActions('  /bt')[0].name).toBe(
             GENERAL_QUESTION_COMMAND,
@@ -478,7 +482,7 @@ describe('/screen-hide and the clears', () => {
         });
         const answer = await runBuiltinCommand('/clear-bible', 'presenter');
         expect(callTool).toHaveBeenCalledWith('owa_click', {
-            find: 'Clear Bible',
+            find: 'Clear Long Text',
         });
         expect(answer.text).toContain('F9');
     });
@@ -509,7 +513,7 @@ describe('the rest', () => {
 
     test('/find with no words asks for them rather than searching', async () => {
         const answer = await runBuiltinCommand('/find', 'presenter');
-        expect(answer.text).toContain('/find Clear Bible');
+        expect(answer.text).toContain('/find Clear Long Text');
         expect(callTool).not.toHaveBeenCalled();
     });
 
@@ -666,6 +670,139 @@ describe('a slide or the screen asked for in words, with no model', () => {
         ).toEqual({
             command: '/goto presenter',
         });
+    });
+
+    // Asked "Show the next slide?" a local model pressed Slide 1 itself, said
+    // nothing of it and told the volunteer to click Slide 2 (2026-10-13).
+    test('the next slide, or the one before, is offered by ONE button and never pressed', async () => {
+        expect(readSlideStepAsk('Show the next slide?')).toBe('next');
+        expect(readSlideStepAsk('can you go to the next slide for me')).toBe(
+            'next',
+        );
+        expect(readSlideStepAsk('put the next verse up please')).toBe('next');
+        expect(readSlideStepAsk('next slide')).toBe('next');
+        expect(readSlideStepAsk('show the previous slide')).toBe('previous');
+        // A how-do-I, and a question about something else that is next.
+        expect(readSlideStepAsk('How do I go to the next slide?')).toBeNull();
+        expect(
+            readSlideStepAsk('What is next in my running order?'),
+        ).toBeNull();
+        expect(readSlideStepAsk('show verse 2')).toBeNull();
+
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_app_state') {
+                return genAppState(LISTED);
+            }
+            if (name === 'owa_list_screens') {
+                return genScreens([]);
+            }
+            return '';
+        });
+        const answer = await answerSlideStepAsk('next');
+        expect(answer?.text).toContain('Slide 1 "First" of "Amazing Grace"');
+        expect(answer?.actions?.[0]).toEqual({
+            label: 'Put "First" on the screen',
+            toolName: BUILTIN_TOOL_NAME,
+            args: { command: '/slide 1' },
+        });
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_click',
+            expect.anything(),
+        );
+        // Nothing of the song is up yet: there is no slide before it.
+        const before = await answerSlideStepAsk('previous');
+        expect(before?.text).toContain('is on a screen yet');
+        expect(before?.actions).toBeUndefined();
+        // Nothing selected, and the Reader page, are said.
+        callTool.mockResolvedValue(genAppState(null));
+        expect((await answerSlideStepAsk('next'))?.text).toContain(
+            'Nothing is selected',
+        );
+        callTool.mockResolvedValue(genAppState(null, 'reader.html'));
+        expect((await answerSlideStepAsk('next'))?.actions?.[0].args).toEqual({
+            command: '/goto presenter',
+        });
+    });
+
+    // "Where is the button for Clear All" -- the list's own fill-in, finished
+    // -- took a local model four rounds of reading the guide and came back
+    // "in the header section of the Presenter window" (2026-10-13).
+    test('a where-is names its control, and a sentence is left to whoever answers', () => {
+        expect(readWhereIsAsk('Where is the button for Clear All')).toBe(
+            'Clear All',
+        );
+        expect(readWhereIsAsk('where is the Clear All button?')).toBe(
+            'Clear All button',
+        );
+        expect(readWhereIsAsk("Where's Bible Lookup?")).toBe('Bible Lookup');
+        expect(readWhereIsAsk('Where are the settings')).toBe('settings');
+        expect(readWhereIsAsk('where is the tab called "Foreground"?')).toBe(
+            'Foreground',
+        );
+        // The fill-in asked as it stands names nothing.
+        expect(readWhereIsAsk('Where is the button for ...')).toBeNull();
+        // A sentence, and a question that is not a where-is.
+        expect(
+            readWhereIsAsk(
+                'Where is the thing that puts the verse on the wall for everyone',
+            ),
+        ).toBeNull();
+        expect(readWhereIsAsk('How do I clear the screen?')).toBeNull();
+        expect(readWhereIsAsk('Where do my downloads go?')).toBeNull();
+    });
+
+    test('a where-is is answered by the window only when a control is CALLED that', async () => {
+        const genFound = (matches: any[], count = matches.length) => {
+            return JSON.stringify({ count, matches, nearMisses: [] });
+        };
+        const clearAll = {
+            label: 'Clear All [F6]',
+            inPanel: 'Mini Screen',
+            where: 'at the bottom right of the window',
+            isVisible: true,
+            tier: 1,
+        };
+        // The one control the words fit: looked for, then outlined.
+        callTool.mockResolvedValue(genFound([clearAll]));
+        const answer = await answerWhereIsAsk('Clear All', 'presenter');
+        expect(answer?.text).toContain('**Clear All [F6]** is on screen now');
+        expect(answer?.text).toContain('at the bottom right of the window');
+        expect(callTool).toHaveBeenNthCalledWith(1, 'owa_find_ui', {
+            text: 'Clear All',
+            page: 'presenter.html',
+        });
+        expect(callTool).toHaveBeenNthCalledWith(2, 'owa_find_ui', {
+            text: 'Clear All',
+            highlight: true,
+            page: 'presenter.html',
+        });
+        // An exact name among several is still that name.
+        callTool.mockResolvedValue(
+            genFound([
+                { ...clearAll, label: 'Documents', tier: 0 },
+                { ...clearAll, label: 'Documents list', tier: 1 },
+            ]),
+        );
+        expect(
+            (await answerWhereIsAsk('Documents', 'presenter'))?.text,
+        ).toContain('**Documents** is on screen now');
+        // Several loose fits, a loose single one, a hidden one and nothing
+        // at all go on to whoever answers -- and nothing is outlined.
+        for (const found of [
+            genFound([clearAll, { ...clearAll, label: 'Clear Slide [F8]' }]),
+            genFound([{ ...clearAll, tier: 2 }]),
+            genFound([{ ...clearAll, isVisible: false, tier: 0 }]),
+            genFound([]),
+            '',
+        ]) {
+            callTool.mockReset();
+            callTool.mockResolvedValue(found);
+            expect(await answerWhereIsAsk('Clear', 'presenter')).toBeNull();
+            expect(callTool).toHaveBeenCalledTimes(1);
+        }
+        // A look that could not be made is not an answer either.
+        callTool.mockRejectedValue(new Error('no open page'));
+        expect(await answerWhereIsAsk('Clear All', 'setting')).toBeNull();
     });
 
     test('/slide presses the slide by its words and reports what went up', async () => {
@@ -1119,7 +1256,7 @@ describe('a clear with content held on an OFF screen', () => {
                                     hasSomething: isForegroundHeld,
                                 },
                                 {
-                                    label: 'Clear Bible [F9]',
+                                    label: 'Clear Long Text [F9]',
                                     hasSomething: false,
                                 },
                                 {

@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -8,7 +10,11 @@ import {
     removeServers,
     runRegistryCommand,
 } from './llm-registry.mjs';
-import { PUBLIC_URL } from './s3-push-llm-registry.mjs';
+import {
+    PUBLIC_URL,
+    findRegistryProblems,
+    toPublishedRegistry,
+} from './s3-push-llm-registry.mjs';
 
 const TUNNEL = {
     id: 'church-lmstudio',
@@ -24,6 +30,14 @@ const GONE = {
     baseUrl: 'https://gone-away-0000.trycloudflare.com/v1',
     apiKey: '',
     models: [{ model: 'x/model' }],
+};
+// Not an assistant: the address the app posts its problem reports to.
+const REPORTS = {
+    id: 'reporting',
+    name: 'Report inbox',
+    baseUrl: 'https://reports-1234.trycloudflare.com/report',
+    apiKey: 'sk-report',
+    isAcceptingReport: true,
 };
 const LAN = {
     id: 'lan-box',
@@ -109,6 +123,62 @@ function genDeps(registry, answers, overrides = {}) {
     };
 }
 
+// The kit keeps its own copy of the registry's schema, so the folder can be
+// copied out whole: the two must say the same thing.
+describe('llm-info.schema.json', () => {
+    const readJson = (relativePath) => {
+        return JSON.parse(
+            fs.readFileSync(new URL(relativePath, import.meta.url), 'utf-8'),
+        );
+    };
+
+    it('is the shape docs/llm-registry/info.schema.json documents', () => {
+        const kit = readJson('./llm-info.schema.json');
+        const docs = readJson('../../docs/llm-registry/info.schema.json');
+        expect(kit.$defs).toEqual(docs.$defs);
+        expect(kit.properties).toEqual(docs.properties);
+        expect(kit.required).toEqual(docs.required);
+        expect(kit.type).toBe(docs.type);
+    });
+
+    it('knows an entry that takes reports, which needs no models', () => {
+        const { server } = readJson('./llm-info.schema.json').$defs;
+        expect(server.properties.isAcceptingReport.type).toBe('boolean');
+        expect(server.required).toEqual(['id', 'name', 'baseUrl']);
+        expect(server.if.properties.isAcceptingReport.const).toBe(true);
+        expect(server.else.required).toEqual(['models']);
+    });
+
+    it('is a line for the editor, left out of what is published', () => {
+        const kept = {
+            $schema: './llm-info.schema.json',
+            version: 1,
+            updated: '2026-10-13',
+            servers: [REPORTS],
+        };
+        expect(findRegistryProblems(kept)).toEqual([]);
+        expect(toPublishedRegistry(kept)).toEqual({
+            version: 1,
+            updated: '2026-10-13',
+            servers: [REPORTS],
+        });
+        // The file the editor has open is not what was changed.
+        expect(kept.$schema).toBe('./llm-info.schema.json');
+    });
+
+    // Not `llm-info.json` itself: that one is edited by hand, and a test
+    // must not fail on somebody's half-typed entry.
+    it('describes the example in the docs, its report entry included', () => {
+        const example = readJson('../../docs/llm-registry/info.example.json');
+        expect(findRegistryProblems(example)).toEqual([]);
+        expect(
+            example.servers.filter((server) => {
+                return server.isAcceptingReport === true;
+            }),
+        ).toHaveLength(1);
+    });
+});
+
 describe('readRegistryArgs', () => {
     it('reads the three commands', () => {
         expect(readRegistryArgs(['list'])).toMatchObject({ command: 'list' });
@@ -146,6 +216,14 @@ describe('what is said of a server', () => {
         expect(text).toContain('models: qwen/qwen3.5-9b, google/gemma-4-e4b');
         expect(text).not.toContain('sk-the-key');
         expect(describeServer(GONE).join('\n')).toContain('key: none');
+    });
+
+    it('says an entry that takes reports is one, where the models would be', () => {
+        const text = describeServer(REPORTS).join('\n');
+        expect(text).toContain('reporting   Report inbox');
+        expect(text).toContain('takes reports (not offered as an assistant)');
+        expect(text).not.toContain('models:');
+        expect(text).not.toContain('sk-report');
     });
 
     it("knows an address of somebody's own network", () => {
@@ -209,6 +287,62 @@ describe('checkSharedServer', () => {
         expect((await checkSharedServer(LAN, fetchUrl)).detail).toBe(
             'no answer in 10 s — a local-network address, which answers only on its own network',
         );
+    });
+
+    // One tunnel doing both is an assistant first: asked the usual way.
+    it('asks an entry that is an assistant too for its model list', async () => {
+        const both = { ...TUNNEL, isAcceptingReport: true };
+        const { fetchUrl, asked } = genFetch(genRegistry([]), {
+            [`${TUNNEL.baseUrl}/models`]: 200,
+        });
+        expect(await checkSharedServer(both, fetchUrl)).toEqual({
+            isReachable: true,
+            detail: 'answers',
+        });
+        expect(asked[0].url).toBe(`${TUNNEL.baseUrl}/models`);
+        const text = describeServer(both).join('\n');
+        expect(text).toContain(
+            'models: qwen/qwen3.5-9b, google/gemma-4-e4b   also takes reports',
+        );
+    });
+
+    // It has no model list, and a check must not file a report to try it.
+    it('asks an address that takes reports where it is, and never posts to it', async () => {
+        const { fetchUrl, asked } = genFetch(genRegistry([]), {
+            [REPORTS.baseUrl]: 405,
+        });
+        expect(await checkSharedServer(REPORTS, fetchUrl)).toEqual({
+            isReachable: true,
+            detail: 'takes reports; answers (405 to a GET — no report was sent to try it)',
+        });
+        expect(asked).toEqual([
+            { url: REPORTS.baseUrl, authorization: 'Bearer sk-report' },
+        ]);
+        expect(
+            await checkSharedServer(
+                REPORTS,
+                genFetch(genRegistry([]), { [REPORTS.baseUrl]: 401 }).fetchUrl,
+            ),
+        ).toEqual({
+            isReachable: true,
+            detail: 'takes reports; answers, but refuses the key in the registry (401)',
+        });
+        // A tunnel with nothing behind it, and a name that is gone.
+        expect(
+            await checkSharedServer(
+                REPORTS,
+                genFetch(genRegistry([]), { [REPORTS.baseUrl]: 530 }).fetchUrl,
+            ),
+        ).toEqual({ isReachable: false, detail: 'answered 530' });
+        expect(
+            await checkSharedServer(
+                REPORTS,
+                genFetch(genRegistry([]), {}).fetchUrl,
+            ),
+        ).toEqual({
+            isReachable: false,
+            detail: 'could not be reached (ENOTFOUND)',
+        });
     });
 });
 

@@ -67,7 +67,7 @@ as two clicks is exactly what an operator cannot spare mid-service.
   not a `DragTypeEnum` at all, and a slide and a document both return null from
   `dragSerialize`. So a drop whose `presentingFlowDraggingStore.current` is set resolves the
   source from the presenting flow BY INDEX (`PresentingFlow.addItemCcFromItemIndex`) instead of from
-  `dataTransfer`; that is the only reason dragging a `Clear Bible` action onto another row
+  `dataTransfer`; that is the only reason dragging a `Clear Long Text` action onto another row
   works.
 - **An element row carries BOTH drops, split by pointer position**: top/bottom bands
   (`REORDER_EDGE_HEIGHT` 7px, capped at height/3) take the POSITION, the middle attaches —

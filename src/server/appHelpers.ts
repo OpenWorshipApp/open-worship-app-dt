@@ -25,6 +25,7 @@ import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
 import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
 import { electronSendAsync } from './electronSendHelpers';
 import { writeTextToClipboard } from './clipboardHelpers';
+import { getHelpPageUrl } from './onlineHelpHelpers';
 
 export { readTextFromClipboard } from './clipboardHelpers';
 
@@ -586,9 +587,9 @@ export function useIsOnTop() {
 
 export { checkIsMainWindow } from './mainWindowHelpers';
 
-export function getHelpPageUrl() {
-    return `${appProvider.appInfo.homepage}/help`;
-}
+// Lives in a leaf module so a window can open the website's help without this
+// file; re-exported for the existing callers.
+export { getHelpPageUrl };
 
 /**
  * The maintainers' address, read out of the package's `author` field -- the

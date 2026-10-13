@@ -395,6 +395,16 @@ export function initMenu(appController: ElectronAppController) {
                                   appController.openChatbotPage();
                               },
                           },
+                          // The same window, opened to report a problem
+                          // (2026-10-13, the user's ask with this menu in
+                          // a picture: _add the item to menubar Help as
+                          // well_). The assistant asks what went wrong.
+                          {
+                              label: 'Report a Problem',
+                              click: () => {
+                                  appController.openChatbotReportPage();
+                              },
+                          },
                           { type: 'separator' },
                       ]
                     : []),

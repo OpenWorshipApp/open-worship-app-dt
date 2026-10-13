@@ -451,6 +451,17 @@ const VIEWER_SCROLL_SELECTORS = new Set([
     '.screen-bible-container-scroll',
     '.half-scale-container',
 ]);
+// Several Bibles side by side scroll a column each, named by its place in the
+// row (`toScreenBibleColumnClassName`, `src/_screen/screenBibleColumnHelpers.ts`).
+const VIEWER_BIBLE_COLUMN_SELECTOR = /^\.screen-bible-column-\d{1,2}$/;
+
+function checkIsViewerScrollSelector(domSelector: unknown) {
+    return (
+        typeof domSelector === 'string' &&
+        (VIEWER_SCROLL_SELECTORS.has(domSelector) ||
+            VIEWER_BIBLE_COLUMN_SELECTOR.test(domSelector))
+    );
+}
 
 export type VirtualDisplayViewerFeedback =
     | {
@@ -497,7 +508,7 @@ export function readVirtualDisplayViewerFeedback(
             );
         };
         if (
-            !VIEWER_SCROLL_SELECTORS.has(domSelector) ||
+            !checkIsViewerScrollSelector(domSelector) ||
             scroll === null ||
             typeof scroll !== 'object' ||
             !isFraction(scroll.x) ||

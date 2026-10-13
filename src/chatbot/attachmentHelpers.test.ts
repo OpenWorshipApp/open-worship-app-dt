@@ -1,14 +1,21 @@
 import { describe, expect, test } from 'vitest';
 
+import { REPORT_FILE_MAX_BYTES } from '../../electron/customLlmProtocol';
 import {
     ATTACHMENT_ONLY_QUESTION,
+    MAX_CARRIED_FILE_BYTES,
+    checkIsCarriedFileName,
     checkIsReadableTextFile,
     dropAttachmentData,
     genElementAttachment,
+    genFileAttachment,
     genTextAttachment,
+    numberAttachments,
+    toAttachedText,
     getAttachmentData,
     putAttachmentData,
     toAskedOfModel,
+    toAttachmentLegend,
     toAttachmentNote,
     toAttachmentText,
     toBotImage,
@@ -140,17 +147,19 @@ describe('what the model is handed', () => {
 
     test('a pointed-at control is described in words, selector last', () => {
         const attachment = genElementAttachment({
-            label: 'Clear Bible',
+            label: 'Clear Long Text',
             inPanel: 'Screen Preview',
             where: 'at the bottom right of the window',
             isVisible: true,
             isEnabled: false,
-            selector: 'button[title="Clear Bible [F9]"]',
+            selector: 'button[title="Clear Long Text [F9]"]',
         });
-        expect(attachment.name).toBe('Clear Bible');
-        expect(attachment.selector).toBe('button[title="Clear Bible [F9]"]');
+        expect(attachment.name).toBe('Clear Long Text');
+        expect(attachment.selector).toBe(
+            'button[title="Clear Long Text [F9]"]',
+        );
         const lines = (attachment.summary ?? '').split('\n');
-        expect(lines[1]).toContain('Clear Bible');
+        expect(lines[1]).toContain('Clear Long Text');
         expect(lines).toContain('- it is greyed out');
         // The selector is there for the model's own tool calls and is told, in
         // as many words, not to come back out at the user.
@@ -275,5 +284,175 @@ describe('the name on an element chip', () => {
 
     test('falls back to the joined label when there are no parts', () => {
         expect(genElementAttachment({ label: 'Videos' }).name).toBe('Videos');
+    });
+});
+
+// "Attachment should have id like 1 2 3 ... so user can mention in the
+// text" -- said over four chips all called "my screen".
+describe('the number an attachment is called by', () => {
+    const genPicture = (id: string, number?: number) => {
+        return {
+            id,
+            kind: 'image' as const,
+            name: 'my screen',
+            mimeType: 'image/png',
+            byteSize: 4,
+            ...(number === undefined ? {} : { number }),
+        };
+    };
+
+    test('is the next one of its tab, and is never changed afterwards', () => {
+        const first = numberAttachments(
+            [genPicture('p1'), genPicture('p2'), genPicture('p3')],
+            [],
+        );
+        expect(first.map((one) => one.number)).toEqual([1, 2, 3]);
+        // The middle chip taken off: the others keep theirs, so "in 3"
+        // still means the picture it meant, and the next one is 4.
+        const left = [first[0], first[2]];
+        expect(
+            numberAttachments([genPicture('p4')], left).map(
+                (one) => one.number,
+            ),
+        ).toEqual([4]);
+        // The LAST chip taken off: its number is free again.
+        expect(
+            numberAttachments([genPicture('p5')], [first[0], first[1]])[0]
+                .number,
+        ).toBe(3);
+        // One past whatever the tab's earlier questions carried.
+        expect(
+            numberAttachments(
+                [genPicture('p6'), genPicture('p7')],
+                [genPicture('old', 7), genPicture('older')],
+            ).map((one) => one.number),
+        ).toEqual([8, 9]);
+        // One that has a number keeps it (asked again with the same chips).
+        expect(
+            numberAttachments([genPicture('p8', 2), genPicture('p9')], []).map(
+                (one) => one.number,
+            ),
+        ).toEqual([2, 3]);
+        // Nothing handed in is changed in place.
+        expect(genPicture('p1').number).toBeUndefined();
+    });
+
+    // A model is handed pictures with no names on them at all.
+    test('is told to the model, each picture by its order among those sent', () => {
+        putAttachmentData('n1', 'data:image/png;base64,AAAA');
+        putAttachmentData('n3', 'data:image/png;base64,BBBB');
+        const attachments = [
+            genPicture('n1', 1),
+            { ...genTextAttachment('notes.md', '# hi'), number: 2 },
+            genPicture('n3', 3),
+            // Its bytes went with an earlier window.
+            genPicture('gone', 4),
+            { ...genElementAttachment({ label: 'Clear All' }), number: 5 },
+            { ...genFileAttachment('order.pdf', 2048, '/d/o.pdf'), number: 6 },
+        ];
+        expect(toAttachmentLegend(attachments)).toBe(
+            'Each thing the user attached shows a number, and they may call ' +
+                'it by that number ("in 2 the button is missing"):\n' +
+                '[1] a picture called "my screen" -- the 1st picture attached here\n' +
+                '[2] the file "notes.md"\n' +
+                '[3] a picture called "my screen" -- the 2nd picture attached here\n' +
+                '[4] a picture called "my screen", no longer attached\n' +
+                '[5] the control "Clear All" they pointed at\n' +
+                '[6] the file "order.pdf"',
+        );
+        // The pictures really are sent in that order.
+        expect(toBotImages(attachments).map((one) => one.data)).toEqual([
+            'AAAA',
+            'BBBB',
+        ]);
+        const asked = toAskedOfModel('in 3 the button is missing', attachments);
+        expect(asked.startsWith('in 3 the button is missing\n\n')).toBe(true);
+        expect(asked.endsWith('[6] the file "order.pdf"')).toBe(true);
+        // A bare picture is still asked as the question it is.
+        expect(toAskedOfModel('', [genPicture('n1', 1)])).toBe(
+            `${ATTACHMENT_ONLY_QUESTION}\n\n` +
+                'Each thing the user attached shows a number, and they may ' +
+                'call it by that number ("in 2 the button is missing"):\n' +
+                '[1] a picture called "my screen" -- the 1st picture attached here',
+        );
+        dropAttachmentData('n1');
+        dropAttachmentData('n3');
+    });
+
+    test('says nothing where nothing is numbered', () => {
+        expect(toAttachmentLegend([genPicture('x')])).toBe('');
+        expect(toAttachmentLegend([])).toBe('');
+        expect(toAskedOfModel('what is this?', [genPicture('x')])).toBe(
+            'what is this?',
+        );
+    });
+
+    // The line that rides in the history of every later question.
+    test('is in what the transcript says was attached', () => {
+        expect(
+            toAttachmentNote([
+                genPicture('a', 1),
+                genPicture('b', 2),
+                { ...genTextAttachment('notes.md', 'x'), number: 3 },
+            ]),
+        ).toBe(
+            '(with picture [1], picture [2] and the file "notes.md" [3] attached)',
+        );
+        expect(toAttachmentNote([genPicture('a', 4)])).toBe(
+            '(with picture [4] attached)',
+        );
+        // Unnumbered, as it always read.
+        expect(toAttachmentNote([genPicture('a'), genPicture('b')])).toBe(
+            '(with 2 pictures attached)',
+        );
+    });
+});
+
+// "And accept files like markdown pdf": a PDF goes along with a problem
+// report for the people who can open it.
+describe('a file that is carried, not read', () => {
+    test('is a PDF, by its name', () => {
+        expect(checkIsCarriedFileName('Order of Service.PDF')).toBe(true);
+        expect(checkIsCarriedFileName('order.pdf.exe')).toBe(false);
+        expect(checkIsCarriedFileName('notes.md')).toBe(false);
+        expect(checkIsCarriedFileName('song.docx')).toBe(false);
+    });
+
+    test('holds where it is and never what is in it', () => {
+        const attachment = genFileAttachment(
+            'order.pdf',
+            240 * 1024,
+            'C:/docs/order.pdf',
+        );
+        expect(attachment).toMatchObject({
+            kind: 'file',
+            name: 'order.pdf',
+            mimeType: 'application/pdf',
+            byteSize: 240 * 1024,
+            filePath: 'C:/docs/order.pdf',
+        });
+        // No bytes are held for it: it is read at the press that sends it.
+        expect(getAttachmentData(attachment.id)).toBeNull();
+        // It has no words of its own to preview or to send in their place.
+        expect(toAttachedText(attachment)).toBe('');
+    });
+
+    // An answer must never pretend to have read it.
+    test('tells the model it is there and cannot be opened', () => {
+        const attachment = genFileAttachment('order.pdf', 240 * 1024, '/d/o');
+        const asked = toAskedOfModel('why does this print wrong?', [
+            attachment,
+        ]);
+        expect(asked).toContain('why does this print wrong?');
+        expect(asked).toContain('a file called "order.pdf" (a PDF, 240 KB)');
+        expect(asked).toContain('You cannot read what is inside it');
+        expect(toAttachmentNote([attachment])).toBe(
+            '(with the file "order.pdf" attached)',
+        );
+        expect(toBotImages([attachment])).toEqual([]);
+    });
+
+    test('is held to the size a report carries in one file', () => {
+        expect(MAX_CARRIED_FILE_BYTES).toBe(REPORT_FILE_MAX_BYTES);
     });
 });

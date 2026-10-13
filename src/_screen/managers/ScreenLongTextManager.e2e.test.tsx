@@ -5,15 +5,15 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { BibleItemDataType } from '../screenTypeHelpers';
 
-// Imported statically, NOT inside each test: the ScreenBibleManager graph is
+// Imported statically, NOT inside each test: the ScreenLongTextManager graph is
 // ~4s to transform alone and went past 30s under the full parallel suite. A
 // test's timeout covers its own body, so the import timed the first test out
 // and its still-running body then clicked into the next test's host and mocks
 // (`bringDomToNearestView` called twice). At the top of the file the cost is
 // paid while the file is collected, which no test timeout covers. `vi.mock`
 // is hoisted above these, so they still see every mock below.
-import { renderScreenBibleManager } from '../screenBibleHelpers';
-import ScreenBibleManager from './ScreenBibleManager';
+import { renderScreenLongTextManager } from '../screenBibleHelpers';
+import ScreenLongTextManager from './ScreenLongTextManager';
 
 const mocks = vi.hoisted(() => ({
     addPlayToBottom: vi.fn(),
@@ -318,7 +318,7 @@ function createHost() {
     return host;
 }
 
-describe('ScreenBibleManager e2e', () => {
+describe('ScreenLongTextManager e2e', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         document.body.innerHTML = '';
@@ -327,14 +327,16 @@ describe('ScreenBibleManager e2e', () => {
 
     test('renders a scaled Bible table and syncs verse selection across columns', async () => {
         const screenManagerBase = createScreenManagerBase(101);
-        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
+        const screenLongTextManager = new ScreenLongTextManager(
+            screenManagerBase,
+        );
         const host = createHost();
         const highlightSpy = vi.fn();
 
-        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
-        screenBibleManager.div = host;
-        screenBibleManager.screenViewData = createScreenViewData();
-        await renderScreenBibleManager(screenBibleManager);
+        screenLongTextManager.handleBibleViewVersesHighlighting = highlightSpy;
+        screenLongTextManager.div = host;
+        screenLongTextManager.screenViewData = createScreenViewData();
+        await renderScreenLongTextManager(screenLongTextManager);
 
         expect(host.style.pointerEvents).toBe('auto');
         expect(host.querySelectorAll('span.highlight')).toHaveLength(4);
@@ -350,7 +352,7 @@ describe('ScreenBibleManager e2e', () => {
 
         verse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-1');
+        expect(screenLongTextManager.selectedKJVVerseKey).toBe('GEN-1-1');
         expect(host.querySelectorAll('span.selected')).toHaveLength(2);
         expect(highlightSpy).toHaveBeenCalledWith('GEN-1-1', false);
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
@@ -366,7 +368,7 @@ describe('ScreenBibleManager e2e', () => {
 
         verse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBeNull();
+        expect(screenLongTextManager.selectedKJVVerseKey).toBeNull();
         expect(host.querySelectorAll('span.selected')).toHaveLength(0);
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -382,14 +384,16 @@ describe('ScreenBibleManager e2e', () => {
 
     test('double click promotes the selected verse to the top flow', async () => {
         const screenManagerBase = createScreenManagerBase(102);
-        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
+        const screenLongTextManager = new ScreenLongTextManager(
+            screenManagerBase,
+        );
         const host = createHost();
         const highlightSpy = vi.fn();
 
-        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
-        screenBibleManager.div = host;
-        screenBibleManager.screenViewData = createScreenViewData();
-        await renderScreenBibleManager(screenBibleManager);
+        screenLongTextManager.handleBibleViewVersesHighlighting = highlightSpy;
+        screenLongTextManager.div = host;
+        screenLongTextManager.screenViewData = createScreenViewData();
+        await renderScreenLongTextManager(screenLongTextManager);
 
         const verse = host.querySelector(
             '[data-kjv-verse-key="GEN-1-2"]',
@@ -398,7 +402,7 @@ describe('ScreenBibleManager e2e', () => {
 
         verse?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
+        expect(screenLongTextManager.selectedKJVVerseKey).toBe('GEN-1-2');
         expect(mocks.bringDomToTopView).toHaveBeenCalledTimes(2);
         expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
         expect(mocks.bringDomToCenterView).not.toHaveBeenCalled();
@@ -417,17 +421,19 @@ describe('ScreenBibleManager e2e', () => {
 
     test('applies synced selections and centers partially hidden verses', async () => {
         const screenManagerBase = createScreenManagerBase(103);
-        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
+        const screenLongTextManager = new ScreenLongTextManager(
+            screenManagerBase,
+        );
         const host = createHost();
         const highlightSpy = vi.fn();
 
-        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
-        screenBibleManager.div = host;
-        screenBibleManager.screenViewData = createScreenViewData();
-        await renderScreenBibleManager(screenBibleManager);
+        screenLongTextManager.handleBibleViewVersesHighlighting = highlightSpy;
+        screenLongTextManager.div = host;
+        screenLongTextManager.screenViewData = createScreenViewData();
+        await renderScreenLongTextManager(screenLongTextManager);
 
         mocks.checkIsVerticalPartialInvisible.mockReturnValue(true);
-        ScreenBibleManager.receiveSyncSelectedIndex({
+        ScreenLongTextManager.receiveSyncSelectedIndex({
             screenId: 103,
             type: 'bible-screen-view-selected-index',
             data: {
@@ -435,7 +441,7 @@ describe('ScreenBibleManager e2e', () => {
             },
         } as any);
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
+        expect(screenLongTextManager.selectedKJVVerseKey).toBe('GEN-1-2');
         expect(host.querySelectorAll('span.selected')).toHaveLength(2);
         expect(mocks.bringDomToCenterView).toHaveBeenCalledTimes(2);
         expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();

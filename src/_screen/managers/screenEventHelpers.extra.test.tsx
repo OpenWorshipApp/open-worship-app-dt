@@ -50,8 +50,8 @@ vi.mock('./ScreenVaryAppDocumentManager', () => ({
     },
 }));
 
-vi.mock('./ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static registerEventListener = screenBibleRegisterMock;
         static unregisterEventListener = screenBibleUnregisterMock;
     },
@@ -239,7 +239,7 @@ describe('screenEventHelpers', () => {
             useScreenEvents,
             useScreenBackgroundManagerEvents,
             useScreenVaryAppDocumentManagerEvents,
-            useScreenBibleManagerEvents,
+            useScreenLongTextManagerEvents,
             useScreenForegroundManagerEvents,
             useScreenDrawManagerEvents,
         } = await import('./screenEventHelpers');
@@ -263,7 +263,7 @@ describe('screenEventHelpers', () => {
             useScreenEvents(['sync'], staticHandler as any);
             useScreenBackgroundManagerEvents(['update']);
             useScreenVaryAppDocumentManagerEvents(['update']);
-            useScreenBibleManagerEvents(['update']);
+            useScreenLongTextManagerEvents(['update']);
             useScreenForegroundManagerEvents(['update']);
             useScreenDrawManagerEvents(['update']);
             return null;

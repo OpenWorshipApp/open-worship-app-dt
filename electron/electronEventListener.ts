@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import electron, {
     BrowserWindow,
     clipboard,
@@ -13,7 +14,14 @@ import electron, {
 
 import type ElectronAppController from './ElectronAppController';
 import { writeClipboardText } from './clipboardHelpers';
-import { getMcpToken, getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import {
+    getMcpToken,
+    getMcpUrl,
+    getRemoteDebuggingPort,
+    importEsm,
+    toMcpPackagePath,
+} from './aiHelpers';
+import { getRecentConsoleLines } from './consoleLogHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -106,9 +114,13 @@ import {
     CUSTOM_LLM_FETCH_CHANNEL,
     LLM_REGISTRY_GET_CHANNEL,
     LLM_REGISTRY_RELOAD_CHANNEL,
+    LLM_REPORT_CANCEL_CHANNEL,
+    LLM_REPORT_POST_CHANNEL,
     type CustomLlmFetchRequestType,
+    type LlmReportPostRequestType,
 } from './customLlmProtocol';
 import { getLlmRegistryStatus, refreshLlmRegistry } from './llmRegistryHelpers';
+import { cancelLlmReportPost, handleLlmReportPost } from './llmReportHelpers';
 import { STAY_AWAKE_SETTING_NAME } from './stayAwakeProtocol';
 import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
@@ -292,6 +304,29 @@ export function initEventListenerApp(appController: ElectronAppController) {
             return result.filePaths;
         },
     );
+
+    // The main window's recent console errors and warnings, for a problem
+    // report (`consoleLogHelpers.ts`). Through the tool firewall's own
+    // scrub before they leave main: a provider key logged in an error is
+    // exactly what that scrub exists for, and a report is sent to a stranger.
+    // With no scrub to be had, no lines: a report says less before it says
+    // too much.
+    onAsync(ipcMain, 'main:app:recent-console', async () => {
+        const lines = getRecentConsoleLines(appController.mainWin?.webContents);
+        if (lines.length === 0) {
+            return [];
+        }
+        try {
+            const { redactSecrets } = await importEsm(
+                pathToFileURL(toMcpPackagePath('firewall.mjs')).toString(),
+            );
+            return lines.map((line) => {
+                return String(redactSecrets(line));
+            });
+        } catch (_error) {
+            return [];
+        }
+    });
 
     // A photograph of what the operator is actually looking at. Three callers,
     // one path: the Presenting Control's snapshot button, the chatbot's own
@@ -1129,6 +1164,19 @@ export function initEventOther(appController: ElectronAppController) {
     });
     onAsync(ipcMain, LLM_REGISTRY_RELOAD_CHANNEL, async () => {
         return await refreshLlmRegistry();
+    });
+    // A prepared problem report, posted as plain text to a registry entry
+    // that takes reports -- `llmReportHelpers.ts`. A window hands over the
+    // words and is told only whether they were taken.
+    onAsync(
+        ipcMain,
+        LLM_REPORT_POST_CHANNEL,
+        (data: LlmReportPostRequestType) => {
+            return handleLlmReportPost(data);
+        },
+    );
+    ipcMain.on(LLM_REPORT_CANCEL_CHANNEL, (_event, data) => {
+        cancelLlmReportPost(data?.requestId);
     });
 
     ipcMain.on('all:app:check-is-window-on-top', (event) => {

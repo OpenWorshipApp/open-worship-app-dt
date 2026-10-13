@@ -54,4 +54,8 @@ being quoted.
 **How to apply:** treat `node extra-work/build-knowledge.mjs` as part of
 finishing any `.claude/` edit — same step as copying the Codex mirror. Run
 it before `npm run lint`, and never reach for the full build just to refresh
-knowledge while the app is running.
+knowledge while the app is running. A watcher started before
+`electron:watch` was given `--ignore electron-build/knowledge` (2026-10-11)
+still relaunches the app on every rebuild -- seen four times on
+2026-10-13, the flag missing from the running process's own command line;
+one started since does not ([[corpus-run-in-a-shared-dev-app]]).

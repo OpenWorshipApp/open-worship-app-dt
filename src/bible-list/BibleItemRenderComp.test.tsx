@@ -40,7 +40,7 @@ vi.mock('../others/ItemColorNoteComp', () => ({ default: () => null }));
 vi.mock('../bible-lookup/BibleKeySelectionComp', () => ({
     BibleKeySelectionMiniComp: () => null,
 }));
-vi.mock('../_screen/managers/ScreenBibleManager', () => ({
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
     default: { handleBibleItemSelecting: h.handleBibleItemSelectingMock },
 }));
 vi.mock('../others/commonButtons', () => ({

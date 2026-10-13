@@ -136,7 +136,7 @@ export default function ScreenPreviewerItemComp({
     const handleWheel = useCallback((event: any) => {
         if (
             event.ctrlKey &&
-            screenManagerRef.current.screenBibleManager.isShowing
+            screenManagerRef.current.screenLongTextManager.isShowing
         ) {
             event.stopPropagation();
         }

@@ -21,7 +21,55 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-11f** (**The corrections of `2026-10-11d` checked by a second reader, and the statements left for a live look gone through again.** The 108 corrections were handed to independent readers with no reason attached and an order to refute them from the code: 107 held, and one did not — **Ctrl+Shift+P** does NOT close the Presenting Control while a drawing tool is armed (W-19 step 9; seen on a scratch dev instance: nothing with the pen armed, the panel closed after **Escape**, and the menu entry closed it either way). Of the 62 statements that pass had left for the running app, a second look at the stylesheets, the bundled libraries, the data and the arithmetic settled 34, and eleven of those were wrong: the countdown flashes red five times before it stays red (W-09); a list row's **⋮** is always there, faint, not brought up by the pointer (W-43); a further run-sheet preview opens a little below and left of the last, not beside it (W-22 step 9); the dictionary is let go ten seconds after its window closes (W-29); **Ctrl+S** saves in the Slide Editor, a Bible note and the Lyric Editor, and the Web Editor saves itself (shortcut appendix); the Khmer Bibles end on _Khmer BFBS_ (W-34); the Jesus example needs the graph opened on David — from Jacob the chain is forty steps and the search stops at thirty (W-38 step 8); two **[en:tran:Slow Down]** presses after two clicks stop the scroll by themselves (W-39 step 4); the help window's captions sit above their lists until it is dragged wider than 560 pixels (W-42 step 5); the notice reads _Assistant read a page on hymnary.org_ (W-42 step 6); and screens on a deleted virtual display go to the first real monitor other than the main one (W-51 step 10). 27 statements are still for a live look — what a second device, a TV, a real account, PowerPoint, a person's press or a model shows, and sixteen a single machine could show — each listed with exactly what to watch in the agent-docs skill's `live-checks.md`. Coverage matrix `2026-10-11f` in the same change.)
+**workflowsVersion: 2026-10-13k** (**W-42 steps 8 and 9 — the way back to the Bible Reader, and a report that really carries the error log.** The user, with a picture of _how can I open bible_ answered with the Presenter’s lookup steps: _the elderly user might accidentally changed page to presenter, if user ask question like bible reading open bible or find bible let add extra follow up to let user know they also should change page to reader as well as extra option to open lookup panel_. An answer to a question about reading, opening or finding the Bible, asked while the main window is on the Presenter or the Document Editor, now ends with one more line and a **Go to the Bible Reader** button; it goes by the page the main window is on at that moment, not the page the chat was opened from. Seen live 2026-10-13 on a scratch dev instance (main window moved to the Presenter, the question asked, the button pressed: the Bible Reader, projector untouched). And step 9: the first report a person sent — from the error dialog — said _Nothing was logged_ under Console, as every report had: the tool the window asked for the console refuses a call that names no page. The main process now keeps each window’s last errors and warnings itself and the report quotes those. Seen live the same hour (three test lines in the report: the account name out of a path, a pasted key redacted, an ordinary log left out).)
+
+Previous: **workflowsVersion: 2026-10-13j** (**W-34 — the card for a Bible that is not available hands it to the assistant.** The user’s ask, with a picture of the Reader on _Bible key "KJV" is not available!_: _should have instruction for user to import in chatbot and should have button to open chatbot to import the bible like kjv_. The card now says how in three steps and carries **Let the assistant import this Bible for me**; the assistant opens already looking for that Bible, and step 1 offers the name the app is waiting for first — installed under any other name the card would stay. A new section of W-34, _When a window says a Bible is not available_. Pressed live 2026-10-13 on a scratch dev instance, twice (once by the user’s own hand): the card in English and in Khmer, the caution, _English KJV_ and _English NKJ 1982_ listed, **KJV (suggested)** first with _The app is looking for a Bible called KJV_, **Install it**, and the Reader on Genesis 1:1 with no reload; **Undo** put the card back. `Import the Bible called "KHOV"` typed: _None of them has “khov” in its name_, and `Khmer` typed under it listed the seven Khmer Bibles with the name still carried. Row `RD-123`.)
+
+Previous: **workflowsVersion: 2026-10-13i** (**W-42 step 7 — every attachment carries a number you can call it by.** The user, with a picture of four chips all named _my screen_: _attachment should have id like `1` `2` `3` ... so user can mention in the text_. Each chip now shows a number, the assistant is told which picture, file or control each number is, the sent question keeps them, and a problem report’s file list says _(attachment 2)_ beside the file. A number is never reused while its chip is there and never changes: with 2 taken off, the row reads 1 · 3 and the next is 4. Seen live 2026-10-13 on a scratch dev instance (three pictures, the middle one removed, one more: 1 · 3 · 4; asked _in 3 the Bibles panel is empty, in 4 it is not_ and the model was sent three pictures with which number each is). Also pressed live the same hour, for step 9: a typed _no_ under **Try this first** puts up the written report with no second look; a report server that finds the files too large is sent the words alone and the answer says the picture stayed behind; and **Stop** while a report is being sent ends the sending and says it was not sent.)
+
+Previous: **workflowsVersion: 2026-10-13h** (**W-42 step 9 — a report takes its files with it, and helping comes before reporting.** Two of the user’s asks the same day. _Some problem is not issue, it is user problem so before helping user to report let try to help user to resolve it first_: the assistant now says first whether you can put it right yourself, and then answers **Try this first** with the steps and two buttons, **That fixed it** (a typed _yes_ is the same press) and **Still a problem — report it**; the report is sent only after the second, and says what you were told to try. And _the posting endpoint maybe have to accept json instead of raw text … and accept files like markdown pdf_: **Send report** now sends the picture of the app and whatever was attached — pictures, a PDF, text files — beside the words, the card names the files before the press, and the answer names the ones that went and any that could not, with why. The paperclip takes a PDF. Words typed while the report is still being written go into it with **Add**. Pressed live 2026-10-13 on a scratch dev instance against a stand-in registry and the kit’s real SQLite inbox: a markdown note and a PDF attached, sent, and written back out of the inbox byte for byte beside the picture; **Add** during the write-up (one report, both sentences, the earlier PDF still with it); the steps answered with a typed _yes, thanks_ (closed, nothing sent, no second look).)
+
+Previous: **workflowsVersion: 2026-10-13g** (**W-42 step 9 — a tab that is reporting keeps reporting, and says so.** The user, with a picture of their own report going wrong: _I’m trying to report but it’s hard_ — asked what went wrong, they typed it, attached a picture and pressed **Ask**, and it was answered as a question (_the guide covers this app only_) — then _chatbot should keep knowing that user try to share information_ and _I don’t see title start with `Report:`_. Now what is typed or attached in a reporting tab goes into the report whichever button sends it, more of it is added to the same report until **Send report**, what was attached is named in the report, and the tab is called **Report: …**. Pressed live 2026-10-13 on a scratch dev instance: typed and **Ask** twice, both messages in the saved report; the user’s own open tab read **Report: keep seeing the e…**.)
+
+Previous: **workflowsVersion: 2026-10-13f** (**W-42 steps 6 and 18 — a where-is asked on a server of your own is answered by the window, and the box a song's words are pasted into is said to be the help window's.** Both found by asking every question of the list, the fill-ins included, of a local model at the settings that ship. _Where is the button for Clear All_ — the list's own fill-in, finished — took the model four rounds of reading the guide and came back _in the header section of the Presenter window_; the button is in the Mini Screen panel. On a server of your own the window now looks for a control called that and outlines it, with no model round (seen live on the dev app: _Clear All [F6] is on screen now — I have outlined it in red for a few seconds_, **Highlight again** under it, no cost on the answer); a name no control carries, and a question the list has a page for, go on to the assistant as before. And _Can you write the notation for words I paste in?_ asked from the Lyric Editor was answered _paste the verses into the box in the Lyric Editor_: step 18 said "the box" and no more, and it says whose box now. No other step changed.)
+
+Previous: **workflowsVersion: 2026-10-13e** (**W-42 step 6 — the next slide, asked for in words on a server of your own, is offered by one button.** Found by asking every supported question of a local model at the settings that ship: asked _Show the next slide?_, the model pressed **Slide 1** itself, said nothing of it, and told the volunteer to click **Slide 2**. On a server of your own the help window now answers that sentence (and _show the previous slide_) by itself, as it already did a slide asked for by its words: it names the slide the arrow keys would go to and offers the one button that puts it up. Observed live 2026-10-13 on the dev app, a local-server tab: _Slide 2 "Info" of "Still" -- press the button and it goes on the screen … The screen is off, so it holds the slide until you turn it on_, with **Put "Info" on the screen** and **Turn the screen on**, and nothing pressed until a button is. Row `CB-140`.)
+
+Previous: **workflowsVersion: 2026-10-13d** (**W-42 step 9 — Send report sends.** The user’s ask, with a registry entry marked `isAcceptingReport` in a picture: _a shared server can be type accepting report … when user report the chatbot should collect information and prepare as a prompt (raw text) then post to the endpoint_. The shared registry can now name a server that takes problem reports, and **Send report** posts the write-up to it as plain text: the answer starts **Sent** with the report’s reference, and says the picture was not sent. With no such server, or one that does not take it, the answer says nothing was sent and why, and goes on as before — the saved file, the address, the five buttons. Such a server is no assistant and is listed nowhere in the app. Pressed live 2026-10-13 on a scratch dev instance against a stand-in registry: one report taken by a stand-in inbox, a second refused by an address that had gone (500), the registry read again and the report taken by the kit’s own SQLite inbox at the new address.)
+
+Previous: **workflowsVersion: 2026-10-13c** (**W-06, W-10, W-22c, W-42, W-53 — the `BB` clear button is `LT`, [en:tran:Clear Long Text]; W-53 step 7 — the part that is marked stays lit in the panel.** Two asks from the user, each with a picture. The first with the `BB` button of the Mini Screen card circled: _search across for any related to long text screen manager … change it to long-text (LT)_ — the layer that draws a Bible passage draws a Long Text Show's text too, so its clear button reads **LT**, its name is **[en:tran:Clear Long Text]** (still **F9**) on the button, in the keyboard shortcuts list and on the running order's clear line, whose badge is `LT`; a running order saved before keeps working. The second with the parts of a Long Text Show card circled: _I want to see those element got focus highlighted when clicked_ — the part marked on a screen is lit on its button, on every language's card, as a button and as a text card alike. Pressed live 2026-10-13 on the dev app: the button read `LT` with the tooltip _Clear Long Text [F9]_; `3 Verse 2` pressed on the KM text card lit that card and brought the row to the middle of the Mini Screen; `1 Verse 1` was lit on the KM card and on the EN button together. Not driven live: the Khmer and French names (held by the key test), the running order's menu, and a click on the text itself lighting its button (unit tests).)
+
+Previous: **workflowsVersion: 2026-10-13b** (**W-42 step 13 — Auto is what a chat starts on.** The user's ask, with the last row of the who-answers list circled: _make `Auto` be selected by default_. A chat in which no assistant was ever picked by name starts on **Auto** — the help window the first time it opens, and every new chat after it; once a named assistant has been picked, new chats start on that one, and picking **Auto** again brings it back. An assistant picked by name before this existed is still that pick. The rule is unit tested; seen live 2026-10-13 on the dev app only as far as a new chat opening on **Auto** once **Auto** was the last pick — the first-run case needs a profile nobody has picked in. Row `CB-139`.)
+
+Previous: **workflowsVersion: 2026-10-13a** (**W-22d steps 1 and 6 — where the right-click is made, and which row carries the stopwatch.** Asked twice of a local model with its temperature at 0, the 27 running-order questions were answered the same both times and two were wrong the same way both times: _right-click the line that should wait_ for the presenting flow's own row, and the stopwatch _at the right of that line's row_ for the attached row's. Step 1 now says the right-click is made in the **[en:tran:Presenting Flows]** list, not in the preview panel, on the row with the name on it, that the action comes in as a NEW line, and that **[en:tran:Change Timing]** is on that `Next: Timeout` line; step 6 says a timeout attached to a line shows as a CC line of its own, indented under the line it is attached to, and that the stopwatch is on that CC line, not on the line itself. Read in the code (a CC line is drawn one level in, under its line; the menu entry of a timeout line is **[en:tran:Change Timing]**), not pressed live: no step changed what it does. Asked again, both answers were right. **W-31 step 5** says in so many words not to open **Widgets** to reach **[en:tran:Reset Widgets Size]** — it is a row of the **View** menu itself, right under **Widgets** — because the same model sent people into that submenu at every asking (_click Widgets, then Reset Widgets Size_); asked again it reads _Click Reset Widgets Size. This option is in the View menu, right under Widgets_. And W-42 gains nothing in words for the two things that changed behind it — a complaint is now checked against the window before it is answered (row `CB-137`), and a local assistant gives the same answer to the same question (row `CB-138`).)
+
+Previous: **workflowsVersion: 2026-10-12l** (**New W-49b: run the slides from a presenter remote; W-22b step 2 and W-49 step 2 point at it.** Asked for by the user, holding a remote and unable to click a panel back into focus: _try attempting next keying multiple time shortly then I should got focused on focusable area which having selected element by order_. Three presses of a next key inside a second and a half hand the keys to the presenting flow's preview panel whose run has started, else to the slides in the middle while one of them is on a screen, else to a floating Slides preview; the third press only focuses. With nothing holding the keys the first press goes to the same panel and moves it. Every step was driven in the live dev app against a hidden screen: the slides took the keys and the fourth press advanced them, the running order outranked a live song, a floating preview took them when it alone was live, nothing was taken with nothing going, from a slider, from behind an open Bible Lookup, or from a song being stepped quickly. Not driven: two preview panels open at once, and a video or audio player — neither is in the recipe.)
+
+Previous: **workflowsVersion: 2026-10-12k** (**W-42 step 8 — two thumbs under every answer, what a thumb down brings, and a mark on what was clicked.** Three asks from the user, typed while every supported question was being asked of a small model: _each response card should have like and dislike icon, when user dislike should follow up_; _when user complain about wrong answer should recommend user to try smarter model_; and _make the card and buttons focusable so when I clicked I still see which one got clicked_. Step 8 says all three: 👍 and 👎 beside **Copy**, kept with the chat and sent nowhere; the first 👎 followed up by the window itself with what was wrong, three sentences to press and the advice to try a smarter model, with **Ask again with …** naming the next model up where the assistant lists its models best first (Claude, ChatGPT, Kimi); the same advice and button with the answer to a typed complaint; and a ring that stays on the card clicked and on the button pressed in it. Observed live 2026-10-12 on the dev app's help window, in a tab opened for it on ChatGPT: a question answered wrongly by GPT-5 nano, 👎 filled, the follow-up with **Ask again with GPT-5 mini** and the three sentences, the press moving the model list to GPT-5 mini and bringing the right answer under a note saying so, 👍 filled on that, a typed _That is wrong …_ answered with the advice naming GPT-5 and its button; then, on a card a command printed, the ring on a pressed thumb and the ring round a clicked card. Read from the code and its unit tests, not pressed live: the wording on the best model, on **Auto**, on a server of your own and with no assistant; a thumb down on an answer further up; a stale **Ask again with …** after the tab moved to another assistant. **And two running-order pages reworded after the last grading** (the user: _fix the two and re-ask_): W-22 step 2 ends on a worked example — drag the row out of the Documents or the Bible list and let go on the row that shows the presenting flow's name; W-22d step 3 says the box that asks for seconds has a chooser at its left, **Seconds** → **At Time**, and its step 1 names the menu entry a timeout line really has, **Change Timing** (it read **Change Seconds**, the interval's — read in the code, not pressed). Rows `CB-134`, `CB-135`, `CB-136`.)
+
+Previous: **workflowsVersion: 2026-10-12j** (**New W-53: one text in several languages, side by side, to sing along to.** Asked for by the user: _I want to have foreground component call `Long Text Show`. Imagine I have lyric just want to show like what showing for bible in screen, with multiple language_. The **[en:tran:Foreground]** launcher has a thirteenth component, **[en:tran:Long Text Show]**: a card per language holding either typed sections or a lyric file of the Documents list, checked against each other before anything goes up (the same sections in the same order, or **[en:tran:Show Long Text]** stays off and the panel says which part differs), drawn row by row in the layer a Bible passage is drawn in, with a look per language and a button per part that brings it to the middle of the screen (a song's card can show each part's words under its button, **[en:tran:View as Text Cards]**). A selected verse or section is marked more faintly than before, at the user's word. Observed live on the dev app the same day: both sources, the two refusals in words, the columns on the Mini Screen and on the screen window, auto-scroll, the per-language size and alignment, a part brought to the middle, **[en:tran:Clear Long Text]** and **[en:tran:Clear Foreground]**, and the text coming back after a reload. Read from the code and its unit tests, not pressed live: moving and removing a language or a section, **[en:tran:Hide Long Text]**, the font and colour rows, a second tab. The text cards were seen live in the user's own use of the panel, not pressed by the run. Verify: PM-163..PM-166.)
+
+Previous: **workflowsVersion: 2026-10-12i** (**W-42, the shared servers: no address is shown.** The user's ask, with the address circled in Settings: _hide endpoint and api key, to avoid easily copy and use_. **[en:tran:Shared servers]** lists each shared server's name and models and no longer its address; the paragraph says so, and that neither the address nor a key reaches either window. Seen live 2026-10-12 in the dev app's Settings: the card opened on _Models_ alone.)
+
+Previous: **workflowsVersion: 2026-10-12h** (**W-09, W-15 step 2, W-19 step 1, W-22 step 9 — four places a local model read wrongly, said where and how.** The last of the answers still graded wrong after the whole question list was asked: _Behind Slide_ was sent to the Background panel (W-09 now says it is under _Properties_ in the component's own panel — seen there, right above _Always on Top_); _How do I add a slide?_ was answered with a new document (step 2 names the menu items: the list's empty area → **New Slide**, a slide → **Duplicate** / **Delete**, rows CM-27, CM-32, CM-33); the drawing panel was opened with the shortcut AND the menu, which closes it again (step 1: one or the other); and the running order's preview was said to step _without changing what is on the screen_ (step 9: opening it shows nothing, clicking a preview or stepping does). And four the page did not say at all, each from rows the test matrix already holds: **renaming a file** (W-01b: its menu → **Rename**, the name turns into a box; CM-04, PL-31), **a slide the wrong shape for the screen** (W-03 Tips: the amber **Fix slide dimension** button at the top of the slides, and the Slide Editor's Width and Height boxes; PM-54, ED-39, ED-17), **the ✨ is not the 🤖** in so many words (W-44's opening), and that **a Bible whose book names or numbers still read in English needs no second import** (W-34, before the sentence about the Info editor). W-06's paragraph about another version on the screen says outright that a plain click changes the column and only Shift adds one beside. Three more after the last grading: the run panel's keys _put the next element on the screen_ (W-22 step 9, where "walk the whole running order without going back to the mouse" had been read as walking it without showing it); a click that goes nowhere does NOT call a **Next: Timeout** off (W-22); and **Generate Slides** is in the Bibles list, the right column, and makes one document for every version ticked (W-06 step 8). And W-22 gained one paragraph that only gathers what the page already said in four places: a loop of slides before the service, from start to finish (the interval above the set, a **Jump to** under it pointing back, started from the preview panel). Its **Jump to** and **Keyboard Event** passages now say where each is added from (right-click the presenting flow itself → **Add Action**), which they had left to the passage before them. And the sentence that introduces **Add Action** says which right-click it is — the presenting flow's own row, not the empty part of the list (that menu is **New File** and **Import**) and not a line — after four different questions had been answered with the wrong one. **And then W-22 became ten recipes** — W-22 (build it), W-22b (run it from the preview panel), W-22c (clear the screen, show and hide it), W-22d (**Next: Timeout**), W-22e (**Next: Interval**, **Jump to**, a loop), W-22f (**Keyboard Event**), W-22g (CC elements), W-22h (**Media Control**), W-22i (a line pinned to a screen, a line parked), W-22j (sharing) — because every answer still wrong was on that one recipe of 39 000 characters, and the user chose the split. The text is the recipe's own; steps that named another step by number name its page; W-22 step 2 says what the NAME row is and W-22d ends on a step for a run that stopped by itself. Its _Verify_ rows stay under W-22 until they are dealt out among the ten. No behaviour changed.)
+
+Previous: **workflowsVersion: 2026-10-12g** (**Nine questions the list offers had no answer on their page — W-01b, W-03, W-06, W-08, W-12, W-16, W-21.** Found by asking every supported question of a local model and reading each answer against its page: where the page said nothing, the model wrote something anyway. Added, each from the code and the controls already checked in the app: the blank first card of a PowerPoint, PDF or Word document (W-03); more than one verse, the next verses from the projector window, and another version on the screen (W-06); putting a search result on the screen (W-12); changing a web background's address (W-08); a name Windows reserves (W-01b); why the projector can show an edit that was never saved (W-03); that an installed Bible has no on/off switch (W-16); what a failed download leaves behind (W-21); the volume of a Video Show clip (W-09); and how a song's parts and their order are written (W-05) — whose step 11 no longer says the verses follow typing that has not been saved: the Lyric Editor writes the song only on Save.)
+
+Previous: **workflowsVersion: 2026-10-12f** (**W-22 steps 2 and its actions, W-42 step 6 — three sentences said more plainly.** Asked of a local model, three answers went wrong on words the page left to be worked out. _How do I add a song … to a presenting flow?_ was answered with the audio track of the **Audios** split, because the list of what can go in said _a document_ and never _a song_ — it now says a slide document or a song. _How do I make the running order advance by itself?_ was answered with dragging an action in, because the paragraph began _Back on the first menu_ without saying which — it now names the menu, right-click the presenting flow → **[en:tran:Add Action]**. And the arrow that folds the top of the help window was put _at the left edge of the list of suggested questions_, because the step said _the left edge of the lists_ — it now says the top line, the one with the three lists. No step changed what it does.)
+
+Previous: **workflowsVersion: 2026-10-12e** (**W-42's checks only.** Six test rows were added for what asking the whole question list of a local model found (CB-126 and CB-127 the same night: an answer names its question's key and menu item, and a song by its link is drafted by the window on a server of the user's own) — the right part of a long page rides (CB-122), **Read the whole thing** shows the page whole and clean (CB-123), a long page is read to its end (CB-124) — and W-11's list has CB-125, a Bible Reader question answered by the assistant and not by the book-button reply. No step of any recipe changed.)
+
+Previous: **workflowsVersion: 2026-10-12d** (**W-01 and W-42 step 1 — the question mark asks which help; W-11 step 3 — a pane in a color group splits into another version.** Two asks from the user, each with a picture. _In `Help` menubar should have `Open Online Help` to open what the question mark icon button open, and for the question mark icon should open contextmenu for `Open Online Help` and `Open Chatbot`_: the **?** at the end of the top bar went straight to the website; it now opens a two-row menu under itself, and the menu bar has **Help** → **[en:tran:Open Online Help]** as its first row. _When a bible view is in group the splitting should call `Split Horizontal to` and `Split Vertical to`_: a pane with a color hands that color to the pane split off it, and the two then follow one passage, so the same version twice showed nothing new — its two split buttons now open the version list, as the menu rows of the same names do, and say so in their names. Observed live 2026-10-12 on the dev Presenter (English): the **?** menu with both rows hung under the button; **Help** → **[en:tran:Open Online Help]** first in the menu bar's own list; a colored Khmer pane whose buttons read **[en:tran:Split Horizontal to]** / **[en:tran:Split Vertical to]**, the press opening the version list under that title, **KJV** chosen, and a KJV pane of the same passage opening on the left in the same group. NOT pressed live: the two rows of the **?** menu and the menu-bar row (a web page in the system browser, and the AI caution, which is a person's to answer) — what each opens is unit tested; nor the same buttons on the lookup's editing pane and its book grid, and their **Ctrl+Shift+S** / **V** keys, which are unit tested too. Rows `NAV-10`, `NAV-25`, `RD-122`.)
+
+Previous: **workflowsVersion: 2026-10-12c** (**W-42 opens on what it is, and step 2 says "new chat".** The page began with a paragraph about importing a Bible from the chat, set in front of the sentence that says what the help window is; and step 2 said only that **+** _starts another_. The opening of a long page rides on every question asked about it: asked through the help window of a local model (gemma-4-e4b), _Can I add something while you are still answering?_ was answered _This guide mainly covers starting a Bible import using an XML link_, and _How do I start a new chat?_ with how to open the help window the question was typed in. The Bible paragraph is now a paragraph of step 6, beside the **More…** list it names, with a lead of its own — **A Bible can be installed from the chat, with no model call.** — and step 2 reads **+** _starts a new chat (its tab reads **New chat** until a question is asked in it)_, which is what the strip shows. No behaviour changed. The other half is in code: which passage of a long page rides (`passageMatch.mjs`, EC-240).)
+
+Previous: **workflowsVersion: 2026-10-12b** (**W-42 step 13 — the who-answers list ends in Auto, which chooses among the assistants that cost nothing.** Asked for by the user with a picture of the list and the space under **Free** circled: _add `Auto` option, the chatbot should choose best no cost for user … check which one not busy and smarter and no cost then use it in asking_, and then _keep `Auto` selected but do dynamic endpoint+model_. The tab stays on **Auto** and who is asked is settled in front of every question: each of the user's own servers that costs nothing is looked at, one that does not answer is left out, one busy in another tab or just failed goes to the back, and the bigger model is asked first — the **Free** service counting as 8B. Observed live 2026-10-12 on the dev app's help window, in a tab made for it: **Auto** as the last row, **AUTO PICK** reading _chosen at each question_, the notice above the chat, the waiting lines _Auto is checking which assistants can answer_ and _Auto picked Free · Nemotron Lightning_ (the one server answering had a 4B model loaded), the answer, **AUTO PICK** then naming who answered, and a named row bringing the model list back. The ordering, the hand-on to the next assistant and the line over the answer are unit tested. Row `CB-121`.)
+
+Previous: **workflowsVersion: 2026-10-12a** (**W-31 step 5 says which menu Reset Widgets Size is on.** The step named the item and not its menu. Asked _How do I put the layout back the way it started?_ with the whole page in front of it, a local model wrote _Click View → Select Widgets → Click Reset Widgets Size_ — a hop through **Widgets** taken from step 1, and not there: the item is on **View** itself, the row under **Widgets**. Read off the app's own menu 2026-10-12 (the menu list a developer's tool returns: _View > Widgets > …_, then _View > Reset Widgets Size_). Row `CB-112`.)
+
+Previous: **workflowsVersion: 2026-10-11g** (**W-18 step 5 — several Bible versions on a screen are columns that scroll together, and what Line Sync really does.** Asked for with a picture of a card whose Khmer column had ended at verse 25 while the NIV beside it was on verse 19: the versions were the cells of one table in one scroller, so a shorter translation ran out early. Each version is its own scroller now and they keep the same reading point the way grouped Bible views do. The step also said Line Sync kept verse highlighting in sync across screens; it lays the versions out verse by verse in rows. Observed live 2026-10-11 on the card and on a virtual display page. Row `SP-33`.)
+
+Previous: **workflowsVersion: 2026-10-11f** (**The corrections of `2026-10-11d` checked by a second reader, and the statements left for a live look gone through again.** The 108 corrections were handed to independent readers with no reason attached and an order to refute them from the code: 107 held, and one did not — **Ctrl+Shift+P** does NOT close the Presenting Control while a drawing tool is armed (W-19 step 9; seen on a scratch dev instance: nothing with the pen armed, the panel closed after **Escape**, and the menu entry closed it either way). Of the 62 statements that pass had left for the running app, a second look at the stylesheets, the bundled libraries, the data and the arithmetic settled 34, and eleven of those were wrong: the countdown flashes red five times before it stays red (W-09); a list row's **⋮** is always there, faint, not brought up by the pointer (W-43); a further run-sheet preview opens a little below and left of the last, not beside it (W-22 step 9); the dictionary is let go ten seconds after its window closes (W-29); **Ctrl+S** saves in the Slide Editor, a Bible note and the Lyric Editor, and the Web Editor saves itself (shortcut appendix); the Khmer Bibles end on _Khmer BFBS_ (W-34); the Jesus example needs the graph opened on David — from Jacob the chain is forty steps and the search stops at thirty (W-38 step 8); two **[en:tran:Slow Down]** presses after two clicks stop the scroll by themselves (W-39 step 4); the help window's captions sit above their lists until it is dragged wider than 560 pixels (W-42 step 5); the notice reads _Assistant read a page on hymnary.org_ (W-42 step 6); and screens on a deleted virtual display go to the first real monitor other than the main one (W-51 step 10). 27 statements are still for a live look — what a second device, a TV, a real account, PowerPoint, a person's press or a model shows, and sixteen a single machine could show — each listed with exactly what to watch in the agent-docs skill's `live-checks.md`. Coverage matrix `2026-10-11f` in the same change.)
 
 Previous: **workflowsVersion: 2026-10-11e** (**W-07 step 7 and step 10 — Bible Properties has a [en:tran:Font Family] row.** Asked for with a picture of the panel: _should have font-family_. The row is the first of the panel's rows, a list of the fonts installed on the computer with a first line, `--`, for none; the font chosen draws every verse, the passage's heading and its verse numbers on every screen, the sample verse and every tile in the panel, and it is saved with a preset and cleared by **[en:tran:Reset]** like the rest of the look. A Bible whose language brings its own font keeps that font behind the chosen one, for the letters the chosen one lacks. Seen live on the dev presenter 2026-10-11, English and dark, a Khmer passage on screen 0's Mini Screen with that screen not showing: _Moul_ picked — the verse, its heading, its version key and its verse number all drawn in Moul, the sample verse and the twelve tiles too; _Georgia_ picked — the sample in Georgia and the Khmer verse still in Battambang; `--` picked — everything back as it was. Not seen on a projector's own window (no screen was showing); the rule a screen draws is held by unit tests. New PM-162.)
 
@@ -157,7 +205,7 @@ Previous: **workflowsVersion: 2026-10-02b** (**W-09 — a session's Hide row is 
 
 Previous: **workflowsVersion: 2026-10-02** (**W-09 — every foreground component gained _Behind Slide_.** Asked for by the user: _as a user I want to be able to render foreground behind bible/slide_. A checkbox in each component's **Properties**, right above **Always on Top**, puts that session's item behind the slide and the Bible text and over the background; ticking it on an item already up moves it at once, and **Always on Top** greys out while it is ticked. Verified live on the dev presenter 2026-10-02: a Marquee Bottom on screen 0 disappeared behind a full-screen slide in the Mini Screen when ticked, and was back over the slide's last line when unticked.)
 
-Previous: **workflowsVersion: 2026-10-01b** (**W-06 step 3 — a verse goes up with its button, not a double-click — from the release robot run 20261001-1953.** Asked for by the user ("fix all findings"). The step said to double-click the verse in the lookup's preview to present it; there a double-click selects a word, opens the verse-mark toolbar and brings the verse into view, and presents nothing. It now names the control that does it — **Save bible item and show on screen**, in the passage's title row while the mouse is over it — and its shortcut **Ctrl+Shift+Enter**, and says the passage is saved to the **Bibles** list as it goes up. Verified live on the dev Presenter 2026-10-01: **Ctrl+Shift+Enter** in the lookup put Genesis 1:1 (KJV) on screen 0 and added it to the **Bibles** list, and **Clear Bible** took it off.)
+Previous: **workflowsVersion: 2026-10-01b** (**W-06 step 3 — a verse goes up with its button, not a double-click — from the release robot run 20261001-1953.** Asked for by the user ("fix all findings"). The step said to double-click the verse in the lookup's preview to present it; there a double-click selects a word, opens the verse-mark toolbar and brings the verse into view, and presents nothing. It now names the control that does it — **Save bible item and show on screen**, in the passage's title row while the mouse is over it — and its shortcut **Ctrl+Shift+Enter**, and says the passage is saved to the **Bibles** list as it goes up. Verified live on the dev Presenter 2026-10-01: **Ctrl+Shift+Enter** in the lookup put Genesis 1:1 (KJV) on screen 0 and added it to the **Bibles** list, and **Clear Long Text** took it off.)
 
 Previous: **workflowsVersion: 2026-10-01** (**W-29's translation note and W-38 step 8 — fixes from the reader-only robot run 20261001-1149.** Asked for by the user ("fix all findings"). A name's **Gender** and a place's **Type** are now said in the lookup language, like a person's kind (W-29 said they were not); and a path search that finds nothing says how far it looked — **No connection found within 30 steps** (W-38). W-38 step 3's counts follow the dataset, which grew: Jacob's badge reads **47**, his children **16**. Verified live on the dev Reader 2026-10-01: Jacob's detail panel reads **ប្រុស** in its chip and its Gender row, Siloam's reads **ស្រះ** for its Type, and Jacob → Jesus answers **No connection found within 30 steps**, inline and as a toast.)
 
@@ -723,7 +771,7 @@ Previous: **workflowsVersion: 2026-09-01h** (**W-19 step 1 and W-42 steps 1 and 
 
 Previous: **workflowsVersion: 2026-09-01g** (**W-42 steps 6 and 9 — the ask box holds several lines, and the window can report a bug for you.** Asked for from the app with a screenshot of the ask row: _"change input text to textarea to support multiple lines"_, then _"under `Ask` add `Report`"_ — investigate first, collect the evidence, prepare it for an issue tracker — then _"ctrl+enter to ask, for normal enter just make new line"_ and _"to prevent click REPORT by accident, should confirm before running report"_. The box now grows with what is typed in it, **Enter** starts a line and **Ctrl+Enter** asks. **Report**, under **Ask**, quotes back what it is about to report before it does anything; confirmed, it photographs the app, notes the build, the window, the screens and the error log, investigates the live app and writes the report in the volunteer's place. Nothing is sent by it — there is no issue tracker connected yet, so it saves the report and the picture into Downloads and says so rather than claiming it was filed. Verified live 2026-09-01 on the presenter with ChatGPT: two reports end to end, both files on disk. New CB-32.)
 
-Previous: **workflowsVersion: 2026-09-01f** (**W-42 steps 6 and 7, and W-19 step 7 — the help window takes more than typed words, and stays listening while it answers.** Asked for from the app: attach files and images, paste an image from the clipboard, inspect a DOM element to attach, attach a screenshot — then widened mid-request to _"during waiting for api response user should able to add more input"_ and _"for something unclear the ai should ask for more input from user"_. The box is no longer disabled while an answer is on its way: **Add** folds what you type into the answer being written, and a **Stop** gives every added word back. Five ways to attach (paperclip, paste, drop, **📷** a picture of the app, **🎯** point at a control), capped at four per question, shown as chips with an **×**. Pointing does not press: the choosing click is swallowed, so asking what **Clear Bible** does never clears the bible. Pictures live only as long as the window — the chip greys out afterwards and says so — and a model that cannot see one says so before spending anything and offers one that can. The assistant can now ask to be SHOWN, with the button beside the request. W-19 gains a **camera** in the Presenting Control that photographs the app WITH the drawing on it and offers ask / copy / save-into-images. Pressing a chip shows what it stands for — a control is ringed again by its stored selector, a picture opens big, a file opens its folder. New CB-26..CB-31.)
+Previous: **workflowsVersion: 2026-09-01f** (**W-42 steps 6 and 7, and W-19 step 7 — the help window takes more than typed words, and stays listening while it answers.** Asked for from the app: attach files and images, paste an image from the clipboard, inspect a DOM element to attach, attach a screenshot — then widened mid-request to _"during waiting for api response user should able to add more input"_ and _"for something unclear the ai should ask for more input from user"_. The box is no longer disabled while an answer is on its way: **Add** folds what you type into the answer being written, and a **Stop** gives every added word back. Five ways to attach (paperclip, paste, drop, **📷** a picture of the app, **🎯** point at a control), capped at four per question, shown as chips with an **×**. Pointing does not press: the choosing click is swallowed, so asking what **Clear Long Text** does never clears the bible. Pictures live only as long as the window — the chip greys out afterwards and says so — and a model that cannot see one says so before spending anything and offers one that can. The assistant can now ask to be SHOWN, with the button beside the request. W-19 gains a **camera** in the Presenting Control that photographs the app WITH the drawing on it and offers ask / copy / save-into-images. Pressing a chip shows what it stands for — a control is ringed again by its stored selector, a picture opens big, a file opens its folder. New CB-26..CB-31.)
 
 Previous: **workflowsVersion: 2026-09-01e** (**W-42 step 6 — an answer on its way can be stopped.** Reported from the app with a screenshot: a question was asked, "Looking it up…" appeared, and there was no way back — the box was disabled, the Ask button was disabled, and the only way out of a question asked by mistake was to wait it out or close the window. A question can take a minute (ten model rounds), and it is being paid for the whole time. The **Ask** button now becomes **Stop** while an answer is on its way, **Esc** does the same, and pressing either drops the request on the wire rather than merely ignoring what comes back. Verified live 2026-09-01 on the presenter with ChatGPT: both the button and the key ended the answer at once, the network log shows the model call `net::ERR_ABORTED` mid-round, no late answer landed, and an answer left alone still arrives as before.)
 
@@ -1427,6 +1475,11 @@ The Presenter has a header and three resizable columns:
   choice is kept for the next launch. The Bible Reader and the Slide Editor
   never hold the computer awake, so they have no cup. A screen that is
   showing keeps the display on by itself, whatever the cup says.
+  The **?** at the far right (**[en:tran:Help]**) opens a small menu of two rows:
+  **[en:tran:Open Online Help]** opens the app's help page on its website, in
+  your web browser, and **[en:tran:Open Chatbot]** opens the help window that
+  answers inside the app (W-42). The first is in the menu bar too, as **Help** →
+  **[en:tran:Open Online Help]**.
 - **Left column:** your content libraries — the **[en:tran:Documents]** list (songs live
   here too, marked with a music note) and **[en:tran:Presenting Flows]**.
 - **Middle column:** the working area — **[en:tran:Documents] / [en:tran:Bibles]** preview tabs plus the
@@ -1438,7 +1491,7 @@ The Presenter has a header and three resizable columns:
 
 Drag any divider between panels to resize them; the size is remembered. 📸
 
-_Verify: GL-12, NAV-01..02, NAV-24, PL-01, PR-04._
+_Verify: GL-12, NAV-01..02, NAV-10, NAV-24, NAV-25, PL-01, PR-04._
 
 ### W-01b — The `⋮` button: everything a thing can do
 
@@ -1465,7 +1518,18 @@ does. Those extras live in a small menu.
 > machines and browsers keep that button for a menu of their own. The `⋮` is the same
 > menu with a button you can see.
 
-_Verify: GL-24, GL-06._
+**To rename a file** — a document, a song, a picture, a clip — open its menu and pick
+**[en:tran:Rename]**. The name turns into a box holding the name it has: change it and
+press **Enter** (or click the ✓). The file is renamed where it lives, and it stays
+selected.
+
+**A name Windows keeps for itself is refused**, when a file is made or given a new name.
+`CON`, `PRN`, `AUX`, `NUL`, `COM1`…, `LPT1`… — with or without something after a dot,
+such as `NUL.old` — cannot name a file on Windows, so the app refuses them on every
+computer (**[en:tran:Invalid file name]**: _This name is reserved by Windows. Please
+choose another one._) and a file made here can always be moved to another machine.
+
+_Verify: GL-24, GL-06, CM-04, PL-31._
 
 ### W-02 — Switch between the main pages
 
@@ -1499,6 +1563,15 @@ _Verify: NAV-01..04._
    Next presses or wrapping from the last slide to the first.
 4. To remove the slide from the screen, press **F8** ([en:tran:Clear Slide]) or click
    the matching clear button (`SL`) in the mini screen's header.
+   **The first card of a PowerPoint, PDF or Word document is blank, on purpose.** It is
+   not a page of your document and takes no number: your own page 1 is the card after it,
+   so a five-slide PowerPoint shows six cards. Presenting the blank card puts a blank
+   slide on the screen.
+   **What the projector shows is what the editor holds, saved or not.** A document you
+   have changed and not saved carries a red `*` after its name, and the Presenter and the
+   screen show it WITH those changes — the editor keeps your unsaved work on disk. To go
+   back to the saved version press **[en:tran:Discard changed]** in the editor's row of
+   buttons (it asks first, and it empties Undo as well), then present the slide again.
 5. **Show the person on the stage what comes next.** A screen's **St:** number (the badge at
    the right of its mini screen's footer) decides how a slide is drawn on it, for every kind
    of document — a slide document, a PDF, a PowerPoint or a Word file — just as it does for a
@@ -1545,8 +1618,15 @@ Tips:
   you type and are **never sent to an audience screen**. The panel starts closed, so
   it costs nothing until you want it; to put it away again drag the divider above it
   down to the bottom edge, or untick **View → Widgets → Note** (W-31).
+- **A slide that is the wrong shape for the screen.** A slide document keeps its own
+  width and height, and one made for another display does not match yours. While a slide
+  and the display differ, an amber button with a hammer — **[en:tran:Fix slide dimension]**,
+  the sizes in its tooltip — shows in the row of buttons at the top of the slides, here
+  and in the Slide Editor: press it and the slides that differ take the display's size,
+  and the button goes away. One slide at a time is the Slide Editor's **Width** and
+  **Height** boxes, with **[en:tran:Apply All Slides]** for the whole document.
 
-_Verify: PL-01, PM-05..09, PM-149, PM-157, KB-05, KB-08._
+_Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08._
 
 ### W-04 — Auto-play slides on a timer
 
@@ -1636,12 +1716,27 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
 11. **Edit the words while the song is open and the verses follow by themselves.** Change the
     song in the **Lyric Editor** (right-click the song → **[en:tran:Edit]**) — or in any other window —
     and within a second or two the rendered song **and every Stage Previewer pane** show the
-    new words. You do not have to re-pick the song, and you do not have to save first: the
-    editor keeps your unsaved work on disk, and that is what the verses render. 📸
+    new words, once the editor has saved them (**Ctrl+S**): the verses render what the
+    song's file holds. You do not have to re-pick the song. 📸
 12. If you ever need to force it — a song changed by something outside the app, say — the
     **⋮** at the right end of the Stage Previewer header holds **[en:tran:Reload]**, which re-renders
     every stage at once. The same **[en:tran:Reload]** sits in the right-click menu of a stage pane and
     of the rendered song above it.
+    **How a song is written: its parts, and the order they are sung in.** In the Lyric
+    Editor a song is plain text in blocks. Each part is a block of its own: a line of three
+    backticks followed by `ol:` and the part's name — `ol:Verse 1`, `ol:Verse 2`,
+    `ol:Chorus`, `ol:Bridge` — then its words, then a line of three backticks to close it.
+    A chord goes in square brackets just before the syllable it falls on, like `[G]`.
+    The first block, `ol:Config`, holds the song's **Title** and its **Structure**, and
+    the Structure line IS the order the song is sung and shown in: short codes run together
+    with NO spaces. `- Structure: V1CV2C` is verse 1, chorus, verse 2, chorus; `x2` after
+    a code repeats it (`Cx2`). To change the order, change that line — the parts
+    themselves stay where they are. The codes: Verse `V`, Chorus `C`, Pre-Chorus `P`,
+    Bridge `B`, Intro `I`, Outro `O`, Tag `T`, Interlude `L`, Instrumental `IS`; a
+    numbered part takes its number (`V2`), Intro and Outro take none. The editor marks a
+    mistake in red where it is: a Structure line that is empty, has spaces in it or names a
+    part that has no block (`V3` with no `Verse 3`), two parts with the same name, a
+    chord it does not know (`[Cm7]` is one, `[Cm7b5]` is not).
 
 _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
 
@@ -1665,9 +1760,26 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    Double-clicking a verse only brings it into view; it does not present. 📸
 4. The dialog closes by itself once the passage is saved, unless _[en:tran:Keep Open]_
    is ticked; to close it yourself use the red ✕ button or **Ctrl+Q**.
-5. Press **F9** ([en:tran:Clear Bible]) to take the verse off screen.
+5. Press **F9** ([en:tran:Clear Long Text]) to take the verse off screen.
 6. The presented verse also appears in the **[en:tran:Bibles]** tab (middle column) and the
    **[en:tran:Bibles]** list (right column) for re-presenting later.
+   **More than one verse.** In the grid of verse numbers, click the first verse and then
+   **Shift**-click the last one (or press on the first and drag to the last);
+   **[en:tran:Show all verses]**, at the end of the grid, takes the whole chapter. Typed into
+   the **[en:tran:Bible Reference]** box it is `John 3:16-18`.
+   **The next verses, from the projector window.** Click the projector window itself and
+   press **Ctrl+→** (or **Alt+→**): the screen moves on by as many verses as it is showing —
+   John 3:16 becomes 3:17, John 3:16-18 becomes 3:19-21 — into the next chapter when the
+   chapter ends, and **Ctrl+←** goes back. It only works while the main window is on the
+   Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first. Nothing
+   on the mini screen card steps the verse; from the Presenter itself, present the next
+   passage the same way you presented this one.
+   **Another version on the screen.** On the mini screen card, each column of the passage
+   begins with the short name of its version (`KJV`, say). Click that name and a list of
+   versions opens. A plain click on one **changes** that column to it — it adds nothing.
+   To put a second version **beside** the first, hold **Shift** while you click it
+   (the list says **[en:tran:Shift Click to Add]** at its top). With two
+   or more versions showing, the same list has a red row that takes that column away.
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
@@ -1675,9 +1787,10 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    list. 📸
 
 8. To make an editable slide document from a saved passage, open that item's
-   **⋮** menu in the Presenter's **[en:tran:Bibles]** list and choose
-   **[en:tran:Generate Slides]**. In the floating panel, select any additional
-   Bible versions to include. The original version stays selected. Enter an optional
+   **⋮** menu in the Presenter's **[en:tran:Bibles]** list (the right column) and choose
+   **[en:tran:Generate Slides]**. In the floating panel, tick every other Bible version
+   you want on the same slides — one document holds them all, so this is done once, not
+   once for each version. The original version stays selected. Enter an optional
    **[en:tran:Font Size]** in pixels, or leave it empty for **[en:tran:Auto]**.
    Choose **[en:tran:Dark]** or **[en:tran:Light]** under **[en:tran:Theme]** to set
    the generated slides' background and text colors. Both themes retain the
@@ -1697,7 +1810,7 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
     file. If a selected version lacks a verse, generation reports it without
     saving a partial passage.
 
-_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, CB-61, CM-101._
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, CB-61, CB-131, CM-101._
 
 ### W-07 — Style the on-screen Bible text
 
@@ -1773,6 +1886,9 @@ _Verify: PM-13..14, PM-57, PM-159..162, SP-21._
    - **[en:tran:Webs]:** click a saved page, or use the **⋮** next to the folder path (or
      right-click the empty list) → **[en:tran:Add URL]** to add one (a small box asks for the
      web address; the Web Editor, W-15, is for a page file of your own).
+     **A saved address cannot be edited.** To change it, right-click its tile →
+     **[en:tran:Remove URL]** (it asks first, and is not offered while that page is on a
+     screen), then **[en:tran:Add URL]** with the new address.
 3. The live background's tab carries the on-screen dot before its name (e.g. `● Videos`).
 4. Press **F7** ([en:tran:Clear Background]) to remove it.
 
@@ -1871,6 +1987,10 @@ button:
   folder of thousands opens as fast as a folder of ten. Click a tile to put it up,
   click it again to take it off, right-click to choose a display. A clip plays muted
   and loops.
+  **The volume of what is playing.** To hear a [en:tran:Video Show] clip, open
+  _[en:tran:Properties]_ in its panel and tick **[en:tran:Play With Sound]**: a
+  **[en:tran:Volume]** slider appears under it, and that slider is the clip's volume.
+  An audio track has no slider of the app's own: it is as loud as the computer's volume.
 - **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
   [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
   the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
@@ -1911,8 +2031,8 @@ button:
 - **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
-- **[en:tran:Behind Slide]** (every foreground component, right above _Always on
-  Top_) puts that session's item **behind** the slide and the Bible text — over the
+- **[en:tran:Behind Slide]** (every foreground component: under _Properties_ in its
+  own panel, right above _Always on Top_) puts that session's item **behind** the slide and the Bible text — over the
   background, under the words — so a logo, a clock or a falling-snow clip never covers
   the lyrics. Tick it while the item is up and it moves at once; untick it and it comes
   back over the slide. A slide that fills the whole screen with its own picture hides
@@ -1958,6 +2078,71 @@ and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6
 
 _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67._
 
+### W-53 — Show a song in several languages for everyone to sing (Long Text Show)
+
+**Goal:** put one text — usually a song — on the screen in two or more
+languages side by side, each part beside its translation, and let it scroll
+while the room sings.
+
+1. Open the **[en:tran:Foreground]** tab and choose **[en:tran:Long Text Show]**
+   in the menu. Its panel opens.
+2. **Add the languages.** Press **[en:tran:Add Language]** and pick one; press it
+   again for the next. Each language gets a card of its own, named by its code
+   (KM, EN), and a language can be in the list only once. The top card is the
+   left column on the screen; the arrows on a card move it, and its ✕ takes
+   that language out.
+3. **Give each language its words**, one of two ways, chosen on its card:
+   - **[en:tran:Raw Text]** — type a **[en:tran:Title]**, then one box per
+     section (a verse, a chorus). **[en:tran:Add Section]** adds the next box;
+     the ✕ beside a box removes it and the arrows move it. A line break in a
+     box is a line break on the screen.
+   - **[en:tran:Lyric File]** — press **[en:tran:Choose Lyric]** and pick one of
+     the songs in your Documents list. The card then says the song's title and
+     how many parts it sings. The words come from the song in the order it is
+     SUNG, so a chorus sung three times is there three times. Chords are left
+     out, and so is a part that has chords and no words (an intro, an
+     instrumental).
+4. **The languages have to line up.** Until they do,
+   **[en:tran:Show Long Text]** stays off and the panel says the first thing
+   that does not match: typed languages need the same number of sections, none
+   of them empty, and two songs need the same parts in the same order. It
+   reads like this: _The songs do not have the same structure: 1. KM Verse 1 ≠
+   EN Intro_.
+5. Tick the screen in the Mini Screen panel and press
+   **[en:tran:Show Long Text]**. Each language is a column under its title and
+   each section is a numbered row, so a verse sits beside its translation. 📸
+   It takes the place of a Bible passage or a slide on that screen.
+6. **Let it scroll.** On the Mini Screen card, press the double arrow at the
+   bottom right of the picture: the text starts moving up by itself, on the
+   screen too.
+7. **Jump to a part.** Every card lists its parts as buttons — `1 Verse 1`,
+   `2 Chorus` … on a song, the section's own number on typed text. While the
+   text is on a screen, press one and that row is marked, faintly, and
+   brought to the middle of the screen in every language. The button you
+   pressed stays lit, on every language's card, so the panel shows where the
+   song has got to. A chorus sung twice
+   has two buttons, and each goes to its own row. On a song's card the first
+   button of that row, **[en:tran:View as Text Cards]**, turns each button
+   into a card holding that part's words, run on in one line with a slash
+   between its lines, for following the song by its words — press
+   anywhere on a card to bring it to the middle; press
+   **[en:tran:View as Text Cards]** again for the small buttons.
+8. **Give a language its own look.** Open **[en:tran:Properties]** on its card:
+   **[en:tran:Font Family]**, **[en:tran:Text Color]**,
+   **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
+   it a little smaller) and **[en:tran:Text Align]**. A change reaches a
+   showing text about half a second after you stop. Whatever you leave alone
+   follows the screen's own Bible text style.
+9. **Change the words.** Edit a card and press **[en:tran:Show Long Text]**
+   again: what is on the screen is the text as it was when you last pressed it.
+10. **Take it down.** **[en:tran:Hide Long Text]** beside the show button, or
+    **[en:tran:Clear Long Text]** (the **LT** button) or
+    **[en:tran:Clear Foreground]** (**FG**) on the Mini Screen card.
+11. The tabs at the top of the panel keep several texts — a song a tab — each
+    with its own languages and looks.
+
+_Verify: PM-163, PM-164, PM-165, PM-166._
+
 ### W-10 — Control what the audience sees (mini screen + clears)
 
 **Goal:** manage the live output from the screen preview card.
@@ -1981,9 +2166,11 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
 - **Clear buttons** (header — each also has a function key):
-  **Clear All `F6` / BG `F7` / SL `F8` / BB `F9` / FG `F10`**
-  ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Bible] / [en:tran:Clear Foreground]).
-  A button is only lit while its layer has something to clear.
+  **Clear All `F6` / BG `F7` / SL `F8` / LT `F9` / FG `F10`**
+  ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Long Text] / [en:tran:Clear Foreground]).
+  A button is only lit while its layer has something to clear. **LT** is the
+  long text layer: a Bible passage, or the text of a
+  **[en:tran:Long Text Show]**.
 - **Stop drawing the preview** (header, the eye right after **FG** —
   **[en:tran:Stop rendering preview]**): for a slow computer. Click it and that card
   stops drawing: its body turns into a striped pattern that says
@@ -2057,6 +2244,13 @@ quick lookup, and where you look a verse up when you are not presenting.
    clicked, without needing another scroll.
    The choice is remembered for that color group, and the toggle appears only
    while the group has at least two panes.
+   A pane that has a color splits into ANOTHER version. Its two split buttons,
+   in the row that appears while the mouse is over its header, read
+   **[en:tran:Split Horizontal to]** and **[en:tran:Split Vertical to]**: click
+   one, then click a version in the list, and the same passage opens beside (or
+   below) it in that version, in the same color group. A pane with no color
+   splits at once, in the version it already has — its buttons read
+   **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
 4. If you lose a passage, you do not need to remember and type it again. Double-click one of
    the recent reference rows near the top to go back to it.
 5. To change the main Bible version, click its short name in the header and choose a
@@ -2074,7 +2268,7 @@ quick lookup, and where you look a verse up when you are not presenting.
    the OpenAI key. The switch lives with the provider setting, not in the Bible
    Reference toolbar.
 
-_Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, ST-59._
+_Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125._
 
 ### W-12 — Search the whole Bible (Bible Find)
 
@@ -2115,6 +2309,10 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, ST-59._
    The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
    to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
+   **To put a result on the screen.** A result has no show button of its own. Click it —
+   it opens as a passage in the lookup — then, in the Presenter, point at that passage's
+   title and press the cast icon, **[en:tran:Save bible item and show on screen]**, as for
+   any passage (W-06 step 3).
 
 _Verify: RD-08, RD-09, RD-45, RD-46, RD-47._
 
@@ -2195,8 +2393,8 @@ in the same documents folder. 📸
 **Slides** ([en:tran:Slide Editor]):
 
 1. Select a slide document, then click the **[en:tran:Slide Editor]** header tab. 📸
-2. Left: the slide list — click to select; right-click to **add / duplicate / delete**;
-   drag to reorder.
+2. Left: the slide list — click to select, drag to reorder. Right-click its empty
+   area → **[en:tran:New Slide]**; right-click a slide → **[en:tran:Duplicate]** / **[en:tran:Delete]**.
 3. Canvas: click a box to select it; drag to move; drag the handles to resize;
    **double-click a text box** to type into it; **Ctrl+Enter** focuses the canvas. 📸
    (From the **[en:tran:Presenter]**, right-click a slide → **[en:tran:Edit] ↗** opens this editor in its
@@ -2280,7 +2478,7 @@ tile in the tab. **[en:tran:New File]** asks for a name and makes an `.html` pag
 folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in its own window,
 its code beside a preview.
 
-_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -2352,6 +2550,11 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
 3. **[en:tran:Bible]** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
    or export/import a **[en:tran:Bible Data]** archive. The old online version list is
    development-only and can be unavailable. 📸
+   **An installed Bible has no on/off switch.** Every Bible in that list is offered
+   wherever a version is chosen. To stop one being offered, take it off the computer: the
+   trash icon on its row, **[en:tran:Move to Trash]**, asks first
+   (**[en:tran:Delete Bible XML]**) and sends its file to the Recycle Bin, from where it
+   can be brought back or imported again.
 4. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
 
 _Verify: ST-01..ST-09, ST-22, ST-52, ST-58, LT-02..04._
@@ -2390,12 +2593,17 @@ _Verify: PU-01, PU-05, PU-07._
    **[en:tran:Select] / [en:tran:Deselect]** it, or **[en:tran:Solo]** to make it the only selected one.
 4. You can also **drag** a slide, background item, or foreground Show button and
    **drop it on one specific card** to present it on that screen only. 📸
-5. While a Bible verse is live, the card's right-click menu offers **[en:tran:Set Line Sync]**
-   to keep verse highlighting in sync across screens.
+5. A Bible passage shown in more than one version is drawn as one column per version, and
+   the columns keep together: scroll one of them on the card — the wheel, its scrollbar or
+   the auto-scroll button — and the others move to the same verse, on the screen it shows
+   as well. The card's right-click menu offers **[en:tran:Set Line Sync]** to lay the
+   versions out verse by verse in rows instead, and **[en:tran:Unset Line Sync]** goes back
+   to columns. A screen that is already showing keeps the layout it was shown with until
+   it is hidden and shown again; its scrolling follows the card either way.
 6. Right-click a card → **[en:tran:Delete]** removes a screen you no longer need (the first
    screen can't be deleted while it is the only one).
 
-_Verify: SP-04..05, SP-10..12._
+_Verify: SP-04..05, SP-10..12, SP-33._
 
 ### W-19 — Draw and spotlight on the app itself (Presenting Control)
 
@@ -2404,8 +2612,8 @@ to other people (a training session, a screen share, a projector mirroring your 
 The audience screen has its own Draw and Focus tools on the mini-screen card (W-10);
 this is the same pair of tools pointed at the app.
 
-1. Open the **Tools** menu → **[en:tran:Start Controlling]** (**Ctrl+Shift+P**, **⌘+Shift+P** on
-   Mac). **Every window of the app answers it** — the Presenter, the Bible Reader, the
+1. Open the **Tools** menu → **[en:tran:Start Controlling]**, or press **Ctrl+Shift+P**
+   instead (**⌘+Shift+P** on Mac) — one or the other. **Every window of the app answers it** — the Presenter, the Bible Reader, the
    Slide Editor, a Bible Note, Settings, the Web Editor, the Lyric Editor and Local Web
    Share — and the one you are looking at is the one that gets the panel. (The projector
    output, the About box and the Find bar deliberately do not: an overlay on what the
@@ -2537,155 +2745,181 @@ installed once.
 > saved as `name (1)`. Pasting something that is not a web link gets you an
 > **[en:tran:Invalid URL]** message and nothing is downloaded. Downloads need an internet connection — and
 > a busy site can cut a large download off partway, in which case just try again.
+> **A download that fails leaves nothing in your folders.** The app downloads into the
+> computer's own temporary folder and takes its unfinished pieces away when the download
+> fails (you are told why under **[en:tran:Download From URL]**). Only when the app was
+> closed in the middle of a download can a file named `temp-…` be left in that temporary
+> folder: nothing in the app uses it, and it is safe to delete once no download is running.
 
 _Verify: MD-01..03, CM-24, PM-102._
 
 ---
 
-### W-22 — Build a service presenting flow (and share it)
+### W-22 — Build a service presenting flow (a running order)
 
 **Goal:** collect everything one service needs — songs, slides, verses, backgrounds and
-foreground presets — into one running order you can work down live, and hand the whole
-thing to another machine.
+foreground presets — into one running order you can work down live.
 
 1. Find the **[en:tran:Presenting Flows]** panel — it is the lower of the two lists on the
    left, under **[en:tran:Documents]**. If the list is empty, right-click its empty area (or
    use the **⋮ [en:tran:More Options]** button in its title bar) → **[en:tran:New File]** to create one. 📸
-2. **Drag things onto the presenting flow's NAME row to add them.** (Dropping onto a _line_ of an
-   open presenting flow does something else — see step 5.) Anything you can present can go in:
+2. **Drag things onto the presenting flow's NAME row to add them.** The NAME row is the
+   presenting flow's own row in the list — the one with its name on it; not the empty part of
+   the list, and not a line inside an open presenting flow (dropping onto a _line_ does
+   something else — it attaches: see W-22g). So, to add a song or a verse: take hold of
+   its row — in the Documents list, or in the Bible list — drag it over to the Presenting
+   Flows list and let go on the row that shows the presenting flow’s name. It is added
+   at the end. Anything you can present can go in:
    - a **background** — a colour, image, video, camera or website;
-   - a **document** — drag its row out of the Documents list;
+   - a **document** — a slide document or a **song** (a song is a document too): drag its row out of the Documents list;
    - a **single slide** — from the previewer, or from a document already in the presenting flow;
    - a **Bible verse** — from the Bible list;
    - a **foreground preset** — drag the blue **[en:tran:Show Marquee Top]** / **[en:tran:Start Countdown]** /
      **[en:tran:Show Time]** button itself. Whatever you typed and styled travels with it, so the
      presenting flow remembers _that_ announcement, not just "a marquee". 📸
    - an **audio track** — drag it out of the **[en:tran:Audios]** split.
+3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
+   what it is, its id, and its name. A **document** line has its own arrow at its left end —
+   a song is a document too. Click the **arrow**, not the line, to see that document's
+   slides underneath; clicking the line itself opens the document in the previewer. 📸
+4. **Click an element to put it on the screen** (a document opens its previewer instead;
+   an **audio track** opens the **[en:tran:Audios]** split and flashes the track there — the
+   presenting flow never plays audio itself, so that you keep the panel's safeguards like
+   "one track at a time").
+   You can also **drag an element onto a mini screen**, or **right-click → Show on
+   Screens** ([en:tran:Show on Screens]) to pick the screen.
+5. Right-click an element for **[en:tran:Move up]** / **[en:tran:Move down]**, **[en:tran:Choose Color]**
+   to group your running order by colour, or **[en:tran:Remove from Presenting Flow]**. To move a line a long
+   way, use **[en:tran:Move to Top]** or **[en:tran:Move to Bottom]** instead of
+   clicking **[en:tran:Move up]** over and over — the line jumps straight to that end and everything
+   else keeps its order. (A line that is already at the top is not offered **[en:tran:Move up]** or
+   **[en:tran:Move to Top]**, and one already at the bottom is not offered **[en:tran:Move down]** or
+   **[en:tran:Move to Bottom]**.) **[en:tran:Duplicate]** puts a copy of the line **directly below** it,
+   with its colour, its pinned screens and its parked slides already on the copy — the quick
+   way to sing a song twice in one service, then change only the second one. The two copies
+   are separate from then on: parking or recolouring one leaves the other alone. 📸
+   You can also drag a
+   line up or down **inside the same presenting flow** (dragging a line into a _different_
+   presenting flow does nothing — add it there from its own list instead). A colour shows as a
+   stripe down the left edge of the line and a dot at its right end; the lines stay in
+   your running order — they are never re-sorted into colour groups, because the order
+   _is_ the meaning here. The colour belongs to that presenting flow alone, so the same song can
+   be marked differently in two services. Changes are saved as you make them — there is
+   **no save button** anywhere in this panel.
+6. Whatever is **live on the screen right now** is marked with a magenta `●` — on the
+   element itself, on the document it belongs to, on the presenting flow, and on the
+   **[en:tran:Presenting Flows]** heading — so you can see at a glance where you are in the running order.
+7. Not sure which "5.jpg" a line means? Right-click it → **[en:tran:Reveal Original]** — the app scrolls to the real item elsewhere in the window and
+   flashes it. This works on the slides inside an opened document too. A colour or a
+   camera has no original to point at, and the panel holding the original has to be
+   open already.
 
-   **Add a screen action.** A running order can also hold something to _do_ rather than
-   something to show. Right-click the presenting flow → **[en:tran:Add Action]** →
-   **[en:tran:Clear Screen]** — a row that adds nothing and opens the clears — and pick
+**What else a running order can do** — each has a page of its own:
+
+- be run from one floating panel, with the keyboard (W-22b);
+- hold a line that clears the screen, or shows or hides it (W-22c);
+- wait on a line and then move on by itself (W-22d), loop a set of slides or jump back
+  (W-22e), answer to a key of your own (W-22f);
+- make one line bring others up with it (W-22g), or play the video inside a slide (W-22h);
+- send a line to one particular screen every time, or park a line (W-22i);
+- be handed to another machine as one file (W-22j).
+
+_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96, PL-101._
+
+---
+
+### W-22b — Run the service from the presenting flow's preview panel
+
+**Goal:** see the whole running order at a glance, and walk the service with one key.
+
+1. To see the whole service at a glance, click the **window** icon on the presenting flow row (or
+   right-click → **[en:tran:Open Preview]**). A floating panel shows every element with its real
+   preview — slides look exactly as they will project, and a document shows all of its
+   slides. Opening it puts nothing on a screen, and neither does scrolling it: that is
+   how you look ahead. An element goes up only when you click its preview or press one
+   of the keys below — those keys run the service, they are not for looking.
+   Collapse the ones you are not working on — or fold the whole running order
+   away at once with the **[en:tran:Collapse All]** icon at the bottom-left of the
+   panel, and open it all again with **[en:tran:Expand All]** beside it. Whichever
+   of the two has nothing left to do fades out. Whatever you folded away is remembered for
+   that presenting flow, so a running order trimmed down to the few things you are working on
+   comes back that way next time — and it follows the element, not its position, so
+   reordering the list does not shuffle what is folded. 📸
+   To make the thumbnails bigger or smaller, use the zoom slider in the panel's footer
+   (it tucks itself away into a **⋯** button at the bottom-left), **Ctrl + scroll**, or a
+   two-finger **pinch**. This zoom is remembered separately from the one in the middle
+   Documents tab — and it is shared by every one of these panels, so zooming one resizes
+   them all.
+   **You can have several of these panels open at once**, one per running order — the
+   songs in one and the sermon in another, side by side once you drag them apart. Each opens a little below and to
+   the left of the last, so it never lands exactly on top of it; each remembers its own
+   size and place, and is closed on its own with its
+   ✕ (or by clicking its window icon in the list again). Each is its own run, too: where
+   you are, what you have folded away and any countdown belong to that panel alone, and
+   the keys below always drive the one you last clicked into. 📸
+2. **Run the service from this panel.** Click an element — the panel outlines it and
+   remembers it as where you are. Clicking its preview also shows it, and clicking the
+   title line of a folded element marks it just the same — folding is the chevron on its
+   left, so pointing the run at an element never folds it away.
+   Then **Space**, **↓**, **→** or **Page Down** puts the next element on the
+   screen: every press shows the congregation the next thing, so one key runs the whole
+   service. **A document is walked slide by slide:** arriving at it always shows its
+   **first** slide, each further press shows the next one, and the keys only move on to
+   the next element once its **last** slide is the one on screen — so a whole song or sermon deck plays from here without touching
+   the mouse. A **folded-away** element is not passed over: the run **opens it** when it
+   gets there, and a song folded away is unfolded and walked from its first slide like any
+   other. Folding is how you _read_ a long running order; it never decides what is in the
+   service. **The only line the keys step over is one you have parked** (W-22i) — an audio
+   track and a damaged line still take the marker, so you can see where the run has got to,
+   they simply have nothing to show. The last element is the end — it does not start over.
+   The keys work while you are in this panel, and it takes them the moment you open it, so
+   there is nothing to click first; click into the slides list and they drive that list
+   again, as before. Clicked somewhere else and the keys stopped? Press the key **three
+   times quickly** and this panel takes them back (W-49b). 📸
+3. **A screen action is stopped on and fired** like anything else (W-22c) — so putting a
+   **[en:tran:Clear All]** between the last song and the sermon means one more press of the same
+   key blanks the screen at exactly that point in the running order.
+   The `Next:` lines are fired the same way, and what they fire is this panel: a wait that
+   moves the run on by itself (W-22d), or a loop that keeps moving it (W-22e).
+4. **Everything you can right-click in the list, you can right-click here.** The menus in
+   this panel are the very same menus — right-click an element's **title line** (or any
+   empty part of its box) and you get its full menu: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, the four
+   moves, **[en:tran:Duplicate]**, **[en:tran:Choose Color]**, **[en:tran:Disable]** / **[en:tran:Enable]** and **[en:tran:Remove from Presenting Flow]**, gated exactly as they are in the list. So you can tidy and re-order the
+   running order from the panel you are actually watching during the service, without
+   going back to the list — and the list behind it follows immediately. 📸
+   Two things inside a box keep menus of their own, because they are not the element:
+   a **slide thumbnail** gets the slide's menu (**[en:tran:Reveal Original]**, **[en:tran:Show on Screens]**,
+   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**), and a **CC line** gets its
+   short one (**[en:tran:Reveal Original]**, **[en:tran:Set Specific Screen]**, **[en:tran:Remove CC Element]**).
+
+---
+
+### W-22c — Clear the screen, or show and hide it, from a running order
+
+**Goal:** put something to _do_ in the running order — clear a screen, light it, darken
+it — rather than something to show.
+
+1. **Add a screen action.** A running order can also hold something to _do_ rather than
+   something to show. Right-click **the presenting flow itself** — its own row in the
+   list, not the empty part of the list and not one of its lines — and choose
+   **[en:tran:Add Action]**: every action is added from that one menu. For a clear,
+   pick **[en:tran:Clear Screen]** there — a row that adds nothing and opens the clears — and then
    one of **[en:tran:Clear All]**, **[en:tran:Clear Background]**, **Clear
-   Slide** ([en:tran:Clear Slide]), **[en:tran:Clear Bible]** or **[en:tran:Clear Foreground]** — the same five clears as the buttons on each mini screen, and the line
-   carries the same `ALL` / `BG` / `SL` / `BB` / `FG` badge so you can tell them apart at a
+   Slide** ([en:tran:Clear Slide]), **[en:tran:Clear Long Text]** or **[en:tran:Clear Foreground]** — the same five clears as the buttons on each mini screen, and the line
+   carries the same `ALL` / `BG` / `SL` / `LT` / `FG` badge so you can tell them apart at a
    glance. It lands at the end of the list; drag it up to where it belongs — say between
    the last song and the sermon. 📸
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
    marquee running: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) and **[en:tran:Clear FG Web Show]** (`WB`). Each does exactly what that widget's own hide button in the **[en:tran:Foreground]** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
-
-   **Let the running order walk itself.** Back on the first menu — beside **[en:tran:Clear Screen]**,
-   not inside it — are two actions that move the RUN on instead of touching a screen: **[en:tran:Next: Interval]**
-   and **[en:tran:Next: Timeout]**. Each asks how many **[en:tran:Seconds]** when you add it, and the answer is part of the line — `⏱ Next: Timeout (5)` —
-   so a glance at the sheet tells you how long it waits. Got it wrong? Right-click the
-   line → **[en:tran:Change Seconds]**; it opens on the number it is holding
-   now. 📸
-
-   - **[en:tran:Next: Timeout]** waits once. When the run reaches it, it counts down and then moves
-     the run on by itself — a slide that should linger ten seconds and then go on without
-     you. **Going somewhere yourself calls it off**: click another line, or press the next
-     key, and the wait is over and you are driving again. Anything else — clicking a
-     background, a foreground button, a stray click on the panel — leaves it counting, so
-     a mis-aimed click cannot silently cost you the wait.
-
-     **Or wait until a time on the clock.** A timeout is the one that does not have to be
-     counted in seconds: the left-hand side of its question is a chooser, and switching it
-     from **[en:tran:Seconds]** to **[en:tran:At Time]** lets you type the time you want the run to
-     move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
-     the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
-     of seconds. Use it for the notice board before a service: put it on the last
-     announcement and the run leaves it exactly when the service starts, whether you armed
-     it an hour or five minutes before. Its menu entry is **[en:tran:Change Timing]** rather than **[en:tran:Change Seconds]**, and it opens on whichever half
-     you armed it with — the two are alternatives, so choosing one clears the other. If the
-     time you set has **already gone by**, the app says so (**[en:tran:The set time is already due]**)
-     and starts nothing: it will not quietly wait until tomorrow. Set a new time, or arm it
-     in seconds. 📸
-
-   - **[en:tran:Next: Interval]** keeps going. It moves the run on every so many seconds — a loop of
-     announcement slides before the service. Going somewhere yourself does not stop it, it
-     **starts the count again from there**, so a line you step to by hand gets the whole
-     interval rather than the second that was left of the last one. To stop it, click the
-     ⊗ (**[en:tran:Stop Auto Next]**) on the pill it puts at the top-right of the preview panel (it shows the seconds left, in
-     the same colour as the line that started it); the ⏸ on the same pill (**[en:tran:Pause Auto Next]**) holds the count where it is until you press it again. Closing the panel stops it too, as does
-     reaching the end of the sheet.
-
-   - **[en:tran:Next: Clear Interval]** stops that loop, and it is the
-     one way the SHEET can stop it: the pill, closing the panel and the end of the list are
-     all you being at the machine. Add it — it asks nothing, there being only ever one clock
-     running — and the line reads `⊘ Next: Clear Interval` in the interval's own colour,
-     because it is that same thing undone. Put it after a looping set (an interval, a few
-     slides, a **[en:tran:Jump to]** pointing back at the interval) and the loop runs until the run
-     reaches this line, then stops and waits for you. Firing it when nothing is looping does
-     nothing at all and says nothing, so it is safe to leave in a sheet you re-run. It stops
-     an interval you have PAUSED as well; a **[en:tran:Next: Timeout]** it leaves alone, so a wait
-     attached to a slide is never killed by a line that only meant to end a loop. 📸
-
-   Both only mean something while that presenting flow's **preview panel** is open (step 9) —
-   that panel is what walks the running order. Click one with the panel closed and the app
-   says so (**[en:tran:Open the presenting flow preview to use this action]**) rather than looking as
-   though it did something. They never go to a screen, so they have no **[en:tran:Apply on Screens]** and no **[en:tran:Set Specific Screen]**, and nothing can be attached to them.
-
-   **A timeout can also ride along with another line.** Attach it to a line — a
-   slide, a song, a verse — as a **CC element** (step 5), and that line means "show this,
-   and go on by yourself N seconds later". Add the **[en:tran:Next: Timeout]** once, right-click the
-   line you want it on → **[en:tran:Add CC Elements]** and pick it. Keep the
-   `Next: Timeout` line itself in the list, though: a CC points at that line rather than copying it, so removing the line removes every follower of it as well (park it with **[en:tran:Disable]** if the run should not stop there — its followers still fire). Attached to
-   a whole SONG it rides every slide of it, which is how a song advances by itself. 📸
-
-   **Each line may wait for its own length.** A CC element normally reads whatever the
-   `Next: Timeout` line is set to, so re-arming that one line re-arms every follower of it
-   at once. When one line needs a different wait, click the small **stopwatch** at the
-   right of that CC row (or right-click it → **[en:tran:Change Timing]**) and
-   answer with seconds or a time of day, exactly as on a line of its own. That answer
-   belongs to **that attachment only**: the same `Next: Timeout` can hold the welcome slide
-   for 4 seconds and the notice slide for 30, with one timeout in the running order instead
-   of one per length. A row holding its own wait shows the stopwatch **filled** and reads
-   its own number; one still following the element shows it hollow. To hand a row back,
-   right-click it → **[en:tran:Use Element Timing]** — it goes back to the
-   element's number and moves with it again. 📸
-   **A Next: Interval cannot be attached to anything** and is simply not in that list —
-   an interval is not stopped by anything you do, so one riding a slide would keep moving
-   the running order on with nothing to call it off but the panel's own pill. A
-   **[en:tran:Next: Clear Interval]** CAN be attached, for the opposite reason: "put this last slide
-   up **and** stop the loop" is one click, and something that stops a loop can never run
-   away with the running order.
-
-   **Go back, not just forward.** The third one, **[en:tran:Jump to]**, is how a running
-   order reaches a line that is not the next one. Add it, then right-click it →
-   **[en:tran:Add CC Elements]** and pick the line it should go to — its list is everything in the
-   presenting flow, **a whole song included**, because here the attached line is not something
-   that rides along, it is the destination. It takes exactly one, so once you have picked
-   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another. 📸
-
-   **It is the next key aimed at a line of your choosing**: when the run reaches it — or
-   you click it — the panel goes to that line and does there exactly what stepping onto it
-   would have done. A song opens at its first slide; a **[en:tran:Next: Interval]** or **[en:tran:Next: Timeout]** it lands on is STARTED. That last one is how a set loops: put the slides
-   under a **[en:tran:Next: Interval]**, and a **[en:tran:Jump to]** at the end of them pointing back at that
-   interval — the set then plays round and round on its own until you stop it with the
-   pill. (A jump that lands on another jump stops there rather than jumping again, so a
-   pair of them cannot send the run back and forth for ever.) If it has nothing attached,
-   or the line it named has since been deleted, it says so instead of quietly doing
-   nothing.
-
-   **Reach a line with a key of your own.** The fourth one, **[en:tran:Keyboard Event]**, is a shortcut you set yourself. Adding it asks for the
-   shortcut, and you answer by **pressing it** — the box is not typed into. Hold **Ctrl**
-   or **Shift** (those two only, and at least one of them, so the shortcut means the same
-   thing on any machine and cannot take a key the running order already uses) and press
-   the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
-   **[en:tran:Change Shortcut]**. Two lines may not share a shortcut — the second one is refused
-   out loud — and duplicating a line leaves the copy without one. 📸
-
-   Now attach what it should put up, with **[en:tran:Add CC Elements]** — as many as you like, which
-   is what makes one key worth more than one click: a slide _and_ its marquee together,
-   say. Then, with the preview panel open (step 9), pressing **Shift+A** sends the run to
-   that line and puts all of it on the screens at once, wherever the run had got to.
-   Pin the line to a screen with **[en:tran:Set Specific Screen]** if it should always go to the
-   same one. The shortcut only answers while the preview panel has the keyboard, exactly
-   as its arrow keys do — the panel takes it the moment you open it, so there is nothing
-   to click first. With nothing attached yet it says so rather than doing nothing. 📸
-
-   **Put the screen itself up and down.** Two more actions are not about what is _on_ a
+2. **A screen action is run, not shown.** Click it to clear, drag it onto one mini screen
+   to clear only that one, or right-click → **[en:tran:Apply on Screens]** to choose. It never
+   lights up as "live", because there is nothing of it on the screen to be live. In the
+   preview panel (W-22b) it is stopped on and fired like any other line — so a
+   **[en:tran:Clear All]** between the last song and the sermon means one more press of the same
+   key blanks the screen at exactly that point in the running order.
+3. **Put the screen itself up and down.** Two more actions are not about what is _on_ a
    screen but about whether there is one: **[en:tran:Screen: Show]** and
    **[en:tran:Screen: Hide]**, the same thing the slides button on each mini screen
    does by hand. Use them when the running order has to work with nobody at the machine —
@@ -2705,52 +2939,178 @@ thing to another machine.
    up does nothing at all, so it is safe inside a loop. Nothing can be attached to them
    either, though they can themselves be attached to another line — "put this last slide
    up **and** light the screen" in one click. 📸
-
-   **Where the actions live in the menu.** **[en:tran:Add Action]** opens with **[en:tran:Clear Screen]** —
+   Clicking one goes to the screens it names and nowhere else; **[en:tran:Apply on Screens]**
+   still asks, since that entry is you saying "send this one somewhere else" — but it
+   does not change what the line is pinned to.
+4. **Where the actions live in the menu.** **[en:tran:Add Action]** opens with **[en:tran:Clear Screen]** —
    one row that adds nothing and opens the five clears, with **[en:tran:Other Clear FG Items]**
    under them for the twelve per-widget foreground clears — then **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, then the five that drive the run.
 
-3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
-   what it is, its id, and its name. A **document** line has its own arrow — open it to
-   see that document's slides underneath. 📸
-4. **Click an element to put it on the screen** (a document opens its previewer instead;
-   an **audio track** opens the **[en:tran:Audios]** split and flashes the track there — the
-   presenting flow never plays audio itself, so that you keep the panel's safeguards like
-   "one track at a time").
-   You can also **drag an element onto a mini screen**, or **right-click → Show on
-   Screens** ([en:tran:Show on Screens]) to pick the screen.
-   A **screen action** works the same way, except it is _run_ rather than shown: click it
-   to clear, drag it onto one mini screen to clear only that one, or right-click →
-   **[en:tran:Apply on Screens]** to choose. It never lights up as "live",
-   because there is nothing of it on the screen to be live. **[en:tran:Screen: Show]** /
-   **[en:tran:Screen: Hide]** are the exception to the first of those: clicking one goes to the
-   screens it names and nowhere else. **[en:tran:Apply on Screens]** still asks, since that entry
-   is you saying "send this one somewhere else" — but it does not change what the line
-   is pinned to.
-   The two **`Next:`** actions are the exception: they drive the RUN, not a screen, so
-   they have none of that — clicking one starts its countdown in the preview panel
-   (step 9), and with that panel closed the app simply tells you to open it.
+---
 
-   **Send a line to one particular screen, every time.** If a lyric always belongs on the
-   stage screen and the sermon slides on the main one, you do not have to drag them there
-   over and over. Right-click the line → **[en:tran:Set Specific Screen]** and
-   tick the screens it should go to — `Screen id: 0`, `Screen id: 1`, … The menu stays open
-   so you can tick more than one, and the line then shows a small 📌 with those numbers —
-   **each number in its own screen's colour**, the very colour that screen's mini-screen
-   badge wears, so you can tell at a glance where a line goes without reading the digit.
-   (The tick boxes in the menu are tinted the same way.) 📸
-   From then on **clicking that line ignores which mini screens are selected**
-   and goes straight to its own; so do the arrow/Space keys in the preview panel. Untick
-   them, or choose **[en:tran:No Specific Screen]**, to hand it back to the
-   normal behaviour.
+### W-22d — Make a running order wait, then move on by itself (Next: Timeout)
 
-   Two things deliberately still override a pin, so you are never stuck: **dragging** the
-   line onto a mini screen puts it on _that_ screen just this once, and right-click →
-   **[en:tran:Show on Screens]** still asks which screen you mean. If the pinned screen has been
-   closed, nothing is projected anywhere and the app tells you so ("Please make sure the
-   screen is open") rather than quietly using a different screen.
+**Goal:** a slide that lingers and then goes on without you, or a notice board that
+ends exactly when the service starts.
 
-5. **Make one line bring others with it — CC elements.** Some things belong _together_: the
+1. **Let the running order walk itself.** In the **[en:tran:Presenting Flows]** list (not
+   in the preview panel), right-click **the presenting flow itself** — the
+   row with its name on it, not the empty part of the list and not one of its lines — and
+   choose **[en:tran:Add Action]** → **[en:tran:Next: Timeout]**. That adds a NEW line to
+   the running order; it is never added by right-clicking a line that is already there.
+   It asks how many **[en:tran:Seconds]**, and the answer is part of the new
+   line — `⏱ Next: Timeout (5)` — so a glance at the sheet tells you how long it waits. Got
+   it wrong? Right-click that `Next: Timeout` line → **[en:tran:Change Timing]**; it opens
+   on what it is holding now. 📸
+2. **[en:tran:Next: Timeout]** waits once. When the run reaches it, it counts down and then moves
+   the run on by itself — a slide that should linger ten seconds and then go on without
+   you. **Going somewhere yourself calls it off**: click another line, or press the next
+   key, and the wait is over and you are driving again. A click that goes nowhere does
+   NOT call it off: clicking a background or a foreground button, or a stray click on
+   the panel, leaves it counting, so a mis-aimed click cannot silently cost you the wait.
+3. **Or wait until a time on the clock.** A timeout does not have to be counted in
+   seconds. The small box that asks for the seconds — it opens when you add the line
+   (step 1), and again from right-click → **[en:tran:Change Timing]** on that line — has a
+   chooser at its left: switch it from **[en:tran:Seconds]** to **[en:tran:At Time]** and type the
+   time you want the run to move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
+   the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
+   of seconds. Use it for the notice board before a service: put it on the last
+   announcement and the run leaves it exactly when the service starts, whether you armed
+   it an hour or five minutes before. Its menu entry is **[en:tran:Change Timing]** rather than **[en:tran:Change Seconds]**, and it opens on whichever half
+   you armed it with — the two are alternatives, so choosing one clears the other. If the
+   time you set has **already gone by**, the app says so (**[en:tran:The set time is already due]**)
+   and starts nothing: it will not quietly wait until tomorrow. Set a new time, or arm it
+   in seconds. 📸
+4. **It counts only in the preview panel.** A `Next:` line means something only while that
+   presenting flow's **preview panel** is open (W-22b) — that panel is what walks the
+   running order: clicking the line there starts its countdown, and a small pill at the
+   panel's top-right shows the seconds left, with ⊗ to stop it and ⏸ to hold it. Click the
+   line with the panel closed and the app says so
+   (**[en:tran:Open the presenting flow preview to use this action]**) rather than looking as
+   though it did something. It never goes to a screen, so it has no **[en:tran:Apply on Screens]**
+   and no **[en:tran:Set Specific Screen]**, and nothing can be attached to it.
+5. **A timeout can also ride along with another line.** Attach it to a line — a
+   slide, a song, a verse — as a **CC element** (W-22g), and that line means "show this,
+   and go on by yourself N seconds later". Add the **[en:tran:Next: Timeout]** once, right-click the
+   line you want it on → **[en:tran:Add CC Elements]** and pick it. Keep the
+   `Next: Timeout` line itself in the list, though: a CC points at that line rather than copying it, so removing the line removes every follower of it as well (park it with **[en:tran:Disable]** if the run should not stop there — its followers still fire). Attached to
+   a whole SONG it rides every slide of it, which is how a song advances by itself. 📸
+6. **Each line may wait for its own length.** This is for a `Next: Timeout` attached to a
+   line as a CC element (step 5): it shows as a CC line of its own, indented under the
+   line it is attached to. A CC line normally reads whatever the
+   `Next: Timeout` line is set to, so re-arming that one line re-arms every follower of it
+   at once. When one line needs a different wait, click the small **stopwatch** at the
+   right of **that CC line — the indented row under the line, not the line itself** (or
+   right-click that CC line → **[en:tran:Change Timing]**) and
+   answer with seconds or a time of day, exactly as on a line of its own. That answer
+   belongs to **that attachment only**: the same `Next: Timeout` can hold the welcome slide
+   for 4 seconds and the notice slide for 30, with one timeout in the running order instead
+   of one per length. A row holding its own wait shows the stopwatch **filled** and reads
+   its own number; one still following the element shows it hollow. To hand a row back,
+   right-click it → **[en:tran:Use Element Timing]** — it goes back to the
+   element's number and moves with it again. 📸
+7. **If the run stopped moving on by itself**, one of three things happened. You went
+   somewhere yourself — clicked another line, or pressed the next key — and that calls a
+   timeout off. Or the preview panel was closed: no `Next:` line counts without it. Or the
+   run reached the end of the list. To set it going again, click the `Next:` line (or the
+   line it rides on) in the preview panel.
+
+---
+
+### W-22e — Loop a set of slides, stop the loop, and jump back (Next: Interval, Jump to)
+
+**Goal:** a loop of announcement slides that runs by itself before the service and stops
+where you say, and a running order that can go back to an earlier line.
+
+1. Right-click **the presenting flow itself** — its own row in the list, not the empty part of
+   the list and not one of its lines — and choose **[en:tran:Add Action]** →
+   **[en:tran:Next: Interval]**. It asks how many **[en:tran:Seconds]**, and the answer is part of the
+   line; right-click the line → **[en:tran:Change Seconds]** to change it. Like every `Next:` line
+   it works only while the preview panel is open (W-22b).
+2. **[en:tran:Next: Interval]** keeps going. It moves the run on every so many seconds — a loop of
+   announcement slides before the service. Going somewhere yourself does not stop it, it
+   **starts the count again from there**, so a line you step to by hand gets the whole
+   interval rather than the second that was left of the last one. To stop it, click the
+   ⊗ (**[en:tran:Stop Auto Next]**) on the pill it puts at the top-right of the preview panel (it shows the seconds left, in
+   the same colour as the line that started it); the ⏸ on the same pill (**[en:tran:Pause Auto Next]**) holds the count where it is until you press it again. Closing the panel stops it too, as does
+   reaching the end of the sheet.
+3. **[en:tran:Next: Clear Interval]** stops that loop, and it is the
+   one way the SHEET can stop it: the pill, closing the panel and the end of the list are
+   all you being at the machine. Add it — it asks nothing, there being only ever one clock
+   running — and the line reads `⊘ Next: Clear Interval` in the interval's own colour,
+   because it is that same thing undone. Put it after a looping set (an interval, a few
+   slides, a **[en:tran:Jump to]** pointing back at the interval) and the loop runs until the run
+   reaches this line, then stops and waits for you. Firing it when nothing is looping does
+   nothing at all and says nothing, so it is safe to leave in a sheet you re-run. It stops
+   an interval you have PAUSED as well; a **[en:tran:Next: Timeout]** it leaves alone, so a wait
+   attached to a slide is never killed by a line that only meant to end a loop. 📸
+   **A Next: Interval cannot be attached to anything** and is simply not in that list —
+   an interval is not stopped by anything you do, so one riding a slide would keep moving
+   the running order on with nothing to call it off but the panel's own pill. A
+   **[en:tran:Next: Clear Interval]** CAN be attached, for the opposite reason: "put this last slide
+   up **and** stop the loop" is one click, and something that stops a loop can never run
+   away with the running order.
+4. **Go back, not just forward.** **[en:tran:Jump to]** is how a running
+   order reaches a line that is not the next one. Add it from the same menu as the interval — right-click
+   the presenting flow itself, not one of its lines → **[en:tran:Add Action]** →
+   **[en:tran:Jump to]** — then right-click the new line →
+   **[en:tran:Add CC Elements]** and pick the line it should go to — its list is everything in the
+   presenting flow, **a whole song included**, because here the attached line is not something
+   that rides along, it is the destination. It takes exactly one, so once you have picked
+   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another. 📸
+
+   **It is the next key aimed at a line of your choosing**: when the run reaches it — or
+   you click it — the panel goes to that line and does there exactly what stepping onto it
+   would have done. A song opens at its first slide; a **[en:tran:Next: Interval]** or **[en:tran:Next: Timeout]** it lands on is STARTED. That last one is how a set loops: put the slides
+   under a **[en:tran:Next: Interval]**, and a **[en:tran:Jump to]** at the end of them pointing back at that
+   interval — the set then plays round and round on its own until you stop it with the
+   pill. (A jump that lands on another jump stops there rather than jumping again, so a
+   pair of them cannot send the run back and forth for ever.) If it has nothing attached,
+   or the line it named has since been deleted, it says so instead of quietly doing
+   nothing.
+5. **A loop of slides before the service, from start to finish.** The slides of the set
+   are lines of the presenting flow already. (a) Right-click the presenting flow →
+   **[en:tran:Add Action]** → **[en:tran:Next: Interval]**, type the seconds each slide
+   stays, and drag that line above the first slide of the set. (b) Right-click the
+   presenting flow → **[en:tran:Add Action]** → **[en:tran:Jump to]** and drag it under
+   the last slide of the set; then right-click the **[en:tran:Jump to]** line →
+   **[en:tran:Add CC Elements]** and pick the **[en:tran:Next: Interval]** line. (c) Open
+   the preview panel (W-22b) and click the **[en:tran:Next: Interval]** line: the set
+   plays round and round by itself. It stops when you click **⊗** on the pill at the
+   top-right of the preview panel, or close the panel. Nothing is dragged ONTO the
+   interval or the jump: they are lines of their own, in the list.
+
+---
+
+### W-22f — Reach a line with a key of your own (Keyboard Event)
+
+**Goal:** one shortcut that sends the run to a line and puts it — and everything attached
+to it — on the screens at once, wherever the run had got to.
+
+1. **Reach a line with a key of your own.** A **[en:tran:Keyboard Event]** is a shortcut you set yourself. Add it from the menu of the presenting flow (right-click the presenting
+   flow itself → **[en:tran:Add Action]** → **[en:tran:Keyboard Event]**): it asks for the
+   shortcut, and you answer by **pressing it** — the box is not typed into. Hold **Ctrl**
+   or **Shift** (those two only, and at least one of them, so the shortcut means the same
+   thing on any machine and cannot take a key the running order already uses) and press
+   the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
+   **[en:tran:Change Shortcut]**. Two lines may not share a shortcut — the second one is refused
+   out loud — and duplicating a line leaves the copy without one. 📸
+2. Now attach what it should put up, with **[en:tran:Add CC Elements]** — as many as you like, which
+   is what makes one key worth more than one click: a slide _and_ its marquee together,
+   say. Then, with the preview panel open (W-22b), pressing **Shift+A** sends the run to
+   that line and puts all of it on the screens at once, wherever the run had got to.
+   Pin the line to a screen with **[en:tran:Set Specific Screen]** if it should always go to the
+   same one. The shortcut only answers while the preview panel has the keyboard, exactly
+   as its arrow keys do — the panel takes it the moment you open it, so there is nothing
+   to click first. With nothing attached yet it says so rather than doing nothing. 📸
+
+---
+
+### W-22g — Make one line bring others with it (CC elements)
+
+**Goal:** the moment verse 1 goes up, the welcome marquee is up too — one click, both.
+
+1. **Make one line bring others with it — CC elements.** Some things belong _together_: the
    moment verse 1 goes up, the welcome marquee has to be up too. Attach the marquee to that
    line as a **CC element** and one click does both.
 
@@ -2806,7 +3166,14 @@ thing to another machine.
    An element can hold as many CC elements as you like; a CC element cannot have CC
    elements of its own.
 
-   **Media Control — playing the video or song inside a slide by itself.** A slide can hold
+---
+
+### W-22h — Play the video or song inside a slide by itself (Media Control)
+
+**Goal:** the running order presses play on a slide's own video or audio for you — from
+where you say, for as long as you say.
+
+1. **Media Control — playing the video or song inside a slide by itself.** A slide can hold
    a video or an audio clip of its own, and normally you press play on it by hand on the
    mini screen. Right-click the slide (or the document line, or the line of a slide inside
    a document) → **[en:tran:Add Media Control]** and the running order does it
@@ -2827,8 +3194,7 @@ thing to another machine.
      slide went to. Tick one and it works **only** where the slide also landed. It is
      controlling the media the slide put on a screen, so a screen the slide never reached
      has nothing on it to control.
-
-   The new line appears as a CC element under the slide, reading what it will do —
+2. The new line appears as a CC element under the slide, reading what it will do —
    `Slide: Media Control (Play +3s 10s→70s 70% 2x)` — with a small **cyan gear** at its
    right. Click the gear (or right-click → **[en:tran:Media Control Settings]**) to change it later;
    it opens on what you set last time. A plain `Slide: Media Control` line is also added at
@@ -2839,8 +3205,7 @@ thing to another machine.
    presenter machine, exactly as it does when you press play by hand, so the **[en:tran:Volume]** is
    the level you hear at the desk; the projected screen stays silent and simply keeps in
    step, at the same speed.
-
-   **Moving off the slide stops it.** When you put another slide on that screen — or clear
+3. **Moving off the slide stops it.** When you put another slide on that screen — or clear
    the screen — everything the Media Control started is stopped and anything still waiting
    (a "stop at 1:10", a delayed start) is dropped, so nothing carries over to whatever you
    put up next. This is what lets the running order carry on: a clip you started **by
@@ -2852,7 +3217,32 @@ thing to another machine.
    the running order itself, because "start this video ten seconds in" is a sentence about
    one particular slide.
 
-   A **document** line can be pinned too — its slides then all follow it — and you can pin
+---
+
+### W-22i — Send a line to one particular screen, or park a line
+
+**Goal:** a lyric that always goes to the stage screen without being dragged there, and a
+line you cannot fire by accident.
+
+1. **Send a line to one particular screen, every time.** If a lyric always belongs on the
+   stage screen and the sermon slides on the main one, you do not have to drag them there
+   over and over. Right-click the line → **[en:tran:Set Specific Screen]** and
+   tick the screens it should go to — `Screen id: 0`, `Screen id: 1`, … The menu stays open
+   so you can tick more than one, and the line then shows a small 📌 with those numbers —
+   **each number in its own screen's colour**, the very colour that screen's mini-screen
+   badge wears, so you can tell at a glance where a line goes without reading the digit.
+   (The tick boxes in the menu are tinted the same way.) 📸
+   From then on **clicking that line ignores which mini screens are selected**
+   and goes straight to its own; so do the arrow/Space keys in the preview panel. Untick
+   them, or choose **[en:tran:No Specific Screen]**, to hand it back to the
+   normal behaviour.
+
+   Two things deliberately still override a pin, so you are never stuck: **dragging** the
+   line onto a mini screen puts it on _that_ screen just this once, and right-click →
+   **[en:tran:Show on Screens]** still asks which screen you mean. If the pinned screen has been
+   closed, nothing is projected anywhere and the app tells you so ("Please make sure the
+   screen is open") rather than quietly using a different screen.
+2. A **document** line can be pinned too — its slides then all follow it — and you can pin
    **one slide on its own**: open the document's arrow, right-click the slide and set its
    screen. That slide overrides the document; its neighbours keep following the document.
    A slide pinned in its own right shows the 📌 on its own line **and in the bottom-right
@@ -2860,7 +3250,7 @@ thing to another machine.
    pictures still tells you which slide breaks away from its document. Clearing it hands
    that slide back to the document rather than pinning it to nothing. The same right-click
    is on the slide thumbnails inside the preview panel.
-   **Park a line you do not want touched.** A line you might click by accident — an
+3. **Park a line you do not want touched.** A line you might click by accident — an
    alternate verse, last week's notice, a song you may or may not reach — can be taken out
    of the running order without deleting it: right-click it → **[en:tran:Disable]**. The line dims, is written in italics, is **crossed out** and gains a small
    amber 🚫 at its right end, and from then on **clicking it does nothing at all** — nothing
@@ -2874,7 +3264,7 @@ thing to another machine.
    with it. A parked line can still be dragged up and down to tidy your running order, and
    parking is remembered in that presenting flow only — the same song stays live in your other
    services.
-   **Two kinds of greyed-out line, and they now look different.** A line YOU parked here is
+4. **Two kinds of greyed-out line, and they now look different.** A line YOU parked here is
    crossed out and carries the amber 🚫 ("This item is disabled in this presenting flow"). A slide
    that is greyed out because the **document itself** hides it is _not_ crossed out and
    carries a plain grey 👁‍🗨 ("This item is disabled in its document") — right-clicking that
@@ -2882,105 +3272,21 @@ thing to another machine.
    turned off; open the document and enable the slide there. In the preview panel the same
    two marks sit in the **bottom-left corner** of each dimmed thumbnail. 📸
 
-6. Right-click an element for **[en:tran:Move up]** / **[en:tran:Move down]**, **[en:tran:Choose Color]**
-   to group your running order by colour, or **[en:tran:Remove from Presenting Flow]**. To move a line a long
-   way, use **[en:tran:Move to Top]** or **[en:tran:Move to Bottom]** instead of
-   clicking **[en:tran:Move up]** over and over — the line jumps straight to that end and everything
-   else keeps its order. (A line that is already at the top is not offered **[en:tran:Move up]** or
-   **[en:tran:Move to Top]**, and one already at the bottom is not offered **[en:tran:Move down]** or
-   **[en:tran:Move to Bottom]**.) **[en:tran:Duplicate]** puts a copy of the line **directly below** it,
-   with its colour, its pinned screens and its parked slides already on the copy — the quick
-   way to sing a song twice in one service, then change only the second one. The two copies
-   are separate from then on: parking or recolouring one leaves the other alone. 📸
-   You can also drag a
-   line up or down **inside the same presenting flow** (dragging a line into a _different_
-   presenting flow does nothing — add it there from its own list instead). A colour shows as a
-   stripe down the left edge of the line and a dot at its right end; the lines stay in
-   your running order — they are never re-sorted into colour groups, because the order
-   _is_ the meaning here. The colour belongs to that presenting flow alone, so the same song can
-   be marked differently in two services. Changes are saved as you make them — there is
-   **no save button** anywhere in this panel.
-7. Whatever is **live on the screen right now** is marked with a magenta `●` — on the
-   element itself, on the document it belongs to, on the presenting flow, and on the
-   **[en:tran:Presenting Flows]** heading — so you can see at a glance where you are in the running order.
-8. Not sure which "5.jpg" a line means? Right-click it → **[en:tran:Reveal Original]** — the app scrolls to the real item elsewhere in the window and
-   flashes it. This works on the slides inside an opened document too. A colour or a
-   camera has no original to point at, and the panel holding the original has to be
-   open already.
-9. To see the whole service at a glance, click the **window** icon on the presenting flow row (or
-   right-click → **[en:tran:Open Preview]**). A floating panel shows every element with its real
-   preview — slides look exactly as they will project, and a document shows all of its
-   slides. Collapse the ones you are not working on — or fold the whole running order
-   away at once with the **[en:tran:Collapse All]** icon at the bottom-left of the
-   panel, and open it all again with **[en:tran:Expand All]** beside it. Whichever
-   of the two has nothing left to do fades out. Whatever you folded away is remembered for
-   that presenting flow, so a running order trimmed down to the few things you are working on
-   comes back that way next time — and it follows the element, not its position, so
-   reordering the list does not shuffle what is folded. 📸
-   To make the thumbnails bigger or smaller, use the zoom slider in the panel's footer
-   (it tucks itself away into a **⋯** button at the bottom-left), **Ctrl + scroll**, or a
-   two-finger **pinch**. This zoom is remembered separately from the one in the middle
-   Documents tab — and it is shared by every one of these panels, so zooming one resizes
-   them all.
-   **You can have several of these panels open at once**, one per running order — the
-   songs in one and the sermon in another, side by side once you drag them apart. Each opens a little below and to
-   the left of the last, so it never lands exactly on top of it; each remembers its own
-   size and place, and is closed on its own with its
-   ✕ (or by clicking its window icon in the list again). Each is its own run, too: where
-   you are, what you have folded away and any countdown belong to that panel alone, and
-   the keys below always drive the one you last clicked into. 📸
-   **Run the service from this panel.** Click an element — the panel outlines it and
-   remembers it as where you are. Clicking its preview also shows it, and clicking the
-   title line of a folded element marks it just the same — folding is the chevron on its
-   left, so pointing the run at an element never folds it away.
-   Then **Space**, **↓**, **→** or **Page Down** moves to the next
-   element and shows it, so you can walk the whole running order without going back to
-   the mouse. **A document is walked slide by slide:** arriving at it always shows its
-   **first** slide, each further press shows the next one, and the keys only move on to
-   the next element once its **last** slide is the one on screen — so a whole song or sermon deck plays from here without touching
-   the mouse. A **folded-away** element is not passed over: the run **opens it** when it
-   gets there, and a song folded away is unfolded and walked from its first slide like any
-   other. Folding is how you _read_ a long running order; it never decides what is in the
-   service. **The only line the keys step over is one you have parked** (step 5) — an audio
-   track and a damaged line still take the marker, so you can see where the run has got to,
-   they simply have nothing to show. The last element is the end — it does not start over.
-   The keys work while you are in this panel, and it takes them the moment you open it, so
-   there is nothing to click first; click into the slides list and they drive that list
-   again, as before. 📸
-   **A screen action is stopped on and fired** like anything else — so putting a
-   **[en:tran:Clear All]** between the last song and the sermon means one more press of the same
-   key blanks the screen at exactly that point in the running order.
+---
 
-   **And the run can walk itself.** The two `Next:` actions of step 2 are stopped on and
-   fired the same way, but what they fire is this panel: a **[en:tran:Next: Timeout]** waits its
-   seconds and then makes the very same move the next key would have made, and a
-   **[en:tran:Next: Interval]** keeps making it. While either is counting, a small pill at the
-   panel's top-right shows the seconds left — click its ⊗ to stop it, or its ⏸ to hold it. Remember the difference:
-   a timeout gets out of your way the moment you go somewhere yourself (click another line, or
-   press the next key), an interval
-   keeps going until you stop it there. 📸
+### W-22j — Share a presenting flow with another machine
 
-   **Everything you can right-click in the list, you can right-click here.** The menus in
-   this panel are the very same menus — right-click an element's **title line** (or any
-   empty part of its box) and you get its full menu: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, the four
-   moves, **[en:tran:Duplicate]**, **[en:tran:Choose Color]**, **[en:tran:Disable]** / **[en:tran:Enable]** and **[en:tran:Remove from Presenting Flow]**, gated exactly as they are in the list. So you can tidy and re-order the
-   running order from the panel you are actually watching during the service, without
-   going back to the list — and the list behind it follows immediately. 📸
-   Two things inside a box keep menus of their own, because they are not the element:
-   a **slide thumbnail** gets the slide's menu (**[en:tran:Reveal Original]**, **[en:tran:Show on Screens]**,
-   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**), and a **CC line** gets its
-   short one (**[en:tran:Reveal Original]**, **[en:tran:Set Specific Screen]**, **[en:tran:Remove CC Element]**).
+**Goal:** hand the whole service — the running order and every file it needs — to another
+machine as one file.
 
-**Sharing it with another machine**
-
-10. Right-click the presenting flow → **[en:tran:Export]**. A small panel asks for a
+1. Right-click the presenting flow → **[en:tran:Export]**. A small panel asks for a
     **[en:tran:Password]** and a **[en:tran:Confirm Password]**.
     **Leave both empty and press Ok** for the ordinary bundle: one
     `<name>.owapf.tar.gz` file in your **Downloads** folder, and the folder opens. It
     contains the presenting flow _and every file it needs_ — the full documents behind your
     slides, the images and videos, and any background attached to those documents.
-    (See step 10a to put a password on it instead.)
-    10a. **To protect it with a password**, type the same password in both fields and press
+    (See step 1a to put a password on it instead.)
+    1a. **To protect it with a password**, type the same password in both fields and press
     **[en:tran:Ok]**. **[en:tran:Show Password]** reveals what you typed if you want to
     check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
     fields do not match the panel says **[en:tran:Passwords do not match]** and asks again rather than exporting, keeping what you
@@ -2992,7 +3298,7 @@ thing to another machine.
     > somewhere safe before you hand the file over, and send it by a different route than
     > the file itself.
 
-11. On the other machine, right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+2. On the other machine, right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
     file from your file manager onto the Presenting Flows list**, which imports it the same way.
     A protected bundle asks for its password first, saying **This archive is password
     protected** ([en:tran:This archive is password protected]); get it wrong and it says
@@ -3001,7 +3307,7 @@ thing to another machine.
     and media are re-created in that machine's own folders, Bible verses are added to the
     **Default** list, and every link inside the presenting flow is re-pointed at the local
     copies. 📸
-12. If the bundle is on a web server or a machine sharing it over the local network,
+3. If the bundle is on a web server or a machine sharing it over the local network,
     you can skip copying the file about: right-click the **[en:tran:Presenting Flows]** list →
     **[en:tran:Import From URL]**, paste the link and press **[en:tran:Ok]**. (If the link is
     already on your clipboard it is filled in for you.) The app downloads the bundle to a
@@ -3028,10 +3334,7 @@ thing to another machine.
 > **[en:tran:Invalid item]**, that one entry is damaged (usually a hand-edited file) — the rest of
 > the running order still works; remove that line and re-add it.
 
-_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96, PL-101._
-
 ---
-
 ### W-23 — Share one document (song, sermon slides, PDF) with another machine
 
 Sometimes you only want to hand over **one** item, not a whole service. A document
@@ -3524,7 +3827,8 @@ _Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80, RD-91, RD-113._
 Copilot — the company's own website, with your own account — in a window beside the app,
 the way a browser's AI sidebar does, without leaving the app.
 
-This is not the app's own assistant (W-42): nothing here reads this manual or presses
+**The ✨ is not the 🤖.** The **🤖** is the app's own assistant: it answers from this
+manual and can point at things in the app. This is not the app's own assistant (W-42): nothing here reads this manual or presses
 anything in the app, and no API key is needed. It is the site itself, in a box.
 
 1. Click the **✨** ([en:tran:AI Chat]) button in the top-right corner of the window, right
@@ -3774,7 +4078,10 @@ the only way in a popup window, whose menu bar is hidden.
 
 **Put everything back:**
 
-5. **[en:tran:Reset Widgets Size]**. Answer **[en:tran:Yes]** to
+5. Open **View** on the top menu bar again and click
+   **[en:tran:Reset Widgets Size]**. Do not open **Widgets** for this one:
+   **[en:tran:Reset Widgets Size]** is a row of the **View** menu itself, the row
+   right under **Widgets**. Answer **[en:tran:Yes]** to
    `Are you sure to reset every widget size and reopen the widgets?` 📸
 6. Every panel returns to the width and height it had when the app was installed, and
    **any panel you had collapsed is reopened**. This happens immediately — no reload.
@@ -3980,6 +4287,26 @@ GitHub **page** of the file is turned into its download address, and a GitHub
 the list. Under the language question, and under an answer that says a link did not
 lead to a Bible, the link can be pasted on its own.
 
+**When a window says a Bible is not available**
+
+The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
+it is set to a Bible this computer does not have — on a new computer, the KJV. The card
+says how the assistant gets it, in three steps, and carries the button:
+
+1. Press **[en:tran:Let the assistant import this Bible for me]** on that card and
+   answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
+2. The assistant opens in a new tab already looking for that Bible in the free
+   collection: for KJV it lists _English KJV_ and _English NKJ 1982_. Press the one you
+   want. A name the collection has no file for is answered with _None of them has … in
+   its name_: type the Bible's language (`Khmer`) and press one from that list.
+3. It downloads the Bible and says _The app is looking for a Bible called **KJV**_. At
+   **Step 1 — a short name** that name comes first, **KJV (suggested)**: keep it.
+   Installed under any other name, the card stays where it is.
+4. Answer the language and the book names as above, then press **Install it**. _Done
+   — KJV is installed_, and the card goes away by itself: the passage shows. 📸
+
+Typing `Import the Bible called "KJV"` in the assistant does the same.
+
 **Import a Bible XML file with the form**
 
 1. Open **[en:tran:Settings]** → **[en:tran:Bible]**. In
@@ -4006,7 +4333,8 @@ lead to a Bible, the link can be pasted on its own.
 7. Press **[en:tran:Import]** in the review. The new translation appears in
    **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
 
-Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
+A Bible already installed whose book names or numbers still read in English needs no
+second import. Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
 **🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
 Those editor actions use the locale currently in the editor buffer; save after editing.
 
@@ -4039,7 +4367,7 @@ existing Bible, then use its pencil instead.
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
 > because there is nothing left to create.
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, CB-80..CB-82, CB-107..CB-109, LT-01._
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, LT-01._
 
 ### W-35 — Bring a song in from CCLI SongSelect
 
@@ -4599,19 +4927,14 @@ _Verify: PR-30, PR-31, CM-69, CM-98, CM-99._
 
 ### W-42 — Ask the app for help (the chatbot)
 
-You can also start a Bible import with `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
-The **Bible versions** section under **More** contains this editable sample. Asking it downloads
-the file and asks a few quick questions in the chat, each with buttons to press — a short
-name, the language, the digits and the book names — and installs nothing until you press
-**Install it**, with **Undo** under the answer afterwards (W-34). This direct request needs no model call.
-
 The app can answer its own "how do I …?" questions. It reads the same manual you are
 reading now, looks at what the app is doing at that moment, and can point at the button
 it is describing.
 
 1. Click the **🤖** button in the top-right corner of the window, between the gear
    and the **✨** (the AI Chat window, W-44 — a different thing: a company's chat site
-   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar. Answer
+   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar, or click
+   the **?** at the end of the same row and choose **[en:tran:Open Chatbot]**. Answer
    the **[en:tran:Be careful with AI]** question with **[en:tran:Open]** — ticking
    **[en:tran:Do not show this again for 30 days]** first puts the question away for that
    long — and a narrow window opens beside the app. 📸
@@ -4627,7 +4950,8 @@ it is describing.
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
-   a browser holds several pages. **+** starts another, **×** closes one, and a
+   a browser holds several pages. **+** starts a new chat (its tab reads **New chat**
+   until a question is asked in it), **×** closes one, and a
    **double-click on a tab's name** renames it (useful once three of them start "how do
    I"). Until you rename it, a tab is called after the first question you asked in it.
    Everything is kept: close the window — close the app — and the tabs, their answers
@@ -4663,7 +4987,8 @@ it is describing.
    service that needs no key, and a notice pinned above the conversation says so and
    carries **Open AI settings**, which opens the settings panel that takes a key. 📸
    **Short of room? Fold those lists to one line.** A small arrow sits at the left
-   edge of the lists. Click it and the lists — with the **LIMIT PER HOUR** list and
+   edge of the window's top line — the line with the three lists, not the list of
+   suggested questions under it. Click it and the lists — with the **LIMIT PER HOUR** list and
    the **CREDIT USED** line of step 8 — fold into a single line that still says
    what each one is set to, such as _Presenter · Claude · Sonnet 5_, with the hourly
    limit at its end (it turns amber when the assistant is close to that limit or
@@ -4695,6 +5020,12 @@ it is describing.
    once: most people use this window for the one thing they first saw it do.
    Press any of them to ask it, or type a few words in the box and the same list
    narrows itself as you type. **Fewer** folds it away again. 📸
+   **A Bible can be installed from the chat, with no model call.** Ask
+   `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`
+   — the **Bible versions** section under **More** contains this editable sample. Asking it
+   downloads the file and asks a few quick questions in the chat, each with buttons to
+   press — a short name, the language, the digits and the book names — and installs
+   nothing until you press **Install it**, with **Undo** under the answer afterwards (W-34).
    **The Bible Reader also has 30 guided demos that need no AI model, key or
    account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
    use **Try a guided demo**. The original four practise text size, opening
@@ -4841,7 +5172,7 @@ it is describing.
    screen is on and, under the answer, that the main window needs to be on the
    Presenter page to see what it holds — with the same **Go to the Presenter**
    button, which switches the main window and leaves the projector untouched;
-   **/find Clear Bible** outlines a control in red; **/goto reader** switches the
+   **/find Clear Long Text** outlines a control in red; **/goto reader** switches the
    main window (the projector is untouched); **/here** says which window is in
    front; **/help clear bible** searches this guide without an assistant;
    **/credit** says what this chat has cost so far (also **/cost**); **/limit**
@@ -4890,7 +5221,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    answered from the app's own state at once, with ONE button that does it —
    _Nothing to turn off_ when no screen is on (never a Clear), **Turn every
    screen off** when one is, **Put "(1)-Verse 1" on the screen** for a slide
-   the selected song has — and a sentence that is not a slide of the song
+   the selected song has — and _Show the next slide?_ or _show the previous
+   slide_ the same way, naming the slide the arrow keys would go to and
+   offering the one button that puts it up — and _Where is the button for
+   Clear All_ is answered by the window itself, which looks for a control
+   called that and outlines it in red where it is, with **Highlight again**
+   under the answer (a name no control carries goes on to the assistant) —
+   and a sentence that is not a
+   slide of the song
    (_Put John 3:16 on the screen_) goes on to the assistant as before;
    **/commands**
    lists them all. The square buttons under a command's answer are
@@ -4916,9 +5254,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    your mouse over the app and the control you click is the one you meant.
    You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
    onto the window. Whatever you attach shows as a small chip above the box, with
-   an **×** to take it off again, and up to four can ride one question. Clicking a
+   an **×** to take it off again, and up to four can ride one question.
+   **Each chip carries a number** — 1, 2, 3 — so you can say which one you mean
+   in your own words: _in 2 the button is missing_, _compare 1 and 3_. The
+   assistant is told which is which. A number stays with its chip: take a chip
+   off and the others keep theirs, and the numbers carry on through the chat, so
+   they still mean the same thing in the conversation above. Clicking a
    control to point at it does **not** press it — the app does not act on that
-   click, so it is safe to point at **[en:tran:Clear Bible]** and ask what it does. 📸
+   click, so it is safe to point at **[en:tran:Clear Long Text]** and ask what it does. 📸
    **Press a chip to see what it stands for.** A control you pointed at is
    **circled in red** in the app window again, so you can find it after looking
    away; and **every file or picture opens** — big enough to read, right here
@@ -4950,6 +5293,35 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **Asked about reading the Bible from the wrong page?** A stray press is enough
+   to leave the Bible Reader for the Presenter. Ask something like _how can I open
+   bible_ or _where do I find the Bible to read_ while the main window is on the
+   Presenter or the Document Editor, and the answer ends with one more line and
+   one more button, **Go to the Bible Reader**: press it and the main window
+   changes to the Bible Reader, and whatever is on the projector is left as it
+   is. A question about showing a verse on the screen does not get it — that is
+   what the Presenter is for.
+   **And every answer has two thumbs beside Copy.** 👍 says the answer helped and
+   👎 says it was wrong or did not help. The one you pressed stays filled, and
+   pressing it again takes it off; the mark is kept with the chat on this
+   computer and is sent nowhere. The first time you press 👎 under an answer the
+   help window follows up by itself — no assistant is asked, so it costs nothing:
+   it asks what was wrong, with three things to press (_A button it names is not
+   there_, _The steps did not work_, _That is wrong for the window I am in_), and
+   says what most often helps, a smarter model. When the assistant answering has
+   one — **Claude**, **ChatGPT** and **Kimi** list theirs best first — a button
+   **Ask again with …** names the next model up: it asks the same question of
+   that model and leaves this chat on it, and the new answer says so, because the
+   model above costs more. Pick another in the model list at the top to go back.
+   On the best model already, on **Auto**, **Bedrock**, **Free** or a server of
+   your own, it says in words what to try instead. **Typing that an answer is
+   wrong** — _that is wrong_, _I cannot find that button_ — brings the same
+   advice, and the same button, with the answer to it.
+   **And what you clicked stays marked.** A card you click keeps a thin ring
+   round it, and a button you press in it — a thumb, **Copy**, a walkthrough
+   button — keeps a ring of its own, until you click somewhere else; **Tab**
+   moves the same mark from the keyboard. A thumb pressed on an answer further
+   up no longer makes the chat jump to its end.
    **And every answer says what it cost.** At the right-hand end of that same line,
    in small grey figures, is what the assistant spent answering — a few cents at
    most for an ordinary question, and the tokens it used — and a line under the
@@ -4992,14 +5364,53 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **Report it**, so a mis-hit costs you nothing. (Press it with an empty box and it
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
+   **Two more ways lead here, from the app window.** The **[en:tran:Help]** button's
+   third row, **[en:tran:Report a Problem]** (the menu bar's Help menu has the
+   same row), opens the help window on a card
+   that asks what went wrong — or what you wish the app did better — with a
+   **Report** button on it: type a line, attach a picture or a file if it
+   helps (the paperclip takes pictures, text files and a PDF), and
+   press **Ask** or **Report** — either starts it. From then on that tab IS
+   the report: its name starts with **Report:**, and anything more you type
+   or attach there is added to the report rather than answered as a
+   question, until you press **Send report**. And when the app itself
+   hits an error it asks first, **[en:tran:Something Went Wrong]**, with
+   **[en:tran:Not Now]** beside **[en:tran:Report a Problem]**; say yes and the
+   help window opens on a card naming the error, with the same **Report**
+   button (type what you were doing first, if you remember — it goes into the
+   report). Nothing is looked into before that press, and every one of these
+   says first what a report carries: the app's version and build, this
+   computer's system information, the window you are in and what is selected,
+   what each screen holds, the app's console log, the end of the conversation,
+   a picture of the app and any file you attach.
    Say yes and it goes and looks: it photographs the app as it stands, notes the
    version, the window you are in and what the screens are doing, reads the app's own
-   error log, and then investigates the problem in the running app. A few seconds
+   error log (the errors and warnings the main window has logged, with the name of
+   this computer's account taken out of any file path), and then investigates the
+   problem in the running app. A few seconds
    later it comes back with what it found and a report written up in your place,
-   with a **Send report** button under it. **Nothing is sent until you press that** —
-   and there is no bug tracker connected to this app yet, so what it does today is
-   save the whole thing, with the picture, into your **Downloads** folder and tell
-   you where and who wants it: the answer names the maintainers' email address and
+   with a **Send report** button under it — and, when you attached files, their
+   names, so you see what would go. **Nothing is sent until you press that.**
+   Thought of something more while it is still writing? Type it and press **Add**:
+   it starts the write-up again with your new words in it, and what you attached
+   earlier stays with it.
+   Not every problem is a fault in the app, so it helps first: when what you
+   describe looks like something you can put right yourself — a setting, a step
+   that was missed — the answer is **Try this first** with the steps, and the
+   question _Did that solve it?_ Press **That fixed it** (or just type _yes_) and
+   the report is closed with nothing sent. Press **Still a problem — report it**
+   and the report it wrote while you tried is put in front of you, saying what you
+   were told to try.
+   Press **Send report** and the line under the conversation reads _Sending the
+   report_ for a moment. When the app's maintainers have a report server open, the
+   write-up goes straight to it together with its files — the picture of the app
+   and whatever you attached: pictures, a PDF, text files, each up to 5 MB — and
+   the answer starts **Sent**, with the report's reference and the names of the
+   files that went. A file that could not go is named too, with why. When no
+   report server is open, or it does not take the report, the answer says plainly
+   that nothing was sent, and why. Either way the whole thing, with the picture, is saved into your
+   **Downloads** folder, and when nothing was sent the answer tells you who wants
+   it: it names the maintainers' email address and
    the subject line to use, and five buttons do the rest — **Copy report** puts the
    whole write-up on your clipboard, **Copy subject** the subject line,
    **Copy picture** the screenshot (paste it into the message and most mail apps
@@ -5058,6 +5469,31 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
+    **Auto, the last row of that list, chooses for you — among the assistants that
+    cost nothing.** Pick **Auto** and the tab stays on it: in front of every question
+    the window looks at each of your own servers that costs nothing to ask (one on
+    this computer or on the church's own network, or a shared one marked free) and
+    asks the best assistant that can answer right now. A server that does not answer
+    is left out. One that is already answering another chat tab, and one that has
+    just failed or taken more than three minutes over an answer, go to the back of
+    the line. Among the rest the bigger model is asked first, read off the size in
+    its name (`9b`, `12b`); the **Free** service counts as 8B, so a server model of
+    8B or more is asked before it and a smaller one after it — which keeps a small
+    model of your own for the day the internet is down. On LM Studio only a model
+    that is loaded is asked while one is, because asking for another would load it
+    in place of yours. An assistant that needs a paid key is never asked by Auto.
+    While it looks, the waiting line reads _Auto is checking which assistants can
+    answer_ and then _Auto picked_ with the name; where the model list stood,
+    **AUTO PICK** reads _chosen at each question_ until the first answer and names
+    who answered after it. When the one it picked fails before saying anything, the
+    next one is asked, and a small line over the answer says who could not answer
+    and who did. Because the **Free** service may be the one that answers, an Auto
+    chat carries a notice saying that your questions may leave this computer; pick
+    one of your own servers by name to keep every question in the building. Picking
+    any named row ends Auto for that tab. **Auto is what a chat starts on** until
+    you pick an assistant by name: the help window opens on it the first time, and
+    so does every new chat after it. Once you have picked a named assistant, new
+    chats start on that one instead, and picking **Auto** again brings it back. 📸
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
@@ -5123,14 +5559,17 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **[en:tran:Custom servers]** — it is not yours to edit. It is listed
     right below that box instead, under **[en:tran:Shared servers]**
     (**[en:tran:Settings]** → **[en:tran:Others]**): each shared server with
-    a lock beside its name and, opened, its address and its models — to
-    read, with nothing to type in and nothing to delete. The small **↻**
+    a lock beside its name and, opened, its models — to read, with nothing
+    to type in and nothing to delete. Its address is not shown anywhere in
+    the app: a shared server is for the app to ask, not an address to copy
+    and use somewhere else. The small **↻**
     beside the **who answers** list reads the file again without a restart
     (hold the mouse over it to see when it was last read, or why a read
     failed — a failed read keeps the servers of the last good one), and the
     **↻** in **[en:tran:Shared servers]** does the same from Settings, with
-    the time of the last read written under it. A key the file carries
-    stays on the computer's own side; neither window ever sees it. 📸
+    the time of the last read written under it. The address and a key the
+    file carries stay on the computer's own side; neither window ever sees
+    them. 📸
     How long a local answer takes is the computer's and the program's: one laptop's
     Ollama read 11 words a second on a 4-billion-parameter model, llama.cpp's own
     `llama-server` read the very same model file at 53 on the same laptop and
@@ -5228,7 +5667,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 > conversation says so. The manual is bundled inside the app.
 
 18. **It can turn words you already have into a song.** Paste the verses of a song
-    into the box — from an email, from a hymn sheet, from a page you found — and ask
+    into the box of this help window, where you type a question (not into the Lyric
+    Editor) — from an email, from a hymn sheet, from a page you found — and ask
     for a song; or attach a `.txt` of the words with the paperclip; or give it the
     address of a page the words are on. One of the **Try asking** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
@@ -5328,7 +5768,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     section and restart the app: the chatbot, its tools and the debugging endpoint they
     use are then never started.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 
@@ -5475,7 +5915,9 @@ learn the keys of the page you are on.
    (**[en:tran:Redo]** is `Ctrl+Shift+Z` and `Ctrl+Y`). A grey line under a
    heading or a row says when the key works — for example
    **[en:tran:While the slides panel has focus]**: the slide arrows only move
-   the slides after you click into the slides panel.
+   the slides after you click into the slides panel — or after three quick
+   presses, the row
+   **[en:tran:Take the keys back to what is being presented]** (W-49b).
 3. Each page lists its own keys. The Presenter starts with
    **[en:tran:Screens]** (`F5` shows or hides the selected screens, `F6`–`F10` clear them,
    `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
@@ -5509,6 +5951,48 @@ learn the keys of the page you are on.
    Close the lookup and the panel goes back to the page's list.
 
 _Verify: KB-61, KB-62, KB-63, KB-64, KB-65._
+
+---
+
+### W-49b — Run the slides from a presenter remote (get the keys back without a click)
+
+**Goal:** keep moving to the next slide from a remote, or from the keyboard,
+when you cannot walk back to the computer to click a panel.
+
+1. **Space**, **→**, **↓** and **Page Down** — the keys a presenter remote
+   sends for _next_ — move a panel only while that panel has the keys: the
+   presenting flow's preview panel (W-22b), the slides in the middle of the
+   Presenter (W-03), or a floating **[en:tran:Slides]** preview of another
+   document. One click anywhere else — a document in the list, a button under
+   a screen — and the keys go to what you clicked, so the remote seems dead.
+2. **Press the key three times quickly** — inside a second and a half. The
+   keys go back to what is being presented. That third press only hands the
+   keys over: nothing on the screen changes. The **next** press moves on.
+3. **Which panel takes them** — the first of these that has something going:
+   - a presenting flow's preview panel whose run has started (one of its
+     lines wears the outline);
+   - the slides in the middle of the Presenter, while one of that document's
+     slides is on a screen;
+   - a floating **[en:tran:Slides]** preview, while one of its slides is on a
+     screen.
+
+   So with a running order started and a song on the screen as well, it is
+   the running order that takes the keys. When none of the three has anything
+   going, three presses change nothing — there is nothing a key could move —
+   so click what you want to present first.
+4. **Nothing at all has the keys** — you closed the panel you were in, say:
+   there is no need for three presses. The first press goes to the same
+   panel, in the same order, and moves it on.
+5. **What the three presses never take the keys from:** a slider, or an open
+   **[en:tran:Bible Lookup]** with the cursor in its box — there the keys keep
+   doing what they do. And a panel that is already moving is left alone
+   however fast you press: stepping quickly through a song never jumps you
+   over to the running order.
+6. **Help → [en:tran:Keyboard Shortcuts]** lists this under
+   **[en:tran:Slides]** as
+   **[en:tran:Take the keys back to what is being presented]** (W-49).
+
+_Verify: KB-66, KB-67, KB-68._
 
 ## Screen Mirror
 

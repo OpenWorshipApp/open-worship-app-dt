@@ -420,6 +420,22 @@ appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
     })();
 });
 
+// Help -> Report a Problem, under it: the same caution, then the request the
+// Help button's third row leaves -- the assistant opens asking what went
+// wrong (`chatbotHandoffStoreHelpers.ts`).
+appProvider.messageUtils.listenForData('main:app:open-chatbot-report', () => {
+    void (async () => {
+        if (await askAiCaution('assistant')) {
+            // Loaded at the press: the settings it writes through are no
+            // part of what every window loads to start.
+            const { requestChatbotReport } =
+                await import('./ai/chatbotHandoffStoreHelpers');
+            requestChatbotReport('');
+            openChatbotPage();
+        }
+    })();
+});
+
 // Help -> AI Chat, same as above.
 appProvider.messageUtils.listenForData('main:app:open-aichat-page', () => {
     void (async () => {

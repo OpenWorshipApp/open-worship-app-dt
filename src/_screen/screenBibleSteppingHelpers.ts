@@ -1,7 +1,8 @@
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { handleError } from '../helper/errorHelpers';
 import appProvider from '../server/appProvider';
-import ScreenBibleManager from './managers/ScreenBibleManager';
+import ScreenLongTextManager from './managers/ScreenLongTextManager';
+import { getBibleItemData } from './screenLongTextTypeHelpers';
 
 // The bible data modules are pulled in only when the shortcut actually fires:
 // this module is loaded by every window through `ScreenManager`, and nothing
@@ -71,12 +72,14 @@ export async function toSteppedBibleTarget(
 }
 
 export async function stepScreenBibleItem(screenId: number, isNext: boolean) {
-    const screenBibleManager = ScreenBibleManager.getInstance(screenId);
-    if (screenBibleManager === null) {
+    const screenLongTextManager = ScreenLongTextManager.getInstance(screenId);
+    if (screenLongTextManager === null) {
         return;
     }
-    const bibleItemJson =
-        screenBibleManager.screenViewData?.bibleItemData?.bibleItem;
+    // A long text on that screen has no passage to step: nothing happens.
+    const bibleItemJson = getBibleItemData(
+        screenLongTextManager.screenViewData,
+    )?.bibleItem;
     if (bibleItemJson === undefined) {
         return;
     }
@@ -90,7 +93,7 @@ export async function stepScreenBibleItem(screenId: number, isNext: boolean) {
     }
     // No `filePath`: re-running `applyAttachBackground` on every step would
     // overwrite whatever background the operator has on that screen.
-    await screenBibleManager.applyNewBibleItemJson(
+    await screenLongTextManager.applyNewBibleItemJson(
         { ...bibleItemJson, target: newTarget },
         undefined,
     );

@@ -1,6 +1,6 @@
 ---
 name: knowledge-label-i18n-templates
-description: Docs name app controls as `[en:tran:Clear Bible]`, resolved to the app's live UI language when a tool serves them — never write an English label with a Khmer twin beside it
+description: Docs name app controls as `[en:tran:Clear Long Text]`, resolved to the app's live UI language when a tool serves them — never write an English label with a Khmer twin beside it
 metadata:
   type: project
 ---
@@ -9,13 +9,13 @@ Every document the chatbot can read — `docs/manual-sources/**` and the allowli
 `.claude/**` — names an app control with a template, not a label:
 
 ```
-Press **F9** ([en:tran:Clear Bible]) to take the verse off screen.
+Press **F9** ([en:tran:Clear Long Text]) to take the verse off screen.
 ```
 
 `tools/owa-devtools-mcp/tran.mjs` fills it in on the way out with what that key
 reads as in the language the app is DISPLAYING right now (`document.documentElement.lang`,
-cached 10s in `owaTools.mjs`): `Clear Bible` in an English window,
-`លុបព្រះគម្ពីរ` in a Khmer one. The chatbot's prose stays English-only; only the
+cached 10s in `owaTools.mjs`): `Clear Long Text` in an English window,
+`លុបអត្ថបទវែង` in a Khmer one. The chatbot's prose stays English-only; only the
 button names move.
 
 **Why:** the docs used to carry both halves by hand — a bold English label with
@@ -29,7 +29,7 @@ to `សៀវភៅទាំងអស់`, and six labels were wrong when this l
 **How to apply:**
 
 - Writing a doc: the token holds the exact `tran()` key and nothing else, the way
-  `[en:tran:Clear Bible]` does. Never a hand-written twin — a reviewer cannot see
+  `[en:tran:Clear Long Text]` does. Never a hand-written twin — a reviewer cannot see
   the drift, and neither can a test that only reads English.
 - The key must EXIST. An unknown key falls back to its own English text, so it
   looks perfect in English and silently hands a Khmer volunteer a label they

@@ -4,6 +4,7 @@
  * so the chat window reads it without pulling in the dialogs and window
  * openers the button that LEAVES it needs.
  */
+import { toPathScrubbed } from '../../server/accountPathHelpers';
 import { getSettingForce, removeSetting, setSetting } from '../settingHelpers';
 
 const HANDOFF_KEY = 'chatbot-handoff-ask';
@@ -20,13 +21,13 @@ export function requestChatbotAsk(text: string) {
     );
 }
 
-/** The waiting request, once; null when there is none or it is stale. */
-export function takeChatbotAsk(): string | null {
-    const raw = getSettingForce(HANDOFF_KEY);
+/** A waiting request's words, once; null when none waits or it is stale. */
+function takeHandoffText(key: string): string | null {
+    const raw = getSettingForce(key);
     if (!raw) {
         return null;
     }
-    removeSetting(HANDOFF_KEY);
+    removeSetting(key);
     try {
         const data = JSON.parse(raw);
         if (
@@ -36,8 +37,70 @@ export function takeChatbotAsk(): string | null {
         ) {
             return null;
         }
-        return data.text.trim().slice(0, HANDOFF_MAX_CHARS) || null;
+        return data.text.trim().slice(0, HANDOFF_MAX_CHARS);
     } catch (_error) {
         return null;
     }
+}
+
+/** The waiting request, once; null when there is none or it is stale. */
+export function takeChatbotAsk(): string | null {
+    return takeHandoffText(HANDOFF_KEY) || null;
+}
+
+// A second request, of another kind (2026-10-13, the user's asks: Help's
+// third row and the error dialog -- _open chatbot for reporting problem,
+// consult and ask user and collect and analyze then post the report_): the
+// assistant is opened to REPORT A PROBLEM. `problem` is what went wrong when
+// the app itself knows -- an error it caught -- and empty when a person
+// asked from the Help button, who is then asked what happened.
+const REPORT_HANDOFF_KEY = 'chatbot-handoff-report';
+
+export function requestChatbotReport(problem: string) {
+    setSetting(
+        REPORT_HANDOFF_KEY,
+        JSON.stringify({
+            text: problem.slice(0, HANDOFF_MAX_CHARS),
+            at: Date.now(),
+        }),
+    );
+}
+
+/**
+ * The waiting report request, once: the problem's words (empty when the
+ * person is to be asked), or null when none waits or it is stale.
+ */
+export function takeChatbotReport(): string | null {
+    return takeHandoffText(REPORT_HANDOFF_KEY);
+}
+
+/**
+ * An error the app caught, in one line for a report: its kind and message
+ * and the window it happened in. Never the stack -- its paths name the
+ * computer's account, and the report reads the console for itself.
+ */
+export function toProblemText(error: unknown, windowTitle: string) {
+    const name =
+        typeof (error as any)?.name === 'string' ? (error as any).name : '';
+    const message =
+        typeof error === 'string'
+            ? error
+            : typeof (error as any)?.message === 'string'
+              ? (error as any).message
+              : '';
+    const said = toPathScrubbed(
+        [name, message]
+            .filter((part) => {
+                return part.length > 0;
+            })
+            .join(': ')
+            .replace(/\s+/g, ' ')
+            .trim(),
+    );
+    const where = windowTitle.trim();
+    return (
+        'The app showed an error' +
+        (where.length > 0 ? ` in the ${where} window` : '') +
+        (said.length > 0 ? `: ${said}` : '')
+    ).slice(0, HANDOFF_MAX_CHARS);
 }

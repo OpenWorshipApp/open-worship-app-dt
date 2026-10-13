@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-11",
+    "updated": "2026-10-13",
     "sections": [
         {
             "id": "panels",
@@ -48,6 +48,7 @@
                     ],
                     "resources": {
                         "recipe": "W-31",
+                        "passage": "Open View on the top menu bar again and click",
                         "menu": "View → Reset Widgets Size",
                         "guide": true
                     }
@@ -87,6 +88,7 @@
                     ],
                     "resources": {
                         "recipe": "W-31",
+                        "passage": "With the keyboard: press Tab until a divider shows a blue outline",
                         "find": "divider between Document List and Presenting Flow List"
                     }
                 }
@@ -300,12 +302,12 @@
                         "throw away"
                     ],
                     "resources": {
+                        "recipe": "W-43",
                         "tools": [
                             "owa_lyric_file",
                             "owa_slide_file",
                             "owa_undo"
-                        ],
-                        "related": ["W-43"]
+                        ]
                     }
                 },
                 {
@@ -338,6 +340,8 @@
                         "move the text box"
                     ],
                     "resources": {
+                        "recipe": "W-15",
+                        "passage": "Apply a font setting to several items",
                         "tools": ["owa_slide_file"]
                     }
                 },
@@ -434,8 +438,9 @@
                 },
                 {
                     "id": "find-a-control",
-                    "text": "Where is the button that does this?",
+                    "text": "Where is the button for ...",
                     "kind": "where",
+                    "template": true,
                     "keywords": [
                         "where is",
                         "which button",
@@ -498,7 +503,7 @@
                 {
                     "id": "tip-of-the-day-disappeared",
                     "text": "Why did the Tip of the Day disappear on its own?",
-                    "kind": "why",
+                    "kind": "what",
                     "keywords": [
                         "tip disappeared",
                         "tip closed by itself",
@@ -558,6 +563,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "The four suggestions are not all it can answer",
                         "tools": ["owa_list_questions"],
                         "find": "More… — everything it can answer"
                     }
@@ -582,6 +588,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Some things need no assistant at all",
                         "find": "Ask how to do something in the app"
                     }
                 },
@@ -604,6 +611,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "The list above the box is worked from the keyboard",
                         "find": "Ask how to do something in the app"
                     }
                 },
@@ -622,6 +630,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Every answer offers Show me step by step",
                         "tools": ["owa_guide_start", "owa_guide_step"]
                     }
                 },
@@ -637,7 +646,8 @@
                         "fresh"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "A strip of tabs runs along the very top"
                     }
                 },
                 {
@@ -652,7 +662,8 @@
                         "do not close"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Lock this chat is how you keep one"
                     }
                 },
                 {
@@ -667,7 +678,32 @@
                         "share"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Under every answer is Copy"
+                    }
+                },
+                {
+                    "id": "answer-was-wrong",
+                    "text": "What can I do when an answer is wrong?",
+                    "kind": "howto",
+                    "keywords": [
+                        "wrong answer",
+                        "bad answer",
+                        "not helpful",
+                        "did not help",
+                        "thumbs down",
+                        "thumbs up",
+                        "dislike",
+                        "like",
+                        "rate",
+                        "smarter model",
+                        "better model",
+                        "ask again with"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "And every answer has two thumbs beside Copy",
+                        "find": "Bad answer"
                     }
                 },
                 {
@@ -691,6 +727,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "And every answer says what it cost",
                         "find": "Credit used"
                     }
                 },
@@ -715,6 +752,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "And it cannot run up the bill on its own",
                         "find": "Limit per hour"
                     }
                 },
@@ -736,7 +774,8 @@
                         "bring the pickers back"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Short of room? Fold those lists to one line"
                     }
                 },
                 {
@@ -755,7 +794,8 @@
                         "recall"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "A question you asked before comes back"
                     }
                 },
                 {
@@ -772,7 +812,8 @@
                         "suggestions"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "And you rarely have to type the next thing"
                     }
                 },
                 {
@@ -791,7 +832,8 @@
                         "still waiting"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Changed your mind? Press Stop"
                     }
                 },
                 {
@@ -812,7 +854,8 @@
                         "what is happening"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "It tells you what it is doing while you wait"
                     }
                 },
                 {
@@ -830,7 +873,8 @@
                         "features"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "The two small arrows at the end of that line walk them in order"
                     }
                 },
                 {
@@ -878,6 +922,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "The rest of the top line belongs to the tab in front",
                         "related": ["W-16"]
                     }
                 },
@@ -896,7 +941,8 @@
                         "ask anything"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "is the one command that DOES ask the assistant"
                     }
                 },
                 {
@@ -913,7 +959,28 @@
                         "tunnel"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "A server shared by the project's own site needs no typing at all"
+                    }
+                },
+                {
+                    "id": "auto-assistant",
+                    "text": "What does the Auto assistant do?",
+                    "kind": "what",
+                    "keywords": [
+                        "auto",
+                        "auto assistant",
+                        "auto pick",
+                        "choose for me",
+                        "pick for me",
+                        "best free assistant",
+                        "no cost",
+                        "not busy",
+                        "which assistant answers"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Auto, the last row of that list, chooses for you"
                     }
                 },
                 {
@@ -928,7 +995,8 @@
                         "works anyway"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "With an AI key set in"
                     }
                 },
                 {
@@ -983,6 +1051,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Show it, instead of describing it",
                         "find": "Attach a picture of the app"
                     }
                 },
@@ -1005,6 +1074,40 @@
                     }
                 },
                 {
+                    "id": "back-to-reading-the-bible",
+                    "text": "I only want to read the Bible — how do I get back to the Bible Reader?",
+                    "kind": "howto",
+                    "keywords": [
+                        "wrong page",
+                        "back to the bible reader",
+                        "just read the bible",
+                        "left the reader",
+                        "go to the bible reader",
+                        "pressed something by mistake"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Under every answer is Copy"
+                    }
+                },
+                {
+                    "id": "attachment-numbers",
+                    "text": "How do I say which of the pictures I attached I mean?",
+                    "kind": "howto",
+                    "keywords": [
+                        "which picture",
+                        "number on the chip",
+                        "attachment number",
+                        "refer to an attachment",
+                        "mention a picture",
+                        "several screenshots"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Show it, instead of describing it"
+                    }
+                },
+                {
                     "id": "point-at-a-control",
                     "text": "How do I point at the button I mean?",
                     "kind": "howto",
@@ -1019,6 +1122,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Show it, instead of describing it",
                         "find": "Point at a control in the app",
                         "tools": ["owa_pick_element"]
                     }
@@ -1036,7 +1140,8 @@
                         "still thinking"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "And you can keep talking while it works"
                     }
                 }
             ]
@@ -1087,7 +1192,8 @@
                         "lost"
                     ],
                     "resources": {
-                        "recipe": "W-44"
+                        "recipe": "W-44",
+                        "passage": "Only three tabs keep their site loaded at once"
                     }
                 },
                 {
@@ -1183,6 +1289,7 @@
                     ],
                     "resources": {
                         "recipe": "W-44",
+                        "passage": "This is not the app's own assistant",
                         "related": ["W-42"],
                         "find": "AI Chat"
                     }

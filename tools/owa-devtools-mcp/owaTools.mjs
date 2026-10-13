@@ -27,6 +27,7 @@ import {
   genTypeExpression,
 } from './domMatch.mjs';
 import { readLiveInstances } from './discovery.mjs';
+import { FRESH_PAGE_NOTE_LEAD } from './manualPage.mjs';
 import {
   genPressGuard,
   genPressRefusalReason,
@@ -605,7 +606,7 @@ export function registerOwaTools(server) {
           .union([z.string(), z.array(z.string()).max(20)])
           .describe(
             'The English label, exactly as the manual writes it ' +
-              '(e.g. "Clear Bible"). A list translates several ' +
+              '(e.g. "Clear Slide"). A list translates several ' +
               'at once.',
           ),
         lang: z
@@ -646,14 +647,17 @@ export function registerOwaTools(server) {
     'owa_help_page',
     {
       description:
-        'Read one knowledge document in full by the id an ' +
+        'Read one knowledge document by the id an ' +
         'owa_help_search hit carries (e.g. "W-11", or ' +
         '"internal:memory/....md") -- the steps behind the excerpt.',
-      inputSchema: { id: z.string() },
+      // `part`: a page too long for one read ends by saying so, and how to
+      // read the next. Said there and not in the description, which every
+      // round of every question pays for.
+      inputSchema: { id: z.string(), part: z.number().optional() },
     },
-    async ({ id }) => {
+    async ({ id, part }) => {
       return await attempt(async () => {
-        const page = readHelpPage(id, await readAppLanguage());
+        const page = readHelpPage(id, await readAppLanguage(), part ?? 1);
         if (page === null) {
           throw new Error(`No knowledge document "${id}"`);
         }
@@ -699,10 +703,14 @@ export function registerOwaTools(server) {
         const freshNote =
           freshUrl === null
             ? ''
-            : '\n\n_(If they say this page does not match their window, ' +
+            : `\n\n${FRESH_PAGE_NOTE_LEAD}` +
               'read its newest copy with owa_read_website: ' +
               `${freshUrl} ${dateNote})_`;
-        return `# ${page.title}${kindNote}\n\n${body}${freshNote}`;
+        // A later part says which it is on its heading: the model asked for
+        // it by number, and the window drops the heading when it joins them.
+        const partNote =
+          page.part > 1 ? ` (part ${page.part} of ${page.partCount})` : '';
+        return `# ${page.title}${partNote}${kindNote}\n\n${body}${freshNote}`;
       });
     },
   );
@@ -2469,9 +2477,13 @@ export function registerOwaTools(server) {
           );
         }
         if (guideSteps === null && manualId !== undefined) {
+          // Every step of it: the card is built from the page, and none
+          // of it is sent to a model. Read in parts, a recipe longer than
+          // one read lost its last steps here too.
           const manualPage = readHelpPage(
             manualId,
             await readAppLanguage(page),
+            'whole',
           );
           if (manualPage === null) {
             throw new Error(`No knowledge document "${manualId}"`);

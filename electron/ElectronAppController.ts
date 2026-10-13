@@ -43,6 +43,13 @@ export default class ElectronAppController {
         this.mainController.sendMessage('main:app:open-about-page');
     }
 
+    // Help -> Report a Problem: the assistant opened already asking what
+    // went wrong. The window asks its own caution first, as for the item
+    // above it.
+    openChatbotReportPage() {
+        this.mainController.sendMessage(messageChannels.openChatbotReport);
+    }
+
     openChatbotPage() {
         this.mainController.sendMessage(messageChannels.openChatbotPage);
     }

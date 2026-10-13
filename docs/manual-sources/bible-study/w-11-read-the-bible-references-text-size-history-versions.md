@@ -2,10 +2,10 @@
 id: W-11
 title: "Read the Bible (references, text size, history, versions)"
 section: "Bible study"
-verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, ST-59]
+verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -41,6 +41,13 @@ quick lookup, and where you look a verse up when you are not presenting.
    clicked, without needing another scroll.
    The choice is remembered for that color group, and the toggle appears only
    while the group has at least two panes.
+   A pane that has a color splits into ANOTHER version. Its two split buttons,
+   in the row that appears while the mouse is over its header, read
+   **[en:tran:Split Horizontal to]** and **[en:tran:Split Vertical to]**: click
+   one, then click a version in the list, and the same passage opens beside (or
+   below) it in that version, in the same color group. A pane with no color
+   splits at once, in the version it already has — its buttons read
+   **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
 4. If you lose a passage, you do not need to remember and type it again. Double-click one of
    the recent reference rows near the top to go back to it.
 5. To change the main Bible version, click its short name in the header and choose a
@@ -61,7 +68,7 @@ quick lookup, and where you look a verse up when you are not presenting.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `ST-59`
+`RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

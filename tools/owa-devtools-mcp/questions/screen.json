@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-11",
+    "updated": "2026-10-12",
     "sections": [
         {
             "id": "screens",
@@ -304,7 +304,7 @@
                 {
                     "id": "stage-sets-transition-none",
                     "text": "Why did the slide transition turn off when I changed the stage number?",
-                    "kind": "why",
+                    "kind": "what",
                     "keywords": [
                         "stage number",
                         "St:",
@@ -379,6 +379,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
+                        "passage": "Content goes to every",
                         "tools": ["owa_list_screens"]
                     }
                 },
@@ -392,21 +393,26 @@
                         "get rid of a card"
                     ],
                     "resources": {
-                        "recipe": "W-18"
+                        "recipe": "W-18",
+                        "passage": "removes a screen you no longer need"
                     }
                 },
                 {
                     "id": "line-sync",
-                    "text": "How do I keep two screens on the same line of a verse?",
+                    "text": "How do I line up two Bible versions verse by verse on the screen?",
                     "kind": "howto",
                     "keywords": [
                         "set line sync",
                         "same line",
-                        "follow",
-                        "stage display"
+                        "verse by verse",
+                        "versions in rows",
+                        "side by side versions",
+                        "line sync"
                     ],
                     "resources": {
                         "recipe": "W-18",
+                        "passage": "A Bible passage shown in more than one version is drawn as one column per version",
+                        "find": "Set Line Sync",
                         "related": ["W-06"]
                     }
                 },
@@ -587,6 +593,7 @@
                     ],
                     "resources": {
                         "recipe": "W-50",
+                        "passage": "A guest can be linked to several hosts at once",
                         "find": "Connect by address"
                     }
                 },
@@ -701,6 +708,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "lists everyone watching",
                         "find": "Watching now"
                     }
                 },
@@ -717,7 +725,8 @@
                         "controls hidden"
                     ],
                     "resources": {
-                        "recipe": "W-51"
+                        "recipe": "W-51",
+                        "passage": "The buttons show while the mouse is over the page"
                     }
                 },
                 {
@@ -748,6 +757,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "leaves the list by itself within about 40 seconds",
                         "find": "Watching now"
                     }
                 },
@@ -836,6 +846,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "The browser page has the same button",
                         "related": ["W-50"],
                         "find": "Cast to a TV",
                         "guide": true
@@ -856,6 +867,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "On a page that may use a camera",
                         "find": "Share my cameras"
                     }
                 },

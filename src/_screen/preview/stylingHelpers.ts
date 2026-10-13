@@ -2,8 +2,8 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { genThrottleAttempt } from '../../helper/timeoutHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
-import { useScreenBibleManagerEvents } from '../managers/screenEventHelpers';
-import ScreenBibleManager from '../managers/ScreenBibleManager';
+import { useScreenLongTextManagerEvents } from '../managers/screenEventHelpers';
+import ScreenLongTextManager from '../managers/ScreenLongTextManager';
 import { toBibleTextStyleView } from '../bibleTextStyleHelpers';
 
 // A slider fires per pixel, and every change that reaches the manager is a
@@ -24,17 +24,17 @@ const COMMIT_WINDOW_MILLISECOND = 80;
  */
 export function useBibleTextStyleEditing() {
     const [textStyle, setTextStyle] = useState(() => {
-        return ScreenBibleManager.textStyle;
+        return ScreenLongTextManager.textStyle;
     });
     // What was changed here and has not gone out yet.
     const pendingRef = useRef<AnyObjectType | null>(null);
-    useScreenBibleManagerEvents(['text-style'], undefined, () => {
+    useScreenLongTextManagerEvents(['text-style'], undefined, () => {
         // While something is waiting, the copy here is the newer one: the
         // broadcast is an earlier commit of this same drag.
         if (pendingRef.current !== null) {
             return;
         }
-        setTextStyle(ScreenBibleManager.textStyle);
+        setTextStyle(ScreenLongTextManager.textStyle);
     });
     // Per instance: a module-level one would let a panel that closed swallow
     // the last change of the one that opened after it.
@@ -51,7 +51,7 @@ export function useBibleTextStyleEditing() {
                 const pending = pendingRef.current;
                 pendingRef.current = null;
                 if (pending !== null) {
-                    ScreenBibleManager.applyTextStyle(pending);
+                    ScreenLongTextManager.applyTextStyle(pending);
                 }
             });
         },

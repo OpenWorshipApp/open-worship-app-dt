@@ -6,7 +6,9 @@ import type {
     BibleItemRenderingType,
     BibleRenderVerseType,
 } from './bibleScreenComps';
-import { BibleBibleTableComp } from './bibleScreenComps';
+import { LongTextTableComp } from './bibleScreenComps';
+import type { LongTextColumnType } from './screenLongTextTypeHelpers';
+import { toBibleLongTextColumns } from './screenLongTextTypeHelpers';
 import { getHTMLChild } from '../helper/helpers';
 import appProvider from '../server/appProvider';
 import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
@@ -14,34 +16,50 @@ import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const bibleScreenHelper = {
-    async genHtmlFromScreenViewBibleItem(
-        bibleRenderingList: BibleItemRenderingType[],
-        isLineSync: boolean,
+    /**
+     * The table of either source, as a detached element. `isLongText` is a
+     * long text in several languages; otherwise the columns are Bibles.
+     */
+    async genHtmlFromLongTextColumns(
+        columns: LongTextColumnType[],
+        {
+            isLineSync,
+            isLongText,
+        }: { isLineSync: boolean; isLongText: boolean },
     ) {
-        if (bibleRenderingList.length === 0) {
+        if (columns.length === 0) {
             return document.createElement('table');
         }
-        const bibleRenderingLangList = await Promise.all(
-            bibleRenderingList.map(async (item) => {
-                let langData = await getLangDataAsync(item.locale);
+        const langColumns = await Promise.all(
+            columns.map(async (column) => {
+                let langData = await getLangDataAsync(column.locale);
                 langData ??= await getLangDataAsync(DEFAULT_LOCALE);
                 return {
-                    ...item,
+                    ...column,
                     langData: langData!,
                 };
             }),
         );
-        const versesCount = bibleRenderingList[0].verses.length;
         const htmlString = renderToStaticMarkup(
-            <BibleBibleTableComp
-                bibleRenderingList={bibleRenderingLangList}
+            <LongTextTableComp
+                columns={langColumns}
                 isLineSync={isLineSync}
-                versesCount={versesCount}
+                isLongText={isLongText}
             />,
         );
         const div = document.createElement('div');
         div.innerHTML = htmlString;
         return getHTMLChild<HTMLDivElement>(div, 'div');
+    },
+
+    genHtmlFromScreenViewBibleItem(
+        bibleRenderingList: BibleItemRenderingType[],
+        isLineSync: boolean,
+    ) {
+        return this.genHtmlFromLongTextColumns(
+            toBibleLongTextColumns(bibleRenderingList),
+            { isLineSync, isLongText: false },
+        );
     },
 
     removeClassName(parent: HTMLElement, className: string) {

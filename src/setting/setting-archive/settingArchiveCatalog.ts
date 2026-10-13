@@ -27,7 +27,7 @@ import {
  * sections unknown. The test pins them.
  *
  * Constants that live in heavy modules are spelled out here with the place
- * they come from, rather than imported: importing `ScreenBibleManager` for one
+ * they come from, rather than imported: importing `ScreenLongTextManager` for one
  * prefix would load the screen machinery into the Settings window.
  */
 
@@ -663,7 +663,9 @@ const LOCAL_RULE_LIST: LocalRuleType[] = [
     {
         leafId: 'foreground.messages',
         patterns: [
-            /^(?:foreground-)?(?:message|quick-text|alert|announcement)(?:-|$)/,
+            // `long-text`: a Long Text Show session keeps its words
+            // under `long-text-setting…`, outside `foreground-`.
+            /^(?:foreground-)?(?:message|quick-text|alert|announcement|long-text)(?:-|$)/,
         ],
     },
     {

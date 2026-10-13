@@ -36,12 +36,15 @@ Measured that day, three ways past it:
   picker's CHOSEN option) and the walkthrough's Do it, the card's own button
   and a tool `do` alike.
 - A key is as destructive as the control whose title names it: `Clear All [F6]`
-  refuses F6, `Clear Bible [F9]` leaves F9 alone.
+  refuses F6, `Clear Long Text [F9]` leaves F9 alone.
 - Anything inside the confirm / alert / input popups (`.modal-container--blocking`)
   is the user's to answer — refused as `question-press`.
 - A translation the dictionary ALSO uses for an allowed control stays
-  pressable: Khmer `លុបព្រះគម្ពីរ` is both Clear Bible and Delete Bible. The
-  app's own confirm stands behind the destructive reading.
+  pressable: Khmer `លុបផ្ទៃខាងក្រោយ` is both Clear Background and Remove
+  Background. The app's own confirm stands behind the destructive reading.
+  (Until 2026-10-13 `លុបព្រះគម្ពីរ` was such a pair too, Clear Bible and
+  Delete Bible; that button is Clear Long Text now, the phrase is Delete
+  Bible's alone, and it is refused.)
 - The text of a NON-control (a slide card, a list row) is never read — a hymn
   saying "erase my sin" must not make its own card unpressable.
 - `probe-mcp.mjs` proves the page half live on three injected probe buttons

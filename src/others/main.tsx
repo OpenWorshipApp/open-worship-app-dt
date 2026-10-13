@@ -13,6 +13,7 @@ import { StrictMode } from 'react';
 import { getCurrentLocale, getLangData, tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { offerErrorReporting } from '../helper/errorReportOfferHelpers';
 import FileSourceMetaManager from '../helper/FileSourceMetaManager';
 import appProvider from '../server/appProvider';
 import initCrypto from '../_owa-crypto';
@@ -150,12 +151,18 @@ async function confirmLocalStorageErasing() {
 // the last.
 let isReloadingConfirmShowing = false;
 
-async function confirmReloading() {
+async function confirmReloading(error?: unknown) {
     if (isReloadingConfirmShowing) {
         return;
     }
     isReloadingConfirmShowing = true;
     try {
+        // Reporting first, and when they take it, no reload question on top
+        // of it: the assistant reads this window as it stands. The next
+        // error asks about the reload as before.
+        if (await offerErrorReporting(error)) {
+            return;
+        }
         // The lock covers the read-compare-write of the timestamp and NOTHING
         // more. It used to be held across the confirm below as well — that is,
         // for as long as it took a human to answer — so the next error in the
@@ -215,7 +222,7 @@ async function initMain() {
         if (isDomException(reason)) {
             return;
         }
-        confirmReloading();
+        confirmReloading(reason);
     };
 
     globalThis.onerror = function (error: any) {
@@ -223,7 +230,7 @@ async function initMain() {
         if (isDomException(error)) {
             return;
         }
-        confirmReloading();
+        confirmReloading(error);
     };
 
     await initCrypto();

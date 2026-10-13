@@ -288,10 +288,10 @@ export const DOM_MATCH_RUNTIME = `
             .replace(/\\s*\\*+$/, '');
     };
     // The NEEDLE loses the same decoration: the words a tool hands back
-    // carry the shortcut -- owa_list_screens says "Clear Bible [F9]", the
+    // carry the shortcut -- owa_list_screens says "Clear Long Text [F9]", the
     // title of that button -- and a press by those exact words was refused
     // because the part had lost its bracket and the needle had not
-    // (EC-135: "Close [Ctrl+Q]" on the Bible Lookup, "Clear Bible [F9]" on
+    // (EC-135: "Close [Ctrl+Q]" on the Bible Lookup, "Clear Long Text [F9]" on
     // the Mini Screen, both the control's own title). A needle that is
     // nothing but decoration matches nothing.
     // A file row's title is the file name WITH its extension ("Amazing

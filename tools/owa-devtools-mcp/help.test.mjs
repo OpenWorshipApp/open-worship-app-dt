@@ -9,6 +9,7 @@ import {
   scrubRecipeIds,
   searchHelp,
   toEnglishOnly,
+  toPageParts,
 } from './help.mjs';
 
 // `searchHelp` decides which page answers a volunteer's question, so it is
@@ -73,6 +74,24 @@ beforeAll(() => {
         'Add Extra Bible puts two Bible versions next to each other.',
         '',
       ].join('\n'),
+    ),
+    // A page longer than one read: thirty steps, about 59 KB, in words no
+    // search here asks for.
+    writeEntry(
+      {
+        id: 'W-90',
+        title: 'Lorem ipsum',
+        section: 'Configuration',
+        kind: 'manual',
+        surface: null,
+        file: 'manual/w-90.md',
+      },
+      `# Lorem ipsum\n\nDolor sit amet.\n\n${Array.from(
+        { length: 30 },
+        (_one, at) => {
+          return `${at + 1}. Lorem ${at + 1} ${'ipsum dolor sit amet consectetur. '.repeat(58)}`.trimEnd();
+        },
+      ).join('\n')}\n`,
     ),
     writeEntry(
       {
@@ -215,6 +234,37 @@ describe('readHelpPage', () => {
     expect(page.body).not.toContain('longer than what is shown');
   });
 
+  it('hands a page too long for one read over in parts, and loses none of it', () => {
+    // The help window's own page outgrew the cap, and cut there its last
+    // seven steps reached nobody -- not the model, not the walkthrough card,
+    // not the window choosing what rides on a question.
+    const first = readHelpPage('W-90');
+    expect(first.partCount).toBe(2);
+    expect(first.part).toBe(1);
+    expect(first.body.startsWith('# Lorem ipsum')).toBe(true);
+    expect(first.body).toContain('This page goes on: this is part 1 of 2');
+    expect(first.body).toContain('"part": 2');
+    expect(first.body).not.toContain('30. Lorem 30 ');
+    expect(first.body.length).toBeLessThan(41 * 1024);
+    // A part opens on a step, and the last one goes nowhere.
+    const last = readHelpPage('W-90', null, 2);
+    expect(last.part).toBe(2);
+    expect(/^\d+\. Lorem \d+ /.test(last.body)).toBe(true);
+    expect(last.body).toContain('30. Lorem 30 ');
+    expect(last.body).not.toContain('This page goes on');
+    // Past the last part is the last part.
+    expect(readHelpPage('W-90', null, 9).part).toBe(2);
+    // The walkthrough card is built from every step; none of it goes to a
+    // model.
+    const whole = readHelpPage('W-90', null, 'whole');
+    expect(whole.body).toContain('1. Lorem 1 ');
+    expect(whole.body).toContain('30. Lorem 30 ');
+    expect(whole.body).not.toContain('This page goes on');
+    expect(
+      [first.body.slice(0, first.body.indexOf('\n\n[This page goes on')), last.body].join('\n'),
+    ).toBe(whole.body);
+  });
+
   it('caps a builder note so one lookup cannot eat the conversation', () => {
     // The measured worst case was 208 KB (~52 000 tokens) returned as one
     // tool result, which then rides every remaining round of the loop on
@@ -224,6 +274,35 @@ describe('readHelpPage', () => {
     // ...and says so, or the model reports that the note ends there.
     expect(page.body).toContain('longer than what is shown');
     expect(page.body).toContain('display picker');
+  });
+});
+
+describe('toPageParts', () => {
+  const steps = Array.from({ length: 12 }, (_one, at) => {
+    return `${at + 1}. Step ${at + 1} ${'words '.repeat(50)}`.trimEnd();
+  });
+  const body = `# A page\n\nIntro.\n\n${steps.join('\n')}`;
+
+  it('divides at a numbered step, within the limit, losing nothing', () => {
+    const parts = toPageParts(body, 1500);
+    expect(parts.length).toBeGreaterThan(2);
+    for (const part of parts) {
+      expect(part.length).toBeLessThanOrEqual(1500);
+    }
+    for (const part of parts.slice(1)) {
+      expect(/^\d+\. Step /.test(part)).toBe(true);
+    }
+    expect(parts.join('\n')).toBe(body);
+  });
+
+  it('divides at a line when no step starts late enough, and leaves a short page alone', () => {
+    const prose = Array.from({ length: 40 }, (_one, at) => {
+      return `Line ${at + 1} of plain words.`;
+    }).join('\n');
+    const parts = toPageParts(prose, 300);
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.join('\n')).toBe(prose);
+    expect(toPageParts('A short page.', 300)).toEqual(['A short page.']);
   });
 });
 
@@ -309,6 +388,19 @@ describe('scrubRecipeIds', () => {
     expect(scrubRecipeIds('Open the lookup (W‑06 step 2) and type.')).toBe(
       'Open the lookup and type.',
     );
+  });
+  it('quotes a passage whole, its wrapped lines joined', () => {
+    // The fixture's page is three lines of one paragraph; the excerpt used
+    // to be "the line with a word in it and the four after", newlines kept.
+    const hit = searchHelp('hide the screen', 5, 'manual').find((one) => {
+      return one.id === 'W-10';
+    });
+    expect(hit).toBeDefined();
+    expect(hit.excerpt.startsWith('Show or hide the screen, or press F5. ')).toBe(
+      true,
+    );
+    expect(hit.excerpt).not.toContain('\n');
+    expect(hit.excerpt).not.toContain('#');
   });
   it('reaches the search excerpts too', () => {
     // W-21 step 1 cites "(W-08 step 1)"; the excerpt used to hand the

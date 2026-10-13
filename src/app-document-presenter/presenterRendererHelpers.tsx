@@ -35,7 +35,7 @@ export async function checkIsOnScreen<T>(
     } else if (targeKey === 'f') {
         const allScreenManager = getAllScreenManagers();
         return allScreenManager.some((screenManager) => {
-            return screenManager.screenForegroundManager.isShowing;
+            return screenManager.isShowingForeground;
         });
     } else if (targeKey === 'b') {
         // Passage AND version -- see `getOnScreenBibleItems`.

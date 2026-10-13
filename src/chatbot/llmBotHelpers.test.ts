@@ -145,9 +145,13 @@ import {
 } from './spendGuardHelpers';
 import { MODEL_HIDDEN_TOOL_MAP } from '../../tools/owa-devtools-mcp/modelTools.mjs';
 import {
+    AUTO_ASSISTANT_WARNING,
     applyToolWatch,
     askLlmBot,
     checkCanSeeImages,
+    checkIsNoCostCustomServer,
+    getIsLlmAuto,
+    toIsLlmAuto,
     checkHasMoreModels,
     checkIsCustomProvider,
     checkIsFreeProvider,
@@ -165,6 +169,7 @@ import {
     getLlmModel,
     getLlmModelList,
     getLlmProviderKeyField,
+    getRankedLlmModelList,
     getLlmProviderWarning,
     getLlmProviderWarningLinks,
     toCleanToolName,
@@ -173,6 +178,7 @@ import {
     genGuideRescueSummary,
     genToolWatch,
     toGuideRescueAnswer,
+    checkIsToolLeftOut,
     filterLocalToolList,
     toGeneralQuestionAsk,
     toHistoryTurns,
@@ -414,7 +420,7 @@ describe('genGuideRescueQuestion', () => {
             ' to present.',
         reason: 'nothing on screen to act on',
         looked: [],
-        nearMisses: ['Bible Lookup', 'Clear Bible'],
+        nearMisses: ['Bible Lookup', 'Clear Long Text'],
     };
 
     test('carries the step, the failure and what is really on screen', () => {
@@ -429,7 +435,7 @@ describe('genGuideRescueQuestion', () => {
         expect(asked).not.toContain('nothing on screen to act on');
         expect(asked).toContain('is not anywhere in the window');
         expect(asked).toContain('not about the projector');
-        expect(asked).toContain('Bible Lookup, Clear Bible');
+        expect(asked).toContain('Bible Lookup, Clear Long Text');
         // A step that named nothing says so, rather than leaving the model to
         // wonder what the card was aiming at.
         expect(asked).toContain('named no control');
@@ -1191,10 +1197,77 @@ describe('getLlmProviderKeyField', () => {
     });
 });
 
+// What a thumb down may call "the next model up" (`answerRatingHelpers`):
+// only a list written best first, or the button names a model that is not
+// the smarter one.
+describe('getRankedLlmModelList', () => {
+    test('is the whole list for the three families written best first', () => {
+        for (const provider of ['anthropic', 'openai', 'kimi'] as const) {
+            expect(getRankedLlmModelList(provider), provider).toEqual(
+                getLlmModelList(provider),
+            );
+            expect(getRankedLlmModelList(provider).length).toBeGreaterThan(1);
+        }
+    });
+
+    test('is nothing for a list in another order, a server of the user’s own, or no assistant', () => {
+        // Bedrock is in the order a volunteer should reach for them, and
+        // the keyless three are three different makers' models.
+        expect(getRankedLlmModelList('bedrock')).toEqual([]);
+        expect(getRankedLlmModelList('free')).toEqual([]);
+        expect(getRankedLlmModelList('custom')).toEqual([]);
+        expect(getRankedLlmModelList(null)).toEqual([]);
+    });
+});
+
 // THE KEYLESS PROVIDER. It is what a volunteer gets before anybody has typed an
 // API key, so every one of these is about the state the app ships in, not an
 // edge case. The mocked `getAISetting` above returns three empty keys, which is
 // exactly that state.
+describe('what Auto may ask', () => {
+    test('a server on this computer or the church network costs nothing', () => {
+        expect(
+            checkIsNoCostCustomServer({ baseUrl: 'http://localhost:1234/v1' }),
+        ).toBe(true);
+        expect(
+            checkIsNoCostCustomServer({
+                baseUrl: 'http://super-computer:1237/v1',
+            }),
+        ).toBe(true);
+    });
+
+    test('a server on the internet costs nothing only when it says so', () => {
+        const baseUrl = 'https://abc.trycloudflare.com/v1';
+        expect(checkIsNoCostCustomServer({ baseUrl })).toBe(false);
+        expect(checkIsNoCostCustomServer({ baseUrl, isFree: false })).toBe(
+            false,
+        );
+        expect(checkIsNoCostCustomServer({ baseUrl, isFree: true })).toBe(true);
+    });
+
+    test('a new tab is on Auto until an assistant is picked by name', () => {
+        // Nothing stored at all -- a first run: Auto (the mocked settings
+        // hold nothing).
+        expect(getIsLlmAuto()).toBe(true);
+        expect(toIsLlmAuto(null, null)).toBe(true);
+        expect(toIsLlmAuto('', '')).toBe(true);
+        // A pick is a pick, either way, whatever the other setting holds.
+        expect(toIsLlmAuto('false', null)).toBe(false);
+        expect(toIsLlmAuto('false', 'openai')).toBe(false);
+        expect(toIsLlmAuto('true', 'openai')).toBe(true);
+        // An assistant picked by name before Auto existed wrote the
+        // provider and nothing else: an update leaves that tab's owner on it.
+        expect(toIsLlmAuto(null, 'anthropic')).toBe(false);
+    });
+
+    test('the Auto notice names the public service in its FIRST sentence', () => {
+        // The first sentence is all a folded notice shows, and it is the
+        // one thing that must still be on screen at question ten.
+        expect(AUTO_ASSISTANT_WARNING.split('. ')[0]).toContain('Kilo');
+        expect(AUTO_ASSISTANT_WARNING).toMatch(/leave this computer/);
+    });
+});
+
 describe('the free provider', () => {
     test('answers when no key at all is set', () => {
         // The whole point. Before this existed the list came back empty, the
@@ -1503,6 +1576,60 @@ describe('the request is cache-shaped', () => {
         expect(prompt).toContain('relevant recovery choice');
         expect(prompt).toContain('Never offer generic "No thanks"');
         expect(prompt).toContain('Renumber the steps you actually give from 1');
+    });
+
+    // A supported question goes out with its guide page under it, and the
+    // Reader's pages say "non-English" beside a reference of their own. The
+    // book-button answer read the whole ask: seventeen of the Reader's
+    // supported questions were answered with how to open John 3:16, by no
+    // model, whichever assistant the tab was on (2026-10-12).
+    test('the book-button answer is read off what was typed, not the page under it', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return {
+                content: [{ type: 'text', text: 'Use the A+ button.' }],
+            };
+        });
+        useFakeAnthropic(createMock);
+        const typed = 'The words are too small. Can you help me?';
+        const asked =
+            `${typed}\n\n(This is one of the app's supported questions.)\n` +
+            'A non-English Bible lists its books under their own names: ' +
+            'type John 3:16 or press the book buttons.';
+
+        const answer = await askLlmBot(
+            asked,
+            'reader',
+            'anthropic',
+            null,
+            [],
+            null,
+            { askedText: typed },
+        );
+
+        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(answer.text).toBe('Use the A+ button.');
+    });
+
+    test('the book-button answer still takes a question that asks for it', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'Type it.' }] };
+        });
+        useFakeAnthropic(createMock);
+        const typed =
+            'My Khmer Bible will not take John 3:16. Use the book buttons.';
+
+        const answer = await askLlmBot(
+            `${typed}\n\n(This is one of the app's supported questions.)`,
+            'reader',
+            'anthropic',
+            null,
+            [],
+            null,
+            { askedText: typed },
+        );
+
+        expect(createMock).not.toHaveBeenCalled();
+        expect(answer.text).toContain('do not need to type');
     });
 
     test('does not impose the Reader-specific answer shape on the Presenter', async () => {
@@ -2413,6 +2540,9 @@ describe('the custom servers', () => {
             model: 'phi-3.1-mini-128k-instruct',
             max_tokens: 2000,
         });
+        // A server that did not say which program it is keeps its own
+        // sampling: it may be a gateway that refuses the field.
+        expect(request).not.toHaveProperty('temperature');
         // The window's own id stays on the usage, for the price and the log;
         // a server on this computer costs nothing.
         expect(rounds[0]).toMatchObject({
@@ -2468,6 +2598,27 @@ describe('the custom servers', () => {
         // The tool loop keeps its thinking on; only the retry turns it off.
         expect(first.reasoning_effort).toBeUndefined();
         expect(second).toMatchObject({ reasoning_effort: 'none' });
+    });
+
+    // EC-258: asked more than once, a 4B model got about one answer in
+    // seven wrong on the dense pages and not the same ones twice -- the
+    // program's own default temperature at work.
+    test('a local program is asked for the likeliest word every time', async () => {
+        fake.lmStudioInfoMap = new Map();
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+
+        await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+        );
+
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).toMatchObject({ temperature: 0 });
     });
 
     test('prices a server elsewhere as not known', async () => {
@@ -2748,6 +2899,52 @@ describe('the custom servers', () => {
         expect(bare.actions).toBeUndefined();
     });
 
+    // 2026-10-12, the corpus's first forty-five questions asked of
+    // gemma-4-e4b: thirty-six took three rounds or more, because steps
+    // written from the page the app had quoted in the ask were handed back
+    // as "written from a search excerpt", and the model opened the same
+    // page again and wrote the answer a second time.
+    test('steps written from a page quoted whole are not handed back', async () => {
+        const steps = '1. Open **View**.\n2. Click **Reset Widgets Size**.';
+        const create = vi.fn(async () => {
+            return {
+                choices: [{ message: { role: 'assistant', content: steps } }],
+                usage: { prompt_tokens: 900, completion_tokens: 30 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'How do I put the layout back the way it started?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-31', isKnownPageQuoted: true },
+        );
+        expect(answer.text).toContain('Reset Widgets Size');
+        expect(create).toHaveBeenCalledTimes(1);
+        // The walkthrough still stands under it, on that page.
+        expect(answer.actions?.[0].args).toMatchObject({ manualId: 'W-31' });
+        // A page that was cut to fit is only a hit: the step that answers
+        // may be in the part that did not ride, so those steps go back once.
+        create.mockClear();
+        await askLlmBot(
+            'How do I put the layout back the way it started?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-31' },
+        );
+        expect(create).toHaveBeenCalledTimes(2);
+        const nudged = (create.mock.calls[1] as any[])[0];
+        expect(nudged.messages[nudged.messages.length - 1].content).toMatch(
+            /Open the page that fits/,
+        );
+    });
+
     test('a general question on LM Studio goes out with its thinking off; an app question keeps it', async () => {
         fake.lmStudioInfoMap = new Map([
             [
@@ -2783,21 +2980,48 @@ describe('the custom servers', () => {
             'reasoning_effort',
         );
         // A server of a kind not measured to take the field is sent nothing
-        // it may refuse.
+        // it may refuse. ANOTHER server: this one has said what it is.
+        const OTHER_ID = '99999999-2222-3333-4444-555555555555';
+        fake.customServers = [genServer({ id: OTHER_ID })];
         fake.lmStudioInfoMap = null;
         create.mockClear();
         await askLlmBot(
             toGeneralQuestionAsk('what is holy bible'),
             'presenter',
             'custom',
-            PHI_MODEL,
+            `${OTHER_ID}/row-phi`,
             [],
             null,
             { isGeneral: true },
         );
-        expect((create.mock.calls[0] as any[])[0]).not.toHaveProperty(
-            'reasoning_effort',
-        );
+        const unknownRequest = (create.mock.calls[0] as any[])[0];
+        expect(unknownRequest).not.toHaveProperty('reasoning_effort');
+        expect(unknownRequest).not.toHaveProperty('temperature');
+    });
+
+    // The look at the server is given five seconds in front of every
+    // question; the one that runs out must not send that question out
+    // sampled. Seen as the one answer in twenty-seven that differed between
+    // two askings (2026-10-13).
+    test('a server slow to say which program it is this once is still that program', async () => {
+        const SLOW_ID = '77777777-2222-3333-4444-555555555555';
+        fake.customServers = [genServer({ id: SLOW_ID })];
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        fake.lmStudioInfoMap = new Map();
+        await askLlmBot('Hello?', 'presenter', 'custom', `${SLOW_ID}/row-phi`);
+        expect((create.mock.calls[0] as any[])[0]).toMatchObject({
+            temperature: 0,
+        });
+        // No answer to the look this time.
+        fake.lmStudioInfoMap = null;
+        create.mockClear();
+        await askLlmBot('Hello?', 'presenter', 'custom', `${SLOW_ID}/row-phi`);
+        expect((create.mock.calls[0] as any[])[0]).toMatchObject({
+            temperature: 0,
+        });
     });
 
     function genCallResponse(name: string, args: Record<string, any> = {}) {
@@ -3035,6 +3259,14 @@ describe('the custom servers', () => {
                 'takes longer on a local model',
         );
         expect(filterLocalToolList([{ name: 'owa_undo' }])).toEqual([]);
+        // And the window can ask which of a question's tools that leaves out.
+        expect(checkIsToolLeftOut('custom', 'owa_undo')).toBe(true);
+        expect(checkIsToolLeftOut('custom', 'owa_help_page')).toBe(false);
+        // Not a local server: the whole model list goes.
+        expect(checkIsToolLeftOut('anthropic', 'owa_undo')).toBe(false);
+        expect(checkIsToolLeftOut(null, 'owa_undo')).toBe(false);
+        // Withheld from EVERY model is another matter, with its own message.
+        expect(checkIsToolLeftOut('custom', 'owa_pick_element')).toBe(false);
     });
 
     test('a general question is not refused by a context too small for the app', async () => {

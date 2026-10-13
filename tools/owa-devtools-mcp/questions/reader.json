@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-11",
+    "updated": "2026-10-13",
     "sections": [
         {
             "id": "reading",
@@ -94,6 +94,24 @@
                         "recipe": "W-11",
                         "related": ["W-39"],
                         "find": "Sync group scrolling"
+                    }
+                },
+                {
+                    "id": "split-other-version",
+                    "text": "Why does the split button ask which Bible version to open?",
+                    "kind": "what",
+                    "keywords": [
+                        "split horizontal to",
+                        "split vertical to",
+                        "color group",
+                        "grouped pane",
+                        "split view",
+                        "another translation",
+                        "version list"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": ["W-32"]
                     }
                 },
                 {
@@ -248,8 +266,26 @@
                     "resources": {
                         "recipe": "W-31",
                         "related": ["W-12"],
-                        "find": ["Advance Bible Lookup", "Advance Lookup"],
+                        "find": "Advance Bible Lookup",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "bible-not-available",
+                    "text": "It says a Bible key is not available. How do I get that Bible?",
+                    "kind": "howto",
+                    "keywords": [
+                        "not available",
+                        "missing bible",
+                        "no kjv",
+                        "kjv missing",
+                        "get that bible",
+                        "import this bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "find": "Let the assistant import this Bible for me",
+                        "passage": "When a window says a Bible is not available"
                     }
                 }
             ]
@@ -272,7 +308,8 @@
                         "no account"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "The Bible Reader also has 30 guided demos"
                     }
                 },
                 {
@@ -302,7 +339,8 @@
                         "clipboard"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "In the Reader, search for"
                     }
                 },
                 {
@@ -334,7 +372,8 @@
                         "move"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "Saved Bibles lists and Bible Notes have separate"
                     }
                 },
                 {
@@ -490,6 +529,7 @@
                     ],
                     "resources": {
                         "recipe": "W-12",
+                        "passage": "To put a result on the screen",
                         "related": ["W-06"],
                         "guide": true
                     }
@@ -1077,6 +1117,7 @@
                     ],
                     "resources": {
                         "recipe": "W-37",
+                        "passage": "Right-click a header for",
                         "find": "Copy to Data Directory"
                     }
                 },
@@ -1219,6 +1260,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Later changes remain available through the translation",
                         "guide": true
                     }
                 },

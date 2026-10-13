@@ -248,7 +248,7 @@ writeFileSync(
 // The app's own label dictionary, beside the documents that name those labels.
 //
 // The knowledge is written in English and the buttons it names are not, so a
-// document says `[en:tran:Clear Bible]` and the assistant fills that in with
+// document says `[en:tran:Clear Long Text]` and the assistant fills that in with
 // whatever the key reads as in the interface language the user is actually
 // looking at. That substitution happens inside the running app, which cannot
 // load a TypeScript language pack (fonts, plugins, a whole module graph) just

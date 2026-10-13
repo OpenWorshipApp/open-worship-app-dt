@@ -165,7 +165,7 @@ describe('Khmer translation coverage', () => {
         expect(readAppTranCalls().length).toBeGreaterThan(1000);
         const { kmSource, keySet } = readKhmerKeys();
         expect(keySet.size).toBeGreaterThan(1000);
-        expect(keySet.has(sanitizeTranKey('Clear Bible'))).toBe(true);
+        expect(keySet.has(sanitizeTranKey('Clear Long Text'))).toBe(true);
         // Unquoted identifier keys are keys too.
         expect(keySet.has(sanitizeTranKey('Sort'))).toBe(true);
         expect(kmSource).toContain('return key.trim().toLowerCase();');
@@ -201,6 +201,46 @@ describe('Khmer translation coverage', () => {
         // A regex that stopped matching would pass an empty list.
         expect(labels).toContain('Countdown');
         expect(labels.length).toBeGreaterThanOrEqual(10);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // The Foreground launcher has the same hole: its rows, each panel's
+    // title and the panel's name are `tran(widget.labelKey)` over a list.
+    // A component added without its Khmer name passed every check and
+    // threw in a Khmer window the moment the Foreground tab was pressed.
+    test('every foreground launcher label has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(
+                SRC_DIR,
+                'presenter-foreground',
+                'foregroundWidgetHelpers.tsx',
+            ),
+            'utf-8',
+        );
+        const start = source.indexOf('export const FOREGROUND_WIDGET_LIST');
+        const end = source.indexOf('\n];', start);
+        if (start === -1 || end === -1) {
+            throw new Error(
+                '`FOREGROUND_WIDGET_LIST` is no longer shaped as expected',
+            );
+        }
+        const list = source.slice(start, end);
+        const labels = [
+            ...list.matchAll(/\blabelKey:\s*('(?:[^'\\\n]|\\.)*')\s*,/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        // One per component, every one of them a literal: a `labelKey`
+        // written any other way would be a label this cannot read.
+        expect(labels.length).toBe([...list.matchAll(/\blabelKey:/g)].length);
+        expect(labels).toContain('Messages');
+        expect(labels).toContain('Long Text Show');
+        expect(labels.length).toBeGreaterThanOrEqual(13);
         expect(
             labels.filter((label) => {
                 return !keySet.has(sanitizeTranKey(label));

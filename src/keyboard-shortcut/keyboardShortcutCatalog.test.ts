@@ -153,6 +153,9 @@ describe('keyboardShortcutCatalog', () => {
         expect(presenterIds).toContain('lookup-close');
         expect(presenterIds).toContain('lookup-save-show');
         expect(presenterIds).not.toContain('lookup-insert-slide');
+        // The remote's take-over hands keys to what a SCREEN is showing, and
+        // only the Presenter steps a screen.
+        expect(presenterIds).toContain('keying-take-over');
         const readerIds = listEntryIds('reader');
         // The Reader shows the lookup inline: no popup to close, no Ctrl+B
         // button to open it.
@@ -162,6 +165,7 @@ describe('keyboardShortcutCatalog', () => {
         const editorIds = listEntryIds('appDocumentEditor');
         expect(editorIds).toContain('lookup-insert-slide');
         expect(editorIds).not.toContain('slide-next');
+        expect(editorIds).not.toContain('keying-take-over');
         expect(listEntryIds('setting')).not.toContain('find');
         expect(listEntryIds(null)).toContain('presenting-control');
     });

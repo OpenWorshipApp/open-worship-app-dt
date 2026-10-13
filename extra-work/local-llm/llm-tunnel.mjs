@@ -17,10 +17,23 @@
 // model list is written out again, and with --publish the app's shared
 // registry (docs/llm-registry/README.md) is told the new address each time.
 //
+// With --with-reports the tunnel to an LLM server ALSO takes the problem
+// reports the app's help window sends: a POST of JSON -- the report under
+// `prompt`, its files under `attachments` -- to the address itself, the
+// `/v1` the registry names, is kept in a SQLite file
+// (llm-report-inbox.mjs) and never passed to the LLM server, and the entry
+// it publishes says so (`isAcceptingReport`). One tunnel, one key, both.
+//
+// With --reports there is no LLM server behind the door: the door IS the
+// report inbox (llm-report-inbox.mjs), which takes the problem reports the
+// app's help window sends and keeps them in a SQLite file, and --publish
+// names its address in the registry as an entry that takes reports.
+//
 // Usage: node llm-tunnel.mjs [--port 1234] [--host <address>]
 //          [--name "Church LM Studio"] [--id <server id>]
 //          [--new-key] [--no-key] [--cloudflared <path>]
 //          [--check <seconds>] [--publish] [--out <folder>] [--log <file>]
+//          [--with-reports | --reports] [--db <file>]
 
 import { execFileSync, spawn } from 'node:child_process';
 import crypto from 'node:crypto';
@@ -49,6 +62,15 @@ export function getLockFile(id) {
 
 // For --publish: the script that reads and writes the registry on the site.
 const PUSH_SCRIPT = path.join(HERE, 's3-push-llm-registry.mjs');
+// For --reports: the inbox, loaded only then -- it needs Node's own SQLite
+// (22.13 or newer), which a tunnel to an LLM server does not.
+const INBOX_SCRIPT = path.join(HERE, 'llm-report-inbox.mjs');
+// Where the inbox takes a report: the registry entry's address ends in it,
+// and the app posts to that address exactly as written.
+export const REPORT_PATH = '/report';
+// Where a tunnel to an LLM server takes one (--with-reports): the base
+// address its registry entry names, to which the app posts as written.
+export const REPORT_AT_BASE_PATH = '/v1';
 
 // The same reading of cloudflared's log as the app's MirrorTunnel.
 const URL_PATTERN = /https:\/\/(?!api\.)[a-z0-9-]+\.trycloudflare\.com/;
@@ -80,7 +102,7 @@ const NAME_MAX = 60;
 export const DOOR_HEADER = 'x-llm-door';
 // How the look names itself to the door, which then keeps its good answers
 // out of the log: one line a minute that says nothing.
-const CHECK_AGENT = 'llm-tunnel-check';
+export const CHECK_AGENT = 'llm-tunnel-check';
 
 // The only calls the door passes on -- the ones Open Worship's relay makes
 // (electron/customLlmProtocol.ts) plus the other two OpenAI inference calls.
@@ -101,6 +123,7 @@ export const USAGE = [
     '         [--name "Church LM Studio"] [--id <server id>]',
     '         [--new-key] [--no-key] [--cloudflared <path>]',
     '         [--check <seconds>] [--publish] [--out <folder>] [--log <file>]',
+    '         [--with-reports | --reports] [--db <file>]',
     '',
     '  --port         the LLM server on this computer (1234 LM Studio,',
     '                 8080 llama.cpp, 11434 Ollama)',
@@ -115,6 +138,19 @@ export const USAGE = [
     '                 (needs the repo checkout and extra-work/.env)',
     '  --out          where the connection file and llm-info.json are written',
     '  --log          also write what it says to this file',
+    '  --with-reports this tunnel also takes the problem reports the app',
+    '                 sends: a POST of the report (JSON: "prompt" and',
+    '                 "attachments") to its own address is kept',
+    '                 in a SQLite file (--db; report-inbox.sqlite here) and',
+    '                 the entry it publishes is marked as taking reports.',
+    '                 Needs Node 22.13 or newer.',
+    '  --reports      no LLM server: open the report inbox instead, which',
+    "                 keeps the problem reports the app's help window sends",
+    '                 in a SQLite file (--db; report-inbox.sqlite here), and',
+    '                 with --publish name it in the registry as the address',
+    '                 that takes reports. Its id is "reports" unless given.',
+    '                 Needs Node 22.13 or newer; --port and --host are not',
+    '                 used.',
 ].join('\n');
 
 /**
@@ -140,8 +176,12 @@ export function readArgs(argv) {
         isPublishing: false,
         outDir: '',
         logFile: '',
+        isReports: false,
+        isWithReports: false,
+        dbFile: '',
     };
     let isBad = false;
+    let isNameGiven = false;
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
         const readNext = () => {
@@ -149,8 +189,13 @@ export function readArgs(argv) {
         };
         if (arg === '--port') args.port = Number(readNext());
         else if (arg === '--host') args.host = readNext();
-        else if (arg === '--name') args.name = readNext();
-        else if (arg === '--id') args.id = readNext();
+        else if (arg === '--name') {
+            args.name = readNext();
+            isNameGiven = true;
+        } else if (arg === '--id') args.id = readNext();
+        else if (arg === '--reports') args.isReports = true;
+        else if (arg === '--with-reports') args.isWithReports = true;
+        else if (arg === '--db') args.dbFile = readNext();
         else if (arg === '--cloudflared') args.cloudflared = readNext();
         else if (arg === '--check') args.checkSeconds = Number(readNext());
         else if (arg === '--out') args.outDir = readNext();
@@ -160,11 +205,23 @@ export function readArgs(argv) {
         else if (arg === '--publish') args.isPublishing = true;
         else isBad = true;
     }
+    // An inbox is not the LLM server on a port: it has a name and an id of
+    // its own, so it and a tunnel to LM Studio are two entries untyped.
+    if (args.isReports && !isNameGiven) {
+        args.name = 'Report inbox';
+    }
     if (args.id === '') {
-        args.id = genDefaultId(args.host, args.port);
+        args.id = args.isReports
+            ? 'reports'
+            : genDefaultId(args.host, args.port);
     }
     if (
         isBad ||
+        // A file for the inbox, and only for it.
+        (args.dbFile !== '' && !args.isReports && !args.isWithReports) ||
+        // The inbox alone, or beside an LLM server: not both.
+        (args.isReports && args.isWithReports) ||
+        (argv.includes('--db') && args.dbFile.trim() === '') ||
         !Number.isInteger(args.port) ||
         args.port < 1 ||
         args.port > 65535 ||
@@ -486,7 +543,13 @@ export async function readModels(port, host = TARGET_HOST) {
 
 // The door: a loopback listener of its own, the only thing cloudflared is
 // pointed at.
-export function openDoor(targetPort, key, say = log, targetHost = TARGET_HOST) {
+export function openDoor(
+    targetPort,
+    key,
+    say = log,
+    targetHost = TARGET_HOST,
+    reportTaker = null,
+) {
     const server = http.createServer((req, res) => {
         const startedAt = Date.now();
         const pathname = req.url.split('?')[0];
@@ -494,7 +557,10 @@ export function openDoor(targetPort, key, say = log, targetHost = TARGET_HOST) {
             req.headers['cf-connecting-ip'] || req.socket.remoteAddress;
         const isOwnLook = req.headers['user-agent'] === CHECK_AGENT;
         const note = (status) => {
-            if (isOwnLook && status === 200) {
+            // Only the tunnel's own LOOK goes unlogged -- a GET. A chat call
+            // that names itself the look is logged like any other, or a
+            // flood sent under that name would leave no line at all.
+            if (isOwnLook && status === 200 && req.method === 'GET') {
                 return;
             }
             const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
@@ -520,6 +586,17 @@ export function openDoor(targetPort, key, say = log, targetHost = TARGET_HOST) {
                 'invalid_api_key',
                 'This server needs its API key: send "Authorization: Bearer <key>".',
             );
+            return;
+        }
+        // --with-reports: a POST to the address itself is a problem report
+        // from the app. It is kept here, behind the same key, and never
+        // reaches the LLM server.
+        if (
+            reportTaker !== null &&
+            req.method === 'POST' &&
+            pathname === REPORT_AT_BASE_PATH
+        ) {
+            reportTaker.take(req, res);
             return;
         }
         if (
@@ -793,6 +870,24 @@ export function genRegistryServer(args, baseUrl, key, kind, models) {
         isFree: true,
         note: `${kind} on the church's computer through a Cloudflare quick tunnel`,
         models,
+        // The same address takes the app's problem reports too.
+        ...(args.isWithReports === true ? { isAcceptingReport: true } : {}),
+    };
+}
+
+/**
+ * The registry entry of a tunnel that carries the report inbox: an address
+ * that takes the app's problem reports and is no assistant, so it names no
+ * model (docs/llm-registry/README.md, "An entry that takes reports").
+ */
+export function genReportRegistryServer(args, baseUrl, key) {
+    return {
+        id: args.id,
+        name: args.name,
+        baseUrl,
+        apiKey: key,
+        isAcceptingReport: true,
+        note: "Takes the help window's problem reports, through a Cloudflare quick tunnel",
     };
 }
 
@@ -908,10 +1003,49 @@ async function main() {
     const infoFile = path.join(outDir, `llm-info-${args.id}.json`);
     endLeftoverTunnel(pidFile);
     const key = args.isKeyWanted ? readKey(args.isNewKey) : '';
-    const door = await openDoor(args.port, key, log, args.host);
+    let door;
+    let doorTarget = `${args.host}:${args.port}`;
+    if (args.isReports) {
+        // The door is the inbox itself: nothing stands behind it.
+        try {
+            const { openReportInbox, DEFAULT_DB_FILE } = await import(
+                pathToFileURL(INBOX_SCRIPT).href
+            );
+            const dbFile = args.dbFile
+                ? path.resolve(args.dbFile)
+                : DEFAULT_DB_FILE;
+            door = await openReportInbox({ key, dbFile, say: log });
+            doorTarget = `the report inbox (${dbFile})`;
+        } catch (error) {
+            print(`The report inbox could not be opened: ${error.message}`);
+            fs.rmSync(lockFile, { force: true });
+            process.exit(1);
+        }
+    } else {
+        let reportTaker = null;
+        if (args.isWithReports) {
+            try {
+                const { openReportTaker, DEFAULT_DB_FILE } = await import(
+                    pathToFileURL(INBOX_SCRIPT).href
+                );
+                const dbFile = args.dbFile
+                    ? path.resolve(args.dbFile)
+                    : DEFAULT_DB_FILE;
+                reportTaker = await openReportTaker({ dbFile, say: log });
+                doorTarget += `, reports kept in ${dbFile}`;
+            } catch (error) {
+                print(
+                    `The report inbox could not be opened: ${error.message}`,
+                );
+                fs.rmSync(lockFile, { force: true });
+                process.exit(1);
+            }
+        }
+        door = await openDoor(args.port, key, log, args.host, reportTaker);
+    }
     const doorPort = door.address().port;
     log(
-        `Door on 127.0.0.1:${doorPort} -> ${args.host}:${args.port}, ${key ? 'API key needed' : 'NO API KEY'}`,
+        `Door on 127.0.0.1:${doorPort} -> ${doorTarget}, ${key ? 'API key needed' : 'NO API KEY'}`,
     );
     log(`cloudflared: ${cloudflared}`);
 
@@ -993,9 +1127,12 @@ async function main() {
         if (!url || isClosing) {
             return;
         }
-        const found = await readModels(args.port, args.host).catch(() => {
-            return null;
-        });
+        // An inbox has no LLM server to wait for and no model to list.
+        const found = args.isReports
+            ? { kind: 'Report inbox', models: [] }
+            : await readModels(args.port, args.host).catch(() => {
+                  return null;
+              });
         if (found === null && args.checkSeconds > 0) {
             // Looked at again on the next check; said once.
             if (!isServerMissingSaid) {
@@ -1011,13 +1148,15 @@ async function main() {
             kind: 'Local LLM server',
             models: [],
         };
-        const baseUrl = `${url}/v1`;
+        const baseUrl = args.isReports ? `${url}${REPORT_PATH}` : `${url}/v1`;
         const text = JSON.stringify({ baseUrl, key, models });
         if (text === announced || url !== tunnel.getUrl()) {
             return;
         }
         announced = text;
-        const server = genRegistryServer(args, baseUrl, key, kind, models);
+        const server = args.isReports
+            ? genReportRegistryServer(args, baseUrl, key)
+            : genRegistryServer(args, baseUrl, key, kind, models);
         fs.writeFileSync(
             infoFile,
             `${JSON.stringify(
@@ -1032,30 +1171,48 @@ async function main() {
             { mode: 0o600 },
         );
         const keyHeader = key ? ` -H "Authorization: Bearer ${key}"` : '';
+        const reportLines = [
+            'Report inbox on the internet (Cloudflare quick tunnel)',
+            '',
+            `Address  : ${baseUrl}`,
+            `API key  : ${key || '(none)'}`,
+            '',
+            "Open Worship's help window posts a problem report here when Send",
+            'report is pressed, once the shared registry names this address',
+            '(--publish). Read what arrived:',
+            '  node llm-report-inbox.mjs list',
+            '',
+            'Test from any computer:',
+            `  curl -X POST ${baseUrl}${keyHeader} -H "Content-Type: application/json" --data "{\\"prompt\\":\\"a test report\\"}"`,
+            '',
+            'The address is new every time the tunnel starts. This file is removed when it stops.',
+            '',
+        ];
+        const serverLines = [
+            'Local LLM server on the internet (Cloudflare quick tunnel)',
+            '',
+            `Base URL : ${baseUrl}`,
+            `API key  : ${key || '(none)'}`,
+            `Models   : ${
+                models
+                    .map((item) => {
+                        return item.model;
+                    })
+                    .join(', ') || '(ask /v1/models)'
+            }`,
+            '',
+            'Open Worship: Settings > Others > Custom servers > add a server with this',
+            'Base URL and API key, then Test.',
+            '',
+            'Test from any computer:',
+            `  curl ${baseUrl}/models${keyHeader}`,
+            '',
+            'The address is new every time the tunnel starts. This file is removed when it stops.',
+            '',
+        ];
         fs.writeFileSync(
             connectionFile,
-            [
-                'Local LLM server on the internet (Cloudflare quick tunnel)',
-                '',
-                `Base URL : ${baseUrl}`,
-                `API key  : ${key || '(none)'}`,
-                `Models   : ${
-                    models
-                        .map((item) => {
-                            return item.model;
-                        })
-                        .join(', ') || '(ask /v1/models)'
-                }`,
-                '',
-                'Open Worship: Settings > Others > Custom servers > add a server with this',
-                'Base URL and API key, then Test.',
-                '',
-                'Test from any computer:',
-                `  curl ${baseUrl}/models${keyHeader}`,
-                '',
-                'The address is new every time the tunnel starts. This file is removed when it stops.',
-                '',
-            ].join(os.EOL),
+            (args.isReports ? reportLines : serverLines).join(os.EOL),
             { mode: 0o600 },
         );
         // The key is shown to a person at a terminal, never written to a
@@ -1063,7 +1220,7 @@ async function main() {
         const isKeyShown = process.stdout.isTTY === true && !output.file;
         const line = '='.repeat(78);
         print(`\n${line}\n`);
-        print(`    Base URL : ${baseUrl}`);
+        print(`    ${args.isReports ? 'Address ' : 'Base URL'} : ${baseUrl}`);
         print(
             `    API key  : ${
                 key
@@ -1075,7 +1232,9 @@ async function main() {
         );
         print(`\n${line}\n`);
         print(
-            `${kind} at ${args.host}:${args.port}, ${models.length} chat model(s).`,
+            args.isReports
+                ? 'The report inbox: a report POSTed to that address is kept, with its files.'
+                : `${kind} at ${args.host}:${args.port}, ${models.length} chat model(s).`,
         );
         print(`Written to ${connectionFile}`);
         print(`       and ${infoFile}`);
@@ -1083,7 +1242,7 @@ async function main() {
         if (!args.isPublishing) {
             return;
         }
-        if (models.length === 0) {
+        if (!args.isReports && models.length === 0) {
             log(
                 'Not published: the server lists no chat model, and the registry takes no server without one.',
             );

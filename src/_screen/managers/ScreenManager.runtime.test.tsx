@@ -169,6 +169,7 @@ class MockBibleManager {
 
     readonly screenId: number;
     isShowing = true;
+    isShowingLongText = false;
     receiveScreenDropped = vi.fn();
     clear = vi.fn();
     delete = vi.fn();
@@ -259,7 +260,7 @@ vi.mock('./ScreenVaryAppDocumentManager', () => ({
     default: MockVaryManager,
 }));
 
-vi.mock('./ScreenBibleManager', () => ({
+vi.mock('./ScreenLongTextManager', () => ({
     default: MockBibleManager,
 }));
 
@@ -349,7 +350,7 @@ describe('ScreenManager runtime orchestration', () => {
             item: { id: 2 },
         } as any);
         expect(
-            screenManager.screenBibleManager.receiveScreenDropped,
+            screenManager.screenLongTextManager.receiveScreenDropped,
         ).toHaveBeenCalled();
 
         screenManager.receiveScreenDropped({
@@ -514,7 +515,7 @@ describe('ScreenManager runtime orchestration', () => {
         expect(
             screenManager.screenVaryAppDocumentManager.delete,
         ).toHaveBeenCalled();
-        expect(screenManager.screenBibleManager.delete).toHaveBeenCalled();
+        expect(screenManager.screenLongTextManager.delete).toHaveBeenCalled();
         expect(screenManager.screenForegroundManager.delete).toHaveBeenCalled();
         expect(screenManager.screenDrawManager.delete).toHaveBeenCalled();
         expect(screenManager.screenFocusManager.delete).toHaveBeenCalled();
@@ -534,7 +535,9 @@ describe('ScreenManager runtime orchestration', () => {
         expect(
             screenManager.screenBackgroundManager.clear,
         ).not.toHaveBeenCalled();
-        expect(screenManager.screenBibleManager.clear).not.toHaveBeenCalled();
+        expect(
+            screenManager.screenLongTextManager.clear,
+        ).not.toHaveBeenCalled();
         expect(deleteScreenManagerBaseCacheMock).toHaveBeenCalledWith('3');
         expect(saveScreenManagersSettingMock).toHaveBeenCalledWith(3);
         expect(deleteScreenPersistedDataMock).toHaveBeenCalledWith(3);
@@ -783,7 +786,7 @@ describe('ScreenManager runtime orchestration', () => {
             screenManager.varyAppDocumentEffectManager.sendSyncScreen,
         ).toHaveBeenCalled();
         expect(
-            screenManager.screenBibleManager.sendSyncScreen,
+            screenManager.screenLongTextManager.sendSyncScreen,
         ).toHaveBeenCalled();
 
         const initCallback = (
@@ -791,11 +794,11 @@ describe('ScreenManager runtime orchestration', () => {
         ).mock.calls[0]?.[1];
         initCallback?.('#445566');
         expect(
-            screenManager.screenBibleManager.reflectBackgroundColor,
+            screenManager.screenLongTextManager.reflectBackgroundColor,
         ).toHaveBeenCalledWith('#445566');
 
         screenManager.clear();
-        expect(screenManager.screenBibleManager.clear).toHaveBeenCalled();
+        expect(screenManager.screenLongTextManager.clear).toHaveBeenCalled();
         expect(
             screenManager.screenVaryAppDocumentManager.clear,
         ).toHaveBeenCalled();
@@ -989,11 +992,13 @@ describe('ScreenManager runtime orchestration', () => {
                 .registerEventListener as any
         ).mock.calls[0][1];
         const bibleListener = (
-            screenManager.screenBibleManager.registerEventListener as any
+            screenManager.screenLongTextManager.registerEventListener as any
         ).mock.calls[0][1];
 
         varyListener();
-        expect(screenManager.screenBibleManager.clear).toHaveBeenCalledTimes(1);
+        expect(screenManager.screenLongTextManager.clear).toHaveBeenCalledTimes(
+            1,
+        );
 
         bibleListener();
         expect(
@@ -1002,13 +1007,39 @@ describe('ScreenManager runtime orchestration', () => {
 
         // nothing on screen: no cross-clearing
         (screenManager.screenVaryAppDocumentManager as any).isShowing = false;
-        (screenManager.screenBibleManager as any).isShowing = false;
+        (screenManager.screenLongTextManager as any).isShowing = false;
         varyListener();
         bibleListener();
-        expect(screenManager.screenBibleManager.clear).toHaveBeenCalledTimes(1);
+        expect(screenManager.screenLongTextManager.clear).toHaveBeenCalledTimes(
+            1,
+        );
         expect(
             screenManager.screenVaryAppDocumentManager.clear,
         ).toHaveBeenCalledTimes(1);
+    });
+
+    test('Clear Foreground also takes a long text down, and never a Bible passage', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(41);
+        const longText = screenManager.screenLongTextManager as any;
+        const foreground = screenManager.screenForegroundManager as any;
+
+        // The layer holds a Bible passage: not the foreground's to touch.
+        foreground.isShowing = false;
+        longText.isShowing = true;
+        longText.isShowingLongText = false;
+        expect(screenManager.isShowingForeground).toBe(false);
+        screenManager.clearForeground();
+        expect(foreground.clear).toHaveBeenCalledTimes(1);
+        expect(longText.clear).not.toHaveBeenCalled();
+
+        // A long text was put up from a Foreground panel, so it counts as
+        // one of the foreground extras and goes down with them.
+        longText.isShowingLongText = true;
+        expect(screenManager.isShowingForeground).toBe(true);
+        screenManager.clearForeground();
+        expect(foreground.clear).toHaveBeenCalledTimes(2);
+        expect(longText.clear).toHaveBeenCalledTimes(1);
     });
 
     test('reads back the persisted stage number and selection', async () => {

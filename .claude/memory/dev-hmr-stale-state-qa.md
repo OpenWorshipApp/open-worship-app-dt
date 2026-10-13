@@ -39,7 +39,7 @@ font row):
 - **A blank presenter with nothing in the console.** Edits to modules under
   `src/_screen/` left the page black; `owa_app_state` answered _Cannot access
   'SCREEN_BIBLE_SETTING_PREFIX' before initialization_ and `owa_list_ui` zero
-  controls. `ScreenBibleManager` and `screenBibleHelpers` import each other, and
+  controls. `ScreenLongTextManager` and `screenBibleHelpers` import each other, and
   a hot re-evaluation enters that cycle from the other side. A `navigate_page`
   reload loaded clean — it was never the edit.
 - **Vite serving the save BEFORE the last one.** Two edits to one file a few

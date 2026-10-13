@@ -402,8 +402,8 @@ projector, so it is offered and never done unasked.
   every locale; the version's FULL book name, never `Ps`/`Jn` — `EC-151`; a
   whole chapter widened to all its verses) in the lookup's version first, then
   any installed one that reads it; presents it exactly as **Show bible item**
-  does (`ScreenBibleManager.handleBibleItemSelecting` to the ticked screens;
-  NOTHING saved to the Bibles list, so **Clear Bible** undoes it); and reads
+  does (`ScreenLongTextManager.handleBibleItemSelecting` to the ticked screens;
+  NOTHING saved to the Bibles list, so **Clear Long Text** undoes it); and reads
   the screens BACK — `isPresented`, the passage, its first words, each ticked
   screen's `isShowing` / `isLocked`, and a `note` to OFFER the show button when
   the screen is off. `action: "check"` resolves and quotes without touching a
@@ -417,7 +417,7 @@ projector, so it is offered and never done unasked.
   offline bot offers ONE button (a typed sentence is not the consent a press
   is). **Whatever version the lookup is on is what goes up** (`EC-149`).
   `EC-135`: `checkIsNamedNearly` strips a `[shortcut]` off both the label part
-  and the needle, so `owa_click "Clear Bible [F9]"` works. Open `EC-148`:
+  and the needle, so `owa_click "Clear Long Text [F9]"` works. Open `EC-148`:
   `canDemo` is true when ANY step is pressable, so a recipe whose second step
   needs the user's words still stalls.
 - **A foreground extra is started by its WORDS** (2026-09-11, `owa_foreground`:
@@ -511,12 +511,20 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   loop (`runBotAction`'s `canOpenPage`). **A tool's own error text may never
   reach the user**: `describeActionError` is the one place a failed button press
   is put into words, and the reason goes to the log. It used to be printed at
-  them, naming page files and the list of open windows.
+  them, naming page files and the list of open windows. **An ASK had the same
+  hole** (2026-10-12, `genWindowNotOpenAnswer` in `helpBotHelpers.ts`): with
+  no assistant, _Where are the settings?_ asked in a tab set to a window that
+  was not open answered _I could not answer that: The app has no open page
+  matching "setting.html"…_ — ten of 540 when every window's questions were
+  asked as the five windows of their own. `answerWhereIs` now answers with
+  the way INTO that window, its control outlined where one control opens it
+  and never pressed: a walkthrough is a request to go there, a question is
+  not.
 - **The picker**: `owa_pick_element` draws an outline that follows the mouse
   (`tools/owa-devtools-mcp/picker.mjs`) and swallows the choosing click in the
   CAPTURE phase — pointer-down as well as click, because a dropdown opens on
-  mousedown — so pointing at **Clear Bible** to ask what it does does not clear
-  the bible. It answers with `describe()` plus `selectorOf()`, a selector built
+  mousedown — so pointing at **Clear Long Text** to ask what it does does not clear
+  the screen. It answers with `describe()` plus `selectorOf()`, a selector built
   shortest-first and TESTED against the document before it is returned (null
   rather than one that matches two things), preferring `data-widget-name` /
   `aria-label` / a hand-written id over `:nth-child`. **A name with a TWIN

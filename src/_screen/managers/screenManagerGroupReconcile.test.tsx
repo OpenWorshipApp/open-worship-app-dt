@@ -34,7 +34,7 @@ class MockScreenManager extends MockScreenManagerBase {
 
     screenBackgroundManager = new MockLayerManager(false);
     screenVaryAppDocumentManager = new MockLayerManager(false);
-    screenBibleManager = new MockLayerManager(false);
+    screenLongTextManager = new MockLayerManager(false);
     screenForegroundManager = new MockLayerManager(false);
     screenDrawManager = new MockLayerManager(false);
 
@@ -129,7 +129,7 @@ describe('screen manager group reconcile on load', () => {
         const loaded = genScreenManager(1, 'amber', [
             'screenDrawManager',
             'screenVaryAppDocumentManager',
-            'screenBibleManager',
+            'screenLongTextManager',
         ]);
         allScreenManagerBases = [empty, loaded];
 
@@ -141,7 +141,7 @@ describe('screen manager group reconcile on load', () => {
     });
 
     test('a tie is broken by the lowest screen id', async () => {
-        const first = genScreenManager(3, 'teal', ['screenBibleManager']);
+        const first = genScreenManager(3, 'teal', ['screenLongTextManager']);
         const second = genScreenManager(2, 'teal', ['screenBackgroundManager']);
         allScreenManagerBases = [first, second];
 
@@ -167,7 +167,7 @@ describe('screen manager group reconcile on load', () => {
     test('a locked group keeps its content frozen', async () => {
         const locked = genScreenManager(0, 'amber');
         locked.isLocked = true;
-        const loaded = genScreenManager(1, 'amber', ['screenBibleManager']);
+        const loaded = genScreenManager(1, 'amber', ['screenLongTextManager']);
         allScreenManagerBases = [locked, loaded];
 
         await importAndReconcile();
@@ -178,7 +178,7 @@ describe('screen manager group reconcile on load', () => {
     test('an entirely empty group and ungrouped screens are left alone', async () => {
         const emptyGroupMember1 = genScreenManager(0, 'amber');
         const emptyGroupMember2 = genScreenManager(1, 'amber');
-        const ungrouped = genScreenManager(2, null, ['screenBibleManager']);
+        const ungrouped = genScreenManager(2, null, ['screenLongTextManager']);
         allScreenManagerBases = [
             emptyGroupMember1,
             emptyGroupMember2,
@@ -195,7 +195,7 @@ describe('screen manager group reconcile on load', () => {
     test('the screen output window never reconciles', async () => {
         appProviderMock.isPagePresenter = false;
         const empty = genScreenManager(0, 'amber');
-        const loaded = genScreenManager(1, 'amber', ['screenBibleManager']);
+        const loaded = genScreenManager(1, 'amber', ['screenLongTextManager']);
         allScreenManagerBases = [empty, loaded];
 
         await importAndReconcile();

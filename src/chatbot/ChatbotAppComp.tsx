@@ -24,20 +24,31 @@ import {
 } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
 import {
     MAX_ATTACHMENT_COUNT,
+    MAX_CARRIED_FILE_BYTES,
+    checkIsCarriedFileName,
     checkIsImageName,
     checkIsReadableTextFile,
     copyImageToClipboard,
     dropAttachmentData,
     genElementAttachment,
+    genFileAttachment,
     genImageAttachment,
     genTextAttachment,
     getAttachmentData,
+    numberAttachments,
     toAskedOfModel,
+    toAttachmentLegend,
     toAttachmentNote,
+    toAttachmentText,
     toBotImages,
     type ChatAttachmentType,
 } from './attachmentHelpers';
-import { checkIsCancelError } from './cancelHelpers';
+import { checkIsCancelError, throwIfCancelled } from './cancelHelpers';
+import {
+    checkIsBibleReadingAsk,
+    genReaderRouteAdvice,
+    toMainWindowFocus,
+} from './readerRouteHelpers';
 import {
     checkIsAssetAttachment,
     downloadAsset,
@@ -47,11 +58,23 @@ import {
 } from './assetPreviewHelpers';
 import RenderSessionTabsComp from './RenderSessionTabsComp';
 import {
+    AUTO_ASSISTANT_VALUE,
     findSteppedProvider,
     genAssistantRows,
     toAssistantRowValue,
     type AssistantRowType,
 } from './providerPickHelpers';
+import {
+    askWithAutoAssistant,
+    clearAutoSetbacks,
+    genAutoAnswerNote,
+    toAutoBusyKey,
+} from './autoAssistantHelpers';
+import {
+    clearAutoAwayServers,
+    guessAutoPick,
+    resolveAutoPicks,
+} from './autoAssistantSourceHelpers';
 import {
     getLlmRegistryStatus,
     getUsableCustomServers,
@@ -90,17 +113,31 @@ import {
     REPORT_COPY_TOOL_NAME,
     REPORT_EMAIL_TOOL_NAME,
     REPORT_SEND_TOOL_NAME,
+    REPORT_COLLECTS_TEXT,
+    REPORT_FIXED_TEXT,
+    REPORT_FIXED_TOOL_NAME,
+    REPORT_NOTE,
+    REPORT_RESOLVED_NOTE,
+    REPORT_STILL_TOOL_NAME,
+    REPORT_START_TOOL_NAME,
     collectReportEvidence,
     describeContactSource,
-    describeHowToSend,
+    describePostedReport,
+    genFixCard,
+    genPreparedCard,
     genPreparedReport,
+    genReportComplaint,
+    genReportOffer,
     genReportFollowUpActions,
     genReportInvestigation,
     genReportMailtoUrl,
     keepPreparedReport,
     postIssueReport,
+    readFixReply,
     readReportImageDataUrl,
     readReportMarkdown,
+    readReportThread,
+    readReportThreadAttachments,
     takePreparedReport,
     toSavedReportSubject,
 } from './reportHelpers';
@@ -151,8 +188,12 @@ import {
     toBibleImportEcho,
     type BibleImportStateType,
 } from './bibleImportChatHelpers';
-import { takeChatbotAsk } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
+    takeChatbotAsk,
+    takeChatbotReport,
+} from '../helper/ai/chatbotHandoffStoreHelpers';
+import {
+    answerLyricLink,
     answerLyricTitle,
     askHelpBot,
     describeActionError,
@@ -166,11 +207,15 @@ import {
     type ChatTurnType,
 } from './helpBotHelpers';
 import {
+    AUTO_ASSISTANT_WARNING,
     askLlmBot,
+    getIsLlmAuto,
+    setIsLlmAuto,
     toGeneralQuestionAsk,
     checkCanSeeImages,
     checkHasMoreModels,
     checkIsFreeProvider,
+    checkIsToolLeftOut,
     getLlmProviderWarning,
     getLlmProviderWarningLinks,
     getFirstImageCapableModel,
@@ -183,6 +228,7 @@ import {
     getLlmProvider,
     getLlmProviderKeyField,
     getLlmProviderLabel,
+    getRankedLlmModelList,
     checkIsCustomProvider,
     listAllLlmModels,
     setLlmModel,
@@ -205,6 +251,7 @@ import {
     DRAFT_GONE_TEXT,
     LYRIC_COPY_TOOL_NAME,
     LYRIC_CREATE_TOOL_NAME,
+    readSongLinkAsk,
     readSongTitleAsk,
     takeDraftedLyric,
 } from './lyricDraftHelpers';
@@ -246,12 +293,25 @@ import {
     getLlmProviderPageUrl,
     readLlmIssue,
 } from './providerIssueHelpers';
-import { readDisputeHint } from './disputeHelpers';
+import { checkIsDisputingAnswer, readDisputeHint } from './disputeHelpers';
+import {
+    applyAnswerRating,
+    ASK_SMARTER_TOOL_NAME,
+    checkIsLastAnswer,
+    findAnsweredQuestion,
+    genComplaintAdvice,
+    genDislikeFollowUp,
+    readSmarterAsk,
+    SMARTER_ASK_HINT,
+    type AnswererType,
+    type AnswerRatingType,
+} from './answerRatingHelpers';
 import { describeAttachError } from './attachErrorHelpers';
 import {
     checkIsAlreadyTyped,
     FALLBACK_STARTERS,
     findKnownQuestion,
+    genKnownAskExtra,
     genKnownQuestionHint,
     readKnownQuestionPage,
     getAllQuestions,
@@ -270,11 +330,15 @@ import {
     CLEAR_CHAT_COMMAND,
     answerScreenToggleAsk,
     answerSlideShowAsk,
+    answerSlideStepAsk,
+    answerWhereIsAsk,
     parseBuiltinCommand,
     readGeneralQuestion,
     readInheritedGeneralQuestion,
     readScreenToggleAsk,
     readSlideShowAsk,
+    readSlideStepAsk,
+    readWhereIsAsk,
     runBuiltinCommand,
     toBuiltinCommandText,
 } from './builtinActionHelpers';
@@ -304,6 +368,14 @@ type PendingAskType = {
     // line drawn on a card, so a user's aside would go somewhere they cannot
     // see it.
     canTakeAdditions: boolean;
+    // Who this ask is waiting on (`toAutoBusyKey`), once that is known. An
+    // Auto tab reads it off every OTHER ask still out: a server already
+    // answering one tab is the last one to hand a second question to.
+    assistantKey?: string;
+    // Not a question: a report being written, or one being sent. Stop says
+    // a different thing of each, and words added while one is being written
+    // go into the report (`handleAdding`).
+    kind?: 'report' | 'send';
 };
 
 // Straight to the panel that holds the keys. `openOthersSetting` in
@@ -1027,21 +1099,37 @@ function toCustomServerRows(servers: CustomServerType[]) {
     });
 }
 
+// The row that leaves the choice to the window (`autoAssistantHelpers`). Its
+// words are the hover's, because Windows draws no tooltip on an OS list row
+// and the closed list has room for one short name.
+const AUTO_ASSISTANT_LABEL = 'Auto';
+const AUTO_ASSISTANT_TITLE =
+    'Auto picks the best assistant that costs nothing, again for every ' +
+    'question — one of your own servers that is on and not busy, the ' +
+    'bigger model first, or the free service';
+const AUTO_PICK_PENDING_TEXT = 'chosen at each question';
+
 function RenderProviderSwitchComp({
     rows,
     value,
     onChange,
+    onAutoChoosing,
 }: Readonly<{
     // One per provider, and one per server for the user's own
     // (`genAssistantRows`).
     rows: AssistantRowType<LlmProviderType>[];
-    // The row the tab is on, or null when no provider can answer at all.
+    // The row the tab is on -- `AUTO_ASSISTANT_VALUE` for a tab on Auto --
+    // or null when no provider can answer at all.
     value: string | null;
     onChange: (row: AssistantRowType<LlmProviderType>) => void;
+    onAutoChoosing: () => void;
 }>) {
-    const chosenLabel = rows.find((row) => {
-        return row.value === value;
-    })?.label;
+    const chosenLabel =
+        value === AUTO_ASSISTANT_VALUE
+            ? AUTO_ASSISTANT_LABEL
+            : rows.find((row) => {
+                  return row.value === value;
+              })?.label;
     // An arrow on the CLOSED list changes its value on every press (Windows,
     // Linux). A row with no key would then open Settings under somebody who
     // was only moving through the list -- and the list, snapping back, would
@@ -1058,7 +1146,9 @@ function RenderProviderSwitchComp({
                 chosenLabel === undefined
                     ? `${genProviderNames()} need an API key of your own` +
                       ' — add one in Settings → Others'
-                    : `${chosenLabel} answers your questions here`
+                    : value === AUTO_ASSISTANT_VALUE
+                      ? AUTO_ASSISTANT_TITLE
+                      : `${chosenLabel} answers your questions here`
             }
             // With no key at all there is no provider to be on, and a select
             // whose value matches no option renders blank.
@@ -1076,6 +1166,12 @@ function RenderProviderSwitchComp({
                 }, 0);
             }}
             onChange={(event) => {
+                // Always able to answer and last in the list, so no arrow
+                // ever has to step over it or past it.
+                if (event.target.value === AUTO_ASSISTANT_VALUE) {
+                    onAutoChoosing();
+                    return;
+                }
                 const findRow = (rowValue: string) => {
                     return rows.find((row) => {
                         return row.value === rowValue;
@@ -1137,7 +1233,42 @@ function RenderProviderSwitchComp({
                     </option>
                 );
             })}
+            {/* Under the keyless one, where the user drew it (2026-10-12).
+                Not offered with nothing to choose from: the keyless service
+                is always there, so that is only a build with no model list. */}
+            {value === null ? null : (
+                <option
+                    value={AUTO_ASSISTANT_VALUE}
+                    title={AUTO_ASSISTANT_TITLE}
+                >
+                    {AUTO_ASSISTANT_LABEL}
+                </option>
+            )}
         </select>
+    );
+}
+
+/**
+ * Where the model picker stands, on a tab that is on Auto: who Auto asked
+ * last, in the two pickers' own words, or that it has not asked yet. Read
+ * only -- there is nothing to pick, which is the point of Auto -- and plain
+ * text rather than a disabled list, which Chromium greys past reading.
+ */
+function RenderAutoPickComp({
+    autoPick,
+}: Readonly<{ autoPick: string | undefined }>) {
+    return (
+        <span
+            className="chat-pick chat-engine chat-auto-pick"
+            title={
+                autoPick === undefined
+                    ? AUTO_ASSISTANT_TITLE
+                    : `${autoPick} answered the last question. ` +
+                      AUTO_ASSISTANT_TITLE
+            }
+        >
+            {autoPick ?? AUTO_PICK_PENDING_TEXT}
+        </span>
     );
 }
 
@@ -1174,12 +1305,24 @@ const WARNING_COLLAPSE_MILLISECONDS = 9000;
  *
  * Nothing is shown at all for a provider the user is paying for themselves --
  * they made that arrangement and do not need reminding of it.
+ *
+ * A tab on Auto carries its OWN notice for as long as it is on Auto, whoever
+ * answered last: the keyless service is always one of the assistants Auto may
+ * ask, so the trade is one this tab can make at the next question, and it is
+ * said before that question rather than found out from the answer.
  */
 function RenderProviderWarningComp({
     provider,
-}: Readonly<{ provider: LlmProviderType | null }>) {
-    const warning = getLlmProviderWarning(provider);
-    const links = getLlmProviderWarningLinks(provider);
+    isAuto,
+}: Readonly<{ provider: LlmProviderType | null; isAuto: boolean }>) {
+    const warning = isAuto
+        ? AUTO_ASSISTANT_WARNING
+        : getLlmProviderWarning(provider);
+    const links = getLlmProviderWarningLinks(isAuto ? 'free' : provider);
+    // What the notice is ABOUT. On Auto the provider underneath changes with
+    // every pick, and that is no new notice: it must not unfold itself again
+    // at each answer.
+    const subject = isAuto ? AUTO_ASSISTANT_VALUE : provider;
     const [isFolded, setIsFolded] = useState(false);
     const [isFoldedByHand, setIsFoldedByHand] = useState(false);
     useAppEffect(() => {
@@ -1187,7 +1330,7 @@ function RenderProviderWarningComp({
         // about a new service, so it opens again and re-runs its own timer.
         setIsFolded(false);
         setIsFoldedByHand(false);
-    }, [provider]);
+    }, [subject]);
     useAppEffect(() => {
         if (isFoldedByHand) {
             return undefined;
@@ -1198,7 +1341,7 @@ function RenderProviderWarningComp({
         return () => {
             clearTimeout(timeoutId);
         };
-    }, [isFoldedByHand, provider]);
+    }, [isFoldedByHand, subject]);
     if (warning === null) {
         return null;
     }
@@ -1500,6 +1643,12 @@ function RenderAttachmentChipsComp({
                         ) : (
                             <img src={dataUrl} alt="" />
                         )}
+                        {attachment.number === undefined ? null : (
+                            // What to call it by in the words beside it.
+                            <span className="chat-clip-number">
+                                {attachment.number}
+                            </span>
+                        )}
                         <span className="chat-clip-name">
                             {attachment.name}
                         </span>
@@ -1765,6 +1914,7 @@ function RenderMessageComp({
     onAction,
     onReply,
     onReuse,
+    onRate,
     onAttachRequest,
     onShowAttachment,
 }: Readonly<{
@@ -1778,6 +1928,8 @@ function RenderMessageComp({
     onAction: (action: BotActionType) => void;
     onReply: (text: string) => void;
     onReuse: (text: string) => void;
+    // A thumb under an answer (`answerRatingHelpers`).
+    onRate: (answerId: number, rating: AnswerRatingType) => void;
     onAttachRequest: (request: AttachRequestType) => void;
     onShowAttachment: (attachment: ChatAttachmentType) => void;
 }>) {
@@ -1791,7 +1943,9 @@ function RenderMessageComp({
         onReuse(message.text);
     };
     return (
-        <article className={`cue cue-${message.author}`}>
+        // Focusable, so the card that was clicked stays marked (and the
+        // button pressed in it): see `.cue` in the stylesheet.
+        <article className={`cue cue-${message.author}`} tabIndex={0}>
             <span className="cue-mark" aria-hidden="true" />
             <p className="cue-label">
                 {message.author === 'you' ? 'You' : 'Assistant'}
@@ -1861,8 +2015,11 @@ function RenderMessageComp({
                             // The two walkthroughs are the answers that DO
                             // something, and the demo is the boldest of them;
                             // reading matter stays quiet beside them.
+                            // ...and so is asking again of the next model up:
+                            // under a thumb down it is the one thing to do.
                             const isGuide =
-                                action.toolName === 'owa_guide_start';
+                                action.toolName === 'owa_guide_start' ||
+                                action.toolName === ASK_SMARTER_TOOL_NAME;
                             const isDemo = action.args?.mode === 'demo';
                             // A button that leaves the app says where to
                             // before it is pressed, and wears the arrow.
@@ -1943,6 +2100,64 @@ function RenderMessageComp({
                         </button>
                     ) : (
                         <RenderCopyButtonComp text={message.text} />
+                    )}
+                    {isAsked || message.isFollowUp === true ? null : (
+                        // Two thumbs under every ANSWER, and under nothing
+                        // else: what the window says by itself after a thumb
+                        // down is not an answer to rate. Icons with a name
+                        // each (there are no words on them), and the one
+                        // pressed stays filled so a reopened tab still shows
+                        // which answers helped.
+                        <>
+                            <button
+                                type="button"
+                                className={
+                                    'cue-tool cue-rate' +
+                                    (message.rating === 'like'
+                                        ? ' cue-rate-on'
+                                        : '')
+                                }
+                                title="This answer helped"
+                                aria-label="Good answer"
+                                aria-pressed={message.rating === 'like'}
+                                onClick={() => {
+                                    onRate(message.id, 'like');
+                                }}
+                            >
+                                <i
+                                    className={
+                                        message.rating === 'like'
+                                            ? 'bi bi-hand-thumbs-up-fill'
+                                            : 'bi bi-hand-thumbs-up'
+                                    }
+                                    aria-hidden="true"
+                                />
+                            </button>
+                            <button
+                                type="button"
+                                className={
+                                    'cue-tool cue-rate' +
+                                    (message.rating === 'dislike'
+                                        ? ' cue-rate-on'
+                                        : '')
+                                }
+                                title="This answer was wrong or did not help"
+                                aria-label="Bad answer"
+                                aria-pressed={message.rating === 'dislike'}
+                                onClick={() => {
+                                    onRate(message.id, 'dislike');
+                                }}
+                            >
+                                <i
+                                    className={
+                                        message.rating === 'dislike'
+                                            ? 'bi bi-hand-thumbs-down-fill'
+                                            : 'bi bi-hand-thumbs-down'
+                                    }
+                                    aria-hidden="true"
+                                />
+                            </button>
+                        </>
                     )}
                     {message.usage === undefined ? null : (
                         // What this one answer cost, in the same quiet voice
@@ -2103,15 +2318,29 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
 function genNewSessionDefaults() {
     const openerFocus = detectOpenerFocus();
     const focus = openerFocus ?? DEFAULT_BOT_FOCUS;
+    // A new tab starts the way the last pick left the list: on Auto when
+    // that is what was picked, standing on Auto's likeliest assistant until
+    // its first question settles one (`guessAutoPick`).
+    const autoGuess = getIsLlmAuto() ? guessAutoPick() : null;
+    if (autoGuess !== null) {
+        return {
+            focus,
+            openerFocus,
+            provider: autoGuess.provider as LlmProviderType,
+            model: autoGuess.model,
+            isAuto: true,
+        };
+    }
     const provider = getLlmProvider();
     const model = provider === null ? '' : getLlmModel(provider);
-    return { focus, openerFocus, provider, model };
+    return { focus, openerFocus, provider, model, isAuto: false };
 }
 
 function genInitialSessionState(): ChatSessionStateType {
-    const { focus, openerFocus, provider, model } = genNewSessionDefaults();
+    const { focus, openerFocus, provider, model, isAuto } =
+        genNewSessionDefaults();
     const loaded = applyChatLaunchFocus(
-        loadChatSessions(focus, provider, model),
+        loadChatSessions(focus, provider, model, isAuto),
         openerFocus,
     );
     const availableProviders = getAvailableLlmProviders();
@@ -2232,7 +2461,11 @@ export default function ChatbotAppComp() {
         isFocusChosen,
         provider,
         model,
+        autoPick,
     } = activeSession;
+    // On Auto the window settles who is asked in front of every question;
+    // `provider` and `model` are then whoever was asked last.
+    const isAuto = activeSession.isAuto === true;
     // Addressed BY ID, never by "whatever is in front". An answer takes as
     // long as the model takes, the tab strip stays live while it does, and a
     // user who checks another tab meanwhile would otherwise have the answer to
@@ -2446,6 +2679,10 @@ export default function ChatbotAppComp() {
     }, [applyRegistryStatus]);
     const handleReloadingRegistry = useCallback(async () => {
         setIsReloadingRegistry(true);
+        // "Look again" is the press: whatever Auto remembered about a server
+        // that was away or had just failed is forgotten with it.
+        clearAutoAwayServers();
+        clearAutoSetbacks();
         try {
             await loadLlmRegistry(true);
         } finally {
@@ -2461,7 +2698,9 @@ export default function ChatbotAppComp() {
             customServers,
         );
     }, [availableProviders, customServers]);
-    const assistantRowValue = toAssistantRowValue(provider, model, 'custom');
+    const assistantRowValue = isAuto
+        ? AUTO_ASSISTANT_VALUE
+        : toAssistantRowValue(provider, model, 'custom');
     const modelList = useMemo(() => {
         if (provider === null) {
             return [];
@@ -2475,6 +2714,31 @@ export default function ChatbotAppComp() {
             return one.serverId === serverId;
         });
     }, [provider, model, modelListMap]);
+    // Who is answering in the tab in front, as the thumbs under an answer
+    // need it said (`answerRatingHelpers`): the next model up is offered
+    // only out of a list written best first.
+    const answerer = useMemo<AnswererType>(() => {
+        if (provider === null) {
+            return {
+                hasAssistant: false,
+                isAuto: false,
+                assistantLabel: OFFLINE_ENGINE_LABEL,
+                modelId: '',
+                rankedModels: [],
+            };
+        }
+        return {
+            hasAssistant: true,
+            isAuto,
+            assistantLabel: getLlmProviderLabel(provider, model),
+            modelId: model,
+            modelLabel: modelList.find((item) => {
+                return item.id === model;
+            })?.label,
+            rankedModels: getRankedLlmModelList(provider),
+        };
+    }, [provider, model, isAuto, modelList]);
+    const answererRef = useAppCurrentRef(answerer);
     // The head folded to one line. By hand only -- nothing in this window
     // tucks itself away -- and the window's, not the tab's: see
     // `headCollapseHelpers`.
@@ -2499,6 +2763,9 @@ export default function ChatbotAppComp() {
         if (provider === null) {
             return genHeadSummary([focusLabel, OFFLINE_ENGINE_LABEL]);
         }
+        if (isAuto) {
+            return genHeadSummary([focusLabel, AUTO_ASSISTANT_LABEL, autoPick]);
+        }
         return genHeadSummary([
             focusLabel,
             assistantRows.find((row) => {
@@ -2513,6 +2780,8 @@ export default function ChatbotAppComp() {
         focus,
         provider,
         model,
+        isAuto,
+        autoPick,
         assistantRows,
         assistantRowValue,
         modelList,
@@ -2532,6 +2801,9 @@ export default function ChatbotAppComp() {
                 return;
             }
             setLlmProvider(newProvider);
+            // A row picked by name is the end of Auto, for this tab and for
+            // the next new one.
+            setIsLlmAuto(false);
             let newModel = getLlmModel(newProvider);
             if (row.serverId !== null) {
                 // A server row: that server's model -- the one last asked
@@ -2550,11 +2822,37 @@ export default function ChatbotAppComp() {
                 setLlmModel(newProvider, newModel);
             }
             updateActiveSession((session) => {
-                return { ...session, provider: newProvider, model: newModel };
+                const {
+                    isAuto: _isAuto,
+                    autoPick: _autoPick,
+                    ...rest
+                } = session;
+                return { ...rest, provider: newProvider, model: newModel };
             });
         },
         [updateActiveSession, refreshAvailableProviders],
     );
+    // The Auto row: the tab STAYS on it, and who is asked is settled again
+    // in front of every question (`autoAssistantHelpers`). Nothing is asked
+    // of any server here -- a pick in a list must not be a wait -- so the tab
+    // stands on the likeliest assistant until its first question, and the
+    // head says "chosen at each question" rather than naming a guess.
+    const handleAutoChoosing = useCallback(() => {
+        const guess = guessAutoPick();
+        if (guess === null) {
+            return;
+        }
+        setIsLlmAuto(true);
+        updateActiveSession((session) => {
+            const { autoPick: _autoPick, ...rest } = session;
+            return {
+                ...rest,
+                isAuto: true,
+                provider: guess.provider,
+                model: guess.model,
+            };
+        });
+    }, [updateActiveSession]);
     const handleModelChanging = useCallback(
         (newModel: string) => {
             if (provider === null) {
@@ -2603,6 +2901,8 @@ export default function ChatbotAppComp() {
                 defaults.focus,
                 defaults.provider,
                 defaults.model,
+                false,
+                defaults.isAuto,
             );
             return {
                 sessions: [...oldState.sessions, session],
@@ -2630,6 +2930,8 @@ export default function ChatbotAppComp() {
                     defaults.focus,
                     defaults.provider,
                     defaults.model,
+                    false,
+                    defaults.isAuto,
                 );
                 return { sessions: [session], activeId: session.id };
             }
@@ -2700,6 +3002,8 @@ export default function ChatbotAppComp() {
                           defaults.focus,
                           defaults.provider,
                           defaults.model,
+                          false,
+                          defaults.isAuto,
                       ),
                   ];
         const isActiveKept = sessions.some((session) => {
@@ -2987,7 +3291,21 @@ export default function ChatbotAppComp() {
             setAttachError(failure ?? null);
             setDraftAttachmentMap((previous) => {
                 const existing = previous[activeSessionId] ?? [];
-                const merged = [...existing, ...added];
+                // Each gets the tab's next number, to be called by in the
+                // words typed beside it: one past the highest on any message
+                // of this tab or still in its box.
+                const session = sessionStateRef.current.sessions.find((one) => {
+                    return one.id === activeSessionId;
+                });
+                const merged = [
+                    ...existing,
+                    ...numberAttachments(added, [
+                        ...(session?.messages ?? []).flatMap((message) => {
+                            return message.attachments ?? [];
+                        }),
+                        ...existing,
+                    ]),
+                ];
                 // Over the cap, the OLDEST go: the one just attached is the
                 // one they are looking at, and dropping that would look like
                 // the button had failed.
@@ -3001,7 +3319,7 @@ export default function ChatbotAppComp() {
                 };
             });
         },
-        [activeSessionId],
+        [activeSessionId, sessionStateRef],
     );
     const handleRemovingAttachment = useCallback(
         (id: string) => {
@@ -3028,6 +3346,7 @@ export default function ChatbotAppComp() {
         async (files: File[]) => {
             const added: ChatAttachmentType[] = [];
             const refused: string[] = [];
+            const tooLarge: string[] = [];
             for (const file of files.slice(0, MAX_ATTACHMENT_COUNT)) {
                 // Where it came from, when it came from anywhere: the electron
                 // preload puts a getter on `File.prototype`, so this is the
@@ -3057,14 +3376,37 @@ export default function ChatbotAppComp() {
                     );
                     continue;
                 }
+                // A PDF is taken along unread, for a problem report to send
+                // to the people who can open it. It is read off the disk at
+                // that press, so it needs a place on disk, and a size a
+                // report carries.
+                if (checkIsCarriedFileName(file.name) && filePath) {
+                    if (file.size > MAX_CARRIED_FILE_BYTES) {
+                        tooLarge.push(file.name);
+                    } else {
+                        added.push(
+                            genFileAttachment(file.name, file.size, filePath),
+                        );
+                    }
+                    continue;
+                }
                 refused.push(file.name);
             }
+            const problems = [
+                refused.length === 0
+                    ? ''
+                    : `I cannot read ${refused.join(', ')} — ` +
+                      'try a picture of it instead.',
+                tooLarge.length === 0
+                    ? ''
+                    : `${tooLarge.join(', ')} is too large to attach — ` +
+                      `${Math.round(MAX_CARRIED_FILE_BYTES / (1024 * 1024)).toString()} MB at most.`,
+            ].filter((one) => {
+                return one.length > 0;
+            });
             addAttachments(
                 added,
-                refused.length === 0
-                    ? undefined
-                    : `I cannot read ${refused.join(', ')} — ` +
-                          'try a picture of it instead.',
+                problems.length === 0 ? undefined : problems.join(' '),
             );
         },
         [addAttachments],
@@ -3344,12 +3686,18 @@ export default function ChatbotAppComp() {
     // wants every control of this window where it always is. The rows are
     // touched once a session, and a control that has to be found again is a
     // control in the way.
+    //
+    // The newest message is brought into view when one ARRIVES (or the tab
+    // changes), not whenever the list is rewritten: a thumb pressed on an
+    // answer further up rewrites that answer, and the list jumping to its
+    // bottom took the card just pressed out of sight.
+    const lastMessageId = messages[messages.length - 1]?.id;
     useAppEffect(() => {
         const element = listRef.current;
         if (element !== null) {
             element.scrollTop = element.scrollHeight;
         }
-    }, [messages]);
+    }, [activeSessionId, messages.length, lastMessageId]);
 
     // Takes the tab it belongs to, because the answer arrives long after the
     // question and the user may be looking at another one by then.
@@ -3368,6 +3716,50 @@ export default function ChatbotAppComp() {
             });
         },
         [updateSession],
+    );
+
+    // A thumb under an answer (2026-10-12, the user's ask: _each response
+    // card should have like and dislike icon, when user dislike should follow
+    // up_). The thumb is kept on the answer; the first time one goes DOWN
+    // the window follows up by itself -- no model, so it costs nothing and
+    // works with the assistant paused or the internet out: what was wrong,
+    // the advice to try a smarter model, and the button that asks the same
+    // question of the next one up (`answerRatingHelpers`).
+    const handleRating = useCallback(
+        (answerId: number, rating: AnswerRatingType) => {
+            const ratedSessionId = activeSessionId;
+            const ratedMessages =
+                sessionStateRef.current.sessions.find((session) => {
+                    return session.id === ratedSessionId;
+                })?.messages ?? [];
+            const { isNewDislike } = applyAnswerRating(
+                ratedMessages,
+                answerId,
+                rating,
+            );
+            updateSession(ratedSessionId, (session) => {
+                return {
+                    ...session,
+                    messages: applyAnswerRating(
+                        session.messages,
+                        answerId,
+                        rating,
+                    ).messages,
+                };
+            });
+            if (isNewDislike) {
+                addMessage(
+                    ratedSessionId,
+                    genDislikeFollowUp(
+                        answererRef.current,
+                        findAnsweredQuestion(ratedMessages, answerId),
+                        checkIsLastAnswer(ratedMessages, answerId),
+                    ),
+                );
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeSessionId, updateSession, addMessage],
     );
 
     // What one ask spends, folded into its tab round by round. Two totals
@@ -3451,6 +3843,7 @@ export default function ChatbotAppComp() {
             sessionId: string,
             onCancelled?: () => void,
             canTakeAdditions = true,
+            kind?: PendingAskType['kind'],
         ) => {
             const pending: PendingAskType = {
                 controller: new AbortController(),
@@ -3459,6 +3852,7 @@ export default function ChatbotAppComp() {
                 additions: [],
                 takenAdditions: [],
                 canTakeAdditions,
+                ...(kind === undefined ? {} : { kind }),
             };
             pendingAskListRef.current = [...pendingAskListRef.current, pending];
             return pending;
@@ -3516,12 +3910,22 @@ export default function ChatbotAppComp() {
                     };
                 });
             }
-            addMessage(pending.sessionId, {
-                author: 'bot',
-                text:
-                    'Stopped. I did not finish looking that up — press the ' +
-                    'question above to ask it again.',
-            });
+            // A report on its way out says its own last word once the
+            // sending has answered: it may have gone already, and "stopped"
+            // over a report that was filed is the one thing not to say
+            // (`handleSendingReport`).
+            if (pending.kind !== 'send') {
+                addMessage(pending.sessionId, {
+                    author: 'bot',
+                    text:
+                        pending.kind === 'report'
+                            ? 'Stopped. I did not finish writing the ' +
+                              'report, and nothing was sent — press Report ' +
+                              'when you want it written.'
+                            : 'Stopped. I did not finish looking that up — ' +
+                              'press the question above to ask it again.',
+                });
+            }
             // A card in the app window waiting on this one is told now, so it
             // falls back to its own written instruction instead of sitting on
             // "asking the assistant" until its timeout.
@@ -3613,31 +4017,49 @@ export default function ChatbotAppComp() {
     // the import starts clean rather than under somebody's last question,
     // and only a request this window knows how to run without a model.
     useAppEffect(() => {
+        // The tab a handed-over job runs in: a new one while there is room.
+        const openHandoffSession = () => {
+            if (!checkCanAddChatSession(sessionStateRef.current.sessions)) {
+                return sessionStateRef.current.activeId;
+            }
+            const defaults = genNewSessionDefaults();
+            const session = genNewChatSession(
+                defaults.focus,
+                defaults.provider,
+                defaults.model,
+                false,
+                defaults.isAuto,
+            );
+            setSessionState((oldState) => {
+                return {
+                    sessions: [...oldState.sessions, session],
+                    activeId: session.id,
+                };
+            });
+            return session.id;
+        };
         const takeHandoff = () => {
+            // A problem to report -- Help's third row, or the dialog an
+            // error raised. The window OFFERS: the card says what it will
+            // do and carries Report, and nothing is looked into before
+            // that press, nor sent before Send report.
+            const problem = takeChatbotReport();
+            if (problem !== null) {
+                addMessage(openHandoffSession(), {
+                    author: 'bot',
+                    ...genReportOffer(problem),
+                });
+                inputRef.current?.focus();
+                return;
+            }
             const asked = takeChatbotAsk();
             const importState =
                 asked === null ? null : findBibleImportState([], asked);
             if (asked === null || importState === null) {
                 return;
             }
-            let sessionId = sessionStateRef.current.activeId;
-            if (checkCanAddChatSession(sessionStateRef.current.sessions)) {
-                const defaults = genNewSessionDefaults();
-                const session = genNewChatSession(
-                    defaults.focus,
-                    defaults.provider,
-                    defaults.model,
-                );
-                setSessionState((oldState) => {
-                    return {
-                        sessions: [...oldState.sessions, session],
-                        activeId: session.id,
-                    };
-                });
-                sessionId = session.id;
-            }
             void handleBibleImportStepRef.current(
-                sessionId,
+                openHandoffSession(),
                 importState,
                 asked,
             );
@@ -3648,6 +4070,18 @@ export default function ChatbotAppComp() {
             window.removeEventListener('focus', takeHandoff);
         };
     }, []);
+
+    // Starts, or goes on with, a report from what is in the box: set once
+    // the report handler exists, further down. Whatever is attached goes
+    // with it and leaves the box.
+    // What the two buttons under a way to put it right do, also reached
+    // by typing the answer (`readFixReply`). Set below, beside the buttons.
+    const answerFixPressRef = useRef<
+        (sessionId: string, reply: 'fixed' | 'still', reference: string) => void
+    >(() => {});
+    const startReportingRef = useRef<
+        (complaint: string, shownText?: string) => void
+    >(() => {});
 
     const handleAsking = useCallback(
         // `isForced` is for the follow-up `handleActing` fires the moment its
@@ -3699,10 +4133,18 @@ export default function ChatbotAppComp() {
                 // time would read as the window asking twice.
                 withoutEcho?: boolean;
                 answerNote?: string;
+                // Asked of THIS model of the tab's assistant, whatever the
+                // closure believes the tab is on, with `askHint` said to it
+                // on the ask alone. One caller: *Ask again with <the next
+                // model up>* sets the tab's model and asks in the same
+                // press, before React has rendered the new one.
+                model?: string;
+                askHint?: string;
                 onAnswered?: (text: string | null) => void;
             },
         ) => {
             const trimmedAsked = asked.trim();
+            const askModel = options?.model ?? model;
             // An attachment IS a question -- "what is this?" with a picture of
             // the screen is the whole ask -- so an empty box with something
             // clipped to it is allowed through, where an empty box alone is
@@ -3714,6 +4156,48 @@ export default function ChatbotAppComp() {
                 (isBusy && !isForced)
             ) {
                 return;
+            }
+            // A tab that is reporting KEEPS reporting: what is typed or
+            // attached there is more for the report, never a question for
+            // the assistant (`readReportThread`). A line that starts with a
+            // slash is still a command, or `/btw`.
+            if (
+                options?.shownText === undefined &&
+                !trimmedAsked.startsWith('/')
+            ) {
+                const reportMessages =
+                    sessionStateRef.current.sessions.find((session) => {
+                        return session.id === activeSessionId;
+                    })?.messages ?? [];
+                const reportThread = readReportThread(reportMessages);
+                // "Yes, thanks" under "Did that solve it?" is that card's
+                // own button, pressed in words -- not more for the report.
+                const fixReply =
+                    reportThread === null || attachments.length > 0
+                        ? null
+                        : readFixReply(reportMessages, trimmedAsked);
+                if (fixReply !== null) {
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: trimmedAsked,
+                    });
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    answerFixPressRef.current(
+                        activeSessionId,
+                        fixReply.reply,
+                        fixReply.reference,
+                    );
+                    return;
+                }
+                if (reportThread !== null) {
+                    startReportingRef.current(
+                        genReportComplaint(reportThread, trimmedAsked),
+                        trimmedAsked,
+                    );
+                    return;
+                }
             }
             // `/btw <words>` is the one slash line that DOES go to a model:
             // a general question, asked with no tools and no lookup in the
@@ -3861,14 +4345,23 @@ export default function ChatbotAppComp() {
             // generate song for user … assistant should follow up like just
             // create a file or generate lyric file"). A paid assistant keeps
             // the model road, which can read the song off the web.
+            //
+            // And a song asked for by its LINK -- the chip *Create a lyric
+            // file from https://…* -- the same way, the link first as the
+            // guide reads them. It went to the local model, which has no
+            // song tool: "I apologize, but I cannot create a lyric file
+            // directly from this chat window" (gemma-4-e4b, 2026-10-12), to
+            // words the guide drafts by itself when no assistant answers.
             if (
                 options?.shownText === undefined &&
                 attachments.length === 0 &&
                 generalQuestion === null &&
                 checkIsCustomProvider(provider)
             ) {
-                const songTitle = readSongTitleAsk(trimmedAsked);
-                if (songTitle !== null) {
+                const songLink = readSongLinkAsk(trimmedAsked);
+                const songTitle =
+                    songLink === null ? readSongTitleAsk(trimmedAsked) : null;
+                if (songLink !== null || songTitle !== null) {
                     const songSessionId = activeSessionId;
                     addMessage(songSessionId, {
                         author: 'you',
@@ -3885,7 +4378,10 @@ export default function ChatbotAppComp() {
                     clearProgressSteps(songSessionId);
                     syncBusy();
                     try {
-                        const answer = await answerLyricTitle(songTitle);
+                        const answer =
+                            songLink === null
+                                ? await answerLyricTitle(songTitle ?? '')
+                                : await answerLyricLink(songLink);
                         if (pending.controller.signal.aborted) {
                             return;
                         }
@@ -3917,16 +4413,52 @@ export default function ChatbotAppComp() {
                 checkIsCustomProvider(provider)
             ) {
                 const screenToggle = readScreenToggleAsk(trimmedAsked);
-                const slideWords =
+                // "The next one" before a slide by its words: "show the
+                // next slide" would otherwise be looked up as a slide
+                // called "the next slide".
+                const slideStep =
                     screenToggle === null
+                        ? readSlideStepAsk(trimmedAsked)
+                        : null;
+                const slideWords =
+                    screenToggle === null && slideStep === null
                         ? readSlideShowAsk(trimmedAsked)
                         : null;
+                // "Where is the button for Clear All": the window looks for
+                // itself and outlines it (a local model read the guide for
+                // four rounds and put it in the header). Never for a
+                // question the list has a PAGE for -- that one is answered
+                // from its page; the fill-in's own row has none, and every
+                // where-is carries its phrase -- and only when a control is
+                // CALLED that.
+                const whereIsFocus = isFocusChosen
+                    ? focus
+                    : (detectOpenerFocus() ?? focus);
+                const whereIsTarget =
+                    screenToggle === null &&
+                    slideStep === null &&
+                    slideWords === null
+                        ? readWhereIsAsk(trimmedAsked)
+                        : null;
+                const whereIsRow =
+                    whereIsTarget !== null
+                        ? await findKnownQuestion(trimmedAsked, whereIsFocus)
+                        : null;
+                const whereIsAnswer =
+                    whereIsTarget !== null &&
+                    typeof whereIsRow?.resources?.recipe !== 'string'
+                        ? await answerWhereIsAsk(whereIsTarget, whereIsFocus)
+                        : null;
                 const directAnswer =
-                    screenToggle !== null
-                        ? await answerScreenToggleAsk(screenToggle)
-                        : slideWords !== null
-                          ? await answerSlideShowAsk(slideWords)
-                          : null;
+                    whereIsAnswer !== null
+                        ? whereIsAnswer
+                        : screenToggle !== null
+                          ? await answerScreenToggleAsk(screenToggle)
+                          : slideStep !== null
+                            ? await answerSlideStepAsk(slideStep)
+                            : slideWords !== null
+                              ? await answerSlideShowAsk(slideWords)
+                              : null;
                 if (directAnswer !== null) {
                     const directSessionId = activeSessionId;
                     addMessage(directSessionId, {
@@ -3949,7 +4481,14 @@ export default function ChatbotAppComp() {
             // model with no eyes answers a picture with a 400, which
             // `describeLlmError` reads as an unreachable service and would
             // tell a volunteer their internet is down.
-            if (images.length > 0 && !checkCanSeeImages(provider, model)) {
+            // On Auto there is nobody to refuse yet: the pick is made among
+            // the assistants that CAN see (`resolveAutoPicks`), and one of
+            // the keyless models always can.
+            if (
+                images.length > 0 &&
+                !isAuto &&
+                !checkCanSeeImages(provider, askModel)
+            ) {
                 setAttachError(
                     checkIsCustomProvider(provider)
                         ? BLIND_CUSTOM_MODEL_MESSAGE
@@ -3961,6 +4500,10 @@ export default function ChatbotAppComp() {
             // to the tab that asked it, whichever one is in front by the time
             // the answer comes back.
             const askedSessionId = activeSessionId;
+            // ...and so is who is answering in it, for the advice a typed
+            // complaint is owed: read when the answer lands, it would be
+            // whoever answers in the tab in front by then.
+            const askedAnswerer = answererRef.current;
             // Everything already said in THIS tab, read through the ref and
             // read BEFORE the new question is appended: this callback is not
             // rebuilt when a message lands, so the session it closed over is
@@ -3971,7 +4514,15 @@ export default function ChatbotAppComp() {
                 : (sessionStateRef.current.sessions.find((session) => {
                       return session.id === askedSessionId;
                   })?.messages ?? []);
-            const priorTurns = priorMessages.map(toHistoryTurn);
+            // What the window said by itself under a thumb down is not a
+            // turn of the conversation: joined to the answer above it, it
+            // would push that answer's last line -- the offer a "yes"
+            // answers -- out of what the model is shown.
+            const priorTurns = priorMessages
+                .filter((message) => {
+                    return message.isFollowUp !== true;
+                })
+                .map(toHistoryTurn);
             if (options?.withoutEcho !== true) {
                 addMessage(askedSessionId, {
                     author: 'you',
@@ -4005,6 +4556,11 @@ export default function ChatbotAppComp() {
                 options?.shownText === undefined,
             );
             const { signal } = pending.controller;
+            // Known at once for a tab on a named assistant; an Auto tab says
+            // when it has picked.
+            if (provider !== null && !isAuto) {
+                pending.assistantKey = toAutoBusyKey(provider, askModel);
+            }
             const usageTally = genUsageTally(askedSessionId);
             // Last question's steps off the line before this one's go up.
             // They are cleared when an ask ENDS too; this is the one that
@@ -4056,16 +4612,39 @@ export default function ChatbotAppComp() {
                 // answer from it (`genKnownQuestionHint`): a small local model
                 // told only the page's id went searching instead, opened the
                 // wrong page and invented the steps (2026-10-10, 63k tokens).
-                const knownHint =
+                const knownPageText =
                     knownQuestion === null
+                        ? null
+                        : await readKnownQuestionPage(
+                              knownQuestion,
+                              (id, part) => {
+                                  return callTool(
+                                      'owa_help_page',
+                                      part === undefined
+                                          ? { id }
+                                          : { id, part },
+                                  );
+                              },
+                          );
+                // Worked out for whoever is ASKED: on Auto that is settled
+                // further down, and may be a server of another kind than
+                // the one the tab last stood on.
+                const genKnownHint = (askedOf: LlmProviderType | null) => {
+                    return knownQuestion === null
                         ? null
                         : genKnownQuestionHint(knownQuestion, {
                               focus: activeFocus,
-                              pageText: await readKnownQuestionPage(
-                                  knownQuestion,
-                                  (id) => callTool('owa_help_page', { id }),
-                              ),
+                              pageText: knownPageText,
+                              // A local server is sent the essential tools
+                              // only: the hint must not name one it lacks.
+                              missingTools: (
+                                  knownQuestion.resources?.tools ?? []
+                              ).filter((name) => {
+                                  return checkIsToolLeftOut(askedOf, name);
+                              }),
                           });
+                };
+                const knownHint = genKnownHint(provider);
                 // "That is wrong", under an answer written from a guide
                 // page: the page's newest copy is read off the project's
                 // repository HERE, before the model is asked, and rides the
@@ -4089,13 +4668,23 @@ export default function ChatbotAppComp() {
                                       'Reading the newest copy of that guide page',
                                   );
                               },
+                              `${activeFocus}.html`,
                           )
                         : null;
-                const askedWithHint = [askedOfModel, knownHint, disputeHint]
-                    .filter((part) => {
-                        return part !== null;
-                    })
-                    .join('\n\n');
+                const genAskedWithHint = (askedOf: LlmProviderType) => {
+                    return [
+                        askedOfModel,
+                        askedOf === provider
+                            ? knownHint
+                            : genKnownHint(askedOf),
+                        disputeHint,
+                        options?.askHint ?? null,
+                    ]
+                        .filter((part) => {
+                            return part !== null;
+                        })
+                        .join('\n\n');
+                };
                 // The offline bot searches the manual, which cannot answer a
                 // picture: it has no eyes, and the stand-in question above is
                 // not something to search for either -- handed it, it answers
@@ -4138,12 +4727,29 @@ export default function ChatbotAppComp() {
                     );
                 };
                 if (provider !== null) {
-                    try {
-                        answer = await askLlmBot(
-                            askedWithHint,
+                    // Who is ASKED, for the lines that name them when the
+                    // call fails: the tab's own assistant, or -- on Auto --
+                    // whoever was tried last.
+                    let askedProvider: LlmProviderType = provider;
+                    let askedModel = askModel;
+                    let hasAsked = false;
+                    const askAssistant = (
+                        askedOf: LlmProviderType,
+                        askedModelId: string,
+                        onUsage: (round: LlmRoundUsageType) => void,
+                    ) => {
+                        askedProvider = askedOf;
+                        askedModel = askedModelId;
+                        hasAsked = true;
+                        pending.assistantKey = toAutoBusyKey(
+                            askedOf,
+                            askedModelId,
+                        );
+                        return askLlmBot(
+                            genAskedWithHint(askedOf),
                             activeFocus,
-                            provider,
-                            model,
+                            askedOf,
+                            askedModelId,
                             priorTurns,
                             signal,
                             {
@@ -4153,19 +4759,13 @@ export default function ChatbotAppComp() {
                                     : { isGeneral: true }),
                                 // The walkthrough buttons stand under the
                                 // answer to a known question whatever the
-                                // model opened (`AskExtraType.knownRecipeId`).
-                                ...(knownQuestion?.resources?.recipe
-                                    ? {
-                                          knownRecipeId:
-                                              knownQuestion.resources.recipe,
-                                      }
-                                    : {}),
-                                ...(knownQuestion?.resources?.find
-                                    ? {
-                                          knownFind:
-                                              knownQuestion.resources.find,
-                                      }
-                                    : {}),
+                                // model opened, and steps written from a
+                                // page that was quoted are not handed back
+                                // to be written again (`genKnownAskExtra`).
+                                ...genKnownAskExtra(
+                                    knownQuestion,
+                                    knownPageText,
+                                ),
                                 askedText: trimmedAsked,
                                 // Pulled by the loop between rounds. The
                                 // splice is the handover: what comes out of
@@ -4186,9 +4786,109 @@ export default function ChatbotAppComp() {
                                 // are worth showing is how a line ends up
                                 // saying something the app is not doing.
                                 onProgress: genSessionProgress(askedSessionId),
-                                onUsage: usageTally.onUsage,
+                                onUsage,
                             },
                         );
+                    };
+                    try {
+                        if (isAuto) {
+                            // Auto: the servers are looked at, the best
+                            // assistant that costs nothing and can answer
+                            // is asked, and one that fails before saying
+                            // anything hands the question to the next
+                            // (`autoAssistantHelpers`).
+                            const reportStep = genProgressReporter(
+                                genSessionProgress(askedSessionId),
+                            );
+                            const finishLooking = reportStep(
+                                'Auto is checking which assistants can answer',
+                            );
+                            let picks: Awaited<
+                                ReturnType<typeof resolveAutoPicks>
+                            >;
+                            try {
+                                picks = await resolveAutoPicks({
+                                    needsImages: images.length > 0,
+                                    isGeneral: generalQuestion !== null,
+                                    // Every OTHER ask still out, in any
+                                    // tab: a server answering one of them
+                                    // is the last to be handed this one.
+                                    busyKeys: pendingAskListRef.current.flatMap(
+                                        (one) => {
+                                            return one === pending ||
+                                                one.assistantKey === undefined
+                                                ? []
+                                                : [one.assistantKey];
+                                        },
+                                    ),
+                                });
+                            } finally {
+                                finishLooking();
+                            }
+                            // The look is a wait like any other, and a Stop
+                            // pressed during it ends here.
+                            throwIfCancelled(signal);
+                            const auto = await askWithAutoAssistant({
+                                picks,
+                                checkIsFinal: (error) => {
+                                    return (
+                                        checkIsCancelError(error, signal) ||
+                                        checkIsSpendLimitError(error) ||
+                                        checkIsToolHostError(error)
+                                    );
+                                },
+                                ask: (pick, attempt) => {
+                                    // Opened and closed at once, so it
+                                    // stays above the rounds that follow:
+                                    // who this wait is on.
+                                    reportStep(`Auto picked ${pick.label}`)();
+                                    return askAssistant(
+                                        pick.provider,
+                                        pick.model,
+                                        (round) => {
+                                            attempt.hasRound = true;
+                                            usageTally.onUsage(round);
+                                        },
+                                    );
+                                },
+                            });
+                            answer = auto.answer;
+                            const autoNote = genAutoAnswerNote(
+                                auto.pick,
+                                auto.skipped,
+                                sessionStateRef.current.sessions.find(
+                                    (session) => {
+                                        return session.id === askedSessionId;
+                                    },
+                                )?.autoPick,
+                            );
+                            if (autoNote !== null) {
+                                note =
+                                    note === undefined
+                                        ? autoNote
+                                        : `${note} ${autoNote}`;
+                            }
+                            // The tab STAYS on Auto and now says who
+                            // answered. Left alone when it was taken off
+                            // Auto while the answer came: that pick is the
+                            // user's own.
+                            updateSession(askedSessionId, (session) => {
+                                return session.isAuto === true
+                                    ? {
+                                          ...session,
+                                          provider: auto.pick.provider,
+                                          model: auto.pick.model,
+                                          autoPick: auto.pick.label,
+                                      }
+                                    : session;
+                            });
+                        } else {
+                            answer = await askAssistant(
+                                provider,
+                                askModel,
+                                usageTally.onUsage,
+                            );
+                        }
                         // Another key of the user's own answered because the
                         // tab's provider could not (see `askLlmBot`). Said
                         // on the answer, and the TAB moves to the one that
@@ -4291,11 +4991,16 @@ export default function ChatbotAppComp() {
                                       describeOfflineStandIn(answer)
                                     : error.message;
                         } else {
-                            // The server's own name for a custom one.
+                            // The server's own name for a custom one; and
+                            // for an Auto tab that got as far as asking
+                            // nobody, Auto itself.
                             const label =
-                                provider === null
-                                    ? undefined
-                                    : getLlmProviderLabel(provider, model);
+                                isAuto && !hasAsked
+                                    ? AUTO_ASSISTANT_LABEL
+                                    : getLlmProviderLabel(
+                                          askedProvider,
+                                          askedModel,
+                                      );
                             // The door to what went wrong, under the note.
                             // The thrown line carries the SDK's error as its
                             // `cause`, and what KIND of failure that was
@@ -4307,9 +5012,9 @@ export default function ChatbotAppComp() {
                                 error?.cause === undefined
                                     ? []
                                     : genProviderIssueActions(
-                                          provider,
+                                          askedProvider,
                                           readLlmIssue(error.cause).kind,
-                                          label ?? provider,
+                                          label,
                                       );
                             if (options?.withoutOfflineFallback) {
                                 // A rescue asked about THIS window and this
@@ -4326,10 +5031,7 @@ export default function ChatbotAppComp() {
                                 // back to that.
                                 addMessage(askedSessionId, {
                                     author: 'bot',
-                                    text: describeAskFailure(
-                                        label ?? provider,
-                                        error,
-                                    ),
+                                    text: describeAskFailure(label, error),
                                     ...(issueActions.length > 0
                                         ? { actions: issueActions }
                                         : {}),
@@ -4344,12 +5046,9 @@ export default function ChatbotAppComp() {
                             ];
                             note =
                                 generalQuestion === null
-                                    ? `${describeAskFailure(label ?? provider, error)} ` +
+                                    ? `${describeAskFailure(label, error)} ` +
                                       describeOfflineStandIn(answer)
-                                    : describeAskFailure(
-                                          label ?? provider,
-                                          error,
-                                      );
+                                    : describeAskFailure(label, error);
                         }
                     }
                     // The amber line, said once on the answer that crossed
@@ -4404,9 +5103,86 @@ export default function ChatbotAppComp() {
                 if (signal.aborted) {
                     return;
                 }
+                // "That is wrong", typed under an answer (2026-10-12, the
+                // user's ask: _when user complain about wrong answer should
+                // recommend user to try smarter model_). Said on the answer
+                // to the complaint, with the button that asks the question
+                // the complaint is ABOUT of the next model up. The same test
+                // the dispute read above goes by, so a supported question
+                // that happens to be worded like a complaint is left alone.
+                const complaintAdvice =
+                    knownQuestion === null &&
+                    generalQuestion === null &&
+                    options?.shownText === undefined &&
+                    checkIsDisputingAnswer(trimmedAsked)
+                        ? genComplaintAdvice(
+                              askedAnswerer,
+                              priorMessages,
+                              checkIsDisputingAnswer,
+                          )
+                        : null;
+                if (complaintAdvice !== null) {
+                    note =
+                        note === undefined
+                            ? complaintAdvice.text
+                            : `${note} ${complaintAdvice.text}`;
+                    if (complaintAdvice.action !== null) {
+                        answer.actions = [
+                            ...(answer.actions ?? []),
+                            complaintAdvice.action,
+                        ];
+                    }
+                }
+                // Asked about reading the Bible with the main window on
+                // another page -- a stray press is how an elderly reader
+                // gets to the Presenter. The answer above is right for that
+                // page; this adds the way back to the Bible Reader, as one
+                // more button beside it (`readerRouteHelpers`).
+                let readerRoute: ReturnType<typeof genReaderRouteAdvice> = null;
+                if (
+                    generalQuestion === null &&
+                    options?.shownText === undefined &&
+                    checkIsBibleReadingAsk(trimmedAsked)
+                ) {
+                    // The page the main window is on NOW: the tab's own
+                    // "asking about" stays on the page it was opened from,
+                    // and the stray press comes after. One read of the app,
+                    // for such a question only; the tab's page when the app
+                    // cannot be read.
+                    let mainFocus: string | null = null;
+                    try {
+                        mainFocus = toMainWindowFocus(
+                            parseToolJson(
+                                await callTool('owa_app_state', {}, signal),
+                            ),
+                        );
+                    } catch (_error) {
+                        mainFocus = null;
+                    }
+                    if (signal.aborted) {
+                        return;
+                    }
+                    readerRoute = genReaderRouteAdvice(
+                        trimmedAsked,
+                        mainFocus ?? activeFocus,
+                        answer.actions ?? [],
+                    );
+                }
+                if (readerRoute !== null) {
+                    answer.actions = [
+                        ...(answer.actions ?? []),
+                        readerRoute.action,
+                    ];
+                }
                 addMessage(askedSessionId, {
                     author: 'bot',
-                    text: shownAnswer,
+                    // AFTER the answer, as its last paragraph, right above
+                    // the button it names: a note is drawn over an answer,
+                    // and this is a follow-up to one.
+                    text:
+                        readerRoute === null
+                            ? shownAnswer
+                            : `${shownAnswer}\n\n${readerRoute.text}`,
                     note,
                     actions: answer.actions,
                     ...usageTally.toField(),
@@ -4471,7 +5247,15 @@ export default function ChatbotAppComp() {
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [isBusy, focus, isFocusChosen, provider, model, activeSessionId],
+        [
+            isBusy,
+            focus,
+            isFocusChosen,
+            provider,
+            model,
+            isAuto,
+            activeSessionId,
+        ],
     );
 
     const handleAskingRef = useAppCurrentRef(handleAsking);
@@ -4525,6 +5309,27 @@ export default function ChatbotAppComp() {
         // back to the same way -- whether it was folded into the answer or
         // asked on its own.
         rememberAsking(text);
+        // A report being written is not a question a sentence can be handed
+        // to halfway: it is stopped and written again WITH the words, which
+        // is what they were typed for. Sent on as an ordinary question they
+        // were answered by the assistant and left out of the report.
+        const reporting = pendingAskListRef.current.find((one) => {
+            return one.sessionId === activeSessionId && one.kind === 'report';
+        });
+        if (reporting !== undefined) {
+            reporting.controller.abort();
+            endPendingAsk(reporting);
+            const thread = readReportThread(
+                sessionStateRef.current.sessions.find((session) => {
+                    return session.id === activeSessionId;
+                })?.messages ?? [],
+            );
+            startReportingRef.current(
+                thread === null ? text : genReportComplaint(thread, text),
+                text,
+            );
+            return;
+        }
         const pending = pendingAskListRef.current.find((one) => {
             return one.sessionId === activeSessionId && one.canTakeAdditions;
         });
@@ -4547,8 +5352,10 @@ export default function ChatbotAppComp() {
         question,
         activeSessionId,
         addMessage,
+        endPendingAsk,
         handleAsking,
         rememberAsking,
+        sessionStateRef,
         updateActiveSession,
     ]);
     // The model to offer when the chosen one cannot see a picture. A custom
@@ -4662,15 +5469,33 @@ export default function ChatbotAppComp() {
      * them -- see `handleReportPressed`.
      */
     const handleReporting = useCallback(
-        async (complaint: string) => {
+        async (
+            complaint: string,
+            // What the transcript shows when the complaint is more than what
+            // was just typed (a report being added to), and what the person
+            // attached: named in the report, shown to a model that sees.
+            extra?: { shownText?: string; attachments?: ChatAttachmentType[] },
+        ) => {
             const reportedSessionId = activeSessionId;
             const session = sessionStateRef.current.sessions.find((one) => {
                 return one.id === reportedSessionId;
             });
+            const userAttachments = extra?.attachments ?? [];
+            // Everything attached to THIS report, not only with these
+            // words: written again -- more was said, or the steps did not
+            // help -- it still carries the picture that came first.
+            const reportAttachments = [
+                ...readReportThreadAttachments(session?.messages ?? []),
+                ...userAttachments,
+            ];
+            const shownText = (extra?.shownText ?? '').trim();
             addMessage(reportedSessionId, {
                 author: 'you',
-                text: complaint,
-                note: 'Reporting a problem.',
+                text: shownText.length > 0 ? shownText : complaint,
+                note: REPORT_NOTE,
+                ...(userAttachments.length > 0
+                    ? { attachments: userAttachments }
+                    : {}),
             });
             updateSession(reportedSessionId, (one) => {
                 return { ...one, draft: '' };
@@ -4678,7 +5503,12 @@ export default function ChatbotAppComp() {
             // Stoppable like an ask, and registered before the first await for
             // the same reason. Additions are refused: this is not a question the
             // user can add a sentence to halfway through.
-            const pending = genPendingAsk(reportedSessionId, undefined, false);
+            const pending = genPendingAsk(
+                reportedSessionId,
+                undefined,
+                false,
+                'report',
+            );
             const { signal } = pending.controller;
             // A report's investigation is a model ask like any other, and it
             // is charged to the tab like any other.
@@ -4714,24 +5544,68 @@ export default function ChatbotAppComp() {
                 // The door to a provider that could not investigate, beside
                 // Send report -- the same one an ordinary answer gets.
                 let issueActions: BotActionType[] = [];
+                // Who investigates: the tab's own assistant, or on Auto the
+                // one Auto would ask a question right now. One attempt -- a
+                // report that could not be looked into is still a report.
+                let askedProvider = provider;
+                let askedModel = model;
                 if (provider === null) {
                     note =
                         'No assistant is set up here, so this is what the window ' +
                         'could see for itself.';
                 } else {
                     try {
+                        if (isAuto) {
+                            const [pick] = await resolveAutoPicks();
+                            throwIfCancelled(signal);
+                            if (pick !== undefined) {
+                                askedProvider = pick.provider;
+                                askedModel = pick.model;
+                            }
+                        }
                         // Asked directly rather than through `handleAsking`: an
                         // ordinary answer comes back with walkthrough buttons on
                         // it, and "show me step by step" under a bug report is
                         // the window offering to demonstrate the fault.
+                        // What came with these words, as words: a
+                        // text file, a control they pointed at, and for a
+                        // PDF that there is one it cannot open.
+                        const shownAttachments =
+                            reportAttachments.slice(-MAX_ATTACHMENT_COUNT);
+                        // ...and which number is which, for "in 2 it is
+                        // missing".
+                        const attachedText = [
+                            toAttachmentText(userAttachments),
+                            toAttachmentLegend(shownAttachments),
+                        ]
+                            .filter((part) => {
+                                return part.length > 0;
+                            })
+                            .join('\n\n');
+                        const reportImages = toBotImages(shownAttachments);
                         const answer = await askLlmBot(
-                            genReportInvestigation(complaint, evidence),
+                            genReportInvestigation(
+                                attachedText.length === 0
+                                    ? complaint
+                                    : `${complaint}\n\n${attachedText}`,
+                                evidence,
+                            ),
                             focus,
-                            provider,
-                            model,
+                            askedProvider,
+                            askedModel,
                             turns,
                             signal,
-                            { onUsage: usageTally.onUsage },
+                            {
+                                onUsage: usageTally.onUsage,
+                                // Their own pictures, to a model that can
+                                // read them: a blind one refuses the ask.
+                                ...(checkCanSeeImages(
+                                    askedProvider,
+                                    askedModel,
+                                ) && reportImages.length > 0
+                                    ? { images: reportImages }
+                                    : {}),
+                            },
                         );
                         answerText = answer.text;
                     } catch (error: any) {
@@ -4748,14 +5622,18 @@ export default function ChatbotAppComp() {
                             'itself.';
                         if (error?.cause !== undefined) {
                             issueActions = genProviderIssueActions(
-                                provider,
+                                askedProvider ?? provider,
                                 readLlmIssue(error.cause).kind,
-                                getLlmProviderLabel(provider, model),
+                                getLlmProviderLabel(
+                                    askedProvider ?? provider,
+                                    askedModel,
+                                ),
                             );
                         }
                     }
                 }
                 const report = genPreparedReport({
+                    attachments: reportAttachments,
                     complaint,
                     answerText,
                     evidence,
@@ -4766,38 +5644,33 @@ export default function ChatbotAppComp() {
                     // Named in the document so a maintainer can weigh the
                     // diagnosis by who wrote it; nobody when no model did.
                     investigatedBy:
-                        provider === null || answerText.length === 0
+                        askedProvider === null || answerText.length === 0
                             ? null
-                            : `${getLlmProviderLabel(provider, model)} (${
+                            : `${getLlmProviderLabel(askedProvider, askedModel)} (${
                                   // The id the server knows, not two uuids.
-                                  getLlmModelList(provider).find((one) => {
-                                      return one.id === model;
-                                  })?.wireId ?? model
+                                  getLlmModelList(askedProvider).find((one) => {
+                                      return one.id === askedModel;
+                                  })?.wireId ?? askedModel
                               })`,
                     contact: await contactPromise.catch(() => {
                         return null;
                     }),
                 });
                 keepPreparedReport(report);
+                // Helping comes before reporting: when the assistant saw a
+                // way they can put it right themselves, THAT is the answer,
+                // and the report -- written and kept -- is offered only if
+                // it did not help.
+                const card =
+                    report.fix.length > 0
+                        ? genFixCard(report)
+                        : genPreparedCard(report);
                 addMessage(reportedSessionId, {
                     author: 'bot',
                     ...usageTally.toField(),
-                    text:
-                        (report.summary.length > 0
-                            ? `${report.summary}\n\n`
-                            : '') +
-                        `I have written this up as "${report.title}". Press Send ` +
-                        'report when you want it filed — nothing goes anywhere ' +
-                        'until you do.',
+                    text: card.text,
                     note,
-                    actions: [
-                        {
-                            label: 'Send report',
-                            toolName: REPORT_SEND_TOOL_NAME,
-                            args: { reference: report.reference },
-                        },
-                        ...issueActions,
-                    ],
+                    actions: [...card.actions, ...issueActions],
                     ...(shot === null ? {} : { attachments: [shot] }),
                 });
             } catch (error: any) {
@@ -4814,7 +5687,7 @@ export default function ChatbotAppComp() {
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [activeSessionId, focus, provider, model],
+        [activeSessionId, focus, provider, model, isAuto],
     );
 
     /**
@@ -4835,13 +5708,34 @@ export default function ChatbotAppComp() {
             return one.id === activeSessionId;
         });
         const typed = question.trim();
+        // A report already under way in this tab: what is in the box is
+        // added to it, with no second question -- they are in the middle
+        // of it, and the card or the first press said what Report does.
+        const reportThread = readReportThread(session?.messages ?? []);
+        if (reportThread !== null && typed.length > 0) {
+            startReportingRef.current(
+                genReportComplaint(reportThread, typed),
+                typed,
+            );
+            return;
+        }
         // With an empty box the complaint is the last thing they asked --
         // after a wrong answer that is exactly the problem they mean.
         const lastAsked =
             [...(session?.messages ?? [])].reverse().find((message) => {
                 return message.author === 'you';
             })?.text ?? '';
-        const complaint = typed.length > 0 ? typed : lastAsked;
+        // In the middle of a report with an empty box -- "press Report
+        // again" after this window was reopened -- it is everything said
+        // for it, not its last line alone.
+        const threadComplaint =
+            reportThread === null ? '' : genReportComplaint(reportThread, '');
+        const complaint =
+            typed.length > 0
+                ? typed
+                : threadComplaint.length > 0
+                  ? threadComplaint
+                  : lastAsked;
         if (complaint.length === 0) {
             addMessage(activeSessionId, {
                 author: 'bot',
@@ -4857,11 +5751,86 @@ export default function ChatbotAppComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeSessionId, question, addMessage]);
 
+    // Report pressed on an offer card (`genReportOffer`). A problem the app
+    // named is looked into at once -- the card already said what the press
+    // does -- with whatever the person added in the box in front of it. A
+    // card that only ASKED what went wrong goes the ordinary way: the box is
+    // quoted back first, and an empty one is asked for.
+    const handleReportStartingRef = useAppCurrentRef(
+        (action: BotActionType) => {
+            const problem = String(action.args?.complaint ?? '').trim();
+            if (problem.length === 0) {
+                handleReportPressed();
+                return;
+            }
+            const typed = question.trim();
+            // With what was already said for it, when something was.
+            const thread = readReportThread(
+                sessionStateRef.current.sessions.find((one) => {
+                    return one.id === activeSessionId;
+                })?.messages ?? [],
+            );
+            startReportingRef.current(
+                genReportComplaint(
+                    { problem, said: thread?.said ?? [], isPrepared: false },
+                    typed,
+                ),
+                typed,
+            );
+        },
+    );
+    answerFixPressRef.current = (sessionId, reply, reference) => {
+        // Fixed: the report is closed and nothing is sent.
+        if (reply === 'fixed') {
+            addMessage(sessionId, {
+                author: 'bot',
+                text: REPORT_FIXED_TEXT,
+                note: REPORT_RESOLVED_NOTE,
+            });
+            return;
+        }
+        // Still a problem: the report written while they tried is put up,
+        // to read and send.
+        const report = takePreparedReport(reference);
+        addMessage(
+            sessionId,
+            report === null
+                ? {
+                      author: 'bot',
+                      text:
+                          'That report is not prepared any more — this ' +
+                          'window has been reopened since. Say what is ' +
+                          'still wrong and press Report, and I will write ' +
+                          'it up again.',
+                  }
+                : { author: 'bot', ...genPreparedCard(report, false) },
+        );
+    };
+    // What every way into a report ends in: the box's attachments go with
+    // it and leave the box, as they do when a question is asked.
+    startReportingRef.current = (complaint: string, shownText?: string) => {
+        const sessionId = activeSessionId;
+        const attachments = draftAttachmentMapRef.current[sessionId] ?? [];
+        if (attachments.length > 0) {
+            setDraftAttachmentMap((previous) => {
+                return { ...previous, [sessionId]: [] };
+            });
+            setAttachError(null);
+        }
+        void handleReporting(complaint, { shownText, attachments });
+    };
+
     /**
-     * The second press, and the only one that writes anything. What it does
-     * NOT do is claim the report went somewhere: there is no issue tracker
-     * for this app yet, so it says so and hands back the file instead. The
-     * day an endpoint exists, `postIssueReport` sends and this line changes.
+     * The second press, and the only one that writes or sends anything. The
+     * report is saved into Downloads and posted -- its text, the picture of
+     * the app and what the person attached -- to a report server of the
+     * shared registry when one is shared (`postIssueReport`). What
+     * this never does is claim the report went somewhere it did not: _Sent_
+     * is said only when a server took it (`describePostedReport`).
+     *
+     * A wait like an ask's -- the registry may be read again and a server
+     * that is away takes seconds to say so -- so it is busy in its own tab,
+     * says what it is doing, and Stop ends the sending in main too.
      */
     const handleSendingReport = useCallback(
         async (reference: string, sessionId: string) => {
@@ -4876,49 +5845,65 @@ export default function ChatbotAppComp() {
                 });
                 return;
             }
-            const posted = await postIssueReport(report);
-            const shows: ShowRefType[] = [];
-            if (posted.filePath !== null) {
-                shows.push({
-                    kind: 'file',
-                    value: posted.filePath,
-                    name: `${posted.reference}.md`,
+            const pending = genPendingAsk(sessionId, undefined, false, 'send');
+            const { signal } = pending.controller;
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const finishStep = genProgressReporter(
+                genSessionProgress(sessionId),
+            )('Sending the report');
+            try {
+                const posted = await postIssueReport(report, signal);
+                if (signal.aborted && !posted.isSent) {
+                    // Stop left this for here to say: only now is it known
+                    // that the report had not gone.
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text:
+                            'Stopped. The report was not sent — press Send ' +
+                            'report when you want it to go.' +
+                            (posted.filePath === null
+                                ? ''
+                                : ' A copy is in your Downloads folder.'),
+                    });
+                    return;
+                }
+                const shows: ShowRefType[] = [];
+                if (posted.filePath !== null) {
+                    shows.push({
+                        kind: 'file',
+                        value: posted.filePath,
+                        name: `${posted.reference}.md`,
+                    });
+                }
+                if (posted.imageFilePath !== null) {
+                    shows.push({
+                        kind: 'file',
+                        value: posted.imageFilePath,
+                        name: `${posted.reference}.png`,
+                    });
+                }
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text:
+                        // Stop pressed as the server took it: it WAS sent,
+                        // and the tab must not go on offering to send it.
+                        (signal.aborted
+                            ? 'It had already gone when you pressed Stop. '
+                            : '') + describePostedReport(report, posted),
+                    // Offered whatever the saving and the sending did: with
+                    // the file gone wrong, the clipboard is the only way
+                    // the report leaves this window at all.
+                    actions: genReportFollowUpActions(report),
+                    ...(shows.length > 0 ? { shows } : {}),
                 });
+            } finally {
+                finishStep();
+                endPendingAsk(pending);
+                settleSession(sessionId);
             }
-            if (posted.imageFilePath !== null) {
-                shows.push({
-                    kind: 'file',
-                    value: posted.imageFilePath,
-                    name: `${posted.reference}.png`,
-                });
-            }
-            const imageFileName =
-                posted.imageFilePath === null
-                    ? null
-                    : `${posted.reference}.png`;
-            const text =
-                posted.failure !== null
-                    ? `${posted.failure} The report is called ` +
-                      `${posted.reference}.`
-                    : posted.isSent
-                      ? `Sent. The report is ${posted.reference} — I kept a ` +
-                        'copy on this machine too.'
-                      : `Report ${posted.reference} is ready. There is no ` +
-                        'issue tracker connected to this app yet, so nothing ' +
-                        'was sent — I saved the whole thing into your ' +
-                        'Downloads folder.\n\n' +
-                        describeHowToSend(report, imageFileName);
-            addMessage(sessionId, {
-                author: 'bot',
-                text,
-                // Offered whatever the saving did: with the file gone wrong,
-                // the clipboard is the only way the report leaves this
-                // window at all.
-                actions: genReportFollowUpActions(report),
-                ...(shows.length > 0 ? { shows } : {}),
-            });
         },
-        [addMessage],
+        [addMessage, genPendingAsk, endPendingAsk, syncBusy, settleSession],
     );
 
     /**
@@ -5219,6 +6204,29 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // The two buttons under a way to put it right. Fixed: the
+            // report is closed and nothing is sent. Still a problem: the
+            // report written while they tried is put up, to read and send.
+            if (
+                action.toolName === REPORT_FIXED_TOOL_NAME ||
+                action.toolName === REPORT_STILL_TOOL_NAME
+            ) {
+                answerFixPressRef.current(
+                    actedSessionId,
+                    action.toolName === REPORT_FIXED_TOOL_NAME
+                        ? 'fixed'
+                        : 'still',
+                    String(action.args?.reference ?? ''),
+                );
+                return;
+            }
+            // Report on the card another window's request put up: the
+            // press that lets the window look into it. A pseudo tool like
+            // Send, so no model can start a report in the user's name.
+            if (action.toolName === REPORT_START_TOOL_NAME) {
+                handleReportStartingRef.current(action);
+                return;
+            }
             // The three under a saved report -- the same seam, for the same
             // reason: the clipboard and the mail app are the user's, and
             // nothing a model says may reach either.
@@ -5251,6 +6259,46 @@ export default function ChatbotAppComp() {
                 if (checkIsBuiltinCommand(command)) {
                     handleAskingRef.current(command, true);
                 }
+                return;
+            }
+            // *Ask again with <the next model up>*, under a thumb down or a
+            // complaint (`answerRatingHelpers`). Read against the tab as it
+            // is NOW: the button stays in the transcript, and a tab moved
+            // to another assistant since has no such model. The TAB moves
+            // to the model asked -- the head row must show who is being
+            // asked -- and the answer says so, because the one above costs
+            // more; the stored choice for NEW tabs is left as the user set
+            // it. A tab already waiting on an answer keeps waiting on it.
+            if (action.toolName === ASK_SMARTER_TOOL_NAME) {
+                const smarterAsk = readSmarterAsk(
+                    action.args,
+                    answererRef.current,
+                );
+                if (smarterAsk === null) {
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        text:
+                            'This chat is not asking that assistant any ' +
+                            'more. Pick the model you want in the MODEL ' +
+                            'list at the top of this window, then ask again.',
+                    });
+                    return;
+                }
+                if (checkIsSessionPending(actedSessionId)) {
+                    return;
+                }
+                updateSession(actedSessionId, (session) => {
+                    return { ...session, model: smarterAsk.model };
+                });
+                handleAskingRef.current(smarterAsk.question, true, {
+                    model: smarterAsk.model,
+                    askHint: SMARTER_ASK_HINT,
+                    answerNote:
+                        `Asked again with ${smarterAsk.label}, and this ` +
+                        'chat now uses it — pick another in the MODEL list ' +
+                        'at the top of this window to switch back.',
+                });
                 return;
             }
             // The button that lifts the spend guard's pause -- a person
@@ -5493,6 +6541,7 @@ export default function ChatbotAppComp() {
                                         rows={assistantRows}
                                         value={assistantRowValue}
                                         onChange={handleProviderChanging}
+                                        onAutoChoosing={handleAutoChoosing}
                                     />
                                     {/* The shared registry's servers come
                                      * and go as an admin changes the file
@@ -5542,6 +6591,15 @@ export default function ChatbotAppComp() {
                                         {OFFLINE_ENGINE_LABEL}
                                     </button>
                                 </RenderPickFieldComp>
+                            ) : isAuto ? (
+                                // Nothing to pick: who answers is Auto's to
+                                // settle, so the field says who it was.
+                                <RenderPickFieldComp
+                                    caption="Auto pick"
+                                    isEngine
+                                >
+                                    <RenderAutoPickComp autoPick={autoPick} />
+                                </RenderPickFieldComp>
                             ) : (
                                 <RenderPickFieldComp caption="Model" isEngine>
                                     <RenderModelPickerComp
@@ -5563,7 +6621,10 @@ export default function ChatbotAppComp() {
                 )}
             </header>
             <div className="chat-log" ref={listRef}>
-                <RenderProviderWarningComp provider={provider} />
+                <RenderProviderWarningComp
+                    provider={provider}
+                    isAuto={isAuto}
+                />
                 {serviceError !== null ? (
                     <p className="chat-alert">{serviceError}</p>
                 ) : null}
@@ -5737,6 +6798,7 @@ export default function ChatbotAppComp() {
                                     onAction={handleActing}
                                     onReply={handleAsking}
                                     onReuse={handleReusing}
+                                    onRate={handleRating}
                                     onAttachRequest={handleAttachRequest}
                                     onShowAttachment={handleShowingAttachment}
                                 />
@@ -5826,8 +6888,9 @@ export default function ChatbotAppComp() {
                     >
                         <span className="chat-report-ask">
                             Report “{toReportQuote(reportAsk)}”? I will look
-                            into it in the app, collect what is on this machine
-                            and write it up — nothing is sent until you say so.
+                            into it in the app and write it up. The report
+                            carries {REPORT_COLLECTS_TEXT} — nothing is sent
+                            until you say so.
                         </span>
                         <button
                             type="button"
@@ -5844,7 +6907,7 @@ export default function ChatbotAppComp() {
                             className="chat-report-yes"
                             onClick={() => {
                                 setReportAsk(null);
-                                handleReporting(reportAsk);
+                                startReportingRef.current(reportAsk);
                             }}
                         >
                             Report it
@@ -5887,7 +6950,7 @@ export default function ChatbotAppComp() {
                         className="chat-file-input"
                         type="file"
                         multiple
-                        accept="image/*,text/*,.md,.json,.csv,.log,.xml"
+                        accept="image/*,text/*,.md,.json,.csv,.log,.xml,.pdf,application/pdf"
                         onChange={(event) => {
                             addFiles([...(event.target.files ?? [])]);
                             // Cleared so choosing the SAME file twice still

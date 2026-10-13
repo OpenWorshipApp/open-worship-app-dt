@@ -81,7 +81,7 @@ const screenManagerMock: any = {
         isShowing: true,
         clear: vi.fn(),
     },
-    screenBibleManager: {
+    screenLongTextManager: {
         render: vi.fn(),
         div: null,
         releaseDiv: vi.fn(),
@@ -292,15 +292,15 @@ vi.mock('./managers/screenManagerBaseHelpers', () => ({
 
 vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBackgroundManagerEvents: vi.fn(),
-    useScreenBibleManagerEvents: vi.fn(),
+    useScreenLongTextManagerEvents: vi.fn(),
     useScreenForegroundManagerEvents: vi.fn(),
     useScreenDrawManagerEvents: vi.fn(),
     useScreenEvents: vi.fn(),
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly textStyleTextColor = '#ffffff';
     },
 }));

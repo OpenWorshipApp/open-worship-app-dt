@@ -27,7 +27,7 @@ import {
     toManualPageBody,
 } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import type { ChatMessageType } from './chatSessionHelpers';
-import { clipKnownPage } from './questionHelpers';
+import { clipKnownPage, HELP_WINDOW_MANUAL_ID } from './questionHelpers';
 
 // A dispute is short. A long message that happens to hold "does not work" is
 // a new question with its own story in it, and is left to the model.
@@ -78,7 +78,12 @@ export type DisputedPageType = {
 export function findDisputedPage(
     messages: ChatMessageType[],
 ): DisputedPageType | null {
-    const lastMessage = messages.at(-1);
+    // What the window said by itself under a thumb down is not the answer
+    // being disputed: "The steps did not work", pressed under it, is about
+    // the answer above (`answerRatingHelpers`).
+    const lastMessage = messages.findLast((message) => {
+        return message.isFollowUp !== true;
+    });
     if (lastMessage?.author !== 'bot') {
         return null;
     }
@@ -93,6 +98,42 @@ export function findDisputedPage(
         }
     }
     return null;
+}
+
+// A control as an answer writes it: in bold. Short -- a bolded sentence is
+// not a name.
+const BOLD_NAME_PATTERN = /\*\*([^*\n]{2,60})\*\*/g;
+
+/**
+ * The control a complaint is about: a name the disputed answer put in bold
+ * that the complaint says again ("There is no Bible Properties button" under
+ * an answer that said to press **Bible Properties**). The longest such name,
+ * so "Bible Properties" is not read as "Bible". Null when the complaint
+ * names none of them -- "the steps did not work" is about no one control.
+ */
+export function findComplainedControl(
+    asked: string,
+    messages: ChatMessageType[],
+): string | null {
+    const answer = messages.findLast((message) => {
+        return message.isFollowUp !== true;
+    });
+    if (answer?.author !== 'bot') {
+        return null;
+    }
+    const said = asked.toLowerCase();
+    let found: string | null = null;
+    for (const match of answer.text.matchAll(BOLD_NAME_PATTERN)) {
+        const name = match[1].trim();
+        if (
+            name.length >= 2 &&
+            said.includes(name.toLowerCase()) &&
+            (found === null || name.length > found.length)
+        ) {
+            found = name;
+        }
+    }
+    return found;
 }
 
 // Only ever the project's own repository, and only its manual pages: the
@@ -181,17 +222,159 @@ export async function readFreshGuidePage(
 }
 
 /**
+ * Where the control a disputed answer starts at IS, on the window they are
+ * asking about, as the app's own find tool has just said.
+ */
+export type DisputedControlType =
+    | { state: 'shown'; find: string; where: string | null }
+    | { state: 'tucked'; find: string; revealBy: string }
+    | { state: 'hover'; find: string; where: string | null }
+    | { state: 'missing'; find: string; nearest: string | null }
+    // The answer was about the help window itself: no tool looks in it.
+    | { state: 'help-window' };
+
+function toWhere(match: any): string | null {
+    const panel =
+        typeof match?.inPanel === 'string' && match.inPanel.length > 0
+            ? `in the ${match.inPanel} panel`
+            : null;
+    const place =
+        typeof match?.where === 'string' && match.where.length > 0
+            ? match.where
+            : null;
+    return (
+        [panel, place]
+            .filter((one) => {
+                return one !== null;
+            })
+            .join(', ') || null
+    );
+}
+
+/**
+ * The window walks the ladder itself. Left to the model it was a paragraph
+ * of conditions -- find the control; when the tool names another to press
+ * first, say THAT; otherwise ask for a picture -- and a small local model
+ * recited it as advice: "Please look for a control labeled ? in your
+ * window. If you find one, press it first" (gemma-4-e4b, 2026-10-13, under
+ * _The steps did not work_). What a model is not handed it cannot recite,
+ * so it is handed the FACT.
+ *
+ * Null when there is nothing to look for, or the look could not be made
+ * (that window is not open, the tool host is down): the model is then told
+ * how to look, as before. The help window's own page is said to be that:
+ * its controls are in THIS window, where the find tool does not look, and
+ * "it is not on their window" would be false.
+ */
+export async function locateDisputedControl(
+    page: DisputedPageType,
+    lookInPage: string | null,
+    callTool: (name: string, args: any) => Promise<string>,
+): Promise<DisputedControlType | null> {
+    const { find } = page;
+    if (page.manualId === HELP_WINDOW_MANUAL_ID) {
+        return { state: 'help-window' };
+    }
+    if (find === null || lookInPage === null) {
+        return null;
+    }
+    try {
+        const result = JSON.parse(
+            await callTool('owa_find_ui', { text: find, page: lookInPage }),
+        );
+        if (!Array.isArray(result?.matches)) {
+            return null;
+        }
+        // Only a control CALLED that: a looser fit is some other control,
+        // and "it is there" said of it would be the wrong answer again.
+        const exact = result.matches.find((one: any) => {
+            return one?.tier === 0;
+        });
+        if (exact === undefined) {
+            const nearest = [
+                ...(Array.isArray(result.nearMisses) ? result.nearMisses : []),
+                ...result.matches.map((one: any) => {
+                    return one?.label;
+                }),
+            ].find((one) => {
+                return typeof one === 'string' && one.length > 0;
+            });
+            return { state: 'missing', find, nearest: nearest ?? null };
+        }
+        if (typeof exact.revealBy === 'string' && exact.revealBy.length > 0) {
+            return { state: 'tucked', find, revealBy: exact.revealBy };
+        }
+        if (exact.showsOnHover === true) {
+            return { state: 'hover', find, where: toWhere(exact) };
+        }
+        return { state: 'shown', find, where: toWhere(exact) };
+    } catch (_error) {
+        return null;
+    }
+}
+
+// What to do next, as one thing to say -- or, with no look made, how to look.
+function genDisputeLadder(located: DisputedControlType | null): string {
+    if (located === null) {
+        return (
+            'find the control with owa_find_ui and, when it answers with ' +
+            '`revealBy`, say to press THAT first; if it is not on their window, ' +
+            'ask for a picture of the window'
+        );
+    }
+    if (located.state === 'help-window') {
+        return (
+            'that answer was about this help window itself, the one they ' +
+            'are typing in, which no tool can look into -- so name no ' +
+            'control to look for: ask which step did not do what it said, ' +
+            'and what happened instead'
+        );
+    }
+    const head =
+        `the app has just looked on their window for "${located.find}", ` +
+        'so do not look again: ';
+    if (located.state === 'shown') {
+        return (
+            `${head}it IS there${located.where === null ? '' : ` (${located.where})`}. ` +
+            'Say where it is, and ask what happens when they press it'
+        );
+    }
+    if (located.state === 'tucked') {
+        return (
+            `${head}it is there but shut away -- "${located.revealBy}" has ` +
+            'to be pressed first. Say exactly that'
+        );
+    }
+    if (located.state === 'hover') {
+        return (
+            `${head}it is there${located.where === null ? '' : ` (${located.where})`} ` +
+            'but only drawn while the mouse is over that part of the ' +
+            'window. Say to move the mouse there first'
+        );
+    }
+    return (
+        `${head}there is NO control called that on their window right now` +
+        (located.nearest === null
+            ? ''
+            : ` (the closest name there is "${located.nearest}")`) +
+        '. Do not tell them to press it again: say it is not on their ' +
+        'window as it is now, and ask what they see where it should be, ' +
+        'or for a picture of the window'
+    );
+}
+
+/**
  * What the MODEL is told with a dispute, on the ask only. With the page: read
  * the two side by side. Without it: the page could not be fetched, so the
  * model must not go looking for it again and falls back on the window itself.
  * With an OLDER page: the built-in guide is the newest there is, and the old
  * one is not quoted at all.
  */
-export function genDisputeHint(fresh: FreshGuidePageType | null): string {
-    const ladder =
-        'find the control with owa_find_ui and, when it answers with ' +
-        '`revealBy`, say to press THAT first; if it is not on their window, ' +
-        'ask for a picture of the window';
+export function genDisputeHint(
+    fresh: FreshGuidePageType | null,
+    located: DisputedControlType | null = null,
+): string {
+    const ladder = genDisputeLadder(located);
     // A new question in the words of a complaint ("there is no sound") is
     // still a question, and must not be answered as an argument.
     const head =
@@ -240,6 +423,9 @@ export async function readDisputeHint(
     messages: ChatMessageType[],
     callTool: (name: string, args: any) => Promise<string>,
     onReading?: () => (() => void) | void,
+    // The window they are asking about, as the find tool takes it
+    // ("presenter.html"); null looks nowhere.
+    lookInPage: string | null = null,
 ): Promise<string | null> {
     if (!checkIsDisputingAnswer(asked)) {
         return null;
@@ -248,9 +434,22 @@ export async function readDisputeHint(
     if (page === null) {
         return null;
     }
+    // The control the COMPLAINT names, when the answer named it too: that is
+    // the one to look for, before the one the walkthrough starts at.
+    const named = findComplainedControl(asked, messages);
     const finishReading = onReading?.();
     try {
-        return genDisputeHint(await readFreshGuidePage(page, callTool));
+        // Both at once: one is a page off the web, the other a look at
+        // the window, and neither waits on the other.
+        const [fresh, located] = await Promise.all([
+            readFreshGuidePage(page, callTool),
+            locateDisputedControl(
+                named === null ? page : { ...page, find: named },
+                lookInPage,
+                callTool,
+            ),
+        ]);
+        return genDisputeHint(fresh, located);
     } finally {
         finishReading?.();
     }

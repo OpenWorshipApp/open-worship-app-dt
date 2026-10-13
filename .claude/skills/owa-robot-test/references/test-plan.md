@@ -120,7 +120,7 @@ it started showing) and all changed state restored.
 - Present one real item (single-click a slide thumbnail — presenting is a single-click
   TOGGLE, KB §5 — or double-click a bible verse); confirm `.app-on-screen` + the mini
   screen mirrors it (PR-04).
-- Clear-control states: the matching `BG`/`SL`/`BB`/`FG` button flips outline→solid
+- Clear-control states: the matching `BG`/`SL`/`LT`/`FG` button flips outline→solid
   while its layer is live; clicking (or `F6`–`F10`) clears it back (SP-02, KB-03..07).
 - Show the screen via `ShowHideScreen` / `F5` (SP-01) → a `screen.html?screenId=N`
   target MUST appear in `list_pages` → `select_page` it → readiness check →

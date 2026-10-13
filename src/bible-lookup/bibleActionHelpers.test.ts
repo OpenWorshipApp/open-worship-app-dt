@@ -19,7 +19,7 @@ vi.mock('../bible-list/bibleHelpers', () => ({
     saveBibleItem: h.saveBibleItemMock,
     exportToWordDocument: h.exportToWordDocumentMock,
 }));
-vi.mock('../_screen/managers/ScreenBibleManager', () => ({
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
     default: { handleBibleItemSelecting: h.handleSelectingMock },
 }));
 vi.mock('../toast/toastHelpers', () => ({

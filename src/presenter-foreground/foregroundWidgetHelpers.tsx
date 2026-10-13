@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import type { LazyExoticComponent } from 'react';
 
 import type { ForegroundDataType } from '../_screen/screenTypeHelpers';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import { getForegroundShowingScreenIdDataList } from './foregroundHelpers';
 import { getRunningAutoPlayKeys } from '../slide-auto-play/autoPlayRunnerHelpers';
 import { toForegroundAutoPlayPrefix } from './foregroundAutoPlayPrefix';
@@ -17,13 +18,25 @@ import { toForegroundAutoPlayPrefix } from './foregroundAutoPlayPrefix';
  *
  * `labelKey` is an English dictionary key. The lookup is dynamic, so
  * `tranKeyCoverage.test.ts` reads this list as source text: keep every one a
- * plain literal and keep the `] as const;` that closes the list.
+ * plain literal on a `labelKey:` line of its own.
  */
 export type ForegroundWidgetType = {
     key: string;
     labelKey: string;
     iconName: string;
     checkIsOnScreen: (foregroundData: ForegroundDataType) => boolean;
+    /**
+     * For a component that is NOT drawn by the foreground manager: the
+     * screens it is on, asked of whatever does draw it. `checkIsOnScreen`
+     * is then never the answer -- nothing of it is in the foreground data.
+     */
+    getShowingScreenIds?: () => number[];
+    /**
+     * No whole-component transition button on its panel: its layer has no
+     * transition to give it, and the button would write a setting nothing
+     * reads.
+     */
+    isNoTransition?: true;
     Comp: LazyExoticComponent<() => any>;
 };
 
@@ -72,6 +85,29 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         },
         Comp: lazy(() => {
             return import('./ForegroundQuickTextComp');
+        }),
+    },
+    {
+        // Beside the other text components, though it is drawn by the
+        // long-text layer (the one a Bible passage is drawn in) and not
+        // by the foreground manager: it has to scroll, which nothing in
+        // the foreground does.
+        key: 'long-text',
+        labelKey: 'Long Text Show',
+        iconName: 'body-text',
+        checkIsOnScreen: () => {
+            return false;
+        },
+        getShowingScreenIds: () => {
+            return ScreenLongTextManager.getLongTextShowingList().map(
+                ([screenId]) => {
+                    return screenId;
+                },
+            );
+        },
+        isNoTransition: true,
+        Comp: lazy(() => {
+            return import('./ForegroundLongTextComp');
         }),
     },
     {
@@ -165,6 +201,26 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
 ];
 
 /**
+ * The screens a component has something on, lowest first -- the one answer
+ * behind the launcher's badges, a panel's on-screen mark and whatever else
+ * asks, whichever manager draws the component.
+ */
+export function getForegroundWidgetShowingScreenIds(
+    widget: ForegroundWidgetType,
+) {
+    const screenIds =
+        widget.getShowingScreenIds?.() ??
+        getForegroundShowingScreenIdDataList(widget.checkIsOnScreen).map(
+            ([screenId]) => {
+                return screenId;
+            },
+        );
+    return Array.from(new Set(screenIds)).sort((a, b) => {
+        return a - b;
+    });
+}
+
+/**
  * Which panels are open, as one comma-separated setting. ONE key rather than
  * one per component because the chooser and the panels have to agree the
  * moment either changes -- a `setSetting` behind a mounted panel's own state
@@ -215,17 +271,7 @@ export function genForegroundPanelMenuItems(
         // scanning this menu mid-service is looking for.
         // WHICH screens, not just whether: with several screens up, "it is
         // showing" is not enough to know where to go and take it off.
-        const screenIds = Array.from(
-            new Set(
-                getForegroundShowingScreenIdDataList(
-                    widget.checkIsOnScreen,
-                ).map(([screenId]) => {
-                    return screenId;
-                }),
-            ),
-        ).sort((a, b) => {
-            return a - b;
-        });
+        const screenIds = getForegroundWidgetShowingScreenIds(widget);
         const isOnScreen = screenIds.length > 0;
         // A slide show runs whether or not its panel is open -- the timers
         // live outside React -- so this menu is the one place that can say

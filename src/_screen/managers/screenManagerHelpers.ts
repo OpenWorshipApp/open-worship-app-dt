@@ -94,7 +94,7 @@ function getContentLayers(screenManager: ScreenManager) {
     return [
         screenManager.screenBackgroundManager,
         screenManager.screenVaryAppDocumentManager,
-        screenManager.screenBibleManager,
+        screenManager.screenLongTextManager,
         screenManager.screenForegroundManager,
         screenManager.screenDrawManager,
     ];

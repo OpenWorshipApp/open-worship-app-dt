@@ -2,10 +2,10 @@
 id: W-15
 title: "Create and edit slides / lyrics / web backgrounds"
 section: "Creating & editing content"
-verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
+verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -17,8 +17,8 @@ in the same documents folder. 📸
 **Slides** ([en:tran:Slide Editor]):
 
 1. Select a slide document, then click the **[en:tran:Slide Editor]** header tab. 📸
-2. Left: the slide list — click to select; right-click to **add / duplicate / delete**;
-   drag to reorder.
+2. Left: the slide list — click to select, drag to reorder. Right-click its empty
+   area → **[en:tran:New Slide]**; right-click a slide → **[en:tran:Duplicate]** / **[en:tran:Delete]**.
 3. Canvas: click a box to select it; drag to move; drag the handles to resize;
    **double-click a text box** to type into it; **Ctrl+Enter** focuses the canvas. 📸
    (From the **[en:tran:Presenter]**, right-click a slide → **[en:tran:Edit] ↗** opens this editor in its
@@ -105,7 +105,7 @@ its code beside a preview.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
+`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-27` · `CM-32` · `CM-33` · `CM-43` · `PM-33` · `PM-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

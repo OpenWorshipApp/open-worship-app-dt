@@ -21,9 +21,13 @@ import SettingOthersGroupComp from './SettingOthersGroupComp';
  * picture of the chatbot's list beside this tab: _in setting should have
  * those llm endpoints (read-only) and have refresh icon as well_.
  *
- * No key is shown because none is here: a shared server's key stays in the
- * main process. Names, addresses and model ids are the admin's own words and
- * NEVER go through `tran()`: it throws on a key it does not know.
+ * No key and no address is shown because neither is here: both stay in the
+ * main process, and what this window holds for an address is a stand-in
+ * (`toPublicRegistryServers`). The address was listed until 2026-10-12, when
+ * the user circled it: _hide endpoint and api key, to avoid easily copy and
+ * use_ -- a shared server is for this app to ask, not an address to take
+ * away. Names and model ids are the admin's own words and NEVER go through
+ * `tran()`: it throws on a key it does not know.
  */
 
 function RenderSharedMarkComp() {
@@ -82,12 +86,6 @@ function RenderSharedServerComp({
             {isCollapsed ? null : (
                 <>
                     <div className="app-setting-others-label">
-                        {tran('Base URL')}
-                    </div>
-                    <div className="app-data small user-select-all">
-                        {server.baseUrl}
-                    </div>
-                    <div className="app-setting-others-label mt-2">
                         {tran('Models')}
                     </div>
                     <div className="app-setting-others-models">

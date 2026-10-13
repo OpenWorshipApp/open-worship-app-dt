@@ -17,6 +17,7 @@ import {
     LM_STUDIO_MODELS_PATH,
     OLLAMA_PS_PATH,
     OLLAMA_TAGS_PATH,
+    checkIsHiddenServerAddress,
     checkIsLlamaCppRouter,
     checkIsLoopbackUrl,
     checkIsUsableCustomServer,
@@ -56,7 +57,8 @@ export function getCustomServers(): CustomServerType[] {
 }
 
 // The shared registry's servers (`electron/llmRegistryHelpers.ts`), as main
-// last told this window -- keys never among them. A module-level copy on
+// last told this window -- keys never among them, and each address a
+// stand-in (`REGISTRY_HIDDEN_HOST`). A module-level copy on
 // purpose: it is a few rows, read on every render of the assistant list, and
 // an IPC round trip per read is the one thing a help box must not do. Filled
 // by `loadLlmRegistry`, which the chatbot calls on mount and on its Reload.
@@ -230,17 +232,26 @@ export function describeCustomLlmFailure(
     result: Extract<CustomLlmFetchResultType, { ok: false }>,
     baseUrl: string,
 ) {
+    // A shared server's address is not this window's to know or to print
+    // (`toPublicRegistryServers`), and its machine is nobody's here to check.
+    const isShared = checkIsHiddenServerAddress(baseUrl);
     // On this computer, the thing to check is the program; anywhere else,
     // first the machine -- the LM Studio box down the hall that went to sleep
     // mid-question is how this sentence came to be written twice.
-    const toCheck = checkIsLoopbackUrl(baseUrl)
-        ? 'check that its server is running'
-        : 'check that the computer it runs on is on and awake, and that ' +
-          'its server is running';
+    const toCheck = isShared
+        ? 'it is shared by openworship.app and may be switched off right ' +
+          'now; try again later or pick another assistant'
+        : checkIsLoopbackUrl(baseUrl)
+          ? 'check that its server is running'
+          : 'check that the computer it runs on is on and awake, and that ' +
+            'its server is running';
     switch (result.reason) {
         case 'unreachable':
             return (
-                `nothing answered at ${toCustomServerBaseUrl(baseUrl) ?? baseUrl}` +
+                'nothing answered at ' +
+                (isShared
+                    ? 'its address'
+                    : (toCustomServerBaseUrl(baseUrl) ?? baseUrl)) +
                 ` — ${toCheck}`
             );
         case 'lost':
@@ -468,6 +479,25 @@ async function readRootCallText(
     } finally {
         clearTimeout(timer);
     }
+}
+
+/**
+ * Whether the server answers its model list within `timeoutMilliseconds` --
+ * the Test button's own proof that something speaks the protocol there, cut
+ * short. `readCustomServerModelInfo` cannot say it: a machine that is on with
+ * no server running refuses every door at once, well inside the time, and
+ * reads there as a server that is merely some other program.
+ */
+export async function checkIsCustomServerAnswering(
+    server: CustomServerType,
+    timeoutMilliseconds: number,
+): Promise<boolean> {
+    const text = await readRootCallText(
+        server,
+        '/models',
+        Date.now() + timeoutMilliseconds,
+    );
+    return text !== null;
 }
 
 /**

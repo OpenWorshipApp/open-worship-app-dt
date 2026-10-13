@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-10",
+    "updated": "2026-10-12",
     "sections": [
         {
             "id": "general",
@@ -67,7 +67,7 @@
                 },
                 {
                     "id": "change-font",
-                    "text": "How do I change the font used on screen?",
+                    "text": "How do I change the font the app's own windows use?",
                     "kind": "howto",
                     "keywords": [
                         "font family",
@@ -229,6 +229,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
+                        "passage": "An installed Bible has no on/off switch",
                         "guide": true
                     }
                 },
@@ -418,6 +419,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "To turn the whole feature off",
                         "find": "Enable AI features",
                         "guide": true
                     }
@@ -456,6 +458,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Every part of that page folds",
                         "find": "AI Providers"
                     }
                 },

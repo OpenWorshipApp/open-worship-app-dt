@@ -25,7 +25,7 @@ const PRESENTER_SNAPSHOT = [
     '## Latest page snapshot',
     'uid=1_0 RootWebArea "Open Worship app - Presenter" url="x"',
     '  uid=1_112 button "Clear All" description="Clear All [F6]"',
-    '  uid=1_115 button "Clear Bible" description="Clear Bible [F9]"',
+    '  uid=1_115 button "Clear Long Text" description="Clear Long Text [F9]"',
     '  uid=1_117 button "Move to Trash" description="Move to Trash"',
     '  uid=1_241 StaticText "and God shall take away and remove his part"',
     '  uid=1_184 textbox "Bible Reference" value="Genesis 1:5"',
@@ -101,7 +101,7 @@ describe('checkToolCall', () => {
 
     it('still presses the ordinary controls', () => {
         for (const find of [
-            'Clear Bible',
+            'Clear Long Text',
             'Reset Widgets Size',
             'Next',
             'Background > Videos',
@@ -164,11 +164,16 @@ describe('a press that cannot be undone, in the words the window shows', () => {
         }
     });
 
-    // Clear Bible's Khmer is ALSO Delete Bible's. The window cannot tell them
-    // apart, so the ordinary move stays pressable and the app's confirm
-    // stands behind the other.
+    // Clear Background's Khmer is ALSO Remove Background's. The window cannot
+    // tell them apart, so the ordinary move stays pressable and the app's
+    // confirm stands behind the other.
     it('still presses the ordinary Khmer controls', () => {
-        for (const find of ['លុបព្រះគម្ពីរ [F9]', 'លុបស្លាយ', 'បង្ហាញ']) {
+        for (const find of [
+            'លុបអត្ថបទវែង [F9]',
+            'លុបផ្ទៃខាងក្រោយ [F7]',
+            'លុបស្លាយ',
+            'បង្ហាញ',
+        ]) {
             expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
                 true,
             );
@@ -191,7 +196,7 @@ describe('a press that cannot be undone, in the words the window shows', () => {
                 'uid=3_0 RootWebArea "x"',
                 '  uid=3_7 menuitem "ផ្លាស់ទីទៅធុងសំរាម"',
                 '  uid=3_8 button "ចាកចេញពីគណនី" description="SongSelect"',
-                '  uid=3_9 button "លុបព្រះគម្ពីរ" description="[F9]"',
+                '  uid=3_9 button "លុបអត្ថបទវែង" description="[F9]"',
             ].join('\n'),
         );
         expect(memory.lookup('3_7')).not.toBeNull();
@@ -1094,7 +1099,7 @@ describe('the key, drag and run-sheet tools', () => {
             }).rule,
         ).toBe('destructive-label');
         expect(
-            checkToolCall('owa_press_key', { keys: 'F9', find: 'Clear Bible' })
+            checkToolCall('owa_press_key', { keys: 'F9', find: 'Clear Long Text' })
                 .isAllowed,
         ).toBe(true);
         expect(

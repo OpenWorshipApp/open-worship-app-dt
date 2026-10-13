@@ -20,6 +20,8 @@ const initSecondInstance = vi.fn();
 const initUserTasks = vi.fn();
 const enableRemoteDebugging = vi.fn();
 const initAi = vi.fn();
+const checkIsAiEnabled = vi.fn(() => true);
+const initConsoleLog = vi.fn();
 const initAiChatGuestGuard = vi.fn();
 const initScreenMirror = vi.fn(async () => {});
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
@@ -44,7 +46,12 @@ vi.mock('./taskbarHelpers', () => ({
     initUserTasks,
 }));
 
-vi.mock('./aiHelpers', () => ({ enableRemoteDebugging, initAi }));
+vi.mock('./aiHelpers', () => ({
+    checkIsAiEnabled,
+    enableRemoteDebugging,
+    initAi,
+}));
+vi.mock('./consoleLogHelpers', () => ({ initConsoleLog }));
 vi.mock('./aiChatGuestHelpers', () => ({ initAiChatGuestGuard }));
 vi.mock('./screenMirrorService', () => ({
     initScreenMirror,
@@ -87,6 +94,9 @@ describe('electron index', () => {
         initUserTasks.mockClear();
         enableRemoteDebugging.mockClear();
         initAi.mockClear();
+        checkIsAiEnabled.mockClear();
+        checkIsAiEnabled.mockReturnValue(true);
+        initConsoleLog.mockClear();
         initScreenMirror.mockClear();
         getInstance.mockClear();
         electronMockState.reset();
@@ -138,6 +148,27 @@ describe('electron index', () => {
         expect(initScreenMirror.mock.invocationCallOrder[0]).toBeLessThan(
             getInstance.mock.invocationCallOrder[0],
         );
+    });
+
+    // What each window logs as an error is kept for a problem report to
+    // quote -- which only the assistant writes.
+    test('the windows are listened to from before the first one is made, and only with AI on', async () => {
+        await import('./index');
+
+        expect(initConsoleLog).toHaveBeenCalledTimes(1);
+        // A window is heard from the moment it exists: the listener is in
+        // place before the app controller makes the main window.
+        expect(initConsoleLog.mock.invocationCallOrder[0]).toBeLessThan(
+            getInstance.mock.invocationCallOrder[0],
+        );
+
+        vi.resetModules();
+        initConsoleLog.mockClear();
+        checkIsAiEnabled.mockReturnValue(false);
+        electronMockState.reset();
+        electronMockState.app.whenReady.mockResolvedValue(undefined);
+        await import('./index');
+        expect(initConsoleLog).not.toHaveBeenCalled();
     });
 
     test('the agent doors are opened before ready, never without the lock', async () => {

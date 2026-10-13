@@ -682,6 +682,39 @@ describe('a screen socket', () => {
                 },
             }),
         );
+        // Several Bibles side by side scroll a column each, named by its
+        // place in the row.
+        screen!.ws.send(
+            JSON.stringify({
+                type: 'feedback',
+                message: {
+                    type: 'sync-scroll-percentage',
+                    data: {
+                        domSelector: '.screen-bible-column-1',
+                        scroll: { x: 0, y: 0.25 },
+                    },
+                },
+            }),
+        );
+        // Anything else wearing a column's name is still a selector of the
+        // viewer's own choosing.
+        for (const domSelector of [
+            '.screen-bible-column',
+            '.screen-bible-column-1 *',
+            '.screen-bible-column-x',
+            '.screen-bible-column-123',
+            'body .screen-bible-column-1',
+        ]) {
+            screen!.ws.send(
+                JSON.stringify({
+                    type: 'feedback',
+                    message: {
+                        type: 'sync-scroll-percentage',
+                        data: { domSelector, scroll: { x: 0, y: 0.5 } },
+                    },
+                }),
+            );
+        }
         // Never these: one hides the screen, one makes the app resend all.
         for (const type of ['visible', 'init', 'background-video-time']) {
             screen!.ws.send(
@@ -714,10 +747,10 @@ describe('a screen socket', () => {
             }),
         );
         await vi.waitFor(() =>
-            expect(host.onFeedback).toHaveBeenCalledTimes(2),
+            expect(host.onFeedback).toHaveBeenCalledTimes(3),
         );
         await settle();
-        expect(host.onFeedback).toHaveBeenCalledTimes(2);
+        expect(host.onFeedback).toHaveBeenCalledTimes(3);
         expect(host.onFeedback).toHaveBeenNthCalledWith(1, {
             screenId: 5,
             type: 'bible-screen-view-selected-index',
@@ -731,13 +764,21 @@ describe('a screen socket', () => {
                 scroll: { x: 0, y: 0.5 },
             },
         });
+        expect(host.onFeedback).toHaveBeenNthCalledWith(3, {
+            screenId: 5,
+            type: 'sync-scroll-percentage',
+            data: {
+                domSelector: '.screen-bible-column-1',
+                scroll: { x: 0, y: 0.25 },
+            },
+        });
 
         // Turned off again: nothing more.
         viewers.setInteractive(VIEWER_ID, 1, false);
         await vi.waitFor(() => expect(screen!.messages).toHaveLength(4));
         screen!.ws.send(JSON.stringify(verse));
         await settle();
-        expect(host.onFeedback).toHaveBeenCalledTimes(2);
+        expect(host.onFeedback).toHaveBeenCalledTimes(3);
     });
 
     // The name the screen gives a viewer's camera goes with the watch: a

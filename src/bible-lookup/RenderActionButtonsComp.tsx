@@ -45,20 +45,32 @@ export default function RenderActionButtonsComp({
     const viewController = useBibleItemsViewControllerContext();
     const viewControllerRef = useAppCurrentRef(viewController);
     const bibleItemRef = useAppCurrentRef(bibleItem);
-    const handleSplitHorizontal = useCallback(() => {
-        viewControllerRef.current.addBibleItemLeft(
+    const handleSplitHorizontal = useCallback((event: any) => {
+        viewControllerRef.current.splitBibleItemOnPress(
+            event,
             bibleItemRef.current,
-            bibleItemRef.current,
+            true,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleSplitVertical = useCallback(() => {
-        viewControllerRef.current.addBibleItemBottom(
+    const handleSplitVertical = useCallback((event: any) => {
+        viewControllerRef.current.splitBibleItemOnPress(
+            event,
             bibleItemRef.current,
-            bibleItemRef.current,
+            false,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // In a colour group the split asks which version first, and the buttons
+    // say so: they are the menu's `… to` items then.
+    const isAskingBibleKey =
+        viewController.checkIsSplitAskingBibleKey(bibleItem);
+    const splitHorizontalLabel = isAskingBibleKey
+        ? tran('Split Horizontal to')
+        : tran('Split horizontal');
+    const splitVerticalLabel = isAskingBibleKey
+        ? tran('Split Vertical to')
+        : tran('Split vertical');
     const handleSaveBibleItem = useCallback(() => {
         const lookupViewController =
             viewControllerRef.current as LookupBibleItemController;
@@ -92,8 +104,9 @@ export default function RenderActionButtonsComp({
             <button
                 type="button"
                 className="btn btn-sm btn-info"
-                title={tran('Split horizontal')}
-                aria-label={tran('Split horizontal')}
+                title={splitHorizontalLabel}
+                aria-label={splitHorizontalLabel}
+                aria-haspopup={isAskingBibleKey ? 'menu' : undefined}
                 onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
@@ -101,8 +114,9 @@ export default function RenderActionButtonsComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title={tran('Split vertical')}
-                aria-label={tran('Split vertical')}
+                title={splitVerticalLabel}
+                aria-label={splitVerticalLabel}
+                aria-haspopup={isAskingBibleKey ? 'menu' : undefined}
                 onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />

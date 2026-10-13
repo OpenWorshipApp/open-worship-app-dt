@@ -23,7 +23,7 @@ const useScreenManagerEventsMock = vi.fn(
         callback?.();
     },
 );
-const useScreenBibleManagerEventsMock = vi.fn();
+const useScreenLongTextManagerEventsMock = vi.fn();
 
 const appProviderMock = {
     isPageScreen: false,
@@ -53,8 +53,8 @@ vi.mock('./managers/ScreenManager', () => ({
     },
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly textStyleTextColor = '#ffffff';
         static readonly textStyleText = 'font-size: 64px;';
     },
@@ -79,7 +79,7 @@ vi.mock('./managers/screenManagerHooks', () => ({
 }));
 
 vi.mock('./managers/screenEventHelpers', () => ({
-    useScreenBibleManagerEvents: useScreenBibleManagerEventsMock,
+    useScreenLongTextManagerEvents: useScreenLongTextManagerEventsMock,
     useScreenForegroundManagerEvents: vi.fn(),
 }));
 
@@ -220,7 +220,7 @@ function createScreenManagerStub() {
                 height: '100%',
             },
         },
-        screenBibleManager: {
+        screenLongTextManager: {
             render: vi.fn(),
             div: null,
             releaseDiv: vi.fn(),
@@ -273,7 +273,7 @@ describe('screen component runtime behavior', () => {
             );
         });
         useScreenManagerEventsMock.mockClear();
-        useScreenBibleManagerEventsMock.mockClear();
+        useScreenLongTextManagerEventsMock.mockClear();
         getCameraStreamMock.mockReset();
         stopCameraStreamMock.mockClear();
         stopViewerCameraLiveMock.mockClear();
@@ -326,7 +326,9 @@ describe('screen component runtime behavior', () => {
         expect(
             screenManager.screenVaryAppDocumentManager.render,
         ).toHaveBeenCalledOnce();
-        expect(screenManager.screenBibleManager.render).toHaveBeenCalledOnce();
+        expect(
+            screenManager.screenLongTextManager.render,
+        ).toHaveBeenCalledOnce();
         // Two foreground roots, each re-rendering only its OWN overlays.
         expect(
             screenManager.screenForegroundManager.render,
@@ -344,7 +346,7 @@ describe('screen component runtime behavior', () => {
         expect(screenManager.screenVaryAppDocumentManager.div).toBe(
             container.querySelector('#slide'),
         );
-        expect(screenManager.screenBibleManager.div).toBe(
+        expect(screenManager.screenLongTextManager.div).toBe(
             container.querySelector('#bible-screen-view'),
         );
         expect(screenManager.screenForegroundManager.rootContainer).toBe(
@@ -419,7 +421,7 @@ describe('screen component runtime behavior', () => {
         const focus = container.querySelector('#focus');
         const {
             screenBackgroundManager,
-            screenBibleManager,
+            screenLongTextManager,
             screenForegroundManager,
             screenFocusManager,
         } = screenManager;
@@ -439,7 +441,7 @@ describe('screen component runtime behavior', () => {
         expect(screenBackgroundManager.releaseRootContainer).toBeCalledWith(
             background,
         );
-        expect(screenBibleManager.releaseDiv).toBeCalledWith(bible);
+        expect(screenLongTextManager.releaseDiv).toBeCalledWith(bible);
         expect(screenForegroundManager.releaseRootContainer).toBeCalledWith(
             foreground,
             false,

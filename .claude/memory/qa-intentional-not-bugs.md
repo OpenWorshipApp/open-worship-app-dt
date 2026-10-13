@@ -23,7 +23,7 @@ four are deliberate. Don't file them again.
    live 2026-09-26; earlier revisions of this note named PPTX only, which made the PDF
    case look like a fresh bug.
 2. **Presenting a bible item replaces the live background.** `applyNewBibleItemJson` calls
-   `applyAttachBackground(...)` (`src/_screen/managers/ScreenBibleManager.ts` →
+   `applyAttachBackground(...)` (`src/_screen/managers/ScreenLongTextManager.ts` →
    `screenBackgroundHelpers.ts:6-28`); a bible item or its file can carry an *attached
    background* (with none, the background stays). Presenting one therefore also clears the Slide layer and swaps `BG`. To QA the screen
    block without disturbing a live setup, present onto an **empty** layer and note that the

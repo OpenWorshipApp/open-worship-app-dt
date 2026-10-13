@@ -3,7 +3,7 @@ import {
     exportToWordDocument,
     saveBibleItem,
 } from '../bible-list/bibleHelpers';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import type BibleItem from '../bible-list/BibleItem';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -34,7 +34,7 @@ export async function addBibleItemAndPresent(
     if (addedBibleItem === null) {
         showAddingBibleItemFail();
     } else {
-        ScreenBibleManager.handleBibleItemSelecting(event, addedBibleItem);
+        ScreenLongTextManager.handleBibleItemSelecting(event, addedBibleItem);
     }
 }
 
@@ -103,7 +103,7 @@ export function genFoundBibleItemContextMenu(
                       childBefore: genContextMenuItemIcon('display'),
                       menuElement: tran('Show bible item'),
                       onSelect: (event: any) => {
-                          ScreenBibleManager.handleBibleItemSelecting(
+                          ScreenLongTextManager.handleBibleItemSelecting(
                               event,
                               bibleItem,
                           );

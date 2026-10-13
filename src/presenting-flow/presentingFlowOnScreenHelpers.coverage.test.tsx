@@ -27,7 +27,7 @@ const { state, mocks } = vi.hoisted(() => ({
 vi.mock('../_screen/managers/ScreenBackgroundManager', () => ({
     default: { getSelectBackgroundSrcList: mocks.backgroundSelect },
 }));
-vi.mock('../_screen/managers/ScreenBibleManager', () => ({
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
     default: { name: 'bible' },
 }));
 vi.mock('../_screen/managers/ScreenForegroundManager', () => ({

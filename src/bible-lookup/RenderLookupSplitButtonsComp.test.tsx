@@ -7,7 +7,11 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import type { KeyboardListenerType } from '../event/KeyboardEventListener';
 
 const { controller, keyboard } = vi.hoisted(() => ({
-    controller: { splitWithoutPassage: vi.fn() },
+    controller: {
+        selectedBibleItem: { id: 'selected-view' },
+        splitWithoutPassageOnPress: vi.fn(),
+        checkIsSplitAskingBibleKey: vi.fn(() => false),
+    },
     keyboard: {
         maps: undefined as unknown,
         listener: undefined as KeyboardListenerType | undefined,
@@ -39,6 +43,11 @@ vi.mock('../helper/appHooks', () => ({
     useAppCurrentRef: (current: unknown) => ({ current }),
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
+// The real one builds a `MouseEvent` with `view: window`, which this jsdom
+// refuses; which BUTTON the key's menu hangs under is what is under test.
+vi.mock('../context-menu/contextMenuEventHelpers', () => ({
+    createMouseEventUnder: (element: Element) => ({ under: element }),
+}));
 
 import RenderLookupSplitButtonsComp from './RenderLookupSplitButtonsComp';
 
@@ -56,6 +65,7 @@ function render(bookKey: string | null) {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    controller.checkIsSplitAskingBibleKey.mockReturnValue(false);
     keyboard.maps = undefined;
     keyboard.listener = undefined;
     host = document.createElement('div');
@@ -75,20 +85,41 @@ test('the buttons split the grid view with the picked book', () => {
     expect(horizontal.title).toBe('Split horizontal [Ctrl+Shift+S]');
     expect(vertical.getAttribute('aria-label')).toBe('Split vertical');
     expect(vertical.title).toBe('Split vertical [Ctrl+Shift+V]');
+    expect(horizontal.hasAttribute('aria-haspopup')).toBe(false);
     act(() => {
         horizontal.click();
     });
-    expect(controller.splitWithoutPassage).toHaveBeenLastCalledWith(
+    // The press itself goes along: it is where a version list would open.
+    expect(controller.splitWithoutPassageOnPress).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'click' }),
         'EXO',
         true,
     );
     act(() => {
         vertical.click();
     });
-    expect(controller.splitWithoutPassage).toHaveBeenLastCalledWith(
+    expect(controller.splitWithoutPassageOnPress).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'click' }),
         'EXO',
         false,
     );
+});
+
+// Asked for by the user: a view in a colour group splits into another
+// version, so its buttons are the menu's `… to` items.
+test('in a colour group the buttons say they ask for a version', () => {
+    controller.checkIsSplitAskingBibleKey.mockReturnValue(true);
+    const [horizontal, vertical] = render('EXO');
+
+    expect(controller.checkIsSplitAskingBibleKey).toHaveBeenLastCalledWith(
+        controller.selectedBibleItem,
+    );
+    expect(horizontal.getAttribute('aria-label')).toBe('Split Horizontal to');
+    expect(horizontal.title).toBe('Split Horizontal to [Ctrl+Shift+S]');
+    expect(horizontal.getAttribute('aria-haspopup')).toBe('menu');
+    expect(vertical.getAttribute('aria-label')).toBe('Split Vertical to');
+    expect(vertical.title).toBe('Split Vertical to [Ctrl+Shift+V]');
+    expect(vertical.getAttribute('aria-haspopup')).toBe('menu');
 });
 
 test('before a book is picked the split carries no book', () => {
@@ -97,7 +128,11 @@ test('before a book is picked the split carries no book', () => {
     act(() => {
         horizontal.click();
     });
-    expect(controller.splitWithoutPassage).toHaveBeenLastCalledWith(null, true);
+    expect(controller.splitWithoutPassageOnPress).toHaveBeenLastCalledWith(
+        expect.anything(),
+        null,
+        true,
+    );
 });
 
 test.each([
@@ -106,7 +141,7 @@ test.each([
     ['v', false],
     ['V', false],
 ])('Ctrl+Shift+%s splits and cancels the browser action', (key, isH) => {
-    render('EXO');
+    const buttons = render('EXO');
     const event = new KeyboardEvent('keydown', {
         key,
         ctrlKey: true,
@@ -121,7 +156,11 @@ test.each([
     keyboard.listener!(event);
 
     expect(event.defaultPrevented).toBe(true);
-    expect(controller.splitWithoutPassage).toHaveBeenCalledExactlyOnceWith(
+    // A key has no pointer position: a version list hangs under its button.
+    expect(
+        controller.splitWithoutPassageOnPress,
+    ).toHaveBeenCalledExactlyOnceWith(
+        { under: buttons[isH ? 0 : 1] },
         'EXO',
         isH,
     );

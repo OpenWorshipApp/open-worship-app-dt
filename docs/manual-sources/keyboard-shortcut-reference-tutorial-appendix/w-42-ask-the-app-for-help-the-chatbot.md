@@ -2,18 +2,12 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
-screenshots: 45
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
+screenshots: 46
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-42 — Ask the app for help (the chatbot)
-
-You can also start a Bible import with `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
-The **Bible versions** section under **More** contains this editable sample. Asking it downloads
-the file and asks a few quick questions in the chat, each with buttons to press — a short
-name, the language, the digits and the book names — and installs nothing until you press
-**Install it**, with **Undo** under the answer afterwards (W-34). This direct request needs no model call.
 
 The app can answer its own "how do I …?" questions. It reads the same manual you are
 reading now, looks at what the app is doing at that moment, and can point at the button
@@ -21,7 +15,8 @@ it is describing.
 
 1. Click the **🤖** button in the top-right corner of the window, between the gear
    and the **✨** (the AI Chat window, W-44 — a different thing: a company's chat site
-   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar. Answer
+   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar, or click
+   the **?** at the end of the same row and choose **[en:tran:Open Chatbot]**. Answer
    the **[en:tran:Be careful with AI]** question with **[en:tran:Open]** — ticking
    **[en:tran:Do not show this again for 30 days]** first puts the question away for that
    long — and a narrow window opens beside the app. 📸
@@ -37,7 +32,8 @@ it is describing.
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
-   a browser holds several pages. **+** starts another, **×** closes one, and a
+   a browser holds several pages. **+** starts a new chat (its tab reads **New chat**
+   until a question is asked in it), **×** closes one, and a
    **double-click on a tab's name** renames it (useful once three of them start "how do
    I"). Until you rename it, a tab is called after the first question you asked in it.
    Everything is kept: close the window — close the app — and the tabs, their answers
@@ -73,7 +69,8 @@ it is describing.
    service that needs no key, and a notice pinned above the conversation says so and
    carries **Open AI settings**, which opens the settings panel that takes a key. 📸
    **Short of room? Fold those lists to one line.** A small arrow sits at the left
-   edge of the lists. Click it and the lists — with the **LIMIT PER HOUR** list and
+   edge of the window's top line — the line with the three lists, not the list of
+   suggested questions under it. Click it and the lists — with the **LIMIT PER HOUR** list and
    the **CREDIT USED** line of step 8 — fold into a single line that still says
    what each one is set to, such as _Presenter · Claude · Sonnet 5_, with the hourly
    limit at its end (it turns amber when the assistant is close to that limit or
@@ -105,6 +102,12 @@ it is describing.
    once: most people use this window for the one thing they first saw it do.
    Press any of them to ask it, or type a few words in the box and the same list
    narrows itself as you type. **Fewer** folds it away again. 📸
+   **A Bible can be installed from the chat, with no model call.** Ask
+   `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`
+   — the **Bible versions** section under **More** contains this editable sample. Asking it
+   downloads the file and asks a few quick questions in the chat, each with buttons to
+   press — a short name, the language, the digits and the book names — and installs
+   nothing until you press **Install it**, with **Undo** under the answer afterwards (W-34).
    **The Bible Reader also has 30 guided demos that need no AI model, key or
    account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
    use **Try a guided demo**. The original four practise text size, opening
@@ -251,7 +254,7 @@ it is describing.
    screen is on and, under the answer, that the main window needs to be on the
    Presenter page to see what it holds — with the same **Go to the Presenter**
    button, which switches the main window and leaves the projector untouched;
-   **/find Clear Bible** outlines a control in red; **/goto reader** switches the
+   **/find Clear Long Text** outlines a control in red; **/goto reader** switches the
    main window (the projector is untouched); **/here** says which window is in
    front; **/help clear bible** searches this guide without an assistant;
    **/credit** says what this chat has cost so far (also **/cost**); **/limit**
@@ -300,7 +303,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    answered from the app's own state at once, with ONE button that does it —
    _Nothing to turn off_ when no screen is on (never a Clear), **Turn every
    screen off** when one is, **Put "(1)-Verse 1" on the screen** for a slide
-   the selected song has — and a sentence that is not a slide of the song
+   the selected song has — and _Show the next slide?_ or _show the previous
+   slide_ the same way, naming the slide the arrow keys would go to and
+   offering the one button that puts it up — and _Where is the button for
+   Clear All_ is answered by the window itself, which looks for a control
+   called that and outlines it in red where it is, with **Highlight again**
+   under the answer (a name no control carries goes on to the assistant) —
+   and a sentence that is not a
+   slide of the song
    (_Put John 3:16 on the screen_) goes on to the assistant as before;
    **/commands**
    lists them all. The square buttons under a command's answer are
@@ -326,9 +336,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    your mouse over the app and the control you click is the one you meant.
    You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
    onto the window. Whatever you attach shows as a small chip above the box, with
-   an **×** to take it off again, and up to four can ride one question. Clicking a
+   an **×** to take it off again, and up to four can ride one question.
+   **Each chip carries a number** — 1, 2, 3 — so you can say which one you mean
+   in your own words: _in 2 the button is missing_, _compare 1 and 3_. The
+   assistant is told which is which. A number stays with its chip: take a chip
+   off and the others keep theirs, and the numbers carry on through the chat, so
+   they still mean the same thing in the conversation above. Clicking a
    control to point at it does **not** press it — the app does not act on that
-   click, so it is safe to point at **[en:tran:Clear Bible]** and ask what it does. 📸
+   click, so it is safe to point at **[en:tran:Clear Long Text]** and ask what it does. 📸
    **Press a chip to see what it stands for.** A control you pointed at is
    **circled in red** in the app window again, so you can find it after looking
    away; and **every file or picture opens** — big enough to read, right here
@@ -360,6 +375,35 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **Asked about reading the Bible from the wrong page?** A stray press is enough
+   to leave the Bible Reader for the Presenter. Ask something like _how can I open
+   bible_ or _where do I find the Bible to read_ while the main window is on the
+   Presenter or the Document Editor, and the answer ends with one more line and
+   one more button, **Go to the Bible Reader**: press it and the main window
+   changes to the Bible Reader, and whatever is on the projector is left as it
+   is. A question about showing a verse on the screen does not get it — that is
+   what the Presenter is for.
+   **And every answer has two thumbs beside Copy.** 👍 says the answer helped and
+   👎 says it was wrong or did not help. The one you pressed stays filled, and
+   pressing it again takes it off; the mark is kept with the chat on this
+   computer and is sent nowhere. The first time you press 👎 under an answer the
+   help window follows up by itself — no assistant is asked, so it costs nothing:
+   it asks what was wrong, with three things to press (_A button it names is not
+   there_, _The steps did not work_, _That is wrong for the window I am in_), and
+   says what most often helps, a smarter model. When the assistant answering has
+   one — **Claude**, **ChatGPT** and **Kimi** list theirs best first — a button
+   **Ask again with …** names the next model up: it asks the same question of
+   that model and leaves this chat on it, and the new answer says so, because the
+   model above costs more. Pick another in the model list at the top to go back.
+   On the best model already, on **Auto**, **Bedrock**, **Free** or a server of
+   your own, it says in words what to try instead. **Typing that an answer is
+   wrong** — _that is wrong_, _I cannot find that button_ — brings the same
+   advice, and the same button, with the answer to it.
+   **And what you clicked stays marked.** A card you click keeps a thin ring
+   round it, and a button you press in it — a thumb, **Copy**, a walkthrough
+   button — keeps a ring of its own, until you click somewhere else; **Tab**
+   moves the same mark from the keyboard. A thumb pressed on an answer further
+   up no longer makes the chat jump to its end.
    **And every answer says what it cost.** At the right-hand end of that same line,
    in small grey figures, is what the assistant spent answering — a few cents at
    most for an ordinary question, and the tokens it used — and a line under the
@@ -402,14 +446,53 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **Report it**, so a mis-hit costs you nothing. (Press it with an empty box and it
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
+   **Two more ways lead here, from the app window.** The **[en:tran:Help]** button's
+   third row, **[en:tran:Report a Problem]** (the menu bar's Help menu has the
+   same row), opens the help window on a card
+   that asks what went wrong — or what you wish the app did better — with a
+   **Report** button on it: type a line, attach a picture or a file if it
+   helps (the paperclip takes pictures, text files and a PDF), and
+   press **Ask** or **Report** — either starts it. From then on that tab IS
+   the report: its name starts with **Report:**, and anything more you type
+   or attach there is added to the report rather than answered as a
+   question, until you press **Send report**. And when the app itself
+   hits an error it asks first, **[en:tran:Something Went Wrong]**, with
+   **[en:tran:Not Now]** beside **[en:tran:Report a Problem]**; say yes and the
+   help window opens on a card naming the error, with the same **Report**
+   button (type what you were doing first, if you remember — it goes into the
+   report). Nothing is looked into before that press, and every one of these
+   says first what a report carries: the app's version and build, this
+   computer's system information, the window you are in and what is selected,
+   what each screen holds, the app's console log, the end of the conversation,
+   a picture of the app and any file you attach.
    Say yes and it goes and looks: it photographs the app as it stands, notes the
    version, the window you are in and what the screens are doing, reads the app's own
-   error log, and then investigates the problem in the running app. A few seconds
+   error log (the errors and warnings the main window has logged, with the name of
+   this computer's account taken out of any file path), and then investigates the
+   problem in the running app. A few seconds
    later it comes back with what it found and a report written up in your place,
-   with a **Send report** button under it. **Nothing is sent until you press that** —
-   and there is no bug tracker connected to this app yet, so what it does today is
-   save the whole thing, with the picture, into your **Downloads** folder and tell
-   you where and who wants it: the answer names the maintainers' email address and
+   with a **Send report** button under it — and, when you attached files, their
+   names, so you see what would go. **Nothing is sent until you press that.**
+   Thought of something more while it is still writing? Type it and press **Add**:
+   it starts the write-up again with your new words in it, and what you attached
+   earlier stays with it.
+   Not every problem is a fault in the app, so it helps first: when what you
+   describe looks like something you can put right yourself — a setting, a step
+   that was missed — the answer is **Try this first** with the steps, and the
+   question _Did that solve it?_ Press **That fixed it** (or just type _yes_) and
+   the report is closed with nothing sent. Press **Still a problem — report it**
+   and the report it wrote while you tried is put in front of you, saying what you
+   were told to try.
+   Press **Send report** and the line under the conversation reads _Sending the
+   report_ for a moment. When the app's maintainers have a report server open, the
+   write-up goes straight to it together with its files — the picture of the app
+   and whatever you attached: pictures, a PDF, text files, each up to 5 MB — and
+   the answer starts **Sent**, with the report's reference and the names of the
+   files that went. A file that could not go is named too, with why. When no
+   report server is open, or it does not take the report, the answer says plainly
+   that nothing was sent, and why. Either way the whole thing, with the picture, is saved into your
+   **Downloads** folder, and when nothing was sent the answer tells you who wants
+   it: it names the maintainers' email address and
    the subject line to use, and five buttons do the rest — **Copy report** puts the
    whole write-up on your clipboard, **Copy subject** the subject line,
    **Copy picture** the screenshot (paste it into the message and most mail apps
@@ -468,6 +551,31 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
+    **Auto, the last row of that list, chooses for you — among the assistants that
+    cost nothing.** Pick **Auto** and the tab stays on it: in front of every question
+    the window looks at each of your own servers that costs nothing to ask (one on
+    this computer or on the church's own network, or a shared one marked free) and
+    asks the best assistant that can answer right now. A server that does not answer
+    is left out. One that is already answering another chat tab, and one that has
+    just failed or taken more than three minutes over an answer, go to the back of
+    the line. Among the rest the bigger model is asked first, read off the size in
+    its name (`9b`, `12b`); the **Free** service counts as 8B, so a server model of
+    8B or more is asked before it and a smaller one after it — which keeps a small
+    model of your own for the day the internet is down. On LM Studio only a model
+    that is loaded is asked while one is, because asking for another would load it
+    in place of yours. An assistant that needs a paid key is never asked by Auto.
+    While it looks, the waiting line reads _Auto is checking which assistants can
+    answer_ and then _Auto picked_ with the name; where the model list stood,
+    **AUTO PICK** reads _chosen at each question_ until the first answer and names
+    who answered after it. When the one it picked fails before saying anything, the
+    next one is asked, and a small line over the answer says who could not answer
+    and who did. Because the **Free** service may be the one that answers, an Auto
+    chat carries a notice saying that your questions may leave this computer; pick
+    one of your own servers by name to keep every question in the building. Picking
+    any named row ends Auto for that tab. **Auto is what a chat starts on** until
+    you pick an assistant by name: the help window opens on it the first time, and
+    so does every new chat after it. Once you have picked a named assistant, new
+    chats start on that one instead, and picking **Auto** again brings it back. 📸
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
@@ -533,14 +641,17 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **[en:tran:Custom servers]** — it is not yours to edit. It is listed
     right below that box instead, under **[en:tran:Shared servers]**
     (**[en:tran:Settings]** → **[en:tran:Others]**): each shared server with
-    a lock beside its name and, opened, its address and its models — to
-    read, with nothing to type in and nothing to delete. The small **↻**
+    a lock beside its name and, opened, its models — to read, with nothing
+    to type in and nothing to delete. Its address is not shown anywhere in
+    the app: a shared server is for the app to ask, not an address to copy
+    and use somewhere else. The small **↻**
     beside the **who answers** list reads the file again without a restart
     (hold the mouse over it to see when it was last read, or why a read
     failed — a failed read keeps the servers of the last good one), and the
     **↻** in **[en:tran:Shared servers]** does the same from Settings, with
-    the time of the last read written under it. A key the file carries
-    stays on the computer's own side; neither window ever sees it. 📸
+    the time of the last read written under it. The address and a key the
+    file carries stay on the computer's own side; neither window ever sees
+    them. 📸
     How long a local answer takes is the computer's and the program's: one laptop's
     Ollama read 11 words a second on a 4-billion-parameter model, llama.cpp's own
     `llama-server` read the very same model file at 53 on the same laptop and
@@ -638,7 +749,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 > conversation says so. The manual is bundled inside the app.
 
 18. **It can turn words you already have into a song.** Paste the verses of a song
-    into the box — from an email, from a hymn sheet, from a page you found — and ask
+    into the box of this help window, where you type a question (not into the Lyric
+    Editor) — from an email, from a hymn sheet, from a page you found — and ask
     for a song; or attach a `.txt` of the words with the paperclip; or give it the
     address of a page the words are on. One of the **Try asking** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
@@ -741,7 +853,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

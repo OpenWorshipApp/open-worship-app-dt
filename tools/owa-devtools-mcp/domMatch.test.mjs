@@ -747,21 +747,21 @@ describe('a control named with a kind noun', () => {
 });
 
 // The words a tool hands back carry the shortcut -- `owa_list_screens` says
-// "Clear Bible [F9]", the button's own title -- and a press by exactly those
+// "Clear Long Text [F9]", the button's own title -- and a press by exactly those
 // words was refused: the label part had its bracket taken off for the
 // comparison and the needle had not (EC-135).
 describe('a needle carrying the shortcut a title carries', () => {
   it('is press-safe on a control whose title is those words', () => {
     document.body.innerHTML =
-      '<button title="Clear Bible [F9]" aria-label="Clear Bible">BB' +
+      '<button title="Clear Long Text [F9]" aria-label="Clear Long Text">LT' +
       '</button>' +
       '<button title="Close [Ctrl+Q]" aria-label="Close"><i></i>' +
       '</button>';
     const dm = install();
-    const clear = dm.findBest(['Clear Bible [F9]']);
-    expect(clear.element.getAttribute('aria-label')).toBe('Clear Bible');
+    const clear = dm.findBest(['Clear Long Text [F9]']);
+    expect(clear.element.getAttribute('aria-label')).toBe('Clear Long Text');
     expect(clear.isPressSafe).toBe(true);
-    expect(dm.findBest(['Clear Bible']).isPressSafe).toBe(true);
+    expect(dm.findBest(['Clear Long Text']).isPressSafe).toBe(true);
     expect(dm.findBest(['Close [Ctrl+Q]']).isPressSafe).toBe(true);
     expect(dm.findBest(['Close']).isPressSafe).toBe(true);
   });
@@ -788,7 +788,7 @@ describe('a needle carrying the shortcut a title carries', () => {
 
   it('never lets bare decoration stand for the words', () => {
     document.body.innerHTML =
-      '<button title="Clear Bible [F9]" aria-label="Clear Bible">BB' +
+      '<button title="Clear Long Text [F9]" aria-label="Clear Long Text">LT' +
       '</button>';
     const dm = install();
     const found = dm.findBest(['[F9]']);

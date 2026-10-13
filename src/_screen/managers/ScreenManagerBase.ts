@@ -6,7 +6,7 @@ import { getWindowDim } from '../../helper/helpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
-import ScreenBibleManager from './ScreenBibleManager';
+import ScreenLongTextManager from './ScreenLongTextManager';
 import {
     getAllShowingScreenIds,
     hideScreen,
@@ -273,7 +273,7 @@ export default class ScreenManagerBase
         this.colorNote = color;
         ScreenBackgroundManager.enableSyncGroup(this.screenId);
         ScreenVaryAppDocumentManager.enableSyncGroup(this.screenId);
-        ScreenBibleManager.enableSyncGroup(this.screenId);
+        ScreenLongTextManager.enableSyncGroup(this.screenId);
         ScreenForegroundManager.enableSyncGroup(this.screenId);
         this.sendSyncScreen(true);
     }

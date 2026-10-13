@@ -41,6 +41,7 @@ export type CustomServerType = {
     name: string;
     // Kept as typed, even when it is not a usable address yet, so the person
     // fixing it sees their own words; `toCustomServerBaseUrl` decides use.
+    // In a window, a shared server's is a stand-in (`REGISTRY_HIDDEN_HOST`).
     baseUrl: string;
     models: CustomModelType[];
     // Set on a server that came from the shared registry (below), never on
@@ -748,13 +749,242 @@ export type LlmRegistryServerType = CustomServerType & {
     source: 'registry';
 };
 
+/**
+ * A registry entry marked `isAcceptingReport` (2026-10-13, the user's ask:
+ * _a shared server can be type accepting report … the endpoint should be
+ * accepting POST a raw text directly … should not show in setting shared
+ * servers_). Not an assistant: it is never offered in a picker and never
+ * listed in Settings AS ONE. An entry that names models too is an assistant
+ * as well, at the same address -- one tunnel doing both -- and is listed for
+ * that half only. Its address takes ONE call of this kind -- a POST
+ * of the prepared problem report (`electron/llmReportHelpers.ts`) -- and,
+ * like every registry server, it and its key stay in main.
+ *
+ * The body is JSON since the same day (the user: _the posting endpoint maybe
+ * have to accept json instead of raw text … `{"prompt":"…",
+ * "attachments":["base64 data", …]}` … and accept files like markdown pdf_):
+ * `genReportPostBody` below is the one place that writes it.
+ */
+export type LlmReportServerType = {
+    id: string;
+    name: string;
+    baseUrl: string;
+    apiKey: string;
+    note: string;
+};
+
 export type LlmRegistryType = {
     version: number;
     updated: string;
     servers: LlmRegistryServerType[];
+    reportServers: LlmReportServerType[];
 };
 
-/** What a window is told: the servers without their keys, and the read's fate. */
+export const LLM_REPORT_POST_CHANNEL = 'main:app:llm-report-post';
+export const LLM_REPORT_CANCEL_CHANNEL = 'main:app:llm-report-post-cancel';
+// The first few are tried in turn at a Send, so a list is a wait: a report
+// is one small text and one address that takes it is enough.
+export const MAX_REPORT_SERVERS = 3;
+// A report is a page or two of text; what is bigger is not one.
+export const REPORT_TEXT_MAX = 200 * 1024;
+export const LLM_REPORT_BODY_VERSION = 1;
+
+// The files that may go with a report: the picture of the app, and what the
+// person attached while reporting. Few and small on purpose -- what takes
+// them is one admin's machine behind a tunnel, and what sends them may be a
+// church hall's uplink. The report inbox holds the same three numbers and
+// the same kinds (`extra-work/local-llm/llm-report-inbox.mjs`; a test there
+// holds the two lists together).
+export const REPORT_FILE_MAX_COUNT = 8;
+export const REPORT_FILE_MAX_BYTES = 5 * 1024 * 1024;
+export const REPORT_FILES_MAX_BYTES = 12 * 1024 * 1024;
+const REPORT_FILE_NAME_MAX = 120;
+/**
+ * The kinds of file a report carries, by extension: pictures, words and PDF.
+ * Nothing that runs, and no `.html` or `.svg` -- a maintainer double-clicks
+ * what arrives.
+ */
+export const REPORT_FILE_TYPE_MAP: Readonly<Record<string, string>> = {
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    pdf: 'application/pdf',
+    md: 'text/markdown',
+    txt: 'text/plain',
+    log: 'text/plain',
+    csv: 'text/csv',
+    json: 'application/json',
+    xml: 'application/xml',
+    yaml: 'application/yaml',
+    yml: 'application/yaml',
+    ini: 'text/plain',
+    srt: 'text/plain',
+    vtt: 'text/vtt',
+    // The app's own documents, which are text.
+    owl: 'text/plain',
+    ows: 'text/plain',
+    owpf: 'text/plain',
+    lyric: 'text/plain',
+};
+
+/** The media type a file goes under, or null for a kind no report carries. */
+export function toReportFileMimeType(fileName: string) {
+    const extension = /\.([A-Za-z0-9]{1,8})$/.exec(fileName)?.[1].toLowerCase();
+    if (
+        extension === undefined ||
+        !Object.prototype.hasOwnProperty.call(REPORT_FILE_TYPE_MAP, extension)
+    ) {
+        return null;
+    }
+    return REPORT_FILE_TYPE_MAP[extension];
+}
+
+/** One file of a report: its name, its kind, and its bytes as base64. */
+export type LlmReportFileType = {
+    name: string;
+    mimeType: string;
+    data: string;
+};
+
+/** How many bytes a base64 string stands for. */
+export function toBase64ByteSize(data: string) {
+    const padding = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0;
+    return Math.max(0, Math.floor((data.length * 3) / 4) - padding);
+}
+
+const BASE64_PATTERN = /^[A-Za-z0-9+/]*={0,2}$/;
+
+/**
+ * The files of a report as a window handed them over, read as untrusted: the
+ * list, or null when it is not one this app would have written -- too many,
+ * too large, a kind no report carries, a name with a path in it, or bytes
+ * that are not base64.
+ */
+export function toValidReportFiles(raw: unknown): LlmReportFileType[] | null {
+    if (raw === undefined) {
+        return [];
+    }
+    if (!Array.isArray(raw) || raw.length > REPORT_FILE_MAX_COUNT) {
+        return null;
+    }
+    const files: LlmReportFileType[] = [];
+    let totalBytes = 0;
+    for (const one of raw) {
+        const name = one?.name;
+        const data = one?.data;
+        if (
+            typeof name !== 'string' ||
+            typeof data !== 'string' ||
+            name.length === 0 ||
+            name.length > REPORT_FILE_NAME_MAX ||
+            // A name, never a path: whoever keeps it writes a file by it.
+            // eslint-disable-next-line no-control-regex
+            /[\\/:\0-\x1f]/.test(name) ||
+            data.length === 0 ||
+            data.length % 4 !== 0 ||
+            !BASE64_PATTERN.test(data)
+        ) {
+            return null;
+        }
+        const mimeType = toReportFileMimeType(name);
+        const byteSize = toBase64ByteSize(data);
+        totalBytes += byteSize;
+        if (
+            mimeType === null ||
+            byteSize > REPORT_FILE_MAX_BYTES ||
+            totalBytes > REPORT_FILES_MAX_BYTES
+        ) {
+            return null;
+        }
+        // The kind is read off the name here, never taken from the window.
+        files.push({ name, mimeType, data });
+    }
+    return files;
+}
+
+const REPORT_REFERENCE_IN_TEXT_PATTERN =
+    /BEGIN REPORT (OWA-\d{6}-[0-9a-f]{4})\b/;
+
+/**
+ * What is POSTed to a report server -- the whole contract, in one place:
+ *
+ *     { "version": 1,
+ *       "reference": "OWA-261013-628c",
+ *       "prompt": "<the report, written to be read as a prompt>",
+ *       "attachments": [
+ *         { "name": "OWA-261013-628c.png", "mimeType": "image/png",
+ *           "data": "<base64>" } ] }
+ *
+ * `reference` is the one the report names itself by, left out when it names
+ * none; `attachments` is always there, empty when no file goes.
+ */
+export function genReportPostBody(text: string, files: LlmReportFileType[]) {
+    const reference = REPORT_REFERENCE_IN_TEXT_PATTERN.exec(text)?.[1];
+    return JSON.stringify({
+        version: LLM_REPORT_BODY_VERSION,
+        ...(reference === undefined ? {} : { reference }),
+        prompt: text,
+        attachments: files,
+    });
+}
+
+// A report of words is over in seconds. One with files is given the time a
+// slow uplink needs to carry them -- 32 KB a second, a quarter of a megabit
+// -- up to a ceiling, because somebody is waiting on the press.
+const REPORT_UPLOAD_FREE_LENGTH = 64 * 1024;
+const REPORT_UPLOAD_BYTES_PER_SECOND = 32 * 1024;
+const REPORT_UPLOAD_ALLOWANCE_MAX_MILLISECONDS = 3 * 60 * 1000;
+
+/**
+ * The extra wait a body of this many characters is allowed: none for one of
+ * words alone, then a second for every 32 KB past the first 64.
+ */
+export function toReportUploadAllowance(bodyLength: number) {
+    return Math.min(
+        REPORT_UPLOAD_ALLOWANCE_MAX_MILLISECONDS,
+        Math.round(
+            (Math.max(0, bodyLength - REPORT_UPLOAD_FREE_LENGTH) /
+                REPORT_UPLOAD_BYTES_PER_SECOND) *
+                1000,
+        ),
+    );
+}
+
+export type LlmReportPostRequestType = {
+    text: string;
+    // The files that go with it; none when the report is words alone.
+    files?: LlmReportFileType[];
+    // Names the post for a Stop (`LLM_REPORT_CANCEL_CHANNEL`).
+    requestId?: string;
+};
+
+export type LlmReportFailureType =
+    | 'ai-off'
+    | 'not-allowed'
+    | 'too-many'
+    // No entry of the registry takes reports: nothing was tried.
+    | 'no-server'
+    | 'unreachable'
+    | 'timeout'
+    | 'refused'
+    // A report server answered 413: the window sends the words alone.
+    | 'too-large'
+    | 'cancelled';
+
+/**
+ * What the report door answers. Never the server's own words and never its
+ * address: `detail` is a sentence written in main, to read after "I could
+ * not send it —".
+ */
+export type LlmReportPostResultType =
+    { ok: true } | { ok: false; reason: LlmReportFailureType; detail: string };
+
+/**
+ * What a window is told: the servers without their keys or their addresses
+ * (`toPublicRegistryServers`), and the read's fate.
+ */
 export type LlmRegistryStatusType = {
     url: string;
     servers: CustomServerType[];
@@ -805,7 +1035,10 @@ function toRegistryModels(raw: unknown): CustomModelType[] {
  * The registry file, read as untrusted: null unless it is an object of the
  * known version with a `servers` list; a server is kept when its id is a
  * slug, its address a web address and it names at least one model -- a row
- * that cannot be asked is not offered. Capped, like the saved list.
+ * that cannot be asked is not offered. Capped, like the saved list. An
+ * entry marked `isAcceptingReport` is kept apart, in `reportServers`: it
+ * needs a name and an address and no model, and is never one of `servers`,
+ * so nothing that lists the assistants can list it.
  */
 export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
     let data = raw;
@@ -828,6 +1061,7 @@ export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
     }
     const seenIds = new Set<string>();
     const servers: LlmRegistryServerType[] = [];
+    const reportServers: LlmReportServerType[] = [];
     for (const item of record.servers) {
         if (servers.length >= MAX_REGISTRY_SERVERS) {
             break;
@@ -839,6 +1073,30 @@ export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
             seenIds.has(entryId)
         ) {
             continue;
+        }
+        if (item.isAcceptingReport === true) {
+            const reportServer: LlmReportServerType = {
+                id: `${REGISTRY_SERVER_ID_PREFIX}${entryId}`,
+                name: toTrimmedString(item.name, CUSTOM_NAME_MAX),
+                baseUrl: toTrimmedString(item.baseUrl, CUSTOM_URL_MAX),
+                apiKey: toTrimmedString(item.apiKey, CUSTOM_KEY_MAX),
+                note: toTrimmedString(item.note, REGISTRY_NOTE_MAX),
+            };
+            if (
+                reportServers.length < MAX_REPORT_SERVERS &&
+                reportServer.name.length > 0 &&
+                toCustomServerBaseUrl(reportServer.baseUrl) !== null
+            ) {
+                seenIds.add(entryId);
+                reportServers.push(reportServer);
+            }
+            // With models on it too, the same address ALSO answers
+            // questions -- one tunnel doing both -- and is a server as
+            // well, read below like any other. The report half of it is
+            // still told to no window.
+            if (toRegistryModels(item.models).length === 0) {
+                continue;
+            }
         }
         const server: LlmRegistryServerType = {
             id: `${REGISTRY_SERVER_ID_PREFIX}${entryId}`,
@@ -860,16 +1118,71 @@ export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
         version: LLM_REGISTRY_VERSION,
         updated: toTrimmedString(record.updated, 40),
         servers,
+        reportServers,
     };
 }
 
-/** The registry's servers as a window may see them: no key. */
+/**
+ * The host that stands in for a shared server's own in every window. A
+ * reserved name (RFC 2606), so nothing can ever answer there: a window asks
+ * a shared server by its id, and the relay is what knows where it lives.
+ */
+export const REGISTRY_HIDDEN_HOST = 'shared-server.invalid';
+
+/**
+ * A shared server's address as a window is told it: the stand-in host with
+ * the server's own PATH, which is the one part a window reads -- only a
+ * `/v1` or a bare address has a root worth asking (`toCustomLlmCallUrl`).
+ */
+function toHiddenRegistryBaseUrl(baseUrl: string) {
+    const base = toCustomServerBaseUrl(baseUrl);
+    const pathname =
+        base === null ? '' : new URL(base).pathname.replace(/\/+$/, '');
+    return `https://${REGISTRY_HIDDEN_HOST}${pathname}`;
+}
+
+/** Whether the address is the stand-in a window holds for a shared server. */
+export function checkIsHiddenServerAddress(value: unknown): boolean {
+    return toHostname(value) === REGISTRY_HIDDEN_HOST;
+}
+
+/**
+ * What a shared server -- or the tunnel in front of it -- wrote, with its own
+ * host taken out: a tunnel that is down answers with a page naming the host,
+ * and a short refusal is shown to the person as written. Only a host with a
+ * dot in it: a bare machine name is a word an answer may use, and names
+ * nothing outside its own network.
+ */
+export function hideRegistryServerHost(text: string, baseUrl: string) {
+    const hostname = toHostname(baseUrl);
+    if (
+        hostname === null ||
+        hostname.indexOf('.') === -1 ||
+        text.toLowerCase().indexOf(hostname) === -1
+    ) {
+        return text;
+    }
+    const escaped = hostname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp(escaped, 'gi'), REGISTRY_HIDDEN_HOST);
+}
+
+/**
+ * The registry's servers as a window may see them: no key, no note and no
+ * address (2026-10-12, the user's ask with the address circled in Settings:
+ * _hide endpoint and api key, to avoid easily copy and use_). Whether the
+ * server is on the church's own network was read off the address, so it is
+ * said here instead: such a server costs nothing, like one marked `isFree`.
+ */
 export function toPublicRegistryServers(
     servers: readonly LlmRegistryServerType[],
 ): CustomServerType[] {
     return servers.map((server) => {
         const { apiKey: _apiKey, note: _note, ...rest } = server;
-        return rest;
+        return {
+            ...rest,
+            baseUrl: toHiddenRegistryBaseUrl(server.baseUrl),
+            isFree: server.isFree || checkIsLocalNetworkUrl(server.baseUrl),
+        };
     });
 }
 

@@ -9,15 +9,19 @@ in [`docs/llm-registry/README.md`](../../docs/llm-registry/README.md).
 All of it is plain Node.js (18 or newer) with no npm packages, for Linux,
 macOS and Windows. Only writing the registry needs this repo's `node_modules`
 and `extra-work/.env`; the two tunnel scripts can be copied to a machine that
-has neither.
+has neither. The report inbox keeps its reports with Node's own SQLite, so
+that one script — and a tunnel started with `--reports` — needs Node 22.13 or
+newer.
 
 | File | What it is |
 | --- | --- |
-| `llm-tunnel.mjs` | The door, cloudflared and the look it takes at itself. With `--publish` it adds its own server to the registry and takes it out again when it stops. |
+| `llm-tunnel.mjs` | The door, cloudflared and the look it takes at itself. With `--publish` it adds its own server to the registry and takes it out again when it stops. With `--reports` its door is the report inbox instead of an LLM server. |
 | `llm-tunnel-startup.mjs` | Starts a tunnel with the computer and brings it back when it stops. |
+| `llm-report-inbox.mjs` | Takes the problem reports the app's help window sends — a `POST` of JSON, the report and its files — keeps them in a SQLite file, and lists them, shows them and writes their files out. |
 | `llm-registry.mjs` | Lists the servers shared right now, asks each whether it answers, and takes one out. |
 | `s3-push-llm-registry.mjs` | Checks a registry file the way the app does and publishes it whole to `https://www.openworship.app/llm/info.json`. |
 | `llm-info.json` | A registry to publish by hand. Empty: the tunnels add and remove their own entries on the site. |
+| `llm-info.schema.json` | The JSON Schema of that file (and of the `llm-info-<id>.json` each tunnel writes): what an editor checks and completes it against. |
 | `model-benchmarks.json` | Every measurement taken of a model answering for the chatbot, and what it says about which model fits whom. |
 | `model-benchmarks.mjs` | Checks that file's shape and prints it, best fit first. |
 | `aws-bedrock-info.md` | What Amazon Bedrock offers the chatbot and at what price: which host serves which model, why Claude Haiku 5.5 is the pick, and what wiring it in takes (read off AWS's cards 2026-10-11). |
@@ -54,6 +58,9 @@ with the key.
 | `--publish` | Add this server to the shared registry, and take it out again on stopping. |
 | `--out <folder>` | Where the two files above are written. |
 | `--log <file>` | Also write what it says to this file (started afresh at 1 MB, one older file kept; the key is never written to it). |
+| `--with-reports` | This tunnel's LLM server stays as it is, and its door ALSO keeps the problem reports the app posts to its address (see _Taking problem reports_). Its entry is published marked as taking reports. |
+| `--reports` | No LLM server: the door is the report inbox (see _Taking problem reports_). `--port` and `--host` are not used; the name is _Report inbox_ and the id `reports` unless given. |
+| `--db <file>` | With `--with-reports` or `--reports`: the SQLite file the reports are kept in (`report-inbox.sqlite` here). |
 
 ### Several tunnels
 
@@ -137,6 +144,180 @@ node extra-work/local-llm/s3-push-llm-registry.mjs extra-work/local-llm/llm-info
 
 Everything in the published file is public, the key too: anyone who reads it
 can use the server. The door is what keeps that to chat calls.
+
+### The schema of `llm-info.json`
+
+`llm-info.schema.json` says what a registry file may hold, field by field —
+the same shape as [`docs/llm-registry/info.schema.json`](../../docs/llm-registry/info.schema.json),
+kept here too so this folder can be copied out whole (`npm test` fails when
+the two stop agreeing). An entry is one of two kinds:
+
+```jsonc
+{
+    "version": 1,
+    "updated": "2026-10-13",
+    "servers": [
+        // An LLM server: offered in the help window as an assistant.
+        {
+            "id": "church-lmstudio",
+            "name": "Church LM Studio",
+            "baseUrl": "https://quiet-river-1234.trycloudflare.com/v1",
+            "apiKey": "sk-…",
+            "isFree": true,
+            "models": [{ "model": "qwen/qwen3.5-9b", "name": "Qwen 3.5 9B" }]
+        },
+        // An LLM server whose tunnel takes reports too (--with-reports)
+        // is the entry above with "isAcceptingReport": true added to it.
+        // An address that takes problem reports and nothing else: no
+        // models, and the app shows it in no list.
+        {
+            "id": "reports",
+            "name": "Report inbox",
+            "baseUrl": "https://calm-lake-5678.trycloudflare.com/report",
+            "apiKey": "sk-…",
+            "isAcceptingReport": true
+        }
+    ]
+}
+```
+
+In this repo VS Code checks `llm-info.json` and every `run/llm-info-<id>.json`
+against it already (`.vscode/settings.json`, `json.schemas`): a missing
+`models`, an id that is not a slug or a misspelt field is underlined, and the
+fields complete as you type. Anywhere else, put `"$schema":
+"./llm-info.schema.json"` as the file's first line — the app ignores the
+field, and the publisher leaves it out of what it sends to the site.
+
+## Taking problem reports
+
+The help window's **Report** button looks into a problem, collects what the
+app can read about itself and writes it up; **Send report** posts that
+write-up — and with it the picture of the app and whatever the person
+attached: pictures, a PDF, text files — to a registry entry marked
+`"isAcceptingReport": true` (the contract is in
+[`docs/llm-registry/README.md`](../../docs/llm-registry/README.md)).
+`llm-report-inbox.mjs` is what takes it. There are two ways to put it on the
+internet and into the registry.
+
+**The tunnel you already run, taking reports too** — add one option to it:
+
+```bash
+node extra-work/local-llm/llm-tunnel.mjs --port 1234 --name "Church LM Studio" --publish --with-reports
+```
+
+Nothing else changes: one cloudflared, one address, one key, one registry
+entry — now marked `"isAcceptingReport": true` beside its `models`. The app
+posts a report to that entry's own address (`…/v1`), and the door keeps it in
+the SQLite file instead of passing it to the LLM server; every chat call goes
+where it always went. A tunnel that is running picks the option up when it is
+next started.
+
+**A tunnel for the inbox alone**, when reports should keep arriving whatever
+the LLM server is doing:
+
+```bash
+node extra-work/local-llm/llm-tunnel.mjs --reports --publish
+```
+
+That is a tunnel like any other — its own cloudflared, its look at itself, its
+entry (`reports`) added on starting and taken out on stopping, a new address
+published each time it changes — whose door is the inbox instead of an LLM
+server. It runs beside the tunnels to your LLM servers, each a process of its
+own, and starts with the computer the same way:
+
+```bash
+node extra-work/local-llm/llm-tunnel-startup.mjs install -- --reports --publish
+```
+
+Then read what arrived, from any terminal, while it runs:
+
+```bash
+node extra-work/local-llm/llm-report-inbox.mjs list                   # newest first
+node extra-work/local-llm/llm-report-inbox.mjs show 12                # one report, by its number
+node extra-work/local-llm/llm-report-inbox.mjs show OWA-261013-127b   # or by the reference the app gave it
+node extra-work/local-llm/llm-report-inbox.mjs files 12               # write its pictures, PDFs and text files out
+node extra-work/local-llm/llm-report-inbox.mjs done 12                # dealt with (again: not done after all)
+node extra-work/local-llm/llm-report-inbox.mjs list --open            # what is left to do
+```
+
+The report is written to be read as a prompt — it opens by saying what it is
+and which parts to trust, then the report between `----- BEGIN REPORT …
+-----` and `----- END REPORT … -----` — so it can be handed to whatever
+reads one:
+
+```bash
+node extra-work/local-llm/llm-report-inbox.mjs show 12 | <your agent or model>
+```
+
+**`show` marks it as a stranger's words before it hands it over.** The
+registry is public and so is its key, so anybody can post here — and the
+fence inside the report was written by whoever sent it. So `show` prints
+the text between two lines of its own, `===== BEGIN UNTRUSTED REPORT <16
+random characters> =====` and the matching `END`, drawn afresh each time so
+a report cannot write the line that closes it, under a note saying the
+sender is not verified, that the text is data and never instructions, and
+which files came with it. Control characters are taken out of everything
+printed, so a report cannot drive the terminal it is listed in. `show 12
+--raw` prints the text alone. **Do not pipe `--raw` into an agent that has
+your repository and your credentials.**
+
+**`files 12`** writes what came with the report into
+`report-files/12-OWA-…/` beside the database (`--to <dir>` names another
+folder; not in git): the picture of the app as it was when Report was
+pressed, and what the person attached. They are a stranger's files too —
+look at them, run nothing in them.
+
+### What the inbox does
+
+- **One call**: `POST /report` with a JSON body — `{"prompt": "…",
+  "attachments": […]}`, what the app sends — or plain text, the body being
+  the report (`curl --data-binary @report.txt`). With `Authorization: Bearer
+  <key>` (the same `tunnel-key.txt` the tunnels use) or a 401 before anything
+  else is looked at; any other path is a 404, any other method a 405.
+- **An attachment is kept for what its bytes are, not for its name.** A
+  picture (`png`, `jpg`, `gif`, `webp`), a PDF or a text file, 8 of them at
+  most, 5 MB each and 12 MB together — the app's own numbers. One may be an
+  object `{name, mimeType, data}` or a bare base64 string or `data:` URL,
+  which is then named by what it is (`attachment-1.png`). A kind it does not
+  take (`.exe`, `.html`, `.svg`…), a file that is not what its name says
+  and one too large are **skipped with a reason**, and the report is kept
+  all the same: the answer lists them under `skipped`, and `show` and
+  `files` say so.
+- **One file**: `report-inbox.sqlite` beside the script (`--db` names
+  another), not in git. Two tables. `report`: `id`, `received_at`,
+  `reference` (the app's `OWA-…`), `title`, `visitor` (the address it came
+  from), `bytes`, `body` — the whole text — `handled_at`, set by `done`, and
+  `digest`. `report_file`: `report_id`, `position`, `name`, `mime_type`,
+  `bytes`, `data` — the file — or `skipped`, why it was not kept. Any SQLite
+  tool opens it.
+- **The same report sent twice is one row** (Send pressed again), told by a
+  digest of its text.
+- **It cannot be made to fill the disk**: the registry is public and so is its
+  key, so the text of a report is at most 640 KB and a whole request 18 MB;
+  one address — for IPv6, one /64 — gets 20 in ten minutes; all of them
+  together 300 and 256 MB an hour; and the inbox keeps 20 000 reports and
+  2 GB at the most. **Full, it makes room out of the oldest reports marked
+  `done`** — so `done` is also what keeps it taking new ones — and answers
+  _full_ only when none is. With room for the words and not the files, the
+  words are kept.
+- **A request too large is answered `413`**, read to its end first, so the
+  app hears _too large_ and sends the words alone.
+
+`node llm-report-inbox.mjs` alone (`serve`, `--port 8788`) runs the inbox on
+this computer only, with no tunnel — for trying it, or for putting it behind a
+reverse proxy or a named tunnel of your own, in which case its registry entry
+is yours to write: `baseUrl` is the public address ending in `/report`.
+
+### In the registry
+
+- A tunnel started with `--reports --publish` writes and removes its own
+  entry, like every tunnel. One kept by hand is published with
+  `s3-push-llm-registry.mjs`, and the tunnels leave it where it is.
+- `llm-registry.mjs list` says _takes reports_ in place of the models, and
+  `check` asks the address with a `GET` — a report is never sent to try it —
+  counting any answer the address gives itself as there and a `5xx` or no
+  answer as unreachable.
+- The app tries the first three such entries in the file's order.
 
 ## Start it with the computer
 

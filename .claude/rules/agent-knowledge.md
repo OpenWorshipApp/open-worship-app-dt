@@ -51,7 +51,7 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `electron:dev` started before the change keeps the old watch until it is
   restarted.
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
-  A document names a control as `[en:tran:Clear Bible]`, never as an English
+  A document names a control as `[en:tran:Clear Long Text]`, never as an English
   label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in
   with what that key reads as in the language the app is DISPLAYING — so
   `owa_help_search`, `owa_help_page` and a guide card built from a recipe all
@@ -83,8 +83,12 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `questions.mjs` is the disk-reading wrapper; `questions/schema.json` documents
   every field; `questions.test.mjs` runs against the REAL corpus and fails on a
   question with no recipe and no tool, a duplicate id, a malformed recipe id, a
-  recipe with **no page on disk** under `docs/manual-sources/`, or a demoted
-  starter. That page check is not the id check: `W-01b` passed the id PATTERN
+  recipe with **no page on disk** under `docs/manual-sources/`, a demoted
+  starter, or a resource that is not the shape its readers take it in
+  (2026-10-12: `find`, `menu` and `shortcut` are read as TEXT; four rows
+  carried `find` as a list, and on the help window's 41 000-character page
+  picking one answered _trim is not a function_; three had a `kind` the
+  schema does not name). That page check is not the id check: `W-01b` passed the id PATTERN
   for months while `build-manual.mjs` matched `W-\d+` only, so its `### W-01b`
   heading was never read as a heading, the recipe was silently folded into
   W-01's page, and four supported questions named a document that did not exist.
@@ -153,6 +157,284 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   Facebook?_ no longer offers to walk the user through the Presenter overview
   (score 2). The score distributions overlap everywhere above 6, so this floor
   is garbage removal, not a confidence measure.
+- **A page is read as PASSAGES, by the search and by the window alike**
+  (2026-10-12, `tools/owa-devtools-mcp/passageMatch.mjs`, no `node:fs`;
+  found by asking the whole corpus through the window, the guide alone and
+  then a local model). A passage is a step, a bullet or a paragraph with the
+  lines it was wrapped over joined — and a paragraph INSIDE a step opens on a
+  bold lead sentence, because the manual sets those under one another with no
+  blank line: the help window's own page is 536 lines with six blank ones,
+  and read by blank lines alone one "passage" of it ran to 14 000
+  characters. `rankPassages` scores them: what a supported question is
+  ABOUT (its `find`, menu item and keys, `genQuestionAnchors`) outranks every
+  word and does not add up — the panels page names its divider in the step
+  that hides a panel and again in the one that resets, which also says
+  _Widgets_; words match at a word's START, three letters or more (_am_ was
+  found in _same_), rarer ones weigh more, and the earlier passage wins a
+  tie. **Two readers.** `searchHelp`'s excerpt is the best passage, whole,
+  cut at a sentence and saying so with `…` (`genPassageExcerpt`): it was the
+  first line carrying ANY query word and the four after it, which over the
+  398 questions that name a page quoted the question's control for 37 of
+  166 (now 160), its key for 11 of 35 (28) and its menu item for 4 of 14
+  (13), with 252 excerpts stopping mid-sentence unsaid — and that excerpt is
+  the whole body of an answer when no assistant can be reached. And
+  `clipKnownPageParts` (`src/chatbot/questionHelpers.ts`) cuts a page too
+  long to ride on a known question to its opening and the passages that
+  match the QUESTION — its own words and its row's keywords — when no control
+  settles it. 199 of the 398 rows are filed under 13 pages longer than the
+  6 000 characters that ride; _What commands can I type instead of asking?_
+  rode the first 6 000 of 41 000, which say nothing of the commands, and a
+  local model answered _the guide covers this app only; type /btw_. The
+  modes: `whole`, `step` (the control's own step, deep in the page),
+  `matching`, `head` (the first 6 000 already carry it) and `opening`
+  (nothing matched: a start, not an answer).
+- **Which passage rides was wrong on the help window's own page, and four
+  things changed it** (2026-10-12 afternoon, `EC-240`; found by grading the
+  model's answers and not its bill). With the cut handed over and the answer
+  written from it in one round, the same forty-seven questions cost a local
+  model half the tokens and came back no better -- 26 right of 47 before, 22
+  after -- and the twenty-three about the help window itself were 7 right
+  and 8 wrong: _Can I add something while you are still answering?_ was
+  handed the step that lists every assistant and server, 5 300 characters,
+  in place of the 540 that say **Add**. (1) A bold lead the manual's wrap
+  carried over a line break opens a passage too (`BOLD_LEAD_OPEN_PATTERN`):
+  five of that page's leads were wrapped and stayed inside the step above.
+  (2) A word counts ONCE, however often the question and its keywords say
+  it. (3) The words of a passage over 2 500 characters weigh less
+  (`LONG_PASSAGE_LENGTH`, by the square root; an anchor is not weighed
+  down). (4) A match longer than ALL the room the matches share WAITS: the
+  ones after it that fit ride first, while they score at least half of what
+  it does, and it has what is left -- half the room when it is the best
+  match of all. A passage merely too long for what is left is cut on the
+  spot, as before. The page's own opening was the fifth thing: W-42 began
+  with a paragraph about importing a Bible, and the opening rides on every
+  question (_This guide mainly covers starting a Bible import using an XML
+  link_). Measured: the passage marked by hand as the answer rode for 14 of
+  23 questions and for 22 after; the excerpt ratchet did not move (160/166,
+  28/35, 13/14); asked again of the model, 7 right and 8 wrong became 14
+  right and 1 wrong.
+- **A row can NAME its passage** (`resources.passage`, same day, `EC-243`):
+  words the passage that answers it carries, copied from the page -- the
+  lead it opens on. For a page too long to ride whole when no control
+  settles which part answers, which is every question about the help
+  window. It is the FIRST anchor (`genQuestionAnchors`), so it outranks the
+  control as the control outranks the words; `clipKnownPageParts` cuts
+  around it rather than around the first place the row's `find` is written
+  (_Open AI settings_ is in three passages of that page); the hint tells
+  the model which part that is (_The part that answers THIS question is the
+  one with the words "…"_), because the parts ride in the page's own order
+  and a small model answers from the first that seems to fit -- _Can you
+  walk me through it step by step?_ rode with the step that answers it and
+  was answered with the Reader's guided demos, earlier in the page; and
+  `questions.test.mjs` fails when the page stops carrying the words.
+  Thirty-one rows carry one. `find` stays what it was: the control to ring,
+  and where a walkthrough starts.
+- **A question about the help window rides without how to open the help
+  window** (`dropFirstStep`, `HELP_WINDOW_MANUAL_ID`, `EC-244`). Step 1 of
+  that page is the 🤖 button, a page's opening rides on every question filed
+  under it, and a local model wrote it out as step 1 of three answers in
+  twenty-four -- to somebody typing in the window. A sentence in the hint,
+  _never tell them how to open it_, was tried first and measured: one answer
+  in twenty-four still did. What a model is not handed it cannot recite.
+  With all of this the twenty-four graded 16 right, 7 partly, 1 wrong.
+- **A page too long for one read comes in PARTS** (`toPageParts`,
+  `owa_help_page`'s `part`, same day, `EC-241`). The model's cap on a
+  manual page is 40 KB, set above the largest when the largest was 37; the
+  help window's page reached 57, and the cut took its last seven steps from
+  every reader at once -- the model, the walkthrough card (`owa_guide_start`
+  with a `manualId`) and the window's own pre-read, which chooses what rides
+  out of the page it is handed. Raising the cap would put 15 000 tokens of
+  one page into a local model's 32k window. So a manual page is divided at a
+  numbered step, each part within the cap, each but the last ending with a
+  note that says how to read the next (`genPagePartNote` in
+  `manualPage.mjs`, read back by the window with `readPagePartNote`); the
+  window reads every part before it cuts (`readWholePage`), and the
+  walkthrough builder reads the page `'whole'`. The tool's DESCRIPTION was
+  not lengthened -- the page says it -- and the model's token ceiling is met
+  exactly (8 350 of 8 350): the next thing added to the model's list has to
+  take something out.
+- **A control the page names EARLY needs its passage named too**
+  (2026-10-12 evening, `EC-249`; the whole corpus asked of a local model
+  through the window and every answer graded). A `find` written in the
+  first 6 000 characters of its page makes those characters ride
+  (`head`), and the step that DEFINES the control may be past them:
+  _Who is watching my virtual display?_ carries `find: Watching now`,
+  which the page first says under step 6 and explains in step 9, and was
+  answered with where to watch. A tab's name (`Foreground`, `Presenting
+  Flows`) is the worst `find` there is -- written in the opening of its
+  page and in half its passages -- and the cut is NOT made cleverer for
+  it, because where the name is that common the ranking has nothing to go
+  by either: the row is labelled. Twenty-two more rows carry a `passage`
+  (53 in all) -- on the Presenting Flow's page (37 000 characters), the
+  virtual displays', a second Screen Mirror host, the slide show, the
+  tips' lessons, the bug report -- chosen where an answer was graded wrong
+  or partly and the part that answers had not ridden, or had ridden with
+  nothing to say which it was. Those twenty-two graded 0 right, 5 partly, 17 wrong
+  before and 4 right, 11 partly, 7 wrong asked again.
+- **Nothing in the window may read the ASK as the person's words** (same
+  evening, `EC-250`). The ask is what was typed, then the hint, then the
+  page. `askLlmBot` tried the Reader's book-button answer
+  (`genReaderButtonReferenceAnswer`: a reference beside _book buttons_,
+  _Khmer_ or _non-English_ is answered with how to open it by its
+  buttons, by no model) on the whole ask, and three of the Reader's pages
+  say _non-English_ or _Khmer_ beside a reference of their own. So every
+  supported question filed under them and asked from the Bible Reader --
+  seventeen of its seventy-one: _The words are too small. Can you help
+  me?_, _What are verse marks?_, _How do I put two Bible versions side by
+  side?_ -- came back in 0.7 s with _Press the book button for John …
+  press Verse 16_, whichever assistant the tab was on. It reads
+  `extra.askedText` now, the words typed. Anything in the loop that
+  decides by what the person SAID -- a shortcut, a pattern, a language
+  check -- reads that; the composed ask is for the model alone. Found by
+  the clock before any grader: seventeen answers under a second in a pass
+  whose median was fourteen. Those seventeen graded 0 right, 3 partly, 14 wrong
+  before and 11 right, 6 partly, 0 wrong asked again.
+- **The hint says the key and the menu item the row is filed with**
+  (2026-10-12 night, `EC-248`, `genKnownQuestionHint`). A row carries its
+  `shortcut` and its `menu` beside its page, and the hint passed on only the
+  page: of the fifteen such answers a grader marked down, nine never named
+  theirs. _How can I learn to prepare several notices in Messages?_ was
+  answered twice without **Help → All tips**, the second time with the
+  passage that says it named and in front of the model; _How do I step to
+  the next verse while presenting?_ with the slide keys -- its key is
+  written in its row and on no page (`EC-251`). One sentence after the
+  hint's head, in front of the page: _The app's own list files this question
+  with the menu item … and the key …: say them in the answer, as written
+  here._ The forty-eight rows that carry one, asked again of the local
+  model: 33 right, 9 partly, 6 wrong before, 37 right, 10 partly, 1 wrong after; 27 of
+  48 named theirs before and 42 after.
+- **The foot note is no part of the page that is cut** (2026-10-12 night,
+  `EC-252`, `clipKnownPageParts`). Every manual page ends with a note for
+  the model -- where its newest copy is -- and the window measured and cut
+  the page WITH it. Two pages that fit (the slide editor's, 5 941
+  characters of 6 000; the one about drawing on the app) were 400 too long
+  for it, so their 35 questions rode "the first 6 000", the note cut off
+  mid-address, under _the page goes on: open it for the rest_ when nothing
+  was missing; and because its address spells the page's own name it was
+  ranked as a passage for 173 of the 203 questions on long pages and rode
+  in 20 cuts in place of one. The page is measured and ranked without it; a
+  page that fits rides whole — and, since 2026-10-13, without the note (the
+  bullet on what may ride, above). **And a page near the limit is
+  a page to leave alone**: two paragraphs added to the slide editor's page
+  the same night took it to 7 148 and every one of its 31 rows to a cut --
+  they went to pages with room.
+- **Asked from the window it is about, the hint says so** (same night,
+  `EC-253`): _They are asking from INSIDE the Document Editor, which is
+  open in front of them: start at what to do there, and never tell them how
+  to open it or get to it._ For a row filed under the window the tab asks
+  about, when that is not the Presenter or the Bible Reader -- nine of
+  thirty-nine answers given from the Slide Editor, the Lyric Editor, the
+  Bible Note window and the web editor opened on the way into the window
+  they were typed in. On the help window's own page the same sentence took
+  three such answers in twenty-four to one, and that page's first step is
+  not handed over at all (`dropFirstStep`); these pages keep theirs,
+  because the same rows are asked from other windows too. **Not for a row
+  answered from the help window's own page**: what that page tells is done
+  in the help window, whichever window the row is filed under -- _Can you
+  write the notation for words I paste in?_, filed under the Lyric Editor
+  and told they were INSIDE it, came back _paste your song lyrics into the
+  box in the Lyric Editor_.
+- **A row with no page and no tool left is told to make up no way by hand**
+  (same night, with `EC-239`). The hint for a tool the assistant was not
+  sent ends _give the way to do it by hand when the guide has one_; under a
+  row that has no page a local model gave one anyway -- an automatic undo
+  for background colours, a Web Editor button and a link box. Now: _the
+  guide has no page for doing this by hand, so describe no steps, buttons
+  or menus for it: say only that this assistant cannot, and that another
+  assistant in the list at the top of this window (Free, or one with a key)
+  can_ -- every assistant but a server of the user's own is sent the whole
+  set. Asked again: _I cannot undo actions … You will need to ask another
+  assistant in the list at the top of this window._
+- **A fill-in row that ends on a gap is still that row once the sentence
+  is finished** (same night, `findFilledTemplateRow`). _Add a slide to my
+  document that says ..._ fills the box and is asked only when completed,
+  and the completed sentence matched no row: no hint, no tool named, no
+  _you were not sent it_ -- a local model searched and answered from the
+  page about presenting a slide, twice. `findKnownQuestion` now takes a
+  sentence that opens with the words of a row ending on three dots, and
+  goes on, for that row; two rows that open alike are nobody's. A row
+  whose sample sits mid-sentence is still matched only as it stands.
+- **A recipe too long to ride whole was split, and that helped without
+  ending it** (same night, `EC-258`, the user's choice of three). With
+  every other cause fixed, every wrong answer left was on the running-order
+  recipe, 39 000 characters: 27 questions, graded 126 times on that page --
+  48 right, 52 partly, 26 wrong -- and not the same questions twice. It is
+  ten recipes now (W-22, W-22b … W-22j), each under the 6 000 characters
+  that ride whole, the text its own and its steps naming a page where they
+  named a step number. Asked again: 11 right, 13 partly, 3 wrong before,
+  14 right, 9 partly, 4 wrong after, and 19 right, 15 partly, 6 wrong over the
+  forty askings since. More right; the wrong ones moved to other questions.
+  A whole page is not a right answer: the model still wrote _a line_ for
+  _the NAME row, not a line_. Write a recipe to ride whole -- and do not
+  expect that alone to carry a small model through a subject of fine
+  distinctions. **Nor is it the size of the model, one step up**: the same
+  26 questions asked once of ChatGPT's smallest (GPT-5 nano, at the
+  user's word) came out 15 right, 9 partly, 2 wrong, against
+  14 right, 10 partly, 2 wrong -- two wrong either way, and not the same two.
+- **The part a row names is answered in ITS OWN WORDS** (2026-10-13,
+  `genKnownQuestionHint`, with the temperature in `chatbot-llm.md`). The
+  sentence that tells the model which part answers the question now ends
+  _answer from that part in ITS OWN WORDS — copy the sentences you use as
+  they stand, change no name in them and add no step it does not have_. With
+  the temperature at 0 the 27 running-order answers were the same on both
+  askings and two were still wrong, each by a noun of its own in place of
+  the page's (_right-click the line_ for _the presenting flow itself … not
+  one of its lines_; the stopwatch _at the right of that line's row_ for the
+  CC line's). A copied sentence cannot change its noun: asked again, the
+  first came back as the page's own step. It is a sentence in a hint, and a
+  hint is not a wall — a row with no `passage` gets none of it, and a model
+  can still stop one step short of what the question needs.
+  **On a page too long to quote whole the named part is quoted FIRST, by
+  itself** (`namedFirst`, mode `matching` only, 1 500 characters at most,
+  under _The part that answers this question, quoted first and by itself_).
+  The parts of a long page ride in the page's order, its opening first, and
+  a small model answers from the first that seems to fit: told which part it
+  was in so many words, gemma-4-e4b still answered _Can you walk me through
+  it step by step?_ with the Reader's guided demos, which the help window's
+  page opens on — at temperature 0, so every time. With the part first it
+  answered _Every answer offers Show me step by step. Press this button …_.
+  A page that rides whole is left in its own order.
+- **Nothing that changes with a release may ride on a known question**
+  (2026-10-13, `clipKnownPageParts`). A page that fits used to ride _whole,
+  note and all_ — the foot note the page tool writes for a model, which says
+  the DAY of the copy. At temperature 0 the same words get the same answer,
+  and the day is words: with the manual regenerated under the next day's
+  date and no page edited, not one of 27 running-order answers came back as
+  it had been an hour before. The note no longer rides (the window reads
+  the newest copy by itself under a complaint, and a model that opens the
+  page with the tool still gets it). The rule is the prompt cache's rule,
+  for a different reason: there a byte that changes per question loses the
+  cached prefix, here a byte that changes per release re-rolls every answer
+  — so a version, a date or a count is never written into what a known
+  question is asked with.
+- **A question about what the app has or is doing right now is told to call
+  its tool** (2026-10-13, `genKnownQuestionHint`, rows of `kind: 'state'`).
+  The hint named _the live tool for it_ and left the calling to the model:
+  of the eight such rows a local model called the tool for seven and
+  answered the eighth — _Which displays does this computer have?_ — with
+  _the guide does not provide information about your computer's physical
+  hardware … type /btw_, at temperature 0 and so every time. The hint now
+  opens that part with _it asks what the app has or is doing RIGHT NOW,
+  which only the app can say — call <tool> first and answer from what it
+  returns_. Asked again, it read the screens and listed the displays; the
+  other seven were asked again with it and none got worse.
+- **What rides is READ, as far as the loop is concerned**
+  (`genKnownAskExtra` → `AskExtraType.isKnownPageQuoted`, same day). The
+  tool watch is seeded with `readId` as well as `searchedId` unless the mode
+  is `opening`. Seeded as a search hit with no page opened, it made
+  `checkIsStepsWithoutPage` hand the model's steps — written from the page in
+  front of it — back as "written from a search excerpt", and the model opened
+  the same page again and wrote the answer a second time: on the same 23
+  questions asked of gemma-4-e4b, 61 model rounds became 37, input tokens
+  fell 41% and the median answer went from 23.5 s to 12.1 s. Every provider
+  paid it, the paid ones in money. A `kind: 'state'` row seeds nothing: its
+  page is background reading, and _Which page am I on right now?_ had been
+  answered correctly with **Show me step by step** through the Presenter
+  overview under it. And a row's tool that the assistant was not SENT
+  (`checkIsToolLeftOut` in `llmBotHelpers.ts`: a custom server's fourteen of
+  twenty-six) is named in the hint as missing — _say plainly that you cannot
+  do that from this assistant_ — where "the live tool for it: owa_undo", with
+  no such tool in its list, had been answered with the Bible note's Undo.
 - **A recipe id is scrubbed in code, at both ends** (2026-09-08,
   `scrubRecipeIds` in `help.mjs`, `src/chatbot/recipeIdHelpers.ts`). The
   prompt has forbidden "an id like W-06 -- not even in passing" since the
@@ -231,3 +513,27 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   built-in one is (`toManualPageBody`: no front matter, no robot block, no
   heading with the recipe's id). Still not asked in the window with an
   assistant: the caution is a person's press.
+  **The window walks the rest of the ladder too** (2026-10-13, `EC-260`,
+  `locateDisputedControl`). The hint handed the model a paragraph of
+  conditions — find the control; when the tool names another to press first,
+  say THAT; otherwise ask for a picture — and a small local model recited it
+  as advice: under _The steps did not work_, pressed beneath a thumb down,
+  gemma-4-e4b wrote _Please look for a control labeled ? in your window. If
+  you find one, press it first_. So the look is made BEFORE the ask, beside
+  the page read (`Promise.all`), with the find tool on the window the tab
+  asks about, and the model is handed the FACT in one sentence: it IS there
+  and where; it is shut away and which control has to be pressed first
+  (`revealBy`); it is drawn under the mouse only; or there is NO control
+  called that on their window, with the closest name there is — only a
+  control CALLED that counts (`tier` 0), since a looser fit is some other
+  control. **Which control**: the one the complaint NAMES, when the answer
+  bolded it too (`findComplainedControl`, the longest such name — _There is
+  no Bible Properties button_ under an answer that said **Bible
+  Properties**), before the one the walkthrough button starts at. An answer
+  written from the help window's own page gets a sentence of its own — no
+  tool looks into the window they are typing in, so name no control and ask
+  which step did not do what it said — and a look that cannot be made (that
+  window is not open) leaves the old ladder. Seen live on the local model:
+  the same press now answers _Which step did not work as expected? What
+  happened when you tried the steps?_, and _There is no Bible Properties
+  button_ is answered with the three dots that have to be pressed first.

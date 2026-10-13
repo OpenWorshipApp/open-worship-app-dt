@@ -2097,7 +2097,7 @@ export function toKeystroke(phrase) {
 }
 
 // ...nor is the verb in front of it, nor a word the manual merely stressed.
-// A real label is Capitalised on screen ("Bible Reader", "Clear Bible"); bold
+// A real label is Capitalised on screen ("Bible Reader", "Clear Long Text"); bold
 // prose is not ("**not**", "**version**") -- and "not" would have found the
 // Notes button and drawn a red ring around the wrong thing entirely.
 const ACTION_PATTERN =

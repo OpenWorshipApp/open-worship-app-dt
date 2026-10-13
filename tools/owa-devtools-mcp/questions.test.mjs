@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { BOT_FOCUS_KEYS } from './botFocus.mjs';
+import { toManualPageBody } from './manualPage.mjs';
+import { toPassageKey } from './passageMatch.mjs';
 import {
   flattenQuestions,
   listQuestionPageIds,
@@ -43,6 +45,31 @@ function listManualIds() {
   };
   walk(root);
   return ids;
+}
+
+/** Every manual page on disk by its id, as the words a passage is matched on. */
+function readManualPageKeys() {
+  const root = join(import.meta.dirname, '..', '..', 'docs', 'manual-sources');
+  const pages = new Map();
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(path);
+        continue;
+      }
+      if (!entry.name.endsWith('.md')) {
+        continue;
+      }
+      const content = readFileSync(path, 'utf8');
+      const found = content.match(/^id:\s*(\S+)\s*$/m);
+      if (found !== null) {
+        pages.set(found[1], toPassageKey(toManualPageBody(content)));
+      }
+    }
+  };
+  walk(root);
+  return pages;
 }
 
 describe('the question corpus', () => {
@@ -98,6 +125,41 @@ describe('the question corpus', () => {
       expect(
         Boolean(recipe) || (tools ?? []).length > 0,
         `${row.id} has no recipe and no tool`,
+      ).toBe(true);
+    }
+  });
+
+  it('gives a how-to with no page a tool that does it, not one that only looks', () => {
+    // 2026-10-12: "How do I keep an external agent connected to the
+    // development copy…" was filed with no page and two tools that read
+    // (the search, the app's state). The search answers its words with the
+    // Screen Mirror pages, the note that does answer is a developer's and is
+    // never quoted to a volunteer, and a local model asked it twice wrote no
+    // usable answer -- the one row of 407. A how-to is answered from a page
+    // or by a tool that does the thing; "go and search" is what a row is
+    // there to replace.
+    const READING_TOOLS = new Set([
+      'owa_help_search',
+      'owa_help_page',
+      'owa_app_state',
+      'owa_list_screens',
+      'owa_list_ui',
+      'owa_find_ui',
+      'owa_list_questions',
+      'owa_guide_status',
+      'owa_tran',
+      'owa_screenshot',
+    ]);
+    for (const row of ROWS) {
+      const { recipe, tools } = row.resources;
+      if (recipe || row.kind !== 'howto') {
+        continue;
+      }
+      expect(
+        (tools ?? []).some((name) => {
+          return !READING_TOOLS.has(name);
+        }),
+        `${row.id} is a how-to with no page and only tools that look`,
       ).toBe(true);
     }
   });
@@ -190,9 +252,68 @@ describe('the question corpus', () => {
     }
   });
 
+  it('names a passage only in words its page really carries', () => {
+    // `passage` is the row's own word on which part of a long page answers
+    // it. A lead reworded in the manual would leave it matching nothing, in
+    // silence, and the question back on a guess among sixty passages.
+    const pages = readManualPageKeys();
+    let named = 0;
+    for (const row of ROWS) {
+      const passage = row.resources?.passage;
+      if (passage === undefined) {
+        continue;
+      }
+      named++;
+      const page = pages.get(row.resources.recipe);
+      expect(
+        page !== undefined,
+        `${row.id} names a passage and no recipe with a page`,
+      ).toBe(true);
+      expect(
+        ` ${page} `.includes(` ${toPassageKey(passage)} `),
+        `${row.id}: "${passage}" is not on ${row.resources.recipe}`,
+      ).toBe(true);
+    }
+    expect(named).toBeGreaterThan(0);
+  });
+
   it('gives every question keywords a user might type instead', () => {
     for (const row of ROWS) {
       expect(row.keywords.length, `${row.id}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('writes every resource in the shape its readers expect', () => {
+    // The files are JSON nobody type-checks, and the schema beside them is
+    // documentation. `find`, `menu` and `shortcut` are read as TEXT -- by
+    // the window, cutting a long page to what rides on the question and
+    // starting a walkthrough at the control, and by the search, choosing the
+    // passage to quote. Four rows carried `find` as a LIST (2026-10-12): on
+    // the help window's own page, 41 000 characters, picking one of them
+    // answered "trim is not a function". And three rows had a `kind` the
+    // schema does not name.
+    const KINDS = ['howto', 'where', 'what', 'state', 'fix'];
+    for (const row of ROWS) {
+      for (const field of ['recipe', 'find', 'passage', 'menu', 'shortcut']) {
+        const value = row.resources?.[field];
+        expect(
+          value === undefined ||
+            (typeof value === 'string' && value.trim().length > 0),
+          `${row.id} ${field}`,
+        ).toBe(true);
+      }
+      for (const field of ['related', 'tools']) {
+        const value = row.resources?.[field];
+        expect(
+          value === undefined ||
+            (Array.isArray(value) &&
+              value.every((one) => {
+                return typeof one === 'string' && one.length > 0;
+              })),
+          `${row.id} ${field}`,
+        ).toBe(true);
+      }
+      expect(KINDS, row.id).toContain(row.kind);
     }
   });
 

@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -78,6 +78,10 @@ button:
   folder of thousands opens as fast as a folder of ten. Click a tile to put it up,
   click it again to take it off, right-click to choose a display. A clip plays muted
   and loops.
+  **The volume of what is playing.** To hear a [en:tran:Video Show] clip, open
+  _[en:tran:Properties]_ in its panel and tick **[en:tran:Play With Sound]**: a
+  **[en:tran:Volume]** slider appears under it, and that slider is the clip's volume.
+  An audio track has no slider of the app's own: it is as loud as the computer's volume.
 - **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
   [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
   the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
@@ -118,8 +122,8 @@ button:
 - **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
-- **[en:tran:Behind Slide]** (every foreground component, right above _Always on
-  Top_) puts that session's item **behind** the slide and the Bible text — over the
+- **[en:tran:Behind Slide]** (every foreground component: under _Properties_ in its
+  own panel, right above _Always on Top_) puts that session's item **behind** the slide and the Bible text — over the
   background, under the words — so a logo, a clock or a falling-snow clip never covers
   the lyrics. Tick it while the item is up and it moves at once; untick it and it comes
   back over the slide. A slide that fills the whole screen with its own picture hides
@@ -168,5 +172,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

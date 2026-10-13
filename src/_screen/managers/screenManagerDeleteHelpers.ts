@@ -18,7 +18,7 @@ import { previewerSettingPrefixList } from './screenSettingKeyHelpers';
 
 // Content that is stored as one JSON object keyed by screen id, with the lock
 // key its writers take. FULL_TEXT is written under a `set-`-prefixed lock
-// (see ScreenBibleManager's screenViewData setter), the others under the plain
+// (see ScreenLongTextManager's screenViewData setter), the others under the plain
 // setting name.
 const onScreenSettingList = [
     {

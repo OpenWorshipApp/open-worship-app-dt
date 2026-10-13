@@ -28,6 +28,7 @@ import {
     checkIsBibleLanguageWord,
     toBibleSearchWords,
 } from '../../tools/owa-devtools-mcp/bibleXmlAdvice.mjs';
+import { readBibleImportAskName } from '../helper/ai/bibleImportAskHelpers';
 import { appError } from '../helper/loggerHelpers';
 import type { BotActionType, BotAnswerType } from './helpBotHelpers';
 import { callTool, parseToolJson } from './mcpClient';
@@ -85,6 +86,10 @@ export type BibleImportStateType = {
     summary?: string;
     keys?: string[];
     takenKeys?: string[];
+    // The short name the app is LOOKING for -- the Reader's "Bible key "KJV"
+    // is not available!" card asked for this Bible by it. Offered first at
+    // step 1: installed under any other name, that card stays where it is.
+    wantedKey?: string;
     key?: string;
     locales?: LocaleChoiceType[];
     locale?: string;
@@ -116,6 +121,16 @@ function carry(
 ) {
     const { awaits: _awaits, typed: _typed, note: _note, ...rest } = state;
     return { ...rest, ...next } as BibleImportStateType;
+}
+
+/**
+ * The name that was asked for, for a button that starts from nothing: `carry`
+ * keeps it by itself, a state written out afresh has to be handed it.
+ */
+function keepWanted(state: { wantedKey?: unknown } | undefined) {
+    return typeof state?.wantedKey === 'string'
+        ? { wantedKey: state.wantedKey }
+        : {};
 }
 
 function toCount(value: unknown) {
@@ -274,7 +289,12 @@ export function readBibleImportTypedReply(
     const link = readPastedLink(typed);
     if (link !== null) {
         return ['find', 'link'].includes(waiting?.args?.awaits)
-            ? { step: 'check', url: link, find: '' }
+            ? {
+                  step: 'check',
+                  url: link,
+                  find: '',
+                  ...keepWanted(waiting?.args),
+              }
             : null;
     }
     if (typed.length > 60 || /https?:\/\//.test(typed)) {
@@ -328,6 +348,29 @@ function genKeyReason(key: string, takenKeys: string[]) {
         return `You already have a Bible called "${key}". Choose another name.`;
     }
     return null;
+}
+
+/**
+ * The short names to offer, the one that was ASKED for first -- when it can
+ * be one at all, and no Bible has it yet.
+ */
+function genKeyChoices(
+    keyList: string[],
+    takenKeys: string[],
+    wantedKey: string | undefined,
+) {
+    if (
+        wantedKey === undefined ||
+        genKeyReason(wantedKey, takenKeys) !== null
+    ) {
+        return keyList;
+    }
+    return [
+        wantedKey,
+        ...keyList.filter((key) => {
+            return key.toLowerCase() !== wantedKey.toLowerCase();
+        }),
+    ];
 }
 
 function countSteps(state: BibleImportStateType) {
@@ -600,8 +643,15 @@ function genProblemAnswer(
         // "Paste it here" has to be heard: the address alone, with no word
         // about a Bible beside it, is the answer to this.
         actions: [
-            toAction('Look for a Bible by language', { step: 'language' }),
-            toAction('Cancel', { step: 'cancel', awaits: 'link' }),
+            toAction('Look for a Bible by language', {
+                step: 'language',
+                ...keepWanted(state),
+            }),
+            toAction('Cancel', {
+                step: 'cancel',
+                awaits: 'link',
+                ...keepWanted(state),
+            }),
         ],
     };
 }
@@ -751,13 +801,17 @@ export function genBibleImportCheckAnswer(
         `${toCount(result.books)} books, ${toCount(result.chapters)} ` +
         `chapters, ${toCount(result.verses)} verses`;
     const lists: NameListType[] = result.nameLists ?? [];
+    const takenKeys: string[] = result.takenKeys ?? [];
+    const keys = genKeyChoices(result.keys ?? [], takenKeys, state.wantedKey);
+    const isWantedOffered =
+        state.wantedKey !== undefined && keys[0] === state.wantedKey;
     const next = carry(state, {
         step: 'key',
         draftId: result.draftId,
         title: result.title,
         summary,
-        keys: result.keys ?? [],
-        takenKeys: result.takenKeys ?? [],
+        keys,
+        takenKeys,
         locales: result.locales ?? [],
         digitChoices: result.digits,
         nameLists: lists.slice(0, -1),
@@ -785,6 +839,15 @@ export function genBibleImportCheckAnswer(
                         : `It is missing ${missingList.length} of the 66 books.`,
               ]),
         'Nothing is installed yet. A few quick choices, then I install it.',
+        // Said beside the question it answers. Not over a Bible they already
+        // have: that one is found by choosing ITS name where this was asked.
+        ...(isWantedOffered && typeof result.installedAs !== 'string'
+            ? [
+                  `The app is looking for a Bible called **${state.wantedKey}**. ` +
+                      'Keep that short name below and the app will find ' +
+                      'this Bible by itself.',
+              ]
+            : []),
     ]);
 }
 
@@ -1001,7 +1064,7 @@ export async function runBibleImportStep(
             case 'settings':
                 return await runSettings(state);
             case 'language':
-                return genLanguageStep();
+                return genLanguageStep(state);
             case 'local-file':
                 return await runLocalFile();
             default:
@@ -1074,12 +1137,18 @@ const LOCAL_FILE_PATTERN =
  * A Bible asked for with NO link -- "Import bible for khmer", "install a
  * Thai Bible", "Import bible": looked for in the catalog by its language,
  * or the language asked for first. One from this computer goes to the
- * Settings form, which is where a file is chosen.
+ * Settings form, which is where a file is chosen. One asked for BY NAME --
+ * `Import the Bible called "KJV"`, what the Reader's "is not available!" card
+ * asks with -- is looked for by that name, and the name is kept to offer as
+ * its short name.
  */
 export function readBibleImportLanguageAsk(
     text: string,
 ): BibleImportStateType | null {
-    const trimmed = text.trim();
+    // The name is not what the sentence is ABOUT (a Bible called LIST is no
+    // list), so whether this is a request is read off the rest.
+    const byName = readBibleImportAskName(text);
+    const trimmed = byName === null ? text.trim() : byName.rest;
     const isAvailabilityAsk = AVAILABILITY_PATTERN.test(trimmed);
     const isFetchAsk = IMPORT_WORD_PATTERN.test(trimmed);
     if (
@@ -1099,6 +1168,15 @@ export function readBibleImportLanguageAsk(
     }
     if (LOCAL_FILE_PATTERN.test(trimmed)) {
         return { step: 'local-file' };
+    }
+    if (byName !== null) {
+        // A name made of nothing to search by ("NEW") asks the language.
+        const nameWords = toBibleSearchWords(byName.name);
+        const state: BibleImportStateType =
+            nameWords.length > 0
+                ? toCatalogSearch(nameWords)
+                : { step: 'language' };
+        return { ...state, wantedKey: byName.name };
     }
     const words = toBibleSearchWords(trimmed);
     const hasLanguage = words.some(checkIsBibleLanguageWord);
@@ -1126,12 +1204,13 @@ export function genBibleImportOfferAction(): BotActionType {
     return toAction('Import a Bible for me', { step: 'language' });
 }
 
-function genLanguageStep(): BotAnswerType {
+function genLanguageStep(state?: BibleImportStateType): BotAnswerType {
     const toCatalog = (language: string) => {
         return toAction(language, {
             step: 'check',
             url: BIBLE_XML_CATALOG_URL,
             find: language,
+            ...keepWanted(state),
         });
     };
     const actions = [

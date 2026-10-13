@@ -19,12 +19,12 @@ const REPO_ROOT = path.join(HERE, '..', '..');
 
 describe('resolveTranTemplates', () => {
     it('fills a label in with what the button says in that language', () => {
-        const source = 'Press **F9** ([en:tran:Clear Bible]) to clear it.';
+        const source = 'Press **F9** ([en:tran:Clear Long Text]) to clear it.';
         expect(resolveTranTemplates(source, 'en')).toBe(
-            'Press **F9** (Clear Bible) to clear it.',
+            'Press **F9** (Clear Long Text) to clear it.',
         );
         expect(resolveTranTemplates(source, 'km')).toBe(
-            'Press **F9** (លុបព្រះគម្ពីរ) to clear it.',
+            'Press **F9** (លុបអត្ថបទវែង) to clear it.',
         );
     });
 
@@ -39,11 +39,11 @@ describe('resolveTranTemplates', () => {
         // dictionary does not carry. The app's own `tran` throws on the last
         // of these in dev; a document must not, or one mistyped label costs
         // the reader the whole answer.
-        expect(resolveTranTemplates('[en:tran:Clear Bible]', 'de')).toBe(
-            'Clear Bible',
+        expect(resolveTranTemplates('[en:tran:Clear Long Text]', 'de')).toBe(
+            'Clear Long Text',
         );
-        expect(resolveTranTemplates('[en:tran:Clear Bible]', null)).toBe(
-            'Clear Bible',
+        expect(resolveTranTemplates('[en:tran:Clear Long Text]', null)).toBe(
+            'Clear Long Text',
         );
         expect(resolveTranTemplates('[en:tran:Not A Real Label]', 'km')).toBe(
             'Not A Real Label',
@@ -74,7 +74,7 @@ describe('tranText', () => {
     it('answers what one label reads as on screen', () => {
         expect(tranText('Bible Lookup', 'km')).toBe('ស្វែងរកព្រះគម្ពីរ');
         // Matched the way `tran()` matches: trimmed and case-insensitive.
-        expect(tranText('  clear bible ', 'km')).toBe('លុបព្រះគម្ពីរ');
+        expect(tranText('  clear long text ', 'km')).toBe('លុបអត្ថបទវែង');
         expect(tranText('Bible Lookup', 'en')).toBe('Bible Lookup');
     });
 });
@@ -89,8 +89,8 @@ describe('the language packs', () => {
         );
         expect(Object.keys(dictionary).length).toBeGreaterThan(1000);
         // Sanitized to `tran()`'s own key shape.
-        expect(dictionary['clear bible']).toBe('លុបព្រះគម្ពីរ');
-        expect(dictionary['Clear Bible']).toBeUndefined();
+        expect(dictionary['clear long text']).toBe('លុបអត្ថបទវែង');
+        expect(dictionary['Clear Long Text']).toBeUndefined();
     });
 
     it('reads each language its own name', () => {

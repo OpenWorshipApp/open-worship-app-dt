@@ -20,7 +20,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { getBotFocus } from './botFocus.mjs';
-import { readManualPageDate, toManualPageBody } from './manualPage.mjs';
+import {
+  genPagePartNote,
+  readManualPageDate,
+  toManualPageBody,
+} from './manualPage.mjs';
+import { genPassageExcerpt, genQuestionAnchors } from './passageMatch.mjs';
 import { flattenQuestions } from './questionMatch.mjs';
 import { loadQuestionPages } from './questions.mjs';
 import { loadTranBundle, resolveTranTemplates } from './tran.mjs';
@@ -39,11 +44,48 @@ const MAX_PAGE_BYTES = 256 * 1024;
 // top internal hit.
 //
 // Split by kind because the two corpora are read for different reasons. A
-// manual page IS the answer and should arrive whole: the largest today is 37 KB
-// and the cap is set above it, so nothing a user needs is cut. An internal note
-// is only ever read to UNDERSTAND -- the prompt forbids quoting one -- so it is
-// cut hard, and understanding survives the first few KB.
+// manual page IS the answer and should arrive whole: the cap was set above the
+// largest one, 37 KB then. An internal note is only ever read to UNDERSTAND --
+// the prompt forbids quoting one -- so it is cut hard, and understanding
+// survives the first few KB.
+//
+// The help window's own page outgrew that cap (57 KB, 2026-10-12), and the cut
+// took its last seven steps from every reader at once: the model, the
+// walkthrough card, and the window's own pre-read, which chooses what rides on
+// a question out of the page it is handed -- "Can you walk me through it step
+// by step?" is answered by step 14, which nobody could reach. Raising the cap
+// would put 15 000 tokens of one page into a local model's 32k window. So a
+// manual page longer than the cap comes in PARTS (`toPageParts`), each within
+// it, each but the last saying how to read the next.
 const MAX_MODEL_BYTES = { manual: 40 * 1024, internal: 8 * 1024 };
+const STEP_START_PATTERN = /\n(?=\d+[a-z]?\. )/g;
+
+/**
+ * A page as the parts it is read in, none longer than `limit`: divided at
+ * the last numbered step that starts in the second half of the room, so a
+ * part opens on a step, and failing that at a line.
+ */
+export function toPageParts(body, limit = MAX_MODEL_BYTES.manual) {
+  const parts = [];
+  let rest = String(body ?? '');
+  while (rest.length > limit) {
+    const room = rest.slice(0, limit);
+    let cutAt = -1;
+    for (const match of room.matchAll(STEP_START_PATTERN)) {
+      cutAt = match.index;
+    }
+    if (cutAt < limit / 2) {
+      cutAt = room.lastIndexOf('\n');
+    }
+    if (cutAt < limit / 2) {
+      cutAt = limit;
+    }
+    parts.push(rest.slice(0, cutAt).trimEnd());
+    rest = rest.slice(cutAt).replace(/^\n+/, '');
+  }
+  parts.push(rest);
+  return parts;
+}
 
 // Cut on a line boundary and SAY it was cut: a model handed a page that stops
 // mid-sentence otherwise reports the steps end there.
@@ -239,7 +281,7 @@ function countEntry(entry, terms) {
   // Three bands, because they are not equally telling. The page's own NAME
   // is the strongest ("Read the Bible" is what that page is); its headings
   // and one-line goal come close behind -- in this corpus they ARE the steps
-  // ("Press Ctrl+B", "Clear Bible") and the goal is written in the user's
+  // ("Press Ctrl+B", "Clear Long Text") and the goal is written in the user's
   // words; the body is weakest, and a long page must not win on length.
   const title = `${entry.id} ${entry.title}`.toLowerCase();
   const headings = `${entry.section} ${entry.headings ?? ''}`.toLowerCase();
@@ -359,32 +401,6 @@ export function scrubRecipeIds(text) {
       // attached to its number.
       .replace(/(?<=\S)[ \t]{2,}/g, ' ')
   );
-}
-
-function genExcerpt(text, terms) {
-  // Headings are dropped: the top one repeats the title the caller already
-  // shows, which made every answer say the same thing twice.
-  const lines = text.split(/\r?\n/).filter((line) => {
-    return !line.startsWith('#');
-  });
-  const hitIndex = lines.findIndex((line) => {
-    const lowerLine = line.toLowerCase();
-    return terms.some((term) => {
-      return lowerLine.includes(term);
-    });
-  });
-  if (hitIndex === -1) {
-    return lines
-      .filter((line) => {
-        return line.trim();
-      })
-      .slice(0, 3)
-      .join('\n');
-  }
-  return lines
-    .slice(Math.max(0, hitIndex - 1), hitIndex + 4)
-    .join('\n')
-    .trim();
 }
 
 // A recipe for another window is worse than no recipe: it names buttons that
@@ -539,7 +555,7 @@ function toQuestionKey(text) {
     .trim();
 }
 
-export function findKnownQuestionRecipe(query) {
+export function findKnownQuestionRow(query) {
   const key = toQuestionKey(query);
   if (key.length === 0) {
     return null;
@@ -554,7 +570,11 @@ export function findKnownQuestionRecipe(query) {
   const row = flattenQuestions(pages).find((one) => {
     return toQuestionKey(one.text) === key;
   });
-  return row?.resources?.recipe ?? null;
+  return row ?? null;
+}
+
+export function findKnownQuestionRecipe(query) {
+  return findKnownQuestionRow(query)?.resources?.recipe ?? null;
 }
 
 // Added to the top score so the known page is first whatever the words did.
@@ -571,9 +591,6 @@ export function searchHelp(
   if (terms.length === 0) {
     return [];
   }
-  // The excerpt is quoted to a person, so it looks for any word the query
-  // reaches -- theirs or the app's -- and shows the line carrying it.
-  const excerptTerms = terms.flat();
   const counted = listKnowledgeEntries()
     .filter((entry) => {
       return kind === 'manual' || kind === 'internal'
@@ -616,7 +633,12 @@ export function searchHelp(
   // A supported question's own recipe goes first, marked, so a caller can
   // tell a label from a guess. Only the manual can be filed under: the
   // internal corpus is never the answer to a question a user picked.
-  const knownId = kind === 'internal' ? null : findKnownQuestionRecipe(query);
+  const knownRow = kind === 'internal' ? null : findKnownQuestionRow(query);
+  const knownId = knownRow?.resources?.recipe ?? null;
+  // What a supported question is about -- its control, its menu item, its
+  // key -- says which PASSAGE of its page to quote, whatever the words did.
+  const knownAnchors =
+    knownId === null ? [] : genQuestionAnchors(knownRow.resources);
   const known =
     knownId === null
       ? undefined
@@ -648,9 +670,23 @@ export function searchHelp(
       surface: entry.surface ?? null,
       score: Math.round(score),
       ...(isKnownQuestion === true ? { isKnownQuestion: true } : {}),
+      // The passage that answers, quoted whole (`passageMatch.mjs`). It used
+      // to be the first line carrying ANY word of the query and the four
+      // lines after it: measured 2026-10-12 over the 398 supported questions
+      // that name a page, that quoted the control the question is about for
+      // 37 of 166 (now 160), its key for 11 of 35 (28) and its menu for 4 of
+      // 14 (14), and 252 excerpts stopped mid-sentence without saying so.
+      // "am" in "What version of the app am I running?" was found inside
+      // "the same", so the answer to it was the find bar's Enter key.
       excerpt: resolveTranTemplates(
         scrubRecipeIds(
-          toEnglishOnly(genExcerpt(entry.searchText, excerptTerms)),
+          toEnglishOnly(
+            genPassageExcerpt(
+              entry.searchText,
+              terms,
+              isKnownQuestion === true ? knownAnchors : [],
+            ),
+          ),
         ),
         langCode,
         tranBundle,
@@ -689,7 +725,13 @@ export function genFreshPageUrl(entry) {
   );
 }
 
-export function readHelpPage(id, langCode = null) {
+/**
+ * One knowledge document. `part` is which part of a manual page too long for
+ * one read (1 by default; past the last, the last), or `'whole'` for a
+ * caller that sends none of it to a model -- the walkthrough card is built
+ * from every step.
+ */
+export function readHelpPage(id, langCode = null, part = 1) {
   const wantedId = id.trim().toLowerCase();
   const entry = listKnowledgeEntries().find((item) => {
     return (
@@ -705,10 +747,23 @@ export function readHelpPage(id, langCode = null) {
   // `[en:tran:Clear` to read out to somebody.
   const tranBundle = loadTranBundle();
   const toPageBody = (raw) => {
-    return toBoundedBody(
-      resolveTranTemplates(raw, langCode, tranBundle),
-      entry.kind,
+    const text = resolveTranTemplates(raw, langCode, tranBundle);
+    if (part === 'whole') {
+      return { body: text, part: 1, partCount: 1 };
+    }
+    if (entry.kind !== 'manual') {
+      return { body: toBoundedBody(text, entry.kind), part: 1, partCount: 1 };
+    }
+    const parts = toPageParts(text);
+    const wanted = Math.min(
+      Math.max(Math.trunc(Number(part)) || 1, 1),
+      parts.length,
     );
+    return {
+      body: parts[wanted - 1] + genPagePartNote(wanted, parts.length),
+      part: wanted,
+      partCount: parts.length,
+    };
   };
   try {
     const content = readFileSync(entry.absolutePath, 'utf-8').slice(
@@ -717,13 +772,13 @@ export function readHelpPage(id, langCode = null) {
     );
     return {
       ...entry,
-      body: toPageBody(toManualPageBody(content)),
+      ...toPageBody(toManualPageBody(content)),
       // The day this copy was generated, for telling it from the newest one.
       date: readManualPageDate(content),
     };
   } catch (_error) {
     // Indexed but unreadable (a partial install): the index copy still
     // answers something rather than nothing.
-    return { ...entry, body: toPageBody(entry.searchText), date: null };
+    return { ...entry, ...toPageBody(entry.searchText), date: null };
   }
 }

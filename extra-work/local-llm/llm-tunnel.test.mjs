@@ -8,11 +8,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
     ALLOWED_CALLS,
+    CHECK_AGENT,
     DOOR_HEADER,
     checkIsPublishOwed,
     checkIsTunnelAnswering,
+    REPORT_PATH,
     genDefaultId,
     genRegistryServer,
+    genReportRegistryServer,
     getPlatformDirName,
     listCloudflaredCandidates,
     mergeRegistry,
@@ -136,7 +139,219 @@ describe('readArgs', () => {
             isPublishing: true,
             outDir: '/tmp/out',
             logFile: '/tmp/tunnel.log',
+            isReports: false,
+            isWithReports: false,
+            dbFile: '',
         });
+    });
+
+    // --with-reports: the tunnel to an LLM server takes reports as well.
+    it('lets a tunnel to an LLM server take reports too, at its own address', async () => {
+        const args = readArgs(['--port', '1237', '--with-reports']);
+        expect(args).toMatchObject({
+            isWithReports: true,
+            isReports: false,
+            // Still the LLM server's tunnel: its own name and id.
+            name: 'Church LM Studio',
+            id: 'llm-1237',
+        });
+        expect(
+            readArgs(['--with-reports', '--db', '/data/in.sqlite']).dbFile,
+        ).toBe('/data/in.sqlite');
+        // The inbox alone, or beside an LLM server: not both.
+        expect(readArgs(['--with-reports', '--reports'])).toBeNull();
+        const models = [{ model: 'qwen/qwen3.5-9b', name: 'Qwen 3.5 9B' }];
+        const entry = genRegistryServer(
+            args,
+            `${TUNNEL_URL}/v1`,
+            KEY,
+            'LM Studio',
+            models,
+        );
+        // ONE entry, marked: an assistant, and where reports are posted.
+        expect(entry).toMatchObject({
+            id: 'llm-1237',
+            baseUrl: `${TUNNEL_URL}/v1`,
+            models,
+            isAcceptingReport: true,
+        });
+        expect(
+            findRegistryProblems(
+                mergeRegistry({}, entry, 'llm-1237', '2026-10-13'),
+            ),
+        ).toEqual([]);
+        // Without the option the entry is as it always was.
+        expect(
+            genRegistryServer(
+                readArgs([]),
+                `${TUNNEL_URL}/v1`,
+                KEY,
+                'x',
+                models,
+            ),
+        ).not.toHaveProperty('isAcceptingReport');
+    });
+
+    it('keeps a report posted to its own address and passes the chat calls on', async () => {
+        const { openReportTaker } = await import('./llm-report-inbox.mjs');
+        const upstreamCalls = [];
+        const upstream = http.createServer((req, res) => {
+            upstreamCalls.push(`${req.method} ${req.url}`);
+            res.writeHead(200, { 'content-type': 'application/json' });
+            res.end('{"data":[]}');
+        });
+        await new Promise((resolve) => {
+            upstream.listen(0, '127.0.0.1', resolve);
+        });
+        openServers.push(upstream);
+        const lines = [];
+        const say = (text) => {
+            lines.push(text);
+        };
+        const taker = await openReportTaker({ dbFile: ':memory:', say });
+        const door = await openDoor(
+            upstream.address().port,
+            KEY,
+            say,
+            '127.0.0.1',
+            taker,
+        );
+        openServers.push(door);
+        const base = `http://127.0.0.1:${door.address().port}/v1`;
+        const auth = { authorization: `Bearer ${KEY}` };
+        // The app's report: a POST of JSON to the base address itself.
+        const report = await fetch(base, {
+            method: 'POST',
+            headers: {
+                ...auth,
+                'content-type': 'application/json; charset=utf-8',
+            },
+            body: JSON.stringify({
+                version: 1,
+                prompt: '----- BEGIN REPORT OWA-261013-127b -----\n# Projector blank\n',
+                attachments: [],
+            }),
+        });
+        expect(report.status).toBe(200);
+        expect(report.headers.get(DOOR_HEADER)).toBe('1');
+        expect(await report.json()).toEqual({
+            ok: true,
+            id: 1,
+            isNew: true,
+            files: 0,
+            skipped: [],
+        });
+        expect(taker.store.find('OWA-261013-127b').title).toBe(
+            'Projector blank',
+        );
+        // It never reached the LLM server.
+        expect(upstreamCalls).toEqual([]);
+        // The key is asked for first, as for every call.
+        expect(
+            (await fetch(base, { method: 'POST', body: 'no key' })).status,
+        ).toBe(401);
+        expect(taker.store.count()).toBe(1);
+        // The chat calls go where they always went.
+        expect((await fetch(`${base}/models`, { headers: auth })).status).toBe(
+            200,
+        );
+        expect(upstreamCalls).toEqual(['GET /v1/models']);
+        // The tunnel's own look at itself leaves no line; a chat call or a
+        // report that only CALLS itself the look is logged like any other.
+        lines.length = 0;
+        const look = { ...auth, 'user-agent': CHECK_AGENT };
+        await fetch(`${base}/models`, { headers: look });
+        expect(lines).toEqual([]);
+        await fetch(`${base}/chat/completions`, {
+            method: 'POST',
+            headers: look,
+            body: '{}',
+        });
+        await fetch(base, { method: 'POST', headers: look, body: 'a report' });
+        expect(lines).toHaveLength(2);
+        expect(lines[0]).toContain('POST /v1/chat/completions  200');
+        expect(lines[1]).toContain('POST /v1  200');
+        taker.store.close();
+    });
+
+    it('opens no report call on a tunnel started without the option', async () => {
+        const upstream = http.createServer((_req, res) => {
+            res.writeHead(200);
+            res.end('{}');
+        });
+        await new Promise((resolve) => {
+            upstream.listen(0, '127.0.0.1', resolve);
+        });
+        openServers.push(upstream);
+        const door = await openDoor(upstream.address().port, KEY, () => {});
+        openServers.push(door);
+        const response = await fetch(
+            `http://127.0.0.1:${door.address().port}/v1`,
+            {
+                method: 'POST',
+                headers: { authorization: `Bearer ${KEY}` },
+                body: 'a report',
+            },
+        );
+        expect(response.status).toBe(404);
+    });
+
+    // --reports: the door is the report inbox, not an LLM server.
+    it('carries the report inbox under a name and an id of its own', () => {
+        expect(readArgs(['--reports'])).toMatchObject({
+            isReports: true,
+            dbFile: '',
+            name: 'Report inbox',
+            id: 'reports',
+        });
+        expect(
+            readArgs([
+                '--reports',
+                '--db',
+                '/data/inbox.sqlite',
+                '--name',
+                'Church reports',
+                '--id',
+                'church-reports',
+                '--publish',
+            ]),
+        ).toMatchObject({
+            isReports: true,
+            dbFile: '/data/inbox.sqlite',
+            name: 'Church reports',
+            id: 'church-reports',
+            isPublishing: true,
+        });
+        // A tunnel to an LLM server keeps its own defaults.
+        expect(readArgs([])).toMatchObject({
+            isReports: false,
+            name: 'Church LM Studio',
+        });
+        // The file is the inbox's, and has to be named.
+        expect(readArgs(['--db', '/data/inbox.sqlite'])).toBeNull();
+        expect(readArgs(['--reports', '--db'])).toBeNull();
+    });
+
+    it('names the inbox in the registry as an entry that takes reports', () => {
+        const entry = genReportRegistryServer(
+            readArgs(['--reports']),
+            `${TUNNEL_URL}${REPORT_PATH}`,
+            KEY,
+        );
+        expect(entry).toEqual({
+            id: 'reports',
+            name: 'Report inbox',
+            baseUrl: 'https://quiet-river-1234.trycloudflare.com/report',
+            apiKey: KEY,
+            isAcceptingReport: true,
+            note: expect.any(String),
+        });
+        // No models, and still one the app -- and the publisher -- takes.
+        expect(
+            findRegistryProblems(
+                mergeRegistry({}, entry, 'reports', '2026-10-13'),
+            ),
+        ).toEqual([]);
     });
 
     it('gives each server an id of its own, so two tunnels are two entries', () => {
@@ -810,6 +1025,49 @@ describe('the registry entry', () => {
             updated: '2026-10-11',
             servers: [other, another],
         });
+    });
+
+    // An address that takes the app's problem reports is kept by hand and
+    // names no model: a tunnel publishing beside it must neither drop it
+    // nor be refused its own publish because of it.
+    it('leaves an entry that takes reports where it is, and still publishes', () => {
+        const reporting = {
+            id: 'reporting',
+            name: 'Report inbox',
+            baseUrl: 'https://reports.example.com/report',
+            apiKey: 'sk-report',
+            isAcceptingReport: true,
+        };
+        const merged = mergeRegistry(
+            { version: 1, servers: [reporting] },
+            server,
+            'church-llm',
+            '2026-10-13',
+        );
+        expect(merged.servers).toEqual([reporting, server]);
+        expect(findRegistryProblems(merged)).toEqual([]);
+        const closed = mergeRegistry(merged, null, 'church-llm', '2026-10-13');
+        expect(closed.servers).toEqual([reporting]);
+        expect(findRegistryProblems(closed)).toEqual([]);
+        // Still held to a name and an address the app can post to.
+        expect(
+            findRegistryProblems({
+                version: 1,
+                servers: [
+                    { ...reporting, name: '' },
+                    { ...reporting, id: 'two', baseUrl: 'reports.example' },
+                    {
+                        ...reporting,
+                        id: 'three',
+                        baseUrl: 'https://reports.example.com/r?to=me',
+                    },
+                ],
+            }),
+        ).toEqual([
+            'servers[0].name is missing',
+            'servers[1].baseUrl must be an http(s) address',
+            'servers[2].baseUrl takes reports and must carry no "?" or "#"',
+        ]);
     });
 
     it('leaves an empty registry when it was the only server', () => {

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-22, ST-52, ST-58, LT-02, LT-03, LT-04]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
@@ -46,6 +46,11 @@ workflowsVersion: "2026-10-11"
 3. **[en:tran:Bible]** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
    or export/import a **[en:tran:Bible Data]** archive. The old online version list is
    development-only and can be unavailable. 📸
+   **An installed Bible has no on/off switch.** Every Bible in that list is offered
+   wherever a version is chosen. To stop one being offered, take it off the computer: the
+   trash icon on its row, **[en:tran:Move to Trash]**, asks first
+   (**[en:tran:Delete Bible XML]**) and sends its file to the Recycle Bin, from where it
+   can be brought back or imported again.
 4. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
 
 ::: details 🤖 Robot-verified — coverage traceability
@@ -53,5 +58,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-22` · `ST-52` · `ST-58` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

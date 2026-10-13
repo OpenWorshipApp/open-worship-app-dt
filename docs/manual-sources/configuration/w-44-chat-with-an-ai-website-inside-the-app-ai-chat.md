@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [CB-68]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-44 — Chat with an AI website inside the app (AI Chat)
 
@@ -13,7 +13,8 @@ workflowsVersion: "2026-10-11"
 Copilot — the company's own website, with your own account — in a window beside the app,
 the way a browser's AI sidebar does, without leaving the app.
 
-This is not the app's own assistant (W-42): nothing here reads this manual or presses
+**The ✨ is not the 🤖.** The **🤖** is the app's own assistant: it answers from this
+manual and can point at things in the app. This is not the app's own assistant (W-42): nothing here reads this manual or presses
 anything in the app, and no API key is needed. It is the site itself, in a box.
 
 1. Click the **✨** ([en:tran:AI Chat]) button in the top-right corner of the window, right
@@ -98,5 +99,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

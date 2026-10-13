@@ -44,8 +44,10 @@ import {
     readSongLookupYours,
     readSongTitleAsk,
 } from './lyricDraftHelpers';
+import { toShownPage } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import { callTool, parseToolJson } from './mcpClient';
 import { toSiteName } from './progressHelpers';
+import { checkIsOwnWindowQuestion, readWholePage } from './questionHelpers';
 import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
 import { describeScreenContent } from '../../tools/owa-devtools-mcp/agentScreens.mjs';
 import {
@@ -423,6 +425,34 @@ export function genBackToPresenterRoute(focus: BotFocusType): string | null {
     return null;
 }
 
+/**
+ * What a window of its OWN lacks, said once in the model's prompt for that
+ * window: the Lyric Editor, a Bible Note, the Web Editor, Settings and Local
+ * Web Share open OVER the main window and have none of its panels. Measured
+ * 2026-10-13 on a local model, _How do I see what a song will look like on
+ * screen?_ asked from the Lyric Editor: the Presenter's steps came back as
+ * steps "while you are in the Lyric Editor" -- click a verse to send it to
+ * the screen, in a window that has no verse to click. The Bible Reader and
+ * the Slide Editor are told theirs through `genBackToPresenterRoute`; a
+ * window of its own has no tab or button back, because the main window never
+ * went away. Empty for a page of the main window.
+ */
+export function genOwnWindowFact(focus: BotFocusType): string {
+    const descriptor = getBotFocus(focus);
+    if (descriptor === null || descriptor.isMainWindow) {
+        return '';
+    }
+    return (
+        ` The **${descriptor.label}** is a window of its own, opened over` +
+        " the main window, and has NONE of the Presenter's panels -- no" +
+        ' Documents list, no previewer, no Presenting Flows, no Background' +
+        ' or Foreground panel, no Mini Screen. When the steps you found use' +
+        ' one of them, say in step 1 that this part is done in the main' +
+        ' window, the Presenter, which is still open behind this one, and' +
+        ' the rest follow from there.'
+    );
+}
+
 // The Presenter's panels, as the manual names them. A recipe that uses one
 // of these is a Presenter recipe whatever page it was asked from.
 const PRESENTER_PANEL_PATTERN =
@@ -451,17 +481,75 @@ export function genBackToPresenterLead(focus: BotFocusType, text: string) {
     );
 }
 
+/**
+ * "Where is …?" asked about a window that is not up. Nothing in a window
+ * nobody opened can be pointed at, and the tool says so in its own words --
+ * measured 2026-10-12 with no assistant, the whole corpus asked as each of
+ * the five windows of their own: _Where are the settings?_ was answered _I
+ * could not answer that: The app has no open page matching "setting.html".
+ * The open pages are: chatbot.html?uuid=chatbot, presenter.html._, ten times
+ * in 540. The answer is the way INTO that window, outlined where one control
+ * is the way and never pressed: a question is not a request to change what
+ * the main window shows (a walkthrough is -- `genPageOpenAnswer`).
+ */
+async function genWindowNotOpenAnswer(
+    error: any,
+    target: string,
+): Promise<BotAnswerType | null> {
+    const wantedPage = NO_OPEN_PAGE_PATTERN.exec(error?.message ?? '')?.[1];
+    if (wantedPage === undefined) {
+        return null;
+    }
+    const descriptor = getBotFocus(detectBotFocus(wantedPage) ?? '');
+    if (descriptor === null) {
+        return null;
+    }
+    let isOutlined = false;
+    if (descriptor.openFind !== null) {
+        try {
+            const opener = parseToolJson(
+                await callTool('owa_find_ui', {
+                    text: descriptor.openFind,
+                    highlight: true,
+                    anyPage: true,
+                }),
+            );
+            isOutlined = (opener?.matches ?? []).some((match: any) => {
+                return match.isVisible;
+            });
+        } catch (_error) {
+            // The words alone still say where to press.
+        }
+    }
+    return {
+        text:
+            `**${descriptor.label} is not open**, so I cannot point at ` +
+            `"${target}" in it. To get there: ${descriptor.howToOpen}` +
+            (isOutlined ? ' — I have outlined it in red' : '') +
+            '. Then ask me again.',
+    };
+}
+
 export async function answerWhereIs(
     target: string,
     focus: BotFocusType,
 ): Promise<BotAnswerType | null> {
-    const found = parseToolJson(
-        await callTool('owa_find_ui', {
-            text: target,
-            highlight: true,
-            page: `${focus}.html`,
-        }),
-    );
+    let found: any;
+    try {
+        found = parseToolJson(
+            await callTool('owa_find_ui', {
+                text: target,
+                highlight: true,
+                page: `${focus}.html`,
+            }),
+        );
+    } catch (error: any) {
+        const answer = await genWindowNotOpenAnswer(error, target);
+        if (answer === null) {
+            throw error;
+        }
+        return answer;
+    }
     if (found === null || found.count === 0) {
         // The matcher says which labels came closest -- "reference box"
         // finds nothing, but the "Bible Reference" box is right there.
@@ -1063,8 +1151,15 @@ export async function answerFromManual(
     }
     const [first, ...rest] = hits;
     const hitText = genHitText(first);
+    // The way across is for a Presenter recipe read from another page -- not
+    // for a question that page's own list offers (`checkIsOwnWindowQuestion`).
+    const lead =
+        genBackToPresenterRoute(focus) === null ||
+        (await checkIsOwnWindowQuestion(question, focus))
+            ? ''
+            : genBackToPresenterLead(focus, hitText);
     return {
-        text: genBackToPresenterLead(focus, hitText) + hitText,
+        text: lead + hitText,
         actions: [
             ...genGuideActions(first, focus, false, question),
             {
@@ -1478,6 +1573,26 @@ export async function runBotAction(
                 `${status.stepCount}, and the button that step is about is ` +
                 'circled in red. Press **Next** on the card when you have ' +
                 'done it — or just do it, and the card moves on by itself.',
+            isNeedingModel: false,
+        };
+    }
+    // A guide page a PERSON asked to read (**Read the whole thing**): every
+    // part of it, and nothing of what the page tool writes at its foot for a
+    // model -- the address of the page's newest copy "to read with
+    // owa_read_website", and that a long page goes on. Shown as the tool
+    // returned it, both were printed under the page.
+    const pageId = action.args?.id;
+    if (action.toolName === 'owa_help_page' && typeof pageId === 'string') {
+        const page = toShownPage(
+            await readWholePage(pageId, (id, part) => {
+                return callTool(
+                    'owa_help_page',
+                    part === undefined ? { id } : { id, part },
+                );
+            }),
+        );
+        return {
+            text: page.length > 0 ? page : 'Done.',
             isNeedingModel: false,
         };
     }

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import { genRefCountedScreenUpdateSubscriber } from '../_screen/managers/screenUpdateSubscriberHelpers';
@@ -343,7 +343,7 @@ const screenUpdateSubscriber = genRefCountedScreenUpdateSubscriber(() => {
     return [
         ScreenVaryAppDocumentManager,
         ScreenBackgroundManager,
-        ScreenBibleManager,
+        ScreenLongTextManager,
         ScreenForegroundManager,
     ];
 }, refreshAllSubscribers);

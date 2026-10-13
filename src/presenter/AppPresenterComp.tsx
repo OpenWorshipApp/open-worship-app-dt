@@ -15,6 +15,7 @@ import { toWidgetLabel } from '../others/labelIconHelpers';
 import DataArchiveAppMenuComp from '../setting/data-archive/DataArchiveAppMenuComp';
 import { useAppEffect } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
+import { useKeyingAreaTakeOver } from '../keyboard-shortcut/keyingAreaHelpers';
 
 const LazyAppPresenterLeftComp = lazy(() => {
     return import('./AppPresenterLeftComp');
@@ -43,6 +44,9 @@ export default function AppPresenterComp() {
             })
             .catch(handleError);
     }, []);
+    // An operator holding a remote cannot click a panel back into focus: three
+    // quick presses of a next key hand the keys to what is being presented.
+    useKeyingAreaTakeOver();
     const viewController = useMemo(() => {
         const newViewController = new BibleItemsViewController('presenter');
         newViewController.finalRenderer = (bibleItem: BibleItem) => {

@@ -1,7 +1,7 @@
 // Is this what a control is CALLED? For each label: whether it is a
 // dictionary key (Khmer, French), and where the code writes those exact words.
 //
-//   node .../find-label.mjs "Start Slide Show" "Clear Bible"
+//   node .../find-label.mjs "Start Slide Show" "Clear Long Text"
 //
 // What a recipe may name as `[en:tran:Key]` is a key the code draws through
 // `tran()`. A word that is in the dictionary and in no code is a label that

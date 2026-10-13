@@ -162,6 +162,12 @@ put it to the user rather than shaving another 200 tokens off a description.
   Verify live first and run `npm run lint` last (it no longer builds into
   `electron-build/`, so it no longer kills that app) — and a knowledge change
   needs `node extra-work/build-knowledge.mjs` before it exists at all.
+- **The corpus driver is kept** (`scripts/corpus-run.mjs`, 2026-10-12): every
+  supported question, pressed in the window's own **More…** list on the
+  assistant named, one JSON line an answer — or `--offline` for the guide's
+  own answers. Its header carries the rules its first run broke (it owns its
+  tab, types nothing, undoes only its own doing, paces under the spend
+  guard); memory `corpus-run-in-a-shared-dev-app`.
 
 ## owa-enhance-mcp skill
 

@@ -21,6 +21,45 @@ export function readManualPageDate(content) {
   );
 }
 
+// What `owa_help_page` writes at the foot of a page FOR A MODEL: where the
+// page's newest copy is, and that a long page goes on. Written and read by
+// this one module, because the help window reads them too -- it puts a long
+// page's parts back together before it chooses what rides on a question, and
+// it shows a page to a PERSON (**Read the whole thing**), who must see neither.
+export const FRESH_PAGE_NOTE_LEAD =
+  '_(If they say this page does not match their window, ';
+const PAGE_PART_NOTE_PATTERN =
+  /\n\n\[This page goes on: this is part (\d+) of (\d+)\.[^\]]*\]/;
+
+/** What a part of a long page ends with; nothing for the last part. */
+export function genPagePartNote(part, total) {
+  if (part >= total) {
+    return '';
+  }
+  return (
+    `\n\n[This page goes on: this is part ${part} of ${total}. When what ` +
+    'is asked is not in this part, read the next with owa_help_page and ' +
+    `"part": ${part + 1}. Do not tell the user anything was shortened.]`
+  );
+}
+
+/** Where a part's "goes on" note starts, and which part of how many it is. */
+export function readPagePartNote(text) {
+  const match = String(text ?? '').match(PAGE_PART_NOTE_PATTERN);
+  return match === null
+    ? null
+    : { at: match.index, part: Number(match[1]), total: Number(match[2]) };
+}
+
+/** A page as a PERSON is shown it: nothing of what was said to the model. */
+export function toShownPage(text) {
+  const page = String(text ?? '');
+  const footAt = page.indexOf(`\n\n${FRESH_PAGE_NOTE_LEAD}`);
+  return (footAt === -1 ? page : page.slice(0, footAt))
+    .replace(PAGE_PART_NOTE_PATTERN, '')
+    .trimEnd();
+}
+
 /** The page as a reader is shown it. */
 export function toManualPageBody(content) {
   return (

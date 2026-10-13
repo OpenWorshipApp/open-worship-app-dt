@@ -1,7 +1,8 @@
 import { app, protocol } from 'electron';
 
 import { initAiChatGuestGuard } from './aiChatGuestHelpers';
-import { enableRemoteDebugging, initAi } from './aiHelpers';
+import { checkIsAiEnabled, enableRemoteDebugging, initAi } from './aiHelpers';
+import { initConsoleLog } from './consoleLogHelpers';
 import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
 import {
     customScheme,
@@ -85,6 +86,12 @@ async function main() {
     // Same: serve `owa-devtools-mcp` and publish both agent doors. Only
     // `node:http` loads until something actually connects.
     initAi();
+    // What each window logs as an error, kept for a problem report to
+    // quote -- which only the assistant writes, so only with it on. Before
+    // the first window is made: a window is heard from the moment it exists.
+    if (checkIsAiEnabled()) {
+        initConsoleLog();
+    }
     initCustomSchemeHandler();
     initDisplayMediaHandler();
     // The AI Chat window's guest session, locked down before any guest

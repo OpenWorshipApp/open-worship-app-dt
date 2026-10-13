@@ -440,6 +440,15 @@ button.chat-engine {
   }
 }
 
+// On Auto there is nothing to pick here: who answered last, as plain words in
+// the model picker's place and with its padding, so the row does not shift
+// when a tab goes on or off Auto.
+.chat-auto-pick {
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
 .chatbot-app[data-bs-theme='light'] select.chat-pick {
   color-scheme: light;
 }
@@ -483,6 +492,45 @@ button.chat-engine {
 
   &:last-child {
     margin-bottom: 4px;
+  }
+
+  // A card that was clicked stays marked, and so does the button pressed in
+  // it (2026-10-12, the user's ask: _make the card and buttons focusable so
+  // when I clicked I still see which one got clicked_). FOCUS is the mark --
+  // `:focus`, not `:focus-visible`, which a mouse press on a button never
+  // sets -- so it is on one thing at a time and moves with the next click or
+  // Tab. The card's ring is drawn round its body (the article is wider than
+  // what it shows) in the colour of the cue marks, and its mark is lit; the
+  // button pressed inside it wears the ring every keyboard focus in this
+  // window already has. Steady: nothing here animates.
+  &:focus {
+    outline: none;
+  }
+
+  &:focus > .cue-body,
+  &:focus-within > .cue-body {
+    outline: 1px solid var(--chat-brass);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  &:focus > .cue-mark,
+  &:focus-within > .cue-mark {
+    background-color: var(--chat-brass);
+    border-color: var(--chat-brass);
+  }
+
+  button:focus,
+  [role='button']:focus {
+    outline: 2px solid var(--chat-signal);
+    outline-offset: 1px;
+  }
+
+  // The quiet row -- Copy, Ask again, the thumbs -- at full strength while
+  // it is the one pressed. Its colour is left alone: a thumb that is on
+  // keeps the colour that says so.
+  .cue-tool:focus {
+    opacity: 1;
   }
 }
 
@@ -760,6 +808,21 @@ button.chat-engine {
     opacity: 1;
     color: var(--chat-text);
     background-color: var(--chat-panel-soft);
+  }
+}
+
+// The two thumbs beside Copy: icons, a little larger than the lettering they
+// stand next to so the hand reads at a glance. The one pressed stays filled
+// and at full strength -- the only colour change in the row, and a steady
+// one (nothing here animates).
+.cue-rate {
+  font-size: 12.5px;
+  letter-spacing: 0;
+  line-height: 1;
+
+  &.cue-rate-on {
+    opacity: 1;
+    color: var(--chat-signal);
   }
 }
 
@@ -1295,6 +1358,26 @@ button.chat-engine {
     object-fit: cover;
     border-radius: 3px;
   }
+}
+
+// The number a chip is called by in the words typed beside it ("in 2 the
+// button is missing"). Inked the other way round from the chip so it reads
+// as a label on it, not as part of the name.
+.chat-clip-number {
+  flex: none;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background-color: var(--chat-clip-ink);
+  // The SOLID ground, not the panel: on a glassy window the panel is a 7%
+  // wash, and a digit drawn in it is a blank disc.
+  color: var(--chat-solid);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 // The copy icon every picture chip carries: the picture onto the clipboard

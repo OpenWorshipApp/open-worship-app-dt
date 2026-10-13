@@ -23,7 +23,7 @@
  * (`BibleItem.fromTitleText`, the one the lookup box and the reader use, in
  * every locale it knows -- the version's full book name, never a short form,
  * and a whole chapter widened to all its verses here), presents it exactly as the
- * lookup's **Show bible item** does (`ScreenBibleManager.handleBibleItemSelecting`
+ * lookup's **Show bible item** does (`ScreenLongTextManager.handleBibleItemSelecting`
  * to the screens the user has ticked), and reads the screen back so the tool
  * answers what is on it now rather than what was pressed.
  *
@@ -35,7 +35,7 @@
  *   not load in every window because somebody might ask.
  * - Nothing is written to disk. The lookup's double-click also SAVES the
  *   verse into the Bibles list; this deliberately does not, so the whole
- *   effect is on the screen and **Clear Bible** undoes it.
+ *   effect is on the screen and **Clear Long Text** undoes it.
  * - A locked screen refuses the verse, as it refuses a click, and the answer
  *   says so instead of pretending.
  * - Whether to present at all is decided BEFORE this is called -- the model
@@ -43,7 +43,7 @@
  *   offer it otherwise; `check` resolves the reference without touching a
  *   screen, for the offer and for "what does it say".
  */
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import appProvider from '../server/appProvider';
@@ -249,7 +249,7 @@ function toScreenState(screenId: number): AgentBibleScreenType | null {
         isShowing: screenManager.isShowing,
         isLocked: screenManager.isLocked,
         bible: toBibleSummary(
-            ScreenBibleManager.getInstance(screenId)?.screenViewData ?? null,
+            ScreenLongTextManager.getInstance(screenId)?.screenViewData ?? null,
         ),
     };
 }
@@ -355,7 +355,7 @@ export async function handleAgentBibleRequest(
     // the screens are the ticked ones, which is what a double-click in the
     // lookup would use too. The manager itself steps over a locked screen
     // with a toast, so only the unlocked ones change.
-    await ScreenBibleManager.handleBibleItemSelecting(null, bibleItem);
+    await ScreenLongTextManager.handleBibleItemSelecting(null, bibleItem);
     const after = targetScreens
         .map((screenManager) => toScreenState(screenManager.screenId))
         .filter((one): one is AgentBibleScreenType => one !== null);

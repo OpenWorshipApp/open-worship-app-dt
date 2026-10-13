@@ -30,7 +30,11 @@ The primary evidence source. You cannot improve answers you have not read.
 
 1. **Ask the corpus below** through the real window (or `verify-chatbot-e2e.mjs`
    plumbing), presenter and reader, both providers if the change is
-   provider-neutral.
+   provider-neutral. For the WHOLE supported-question corpus — every page,
+   one assistant — `scripts/corpus-run.mjs` does the asking and keeps the
+   transcripts; a pass with `--offline` first (the guide alone, ~6 s a
+   question, free) is the baseline a model has to beat and finds what no
+   model is needed to find.
 2. **Grade each answer** on the scorecard.
 3. **Keep the transcript.** Quote the bad ones in the backlog item you file — a
    verbatim bad answer is what makes an improvement provable later.

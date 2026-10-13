@@ -45,8 +45,15 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   purpose.
 - **Chatbot**: `html/chatbot.html` → `src/chatbot/*`, opened by the **🤖**
   (`ChatbotButtonComp`, left of Help on the presenter, slide editor and reader
-  — the only windows with a top bar), Help → _App Help (Chatbot)_, or
-  `AppAssistantComp` (above). The 🤖 STAYS when the master switch is off: the
+  — the only windows with a top bar), Help → _App Help (Chatbot)_, the Help
+  button's own **[en:tran:Open Chatbot]** (2026-10-12, the user's ask: the
+  **?** opens a two-row menu, **[en:tran:Open Online Help]** over it, instead
+  of going straight to the website; it runs the 🤖's own press,
+  `openChatbotOnPress`, so the switch and the caution are asked there too),
+  or `AppAssistantComp` (above — which since the same day also answers Help →
+  **[en:tran:Open Online Help]**, the menu's first row, through
+  `src/server/onlineHelpHelpers.ts`, a leaf module both ways in share). The 🤖
+  STAYS when the master switch is off: the
   press reads the switch and offers Settings → Others, because a vanished
   button explains nothing; the Tools entry withdraws (a menu item cannot
   explain itself). It talks to the MCP host over HTTP (port from
@@ -84,6 +91,32 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     only seed a NEW tab. Three models each for Claude, ChatGPT and Kimi (speed + list price on
     hover) plus _More models…_ (the account's `models.list`); a non-reasoning
     OpenAI model gets no `reasoning_effort`.
+  - **The assistant list ends in Auto, and a tab on it STAYS on it**
+    (2026-10-12, the user's ask with the space under **Free** circled; the
+    choosing is in `chatbot-llm.md`). `AUTO_ASSISTANT_VALUE` (`::auto::`) is an
+    `<option>` drawn after the rows, not a row of `genAssistantRows` — it is
+    no provider and no server, always able to answer and last, so no arrow has
+    to step over it. **Auto is the default** (2026-10-13, the user's ask
+    with the row circled: _make `Auto` be selected by default_;
+    `toIsLlmAuto`): a new tab starts on it while `chatbot-llm-auto` was
+    never written, and a named pick writes `false` — but a provider
+    stored with nothing in that setting is a pick made before Auto
+    existed, and stands. Picking it sets `isAuto` on the tab (and
+    `chatbot-llm-auto` for the next new tab) with NOTHING asked of any
+    server: a pick in a list must not be a wait. Where the model picker
+    stood, **AUTO PICK** (`RenderAutoPickComp`, plain text — a disabled list
+    is greyed past reading, and `verify-chatbot-e2e.mjs` already takes a
+    missing model list) reads _chosen at each question_ until a question has
+    been put, then `autoPick`, who answered last; the folded head reads
+    `<window> · Auto · <who>`. A named row ends Auto and drops both fields.
+    The image check is skipped at the press (Auto picks among the models
+    that see) and the custom-server shortcuts follow the tab's last pick.
+    **An Auto tab carries its own notice** (`AUTO_ASSISTANT_WARNING`, through
+    `RenderProviderWarningComp`'s `isAuto`): the keyless service is always
+    one Auto may ask, so the trade is said BEFORE the first question, and it
+    names the service in its first sentence — all a folded notice shows. Its
+    subject is Auto, not the provider underneath, or it would unfold itself
+    at every pick.
   - **The head folds to ONE line, by hand** (2026-10-09, the user's ask with a
     picture of the head circled: _make the area collapsible_;
     `headCollapseHelpers.ts`). The arrow in the slim rail at the head's left
@@ -149,7 +182,8 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     (`electron/llmRegistryHelpers.ts`, `docs/llm-registry/README.md`:
     `https://www.openworship.app/llm/info.json`, read by main at launch and
     on the chatbot's ↻ beside the Assistant picker, its servers offered as
-    `registry-<id>` rows with their keys held in main, `isFree` pricing them
+    `registry-<id>` rows with their keys and addresses held in main (a
+    window holds a stand-in address, 2026-10-12), `isFree` pricing them
     at $0; a failed read keeps the last good list and says why on the
     button's tooltip) — only `GET /models`, the four root reads below and `POST /chat/completions`, with
     the key read in main — the chatbot CSP is NOT widened and a custom key
@@ -215,7 +249,12 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     (`quickReplyHelpers.ts`) always strips (own line or inline at the end);
     failing that, the answer's trailing yes/no or either-or question, then the
     nearest corpus questions (`genFollowUpQuestions`). LAST message only,
-    never duplicating an action button, both rows capped at 5.
+    never duplicating an action button, both rows capped at 5. An option
+    loses the quote marks a model put round it, and two things are not
+    options at all (`toReplyList`, 2026-10-12, a local model's chips): one
+    that says there is none (_No options available_, drawn as a button
+    under a state answer) and a decline with nothing beside it to decline
+    (_No thanks_ alone — a round spent on being told nothing was wanted).
     **Walkthrough** buttons (`genGuideActions`) walk the recipe the model
     SETTLED on: `applyToolWatch` prefers the last `owa_help_page` opened, lets
     a later search overwrite an earlier one, and offers nothing once the model
@@ -274,7 +313,22 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   selector) and the picture lives in a bounded in-memory map that dies with the
   window; a reopened tab shows the chip greyed. `toValidAttachments` LISTS the
   fields it copies rather than spreading, so a hand-edited file cannot smuggle
-  a `dataUrl` back in. Images are cut to a 1024px long edge — the provider
+  a `dataUrl` back in. **Every attachment carries a NUMBER** (2026-10-13,
+  the user, with a picture of four chips all named _my screen_: _attachment
+  should have id like `1` `2` `3` ... so user can mention in the text_):
+  `numberAttachments` gives each the tab's next — one past the highest on any
+  message of the tab or still in its box — when it is ATTACHED, and it is
+  never changed after, because _in 2 the button is missing_ must still mean
+  that picture once another chip is taken off (1 · 3, then 4; only the last
+  chip's number is free again). It is drawn on the chip
+  (`.chat-clip-number`, inked in `--chat-solid` — the panel colour is a 7%
+  wash on a glassy window and drew a blank disc), persisted with the
+  message, and TOLD to the model: `toAttachmentLegend`, last in
+  `toAskedOfModel`, lists each number with what it is, a picture by its
+  ORDER among the ones sent, since a model is handed pictures with no names
+  on them. `toAttachmentNote` names them (_picture [2]_) in the history, and
+  a report's file list says _(attachment 2)_. A chip an answer draws has
+  none. Images are cut to a 1024px long edge — the provider
   charges by DIMENSIONS, so re-encoding without resizing saves bytes and not one
   token, and the first user message is re-sent on every one of up to ten rounds.
   PNG unless that comes back photo-sized: the subject is small text and thin
@@ -384,7 +438,8 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   the user's own ask, both icons circled in a picture). `askAiCaution`
   (`src/helper/ai/aiCautionHelpers.ts`) is ONE confirm — _Be careful with AI_,
   **Cancel** / **Open** — in front of every user-initiated route into the 🤖
-  and the ✨: the two toolbar buttons, the two Tools entries (Ctrl+Shift+A
+  and the ✨: the two toolbar buttons, the Help button's
+  **[en:tran:Open Chatbot]**, the two Tools entries (Ctrl+Shift+A
   included) and the two native Help items, which land on the IPC receivers in
   `domHelpers`. A caution a menu item walks around is a caution nobody is
   given. One of its three sentences is shared and two — the risk and the closing advice — are NOT, because the
@@ -565,19 +620,127 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   it, never a Clear) and `readSlideShowAsk` → `answerSlideShowAsk` (the
   slide named, **Put "…" on the screen** running `/slide N`; a sentence
   naming no slide of the song — a passage — falls through to the model).
+  **And a third, 2026-10-13** (`readSlideStepAsk` → `answerSlideStepAsk`,
+  tried before the slide-by-words reader or _the next slide_ is looked up
+  as a slide of that name): _Show the next slide?_ / _show the previous
+  slide_ name the slide `selectedDocument.next` / `.previous` point at and
+  offer the same one button — asked of the model at temperature 0, it
+  pressed **Slide 1** itself, said nothing of it and told the volunteer
+  to click **Slide 2**, every time.
+  **And a fourth, the same day** (`readWhereIsAsk` → `answerWhereIsAsk`):
+  _Where is the button for Clear All_ — the list's own fill-in, finished
+  — is answered by the guide's own `answerWhereIs`, the control outlined,
+  with no model round. Only when the window has a control CALLED that on
+  show (a tier-0 match, or the ONE control the words fit: **Clear All
+  [F6]**), and never for a question the list has a PAGE for:
+  `findKnownQuestion` takes every where-is for the fill-in's own row by
+  its phrase, so the test is the row's `recipe`, not the row. Asked of
+  the model it was four rounds, 42 500 tokens and _in the header section
+  of the Presenter window_; the button is in the Mini Screen panel.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it
   takes a picture BEFORE investigating, reads the build, window, screens and
   console itself — trimmed, since `owa_app_state` carried the data directory
-  and dev component names until 2026-09-09 — then asks the model through `askLlmBot` DIRECTLY,
+  and dev component names until 2026-09-09 — **the console from the MAIN
+  process** (`main:app:recent-console`, `electron/consoleLogHelpers.ts`: the
+  last forty errors and warnings of each of the app's own windows, heard
+  since the window was made, a repeated line counted once, Electron's
+  dev-mode security banner left out, through the firewall's `redactSecrets`
+  before it leaves main and `toPathScrubbed` in the window). Until
+  2026-10-13 it asked the tool host's `list_console_messages` with no page
+  named, which that tool has refused since `chrome-devtools-mcp` 1.8 — the
+  error was swallowed and EVERY report said _Nothing was logged_; it was
+  found in the first report a person sent, about an uncaught error. That
+  tool could not have had the line anyway when the error is what opens the
+  help window: it hears a page from when its own session starts — then asks the model through `askLlmBot` DIRECTLY,
   not `handleAsking` (which would add "show me step by step" under a bug). The
   answer is a `REPORT:`/`TITLE:`/`STEPS:` frame parsed like `OPTIONS:`; no
   frame is not an error. **Nothing is sent by that**: the report waits on
   **Send report**, held in a bounded in-memory map (the message stores only
-  the reference). No tracker exists yet — `ISSUE_TRACKER_ENDPOINT` is the
-  seam; while it is null the window SAYS nothing was sent and saves
-  `OWA-<date>-<id>.md` + `.png` into Downloads with chips that open them. Send
+  the reference). **Send posts it when the shared registry names a server
+  that takes reports** (2026-10-13, the user's ask: _a shared server can be
+  type accepting report … collect information and prepare as a prompt (raw
+  text) then post to the endpoint_; `chatbot-llm.md`): the report's text
+  (`genReportPrompt` — a few lines saying what it is and which parts to
+  trust, then the report fenced as DATA, without **How to send this**) goes
+  to main over `LLM_REPORT_POST_CHANNEL` and from there to that server. The
+  window names no address and is told none; the wait is a stoppable pending
+  ask with a _Sending the report_ line. **Its FILES go with it** (the same
+  day: _accept json … and accept files like markdown pdf_):
+  `gatherReportFiles` runs at the press — the picture of the app, then
+  everything attached to the report (`readReportThreadAttachments`: every
+  `REPORT_NOTE` message of the thread, so a report written again keeps the
+  picture that came with the first words). A picture comes from the
+  window's own memory; a text file and a PDF are READ OFF THE DISK there and
+  then, size asked first, and held no longer than the sending. Each file
+  either goes or is NOTED with why (too large, not a kind a report carries,
+  no longer there), and `genReportPromptWithFiles` writes the copy that
+  says so — `report.prompt` is the words-only copy, which is also what goes
+  again, by itself, when a server answers _too large_. The prepared card
+  names the files before the press. `describePostedReport` is the one place
+  the outcome is worded: **Sent** only when a server took it — with the
+  names of the files that went and of any that did not — otherwise that
+  nothing was sent — and why, when a server refused — with the email route.
+  **Stop while it is sending** says nothing at the press: `sendReportPrompt`
+  gives main two seconds to say what became of the post, and the tab then
+  reads _Stopped. The report was not sent_ or _It had already gone when you
+  pressed Stop_ — never _stopped_ over a report that was filed.
+  Either way it saves
+  `OWA-<date>-<id>.md` + `.png` into Downloads with chips that open them.
+  **Three ways in** (same day): **Report** under Ask; the Help button's
+  third row and the native Help menu's **[en:tran:Report a Problem]**; and
+  the question an uncaught error asks before the reload one
+  (`offerErrorReporting` in `src/helper/errorReportOfferHelpers.ts`, a
+  module of its own so a test holds what the press does -- no automation
+  may answer that confirm -- once in ten minutes,
+  titled **[en:tran:Something Went Wrong]**). The last two leave a 30-second
+  request (`requestChatbotReport`) after the 🤖's own two questions, and the
+  window opens a tab on an OFFER card (`genReportOffer`) whose **Report**
+  button (`REPORT_START_TOOL_NAME`, a pseudo tool) is the press that lets
+  it look. **Every place that asks says what a report carries**
+  (`REPORT_COLLECTS_TEXT`: app version and build, system information, window
+  and selection, screens, the console log, the end of the conversation, a
+  picture) — the user's asks: _let user aware console log also collected_,
+  _system and app information also collected_. **A tab that is reporting
+  KEEPS reporting** (`readReportThread`, the user's words with a picture of
+  their own report gone wrong: _I'm trying to report but it's hard_, _chatbot
+  should keep knowing that user try to share information_ — they had typed
+  under the card and pressed **Ask**, and it was answered as a question):
+  from the offer card or a first press of Report until Send report is
+  pressed, `handleAsking` hands whatever is typed or attached to the report
+  (a line starting with a slash is still a command), more of it is ADDED —
+  the complaint is everything said for it (`genReportComplaint`), the
+  transcript shows only what was just typed — the box's attachments go with
+  it (pictures shown to a model that sees, a text file's words and a
+  pointed-at control's lines folded in after the complaint, every one of
+  them SENT with the report), and the
+  tab is called **Report: …** (`genChatSessionTitle`, the three marks in the
+  leaf `reportMarks.ts`). A report still being WRITTEN counts too (a
+  `REPORT_NOTE` message with no card yet), and words typed then are not a
+  question either: **Add** stops the write-up and starts it again with them
+  (`handleAdding`, the pending ask's `kind: 'report'`) — handed on as an
+  ordinary addition they were answered by the assistant and left out of the
+  report. **Helping comes before reporting** (the user, the same day: _some
+  problem is not issue, it is user problem so before helping user to report
+  let try to help user to resolve it first_): the investigation is asked to
+  say first whether it is something the person can put right themselves, a
+  fault or a wish, and a `TRY THIS:` marker in front of `REPORT:` becomes
+  `report.fix` — the answer is then `genFixCard` (_Try this first_, the
+  steps, **That fixed it** / **Still a problem — report it**) with the
+  report written and held back. Fixed closes the thread
+  (`REPORT_RESOLVED_NOTE`, nothing sent); Still puts up the prepared card,
+  whose report says what they were told to try. A typed _yes, thanks_ or
+  _no_ under that card is its own button (`readFixReply`, short answers
+  only — anything that says more IS more for the report). **A PDF can be
+  attached** (`kind: 'file'`, `genFileAttachment`): no bytes are held and
+  no model is shown it — the model is told it is there and cannot be opened
+  — it rides along for the report to send from its path. **A home folder
+  loses the account's name** in the console lines and in the error an offer
+  card names (`toPathScrubbed`, a leaf `fileHelpers` re-exports), and a
+  turn of the conversation is quoted cut at 2 000 characters. The prepared card carries
+  **Copy report** beside Send, so the whole text can be read BEFORE it
+  goes. Send
   is caught in `handleActing` by `REPORT_SEND_TOOL_NAME`, which the server never
   registers, so nothing outside the window can file in the user's name. **It
   says WHO wants it** (`EC-176`): the address is read off the LIVE help page
@@ -598,7 +761,15 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   save it into the Background Images folder so it can be presented. It is one
   IPC — `main:app:capture-window` → `captureWindowImage` → `capturePage` on the
   window's own web contents, which is why the chatbot popup sitting on top of
-  the app never appears in a picture of the app. The same IPC serves the
+  the app never appears in a picture of the app. **It is asked up to four
+  times** (2026-10-13, `CAPTURE_WAIT_LIST_MILLISECONDS`): a window that has
+  just loaded or RELOADED — what a window does after the error somebody is
+  about to report — or sits behind another has no frame to hand over, and
+  `capturePage` rejects with `UnknownVizError` (or answers an empty
+  image). Measured on a main window reloaded while covered: the first ask
+  failed and the one 100 ms later had the picture, and a live report had
+  gone out without its picture for that. `invalidate()` between asks; after
+  the fourth it throws a sentence, never the engine's word. The same IPC serves the
   chatbot's own 📷 and `owa_screenshot`. A snapshot bound for the chat window is
   HELD in the main process (`sendChatAttachment` / `takeChatAttachment`, exactly
   one) because the same press also opens that window, and a renderer still
@@ -644,10 +815,89 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   which redraws anything that is not PNG because Chromium's async clipboard
   takes no other image type.
 
+- **A question about READING the Bible, asked off the Bible Reader, ends
+  with the way back** (2026-10-13, the user, with a picture of _how can I
+  open bible_ answered with the Presenter's lookup steps: _the elderly user
+  might accidentally changed page to presenter … add extra follow up to let
+  user know they also should change page to reader as well as extra option
+  to open lookup panel_; `src/chatbot/readerRouteHelpers.ts`, pure, every
+  rule a test). `checkIsBibleReadingAsk` reads the question — a Bible word
+  and a reading word (read, open, find, look up, where…), and NOT a word of
+  presenting (screen, projector, slide, congregation…), which is the
+  Presenter's own work — and `genReaderRouteAdvice` adds one last paragraph
+  to the answer and a **Go to the Bible Reader** button, the window's own
+  `/goto reader` (`BUILTIN_TOOL_NAME`: the person's press, no model's),
+  whichever assistant wrote the answer and when none did. **It goes by the
+  page the main window is on NOW** (`toMainWindowFocus` over one
+  `owa_app_state`, asked for such a question only), not by the tab's
+  _asking about_: a tab keeps the page it was opened from, and the stray
+  press comes after — seen live, a tab opened from the Reader still read
+  _Bible Reader_ with the Presenter in front. Offered on the Presenter and
+  the Document Editor; never on the Reader, never in a window of its own,
+  never twice. The line goes at the END of the answer's text, not in its
+  `note`, which is drawn above an answer.
+
+- **Two thumbs under every answer, and a thumb down is FOLLOWED UP by the
+  window** (2026-10-12, `EC-259`, `src/chatbot/answerRatingHelpers.ts` — pure,
+  every rule a test; the user's asks: _each response card should have like and
+  dislike icon, when user dislike should follow up_ and _when user complain
+  about wrong answer should recommend user to try smarter model_). 👍 / 👎
+  beside **Copy** (`aria-label` _Good answer_ / _Bad answer_, `aria-pressed`,
+  filled when on) write `rating` on the message; nothing is counted or sent.
+  The first 👎 under an answer (`isFollowedUp`, so once per answer however
+  the thumb is toggled) appends a line the window writes itself, **no
+  model**: what was wrong, the three `DISLIKE_REPLY_LIST` sentences — each
+  one `checkIsDisputingAnswer` takes, so pressing it runs the dispute read of
+  the guide's newest copy; a test holds the two together — and the advice.
+  That line is `isFollowUp`: it has no thumbs, is left out of the history a
+  model is shown (joined to the answer above it, it would push that answer's
+  last line — the offer a "yes" answers — out of the clip), and
+  `findDisputedPage` looks past it to the answer it follows. Under a thumb
+  down further up the chat it names the question and offers no sentences
+  (pressed, they would dispute the LAST answer); under what a `/` command
+  printed it blames no model. **"Smarter" is one step up a list written best
+  first, and only three lists are**: `getRankedLlmModelList`
+  (`isModelListRanked` in `LLM_PROVIDER_MAP`) answers for Claude, ChatGPT and
+  Kimi — Bedrock's list is in the order to reach for them (its most capable
+  model is fourth), the keyless three are three makers' models, a custom
+  server lists what was loaded — so everywhere else, on Auto, and on the best
+  model already, the advice is words and no button. **Ask again with <model>**
+  is a pseudo tool (`ASK_SMARTER_TOOL_NAME`, caught in `handleActing`,
+  registered nowhere) read against who is answering NOW (`readSmarterAsk`: a
+  tab moved to another assistant is told so): it sets the TAB's model, leaves
+  the stored choice for new tabs alone, and asks through `handleAsking`'s
+  `options.model` — the closure still believes the old model — with
+  `SMARTER_ASK_HINT` on the ask alone and a note on the answer that this chat
+  now uses the model above, because it costs more. **A typed complaint gets
+  the same advice as the answer's note and the same button**
+  (`genComplaintAdvice`: by the dispute reader's own test, never for a known
+  question, a general one or a rescue, and not right under a follow-up that
+  has just said it); the button asks the question the complaint is ABOUT.
+  **And what was clicked stays marked** (the user, the same night: _make the
+  card and buttons focusable so when I clicked I still see which one got
+  clicked_): each `article.cue` is `tabIndex={0}`, and `.cue` styles `:focus`
+  — not `:focus-visible`, which a mouse press on a button never sets — with a
+  ring round the card's body and the signal ring on the button pressed in it,
+  steady, nothing animated. The list scrolls to its end when a message
+  ARRIVES or the tab changes (`lastMessageId`), no longer on every rewrite of
+  `messages`: a thumb on an answer further up took the card just pressed out
+  of sight.
+- **A page a PERSON asked to read is shown whole, and without what the page
+  tool says to a model** (2026-10-12, `EC-242`). **Read the whole thing**
+  under a guide answer presses `owa_help_page`, and what came back was
+  printed as it stood: since 2026-10-11 every manual page ends with _(If they
+  say this page does not match their window, read its newest copy with
+  owa_read_website: https://raw.githubusercontent.com/… )_, and a page past
+  the model's cap ended with a note that it had been shortened.
+  `runBotAction` now reads every part (`readWholePage`) and shows
+  `toShownPage` of it; `manualPage.mjs` is the one module that writes those
+  notes and takes them off again. Pressed live: the help window's own page,
+  55 560 characters to its last step, no tool name in it.
 - **A Bible is installed IN the chat, one question at a time, by buttons and
   with no model** (2026-10-06, `src/chatbot/bibleImportChatHelpers.ts`; asked
   for _for old and non-technical users_ — it used to open Settings with the
-  link typed in, leaving four fields nobody had heard of). Three ways in, the typed two
+  link typed in, leaving four fields nobody had heard of). Four ways in (the
+  fourth, a missing Bible's own card, at the end of this note), the typed two
   caught in `handleAsking` ahead of any provider, like a `/` command: a
   message with a Bible word and ONE link (`readBibleImportLinkAsk` — a file, a
   GitHub file page, a repository); a Bible word with NO link
@@ -701,3 +951,37 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   `genGuideActions` puts **Import a Bible for me** first on any answer whose
   page is `BIBLE_IMPORT_MANUAL_ID` (W-34) — the how-to is still TOLD from the
   guide, and the button is the guide's own "easy way".
+  **A Bible that is MISSING is asked for by its name** (2026-10-13, the
+  user's ask with a picture of the Reader on _Bible key "KJV" is not
+  available!_: _should have instruction for user to import in chatbot and
+  should have button to open chatbot to import the bible like kjv_).
+  `BibleNotAvailableComp` (`src/bible-lookup/RenderLookupSuggestionComp.tsx`)
+  says how in three steps and carries
+  **[en:tran:Let the assistant import this Bible for me]** — the fourth way
+  in, through the same handoff and the 🤖's own two questions. What it
+  leaves is a sentence a person could type, `Import the Bible called "KJV"`,
+  written and read by ONE leaf (`src/helper/ai/bibleImportAskHelpers.ts`, no
+  imports: the card must not pull the import conversation into the Reader),
+  so the two cannot drift. `readBibleImportLanguageAsk` decides whether it
+  is a request off the sentence WITHOUT the name (a Bible called LIST is no
+  list), searches the collection for the name (`kjv` alone is the English
+  one; a name with nothing to search by asks the language) and keeps it as
+  `wantedKey` on the state. `carry` takes it through every step by itself;
+  the buttons that write a state afresh hand it on (`keepWanted`: the
+  language question's, a dead link's two, a link pasted alone). At the
+  download it is the FIRST short name offered (`genKeyChoices`), with one
+  sentence saying why — a Bible installed under any other name leaves that
+  card exactly where it was — unless it is taken, cannot be a short name,
+  or the Bible is already installed under another name (that one is found
+  by choosing ITS name on the card, and the two sentences would say opposite
+  things). Installed, the card goes away by itself: the import ends in
+  `clearBibleXMLCache`, which tells every window, and `useSelectedBibleKey`
+  asks again. **The button's text is its name and nothing more** — drawn as
+  `… for me (KJV)` it could be found and not pressed, because a press by
+  label wants a label part EQUAL to the words (`isPressSafe`); the heading
+  above it says which Bible. Seen live on a scratch dev instance, twice
+  (once by the user's own hand): _English KJV_ and _English NKJ 1982_
+  listed, **KJV (suggested)** ahead of the file's own EK / ENGLISHKJ /
+  ENGLISH, the Reader on Genesis 1:1 with no reload; `…called "KHOV"` typed
+  — _None of them has “khov” in its name_ — and `Khmer` under it listing
+  seven Bibles with the name still on every button.

@@ -7,6 +7,10 @@ import { defaultRangeSize } from '../app-document-presenter/items/AppDocumentPre
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { presentingFlowNextEventMappers } from '../keyboard-shortcut/appShortcutMappers';
+import {
+    KEYING_AREA_PRIORITY,
+    registerKeyingArea,
+} from '../keyboard-shortcut/keyingAreaHelpers';
 import { useVarySlideThumbnailSizeScale } from '../event/VaryAppDocumentEventListener';
 import AppRangeComp, { useZoomingRegistering } from '../others/AppRangeComp';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
@@ -39,6 +43,7 @@ import {
     expandPresentingFlowPreviewItem,
     findNextPresentingFlowPreviewIndex,
     findPresentingFlowRunShortcutUuid,
+    getPresentingFlowPreviewSelectedItemKey,
     requestPresentingFlowPreviewChildEntry,
     resolvePresentingFlowPreviewSelectedIndex,
     stepPresentingFlowPreviewChild,
@@ -657,6 +662,24 @@ function PresentingFlowPreviewBodyComp({
     // actually using. `preventScroll` because the run sheet must not jump.
     useAppEffect(() => {
         containerRef.current?.focus({ preventScroll: true });
+    }, [filePath]);
+    // And it can be handed them BACK without a click. The focus above is lost
+    // to the first press anywhere else in the app, and an operator holding a
+    // remote has no mouse to return with — so the run names itself to the
+    // take-over (`keyingAreaHelpers`), ahead of the slides previews, for as
+    // long as it has a cursor to step from.
+    useAppEffect(() => {
+        return registerKeyingArea({
+            priority: KEYING_AREA_PRIORITY.presentingFlow,
+            getElement: () => {
+                return containerRef.current;
+            },
+            checkHasSelected: () => {
+                return (
+                    getPresentingFlowPreviewSelectedItemKey(filePath) !== null
+                );
+            },
+        });
     }, [filePath]);
     const getItemRevealKey = useCallback(
         (presentingFlowItem: PresentingFlowItem, index: number) => {

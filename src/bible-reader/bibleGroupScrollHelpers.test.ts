@@ -432,3 +432,155 @@ test('a follower leaving the group drops its slide', () => {
     unregister();
     expect(checkIsSubPixelScrolling(target)).toBe(false);
 });
+
+/**
+ * A pane drawn at `scale` inside a `transform: scale(...)`, as a screen's
+ * mini preview is: its rects are the size it is painted at, its scroll
+ * offsets the size it is laid out at.
+ */
+function scaledPane(scale: number, height = 200, verseHeight = 100, top = 0) {
+    const container = pane(height, verseHeight, top);
+    container.getBoundingClientRect = () =>
+        ({
+            top,
+            bottom: top + height * scale,
+            left: 0,
+            height: height * scale,
+            width: 300 * scale,
+        }) as DOMRect;
+    container
+        .querySelectorAll<HTMLElement>('.verse-text')
+        .forEach((verse, i) => {
+            verse.getClientRects = () =>
+                rects({
+                    top:
+                        top +
+                        (i * verseHeight - getSubPixelScrollTop(container)) *
+                            scale,
+                    height: verseHeight * scale,
+                    left: 0,
+                    right: 300 * scale,
+                });
+        });
+    return container;
+}
+
+test('panes drawn at a scale close the gap in scroll px, not in drawn px', () => {
+    const scale = 0.25;
+    const sync = new BibleGroupScrollSync({ getScale: () => scale });
+    const source = scaledPane(scale);
+    const target = scaledPane(scale, 300, 180, 600);
+    join(sync, source);
+    join(sync, target);
+    // The same reading point as the unscaled test above: 1/8 into verse 4.
+    wheel(source, 250);
+    settle();
+    expect(target.scrollTop).toBeCloseTo(468.75);
+    // Unscaled arithmetic would have stopped a quarter of the way there.
+    wheel(source, 860);
+    settle();
+    expect(target.scrollTop).toBeCloseTo(1500);
+});
+
+test('a nonsense scale is ignored rather than dividing by it', () => {
+    const sync = new BibleGroupScrollSync({ getScale: () => 0 });
+    const source = pane();
+    const target = pane();
+    join(sync, source);
+    join(sync, target);
+    wheel(source, 250);
+    settle();
+    expect(target.scrollTop).toBeCloseTo(250);
+});
+
+test('reads the verses the caller names', () => {
+    const sync = new BibleGroupScrollSync({
+        verseSelector: '.highlight[data-kjv-verse-key]',
+    });
+    const source = pane();
+    const target = pane(300, 180);
+    for (const container of [source, target]) {
+        container.querySelectorAll('.verse-text').forEach((verse) => {
+            verse.className = 'highlight';
+        });
+    }
+    join(sync, source);
+    join(sync, target);
+    wheel(source, 250);
+    settle();
+    expect(target.scrollTop).toBeCloseTo(468.75);
+    // The Reader's own selector finds nothing in them.
+    expect(readPosition(source, 62.5)).toBeNull();
+});
+
+test('followFrom makes a pane the leader with no hand on it, and keeps up with it', () => {
+    const sync = new BibleGroupScrollSync();
+    const source = pane();
+    const target = pane();
+    join(sync, source);
+    join(sync, target);
+    expect(sync.checkIsLeading(source)).toBe(false);
+    // A scroll another window sent: no wheel, no press.
+    source.scrollTop = 450;
+    sync.followFrom(source);
+    expect(sync.checkIsLeading(source)).toBe(true);
+    expect(sync.checkIsLeading(target)).toBe(false);
+    settle();
+    expect(target.scrollTop).toBeCloseTo(450);
+    // The next ones arrive a frame apart. Taking the lead again on each
+    // would restart the glide and leave the follower trailing behind.
+    for (const top of [460, 470, 480]) {
+        source.scrollTop = top;
+        sync.followFrom(source);
+        frame();
+        expect(target.scrollTop).toBeCloseTo(top);
+    }
+    expect(frames.size).toBe(0);
+});
+
+test('followFrom takes the lead back from a pane a hand was on', () => {
+    const sync = new BibleGroupScrollSync();
+    const first = pane();
+    const second = pane();
+    join(sync, first);
+    join(sync, second);
+    wheel(second, 300);
+    settle();
+    expect(first.scrollTop).toBeCloseTo(300);
+    first.scrollTop = 600;
+    sync.followFrom(first);
+    expect(sync.checkIsLeading(first)).toBe(true);
+    settle();
+    expect(second.scrollTop).toBeCloseTo(600);
+});
+
+test('alignTo puts every member in place at once, with no glide', () => {
+    const sync = new BibleGroupScrollSync();
+    const source = pane();
+    const target = pane(300, 180, 600);
+    const other = pane();
+    join(sync, source);
+    join(sync, target);
+    join(sync, other, 'blue');
+    source.scrollTop = 250;
+    sync.alignTo(source);
+    // Already there, before any frame has run.
+    expect(target.scrollTop).toBeCloseTo(468.75);
+    expect(writes.get(other)).toEqual([]);
+    expect(sync.checkIsLeading(source)).toBe(true);
+    // And the pane it was aligned to leads from then on.
+    source.scrollTop = 260;
+    frame();
+    expect(target.scrollTop).toBeCloseTo(487.5);
+});
+
+test('alignTo leaves a pane that is not a member alone', () => {
+    const sync = new BibleGroupScrollSync();
+    const stranger = pane();
+    const member = pane();
+    join(sync, member);
+    stranger.scrollTop = 250;
+    sync.alignTo(stranger);
+    expect(sync.checkIsLeading(stranger)).toBe(false);
+    expect(writes.get(member)).toEqual([]);
+});

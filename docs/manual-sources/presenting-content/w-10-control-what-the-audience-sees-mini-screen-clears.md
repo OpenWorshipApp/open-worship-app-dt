@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
@@ -30,9 +30,11 @@ workflowsVersion: "2026-10-11"
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
 - **Clear buttons** (header — each also has a function key):
-  **Clear All `F6` / BG `F7` / SL `F8` / BB `F9` / FG `F10`**
-  ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Bible] / [en:tran:Clear Foreground]).
-  A button is only lit while its layer has something to clear.
+  **Clear All `F6` / BG `F7` / SL `F8` / LT `F9` / FG `F10`**
+  ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Long Text] / [en:tran:Clear Foreground]).
+  A button is only lit while its layer has something to clear. **LT** is the
+  long text layer: a Bible passage, or the text of a
+  **[en:tran:Long Text Show]**.
 - **Stop drawing the preview** (header, the eye right after **FG** —
   **[en:tran:Stop rendering preview]**): for a slow computer. Click it and that card
   stops drawing: its body turns into a striped pattern that says
@@ -71,5 +73,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

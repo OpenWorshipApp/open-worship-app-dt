@@ -273,6 +273,20 @@ export function handleNextItemSelecting({
     return true;
 }
 
+/**
+ * Whether a slide of this document is on a screen RIGHT NOW — i.e. whether a
+ * navigation key pressed in its previewer would move anything.
+ *
+ * The live managers, the same ones `handleNextItemSelecting` steps from, and
+ * matched on the file path alone: no slide is read and nothing is parsed, so
+ * this is safe to ask on a key press.
+ */
+export function checkIsVaryAppDocumentPresenting(filePath: string) {
+    return (
+        ScreenVaryAppDocumentManager.getPresentingDataList(filePath).length > 0
+    );
+}
+
 export function getContainerDiv(): HTMLDivElement | null {
     return document.querySelector(`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`);
 }

@@ -49,7 +49,7 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../_screen/managers/screenManagerHelpers', () => ({
     getAllScreenManagers: () => h.managers,
 }));
-vi.mock('../_screen/managers/ScreenBibleManager', () => ({
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
     default: {
         getInstance: (screenId: number) => ({
             screenViewData: h.viewData[screenId] ?? null,

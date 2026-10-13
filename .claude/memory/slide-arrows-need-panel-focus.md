@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: b235b5dc-e5b5-4b4c-8e7b-9404b6966677
-  modified: 2026-09-28T23:55:35.255Z
+  modified: 2026-10-13T03:45:34.341Z
 ---
 
 `handleSlideMoving` (`src/app-document-presenter/items/varyAppDocumentHelpers.ts`)
@@ -37,10 +37,12 @@ What was missing is that nothing handed the focus BACK:
   `varyAppDocument.filePath` changes, so picking a document arms the arrows at
   once. Main panel only, never out of a typing target, never when it already has
   focus.
-- Still not covered: clicking the ALREADY-selected row, or the list's own chrome,
-  leaves focus on that list and the arrows do nothing until a slide card or the
-  panel is clicked. Widening it means deciding which focused elements "consume"
-  arrows, which is a list that rots.
+- Clicking the ALREADY-selected row, or the list's own chrome, still leaves
+  focus on that list and ONE press does nothing. Since 2026-10-12 three quick
+  presses of a next key hand the keys back ([[remote-key-take-over]]), and an
+  unowned keyboard goes to a run sheet with a cursor before it goes here. The
+  gate itself was not widened: deciding which focused elements "consume" arrows
+  is a list that rots.
 
 The other half of the same complaint was [[keyboard-layer-stack-leak]] — that one
 killed `Ctrl+B` too.

@@ -5,7 +5,6 @@ import BibleItem from '../bible-list/BibleItem';
 import { screenManagerSettingNames } from '../helper/constants';
 import { handleError } from '../helper/errorHelpers';
 import { parseJsonSafely } from '../helper/helpers';
-import { setSetting } from '../helper/settingHelpers';
 import { genDerivedSettingReader } from '../helper/derivedSettingHelpers';
 import { checkIsValidLocale, tran } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
@@ -23,7 +22,6 @@ import {
 } from '../scrolling/scrollingHandlerHelpers';
 import type { AutoScrollFrameType } from '../scrolling/scrollingHandlerHelpers';
 import { showPlayToBottomContextMenu } from '../scrolling/playToBottomMenuHelpers';
-import { unlocking } from '../server/unlockingHelpers';
 import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
 import type {
@@ -34,6 +32,7 @@ import type {
     SetDisplayType,
 } from './screenTypeHelpers';
 import { bibleDataTypeList } from './screenTypeHelpers';
+import { checkIsValidLongTextData } from './screenLongTextTypeHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 const messageUtils = appProvider.messageUtils;
@@ -201,6 +200,23 @@ const validateBible = ({ renderedList, bibleItem }: any) => {
     );
 };
 
+function checkIsValidBibleListEntry(item: any) {
+    try {
+        if (!bibleDataTypeList.includes(item?.type)) {
+            return false;
+        }
+        if (item.type === 'long-text') {
+            return checkIsValidLongTextData(
+                item.longTextData,
+                checkIsValidLocale,
+            );
+        }
+        return !validateBible(item.bibleItemData);
+    } catch (_error) {
+        return false;
+    }
+}
+
 const readBibleListOnScreen = genDerivedSettingReader<BibleListType>(
     [screenManagerSettingNames.FULL_TEXT, screenManagerSettingNames.MANAGERS],
     ([str]) => {
@@ -209,21 +225,29 @@ const readBibleListOnScreen = genDerivedSettingReader<BibleListType>(
             if (json === null) {
                 return {};
             }
-            for (const item of Object.values(json)) {
-                if (
-                    !bibleDataTypeList.includes((item as any).type) ||
-                    ((item as any).type === 'bible-item' &&
-                        validateBible((item as any).bibleItemData))
-                ) {
-                    loggerHelpers.appError(item);
-                    throw new Error('Invalid bible-screen-view data');
+            // Validated PER ENTRY, dropping only the bad ones -- as the slide
+            // map is (`deriveAppDocumentListOnScreen`). Every writer does a
+            // read-modify-write on this map, so blanking the whole setting on
+            // one entry took every OTHER screen's passage with it. An entry
+            // of a kind this build does not know (one written by a newer one
+            // sharing the data folder) is such an entry.
+            const validEntries: { [key: string]: any } = {};
+            for (const [key, item] of Object.entries(json)) {
+                if (checkIsValidBibleListEntry(item)) {
+                    validEntries[key] = item;
+                    continue;
                 }
+                loggerHelpers.appError(item);
+                handleError(
+                    new Error(
+                        'Dropping invalid bible-screen-view entry for ' +
+                            'screen id: ' +
+                            key,
+                    ),
+                );
             }
-            return getValidOnScreen(json);
+            return getValidOnScreen(validEntries);
         } catch (error) {
-            unlocking(screenManagerSettingNames.FULL_TEXT, () => {
-                setSetting(screenManagerSettingNames.FULL_TEXT, '');
-            });
             handleError(error);
         }
         return {};

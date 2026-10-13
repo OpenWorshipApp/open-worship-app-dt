@@ -160,6 +160,7 @@ export const messageChannels = {
     screenMessage: 'app:screen:message',
     openAboutPage: 'main:app:open-about-page',
     openChatbotPage: 'main:app:open-chatbot-page',
+    openChatbotReport: 'main:app:open-chatbot-report',
     openAiChatPage: 'main:app:open-aichat-page',
     guideHelp: 'main:app:guide-help',
     guideHelpAnswer: 'main:app:guide-help-answer',
@@ -1697,9 +1698,37 @@ export async function captureWindowImage(win: BrowserWindow | null) {
     if (win === null || win.isDestroyed()) {
         throw new Error('That window is not open');
     }
-    const image = await win.webContents.capturePage();
-    return image.toDataURL();
+    for (const wait of CAPTURE_WAIT_LIST_MILLISECONDS) {
+        if (wait > 0) {
+            await new Promise((resolve) => {
+                setTimeout(resolve, wait);
+            });
+            if (win.isDestroyed()) {
+                break;
+            }
+            // Ask for a frame: the page may be asleep behind another window.
+            win.webContents.invalidate();
+        }
+        try {
+            const image = await win.webContents.capturePage();
+            if (!image.isEmpty()) {
+                return image.toDataURL();
+            }
+        } catch (_error) {
+            // No frame to hand over yet -- asked again below.
+        }
+    }
+    throw new Error('That window could not be photographed just now');
 }
+
+// A window that has only just loaded -- or reloaded, which is what a window
+// does after the error somebody is about to report -- or that sits hidden
+// behind another has no frame to hand over yet: `capturePage` then rejects
+// (`UnknownVizError`) or answers an empty image. Measured 2026-10-13 on a
+// main window reloaded while covered: the first ask failed and the one
+// 100 ms later had the picture, because the first ask is what wakes the
+// page. So it is asked a few times before a report goes without its picture.
+const CAPTURE_WAIT_LIST_MILLISECONDS = [0, 150, 350, 700];
 
 /**
  * The picture of a screen that has no window: one on a virtual display is

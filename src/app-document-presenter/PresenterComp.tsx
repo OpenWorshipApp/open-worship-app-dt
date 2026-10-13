@@ -19,14 +19,17 @@ import {
     useBibleItemsViewControllerContext,
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { getForegroundShowingScreenIdDataList } from '../presenter-foreground/foregroundHelpers';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
+import {
+    useScreenForegroundManagerEvents,
+    useScreenLongTextManagerEvents,
+} from '../_screen/managers/screenEventHelpers';
 import type { ForegroundWidgetType } from '../presenter-foreground/foregroundWidgetHelpers';
 import {
     FOREGROUND_OPEN_PANELS_SETTING_NAME,
     FOREGROUND_WIDGET_LIST,
     genForegroundPanelMenuItems,
+    getForegroundWidgetShowingScreenIds,
     toForegroundPanelPersistKey,
     toOpenPanelKeys,
     toToggledPanelKeys,
@@ -61,8 +64,10 @@ function ForegroundWidgetPanelComp({
     onClose,
 }: Readonly<{ widget: ForegroundWidgetType; onClose: () => void }>) {
     useScreenForegroundManagerEvents(['update']);
-    const isOnScreen =
-        getForegroundShowingScreenIdDataList(widget.checkIsOnScreen).length > 0;
+    // Long Text Show is drawn by the long-text layer, so its mark follows
+    // that layer's changes, which the foreground manager never hears of.
+    useScreenLongTextManagerEvents(['update']);
+    const isOnScreen = getForegroundWidgetShowingScreenIds(widget).length > 0;
     const { Comp } = widget;
     return (
         <FloatingWidgetComp
@@ -81,10 +86,12 @@ function ForegroundWidgetPanelComp({
             // The transition of the WHOLE component -- every session at once;
             // a session's own row in its Properties still wins over it.
             extraActionButtons={
-                <ForegroundComponentTransitionButtonComp
-                    widgetKey={widget.key}
-                    widgetLabel={widget.labelKey}
-                />
+                widget.isNoTransition ? null : (
+                    <ForegroundComponentTransitionButtonComp
+                        widgetKey={widget.key}
+                        widgetLabel={widget.labelKey}
+                    />
+                )
             }
             options={{
                 width: 460,
@@ -304,7 +311,7 @@ export default function PresenterComp() {
     const viewController = useBibleItemsViewControllerContext();
 
     const handleBibleUpdate = useCallback(() => {
-        ScreenBibleManager.fireUpdateEvent();
+        ScreenLongTextManager.fireUpdateEvent();
     }, []);
 
     useBibleItemViewControllerUpdateEvent(handleBibleUpdate);

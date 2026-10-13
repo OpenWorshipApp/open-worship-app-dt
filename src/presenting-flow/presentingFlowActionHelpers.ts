@@ -712,7 +712,7 @@ const nextActionList: PresentingFlowRunActionType[] = [
 /**
  * The clearing family proper: the five that mirror a button of the mini screen's
  * clear bar — same label (so the shipped translations are reused rather than
- * duplicated), same `BG`/`SL`/`BB`/`FG` text as its badge, and kept in the bar's
+ * duplicated), same `BG`/`SL`/`LT`/`FG` text as its badge, and kept in the bar's
  * own left-to-right order so the menu reads like the control it mirrors.
  *
  * The bar's two `secondary` buttons are the one thing not copied literally: the
@@ -763,9 +763,12 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         },
     },
     {
+        // The id is what a saved run sheet holds, so it keeps the name the
+        // layer had while a Bible passage was all it drew; the label and
+        // the badge are the mini screen's own `LT` button's.
         id: 'clear-bible',
-        label: 'Clear Bible',
-        badge: 'BB',
+        label: 'Clear Long Text',
+        badge: 'LT',
         iconName: 'eraser',
         color: 'var(--bs-primary)',
         ccItemCount: Infinity,
@@ -773,7 +776,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
-            screenManager.screenBibleManager.clear();
+            screenManager.screenLongTextManager.clear();
         },
     },
     {
@@ -787,7 +790,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
-            screenManager.screenForegroundManager.clear();
+            screenManager.clearForeground();
         },
     },
 ];

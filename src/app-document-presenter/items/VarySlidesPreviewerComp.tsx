@@ -8,9 +8,14 @@ import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
 import {
+    checkIsVaryAppDocumentPresenting,
     getContainerDiv,
     SLIDE_ITEMS_CONTAINER_CLASS_NAME,
 } from './varyAppDocumentHelpers';
+import {
+    KEYING_AREA_PRIORITY,
+    registerKeyingArea,
+} from '../../keyboard-shortcut/keyingAreaHelpers';
 import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
 import {
     SelectedEditingSlideContext,
@@ -163,6 +168,31 @@ export default function VarySlidesPreviewerComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
+    // Named to the remote's take-over (`keyingAreaHelpers`), so the arrows can
+    // be handed back here without a click — while a slide of this document is
+    // live, which is the only time a press in here moves anything. A floating
+    // preview ranks below the panel it floats over. The Presenter only: no
+    // other page steps a screen from here, and none listens for the hand-over.
+    useAppEffect(() => {
+        const element = containerRef.current;
+        if (element === null || !appProvider.isPagePresenter) {
+            return;
+        }
+        return registerKeyingArea({
+            priority:
+                element.closest('.floating-widget') === null
+                    ? KEYING_AREA_PRIORITY.slides
+                    : KEYING_AREA_PRIORITY.slidesPopup,
+            getElement: () => {
+                return containerRef.current;
+            },
+            checkHasSelected: () => {
+                return checkIsVaryAppDocumentPresenting(
+                    varyAppDocumentRef.current.filePath,
+                );
+            },
+        });
+    }, []);
     const handleContextMenu = useCallback(async (event: any) => {
         const varyAppDocument = varyAppDocumentRef.current;
         // The slides preview's own transition, for every kind of document --

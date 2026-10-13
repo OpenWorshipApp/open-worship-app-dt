@@ -4,7 +4,7 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-10-05",
+    "updated": "2026-10-12",
     "sections": [
         {
             "id": "slides",
@@ -43,6 +43,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "Left: the slide list",
                         "guide": true
                     },
                     "starter": true,
@@ -76,6 +77,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "Left: the slide list",
                         "guide": true
                     }
                 },
@@ -157,6 +159,7 @@
                     ],
                     "resources": {
                         "recipe": "W-48",
+                        "passage": "One canvas item",
                         "find": "Canvas item transition",
                         "guide": true
                     }
@@ -262,6 +265,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "Add new boxes with the toolbar above the canvas",
                         "find": "Insert Media Link",
                         "guide": true
                     }

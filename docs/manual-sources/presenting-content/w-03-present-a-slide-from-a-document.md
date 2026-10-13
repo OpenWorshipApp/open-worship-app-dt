@@ -2,10 +2,10 @@
 id: W-03
 title: "Present a slide from a document"
 section: "Presenting content"
-verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-149, PM-157, KB-05, KB-08]
+verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-11"
+workflowsVersion: "2026-10-13"
 ---
 # W-03 — Present a slide from a document
 
@@ -22,6 +22,15 @@ workflowsVersion: "2026-10-11"
    Next presses or wrapping from the last slide to the first.
 4. To remove the slide from the screen, press **F8** ([en:tran:Clear Slide]) or click
    the matching clear button (`SL`) in the mini screen's header.
+   **The first card of a PowerPoint, PDF or Word document is blank, on purpose.** It is
+   not a page of your document and takes no number: your own page 1 is the card after it,
+   so a five-slide PowerPoint shows six cards. Presenting the blank card puts a blank
+   slide on the screen.
+   **What the projector shows is what the editor holds, saved or not.** A document you
+   have changed and not saved carries a red `*` after its name, and the Presenter and the
+   screen show it WITH those changes — the editor keeps your unsaved work on disk. To go
+   back to the saved version press **[en:tran:Discard changed]** in the editor's row of
+   buttons (it asks first, and it empties Undo as well), then present the slide again.
 5. **Show the person on the stage what comes next.** A screen's **St:** number (the badge at
    the right of its mini screen's footer) decides how a slide is drawn on it, for every kind
    of document — a slide document, a PDF, a PowerPoint or a Word file — just as it does for a
@@ -68,11 +77,18 @@ Tips:
   you type and are **never sent to an audience screen**. The panel starts closed, so
   it costs nothing until you want it; to put it away again drag the divider above it
   down to the bottom edge, or untick **View → Widgets → Note** (W-31).
+- **A slide that is the wrong shape for the screen.** A slide document keeps its own
+  width and height, and one made for another display does not match yours. While a slide
+  and the display differ, an amber button with a hammer — **[en:tran:Fix slide dimension]**,
+  the sizes in its tooltip — shows in the row of buttons at the top of the slides, here
+  and in the Slide Editor: press it and the slides that differ take the display's size,
+  and the button goes away. One slide at a time is the Slide Editor's **Width** and
+  **Height** boxes, with **[en:tran:Apply All Slides]** for the whole document.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-149` · `PM-157` · `KB-05` · `KB-08`
+`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-11).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
 :::

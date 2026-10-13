@@ -43,9 +43,13 @@ import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import type ScreenManager from '../_screen/managers/ScreenManager';
 import type {
     BackgroundSrcType,
-    BibleItemDataType,
     ForegroundDataType,
+    LongTextDataType,
 } from '../_screen/screenTypeHelpers';
+import {
+    checkIsLongTextData,
+    getBibleItemData,
+} from '../_screen/screenLongTextTypeHelpers';
 import type { VarySlideScreenDataType } from '../_screen/screenAppDocumentTypeHelpers';
 import appProvider from '../server/appProvider';
 import { getFileName, pathBasename } from '../server/fileHelpers';
@@ -233,14 +237,22 @@ export function toBackgroundSummary(
 }
 
 export function toBibleSummary(
-    viewData: BibleItemDataType | null,
+    viewData: LongTextDataType | null,
 ): AgentScreenBibleSummaryType | null {
-    if (viewData === null || typeof viewData !== 'object') {
+    // A long text sits in the same layer and is no passage: it is said
+    // among the foreground extras (`toLongTextSummary`), where its panel
+    // is, so nothing reads `KM` as a Bible version.
+    if (
+        viewData === null ||
+        typeof viewData !== 'object' ||
+        checkIsLongTextData(viewData)
+    ) {
         return null;
     }
-    const renderedList = viewData.bibleItemData?.renderedList ?? [];
+    const bibleItemData = getBibleItemData(viewData);
+    const renderedList = bibleItemData?.renderedList ?? [];
     const first = renderedList[0];
-    const bibleItem = viewData.bibleItemData?.bibleItem;
+    const bibleItem = bibleItemData?.bibleItem;
     const version = first?.bibleKey ?? bibleItem?.bibleKey ?? '?';
     let reference = first?.title ?? '';
     if (reference.length === 0 && bibleItem?.target) {
@@ -254,6 +266,28 @@ export function toBibleSummary(
         summary.versions = renderedList.map((item) => item.bibleKey);
     }
     return summary;
+}
+
+/**
+ * A long text on the screen, in words: its title and the languages it is in.
+ * One line in the foreground list, never a passage.
+ */
+export function toLongTextSummary(viewData: LongTextDataType | null) {
+    if (!checkIsLongTextData(viewData)) {
+        return [];
+    }
+    const { renderedList } = viewData.longTextData;
+    const title = cutText(toPlainText(renderedList[0]?.title ?? ''));
+    const languages = renderedList
+        .map(({ code }) => {
+            return code;
+        })
+        .join(', ');
+    return [
+        `long text` +
+            (title === '' ? '' : ` "${title}"`) +
+            (languages === '' ? '' : ` in ${languages}`),
+    ];
 }
 
 /**
@@ -335,12 +369,14 @@ function toScreenSummary(screenManager: ScreenManager): AgentScreenSummaryType {
     const slide = toSlideSummary(
         screenManager.screenVaryAppDocumentManager.varySlideData,
     );
-    const bible = toBibleSummary(
-        screenManager.screenBibleManager.screenViewData,
-    );
-    const foreground = toForegroundSummary(
-        screenManager.screenForegroundManager.foregroundData,
-    );
+    const longTextViewData = screenManager.screenLongTextManager.screenViewData;
+    const bible = toBibleSummary(longTextViewData);
+    const foreground = [
+        ...toForegroundSummary(
+            screenManager.screenForegroundManager.foregroundData,
+        ),
+        ...toLongTextSummary(longTextViewData),
+    ];
     let displayId: number | null = null;
     try {
         displayId = screenManager.displayId;
