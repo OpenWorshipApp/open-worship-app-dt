@@ -12,6 +12,16 @@
             "recipes": ["W-31"],
             "questions": [
                 {
+                    "id": "context-menu-height",
+                    "text": "Why do I still need to scroll inside a long right-click menu?",
+                    "kind": "what",
+                    "keywords": ["context menu", "menu height", "scroll menu"],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "passage": "The menu shifts into view"
+                    }
+                },
+                {
                     "id": "hide-panel",
                     "text": "How do I hide a panel I do not use?",
                     "kind": "howto",

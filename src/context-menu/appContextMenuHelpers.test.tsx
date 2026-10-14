@@ -146,7 +146,8 @@ describe('showAppContextMenu', () => {
         });
         expect(event.defaultPrevented).toBe(true);
         expect(menu.style.right).toBe('100px');
-        expect(menu.style.bottom).toBe('100px');
+        expect(menu.style.top).toBe('450px');
+        expect(menu.style.bottom).toBe('');
         expect(menu.style.maxWidth).toBe('210px');
         expect(menu.style.maxHeight).toBe('120px');
         expect(menu.style.color).toBe('red');

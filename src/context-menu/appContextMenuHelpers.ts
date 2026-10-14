@@ -61,6 +61,7 @@ export const setPositionMenu = (
             right: '',
             top: '',
             bottom: '',
+            maxHeight: '',
         });
         event.preventDefault();
         event.stopPropagation();
@@ -69,7 +70,6 @@ export const setPositionMenu = (
         const rect = menu.getBoundingClientRect();
         const windowDim = getWindowDim();
         let maxWidth;
-        let maxHeight;
         if (x > windowDim.width / 2 && x + rect.width > windowDim.width) {
             menu.style.right = `${windowDim.width - x}px`;
             maxWidth = x;
@@ -77,22 +77,27 @@ export const setPositionMenu = (
             menu.style.left = `${x}px`;
             maxWidth = windowDim.width - x;
         }
-        if (y > windowDim.height / 2 && y + rect.height > windowDim.height) {
-            menu.style.bottom = `${windowDim.height - y}px`;
-            maxHeight = y;
-        } else {
-            menu.style.top = `${y}px`;
-            maxHeight = windowDim.height - y;
-        }
         menu.style.maxWidth = `${Math.min(maxWidth, 210)}px`;
-        menu.style.maxHeight = `${maxHeight}px`;
-        if (options?.maxHeigh) {
-            menu.style.maxHeight = `${options.maxHeigh}px`;
-        }
+        menu.style.maxHeight = `${Math.min(
+            options?.maxHeigh ?? windowDim.height,
+            windowDim.height,
+        )}px`;
         menu.scrollTop = 0;
         if (options?.style) {
             Object.assign(menu.style, options.style);
         }
+        // Measure after the width and caller styles are applied: wrapped
+        // labels can make the menu taller. Use the whole viewport, shifting
+        // past the cursor when neither side alone has enough room.
+        const height = menu.getBoundingClientRect().height;
+        const preferredTop =
+            y > windowDim.height / 2 && y + height > windowDim.height
+                ? y - height
+                : y;
+        menu.style.top = `${Math.max(
+            0,
+            Math.min(preferredTop, windowDim.height - height),
+        )}px`;
     }
 };
 

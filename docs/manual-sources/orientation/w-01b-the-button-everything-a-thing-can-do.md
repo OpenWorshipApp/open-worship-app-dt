@@ -24,6 +24,9 @@ does. Those extras live in a small menu.
    the files inside it. 📸
 2. **Click it.** The menu opens right at the button — the same menu you get by
    **right-clicking** the row itself, which still works exactly as before.
+   The menu shifts into view and can use the full window height, regardless of
+   where you clicked. Scroll inside it only when its entries exceed that height
+   or the menu has its own smaller height limit.
    > Clicking `⋮` does NOT also do what clicking the row does: a document you open the
    > menu on is not selected, and a slide is not sent to a screen.
 3. Pick an entry, or click anywhere else to close the menu without choosing.
