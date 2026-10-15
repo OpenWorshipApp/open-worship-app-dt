@@ -553,6 +553,63 @@ test('hosting is off until switched on, and switching it off ends guests', async
     expect((await fetch(discoveryUrl())).status).toBe(404);
 });
 
+test('presenter commands save connection settings and reject an invalid port', async () => {
+    const sender = {
+        getURL: () => 'owa://local/presenter.html',
+        isDestroyed: () => false,
+        send: vi.fn(),
+    };
+    const command = (data: Record<string, unknown>) =>
+        new Promise<any>((resolve) => {
+            sender.send.mockImplementationOnce((_channel, result) =>
+                resolve(result),
+            );
+            ipc('mirror:command')(
+                { sender },
+                { ...data, replyEventName: 'reply' },
+            );
+        });
+
+    const configured = await command({
+        action: 'settings',
+        mode: 'code',
+        code: ' 4321 ',
+        port: service.port,
+        publicAddress: 'church.example',
+    });
+    expect(configured.approvalMode).toBe('code');
+    expect(fixture.client.get('screen-mirror-mode')).toBe('code');
+    expect(fixture.secure.get('screen-mirror-code')).toBe('4321');
+    expect(fixture.client.get('screen-mirror-public-address')).toBe(
+        'church.example',
+    );
+
+    await command({ action: 'public-port', port: 40500 });
+    expect(service.publicPort).toBe(40500);
+    const invalid = await command({ action: 'public-port', port: 70000 });
+    expect(invalid).toBeInstanceOf(Error);
+    expect(service.publicPort).toBe(40500);
+    await command({ action: 'custom-port', port: null });
+    expect(fixture.client.get('screen-mirror-port')).toBe('');
+    await command({ action: 'public-address', text: 'display.example' });
+    expect(fixture.client.get('screen-mirror-public-address')).toBe(
+        'display.example',
+    );
+
+    const untrusted = {
+        ...sender,
+        getURL: () => 'https://untrusted.example',
+        send: vi.fn(),
+    };
+    ipc('mirror:command')(
+        { sender: untrusted },
+        { action: 'settings', mode: 'approve', replyEventName: 'reply' },
+    );
+    await Promise.resolve();
+    expect(untrusted.send).not.toHaveBeenCalled();
+    expect(fixture.client.get('screen-mirror-mode')).toBe('code');
+});
+
 // Plays the presenter: answers each output's bootstrap with `messages`, and
 // keeps everything else the host sends it in `sent`.
 function answerBootstraps(host: ScreenMirrorService, messages: any[] = []) {

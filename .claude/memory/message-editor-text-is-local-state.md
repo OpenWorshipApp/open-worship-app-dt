@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: a24d7439-2c44-4661-8bf9-b2598198c5cf
-  modified: 2026-09-26T15:23:35.716Z
+  modified: 2026-10-14T16:11:34.000Z
 ---
 
 A Messages **session** is persisted as its messages joined by a blank line
@@ -32,6 +32,14 @@ Two things that follow:
   on reload — the format genuinely cannot store it, and that is acceptable.
 - **Add Message** is disabled while any editor is empty. `toStoredText` collapses a list of
   empty editors to one space, so a second press could only ever be a silent no-op.
+
+Each added editor also needs a distinct ID immediately. Leaving every new editor at
+`id: ''` made two editors share a React key and their text handler update both: typing
+into the second replaced the first. `handleAdding` now chooses an unused
+`message-${index}${suffix}` ID, checking existing IDs because moving or removing a
+message makes the current list length reusable. Keep that identity on moves and edits.
+The regression test covers two editors and a removal/add cycle; two independently
+editable notices were verified in a scratch Presenter on 2026-10-14.
 
 Anything else that derives a controlled input's value from a lossy serializer will have the
 same bug. Related: [[foreground-effects-one-setting]].

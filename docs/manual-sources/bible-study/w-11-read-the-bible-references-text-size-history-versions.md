@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-13"
+workflowsVersion: "2026-10-14"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -70,5 +70,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
 :::

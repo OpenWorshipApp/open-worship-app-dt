@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PM-134, PM-135]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-13"
+workflowsVersion: "2026-10-14"
 ---
 # W-47 — Put messages on the screen
 
@@ -17,8 +17,9 @@ slides — a parking notice, an offering notice, a call for the next speaker.
    because it is the one you open in a hurry.
 2. **Write your messages.** Press **[en:tran:Add Message]** for each one. Every
    message gets its own box and can be **as many lines as you like** — a line
-   break in the box is a line break on the screen. The arrows beside a box move
-   that message up or down the list; the ✕ removes it.
+   break in the box is a line break on the screen. After typing in the second
+   box, the first message still has the words you gave it. The arrows beside a
+   box move that message up or down the list; the ✕ removes it.
 3. **Put one up.** Press the screen button on a message's own row. It appears
    over whatever is already on the screen — the slide, the verse, the background
    — and it **stays there until you take it down**. There is no delay and no
@@ -56,5 +57,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-134` · `PM-135`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
 :::

@@ -338,10 +338,9 @@ function MessageBodyComp({
         DEFAULT_INTERVAL_SECOND,
     );
     const messageAllId = toMessageAllId(suffix);
-    // Ids are minted per PARSE, so they are stable only while the panel is
-    // mounted. That is on purpose: an id is the handle for "this editor's
-    // message on that screen", and a session reloaded from disk has nothing on
-    // a screen yet.
+    // Parsed and newly added editors each get an id unique within this mounted
+    // session. It is the handle for "this editor's message on that screen";
+    // a session reloaded from disk has nothing on a screen yet.
     /**
      * The editors are LOCAL state, deliberately not derived from the stored
      * string.
@@ -516,9 +515,17 @@ function MessageBodyComp({
         [],
     );
     const handleAdding = useCallback(() => {
+        const currentList = messageListRef.current;
+        const usedIds = new Set(currentList.map((message) => message.id));
+        // Editors retain their ids after moves/removals, so the next slot
+        // cannot assume the current length is unused.
+        let index = currentList.length;
+        while (usedIds.has(`message-${index}${suffixRef.current}`)) {
+            index += 1;
+        }
         applyMessageListRef.current([
-            ...messageListRef.current,
-            { id: '', text: '' },
+            ...currentList,
+            { id: `message-${index}${suffixRef.current}`, text: '' },
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

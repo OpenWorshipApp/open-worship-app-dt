@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-13l** (W-01b: context menus use the full window height and shift into view. Verified in the live dev Reader at top, middle and bottom cursor positions.)
+**workflowsVersion: 2026-10-14** (W-47: each new Messages editor keeps its own text. Verified with two notices in a scratch dev Presenter; editing the second left the first intact.)
+
+Previous: **workflowsVersion: 2026-10-13l** (W-01b: context menus use the full window height and shift into view. Verified in the live dev Reader at top, middle and bottom cursor positions.)
 
 Previous: **workflowsVersion: 2026-10-13k** (**W-42 steps 8 and 9 — the way back to the Bible Reader, and a report that really carries the error log.** The user, with a picture of _how can I open bible_ answered with the Presenter’s lookup steps: _the elderly user might accidentally changed page to presenter, if user ask question like bible reading open bible or find bible let add extra follow up to let user know they also should change page to reader as well as extra option to open lookup panel_. An answer to a question about reading, opening or finding the Bible, asked while the main window is on the Presenter or the Document Editor, now ends with one more line and a **Go to the Bible Reader** button; it goes by the page the main window is on at that moment, not the page the chat was opened from. Seen live 2026-10-13 on a scratch dev instance (main window moved to the Presenter, the question asked, the button pressed: the Bible Reader, projector untouched). And step 9: the first report a person sent — from the error dialog — said _Nothing was logged_ under Console, as every report had: the tool the window asked for the console refuses a call that names no page. The main process now keeps each window’s last errors and warnings itself and the report quotes those. Seen live the same hour (three test lines in the report: the account name out of a path, a pasted key redacted, an ordinary log left out).)
 
@@ -5785,8 +5787,9 @@ slides — a parking notice, an offering notice, a call for the next speaker.
    because it is the one you open in a hurry.
 2. **Write your messages.** Press **[en:tran:Add Message]** for each one. Every
    message gets its own box and can be **as many lines as you like** — a line
-   break in the box is a line break on the screen. The arrows beside a box move
-   that message up or down the list; the ✕ removes it.
+   break in the box is a line break on the screen. After typing in the second
+   box, the first message still has the words you gave it. The arrows beside a
+   box move that message up or down the list; the ✕ removes it.
 3. **Put one up.** Press the screen button on a message's own row. It appears
    over whatever is already on the screen — the slide, the verse, the background
    — and it **stays there until you take it down**. There is no delay and no

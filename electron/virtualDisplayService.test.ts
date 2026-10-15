@@ -39,7 +39,22 @@ vi.mock('./fsServe', () => ({
 vi.mock('./displayWallpaperHelpers', () => ({
     readVirtualDisplayWallpaper: async () => null,
 }));
-vi.mock('./VirtualScreenController', () => ({ default: class {} }));
+vi.mock('./VirtualScreenController', () => ({
+    default: class {
+        guest = null;
+        sockets = new Set<{ close: (code: number, reason: string) => void }>();
+        order = 0;
+        capture = vi.fn(() => 'screen image');
+        constructor(
+            readonly screenId: number,
+            public displayNumber: number,
+            private readonly onDetach: (controller: any) => void,
+        ) {}
+        close() {
+            this.onDetach(this);
+        }
+    },
+}));
 // No network here: the TVs a search finds and the sessions cast to them are
 // stand-ins (`castTargets.test.ts` tests the real ones).
 const castMocks = vi.hoisted(() => ({
@@ -478,6 +493,113 @@ describe('virtual display records', () => {
             },
         });
         expect(service.state().displays[0].isWallpaperMissing).toBe(true);
+    });
+});
+
+describe('virtual display screens and commands', () => {
+    test('screens move between displays and keep their order for viewers', async () => {
+        const service = createService();
+        service.create({ name: 'Front' });
+        service.create({ name: 'Side' });
+        expect(() => service.attachScreen(7, -500099)).toThrow(
+            'Virtual display not found',
+        );
+
+        const first = service.attachScreen(7, -500001);
+        service.attachScreen(8, -500001);
+        expect(service.getLayout(1)?.screenIds).toEqual([7, 8]);
+        expect(service.showingScreenIds()).toEqual([7, 8]);
+        expect(await service.captureScreen(7)).toBe('screen image');
+        expect(service.captureScreen(99)).toBeUndefined();
+
+        const socket = { close: vi.fn() };
+        first.sockets.add(socket as any);
+        expect(service.moveScreen(99, -500002)).toBe(false);
+        expect(service.moveScreen(7, -500099)).toBe(false);
+        expect(service.moveScreen(7, -500002)).toBe(true);
+        expect(socket.close).toHaveBeenCalledWith(1000, 'Screen moved');
+        expect(first.sockets.size).toBe(0);
+        expect(service.getLayout(1)?.screenIds).toEqual([8]);
+        expect(service.getLayout(2)?.screenIds).toEqual([7]);
+        expect(service.state().displays.map((item) => item.screenIds)).toEqual([
+            [8],
+            [7],
+        ]);
+
+        service.closeAllScreens();
+        expect(service.showingScreenIds()).toEqual([]);
+        expect(service.getLayout(1)?.screenIds).toEqual([]);
+        expect(service.getLayout(2)?.screenIds).toEqual([]);
+    });
+
+    test('commands change display settings and return the resulting state', async () => {
+        const service = createService();
+        const created = await service['runCommand']({
+            action: 'create',
+            name: 'Hall',
+        });
+        expect(created.displays[0].name).toBe('Hall 1');
+        const updated = await service['runCommand']({
+            action: 'update',
+            number: 1,
+            name: 'Sanctuary',
+        });
+        expect(updated.displays[0].name).toBe('Sanctuary');
+        await service['runCommand']({ action: 'code', code: 'secret' });
+        expect(
+            (await service['runCommand']({ action: 'access', mode: 'code' }))
+                .hasCode,
+        ).toBe(true);
+        expect(
+            (await service['runCommand']({ action: 'access', mode: 'code' }))
+                .access,
+        ).toBe('code');
+        const shared = await service['runCommand']({
+            action: 'share',
+            enabled: true,
+        });
+        expect(mirror.setVirtualDisplayShareEnabled).toHaveBeenCalledWith(true);
+        expect(shared.displays[0].name).toBe('Sanctuary');
+        await service['runCommand']({ action: 'delete', number: 1 });
+        expect(service.state().displays).toEqual([]);
+    });
+
+    test('IPC rejects untrusted callers and replies with the command result', async () => {
+        const service = createService();
+        service.initIpc();
+        const on = (channel: string) =>
+            electronMockState.ipcMain.on.mock.calls.find(
+                ([name]) => name === channel,
+            )?.[1] as (...args: any[]) => void;
+        const sender = { isDestroyed: () => false, send: vi.fn() };
+        const event = { sender, returnValue: undefined as unknown };
+        mirror.trusted.mockReturnValue(false);
+        on('vd:state')(event);
+        expect(event.returnValue).toBeNull();
+        on('vd:command')(event, {
+            action: 'create',
+            name: 'Ignored',
+            replyEventName: 'reply',
+        });
+        expect(service.state().displays).toEqual([]);
+
+        mirror.trusted.mockReturnValue(true);
+        on('vd:command')(event, {
+            action: 'create',
+            name: 'Hall',
+            replyEventName: 'reply',
+        });
+        await vi.waitFor(() => expect(sender.send).toHaveBeenCalledTimes(1));
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply',
+            expect.objectContaining({
+                displays: [expect.objectContaining({ name: 'Hall 1' })],
+            }),
+        );
+        on('vd:state')(event);
+        expect(event.returnValue).toMatchObject({
+            displays: [expect.objectContaining({ name: 'Hall 1' })],
+        });
     });
 });
 

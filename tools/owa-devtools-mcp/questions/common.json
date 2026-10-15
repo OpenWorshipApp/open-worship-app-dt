@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-13",
+    "updated": "2026-10-14",
     "sections": [
         {
             "id": "panels",

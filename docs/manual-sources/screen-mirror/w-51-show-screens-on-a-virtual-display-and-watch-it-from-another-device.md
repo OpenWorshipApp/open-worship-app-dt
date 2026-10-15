@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-30, SP-31]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-13"
+workflowsVersion: "2026-10-14"
 ---
 # W-51 — Show screens on a virtual display and watch it from another device
 
@@ -177,5 +177,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-30` · `SP-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-13).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
 :::

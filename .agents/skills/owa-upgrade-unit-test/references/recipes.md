@@ -247,3 +247,30 @@ await act(async () => {
 
 Prefer `vi.useFakeTimers()` + `vi.advanceTimersByTimeAsync(500)` for anything
 debounced — it is deterministic, and the 500ms debounces are everywhere.
+
+## 9. Instrumentation and generated fixtures (2026-10-14)
+
+Full instrumentation also delays imports inside `beforeAll`: the measurement
+script raises **both** `testTimeout` and `hookTimeout` to 60 seconds. The
+ordinary suite keeps its committed timeouts. A screen-manager import exceeded
+the default hook timeout during measurement while its focused suite passed.
+
+`tran.mjs` prefers `electron-build/knowledge/tran.json` over source dictionaries.
+An old local bundle made four translation/interlock tests fail despite both
+source packs having the keys. `node extra-work/build-knowledge.mjs` restored
+those real-data tests without changing their expectations.
+
+Use fake timers in **every** test of a debounce-heavy component harness, then
+clear them after unmount before restoring real timers. Instrumentation slowed
+the foreground harness enough for an earlier test's real marquee timer to
+arrive in the independent-timers test; focused runs had not exposed it.
+
+The foreground harness extracts both real dictionaries, returns English labels
+for queries, and throws on missing dynamic keys. Its Node fixture reads use
+repo-relative paths: Vite's asset transform rewrote a dynamic
+`new URL(..., import.meta.url)` into a nonexistent drive-root path on Windows.
+
+The measurement runner checks child-process failure before reading any summary.
+Finding a summary alone can accept a stale report. The regression tests in
+`src/test-setup/coverageGapRunner.test.ts` simulate failed launches with an
+existing summary and verify that only success writes the worklist.

@@ -110,6 +110,8 @@ Three facts about running it, each of which has already cost a run:
   `--testTimeout=60000` for exactly this reason: at the committed 10s timeout,
   `src/_screen/components.smoke.test.tsx` times out under full instrumentation
   and it looks like a test you broke.
+  Dynamic imports in `beforeAll` pay the same cost, so the script also passes
+  `--hookTimeout=60000`.
 - **A failing test means NO report at all.** vitest writes no
   `coverage-summary.json` when the run fails, and the script says so rather
   than printing a stale number. Green the suite first.

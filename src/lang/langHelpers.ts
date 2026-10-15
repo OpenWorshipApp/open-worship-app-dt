@@ -741,7 +741,7 @@ export function tran(...args: any[]): string {
         const translated = text.map((t) => tran(t));
         // translated=['a ', ' b'] & args[1] => 'a 1 b'
         return translated.reduce((prev, curr, index) => {
-            return prev + (args[index] ?? '') + curr;
+            return prev + curr + (args[index] ?? '');
         }, '');
     }
     if (typeof text !== 'string') {
