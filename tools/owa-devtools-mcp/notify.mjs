@@ -705,7 +705,7 @@ export function genNoticeWords(
 // and a window first given an older one (by a server started before the
 // change) must be given this one instead of being handed words it cannot
 // read.
-const NOTICE_RUNTIME_VERSION = 3;
+const NOTICE_RUNTIME_VERSION = 4;
 
 const NOTICE_RUNTIME = `
 (() => {
@@ -811,6 +811,9 @@ const NOTICE_RUNTIME = `
         // window is DISPLAYING is picked here, off the same attribute the
         // app's own interface language sets.
         show(wordsByLang) {
+            // The host sits outside body, where the app sets its language
+            // font. Read it on each notice so language/font changes apply too.
+            pill.style.fontFamily = getComputedStyle(document.body).fontFamily;
             const langCode = (document.documentElement.lang || 'en')
                 .split('-')[0];
             const words = (wordsByLang && wordsByLang[langCode]) ||
