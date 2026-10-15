@@ -99,6 +99,10 @@ draws the operating-system menu outside the page and a walkthrough cannot safely
 ring or press it. The detailed **View** lessons remain separate so each View
 command can explain its effect and risk.
 
+For support information, open **Help → Copy Debug Info** or
+**Help → Copy Full Debug Info**. Both commands are in **Help**; the full
+version also includes the complete build metadata.
+
 The Presenter and Reader catalogs deliberately keep **Reload**, **Force Reload**,
 **Relaunch** and **Toggle Developer Tools** under the **[en:tran:View menu]** topic for
 completeness, but do not put those troubleshooting commands into the random

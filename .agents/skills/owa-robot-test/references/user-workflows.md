@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-14** (W-47: each new Messages editor keeps its own text. Verified with two notices in a scratch dev Presenter; editing the second left the first intact.)
+**workflowsVersion: 2026-10-14a** (W-46: Copy Debug Info and Copy Full Debug Info are under Help. Verified in the live dev menu.)
+
+Previous: **workflowsVersion: 2026-10-14** (W-47: each new Messages editor keeps its own text. Verified with two notices in a scratch dev Presenter; editing the second left the first intact.)
 
 Previous: **workflowsVersion: 2026-10-13l** (W-01b: context menus use the full window height and shift into view. Verified in the live dev Reader at top, middle and bottom cursor positions.)
 
@@ -4010,6 +4012,10 @@ for a command finds the menu that owns it. They are self-guided because Electron
 draws the operating-system menu outside the page and a walkthrough cannot safely
 ring or press it. The detailed **View** lessons remain separate so each View
 command can explain its effect and risk.
+
+For support information, open **Help → Copy Debug Info** or
+**Help → Copy Full Debug Info**. Both commands are in **Help**; the full
+version also includes the complete build metadata.
 
 The Presenter and Reader catalogs deliberately keep **Reload**, **Force Reload**,
 **Relaunch** and **Toggle Developer Tools** under the **[en:tran:View menu]** topic for

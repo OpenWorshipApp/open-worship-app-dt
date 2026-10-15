@@ -328,18 +328,6 @@ export function initMenu(appController: ElectronAppController) {
             label: 'Tools',
             submenu: [
                 {
-                    label: 'Copy Debug Info',
-                    click: () => {
-                        copyDebugInfoToClipboard();
-                    },
-                },
-                {
-                    label: 'Copy Full Debug Info',
-                    click: () => {
-                        copyDebugInfoToClipboard(true);
-                    },
-                },
-                {
                     label: 'Local Web Share',
                     click: () => {
                         appController.lwShareController.open(
@@ -385,6 +373,19 @@ export function initMenu(appController: ElectronAppController) {
             submenu: [
                 ...helpMenuItems,
                 ...(helpMenuItems.length === 0 ? [] : [{ type: 'separator' }]),
+                {
+                    label: 'Copy Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard();
+                    },
+                },
+                {
+                    label: 'Copy Full Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard(true);
+                    },
+                },
+                { type: 'separator' },
                 // Hidden outright when AI is switched off in Settings ->
                 // Others: the window it opens would have nothing to talk to.
                 ...(checkIsAiEnabled()

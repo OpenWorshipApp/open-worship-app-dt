@@ -503,7 +503,9 @@
                         "window menu",
                         "menu commands",
                         "print without preview",
-                        "debug info"
+                        "debug info",
+                        "help copy debug info",
+                        "help copy full debug info"
                     ],
                     "resources": {
                         "recipe": "W-46",

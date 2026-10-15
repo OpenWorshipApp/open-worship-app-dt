@@ -156,7 +156,8 @@ describe('electronMenu', () => {
             (item: any) => item.label === 'Print Without Preview',
         );
         const toolsMenu = template.find((item: any) => item.label === 'Tools');
-        const copyItem = toolsMenu.submenu.find(
+        const helpMenu = template.find((item: any) => item.role === 'help');
+        const copyItem = helpMenu.submenu.find(
             (item: any) => item.label === 'Copy Debug Info',
         );
         const fontsItem = toolsMenu.submenu.find(
@@ -293,7 +294,10 @@ describe('electronMenu', () => {
             consoleLogSpy.mockRestore();
         }
 
-        clickItem(template, 'Tools', 'Copy Full Debug Info');
+        clickSubmenuItem(
+            template.find((item: any) => item.role === 'help'),
+            'Copy Full Debug Info',
+        );
         expect(copyDebugInfoToClipboard).toHaveBeenCalledWith(true);
 
         clickItem(template, 'Tools', 'Local Web Share');

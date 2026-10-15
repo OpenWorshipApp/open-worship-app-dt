@@ -2659,14 +2659,14 @@ const dictionary = {
     'Learn Undo, Redo, Cut, Copy, Paste, Paste and Match Style, Find, Delete, Select All, Settings, and Speech.':
         'ស្វែងយល់អំពី Undo, Redo, Cut, Copy, Paste, Paste and Match Style, Find, Delete, Select All, Settings និង Speech។',
     'Learn the Tools menu': 'រៀនអំពីម៉ឺនុយ ឧបករណ៍',
-    'Learn Copy Debug Info, Copy Full Debug Info, Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.':
-        'ស្វែងយល់អំពី Copy Debug Info, Copy Full Debug Info, Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools និង Start Controlling។',
+    'Learn Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.':
+        'ស្វែងយល់អំពី Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools និង Start Controlling។',
     'Learn the Window menu': 'រៀនអំពីម៉ឺនុយ បង្អួច',
     'Learn Minimize, Maximize or Zoom, Close, Bring All to Front, window switching, and Reset Position and Size.':
         'ស្វែងយល់អំពី Minimize, Maximize ឬ Zoom, Close, Bring All to Front, ការប្តូរបង្អួច និង Reset Position and Size។',
     'Learn the Help menu': 'រៀនអំពីម៉ឺនុយ ជំនួយ',
-    'Learn Tips of the Day, All tips, App Help (Chatbot), AI Chat, Learn More, both update checks, and About.':
-        'ស្វែងយល់អំពី Tips of the Day, All tips, App Help (Chatbot), AI Chat, Learn More, ការពិនិត្យបច្ចុប្បន្នភាពទាំងពីរ និង About។',
+    'Learn Tips of the Day, All tips, Copy Debug Info, Copy Full Debug Info, App Help (Chatbot), AI Chat, Learn More, both update checks, and About.':
+        'ស្វែងយល់អំពី Tips of the Day, All tips, Copy Debug Info, Copy Full Debug Info, App Help (Chatbot), AI Chat, Learn More, ការពិនិត្យបច្ចុប្បន្នភាពទាំងពីរ និង About។',
     'Look up a Bible passage': 'ស្វែងរកបទគម្ពីរ',
     'Open Bible Lookup without leaving the Presenter.':
         'បើកការស្វែងរកព្រះគម្ពីរដោយមិនចាកចេញពីទំព័រអ្នកបង្ហាញ។',
