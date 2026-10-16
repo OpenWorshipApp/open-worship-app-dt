@@ -1119,6 +1119,23 @@
                     }
                 },
                 {
+                    "id": "projector-more-chapters",
+                    "text": "How do I put the rest of a long passage on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "only three chapters",
+                        "rest of the passage",
+                        "next chapter on screen",
+                        "show the next chapter",
+                        "three dots on the mini screen",
+                        "passage across chapters"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "passage": "A passage across chapters."
+                    }
+                },
+                {
                     "id": "present-verse-for-me",
                     "text": "Put John 3:16 on the screen",
                     "kind": "state",

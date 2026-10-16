@@ -2,7 +2,7 @@
 id: W-06
 title: "Look up and present a Bible verse"
 section: "Presenting content"
-verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, CB-61, CB-131, CM-101]
+verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101]
 screenshots: 5
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-10-15"
@@ -34,6 +34,14 @@ workflowsVersion: "2026-10-15"
    **Shift**-click the last one (or press on the first and drag to the last);
    **[en:tran:Show all verses]**, at the end of the grid, takes the whole chapter. Typed into
    the **[en:tran:Bible Reference]** box it is `John 3:16-18`.
+   **A passage across chapters.** Type it the way you would say it —
+   `John 1:50-6:3`, `John 1-3`, `John 3:16-4:2` — and present it as above. The
+   projector shows the first three chapters, each starting with its chapter
+   number on a thin rule. On the mini screen card the passage ends with **...**
+   (**[en:tran:Show the next chapter]**): each press puts one more chapter on the
+   projector. The projector itself never shows the **...**. From the projector
+   window, **Ctrl+→** steps to the verse just after the passage (John 6:4) and
+   **Ctrl+←** to the verse just before it (John 1:49).
    **The next verses, from the projector window.** Click the projector window itself and
    press **Ctrl+→** (or **Alt+→**): the screen moves on by as many verses as it is showing —
    John 3:16 becomes 3:17, John 3:16-18 becomes 3:19-21 — into the next chapter when the
@@ -46,7 +54,8 @@ workflowsVersion: "2026-10-15"
    versions opens. A plain click on one **changes** that column to it — it adds nothing.
    To put a second version **beside** the first, hold **Shift** while you click it
    (the list says **[en:tran:Shift Click to Add]** at its top). With two
-   or more versions showing, the same list has a red row that takes that column away.
+   or more versions showing, the same list has a red row that takes that column away. From the keyboard, highlight a version in that
+   list and press **Shift+Enter** to add it beside the others.
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
@@ -80,7 +89,7 @@ workflowsVersion: "2026-10-15"
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `CB-61` · `CB-131` · `CM-101`
+`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

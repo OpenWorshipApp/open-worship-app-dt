@@ -212,6 +212,31 @@ describe('generateBibleMSWordBytes', () => {
         expect(documentXML).toContain('w:ascii="Font"');
     });
 
+    test('writes each line of a body as its own paragraph', async () => {
+        // a passage across chapters: a header and a text line per chapter
+        const documentXML = await readDocumentXML([
+            {
+                title: 'John 2:24-3:2',
+                body: 'John 2:24-25\n(24): But\r\nJohn 3:1-2\n(1): Now',
+                fontFamily: null,
+            },
+        ]);
+        const paragraphTextList = [
+            ...documentXML.matchAll(
+                /<w:p><w:r><w:rPr><w:sz w:val="24"\/><\/w:rPr><w:t xml:space="preserve">([^<]*)<\/w:t><\/w:r><\/w:p>/g,
+            ),
+        ].map((match) => {
+            return match[1];
+        });
+        expect(paragraphTextList).toEqual([
+            'John 2:24-25',
+            '(24): But',
+            'John 3:1-2',
+            '(1): Now',
+        ]);
+        expect(documentXML).not.toContain('\n');
+    });
+
     test('handles an empty entry list', async () => {
         const documentXML = await readDocumentXML([]);
         expect(documentXML).toContain('<w:body></w:body>');

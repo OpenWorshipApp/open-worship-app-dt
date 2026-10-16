@@ -86,11 +86,23 @@ function toRunXML(
 
 function toBibleEntryXML({ title, body, fontFamily }: BibleWordEntryType) {
     const fontFamilyName = fontFamily ?? '';
+    // A passage across chapters is a header line and a text line per
+    // chapter, and Word renders a newline inside `w:t` as a space: each line
+    // is a paragraph of its own.
+    const bodyXML = body
+        .split(/\r?\n/)
+        .map((line) => {
+            return (
+                '<w:p>' +
+                toRunXML(line, fontFamilyName, BODY_HALF_POINT_SIZE, false) +
+                '</w:p>'
+            );
+        })
+        .join('');
     return (
         `<w:p>${toRunXML(title, fontFamilyName, TITLE_HALF_POINT_SIZE, true)}` +
         '</w:p>' +
-        `<w:p>${toRunXML(body, fontFamilyName, BODY_HALF_POINT_SIZE, false)}` +
-        '</w:p>' +
+        bodyXML +
         // the two blank spacer paragraphs `AppendBibleEntryToWordBody` adds
         '<w:p/><w:p/>'
     );

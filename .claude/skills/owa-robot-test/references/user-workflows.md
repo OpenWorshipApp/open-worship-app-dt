@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-15j** (**W-42 step 5 — the window list keeps up by itself, and a picture or a pointed-at control remembers its window.** The user, with a picture of Settings opened while the help was already up and no **WORKING IN** line under it: _I don't see the selection after I opened setting later, it should real-time tracking the new opening_; and then _make sure screenshot and element selection have uuid information to the window to let mcp know_. The list now follows the windows as they open, close or change page, with nothing pressed in the help window, and a 📷 picture or a ◎ control keeps the window it came from — its page and `uuid` — which its chip names on hover and the assistant is told. Seen live 2026-10-15 on a scratch dev instance: Settings opened from the main window and the line read _Reader (📖) · main window_ and _Setting (⚙️) · own window_ within 1.5 s, with no focus sent to the help window; the main window moved to the Presenter and its row became _Presenter (🖥️) · main window_; with Settings chosen, the 📷 chip read _my Settings window_ and pointing at **General** made a chip _General (Settings window)_; the picker set back to the main window, pressing that chip still rang **General** in the Settings window; Settings closed and the line went away.)
+**workflowsVersion: 2026-10-15k** (**W-06 step 6 — a passage across chapters on the projector.** Asked for by the user: _for all bible rendering add support cross chapter rendering_, _if more than 3 chapters then show 3 chapter only and have `...` button to render more 1 by 1 chapter_. A passage like `John 1:50-6:3` goes up as one passage: the projector shows the first three chapters, each opened by its chapter number on a rule, and the mini screen card ends it with **...** (**[en:tran:Show the next chapter]**), which puts one more chapter on the projector per press. Seen live 2026-10-15 on the dev app (Khmer Bible គខប, the real `screen.html?screenId=0` window): **Ctrl+Shift+Enter** put `យ៉ូហាន ១:៥០-៦:៣` up with the `១` divider and no **...** on the projector; the card's **...** took the projector from 63 verse numbers to 117 (chapter 4 added); **Ctrl+→** on the projector window went to `៦:៤` and, re-presented, **Ctrl+←** to `១:៤៩`; a second version was added from the keyboard with **Shift+Enter** on the highlighted version.)
+
+Previous: **workflowsVersion: 2026-10-15j** (**W-42 step 5 — the window list keeps up by itself, and a picture or a pointed-at control remembers its window.** The user, with a picture of Settings opened while the help was already up and no **WORKING IN** line under it: _I don't see the selection after I opened setting later, it should real-time tracking the new opening_; and then _make sure screenshot and element selection have uuid information to the window to let mcp know_. The list now follows the windows as they open, close or change page, with nothing pressed in the help window, and a 📷 picture or a ◎ control keeps the window it came from — its page and `uuid` — which its chip names on hover and the assistant is told. Seen live 2026-10-15 on a scratch dev instance: Settings opened from the main window and the line read _Reader (📖) · main window_ and _Setting (⚙️) · own window_ within 1.5 s, with no focus sent to the help window; the main window moved to the Presenter and its row became _Presenter (🖥️) · main window_; with Settings chosen, the 📷 chip read _my Settings window_ and pointing at **General** made a chip _General (Settings window)_; the picker set back to the main window, pressing that chip still rang **General** in the Settings window; Settings closed and the line went away.)
 
 Previous: **workflowsVersion: 2026-10-15i** (**W-42 step 5 — the window to work in is chosen on the line above the box.** The user, with a picture of the help window and the line over the box circled: _if windows are open more than 1 (beside main) the chat bot should have option to select which window to work on. e.g. lyric editor, setting, app-document editor. add the selection where I highlighted_, and the story under it: _ask about some stuff on app-document editor page, I wish I could select the editor window and start interacting with it_. The **WINDOW** list left the head row: **WORKING IN**, on its own line just over the box, names each open window, and the window chosen is the one the help reads, outlines controls in and walks you through — and now the one the 📷 photographs and the ◎ points in (both had stayed on the main window). The main window is never Local Web Share. Seen live 2026-10-15 on a scratch dev instance: with the main window on the Presenter, a Slide Editor of its own on _Window Aim Test_ and Settings, the line listed _Presenter (🖥️) · main window_, _Setting (⚙️) · own window_ and _Document Editor (🖥️✏️) - Window Aim Test · own window_; choosing the editor set **ASKING ABOUT** to **Document Editor** and lit the line's bar, **/here** answered _This tab works with the Document Editor, a window of its own_, **/find Insert YouTube** ringed it in the editor window, the 📷 attached _my Document Editor window_ — a picture of the editor — and the ◎ read _Point at the control you mean in the Document Editor window…_; choosing the main window put **ASKING ABOUT** back on **Presenter**. Your own app shows the line once it is RESTARTED: the list comes from the main process, and one started before this change has no answer for it.)
 
@@ -1804,6 +1806,14 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    **Shift**-click the last one (or press on the first and drag to the last);
    **[en:tran:Show all verses]**, at the end of the grid, takes the whole chapter. Typed into
    the **[en:tran:Bible Reference]** box it is `John 3:16-18`.
+   **A passage across chapters.** Type it the way you would say it —
+   `John 1:50-6:3`, `John 1-3`, `John 3:16-4:2` — and present it as above. The
+   projector shows the first three chapters, each starting with its chapter
+   number on a thin rule. On the mini screen card the passage ends with **...**
+   (**[en:tran:Show the next chapter]**): each press puts one more chapter on the
+   projector. The projector itself never shows the **...**. From the projector
+   window, **Ctrl+→** steps to the verse just after the passage (John 6:4) and
+   **Ctrl+←** to the verse just before it (John 1:49).
    **The next verses, from the projector window.** Click the projector window itself and
    press **Ctrl+→** (or **Alt+→**): the screen moves on by as many verses as it is showing —
    John 3:16 becomes 3:17, John 3:16-18 becomes 3:19-21 — into the next chapter when the
@@ -1816,7 +1826,8 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    versions opens. A plain click on one **changes** that column to it — it adds nothing.
    To put a second version **beside** the first, hold **Shift** while you click it
    (the list says **[en:tran:Shift Click to Add]** at its top). With two
-   or more versions showing, the same list has a red row that takes that column away.
+   or more versions showing, the same list has a red row that takes that column away. From the keyboard, highlight a version in that
+   list and press **Shift+Enter** to add it beside the others.
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
@@ -1847,7 +1858,7 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
     file. If a selected version lacks a verse, generation reports it without
     saving a partial passage.
 
-_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, CB-61, CB-131, CM-101._
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101._
 
 ### W-07 — Style the on-screen Bible text
 

@@ -126,20 +126,22 @@ function getStyleText(textColor?: string) {
     text-shadow: 0 0 ${HEX_COLOR_BLACK};
 }
 
-/* "-2-----": a new chapter of a passage crossing chapters, in the verse
-   numbers' colour. Static: it stays up for as long as the passage does. */
+/* "-2-----": a new chapter of a passage crossing chapters, its number drawn
+   like a verse number. The rules take the text's own colour, so they read on
+   a white background as well as a dark one. Static: it stays up for as long
+   as the passage does. */
 #bible-screen-view .bible-chapter-divider {
     display: flex;
     align-items: center;
     gap: 0.4em;
     width: 100%;
     margin: 0.4em 0 0.1em;
-    opacity: 0.7;
 }
 #bible-screen-view .bible-chapter-divider::before,
 #bible-screen-view .bible-chapter-divider::after {
     content: '';
-    border-top: 1px solid rgba(172, 255, 47, 0.645);
+    border-top: max(1px, 0.04em) solid currentColor;
+    opacity: 0.35;
 }
 #bible-screen-view .bible-chapter-divider::before {
     flex: 0 0 1.2em;
@@ -148,7 +150,10 @@ function getStyleText(textColor?: string) {
     flex: 1;
 }
 #bible-screen-view .bible-chapter-divider-label {
+    -webkit-text-stroke: 0.01em greenyellow;
     color: rgba(172, 255, 47, 0.645);
+    text-shadow: 0 0 ${HEX_COLOR_BLACK};
+    opacity: 0.7;
     font-weight: bold;
     font-size: 0.7em;
 }
