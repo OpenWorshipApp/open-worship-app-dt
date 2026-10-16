@@ -31,8 +31,16 @@ vi.mock('../server/appProvider', () => {
     };
 });
 
-const { deserializeDragData } = await import('./dragHelpers');
-const { DragTypeEnum } = await import('./DragInf');
+const {
+    addDragPayload,
+    deserializeDragData,
+    extractDragData,
+    extractDropData,
+    extractDropDataOfType,
+    handleAppDocumentDragStart,
+    handleDragStart,
+} = await import('./dragHelpers');
+const { DragTypeEnum, genDragMimeType } = await import('./DragInf');
 const { default: NoteItem } = await import('../bible-list/note/NoteItem');
 
 describe('deserializeDragData', () => {
@@ -56,5 +64,78 @@ describe('deserializeDragData', () => {
         expect(
             deserializeDragData({ type: 'nonsense' as any, data: {} }),
         ).toBeNull();
+    });
+});
+
+describe('drag payload transport', () => {
+    function makeEvent() {
+        const values = new Map<string, string>();
+        return {
+            values,
+            dataTransfer: {
+                setData: (kind: string, value: string) => {
+                    values.set(kind.toLowerCase(), value);
+                },
+                getData: (kind: string) => values.get(kind.toLowerCase()) ?? '',
+            },
+        };
+    }
+
+    test('an app document travels by path and advertises its type during hover', () => {
+        const event = makeEvent();
+        handleAppDocumentDragStart(event, '/docs/sermon.pdf');
+
+        expect(
+            event.values.get(genDragMimeType(DragTypeEnum.APP_DOCUMENT)),
+        ).toBe('');
+        expect(extractDragData(event)).toEqual({
+            type: DragTypeEnum.APP_DOCUMENT,
+            data: '/docs/sermon.pdf',
+        });
+        expect(extractDropData(event)).toEqual({
+            type: DragTypeEnum.APP_DOCUMENT,
+            item: { filePath: '/docs/sermon.pdf' },
+        });
+        expect(
+            extractDropDataOfType(event, DragTypeEnum.BACKGROUND_IMAGE),
+        ).toBeNull();
+        expect(extractDropDataOfType(event, DragTypeEnum.APP_DOCUMENT)).toEqual(
+            extractDropData(event),
+        );
+    });
+
+    test('a verse drag can carry a second note payload for its other target', () => {
+        const event = makeEvent();
+        const note = new NoteItem(NoteItem.genNewJsonData(), '/notes/a.note');
+        handleAppDocumentDragStart(event, '/docs/sermon.pdf');
+        addDragPayload(event, note);
+
+        const dropped = extractDropDataOfType(event, DragTypeEnum.NOTE_ITEM);
+        expect(dropped?.type).toBe(DragTypeEnum.NOTE_ITEM);
+        expect(dropped?.item).toBeInstanceOf(NoteItem);
+        expect((dropped?.item as InstanceType<typeof NoteItem>).filePath).toBe(
+            '/notes/a.note',
+        );
+        expect(extractDropData(event)?.type).toBe(DragTypeEnum.APP_DOCUMENT);
+
+        event.values.set(genDragMimeType(DragTypeEnum.NOTE_ITEM), '{bad');
+        expect(extractDropDataOfType(event, DragTypeEnum.NOTE_ITEM)).toBeNull();
+    });
+
+    test('plain text, invalid JSON and incomplete drags do not deserialize', () => {
+        const event = makeEvent();
+        expect(extractDragData(event)).toBeNull();
+        for (const text of ['plain text', 'null', '3', '{}']) {
+            event.dataTransfer.setData('text', text);
+            expect(extractDragData(event)).toBeNull();
+            expect(extractDropData(event)).toBeNull();
+        }
+        handleDragStart(event, {
+            dragSerialize: () => ({
+                type: '' as (typeof DragTypeEnum)[keyof typeof DragTypeEnum],
+                data: 'x',
+            }),
+        });
+        expect(event.values.size).toBe(1);
     });
 });

@@ -417,9 +417,31 @@ function toValidAttachments(raw: any) {
                 one.number < 100000
                     ? { number: one.number }
                     : {}),
+                ...toValidAttachmentWindow(one.window),
             };
         });
     return attachments.length > 0 ? { attachments } : {};
+}
+
+// Which window a picture or a pointed-at control came from
+// (`AttachmentWindowType`): four short fields, listed like the rest.
+function toValidAttachmentWindow(raw: any) {
+    if (
+        typeof raw?.id !== 'string' ||
+        typeof raw.page !== 'string' ||
+        typeof raw.label !== 'string' ||
+        typeof raw.isMain !== 'boolean'
+    ) {
+        return {};
+    }
+    return {
+        window: {
+            id: raw.id.slice(0, 64),
+            page: raw.page.slice(0, 200),
+            label: raw.label.slice(0, 80),
+            isMain: raw.isMain,
+        },
+    };
 }
 
 // The one guard on a stored total, shared by the answer and the tab: every

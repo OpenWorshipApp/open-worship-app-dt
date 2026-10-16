@@ -48,6 +48,8 @@ import {
     toAgentFilePath,
     trashAgentFile,
 } from './agentBackupHelpers';
+import { toVerseFullKeyFormat } from './bible-helpers/bibleKeyFormatHelpers';
+import { getTargetChapterEnd } from './bible-helpers/bibleTargetHelpers';
 
 export type AgentBibleListRequestType = {
     action?: unknown;
@@ -95,12 +97,16 @@ async function toTitle(bibleItem: any) {
     try {
         return await bibleItem.toTitleWithBibleKey();
     } catch (_error) {
-        const { bookKey, chapter, verseStart, verseEnd } =
-            bibleItem.target ?? {};
-        return (
-            `(${bibleItem.bibleKey}) ${bookKey} ${chapter}:${verseStart}` +
-            (verseEnd === verseStart ? '' : `-${verseEnd}`)
+        const target = bibleItem.target ?? {};
+        // `JHN 1:2-3:4` when the passage runs on into a later chapter.
+        const verseKey = toVerseFullKeyFormat(
+            target.bookKey,
+            target.chapter,
+            target.verseStart,
+            target.verseEnd,
+            getTargetChapterEnd(target),
         );
+        return `(${bibleItem.bibleKey}) ${verseKey}`;
     }
 }
 

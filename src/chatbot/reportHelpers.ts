@@ -169,6 +169,10 @@ export type ReportFileNoteType = {
 export type PostedReportType = {
     reference: string;
     isSent: boolean;
+    // Not sent, because the report server was away -- and KEPT by the app,
+    // which sends it by itself when that server is back
+    // (`electron/llmReportQueueHelpers.ts`).
+    isQueued: boolean;
     // The files a report server took with it, by name; none when only the
     // words went, and when nothing did.
     sentFileNames: string[];
@@ -210,11 +214,45 @@ export const REPORT_EMAIL_TOOL_NAME = 'owa-report-email';
 // `SHOWS:` -- a marker at the start of a line, parsed off, never shown -- and
 // for the same reason: a small model told merely to "be structured" writes a
 // different structure every time, and the report has to be one document.
-const REPORT_MARKER = /^[ \t]*REPORT:[ \t]*/im;
+//
+// Each one is taken in the markdown a model dresses it in, too (2026-10-15,
+// the first report the user sent through the inbox: a free model wrote
+// `**TRY THIS:**` and `**REPORT**` alone on a line, neither was seen, and the
+// whole answer -- steps, frame and all -- went out as the account, under the
+// person's own words for a title, with no _Try this first_ card). A heading
+// or bold marker with nothing after it needs no colon; one with words after
+// it does, or "Report the issue" would be a frame.
+const MARKER_LEAD = String.raw`^[ \t]*(?:[#>]+[ \t]*)?[*_]{0,3}`;
+const MARKER_END = String.raw`(?:[*_]{0,3}[ \t]*:[*_]{0,3}|[*_]{0,3}[ \t]*$)[ \t]*`;
+const REPORT_MARKER = new RegExp(`${MARKER_LEAD}REPORT${MARKER_END}`, 'im');
 // The same kind of marker, in front of what the person can try themselves.
-const FIX_MARKER = /^[ \t]*TRY THIS:[ \t]*/im;
+const FIX_MARKER = new RegExp(`${MARKER_LEAD}TRY THIS${MARKER_END}`, 'im');
 const FIELD_PATTERN =
-    /^[ \t]*(TITLE|WHAT HAPPENED|STEPS|EXPECTED|SUSPECT):[ \t]*/i;
+    /^[ \t]*(?:[-*][ \t]+)?[*_]{0,3}(TITLE|WHAT HAPPENED|STEPS|EXPECTED|SUSPECT)[*_]{0,3}[ \t]*:[*_]{0,3}[ \t]*/i;
+// A rule a model draws between its parts (`---`), left at the end of one.
+const TRAILING_RULE_PATTERN = /\n[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
+
+function toTrimmedPart(text: string) {
+    // A markdown line break is two spaces at a line's end: not words.
+    return text
+        .replace(/[ \t]+$/gm, '')
+        .trim()
+        .replace(TRAILING_RULE_PATTERN, '')
+        .trim();
+}
+
+// What is left of a bold marker that carried more words inside it --
+// `**TRY THIS: steps you can try yourself**` leaves `steps you can try
+// yourself**` (the user's second inbox report, 2026-10-15). It is the
+// marker's heading, not a step: a first line whose bold only CLOSES.
+function dropMarkerTail(text: string) {
+    const [first, ...rest] = text.split('\n');
+    const boldCount = first.match(/\*\*|__/g)?.length ?? 0;
+    if (boldCount % 2 === 1 && /(?:\*\*|__)[ \t]*$/.test(first)) {
+        return rest.join('\n').trim();
+    }
+    return text;
+}
 
 const MAX_CONSOLE_LINES = 20;
 const CONSOLE_READ_TIMEOUT_MILLISECONDS = 3000;
@@ -309,7 +347,10 @@ export function genReportInvestigation(
         'TITLE: one line a maintainer can read in a list',
         'WHAT HAPPENED: what is actually wrong, in your words, with what you',
         'saw in the app that shows it',
-        'STEPS: how to make it happen again, numbered',
+        'STEPS: how to make it happen again, numbered -- only what the',
+        'user said they did or what you saw happen; when nobody knows,',
+        'write "unknown" and say what was on screen, never a guess dressed',
+        'as steps: a maintainer follows them',
         'EXPECTED: what should have happened instead',
         'SUSPECT: the part of the app you think is at fault, or "unknown"',
     ].join('\n');
@@ -670,14 +711,13 @@ export function parseReportDraft(text: string): {
     const toHead = (head: string) => {
         const tried = FIX_MARKER.exec(head);
         if (tried === null) {
-            return { summary: head.trim(), fix: '' };
+            return { summary: toTrimmedPart(head), fix: '' };
         }
         return {
-            summary: head.slice(0, tried.index).trim(),
-            fix: head
-                .slice(tried.index + tried[0].length)
-                .trim()
-                .slice(0, MAX_FIELD_LENGTH),
+            summary: toTrimmedPart(head.slice(0, tried.index)),
+            fix: dropMarkerTail(
+                toTrimmedPart(head.slice(tried.index + tried[0].length)),
+            ).slice(0, MAX_FIELD_LENGTH),
         };
     };
     if (matched === null) {
@@ -1873,6 +1913,7 @@ export async function postIssueReport(
         return {
             reference: report.reference,
             isSent: false,
+            isQueued: false,
             sentFileNames: [],
             unsentFiles: [],
             filePath: null,
@@ -1912,6 +1953,7 @@ export async function postIssueReport(
     return {
         reference: report.reference,
         isSent: sent.ok,
+        isQueued: !sent.ok && sent.queued === true,
         sentFileNames: sent.ok
             ? notes
                   .filter((note) => {
@@ -1975,6 +2017,21 @@ export function describePostedReport(
                       ? ' The picture is still in Downloads, and the ' +
                         'buttons below email it if somebody asks to see it.'
                       : ''))
+        );
+    }
+    // Kept by the app for a server that is away -- asleep, restarting,
+    // moved. Said as what it is: on its way, with nothing left to do. A
+    // volunteer told "nothing was sent, here is how to email it" mostly
+    // does not, and the report was lost.
+    if (posted.isQueued) {
+        return (
+            `Report ${posted.reference} is ready, but the report server is ` +
+            `not answering right now (${posted.sendFailure ?? 'it is away'}). ` +
+            'I kept it, and the app will send it by itself as soon as that ' +
+            'server is back — it tries every half hour while the app is ' +
+            'open, for up to a week — so there is nothing more you need to ' +
+            'do. A copy is in your Downloads folder too, and if it is ' +
+            'urgent the buttons below email it.'
         );
     }
     return (

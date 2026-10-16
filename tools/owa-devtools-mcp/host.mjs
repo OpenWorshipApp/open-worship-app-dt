@@ -204,7 +204,9 @@ export async function startOwaMcpHost({
         // (and puppeteer behind it). An app nobody asks for help stays exactly
         // as light as it was.
         const { createOwaMcpServer } = await import('./server.mjs');
-        const { server } = await createOwaMcpServer();
+        // The HTTP door is the app's own: its bearer token is handed to the
+        // chatbot window and nobody else.
+        const { server } = await createOwaMcpServer({ door: 'app' });
         await server.connect(transport);
         const session = {
             sessionId,

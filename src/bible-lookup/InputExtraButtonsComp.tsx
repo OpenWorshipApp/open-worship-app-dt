@@ -24,6 +24,7 @@ import {
 } from '../keyboard-shortcut/appShortcutMappers';
 import { useInputTextContext } from './InputHandlerComp';
 import { parseChapterFromGuessing } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { checkIsCrossChapterTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import { tran } from '../lang/langHelpers';
 
 async function checkNewTabInputText(
@@ -46,7 +47,11 @@ async function checkNewTabInputText(
                 return `${editingResult.oldInputText}:`;
             }
         }
-    } else if (bibleItem.target.verseStart === bibleItem.target.verseEnd) {
+    } else if (
+        // `John 1:2-3:2` already has its end, its verses only look the same.
+        !checkIsCrossChapterTarget(bibleItem.target) &&
+        bibleItem.target.verseStart === bibleItem.target.verseEnd
+    ) {
         event?.stopPropagation();
         event?.preventDefault();
         return `${editingResult.oldInputText}-`;

@@ -175,6 +175,7 @@ vi.mock('../server/appProvider', () => ({
     default: {
         POPUP_FRAME_NAME_PREFIX: 'owa-frame',
         aboutHomePage: 'https://app.local/about',
+        chatbotHomePage: 'https://app.local/chatbot',
         messageUtils: {
             sendDataSync: sendDataSyncMock,
             listenForData: listenForDataMock,
@@ -446,6 +447,18 @@ describe('domHelpers', () => {
             appBlinkFeatures: [],
         });
         expect(openCalls[2]?.features).toBe('popup');
+    });
+
+    // The user's word: _open from taskbar no need confirmation_. Every other
+    // way in asks the caution, which is asynchronous; this one opens in the
+    // same turn, before any question could have been put.
+    test('the taskbar task opens the help at once, with no caution', () => {
+        listenerRegistry['main:app:open-chatbot-from-taskbar']?.();
+
+        expect(openCalls).toHaveLength(1);
+        expect(openCalls[0]?.url).toContain(
+            'https://app.local/chatbot?uuid=chatbot',
+        );
     });
 
     test('registers the about page listener and highlights newly added elements', async () => {

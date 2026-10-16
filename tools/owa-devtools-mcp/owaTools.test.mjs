@@ -198,7 +198,11 @@ describe('registered app tools', () => {
       value: { page: 'reader.html', lang: 'en' },
     });
     app.listTargets.mockResolvedValue([
-      { title: 'Reader', url: 'http://localhost:9222/reader.html' },
+      {
+        id: 'T1',
+        title: 'Reader',
+        url: 'http://localhost:9222/reader.html',
+      },
     ]);
     app.readLiveInstances.mockReturnValue([
       {
@@ -221,8 +225,9 @@ describe('registered app tools', () => {
         startedAt: 5,
       },
     ]);
+    // The id is what `page` takes to aim at one of two same-address windows.
     expect(result.windows).toEqual([
-      { title: 'Reader', url: 'http://localhost:9222/reader.html' },
+      { id: 'T1', title: 'Reader', url: 'http://localhost:9222/reader.html' },
     ]);
     expect(result.mainWindow.page).toBe('reader.html');
     expect(JSON.stringify(result)).not.toContain('C:/Users/private');
@@ -291,6 +296,22 @@ describe('registered app tools', () => {
     const missing = await call('owa_screenshot', {});
     expect(missing.isError).toBe(true);
     expect(missing.content[0].text).toContain('did not return a picture');
+    expect(app.evaluateInApp.mock.calls[1][0]).not.toContain('isOwnWindow');
+  });
+
+  // The help window's 📷 with a Slide Editor of its own chosen: a picture of
+  // THAT window, never of the main window behind it.
+  it('photographs the window it is aimed at, not the main window', async () => {
+    app.evaluateInApp.mockResolvedValueOnce({
+      value: 'data:image/png;base64,aGVsbG8=',
+    });
+    await call('owa_screenshot', { page: 'EDITOR-TARGET-ID' });
+    expect(app.evaluateInApp.mock.calls[0][0]).toContain(
+      '{ isOwnWindow: true }',
+    );
+    expect(app.evaluateInApp.mock.calls[0][1]).toEqual({
+      match: 'EDITOR-TARGET-ID',
+    });
   });
 
   it('returns website text with the image when available and text alone otherwise', async () => {

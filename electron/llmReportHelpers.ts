@@ -1,3 +1,7 @@
+import path from 'node:path';
+
+import { app } from 'electron';
+
 import { checkIsAiEnabled } from './aiHelpers';
 import { fetchOnRelaySession } from './customLlmRelayHelpers';
 import {
@@ -12,6 +16,14 @@ import {
     type LlmReportServerType,
 } from './customLlmProtocol';
 import { getLlmReportServers, refreshLlmRegistry } from './llmRegistryHelpers';
+import {
+    QUEUED_REASON_LIST,
+    REPORT_QUEUE_FIRST_TRY_DELAY_MILLISECONDS,
+    REPORT_QUEUE_RETRY_EVERY_MILLISECONDS,
+    queueReportBody,
+    sendQueuedReports,
+    type ReportQueueDepsType,
+} from './llmReportQueueHelpers';
 
 /**
  * The door a problem report leaves by (2026-10-13, the user's ask: _a shared
@@ -59,6 +71,9 @@ export type LlmReportDepsType = {
     refreshRegistry: () => Promise<unknown>;
     fetch: (url: string, init: RequestInit) => Promise<Response>;
     now?: () => number;
+    // Keeps a report whose server was away, to be sent later; answers
+    // whether it was kept. Without it nothing is kept.
+    queue?: (body: string) => Promise<boolean>;
 };
 
 // When the last few reports were handed in, for the ration. Bounded by the
@@ -259,8 +274,6 @@ export async function runLlmReportPost(
     postStampList.push(startedAt);
     // Written once: every address is sent the same bytes.
     const body = genReportPostBody(text, files);
-    const totalTimeout =
-        TOTAL_TIMEOUT_MILLISECONDS + toReportUploadAllowance(body.length);
     const controller = new AbortController();
     if (requestId !== undefined) {
         // Registered before the first `await`: a cancel sent straight after
@@ -268,6 +281,44 @@ export async function runLlmReportPost(
         controllerMap.set(requestId, controller);
     }
     const { signal } = controller;
+    try {
+        const result = await deliverReportBody(body, deps, signal);
+        // The server is away -- asleep, restarting, moved -- and nobody
+        // said no: the report is kept and sent when it is back, rather
+        // than left to an email nobody writes.
+        if (
+            !result.ok &&
+            !signal.aborted &&
+            QUEUED_REASON_LIST.includes(result.reason) &&
+            deps.queue !== undefined &&
+            (await deps.queue(body))
+        ) {
+            return { ...result, queued: true };
+        }
+        return result;
+    } finally {
+        if (requestId !== undefined) {
+            controllerMap.delete(requestId);
+        }
+    }
+}
+
+/**
+ * One report's bytes, posted to the report servers main knows, in the
+ * registry's order; when none of them took it -- or none is known -- the
+ * registry is read once more and whatever is NEW in it tried. The same for
+ * a Send and for a report kept for later (`llmReportQueueHelpers.ts`).
+ * Never throws.
+ */
+export async function deliverReportBody(
+    body: string,
+    deps: LlmReportDepsType,
+    signal: AbortSignal = new AbortController().signal,
+): Promise<LlmReportPostResultType> {
+    const now = deps.now ?? Date.now;
+    const startedAt = now();
+    const totalTimeout =
+        TOTAL_TIMEOUT_MILLISECONDS + toReportUploadAllowance(body.length);
     // By address and key: an entry read again as it was is not asked twice.
     const triedKeySet = new Set<string>();
     // The last "no" of an address that was asked; none when none was.
@@ -292,7 +343,7 @@ export async function runLlmReportPost(
         }
         return null;
     };
-    try {
+    {
         const first = await tryServers();
         if (first !== null) {
             return first;
@@ -326,10 +377,6 @@ export async function runLlmReportPost(
             failureList[failureList.length - 1] ??
             genFailure('no-server', 'no report server is shared right now')
         );
-    } finally {
-        if (requestId !== undefined) {
-            controllerMap.delete(requestId);
-        }
     }
 }
 
@@ -350,9 +397,45 @@ const reportDeps: LlmReportDepsType = {
     },
 };
 
+// Where a report the server was away for waits: the app's own data folder,
+// read inside a function -- `app` is not ready when this module loads.
+const reportQueueDeps: ReportQueueDepsType = {
+    get dirPath() {
+        return path.join(app.getPath('userData'), 'pending-reports');
+    },
+    deliver: (body) => {
+        return deliverReportBody(body, reportDeps);
+    },
+    isAiEnabled: () => {
+        return checkIsAiEnabled();
+    },
+};
+
 /** The IPC door. */
-export function handleLlmReportPost(request: LlmReportPostRequestType) {
-    return runLlmReportPost(request, reportDeps);
+export async function handleLlmReportPost(request: LlmReportPostRequestType) {
+    const result = await runLlmReportPost(request, {
+        ...reportDeps,
+        queue: (body) => {
+            return queueReportBody(body, reportQueueDeps);
+        },
+    });
+    if (result.ok) {
+        // The server is plainly there now: anything kept for it goes too.
+        void sendQueuedReports(reportQueueDeps);
+    }
+    return result;
+}
+
+/**
+ * Sends what was kept for later: a minute after the app starts, then every
+ * half hour while it runs. Called once, with AI on.
+ */
+export function initLlmReportQueue() {
+    const run = () => {
+        void sendQueuedReports(reportQueueDeps);
+    };
+    setTimeout(run, REPORT_QUEUE_FIRST_TRY_DELAY_MILLISECONDS).unref?.();
+    setInterval(run, REPORT_QUEUE_RETRY_EVERY_MILLISECONDS).unref?.();
 }
 
 /** Tests only: no report handed in yet. */

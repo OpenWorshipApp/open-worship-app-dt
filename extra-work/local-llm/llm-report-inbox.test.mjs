@@ -18,8 +18,11 @@ import {
     MAX_FILE_BYTES,
     MAX_PROMPT_BYTES,
     MAX_REPORT_BYTES,
+    NOTICE_GAP_MILLISECOND,
     REPORT_FILE_TYPE_MAP,
     VISITOR_LIMIT,
+    genNewReportNotice,
+    genNewReportNotifier,
     genShownReport,
     openReportInbox,
     openReportStore,
@@ -31,6 +34,7 @@ import {
     sniffFileKind,
     toPrintable,
     toSafeFileName,
+    notifyDesktop,
     toVisitorKey,
 } from './llm-report-inbox.mjs';
 import { CHECK_AGENT, DOOR_HEADER, REPORT_PATH } from './llm-tunnel.mjs';
@@ -323,6 +327,136 @@ describe('what comes with a report', () => {
                 Buffer.from('{"prompt":"x","reference":"../../etc"}'),
             ).reference,
         ).toBeNull();
+    });
+});
+
+// The inbox runs with no window: a report nobody notices helps nobody.
+describe('saying a new report on the desktop', () => {
+    it('says what the report is, and nothing a stranger could make it run', () => {
+        expect(
+            genNewReportNotice({
+                id: 3,
+                reference: 'OWA-261015-7e05',
+                title: 'Font \u001b[2J too small\nnow',
+                fileCount: 2,
+            }),
+        ).toEqual({
+            title: 'New problem report',
+            body:
+                'Font [2J too small now — #3 OWA-261015-7e05, 2 files. ' +
+                'Read it: node llm-report-inbox.mjs show 3',
+        });
+        expect(
+            genNewReportNotice({ id: 4, reference: null, title: '' }),
+        ).toEqual({
+            title: 'New problem report',
+            body: '(no title) — #4. Read it: node llm-report-inbox.mjs show 4',
+        });
+    });
+
+    it('passes the words as data to what each OS has, never inside a command', () => {
+        const calls = [];
+        const spawn = (command, args, options) => {
+            calls.push({ command, args, options });
+            return { on: () => {}, unref: () => {} };
+        };
+        const notice = {
+            title: 'New problem report',
+            body: "x'; Remove-Item C:\\ -Recurse; '",
+        };
+        expect(notifyDesktop(notice, { platform: 'win32', spawn })).toBe(true);
+        const [windows] = calls;
+        expect(windows.command).toBe('powershell.exe');
+        const script = Buffer.from(
+            windows.args[windows.args.indexOf('-EncodedCommand') + 1],
+            'base64',
+        ).toString('utf16le');
+        // The words are not in the script; the script reads them.
+        expect(script).not.toContain('Remove-Item');
+        expect(script).toContain('$env:OWA_NOTICE_BODY');
+        expect(windows.options.env.OWA_NOTICE_BODY).toBe(notice.body);
+        expect(windows.options.windowsHide).toBe(true);
+        notifyDesktop(notice, { platform: 'darwin', spawn });
+        expect(calls[1].command).toBe('osascript');
+        expect(calls[1].args.join(' ')).not.toContain('Remove-Item');
+        expect(calls[1].args.join(' ')).toContain(
+            'system attribute "OWA_NOTICE_BODY"',
+        );
+        notifyDesktop(notice, { platform: 'linux', spawn });
+        expect(calls[2]).toMatchObject({
+            command: 'notify-send',
+            args: ['New problem report', notice.body],
+        });
+        // An OS it knows no way for, and a spawn that throws: no notice,
+        // nothing thrown.
+        expect(notifyDesktop(notice, { platform: 'sunos', spawn })).toBe(false);
+        expect(
+            notifyDesktop(notice, {
+                platform: 'linux',
+                spawn: () => {
+                    throw new Error('no notify-send');
+                },
+            }),
+        ).toBe(false);
+    });
+
+    // The key is public: a flood of reports must not flood a desktop.
+    it('says one at once, and the rest of the minute in one notice after it', () => {
+        let now = 1_000_000;
+        const shown = [];
+        const scheduled = [];
+        const onNew = genNewReportNotifier({
+            notify: (notice) => {
+                shown.push(notice);
+            },
+            now: () => now,
+            schedule: (callback, delay) => {
+                scheduled.push({ callback, delay });
+            },
+        });
+        onNew({ id: 1, reference: 'OWA-261015-0001', title: 'First' });
+        expect(shown).toHaveLength(1);
+        now += 10 * 1000;
+        onNew({ id: 2, title: 'Second' });
+        onNew({ id: 3, title: 'Third' });
+        expect(shown).toHaveLength(1);
+        expect(scheduled).toHaveLength(1);
+        expect(scheduled[0].delay).toBe(NOTICE_GAP_MILLISECOND - 10 * 1000);
+        now += NOTICE_GAP_MILLISECOND;
+        scheduled[0].callback();
+        expect(shown[1]).toEqual({
+            title: 'New problem reports',
+            body: '2 more reports arrived. Read them: node llm-report-inbox.mjs list --open',
+        });
+        // A minute after that, the next is said at once again.
+        now += NOTICE_GAP_MILLISECOND;
+        onNew({ id: 4, title: 'Fourth' });
+        expect(shown).toHaveLength(3);
+        expect(shown[2].body).toContain('Fourth');
+    });
+
+    it('is asked for each NEW report only, from both doors', async () => {
+        const seen = [];
+        const { url } = await openInbox({
+            onNew: (report) => {
+                seen.push(report);
+            },
+        });
+        const prompt = genReport('OWA-261015-0009', 'Projector blank');
+        await postJson(`${url}${REPORT_PATH}`, {
+            prompt,
+            attachments: [toFile('notes.md', NOTES)],
+        });
+        // Send pressed again: the same report, not a new one.
+        await postJson(`${url}${REPORT_PATH}`, { prompt });
+        expect(seen).toEqual([
+            {
+                id: 1,
+                reference: 'OWA-261015-0009',
+                title: 'Projector blank',
+                fileCount: 1,
+            },
+        ]);
     });
 });
 
@@ -798,17 +932,20 @@ describe('the inbox’s door', () => {
         expect(look.headers.get(DOOR_HEADER)).toBe('1');
         expect(lines).toEqual([]);
         await post(`${url}${REPORT_PATH}`, 'a test report');
-        expect(lines).toHaveLength(1);
-        expect(lines[0]).toContain(`POST ${REPORT_PATH}  200`);
+        // The report kept, and the call: two lines.
+        expect(lines).toEqual([
+            'New report #1 kept, 0 files.',
+            expect.stringContaining(`POST ${REPORT_PATH}  200`),
+        ]);
         // Never the words of the report, and never the key.
-        expect(lines[0]).not.toContain('a test report');
-        expect(lines[0]).not.toContain(KEY);
+        expect(lines.join('\n')).not.toContain('a test report');
+        expect(lines.join('\n')).not.toContain(KEY);
         // A REPORT that calls itself the tunnel's look is logged like any.
         await post(`${url}${REPORT_PATH}`, 'another test report', {
             'user-agent': CHECK_AGENT,
         });
-        expect(lines).toHaveLength(2);
-        expect(lines[1]).toContain(`POST ${REPORT_PATH}  200`);
+        expect(lines).toHaveLength(4);
+        expect(lines[3]).toContain(`POST ${REPORT_PATH}  200`);
     });
 });
 

@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-12",
+    "updated": "2026-10-15",
     "sections": [
         {
             "id": "general",
@@ -47,6 +47,22 @@
                         "guide": true
                     },
                     "starterRank": 10
+                },
+                {
+                    "id": "language-across-data-folders",
+                    "text": "Will the app keep my language when I switch to another data folder?",
+                    "kind": "what",
+                    "keywords": [
+                        "language changed",
+                        "back to english",
+                        "language reset",
+                        "parent directory",
+                        "recent folders"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "find": "Language"
+                    }
                 },
                 {
                     "id": "change-theme",
@@ -322,6 +338,25 @@
                     "resources": {
                         "recipe": "W-34",
                         "tools": ["owa_bible_xml"]
+                    }
+                },
+                {
+                    "id": "bible-xml-source",
+                    "text": "Where did a Bible I imported come from?",
+                    "kind": "where",
+                    "keywords": [
+                        "source",
+                        "link",
+                        "url",
+                        "note",
+                        "downloaded from",
+                        "imported from",
+                        "origin"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": ["owa_bible_xml"],
+                        "passage": "Where an imported Bible came from"
                     }
                 },
                 {

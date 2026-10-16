@@ -574,6 +574,8 @@ export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
 }
 
+// This computer's, whatever data folder is open (`COMPUTER_SETTING_NAME_LIST`).
+export const LOCALE_SETTING_NAME = 'language-locale';
 let localeSettingManager: SettingManager<LocaleType> | null = null;
 /**
  * Built on first use, NOT at module load. This module sits inside the
@@ -585,7 +587,7 @@ let localeSettingManager: SettingManager<LocaleType> | null = null;
  */
 function getLocaleSettingManager() {
     localeSettingManager ??= new SettingManager<LocaleType>({
-        settingName: 'language-locale',
+        settingName: LOCALE_SETTING_NAME,
         defaultValue: DEFAULT_LOCALE,
         isErrorToDefault: true,
         validate: checkIsValidLocale,

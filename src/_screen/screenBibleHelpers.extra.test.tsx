@@ -268,9 +268,11 @@ describe('screenBibleHelpers', () => {
             createScreenLongTextManager(screenViewData);
         await renderScreenLongTextManager(screenLongTextManager);
 
+        // One chapter: nothing more to show, so no `...` label.
         expect(genHtmlFromScreenViewBibleItemMock).toHaveBeenCalledWith(
             screenViewData.bibleItemData.renderedList,
             true,
+            undefined,
         );
         expect(screenLongTextManager.div.style.pointerEvents).toBe('auto');
         expect(screenLongTextManager.div.firstElementChild).not.toBeNull();
@@ -646,5 +648,74 @@ describe('screenBibleHelpers', () => {
         );
         expect(singleView.bibleItemData?.renderedList).toHaveLength(1);
         expect(getBibleLocaleMock).toHaveBeenCalledWith('KJV');
+    });
+
+    // GEN 1:1 to 5:2: the operator's view of the screen gets a `...` while
+    // chapters remain, and pressing it asks the manager for one more.
+    test('offers the operator one more chapter of a passage across chapters', async () => {
+        const { renderScreenLongTextManager, bibleItemJsonToScreenViewData } =
+            await import('./screenBibleHelpers');
+        const crossJson = {
+            ...createBibleItemJson(),
+            target: {
+                bookKey: 'GEN',
+                chapter: 1,
+                verseStart: 1,
+                verseEnd: 2,
+                chapterEnd: 5,
+            },
+        };
+        const renderedList = [
+            {
+                locale: 'en-US',
+                bibleKey: 'KJV',
+                title: 'Genesis 1:1-5:2',
+                verses: [],
+            },
+        ];
+        const genManager = (shownChapterCount?: number) => {
+            const manager = createScreenLongTextManager({
+                type: 'bible-item',
+                locale: 'en-US',
+                bibleItemData: { renderedList, bibleItem: crossJson },
+                scroll: 0,
+                selectedKJVVerseKey: null,
+                shownChapterCount,
+            });
+            manager.showMoreBibleChapter = vi.fn();
+            return manager;
+        };
+
+        const manager = genManager(3);
+        await renderScreenLongTextManager(manager);
+        expect(genHtmlFromScreenViewBibleItemMock).toHaveBeenLastCalledWith(
+            renderedList,
+            true,
+            'Show the next chapter',
+        );
+        (capturedHighlightHandlers as any)?.onShowMoreChapter();
+        expect(manager.showMoreBibleChapter).toHaveBeenCalledOnce();
+
+        // Every chapter shown: nothing more to offer.
+        await renderScreenLongTextManager(genManager(5));
+        expect(genHtmlFromScreenViewBibleItemMock).toHaveBeenLastCalledWith(
+            renderedList,
+            true,
+            undefined,
+        );
+
+        // The count is written only for a passage across chapters.
+        genBibleItemRenderListMock.mockResolvedValue(renderedList);
+        const crossView = await bibleItemJsonToScreenViewData(crossJson, [], 4);
+        expect(crossView.shownChapterCount).toBe(4);
+        expect(genBibleItemRenderListMock).toHaveBeenLastCalledWith(
+            [expect.anything()],
+            4,
+        );
+        const singleView = await bibleItemJsonToScreenViewData(
+            createBibleItemJson(),
+            [],
+        );
+        expect(singleView).not.toHaveProperty('shownChapterCount');
     });
 });

@@ -211,6 +211,32 @@ describe('handleAgentBibleRequest', () => {
         expect((result as any).note).toContain('Nothing was put on a screen');
     });
 
+    it('quotes a cross-chapter passage from its first chapter only', async () => {
+        const toText = vi.fn(async (maxChapterCount?: number) => {
+            return maxChapterCount === 1
+                ? 'John 1:2-51\n(2): The same was in the beginning with God.'
+                : 'every chapter of it';
+        });
+        h.parseMap = {
+            KJV: {
+                'John 1:2-3:4': {
+                    ...genItem('KJV', 'John 1:2-3:4', ''),
+                    toText,
+                },
+            },
+        };
+        const result = await handleAgentBibleRequest({
+            reference: 'John 1:2-3:4',
+            action: 'check',
+        });
+        expect(toText).toHaveBeenCalledTimes(1);
+        expect(toText).toHaveBeenCalledWith(1);
+        expect(result).toMatchObject({
+            reference: 'John 1:2-3:4',
+            text: 'John 1:2-51 (2): The same was in the beginning with God.',
+        });
+    });
+
     it('reads the reference under the lookup version first', async () => {
         h.lookupKey = 'KHM';
         h.parseMap = {

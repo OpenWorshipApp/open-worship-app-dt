@@ -257,6 +257,15 @@ describe('bible-list bibleHelpers', () => {
         expect(await genInputText('kjv', 'esv', 'Gen 1:1-2')).toBe(
             'Genesis 1:1-2',
         );
+        // A one-chapter passage has no end chapter to carry.
+        expect(h.toInputTextMock).toHaveBeenLastCalledWith(
+            'esv',
+            'Genesis',
+            1,
+            1,
+            2,
+            undefined,
+        );
 
         h.checkIsBookAvailableMock.mockResolvedValue(false);
         expect(await genInputText('kjv', 'esv', 'unknown')).toBe('unknown');
@@ -265,6 +274,38 @@ describe('bible-list bibleHelpers', () => {
             result: { bookKey: null, chapter: null, bibleItem: null },
         });
         expect(await genInputText('kjv', 'esv', 'raw')).toBe('raw');
+    });
+
+    test('genInputText carries the end chapter of a cross-chapter passage', async () => {
+        h.extractBibleTitleMock.mockResolvedValue({
+            result: {
+                bookKey: 'JHN',
+                chapter: 1,
+                bibleItem: {
+                    target: {
+                        bookKey: 'JHN',
+                        chapter: 1,
+                        verseStart: 2,
+                        verseEnd: 4,
+                        chapterEnd: 3,
+                    },
+                },
+            },
+        });
+        h.checkIsBookAvailableMock.mockResolvedValue(true);
+        h.keyToBookMock.mockResolvedValue('Jean');
+        h.toInputTextMock.mockReturnValue('Jean 1:2-3:4');
+        expect(await genInputText('kjv', 'lsg', 'John 1:2-3:4')).toBe(
+            'Jean 1:2-3:4',
+        );
+        expect(h.toInputTextMock).toHaveBeenLastCalledWith(
+            'lsg',
+            'Jean',
+            1,
+            2,
+            4,
+            3,
+        );
     });
 
     test('saveBibleItem reports success and failure', async () => {
@@ -486,12 +527,15 @@ describe('bible-list bibleHelpers', () => {
                 screenLongTextManager: {
                     screenViewData: {
                         bibleItemData: {
-                            a: [
+                            renderedList: [
                                 { bibleKey: 'kjv', title: 'T1' },
                                 { bibleKey: 'kjv', title: 'T1' },
                                 { bibleKey: 'niv', title: 'T1' },
                             ],
-                            b: { bibleKey: 'kjv', target: {} },
+                            bibleItem: { bibleKey: 'kjv', target: {} },
+                            // Any other field is not a passage.
+                            extra: { bibleKey: 'esv', target: {} },
+                            extraList: [{ bibleKey: 'esv', title: 'T2' }],
                         },
                     },
                 },
@@ -506,6 +550,10 @@ describe('bible-list bibleHelpers', () => {
         expect(keys).toContain('kjv|rendered-title');
         // deduped
         expect(keys.filter((key) => key === 'kjv|T1')).toHaveLength(1);
+        expect(keys).toHaveLength(3);
+        expect(keys.some((key) => key.startsWith('esv|'))).toBe(false);
+        expect(h.bibleRenderToTitleMock).toHaveBeenCalledTimes(1);
+        expect(h.bibleRenderToTitleMock).toHaveBeenCalledWith('kjv', {});
     });
 
     test('checkIsBibleItemOnScreen matches the passage AND its version', async () => {
@@ -514,7 +562,7 @@ describe('bible-list bibleHelpers', () => {
                 screenLongTextManager: {
                     screenViewData: {
                         bibleItemData: {
-                            a: [{ bibleKey: 'niv', title: 'Match' }],
+                            renderedList: [{ bibleKey: 'niv', title: 'Match' }],
                         },
                     },
                 },
@@ -545,7 +593,7 @@ describe('bible-list bibleHelpers', () => {
                 screenLongTextManager: {
                     screenViewData: {
                         bibleItemData: {
-                            a: [{ bibleKey: 'kjv', title: 'Match' }],
+                            renderedList: [{ bibleKey: 'kjv', title: 'Match' }],
                         },
                     },
                 },
@@ -677,13 +725,14 @@ describe('bible-list bibleHelpers', () => {
         ).toBeUndefined();
 
         const element = document.createElement('div');
-        h.bibleItemFromVerseKeyMock.mockResolvedValue({
-            toText: async () => 'x'.repeat(2000),
-        });
+        const toText = vi.fn(async () => 'x'.repeat(2000));
+        h.bibleItemFromVerseKeyMock.mockResolvedValue({ toText });
         improveBibleItemTitleOnHover('kjv', 'GEN.1.1', element);
         element.dispatchEvent(new Event('mouseover'));
         await new Promise((r) => setTimeout(r, 5));
         expect(element.title.length).toBe(1000);
+        // A 1000-character tooltip never reads past the first chapter.
+        expect(toText).toHaveBeenCalledWith(1);
 
         // second hover returns early because title is already set
         h.bibleItemFromVerseKeyMock.mockClear();

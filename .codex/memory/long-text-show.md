@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 6301d837-d2bf-49ee-ae70-5b5cdb819c41
-  modified: 2026-10-13T03:21:34.450Z
+  modified: 2026-10-15T22:16:47.252Z
 ---
 
 Asked for on 2026-10-12: _I want to have foreground component call `Long Text
@@ -79,6 +79,13 @@ What is not obvious from the code:
   inline-block with wrapping text. The words are held by the card only
   while that view is on. And the mark on a selected verse or section went
   from `0.6` to `0.2` alpha for both, at the user's word.
+  **Cards are the default for a NEW language** (2026-10-15, the toggle
+  circled on a card a lyric's menu had opened: _make it enabled by
+  default_): `genLongTextLanguage` writes `sectionView: 'cards'`, so Add
+  Language and a lyric's own `Long Text Show` start there. The absence
+  still means buttons and was NOT flipped: switching back to buttons
+  deletes the key, so a stored card without it cannot be told from one
+  never touched, and flipping the meaning would have overridden a choice.
 
 - **The layer's clear button is `LT`, Clear Long Text** (2026-10-13, the
   user's ask with the Mini Screen's `BB` circled: _search across for any
@@ -101,6 +108,35 @@ What is not obvious from the code:
   screen lights the button too. The style is DECLARED, three classes deep:
   the theme writes `.btn { border }` outright, so the Bootstrap border
   variable is dead ([[bootstrap-btn-vars-are-dead]]).
+
+- **The lit part steps by the slide keys** (2026-10-15, the user's ask with
+  the text cards in the picture: _like slides preview for next keying … should
+  not jump to the first element when in last element_). `useLongTextPartKeying`
+  registers `slideMovingEventMappers` and acts only while the FOCUSED element
+  is a part button (`data-long-text-row`) whose row the SCREEN has marked —
+  read from `getLongTextSelectedSectionKeys`, not the button's `aria-current`,
+  because the mark moves at once and the button is only lit on the next
+  render. It brings row ±1 up and focuses that row's button in the SAME card
+  (`data-long-text-parts`), so the next key steps again. No wrap, and the key
+  is still taken at an end (Space would otherwise press the last part again).
+  A part that is not lit keeps Space for itself. It is the fourth keying area
+  ([[remote-key-take-over]]), LAST.
+
+- **A lyric's own menu starts one** (2026-10-15, the user's ask with the
+  Documents list's lyric menu in the picture: _when clicked it should create
+  long text new session then create `EN` language and set the lyric to be
+  ready to show_). `openLyricInLongTextShow` (`foregroundLongTextOpenHelpers`,
+  imported by the menu item only when pressed) writes the session's
+  `long-text-setting-<id>` FIRST, then `addMediaSession`, then opens the panel:
+  `LongTextBodyComp` is keyed by the active id and reads its setting on mount,
+  so the order is the whole trick. Two outside doors it needed, because both
+  were per-mount `useStateSettingString` state a bare `setSetting` never
+  reached: `addMediaSession` tells every mounted strip of its target to read
+  back (`sessionRefresherMap`; the strip's own `+` goes through it too), and
+  `requestForegroundPanelOpening` reaches the launcher in `PresenterComp`,
+  which opens the panel and bumps its `raiseToken` — false when no launcher is
+  mounted, and the caller writes `foreground-open-panels` instead. Always a NEW
+  session named after the song: the open one may be typed text or on a screen.
 
 Not built, by decision of the first change: a Presenting Flow row or a drag to
 a screen, the `owa_foreground` tool and a tip lesson for it, a saved-text

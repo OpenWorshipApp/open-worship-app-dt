@@ -1,5 +1,633 @@
 # Baseline — the honest starting point
 
+## Achieved 80% target — 2026-10-15 (UT-69)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.81% (58,331 / 73,091) → 80.01% (58,478 / 73,091)**,
+**+147 net covered lines, +0.20 points**. The 80% threshold is **58,473
+covered lines**, so this result clears it by **5 lines**. No exclusions or
+thresholds were changed. Renderer + MCP is **79.15% (51,244 / 64,740)**;
+Electron is unchanged at **86.62% (7,234 / 8,351)**.
+
+Twelve behavioral tests extend virtual-list scrolling, slide-editor keyboard
+handling and lyric-stage rendering. They check shared scroll observers and the
+timeout fallback; slide and canvas delete, paste, duplicate, navigation and
+history keys; and lyric font options, single-key and whole-song slides,
+attachments and slide lookup. Full instrumentation covers **89 / 103**
+virtual-scroll lines, up from 46 / 103, **93 / 101** keyboard-handler lines,
+up from 44 / 101, and **80 / 103** lyric-stage lines, up from 25 / 103. All
+**6,693 renderer/MCP and 849 Electron tests** passed under instrumentation.
+No application code changed. The full `npm run lint` gate passed both
+TypeScript projects, **7,542 ordinary tests**, Prettier, ESLint, and the
+production build check.
+
+Evidence: `ut69-after.log`, `ut69-after-src-summary.json`,
+`ut69-after-electron-summary.json`, `ut69-after-worklist.json` and
+`ut69-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-68
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.62% (58,195 / 73,091) → 79.81% (58,331 / 73,091)**,
+**+136 net covered lines, +0.19 points**. Another **142 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.93% (51,097 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Nine behavioral tests extend the run-sheet, router and mirror camera transport
+suites. They check an open run's cursor, parked lines and slides; the available
+run-sheet fallback; tab visibility and external opening; and WebRTC offer and
+candidate signaling, stream release, failure, timeout and unload cleanup.
+Full instrumentation covers **92 / 98** run-sheet lines, up from 32 / 98,
+**66 / 111** router lines, up from 42 / 111, and **57 / 60** camera transport
+lines, up from 5 / 60. All **6,681 renderer/MCP and 849 Electron tests** passed
+under instrumentation. No application code changed. The full `npm run lint`
+gate passed both TypeScript projects, **7,530 ordinary tests**, Prettier,
+ESLint, and the production build check.
+
+Evidence: `ut68-after.log`, `ut68-after-src-summary.json`,
+`ut68-after-electron-summary.json`, `ut68-after-worklist.json` and
+`ut68-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-67
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.48% (58,096 / 73,091) → 79.62% (58,195 / 73,091)**,
+**+99 net covered lines, +0.14 points**. Another **278 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.72% (50,961 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Eight behavioral tests cover renderer startup: crypto, color-note and provider
+initialization; window controls and widget menu registration; popup and locale
+behavior; error reporting and reload prompts; and missing, found, declined or
+already selected data folders. Full instrumentation covers **99 / 107** lines
+in `src/others/main.tsx`, up from 0 / 107. All **6,672 renderer/MCP and 849
+Electron tests** passed under instrumentation. No application code changed.
+The full `npm run lint` gate passed both TypeScript projects, **7,521 ordinary
+tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut67-after.log`, `ut67-after-src-summary.json`,
+`ut67-after-electron-summary.json`, `ut67-after-worklist.json` and
+`ut67-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-66
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.43% (58,057 / 73,091) → 79.48% (58,096 / 73,091)**,
+**+39 net covered lines, +0.05 points**. Another **377 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.56% (50,862 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Six behavioral tests extend drag transport and foreground property suites.
+They check app-document path drags and MIME advertising, a secondary note
+payload and malformed-data fallback, invalid plain-text drops, aligned widget
+anchors, non-geometric rounding and opacity bounds, and backdrop handling
+while blending. Full instrumentation covers **50 / 84** drag-helper lines, up
+from 21 / 84, and **86 / 165** property-helper lines, up from 76 / 165. All
+**6,664 renderer/MCP and 849 Electron tests** passed under instrumentation.
+No application code changed. The full `npm run lint` gate passed both
+TypeScript projects, **7,513 ordinary tests**, Prettier, ESLint, and the
+production build check.
+
+Evidence: `ut66-after.log`, `ut66-after-src-summary.json`,
+`ut66-after-electron-summary.json`, `ut66-after-worklist.json` and
+`ut66-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-65
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.32% (57,975 / 73,091) → 79.43% (58,057 / 73,091)**,
+**+82 net covered lines, +0.11 points**. Another **416 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.50% (50,823 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Five behavioral tests extend the virtual-display viewer and card suites. The
+viewer test checks camera key frames, backpressure, resize and stop behavior
+while a host watches. The card tests check rename and resolution settings,
+wallpaper file and color, confirmed deletion, and allowing blocked browser and
+player clients again. Full instrumentation covers **612 / 751** viewer lines,
+up from 569 / 751, and **115 / 145** card lines, up from 76 / 145. All **6,658
+renderer/MCP and 849 Electron tests** passed under instrumentation. No
+application code changed. The full `npm run lint` gate passed both TypeScript
+projects, **7,507 ordinary tests**, Prettier, ESLint, and the production build
+check.
+
+Evidence: `ut65-after.log`, `ut65-after-src-summary.json`,
+`ut65-after-electron-summary.json`, `ut65-after-worklist.json` and
+`ut65-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-64
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.19% (57,881 / 73,091) → 79.32% (57,975 / 73,091)**,
+**+94 net covered lines, +0.13 points**. Another **498 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.38% (50,741 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Six behavioral tests cover the floating widget's persisted position and
+viewport resizing, collapse and temporary body hiding, full-view toggle,
+pointer move and resize persistence, same-pointer release, header double
+press and close action. They use the real widget geometry helpers. Full
+instrumentation covers **121 / 128** lines in the component, up from
+63 / 128, with adjacent geometry helper lines accounting for the rest of the
+gain. All **6,653 renderer/MCP and 849 Electron tests** passed under
+instrumentation. No application code changed. The full `npm run lint` gate
+passed both TypeScript projects, **7,502 ordinary tests**, Prettier, ESLint,
+and the production build check.
+
+Evidence: `ut64-after.log`, `ut64-after-src-summary.json`,
+`ut64-after-electron-summary.json`, `ut64-after-worklist.json` and
+`ut64-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-63
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.10% (57,818 / 73,091) → 79.19% (57,881 / 73,091)**,
+**+63 net covered lines, +0.09 points**. Another **592 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.23% (50,647 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Three behavioral tests extend the PowerPoint slide measurement suite. They
+check that loose text in a flex container, explicit child blocks, and `<br>`
+lines remain separately editable; that two positioned blocks export as two
+slide shapes; and that centered and right-aligned text keeps the correct
+alignment band. Full instrumentation covers **544 / 613** lines in the
+measurer, up from 481 / 613. All **6,647 renderer/MCP and 849 Electron tests**
+passed under instrumentation. No application code changed. The full
+`npm run lint` gate passed both TypeScript projects, **7,496 ordinary tests**,
+Prettier, ESLint, and the production build check.
+
+Evidence: `ut63-after.log`, `ut63-after-src-summary.json`,
+`ut63-after-electron-summary.json`, `ut63-after-worklist.json` and
+`ut63-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-62
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **79.02% (57,753 / 73,091) → 79.10% (57,818 / 73,091)**,
+**+65 net covered lines, +0.08 points**. Another **655 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.13% (50,584 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Six additional behavioral tests for `appLocalStorage` cover cached misses,
+atomic writes and forced reads, removal, directory switching, selected-folder
+checks, listing, clearing both settings stores, and error handling. Full
+instrumentation covers **123 / 129** lines in that module. All **6,644
+renderer/MCP and 849 Electron tests** passed under instrumentation. No
+application code changed. The full `npm run lint` gate passed both TypeScript
+projects, **7,493 ordinary tests**, Prettier, ESLint, and the production build
+check.
+
+Evidence: `ut62-after.log`, `ut62-after-src-summary.json`,
+`ut62-after-electron-summary.json`, `ut62-after-worklist.json` and
+`ut62-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-61
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **78.80% (57,595 / 73,091) → 79.02% (57,753 / 73,091)**,
+**+158 net covered lines, +0.22 points**. Another **720 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**78.03% (50,519 / 64,740)**; Electron is unchanged at **86.62% (7,234 /
+8,351)**.
+
+Three file-local suites add ten behavioral tests. Bible Find header tests
+cover debounced search, Enter, Escape, refresh, suggestion-menu dismissal and
+recent-search persistence. Graph toolbar tests cover relation controls, the
+path finder, copy actions, presets and fullscreen. Bible file row tests cover
+load and reload, menu actions and typed passage drops. Full instrumentation
+covers **52 / 53**, **54 / 57**, and **53 / 53** lines in those previously
+untested components. All **6,638 renderer/MCP and 849 Electron tests** passed
+under instrumentation. No application code changed. The full `npm run lint`
+gate passed both TypeScript projects, **7,487 ordinary tests**, Prettier,
+ESLint, and the production build check.
+
+Evidence: `ut61-after.log`, `ut61-after-src-summary.json`,
+`ut61-after-electron-summary.json`, `ut61-after-worklist.json` and
+`ut61-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-60
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **78.53% (57,402 / 73,091) → 78.80% (57,595 / 73,091)**,
+**+193 net covered lines, +0.27 points**. Another **878 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**77.79% (50,361 / 64,740)**, with **71.61% branch** coverage. Electron is
+unchanged at **86.62% (7,234 / 8,351)**, with **78.98% branch** coverage.
+
+Three file-local suites add thirteen behavioral tests. Bible view tests cover
+scroll synchronization, drag and drop, selected-text and no-passage context
+menus, and following matching verses across panes. Note row tests cover
+opening, live export, title-edit cancellation and typed drops. Directory
+settings tests cover default path creation, existing and missing parent paths,
+and link repair. Full instrumentation covers **81 / 84**, **51 / 61**, and
+**61 / 66** lines in those previously untested components. All **6,628
+renderer/MCP and 849 Electron tests** passed under instrumentation. No
+application code changed. The full `npm run lint` gate passed both TypeScript
+projects, **7,477 ordinary tests**, Prettier, ESLint, and the production build
+check.
+
+Evidence: `ut60-after.log`, `ut60-after-src-summary.json`,
+`ut60-after-electron-summary.json`, `ut60-after-worklist.json` and
+`ut60-lint.log` under
+`test-results/unit-coverage/`.
+
+### Previous batch — UT-59
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **78.33% (57,252 / 73,091) → 78.53% (57,402 / 73,091)**,
+**+150 net covered lines, +0.20 points**. Another **1,071 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**77.49% (50,168 / 64,740)**, with **71.36% branch** coverage. Electron is
+**86.62% (7,234 / 8,351)**, with **78.98% branch** coverage.
+
+Nine behavioral tests cover virtual screen output and camera lifecycle, and
+pointer resizing, collapsing, reset and context menu actions on the flex
+divider. The controller now covers **59 / 59** lines and the divider
+**233 / 263**. A failing drag test found that collapse saved the pane's
+already zero flex value; the production fix preserves its size from before
+the drag so reopening restores the prior width. All **6,615 renderer/MCP and
+849 Electron tests** passed under instrumentation. The full `npm run lint`
+gate passed both TypeScript projects, **7,464 ordinary tests**, Prettier,
+ESLint, and the production build check.
+
+Evidence: `ut59-after.log`, `ut59-after-src-summary.json`,
+`ut59-after-electron-summary.json`, `ut59-after-worklist.json` and
+`ut59-lint.log` under
+`test-results/unit-coverage/`.
+
+### Previous batch — UT-57–58
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **78.08% (57,068 / 73,091) → 78.33% (57,252 / 73,091)**,
+**+184 net covered lines, +0.25 points**. Another **1,221 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**77.35% (50,076 / 64,740)**, with **71.24% branch** coverage. Electron is
+unchanged at **85.92% (7,176 / 8,351)**, with **78.53% branch** coverage.
+
+Twelve behavioral tests extend backup and undo coverage for Bible note and
+presenting flow editing histories, and add file-local suites for SongSelect
+search and location/name detail panels. The backup helper now covers
+**251 / 287** lines; SongSelect search covers **62 / 65**; detail panels cover
+**69 / 74**. The panel tests assert debounce, stale response handling,
+download state, record summaries, verse copy and lookup actions. All
+**6,609 renderer/MCP and 846 Electron tests** passed under instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, **7,455 ordinary
+tests**, Prettier, ESLint, and the production build check. No application
+code changed.
+
+Evidence: `ut57-after.log`, `ut58-after.log`, `ut58-after-src-summary.json`,
+`ut58-after-electron-summary.json`, `ut58-after-worklist.json` and
+`ut58-lint.log` under
+`test-results/unit-coverage/`.
+
+### Previous batch — UT-56
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **77.99% (57,002 / 73,091) → 78.08% (57,068 / 73,091)**,
+**+66 net covered lines, +0.09 points**. Another **1,405 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**77.06% (49,892 / 64,740)**, with **70.90% branch** coverage. Electron is
+unchanged at **85.92% (7,176 / 8,351)**, with **78.53% branch** coverage.
+
+Seven behavioral tests in `agentBackupHelpers.coverage.test.ts` exercise
+restoring overwritten text and binary files, undoing creation and rename,
+preserving the replaced version in an undo backup, and rejecting missing or
+unwritable backups and oversized binary copies. The helper now covers
+**200 / 287** lines. All **6,597 renderer/MCP and 846 Electron tests** passed
+under instrumentation. The full `npm run lint` gate passed both TypeScript
+projects, **7,443 ordinary tests**, Prettier, ESLint, and the production build
+check. No application code changed.
+
+Evidence: `ut56-after.log`, `ut56-after-src-summary.json`,
+`ut56-after-electron-summary.json`, `ut56-after-worklist.json` and
+`ut56-lint.log` under
+`test-results/unit-coverage/`.
+
+### Previous batch — UT-55
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **77.74% (56,822 / 73,091) → 77.99% (57,002 / 73,091)**,
+**+180 net covered lines, +0.25 points**. Another **1,471 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**76.96% (49,826 / 64,740)**, with **70.83% branch** coverage. Electron is
+unchanged at **85.92% (7,176 / 8,351)**, with **78.53% branch** coverage.
+
+Three file-local suites add twelve behavioral tests. Note file tests cover
+loading, menu actions, confirmation, keyboard opening and typed drops. Drawing
+controls tests cover persisted brush parameters, focus-scoped shortcuts,
+quality, reset and undo/redo/clear. Bible XML editor tests cover book selection,
+identifier validation, chapter merge and failed saves. Full instrumentation
+covers **57 / 66** Note file lines, **67 / 68** drawing-control lines and
+**56 / 68** Bible XML editor lines, all previously at zero. All **6,590
+renderer/MCP and 846 Electron tests** passed under instrumentation. No
+application code changed. The full `npm run lint` gate passed both TypeScript
+projects, **7,436 ordinary tests**, Prettier, ESLint, and the production build
+check.
+
+Evidence: `ut55-after.log`, `ut55-after-src-summary.json`,
+`ut55-after-electron-summary.json`, `ut55-after-worklist.json` and
+`ut55-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-53–54
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **77.53% (56,671 / 73,091) → 77.74% (56,822 / 73,091)**,
+**+151 net covered lines, +0.21 points**. Another **1,651 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**76.68% (49,646 / 64,740)**, with **70.61% branch** coverage. Electron is
+unchanged at **85.92% (7,176 / 8,351)**, with **78.53% branch** coverage.
+
+The Note lifecycle suite adds eight behavioral tests for item mutation and
+ordering, cross-file moves, default-file creation, and editing-head sync. The
+Note editor suite adds three tests for title/content saves and file-event
+refresh. Full instrumentation covers **199 / 216** Note lines and **44 / 54**
+editor lines, up from 92 / 216 and 0 / 54. All **6,578 renderer/MCP and 846
+Electron tests** passed under instrumentation. The full `npm run lint` gate
+passed both TypeScript projects, **7,424 ordinary tests**, Prettier, ESLint,
+and the production build check. No application code changed.
+
+Evidence: `ut53-after.log`, `ut54-after.log`, `ut54-after-src-summary.json`,
+`ut54-after-electron-summary.json`, `ut54-after-worklist.json` and
+`ut54-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-51–52
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **77.27% (56,481 / 73,091) → 77.53% (56,671 / 73,091)**,
+**+190 net covered lines, +0.26 points**. Another **1,802 covered lines** are
+needed for 80%. No exclusions or thresholds were changed. Renderer + MCP is
+**76.45% (49,495 / 64,740)**, with **70.45% branch** coverage. Electron is
+unchanged at **85.92% (7,176 / 8,351)**, with **78.53% branch** coverage.
+
+Three file-local suites add eleven behavioral tests. The Bible text panel
+tests check style patches, color/backdrop changes, effect controls, CSS shadow
+validation and reset. Foreground decoration tests check folded state,
+persistence of border/color/layout values, and media defaults. Transition
+tests check inherited values, session overrides, and component dialog choices.
+Full instrumentation covers **76 / 82** Bible panel lines, **71 / 71**
+decoration lines and **40 / 40** transition lines, all previously at zero.
+All **6,567 renderer/MCP and 846 Electron tests** passed under instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, **7,413 ordinary
+tests**, Prettier, ESLint, and the production build check. No application code
+changed.
+
+Evidence: `ut51-after.log`, `ut52-after.log`, `ut52-after-src-summary.json`,
+`ut52-after-electron-summary.json`, `ut52-after-worklist.json` and
+`ut52-lint.log` under `test-results/unit-coverage/`.
+
+### Previous batch — UT-50
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **77.05% (56,313 / 73,091) → 77.27% (56,481 / 73,091)**,
+**+168 net covered lines, +0.22 points**. Another **1,992 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 75.89% (49,137 / 64,740) → 76.15% (49,305 / 64,740) | 70.03% → 70.23%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+Three file-local suites add eleven behavioral tests. Canvas drop tests cover
+internal and file data, box targeting, synchronous event capture, unsupported
+media, context menus, and viewport geometry. Ruler tests cover scaled ticks,
+orientation, pointer guide creation, and unavailable drawing contexts.
+Container tests cover centering, guide dragging and removal, sizing, and
+keyboard focus. Full instrumentation covers **39 / 39** drop-helper lines,
+**67 / 69** ruler lines, and **62 / 69** container lines, all previously at
+zero. No application code changed. All **6,556 renderer/MCP and 846 Electron
+tests** passed under instrumentation. The full `npm run lint` gate passed both
+TypeScript projects, **7,402 ordinary tests**, Prettier, ESLint, and the
+production build check.
+
+Evidence: `ut50-after.log`, `ut50-after-src-summary.json`,
+`ut50-after-electron-summary.json`, `ut50-after-worklist.json` and
+`ut50-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-49)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **76.85% (56,170 / 73,091) → 77.05% (56,313 / 73,091)**,
+**+143 net covered lines, +0.20 points**. Another **2,160 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 75.67% (48,994 / 64,740) → 75.89% (49,137 / 64,740) | 69.77% → 70.03%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+Four file-local suites add eleven behavioral tests. Background auto-play tests
+runnable conditions, URL order, video duration, and scoped timers. The color
+picker tests per-screen changes, empty selections, focus restoration, and
+closed-screen feedback. Session tests cover setting suffixes, change refusal,
+and stopping only the removed show's timer. The media card tests sort order,
+virtual grid settings, visible auto-play controls, and empty folders. Full
+instrumentation covers **37 / 37** auto-play lines, **42 / 46** color lines,
+**35 / 35** session lines, and **29 / 30** media-card lines, all previously at
+zero. No application code changed. All **6,545 renderer/MCP and 846 Electron
+tests** passed under instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, all **7,391
+ordinary tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut49-after.log`, `ut49-after-src-summary.json`,
+`ut49-after-electron-summary.json`, `ut49-after-worklist.json` and
+`ut49-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-48)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines, then repeated the Electron surface after a three-line variation:
+**76.58% (55,976 / 73,091) → 76.85% (56,170 / 73,091)**, **+194 stable
+covered lines, +0.27 points**. Another **2,303 covered lines** are needed for
+80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 75.37% (48,800 / 64,740) → 75.67% (48,994 / 64,740) | 69.61% → 69.77%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged on repeat         | 78.53%, unchanged       |
+
+Three file-local suites add eleven behavioral tests. The verse painter tests
+valid ranges, stale text, mutation repainting, and cleanup. File-drop helpers
+test accepted files, folder prompts, file selection, and context-menu actions.
+The Finder bar tests debounced and immediate search, focus, results, keyboard
+shortcuts, and drag cleanup. Full instrumentation covers **57 / 61** painter
+lines, **64 / 65** file-drop lines, and **73 / 73** Finder lines, all previously
+at zero. No application code changed. All **6,534 renderer/MCP and 846
+Electron tests** passed under instrumentation. The first all-surface run
+reported three extra Electron lines in `screenMirrorService.ts`; the isolated
+Electron repeat returned to its prior 7,176-line result, which is used above.
+The full `npm run lint` gate passed both TypeScript projects, all **7,380
+ordinary tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut48-after.log`, `ut48-after-src-summary.json`,
+`ut48-electron-repeat.log`, `ut48-stable-electron-summary.json`,
+`ut48-stable.log`, `ut48-stable-worklist.json` and `ut48-lint.log` under
+`test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-47)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **76.42% (55,854 / 73,091) → 76.58% (55,976 / 73,091)**,
+**+122 net covered lines, +0.16 points**. Another **2,497 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 75.18% (48,678 / 64,740) → 75.37% (48,800 / 64,740) | 69.48% → 69.61%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+Two file-local suites add eight behavioral tests. Slide auto-play tests stable
+countdowns, scoped reconciliation, async delay cancellation, rescheduling,
+completion, and error handling. The mirror camera broker tests shared capture
+and cleanup, WebRTC candidate ordering, cancellation while capture is pending,
+unavailable devices, and intercom relay. Full instrumentation covers **50 /
+52** auto-play runner lines and **72 / 73** camera broker lines, both previously
+at zero. No application code changed. All **6,523 renderer/MCP and 846
+Electron tests** passed under instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, all **7,369
+ordinary tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut47-after.log`, `ut47-after-src-summary.json`,
+`ut47-after-electron-summary.json`, `ut47-after-worklist.json` and
+`ut47-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-46)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **76.21% (55,701 / 73,091) → 76.42% (55,854 / 73,091)**,
+**+153 net covered lines, +0.21 points**. Another **2,619 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 74.95% (48,525 / 64,740) → 75.18% (48,678 / 64,740) | 69.27% → 69.48%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+Three file-local suites add ten behavioral tests. The location/name lookup
+panel tests loading and error states, separate tab queries, debounce, name-type
+filtering, visible results, pagination reset, and clearing. Verse links test
+English and translated matches, selection and context-menu behavior, and
+unavailable indexes. The virtual-row hook tests visible and pinned rows,
+scrolling, all-row mode, row-count changes, and cleanup. Full instrumentation
+covers **62 / 64** lookup panel lines, **33 / 33** verse-link lines, and **58 /
+64** virtual-row lines, all previously at zero. No application code changed.
+All **6,515 renderer/MCP and 846 Electron tests** passed under instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, all **7,361
+ordinary tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut46-after.log`, `ut46-after-src-summary.json`,
+`ut46-after-electron-summary.json`, `ut46-after-worklist.json` and
+`ut46-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-45)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **76.05% (55,583 / 73,091) → 76.21% (55,701 / 73,091)**,
+**+118 net covered lines, +0.16 points**. Another **2,772 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 74.77% (48,407 / 64,740) → 74.95% (48,525 / 64,740) | 69.12% → 69.27%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+Two file-local suites add eight behavioral tests. The presenting-flow rename
+migration tests discovery, default versus user-chosen folders, file and history
+renames, setting-key rewrites, collisions, and failed moves. The note menu tests
+the directory setting used to find targets, moving an item, unavailable targets,
+confirmation, discard, duplicate, reorder, and nonmutating default-first sort.
+Full instrumentation covers **62 / 63** migration lines and **56 / 56** note
+helper lines, both previously at zero. No application code changed. All **6,505
+renderer/MCP and 846 Electron tests** passed under instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, all **7,351
+ordinary tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut45-after.log`, `ut45-after-src-summary.json`,
+`ut45-after-electron-summary.json`, `ut45-after-worklist.json` and
+`ut45-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-44)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **75.89% (55,469 / 73,091) → 76.05% (55,583 / 73,091)**,
+**+114 net covered lines, +0.16 points**. Another **2,890 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 74.59% (48,293 / 64,740) → 74.77% (48,407 / 64,740) | 68.92% → 69.12%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+One file-local suite adds six behavioral tests for presenting-flow floating
+widgets: independent files and closure, file deletion, focus-gated stepping,
+UUID jumps, loading and error states, collapse controls, and the auto-next
+clock. Full instrumentation covers **115 / 141** floating preview lines,
+previously at zero; the whole-surface net gain is 114 lines. No application
+code changed. All **6,497 renderer/MCP and 846 Electron tests** passed under
+instrumentation.
+The full `npm run lint` gate passed both TypeScript projects, all **7,343
+ordinary tests**, Prettier, ESLint, and the production build check.
+
+Evidence: `ut44-after.log`, `ut44-after-src-summary.json`,
+`ut44-after-electron-summary.json`, `ut44-after-worklist.json` and
+`ut44-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-43)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **75.65% (55,290 / 73,091) → 75.89% (55,469 / 73,091)**,
+**+179 covered lines, +0.24 points**. Another **3,004 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 74.31% (48,114 / 64,740) → 74.59% (48,293 / 64,740) | 68.64% → 68.92%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+One file-local suite adds eight behavioral tests for presenting-flow preview
+selection, menus, folding, parked entries, screen actions, drag payloads, Bible
+and background data, and document slide stepping. Full instrumentation covers
+**178 / 198** preview entry lines, previously at zero. No application code
+changed. All **6,491 renderer/MCP and 846 Electron tests** passed under
+instrumentation.
+The full `npm run lint` gate passes with **7,337 ordinary tests**, both
+TypeScript projects, Prettier, ESLint and the production build check.
+
+Evidence: `ut43-after.log`, `ut43-after-src-summary.json`,
+`ut43-after-electron-summary.json`, `ut43-after-worklist.json` and
+`ut43-lint.log` under `test-results/unit-coverage/`.
+
+## Active 80% target — 2026-10-14 (UT-42)
+
+Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
+73,091 lines: **75.46% (55,158 / 73,091) → 75.65% (55,290 / 73,091)**,
+**+132 behavioral lines, +0.19 points**. Another **3,183 covered lines** are
+needed for 80%. No exclusions or thresholds were changed.
+
+| Surface        | Before → after lines                                | Before → after branches |
+| -------------- | --------------------------------------------------- | ----------------------- |
+| Renderer + MCP | 74.11% (47,982 / 64,740) → 74.31% (48,114 / 64,740) | 68.46% → 68.64%         |
+| Electron       | 85.92% (7,176 / 8,351), unchanged                   | 78.53%, unchanged       |
+
+Two file-local suites add eight behavioral tests for media session persistence,
+selection and confirmed removal, plus canvas item styles, identity, edits,
+validation and selection contexts. Full instrumentation covers **72 / 73**
+media session lines, previously at zero, and **107 / 124** canvas item lines,
+up from 47 / 124. No application code changed. All **6,483 renderer/MCP and
+846 Electron tests** passed under instrumentation.
+The full `npm run lint` gate passes with **7,329 ordinary tests**, both
+TypeScript projects, Prettier, ESLint and the production build check.
+
+Evidence: `ut42-after.log`, `ut42-after-src-summary.json`,
+`ut42-after-electron-summary.json`, `ut42-after-worklist.json` and
+`ut42-lint.log` under `test-results/unit-coverage/`.
+
 ## Active 80% target — 2026-10-14 (UT-41)
 
 Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and

@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-13",
+    "updated": "2026-10-15",
     "sections": [
         {
             "id": "reading",
@@ -49,6 +49,57 @@
                     },
                     "starter": true,
                     "starterRank": 1
+                },
+                {
+                    "id": "cross-chapter-passage",
+                    "text": "How do I read a passage that runs into the next chapter, like John 1:2-3:4?",
+                    "kind": "howto",
+                    "keywords": [
+                        "across chapters",
+                        "two chapters",
+                        "chapter range",
+                        "John 1-3",
+                        "several chapters",
+                        "ends in another chapter"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "find": "Bible Reference",
+                        "passage": "A passage that runs on into later chapters of the same book."
+                    }
+                },
+                {
+                    "id": "more-chapters",
+                    "text": "Why does a long passage show only three chapters?",
+                    "kind": "what",
+                    "keywords": [
+                        "only 3 chapters",
+                        "rest of the passage",
+                        "three dots",
+                        "show the next chapter",
+                        "more chapters",
+                        "cut off"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "A passage that runs on into later chapters of the same book."
+                    }
+                },
+                {
+                    "id": "heading-reference",
+                    "text": "How do I open a passage named in a section heading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "heading reference",
+                        "parallel passage",
+                        "reference in the title",
+                        "section title",
+                        "click a reference"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "Some Bibles print references in their section headings"
+                    }
                 },
                 {
                     "id": "reader-versions",
@@ -165,6 +216,22 @@
                     },
                     "starter": true,
                     "starterRank": 3
+                },
+                {
+                    "id": "reader-history-put-back",
+                    "text": "How do I put a passage from the history back into the passage I am editing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "put back",
+                        "set to current editing",
+                        "history row",
+                        "recent reference",
+                        "reopen passage"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "the recent reference rows near the top keep it"
+                    }
                 },
                 {
                     "id": "reader-clear-input",
@@ -572,6 +639,22 @@
                         "recipe": "W-13",
                         "find": "Cross Reference",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "cross-ref-other-bible",
+                    "text": "How do I read a cross reference in another Bible version?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another version",
+                        "other bible",
+                        "compare versions",
+                        "verse panel",
+                        "translation"
+                    ],
+                    "resources": {
+                        "recipe": "W-13",
+                        "passage": "The version at the start of the panel's title"
                     }
                 },
                 {

@@ -22,6 +22,7 @@ import {
     toMcpPackagePath,
 } from './aiHelpers';
 import { getRecentConsoleLines } from './consoleLogHelpers';
+import { listAppWindows } from './appWindowListHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -255,6 +256,13 @@ export function initEventListenerApp(appController: ElectronAppController) {
         };
     });
 
+    // The help window's window picker: the app's open windows by the id its
+    // tools aim with. Asked when that window gains focus or the picker is
+    // opened; one loopback request each time.
+    onAsync(ipcMain, 'main:app:list-app-windows', async () => {
+        return await listAppWindows(getRemoteDebuggingPort());
+    });
+
     // The AI Chat window's "Sign out of every site". It is the only way in
     // the app to end a sign-in held on the guest partition, and the window
     // has already asked twice by the time it gets here.
@@ -333,10 +341,24 @@ export function initEventListenerApp(appController: ElectronAppController) {
     // "attach a screenshot", and `owa_screenshot` for an agent driving the app
     // from outside. Everything here is a data URL, and the renderer that asked
     // is the one that decides what to do with it.
+    // `isOwnWindow` is `owa_screenshot` aimed at a window by name: a Slide
+    // Editor or Settings of its own, chosen in the help window's window
+    // picker, is photographed itself, not the main window behind it.
     onAsync(
         ipcMain,
         'main:app:capture-window',
-        async ({ screenId }: { screenId?: number }) => {
+        async (
+            {
+                screenId,
+                isOwnWindow,
+            }: { screenId?: number; isOwnWindow?: true },
+            event,
+        ) => {
+            if (screenId === undefined && isOwnWindow === true) {
+                return await captureWindowImage(
+                    BrowserWindow.fromWebContents(event.sender),
+                );
+            }
             // A screen on a virtual display is a page, not a window.
             const virtualCapture =
                 screenId === undefined

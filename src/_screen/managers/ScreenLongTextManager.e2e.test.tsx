@@ -407,12 +407,15 @@ describe('ScreenLongTextManager e2e', () => {
         expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
         expect(mocks.bringDomToCenterView).not.toHaveBeenCalled();
         expect(highlightSpy).toHaveBeenCalledWith('GEN-1-2', true);
+        // The projector is told to bring it to ITS top: the mini preview's
+        // glide is not sent for it.
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
             expect.objectContaining({
                 screenId: 102,
                 type: 'bible-screen-view-selected-index',
                 data: {
                     selectedKJVVerseKey: 'GEN-1-2',
+                    isToTop: true,
                 },
             }),
             true,

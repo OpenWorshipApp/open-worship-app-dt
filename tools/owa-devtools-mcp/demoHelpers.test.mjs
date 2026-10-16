@@ -15,6 +15,15 @@ describe('built-in demo destinations', () => {
     expect(pickTarget([main, popup], popup.url)).toBe(popup);
     expect(pickTarget([popup, main], 'reader.html')).toBe(popup);
   });
+  // Two Bible Reader windows share one address: only the id tells them apart.
+  it('chooses a window by its id before any address', () => {
+    const url = 'https://localhost:3000/reader.html?uuid=reader';
+    const first = { id: 'A1B2', url };
+    const second = { id: 'C3D4', url };
+    expect(pickTarget([first, second], 'C3D4')).toBe(second);
+    expect(pickTarget([first, second], url)).toBe(first);
+    expect(pickTarget([first, second], 'E5F6')).toBeNull();
+  });
   it('keeps a requested popup URL when the main window has the same page', () => {
     const page = 'https://localhost:3000/reader.html?uuid=reader';
     expect(getBuiltInDemoPage('reader-font-larger', page)).toBe(page);

@@ -716,6 +716,8 @@ describe('CanvasItem models', () => {
             '<div>(<span data-bible-key="NIV">NIV</span>) Psalm 1</div></div>',
         );
         expect(fromBibleItemJson.html).toContain('>1</sup>Blessed is the man');
+        // A one-chapter passage has no chapter divider.
+        expect(fromBibleItemJson.html).not.toContain('role="separator"');
 
         // Verse numbers become superscripts, and every value is escaped.
         expect(
@@ -776,6 +778,71 @@ describe('CanvasItem models', () => {
             json: bibleJson,
         });
     });
+    test('draws a chapter divider before each chapter of a cross-chapter passage', async () => {
+        const crossItem = {
+            bibleKey: 'KHM',
+            target: {
+                bookKey: 'JHN',
+                chapter: 1,
+                verseStart: 51,
+                verseEnd: 1,
+                chapterEnd: 2,
+            },
+            toTitleWithBibleKey: async () => '(KHM) John 1:51-2:1',
+            toText: async () => 'John 1:51\n(51): a\nJohn 2:1\n(1): b',
+            toVerseTextList: async () => [
+                {
+                    localeVerse: '៥១',
+                    text: 'a',
+                    isChapterStart: true,
+                    localeChapter: '១',
+                },
+                {
+                    localeVerse: '១',
+                    text: 'b',
+                    isChapterStart: true,
+                    localeChapter: '<២>',
+                },
+                {
+                    localeVerse: '២',
+                    text: 'c',
+                    isChapterStart: false,
+                    localeChapter: '<២>',
+                },
+            ],
+        };
+        const json = (
+            await CanvasItemBibleItem.fromBibleItem(7, crossItem as any)
+        ).toJson() as any;
+        expect(json.bibleRenderingList[0].verses).toEqual([
+            { num: '៥១', text: 'a', chapterLabel: '១' },
+            { num: '១', text: 'b', chapterLabel: '<២>' },
+            { num: '២', text: 'c' },
+        ]);
+        expect(json.bibleItemTarget).toEqual(crossItem.target);
+        const html: string = json.html;
+        expect(html.match(/role="separator"/g)).toHaveLength(2);
+        // Before its chapter's first verse, the number escaped, then a rule.
+        const secondDivider =
+            '<div role="separator" style="display:flex;align-items:center;' +
+            'gap:0.4em;width:100%;margin:0.6em 0 0.2em;opacity:0.75">' +
+            '<span style="flex:0 0 1.2em;border-top:1px solid currentColor">' +
+            '</span><span style="font-weight:bold;font-size:0.85em">' +
+            '&lt;២&gt;</span><span style="flex:1;border-top:1px solid ' +
+            'currentColor"></span></div>';
+        expect(html).toContain(`a ${secondDivider}<sup`);
+        expect(html.indexOf('&lt;២&gt;')).toBeLessThan(
+            html.indexOf('>១</sup>b'),
+        );
+        expect(html).toContain('>១</sup>b <sup');
+        // Re-derived from the stored list, the divider comes back.
+        expect(
+            (
+                CanvasItemBibleItem.fromJson({ ...json, html: '' }) as any
+            ).toJson().html,
+        ).toBe(html);
+    });
+
     test('builds website canvas items that keep their embed ratio', () => {
         const item = CanvasItemWebsite.genFromUrl(
             400,

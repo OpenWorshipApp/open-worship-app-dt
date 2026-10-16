@@ -1890,6 +1890,8 @@ const dictionary = {
     Chapter: 'Chapitre',
     'Verse Start': 'Verset de début',
     'Verse End': 'Verset de fin',
+    'End Chapter': 'Chapitre de fin',
+    'Show the next chapter': 'Afficher le chapitre suivant',
     'Books map': 'Correspondance des livres',
     'Box Alignment': 'Alignement de la zone',
     'Box Properties': 'Propriétés de la zone',
@@ -2238,6 +2240,9 @@ const dictionary = {
         'Emplacement approximatif, le repère est un point estimé',
     'Open in Google Maps': 'Ouvrir dans Google Maps',
     'Open in bible lookup': 'Ouvrir dans la recherche biblique',
+    // A verse detail panel's `(KJV)`: opens the verse in a panel of its own
+    // in another installed bible.
+    'Open in another Bible': 'Ouvrir dans une autre Bible',
     'Show more': 'Afficher plus',
     // The bible translation info popup, opened from the lookup pane header while
     // no verse has resolved yet. `Title` already exists above and resolves after
@@ -2634,8 +2639,7 @@ const dictionary = {
     // --- Tooltips that were English in every language (EN-21, 2026-09-18):
     // the lookup history chips, the verse numbers, the divider arrows, the
     // Mini Screen card, the Bible Note footer.
-    'Double click to put back, shift double click to put back split':
-        'Double-cliquez pour remettre, Maj + double-clic pour remettre en vue partagée',
+    'Set to current editing': 'Mettre dans l’édition en cours',
     'Tab to complete': 'Tab pour compléter',
     'Double click to select verses':
         'Double-cliquez pour sélectionner des versets',
@@ -3101,8 +3105,8 @@ const dictionary = {
         'Tab complète un choix, Échap supprime une partie et Ctrl+Échap efface tout.',
     'Reuse and arrange passage history':
         "Réutiliser et organiser l'historique des passages",
-    'Open, split, drag, save, or remove references from the history row.':
-        "Ouvrez, partagez, faites glisser, enregistrez ou retirez les références de l'historique.",
+    'Open, put back, drag, save, or remove references from the history row.':
+        "Ouvrez, remettez, faites glisser, enregistrez ou retirez les références de l'historique.",
     'Change version and read Bible information':
         'Changer de version et lire les informations bibliques',
     'Choose a translation, then open its publisher, language, and copyright details.':
@@ -3347,6 +3351,12 @@ const dictionary = {
     'While a Presenting Flow preview has focus':
         "Quand l'aperçu d'un déroulé a le focus",
     'Go to the next item': "Passer à l'élément suivant",
+    'While the current part of Long Text Show has focus':
+        "Quand la partie en cours de l'affichage de texte long a le focus",
+    'Bring the next part to the middle':
+        "Amener la partie suivante au milieu de l'écran",
+    'Bring the previous part to the middle':
+        "Amener la partie précédente au milieu de l'écran",
     'Take the keys back to what is being presented':
         'Rendre les touches à ce qui est présenté',
     'Pressed 3 times quickly while another part of the app has focus':

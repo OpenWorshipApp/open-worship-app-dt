@@ -43,6 +43,8 @@ import type { AnyObjectType } from '../helper/typeHelpers';
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleKeyFormatHelpers';
+import { getTargetChapterEnd } from '../helper/bible-helpers/bibleTargetHelpers';
 
 export const ERROR_TYPE = 'error';
 
@@ -1279,11 +1281,15 @@ async function toDroppedDataTitle(
         if (fullVerseTitle !== null) {
             return `(${bibleKey}) ${fullVerseTitle}`;
         }
-        const verse =
-            target.verseStart === target.verseEnd
-                ? `${target.verseStart}`
-                : `${target.verseStart}-${target.verseEnd}`;
-        return `(${bibleKey}) ${target.bookKey} ${target.chapter}:${verse}`;
+        // `John 3:16`, `John 3:16-18`, or across chapters `John 1:2-3:4`.
+        const verseKey = toVerseFullKeyFormat(
+            target.bookKey,
+            target.chapter,
+            target.verseStart,
+            target.verseEnd,
+            getTargetChapterEnd(target),
+        );
+        return `(${bibleKey}) ${verseKey}`;
     }
     if (type === DragTypeEnum.FOREGROUND) {
         return toForegroundDragLabel(item);

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 9486773e-ca77-4fa6-892a-e2adaf3caaf7
-  modified: 2026-10-13T03:45:31.327Z
+  modified: 2026-10-15T17:26:08.826Z
 ---
 
 `src/keyboard-shortcut/keyingAreaHelpers.ts` (2026-10-12) is how an operator
@@ -33,6 +33,12 @@ are asked.
   remote onto the docked slides previewer even with a run in progress.
 - Order: Presenting Flow preview, docked slides previewer, floating Slides
   preview. Of two of one kind, the floating widget on top, then document order.
+  Long Text Show's lit part joined LAST on 2026-10-15
+  (`KEYING_AREA_PRIORITY.longText`, [[long-text-show]]) — placed there so the
+  user's order above did not move, not by a decision of theirs. Its
+  `getElement` answers the FOCUSED part button when focus is on one, so
+  stepping from the second language's card is not counted as presses nobody
+  answered.
 
 **Why a capture listener on `window` and not `useKeyboardRegistering`:**
 `EventHandler.checkOnEvent` runs keyboard listeners NEWEST-first and stops at

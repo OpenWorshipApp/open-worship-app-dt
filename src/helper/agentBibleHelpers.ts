@@ -310,7 +310,9 @@ export async function handleAgentBibleRequest(
         );
     }
     const title = await bibleItem.toTitle();
-    const text = cutText(await bibleItem.toText());
+    // Cut to `TEXT_LIMIT` characters, so a passage running over chapters
+    // reads its first chapter only: the rest would be read to be thrown away.
+    const text = cutText(await bibleItem.toText(1));
     const targetScreens = getAllScreenManagers().filter((screenManager) => {
         return !screenManager.isDeleted && screenManager.isSelected;
     });

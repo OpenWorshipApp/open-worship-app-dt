@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-66, KB-67, KB-68]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-49b — Run the slides from a presenter remote (get the keys back without a click)
 
@@ -15,8 +15,9 @@ when you cannot walk back to the computer to click a panel.
 1. **Space**, **→**, **↓** and **Page Down** — the keys a presenter remote
    sends for _next_ — move a panel only while that panel has the keys: the
    presenting flow's preview panel (W-22b), the slides in the middle of the
-   Presenter (W-03), or a floating **[en:tran:Slides]** preview of another
-   document. One click anywhere else — a document in the list, a button under
+   Presenter (W-03), a floating **[en:tran:Slides]** preview of another
+   document, or the lit part of a **[en:tran:Long Text Show]** (W-53). One
+   click anywhere else — a document in the list, a button under
    a screen — and the keys go to what you clicked, so the remote seems dead.
 2. **Press the key three times quickly** — inside a second and a half. The
    keys go back to what is being presented. That third press only hands the
@@ -27,10 +28,12 @@ when you cannot walk back to the computer to click a panel.
    - the slides in the middle of the Presenter, while one of that document's
      slides is on a screen;
    - a floating **[en:tran:Slides]** preview, while one of its slides is on a
-     screen.
+     screen;
+   - a **[en:tran:Long Text Show]** whose text is on a screen with one of its
+     parts lit: the keys go to that part's button, on the top card.
 
    So with a running order started and a song on the screen as well, it is
-   the running order that takes the keys. When none of the three has anything
+   the running order that takes the keys. When none of the four has anything
    going, three presses change nothing — there is nothing a key could move —
    so click what you want to present first.
 4. **Nothing at all has the keys** — you closed the panel you were in, say:
@@ -50,5 +53,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-66` · `KB-67` · `KB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

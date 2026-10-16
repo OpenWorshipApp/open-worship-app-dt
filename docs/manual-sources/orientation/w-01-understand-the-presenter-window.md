@@ -5,7 +5,7 @@ section: "Orientation"
 verify: [GL-12, NAV-01, NAV-02, NAV-10, NAV-24, NAV-25, PL-01, PR-04]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-01 — Understand the Presenter window
 
@@ -47,5 +47,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-12` · `NAV-01` · `NAV-02` · `NAV-10` · `NAV-24` · `NAV-25` · `PL-01` · `PR-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

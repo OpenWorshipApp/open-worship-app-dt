@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-14",
+    "updated": "2026-10-15",
     "sections": [
         {
             "id": "panels",
@@ -578,6 +578,65 @@
                         "passage": "The four suggestions are not all it can answer",
                         "tools": ["owa_list_questions"],
                         "find": "More… — everything it can answer"
+                    }
+                },
+                {
+                    "id": "open-help-from-taskbar",
+                    "text": "How do I open the help from the taskbar?",
+                    "kind": "howto",
+                    "keywords": [
+                        "taskbar",
+                        "jump list",
+                        "right-click the icon",
+                        "open the help",
+                        "open the chatbot",
+                        "app help",
+                        "minimised",
+                        "minimized"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Click the 🤖 button in the top-right corner of the window"
+                    }
+                },
+                {
+                    "id": "help-other-window",
+                    "text": "How do I get help with another open window, like a Bible Reader window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "other window",
+                        "child window",
+                        "separate window",
+                        "which window",
+                        "bible reader window",
+                        "lyric editor window",
+                        "slide editor window",
+                        "settings window",
+                        "working in",
+                        "window list"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "More than one window of the app open? Choose it on the WORKING IN line above the box",
+                        "find": "Which window"
+                    }
+                },
+                {
+                    "id": "hide-tip-line",
+                    "text": "How do I hide the tip line above the box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "hide tips",
+                        "tip line",
+                        "lightbulb",
+                        "stop showing tips",
+                        "30 days",
+                        "annoying tip"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Seen enough tips? The ✕ at the very end of the line puts it away for 30 days",
+                        "find": "Hide tips for 30 days"
                     }
                 },
                 {

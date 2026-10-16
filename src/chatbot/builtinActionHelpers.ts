@@ -47,6 +47,11 @@ import {
 import { readSongAddress, readSongTitleArgument } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
 import {
+    checkIsMainWindowUrl,
+    getCurrentWindowAim,
+    toFocusOfUrl,
+} from './windowAimHelpers';
+import {
     genProgressReporter,
     toSiteName,
     type BotProgressCallbackType,
@@ -529,6 +534,34 @@ async function runWhere({ report }: BuiltinRunContextType) {
                 return one !== undefined;
             });
         const version = state?.instances?.[0]?.version;
+        // A window of its own chosen in the window picker: the read above was
+        // of THAT window (`windowAimHelpers.ts`), so it is named as the one
+        // this tab works with, and the main window is told apart from it.
+        if (getCurrentWindowAim() !== null) {
+            const mainEntry = (state.windows ?? []).find((one: any) => {
+                return (
+                    typeof one?.url === 'string' &&
+                    checkIsMainWindowUrl(one.url)
+                );
+            });
+            const mainFocus = mainEntry ? toFocusOfUrl(mainEntry.url) : null;
+            const mainLabel = BOT_FOCUS_LIST.find((one) => {
+                return one.key === mainFocus;
+            })?.label;
+            return {
+                text:
+                    `**This tab works with the ${label}, a window of its ` +
+                    'own**' +
+                    (main.language
+                        ? ` in ${languageName(main.language)}`
+                        : '') +
+                    '.' +
+                    (mainLabel
+                        ? ` The main window is on the ${mainLabel}.`
+                        : '') +
+                    (version ? `\n\nApp version ${version}.` : ''),
+            };
+        }
         return {
             text:
                 `**The main window is on the ${label}**` +

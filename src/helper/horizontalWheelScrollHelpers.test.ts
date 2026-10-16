@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from 'vitest';
 
-import { applyHorizontalWheelScroll } from './viewExtraHelpers';
+import { applyHorizontalWheelScroll } from './horizontalWheelScrollHelpers';
 
 // jsdom lays nothing out, so the strip's sizes are set by hand.
 function genStrip({

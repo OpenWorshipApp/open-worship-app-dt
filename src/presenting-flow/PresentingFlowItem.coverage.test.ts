@@ -532,6 +532,32 @@ describe('PresentingFlowItem data model', () => {
             title: '(KJV) John 3:16',
             extraStyle: { fontFamily: 'Khmer Font' },
         });
+        // Without a bible to title it, the reference is spelled from the key.
+        for (const [target, expectedTitle] of [
+            [{ chapter: 3, verseStart: 16, verseEnd: 16 }, '(KJV) JHN 3:16'],
+            [{ chapter: 3, verseStart: 16, verseEnd: 18 }, '(KJV) JHN 3:16-18'],
+            [
+                { chapter: 1, verseStart: 2, verseEnd: 4, chapterEnd: 3 },
+                '(KJV) JHN 1:2-3:4',
+            ],
+            [
+                { chapter: 1, verseStart: 2, verseEnd: 4, chapterEnd: 1 },
+                '(KJV) JHN 1:2-4',
+            ],
+        ] as const) {
+            mocks.bibleTitle.mockResolvedValueOnce(null);
+            const fallback = await PresentingFlowItem.fromDroppedData(
+                { type: DragTypeEnum.BIBLE_ITEM, item: {} },
+                {
+                    type: DragTypeEnum.BIBLE_ITEM,
+                    data: {
+                        bibleKey: 'KJV',
+                        target: { bookKey: 'JHN', ...target },
+                    },
+                },
+            );
+            expect(fallback?.title).toBe(expectedTitle);
+        }
         expect(
             await PresentingFlowItem.fromDroppedData(
                 { type: DragTypeEnum.UNKNOWN, item: {} },

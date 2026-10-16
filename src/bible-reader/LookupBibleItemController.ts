@@ -24,6 +24,7 @@ import {
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
+import { checkIsSameBibleTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import CacheManager from '../others/CacheManager';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { unlocking } from '../server/unlockingHelpers';
@@ -248,15 +249,11 @@ class LookupBibleItemController extends BibleItemsViewController {
         const selectedJson = this.selectedBibleItem.toJson();
         const foundBibleItem = editingResult.result.bibleItem;
         // Two views titled alike: the result already is this view's passage,
-        // with any further ranges it carries, so it stands as it is.
-        const selectedTarget = selectedJson.target;
+        // so it stands as it is.
         if (
             foundBibleItem !== null &&
             foundBibleItem.bibleKey === selectedJson.bibleKey &&
-            foundBibleItem.target.bookKey === selectedTarget.bookKey &&
-            foundBibleItem.target.chapter === selectedTarget.chapter &&
-            foundBibleItem.target.verseStart === selectedTarget.verseStart &&
-            foundBibleItem.target.verseEnd === selectedTarget.verseEnd
+            checkIsSameBibleTarget(foundBibleItem.target, selectedJson.target)
         ) {
             return editingResult;
         }
@@ -268,7 +265,6 @@ class LookupBibleItemController extends BibleItemsViewController {
                 bookKey: selectedJson.target.bookKey,
                 chapter: selectedJson.target.chapter,
                 bibleItem: FoundBibleItem.fromJson(selectedJson),
-                extraBibleItems: undefined,
             },
         };
     }

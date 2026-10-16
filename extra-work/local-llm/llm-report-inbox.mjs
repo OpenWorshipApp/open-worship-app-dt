@@ -36,6 +36,7 @@
 // No npm packages: the database is Node's own SQLite (`node:sqlite`), which
 // needs Node 22.13 or newer.
 
+import { spawn as spawnProcess } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -56,6 +57,153 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_DB_FILE = path.join(HERE, 'report-inbox.sqlite');
 // Where `files` writes what came with a report, beside the database.
 export const FILES_DIR_NAME = 'report-files';
+
+// ---------------------------------------------------------------------------
+// A new report, said on this computer's desktop (2026-10-15). The inbox runs
+// with no window -- under the startup task, behind a tunnel -- and a report
+// nobody notices helps nobody: the person who sent it has done their part,
+// and it sat in a file until somebody thought to run `list`.
+// ---------------------------------------------------------------------------
+
+// The PowerShell that shows a Windows notification. The words reach it as
+// ENVIRONMENT variables and never as part of the script: a report's title is
+// a stranger's, and text pasted into a command is a command.
+const WINDOWS_NOTICE_SCRIPT = [
+    "$ErrorActionPreference = 'Stop'",
+    '[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null',
+    '$xml = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)',
+    "$text = $xml.GetElementsByTagName('text')",
+    '$null = $text.Item(0).AppendChild($xml.CreateTextNode($env:OWA_NOTICE_TITLE))',
+    '$null = $text.Item(1).AppendChild($xml.CreateTextNode($env:OWA_NOTICE_BODY))',
+    '$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)',
+    "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe').Show($toast)",
+].join('; ');
+
+const NOTICE_TEXT_MAX = 160;
+
+function toNoticeText(text) {
+    return toPrintable(String(text ?? ''))
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, NOTICE_TEXT_MAX);
+}
+
+/** What the notice says of one new report, every word of it made safe. */
+export function genNewReportNotice({ id, reference, title, fileCount = 0 }) {
+    const name = toNoticeText(title) || '(no title)';
+    const files =
+        fileCount > 0
+            ? `, ${fileCount} file${fileCount === 1 ? '' : 's'}`
+            : '';
+    return {
+        title: 'New problem report',
+        body: toNoticeText(
+            `${name} — #${id}${reference ? ` ${reference}` : ''}${files}. ` +
+                `Read it: node llm-report-inbox.mjs show ${id}`,
+        ),
+    };
+}
+
+/**
+ * Shows one desktop notification, by what this OS has for it -- Windows
+ * PowerShell, macOS `osascript`, Linux `notify-send` -- the words passed as
+ * data. Answers whether one was attempted. Never throws, never waits.
+ */
+export function notifyDesktop(
+    { title, body },
+    { platform = process.platform, spawn = spawnProcess } = {},
+) {
+    const env = {
+        ...process.env,
+        OWA_NOTICE_TITLE: toNoticeText(title),
+        OWA_NOTICE_BODY: toNoticeText(body),
+    };
+    let command;
+    let args;
+    if (platform === 'win32') {
+        command = 'powershell.exe';
+        args = [
+            '-NoProfile',
+            '-NonInteractive',
+            '-WindowStyle',
+            'Hidden',
+            '-EncodedCommand',
+            Buffer.from(WINDOWS_NOTICE_SCRIPT, 'utf16le').toString('base64'),
+        ];
+    } else if (platform === 'darwin') {
+        command = 'osascript';
+        args = [
+            '-e',
+            'display notification (system attribute "OWA_NOTICE_BODY") with title (system attribute "OWA_NOTICE_TITLE")',
+        ];
+    } else if (platform === 'linux') {
+        command = 'notify-send';
+        args = [env.OWA_NOTICE_TITLE, env.OWA_NOTICE_BODY];
+    } else {
+        return false;
+    }
+    try {
+        const child = spawn(command, args, {
+            env,
+            stdio: 'ignore',
+            detached: true,
+            windowsHide: true,
+        });
+        child.on?.('error', () => {});
+        child.unref?.();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// One notice a minute at most: a flood of reports -- the key is public --
+// must not become a flood on somebody's desktop. What comes inside the
+// minute is counted and said once at its end.
+export const NOTICE_GAP_MILLISECOND = 60 * 1000;
+
+/**
+ * What a taker calls for each NEW report (`onNew`): the first is said at
+ * once, the rest of the minute in one notice after it.
+ */
+export function genNewReportNotifier({
+    notify = notifyDesktop,
+    now = Date.now,
+    schedule = (callback, delay) => {
+        const timer = setTimeout(callback, delay);
+        timer.unref?.();
+    },
+} = {}) {
+    let lastAt = -Infinity;
+    let heldCount = 0;
+    let isScheduled = false;
+    const flush = () => {
+        isScheduled = false;
+        if (heldCount === 0) {
+            return;
+        }
+        notify({
+            title: 'New problem reports',
+            body: `${heldCount} more report${heldCount === 1 ? '' : 's'} arrived. Read them: node llm-report-inbox.mjs list --open`,
+        });
+        heldCount = 0;
+        lastAt = now();
+    };
+    return (report) => {
+        const at = now();
+        if (at - lastAt >= NOTICE_GAP_MILLISECOND && !isScheduled) {
+            lastAt = at;
+            notify(genNewReportNotice(report));
+            return;
+        }
+        heldCount += 1;
+        if (!isScheduled) {
+            isScheduled = true;
+            schedule(flush, Math.max(0, lastAt + NOTICE_GAP_MILLISECOND - at));
+        }
+    };
+}
+
 const DEFAULT_PORT = 8788;
 // The app sends at most 200 000 characters of report, and a character can
 // be three bytes.
@@ -150,6 +298,7 @@ export function readInboxArgs(argv) {
         dbFile: '',
         isKeyWanted: true,
         isNewKey: false,
+        isNotifying: true,
         limit: 20,
         isOpenOnly: false,
         isRaw: false,
@@ -172,6 +321,8 @@ export function readInboxArgs(argv) {
             args.port = Number(readNext());
         } else if (arg === '--new-key' && args.command === 'serve') {
             args.isNewKey = true;
+        } else if (arg === '--no-notify' && args.command === 'serve') {
+            args.isNotifying = false;
         } else if (arg === '--no-key' && args.command === 'serve') {
             args.isKeyWanted = false;
         } else if (arg === '--limit' && args.command === 'list') {
@@ -814,6 +965,9 @@ export async function openReportTaker({
     dbFile = DEFAULT_DB_FILE,
     say = () => {},
     now = Date.now,
+    // Called with `{id, reference, title, fileCount}` for each report kept
+    // that was not here before (`genNewReportNotifier`).
+    onNew = null,
 } = {}) {
     const store = await openReportStore(dbFile);
     // When each address last posted, and when anybody did and how much.
@@ -980,6 +1134,20 @@ export async function openReportTaker({
                                 files.reduce((total, file) => {
                                     return total + file.bytes.length;
                                 }, 0);
+                            const head = readReportHead(body);
+                            say(
+                                `New report #${kept.id}${head.reference ? ` ${head.reference}` : ''} kept, ${kept.fileCount} file${kept.fileCount === 1 ? '' : 's'}.`,
+                            );
+                            try {
+                                onNew?.({
+                                    id: kept.id,
+                                    reference: head.reference ?? reference,
+                                    title: head.title,
+                                    fileCount: kept.fileCount,
+                                });
+                            } catch {
+                                // A notice that fails costs nothing kept.
+                            }
                         }
                         answer(200, {
                             ok: true,
@@ -1029,8 +1197,9 @@ export async function openReportInbox({
     port = 0,
     say = () => {},
     now = Date.now,
+    onNew = null,
 } = {}) {
-    const taker = await openReportTaker({ dbFile, say, now });
+    const taker = await openReportTaker({ dbFile, say, now, onNew });
     const { store } = taker;
     const server = http.createServer((req, res) => {
         const { pathname, isOwnLook, answer, refuse } = genAnswerer(
@@ -1227,6 +1396,7 @@ export async function runInboxCommand(argv, overrides = {}) {
             say: (text) => {
                 deps.print(`${new Date().toTimeString().slice(0, 8)}  ${text}`);
             },
+            onNew: args.isNotifying ? genNewReportNotifier() : null,
         });
         deps.print(
             `Report inbox on http://127.0.0.1:${server.address().port}${REPORT_PATH}`,

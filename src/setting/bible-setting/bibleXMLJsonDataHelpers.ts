@@ -37,8 +37,10 @@ import { guessBibleLocale } from '../../../tools/owa-devtools-mcp/bibleBookNames
 
 // The root element's open tag (which carries the bible key attribute) lives
 // within the first few KB of the file, so reading the whole multi-MB XML file
-// just to extract the key is wasteful.
-const BIBLE_KEY_HEAD_READ_BYTES = 4096;
+// just to extract the key is wasteful. 8 KB, not 4: an imported Bible's
+// `note` (up to `BIBLE_NOTE_MAX_CHARS`) rides on that tag too, and a tag cut
+// by the head falls back to reading the whole file on every scan.
+const BIBLE_KEY_HEAD_READ_BYTES = 8192;
 function readFileHeadText(filePath: string, maxBytes: number) {
     const fileUtils = appProvider.fileUtils;
     let fileDescriptor: number | null = null;
@@ -174,6 +176,7 @@ export async function getAllXMLFileKeys() {
  *         "legalNote": "Legal note of bible. e.g: Public Domain",
  *         "publisher": "Publisher of bible. e.g: Bible Society",
  *         "copyRights": "Copy rights of bible. e.g: Public Domain",
+ *         "note": "Free text. e.g: where it was imported from",
  *         "books": {
  *             "GEN": "GENESIS",
  *         },
@@ -221,6 +224,7 @@ const attributesMap = {
     legalNote: ['legalNote', 'status'],
     publisher: ['publisher'],
     copyRights: ['copyRights'],
+    note: ['note'],
     bookKey: ['key'],
     index: ['number', 'index', 'id'],
     mapKey: ['key'],
@@ -244,6 +248,9 @@ export type BibleJsonInfoType = {
     legalNote: string;
     publisher: string;
     copyRights: string;
+    // Free text, empty when the file has none. An import writes where the
+    // Bible came from into it (`bibleImportNoteHelpers.ts`).
+    note?: string;
     keyBookMap: { [bookKey: string]: string };
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
@@ -658,6 +665,8 @@ export async function getBibleInfoJson(
     const copyRights =
         guessValue(xmlElementOrText, attributesMap.copyRights) ??
         'Unknown Copy Rights';
+    // Always present, empty when absent, so the Info editor offers the field.
+    const note = guessValue(xmlElementOrText, attributesMap.note) ?? '';
     const bibleInfo = {
         title,
         description,
@@ -667,6 +676,7 @@ export async function getBibleInfoJson(
         legalNote,
         publisher,
         copyRights,
+        note,
         numbersMap,
         keyBookMap,
         booksAvailable,
@@ -684,6 +694,10 @@ function setBibleInfo(
     });
     for (const key of bibleInfoKey) {
         const value = restInfo[key as keyof typeof restInfo];
+        // An empty note is no note: not written onto every Bible saved.
+        if (value === undefined || (key === 'note' && value === '')) {
+            continue;
+        }
         xmlElementBible.setAttribute(key, value.toString());
     }
     const xmlElementMap = xmlDoc.createElement(tagNamesMap.map[0]);

@@ -126,6 +126,47 @@ function getStyleText(textColor?: string) {
     text-shadow: 0 0 ${HEX_COLOR_BLACK};
 }
 
+/* "-2-----": a new chapter of a passage crossing chapters, in the verse
+   numbers' colour. Static: it stays up for as long as the passage does. */
+#bible-screen-view .bible-chapter-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    width: 100%;
+    margin: 0.4em 0 0.1em;
+    opacity: 0.7;
+}
+#bible-screen-view .bible-chapter-divider::before,
+#bible-screen-view .bible-chapter-divider::after {
+    content: '';
+    border-top: 1px solid rgba(172, 255, 47, 0.645);
+}
+#bible-screen-view .bible-chapter-divider::before {
+    flex: 0 0 1.2em;
+}
+#bible-screen-view .bible-chapter-divider::after {
+    flex: 1;
+}
+#bible-screen-view .bible-chapter-divider-label {
+    color: rgba(172, 255, 47, 0.645);
+    font-weight: bold;
+    font-size: 0.7em;
+}
+
+/* "...": the operator's, for one more chapter. Never on the projector. */
+#bible-screen-view .bible-more-chapter-button {
+    display: block;
+    margin: 0.3em auto;
+    padding: 0 1.2em;
+    cursor: pointer;
+    color: inherit;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 0.3em;
+    opacity: 0.7;
+    letter-spacing: 0.2em;
+}
+
 #bible-screen-view .header .bible-key {
     opacity: 0.5;
     font-weight: 100;

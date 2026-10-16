@@ -369,8 +369,12 @@ const RUN_SHEET_PATTERN =
 // decides what it means, not this pattern.
 // A word-and-number that is not a book -- "slide 3", "verse 2" -- is a slide
 // ask and goes on to the selection answer, not to the passage parser.
+// A range may cross chapters -- "John 1:2-3:4", "John 1-3" -- and be spelled
+// with any dash the parser reads (`DASH_VARIANTS` in
+// `bibleReferenceTokenizer.ts`) or a word: "John 1:2 to 3:4". The word needs
+// a number after it, so "to the screen" stays the tail.
 const VERSE_ASK_PATTERN =
-    /^(?:please\s+)?(?:put|show|present|display|open|bring)\s+(?:up\s+)?(?:the\s+)?(?!(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+(?:\s*-\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?\s*[.!]?\s*$/i;
+    /^(?:please\s+)?(?:put|show|present|display|open|bring)\s+(?:up\s+)?(?:the\s+)?(?!(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+)?(?:(?:\s*[-‐-―−﹘﹣－]\s*|\s+(?:to|through|thru)\s+)\d+(?:\s*[:.]\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?\s*[.!]?\s*$/i;
 
 /**
  * The pseudo tool name a button carries when pressing it should run one of
@@ -437,9 +441,15 @@ export function genBackToPresenterRoute(focus: BotFocusType): string | null {
  * window of its own has no tab or button back, because the main window never
  * went away. Empty for a page of the main window.
  */
-export function genOwnWindowFact(focus: BotFocusType): string {
+export function genOwnWindowFact(
+    focus: BotFocusType,
+    // A page of the main window open in a window of its own -- a Bible
+    // Reader opened beside the main one, chosen in the window picker
+    // (`windowAimHelpers.ts`). It is just as far from the Presenter's panels.
+    isSeparateWindow = false,
+): string {
     const descriptor = getBotFocus(focus);
-    if (descriptor === null || descriptor.isMainWindow) {
+    if (descriptor === null || (descriptor.isMainWindow && !isSeparateWindow)) {
         return '';
     }
     return (
@@ -1593,6 +1603,28 @@ export async function runBotAction(
         );
         return {
             text: page.length > 0 ? page : 'Done.',
+            isNeedingModel: false,
+        };
+    }
+    // **Highlight again** and **Highlight "…"**: the ring is the answer, and
+    // the line under it says whether there was one. Printed as it came back,
+    // the tool's JSON -- the component and the source file among it -- was
+    // the whole reply in a volunteer's chat (seen live 2026-10-15).
+    if (action.toolName === 'owa_find_ui') {
+        const found = parseToolJson(
+            await callTool(action.toolName, action.args ?? {}),
+        );
+        const shown = (found?.matches ?? []).find((match: any) => {
+            return match?.isVisible;
+        });
+        return {
+            text:
+                shown === undefined
+                    ? `I could not find "${action.args?.text}" on screen ` +
+                      'just now. Open the panel or tab it belongs to, then ' +
+                      'ask again.'
+                    : `I have outlined **${shown.label}** again, ` +
+                      `${shown.where ?? 'in this window'}.`,
             isNeedingModel: false,
         };
     }

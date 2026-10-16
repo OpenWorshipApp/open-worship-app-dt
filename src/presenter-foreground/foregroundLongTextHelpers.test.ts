@@ -9,6 +9,7 @@ import {
     genLongTextLanguage,
     genLongTextRowTexts,
     genLongTextStyleByCode,
+    genLyricLongTextSession,
     parseLongTextSession,
     serializeLongTextSession,
     toInlineSectionText,
@@ -77,6 +78,48 @@ describe('a Long Text Show session', () => {
         expect(parseLongTextSession(serializeLongTextSession(session))).toEqual(
             session,
         );
+    });
+
+    test('started from a lyric is that file as English, read back as it was written', () => {
+        const session = genLyricLongTextSession('/docs/still.owl');
+        expect(session).toEqual({
+            languages: [
+                {
+                    langCode: 'en',
+                    source: 'lyric',
+                    title: '',
+                    sections: [''],
+                    lyricFilePath: '/docs/still.owl',
+                    // Its parts as text cards, as every new language's are.
+                    sectionView: 'cards',
+                },
+            ],
+        });
+        expect(parseLongTextSession(serializeLongTextSession(session))).toEqual(
+            session,
+        );
+        expect(
+            genLyricLongTextSession('/docs/still.owl', 'km').languages[0]
+                .langCode,
+        ).toBe('km');
+    });
+
+    test('starts a new language as text cards, and keeps a stored one as it was', () => {
+        expect(genLongTextLanguage('km').sectionView).toBe('cards');
+        // Stored before the default changed, or switched back to buttons:
+        // either way no view is written, and the buttons are kept.
+        const stored = parseLongTextSession(
+            JSON.stringify({
+                languages: [
+                    {
+                        langCode: 'en',
+                        source: 'lyric',
+                        lyricFilePath: '/docs/grace.owl',
+                    },
+                ],
+            }),
+        );
+        expect(stored.languages[0].sectionView).toBeUndefined();
     });
 
     test('keeps a language once and drops what is not one', () => {

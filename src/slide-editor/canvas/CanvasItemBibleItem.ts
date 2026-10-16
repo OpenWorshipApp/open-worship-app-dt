@@ -19,6 +19,10 @@ import CanvasItemHtml, { genHtmlDefaultProps } from './CanvasItemHtml';
 export type BibleRenderedVerseType = {
     num: string;
     text: string;
+    // Only on the first verse of each chapter of a passage crossing chapters:
+    // the chapter number its divider shows, as the screen's verses carry it.
+    // Absent from every one-chapter item, so those are stored as before.
+    chapterLabel?: string;
 };
 export type BibleRenderedType = {
     title: string;
@@ -75,11 +79,37 @@ const BOOK_ICON_SVG =
     ' 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8' +
     ' 1.783z"/></svg>';
 
+// `-2-----` above the first verse of each chapter of a passage crossing
+// chapters, drawn as the Reader and the screen draw it: a short rule, the
+// chapter number, a rule to the edge. Inline for the same shadow-root reason
+// as the book icon; a block, so the verses after it start on a line of their
+// own.
+const CHAPTER_DIVIDER_STYLE = [
+    'display:flex',
+    'align-items:center',
+    'gap:0.4em',
+    'width:100%',
+    'margin:0.6em 0 0.2em',
+    'opacity:0.75',
+].join(';');
+const CHAPTER_DIVIDER_RULE_STYLE = 'border-top:1px solid currentColor';
+const CHAPTER_DIVIDER_LABEL_STYLE = 'font-weight:bold;font-size:0.85em';
+
 function escapeHtml(text: string) {
     return text
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;');
+}
+
+function genChapterDividerHtml(chapterLabel: string) {
+    return (
+        `<div role="separator" style="${CHAPTER_DIVIDER_STYLE}">` +
+        `<span style="flex:0 0 1.2em;${CHAPTER_DIVIDER_RULE_STYLE}"></span>` +
+        `<span style="${CHAPTER_DIVIDER_LABEL_STYLE}">${escapeHtml(chapterLabel)}</span>` +
+        `<span style="flex:1;${CHAPTER_DIVIDER_RULE_STYLE}"></span>` +
+        '</div>'
+    );
 }
 
 function genVersesHtml(
@@ -90,8 +120,11 @@ function genVersesHtml(
         return escapeHtml(text);
     }
     return verses
-        .map(({ num, text }) => {
+        .map(({ num, text, chapterLabel }) => {
             return (
+                (chapterLabel === undefined
+                    ? ''
+                    : genChapterDividerHtml(chapterLabel)) +
                 `<sup style="${VERSE_NUMBER_STYLE}${isLightTheme ? ';color:#496b19' : ''}">${escapeHtml(num)}</sup>` +
                 escapeHtml(text)
             );
@@ -136,12 +169,17 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
             {
                 title,
                 text,
-                verses: (verseTextList ?? []).map(({ localeVerse, text }) => {
-                    return {
-                        num: localeVerse,
-                        text,
-                    };
-                }),
+                verses: (verseTextList ?? []).map(
+                    ({ localeVerse, text, isChapterStart, localeChapter }) => {
+                        return {
+                            num: localeVerse,
+                            text,
+                            ...(isChapterStart
+                                ? { chapterLabel: localeChapter }
+                                : {}),
+                        };
+                    },
+                ),
             },
         ];
         return {

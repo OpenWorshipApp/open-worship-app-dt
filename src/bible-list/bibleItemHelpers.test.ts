@@ -64,6 +64,68 @@ describe('bible-list bibleItemHelpers', () => {
         expect(genDuplicatedMessage(list, list[1], 1)).toBeUndefined();
     });
 
+    test('genDuplicatedMessage tells cross-chapter passages apart by their end chapter', () => {
+        const target = {
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+        };
+        const list = [
+            { bibleKey: 'KJV', target: { ...target, chapterEnd: 3 } } as any,
+            { bibleKey: 'KJV', target: { ...target, chapterEnd: 2 } } as any,
+            { bibleKey: 'KJV', target } as any,
+        ];
+        // JHN 1:2-3:4, JHN 1:2-2:4 and JHN 1:2-4 are three passages.
+        expect(genDuplicatedMessage(list, list[0], 0)).toBeUndefined();
+        expect(genDuplicatedMessage(list, list[1], 1)).toBeUndefined();
+        expect(genDuplicatedMessage(list, list[2], 2)).toBeUndefined();
+    });
+
+    test('genDuplicatedMessage flags the same cross-chapter passage', () => {
+        const list = [
+            {
+                bibleKey: 'KJV',
+                target: {
+                    bookKey: 'JHN',
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd: 4,
+                    chapterEnd: 3,
+                },
+            } as any,
+            {
+                bibleKey: 'KJV',
+                target: {
+                    chapterEnd: 3,
+                    verseEnd: 4,
+                    verseStart: 2,
+                    chapter: 1,
+                    bookKey: 'JHN',
+                },
+            } as any,
+        ];
+        expect(genDuplicatedMessage(list, list[1], 1)).toBe(
+            'Duplicated with item number 1',
+        );
+    });
+
+    test('genDuplicatedMessage reads a same-chapter chapterEnd as no end chapter', () => {
+        const target = {
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 3,
+        };
+        const list = [
+            { bibleKey: 'KJV', target } as any,
+            { bibleKey: 'KJV', target: { ...target, chapterEnd: 1 } } as any,
+        ];
+        expect(genDuplicatedMessage(list, list[1], 1)).toBe(
+            'Duplicated with item number 1',
+        );
+    });
+
     test('genDuplicatedMessage returns undefined without duplicates', () => {
         const list = [
             {

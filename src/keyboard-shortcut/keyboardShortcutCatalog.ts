@@ -395,6 +395,28 @@ function genPresentingFlowGroup(): KeyboardShortcutGroupType {
     };
 }
 
+// The slides' own keys, answered by Long Text Show's part buttons
+// (`useLongTextPartKeying`).
+function genLongTextGroup(): KeyboardShortcutGroupType {
+    return {
+        id: 'long-text',
+        title: tran('Long Text Show'),
+        note: tran('While the current part of Long Text Show has focus'),
+        entries: [
+            {
+                id: 'long-text-next',
+                keys: nextSlideEventMappers,
+                label: tran('Bring the next part to the middle'),
+            },
+            {
+                id: 'long-text-previous',
+                keys: previousSlideEventMappers,
+                label: tran('Bring the previous part to the middle'),
+            },
+        ],
+    };
+}
+
 function genDrawingGroup(): KeyboardShortcutGroupType {
     return {
         id: 'drawing',
@@ -840,6 +862,7 @@ export function getKeyboardShortcutGroups(
             genSlideListGroup(page),
             genBibleLookupGroup(page),
             genPresentingFlowGroup(),
+            genLongTextGroup(),
             genDrawingGroup(),
             genFocusingGroup(),
         );

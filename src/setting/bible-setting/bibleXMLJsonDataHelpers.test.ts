@@ -127,6 +127,7 @@ describe('Bible XML metadata and conversion', () => {
             legalNote: 'Public',
             publisher: 'Press',
             copyRights: 'Rights',
+            note: '',
             keyBookMap: { GEN: 'First', EXO: 'Exodus' },
             booksAvailable: ['GEN', 'EXO'],
             numbersMap: {
@@ -212,6 +213,27 @@ describe('Bible XML metadata and conversion', () => {
         expect(mocks.log).not.toHaveBeenCalled();
     });
 
+    test('keeps a multi-line note through a save, and writes no empty one', async () => {
+        const original = await xmlTextToJson(
+            `<bible key="NOTE" title="T">${book}</bible>`,
+        );
+        expect(original?.info.note).toBe('');
+        expect(jsonToXMLText(original!)).not.toContain('note=');
+        const note =
+            'Imported on 2026-10-15 07:03 UTC by the assistant (Chatbot).\n' +
+            'Downloaded from: https://example.org/k.xml?a=1&b="2"';
+        const xml = jsonToXMLText({
+            ...original!,
+            info: { ...original!.info, note },
+        });
+        // Line breaks as references: another XML reader would make a raw
+        // one inside an attribute a space.
+        expect(xml).toContain(
+            'note="Imported on 2026-10-15 07:03 UTC by the assistant (Chatbot).&#10;Downloaded from: https://example.org/k.xml?a=1&amp;b=&quot;2&quot;"',
+        );
+        expect((await xmlTextToJson(xml!))?.info.note).toBe(note);
+    });
+
     test('reads legacy extra tag names and isolates malformed JSON entries', async () => {
         const result = await xmlTextToJson(`<bible key="T">${book}
             <new_lines><item> GEN 1:1 </item><item> </item><item/></new_lines>
@@ -260,7 +282,7 @@ describe('Bible XML metadata and conversion', () => {
 });
 
 describe('bounded file reads and key lookup', () => {
-    test('reads key, title and locale from one 4 KB head without a full read', async () => {
+    test('reads key, title and locale from one 8 KB head without a full read', async () => {
         expect(await getBibleHeadInfoFromFile('/bibles/kjv.xml')).toEqual({
             bibleKey: 'KJV',
             title: 'King James',
@@ -271,13 +293,26 @@ describe('bounded file reads and key lookup', () => {
             17,
             expect.any(Buffer),
             0,
-            4096,
+            8192,
             0,
         );
         expect(mocks.read).toHaveBeenCalledTimes(1);
         expect(mocks.close).toHaveBeenCalledWith(17);
         expect(mocks.readFile).not.toHaveBeenCalled();
         expect(mocks.input).not.toHaveBeenCalled();
+    });
+
+    test('a root tag carrying a long note still answers from the head', async () => {
+        head(
+            `<bible title="Noted" note="${'x'.repeat(2000)}" ` +
+                `booksAvailable="${'GEN,'.repeat(66)}" key="NOTED" locale="km-KH">`,
+        );
+        expect(await getBibleHeadInfoFromFile('/bibles/noted.xml')).toEqual({
+            bibleKey: 'NOTED',
+            title: 'Noted',
+            locale: 'km-KH',
+        });
+        expect(mocks.readFile).not.toHaveBeenCalled();
     });
 
     test('falls back only for the key when the head cannot provide it', async () => {

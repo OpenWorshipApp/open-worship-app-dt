@@ -290,14 +290,7 @@ export default function BibleViewComp({
                     level down, and every switch rebuilt the verses. */}
                 {isEditing ? <RenderBibleLookupBodyComp /> : null}
                 {foundBibleItem === null ? null : (
-                    <BibleViewTextComp
-                        bibleItem={foundBibleItem}
-                        extraBibleItems={
-                            isEditing
-                                ? editingResult?.result.extraBibleItems
-                                : undefined
-                        }
-                    />
+                    <BibleViewTextComp bibleItem={foundBibleItem} />
                 )}
                 <ScrollingHandlerComp
                     // Both buttons stack in the bottom-right corner, 30px

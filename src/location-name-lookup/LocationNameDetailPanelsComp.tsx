@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
+import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
 import OpenGraphPreviewButtonComp from '../graph-view/OpenGraphPreviewButtonComp';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -18,6 +19,7 @@ import { useThemeSource } from '../others/themeHelpers';
 import type { VerseDataType } from './bibleVerseHelpers';
 import {
     openVerseInBibleLookup,
+    shortToVerseCopyData,
     toVerseFullTitle,
     useLookupVerseFontFamily,
 } from './bibleVerseHelpers';
@@ -115,7 +117,8 @@ function RenderCopyButtonComp({
  */
 function RenderOpenInLookupButtonComp({
     shortVerse,
-}: Readonly<{ shortVerse: string }>) {
+    bibleKey,
+}: Readonly<{ shortVerse: string; bibleKey?: string }>) {
     const viewController = getCurrentLookupBibleItemController();
     const viewControllerRef = useAppCurrentRef(viewController);
     const label = tran('Open in bible lookup');
@@ -136,7 +139,11 @@ function RenderOpenInLookupButtonComp({
                 if (currentViewController === null) {
                     return;
                 }
-                openVerseInBibleLookup(currentViewController, shortVerse)
+                openVerseInBibleLookup(
+                    currentViewController,
+                    shortVerse,
+                    bibleKey,
+                )
                     .then((isOpened) => {
                         if (!isOpened) {
                             showSimpleToast(
@@ -153,13 +160,56 @@ function RenderOpenInLookupButtonComp({
     );
 }
 
+/**
+ * The verse panel's `(KJV)`: pressed, it lists the other installed bibles,
+ * and the one picked opens as a panel of its own beside this one -- the
+ * verse in two bibles is two panels, never this one re-read.
+ */
+function RenderVerseBibleKeyButtonComp({
+    bibleKey,
+    shortVerse,
+    title,
+}: Readonly<{ bibleKey: string; shortVerse: string; title: string }>) {
+    const label = tran('Open in another Bible');
+    return (
+        <button
+            type="button"
+            className={
+                'flex-shrink-0 location-name-lookup__kjv-name' +
+                ' location-name-lookup__bible-key-button'
+            }
+            title={label}
+            aria-label={`${label}: ${bibleKey}`}
+            aria-haspopup="menu"
+            onClick={(event) => {
+                showBibleKeyOption(
+                    event,
+                    (newBibleKey) => {
+                        openDetailPanel({
+                            kind: 'verse',
+                            target: shortVerse,
+                            name: title,
+                            bibleKey: newBibleKey,
+                        });
+                    },
+                    [bibleKey],
+                    label,
+                ).catch(handleError);
+            }}
+        >
+            ({bibleKey})
+        </button>
+    );
+}
+
 function RenderDetailPanelComp({
     index,
     managers,
     panel,
 }: Readonly<{
     index: number;
-    managers: LookupManagersType;
+    // Null for a verse panel, which reads nothing out of the lookup dataset.
+    managers: LookupManagersType | null;
     panel: DetailPanelType;
 }>) {
     // The copy payload is assembled from what the body actually resolved, so a
@@ -167,7 +217,7 @@ function RenderDetailPanelComp({
     // references rather than blocking on dozens of bible reads.
     const textScale = useBibleViewTextScale();
     const { fontFamily } = useLookupLangPresentation();
-    const verseFontFamily = useLookupVerseFontFamily();
+    const verseFontFamily = useLookupVerseFontFamily(panel.bibleKey);
     const resolvedVersesRef = useRef<string[]>([]);
     // A verse panel has no record to name it, so `panel.name` — the reference as
     // it read the moment the panel was opened — used to be its title for good.
@@ -185,11 +235,11 @@ function RenderDetailPanelComp({
     // `record` forced an `as any` at each summary call, which is exactly the
     // check that would catch a location record reaching `buildNameSummary`.
     const nameRecord =
-        panel.kind === 'name'
+        panel.kind === 'name' && managers !== null
             ? managers.namesLookupManager.getRecordById(panel.target)
             : null;
     const locationRecord =
-        panel.kind === 'location'
+        panel.kind === 'location' && managers !== null
             ? managers.locationsLookupManager.getRecordById(panel.target)
             : null;
     const record = nameRecord ?? locationRecord;
@@ -199,6 +249,30 @@ function RenderDetailPanelComp({
     // never an English one to add to it.
     const kjvName = record === null ? '' : getRecordKjvName(record);
     const handleCopy = async () => {
+        if (panel.kind === 'verse' && verseData?.sectionList) {
+            // Across chapters the WHOLE passage is copied, every chapter under
+            // its own title — not just the chapters the panel shows yet.
+            const copyData = await shortToVerseCopyData(
+                verseData.bibleKey,
+                panel.target,
+            );
+            if (copyData !== null) {
+                const fullTitle = toVerseFullTitle(copyData);
+                await copyRecordToClipboard(
+                    `${fullTitle}\n${copyData.text}`,
+                    `<p><strong>${escapeHtml(fullTitle)}</strong></p>` +
+                        copyData.sectionList
+                            .map(({ title, text }) => {
+                                return (
+                                    `<p><strong>${escapeHtml(title)}</strong></p>` +
+                                    `<p>${escapeHtml(text)}</p>`
+                                );
+                            })
+                            .join(''),
+                );
+                return;
+            }
+        }
         if (panel.kind === 'verse') {
             // The reference belongs with the text — a bare verse pasted into a
             // sermon note with no "(KJV) Exodus 6:23" attached is not much use.
@@ -219,7 +293,7 @@ function RenderDetailPanelComp({
             );
             return;
         }
-        if (record === null) {
+        if (record === null || managers === null) {
             return;
         }
         // The Verses section resolves its titles only once the user expands it,
@@ -291,14 +365,11 @@ function RenderDetailPanelComp({
                         />
                     )}
                     {panel.kind === 'verse' && verseData !== null ? (
-                        <span
-                            className={
-                                'flex-shrink-0' +
-                                ' location-name-lookup__kjv-name'
-                            }
-                        >
-                            ({verseData.bibleKey})
-                        </span>
+                        <RenderVerseBibleKeyButtonComp
+                            bibleKey={verseData.bibleKey}
+                            shortVerse={panel.target}
+                            title={title}
+                        />
                     ) : null}
                     <span className="text-truncate">{title}</span>
                     {kjvName === '' ? null : (
@@ -314,6 +385,7 @@ function RenderDetailPanelComp({
                     {panel.kind === 'verse' ? (
                         <RenderOpenInLookupButtonComp
                             shortVerse={panel.target}
+                            bibleKey={panel.bibleKey}
                         />
                     ) : null}
                 </span>
@@ -378,6 +450,7 @@ function RenderDetailPanelComp({
                 {panel.kind === 'verse' ? (
                     <RenderVerseDetailComp
                         shortVerse={panel.target}
+                        bibleKey={panel.bibleKey}
                         onResolved={setVerseData}
                     />
                 ) : null}
@@ -386,7 +459,7 @@ function RenderDetailPanelComp({
     );
 }
 
-function LoadDetailPanelComp({
+function LoadRecordDetailPanelComp({
     panel,
     index,
 }: Readonly<{ panel: DetailPanelType; index: number }>) {
@@ -427,6 +500,26 @@ function LoadDetailPanelComp({
             />
         </LookupManagersContext>
     );
+}
+
+function LoadDetailPanelComp({
+    panel,
+    index,
+}: Readonly<{ panel: DetailPanelType; index: number }>) {
+    // A verse panel reads one verse out of a bible and nothing out of the
+    // names and places dataset, so it must not make the window load that
+    // ~34MB: a cross reference or a found verse opens one with no lookup
+    // panel already holding the data.
+    if (panel.kind === 'verse') {
+        return (
+            <RenderDetailPanelComp
+                index={index}
+                managers={null}
+                panel={panel}
+            />
+        );
+    }
+    return <LoadRecordDetailPanelComp index={index} panel={panel} />;
 }
 
 export default function LocationNameDetailPanelsComp() {

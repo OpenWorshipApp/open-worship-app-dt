@@ -22,6 +22,7 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type BibleFindController from './BibleFindController';
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
 import { setSetting } from '../helper/settingHelpers';
+import { openBibleItemDetailPanel } from '../location-name-lookup/detailPanelHelpers';
 
 export const BIBLE_SEARCH_SETTING_NAME = 'bible-search-tab';
 
@@ -605,6 +606,15 @@ export function openInBibleLookup(
     }
 }
 
+/**
+ * What pressing a found verse or a cross reference does: the verse opens in a
+ * floating detail panel, in the bible it was listed in, and the passage being
+ * read stays as it is.
+ */
+export function openFoundBibleItem(bibleItem: BibleItem) {
+    openBibleItemDetailPanel(bibleItem).catch(handleError);
+}
+
 export function openContextMenu(
     event: any,
     {
@@ -619,6 +629,15 @@ export function openContextMenu(
         {
             childBefore: genContextMenuItemIcon('box-arrow-up-right'),
             menuElement: tran('Open'),
+            onSelect: () => {
+                openFoundBibleItem(bibleItem);
+            },
+        },
+        // What a press on the row did before it opened the detail panel; the
+        // only other way to put the verse beside the passage is to drag it.
+        {
+            childBefore: genContextMenuItemIcon('layout-split'),
+            menuElement: tran('Open beside the current verse'),
             onSelect: () => {
                 openInBibleLookup(event, viewController, bibleItem, true);
             },

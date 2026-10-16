@@ -8,6 +8,7 @@ import { subscribeSlideAutoPlayState } from '../slide-auto-play/slideAutoPlayRul
 import {
     getSetting,
     removeSetting,
+    setSetting,
     useStateSettingString,
 } from '../helper/settingHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -117,6 +118,37 @@ export function readSessions(target: string): MediaSessionType[] {
     }
 }
 
+// The mounted strips of each target in this window, so a session added from
+// outside one -- a lyric's `Long Text Show` -- is drawn by the strip already
+// up. An entry leaves when its strip unmounts, so this holds only what is on
+// screen.
+const sessionRefresherMap = new Map<string, Set<() => void>>();
+
+/**
+ * A new session's id. Ids are never reused: every setting a removed session
+ * wrote is keyed by its id, and a recycled one would inherit them.
+ */
+export function genMediaSessionId() {
+    return `s${Date.now().toString(36)}`;
+}
+
+/**
+ * Adds a session to a strip and makes it the active one, whether the strip is
+ * mounted or not: a mounted one is told, any other reads it when it mounts.
+ * Whatever the session's own settings are to hold is written BEFORE this: the
+ * panel switching to it reads them on the spot.
+ */
+export function addMediaSession(target: string, session: MediaSessionType) {
+    setSetting(
+        toListSettingName(target),
+        JSON.stringify([...readSessions(target), session]),
+    );
+    setSetting(toActiveSettingName(target), session.id);
+    for (const refresh of sessionRefresherMap.get(target) ?? []) {
+        refresh();
+    }
+}
+
 export function useMediaSessions(target: string) {
     const [rawList, setRawList] = useStateSettingString(
         toListSettingName(target),
@@ -126,6 +158,29 @@ export function useMediaSessions(target: string) {
         toActiveSettingName(target),
         DEFAULT_SESSION_ID,
     );
+    useAppEffect(() => {
+        // Read back, not written: `addMediaSession` already wrote both.
+        const refresh = () => {
+            setRawList(getSetting(toListSettingName(target)) ?? '', true);
+            setActiveId(
+                getSetting(toActiveSettingName(target)) ?? DEFAULT_SESSION_ID,
+                true,
+            );
+        };
+        let refresherSet = sessionRefresherMap.get(target);
+        if (refresherSet === undefined) {
+            refresherSet = new Set();
+            sessionRefresherMap.set(target, refresherSet);
+        }
+        const currentRefresherSet = refresherSet;
+        currentRefresherSet.add(refresh);
+        return () => {
+            currentRefresherSet.delete(refresh);
+            if (currentRefresherSet.size === 0) {
+                sessionRefresherMap.delete(target);
+            }
+        };
+    }, [target]);
     const sessions = readSessions(target);
     const activeSession =
         sessions.find((session) => {
@@ -141,14 +196,10 @@ export function useMediaSessions(target: string) {
         setActiveId,
         rawList,
         addSession: () => {
-            // Ids are never reused: every setting a removed session wrote is
-            // keyed by its id, and a recycled one would inherit them.
-            const id = `s${Date.now().toString(36)}`;
-            writeList([
-                ...sessions,
-                { id, name: `${tran('Session')} ${sessions.length + 1}` },
-            ]);
-            setActiveId(id);
+            addMediaSession(target, {
+                id: genMediaSessionId(),
+                name: `${tran('Session')} ${sessions.length + 1}`,
+            });
         },
         renameSession: (sessionId: string, name: string) => {
             writeList(

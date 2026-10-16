@@ -306,14 +306,25 @@ describe('presenting-flow archives', () => {
             backgroundMetas: [],
             dataDirPath: '/old',
         };
+        // The same passage with its keys in another order is still the same.
         const existing = {
             id: 9,
             bibleKey: 'KJV',
-            toJson: () => ({ target: { book: 1 } }),
+            target: {
+                bookKey: 'JHN',
+                chapter: 3,
+                verseStart: 16,
+                verseEnd: 18,
+            },
         };
         state.bibleItem = {
             bibleKey: 'KJV',
-            toJson: () => ({ target: { book: 1 } }),
+            target: {
+                verseEnd: 18,
+                verseStart: 16,
+                chapter: 3,
+                bookKey: 'JHN',
+            },
         };
         state.defaultBible = {
             items: [existing],
@@ -400,7 +411,7 @@ describe('presenting-flow archives', () => {
         };
         state.bibleItem = {
             bibleKey: 'KJV',
-            toJson: () => ({ target: { verse: 1 } }),
+            target: { bookKey: 'JHN', chapter: 1, verseStart: 1, verseEnd: 2 },
         };
         state.defaultBible = null;
         await expect(importPresentingFlowArchive('/x')).rejects.toThrow(
@@ -420,6 +431,50 @@ describe('presenting-flow archives', () => {
         await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
         expect(state.defaultBible.addBibleItem).toHaveBeenCalled();
         expect(state.readJson.items[0].data.id).toBe(4);
+    });
+
+    test('reuses only the same cross-chapter passage in the Default list', async () => {
+        const cross = {
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+            chapterEnd: 3,
+        };
+        state.readJson = {
+            items: [{ type: DragTypeEnum.BIBLE_ITEM, data: {} }],
+        };
+        state.bibleItem = { bibleKey: 'KJV', target: { ...cross } };
+        state.defaultBible = {
+            items: [
+                // JHN 1:2-4 and JHN 1:2-2:4 are other passages.
+                {
+                    id: 1,
+                    bibleKey: 'KJV',
+                    target: { ...cross, chapterEnd: undefined },
+                },
+                { id: 2, bibleKey: 'KJV', target: { ...cross, chapterEnd: 2 } },
+                { id: 3, bibleKey: 'LSG', target: { ...cross } },
+                { id: 4, bibleKey: 'KJV', target: { ...cross } },
+            ],
+            filePath: '/default',
+            addBibleItem: vi.fn(),
+            save: vi.fn(async () => true),
+            maxItemId: 9,
+        };
+        await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
+        expect(state.readJson.items[0].data.id).toBe(4);
+        expect(state.defaultBible.addBibleItem).not.toHaveBeenCalled();
+
+        state.readJson = {
+            items: [{ type: DragTypeEnum.BIBLE_ITEM, data: {} }],
+        };
+        state.defaultBible.items = state.defaultBible.items.slice(0, 3);
+        await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
+        expect(state.defaultBible.addBibleItem).toHaveBeenCalledWith(
+            state.bibleItem,
+        );
+        expect(state.readJson.items[0].data.id).toBe(9);
     });
 
     test('selects, recognizes, downloads, and drops archives through the shared importer', async () => {

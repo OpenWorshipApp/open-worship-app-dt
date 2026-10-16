@@ -2,10 +2,10 @@
 id: W-13
 title: "Cross references"
 section: "Bible study"
-verify: [RD-10, RD-49, RD-50, RD-51, RD-52]
+verify: [RD-10, RD-49, RD-50, RD-51, RD-52, RD-124]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-13 — Cross references
 
@@ -31,9 +31,14 @@ workflowsVersion: "2026-10-14"
    verse under it, cut at a word with a single `…` when there is more.
    Themes set in columns and reflow to one column when the panel is narrow.
 5. Point at any verse and the line beside it lights up, along with its reference: click to
-   open it beside the verse you are on, drag it into a list, or right-click it for the
-   usual verse menu. The keyboard reaches the same rows — **Tab** to one and press
-   **Enter**.
+   read it in a small floating panel, in the version the references are quoting — the
+   verse you are on stays as it is. Drag it into a list, or right-click it (or press its
+   **⋮**) for the usual verse menu: **[en:tran:Open]** does what a click does, and
+   **[en:tran:Open beside the current verse]** opens it as a passage beside the verse you
+   are on. The keyboard reaches the same rows — **Tab** to one and press **Enter**.
+   The version at the start of the panel's title — **(KJV)** — is a button: click it and
+   choose another Bible, and the same verse opens in a second panel of its own, so the two
+   can be read side by side. Close a panel with its **×**.
 6. The **`bi-cpu`** button on the section title says a model wrote these; click it for the
    page explaining what that costs you in accuracy. On a translation whose theme headings
    were machine-translated, each heading carries its own **`bi-translate`** button saying
@@ -45,7 +50,7 @@ workflowsVersion: "2026-10-14"
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52`
+`RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52` · `RD-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

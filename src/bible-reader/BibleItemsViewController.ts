@@ -26,6 +26,7 @@ import {
     setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { getTargetChapterEnd } from '../helper/bible-helpers/bibleTargetHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
@@ -1052,6 +1053,9 @@ export function compareBibleItemsInBibleOrder(
         toBookIndex(target1.bookKey) - toBookIndex(target2.bookKey) ||
         target1.chapter - target2.chapter ||
         target1.verseStart - target2.verseStart ||
+        // `verseEnd` is in the end chapter: John 1:2-5 comes before
+        // John 1:2-2:3, which comes before John 1:2-3:1.
+        getTargetChapterEnd(target1) - getTargetChapterEnd(target2) ||
         target1.verseEnd - target2.verseEnd ||
         bibleItem1.bibleKey.localeCompare(bibleItem2.bibleKey)
     );

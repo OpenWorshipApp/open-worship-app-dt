@@ -85,11 +85,25 @@ $resize-corner-size: 16px;
     var(--bs-border-color-translucent, rgb(108 117 125 / 40%));
 }
 
+// A title longer than the header scrolls sideways (the wheel does it too,
+// `applyHorizontalWheelScroll`) instead of being cut off: a host's title can
+// carry buttons at its END -- the Lookup Detail panel's "open in lookup" -- and
+// a clipped or ellipsized title left them with no way to be reached.
 .floating-widget__title {
-  overflow: hidden;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   font-weight: 600;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// The header is 40px; the app-wide 7px bar would crowd the title text -- the
+// same slim bar `.app-scroll-x-buttons` uses. Scoped under `.app` both to
+// outrank `.app *::-webkit-scrollbar` (an equal-specificity tie would be
+// decided by CSS chunk order) and because only there is the thumb styled: a
+// bare size anywhere else switches on custom drawing with no thumb to draw.
+.app .floating-widget__title::-webkit-scrollbar {
+  height: 4px;
 }
 
 // Inside the header the actions blend in instead of floating as an overlay pill.

@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-03 — Present a slide from a document
 
@@ -90,5 +90,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

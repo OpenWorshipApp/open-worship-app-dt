@@ -30,7 +30,9 @@ import {
     FOREGROUND_WIDGET_LIST,
     genForegroundPanelMenuItems,
     getForegroundWidgetShowingScreenIds,
+    registerForegroundPanelOpener,
     toForegroundPanelPersistKey,
+    toOpenedPanelKeys,
     toOpenPanelKeys,
     toToggledPanelKeys,
 } from '../presenter-foreground/foregroundWidgetHelpers';
@@ -61,8 +63,13 @@ const LazyPresenterBiblePreviewerRenderComp = lazy(() => {
  */
 function ForegroundWidgetPanelComp({
     widget,
+    raiseToken,
     onClose,
-}: Readonly<{ widget: ForegroundWidgetType; onClose: () => void }>) {
+}: Readonly<{
+    widget: ForegroundWidgetType;
+    raiseToken: number;
+    onClose: () => void;
+}>) {
     useScreenForegroundManagerEvents(['update']);
     // Long Text Show is drawn by the long-text layer, so its mark follows
     // that layer's changes, which the foreground manager never hears of.
@@ -82,6 +89,7 @@ function ForegroundWidgetPanelComp({
             // Background panel. Naming the panel is what lets a find be aimed
             // at one of them: `Video Show > snow.mp4` rather than both.
             widgetName={widget.labelKey}
+            raiseToken={raiseToken}
             onClose={onClose}
             // The transition of the WHOLE component -- every session at once;
             // a session's own row in its Properties still wins over it.
@@ -207,6 +215,21 @@ function ForegroundFloatingComp() {
             return toToggledPanelKeys(prev, key);
         });
     };
+    // Bumped per panel when it is opened from outside the launcher, so one
+    // that is open already comes up from behind the others.
+    const [raiseTokenMap, setRaiseTokenMap] = useState<{
+        [key: string]: number;
+    }>({});
+    useAppEffect(() => {
+        return registerForegroundPanelOpener((key) => {
+            setOpenKeysRaw((prev) => {
+                return toOpenedPanelKeys(prev, key);
+            });
+            setRaiseTokenMap((prev) => {
+                return { ...prev, [key]: (prev[key] ?? 0) + 1 };
+            });
+        });
+    }, []);
     return (
         <>
             <TabRenderComp<'f'>
@@ -232,6 +255,7 @@ function ForegroundFloatingComp() {
                     <ForegroundWidgetPanelComp
                         key={widget.key}
                         widget={widget}
+                        raiseToken={raiseTokenMap[widget.key] ?? 0}
                         onClose={() => {
                             handleToggling(widget.key);
                         }}

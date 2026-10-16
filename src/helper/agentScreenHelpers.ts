@@ -57,6 +57,8 @@ import {
     describeCountdown,
     describeStopwatch,
 } from '../_screen/managers/timerStateHelpers';
+import { toVerseFullKeyFormat } from './bible-helpers/bibleKeyFormatHelpers';
+import { getTargetChapterEnd } from './bible-helpers/bibleTargetHelpers';
 
 export type AgentScreenBackgroundSummaryType = {
     kind: string;
@@ -257,9 +259,14 @@ export function toBibleSummary(
     let reference = first?.title ?? '';
     if (reference.length === 0 && bibleItem?.target) {
         const { bookKey, chapter, verseStart, verseEnd } = bibleItem.target;
-        reference =
-            `${bookKey} ${chapter}:${verseStart}` +
-            (verseEnd !== verseStart ? `-${verseEnd}` : '');
+        // `JHN 1:2-3:4` when the passage runs on into a later chapter.
+        reference = toVerseFullKeyFormat(
+            bookKey,
+            chapter,
+            verseStart,
+            verseEnd,
+            getTargetChapterEnd(bibleItem.target),
+        );
     }
     const summary: AgentScreenBibleSummaryType = { reference, version };
     if (renderedList.length > 1) {

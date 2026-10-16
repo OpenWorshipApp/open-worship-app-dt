@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
     selectSlide: null as null | (() => void),
     bibleUpdate: null as null | (() => void),
     foregroundOnScreen: false,
+    panelOpeners: new Set<(key: string) => void>(),
 }));
 
 vi.mock('../event/PreviewingEventListener', () => ({
@@ -84,16 +85,18 @@ vi.mock('../app-modal/FloatingWidgetComp', () => ({
         title,
         children,
         extraActionButtons,
+        raiseToken,
         onClose,
     }: {
         title: ReactNode;
         children: ReactNode;
         extraActionButtons: ReactNode;
+        raiseToken?: number;
         onClose: () => void;
     }) =>
         createElement(
             'section',
-            {},
+            { 'data-raise-token': raiseToken },
             title,
             extraActionButtons,
             children,
@@ -144,6 +147,14 @@ vi.mock('../presenter-foreground/foregroundWidgetHelpers', () => ({
     ) => [{ menuElement: 'Message Show', onSelect: () => toggle('message') }],
     getForegroundWidgetShowingScreenIds: () =>
         h.foregroundOnScreen ? ['screen-1'] : [],
+    registerForegroundPanelOpener: (opener: (key: string) => void) => {
+        h.panelOpeners.add(opener);
+        return () => {
+            h.panelOpeners.delete(opener);
+        };
+    },
+    toOpenedPanelKeys: (raw: string, key: string) =>
+        raw.split(',').includes(key) ? raw : key,
     toForegroundPanelPersistKey: (key: string) => `panel:${key}`,
     toOpenPanelKeys: (raw: string) => (raw ? raw.split(',') : []),
     toToggledPanelKeys: (raw: string, key: string) =>
@@ -290,6 +301,24 @@ describe('Presenter tabs and foreground panels', () => {
         );
         expect(h.settings.panels).toBe('');
         expect(container.textContent).not.toContain('Message controls');
+    });
+
+    it('opens a panel asked for from elsewhere, and raises one already open', async () => {
+        await renderPresenter();
+        expect(h.panelOpeners.size).toBe(1);
+        const [openPanel] = h.panelOpeners;
+        await act(async () => openPanel('message'));
+        expect(h.settings.panels).toBe('message');
+        expect(container.textContent).toContain('Message controls');
+        const panel = container.querySelector<HTMLElement>('section')!;
+        expect(panel.dataset.raiseToken).toBe('1');
+        // Open already: it stays open and comes to the front again.
+        await act(async () => openPanel('message'));
+        expect(h.settings.panels).toBe('message');
+        expect(panel.dataset.raiseToken).toBe('2');
+        await act(async () => root.unmount());
+        expect(h.panelOpeners.size).toBe(0);
+        root = createRoot(container);
     });
 
     it('asks the screen checker for each tab', async () => {

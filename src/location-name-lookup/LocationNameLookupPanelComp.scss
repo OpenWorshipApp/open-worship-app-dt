@@ -82,6 +82,24 @@
   opacity: 0.75;
 }
 
+// A verse panel's `(KJV)` is a button that opens the verse in another bible:
+// it keeps the dimmed look of the bible key it always was, and says it can be
+// pressed only under the pointer or the keyboard.
+.location-name-lookup__bible-key-button {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    text-decoration: underline dotted;
+  }
+}
+
 // A record's detail panel. It lives in its own floating widget, so only the
 // body is styled here — the chrome comes from `FloatingWidgetComp`.
 .location-name-lookup-detail-widget .floating-widget__content {

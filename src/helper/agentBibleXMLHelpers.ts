@@ -48,6 +48,12 @@ import {
     saveJsonDataToXMLfile,
 } from '../setting/bible-setting/bibleXMLHelpers';
 import {
+    checkIsBibleImportBy,
+    countBibleContents,
+    genBibleImportNote,
+    type BibleImportOriginType,
+} from '../setting/bible-setting/bibleImportNoteHelpers';
+import {
     genNoBackupReason,
     genUndoField,
     NoBackupError,
@@ -75,6 +81,9 @@ type BibleXMLRequestType = {
     numbers?: unknown;
     bookNames?: unknown;
     lists?: unknown;
+    // Where the draft came from, from the server's draft record: written
+    // into the installed Bible's `note`.
+    origin?: unknown;
 };
 
 function fail(reason: string, problem?: string): AgentResultType {
@@ -170,18 +179,8 @@ function toSampleText(data: BibleXMLJsonType) {
 }
 
 function countBible(data: BibleXMLJsonType) {
-    let chapters = 0;
-    let verses = 0;
-    for (const book of Object.values(data.books)) {
-        for (const chapter of Object.values(book)) {
-            chapters++;
-            verses += Object.keys(chapter).length;
-        }
-    }
     return {
-        books: Object.keys(data.books).length,
-        chapters,
-        verses,
+        ...countBibleContents(data.books),
         missingBooks: BIBLE_BOOK_KEYS.filter((key) => {
             return !Object.hasOwn(data.books, key);
         }),
@@ -340,7 +339,9 @@ async function handleAnalyze(request: BibleXMLRequestType) {
     // Read ONCE: the head for what the root tag says, the whole for the app's
     // own reader -- a second read of a 15 MB file is a second 15 MB.
     const xmlText = await readDraftText(request.xmlPath);
-    const xmlHead = xmlText?.slice(0, 4096) ?? '';
+    // The head the app's own scans read: a Bible exported from this app
+    // carries a `note` on its root tag, and the tag must fit whole.
+    const xmlHead = xmlText?.slice(0, 8192) ?? '';
     const data = await parseDraft(xmlText, sourceName);
     if (data === null) {
         return fail(
@@ -450,6 +451,80 @@ function readBookNameChanges(value: unknown) {
     return changes;
 }
 
+function toOptionalText(value: unknown) {
+    return typeof value === 'string' ? value : null;
+}
+
+/**
+ * The server's record of where a draft came from. It is the server's own
+ * (`writeBibleDraftMeta`), but this half trusts nothing it is handed: unknown
+ * fields are dropped, and the note builder keeps only http(s) links.
+ */
+function readOrigin(value: unknown): BibleImportOriginType {
+    const origin = (
+        value !== null && typeof value === 'object' ? value : {}
+    ) as Record<string, unknown>;
+    const bookNames = (
+        origin.bookNames !== null && typeof origin.bookNames === 'object'
+            ? origin.bookNames
+            : {}
+    ) as Record<string, unknown>;
+    const label = toOptionalText(bookNames.label);
+    return {
+        by: checkIsBibleImportBy(origin.by) ? origin.by : 'agent',
+        url: toOptionalText(origin.url),
+        downloadUrl: toOptionalText(origin.downloadUrl),
+        finalUrl: toOptionalText(origin.finalUrl),
+        fileName: toOptionalText(origin.fileName),
+        bytes: typeof origin.bytes === 'number' ? origin.bytes : null,
+        bookNames:
+            label === null
+                ? null
+                : { label, source: toOptionalText(bookNames.source) },
+    };
+}
+
+/**
+ * The draft's own record beside it (`<id>.json`, `writeBibleDraftMeta`),
+ * which says where the file came from since the download. Read here as well
+ * as handed over in `origin`, so the link reaches the note whatever the
+ * server sends: a dev app's MCP host keeps the modules it first loaded until
+ * the app relaunches, and an older one sent no `origin` at all.
+ */
+async function readDraftRecord(xmlPath: string) {
+    const recordPath = xmlPath.replace(/\.xml$/, '.json');
+    try {
+        if (!(await fsCheckFileExist(recordPath))) {
+            return null;
+        }
+        const record = JSON.parse(await fsReadFile(recordPath));
+        return record !== null && typeof record === 'object'
+            ? (record as Record<string, unknown>)
+            : null;
+    } catch (_error) {
+        return null;
+    }
+}
+
+function fillOriginFromRecord(
+    origin: BibleImportOriginType,
+    record: Record<string, unknown> | null,
+): BibleImportOriginType {
+    if (record === null) {
+        return origin;
+    }
+    return {
+        ...origin,
+        url: origin.url ?? toOptionalText(record.url),
+        downloadUrl: origin.downloadUrl ?? toOptionalText(record.source),
+        finalUrl: origin.finalUrl ?? toOptionalText(record.finalUrl),
+        fileName: origin.fileName ?? toOptionalText(record.fileName),
+        bytes:
+            origin.bytes ??
+            (typeof record.bytes === 'number' ? record.bytes : null),
+    };
+}
+
 function checkKeyReason(key: string, takenKeys: string[]) {
     if (key === '') {
         return 'A Bible key is needed: a short name such as KJV.';
@@ -517,6 +592,20 @@ async function handleImport(request: BibleXMLRequestType) {
             );
         }
         const title = toText(request.title).slice(0, 200) || data.info.title;
+        // Where it came from, written into the Bible itself: the Settings
+        // list shows its link, and `info` answers "where is this one from?".
+        const origin = fillOriginFromRecord(
+            readOrigin(request.origin),
+            await readDraftRecord(xmlPath),
+        );
+        const note = genBibleImportNote({
+            origin: { ...origin, fileName: origin.fileName ?? sourceName },
+            fileInfo: { key: data.info.key, title: data.info.title },
+            chosen: { key, title, locale, digits: Object.values(numbersMap) },
+            counts: countBibleContents(data.books),
+            appVersion: appProvider.appInfo?.version ?? null,
+            previousNote: data.info.note,
+        });
         const edited: BibleXMLJsonType = {
             ...data,
             info: {
@@ -526,6 +615,7 @@ async function handleImport(request: BibleXMLRequestType) {
                 locale,
                 numbersMap,
                 keyBookMap: keyBookMap ?? data.info.keyBookMap,
+                note,
             },
         };
         try {
@@ -630,6 +720,9 @@ async function handleInfo(request: BibleXMLRequestType) {
             }),
         ),
         file: appProvider.pathUtils.basename(installed.filePath),
+        // When and where it was imported from, if it was: the link to send
+        // a person back to, or to report a wrong verse to.
+        ...(info.note ? { note: info.note } : {}),
     };
 }
 

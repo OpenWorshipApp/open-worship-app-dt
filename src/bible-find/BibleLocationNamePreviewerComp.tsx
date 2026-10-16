@@ -9,6 +9,11 @@ import {
 import { useAppEffect } from '../helper/appHooks';
 import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
+import {
+    BIBLE_SHOWN_CHAPTER_COUNT,
+    checkIsCrossChapterTarget,
+    toTargetChapterSliceList,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { DEFAULT_LANG_CODE, tran } from '../lang/langHelpers';
 import { toLookupVerseBibleKey } from '../location-name-lookup/bibleVerseHelpers';
@@ -21,6 +26,7 @@ import type { VerseRecordType } from '../location-name-lookup/verseRecordListHel
 import {
     collectVerseRecords,
     toVerseListLabel,
+    toVerseRecordChapterTarget,
     useLookupRecordLabels,
 } from '../location-name-lookup/verseRecordListHelpers';
 import { useLookupTextIndex } from '../location-name-lookup/verseTextIndexHelpers';
@@ -37,6 +43,9 @@ import LoadingComp from '../others/LoadingComp';
  * underlines in the reader, which needs the KJV wording of the chapter. That is
  * ONE cached chapter read per pane, never one per verse: targets are KJV-numbered
  * in this app's model, so turning a range into verse keys is pure arithmetic.
+ * A passage crossing chapters is one section per chapter, each its own chapter
+ * read, and only the first `BIBLE_SHOWN_CHAPTER_COUNT` of them: the list is a
+ * look at the reading, not an index of the book.
  *
  * The ~35MB lookup dataset is touched only if the user clicks a row, which opens
  * the existing floating detail panel.
@@ -175,48 +184,80 @@ export default function BibleLocationNamePreviewerComp() {
                     continue;
                 }
                 seenTargetKeys.add(targetKey);
-                // The KJV wording, whatever bible this pane shows: the dataset
-                // was extracted from the KJV, and targets carry KJV numbering.
-                // One cached chapter read per pane, not one per verse.
-                const kjvVerseMap = await getVerses(
-                    BIBLE_KJV_KEY,
-                    target.bookKey,
-                    target.chapter,
-                );
-                if (isCancelled) {
-                    return;
-                }
-                const { names, locations } = collectVerseRecords(
-                    index,
-                    recordLabels,
-                    target,
-                    kjvVerseMap,
-                );
+                const isCrossChapter = checkIsCrossChapterTarget(target);
                 // Which bible NAMES the passage — KJV under an English lookup
                 // language, otherwise the pane's OWN bible, so the heading reads
                 // in the same script as the rows under it. Per pane: the
                 // reader's selected bible used to title every section, so a
                 // ពគប pane's reading was headed `(NIV) Genesis 3:20`.
                 const groupBibleKey = toLookupVerseBibleKey(bibleItem.bibleKey);
-                // The TITLE only. The chapter read above stays KJV whatever
-                // this says — the scan needs the KJV's wording — so this
-                // renames the passage without changing what is found in it.
-                const title = await bibleRenderHelper.toTitle(
-                    groupBibleKey,
+                // One section per chapter: a one-chapter passage is one, itself.
+                const sliceList = toTargetChapterSliceList(
                     target,
+                    0,
+                    BIBLE_SHOWN_CHAPTER_COUNT,
                 );
-                newGroupList.push({
-                    // The target, not the pane: panes come and go around a
-                    // passage that stays put, and the key is now unique by
-                    // construction.
-                    key: targetKey,
-                    // `(KJV) Genesis 29:1-35`, the way the Bibles list names
-                    // a reading, so a section can be matched to its pane.
-                    title: `(${groupBibleKey}) ${title}`,
-                    chapter: target.chapter,
-                    names,
-                    locations,
-                });
+                for (const slice of sliceList) {
+                    // The KJV wording, whatever bible this pane shows: the
+                    // dataset was extracted from the KJV, and targets carry KJV
+                    // numbering. One cached chapter read per chapter shown, not
+                    // one per verse.
+                    const kjvVerseMap = await getVerses(
+                        BIBLE_KJV_KEY,
+                        target.bookKey,
+                        slice.chapter,
+                    );
+                    // With no KJV installed, a chapter the passage runs on
+                    // through is counted in the pane's own bible instead --
+                    // the chapter that pane has just read to show it.
+                    const countedVerseMap =
+                        kjvVerseMap === null && slice.verseEnd === null
+                            ? await getVerses(
+                                  bibleItem.bibleKey,
+                                  target.bookKey,
+                                  slice.chapter,
+                              )
+                            : kjvVerseMap;
+                    if (isCancelled) {
+                        return;
+                    }
+                    // The chapter's part of the passage; for a one-chapter
+                    // passage, the target as it is.
+                    const chapterTarget = toVerseRecordChapterTarget(
+                        target.bookKey,
+                        slice,
+                        countedVerseMap,
+                    );
+                    const { names, locations } = collectVerseRecords(
+                        index,
+                        recordLabels,
+                        chapterTarget,
+                        kjvVerseMap,
+                    );
+                    // The TITLE only. The chapter read above stays KJV whatever
+                    // this says — the scan needs the KJV's wording — so this
+                    // renames the passage without changing what is found in it.
+                    const title = await bibleRenderHelper.toTitle(
+                        groupBibleKey,
+                        chapterTarget,
+                    );
+                    newGroupList.push({
+                        // The target, not the pane: panes come and go around a
+                        // passage that stays put, and the key is now unique by
+                        // construction -- per chapter for a passage crossing
+                        // chapters.
+                        key: isCrossChapter
+                            ? `${targetKey}|${slice.chapter}`
+                            : targetKey,
+                        // `(KJV) Genesis 29:1-35`, the way the Bibles list
+                        // names a reading, so a section can be matched to its
+                        // pane.
+                        title: `(${groupBibleKey}) ${title}`,
+                        chapter: slice.chapter,
+                        names,
+                        locations,
+                    });
+                }
             }
             setGroupList(newGroupList);
         }, isImmediate);

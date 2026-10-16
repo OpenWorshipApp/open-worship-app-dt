@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-61, KB-62, KB-63, KB-64, KB-65]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-49 — See every keyboard shortcut for this page (Help → Keyboard Shortcuts)
 
@@ -28,7 +28,8 @@ learn the keys of the page you are on.
 3. Each page lists its own keys. The Presenter starts with
    **[en:tran:Screens]** (`F5` shows or hides the selected screens, `F6`–`F10` clear them,
    `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
-   **[en:tran:Presenting Flow]** and the mini screen's
+   **[en:tran:Presenting Flow]**, **[en:tran:Long Text Show]** and the mini
+   screen's
    **[en:tran:Drawing]** and **[en:tran:Focusing]** keys. The Bible Reader
    lists the lookup and split keys, and the Slide Editor the canvas keys.
    Every page ends with **[en:tran:Every window]**,
@@ -62,5 +63,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-61` · `KB-62` · `KB-63` · `KB-64` · `KB-65`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

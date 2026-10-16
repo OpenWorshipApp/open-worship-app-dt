@@ -83,8 +83,13 @@ export type ForegroundSessionsPropsType = {
     ) => void;
 };
 
+/** The sessions strip of a foreground component (see `widgetKey`). */
+export function toForegroundSessionsTarget(widgetKey: string) {
+    return `foreground-${widgetKey}`;
+}
+
 export function useForegroundSessions(props: ForegroundSessionsPropsType) {
-    const target = `foreground-${props.widgetKey}`;
+    const target = toForegroundSessionsTarget(props.widgetKey);
     const {
         sessions,
         activeId,

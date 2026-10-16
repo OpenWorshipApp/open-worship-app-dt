@@ -97,6 +97,13 @@ vi.mock('../verseHighlightPainter', () => ({
 vi.mock('../verseCommentHoverHelpers', () => ({
     useVerseCommentHover: () => {},
 }));
+vi.mock('./RenderShowNextChapterButtonComp', () => ({
+    default: ({ onClick }: { onClick: () => void }) => (
+        <button type="button" className="more" onClick={onClick}>
+            ...
+        </button>
+    ),
+}));
 
 import BibleViewTextComp, { toPassageViewKey } from './BibleViewTextComp';
 
@@ -120,22 +127,19 @@ async function flush() {
 
 describe('toPassageViewKey', () => {
     test('the same passage in a new object is the same key', () => {
-        expect(toPassageViewKey(genItem('GEN', 4), undefined)).toBe(
-            toPassageViewKey(genItem('GEN', 4), undefined),
+        expect(toPassageViewKey(genItem('GEN', 4))).toBe(
+            toPassageViewKey(genItem('GEN', 4)),
         );
     });
 
-    test('another range, extra bible or extra passage is another key', () => {
-        const key = toPassageViewKey(genItem('GEN', 4), undefined);
-        expect(toPassageViewKey(genItem('GEN', 4, 8), undefined)).not.toBe(key);
+    test('another range, end chapter or extra bible is another key', () => {
+        const key = toPassageViewKey(genItem('GEN', 4));
+        expect(toPassageViewKey(genItem('GEN', 4, 8))).not.toBe(key);
+        const crossItem = genItem('GEN', 4);
+        crossItem.target.chapterEnd = 5;
+        expect(toPassageViewKey(crossItem)).not.toBe(key);
         expect(
-            toPassageViewKey(
-                { ...genItem('GEN', 4), extraBibleKeys: ['NIV'] },
-                undefined,
-            ),
-        ).not.toBe(key);
-        expect(
-            toPassageViewKey(genItem('GEN', 4), [genItem('GEN', 5)]),
+            toPassageViewKey({ ...genItem('GEN', 4), extraBibleKeys: ['NIV'] }),
         ).not.toBe(key);
     });
 });
@@ -160,7 +164,13 @@ describe('BibleViewTextComp', () => {
         );
         h.verseListMap.set(
             'GEN',
-            Promise.resolve([{ localeVerse: '2', text: 'GEN text' }]),
+            Promise.resolve([
+                {
+                    localeVerse: '2',
+                    text: 'GEN text',
+                    kjvBibleVersesKey: 'GEN 4:2',
+                },
+            ]),
         );
         h.verseCountMap.set('GEN', Promise.resolve(26));
         host = document.createElement('div');
@@ -182,6 +192,7 @@ describe('BibleViewTextComp', () => {
             rests: [...host.querySelectorAll('.rest')].map((element) => {
                 return element.textContent;
             }),
+            isMore: host.querySelector('.more') !== null,
         };
     }
 
@@ -195,6 +206,7 @@ describe('BibleViewTextComp', () => {
         expect(read()).toEqual({
             verses: ['GEN text'],
             rests: ['1-1', '8-26'],
+            isMore: false,
         });
 
         const verseList = h.genDeferred<any>();
@@ -209,13 +221,21 @@ describe('BibleViewTextComp', () => {
         expect(read()).toEqual({
             verses: ['GEN text'],
             rests: ['1-1', '8-26'],
+            isMore: false,
         });
 
-        verseList.resolve([{ localeVerse: '16', text: 'JHN text' }]);
+        verseList.resolve([
+            {
+                localeVerse: '16',
+                text: 'JHN text',
+                kjvBibleVersesKey: 'JHN 3:16',
+            },
+        ]);
         await flush();
         expect(read()).toEqual({
             verses: ['JHN text'],
             rests: ['1-1', '8-36'],
+            isMore: false,
         });
     });
 
@@ -231,5 +251,67 @@ describe('BibleViewTextComp', () => {
         await flush();
         expect(h.toVerseTextListMock.mock.calls.length).toBe(readCount);
         expect(read().verses).toEqual(['GEN text']);
+    });
+
+    // GEN 4:2 to 9:7: six chapters, so three are read, then one per `...`;
+    // the numbers after the passage belong to its LAST chapter, and show
+    // only once that chapter does.
+    test('a passage over many chapters is read three chapters deep, then one per press', async () => {
+        h.toVerseTextListMock.mockImplementation(
+            (_bibleKey: string, _target: any, _isSkip: boolean, range: any) => {
+                return Promise.resolve(
+                    Array.from({ length: range.count }, (_, i) => {
+                        const chapter = 4 + range.start + i;
+                        return {
+                            localeVerse: '1',
+                            text: `GEN ${chapter}`,
+                            kjvBibleVersesKey: `GEN ${chapter}:1`,
+                        };
+                    }),
+                );
+            },
+        );
+        h.verseCountMap.set('GEN', Promise.resolve(9));
+        const crossItem = genItem('GEN', 4);
+        crossItem.target.chapterEnd = 9;
+        act(() => {
+            root.render(<BibleViewTextComp bibleItem={crossItem} />);
+        });
+        await flush();
+        expect(h.toVerseTextListMock).toHaveBeenLastCalledWith(
+            'KJV',
+            crossItem.target,
+            false,
+            { start: 0, count: 3 },
+        );
+        expect(read()).toEqual({
+            verses: ['GEN 4', 'GEN 5', 'GEN 6'],
+            rests: ['1-1'],
+            isMore: true,
+        });
+        for (const chapter of [7, 8]) {
+            act(() => {
+                (host.querySelector('.more') as HTMLButtonElement).click();
+            });
+            await flush();
+            expect(h.toVerseTextListMock).toHaveBeenLastCalledWith(
+                'KJV',
+                crossItem.target,
+                false,
+                { start: chapter - 4, count: 1 },
+            );
+            expect(read().verses.at(-1)).toBe(`GEN ${chapter}`);
+            expect(read().isMore).toBe(true);
+        }
+        act(() => {
+            (host.querySelector('.more') as HTMLButtonElement).click();
+        });
+        await flush();
+        expect(read()).toEqual({
+            verses: ['GEN 4', 'GEN 5', 'GEN 6', 'GEN 7', 'GEN 8', 'GEN 9'],
+            rests: ['1-1', '8-9'],
+            isMore: false,
+        });
+        expect(h.getVersesCountMock).toHaveBeenLastCalledWith('KJV', 'GEN', 9);
     });
 });

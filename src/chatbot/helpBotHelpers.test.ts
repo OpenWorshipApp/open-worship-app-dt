@@ -182,6 +182,48 @@ describe('walkthrough actions', () => {
     });
 });
 
+// Seen live 2026-10-15: **Highlight again** printed the find tool's JSON,
+// component and source file included, as the whole reply.
+describe('pressing Highlight again', () => {
+    const action = {
+        label: 'Highlight again',
+        toolName: 'owa_find_ui',
+        args: { text: 'Insert YouTube', highlight: true },
+    };
+
+    test('says what it outlined, in words', async () => {
+        parseToolJson.mockReturnValue({
+            count: 1,
+            shownCount: 1,
+            matches: [
+                {
+                    label: 'Insert YouTube',
+                    where: 'at the top center of the window',
+                    isVisible: true,
+                    component: 'SlideEditorInsertToolbarComp',
+                    sourceFile: 'src/slide-editor/x.tsx',
+                },
+            ],
+        });
+        const result = await runBotAction(action);
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', action.args);
+        expect(result.text).toBe(
+            'I have outlined **Insert YouTube** again, at the top center ' +
+                'of the window.',
+        );
+        expect(result.text).not.toContain('{');
+        expect(result.text).not.toContain('src/');
+    });
+
+    test('says so when it is no longer on screen', async () => {
+        parseToolJson.mockReturnValue({ count: 0, matches: [] });
+        const result = await runBotAction(action);
+        expect(result.text).toContain(
+            'I could not find "Insert YouTube" on screen',
+        );
+    });
+});
+
 describe('localized Bible button lookup', () => {
     test('turns an English reference into exact book, chapter, and verse buttons', () => {
         const answer = genReaderButtonReferenceAnswer(
@@ -1265,6 +1307,28 @@ describe('the offline bot offers to put a passage on the screen', () => {
             ['show Psalm 23 on the projector', 'Psalm 23'],
             ['please put up 1 John 1:1-4', '1 John 1:1-4'],
             ['Present Romans 8.28 to the big screen.', 'Romans 8.28'],
+        ]) {
+            callTool.mockClear();
+            await askHelpBot(ask, 'presenter');
+            expect(callTool, ask).toHaveBeenCalledWith('owa_present_bible', {
+                reference,
+                action: 'check',
+            });
+        }
+    });
+
+    test('a range running over chapters is read as one reference', async () => {
+        parseToolJson.mockReturnValue(checked);
+        for (const [ask, reference] of [
+            ['Put John 1:2-3:4 on the screen', 'John 1:2-3:4'],
+            ['show John 1-3', 'John 1-3'],
+            ['present John 1:2–3:4 on the projector', 'John 1:2–3:4'],
+            ['Put John 1:2 to 3:4 on the screen', 'John 1:2 to 3:4'],
+            ['show 1 John 1:5 through 2:2', '1 John 1:5 through 2:2'],
+            ['please put up Psalm 23 — 24.', 'Psalm 23 — 24'],
+            // "to the screen" is the tail, not a range: no number after it.
+            ['Put John 3:16 to the screen', 'John 3:16'],
+            ['Present Romans 8.28-30 to the big screen.', 'Romans 8.28-30'],
         ]) {
             callTool.mockClear();
             await askHelpBot(ask, 'presenter');

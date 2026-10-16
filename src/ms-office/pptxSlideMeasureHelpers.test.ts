@@ -389,6 +389,112 @@ describe('PowerPoint slide measurement', () => {
         measurer.destroy();
     });
 
+    it('keeps loose flex text runs and block children as separate editable blocks', () => {
+        const measurer = makeMeasurer();
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText =
+            'display: flex; font-size: 20px; line-height: 24px;';
+        setRect(wrapper, 0, 0, 300, 80);
+        wrapper.append('First', document.createElement('br'), 'Second');
+        const child = document.createElement('div');
+        child.style.cssText =
+            'display: block; font-size: 20px; line-height: 24px;';
+        child.textContent = 'Inside';
+        setRect(child, 100, 0, 80, 40);
+        wrapper.append(child, 'Last');
+        mockTextRects(new DOMRect(10, 10, 60, 20));
+
+        const blocks = measurer.measureTextBlocks(
+            wrapper,
+            new DOMRect(0, 0, 1920, 1080),
+        );
+        expect(blocks).toHaveLength(3);
+        expect(
+            blocks.map((block) =>
+                block.textBody.lines.map((line) =>
+                    line.runs.map((run) => run.text).join(''),
+                ),
+            ),
+        ).toEqual([['First', 'Second'], ['Inside'], ['Last']]);
+        expect(blocks[0].frame.width).toBe(60);
+        expect(blocks[2].frame.width).toBe(60);
+        measurer.destroy();
+    });
+
+    it('exports two positioned text blocks as separately editable shapes', async () => {
+        const measurer = makeMeasurer();
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'font-size: 20px; line-height: 24px;';
+        setRect(wrapper, 0, 0, 300, 100);
+        const left = document.createElement('div');
+        left.style.cssText =
+            'display: block; font-size: 20px; line-height: 24px;';
+        left.textContent = 'Left';
+        setRect(left, 10, 10, 80, 40);
+        const right = document.createElement('div');
+        right.style.cssText =
+            'display: block; font-size: 20px; line-height: 24px;';
+        right.textContent = 'Right';
+        setRect(right, 160, 10, 80, 40);
+        wrapper.append(left, right);
+        Object.defineProperty(Range.prototype, 'getClientRects', {
+            configurable: true,
+            value: function (this: Range) {
+                const rect =
+                    this.startContainer.parentElement === left
+                        ? new DOMRect(10, 10, 40, 20)
+                        : new DOMRect(160, 10, 50, 20);
+                return [rect];
+            },
+        });
+
+        const result = await measurer.measureItem(
+            wrapper,
+            { id: 1, type: 'html' },
+            new DOMRect(0, 0, 1920, 1080),
+            0,
+        );
+        expect(result).toMatchObject({
+            kind: 'group',
+            children: [
+                { kind: 'shape', name: 'html 1 text', box: { x: 10 } },
+                { kind: 'shape', name: 'html 1 text', box: { x: 160 } },
+            ],
+        });
+        measurer.destroy();
+    });
+
+    it('keeps centered and right-aligned text in the measured alignment band', () => {
+        const measurer = makeMeasurer();
+        const origin = new DOMRect(0, 0, 1920, 1080);
+        const measure = (align: 'center' | 'right', x: number) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `font-size: 20px; line-height: 24px; text-align: ${align};`;
+            wrapper.textContent = 'Aligned';
+            setRect(wrapper, 0, 0, 200, 80);
+            mockTextRects(new DOMRect(x, 10, 50, 20));
+            return measurer.measureTextBlocks(wrapper, origin)[0];
+        };
+
+        expect(measure('center', 75).frame).toMatchObject({
+            x: 0,
+            width: 200,
+        });
+        expect(measure('center', 20).frame).toMatchObject({
+            x: 20,
+            width: 50,
+        });
+        expect(measure('right', 150).frame).toMatchObject({
+            x: 0,
+            width: 200,
+        });
+        expect(measure('right', 20).frame).toMatchObject({
+            x: 0,
+            width: 70,
+        });
+        measurer.destroy();
+    });
+
     it('caches a decoded background still across slides and exports its crop', async () => {
         const imageLoads = mockLoadedImages(800, 600);
         const source = 'data:image/png;base64,iVBORw0K';

@@ -14,11 +14,20 @@ const {
     checkIsVaryAppDocumentSwitchRefusedMock,
     forceUnpinVaryAppDocumentMock,
     fileSourceEventListeners,
+    checkIsAppDocumentSelectedMock,
+    openAppDocumentEditorExternalMock,
+    openPopupWindowMock,
 } = vi.hoisted(() => ({
     appProviderMock: {
         isPagePresenter: true,
         isPageAppDocumentEditor: false,
         isPageReader: false,
+        isPageScreenMirror: false,
+        presenterHomePage: '/presenter',
+        readerHomePage: '/reader',
+        experimentHomePage: '/experiment',
+        appDocumentEditorHomePage: '/slide-editor',
+        screenMirrorHomePage: '/screen-mirror',
         systemUtils: { isDev: false },
     },
     getSelectedVaryAppDocumentMock: vi.fn(async () => null as any),
@@ -28,6 +37,9 @@ const {
     preloadAttachedBackgroundMock: vi.fn(),
     checkIsVaryAppDocumentSwitchRefusedMock: vi.fn(() => false),
     forceUnpinVaryAppDocumentMock: vi.fn(),
+    checkIsAppDocumentSelectedMock: vi.fn(async () => false),
+    openAppDocumentEditorExternalMock: vi.fn(),
+    openPopupWindowMock: vi.fn(),
     fileSourceEventListeners: [] as {
         events: string[];
         callback: (filePath: string) => void;
@@ -39,7 +51,9 @@ vi.mock('../lang/langHelpers', () => ({ tran: (value: string) => value }));
 vi.mock('../others/labelIconHelpers', () => ({
     genLabelIcon: () => null,
 }));
-vi.mock('../helper/domHelpers', () => ({ openPopupWindow: vi.fn() }));
+vi.mock('../helper/domHelpers', () => ({
+    openPopupWindow: openPopupWindowMock,
+}));
 vi.mock('./routeHelpers', () => ({
     toTitleExternal: (value: string) => value,
 }));
@@ -51,8 +65,8 @@ vi.mock('../editing-manager/EditingHistoryManager', () => ({
 }));
 vi.mock('../app-document-list/AppDocument', () => ({
     default: { checkIsThisType: () => false },
-    checkIsAppDocumentSelected: vi.fn(),
-    openAppDocumentEditorExternal: vi.fn(),
+    checkIsAppDocumentSelected: checkIsAppDocumentSelectedMock,
+    openAppDocumentEditorExternal: openAppDocumentEditorExternalMock,
 }));
 vi.mock('../app-document-list/appDocumentHelpers', () => ({
     getSelectedVaryAppDocument: getSelectedVaryAppDocumentMock,
@@ -85,6 +99,74 @@ vi.mock('../helper/appHooks', async () => {
             }, deps);
         },
     };
+});
+
+describe('layout navigation tabs', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        appProviderMock.isPagePresenter = true;
+        appProviderMock.isPageAppDocumentEditor = false;
+        appProviderMock.isPageScreenMirror = false;
+        appProviderMock.systemUtils.isDev = false;
+        checkIsAppDocumentSelectedMock.mockResolvedValue(false);
+    });
+
+    test('shows the editor from Presenter and the Presenter from other pages', async () => {
+        const { genTabs } = await import('./layoutHelpers');
+        expect(genTabs().map((tab) => tab.routePath)).toEqual([
+            '/slide-editor',
+            '/reader',
+            '/screen-mirror',
+        ]);
+
+        appProviderMock.isPagePresenter = false;
+        appProviderMock.isPageScreenMirror = true;
+        appProviderMock.systemUtils.isDev = true;
+        expect(genTabs().map((tab) => tab.routePath)).toEqual([
+            '/presenter',
+            '/reader',
+            '/presenter',
+        ]);
+        appProviderMock.isPagePresenter = true;
+        appProviderMock.isPageAppDocumentEditor = true;
+        appProviderMock.systemUtils.isDev = false;
+        expect(genTabs().map((tab) => tab.routePath)).toEqual(['/reader']);
+    });
+
+    test('opens Reader and experiment in their own windows', async () => {
+        const { genLayoutTabs } = await import('./layoutHelpers');
+        const { readerTab, experimentTab } = genLayoutTabs();
+        readerTab.externalOpen?.onOpen();
+        expect(openPopupWindowMock).toHaveBeenCalledWith(
+            '/reader',
+            expect.stringMatching(/^reader_\d+$/),
+            'reader',
+        );
+        experimentTab.onOpen?.();
+        expect(openPopupWindowMock).toHaveBeenCalledWith(
+            '/experiment',
+            expect.stringMatching(/^experiment_\d+$/),
+            'experiment',
+            { appBlinkFeatures: ['CanvasDrawElement'] },
+        );
+    });
+
+    test('opens a selected document in an external editor only after precheck', async () => {
+        const { genLayoutTabs } = await import('./layoutHelpers');
+        const editorTab = genLayoutTabs().editorTab;
+        expect(editorTab.preCheck).toBe(checkIsAppDocumentSelectedMock);
+        await editorTab.externalOpen?.onOpen();
+        expect(getSelectedVaryAppDocumentMock).not.toHaveBeenCalled();
+        expect(openAppDocumentEditorExternalMock).not.toHaveBeenCalled();
+
+        checkIsAppDocumentSelectedMock.mockResolvedValue(true);
+        getSelectedVaryAppDocumentMock.mockResolvedValue(DOCUMENT_1);
+        await editorTab.externalOpen?.onOpen();
+        expect(getSelectedVaryAppDocumentMock).toHaveBeenCalledOnce();
+        expect(openAppDocumentEditorExternalMock).toHaveBeenCalledWith(
+            DOCUMENT_1,
+        );
+    });
 });
 
 async function flushAsyncEvents() {

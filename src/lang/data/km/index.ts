@@ -1838,6 +1838,8 @@ const dictionary = {
     Chapter: 'ជំពូក',
     'Verse Start': 'ខចាប់ផ្ដើម',
     'Verse End': 'ខបញ្ចប់',
+    'End Chapter': 'ជំពូកបញ្ចប់',
+    'Show the next chapter': 'បង្ហាញជំពូកបន្ទាប់',
     'Books map': 'ផែនទីគម្ពីរ',
     'Box Alignment': 'ការតម្រឹមប្រអប់',
     'Box Properties': 'លក្ខណសម្បត្តិប្រអប់',
@@ -2167,6 +2169,9 @@ const dictionary = {
         'ទីតាំងប្រហាក់ប្រហែល សញ្ញាសម្គាល់ជាចំណុចប៉ាន់ស្មាន',
     'Open in Google Maps': 'បើកក្នុង Google Maps',
     'Open in bible lookup': 'បើកក្នុងការស្វែងរកព្រះគម្ពីរ',
+    // A verse detail panel's `(KJV)`: opens the verse in a panel of its own
+    // in another installed bible.
+    'Open in another Bible': 'បើកក្នុងព្រះគម្ពីរផ្សេងទៀត',
     'Show more': 'បង្ហាញបន្ថែម',
     // The bible translation info popup, opened from the lookup pane header while
     // no verse has resolved yet. `Title` already exists above and resolves after
@@ -2570,8 +2575,7 @@ const dictionary = {
     // the lookup history chips, the verse numbers, the divider arrows, the
     // Mini Screen card, the Bible Note footer. Machine-authored Khmer following
     // the dictionary's existing conventions; a native speaker should review.
-    'Double click to put back, shift double click to put back split':
-        'ចុចពីរដងដើម្បីដាក់ត្រឡប់វិញ, Shift + ចុចពីរដងដើម្បីដាក់ត្រឡប់វិញដោយបំបែក',
+    'Set to current editing': 'កំណត់ទៅការកែសម្រួលបច្ចុប្បន្ន',
     'Tab to complete': 'Tab ដើម្បីបំពេញ',
     'Double click to select verses': 'ចុចពីរដងដើម្បីជ្រើសរើសខគម្ពីរ',
     'Click to remove extra Bible': 'ចុចដើម្បីដកព្រះគម្ពីរបន្ថែមចេញ',
@@ -2998,8 +3002,8 @@ const dictionary = {
     'Tab completes a choice, Escape removes one part, and Ctrl+Escape clears all.':
         'Tab បំពេញជម្រើស Escape លុបមួយផ្នែក ហើយ Ctrl+Escape សម្អាតទាំងអស់។',
     'Reuse and arrange passage history': 'ប្រើឡើងវិញ និងរៀបចំប្រវត្តិអត្ថបទ',
-    'Open, split, drag, save, or remove references from the history row.':
-        'បើក បំបែក អូស រក្សាទុក ឬលុបសេចក្ដីយោងពីជួរប្រវត្តិ។',
+    'Open, put back, drag, save, or remove references from the history row.':
+        'បើក ដាក់ត្រឡប់វិញ អូស រក្សាទុក ឬលុបសេចក្ដីយោងពីជួរប្រវត្តិ។',
     'Change version and read Bible information':
         'ប្ដូរកំណែ និងអានព័ត៌មានព្រះគម្ពីរ',
     'Choose a translation, then open its publisher, language, and copyright details.':
@@ -3228,6 +3232,10 @@ const dictionary = {
     'While a Presenting Flow preview has focus':
         'ពេលផ្ទាំងមើលតារាងកម្មវិធីកំពុងសកម្ម',
     'Go to the next item': 'ទៅធាតុបន្ទាប់',
+    'While the current part of Long Text Show has focus':
+        'ពេលផ្នែកបច្ចុប្បន្ននៃការបង្ហាញអត្ថបទវែងកំពុងសកម្ម',
+    'Bring the next part to the middle': 'នាំផ្នែកបន្ទាប់មកកណ្តាលអេក្រង់',
+    'Bring the previous part to the middle': 'នាំផ្នែកមុនមកកណ្តាលអេក្រង់',
     'Take the keys back to what is being presented':
         'ប្រគល់គ្រាប់ចុចត្រឡប់ទៅអ្វីដែលកំពុងបង្ហាញ',
     'Pressed 3 times quickly while another part of the app has focus':

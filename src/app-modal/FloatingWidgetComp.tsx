@@ -9,6 +9,7 @@ import type {
 } from 'react';
 import { useThemeSource } from '../others/themeHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { applyHorizontalWheelScroll } from '../helper/horizontalWheelScrollHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     COLLAPSED_HEIGHT,
@@ -447,6 +448,17 @@ export default function FloatingWidgetComp({
             ) {
                 return;
             }
+            // A long title scrolls sideways, and two quick presses on its
+            // scrollbar are a scroll, not a request to fill the viewport. Only
+            // the title itself is checked: an inline span inside it has a
+            // client size of 0, so every press on it would read as "on the
+            // scrollbar".
+            if (
+                target.classList.contains('floating-widget__title') &&
+                isOnScrollbar(event.clientX, event.clientY, target)
+            ) {
+                return;
+            }
 
             const previousPress = lastHeaderPressRef.current;
             const isDoublePress =
@@ -575,7 +587,12 @@ export default function FloatingWidgetComp({
                     className="floating-widget__header"
                     onPointerDown={handleHeaderPointerDown}
                 >
-                    <div className="floating-widget__title">{title}</div>
+                    <div
+                        className="floating-widget__title"
+                        ref={applyHorizontalWheelScroll}
+                    >
+                        {title}
+                    </div>
                     {actionButtons}
                 </div>
             )}

@@ -17,6 +17,7 @@ import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import type { LongTextDataType } from '../screenTypeHelpers';
 import { getBibleItemData } from '../screenLongTextTypeHelpers';
+import { checkIsSameBibleTarget } from '../../helper/bible-helpers/bibleTargetHelpers';
 import { tran } from '../../lang/langHelpers';
 import { Fragment, useCallback, useMemo } from 'react';
 import {
@@ -133,8 +134,25 @@ function viewControllerAndScreenManagers(
                 bibleItemData?.bibleItem.target &&
                 bibleItemData.renderedList.length > 0
             ) {
-                bibleItemViewController.nestedBibleItems = [];
                 const { target } = bibleItemData.bibleItem;
+                // The same passage in the same versions already: a screen
+                // drawn one chapter deeper (`...`) or sent again must not
+                // rebuild the Reader's view of it.
+                const currentItems = bibleItemViewController.straightBibleItems;
+                const isSameView =
+                    currentItems.length === bibleItemData.renderedList.length &&
+                    currentItems.every((item, i) => {
+                        const json = item.toJson();
+                        return (
+                            json.bibleKey ===
+                                bibleItemData.renderedList[i].bibleKey &&
+                            checkIsSameBibleTarget(json.target, target)
+                        );
+                    });
+                if (isSameView) {
+                    return;
+                }
+                bibleItemViewController.nestedBibleItems = [];
                 for (const { bibleKey } of bibleItemData.renderedList) {
                     const bibleItem = BibleItem.fromJson({
                         id: -1,

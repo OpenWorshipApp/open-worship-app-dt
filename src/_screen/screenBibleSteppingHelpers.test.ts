@@ -75,6 +75,34 @@ describe('screenBibleSteppingHelpers', () => {
         appProviderMock.messageUtils = { listenForData: listenForDataMock };
     });
 
+    // JHN 1:2-3:4 has no single chapter to keep its size in: a step goes to
+    // the verse just past its end, or just before its start.
+    test('steps out of a passage across chapters one verse at a time', async () => {
+        mockVerseCount(36);
+        const crossTarget = {
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+            chapterEnd: 3,
+        };
+
+        expect(await toSteppedBibleTarget('KJV', crossTarget, true)).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 5,
+            verseEnd: 5,
+        });
+        expect(getVersesMock).toHaveBeenLastCalledWith('KJV', 'JHN', 3);
+        expect(await toSteppedBibleTarget('KJV', crossTarget, false)).toEqual({
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        expect(getVersesMock).toHaveBeenLastCalledWith('KJV', 'JHN', 1);
+    });
+
     test('steps a single verse forward and backward inside the chapter', async () => {
         mockVerseCount(36);
 

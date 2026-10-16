@@ -26,6 +26,10 @@ import {
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
 import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
 import {
+    checkIsCrossChapterTarget,
+    getTargetChapterEnd,
+} from './bible-helpers/bibleTargetHelpers';
+import {
     TRANSITION_META_DOT_EXTENSION,
     toValidTransitionEffect,
 } from '../_screen/transitionOverrideHelpers';
@@ -712,13 +716,19 @@ export function getImportCollisionPolicy(settingName: string) {
  */
 function toBibleItemKey(itemJson: any) {
     const target = itemJson?.target ?? {};
-    return JSON.stringify([
+    const keyParts = [
         itemJson?.bibleKey ?? '',
         target.bookKey ?? '',
         target.chapter ?? 0,
         target.verseStart ?? 0,
         target.verseEnd ?? 0,
-    ]);
+    ];
+    // A one-chapter verse keeps the key it always had; only a passage running
+    // into a later chapter (`John 1:2-3:4`) adds the chapter it ends in.
+    if (checkIsCrossChapterTarget(target)) {
+        keyParts.push(getTargetChapterEnd(target));
+    }
+    return JSON.stringify(keyParts);
 }
 
 /**

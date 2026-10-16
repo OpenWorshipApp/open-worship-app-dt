@@ -14,11 +14,9 @@ import {
 import { closeCurrentEditingBibleItem } from '../readBibleHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { RenderTitleMaterialComp } from './RenderTitleMaterialComp';
-import {
-    applyHorizontalWheelScroll,
-    BibleViewTitleMaterialContext,
-} from './viewExtraHelpers';
+import { BibleViewTitleMaterialContext } from './viewExtraHelpers';
 import { toShortcutKey } from '../../event/KeyboardEventListener';
+import { applyHorizontalWheelScroll } from '../../helper/horizontalWheelScrollHelpers';
 import { BIBLE_VERSE_TEXT_TITLE } from '../../helper/helpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { tran } from '../../lang/langHelpers';

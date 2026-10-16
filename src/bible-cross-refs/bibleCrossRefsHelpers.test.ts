@@ -10,6 +10,9 @@ const h = vi.hoisted(() => ({
     bibleText: 'In the beginning' as string,
     referenceValid: true,
     bookKey: 'GEN',
+    chapterEnd: undefined as number | undefined,
+    verseEnd: 3,
+    toTextArgs: [] as unknown[][],
 }));
 
 vi.mock('../_owa-crypto', () => ({
@@ -42,7 +45,8 @@ vi.mock('../bible-list/bibleRenderHelpers', () => ({
             bookKey: h.bookKey,
             chapter: 1,
             verseStart: 2,
-            verseEnd: 3,
+            verseEnd: h.verseEnd,
+            ...(h.chapterEnd === undefined ? {} : { chapterEnd: h.chapterEnd }),
         }),
     },
 }));
@@ -52,7 +56,10 @@ vi.mock('../bible-list/BibleItem', () => ({
             h.items.push(data);
             return {
                 toTitle: async () => 'Genesis 1:2-3',
-                toText: async () => h.bibleText,
+                toText: async (...args: unknown[]) => {
+                    h.toTextArgs.push(args);
+                    return h.bibleText;
+                },
             };
         },
     },
@@ -99,6 +106,9 @@ beforeEach(() => {
     h.bibleText = 'In the beginning';
     h.referenceValid = true;
     h.bookKey = 'GEN';
+    h.chapterEnd = undefined;
+    h.verseEnd = 3;
+    h.toTextArgs.length = 0;
 });
 
 describe('Bible cross-reference downloads', () => {
@@ -200,5 +210,31 @@ describe('reference display', () => {
         expect(long?.bibleText).toBe(h.bibleText);
         h.bookKey = 'UNKNOWN';
         expect(await breakItem('KJV', 'UNKNOWN 1:2-3')).toBeNull();
+    });
+
+    test('keeps the end chapter of a cross-chapter reference and reads one chapter', async () => {
+        h.chapterEnd = 3;
+        h.verseEnd = 4;
+        expect(await breakItem('KJV', 'GEN 1:2-3:4')).not.toBeNull();
+        expect(h.items[0].target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+            chapterEnd: 3,
+        });
+        // A preview of ~150 characters never reads chapters 2 and 3.
+        expect(h.toTextArgs).toEqual([[1]]);
+    });
+
+    test('writes no end chapter for a one-chapter reference', async () => {
+        h.chapterEnd = 1;
+        await breakItem('KJV', 'GEN 1:2-3');
+        expect(h.items[0].target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 3,
+        });
     });
 });

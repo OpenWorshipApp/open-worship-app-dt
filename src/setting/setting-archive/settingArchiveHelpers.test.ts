@@ -183,7 +183,9 @@ import {
 } from './settingArchiveHelpers';
 
 function seedComputer() {
-    h.local.set('language-locale', 'km');
+    h.home.set('language-locale', 'km');
+    // What an older version left in the data folder: not the one in use.
+    h.local.set('language-locale', 'en-US');
     h.local.set('foreground-marquee-top-setting', '{"speed":3}');
     h.local.set('select-dir-image-bg', '$DATA_DIR_PATH/images');
     h.local.set('chatbot-sessions', '[{"secret":"conversation"}]');
@@ -220,11 +222,12 @@ describe('listing what can be exported', () => {
 
         expect(h.secureReads).toEqual([]);
         const keys = refs.map(({ store, key }) => `${store}:${key}`);
-        expect(keys).toContain('local:language-locale');
+        expect(keys).toContain('home:language-locale');
         expect(keys).toContain('home:ai-setting');
         expect(keys).toContain('secure:ai-setting-secret');
         expect(keys).toContain('theme:themeSource');
         for (const excluded of [
+            'local:language-locale',
             'local:chatbot-sessions',
             'local:screen-draw-data-0',
             'home:ai-enabled',
@@ -478,7 +481,9 @@ describe('validating a file', () => {
         );
         expect(manifest.sections).toEqual(['general.language', 'ai.providers']);
         expect(manifest.settings).toEqual([
-            { store: 'local', key: 'language-locale', value: 'km' },
+            // Made while the language was the data folder's: it is this
+            // computer's now.
+            { store: 'home', key: 'language-locale', value: 'km' },
             { store: 'home', key: 'ai-setting', value: '{}' },
         ]);
         expect(manifest).not.toHaveProperty('dataDirPath');
@@ -556,7 +561,7 @@ describe('importing replaces each chosen section', () => {
                     'secrets.aiKeys',
                 ],
                 [
-                    { store: 'local', key: 'language-locale', value: 'fr' },
+                    { store: 'home', key: 'language-locale', value: 'fr' },
                     {
                         store: 'local',
                         key: 'select-dir-video-bg',
@@ -594,7 +599,7 @@ describe('importing replaces each chosen section', () => {
             true,
         );
 
-        expect(h.local.get('language-locale')).toBe('fr');
+        expect(h.home.get('language-locale')).toBe('fr');
         // Expanded for this computer, stored portable again.
         expect(h.local.get('select-dir-video-bg')).toBe(
             '$DATA_DIR_PATH/videos',
@@ -607,6 +612,7 @@ describe('importing replaces each chosen section', () => {
             '[{"secret":"conversation"}]',
         );
         expect(h.local.has('screen-draw-data-0')).toBe(true);
+        expect(h.local.get('language-locale')).toBe('en-US');
         expect(h.home.get('ai-enabled')).toBe('true');
         expect(h.home.get('selected-parent-dir')).toBe('/data');
         expect(h.home.get('song-select-setting')).toBe('{"clientId":"x"}');
@@ -632,7 +638,7 @@ describe('importing replaces each chosen section', () => {
             true,
         );
 
-        expect(h.local.get('language-locale')).toBe('fr');
+        expect(h.home.get('language-locale')).toBe('fr');
         expect(h.local.get('select-dir-image-bg')).toBe(
             '$DATA_DIR_PATH/images',
         );
@@ -648,7 +654,7 @@ describe('importing replaces each chosen section', () => {
     });
 
     test('writes nothing that is already the same', async () => {
-        h.local.set('language-locale', 'fr');
+        h.home.set('language-locale', 'fr');
         h.theme.value = 'system';
         const result = await importSettingSections(
             genImportManifest(),
@@ -657,6 +663,30 @@ describe('importing replaces each chosen section', () => {
         );
         expect(result.writtenCount).toBe(0);
         expect(h.sentData).toEqual([]);
+    });
+
+    test('an older file restores the language to this computer', async () => {
+        // Made while the language was the data folder's.
+        seedComputer();
+        const manifest = validateSettingManifest(
+            genManifest(
+                ['general.language'],
+                [{ store: 'local', key: 'language-locale', value: 'fr-FR' }],
+            ),
+            false,
+        );
+        const result = await importSettingSections(
+            manifest,
+            ['general.language'],
+            false,
+        );
+        expect(h.home.get('language-locale')).toBe('fr-FR');
+        expect(h.local.get('language-locale')).toBe('en-US');
+        expect(result).toEqual({
+            writtenCount: 1,
+            removedCount: 0,
+            needsRelaunch: false,
+        });
     });
 
     test('never takes credentials out of an unprotected file', async () => {

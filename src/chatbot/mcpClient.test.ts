@@ -23,7 +23,69 @@ vi.mock('../server/appProvider', () => ({
     },
 }));
 
-import { ToolHostError, checkIsToolHostError, listTools } from './mcpClient';
+import {
+    ToolHostError,
+    callToolPicture,
+    checkIsToolHostError,
+    listTools,
+} from './mcpClient';
+
+// A host that opens a session and answers `tools/call` with `content`,
+// remembering the arguments each call was sent.
+function stubToolHost(content: any[], isError = false) {
+    const calls: any[] = [];
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: any) => {
+            const body = JSON.parse(init.body);
+            if (body.method === 'notifications/initialized') {
+                return new Response(null, { status: 202 });
+            }
+            if (body.method === 'tools/call') {
+                calls.push(body.params);
+            }
+            return new Response(
+                JSON.stringify({
+                    result:
+                        body.method === 'tools/call'
+                            ? { content, isError }
+                            : {},
+                }),
+                { status: 200, headers: { 'mcp-session-id': 'S1' } },
+            );
+        }),
+    );
+    return calls;
+}
+
+// The 📷 with a window of its own chosen: `owa_screenshot` of that window.
+describe('a picture from a tool', () => {
+    const aim = {
+        windowId: 'EDITOR',
+        focus: 'appDocumentEditor' as const,
+        isSeparateWindow: true,
+    };
+
+    test('comes back as a data URL, taken in the chosen window', async () => {
+        const calls = stubToolHost([
+            { type: 'text', text: 'A picture of the app as it is right now.' },
+            { type: 'image', mimeType: 'image/png', data: 'AAAA' },
+        ]);
+        await expect(
+            callToolPicture('owa_screenshot', {}, null, aim),
+        ).resolves.toBe('data:image/png;base64,AAAA');
+        expect(calls).toEqual([
+            { name: 'owa_screenshot', arguments: { page: 'EDITOR' } },
+        ]);
+    });
+
+    test("says the tool's own words when there is no picture", async () => {
+        stubToolHost([{ type: 'text', text: 'That window is not open' }], true);
+        await expect(
+            callToolPicture('owa_screenshot', {}, null, aim),
+        ).rejects.toThrow('That window is not open');
+    });
+});
 
 afterEach(() => {
     vi.unstubAllGlobals();

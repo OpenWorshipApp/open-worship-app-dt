@@ -13,6 +13,12 @@ import { getDownloadedBibleInfoList } from '../../helper/bible-helpers/bibleDown
 import { checkIsBibleKeyTaken } from './bibleKeyHelpers';
 import { checkAgentFileName } from '../../../tools/owa-devtools-mcp/agentFileName.mjs';
 import { saveNewBibleImport } from './bibleImportSaveHelpers';
+import appProvider from '../../server/appProvider';
+import {
+    countBibleContents,
+    genBibleImportNote,
+    type BibleImportOriginType,
+} from './bibleImportNoteHelpers';
 type NamesResultType = {
     bookNames: string[][];
     sources: {
@@ -88,11 +94,14 @@ async function readBuiltInNames(locale: string): Promise<NamesResultType> {
 
 export default function BibleImportReviewComp({
     data,
+    origin,
     keyChoices,
     onCancel,
     onImported,
 }: Readonly<{
     data: BibleXMLJsonType;
+    // Where the text came from, written into the Bible's `note` on Import.
+    origin: BibleImportOriginType;
     keyChoices: string[];
     onCancel: () => void;
     onImported: () => void;
@@ -138,6 +147,12 @@ export default function BibleImportReviewComp({
         checkAgentFileName(bibleKey.trim()) === null;
     const keyTaken =
         takenKeys !== null && checkIsBibleKeyTaken(bibleKey, takenKeys);
+    const selectedBookIndex =
+        books === null
+            ? -1
+            : (result?.bookNames.findIndex((names) =>
+                  names.every((name, index) => name === books[index]),
+              ) ?? -1);
     const languageKey = data.info.locale.split('-')[0].toUpperCase();
     const year = data.info.title.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? '';
     const suggestedKeys = Array.from(
@@ -302,18 +317,7 @@ export default function BibleImportReviewComp({
                     className="form-select"
                     aria-label={tran('Book name mapping')}
                     disabled={saving}
-                    value={
-                        books === null
-                            ? '-1'
-                            : String(
-                                  result?.bookNames.findIndex((names) =>
-                                      names.every(
-                                          (name, index) =>
-                                              name === books[index],
-                                      ),
-                                  ),
-                              )
-                    }
+                    value={String(selectedBookIndex)}
                     onChange={(event) =>
                         setBooks(
                             result?.bookNames[Number(event.target.value)] ??
@@ -436,12 +440,45 @@ export default function BibleImportReviewComp({
                         setSaving(true);
                         setSaveError('');
                         try {
+                            const bookSource =
+                                selectedBookIndex < 0
+                                    ? null
+                                    : (result?.sources[selectedBookIndex] ??
+                                      null);
+                            const note = genBibleImportNote({
+                                origin: {
+                                    ...origin,
+                                    bookNames:
+                                        bookSource === null
+                                            ? {
+                                                  label: 'The names in the file',
+                                              }
+                                            : {
+                                                  label: bookSource.label,
+                                                  source: bookSource.url,
+                                              },
+                                },
+                                fileInfo: {
+                                    key: data.info.key,
+                                    title: data.info.title,
+                                },
+                                chosen: {
+                                    key: bibleKey.trim(),
+                                    title: data.info.title,
+                                    locale,
+                                    digits: numbers,
+                                },
+                                counts: countBibleContents(data.books),
+                                appVersion: appProvider.appInfo.version,
+                                previousNote: data.info.note,
+                            });
                             const edited = {
                                 ...data,
                                 info: {
                                     ...data.info,
                                     key: bibleKey.trim(),
                                     locale: locale as LocaleType,
+                                    note,
                                     numbersMap: Object.fromEntries(
                                         numbers.map((value, index) => [
                                             String(index),

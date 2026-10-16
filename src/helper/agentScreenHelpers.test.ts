@@ -211,6 +211,38 @@ describe('toBibleSummary', () => {
             versions: ['KJV', 'KHSV'],
         });
     });
+    it('spells the reference from the target before anything is rendered', () => {
+        const toReference = (target: any) =>
+            toBibleSummary({
+                type: 'bible-item',
+                locale: 'en',
+                scroll: 0,
+                selectedKJVVerseKey: null,
+                bibleItemData: {
+                    renderedList: [],
+                    bibleItem: {
+                        id: 1,
+                        bibleKey: 'KJV',
+                        target: { bookKey: 'JHN', ...target },
+                        metadata: {},
+                    },
+                },
+            })?.reference;
+        expect(toReference({ chapter: 3, verseStart: 16, verseEnd: 16 })).toBe(
+            'JHN 3:16',
+        );
+        expect(toReference({ chapter: 3, verseStart: 16, verseEnd: 18 })).toBe(
+            'JHN 3:16-18',
+        );
+        expect(
+            toReference({
+                chapter: 1,
+                verseStart: 2,
+                verseEnd: 4,
+                chapterEnd: 3,
+            }),
+        ).toBe('JHN 1:2-3:4');
+    });
 });
 
 describe('toForegroundSummary', () => {

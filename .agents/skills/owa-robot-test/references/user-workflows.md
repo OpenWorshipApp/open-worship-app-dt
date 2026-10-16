@@ -21,7 +21,35 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-14a** (W-46: Copy Debug Info and Copy Full Debug Info are under Help. Verified in the live dev menu.)
+**workflowsVersion: 2026-10-15j** (**W-42 step 5 — the window list keeps up by itself, and a picture or a pointed-at control remembers its window.** The user, with a picture of Settings opened while the help was already up and no **WORKING IN** line under it: _I don't see the selection after I opened setting later, it should real-time tracking the new opening_; and then _make sure screenshot and element selection have uuid information to the window to let mcp know_. The list now follows the windows as they open, close or change page, with nothing pressed in the help window, and a 📷 picture or a ◎ control keeps the window it came from — its page and `uuid` — which its chip names on hover and the assistant is told. Seen live 2026-10-15 on a scratch dev instance: Settings opened from the main window and the line read _Reader (📖) · main window_ and _Setting (⚙️) · own window_ within 1.5 s, with no focus sent to the help window; the main window moved to the Presenter and its row became _Presenter (🖥️) · main window_; with Settings chosen, the 📷 chip read _my Settings window_ and pointing at **General** made a chip _General (Settings window)_; the picker set back to the main window, pressing that chip still rang **General** in the Settings window; Settings closed and the line went away.)
+
+Previous: **workflowsVersion: 2026-10-15i** (**W-42 step 5 — the window to work in is chosen on the line above the box.** The user, with a picture of the help window and the line over the box circled: _if windows are open more than 1 (beside main) the chat bot should have option to select which window to work on. e.g. lyric editor, setting, app-document editor. add the selection where I highlighted_, and the story under it: _ask about some stuff on app-document editor page, I wish I could select the editor window and start interacting with it_. The **WINDOW** list left the head row: **WORKING IN**, on its own line just over the box, names each open window, and the window chosen is the one the help reads, outlines controls in and walks you through — and now the one the 📷 photographs and the ◎ points in (both had stayed on the main window). The main window is never Local Web Share. Seen live 2026-10-15 on a scratch dev instance: with the main window on the Presenter, a Slide Editor of its own on _Window Aim Test_ and Settings, the line listed _Presenter (🖥️) · main window_, _Setting (⚙️) · own window_ and _Document Editor (🖥️✏️) - Window Aim Test · own window_; choosing the editor set **ASKING ABOUT** to **Document Editor** and lit the line's bar, **/here** answered _This tab works with the Document Editor, a window of its own_, **/find Insert YouTube** ringed it in the editor window, the 📷 attached _my Document Editor window_ — a picture of the editor — and the ◎ read _Point at the control you mean in the Document Editor window…_; choosing the main window put **ASKING ABOUT** back on **Presenter**. Your own app shows the line once it is RESTARTED: the list comes from the main process, and one started before this change has no answer for it.)
+
+Previous: **workflowsVersion: 2026-10-15h** (**W-34 — an imported Bible keeps a note of where it came from.** The user, with a picture of Settings → Bible's **[en:tran:Bibles XML]** list: _as a user I want to see bible data that import by download from online have url. add new field to bible info `note` and mention there about downloading from url by Chatbot for example. keep all possible information of importing_. A Bible's info has a `note` now, and every import writes one: when, by whom (the assistant, an AI agent connected to the app, or the Settings form — and when the assistant typed the link into that form), the link as given, the file link actually downloaded and where the redirects ended, the file's name and size, its books, chapters and verses, the title and key the file had when the person chose others, the key, language, numbers and book names chosen, and any note the file already carried. Its row in **[en:tran:Bibles XML]** shows **[en:tran:Source]:** with the link, and **[en:tran:Note]** opens the whole of it. Seen live 2026-10-15 on a scratch dev instance: _Khmer 2014_ installed through the assistant's tool from its GitHub PAGE link carried _Downloaded from:_ that page, _File link used:_ its raw file, _14.5 MB_, _66 books, 1189 chapters, 31102 verses_ and _digits ០ ១ ២ …, book names "Khmer names (គខប)"_; its row read **Source:** with the page link and a closed **Note**, which pressed opened to those six lines. Not seen live: the form's own import and the chat window's own words (unit tests hold both).)
+
+Previous: **workflowsVersion: 2026-10-15g** (**W-42 steps 5 and 6 — the help works with the window you choose, and the tip line can be put away for 30 days.** The user, with a Bible Reader window open beside the main one and the help still asking about the Presenter: _chatbot work with main window only, imagine I have more child windows like slide editor lyric editor bible reader ... then want the chatbot to help troubleshooting or guide in child window, it's impossible now. Let add window selection (if more child window), after window change the chatbot should work with the selected window_; and, with the 💡 line circled: _add option to hide it for 30 day_. With more than one window of the app open, a **WINDOW** list comes first in the head row; the window chosen there is the one the help reads, outlines controls in and walks you through, and **ASKING ABOUT** follows it. The 💡 line ends in a ✕ that puts it away for 30 days. Seen live 2026-10-15 on a scratch dev instance: with the main window on the Presenter and a Bible Reader opened in a window of its own, the list read _Presenter (🖥️) · main window_ and _Reader (📖) · own window_; choosing the Reader set **ASKING ABOUT** to **Bible Reader**, **/here** answered _This tab works with the Bible Reader, a window of its own … The main window is on the Presenter_, **/find Bible Lookup** outlined it in the Reader window and not in the Presenter, and _Which Bible is open in this window?_ was answered off the Reader window by a free model; the ✕ took the line away and it stayed away after the window was reloaded. Not seen live: two Reader windows at once (a unit test holds that each is aimed at by its own id).)
+
+Previous: **workflowsVersion: 2026-10-15f** (**W-42 step 1 — the taskbar's help opens with no question, and reaches YOUR app.** The user, after pressing the new **App Help (Chatbot)** on the taskbar: _it's there but clicked then open new window instead_, and then _open from taskbar no need confirmation_. The new window was another copy of the app: every development copy shared one taskbar identity, the last one started owns the taskbar's menu, and a copy on a test profile started after the user's had pointed the menu at itself. Each data folder now has a taskbar identity of its own — the usual one keeps the usual — and the taskbar's entry opens the help at once, with no **[en:tran:Be careful with AI]** question; every other way in still asks it. Seen live 2026-10-15 on the dev app: after the restart the menu Windows stored names the user's own data folder, and the entry's command line, run as Windows runs it, opened the help window within three seconds with nothing pressed. A unit test holds that this route asks no question while the others still do.)
+
+Previous: **workflowsVersion: 2026-10-15e** (**W-53 step 7 — a song's card starts as text cards.** The user's ask, with **[en:tran:View as Text Cards]** circled on a card opened from a lyric's menu: _make it enabled by default_. Every NEW language card — from **[en:tran:Add Language]** or from a lyric's **[en:tran:Long Text Show]** — lists a song's parts as text cards from the start; the button turns them into the small buttons and back, and the choice is kept with the session. A card kept from before keeps the small buttons it had. Seen live 2026-10-15 on the dev app: a lyric's **[en:tran:Long Text Show]** on `Still` opened a new session with the toggle on and the nine parts as cards holding their words. Not seen live: **[en:tran:Add Language]** then **[en:tran:Lyric File]** on a new card (the same helper makes both; a unit test holds it).)
+
+Previous: **workflowsVersion: 2026-10-15d** (**W-16 step 2 — the language stays when the data folder changes.** The user's ask, with the Language card of Settings circled: _setting language should be global (not store in data folder) so can once set then have apply to every data folder change_. The language chosen under **[en:tran:Language]** belongs to the computer: a data folder switched to — by **[en:tran:Recent Folders]** or a new **[en:tran:Parent Directory:]** — opens in it, whatever language that folder had before. Seen live 2026-10-15 on a scratch dev instance with two data folders: the first opened in the Khmer it already had; the second, which had held English, opened in Khmer too; **Français** chosen there and applied, the first folder opened in French.)
+
+Previous: **workflowsVersion: 2026-10-15c** (**W-42 step 1 — the help from the taskbar.** The user's ask, with the taskbar icon's right-click menu in the picture and its **Tasks** circled: _I want a `App Help (Chatbot)` in taskbar icon menu as well so I can find help_. On Windows the app's taskbar icon, right-clicked, lists **App Help (Chatbot)** above **Reset Position and Size**, whenever AI features are on; it does what **Help → App Help (Chatbot)** does — the app comes forward and the help window opens (after the caution, unless it was put away). Seen live 2026-10-15 on the dev app: the task's own command line, run as Windows runs it, took the focus from the Presenter to the help window within three seconds. Not seen live: the entry drawn in the taskbar's menu (Windows draws it; a unit test holds the list), and the task pressed with the app closed, which starts the app and opens the help once its window has loaded (a unit test).)
+
+Previous: **workflowsVersion: 2026-10-15b** (**W-53 — a song straight from the Documents list.** The user's ask, with a lyric's menu in the picture: _for a quick showing lyric on behalf of long text show, I want to add `Long Text Show` to lyric's contextmenu, when clicked it should create long text new session then create `EN` language and set the lyric to be ready to show_. A lyric's own menu in the **Documents** list has **[en:tran:Long Text Show]**: it opens the panel on a NEW session named after the song, holding it as an **EN** card from **[en:tran:Lyric File]**, and **[en:tran:Show Long Text]** is on once the card has read the file. Pressed live 2026-10-15 on the dev app: with the panel closed it opened on a `Still` session, `EN · Lyric File · Still — Still · Sections: 9`, the show button on and nine part buttons; with the panel open a second `Still` chip was added and chosen. Not driven live: the Khmer and French names (an existing key, held by the key gate), and the panel coming up from behind another floating panel (a unit test).)
+
+Previous: **workflowsVersion: 2026-10-15a** (**W-42 step 9 — a report the server was asleep for is kept and sent by itself.** The report inbox the shared registry names runs on an ordinary computer, and on 2026-10-14 it was asleep for a day and a half: every report pressed then said _nothing was sent_ and offered an email nobody writes. Now a report whose server cannot be reached is kept by the app — the very words and files that were to go — and sent by itself when the server is back (a minute after the app starts, then every half hour while it is open, for up to a week), and the answer says so. A server that answers no is still said plainly. Seen live 2026-10-15 on a scratch dev instance: a report with a PDF sent with the inbox down was kept; the inbox brought back and the app restarted, it arrived by itself 62 seconds later with both files.)
+
+Previous: **workflowsVersion: 2026-10-15** (**W-53 step 7, W-49b, W-49 and the shortcut appendix — a Long Text Show is stepped by the keys.** The user's ask, with the panel's text cards in the picture: _I want to be like slides preview for next keying, e.g. space, right arrow, when an element selected and focus then next keying should make next click. should not jump to the first element when in last element_. With the lit part's button focused, **Space** / **→** / **↓** / **Page Down** press the next part's button and **Shift+Space** / **←** / **↑** / **Page Up** the one before; focus moves with it, and it stops at either end. A Long Text Show with a lit part is the fourth and last place the remote's three presses hand the keys to (W-49b). Pressed live 2026-10-15 on the dev app with a hidden screen: 7 → 8 by → on the EN buttons, 8 → 9 by Space, Space and → at 9 doing nothing, ← and Shift+Space back to 7, ↓ from the KM text card 7 → 8, and three quick → from **[en:tran:Show Long Text]** focusing the lit part with no step and the next → stepping 3 → 4. Not seen live: the new rows in **Help → [en:tran:Keyboard Shortcuts]** (the menu acts on the window in front, and the app was not; a unit test holds them) and the Khmer and French names (the key gate).)
+
+Previous: **workflowsVersion: 2026-10-15c** (**W-11 step 1 — a passage across chapters, and a heading's reference read whole.** Asked for by the user: _for all bible rendering add support cross chapter rendering, e.g. John 1:2-3:4 … in same book only_, _if more than 3 chapters then show 3 chapter only and have `...` button to render more 1 by 1 chapter_, _devide chapter by `-<chpater number>-----`_, and, with a picture of a Khmer heading citing `យ៉ូហាន ១៨.៣៣-១៩.១៦`, _embedding verse in here should open floating bible detail and should open the whole cross chapters directly in the panel_. A reference may now end in a later chapter of the same book (`John 1:2-3:4`, `John 1-3`, `John 1:-2:`, a dot for the colon); the passage is ONE passage, each chapter under a divider with its number, three chapters at first and one more per press of **...** (**[en:tran:Show the next chapter]**); a heading's reference opens the whole range in the floating verse panel. Verified live 2026-10-15 on the dev Reader with a Khmer Bible: `John 1:50-6:3` read as `យ៉ូហាន ១:៥០-៦:៣` with dividers ១ ២ ៣ and the **...**, three presses adding ៤, ៥ and ៦ one at a time and the button gone after the last; `John 1:-2:` read as `១:១-២:២៥`, `John 1-3` as `១:១-៣:៣៦`, `យ៉ូហាន ១៨.៣៩-១៩.១៦` typed with dots as `១៨:៣៩-១៩:១៦`; the heading reference of Mark 15 opened its panel with dividers ១៨ and ១៩. NOT seen live: the projector's chapters and its **...** (W-06), the copy headers and the heading reference's right-click menu — unit tested.)
+
+Previous: **workflowsVersion: 2026-10-15b** (**W-11 step 4 — a history row is read in a floating panel too, and put back from its menu.** Asked for by the user: _click history element should open the floating bible detial, should have `Open beside the current verse` and `Set to current editing`_. A click on a recent reference row (or ↵/Space on it) now opens the same verse panel a cross reference opens, in the version the row names, and leaves the passage being edited alone; Shift no longer splits. Its **⋮** / right-click menu reads **[en:tran:Open]** (the panel), **[en:tran:Open beside the current verse]** (a new pane after the others) and **[en:tran:Set to current editing]** (what a click did before: the passage goes back into the editing pane), then the copy rows, **[en:tran:Save bible item]** and **[en:tran:Remove]**. Verified live 2026-10-15 on the dev Reader: Genesis 22:2-5 opened in its panel on one click with John 3:1-36 left in the editing pane; **[en:tran:Set to current editing]** put Genesis 22:2-5 into the editing pane, its linked Khmer pane following; **[en:tran:Open beside the current verse]** added a third column; John 3:1-36 was put back the same way.)
+
+Previous: **workflowsVersion: 2026-10-15a** (**W-11 step 4, W-12 step 2 and its put-on-screen note, W-13 step 5 — one click, and a verse read where it was found.** Asked for by the user with pictures of the Reader: _change history element to open by click (not doubleclick). history element cross-reference's verse and find's found verse, when click then open floating-widget (bible verse detail)_, then _`Open` as well_, then, on the panel's **(KJV)**, _should allow choosing different bible key, when chosen then open new panel for the detail_. A reference row above the lookup now goes back on ONE click. A cross reference or a Find result opens in a small floating panel in the version it was listed in, and its menu's **[en:tran:Open]** does the same; the old press, opening it beside the verse you are on, is **[en:tran:Open beside the current verse]** in that menu. The panel's version is a button: pick another Bible and the verse opens in a second panel. Verified live 2026-10-15 on the dev Reader: Romans 11:33-34 and Ecclesiastes 11:5 from Cross Reference, John 19:39 from Find, NIV picked on a KJV panel, Genesis 22:2-5 put back from the history row by one click, Job 37:9-10 opened beside the passage from the menu.)
+
+Previous: **workflowsVersion: 2026-10-14a** (W-46: Copy Debug Info and Copy Full Debug Info are under Help. Verified in the live dev menu.)
 
 Previous: **workflowsVersion: 2026-10-14** (W-47: each new Messages editor keeps its own text. Verified with two notices in a scratch dev Presenter; editing the second left the first intact.)
 
@@ -2093,6 +2121,14 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151
 languages side by side, each part beside its translation, and let it scroll
 while the room sings.
 
+**Quickest for one song:** right-click it in the **Documents** list and choose
+**[en:tran:Long Text Show]**. The panel opens on a new session named after the
+song, holding it as an **EN** card read from its **[en:tran:Lyric File]**, and
+**[en:tran:Show Long Text]** is on as soon as the card has read the song — go
+on at step 5, or at step 2 to put a translation beside it. Each press makes
+another session; the ones you no longer need are removed from their tab's
+menu.
+
 1. Open the **[en:tran:Foreground]** tab and choose **[en:tran:Long Text Show]**
    in the menu. Its panel opens.
 2. **Add the languages.** Press **[en:tran:Add Language]** and pick one; press it
@@ -2130,12 +2166,21 @@ while the room sings.
    brought to the middle of the screen in every language. The button you
    pressed stays lit, on every language's card, so the panel shows where the
    song has got to. A chorus sung twice
-   has two buttons, and each goes to its own row. On a song's card the first
-   button of that row, **[en:tran:View as Text Cards]**, turns each button
-   into a card holding that part's words, run on in one line with a slash
-   between its lines, for following the song by its words — press
-   anywhere on a card to bring it to the middle; press
-   **[en:tran:View as Text Cards]** again for the small buttons.
+   has two buttons, and each goes to its own row. On a song's card each
+   part starts as a card holding that part's words, run on in one line with
+   a slash between its lines, for following the song by its words — press
+   anywhere on a card to bring it to the middle. The first button of that
+   row, **[en:tran:View as Text Cards]**, turns them into small buttons
+   with only the part's name, and back; the card remembers which.
+
+   **Step with the keys.** Once you have pressed a part, its button has the
+   keys, the way the slides do: **Space**, **→**, **↓** or **Page Down**
+   presses the next part's button, and **Shift+Space**, **←**, **↑** or
+   **Page Up** the one before. The light and the keys move along with it, on
+   the card you pressed, so you can follow the song from the keyboard or a
+   presenter remote. It stops at the last part, and at the first: it never
+   goes round to the beginning. A part that is not lit keeps its own keys —
+   **Space** presses that one.
 8. **Give a language its own look.** Open **[en:tran:Properties]** on its card:
    **[en:tran:Font Family]**, **[en:tran:Text Color]**,
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
@@ -2233,6 +2278,20 @@ quick lookup, and where you look a verse up when you are not presenting.
    > Typing a full reference such as `John 3:16` is an optional shortcut when the
    > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
    > last piece and **Shift+Escape** clears the box.
+
+   **A passage that runs on into later chapters of the same book.** Type its
+   first verse and its last verse, each with its chapter: `John 1:50-6:3` is one
+   passage, from John 1:50 to John 6:3. `John 1-3` takes chapters 1 to 3 whole,
+   `John 1:-2:` runs from 1:1 to the end of chapter 2, and a dot does what a colon
+   does (`យ៉ូហាន ១៨.៣៩-១៩.១៦`). Each chapter of it starts under a line with the
+   chapter's number, `─ 2 ─────`. A passage over more than three chapters opens
+   with the first three and a **...** button under them
+   (**[en:tran:Show the next chapter]**): each click adds the next chapter, and
+   the button goes once the last one is shown. 📸
+   Some Bibles print references in their section headings — `(… យ៉ូហាន
+   ១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
+   names, every chapter of it, opens in a small floating panel; the passage you
+   are reading stays as it is.
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
@@ -2260,8 +2319,12 @@ quick lookup, and where you look a verse up when you are not presenting.
    below) it in that version, in the same color group. A pane with no color
    splits at once, in the version it already has — its buttons read
    **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
-4. If you lose a passage, you do not need to remember and type it again. Double-click one of
-   the recent reference rows near the top to go back to it.
+4. If you lose a passage, you do not need to remember and type it again: the recent
+   reference rows near the top keep it. Click one to read it in a small floating
+   panel, in the version it was read in; the passage you are on stays as it is. To
+   go back to it, open that row's **⋮** (or right-click it) and choose
+   **[en:tran:Set to current editing]**. **[en:tran:Open beside the current verse]**
+   in the same menu opens it next to the passage you are on instead.
 5. To change the main Bible version, click its short name in the header and choose a
    version from the list. 📸
 6. To read without the side panels, click the small **⋯** at the bottom-left if the
@@ -2277,7 +2340,7 @@ quick lookup, and where you look a verse up when you are not presenting.
    the OpenAI key. The switch lives with the provider setting, not in the Bible
    Reference toolbar.
 
-_Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125._
+_Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124..126, ST-59, CB-125._
 
 ### W-12 — Search the whole Bible (Bible Find)
 
@@ -2294,7 +2357,10 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125._
 2. Type your search words. Every verse containing them is listed, with **the word you
    searched for marked** in each one, so you can see at a glance why a verse is there.
    The reference — _Psalm 23:1_ — leads each result; clicking anywhere on the result
-   opens that verse. 📸
+   opens that verse in a small floating panel, in the version you searched, and the passage
+   you are reading stays as it is. Its **⋮** menu has **[en:tran:Open]**, which does the same,
+   and **[en:tran:Open beside the current verse]**, which opens it as a passage beside the one
+   you are reading. 📸
 3. The bar under the results, at the bottom of the panel, says how many verses matched — **74 [en:tran:verses found]**.
    Use it to judge whether to narrow the search: a common word runs to tens of
    thousands. If a completed search has no matches, the panel says
@@ -2318,12 +2384,12 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125._
    The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
    to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
-   **To put a result on the screen.** A result has no show button of its own. Click it —
-   it opens as a passage in the lookup — then, in the Presenter, point at that passage's
-   title and press the cast icon, **[en:tran:Save bible item and show on screen]**, as for
-   any passage (W-06 step 3).
+   **To put a result on the screen.** A result has no show button of its own. Open its **⋮**
+   menu and choose **[en:tran:Open beside the current verse]** — it opens as a passage in the
+   lookup — then, in the Presenter, point at that passage's title and press the cast icon,
+   **[en:tran:Save bible item and show on screen]**, as for any passage (W-06 step 3).
 
-_Verify: RD-08, RD-09, RD-45, RD-46, RD-47._
+_Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124._
 
 ### W-13 — Cross references
 
@@ -2349,9 +2415,14 @@ _Verify: RD-08, RD-09, RD-45, RD-46, RD-47._
    verse under it, cut at a word with a single `…` when there is more.
    Themes set in columns and reflow to one column when the panel is narrow.
 5. Point at any verse and the line beside it lights up, along with its reference: click to
-   open it beside the verse you are on, drag it into a list, or right-click it for the
-   usual verse menu. The keyboard reaches the same rows — **Tab** to one and press
-   **Enter**.
+   read it in a small floating panel, in the version the references are quoting — the
+   verse you are on stays as it is. Drag it into a list, or right-click it (or press its
+   **⋮**) for the usual verse menu: **[en:tran:Open]** does what a click does, and
+   **[en:tran:Open beside the current verse]** opens it as a passage beside the verse you
+   are on. The keyboard reaches the same rows — **Tab** to one and press **Enter**.
+   The version at the start of the panel's title — **(KJV)** — is a button: click it and
+   choose another Bible, and the same verse opens in a second panel of its own, so the two
+   can be read side by side. Close a panel with its **×**.
 6. The **`bi-cpu`** button on the section title says a model wrote these; click it for the
    page explaining what that costs you in accuracy. On a translation whose theme headings
    were machine-translated, each heading carries its own **`bi-translate`** button saying
@@ -2360,7 +2431,7 @@ _Verify: RD-08, RD-09, RD-45, RD-46, RD-47._
    **Custom Anthropic** appear as their own sections below, each collapsing and refreshing
    the same way. The section above them needs no key.
 
-_Verify: RD-10, RD-49, RD-50, RD-51, RD-52._
+_Verify: RD-10, RD-49, RD-50, RD-51, RD-52, RD-124._
 
 ### W-14 — Keep Bible notes
 
@@ -2532,7 +2603,9 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      `title` gives the English name.) Some
      labels change straight away, but the switch is only complete once you click
      **[en:tran:Apply Settings]** at the bottom-left — that reloads every open
-     window. Unsaved edits in the Slide Editor are kept.
+     window. Unsaved edits in the Slide Editor are kept. The language belongs to this
+     computer, not to the data folder: switch to another data folder and the app stays
+     in the language you chose.
    - **[en:tran:Theme]:** system / light / dark.
    - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
      configured but not installed on this computer. When the chosen font comes in more
@@ -4043,6 +4116,7 @@ Every page lists its own keys, searchable, under **Help → [en:tran:Keyboard Sh
 | `F6` / `F7` / `F8` / `F9` / `F10`    | Clear All / Background / Slide / Bible / Foreground                     | Presenter                                                             |
 | `Ctrl/Alt+ArrowLeft/Right`           | Previous / next Bible verse                                             | the output screen                                                     |
 | Arrows, `PageUp`/`PageDown`, `Space` | Next / previous slide (`Shift+Space` goes back)                         | slide thumbnails focused                                              |
+| Arrows, `PageUp`/`PageDown`, `Space` | Next / previous part, stopping at either end (`Shift+Space` goes back)  | Long Text Show, its lit part focused                                  |
 | `Tab` / `Escape` / `Shift+Escape`    | Complete the reference / remove its last part / clear it                | lookup & reader                                                       |
 | `Ctrl+Enter`                         | Focus the editing canvas                                                | Slide Editor                                                          |
 | `Ctrl+S`                             | Save                                                                    | Slide Editor, Bible Note, Lyric Editor (Web Editor saves itself)      |
@@ -4346,6 +4420,19 @@ Typing `Import the Bible called "KJV"` in the assistant does the same.
 7. Press **[en:tran:Import]** in the review. The new translation appears in
    **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
 
+**Where an imported Bible came from**
+
+Every Bible imported this way — by the assistant or with the form — keeps a note of
+where it came from: when it was imported and by whom, the link it was downloaded from
+(and the file link really used, when a GitHub page was turned into its file), the
+file's name and size, how many books, chapters and verses it has, and the key,
+language, numbers and book names chosen for it. In **[en:tran:Bibles XML]** its row
+shows **[en:tran:Source]:** and that link — press it to open the page in your
+browser — and **[en:tran:Note]** under it opens the whole note. 📸 The note is part of
+the Bible's info (`"note"` in the pencil → **[en:tran:Info]** editor), so you can add
+to it or clear it there, and a Bible you export (W-33) takes it along. A Bible
+imported before this note existed has none.
+
 A Bible already installed whose book names or numbers still read in English needs no
 second import. Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
 **🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
@@ -4380,7 +4467,7 @@ existing Bible, then use its pencil instead.
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
 > because there is nothing left to create.
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, LT-01._
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, LT-01._
 
 ### W-35 — Bring a song in from CCLI SongSelect
 
@@ -4958,8 +5045,12 @@ it is describing.
    Lyric Editor and Local Web Share — the windows a volunteer is most likely to be
    stuck in — and the menu bar is hidden on those, so the shortcut is the way in. If a
    help window is already open it comes to the front rather than a second one opening.
-   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries
-   and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
+   **On Windows the taskbar has it too**: right-click the app's icon on the taskbar and
+   choose **App Help (Chatbot)** under **Tasks** — the app comes forward and the help
+   opens straight away, without the **[en:tran:Be careful with AI]** question, which is the
+   quickest way when the app is minimised or behind something else.
+   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries,
+   the taskbar entry and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
@@ -4995,7 +5086,23 @@ it is describing.
    the Lyric Editor it offers marking verses and choruses, opened from Settings it
    offers the language and the Bible downloads. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is
-   left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
+   left out. Another tab can be asking about a different window at the same time.
+   **More than one window of the app open? Choose it on the WORKING IN line above the box.**
+   That line, just over the box you type in, names each open window — the main
+   window, and for example a Slide Editor (by its document's name), Settings or a
+   Bible Reader opened in a window of its own — and the help then works with the
+   one you choose: it reads what that window shows, outlines buttons in it, walks you
+   through steps there, the 📷 takes a picture of that window and the ◎ points in it.
+   Choosing one sets **ASKING ABOUT** to match and marks the line with a coloured
+   bar; choosing the main window goes back to the usual way. The choice belongs to
+   that chat tab while the help window stays open; the line appears only while there
+   is a second window to choose, and it keeps up by itself: a window you open or
+   close, or the main window moving to another page, shows in the list within a
+   second, with nothing to press in the help window. A picture from the 📷 and a
+   control from the ◎ remember the window they came from — rest the mouse on the
+   chip to see it — and the assistant is told which window each is of; pressing a
+   pointed-at chip outlines that control in its own window, whichever window is
+   chosen now. 📸 **ASSISTANT** is which service answers and **MODEL** is which of
    its models; with no API key at all **ASSISTANT** starts on **Free**, a shared public
    service that needs no key, and a notice pinned above the conversation says so and
    carries **Open AI settings**, which opens the settings panel that takes a key. 📸
@@ -5261,6 +5368,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    that changed while you were still reading it. (Clicking the sentence itself
    still picks one at random, which is the quick way to be shown something
    new.) 📸
+   **Seen enough tips? The ✕ at the very end of the line puts it away for 30
+   days.** It comes back by itself after that. 📸
 7. **Show it, instead of describing it.** Beside the box are three buttons.
    **📎** attaches a picture or a file from your computer; **📷** takes a picture
    of the app as it looks right now; **🎯** lets you POINT — an outline follows
@@ -5419,9 +5528,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    write-up goes straight to it together with its files — the picture of the app
    and whatever you attached: pictures, a PDF, text files, each up to 5 MB — and
    the answer starts **Sent**, with the report's reference and the names of the
-   files that went. A file that could not go is named too, with why. When no
-   report server is open, or it does not take the report, the answer says plainly
-   that nothing was sent, and why. Either way the whole thing, with the picture, is saved into your
+   files that went. A file that could not go is named too, with why. When the
+   report server is there but not answering — the computer it runs on is asleep
+   or restarting — the app KEEPS the report and sends it by itself as soon as that
+   server is back: it tries a minute after the app starts and every half hour
+   while it is open, for up to a week, and the answer says so, so there is nothing
+   more you need to do. When no report server is open at all, or it does not take
+   the report, the answer says plainly that nothing was sent, and why. Either way
+   the whole thing, with the picture, is saved into your
    **Downloads** folder, and when nothing was sent the answer tells you who wants
    it: it names the maintainers' email address and
    the subject line to use, and five buttons do the rest — **Copy report** puts the
@@ -5781,7 +5895,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     section and restart the app: the chatbot, its tools and the debugging endpoint they
     use are then never started.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 
@@ -5935,7 +6049,8 @@ learn the keys of the page you are on.
 3. Each page lists its own keys. The Presenter starts with
    **[en:tran:Screens]** (`F5` shows or hides the selected screens, `F6`–`F10` clear them,
    `F4` the messages), then **[en:tran:Slides]**, **[en:tran:Bible Lookup]**,
-   **[en:tran:Presenting Flow]** and the mini screen's
+   **[en:tran:Presenting Flow]**, **[en:tran:Long Text Show]** and the mini
+   screen's
    **[en:tran:Drawing]** and **[en:tran:Focusing]** keys. The Bible Reader
    lists the lookup and split keys, and the Slide Editor the canvas keys.
    Every page ends with **[en:tran:Every window]**,
@@ -5976,8 +6091,9 @@ when you cannot walk back to the computer to click a panel.
 1. **Space**, **→**, **↓** and **Page Down** — the keys a presenter remote
    sends for _next_ — move a panel only while that panel has the keys: the
    presenting flow's preview panel (W-22b), the slides in the middle of the
-   Presenter (W-03), or a floating **[en:tran:Slides]** preview of another
-   document. One click anywhere else — a document in the list, a button under
+   Presenter (W-03), a floating **[en:tran:Slides]** preview of another
+   document, or the lit part of a **[en:tran:Long Text Show]** (W-53). One
+   click anywhere else — a document in the list, a button under
    a screen — and the keys go to what you clicked, so the remote seems dead.
 2. **Press the key three times quickly** — inside a second and a half. The
    keys go back to what is being presented. That third press only hands the
@@ -5988,10 +6104,12 @@ when you cannot walk back to the computer to click a panel.
    - the slides in the middle of the Presenter, while one of that document's
      slides is on a screen;
    - a floating **[en:tran:Slides]** preview, while one of its slides is on a
-     screen.
+     screen;
+   - a **[en:tran:Long Text Show]** whose text is on a screen with one of its
+     parts lit: the keys go to that part's button, on the top card.
 
    So with a running order started and a song on the screen as well, it is
-   the running order that takes the keys. When none of the three has anything
+   the running order that takes the keys. When none of the four has anything
    going, three presses change nothing — there is nothing a key could move —
    so click what you want to present first.
 4. **Nothing at all has the keys** — you closed the panel you were in, say:

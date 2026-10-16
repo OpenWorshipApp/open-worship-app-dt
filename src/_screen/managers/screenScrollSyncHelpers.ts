@@ -23,7 +23,9 @@ export type ScrollSyncStateType = {
     // Last operator input on the element: a wheel, or a press -- a scrollbar
     // grab, the "to the top" button, the auto-scroll button.
     inputAt: number;
-    // Last scroll a sync message applied to the element.
+    // Last scroll the operator did not make here: one a sync message applied
+    // to the element, or a selection brought into view
+    // (`markProgrammaticScroll`).
     remoteAt: number;
 };
 
@@ -69,6 +71,20 @@ export function applyRemoteScrollPercentage(
         element.scrollTo({ left, top });
     }
     state.onRemoteScroll?.();
+}
+
+/**
+ * A scroll this window is about to set off by itself -- a selected verse or
+ * row brought into view -- that must not go out as the operator's. Every
+ * window holding the selection brings it into view on its own layout
+ * (`bible-screen-view-selected-index`), so sending the glide as well only
+ * fights theirs: two grouped mini screens each glided to the verse, each sent
+ * its first frame to the other, and each `scrollTo` stopped the other's glide
+ * -- both stuck a few pixels from where they started. Swallowed like a remote
+ * scroll, so a wheel or a press on the container takes it back at once.
+ */
+export function markProgrammaticScroll(element: HTMLElement) {
+    getScrollSyncState(element).remoteAt = performance.now();
 }
 
 // How long after a wheel on a container its scroll events still count as the

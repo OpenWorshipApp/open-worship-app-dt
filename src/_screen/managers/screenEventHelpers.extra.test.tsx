@@ -467,6 +467,51 @@ describe('screenEventHelpers', () => {
         }
     });
 
+    test('never sends the glide a selection brought into view set off', async () => {
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
+        const { markProgrammaticScroll } =
+            await import('./screenScrollSyncHelpers');
+
+        const target = document.createElement('div');
+        Object.defineProperties(target, {
+            scrollLeft: { configurable: true, writable: true, value: 0 },
+            scrollTop: { configurable: true, writable: true, value: 30 },
+            scrollWidth: { configurable: true, value: 200 },
+            clientWidth: { configurable: true, value: 100 },
+            scrollHeight: { configurable: true, value: 160 },
+            clientHeight: { configurable: true, value: 60 },
+        });
+        const onScroll = vi.fn();
+        const nowSpy = vi.spyOn(performance, 'now');
+        try {
+            registerScrollingSyncEvent(target, onScroll);
+
+            // The verse is clicked ON this container, then brought into
+            // view: the press came first, so the glide is still not the
+            // operator's. Sent, it stopped a grouped mini screen's own glide
+            // to the same verse.
+            nowSpy.mockReturnValue(1000);
+            target.dispatchEvent(new Event('pointerdown'));
+            nowSpy.mockReturnValue(1001);
+            markProgrammaticScroll(target);
+            for (const now of [1016, 1200, 1700]) {
+                nowSpy.mockReturnValue(now);
+                target.dispatchEvent(new Event('scroll'));
+            }
+            expect(onScroll).not.toHaveBeenCalled();
+
+            // A wheel mid-glide takes it back at once.
+            nowSpy.mockReturnValue(1800);
+            target.dispatchEvent(new Event('wheel'));
+            nowSpy.mockReturnValue(1816);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenCalledWith({ x: 0, y: 0.3 }, true);
+        } finally {
+            nowSpy.mockRestore();
+        }
+    });
+
     test('registers one set of listeners per container', async () => {
         const { registerScrollingSyncEvent } =
             await import('./screenEventHelpers');

@@ -33,6 +33,13 @@ and `<scratch>\data` created.
   `take_screenshot`, `click`, `fill` and `list_pages` stayed on the app that
   was up first, so a uid press meant for the scratch window lands in the
   user's. Use the `owa_*` tools there and nothing aimed by uid.
+- **A scratch instance has a taskbar identity of its own** (2026-10-15,
+  `toAppUserModelId` in `electron/taskbarHelpers.ts`). Before, every dev
+  copy shared `app.openworship.desktop.dev`, and the jump list belongs to
+  the identity: a `release/scratch-lang2` copy started after the user's
+  app pointed the taskbar's tasks at its own folder, and the user's
+  **App Help (Chatbot)** opened a new app on it. Now a scratch copy shows
+  as a separate taskbar button and leaves the user's menu alone.
 - **A scratch window the user's own window covers stops painting**, and
   `owa_screenshot` then hands back its last frame as if it were now. Trust
   the DOM tools (`owa_list_ui`, a click's `isOnNow`) and the files under the

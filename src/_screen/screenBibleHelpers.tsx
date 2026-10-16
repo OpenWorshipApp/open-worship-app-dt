@@ -27,6 +27,12 @@ import {
     getScreenBibleColumns,
     wireScreenBibleColumns,
 } from './screenBibleColumnHelpers';
+import appProvider from '../server/appProvider';
+import {
+    BIBLE_SHOWN_CHAPTER_COUNT,
+    checkIsCrossChapterTarget,
+    getTargetChapterCount,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 
 // `selected` is a long text's alone: the row its panel lights a button for.
 // A Bible verse is marked far more often (the Reader follows it) and nothing
@@ -43,7 +49,7 @@ export function onSelectKey(
 ) {
     screenLongTextManager.isToTop = isToTop;
     screenLongTextManager.selectedKJVVerseKey = selectedKJVVerseKey;
-    screenLongTextManager.sendSyncSelectedIndex();
+    screenLongTextManager.sendSyncSelectedIndex(isToTop ? 'top' : null);
 }
 
 async function applyBibleItems(
@@ -60,9 +66,11 @@ async function applyBibleItems(
         );
         return;
     }
+    // Another version of the SAME passage: as many chapters as were shown.
     const newScreenViewItemData = await bibleItemJsonToScreenViewData(
         bibleItemJson,
         newBibleKeys,
+        bibleItemData.shownChapterCount,
     );
     screenLongTextManager.screenViewData = newScreenViewItemData;
 }
@@ -136,6 +144,25 @@ async function onBibleSelect(
         ...bibleKeyMenuItems,
     ];
     showAppContextMenu(event, menuItems);
+}
+
+/**
+ * The `...` label of a passage with chapters still to show, or `undefined`.
+ * Only ever in the window that holds the operator's view: the projector
+ * draws the chapters it is given and nothing to press.
+ */
+function genMoreChapterLabel(screenViewData: BibleItemDataType) {
+    // A screen's data comes back from a setting file: tolerate it partial.
+    const target = screenViewData.bibleItemData?.bibleItem?.target;
+    if (appProvider.isPageScreen || target === undefined) {
+        return undefined;
+    }
+    const shownChapterCount =
+        screenViewData.shownChapterCount ?? BIBLE_SHOWN_CHAPTER_COUNT;
+    if (shownChapterCount >= getTargetChapterCount(target)) {
+        return undefined;
+    }
+    return tran('Show the next chapter');
 }
 
 // The content is laid out at the display's size and scaled to the box it is
@@ -221,6 +248,9 @@ export async function renderScreenLongTextManager(
         newDiv = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
             bibleItemData.renderedList,
             screenLongTextManager.isLineSync,
+            screenViewData.type === 'bible-item'
+                ? genMoreChapterLabel(screenViewData)
+                : undefined,
         );
     }
     if (newDiv === null) {
@@ -244,6 +274,9 @@ export async function renderScreenLongTextManager(
                     screenViewData,
                 );
             }
+        },
+        onShowMoreChapter: () => {
+            screenLongTextManager.showMoreBibleChapter();
         },
     });
     const { screenManagerBase } = screenLongTextManager;
@@ -307,12 +340,16 @@ export async function renderScreenLongTextManager(
 
 export async function bibleItemToScreenViewData(
     bibleItems: BibleItem[],
+    shownChapterCount = BIBLE_SHOWN_CHAPTER_COUNT,
 ): Promise<BibleItemDataType> {
-    const bibleRenderingList =
-        await bibleScreenHelper.genBibleItemRenderList(bibleItems);
+    const bibleRenderingList = await bibleScreenHelper.genBibleItemRenderList(
+        bibleItems,
+        shownChapterCount,
+    );
     const bibleKey = bibleItems[0].bibleKey || null;
     const locale =
         bibleKey === null ? DEFAULT_LANG_CODE : await getBibleLocale(bibleKey);
+    const isCrossChapter = checkIsCrossChapterTarget(bibleItems[0].target);
     return {
         type: 'bible-item',
         locale,
@@ -322,23 +359,26 @@ export async function bibleItemToScreenViewData(
         },
         scroll: 0,
         selectedKJVVerseKey: null,
+        ...(isCrossChapter ? { shownChapterCount } : {}),
     };
 }
 
 export async function bibleItemJsonToScreenViewData(
     bibleItemJson: BibleItemType,
     bibleKeys: string[],
+    shownChapterCount?: number,
 ) {
     const newBibleKeys = cloneJson(bibleKeys);
     if (newBibleKeys.length === 0) {
-        return await bibleItemToScreenViewData([
-            BibleItem.fromJson(bibleItemJson),
-        ]);
+        return await bibleItemToScreenViewData(
+            [BibleItem.fromJson(bibleItemJson)],
+            shownChapterCount,
+        );
     }
     const newBibleItems = newBibleKeys.map((bibleKey1) => {
         const bibleItem = BibleItem.fromJson(bibleItemJson);
         bibleItem.bibleKey = bibleKey1;
         return bibleItem;
     });
-    return await bibleItemToScreenViewData(newBibleItems);
+    return await bibleItemToScreenViewData(newBibleItems, shownChapterCount);
 }

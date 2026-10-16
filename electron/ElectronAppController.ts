@@ -54,6 +54,12 @@ export default class ElectronAppController {
         this.mainController.sendMessage(messageChannels.openChatbotPage);
     }
 
+    // The taskbar icon's Tasks -> App Help (Chatbot): the same window with
+    // no caution in front of it, at the user's word.
+    openChatbotFromTaskbar() {
+        this.mainController.sendMessage(messageChannels.openChatbotFromTaskbar);
+    }
+
     openAiChatPage() {
         this.mainController.sendMessage(messageChannels.openAiChatPage);
     }

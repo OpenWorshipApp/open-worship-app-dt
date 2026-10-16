@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: f6db8419-15c0-43d6-9847-10ef8f56227d
-  modified: 2026-10-12T15:37:13.935Z
+  modified: 2026-10-15T17:52:51.782Z
 ---
 
 `tools/owa-devtools-mcp/questions/*.json` is the curated list of questions the
@@ -39,7 +39,13 @@ app moves without it.
   included. On 2026-10-12 two questions added mid-session closed the user's
   Settings and help windows with an answer in flight. Check `owa_app_state`
   first; when an app is up and somebody is working in it, make the corpus edit
-  the LAST write of the change and say so, or ask.
+  the LAST write of the change and say so, or ask. **Do not decide it is safe
+  from the process chain**: under `electron:dev` the chain up from
+  `electron.exe` reads `cross-env NODE_ENV=development electron .` →
+  `npm run electron`, which looks like a plain launch — nodemon (`--watch
+  tools/owa-devtools-mcp`) is the NEXT parent up. On 2026-10-15 a check that
+  stopped at `npm run electron` called it safe, and the save relaunched the
+  user's app with a song on two screens three seconds later.
 - The two consumers share one ranking, `questionMatch.mjs`, which is deliberately
   free of `node:fs` so the renderer can bundle it. `questions.mjs` is the
   disk-reading wrapper the MCP server uses. Never write a second matcher in

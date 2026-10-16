@@ -142,7 +142,10 @@ describe('readArgs', () => {
             isReports: false,
             isWithReports: false,
             dbFile: '',
+            isNotifying: true,
         });
+        // A new report is said on the desktop unless told not to.
+        expect(readArgs(['--reports', '--no-notify']).isNotifying).toBe(false);
     });
 
     // --with-reports: the tunnel to an LLM server takes reports as well.
@@ -268,9 +271,14 @@ describe('readArgs', () => {
             body: '{}',
         });
         await fetch(base, { method: 'POST', headers: look, body: 'a report' });
-        expect(lines).toHaveLength(2);
-        expect(lines[0]).toContain('POST /v1/chat/completions  200');
-        expect(lines[1]).toContain('POST /v1  200');
+        const calls = lines.filter((line) => {
+            return line.startsWith('POST ');
+        });
+        expect(calls).toHaveLength(2);
+        expect(calls[0]).toContain('POST /v1/chat/completions  200');
+        expect(calls[1]).toContain('POST /v1  200');
+        // ...and a report kept says so in the log.
+        expect(lines).toContain('New report #2 kept, 0 files.');
         taker.store.close();
     });
 
@@ -708,6 +716,71 @@ describe('readModels', () => {
                 },
             ],
         });
+    });
+
+    // Listed but not loaded, a model is loaded on the spot at its default
+    // context when somebody picks it.
+    it('lists only the LOADED chat models when any is loaded', async () => {
+        const llm = await openFakeLlm((req, res) => {
+            answerJson(res, {
+                models: [
+                    {
+                        type: 'llm',
+                        key: 'google/gemma-4-12b-qat',
+                        loaded_instances: [],
+                    },
+                    {
+                        type: 'llm',
+                        key: 'google/gemma-4-e4b',
+                        display_name: 'Gemma 4 E4B',
+                        loaded_instances: [
+                            {
+                                id: 'google/gemma-4-e4b',
+                                config: { context_length: 32768 },
+                            },
+                        ],
+                    },
+                    {
+                        type: 'embedding',
+                        key: 'text-embedding-nomic',
+                        loaded_instances: [{ id: 'text-embedding-nomic' }],
+                    },
+                ],
+            });
+        });
+        expect(await readModels(llm.port)).toEqual({
+            kind: 'LM Studio',
+            models: [
+                {
+                    model: 'google/gemma-4-e4b',
+                    name: 'Gemma 4 E4B',
+                    canSeeImages: false,
+                },
+            ],
+        });
+    });
+
+    it('lists every chat model when none is loaded', async () => {
+        const llm = await openFakeLlm((req, res) => {
+            answerJson(res, {
+                models: [
+                    { type: 'llm', key: 'a/one', loaded_instances: [] },
+                    { type: 'llm', key: 'b/two', loaded_instances: [] },
+                    // Only an embedding model loaded: still no chat model.
+                    {
+                        type: 'embedding',
+                        key: 'text-embedding-nomic',
+                        loaded_instances: [{ id: 'text-embedding-nomic' }],
+                    },
+                ],
+            });
+        });
+        const { models } = await readModels(llm.port);
+        expect(
+            models.map((item) => {
+                return item.model;
+            }),
+        ).toEqual(['a/one', 'b/two']);
     });
 
     it('falls back to the ids any OpenAI-compatible server lists', async () => {

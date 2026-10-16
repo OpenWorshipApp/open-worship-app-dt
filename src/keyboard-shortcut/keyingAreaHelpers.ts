@@ -7,7 +7,8 @@ import { nextSlideEventMappers } from './appShortcutMappers';
 // holding a presenter remote and cannot click.
 //
 // Every area that steps a service -- a Presenting Flow window, the slides
-// preview, a floating "Slides: ..." preview -- answers Space and the arrows
+// preview, a floating "Slides: ..." preview, Long Text Show's lit part --
+// answers Space and the arrows
 // only while DOM focus is INSIDE it. That gate has to stay: several of them are
 // mounted at once and each one hears every key, so without it they would all
 // step together. But one click anywhere else (a Documents row, a screen's
@@ -32,11 +33,13 @@ import { nextSlideEventMappers } from './appShortcutMappers';
 
 // Which area takes the keys when more than one has a selected element. A run
 // sheet is what the operator opened to run the service from, so it outranks
-// the document they were merely looking at.
+// the document they were merely looking at. Long Text Show comes last: it was
+// added after that order was chosen, and placed so as not to change it.
 export const KEYING_AREA_PRIORITY = {
     presentingFlow: 0,
     slides: 1,
     slidesPopup: 2,
+    longText: 3,
 } as const;
 
 export type KeyingAreaType = {

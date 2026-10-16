@@ -18,6 +18,7 @@ import {
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { normalizeBibleTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import { appLog, appError as logError } from '../helper/loggerHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
@@ -296,16 +297,14 @@ export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const bibleItem = BibleItem.fromJson({
         id: -1,
         bibleKey,
-        target: {
-            bookKey: extracted.bookKey,
-            chapter: extracted.chapter,
-            verseStart: extracted.verseStart,
-            verseEnd: extracted.verseEnd,
-        },
+        // With its `chapterEnd`: `JHN 1:2-3:4` read without it is `JHN 1:2-4`.
+        target: normalizeBibleTarget(extracted),
         metadata: {},
     });
     await bibleItem.toTitle();
-    const bibleText = await bibleItem.toText();
+    // The text only feeds a ~150 character preview and its tooltip, so a
+    // reference running over chapters reads its first chapter, never the rest.
+    const bibleText = await bibleItem.toText(1);
     return {
         htmlText: toPreviewText(bibleText),
         bibleItem,

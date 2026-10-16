@@ -1002,6 +1002,25 @@ describe('electronEventListener handlers', () => {
         expect(captureWindowImage).toHaveBeenLastCalledWith(screenWin);
     });
 
+    // `owa_screenshot` aimed at a window of its own -- a Slide Editor chosen
+    // in the help window's window picker -- is a picture of THAT window.
+    test('a page that asks for its own window is photographed itself', async () => {
+        const editorWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => editorWin);
+        electronMockState.BrowserWindowMock();
+        const appController = createAppController();
+        captureWindowImage.mockResolvedValue('data:image/png;base64,SHOT');
+        initEventListenerApp(appController);
+        await findOnHandler('main:app:capture-window')(
+            { sender: editorWin.webContents },
+            { replyEventName: 'reply:own', isOwnWindow: true },
+        );
+        expect(captureWindowImage).toHaveBeenLastCalledWith(editorWin);
+        expect(captureWindowImage).not.toHaveBeenCalledWith(
+            appController.mainWin,
+        );
+    });
+
     // A screen on a virtual display has no window, and is drawn here only
     // while an MP4 is watched: the rest of the time its Mini Screen is the
     // picture, never "That window is not open".

@@ -151,6 +151,9 @@ export const USAGE = [
     '                 that takes reports. Its id is "reports" unless given.',
     '                 Needs Node 22.13 or newer; --port and --host are not',
     '                 used.',
+    '  --no-notify    with --reports or --with-reports: no desktop notice',
+    '                 on this computer when a new report arrives (one a',
+    '                 minute at most; on by default).',
 ].join('\n');
 
 /**
@@ -179,6 +182,8 @@ export function readArgs(argv) {
         isReports: false,
         isWithReports: false,
         dbFile: '',
+        // A desktop notice for each new report (`genNewReportNotifier`).
+        isNotifying: true,
     };
     let isBad = false;
     let isNameGiven = false;
@@ -196,6 +201,7 @@ export function readArgs(argv) {
         else if (arg === '--reports') args.isReports = true;
         else if (arg === '--with-reports') args.isWithReports = true;
         else if (arg === '--db') args.dbFile = readNext();
+        else if (arg === '--no-notify') args.isNotifying = false;
         else if (arg === '--cloudflared') args.cloudflared = readNext();
         else if (arg === '--check') args.checkSeconds = Number(readNext());
         else if (arg === '--out') args.outDir = readNext();
@@ -508,12 +514,24 @@ export async function readModels(port, host = TARGET_HOST) {
     // LM Studio describes its models (display name, vision) on /api/v1/models.
     const lmStudio = await getJson(`${base}/api/v1/models`);
     if (Array.isArray(lmStudio.data?.models)) {
+        const chatList = lmStudio.data.models.filter((item) => {
+            return item.type === 'llm' && typeof item.key === 'string';
+        });
+        // Only what is LOADED, when anything is: the list holds every model
+        // downloaded, and one picked that is not loaded is loaded on the
+        // spot (LM Studio's JIT) at its default context -- too small for the
+        // app, and a long wait on the machine (2026-10-15, nine listed with
+        // a 12B first while only a 4B was loaded). With nothing loaded the
+        // whole list stands, so the assistant is never published empty.
+        const loadedList = chatList.filter((item) => {
+            return (
+                Array.isArray(item.loaded_instances) &&
+                item.loaded_instances.length > 0
+            );
+        });
         return {
             kind: 'LM Studio',
-            models: lmStudio.data.models
-                .filter((item) => {
-                    return item.type === 'llm' && typeof item.key === 'string';
-                })
+            models: (loadedList.length > 0 ? loadedList : chatList)
                 .slice(0, MAX_MODELS)
                 .map((item) => {
                     return {
@@ -1008,13 +1026,20 @@ async function main() {
     if (args.isReports) {
         // The door is the inbox itself: nothing stands behind it.
         try {
-            const { openReportInbox, DEFAULT_DB_FILE } = await import(
-                pathToFileURL(INBOX_SCRIPT).href
-            );
+            const {
+                openReportInbox,
+                DEFAULT_DB_FILE,
+                genNewReportNotifier,
+            } = await import(pathToFileURL(INBOX_SCRIPT).href);
             const dbFile = args.dbFile
                 ? path.resolve(args.dbFile)
                 : DEFAULT_DB_FILE;
-            door = await openReportInbox({ key, dbFile, say: log });
+            door = await openReportInbox({
+                key,
+                dbFile,
+                say: log,
+                onNew: args.isNotifying ? genNewReportNotifier() : null,
+            });
             doorTarget = `the report inbox (${dbFile})`;
         } catch (error) {
             print(`The report inbox could not be opened: ${error.message}`);
@@ -1025,13 +1050,19 @@ async function main() {
         let reportTaker = null;
         if (args.isWithReports) {
             try {
-                const { openReportTaker, DEFAULT_DB_FILE } = await import(
-                    pathToFileURL(INBOX_SCRIPT).href
-                );
+                const {
+                    openReportTaker,
+                    DEFAULT_DB_FILE,
+                    genNewReportNotifier,
+                } = await import(pathToFileURL(INBOX_SCRIPT).href);
                 const dbFile = args.dbFile
                     ? path.resolve(args.dbFile)
                     : DEFAULT_DB_FILE;
-                reportTaker = await openReportTaker({ dbFile, say: log });
+                reportTaker = await openReportTaker({
+                    dbFile,
+                    say: log,
+                    onNew: args.isNotifying ? genNewReportNotifier() : null,
+                });
                 doorTarget += `, reports kept in ${dbFile}`;
             } catch (error) {
                 print(

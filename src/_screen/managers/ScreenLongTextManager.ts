@@ -66,9 +66,14 @@ import {
 import { showBibleTextColorChangedToast } from './bibleTextColorToastHelpers';
 import { tran } from '../../lang/langHelpers';
 import {
+    BIBLE_SHOWN_CHAPTER_COUNT,
+    getTargetChapterCount,
+} from '../../helper/bible-helpers/bibleTargetHelpers';
+import {
     SCREEN_BIBLE_SCROLL_CLASSNAME,
     getScreenBibleScrollTop,
     getScreenBibleScroller,
+    markScreenBibleProgrammaticScroll,
     steerScreenBibleAutoScroll,
     toScreenBibleScrollSelector,
 } from '../screenBibleColumnHelpers';
@@ -411,17 +416,19 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
     set scroll(scroll: number) {
         this._setMetadata('scroll', scroll);
     }
-    // `isToMiddle` rides along only when it is asked for: the screen then
-    // brings the row to ITS middle, which is another pixel than the mini
-    // preview's.
-    sendSyncSelectedIndex(isToMiddle = false) {
+    // `isToTop` / `isToMiddle` ride along only when asked for: the screen
+    // then brings the selection to ITS top or middle, which is another pixel
+    // than the mini preview's. The preview's glide is not sent for it
+    // (`markProgrammaticScroll`).
+    sendSyncSelectedIndex(bringTo: 'top' | 'middle' | null = null) {
         this.screenManagerBase.sendScreenMessage(
             {
                 screenId: this.screenId,
                 type: 'bible-screen-view-selected-index',
                 data: {
                     selectedKJVVerseKey: this.selectedKJVVerseKey,
-                    ...(isToMiddle ? { isToMiddle: true } : {}),
+                    ...(bringTo === 'top' ? { isToTop: true } : {}),
+                    ...(bringTo === 'middle' ? { isToMiddle: true } : {}),
                 },
             },
             true,
@@ -434,10 +441,55 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         if (screenLongTextManager === null) {
             return;
         }
+        if (data.isToTop === true) {
+            screenLongTextManager.isToTop = true;
+        }
         if (data.isToMiddle === true) {
             screenLongTextManager.isToMiddle = true;
         }
         screenLongTextManager.selectedKJVVerseKey = data.selectedKJVVerseKey;
+    }
+
+    // The same text as the other screen's: the same long text, or any Bible
+    // passage -- what a verse clicked in the Reader is written to as well.
+    private checkIsSameText(other: ScreenLongTextManager) {
+        const data = this._screenViewData;
+        const otherData = other._screenViewData;
+        if (data === null || otherData === null) {
+            return false;
+        }
+        if (checkIsLongTextData(otherData)) {
+            return this.checkIsLongTextSource(otherData.longTextData.sourceId);
+        }
+        return !checkIsLongTextData(data);
+    }
+
+    /**
+     * A colour-group member takes the selection a screen of its group just
+     * made -- on its mini preview, on its projector, from a long text's
+     * panel -- and brings it into view on its own layout. Grouped screens
+     * are not always one size, and a member that followed the sender's
+     * SCROLL instead had its own glide to the same place stopped by it.
+     * Passed over: a locked member, and one holding another text, whose own
+     * mark the key would only drop. Answers whether it was taken, so the
+     * caller tells the member's own window too.
+     */
+    static receiveGroupSelectedIndex(
+        fromScreenId: number,
+        message: ScreenMessageType,
+    ) {
+        const from = this.getInstance(fromScreenId);
+        const member = this.getInstance(message.screenId);
+        if (
+            from === null ||
+            member === null ||
+            member.screenManagerBase.isLocked ||
+            !member.checkIsSameText(from)
+        ) {
+            return false;
+        }
+        this.receiveSyncSelectedIndex(message);
+        return true;
     }
 
     /**
@@ -449,7 +501,7 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
     bringSectionToMiddle(sectionKey: string) {
         this.isToMiddle = true;
         this.selectedKJVVerseKey = sectionKey;
-        this.sendSyncSelectedIndex(true);
+        this.sendSyncSelectedIndex('middle');
     }
 
     toSyncMessage(): BasicScreenMessageType {
@@ -563,6 +615,47 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         if (filePath !== undefined) {
             applyAttachBackground(this.screenId, filePath, bibleItemJson.id);
         }
+    }
+
+    /**
+     * The operator's `...` under a passage crossing chapters: the same
+     * passage, in the same versions, one chapter deeper, on this screen and
+     * every screen synced with it.
+     *
+     * The scroll is a share of the scrollable height, which the new chapter
+     * grows; it is scaled by the verses before and after so the view stays
+     * about where it was instead of jumping past the chapter just added.
+     */
+    async showMoreBibleChapter() {
+        const screenViewData = this._screenViewData;
+        if (
+            screenViewData?.type !== 'bible-item' ||
+            screenViewData.bibleItemData === undefined
+        ) {
+            return;
+        }
+        const { bibleItem, renderedList } = screenViewData.bibleItemData;
+        const shownChapterCount =
+            screenViewData.shownChapterCount ?? BIBLE_SHOWN_CHAPTER_COUNT;
+        if (shownChapterCount >= getTargetChapterCount(bibleItem.target)) {
+            return;
+        }
+        const newBibleItemData = await bibleItemJsonToScreenViewData(
+            bibleItem,
+            this.getRenderedBibleKeys(),
+            shownChapterCount + 1,
+        );
+        const oldVerseCount = renderedList[0]?.verses.length ?? 0;
+        const newVerseCount =
+            newBibleItemData.bibleItemData?.renderedList[0]?.verses.length ?? 0;
+        this.applyFullDataSrcWithSyncGroup({
+            ...newBibleItemData,
+            scroll:
+                newVerseCount > 0
+                    ? (screenViewData.scroll * oldVerseCount) / newVerseCount
+                    : screenViewData.scroll,
+            selectedKJVVerseKey: screenViewData.selectedKJVVerseKey,
+        });
     }
 
     static async handleBibleItemSelecting(
@@ -779,20 +872,26 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
     }
 
     renderSelectedIndex() {
-        if (this.div === null) {
-            return;
-        }
-        bibleScreenHelper.removeClassName(this.div, 'selected');
+        // Taken whether or not there is a div to scroll: one left behind by a
+        // card drawn without it -- a group member's, say -- would bend that
+        // screen's next, ordinary selection.
         const isToTop = this.isToTop;
         this.isToTop = false;
         const isToMiddle = this.isToMiddle;
         this.isToMiddle = false;
+        if (this.div === null) {
+            return;
+        }
+        bibleScreenHelper.removeClassName(this.div, 'selected');
         const selectedBlockDoms = bibleScreenHelper.resetClassName(
             this.div,
             'selected',
             true,
             `${this.selectedKJVVerseKey}`,
         );
+        if (selectedBlockDoms.length > 0) {
+            markScreenBibleProgrammaticScroll(this.div);
+        }
         if (isToMiddle) {
             // The ROW, once. The cells of one row are other heights in each
             // language, and centring them one after another left the last

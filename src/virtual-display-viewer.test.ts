@@ -403,6 +403,166 @@ test('the camera button lists every camera, and shares the one chosen', async ()
     expect(panel.hidden).toBe(true);
 });
 
+test('a shared camera encodes only while watched, requests keys and respects backpressure', async () => {
+    const drawImage = vi.fn();
+    const contextSpy = vi
+        .spyOn(HTMLCanvasElement.prototype, 'getContext')
+        .mockReturnValue({ drawImage } as unknown as CanvasRenderingContext2D);
+    const encoders: FakeEncoder[] = [];
+    class FakeEncoder {
+        state = 'unconfigured';
+        encodeQueueSize = 0;
+        configurations: unknown[] = [];
+        frames: Array<{ keyFrame: boolean }> = [];
+        constructor(
+            readonly callbacks: {
+                output: (chunk: unknown) => void;
+                error: (error: Error) => void;
+            },
+        ) {
+            encoders.push(this);
+        }
+        configure(config: unknown) {
+            this.state = 'configured';
+            this.configurations.push(config);
+        }
+        encode(_frame: unknown, options: { keyFrame: boolean }) {
+            this.frames.push(options);
+            this.callbacks.output({
+                byteLength: 3,
+                type: options.keyFrame ? 'key' : 'delta',
+                timestamp: 1234,
+                copyTo: (bytes: Uint8Array) => bytes.set([1, 2, 3]),
+            });
+        }
+        close() {
+            this.state = 'closed';
+        }
+    }
+    const closedFrames: number[] = [];
+    class FakeFrame {
+        constructor(
+            readonly canvas: HTMLCanvasElement,
+            readonly init: { timestamp: number },
+        ) {}
+        close() {
+            closedFrames.push(this.canvas.width);
+        }
+    }
+    vi.stubGlobal('VideoEncoder', FakeEncoder);
+    vi.stubGlobal('VideoFrame', FakeFrame);
+    const track = {
+        label: 'Choir camera',
+        stop: vi.fn(),
+        getSettings: () => ({ deviceId: 'choir-camera' }),
+    };
+    const stream = {
+        getVideoTracks: () => [track],
+        getTracks: () => [track],
+    };
+    const previousMediaDevices = Object.getOwnPropertyDescriptor(
+        navigator,
+        'mediaDevices',
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: {
+            getUserMedia: vi.fn(async () => stream),
+            enumerateDevices: vi.fn(async () => [
+                {
+                    kind: 'videoinput',
+                    deviceId: 'choir-camera',
+                    label: 'Choir camera',
+                },
+            ]),
+        },
+    });
+    try {
+        latest().open();
+        latest().receive({ type: 'layout', layout: LAYOUT });
+        element<HTMLButtonElement>('share-camera-button').click();
+        await vi.advanceTimersByTimeAsync(0);
+        element('camera-list').querySelector('button')!.click();
+        for (let i = 0; i < 5; i++) await vi.advanceTimersByTimeAsync(0);
+        const video = element('camera-preview').querySelector('video')!;
+        Object.defineProperty(video, 'videoWidth', {
+            configurable: true,
+            value: 1280,
+        });
+        Object.defineProperty(video, 'videoHeight', {
+            configurable: true,
+            value: 720,
+        });
+
+        latest().receive({ type: 'camera-start' });
+        await vi.advanceTimersByTimeAsync(70);
+        expect(encoders).toHaveLength(1);
+        expect(encoders[0].configurations).toEqual([
+            expect.objectContaining({
+                codec: 'vp8',
+                width: 640,
+                height: 360,
+                framerate: 15,
+            }),
+        ]);
+        expect(encoders[0].frames).toEqual([{ keyFrame: true }]);
+        const videos = () =>
+            latest()
+                .sent.map((text) => JSON.parse(text))
+                .filter((packet) => packet.type === 'video');
+        expect(videos()).toEqual([
+            { type: 'video', key: true, timestamp: 1234, data: 'AQID' },
+        ]);
+        expect(closedFrames).toEqual([640]);
+        expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 640, 360);
+
+        latest().receive({ type: 'camera-keyframe' });
+        await vi.advanceTimersByTimeAsync(70);
+        expect(encoders[0].frames.at(-1)).toEqual({ keyFrame: true });
+        (latest() as any).bufferedAmount = 1024 * 1024 + 1;
+        const sentBeforeBackpressure = videos().length;
+        await vi.advanceTimersByTimeAsync(70);
+        expect(videos()).toHaveLength(sentBeforeBackpressure);
+        (latest() as any).bufferedAmount = 0;
+        encoders[0].encodeQueueSize = 3;
+        await vi.advanceTimersByTimeAsync(70);
+        expect(videos()).toHaveLength(sentBeforeBackpressure);
+        encoders[0].encodeQueueSize = 0;
+
+        Object.defineProperty(video, 'videoHeight', {
+            configurable: true,
+            value: 960,
+        });
+        await vi.advanceTimersByTimeAsync(70);
+        expect(encoders).toHaveLength(2);
+        expect(encoders[0].state).toBe('closed');
+        expect(encoders[1].configurations).toEqual([
+            expect.objectContaining({ width: 640, height: 480 }),
+        ]);
+        expect(encoders[1].frames[0]).toEqual({ keyFrame: true });
+
+        latest().receive({ type: 'camera-stop' });
+        expect(encoders[1].state).toBe('closed');
+        const sentAtStop = videos().length;
+        await vi.advanceTimersByTimeAsync(500);
+        expect(videos()).toHaveLength(sentAtStop);
+        element('camera-list').querySelector('button')!.click();
+        expect(track.stop).toHaveBeenCalled();
+    } finally {
+        contextSpy.mockRestore();
+        vi.unstubAllGlobals();
+        if (previousMediaDevices) {
+            Object.defineProperty(
+                navigator,
+                'mediaDevices',
+                previousMediaDevices,
+            );
+        } else {
+            delete (navigator as any).mediaDevices;
+        }
+    }
+});
+
 // "Cast to a TV" did nothing in Chrome: the browser's picker, handed a stream
 // it had never loaded, closed at once, and the page took that for a person
 // closing it. The page casts to a TV on THIS DEVICE's network through the

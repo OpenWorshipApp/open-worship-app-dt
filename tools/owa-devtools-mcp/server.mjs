@@ -19,8 +19,15 @@ import { registerOwaTools } from './owaTools.mjs';
 /**
  * `argv` is chrome-devtools-mcp's own CLI surface (`--headless`, `--viewport`,
  * `--logFile`, ...); anything it does not know is dropped by the caller.
+ * `door` is who is on the other end: `app` for the in-app HTTP host (the
+ * chatbot), `stdio` for an outside agent -- said in what a tool writes into
+ * the user's files, e.g. who installed a Bible.
  */
-export async function createOwaMcpServer({ argv = [], logFile } = {}) {
+export async function createOwaMcpServer({
+    argv = [],
+    logFile,
+    door = 'stdio',
+} = {}) {
     const args = parseArguments(VERSION, ['node', 'owa-devtools-mcp', ...argv]);
     // Two reasons, both hard requirements:
     //  - chrome-devtools-mcp's telemetry is a process-wide singleton that
@@ -36,7 +43,7 @@ export async function createOwaMcpServer({ argv = [], logFile } = {}) {
         enumerable: true,
     });
     const { server } = await createMcpServer(args, { logFile });
-    registerOwaTools(server);
+    registerOwaTools(server, { door });
     // Wrapped here rather than at each transport: the stdio bin and the
     // in-app HTTP host both reach the window through this one server, and a
     // click nobody in the room made must say who made it. Set

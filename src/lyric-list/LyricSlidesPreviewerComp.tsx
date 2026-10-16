@@ -32,6 +32,7 @@ import StagePreviewerHeaderComp, {
     parseStagePaneSetting,
     toStagePaneSetting,
 } from '../app-document-presenter/stage/StagePreviewerHeaderComp';
+import { useLyricWarmSlides } from './useLyricWarmSlides';
 
 function getLyricAppDocuments(
     stageSetting: string,
@@ -143,11 +144,15 @@ export default function LyricSlidesPreviewerComp() {
         return getLyricAppDocuments(stageSetting, lyricManager);
     }, [stageSetting, lyricManager]);
 
+    // The song's slides at every screen's stage, built before the click.
+    const scheduleWarmUp = useLyricWarmSlides(lyricManager, stages);
+
     // The file moved on disk, so the slides every pane derived from it are
     // stale. ORDER IS LOAD-BEARING: the previewer is re-fed first and the
     // caches dropped second — a pane that re-derives in between would re-fill
     // its cache from the text the previewer still holds, and stay stale for the
-    // cache's full 3 minutes.
+    // cache's full 10 seconds. The screens' stages are rebuilt last, from the
+    // new text (`clearCache` dropped their decks too).
     useFileSourceEvents(
         ['update'],
         async () => {
@@ -155,6 +160,7 @@ export default function LyricSlidesPreviewerComp() {
             lyricAppDocumentEntries.forEach(([_, lyricAppDocument]) => {
                 lyricAppDocument.clearCache();
             });
+            scheduleWarmUp();
         },
         [lyricAppDocumentEntries],
         lyricManager.filePath,

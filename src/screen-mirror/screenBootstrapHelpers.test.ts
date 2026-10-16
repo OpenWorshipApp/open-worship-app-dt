@@ -9,9 +9,18 @@ vi.mock('../server/appProvider', () => ({
 }));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
-        listKeys: vi.fn(async () => ['screen-bg-manager', 'api-key']),
+        listKeys: vi.fn(async () => [
+            'screen-bg-manager',
+            'api-key',
+            // A copy an older version left in the data folder.
+            'language-locale',
+        ]),
         getItem: vi.fn((key: string) => `value:${key}`),
     },
+}));
+vi.mock('../lang/langHelpers', () => ({
+    LOCALE_SETTING_NAME: 'language-locale',
+    getCurrentLocale: () => 'km-KH',
 }));
 vi.mock('../_screen/managers/screenManagerBaseHelpers', () => ({
     getScreenManagerBase: (screenId: number) => bases.get(screenId) ?? null,
@@ -50,9 +59,11 @@ describe('getMirrorBootstrap', () => {
 
         expect(context.screenId).toBe(0);
         expect(context.stage).toBe(3);
-        // Only what a screen draws with, never anything else.
+        // Only what a screen draws with, never anything else -- and the
+        // language this computer uses, not the data folder's stale copy.
         expect(context.settings).toEqual({
             'screen-bg-manager': 'value:screen-bg-manager',
+            'language-locale': 'km-KH',
         });
         expect(context.messages).toEqual([
             { screenId: 0, type: 'screen-show', data: payload },

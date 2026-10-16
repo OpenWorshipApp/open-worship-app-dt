@@ -21,7 +21,6 @@ import {
 // for it -- and the ones that share a prefix with a broader family are the
 // point of the list.
 const REAL_LOCAL_KEY_LEAF_MAP: Record<string, string> = {
-    'language-locale': 'general.language',
     'app-font-family': 'general.font',
     'daily-tips-disabled': 'general.tips',
     'daily-tips-hidden-until': 'general.tips',
@@ -153,6 +152,8 @@ const REAL_LOCAL_KEY_LEAF_MAP: Record<string, string> = {
     'screen-bg-manager': SETTING_EXCLUDED,
     'screen-draw-data-0': SETTING_EXCLUDED,
     'selected-lyric': SETTING_EXCLUDED,
+    // An older version's copy: the language is this computer's now.
+    'language-locale': SETTING_EXCLUDED,
 };
 
 describe('the section tree', () => {
@@ -293,6 +294,9 @@ describe('classifying a local setting', () => {
 
 describe('classifying the main process stores', () => {
     test('the home store is an allowlist', () => {
+        expect(classifySettingKey('home', 'language-locale')).toBe(
+            'general.language',
+        );
         expect(classifySettingKey('home', 'ai-setting')).toBe('ai.providers');
         expect(classifySettingKey('home', 'ai-custom-servers')).toBe(
             'ai.providers',
@@ -319,6 +323,8 @@ describe('classifying the main process stores', () => {
             'virtual-display-access',
             'ai-enabled',
             'stay-awake',
+            // Whether the data folder's copy was taken, once per computer.
+            'language-locale-migrated',
             'lexical-playground-editor-state',
             '__proto__',
             'constructor',

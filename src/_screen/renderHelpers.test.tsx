@@ -71,6 +71,40 @@ vi.mock('../bible-list/bibleRenderHelpers', () => ({
                 return `KJV-${target.chapter}-${target.verseStart}`;
             },
         ),
+        // Two verses a chapter, from the chapter the range starts at.
+        toVerseTextList: vi.fn(
+            async (
+                _bibleKey: string,
+                target: { chapter: number; chapterEnd?: number },
+                _isSkipExtra: boolean,
+                range: { start: number; count: number },
+            ) => {
+                const isCrossChapter =
+                    (target.chapterEnd ?? target.chapter) > target.chapter;
+                const lastChapter = target.chapterEnd ?? target.chapter;
+                const verseList = [];
+                for (
+                    let chapter = target.chapter + range.start;
+                    chapter <= lastChapter &&
+                    chapter < target.chapter + range.start + range.count;
+                    chapter++
+                ) {
+                    for (const verse of [1, 2]) {
+                        verseList.push({
+                            chapter,
+                            verse,
+                            localeVerse: `${verse}`,
+                            localeChapter: `${chapter}`,
+                            text: verse === 1 ? 'Verse one' : 'Verse two',
+                            bibleVersesKey: `VERSE-${chapter}-${verse}`,
+                            kjvBibleVersesKey: `KJV-${chapter}-${verse}`,
+                            isChapterStart: isCrossChapter && verse === 1,
+                        });
+                    }
+                }
+                return verseList;
+            },
+        ),
     },
 }));
 
@@ -634,6 +668,81 @@ describe('screen render helpers', () => {
                 kjvVerseKey: 'KJV-1-2',
             },
         ]);
+    });
+
+    // GEN 1:1 to 5:2: three chapters are drawn, each opening on a divider
+    // that names it; the operator's `...` asks for more.
+    test('draws a passage across chapters chapter-labelled, as deep as asked', async () => {
+        const bibleScreenHelper = (await import('./bibleScreenHelpers'))
+            .default;
+        const bibleItem = {
+            bibleKey: 'KJV',
+            target: {
+                bookKey: 'GEN',
+                chapter: 1,
+                verseStart: 1,
+                verseEnd: 2,
+                chapterEnd: 5,
+            },
+            toTitle: vi.fn(async () => 'Genesis 1:1-5:2'),
+        } as any;
+        const [rendered] = await bibleScreenHelper.genBibleItemRenderList([
+            bibleItem,
+        ]);
+        expect(
+            rendered.verses.map(({ kjvVerseKey, chapterLabel }) => {
+                return `${kjvVerseKey}${chapterLabel ? ` [${chapterLabel}]` : ''}`;
+            }),
+        ).toEqual([
+            'KJV-1-1 [1]',
+            'KJV-1-2',
+            'KJV-2-1 [2]',
+            'KJV-2-2',
+            'KJV-3-1 [3]',
+            'KJV-3-2',
+        ]);
+        const [deeper] = await bibleScreenHelper.genBibleItemRenderList(
+            [bibleItem],
+            4,
+        );
+        expect(deeper.verses).toHaveLength(8);
+
+        const screenView =
+            await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+                [rendered],
+                true,
+                'Show the next chapter',
+            );
+        expect(
+            Array.from(
+                screenView.querySelectorAll('.bible-chapter-divider'),
+            ).map((element) => element.textContent),
+        ).toEqual(['1', '2', '3']);
+        const moreButton = screenView.querySelector(
+            '[data-bible-more-chapter]',
+        ) as HTMLButtonElement;
+        expect(moreButton.getAttribute('aria-label')).toBe(
+            'Show the next chapter',
+        );
+        const onShowMoreChapter = vi.fn();
+        const onSelectKey = vi.fn();
+        bibleScreenHelper.registerHighlight(screenView, {
+            onSelectKey,
+            onBibleSelect: vi.fn(),
+            onShowMoreChapter,
+        });
+        moreButton.click();
+        expect(onShowMoreChapter).toHaveBeenCalledTimes(1);
+        expect(onSelectKey).not.toHaveBeenCalled();
+
+        const projectorView =
+            await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+                [rendered],
+                true,
+            );
+        expect(
+            projectorView.querySelector('[data-bible-more-chapter]'),
+        ).toBeNull();
     });
 
     test('a marquee keeps its edge slide unless it carries its own transition', async () => {

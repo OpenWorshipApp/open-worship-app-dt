@@ -421,11 +421,18 @@ describe('bibleLogicHelpers2', () => {
         expect(await module.toInputText('KJV', 'John', 3, 16)).toBe(
             'John ៣:១៦',
         );
+        // A range keeps its end; one verse is written once.
         expect(await module.toInputText('KJV', 'John', 3, 16, 18)).toBe(
-            'John ៣:១៦',
+            'John ៣:១៦-១៨',
         );
         expect(await module.toInputText('KJV', 'John', 3, 16, 16)).toBe(
-            'John ៣:១៦-១៦',
+            'John ៣:១៦',
+        );
+        expect(await module.toInputText('KJV', 'John', 1, 2, 4, 3)).toBe(
+            'John ១:២-៣:៤',
+        );
+        expect(await module.toInputText('KJV', 'John', 3, 2, 4, 3)).toBe(
+            'John ៣:២-៤',
         );
     });
 
@@ -694,7 +701,9 @@ describe('bibleLogicHelpers2', () => {
         expect(module.toTrailingReference(null)).toBeNull();
     });
 
-    test('creates extra bible items for broken chapter ranges', async () => {
+    // One item across chapters, where the lookup used to hand back the first
+    // chapter's part and the rest as "extra" items nothing else could keep.
+    test('reads a range across chapters as one passage', async () => {
         const module = await loadModule();
         mocks.fromDataMock.mockImplementation(
             (
@@ -703,29 +712,32 @@ describe('bibleLogicHelpers2', () => {
                 chapter: number,
                 verseStart: number,
                 verseEnd: number,
-            ) =>
-                mocks.buildBibleItem(
+                chapterEnd?: number,
+            ) => {
+                const bibleItem = mocks.buildBibleItem(
                     bibleKey,
                     bookKey,
                     chapter,
                     verseStart,
                     verseEnd,
-                    'John 1:1-3',
-                ),
-        );
-        mocks.titleTextMap.set(
-            'KJV:John 2:1-3',
-            mocks.buildBibleItem('KJV', 'JHN', 2, 1, 3, 'John 2:1-3'),
+                );
+                if (chapterEnd !== undefined) {
+                    (bibleItem.target as any).chapterEnd = chapterEnd;
+                }
+                return bibleItem;
+            },
         );
 
         const extracted = await module.extractBibleTitle('KJV', 'John 1:1-2:3');
-        expect(extracted.result.extraBibleItems).toHaveLength(1);
-        expect(extracted.result.extraBibleItems?.[0]?.target).toEqual({
+        expect(extracted.result.bookKey).toBe('JHN');
+        expect(extracted.result.bibleItem?.target).toEqual({
             bookKey: 'JHN',
-            chapter: 2,
-            verseEnd: 3,
+            chapter: 1,
             verseStart: 1,
+            verseEnd: 3,
+            chapterEnd: 2,
         });
+        expect(extracted.result).not.toHaveProperty('extraBibleItems');
     });
 
     test('persists newline settings and checks model and chapter newline markers', async () => {

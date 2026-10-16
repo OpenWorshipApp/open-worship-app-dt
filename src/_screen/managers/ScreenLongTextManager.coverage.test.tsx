@@ -559,6 +559,78 @@ describe('ScreenLongTextManager coverage', () => {
         expect(manager.getRenderedBibleKeys()).toEqual(['MSG']);
     });
 
+    // The operator's `...` under JHN 1:2-6:4: the same passage in the same
+    // versions one chapter deeper, the marked verse kept, the view kept about
+    // where it was rather than jumping past the chapter just added.
+    test('shows one more chapter of a passage across chapters', async () => {
+        const manager = new ScreenLongTextManager(createScreenManagerBase(82));
+        const crossJson = {
+            id: 6,
+            bibleKey: 'KJV',
+            target: {
+                bookKey: 'JHN',
+                chapter: 1,
+                verseStart: 2,
+                verseEnd: 4,
+                chapterEnd: 6,
+            },
+        };
+        const genVerses = (count: number) => {
+            return Array.from({ length: count }, () => ({}));
+        };
+        const genViewData = (shownChapterCount: number) => {
+            return {
+                locale: 'en-US',
+                type: 'bible-item',
+                scroll: 0.8,
+                selectedKJVVerseKey: 'JHN 2:3',
+                shownChapterCount,
+                bibleItemData: {
+                    bibleItem: crossJson,
+                    renderedList: ['KJV', 'NIV'].map((bibleKey) => ({
+                        bibleKey,
+                        verses: genVerses(shownChapterCount * 10),
+                    })),
+                },
+            } as any;
+        };
+        mocks.bibleItemJsonToScreenViewData.mockImplementationOnce(
+            async (bibleItemJson: any, bibleKeys: string[], count?: number) => {
+                return {
+                    ...genViewData(count ?? 3),
+                    bibleItemData: {
+                        bibleItem: bibleItemJson,
+                        renderedList: bibleKeys.map((bibleKey) => ({
+                            bibleKey,
+                            verses: genVerses((count ?? 3) * 10),
+                        })),
+                    },
+                    scroll: 0,
+                    selectedKJVVerseKey: null,
+                };
+            },
+        );
+        manager.screenViewData = genViewData(3);
+
+        await manager.showMoreBibleChapter();
+
+        expect(mocks.bibleItemJsonToScreenViewData).toHaveBeenLastCalledWith(
+            crossJson,
+            ['KJV', 'NIV'],
+            4,
+        );
+        const screenViewData = manager.screenViewData as any;
+        expect(screenViewData.shownChapterCount).toBe(4);
+        expect(screenViewData.selectedKJVVerseKey).toBe('JHN 2:3');
+        expect(screenViewData.scroll).toBeCloseTo((0.8 * 30) / 40);
+
+        // Every chapter on the screen already: nothing to read.
+        mocks.bibleItemJsonToScreenViewData.mockClear();
+        manager.screenViewData = genViewData(6);
+        await manager.showMoreBibleChapter();
+        expect(mocks.bibleItemJsonToScreenViewData).not.toHaveBeenCalled();
+    });
+
     test("puts a long text on the chosen screens with nothing that is only a Bible's", async () => {
         const baseA = createScreenManagerBase(301);
         const baseB = createScreenManagerBase(302);
@@ -765,6 +837,154 @@ describe('ScreenLongTextManager coverage', () => {
 
         managerA.screenViewData = null;
         managerB.screenViewData = null;
+    });
+
+    test('a selection brought into view is not sent out as a scroll, and to the top rides with it', async () => {
+        const { getScrollSyncState } =
+            await import('./screenScrollSyncHelpers');
+        const base = createScreenManagerBase(331);
+        const manager = new ScreenLongTextManager(base);
+        manager.screenViewData = createScreenViewData();
+        const host = document.createElement('div');
+        const verse = document.createElement('span');
+        verse.dataset.kjvVerseKey = 'GEN-2-12';
+        host.appendChild(verse);
+        manager.div = host;
+        const state = getScrollSyncState(host);
+        state.remoteAt = Number.NEGATIVE_INFINITY;
+
+        // No such verse here: nothing scrolls, nothing is marked.
+        manager.selectedKJVVerseKey = 'GEN-9-9';
+        expect(state.remoteAt).toBe(Number.NEGATIVE_INFINITY);
+
+        // The glide is this window's own: the scroll sync swallows it as it
+        // does a remote one, so a grouped mini screen's glide is not stopped.
+        manager.isToTop = true;
+        manager.selectedKJVVerseKey = 'GEN-2-12';
+        expect(mocks.bringDomToTopView).toHaveBeenCalledWith(verse);
+        expect(state.remoteAt).toBeGreaterThan(Number.NEGATIVE_INFINITY);
+
+        // The projector brings it to ITS top instead of following the glide.
+        base.sendScreenMessage.mockClear();
+        manager.sendSyncSelectedIndex('top');
+        expect(base.sendScreenMessage).toHaveBeenCalledWith(
+            {
+                screenId: 331,
+                type: 'bible-screen-view-selected-index',
+                data: { selectedKJVVerseKey: 'GEN-2-12', isToTop: true },
+            },
+            true,
+        );
+        mocks.bringDomToTopView.mockClear();
+        mocks.bringDomToNearestView.mockClear();
+        ScreenLongTextManager.receiveSyncSelectedIndex({
+            screenId: 331,
+            type: 'bible-screen-view-selected-index',
+            data: { selectedKJVVerseKey: 'GEN-2-12', isToTop: true },
+        } as any);
+        expect(mocks.bringDomToTopView).toHaveBeenCalledWith(verse);
+        expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
+
+        manager.screenViewData = null;
+    });
+
+    test('a colour-group member takes a selection only for the same text and while unlocked', async () => {
+        const baseBible = createScreenManagerBase(341);
+        const baseBibleMember = createScreenManagerBase(342);
+        const baseLongText = createScreenManagerBase(343);
+        const baseLongTextMember = createScreenManagerBase(344);
+        const baseOtherLongText = createScreenManagerBase(345);
+        const bible = new ScreenLongTextManager(baseBible);
+        const bibleMember = new ScreenLongTextManager(baseBibleMember);
+        const longText = new ScreenLongTextManager(baseLongText);
+        const longTextMember = new ScreenLongTextManager(baseLongTextMember);
+        const otherLongText = new ScreenLongTextManager(baseOtherLongText);
+        bible.screenViewData = createScreenViewData(['KJV']);
+        bibleMember.screenViewData = createScreenViewData(['NIV']);
+        longText.screenViewData = createLongTextData('song');
+        longTextMember.screenViewData = createLongTextData('song');
+        otherLongText.screenViewData = createLongTextData('song-2');
+        const toMessage = (screenId: number, data: object) => {
+            return {
+                screenId,
+                type: 'bible-screen-view-selected-index',
+                data,
+            } as any;
+        };
+
+        // Any Bible passage, in its own versions: as the Reader writes it.
+        expect(
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                341,
+                toMessage(342, { selectedKJVVerseKey: 'GEN-2-12' }),
+            ),
+        ).toBe(true);
+        expect(bibleMember.selectedKJVVerseKey).toBe('GEN-2-12');
+
+        // The same long text, brought to its middle as the sender's was.
+        expect(
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                343,
+                toMessage(344, {
+                    selectedKJVVerseKey: 'lt-2',
+                    isToMiddle: true,
+                }),
+            ),
+        ).toBe(true);
+        expect(longTextMember.selectedKJVVerseKey).toBe('lt-2');
+        expect(longTextMember.isToMiddle).toBe(false);
+
+        // Another text keeps its own mark: another song, a song against a
+        // Bible verse, a Bible against a song's row.
+        otherLongText.selectedKJVVerseKey = 'lt-1';
+        for (const [fromScreenId, screenId] of [
+            [343, 345],
+            [341, 345],
+            [343, 342],
+        ]) {
+            expect(
+                ScreenLongTextManager.receiveGroupSelectedIndex(
+                    fromScreenId,
+                    toMessage(screenId, { selectedKJVVerseKey: 'lt-2' }),
+                ),
+            ).toBe(false);
+        }
+        expect(otherLongText.selectedKJVVerseKey).toBe('lt-1');
+        expect(bibleMember.selectedKJVVerseKey).toBe('GEN-2-12');
+
+        // A locked member stays as it is; so does one with nothing up, and
+        // a screen that is gone.
+        baseLongTextMember.isLocked = true;
+        expect(
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                343,
+                toMessage(344, { selectedKJVVerseKey: 'lt-1' }),
+            ),
+        ).toBe(false);
+        expect(longTextMember.selectedKJVVerseKey).toBe('lt-2');
+        bibleMember.screenViewData = null;
+        expect(
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                341,
+                toMessage(342, { selectedKJVVerseKey: 'GEN-2-13' }),
+            ),
+        ).toBe(false);
+        expect(
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                399,
+                toMessage(341, { selectedKJVVerseKey: 'GEN-2-13' }),
+            ),
+        ).toBe(false);
+        expect(bible.selectedKJVVerseKey).toBeNull();
+
+        for (const manager of [
+            bible,
+            longText,
+            longTextMember,
+            otherLongText,
+        ]) {
+            manager.screenViewData = null;
+        }
     });
 
     test('says which rows of a long text are marked, and says so only for a long text', async () => {

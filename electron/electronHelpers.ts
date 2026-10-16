@@ -161,6 +161,7 @@ export const messageChannels = {
     openAboutPage: 'main:app:open-about-page',
     openChatbotPage: 'main:app:open-chatbot-page',
     openChatbotReport: 'main:app:open-chatbot-report',
+    openChatbotFromTaskbar: 'main:app:open-chatbot-from-taskbar',
     openAiChatPage: 'main:app:open-aichat-page',
     guideHelp: 'main:app:guide-help',
     guideHelpAnswer: 'main:app:guide-help-answer',

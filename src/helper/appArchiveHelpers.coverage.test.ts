@@ -435,6 +435,57 @@ describe('import collision and restoration', () => {
         ).toBeNull();
     });
 
+    test('merges a cross-chapter passage as its own entry, once', async () => {
+        const local = '/bibles/cross.json';
+        const archived = '/tmp/extract/files/cross.json';
+        const singleItem = {
+            id: 3,
+            bibleKey: 'KJV',
+            target: { bookKey: 'JHN', chapter: 1, verseStart: 2, verseEnd: 4 },
+            metadata: {},
+        };
+        const crossItem = {
+            id: 1,
+            bibleKey: 'KJV',
+            target: {
+                bookKey: 'JHN',
+                chapter: 1,
+                verseStart: 2,
+                verseEnd: 4,
+                chapterEnd: 3,
+            },
+            metadata: {},
+        };
+        h.files.set(local, JSON.stringify({ items: [singleItem] }));
+        h.files.set(
+            archived,
+            JSON.stringify({
+                items: [
+                    // JHN 1:2-4 with a same-chapter `chapterEnd` IS JHN 1:2-4.
+                    {
+                        ...singleItem,
+                        target: { ...singleItem.target, chapterEnd: 1 },
+                    },
+                    crossItem,
+                    { ...crossItem, id: 2 },
+                    // JHN 1:2-2:4 is another passage again.
+                    {
+                        ...crossItem,
+                        id: 4,
+                        target: { ...crossItem.target, chapterEnd: 2 },
+                    },
+                ],
+            }),
+        );
+        expect(
+            await findExistingLocalFile('merge-items', archived, local),
+        ).toBe(local);
+        const items = JSON.parse(h.files.get(local)!).items;
+        expect(items.map(({ id }: any) => id)).toEqual([3, 4, 5]);
+        expect(items[1].target).toEqual(crossItem.target);
+        expect(items[2].target.chapterEnd).toBe(2);
+    });
+
     test('rewrites imported canvas paths and restores the two sidecars', async () => {
         const documentPath = '/documents/song.ows';
         h.files.set(

@@ -96,6 +96,7 @@ import {
     findModelHiddenReason,
 } from '../../tools/owa-devtools-mcp/modelTools.mjs';
 import { callTool, listTools } from './mcpClient';
+import type { WindowAimType } from './windowAimHelpers';
 import { genBibleImportCheckAnswer } from './bibleImportChatHelpers';
 import {
     LYRIC_COPY_TOOL_NAME,
@@ -1112,7 +1113,7 @@ export function setLlmModel(provider: LlmProviderType, model: string) {
     setSetting(MODEL_SETTING_PREFIX + provider, model);
 }
 
-function genSystemPrompt(focus: BotFocusType) {
+function genSystemPrompt(focus: BotFocusType, isSeparateWindow = false) {
     // The window the question is about decides how the model gets the user
     // there when a tool reports it is not on screen. Three of them are pages
     // the ONE main window navigates between, so `owa_goto_page` can take the
@@ -1133,7 +1134,16 @@ function genSystemPrompt(focus: BotFocusType) {
             ' When they asked you to DO it for them, switch the window' +
             ' yourself with `owa_goto_page` -- say the window is about to' +
             ' change first -- then start the guide on the new page.';
-    } else if (descriptor.openFind !== null) {
+    }
+    // A page of the main window chosen in a window of its own
+    // (`windowAimHelpers.ts`): the main window's crossing is not this one's.
+    if (isSeparateWindow) {
+        crossingText =
+            ` This **${descriptor.label}** is a window of its own beside the` +
+            ' main window: `owa_goto_page` moves the MAIN window, never this' +
+            ' one, so do not use it to reach this one -- every tool here' +
+            ' already works in it.';
+    } else if (!descriptor.isMainWindow && descriptor.openFind !== null) {
         crossingText =
             ' This one is a window of its own, so `owa_goto_page` cannot open' +
             ' it. When they asked you to DO it for them, open it yourself:' +
@@ -1152,7 +1162,11 @@ function genSystemPrompt(focus: BotFocusType) {
     // the Reader has no Presenter tab -- its route is the 🖥️ button at the
     // top right, titled **Go Back to Presenter** -- and the two "passing"
     // answers of that run had sent the user to "a tab for it at the top".
-    const backToPresenterText = genBackToPresenterRoute(focus);
+    // A window of its own has no tab or button back: the main window never
+    // went away, and `genOwnWindowFact` says so below.
+    const backToPresenterText = isSeparateWindow
+        ? null
+        : genBackToPresenterRoute(focus);
     const notHereText =
         backToPresenterText !== null
             ? ' The **' +
@@ -1251,7 +1265,7 @@ The user is currently asking about the **${descriptor.label}**, and they are
 LOOKING AT IT while they ask. Never tell them to open the window they are
 already in -- no "click the Bible Reader tab" when they are in the Bible
 Reader; start at the first step they have not done. \`owa_app_state\` with
-\`page: "${focus}.html"\` says what is on their screen if you are unsure.${notHereText}${genOwnWindowFact(focus)}
+\`page: "${focus}.html"\` says what is on their screen if you are unsure.${notHereText}${genOwnWindowFact(focus, isSeparateWindow)}
 ${readerAudienceText}
 
 **The window may not be showing it.** If a tool answers that the app has no
@@ -1820,6 +1834,13 @@ type ToolWatchType = {
      * bounded by the list tool's own result cap.
      */
     verifiedControlNames: Set<string>;
+    /**
+     * The window of its own the tab was working with when this was asked
+     * (`windowAimHelpers.ts`), or `null` for the main window. Every tool call
+     * of the answer goes with it -- not with whichever tab is in front by
+     * the time the third round runs.
+     */
+    windowAim: WindowAimType | null;
 };
 
 function toControlNameKey(value: string) {
@@ -1881,6 +1902,7 @@ export function genToolWatch(): ToolWatchType {
         isPageNudged: false,
         needsPage: null,
         verifiedControlNames: new Set<string>(),
+        windowAim: null,
     };
 }
 
@@ -2010,8 +2032,14 @@ export function applyToolWatch(
     // the Presenter alone knows the answer. Cleared when the model takes the
     // window there itself -- the offer under the answer would then be a
     // button for a trip already made.
+    // With a window of its own chosen (`windowAimHelpers.ts`) the state read
+    // is of THAT window, which is never the Presenter: it says nothing of
+    // where the main window is, and the offer would send them away from the
+    // window they asked about (seen live 2026-10-15, a Reader window chosen
+    // and the main window already on the Presenter).
     if (
-        (name === 'owa_list_screens' || name === 'owa_app_state') &&
+        (name === 'owa_list_screens' ||
+            (name === 'owa_app_state' && watch.windowAim === null)) &&
         /"needsPage":\s*"presenter"/.test(text)
     ) {
         watch.needsPage = 'presenter';
@@ -2137,7 +2165,7 @@ async function runMcpToolCall(
         return `Tool refused: ${hidden}`;
     }
     try {
-        const text = await callTool(name, args ?? {}, signal);
+        const text = await callTool(name, args ?? {}, signal, watch.windowAim);
         applyToolWatch(watch, name, args, text);
         return text;
     } catch (error: any) {
@@ -2267,6 +2295,12 @@ export type AskExtraType = {
      */
     knownRecipeId?: string;
     /**
+     * The window of its own the tab works with (`windowAimHelpers.ts`): its
+     * tool calls aim there, and the prompt says it is a window of its own.
+     * Left out for the main window.
+     */
+    windowAim?: WindowAimType | null;
+    /**
      * That page was QUOTED in the ask -- whole, or cut to the part that
      * answers (`checkIsKnownPageQuoted`) -- so the tool watch starts with it
      * already READ, not merely found. Measured 2026-10-12 on the first
@@ -2345,7 +2379,9 @@ const GENERAL_SYSTEM_PROMPT =
 
 /** The system prompt an ask goes out with: the app's, or the general one. */
 function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
-    return extra?.isGeneral ? GENERAL_SYSTEM_PROMPT : genSystemPrompt(focus);
+    return extra?.isGeneral
+        ? GENERAL_SYSTEM_PROMPT
+        : genSystemPrompt(focus, extra?.windowAim?.isSeparateWindow === true);
 }
 
 // The frame an addition arrives in. Named as coming from the user and joined to
@@ -3798,6 +3834,7 @@ export async function askLlmBot(
     // would have had (`searchedId`: a guess the page it opens overrides).
     const genSeededWatch = () => {
         const seeded = genToolWatch();
+        seeded.windowAim = extra?.windowAim ?? null;
         if (extra?.knownRecipeId !== undefined) {
             seeded.searchedId = extra.knownRecipeId;
             // Quoted in the ask: read, as far as the watch goes.

@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
-    "updated": "2026-10-13",
+    "updated": "2026-10-15",
     "sections": [
         {
             "id": "screen",
@@ -487,6 +487,24 @@
                         "add a picture to the report",
                         "report with a file",
                         "markdown file"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Something wrong with the app itself? Press Report"
+                    }
+                },
+                {
+                    "id": "report-kept-for-later",
+                    "text": "My report says the server is not answering — is it lost?",
+                    "kind": "fix",
+                    "keywords": [
+                        "report not sent",
+                        "server not answering",
+                        "send it later",
+                        "report kept",
+                        "try again later",
+                        "offline report",
+                        "did my report go"
                     ],
                     "resources": {
                         "recipe": "W-42",

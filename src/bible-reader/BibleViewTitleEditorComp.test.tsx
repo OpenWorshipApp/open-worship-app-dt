@@ -41,6 +41,9 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: async () => null,
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+vi.mock('../bible-list/bibleRenderHelpers', () => ({
+    bibleRenderHelper: { toTitleParts: async () => null },
+}));
 
 import BibleViewTitleEditorComp from './BibleViewTitleEditorComp';
 
@@ -122,5 +125,61 @@ describe('BibleViewTitleEditorComp keyboard', () => {
 
         expect(host.querySelector('[role="button"]')).toBeNull();
         expect(host.querySelector('[tabindex]')).toBeNull();
+    });
+
+    // `John 1:2-3:4`: a passage crossing chapters has a part for the chapter
+    // it ends in, between the start verse and the end verse.
+    test('a title across chapters has an end chapter part', () => {
+        act(() => {
+            root.render(
+                <BibleViewTitleEditorComp
+                    bibleItem={{
+                        ...bibleItem,
+                        target: {
+                            bookKey: 'GEN',
+                            chapter: 1,
+                            verseStart: 2,
+                            verseEnd: 4,
+                            chapterEnd: 3,
+                        },
+                    }}
+                    onTargetChange={() => {}}
+                />,
+            );
+        });
+
+        expect(
+            Array.from(host.querySelectorAll('[role="button"]')).map((part) => {
+                return part.getAttribute('aria-label');
+            }),
+        ).toEqual([
+            'Book: GEN',
+            'Chapter: 1',
+            'Verse Start: 2',
+            'End Chapter: 3',
+            'Verse End: 4',
+        ]);
+        expect(host.textContent).toBe('GEN 1:2-3:4');
+    });
+
+    test('one verse has no end part', () => {
+        act(() => {
+            root.render(
+                <BibleViewTitleEditorComp
+                    bibleItem={{
+                        ...bibleItem,
+                        target: {
+                            bookKey: 'GEN',
+                            chapter: 1,
+                            verseStart: 2,
+                            verseEnd: 2,
+                        },
+                    }}
+                    onTargetChange={() => {}}
+                />,
+            );
+        });
+
+        expect(host.textContent).toBe('GEN 1:2');
     });
 });

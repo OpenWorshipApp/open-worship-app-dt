@@ -41,6 +41,7 @@ import {
     THEME_SETTING_KEY,
     checkIsPortableSettingKey,
     getSettingLeaf,
+    toCurrentSettingStore,
     toSettingLeafId,
 } from './settingArchiveCatalog';
 
@@ -311,6 +312,9 @@ function checkIsSettingStore(store: unknown): store is SettingStoreType {
  * password-protected -- Export Settings never writes one into an unprotected
  * file, so one found there was put there by someone else.
  *
+ * MOVED -- a setting that lives in another store now than when the file was
+ * made (`toCurrentSettingStore`) is read as the store it lives in now.
+ *
  * Error messages name an index or a key, never a value.
  */
 export function validateSettingManifest(
@@ -353,13 +357,18 @@ export function validateSettingManifest(
         if (entry === null || typeof entry !== 'object') {
             throw new TypeError(`Invalid setting at #${index}`);
         }
-        const { store, key, value } = entry as Record<string, unknown>;
-        if (!checkIsSettingStore(store)) {
+        const {
+            store: fileStore,
+            key,
+            value,
+        } = entry as Record<string, unknown>;
+        if (!checkIsSettingStore(fileStore)) {
             throw new TypeError(`Invalid setting store at #${index}`);
         }
         if (!checkIsPortableSettingKey(key) || typeof value !== 'string') {
             throw new TypeError(`Invalid setting at #${index}`);
         }
+        const store = toCurrentSettingStore(fileStore, key);
         if (value.length > MAX_VALUE_LENGTH) {
             throw new Error(`Setting "${key}" is too large`);
         }

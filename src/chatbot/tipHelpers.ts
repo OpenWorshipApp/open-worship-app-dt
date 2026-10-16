@@ -20,6 +20,13 @@
 import { getSetting, setSetting } from '../helper/settingHelpers';
 
 const TIP_SETTING_NAME = 'chatbot-tip-shown';
+// The line can be put away for a while (2026-10-15, the user's ask with the
+// row circled: _add option to hide it for 30 day_) -- the same 30 days the
+// AI caution and the daily tips give, and like theirs it comes back by itself.
+const TIP_HIDDEN_UNTIL_SETTING_NAME = 'chatbot-tip-hidden-until';
+// The button says the number ("Hide tips for 30 days"), so the two change
+// together.
+export const CHAT_TIP_HIDE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type ChatTipType = {
     id: string;
@@ -213,6 +220,20 @@ function rememberChatTip(tip: ChatTipType) {
  */
 export function pickChatTip(currentId: string | null) {
     return rememberChatTip(genChatTip(currentId));
+}
+
+/**
+ * Whether the line is put away. A day further off than twice what the button
+ * sets is not believed, as with the daily tips: pressed while the clock ran
+ * ahead, it would hide the line for years once the clock is right.
+ */
+export function checkIsChatTipHidden(now = Date.now()) {
+    const remaining = Number(getSetting(TIP_HIDDEN_UNTIL_SETTING_NAME)) - now;
+    return remaining > 0 && remaining <= 2 * CHAT_TIP_HIDE_MS;
+}
+
+export function hideChatTip(now = Date.now()) {
+    setSetting(TIP_HIDDEN_UNTIL_SETTING_NAME, `${now + CHAT_TIP_HIDE_MS}`);
 }
 
 /**

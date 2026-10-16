@@ -224,7 +224,13 @@ describe('Bible XML MCP tool', () => {
     expect(result.digits.local).toContain('០');
     expect(mocks.writeMeta).toHaveBeenCalledWith(
       'abcdefghijkl',
-      expect.objectContaining({ fileListId: 'n1' }),
+      expect.objectContaining({
+        fileListId: 'n1',
+        // Kept for the installed Bible's note.
+        url: 'https://example.test/KhmerBible.xml',
+        source: 'https://example.test/KhmerBible.xml',
+        bytes: 1048576,
+      }),
     );
     expect(state.requests.some((request) => request.action === 'analyze')).toBe(
       true,
@@ -307,6 +313,58 @@ describe('Bible XML MCP tool', () => {
     });
     expect(state.requests.at(-1).numbers[0]).toBe('០');
     expect(mocks.remove).toHaveBeenCalledWith('abcdefghijkl');
+  });
+
+  test('import hands the app where the draft came from and which list was chosen', async () => {
+    state.meta = {
+      ...state.meta,
+      url: 'https://github.com/o/r/blob/main/KhmerBible.xml',
+      source: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+      finalUrl: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+      bytes: 2048,
+    };
+    state.lists.set('n0', {
+      label: 'Khmer names',
+      source: 'https://example.test/names',
+      names: ['Genesis', 'Exodus'],
+    });
+    await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' });
+    expect(state.requests.at(-1).origin).toEqual({
+      // Registered with no door: an outside agent over stdio.
+      by: 'agent',
+      url: 'https://github.com/o/r/blob/main/KhmerBible.xml',
+      downloadUrl: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+      finalUrl: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+      fileName: 'KhmerBible.xml',
+      bytes: 2048,
+      bookNames: { label: 'Khmer names', source: 'https://example.test/names' },
+    });
+  });
+
+  test('the in-app door is the chatbot, and a partial name change says so', async () => {
+    registerBibleXmlTool(
+      {
+        registerTool: (_name, _options, handler) => {
+          state.handler = handler;
+        },
+      },
+      { door: 'app' },
+    );
+    state.lists.set('n1', {
+      label: 'The names in the file',
+      source: 'file',
+      names: ['Genesis', 'Exodus'],
+    });
+    await call({
+      action: 'import',
+      draftId: 'abcdefghijkl',
+      key: 'KHM',
+      bookNames: { GEN: 'New Genesis' },
+    });
+    expect(state.requests.at(-1).origin).toMatchObject({
+      by: 'chatbot',
+      bookNames: { label: 'The names in the file, 1 changed', source: 'file' },
+    });
   });
 
   test('a missing saved book list explains how to recover without installing', async () => {

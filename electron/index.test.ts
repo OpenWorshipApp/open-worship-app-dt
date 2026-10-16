@@ -17,6 +17,7 @@ const initDisplayMediaHandler = vi.fn();
 const findUserDataPathArg = vi.fn(() => null as string | null);
 const initAppUserModelId = vi.fn();
 const initSecondInstance = vi.fn();
+const initLaunchTask = vi.fn();
 const initUserTasks = vi.fn();
 const enableRemoteDebugging = vi.fn();
 const initAi = vi.fn();
@@ -42,6 +43,7 @@ vi.mock('./electronEventListener', () => ({
 vi.mock('./taskbarHelpers', () => ({
     findUserDataPathArg,
     initAppUserModelId,
+    initLaunchTask,
     initSecondInstance,
     initUserTasks,
 }));
@@ -52,6 +54,10 @@ vi.mock('./aiHelpers', () => ({
     initAi,
 }));
 vi.mock('./consoleLogHelpers', () => ({ initConsoleLog }));
+const initLlmReportQueue = vi.fn();
+vi.mock('./llmReportHelpers', () => ({ initLlmReportQueue }));
+const initAppWindowListWatch = vi.fn();
+vi.mock('./appWindowListHelpers', () => ({ initAppWindowListWatch }));
 vi.mock('./aiChatGuestHelpers', () => ({ initAiChatGuestGuard }));
 vi.mock('./screenMirrorService', () => ({
     initScreenMirror,
@@ -91,12 +97,15 @@ describe('electron index', () => {
         findUserDataPathArg.mockReturnValue(null);
         initAppUserModelId.mockClear();
         initSecondInstance.mockClear();
+        initLaunchTask.mockClear();
         initUserTasks.mockClear();
         enableRemoteDebugging.mockClear();
         initAi.mockClear();
         checkIsAiEnabled.mockClear();
         checkIsAiEnabled.mockReturnValue(true);
         initConsoleLog.mockClear();
+        initLlmReportQueue.mockClear();
+        initAppWindowListWatch.mockClear();
         initScreenMirror.mockClear();
         getInstance.mockClear();
         electronMockState.reset();
@@ -137,11 +146,20 @@ describe('electron index', () => {
         expect(getInstance).toHaveBeenCalledTimes(1);
         expect(initMenu).toHaveBeenCalledWith({ id: 'app-controller' });
         expect(initDevtools).toHaveBeenCalledWith({ id: 'app-controller' });
-        expect(initAppUserModelId).toHaveBeenCalledTimes(1);
-        expect(initSecondInstance).toHaveBeenCalledWith({
-            id: 'app-controller',
-        });
-        expect(initUserTasks).toHaveBeenCalledTimes(1);
+        // The folder Electron chose before the override: the taskbar
+        // identity is read off the two.
+        expect(initAppUserModelId).toHaveBeenCalledWith('/mock-user-data');
+        // The taskbar's App Help task follows the AI master switch.
+        expect(initSecondInstance).toHaveBeenCalledWith(
+            { id: 'app-controller' },
+            true,
+        );
+        expect(initLaunchTask).toHaveBeenCalledWith(
+            { id: 'app-controller' },
+            process.argv,
+            true,
+        );
+        expect(initUserTasks).toHaveBeenCalledWith(true);
         expect(enableRemoteDebugging).toHaveBeenCalledTimes(1);
         expect(initAi).toHaveBeenCalledTimes(1);
         expect(initScreenMirror).toHaveBeenCalledTimes(1);
@@ -156,6 +174,13 @@ describe('electron index', () => {
         await import('./index');
 
         expect(initConsoleLog).toHaveBeenCalledTimes(1);
+        // A report kept while its server was away is sent by itself.
+        expect(initLlmReportQueue).toHaveBeenCalledTimes(1);
+        // The help window's window picker follows every window made.
+        expect(initAppWindowListWatch).toHaveBeenCalledTimes(1);
+        expect(initAppWindowListWatch.mock.invocationCallOrder[0]).toBeLessThan(
+            getInstance.mock.invocationCallOrder[0],
+        );
         // A window is heard from the moment it exists: the listener is in
         // place before the app controller makes the main window.
         expect(initConsoleLog.mock.invocationCallOrder[0]).toBeLessThan(
@@ -164,11 +189,15 @@ describe('electron index', () => {
 
         vi.resetModules();
         initConsoleLog.mockClear();
+        initLlmReportQueue.mockClear();
+        initAppWindowListWatch.mockClear();
         checkIsAiEnabled.mockReturnValue(false);
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
         await import('./index');
         expect(initConsoleLog).not.toHaveBeenCalled();
+        expect(initLlmReportQueue).not.toHaveBeenCalled();
+        expect(initAppWindowListWatch).not.toHaveBeenCalled();
     });
 
     test('the agent doors are opened before ready, never without the lock', async () => {

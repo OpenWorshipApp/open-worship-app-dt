@@ -1,12 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
-import { toLocaleNumBible } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
 import type {
     BibleItemRenderingType,
     BibleRenderVerseType,
 } from './bibleScreenComps';
-import { LongTextTableComp } from './bibleScreenComps';
+import {
+    LongTextTableComp,
+    SCREEN_BIBLE_MORE_CHAPTER_ATTRIBUTE,
+} from './bibleScreenComps';
 import type { LongTextColumnType } from './screenLongTextTypeHelpers';
 import { toBibleLongTextColumns } from './screenLongTextTypeHelpers';
 import { getHTMLChild } from '../helper/helpers';
@@ -14,6 +15,7 @@ import appProvider from '../server/appProvider';
 import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
+import { BIBLE_SHOWN_CHAPTER_COUNT } from '../helper/bible-helpers/bibleTargetHelpers';
 
 const bibleScreenHelper = {
     /**
@@ -25,7 +27,12 @@ const bibleScreenHelper = {
         {
             isLineSync,
             isLongText,
-        }: { isLineSync: boolean; isLongText: boolean },
+            moreChapterLabel,
+        }: {
+            isLineSync: boolean;
+            isLongText: boolean;
+            moreChapterLabel?: string;
+        },
     ) {
         if (columns.length === 0) {
             return document.createElement('table');
@@ -45,6 +52,7 @@ const bibleScreenHelper = {
                 columns={langColumns}
                 isLineSync={isLineSync}
                 isLongText={isLongText}
+                moreChapterLabel={moreChapterLabel}
             />,
         );
         const div = document.createElement('div');
@@ -55,10 +63,12 @@ const bibleScreenHelper = {
     genHtmlFromScreenViewBibleItem(
         bibleRenderingList: BibleItemRenderingType[],
         isLineSync: boolean,
+        // Only for an operator's view of a passage with chapters to come.
+        moreChapterLabel?: string,
     ) {
         return this.genHtmlFromLongTextColumns(
             toBibleLongTextColumns(bibleRenderingList),
-            { isLineSync, isLongText: false },
+            { isLineSync, isLongText: false, moreChapterLabel },
         );
     },
 
@@ -95,15 +105,30 @@ const bibleScreenHelper = {
         {
             onSelectKey,
             onBibleSelect,
+            onShowMoreChapter,
         }: {
             onSelectKey: (
                 selectedKJVVerseKey: string | null,
                 isToTop: boolean,
             ) => void;
             onBibleSelect: (event: MouseEvent, index: number) => void;
+            onShowMoreChapter?: () => void;
         },
     ) {
         if (!appProvider.isPageScreen) {
+            const moreChapterButtons = div.querySelectorAll<HTMLButtonElement>(
+                `[${SCREEN_BIBLE_MORE_CHAPTER_ATTRIBUTE}]`,
+            );
+            for (const button of Array.from(moreChapterButtons)) {
+                // Its own: a click or double-click here selects no verse.
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    onShowMoreChapter?.();
+                });
+                button.addEventListener('dblclick', (event) => {
+                    event.stopPropagation();
+                });
+            }
             const divBibleKeys =
                 div.querySelectorAll<HTMLSpanElement>('div.bible-name');
             for (const divBibleKey of Array.from(divBibleKeys)) {
@@ -147,64 +172,48 @@ const bibleScreenHelper = {
             });
         }
     },
-    genBibleItemRenderList(bibleItems: BibleItem[]) {
+    /**
+     * What a screen draws of each Bible's passage. A passage crossing
+     * chapters is drawn `shownChapterCount` chapters deep, a divider above
+     * each; the operator's `...` asks for one more.
+     */
+    genBibleItemRenderList(
+        bibleItems: BibleItem[],
+        shownChapterCount = BIBLE_SHOWN_CHAPTER_COUNT,
+    ) {
         return Promise.all(
-            bibleItems.map((bibleItem) => {
-                return new Promise<BibleItemRenderingType>((resolve, _) => {
-                    (async () => {
-                        const bibleTitle = await bibleItem.toTitle();
-                        const verses = await getVerses(
-                            bibleItem.bibleKey,
-                            bibleItem.target.bookKey,
-                            bibleItem.target.chapter,
-                        );
-                        const verseList: BibleRenderVerseType[] = [];
-                        if (verses !== null) {
-                            for (
-                                let i = bibleItem.target.verseStart;
-                                i <= bibleItem.target.verseEnd;
-                                i++
-                            ) {
-                                const verseNumb = await toLocaleNumBible(
-                                    bibleItem.bibleKey,
-                                    i,
-                                );
-                                const verseKey =
-                                    bibleRenderHelper.toBibleVersesKey(
-                                        bibleItem.bibleKey,
-                                        {
-                                            bookKey: bibleItem.target.bookKey,
-                                            chapter: bibleItem.target.chapter,
-                                            verseStart: i,
-                                            verseEnd: i,
-                                        },
-                                    );
-                                const kjvVerseKey =
-                                    bibleRenderHelper.toKJVBibleVersesKey({
-                                        bookKey: bibleItem.target.bookKey,
-                                        chapter: bibleItem.target.chapter,
-                                        verseStart: i,
-                                        verseEnd: i,
-                                    });
-                                if (verseNumb !== null) {
-                                    verseList.push({
-                                        num: verseNumb,
-                                        text: verses[`${i}`],
-                                        verseKey,
-                                        kjvVerseKey,
-                                    });
-                                }
-                            }
-                        }
-                        const locale = await getBibleLocale(bibleItem.bibleKey);
-                        resolve({
-                            locale,
-                            bibleKey: bibleItem.bibleKey,
-                            title: bibleTitle,
-                            verses: verseList,
-                        });
-                    })();
+            bibleItems.map(async (bibleItem) => {
+                const { bibleKey } = bibleItem;
+                const [bibleTitle, verseTextList, locale] = await Promise.all([
+                    bibleItem.toTitle(),
+                    bibleRenderHelper.toVerseTextList(
+                        bibleKey,
+                        bibleItem.target,
+                        true,
+                        { start: 0, count: shownChapterCount },
+                    ),
+                    getBibleLocale(bibleKey),
+                ]);
+                const verseList: BibleRenderVerseType[] = (
+                    verseTextList ?? []
+                ).map((verseInfo) => {
+                    return {
+                        num: verseInfo.localeVerse,
+                        text: verseInfo.text,
+                        verseKey: verseInfo.bibleVersesKey,
+                        kjvVerseKey: verseInfo.kjvBibleVersesKey,
+                        ...(verseInfo.isChapterStart
+                            ? { chapterLabel: verseInfo.localeChapter }
+                            : {}),
+                    };
                 });
+                const rendering: BibleItemRenderingType = {
+                    locale,
+                    bibleKey,
+                    title: bibleTitle,
+                    verses: verseList,
+                };
+                return rendering;
             }),
         );
     },

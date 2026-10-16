@@ -4,8 +4,13 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-vi.mock('../context-menu/appContextMenuHelpers', () => ({
+const mocks = vi.hoisted(() => ({
     showAppContextMenu: vi.fn(),
+    checkMediaPlaying: vi.fn(),
+}));
+
+vi.mock('../context-menu/appContextMenuHelpers', () => ({
+    showAppContextMenu: mocks.showAppContextMenu,
 }));
 vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: () => null,
@@ -14,7 +19,7 @@ vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => text,
 }));
 vi.mock('../helper/mediaControlHelpers', () => ({
-    checkMediaPlaying: () => false,
+    checkMediaPlaying: mocks.checkMediaPlaying,
 }));
 vi.mock('../helper/timeoutHelpers', () => ({
     genTimeoutAttempt: () => (func: () => void) => {
@@ -38,6 +43,9 @@ let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    vi.clearAllMocks();
+    mocks.checkMediaPlaying.mockReturnValue(false);
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -48,6 +56,7 @@ afterEach(() => {
         root.unmount();
     });
     container.remove();
+    vi.unstubAllGlobals();
 });
 
 function renderActor(type: ResizeKindType) {
@@ -129,21 +138,39 @@ describe('FlexResizeActorComp mover', () => {
 describe('FlexResizeActorComp keyboard', () => {
     function renderBetweenPanes(
         type: ResizeKindType,
-        { preSize = 300, nextSize = 300, minSize = 50 } = {},
+        {
+            preSize = 300,
+            nextSize = 300,
+            minSize = 50,
+            disableQuickResize = false,
+        } = {},
     ) {
         const checkSize = vi.fn();
+        const disableWidget = vi.fn();
         act(() => {
             root.render(
                 <div className="d-flex">
-                    <div data-min-size={minSize} style={{ flexGrow: 1 }} />
+                    <div
+                        data-min-size={minSize}
+                        data-fs="first"
+                        data-fs-default="3"
+                        data-widget-name="Documents"
+                        style={{ flexGrow: 1 }}
+                    />
                     <FlexResizeActorComp
                         type={type}
-                        isDisableQuickResize={false}
+                        isDisableQuickResize={disableQuickResize}
                         checkSize={checkSize}
-                        disableWidget={() => {}}
+                        disableWidget={disableWidget}
                         checkCanClose={() => null}
                     />
-                    <div data-min-size={minSize} style={{ flexGrow: 1 }} />
+                    <div
+                        data-min-size={minSize}
+                        data-fs="second"
+                        data-fs-default="2"
+                        data-widget-name="Bible"
+                        style={{ flexGrow: 1 }}
+                    />
                 </div>,
             );
         });
@@ -162,7 +189,7 @@ describe('FlexResizeActorComp keyboard', () => {
             Object.defineProperty(node, 'offsetWidth', { value: size });
             Object.defineProperty(node, 'offsetHeight', { value: size });
         }
-        return { actor, preNode, nextNode, checkSize };
+        return { actor, preNode, nextNode, checkSize, disableWidget };
     }
 
     function pressKey(actor: HTMLElement, key: string, shiftKey = false) {
@@ -235,6 +262,137 @@ describe('FlexResizeActorComp keyboard', () => {
         pressKey(actor, 'ArrowLeft');
         expect(preNode.style.flexGrow).toBe('1');
         expect(checkSize).not.toHaveBeenCalled();
+    });
+
+    function drag(actor: HTMLElement, from: number, to: number) {
+        act(() => {
+            actor.dispatchEvent(
+                new MouseEvent('mousedown', {
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: from,
+                }),
+            );
+            document.body.dispatchEvent(
+                new MouseEvent('mousemove', { bubbles: true, clientX: to }),
+            );
+        });
+    }
+
+    function endDrag() {
+        act(() => {
+            document.body.dispatchEvent(
+                new MouseEvent('mouseup', { bubbles: true }),
+            );
+        });
+    }
+
+    test('dragging changes both pane shares and saves once on release', () => {
+        const { actor, preNode, nextNode, checkSize } = renderBetweenPanes('h');
+        expect(actor.getAttribute('aria-label')).toBe(
+            'Divider between Documents and Bible',
+        );
+
+        drag(actor, 100, 150);
+        expect(Number(preNode.style.flexGrow)).toBeCloseTo((2 * 350) / 600);
+        expect(Number(nextNode.style.flexGrow)).toBeCloseTo((2 * 250) / 600);
+        expect(actor.classList.contains('active')).toBe(true);
+        expect(preNode.style.pointerEvents).toBe('none');
+        endDrag();
+        expect(checkSize).toHaveBeenCalledOnce();
+        expect(actor.classList.contains('active')).toBe(false);
+        expect(preNode.style.pointerEvents).toBe('auto');
+
+        const previousGrow = preNode.style.flexGrow;
+        act(() =>
+            document.body.dispatchEvent(
+                new MouseEvent('mousemove', { bubbles: true, clientX: 180 }),
+            ),
+        );
+        expect(preNode.style.flexGrow).toBe(previousGrow);
+    });
+
+    test('dragging a pane closed uses its saved widget key', () => {
+        const { actor, preNode, nextNode, disableWidget, checkSize } =
+            renderBetweenPanes('h');
+        drag(actor, 300, -100);
+        expect(preNode.classList.contains('app-hidden-widget')).toBe(true);
+        expect(nextNode.style.flexGrow).toBe('2');
+        endDrag();
+        expect(disableWidget).toHaveBeenCalledWith('first', ['first', 1]);
+        expect(checkSize).not.toHaveBeenCalled();
+    });
+
+    test('dragging the second pane closed also preserves its prior size', () => {
+        const { actor, preNode, nextNode, disableWidget } =
+            renderBetweenPanes('h');
+        drag(actor, 100, 500);
+        expect(nextNode.classList.contains('app-hidden-widget')).toBe(true);
+        expect(preNode.style.flexGrow).toBe('2');
+        endDrag();
+        expect(disableWidget).toHaveBeenCalledWith('second', ['second', 1]);
+    });
+
+    test('quick-resize disabled keeps the pane above its minimum', () => {
+        const { actor, preNode, disableWidget, checkSize } = renderBetweenPanes(
+            'h',
+            {
+                preSize: 50,
+                disableQuickResize: true,
+            },
+        );
+        expect(actor.querySelectorAll('.disabling-arrow')).toHaveLength(0);
+        drag(actor, 100, 0);
+        expect(preNode.style.flexGrow).toBe('1');
+        expect(preNode.classList.contains('app-hidden-widget')).toBe(false);
+        endDrag();
+        expect(disableWidget).not.toHaveBeenCalled();
+        expect(checkSize).toHaveBeenCalledOnce();
+    });
+
+    test('double-click reset and context menu actions update the intended pane', () => {
+        const { actor, preNode, nextNode, checkSize, disableWidget } =
+            renderBetweenPanes('h');
+        preNode.style.flexGrow = '0.4';
+        nextNode.style.flexGrow = '1.6';
+        act(() =>
+            actor.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })),
+        );
+        expect(preNode.style.flexGrow).toBe('3');
+        expect(nextNode.style.flexGrow).toBe('2');
+        expect(checkSize).toHaveBeenCalledOnce();
+
+        act(() =>
+            actor.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const menuItems = mocks.showAppContextMenu.mock.calls.at(-1)?.[1];
+        expect(menuItems.map((item: any) => item.menuElement)).toEqual([
+            'Reset Size',
+            'Close First Widget',
+            'Close Second Widget',
+        ]);
+        act(() => menuItems[2].onSelect());
+        expect(disableWidget).toHaveBeenCalledWith('second', ['second', 2]);
+        expect(preNode.style.flexGrow).toBe('5');
+    });
+
+    test('playing media prevents a context-menu collapse', () => {
+        const { actor, disableWidget } = renderBetweenPanes('h');
+        mocks.checkMediaPlaying.mockReturnValue(true);
+        act(() =>
+            actor.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const menuItems = mocks.showAppContextMenu.mock.calls.at(-1)?.[1];
+        act(() => menuItems[1].onSelect());
+        expect(disableWidget).not.toHaveBeenCalled();
+        expect(mocks.checkMediaPlaying).toHaveBeenCalledWith({
+            targetElement: actor.previousElementSibling,
+            includeYouTube: true,
+        });
     });
 });
 

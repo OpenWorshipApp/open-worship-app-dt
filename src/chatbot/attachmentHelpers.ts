@@ -16,6 +16,8 @@
 // dies with the window. A reopened tab shows the chip greyed out, which is the
 // truth rather than a broken thumbnail.
 
+import type { AttachmentWindowType } from './windowAimHelpers';
+
 /**
  * The four things that can be attached, and they are not alike. A `file` is
  * one this window cannot read and no model is shown -- a PDF -- that a
@@ -56,6 +58,10 @@ export type ChatAttachmentType = {
     // missing in 2" must still mean the same picture after another chip is
     // taken off. A chip an ANSWER draws has none.
     number?: number;
+    // `image` from the 📷 and `element` from the ◎ -- WHICH window of the app
+    // it was taken in, so the model can aim its tools there and a pointed-at
+    // chip is rung where it was pointed at (`windowAimHelpers.ts`).
+    window?: AttachmentWindowType;
 };
 
 /**
@@ -301,6 +307,8 @@ export async function genImageAttachment(
     source: Blob | string,
     name: string,
     filePath?: string,
+    // The app window the picture is of -- the 📷, a report's picture.
+    takenIn?: AttachmentWindowType | null,
 ): Promise<ChatAttachmentType | null> {
     const normalized = await normalizeImage(source);
     if (normalized === null) {
@@ -315,6 +323,7 @@ export async function genImageAttachment(
         mimeType: toBotImage(normalized.dataUrl)?.mediaType ?? 'image/png',
         byteSize: normalized.byteSize,
         ...(filePath ? { filePath } : {}),
+        ...(takenIn ? { window: takenIn } : {}),
     };
 }
 
@@ -483,10 +492,14 @@ function toChipName(described: any) {
     return String(described?.label ?? '').trim();
 }
 
-export function genElementAttachment(described: any): ChatAttachmentType {
+export function genElementAttachment(
+    described: any,
+    // The app window it was pointed at in.
+    takenIn?: AttachmentWindowType | null,
+): ChatAttachmentType {
     const label = toChipName(described);
     const lines = [
-        'The user pointed at a control in the app window. It is:',
+        `The user pointed at a control in ${toWindowWords(takenIn)}. It is:`,
         `- what it says: ${label.length > 0 ? label : '(no words on it)'}`,
     ];
     if (described?.inPanel) {
@@ -522,7 +535,22 @@ export function genElementAttachment(described: any): ChatAttachmentType {
             ? { selector: String(described.selector) }
             : {}),
         summary: lines.join('\n'),
+        ...(takenIn ? { window: takenIn } : {}),
     };
+}
+
+/**
+ * The window in words: "the Settings window", "the main window (on the
+ * Presenter)". Kept apart from its `page`, which is good for one launch and
+ * is worked out at the ask (`toAttachmentLegend`), never stored in words.
+ */
+function toWindowWords(takenIn?: AttachmentWindowType | null) {
+    if (!takenIn) {
+        return 'the app window';
+    }
+    return takenIn.isMain
+        ? `the main window (on the ${takenIn.label})`
+        : `the ${takenIn.label} window`;
 }
 
 /**
@@ -594,7 +622,16 @@ function toOrdinal(count: number) {
  * ORDER among the ones that reach the model -- the only thing it can tell
  * them apart by. '' when nothing is numbered.
  */
-export function toAttachmentLegend(attachments: ChatAttachmentType[]) {
+export function toAttachmentLegend(
+    attachments: ChatAttachmentType[],
+    // The `page` that reaches an attachment's window NOW
+    // (`toAttachmentWindowPage`); its stored id when nobody says.
+    toWindowPage: (takenIn: AttachmentWindowType) => string | undefined = (
+        takenIn,
+    ) => {
+        return takenIn.id;
+    },
+) {
     let pictureCount = 0;
     const lines: string[] = [];
     for (const attachment of attachments) {
@@ -612,6 +649,17 @@ export function toAttachmentLegend(attachments: ChatAttachmentType[]) {
             what = `the control "${attachment.name}" they pointed at`;
         } else {
             what = `the file "${attachment.name}"`;
+        }
+        // WHICH window, and how a tool reaches it: a picture of a Settings
+        // window read against the main window's controls is a wrong answer
+        // with the right picture in front of it.
+        if (attachment.window !== undefined) {
+            const page = toWindowPage(attachment.window);
+            what +=
+                `, in ${toWindowWords(attachment.window)}` +
+                (page === undefined
+                    ? ''
+                    : ` -- for your tool calls about it, page "${page}"`);
         }
         if (attachment.number !== undefined) {
             lines.push(`[${attachment.number.toString()}] ${what}`);
@@ -637,6 +685,7 @@ export function toAttachmentLegend(attachments: ChatAttachmentType[]) {
 export function toAskedOfModel(
     typed: string,
     attachments: ChatAttachmentType[],
+    toWindowPage?: (takenIn: AttachmentWindowType) => string | undefined,
 ) {
     const attachedText = toAttachmentText(attachments);
     const asked = (
@@ -649,7 +698,7 @@ export function toAskedOfModel(
             ? ATTACHMENT_ONLY_QUESTION
             : asked;
     // Which number is which, last: it is a key to what stands above it.
-    const legend = toAttachmentLegend(attachments);
+    const legend = toAttachmentLegend(attachments, toWindowPage);
     return legend.length === 0 || question.length === 0
         ? question
         : `${question}\n\n${legend}`;
@@ -671,15 +720,23 @@ export function toAttachmentNote(attachments: ChatAttachmentType[]) {
         })
     ) {
         const named = attachments.map((attachment) => {
+            // The window rides into the history by NAME only: a later "look
+            // at 2 again" knows which window, and no launch-bound id is kept.
+            const where =
+                attachment.window === undefined
+                    ? ''
+                    : ` in ${toWindowWords(attachment.window)}`;
             const what =
                 attachment.kind === 'image'
                     ? 'picture'
                     : attachment.kind === 'element'
                       ? `the "${attachment.name}" control`
                       : `the file "${attachment.name}"`;
-            return attachment.number === undefined
-                ? what
-                : `${what} [${attachment.number.toString()}]`;
+            return (
+                (attachment.number === undefined
+                    ? what
+                    : `${what} [${attachment.number.toString()}]`) + where
+            );
         });
         const last = named.pop() ?? '';
         return `(with ${named.length === 0 ? last : `${named.join(', ')} and ${last}`} attached)`;

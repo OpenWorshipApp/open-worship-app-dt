@@ -6,6 +6,10 @@ import {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { useAppEffect } from '../helper/appHooks';
+import {
+    BIBLE_SHOWN_CHAPTER_COUNT,
+    toTargetChapterList,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ResourcesRendererComp from './ResourcesRendererComp';
@@ -53,11 +57,17 @@ export default function ResourcesPreviewerComp() {
                 viewController.resolveStraightBibleItems(foundBibleItem);
             setTargetsKey(
                 toResourceTargetsKey(
-                    bibleItemList.map(({ target }) => {
-                        return {
-                            bookKey: target.bookKey,
-                            chapter: target.chapter,
-                        };
+                    bibleItemList.flatMap(({ target }) => {
+                        // A passage crossing chapters is read in each chapter
+                        // the reader opens it with, never the whole range: a
+                        // folder walk per chapter of a book is no preview.
+                        return toTargetChapterList(
+                            target,
+                            0,
+                            BIBLE_SHOWN_CHAPTER_COUNT,
+                        ).map((chapter) => {
+                            return { bookKey: target.bookKey, chapter };
+                        });
                     }),
                 ),
             );

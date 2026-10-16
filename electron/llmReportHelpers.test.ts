@@ -211,6 +211,77 @@ describe('runLlmReportPost', () => {
     });
 
     // An app that never read the list, on a machine with no internet.
+    // A report pressed while the server was asleep is kept, not lost.
+    it('keeps a report the server was away for, and says it was kept', async () => {
+        const queue = vi.fn(async (_body: string) => {
+            return true;
+        });
+        const deps = genDeps({
+            queue,
+            fetch: vi.fn(async () => {
+                throw new TypeError('getaddrinfo ENOTFOUND gone.host');
+            }),
+        });
+        const result = await runLlmReportPost(
+            { text: FENCED_TEXT, files: [genFile()] },
+            deps,
+        );
+        expect(result).toEqual({
+            ok: false,
+            reason: 'unreachable',
+            detail: 'the report server did not answer',
+            queued: true,
+        });
+        // The very bytes that were to go, files and all.
+        const [body] = queue.mock.calls[0];
+        expect(JSON.parse(body)).toMatchObject({
+            reference: 'OWA-261013-628c',
+            prompt: FENCED_TEXT,
+            attachments: [genFile()],
+        });
+    });
+
+    it('keeps nothing a server said no to, nor a report somebody stopped', async () => {
+        const queue = vi.fn(async (_body: string) => {
+            return true;
+        });
+        // Answered, and refused: a later try would be refused too.
+        for (const status of [500, 413, 401]) {
+            resetLlmReportForTests();
+            await runLlmReportPost(
+                { text: REPORT_TEXT },
+                genDeps({
+                    queue,
+                    fetch: vi.fn(async () => {
+                        return new Response('', { status });
+                    }),
+                }),
+            );
+        }
+        // No report server shared at all: nothing to wait for.
+        resetLlmReportForTests();
+        await runLlmReportPost(
+            { text: REPORT_TEXT },
+            genDeps({ queue, readReportServers: () => [] }),
+        );
+        expect(queue).not.toHaveBeenCalled();
+        // Kept nowhere: said as it was.
+        resetLlmReportForTests();
+        expect(
+            await runLlmReportPost(
+                { text: REPORT_TEXT },
+                genDeps({
+                    queue: vi.fn(async () => {
+                        return false;
+                    }),
+                    fetch: vi.fn(async () => {
+                        throw new TypeError('offline');
+                    }),
+                }),
+            ),
+        ).not.toHaveProperty('queued');
+    });
+
     it('says the list could not be read, not that nobody shares a server', async () => {
         const deps = genDeps({
             readReportServers: () => [],

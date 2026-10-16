@@ -1,4 +1,9 @@
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import {
+    checkIsCrossChapterTarget,
+    getTargetChapterEnd,
+    toSingleChapterTarget,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { handleError } from '../helper/errorHelpers';
 import appProvider from '../server/appProvider';
 import ScreenLongTextManager from './managers/ScreenLongTextManager';
@@ -31,6 +36,19 @@ export async function toSteppedBibleTarget(
     isNext: boolean,
 ): Promise<BibleTargetType | null> {
     const { bookKey, chapter, verseStart, verseEnd } = target;
+    if (checkIsCrossChapterTarget(target)) {
+        // A passage across chapters has no size to keep: step to the one
+        // verse just past it, from its last verse forward or its first back.
+        const edgeTarget = isNext
+            ? toSingleChapterTarget(
+                  bookKey,
+                  getTargetChapterEnd(target),
+                  verseEnd,
+                  verseEnd,
+              )
+            : toSingleChapterTarget(bookKey, chapter, verseStart, verseStart);
+        return await toSteppedBibleTarget(bibleKey, edgeTarget, isNext);
+    }
     const span = Math.max(0, verseEnd - verseStart);
     const verseCount = await countChapterVerses(bibleKey, bookKey, chapter);
     if (verseCount === 0) {

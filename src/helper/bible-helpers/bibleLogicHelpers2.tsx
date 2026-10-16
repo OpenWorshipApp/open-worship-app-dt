@@ -24,9 +24,15 @@ import type { BibleInfoType } from './BibleDataReader';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
-import { appLog } from '../loggerHelpers';
 import { getBibleModelInfo, modelNewLinerInfo } from './bibleModelHelpers';
 import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
+import type { BibleRangeTokensType } from './bibleReferenceTokenizer';
+import {
+    checkHasBibleRangeReference,
+    normalizeBibleReferenceText,
+    toBibleDigitPattern,
+    tokenizeBibleRangeReference,
+} from './bibleReferenceTokenizer';
 
 export async function toInputText(
     bibleKey: string,
@@ -34,6 +40,8 @@ export async function toInputText(
     chapter?: number | null,
     verseStart?: number | null,
     verseEnd?: number | null,
+    // Written only when it is a later chapter: `verseEnd` is then its verse.
+    chapterEnd?: number | null,
 ) {
     let text = '';
     if (!book) {
@@ -56,7 +64,13 @@ export async function toInputText(
         return text;
     }
     text += `:${await toLocaleNumBible(bibleKey, verseStart)}`;
-    if (!verseEnd || verseEnd !== verseStart) {
+    if (chapterEnd && chapterEnd > chapter && verseEnd) {
+        // 1 John 1:1-2:3
+        text += `-${await toLocaleNumBible(bibleKey, chapterEnd)}`;
+        text += `:${await toLocaleNumBible(bibleKey, verseEnd)}`;
+        return text;
+    }
+    if (!verseEnd || verseEnd === verseStart) {
         // 1 John 1:1
         return text;
     }
@@ -166,8 +180,8 @@ export type ExtractedBibleResult = {
     guessingBook: string | null;
     chapter: number | null;
     guessingChapter: string | null;
+    // One item even across chapters: its target carries `chapterEnd`.
     bibleItem: BibleItem | null;
-    extraBibleItems?: BibleItem[];
 };
 
 export function genExtractedBible(): ExtractedBibleResult {
@@ -234,14 +248,39 @@ function modelBookToKey(book: string) {
 // "Psalms 23:1" (no such book) => "23:1": the part of an input no book
 // matched that was already a chapter, or a chapter and verses, so picking the
 // book it was meant to be does not throw that part away. Digits of any
-// script (`\p{Nd}`), so a Khmer `២៣:១` is kept too.
-const TRAILING_REFERENCE_REGEX = /\s(\p{Nd}+(?::\p{Nd}*(?:-\p{Nd}*)?)?)$/u;
+// script (`\p{Nd}`), so a Khmer `២៣:១` is kept too, and a range across
+// chapters (`23:1-24:3`) whole.
+const TRAILING_REFERENCE_REGEX =
+    /\s(\p{Nd}+(?::\p{Nd}*)?(?:-(?:\p{Nd}+(?::\p{Nd}*)?)?)?)$/u;
 export function toTrailingReference(guessingBook: string | null) {
     if (!guessingBook) {
         return null;
     }
     const matches = TRAILING_REFERENCE_REGEX.exec(guessingBook.trim());
     return matches?.[1] ?? null;
+}
+
+/**
+ * The book a typed name means: the Bible's own name for it, then the
+ * language's other spellings of that name (ពេត្រុសទី១ => ១ ពេត្រុស), then the
+ * model's English name.
+ */
+async function resolveBibleBookKey(bibleKey: string, book: string) {
+    const bookKey = await bookToKey(bibleKey, book);
+    if (bookKey !== null) {
+        return bookKey;
+    }
+    const langData = await getLangDataFromBibleKey(bibleKey);
+    if (langData === null) {
+        return null;
+    }
+    for (const transformedBook of langData.transformBibleBookName(book)) {
+        const transformedBookKey = await bookToKey(bibleKey, transformedBook);
+        if (transformedBookKey !== null) {
+            return transformedBookKey;
+        }
+    }
+    return modelBookToKey(book);
 }
 
 async function transformExtracted(
@@ -257,24 +296,9 @@ async function transformExtracted(
     if (book === null) {
         return result;
     }
-    let bookKey: string | null = await bookToKey(bibleKey, book);
+    const bookKey = await resolveBibleBookKey(bibleKey, book);
     if (bookKey === null) {
-        const langData = await getLangDataFromBibleKey(bibleKey);
-        if (langData === null) {
-            return null;
-        } else {
-            const transformedBooks = langData.transformBibleBookName(book);
-            for (const transformedBook of transformedBooks) {
-                bookKey = await bookToKey(bibleKey, transformedBook);
-                if (bookKey !== null) {
-                    break;
-                }
-            }
-            bookKey ??= modelBookToKey(book);
-            if (bookKey === null) {
-                return null;
-            }
-        }
+        return null;
     }
     result.bookKey = bookKey;
     result.guessingBook = null;
@@ -337,6 +361,135 @@ async function transformExtracted(
         target.verseEnd = verseCount;
     }
     return result;
+}
+
+// `JHN 1:2-3:4`: a range typed with the book's KEY, which only `keyToBook`
+// knows — the same fallback the legacy key patterns below give a key.
+async function resolveRangeBookKey(bibleKey: string, book: string) {
+    const bookKey = await resolveBibleBookKey(bibleKey, book);
+    if (bookKey !== null) {
+        return bookKey;
+    }
+    if (/^[123A-Z]{3}$/.test(book) && (await keyToBook(bibleKey, book))) {
+        return book;
+    }
+    return null;
+}
+
+async function parseVerseNum(
+    bibleKey: string,
+    verse: string | null,
+    verseCount: number,
+) {
+    if (verse === null) {
+        return null;
+    }
+    const verseNum = await fromLocaleNumBible(bibleKey, verse);
+    if (verseNum === null || verseNum < 1 || verseNum > verseCount) {
+        return null;
+    }
+    return verseNum;
+}
+
+/**
+ * A range form (`bibleReferenceTokenizer`) as ONE item, crossing chapters
+ * when it does. Reads at most the start and the end chapter.
+ *
+ * Out-of-range numbers fall back the way the legacy parser's do — a start
+ * verse to 1, an end verse to its chapter's last — and an end chapter past
+ * the book to the book's last verse. An end chapter BEFORE the start one is
+ * not a range at all: the start chapter runs to its end.
+ */
+async function transformExtractedRange(
+    bibleKey: string,
+    tokens: BibleRangeTokensType,
+): Promise<ExtractedBibleResult | null> {
+    const bookKey = await resolveRangeBookKey(bibleKey, tokens.book);
+    if (bookKey === null) {
+        return null;
+    }
+    const result = genExtractedBible();
+    result.bookKey = bookKey;
+    const modelChapterCount = getModelChapterCount(bookKey);
+    let { chapter, verseStart, chapterEnd, verseEnd } = tokens;
+    if (tokens.isWithoutColon && modelChapterCount === 1) {
+        // `Jude 1-3`: a one-chapter book is cited by its verses.
+        verseStart = chapter;
+        verseEnd = chapterEnd;
+        chapter = '1';
+        chapterEnd = null;
+    }
+    const chapterNum = await parseChapterFromGuessing(
+        bibleKey,
+        bookKey,
+        chapter,
+    );
+    if (chapterNum === null) {
+        result.guessingChapter = chapter;
+        return result;
+    }
+    const verseCount = await getVersesCount(bibleKey, bookKey, chapterNum);
+    if (verseCount === null) {
+        result.guessingChapter = chapter;
+        return result;
+    }
+    result.chapter = chapterNum;
+    const verseStartNum =
+        (await parseVerseNum(bibleKey, verseStart, verseCount)) ?? 1;
+    const genResult = (
+        newVerseStart: number,
+        newVerseEnd: number,
+        newChapterEnd?: number,
+    ) => {
+        result.bibleItem = BibleItem.fromData(
+            bibleKey,
+            bookKey,
+            chapterNum,
+            newVerseStart,
+            newVerseEnd,
+            newChapterEnd,
+        );
+        return result;
+    };
+    let chapterEndNum =
+        chapterEnd === null
+            ? chapterNum
+            : await fromLocaleNumBible(bibleKey, chapterEnd);
+    if (chapterEndNum === null || chapterEndNum < chapterNum) {
+        return genResult(verseStartNum, verseCount);
+    }
+    const isPastBook = chapterEndNum > modelChapterCount;
+    if (isPastBook) {
+        chapterEndNum = modelChapterCount;
+    }
+    if (chapterEndNum === chapterNum) {
+        const verseEndNum = isPastBook
+            ? verseCount
+            : ((await parseVerseNum(bibleKey, verseEnd, verseCount)) ??
+              verseCount);
+        if (verseEndNum < verseStartNum) {
+            // The legacy rule for an end before the start: the whole chapter.
+            return genResult(1, verseCount);
+        }
+        return genResult(verseStartNum, verseEndNum);
+    }
+    const endVerseCount = await getVersesCount(
+        bibleKey,
+        bookKey,
+        chapterEndNum,
+    );
+    if (endVerseCount === null) {
+        return genResult(verseStartNum, verseCount);
+    }
+    const verseEndNum = isPastBook
+        ? endVerseCount
+        : ((await parseVerseNum(bibleKey, verseEnd, endVerseCount)) ??
+          endVerseCount);
+    return genResult(verseStartNum, verseEndNum, chapterEndNum);
+}
+
+export async function getBibleDigitPattern(bibleKey: string) {
+    return toBibleDigitPattern(getBibleNumList(await getBibleInfo(bibleKey)));
 }
 
 const regexTitleMap: [
@@ -614,6 +767,38 @@ export async function extractBibleTitleByRegex(
     time: number,
 ): Promise<EditingResultType> {
     const oldInputText = inputText;
+    const digitPattern = await getBibleDigitPattern(bibleKey);
+    // The range forms first: the first legacy pattern would otherwise take
+    // `John 1:2-3:4` as verses 2 to "3:4" of chapter 1.
+    const rangeTokens = tokenizeBibleRangeReference(cleanText, digitPattern);
+    if (rangeTokens !== null) {
+        const result = await transformExtractedRange(bibleKey, rangeTokens);
+        if (result !== null) {
+            return { result, bibleKey, inputText, oldInputText, time };
+        }
+    }
+    // `(KJV) John 1:2-3:4`, `John 1:2-3:4 niv`: a range in a version named
+    // beside it. Only a text holding a RANGE is redirected here, so every
+    // legacy form keeps the answer it has always given.
+    if (
+        rangeTokens !== null ||
+        checkHasBibleRangeReference(cleanText, digitPattern)
+    ) {
+        const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
+        if (extractedBibleKeyResult !== null) {
+            const restText = normalizeBibleReferenceText(
+                extractedBibleKeyResult.inputText,
+                digitPattern,
+            );
+            if (tokenizeBibleRangeReference(restText, digitPattern) !== null) {
+                return extractBibleTitle(
+                    extractedBibleKeyResult.bibleKey,
+                    extractedBibleKeyResult.inputText,
+                    time,
+                );
+            }
+        }
+    }
     for (const [regexStr, parse] of regexTitleMap) {
         const regex = new RegExp(regexStr);
         const matches = regex.exec(cleanText);
@@ -650,63 +835,6 @@ export async function extractBibleTitleByRegex(
     };
 }
 
-// John 1:1-2: => John 1:1-, John 2:
-const numRegexString = String.raw`[^\s-:]`;
-const brokenRegex = new RegExp(
-    String.raw`^(.+${numRegexString}+\s${numRegexString}+:${numRegexString}+-)` +
-        String.raw`(${numRegexString}+:${numRegexString}*)$`,
-);
-function breakText(inputText: string) {
-    let extra: string | null = null;
-    const matches = brokenRegex.exec(inputText);
-    if (matches !== null && matches.length === 3) {
-        inputText = matches[1].trim();
-        extra = matches[2].trim();
-    }
-    if (extra) {
-        const arr = extra.split(':');
-        extra = `${arr[0]}:1-${arr[1]}`;
-    }
-    return {
-        inputText,
-        extra,
-    };
-}
-async function genExtraBibleItems(
-    bibleItem: BibleItem,
-    extraInputText: string,
-): Promise<BibleItem[] | undefined> {
-    const title = await bibleItem.toTitle();
-    const arr = title.split(' ');
-    arr.pop();
-    const book = arr.join(' ');
-    const extraVerseKey = `${book} ${extraInputText}`;
-    const { bibleKey } = bibleItem;
-    const endBibleItem = await BibleItem.fromTitleText(bibleKey, extraVerseKey);
-    const startChapter = bibleItem.target.chapter;
-    if (endBibleItem === null || endBibleItem.target.chapter <= startChapter) {
-        return undefined;
-    }
-    const extraBibleItems: BibleItem[] = [];
-    const chapterRange =
-        endBibleItem.target.chapter - bibleItem.target.chapter - 1;
-    for (let i = 1; i <= chapterRange; i++) {
-        const chapterNum = startChapter + i;
-        const newBibleItem = await BibleItem.fromTitleText(
-            bibleKey,
-            `${book} ${chapterNum}:`,
-        );
-        if (newBibleItem === null) {
-            appLog(
-                'Failed to generate extra bible item for',
-                `${book} ${chapterNum}:`,
-            );
-            return undefined;
-        }
-        extraBibleItems.push(newBibleItem);
-    }
-    return [...extraBibleItems, endBibleItem];
-}
 const extractBibleTitleCache = new CacheManager<EditingResultType>(4); // 4 seconds
 function setCache(cacheKey: string, data: EditingResultType) {
     extractBibleTitleCache.set(cacheKey, data);
@@ -727,13 +855,17 @@ export async function extractBibleTitle(
         let cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
         // 1 John 1.1 => 1 John 1:1
         cleanText = cleanText.replaceAll(/(.+\s+.+)\.(.?)/g, '$1:$2');
-        const brokenInputText = breakText(cleanText);
-        cleanText = brokenInputText.inputText;
         const locale = await getBibleLocale(bibleKey);
         const lang = await getLangDataAsync(locale);
         if (lang !== null) {
             cleanText = lang.sanitizeText(cleanText);
         }
+        // Only AFTER the passes above, and only between numbers: `John
+        // 18.33–19.16` => `John 18:33-19:16`, nothing a legacy form reads.
+        cleanText = normalizeBibleReferenceText(
+            cleanText,
+            await getBibleDigitPattern(bibleKey),
+        );
         if (cleanText === '') {
             const data = {
                 result: genExtractedBible(),
@@ -750,14 +882,6 @@ export async function extractBibleTitle(
             cleanText,
             time,
         );
-        const { bibleItem } = extractedData.result;
-        if (bibleItem !== null && brokenInputText.extra !== null) {
-            const extraBibleItems = await genExtraBibleItems(
-                bibleItem,
-                brokenInputText.extra,
-            );
-            extractedData.result.extraBibleItems = extraBibleItems;
-        }
         return setCache(cacheKey, extractedData);
     });
 }

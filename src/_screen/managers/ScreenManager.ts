@@ -582,6 +582,11 @@ export default class ScreenManager extends ScreenManagerBase {
             ScreenEffectManager.receiveSyncScreen(message);
         } else if (type === 'bible-screen-view-selected-index') {
             ScreenLongTextManager.receiveSyncSelectedIndex(message);
+            // Marked on the projector itself: the presenter carries it on to
+            // the members, as it does a scroll.
+            if (appProvider.isPagePresenter) {
+                this.syncScreenManagerGroup(message);
+            }
         } else if (type === 'bible-screen-view-text-style') {
             ScreenLongTextManager.receiveSyncTextStyle(message);
         } else if (type === 'background-video-time') {
@@ -679,6 +684,14 @@ export default class ScreenManager extends ScreenManagerBase {
                 this.relayScrollToMember(screenManagerBase, newMessage);
                 continue;
             }
+            if (newMessage.type === 'bible-screen-view-selected-index') {
+                this.relaySelectedIndexToMember(
+                    message.screenId,
+                    screenManagerBase,
+                    newMessage,
+                );
+                continue;
+            }
             const ScreenHandler =
                 this.getSyncGroupScreenEventHandler(newMessage);
             if (ScreenHandler !== null) {
@@ -712,6 +725,27 @@ export default class ScreenManager extends ScreenManagerBase {
         screenManagerBase.syncScrollPercentage(message.data);
         // A scroll fires every frame; a hidden member has no window to tell.
         if (screenManagerBase.isShowing) {
+            this.postScreenMessage(message);
+        }
+    }
+
+    // A selected verse or row belongs to no layer either, and only the scroll
+    // it set off used to reach the group -- which fought each member's own
+    // glide to it. Each member brings the selection into view itself, in its
+    // mini screen and in its own window; not gated by `noSyncGroupMap`, for
+    // the same reason as a scroll.
+    private static relaySelectedIndexToMember(
+        fromScreenId: number,
+        screenManagerBase: ScreenManagerBase,
+        message: ScreenMessageType,
+    ) {
+        if (
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                fromScreenId,
+                message,
+            ) &&
+            screenManagerBase.isShowing
+        ) {
             this.postScreenMessage(message);
         }
     }

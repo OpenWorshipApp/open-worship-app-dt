@@ -28,6 +28,11 @@ vi.mock('../../helper/FileSource', () => ({
     default: {
         getInstance: (filePath: string) => ({
             filePath,
+            name:
+                filePath
+                    .split('/')
+                    .pop()
+                    ?.replace(/\.own$/, '') ?? '',
             readFileData: () => h.readFileDataMock(filePath),
             writeFileData: (data: string) =>
                 h.writeFileDataMock(filePath, data),
@@ -320,5 +325,181 @@ describe('bible-list/note Note editing history', () => {
         );
         await note.reload();
         expect(note.items[0].content).toBe('file text');
+    });
+
+    test('item edits preserve order and write only the requested item', () => {
+        const note = genNote([genItem(2, 'two'), genItem(5, 'five')]);
+        const ids = () => note.items.map((item) => item.id);
+        expect(note.itemsLength).toBe(2);
+        expect(note.maxItemId).toBe(5);
+        expect(note.getItemById(5)?.note).toBe(note);
+        expect(note.getItemById(99)).toBeNull();
+
+        const added = genNote([genItem(20, 'new')]).items[0];
+        note.addNoteItem(added);
+        expect(ids()).toEqual([2, 5, 6]);
+        expect(h.notifyElementHighlightMock).toHaveBeenCalledOnce();
+
+        const edited = note.getItemById(5)!;
+        edited.content = 'edited five';
+        note.updateNoteItem(edited, true);
+        expect(note.getItemById(5)?.content).toBe('edited five');
+        expect(h.notifyElementHighlightMock).toHaveBeenCalledOnce();
+        note.updateNoteItem(edited);
+        expect(h.notifyElementHighlightMock).toHaveBeenCalledTimes(2);
+
+        note.swapItems(0, 2);
+        expect(ids()).toEqual([6, 5, 2]);
+        note.moveItemToIndex(note.getItemById(2)!, 1);
+        expect(ids()).toEqual([6, 2, 5]);
+        note.setItemById(2, genNote([genItem(2, 'replacement')]).items[0]);
+        expect(note.getItemById(2)?.content).toBe('replacement');
+        note.deleteItem(edited);
+        expect(ids()).toEqual([6, 2]);
+        expect(note.deleteItemAtIndex(50)).toBeNull();
+        note.empty();
+        expect(note.itemsLength).toBe(0);
+        expect(note.maxItemId).toBe(0);
+    });
+
+    test('invalid reorder requests and unknown items leave the document alone', () => {
+        const note = genNote([genItem(2, 'two'), genItem(5, 'five')]);
+        const missing = genNote([genItem(90, 'other')]).items[0];
+        note.swapItems(-1, 1);
+        note.swapItems(0, 9);
+        note.moveItemToIndex(missing, 0);
+        note.moveItemToIndex(note.items[0], 9);
+        note.moveItemToIndex(note.items[0], 0);
+        note.deleteItem(missing);
+        note.updateNoteItem(missing);
+        expect(note.items.map((item) => item.id)).toEqual([2, 5]);
+        expect(h.notifyElementHighlightMock).not.toHaveBeenCalled();
+    });
+
+    test('convenience operations save the resulting file and keep open state', async () => {
+        const note = genNote([genItem(1, 'one')]);
+        await note.setIsOpened(true);
+        expect(note.isOpened).toBe(true);
+        expect(
+            JSON.parse(h.writeFileDataMock.mock.lastCall![1]).metadata.isOpened,
+        ).toBe(true);
+        await note.addAndSaveNoteItem(genNote([genItem(8, 'eight')]).items[0]);
+        expect(note.items.map((item) => item.id)).toEqual([1, 2]);
+        const edited = note.getItemById(2)!;
+        edited.content = 'changed';
+        await note.updateAndSaveNoteItem(edited);
+        expect(
+            JSON.parse(h.writeFileDataMock.mock.lastCall![1]).items[1].content,
+        ).toBe('changed');
+        await note.deleteNoteItem(edited);
+        expect(
+            JSON.parse(h.writeFileDataMock.mock.lastCall![1]).items,
+        ).toHaveLength(1);
+        expect(h.writeFileDataMock).toHaveBeenCalledTimes(4);
+    });
+
+    test('moving a chosen item writes it to the destination before deleting it from the source', async () => {
+        const sourcePath = '/notes/Source.own';
+        h.readFileDataMock.mockImplementation(async (filePath: string) =>
+            filePath === sourcePath
+                ? JSON.stringify(
+                      genNoteJson([genItem(3, 'keep'), genItem(4, 'move')]),
+                  )
+                : null,
+        );
+        const target = genNote([genItem(1, 'already here')]);
+        await target.moveItemFrom(
+            sourcePath,
+            genNote([genItem(4, 'move')]).items[0],
+        );
+        expect(target.items.map((item) => item.content)).toEqual([
+            'already here',
+            'move',
+        ]);
+        expect(h.writeFileDataMock.mock.calls.map(([path]) => path)).toEqual([
+            FILE_PATH,
+            sourcePath,
+        ]);
+        expect(
+            JSON.parse(h.writeFileDataMock.mock.calls[1][1]).items.map(
+                (item: { metadata: { id: number } }) => item.metadata.id,
+            ),
+        ).toEqual([3]);
+    });
+
+    test('move refuses a missing source or item and does not touch its own file', async () => {
+        const target = genNote([]);
+        await target.moveItemFrom(FILE_PATH);
+        expect(h.readFileDataMock).not.toHaveBeenCalled();
+        await target.moveItemFrom('/notes/Missing.own');
+        expect(h.showSimpleToastMock).toHaveBeenLastCalledWith(
+            'Moving Note Item',
+            'Cannot source Note',
+        );
+        h.readFileDataMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'one')])),
+        );
+        await target.moveItemFrom(
+            '/notes/Source.own',
+            genNote([genItem(99, 'absent')]).items[0],
+        );
+        expect(h.showSimpleToastMock).toHaveBeenLastCalledWith(
+            'Moving Note Item',
+            'Cannot find Note Item',
+        );
+        expect(h.writeFileDataMock).not.toHaveBeenCalled();
+    });
+
+    test('default note loads an existing file or creates and opens one', async () => {
+        h.getSettingMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
+        h.readFileDataMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'existing')])),
+        );
+        expect((await Note.getDefault())?.items[0].content).toBe('existing');
+        expect(h.createNewFileDetailMock).not.toHaveBeenCalled();
+
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([]);
+        h.createNewFileDetailMock.mockResolvedValue(FILE_PATH);
+        h.readFileDataMock.mockResolvedValue(JSON.stringify(genNoteJson([])));
+        const created = await Note.getDefault();
+        expect(created?.isOpened).toBe(true);
+        expect(created?.items).toHaveLength(1);
+        expect(h.createNewFileDetailMock).toHaveBeenCalledWith(
+            '/notes',
+            'Default',
+            expect.any(String),
+            'note',
+        );
+        expect(h.writeFileDataMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('default note handles absent directory and failed creation', async () => {
+        h.getSettingMock.mockReturnValue(null);
+        expect(await Note.getDefault()).toBeNull();
+        h.getSettingMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([]);
+        h.createNewFileDetailMock.mockResolvedValue(null);
+        expect(await Note.getDefault()).toBeNull();
+        expect(h.showSimpleToastMock).toHaveBeenLastCalledWith(
+            'Getting Default Note File',
+            'Fail to get default note file',
+        );
+    });
+
+    test('editing-head synchronization runs only when a head exists', async () => {
+        const note = genNote([genItem(1, 'file')]);
+        const edited = note.getItemById(1)!;
+        edited.content = 'agent edit';
+        await note.syncItemEditingHistory(edited);
+        expect(h.addHistoryMock).not.toHaveBeenCalled();
+        h.checkHasHistoriesMock.mockResolvedValue(true);
+        h.getCurrentHistoryMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'old head')])),
+        );
+        await note.syncItemEditingHistory(edited);
+        expect(JSON.parse(readAddedHistory()).items[0].content).toBe(
+            'agent edit',
+        );
     });
 });

@@ -13,6 +13,7 @@ import { checkIsSubPixelScrolling } from '../scrolling/subPixelScrollHelpers';
 import type { ScrollPercentageType } from './managers/screenScrollSyncHelpers';
 import {
     getScrollSyncState,
+    markProgrammaticScroll,
     registerScrollingSyncEvent,
 } from './managers/screenScrollSyncHelpers';
 
@@ -201,6 +202,17 @@ export function getScreenBibleScrollTop(div: HTMLElement) {
         scrollTop = Math.max(scrollTop, column.scrollTop);
     }
     return scrollTop;
+}
+
+/**
+ * A selection is about to be brought into view: whatever of the screen it
+ * scrolls -- the div, or each column -- is this window's own doing.
+ */
+export function markScreenBibleProgrammaticScroll(div: HTMLElement) {
+    markProgrammaticScroll(div);
+    for (const column of columnsMap.get(div)?.columns ?? []) {
+        markProgrammaticScroll(column);
+    }
 }
 
 /** Fresh columns, put where the host is at once: nothing to glide out of. */

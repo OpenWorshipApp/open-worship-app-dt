@@ -379,17 +379,17 @@ export default class FlexResizeActorComp extends Component<Props, object> {
 
         this.setInactive();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.close('left');
+            this.close('left', this.previousGrow);
             return;
         }
         if (this.nextNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.close('right');
+            this.close('right', this.nextGrow);
             return;
         }
         this.props.checkSize();
     }
 
-    close(closeType: CloseType) {
+    close(closeType: CloseType, growBeforeDrag?: number) {
         const isFirst = CloseTypeListLeft.includes(closeType);
         const isPlaying = checkMediaPlaying({
             targetElement: isFirst ? this.preNode : this.nextNode,
@@ -410,7 +410,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             }
             this.props.disableWidget(dataFlexSizeKey, [
                 isFirst ? 'first' : 'second',
-                isFirst ? this.previousGrow : this.nextGrow,
+                growBeforeDrag ?? (isFirst ? this.previousGrow : this.nextGrow),
             ]);
         }
         this.setInactive();

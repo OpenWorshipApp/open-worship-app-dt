@@ -30,9 +30,13 @@ const mocks = vi.hoisted(() => {
                 chapter: number,
                 verseStart: number | string,
                 verseEnd?: number,
+                chapterEnd?: number | null,
             ) => {
                 if (verseEnd === undefined) {
                     return `${bookKey} ${chapter}:${verseStart}`;
+                }
+                if (typeof chapterEnd === 'number' && chapterEnd !== chapter) {
+                    return `${bookKey} ${chapter}:${verseStart}-${chapterEnd}:${verseEnd}`;
                 }
                 return `${bookKey} ${chapter}:${verseStart}-${verseEnd}`;
             },
@@ -350,6 +354,93 @@ describe('BibleItem', () => {
         expect(bibleItem.toJson()).toEqual({
             ...synced.toJson(),
             id: 1,
+        });
+    });
+
+    // JHN 1:2-3:4: `chapterEnd` is kept when it is a later chapter, and
+    // never written at all otherwise, so a one-chapter item stores exactly
+    // what it always stored.
+    test('keeps a passage across chapters, and only when it is one', async () => {
+        const crossTarget = {
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+            chapterEnd: 3,
+        };
+        const crossJson = { ...createBibleItemJson(), target: crossTarget };
+        const crossItem = BibleItem.fromJson(crossJson);
+        expect(crossItem.target).toEqual(crossTarget);
+        expect(crossItem.toJson().target).toEqual(crossTarget);
+        expect(crossItem.toVerseFullKey()).toBe('JHN 1:2-3:4');
+
+        const sameChapterJson = {
+            ...createBibleItemJson(),
+            target: { ...createBibleItemJson().target, chapterEnd: 1 },
+        };
+        expect(
+            BibleItem.fromJson(sameChapterJson).toJson().target,
+        ).not.toHaveProperty('chapterEnd');
+        expect(BibleItem.fromData('KJV', 'JHN', 1, 2, 4, 3).target).toEqual(
+            crossTarget,
+        );
+        expect(
+            BibleItem.fromData('KJV', 'JHN', 1, 2, 4).target,
+        ).not.toHaveProperty('chapterEnd');
+
+        crossItem.target = { ...crossTarget, chapterEnd: 1 };
+        expect(crossItem.target).not.toHaveProperty('chapterEnd');
+
+        expect(() => {
+            BibleItem.fromJson({
+                ...crossJson,
+                target: { ...crossTarget, chapterEnd: '3' },
+            } as any);
+        }).toThrow('Invalid bible item data');
+
+        const sameItem = BibleItem.fromJson(crossJson);
+        expect(
+            sameItem.checkIsTargetIdentical(BibleItem.fromJson(crossJson)),
+        ).toBe(true);
+        expect(
+            sameItem.checkIsTargetIdentical(
+                BibleItem.fromJson({
+                    ...crossJson,
+                    target: { ...crossTarget, chapterEnd: 4 },
+                }),
+            ),
+        ).toBe(false);
+
+        mocks.fromVerseKeyMock.mockResolvedValueOnce({
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 16,
+            chapterEnd: 19,
+        });
+        expect(
+            (await BibleItem.fromVerseKey('KJV', 'JHN 18:33-19:16'))?.target,
+        ).toEqual({
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 16,
+            chapterEnd: 19,
+        });
+
+        await sameItem.toText(3);
+        expect(mocks.bibleRenderHelperMock.toText).toHaveBeenLastCalledWith(
+            'KJV',
+            crossTarget,
+            true,
+            3,
+        );
+        await sameItem.toVerseTextList({ start: 3, count: 1 });
+        expect(
+            mocks.bibleRenderHelperMock.toVerseTextList,
+        ).toHaveBeenLastCalledWith('KJV', crossTarget, false, {
+            start: 3,
+            count: 1,
         });
     });
 

@@ -160,6 +160,67 @@ describe('parseReportDraft', () => {
         expect(parsed.fields.SUSPECT).toBe('the screen show control');
     });
 
+    // The first report sent through the inbox, word for word as a free
+    // model framed it: bold markers, `REPORT` with no colon, a rule.
+    it('reads the frame in the markdown a model dresses it in', () => {
+        const parsed = parseReportDraft(
+            '**What I see**\n\nThe Bible Lookup button is at the top.\n\n' +
+                '**TRY THIS:**  \n' +
+                '1. Click the blue **Bible Lookup** button at the top.  \n\n' +
+                'If the popup opens you can pick a book.\n\n---\n\n' +
+                '**REPORT**  \n' +
+                'TITLE: Cannot open Bible  \n' +
+                '**WHAT HAPPENED:** They cannot open a Bible.\n' +
+                '- STEPS: unknown – nothing was described.\n' +
+                'EXPECTED: The lookup opens.  \n' +
+                'SUSPECT: unknown\n',
+        );
+        expect(parsed.summary).toBe(
+            '**What I see**\n\nThe Bible Lookup button is at the top.',
+        );
+        expect(parsed.fix).toBe(
+            '1. Click the blue **Bible Lookup** button at the top.\n\n' +
+                'If the popup opens you can pick a book.',
+        );
+        expect(parsed.title).toBe('Cannot open Bible');
+        expect(parsed.fields).toEqual({
+            TITLE: 'Cannot open Bible',
+            'WHAT HAPPENED': 'They cannot open a Bible.',
+            STEPS: 'unknown – nothing was described.',
+            EXPECTED: 'The lookup opens.',
+            SUSPECT: 'unknown',
+        });
+    });
+
+    // The user's second inbox report: the marker's bold carried a heading.
+    it('leaves out the heading a bold marker carried inside it', () => {
+        const parsed = parseReportDraft(
+            'You are in the Presenter.\n\n' +
+                '**TRY THIS: steps you can try yourself**\n\n' +
+                '1. Press **Clear All**.\n' +
+                '2. Ask again.\n\n' +
+                'REPORT:\nTITLE: Presenter running slowly\n',
+        );
+        expect(parsed.fix).toBe('1. Press **Clear All**.\n2. Ask again.');
+        expect(parsed.title).toBe('Presenter running slowly');
+        // A first line whose bold opens AND closes is a step, and stays.
+        expect(
+            parseReportDraft('TRY THIS:\n1. Press **Clear All**\n2. Ask again.')
+                .fix,
+        ).toBe('1. Press **Clear All**\n2. Ask again.');
+    });
+
+    it('takes no sentence that merely starts with the word for a frame', () => {
+        const parsed = parseReportDraft(
+            'Report the issue to the maintainers.\nTry this later.',
+        );
+        expect(parsed.title).toBe('');
+        expect(parsed.fix).toBe('');
+        expect(parsed.summary).toBe(
+            'Report the issue to the maintainers.\nTry this later.',
+        );
+    });
+
     it('keeps the whole answer when the model wrote no frame', () => {
         const parsed = parseReportDraft('Something is wrong with the screen.');
         expect(parsed.summary).toBe('Something is wrong with the screen.');
@@ -175,6 +236,17 @@ describe('genReportInvestigation', () => {
         expect(asked).toContain(EVIDENCE.selectionLines[0]);
         expect(asked).toContain(EVIDENCE.screenLines[0]);
         expect(asked).toContain('error: something went wrong');
+    });
+
+    // The first report a person sent (an uncaught error, nothing said of
+    // what led to it) came back with three made-up steps: open the
+    // Presenter, the Documents tab, select a song. A maintainer follows them.
+    it('asks for steps somebody saw, and "unknown" when nobody knows', () => {
+        const asked = genReportInvestigation('it went blank', EVIDENCE);
+        const steps = asked.slice(asked.indexOf('STEPS:'));
+        expect(steps).toContain('only what the');
+        expect(steps).toContain('write "unknown"');
+        expect(steps).toContain('never a guess');
     });
 });
 
@@ -384,6 +456,7 @@ describe('postIssueReport', () => {
         expect(posted).toEqual({
             reference: report.reference,
             isSent: true,
+            isQueued: false,
             sentFileNames: [],
             unsentFiles: [],
             filePath: `/downloads/${report.reference}.md`,
@@ -731,6 +804,42 @@ describe('postIssueReport', () => {
         expect(said).not.toContain('Sent.');
         expect(said).toContain('`owf2025@gmail.com`');
         expect(said).toContain('**Copy report**');
+    });
+
+    // The report server asleep at the press: the report is kept by the
+    // app and goes by itself -- not left to an email nobody writes.
+    it('says a report the server was away for is kept and will go by itself', async () => {
+        electronSendAsyncMock.mockResolvedValueOnce({
+            ok: false,
+            reason: 'unreachable',
+            detail: 'the report server did not answer',
+            queued: true,
+        });
+        const report = genReport('data:image/png;base64,AAAA');
+        const posted = await postIssueReport(report);
+        expect(posted.isSent).toBe(false);
+        expect(posted.isQueued).toBe(true);
+        const said = describePostedReport(report, posted);
+        expect(said).toContain(
+            'the report server is not answering right now (the report ' +
+                'server did not answer). I kept it, and the app will send it ' +
+                'by itself as soon as that server is back',
+        );
+        expect(said).toContain('nothing more you need to do');
+        // Not the words for a report that went nowhere.
+        expect(said).not.toContain('Nothing was sent');
+        expect(said).not.toContain('Sent.');
+        // Not kept: said as before.
+        electronSendAsyncMock.mockResolvedValueOnce({
+            ok: false,
+            reason: 'unreachable',
+            detail: 'the report server did not answer',
+        });
+        const notKept = await postIssueReport(report);
+        expect(notKept.isQueued).toBe(false);
+        expect(describePostedReport(report, notKept)).toContain(
+            'Nothing was sent',
+        );
     });
 
     it('says why a report server did not take it, and still how to send it by hand', async () => {

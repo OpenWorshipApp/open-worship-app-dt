@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     findClippingAncestors,
     scrollBandIntoView,
+    subscribeScrollerList,
 } from './virtualScrollHelpers';
 
 function genElement(style: string, tagName = 'div') {
@@ -23,6 +24,113 @@ function genNested(elementList: HTMLElement[]) {
 
 afterEach(() => {
     document.body.innerHTML = '';
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+});
+
+describe('subscribeScrollerList', () => {
+    function installObserver() {
+        const observers: Array<{
+            notify: () => void;
+            observe: ReturnType<typeof vi.fn>;
+            disconnect: ReturnType<typeof vi.fn>;
+        }> = [];
+        vi.stubGlobal(
+            'ResizeObserver',
+            class {
+                observe = vi.fn();
+                disconnect = vi.fn();
+                constructor(notify: () => void) {
+                    observers.push(this);
+                    this.notify = notify;
+                }
+                notify: () => void;
+            },
+        );
+        return observers;
+    }
+
+    it('shares one observer and one frame across listeners on a scroller', () => {
+        const observers = installObserver();
+        const frames: FrameRequestCallback[] = [];
+        const requestFrame = vi.fn((callback: FrameRequestCallback) => {
+            frames.push(callback);
+            return frames.length;
+        });
+        const cancelFrame = vi.fn();
+        vi.stubGlobal('requestAnimationFrame', requestFrame);
+        vi.stubGlobal('cancelAnimationFrame', cancelFrame);
+        const scroller = document.createElement('div');
+        const first = vi.fn();
+        const second = vi.fn();
+        const stopFirst = subscribeScrollerList([scroller], first);
+        const stopSecond = subscribeScrollerList([scroller], second);
+        expect(observers).toHaveLength(1);
+        expect(observers[0].observe).toHaveBeenCalledWith(scroller);
+
+        scroller.dispatchEvent(new Event('scroll'));
+        scroller.dispatchEvent(new Event('scroll'));
+        observers[0].notify();
+        expect(requestFrame).toHaveBeenCalledOnce();
+        frames[0](0);
+        expect(first).toHaveBeenCalledOnce();
+        expect(second).toHaveBeenCalledOnce();
+
+        stopFirst();
+        scroller.dispatchEvent(new Event('scroll'));
+        frames[1](0);
+        expect(first).toHaveBeenCalledOnce();
+        expect(second).toHaveBeenCalledTimes(2);
+        stopSecond();
+        expect(observers[0].disconnect).toHaveBeenCalledOnce();
+        scroller.dispatchEvent(new Event('scroll'));
+        expect(requestFrame).toHaveBeenCalledTimes(2);
+        expect(cancelFrame).toHaveBeenCalled();
+    });
+
+    it('flushes on the fallback timeout when an animation frame never arrives', () => {
+        vi.useFakeTimers();
+        const observers = installObserver();
+        const cancelFrame = vi.fn();
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn(() => 17),
+        );
+        vi.stubGlobal('cancelAnimationFrame', cancelFrame);
+        const scroller = document.createElement('div');
+        const listener = vi.fn();
+        const stop = subscribeScrollerList([scroller], listener);
+        observers[0].notify();
+        expect(listener).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(50);
+        expect(listener).toHaveBeenCalledOnce();
+        expect(cancelFrame).toHaveBeenCalledWith(17);
+        stop();
+    });
+
+    it('watches each distinct clipping ancestor and stops all on cleanup', () => {
+        const observers = installObserver();
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn(() => 1),
+        );
+        vi.stubGlobal('cancelAnimationFrame', vi.fn());
+        const ancestors = [
+            document.createElement('div'),
+            document.createElement('div'),
+        ];
+        const listener = vi.fn();
+        const stop = subscribeScrollerList(ancestors, listener);
+        expect(
+            observers.map((observer) => observer.observe.mock.calls[0][0]),
+        ).toEqual(ancestors);
+        stop();
+        expect(
+            observers.every(
+                (observer) => observer.disconnect.mock.calls.length === 1,
+            ),
+        ).toBe(true);
+    });
 });
 
 describe('scrollBandIntoView', () => {

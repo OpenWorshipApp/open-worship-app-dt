@@ -402,6 +402,26 @@ export function listSettingLeaves() {
 // Keys that never travel, whichever section is ticked.
 // ---------------------------------------------------------------------------
 
+// Settings that left the data folder for this computer's own store
+// (`COMPUTER_SETTING_NAME_LIST` in `appLocalStorage.ts`, held equal to this
+// list by its test). A file made before that names them `local`.
+const MOVED_TO_HOME_KEY_LIST = [
+    'language-locale', // `LOCALE_SETTING_NAME`, `src/lang/langHelpers.ts`
+];
+
+/**
+ * The store a setting of a settings file lives in NOW: a file made while the
+ * interface language was the data folder's still restores it.
+ */
+export function toCurrentSettingStore(
+    store: SettingStoreType,
+    key: string,
+): SettingStoreType {
+    return store === 'local' && MOVED_TO_HOME_KEY_LIST.includes(key)
+        ? 'home'
+        : store;
+}
+
 const EXCLUDED_LOCAL_KEY_LIST = [
     // One-off migration markers: carried to a computer that has not run the
     // migration, they would stop it from ever running there.
@@ -428,6 +448,9 @@ const EXCLUDED_LOCAL_KEY_LIST = [
     screenManagerSettingNames.FULL_TEXT,
     // Replaced by `selected-vary-app-document`; read once on upgrade.
     'selected-lyric',
+    // A copy an older version left in the folder; the one in use is this
+    // computer's, and is exported from there.
+    ...MOVED_TO_HOME_KEY_LIST,
 ];
 
 const EXCLUDED_LOCAL_PATTERN_LIST = [
@@ -445,6 +468,7 @@ const EXCLUDED_LOCAL_PATTERN_LIST = [
 // ---------------------------------------------------------------------------
 
 const HOME_KEY_LEAF_MAP = new Map<string, string>([
+    ['language-locale', 'general.language'], // `MOVED_TO_HOME_KEY_LIST`
     // `{isAutoPlay, anthropicWorkspaceId, bedrockRegion}` -- the plaintext half.
     ['ai-setting', 'ai.providers'],
     ['ai-custom-servers', 'ai.providers'], // `electron/customLlmProtocol.ts`
@@ -514,7 +538,6 @@ export const SECURE_SETTING_KEY_LIST: readonly string[] = Array.from(
  * Exact keys beat every prefix. Each one names its leaf, or `excluded`.
  */
 const LOCAL_EXACT_KEY_LIST: [string, string[]][] = [
-    ['general.language', ['language-locale']],
     ['general.font', ['app-font-family', 'app-font-weight']],
     ['general.tips', ['daily-tips-disabled', 'daily-tips-hidden-until']],
     [
@@ -594,7 +617,12 @@ const LOCAL_EXACT_KEY_LIST: [string, string[]][] = [
     ],
     [
         'ai.assistant',
-        ['chatbot-llm-provider', 'chatbot-spend-limit', 'chatbot-tip-shown'],
+        [
+            'chatbot-llm-provider',
+            'chatbot-spend-limit',
+            'chatbot-tip-shown',
+            'chatbot-tip-hidden-until',
+        ],
     ],
     [SETTING_EXCLUDED, EXCLUDED_LOCAL_KEY_LIST],
 ];

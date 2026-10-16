@@ -107,7 +107,12 @@ Every `--check` seconds it asks its own public address for `/v1/models`:
 - three misses in a row and cloudflared is started again, with a new address,
   which replaces the old one in the registry;
 - a cloudflared that has no address after three minutes is started again;
-- a model list that changed is written out (and published) again;
+- a model list that changed is written out (and published) again. From LM
+  Studio the list is the chat models LOADED, whenever any is: every model
+  downloaded used to be listed, and one picked that was not loaded was
+  loaded on the spot at its default context — too small for the app, and a
+  long wait on that machine. Load another (at 32k) and it is published at
+  the next check; with nothing loaded the whole list stands;
 - a publish that failed is tried again a few minutes later, and an entry that
   went missing from the registry is put back;
 - an LLM server that is not running yet does not stop it: the tunnel opens and
@@ -302,6 +307,22 @@ look at them, run nothing in them.
   words are kept.
 - **A request too large is answered `413`**, read to its end first, so the
   app hears _too large_ and sends the words alone.
+- **A new report is said on this computer's desktop** — a Windows
+  notification (PowerShell), `osascript` on macOS, `notify-send` on Linux —
+  _New problem report: <its title> — #12 OWA-… Read it: node
+  llm-report-inbox.mjs show 12_, and a line in the log either way. The inbox
+  usually runs with no window (behind the tunnel, under the startup task),
+  and a report nobody notices helps nobody. One notice a minute at most: what
+  arrives inside the minute is counted and said once after it, because the
+  key is public. A report's words are passed to the notice as data, never as
+  part of a command. `--no-notify` (on `llm-tunnel.mjs` with `--reports` or
+  `--with-reports`, and on `llm-report-inbox.mjs serve`) turns it off.
+- **While the inbox is away, the app keeps what it is sent.** A copy of the
+  app whose Send finds this address not answering — the computer asleep, the
+  tunnel restarting — keeps the report (words and files, at most five, for a
+  week) and sends it by itself when the inbox is back: a minute after the app
+  starts, every half hour while it runs. A restart of the inbox loses no
+  report.
 
 `node llm-report-inbox.mjs` alone (`serve`, `--port 8788`) runs the inbox on
 this computer only, with no tunnel — for trying it, or for putting it behind a
@@ -337,7 +358,7 @@ administrator is needed.
 | --- | --- | --- |
 | Linux | A systemd **user** service, `owa-llm-tunnel-<id>.service`, `Restart=always`. `loginctl enable-linger` is tried so it starts at boot and outlives a logout; when that is refused the command to run with `sudo` is shown. With no systemd, two cron lines are printed to add by hand. | `journalctl --user -u owa-llm-tunnel-<id> -f` |
 | macOS | A launchd agent, `app.openworship.llm-tunnel.<id>` (`RunAtLoad`, `KeepAlive`): from this user's login. | `tunnel-<id>.log` here |
-| Windows | A Task Scheduler task, _Open Worship LLM Tunnel (<id>)_: at this user's logon and again every `--every` minutes (5) while it is not running, with no window. | `tunnel-<id>.log` here |
+| Windows | A Task Scheduler task, _Open Worship LLM Tunnel (<id>)_: at this user's logon, and every `--every` minutes (5) from the moment it is installed, starting it whenever it is not running, with no window. Two triggers: a logon trigger's repeat only begins at the next logon, so a task installed mid-session used to run once and never again (`schtasks /Query /TN "<name>" /V /FO LIST` showed _Next Run Time: N/A_). Pass `--out` and `--log` as FULL paths: the task runs in this folder. | `tunnel-<id>.log` here |
 
 Tried for real on Linux (Ubuntu 24.04, systemd) and Windows 11; the macOS
 recipe is written from launchd's documentation and has not been run.

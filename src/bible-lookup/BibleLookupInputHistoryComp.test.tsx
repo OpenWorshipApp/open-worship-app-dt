@@ -11,8 +11,10 @@ const h = vi.hoisted(() => ({
     menu: vi.fn(),
     drag: vi.fn(),
     saveBibleItem: vi.fn(),
-    addLeft: vi.fn(),
+    append: vi.fn(),
     setLookupContent: vi.fn(),
+    openPanel: vi.fn(),
+    handleError: vi.fn(),
     historyStore: { addBibleItemHistory: (_text: string) => {} },
 }));
 
@@ -72,13 +74,17 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     useBibleFontFamily: () => 'Test Serif',
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+vi.mock('../location-name-lookup/detailPanelHelpers', () => ({
+    openBibleItemDetailPanel: h.openPanel,
+}));
+vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleError }));
 
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 
 const bibleItem = { bibleKey: 'en', target: { verseStart: 1, verseEnd: 2 } };
 const controller = {
     selectedBibleItem: bibleItem,
-    addBibleItemLeft: h.addLeft,
+    appendBibleItem: h.append,
     setLookupContentFromBibleItem: h.setLookupContent,
 };
 let root: Root;
@@ -106,8 +112,10 @@ beforeEach(() => {
     h.menu.mockClear();
     h.drag.mockClear();
     h.saveBibleItem.mockClear();
-    h.addLeft.mockClear();
+    h.append.mockClear();
     h.setLookupContent.mockClear();
+    h.openPanel.mockReset().mockResolvedValue(undefined);
+    h.handleError.mockClear();
     h.historyStore.addBibleItemHistory = () => {};
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -153,15 +161,18 @@ describe('Bible lookup input history', () => {
         expect(h.setLookupContent).not.toHaveBeenCalled();
     });
 
-    it('opens a passage by double-click or keyboard and handles Shift split', async () => {
+    // A press reads the passage in a floating panel; the passage being
+    // edited stays as it is, Shift or not.
+    it('opens a passage in the verse panel by click or keyboard', async () => {
         await render();
+        expect(rows()[0].title).toBe('Click to open the verse');
         await act(async () =>
-            rows()[0].dispatchEvent(
-                new MouseEvent('dblclick', { bubbles: true }),
-            ),
+            rows()[0]
+                .querySelector<HTMLButtonElement>('button.text-reset')!
+                .click(),
         );
         expect(h.extract).toHaveBeenCalledWith('en', 'John 3:16');
-        expect(h.setLookupContent).toHaveBeenCalledWith(bibleItem);
+        expect(h.openPanel).toHaveBeenCalledWith(bibleItem);
         await act(async () =>
             rows()[1]
                 .querySelector<HTMLButtonElement>('button.text-reset')!
@@ -174,11 +185,41 @@ describe('Bible lookup input history', () => {
                     }),
                 ),
         );
-        expect(h.addLeft).toHaveBeenCalledWith(bibleItem, bibleItem);
-        expect(h.setLookupContent).toHaveBeenCalledTimes(2);
+        expect(h.extract).toHaveBeenLastCalledWith('en', 'Psalm 23');
+        await act(async () =>
+            rows()[0].dispatchEvent(
+                new MouseEvent('click', { bubbles: true, shiftKey: true }),
+            ),
+        );
+        expect(h.openPanel).toHaveBeenCalledTimes(3);
+        expect(h.setLookupContent).not.toHaveBeenCalled();
+        expect(h.append).not.toHaveBeenCalled();
     });
 
-    it('offers open, copy, save and remove actions for a valid passage', async () => {
+    it('reports a panel that fails to open', async () => {
+        const error = new Error('no bible');
+        h.openPanel.mockRejectedValueOnce(error);
+        await render();
+        await act(async () =>
+            rows()[0]
+                .querySelector<HTMLButtonElement>('button.text-reset')!
+                .click(),
+        );
+        expect(h.handleError).toHaveBeenCalledWith(error);
+    });
+
+    it('opens nothing from its own remove button', async () => {
+        await render();
+        await act(async () =>
+            rows()[1]
+                .querySelector<HTMLButtonElement>('[aria-label="Remove"]')!
+                .click(),
+        );
+        expect(h.extract).not.toHaveBeenCalled();
+        expect(h.openPanel).not.toHaveBeenCalled();
+    });
+
+    it('offers open, open beside, set, copy, save and remove for a valid passage', async () => {
         await render();
         await act(async () =>
             rows()[0].dispatchEvent(
@@ -191,11 +232,31 @@ describe('Bible lookup input history', () => {
         const items = h.menu.mock.calls.at(-1)![1];
         expect(
             items.map((item: { menuElement: string }) => item.menuElement),
-        ).toEqual(['Open', 'Copy passage', 'Save bible item', 'Remove']);
+        ).toEqual([
+            'Open',
+            'Open beside the current verse',
+            'Set to current editing',
+            'Copy passage',
+            'Save bible item',
+            'Remove',
+        ]);
+        await act(async () => items[0].onSelect());
+        expect(h.openPanel).toHaveBeenCalledWith(bibleItem);
+        expect(h.append).not.toHaveBeenCalled();
+        expect(h.setLookupContent).not.toHaveBeenCalled();
+        await act(async () => items[1].onSelect());
+        expect(h.append).toHaveBeenCalledWith(bibleItem);
+        expect(h.setLookupContent).not.toHaveBeenCalled();
+        // What a press on the entry did before: the editing passage becomes
+        // this one, and no pane is added beside it.
         await act(async () => items[2].onSelect());
+        expect(h.setLookupContent).toHaveBeenCalledWith(bibleItem);
+        expect(h.append).toHaveBeenCalledTimes(1);
+        await act(async () => items[4].onSelect());
         expect(h.saveBibleItem).toHaveBeenCalledWith(bibleItem);
-        await act(async () => items[3].onSelect());
+        await act(async () => items[5].onSelect());
         expect(h.history).toEqual(['(en) Psalm 23']);
+        expect(h.openPanel).toHaveBeenCalledTimes(1);
     });
 
     it('keeps an unparseable history entry removable but never drags or opens it', async () => {
@@ -215,10 +276,8 @@ describe('Bible lookup input history', () => {
         expect(h.menu.mock.calls.at(-1)![1]).toHaveLength(1);
         expect(h.menu.mock.calls.at(-1)![1][0].menuElement).toBe('Remove');
         await act(async () =>
-            rows()[0].dispatchEvent(
-                new MouseEvent('dblclick', { bubbles: true }),
-            ),
+            rows()[0].dispatchEvent(new MouseEvent('click', { bubbles: true })),
         );
-        expect(h.setLookupContent).not.toHaveBeenCalled();
+        expect(h.openPanel).not.toHaveBeenCalled();
     });
 });

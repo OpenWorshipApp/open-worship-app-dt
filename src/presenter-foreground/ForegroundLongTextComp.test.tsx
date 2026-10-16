@@ -19,6 +19,13 @@ const { state, mocks } = vi.hoisted(() => ({
         showingList: [] as [number, any][],
         // The rows marked on the screens holding a source's text.
         selectedKeyMap: new Map<string, string[]>(),
+        // The panel's Space / arrow listener, as its latest render made it.
+        keyListener: null as ((event: any) => void) | null,
+        keyingAreas: [] as {
+            priority: number;
+            getElement: () => HTMLElement | null;
+            checkHasSelected: () => boolean;
+        }[],
     },
     mocks: {
         setSetting: vi.fn(),
@@ -86,6 +93,20 @@ vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
         getLongTextSelectedSectionKeys: (sourceId: string) => {
             return state.selectedKeyMap.get(sourceId) ?? [];
         },
+    },
+}));
+vi.mock('../event/KeyboardEventListener', () => ({
+    useKeyboardRegistering: (_eventMappers: any, listener: any) => {
+        state.keyListener = listener;
+    },
+}));
+vi.mock('../keyboard-shortcut/keyingAreaHelpers', () => ({
+    KEYING_AREA_PRIORITY: { longText: 9 },
+    registerKeyingArea: (keyingArea: (typeof state.keyingAreas)[number]) => {
+        state.keyingAreas.push(keyingArea);
+        return () => {
+            state.keyingAreas.splice(state.keyingAreas.indexOf(keyingArea), 1);
+        };
     },
 }));
 vi.mock('../_screen/managers/screenEventHelpers', () => ({
@@ -816,5 +837,174 @@ describe('Long Text Show', () => {
         );
         await click('Hide Long Text 2');
         expect(mocks.hideLongText).toHaveBeenCalledWith('long-text', 2);
+    });
+
+    describe('Space and the arrows on the lit part', () => {
+        // jsdom has no layout, and so no scrolling into view.
+        const scrollIntoView = vi.fn();
+        beforeEach(() => {
+            Element.prototype.scrollIntoView = scrollIntoView;
+            state.keyListener = null;
+            state.keyingAreas.length = 0;
+        });
+
+        function press(key: string, shiftKey = false) {
+            const event = { key, shiftKey, preventDefault: vi.fn() };
+            act(() => {
+                state.keyListener?.(event);
+            });
+            return event;
+        }
+
+        async function renderSong() {
+            // The Intro has no words, so the rows are Verse 1, Chorus,
+            // Verse 2.
+            const parts = ['Intro', 'Verse 1', 'Chorus', 'Verse 2'];
+            state.lyricMap.set('/docs/km.owl', { title: 'ចម្រៀង', parts });
+            state.lyricMap.set('/docs/en.owl', { title: 'Song', parts });
+            setSession([
+                genLanguage('km', {
+                    source: 'lyric',
+                    lyricFilePath: '/docs/km.owl',
+                }),
+                genLanguage('en', {
+                    source: 'lyric',
+                    lyricFilePath: '/docs/en.owl',
+                }),
+            ]);
+            state.showingList = [
+                [
+                    0,
+                    {
+                        longTextData: {
+                            sourceId: 'long-text',
+                            renderedList: [],
+                        },
+                    },
+                ],
+            ];
+            await render();
+        }
+
+        test('press the next part in the same card, and focus goes with it', async () => {
+            await renderSong();
+            state.selectedKeyMap.set('long-text', ['lt-2']);
+            await render();
+            getButton('Bring to Middle 2 Chorus EN').focus();
+
+            const event = press('ArrowRight');
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(mocks.bringLongTextRowToMiddle).toHaveBeenCalledWith(
+                'long-text',
+                2,
+            );
+            // The EN card's button, not the KM one above it.
+            expect(document.activeElement).toBe(
+                getButton('Bring to Middle 3 Verse 2 EN'),
+            );
+            expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+
+            // Shift+Space goes back.
+            state.selectedKeyMap.set('long-text', ['lt-3']);
+            press(' ', true);
+            expect(mocks.bringLongTextRowToMiddle).toHaveBeenLastCalledWith(
+                'long-text',
+                1,
+            );
+            expect(document.activeElement).toBe(
+                getButton('Bring to Middle 2 Chorus EN'),
+            );
+        });
+
+        test('stop at the last part and at the first, without going round', async () => {
+            await renderSong();
+            state.selectedKeyMap.set('long-text', ['lt-3']);
+            await render();
+            const lastButton = getButton('Bring to Middle 3 Verse 2 KM');
+            lastButton.focus();
+            for (const key of [' ', 'ArrowRight', 'ArrowDown', 'PageDown']) {
+                // Still the panel's key: Space must not press the last part
+                // again.
+                expect(press(key).preventDefault).toHaveBeenCalled();
+            }
+            expect(mocks.bringLongTextRowToMiddle).not.toHaveBeenCalled();
+            expect(document.activeElement).toBe(lastButton);
+
+            state.selectedKeyMap.set('long-text', ['lt-1']);
+            await render();
+            getButton('Bring to Middle 1 Verse 1 KM').focus();
+            press('ArrowLeft');
+            press('PageUp');
+            expect(mocks.bringLongTextRowToMiddle).not.toHaveBeenCalled();
+        });
+
+        test('leave the key alone off the lit part', async () => {
+            await renderSong();
+            state.selectedKeyMap.set('long-text', ['lt-2']);
+            await render();
+            // A part that is not lit: Space is left to press THAT one.
+            getButton('Bring to Middle 1 Verse 1 KM').focus();
+            expect(press(' ').preventDefault).not.toHaveBeenCalled();
+            // Anything else in the panel.
+            getButton('Show Long Text').focus();
+            expect(press('ArrowRight').preventDefault).not.toHaveBeenCalled();
+            expect(mocks.bringLongTextRowToMiddle).not.toHaveBeenCalled();
+        });
+
+        test("a typed language's numbers step the same way", async () => {
+            setSession([
+                genLanguage('km', { sections: ['មួយ', 'ពីរ'] }),
+                genLanguage('en', { sections: ['one', 'two'] }),
+            ]);
+            state.showingList = [
+                [
+                    0,
+                    {
+                        longTextData: {
+                            sourceId: 'long-text',
+                            renderedList: [],
+                        },
+                    },
+                ],
+            ];
+            state.selectedKeyMap.set('long-text', ['lt-1']);
+            await render();
+            getButton('Bring to Middle 1 KM').focus();
+            press('ArrowDown');
+            expect(mocks.bringLongTextRowToMiddle).toHaveBeenCalledWith(
+                'long-text',
+                1,
+            );
+            expect(document.activeElement).toBe(
+                getButton('Bring to Middle 2 KM'),
+            );
+        });
+
+        test("hand the remote's keys to the lit part, and only while there is one", async () => {
+            await renderSong();
+            expect(state.keyingAreas).toHaveLength(1);
+            const [keyingArea] = state.keyingAreas;
+            expect(keyingArea.priority).toBe(9);
+            expect(keyingArea.checkHasSelected()).toBe(false);
+            expect(keyingArea.getElement()).toBeNull();
+
+            state.selectedKeyMap.set('long-text', ['lt-2']);
+            await render();
+            expect(keyingArea.checkHasSelected()).toBe(true);
+            // The first card's lit part, with the focus anywhere else...
+            expect(keyingArea.getElement()).toBe(
+                getButton('Bring to Middle 2 Chorus KM'),
+            );
+            // ...and the part that has it, so stepping from the second card
+            // is never counted as a remote going unanswered.
+            getButton('Bring to Middle 2 Chorus EN').focus();
+            expect(keyingArea.getElement()).toBe(
+                getButton('Bring to Middle 2 Chorus EN'),
+            );
+
+            act(() => root.unmount());
+            expect(state.keyingAreas).toHaveLength(0);
+            root = createRoot(container);
+        });
     });
 });

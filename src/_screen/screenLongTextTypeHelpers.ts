@@ -45,6 +45,9 @@ export type LongTextSectionType = {
     key: string;
     // A Bible verse's own key in its own version; nothing else has one.
     verseKey?: string;
+    // The first verse of a chapter in a passage crossing chapters: the
+    // chapter number its divider shows, in the Bible's own digits.
+    chapterLabel?: string;
 };
 
 export type LongTextColumnType = {
@@ -200,9 +203,17 @@ export function toBibleLongTextColumns(
             locale,
             code: bibleKey,
             title,
-            sections: verses.map(({ num, text, verseKey, kjvVerseKey }) => {
-                return { num, text, key: kjvVerseKey, verseKey };
-            }),
+            sections: verses.map(
+                ({ num, text, verseKey, kjvVerseKey, chapterLabel }) => {
+                    return {
+                        num,
+                        text,
+                        key: kjvVerseKey,
+                        verseKey,
+                        ...(chapterLabel === undefined ? {} : { chapterLabel }),
+                    };
+                },
+            ),
         };
     });
 }

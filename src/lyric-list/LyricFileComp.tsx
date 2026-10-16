@@ -21,6 +21,7 @@ import { tran } from '../lang/langHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 import { exportAppDocument } from '../app-document-list/appDocumentArchiveHelpers';
+import { handleError } from '../helper/errorHelpers';
 import {
     checkHandleOpenSlidesPreviewClicking,
     closeAppDocumentPreviewFloating,
@@ -36,6 +37,22 @@ function genContextMenuItems(
     }
     return [
         genOpenSlidesPreviewContextMenu(lyric.filePath, isSelected),
+        {
+            // The song in a new Long Text Show session, as its English card,
+            // ready to show. Its code is fetched when this is pressed: the
+            // panel's helpers are nothing a list of files needs to hold.
+            childBefore: genContextMenuItemIcon('body-text'),
+            menuElement: tran('Long Text Show'),
+            onSelect: async () => {
+                try {
+                    const { openLyricInLongTextShow } =
+                        await import('../presenter-foreground/foregroundLongTextOpenHelpers');
+                    openLyricInLongTextShow(lyric.filePath);
+                } catch (error) {
+                    handleError(error);
+                }
+            },
+        },
         {
             childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: (

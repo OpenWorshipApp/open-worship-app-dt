@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-13",
+    "updated": "2026-10-15",
     "sections": [
         {
             "id": "orientation",
@@ -2190,6 +2190,25 @@
                         "recipe": "W-53",
                         "passage": "Jump to a part",
                         "find": "Long Text Show"
+                    }
+                },
+                {
+                    "id": "long-text-keys",
+                    "text": "Can I go to the next part of a Long Text Show with Space or the arrow keys?",
+                    "kind": "howto",
+                    "keywords": [
+                        "next part",
+                        "presenter remote",
+                        "keyboard",
+                        "right arrow",
+                        "space bar",
+                        "last part"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "Step with the keys",
+                        "find": "Long Text Show",
+                        "shortcut": "Arrow keys / PageDown / Space"
                     }
                 }
             ]

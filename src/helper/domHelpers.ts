@@ -420,6 +420,18 @@ appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
     })();
 });
 
+// The taskbar icon's Tasks -> App Help (Chatbot) opens it with NO caution
+// (2026-10-15, the user's word: _open from taskbar no need confirmation_):
+// a task right-clicked off the taskbar is a person reaching for help, often
+// with the app minimised, and a question in front of it only stands in the
+// way. Every other way in still asks.
+appProvider.messageUtils.listenForData(
+    'main:app:open-chatbot-from-taskbar',
+    () => {
+        openChatbotPage();
+    },
+);
+
 // Help -> Report a Problem, under it: the same caution, then the request the
 // Help button's third row leaves -- the assistant opens asking what went
 // wrong (`chatbotHandoffStoreHelpers.ts`).

@@ -45,7 +45,13 @@ function escapeXMLText(value: string) {
 }
 
 function escapeXMLAttribute(value: string) {
-    return escapeXMLText(value).replaceAll('"', '&quot;');
+    // Line breaks as references: any other XML reader turns a raw one inside
+    // an attribute into a space, and a Bible's `note` is several lines.
+    return escapeXMLText(value)
+        .replaceAll('"', '&quot;')
+        .replaceAll('\r', '&#13;')
+        .replaceAll('\n', '&#10;')
+        .replaceAll('\t', '&#9;');
 }
 
 function serializeXMLNodeList(nodes: NodeListOf<ChildNode>) {

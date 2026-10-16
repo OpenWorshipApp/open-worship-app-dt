@@ -15,7 +15,12 @@ const h = vi.hoisted(() => ({
             bookKey: null as string | null,
             guessingChapter: null as number | null,
             bibleItem: null as null | {
-                target: { verseStart: number; verseEnd: number };
+                target: {
+                    chapter?: number;
+                    verseStart: number;
+                    verseEnd: number;
+                    chapterEnd?: number;
+                };
             },
         },
     },
@@ -174,6 +179,34 @@ describe('Bible lookup input actions', () => {
         expect(controller.inputText).toBe('John 3:16-');
         expect(event.stopPropagation).toHaveBeenCalled();
         expect(event.preventDefault).toHaveBeenCalled();
+    });
+
+    it('leaves a cross-chapter passage alone though its verses match', async () => {
+        h.inputText = 'John 1:2-3:2';
+        h.editingResult = {
+            oldInputText: 'John 1:2-3:2',
+            result: {
+                bookKey: 'JHN',
+                guessingChapter: 1,
+                bibleItem: {
+                    target: {
+                        chapter: 1,
+                        verseStart: 2,
+                        verseEnd: 2,
+                        chapterEnd: 3,
+                    },
+                },
+            },
+        };
+        await render();
+        expect(action('Tab to complete').getAttribute('aria-disabled')).toBe(
+            'true',
+        );
+        controller.inputText = 'John 1:2-3:2';
+        const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
+        await act(async () => h.handlers.get('tab')!(event));
+        expect(controller.inputText).toBe('John 1:2-3:2');
+        expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
     it('completes a recognized chapter with a colon', async () => {

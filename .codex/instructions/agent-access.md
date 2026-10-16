@@ -146,7 +146,7 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
   `checkIsAiEnabled()` reads that file directly (before `ready`, before the
   setting manager exists); off means neither door opens, the Help menu drops
-  the chatbot item, and the renderer's AI providers refuse to hand out a
+  the chatbot item (and the Windows taskbar its **App Help (Chatbot)** task), and the renderer's AI providers refuse to hand out a
   client. It only takes effect on the next launch — that is the point.
   The panel SAYS so and hands over the restart: _Restart the app to apply_
   sits under the switch whether or not it was just touched, with a

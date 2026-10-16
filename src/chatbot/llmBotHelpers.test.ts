@@ -313,6 +313,32 @@ describe('describeLlmError', () => {
 // reported from a real window: the assistant offered to help show a screen,
 // the user said "yes", and the reply was "It sounds like you might need help
 // or have a question" -- every question was being asked on its own.
+// A window of its own chosen in the window picker: the state read is of THAT
+// window, never the Presenter, and says nothing of where the main window is.
+describe('applyToolWatch with a window of its own chosen', () => {
+    const NEEDS_PRESENTER = '{"mainWindow":{"needsPage":"presenter"}}';
+
+    test('a state read of the chosen window does not offer the Presenter', () => {
+        const watch = genToolWatch();
+        watch.windowAim = {
+            windowId: 'READER-2',
+            focus: 'reader',
+            isSeparateWindow: true,
+        };
+        applyToolWatch(watch, 'owa_app_state', {}, NEEDS_PRESENTER);
+        expect(watch.needsPage).toBeNull();
+        // What is on the projector is still the Presenter's to say.
+        applyToolWatch(watch, 'owa_list_screens', {}, NEEDS_PRESENTER);
+        expect(watch.needsPage).toBe('presenter');
+    });
+
+    test('with the main window, the same read still offers it', () => {
+        const watch = genToolWatch();
+        applyToolWatch(watch, 'owa_app_state', {}, NEEDS_PRESENTER);
+        expect(watch.needsPage).toBe('presenter');
+    });
+});
+
 describe('toHistoryTurns', () => {
     test('a short exchange goes back whole', () => {
         const turns = toHistoryTurns([

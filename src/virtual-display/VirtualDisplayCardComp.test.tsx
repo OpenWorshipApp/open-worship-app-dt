@@ -11,8 +11,9 @@ import type {
 
 // The real `settingHelpers` over an in-memory store, so what the card writes
 // is what it reads back when mounted again.
-const { settingStore, appProviderMock } = vi.hoisted(() => ({
+const { settingStore, appProviderMock, selectFilesMock } = vi.hoisted(() => ({
     settingStore: new Map<string, string>(),
+    selectFilesMock: vi.fn(async () => [] as string[]),
     appProviderMock: {
         isPageReader: false,
         systemUtils: { isDev: false },
@@ -42,7 +43,7 @@ vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...parts: string[]) => parts.join('/'),
     fsCheckFileExist: async () => true,
     toDataDirRelativePath: (filePath: string) => filePath,
-    selectFiles: async () => [],
+    selectFiles: selectFilesMock,
     toBaseNameOfAnyOs: (filePath: string) => {
         return filePath.split(/[\\/]/).pop() ?? '';
     },
@@ -115,16 +116,21 @@ describe('VirtualDisplayCardComp folds', () => {
     let container: HTMLDivElement;
     let root: Root | null = null;
 
-    function mount(isJustCreated = false) {
+    function mount(
+        isJustCreated = false,
+        nextDisplay: VirtualDisplayInfo = display,
+    ) {
         root = createRoot(container);
         act(() => {
             root!.render(
                 <VirtualDisplayCardComp
-                    display={display}
+                    display={nextDisplay}
                     state={state}
                     isBusy={false}
                     isJustCreated={isJustCreated}
-                    perform={async () => {}}
+                    perform={async (work) => {
+                        await work();
+                    }}
                 />,
             );
         });
@@ -171,6 +177,8 @@ describe('VirtualDisplayCardComp folds', () => {
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         settingStore.clear();
+        selectFilesMock.mockReset();
+        selectFilesMock.mockResolvedValue([]);
         container = document.createElement('div');
         document.body.appendChild(container);
     });
@@ -287,6 +295,109 @@ describe('VirtualDisplayCardComp folds', () => {
         mount();
         expect(getCardButton().getAttribute('aria-expanded')).toBe('false');
     });
+
+    test('renaming and changing a resolution send the chosen display settings', async () => {
+        const { virtualDisplayCommand } =
+            await import('./virtualDisplayHelpers');
+        vi.mocked(virtualDisplayCommand).mockClear();
+        mount();
+        click(getCardButton());
+        const name = container.querySelector<HTMLInputElement>(
+            'section[aria-label="Settings"] input.form-control-sm',
+        )!;
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value',
+            )!.set!.call(name, 'Sunday Room');
+            name.dispatchEvent(new Event('input', { bubbles: true }));
+            name.focus();
+            name.blur();
+        });
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('update', {
+            number: NUMBER,
+            name: 'Sunday Room',
+        });
+        const resolution = container.querySelector<HTMLSelectElement>(
+            `#app-vd-resolution-${NUMBER}`,
+        )!;
+        await act(async () => {
+            resolution.value = '1920x1080';
+            resolution.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('update', {
+            number: NUMBER,
+            width: 1920,
+            height: 1080,
+        });
+    });
+
+    test('wallpaper file choices use the selected file type and path', async () => {
+        const { virtualDisplayCommand } =
+            await import('./virtualDisplayHelpers');
+        vi.mocked(virtualDisplayCommand).mockClear();
+        selectFilesMock.mockResolvedValueOnce(['/media/wallpaper.png']);
+        mount();
+        click(getCardButton());
+        const wallpaper = container.querySelector<HTMLSelectElement>(
+            `#app-vd-wallpaper-${NUMBER}`,
+        )!;
+        await act(async () => {
+            wallpaper.value = 'image';
+            wallpaper.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        expect(selectFilesMock).toHaveBeenCalledWith([
+            expect.objectContaining({ name: 'Image' }),
+        ]);
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('update', {
+            number: NUMBER,
+            wallpaper: { kind: 'image', filePath: '/media/wallpaper.png' },
+        });
+        await act(async () => {
+            wallpaper.value = 'color';
+            wallpaper.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('update', {
+            number: NUMBER,
+            wallpaper: { kind: 'color', color: '#000000' },
+        });
+    });
+
+    test('confirmed deletion clears all stored fold choices', async () => {
+        const { virtualDisplayCommand } =
+            await import('./virtualDisplayHelpers');
+        const { showAppConfirm } =
+            await import('../popup-widget/popupWidgetHelpers');
+        vi.mocked(virtualDisplayCommand).mockClear();
+        vi.mocked(showAppConfirm).mockResolvedValueOnce(true);
+        for (const part of [
+            'card',
+            'settings',
+            'addresses',
+            'more-addresses',
+        ]) {
+            settingStore.set(
+                `virtual-display-${NUMBER}-${part}-expanded`,
+                'true',
+            );
+        }
+        mount();
+        await act(async () => {
+            [...container.querySelectorAll<HTMLButtonElement>('button')]
+                .find((button) =>
+                    button.textContent?.includes('Delete Virtual Display'),
+                )!
+                .click();
+        });
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('delete', {
+            number: NUMBER,
+        });
+        expect(
+            [...settingStore.keys()].filter((key) =>
+                key.startsWith('virtual-display-7-'),
+            ),
+        ).toEqual([]);
+    });
 });
 
 // A viewer from the internet not let in yet is marked so, and the operator
@@ -311,7 +422,10 @@ describe('VirtualDisplayCardComp watching now', () => {
         container.remove();
     });
 
-    function mount(waiting: 'approval' | 'code' | null) {
+    function mount(
+        waiting: 'approval' | 'code' | null,
+        blocked: VirtualDisplayInfo['blocked'] = [],
+    ) {
         const client = {
             id: 'viewer-0001',
             kind: 'web' as const,
@@ -327,7 +441,7 @@ describe('VirtualDisplayCardComp watching now', () => {
         act(() => {
             root!.render(
                 <VirtualDisplayCardComp
-                    display={{ ...display, clients: [client] }}
+                    display={{ ...display, clients: [client], blocked }}
                     state={state}
                     isBusy={false}
                     isJustCreated={false}
@@ -381,6 +495,43 @@ describe('VirtualDisplayCardComp watching now', () => {
         expect(container.textContent).not.toContain('Waiting');
         expect(container.querySelector('[role="switch"]')).not.toBeNull();
         expect(findButton('Disconnect')).toBeDefined();
+    });
+
+    test('disconnected browsers and players can each be allowed again', async () => {
+        const { virtualDisplayCommand } =
+            await import('./virtualDisplayHelpers');
+        vi.mocked(virtualDisplayCommand).mockClear();
+        mount(null, [
+            {
+                key: 'viewer-2',
+                kind: 'web',
+                address: '198.51.100.2',
+                until: 1000,
+            },
+            {
+                key: 'player-3',
+                kind: 'video',
+                address: '198.51.100.3',
+                until: 1000,
+            },
+        ]);
+        expect(container.textContent).toContain('Disconnected');
+        expect(container.textContent).toContain('Browser');
+        expect(container.textContent).toContain('MP4');
+        const rows = [...container.querySelectorAll('li')].filter((row) =>
+            row.textContent?.includes('Allow again'),
+        );
+        expect(rows).toHaveLength(2);
+        await act(async () => rows[0].querySelector('button')!.click());
+        await act(async () => rows[1].querySelector('button')!.click());
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('unblock', {
+            number: NUMBER,
+            key: 'viewer-2',
+        });
+        expect(virtualDisplayCommand).toHaveBeenCalledWith('unblock', {
+            number: NUMBER,
+            key: 'player-3',
+        });
     });
 });
 

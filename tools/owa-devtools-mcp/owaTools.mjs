@@ -289,9 +289,16 @@ function toImageResult(dataUrl) {
  * the way the app's own code does, and `awaitPromise` on the CDP side lets the
  * promise be the answer.
  */
-function genCaptureExpression(screenId) {
+function genCaptureExpression(screenId, isOwnWindow) {
+  // Aimed at a window by name, the picture is of THAT window (main answers
+  // `isOwnWindow` with the asking page's own); with no page named it stays
+  // the main window, as it always was.
   const args =
-    screenId === undefined ? '{}' : `{ screenId: ${JSON.stringify(screenId)} }`;
+    screenId !== undefined
+      ? `{ screenId: ${JSON.stringify(screenId)} }`
+      : isOwnWindow
+        ? '{ isOwnWindow: true }'
+        : '{}';
   return `(() => {
         if (typeof require !== 'function') {
             throw new Error(
@@ -345,9 +352,11 @@ async function runElementPicker(timeoutSeconds, page) {
         return { picked: true, element: value.result };
       }
       if (value?.phase === 'cancelled' || value?.phase === 'idle') {
+        // Read out in the help window, under the ◎ the person pressed:
+        // worded for them, not about them.
         return {
           picked: false,
-          reason: 'The user did not point at anything.',
+          reason: 'Nothing was pointed at.',
         };
       }
       if (Date.now() > deadline) {
@@ -434,9 +443,9 @@ function genOpenLyricRefusal(report) {
   ].join('\n');
 }
 
-export function registerOwaTools(server) {
+export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // Bibles from an XML link, and the installed ones: its own module.
-  registerBibleXmlTool(server);
+  registerBibleXmlTool(server, { door });
   server.registerTool(
     'owa_help_search',
     {
@@ -787,8 +796,10 @@ export function registerOwaTools(server) {
             const { pid, port, isDev, version, startedAt } = instance;
             return { pid, port, isDev, version, startedAt };
           }),
+          // `id` is what `page` takes to aim at ONE window when two
+          // share an address (two Bible Reader windows).
           windows: targets.map((target) => {
-            return { title: target.title, url: target.url };
+            return { id: target.id, title: target.title, url: target.url };
           }),
           mainWindow,
         };
@@ -1010,9 +1021,10 @@ export function registerOwaTools(server) {
     },
     async ({ screenId, page }) => {
       try {
-        const { value } = await evaluateInApp(genCaptureExpression(screenId), {
-          match: page,
-        });
+        const { value } = await evaluateInApp(
+          genCaptureExpression(screenId, Boolean(page)),
+          { match: page },
+        );
         return toImageResult(value);
       } catch (error) {
         return toErrorResult(error);

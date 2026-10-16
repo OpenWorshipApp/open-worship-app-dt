@@ -52,7 +52,23 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   `openChatbotOnPress`, so the switch and the caution are asked there too),
   or `AppAssistantComp` (above — which since the same day also answers Help →
   **[en:tran:Open Online Help]**, the menu's first row, through
-  `src/server/onlineHelpHelpers.ts`, a leaf module both ways in share). The 🤖
+  `src/server/onlineHelpHelpers.ts`, a leaf module both ways in share), and
+  — on Windows — the taskbar icon's **Tasks → App Help (Chatbot)**
+  (2026-10-15, the user's ask: _so I can find help_ with the app minimised;
+  `OPEN_CHATBOT_ARG` in `electron/taskbarHelpers.ts`). A jump list task
+  can only start the program again, so the running app hears it through
+  `second-instance`, brings the main window up and sends a message of its
+  own, `main:app:open-chatbot-from-taskbar`, which opens the window with
+  NO caution (the user's word the same day: _open from taskbar no need
+  confirmation_); with the app closed, `initLaunchTask` waits for the main
+  window's first load. Listed only with the master switch on, like the Help
+  item. **The taskbar identity follows the DATA FOLDER**
+  (`toAppUserModelId`): the jump list belongs to the identity and the last
+  process to set it wins, so a dev copy on a scratch profile, started after
+  the user's, had pointed the list at itself and the user's press opened a
+  new window on the scratch folder. The default folder keeps the shared id,
+  its `-dev` twin `.dev` (also for the environment-less copy a task click
+  starts), any other folder an id of its own. The 🤖
   STAYS when the master switch is off: the
   press reads the switch and offers Settings → Others, because a vanished
   button explains nothing; the Tools entry withdraws (a menu item cannot
@@ -70,7 +86,65 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     `×`, is refused by `handleClosingSession`, and both step around it.
   - **The head row belongs to the tab in front**: three `<select>`s — _asking
     about_ (`BOT_FOCUS_LIST`, following the opener window until picked), the
-    assistant, the model. Their `aria-label`s must stay distinct (`Which part of the app` / `Which assistant answers` / `Which model answers`) —
+    assistant, the model. **Which WINDOW the tab works in is NOT in the head**:
+    it is **Working in**, a line of its own right ABOVE THE BOX, drawn only
+    while the app has a second window open (2026-10-15, the user's ask:
+    _chatbot work with main window only … Let add window selection (if more
+    child window), after window change the chatbot should work with the
+    selected window_; moved out of the head the same day at the user's word,
+    the line over the box circled — _add the selection where I highlighted_ —
+    with the story _ask about some stuff on app-document editor page … select
+    the editor window and start interacting with it_; `RenderWindowAimRowComp`,
+    `windowAimHelpers.ts`, `aria-label` `Which window`, which the question
+    corpus finds it by). It sits over the 📷 and the ◎ because both work in
+    it: the 📷 goes through `owa_screenshot` (`callToolPicture` — only a tool
+    aims by window id), which, given a page, asks `main:app:capture-window`
+    for `isOwnWindow`, the asking page's own window (until then every aimed
+    picture, the model's included, was of the main window); the ◎ says which
+    window to point in. A brass bar marks the line while a window of its own
+    is chosen. **A 📷 picture and a ◎ control KEEP the window they were
+    taken in** (the user, the same day: _make sure screenshot and element
+    selection have uuid information to the window to let mcp know_):
+    `ChatAttachmentType.window` — its DevTools id, its page WITH the popup
+    `uuid` (`setting.html?uuid=setting`), its name, whether it is the main
+    window — persisted with the message (`toValidAttachmentWindow` lists the
+    four fields). The model's legend says which window each one is in and the
+    `page` its tools reach it by NOW (`toAttachmentWindowPage`: the id while
+    that window is open; after a relaunch the main window's new id, or a
+    popup by its page and `uuid`) — the stored words (`summary`, the history
+    note) carry the window's NAME only, never a launch-bound id. A pointed-at
+    chip is rung in its own window whichever the tab works in now (aim
+    `null`, an explicit `page`), and its hover names the window. Local Web Share is loaded by main with no `uuid` and is never
+    the main window (`checkIsMainWindowUrl`). _Asking about_ names a
+    KIND, and every tool aims by a piece of an address — the first window it
+    fits wins — while two Reader windows are both `reader.html?uuid=reader`.
+    So a window is aimed at by its DevTools target id: main lists the windows
+    over its own debugging port (`electron/appWindowListHelpers.ts`,
+    `main:app:list-app-windows`, asked on mount, on focus, as the list
+    opens, and whenever main SAYS a window came, went or changed — never on
+    a timer (2026-10-15, the user, Settings opened with the help up and not
+    in its list: _it should real-time tracking the new opening_;
+    `initAppWindowListWatch`: every app window that loads a listed page,
+    changes its title or closes raises one `main:app:app-windows-changed`
+    to the help windows only, a burst settled for 300 ms, nothing sent with
+    no help window open, watched only with AI on; a test holds its page list
+    to `botFocus.mjs`'s windows. An app whose MAIN process started before
+    that code lists nothing and draws no line until it is relaunched, which
+    is how the user first saw it missing — memory
+    `main-process-change-needs-relaunch`),
+    `pickTarget` takes the id as `page`, and
+    `callTool` swaps it in (`toAimedToolArgs`) for a UI tool given no page
+    or the bare kind — never for a page asked for on purpose, never for the
+    data tools. The tab in front's choice is module state for the short calls
+    (a `/` command, the guide, a button); a model's answer carries the one it
+    was asked with (`AskExtraType.windowAim` → `ToolWatchType.windowAim`),
+    because it can outlast a tab switch. Per tab, in memory only: an id is
+    good for one launch. Choosing one sets _asking about_ to its kind; the
+    main window is no aim at all (the old way). With one chosen, the prompt
+    calls a Reader or Editor window "a window of its own" (no
+    `owa_goto_page`, no **Go Back to Presenter**), `/here` names it and the
+    main window apart, and a state read of it raises no **Go to the
+    Presenter** (`needsPage`), which it always would. Their `aria-label`s must stay distinct (`Which part of the app` / `Which assistant answers` / `Which model answers`) —
     `extra-work/verify-chatbot-e2e.mjs` finds them by label. A keyless
     provider's option TEXT reads `<name> — needs an API key` (Windows draws no
     tooltip on an OS list row) and is PICKABLE (`data-needs-key`, NOT
@@ -442,7 +516,9 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   **[en:tran:Open Chatbot]**, the two Tools entries (Ctrl+Shift+A
   included) and the two native Help items, which land on the IPC receivers in
   `domHelpers`. A caution a menu item walks around is a caution nobody is
-  given. One of its three sentences is shared and two — the risk and the closing advice — are NOT, because the
+  given. **One route skips it, by the user's word**: the Windows taskbar's
+  **App Help (Chatbot)** (2026-10-15, _open from taskbar no need
+  confirmation_) — do not add the caution back there. One of its three sentences is shared and two — the risk and the closing advice — are NOT, because the
   risks differ: the assistant reads THIS app and can offer a press that
   reaches a live projector, the ✨ is a stranger's website where the words
   leave the machine and nothing knows about this app — one warning vague
@@ -533,7 +609,11 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   the sign, so stepping back off the first tip indexes at -1. The arrows are
   drawn at half opacity rather than revealed on hover, deliberately: this line
   exists because a feature nobody announces is a feature nobody has, and hiding
-  its own controls is that mistake one level down.
+  its own controls is that mistake one level down. **The ✕ after the arrows
+  puts the line away for 30 days** (2026-10-15, the user's ask with the row
+  circled: _add option to hide it for 30 day_): `chatbot-tip-hidden-until`,
+  a setting like the daily tips' own, not believed when set further off than
+  60 days, back by itself — the same 30 days as the two cautions.
 - **A line starting with `/` is a COMMAND, and no model ever sees it**
   (2026-09-02, `src/chatbot/builtinActionHelpers.ts`). Measured on the standing
   corpus the afternoon three of the four providers answered 429 within an hour:
@@ -646,7 +726,10 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   process** (`main:app:recent-console`, `electron/consoleLogHelpers.ts`: the
   last forty errors and warnings of each of the app's own windows, heard
   since the window was made, a repeated line counted once, Electron's
-  dev-mode security banner left out, through the firewall's `redactSecrets`
+  dev-mode security banner left out — and the `bible-note` package's
+  _profiling the playground app … debug view_ advice, which sent the model
+  of the user's second inbox report (2026-10-15) after a setting this app
+  does not have — through the firewall's `redactSecrets`
   before it leaves main and `toPathScrubbed` in the window). Until
   2026-10-13 it asked the tool host's `list_console_messages` with no page
   named, which that tool has refused since `chrome-devtools-mcp` 1.8 — the
@@ -682,6 +765,10 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   the outcome is worded: **Sent** only when a server took it — with the
   names of the files that went and of any that did not — otherwise that
   nothing was sent — and why, when a server refused — with the email route.
+  A report main KEPT because its server was away (`queued`, see
+  `chatbot-llm.md`) is said as such — _I kept it, and the app will send it
+  by itself as soon as that server is back … nothing more you need to do_ —
+  never as _nothing was sent_ (`PostedReportType.isQueued`).
   **Stop while it is sending** says nothing at the press: `sendReportPrompt`
   gives main two seconds to say what became of the post, and the tab then
   reads _Stopped. The report was not sent_ or _It had already gone when you
@@ -728,7 +815,21 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   fault or a wish, and a `TRY THIS:` marker in front of `REPORT:` becomes
   `report.fix` — the answer is then `genFixCard` (_Try this first_, the
   steps, **That fixed it** / **Still a problem — report it**) with the
-  report written and held back. Fixed closes the thread
+  report written and held back. **STEPS are only what somebody saw**
+  (2026-10-15): the first report a person sent — an uncaught error,
+  nothing said of what led to it — came back with three made-up steps
+  (open the Presenter, the Documents tab, select a song), so the frame
+  asks for what the person said they did or the model saw happen, and
+  `unknown` with what was on screen otherwise. **The frame is read in the
+  markdown a model dresses it in** (the same day, the user's own inbox
+  report: a free model wrote `**REPORT**` alone on a line and
+  `**TRY THIS:**`, neither was seen, and the whole answer went out as one
+  block under the person's words for a title): a bold or heading marker
+  needs no colon when nothing follows it, a field may be bold or bulleted,
+  a closing `---` and line-end spaces come off; a sentence that merely
+  starts with _Report_ is not a frame, and the words a bold marker carried
+  inside it (`**TRY THIS: steps you can try yourself**`) are its heading,
+  not a step. Fixed closes the thread
   (`REPORT_RESOLVED_NOTE`, nothing sent); Still puts up the prepared card,
   whose report says what they were told to try. A typed _yes, thanks_ or
   _no_ under that card is its own button (`readFixReply`, short answers
@@ -770,7 +871,8 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   failed and the one 100 ms later had the picture, and a live report had
   gone out without its picture for that. `invalidate()` between asks; after
   the fourth it throws a sentence, never the engine's word. The same IPC serves the
-  chatbot's own 📷 and `owa_screenshot`. A snapshot bound for the chat window is
+  chatbot's own 📷 and `owa_screenshot` — which, given a `page`, sends
+  `isOwnWindow` and gets THAT page's window, never the main one. A snapshot bound for the chat window is
   HELD in the main process (`sendChatAttachment` / `takeChatAttachment`, exactly
   one) because the same press also opens that window, and a renderer still
   loading has nobody listening.

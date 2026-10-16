@@ -2,10 +2,10 @@
 id: W-12
 title: "Search the whole Bible (Bible Find)"
 section: "Bible study"
-verify: [RD-08, RD-09, RD-45, RD-46, RD-47]
+verify: [RD-08, RD-09, RD-45, RD-46, RD-47, RD-124]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -22,7 +22,10 @@ workflowsVersion: "2026-10-14"
 2. Type your search words. Every verse containing them is listed, with **the word you
    searched for marked** in each one, so you can see at a glance why a verse is there.
    The reference — _Psalm 23:1_ — leads each result; clicking anywhere on the result
-   opens that verse. 📸
+   opens that verse in a small floating panel, in the version you searched, and the passage
+   you are reading stays as it is. Its **⋮** menu has **[en:tran:Open]**, which does the same,
+   and **[en:tran:Open beside the current verse]**, which opens it as a passage beside the one
+   you are reading. 📸
 3. The bar under the results, at the bottom of the panel, says how many verses matched — **74 [en:tran:verses found]**.
    Use it to judge whether to narrow the search: a common word runs to tens of
    thousands. If a completed search has no matches, the panel says
@@ -46,15 +49,15 @@ workflowsVersion: "2026-10-14"
    The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
    to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
-   **To put a result on the screen.** A result has no show button of its own. Click it —
-   it opens as a passage in the lookup — then, in the Presenter, point at that passage's
-   title and press the cast icon, **[en:tran:Save bible item and show on screen]**, as for
-   any passage (W-06 step 3).
+   **To put a result on the screen.** A result has no show button of its own. Open its **⋮**
+   menu and choose **[en:tran:Open beside the current verse]** — it opens as a passage in the
+   lookup — then, in the Presenter, point at that passage's title and press the cast icon,
+   **[en:tran:Save bible item and show on screen]**, as for any passage (W-06 step 3).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47`
+`RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47` · `RD-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

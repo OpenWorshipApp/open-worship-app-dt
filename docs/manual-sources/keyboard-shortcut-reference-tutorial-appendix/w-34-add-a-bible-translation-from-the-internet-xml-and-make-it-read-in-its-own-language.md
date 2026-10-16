@@ -2,10 +2,10 @@
 id: W-34
 title: "Add a Bible translation from the internet (XML), and make it read in its own language"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, LT-01]
-screenshots: 7
+verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, LT-01]
+screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -113,6 +113,19 @@ Typing `Import the Bible called "KJV"` in the assistant does the same.
 7. Press **[en:tran:Import]** in the review. The new translation appears in
    **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
 
+**Where an imported Bible came from**
+
+Every Bible imported this way — by the assistant or with the form — keeps a note of
+where it came from: when it was imported and by whom, the link it was downloaded from
+(and the file link really used, when a GitHub page was turned into its file), the
+file's name and size, how many books, chapters and verses it has, and the key,
+language, numbers and book names chosen for it. In **[en:tran:Bibles XML]** its row
+shows **[en:tran:Source]:** and that link — press it to open the page in your
+browser — and **[en:tran:Note]** under it opens the whole note. 📸 The note is part of
+the Bible's info (`"note"` in the pencil → **[en:tran:Info]** editor), so you can add
+to it or clear it there, and a Bible you export (W-33) takes it along. A Bible
+imported before this note existed has none.
+
 A Bible already installed whose book names or numbers still read in English needs no
 second import. Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
 **🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
@@ -150,7 +163,7 @@ existing Bible, then use its pencil instead.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `LT-01`
+`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

@@ -37,6 +37,9 @@ import {
     FOREGROUND_WIDGET_LIST,
     genForegroundPanelMenuItems,
     getForegroundWidgetShowingScreenIds,
+    registerForegroundPanelOpener,
+    requestForegroundPanelOpening,
+    toOpenedPanelKeys,
     toOpenPanelKeys,
     toToggledPanelKeys,
 } from './foregroundWidgetHelpers';
@@ -120,5 +123,26 @@ describe('the foreground launcher', () => {
         expect(toToggledPanelKeys('message,long-text', 'message')).toBe(
             'long-text',
         );
+    });
+
+    test('a panel opened from elsewhere is opened, never closed', () => {
+        expect(toOpenedPanelKeys('message', 'long-text')).toBe(
+            'message,long-text',
+        );
+        expect(toOpenedPanelKeys('message,long-text', 'long-text')).toBe(
+            'message,long-text',
+        );
+        expect(toOpenedPanelKeys('gone', 'long-text')).toBe('long-text');
+    });
+
+    test('a request to open a panel goes to the launcher that is mounted', () => {
+        expect(requestForegroundPanelOpening('long-text')).toBe(false);
+        const opener = vi.fn();
+        const unregister = registerForegroundPanelOpener(opener);
+        expect(requestForegroundPanelOpening('long-text')).toBe(true);
+        expect(opener).toHaveBeenCalledWith('long-text');
+        unregister();
+        expect(requestForegroundPanelOpening('long-text')).toBe(false);
+        expect(opener).toHaveBeenCalledTimes(1);
     });
 });

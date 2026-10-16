@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
-screenshots: 46
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
+screenshots: 48
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -27,8 +27,12 @@ it is describing.
    Lyric Editor and Local Web Share — the windows a volunteer is most likely to be
    stuck in — and the menu bar is hidden on those, so the shortcut is the way in. If a
    help window is already open it comes to the front rather than a second one opening.
-   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries
-   and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
+   **On Windows the taskbar has it too**: right-click the app's icon on the taskbar and
+   choose **App Help (Chatbot)** under **Tasks** — the app comes forward and the help
+   opens straight away, without the **[en:tran:Be careful with AI]** question, which is the
+   quickest way when the app is minimised or behind something else.
+   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries,
+   the taskbar entry and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
@@ -64,7 +68,23 @@ it is describing.
    the Lyric Editor it offers marking verses and choruses, opened from Settings it
    offers the language and the Bible downloads. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is
-   left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
+   left out. Another tab can be asking about a different window at the same time.
+   **More than one window of the app open? Choose it on the WORKING IN line above the box.**
+   That line, just over the box you type in, names each open window — the main
+   window, and for example a Slide Editor (by its document's name), Settings or a
+   Bible Reader opened in a window of its own — and the help then works with the
+   one you choose: it reads what that window shows, outlines buttons in it, walks you
+   through steps there, the 📷 takes a picture of that window and the ◎ points in it.
+   Choosing one sets **ASKING ABOUT** to match and marks the line with a coloured
+   bar; choosing the main window goes back to the usual way. The choice belongs to
+   that chat tab while the help window stays open; the line appears only while there
+   is a second window to choose, and it keeps up by itself: a window you open or
+   close, or the main window moving to another page, shows in the list within a
+   second, with nothing to press in the help window. A picture from the 📷 and a
+   control from the ◎ remember the window they came from — rest the mouse on the
+   chip to see it — and the assistant is told which window each is of; pressing a
+   pointed-at chip outlines that control in its own window, whichever window is
+   chosen now. 📸 **ASSISTANT** is which service answers and **MODEL** is which of
    its models; with no API key at all **ASSISTANT** starts on **Free**, a shared public
    service that needs no key, and a notice pinned above the conversation says so and
    carries **Open AI settings**, which opens the settings panel that takes a key. 📸
@@ -330,6 +350,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    that changed while you were still reading it. (Clicking the sentence itself
    still picks one at random, which is the quick way to be shown something
    new.) 📸
+   **Seen enough tips? The ✕ at the very end of the line puts it away for 30
+   days.** It comes back by itself after that. 📸
 7. **Show it, instead of describing it.** Beside the box are three buttons.
    **📎** attaches a picture or a file from your computer; **📷** takes a picture
    of the app as it looks right now; **🎯** lets you POINT — an outline follows
@@ -488,9 +510,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    write-up goes straight to it together with its files — the picture of the app
    and whatever you attached: pictures, a PDF, text files, each up to 5 MB — and
    the answer starts **Sent**, with the report's reference and the names of the
-   files that went. A file that could not go is named too, with why. When no
-   report server is open, or it does not take the report, the answer says plainly
-   that nothing was sent, and why. Either way the whole thing, with the picture, is saved into your
+   files that went. A file that could not go is named too, with why. When the
+   report server is there but not answering — the computer it runs on is asleep
+   or restarting — the app KEEPS the report and sends it by itself as soon as that
+   server is back: it tries a minute after the app starts and every half hour
+   while it is open, for up to a week, and the answer says so, so there is nothing
+   more you need to do. When no report server is open at all, or it does not take
+   the report, the answer says plainly that nothing was sent, and why. Either way
+   the whole thing, with the picture, is saved into your
    **Downloads** folder, and when nothing was sent the answer tells you who wants
    it: it names the maintainers' email address and
    the subject line to use, and five buttons do the rest — **Copy report** puts the
@@ -853,7 +880,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

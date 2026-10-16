@@ -87,6 +87,16 @@ describe('the console a problem report quotes', () => {
                 '%cElectron Security Warning (Disabled webSecurity) font-weight: bold; This renderer process has "webSecurity" disabled.',
             ),
         ).toBeNull();
+        // Nor is a library's development-mode advice: quoted in a report,
+        // it sent the model after a "debug view" this app does not have.
+        expect(
+            toConsoleLine(
+                2,
+                'If you are profiling the playground app, please ensure you turn off the debug view. You can disable it by pressing on the settings control in the bottom-left of your screen and toggling the debug view setting.',
+                63192,
+                'https://localhost:3000/node_modules/.vite/deps/bible-note.js?v=1',
+            ),
+        ).toBeNull();
         expect(toConsoleLine(3, 'x'.repeat(900))!.length).toBeLessThan(520);
     });
 

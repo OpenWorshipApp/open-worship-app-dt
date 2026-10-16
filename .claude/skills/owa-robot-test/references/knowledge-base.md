@@ -40,6 +40,11 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
   (verified 2026-07-08: it read `"km-KH"` while the UI rendered English). Settings now go
   through `appLocalStorage` (`src/helper/settingHelpers.ts` → `getSetting`), which is a
   separate store.
+- **The locale is the COMPUTER's, not the data folder's** (2026-10-15): `getCurrentLocale()`
+  reads `clientSetting["language-locale"]` in the userData `setting.json` (the home store,
+  `COMPUTER_SETTING_NAME_LIST` in `appLocalStorage.ts`), so it holds across a data-folder switch. A
+  `<data dir>/local-storage/language-locale` file is an older version's copy — taken once
+  (`language-locale-migrated`), then never read; don't trust it either.
 - **`document.documentElement.lang` IS reliable now** — `init()` in `src/boot.ts` sets it from the
   locale each time an app window (re)loads, and `owa_app_state` reports it as `language` (on
   2026-07-26 it read `"en"` under a Khmer presenter; that Low a11y finding is fixed). In Settings →
@@ -220,8 +225,8 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   why a long-used dev profile opens on the Presenter.
 - **Recovery if the main window is stuck on a popup page:** (1) stop the app, (2) set
   `mainHtmlPath` back to `"presenter.html"` in `setting.json` (keep the other keys), (3)
-  relaunch. The window will open on the Presenter. Locale (the `language-locale` setting file under
-  `<data dir>/local-storage/`, §1) is stored separately and is preserved.
+  relaunch. The window will open on the Presenter. Locale (`clientSetting["language-locale"]` in that
+  same `setting.json`, §1) is preserved as long as you keep the other keys.
 - The `mainHtmlPath` validation IS implemented (`toAllowedMainHtmlPath` in
   `electron/ElectronMainController.ts`): only presenter/reader/appDocumentEditor/screen-mirror are
   accepted at boot, anything else falls back to `htmlFiles.reader`. Note it does NOT

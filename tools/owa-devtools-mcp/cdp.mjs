@@ -82,6 +82,11 @@ export async function getVersion(port) {
 export function pickTarget(targets, match) {
     if (match) {
         return (
+            // A window by its id first (2026-10-15, the chatbot's window
+            // picker): two Bible Reader windows have the same address, so
+            // only the id tells one from the other. An address is never a
+            // target id, so nothing that matched before matches otherwise.
+            targets.find((target) => target.id === match) ??
             targets.find((target) => target.url === match) ??
             targets.find((target) => {
                 return target.url.includes(match);

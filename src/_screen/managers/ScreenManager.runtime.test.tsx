@@ -165,6 +165,9 @@ class MockBibleManager {
     static readonly sendSynTextStyle = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
     static readonly receiveSyncSelectedIndex = vi.fn();
+    static readonly receiveGroupSelectedIndex = vi.fn(
+        (_fromScreenId: number, _message: { screenId: number }) => true,
+    );
     static readonly receiveSyncTextStyle = vi.fn();
 
     readonly screenId: number;
@@ -941,6 +944,121 @@ describe('ScreenManager runtime orchestration', () => {
         expect(sendDataMock).not.toHaveBeenCalledWith(
             'screen-message-channel',
             expect.objectContaining({ screenId: 40 }),
+        );
+    });
+
+    test('a selection on one screen is brought into view by every colour-note member that takes it', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(50);
+        const shownSibling = new ScreenManager(51);
+        const hiddenSibling = new ScreenManager(52);
+        const refusingSibling = new ScreenManager(53);
+        const outsider = new ScreenManager(54);
+        for (const instance of [
+            screenManager,
+            shownSibling,
+            hiddenSibling,
+            refusingSibling,
+        ]) {
+            instance.colorNote = 'purple';
+            baseInstances.set(instance.screenId, instance);
+        }
+        outsider.colorNote = 'green';
+        baseInstances.set(54, outsider);
+        shownSibling.isShowing = true;
+        refusingSibling.isShowing = true;
+        // A selection is no layer: the sticky echo guard is not consulted.
+        (screenManager.checkIsSyncGroupEnabled as any).mockReturnValue(false);
+        // Another text, or locked (`receiveGroupSelectedIndex`).
+        MockBibleManager.receiveGroupSelectedIndex.mockImplementation(
+            (_fromScreenId, message) => {
+                return message.screenId !== 53;
+            },
+        );
+
+        const type = 'bible-screen-view-selected-index';
+        const data = { selectedKJVVerseKey: 'GEN-2-12', isToTop: true };
+        screenManager.sendScreenMessage({ screenId: 50, type, data }, true);
+        await vi.waitFor(() => {
+            expect(
+                MockBibleManager.receiveGroupSelectedIndex,
+            ).toHaveBeenCalledTimes(3);
+        });
+
+        for (const screenId of [51, 52, 53]) {
+            expect(
+                MockBibleManager.receiveGroupSelectedIndex,
+            ).toHaveBeenCalledWith(50, { screenId, type, data });
+        }
+        // the selecting screen's own window, and the shown member that took
+        // it: not the hidden one, the one that refused, or the outsider
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 50,
+            stage: 0,
+            type,
+            data,
+            isScreen: false,
+        });
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 51,
+            stage: 0,
+            type,
+            data,
+            isScreen: false,
+        });
+        expect(sendDataMock).toHaveBeenCalledTimes(2);
+        // it is the member that brings it into view, not a scroll of the
+        // sender's, and no layer handler is involved
+        expect(shownSibling.syncScrollPercentage).not.toHaveBeenCalled();
+        expect(MockBibleManager.receiveSyncScreen).not.toHaveBeenCalled();
+        expect(shownSibling.noSyncGroupMap.size).toBe(0);
+        MockBibleManager.receiveGroupSelectedIndex.mockImplementation(
+            () => true,
+        );
+    });
+
+    test('a selection made on the projector reaches the group through the presenter only', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(60);
+        const sibling = new ScreenManager(61);
+        screenManager.colorNote = 'purple';
+        sibling.colorNote = 'purple';
+        baseInstances.set(60, screenManager);
+        baseInstances.set(61, sibling);
+        sibling.isShowing = true;
+        const message = {
+            screenId: 60,
+            type: 'bible-screen-view-selected-index',
+            data: { selectedKJVVerseKey: 'GEN-2-13' },
+        } as const;
+
+        // a screen window is told by the presenter; it relays nothing
+        ScreenManager.applyScreenManagerSyncScreen(message);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(MockBibleManager.receiveSyncSelectedIndex).toHaveBeenCalledWith(
+            message,
+        );
+        expect(
+            MockBibleManager.receiveGroupSelectedIndex,
+        ).not.toHaveBeenCalled();
+
+        appProviderMock.isPagePresenter = true;
+        ScreenManager.applyScreenManagerSyncScreen(message);
+        await vi.waitFor(() => {
+            expect(
+                MockBibleManager.receiveGroupSelectedIndex,
+            ).toHaveBeenCalledWith(60, { ...message, screenId: 61 });
+        });
+        // the member's window is told; the projector it came from is not
+        expect(sendDataMock).toHaveBeenCalledWith(
+            'screen-message-channel',
+            expect.objectContaining({ screenId: 61, type: message.type }),
+        );
+        expect(sendDataMock).not.toHaveBeenCalledWith(
+            'screen-message-channel',
+            expect.objectContaining({ screenId: 60 }),
         );
     });
 

@@ -35,6 +35,7 @@ vi.mock('../lang/langHelpers', () => ({
 vi.mock('../server/appProvider', () => ({
     default: {
         pathUtils: { basename: (path: string) => path.split('/').at(-1) },
+        appInfo: { version: '2026.10.15' },
     },
 }));
 vi.mock('../server/fileHelpers', () => ({
@@ -321,6 +322,126 @@ describe('Bible XML agent installation and lifecycle', () => {
         expect(mocks.save).toHaveBeenCalledWith(expect.any(Object), 'NEW');
     });
 
+    test('writes where the Bible came from into its note, keeping an earlier one', async () => {
+        const data: any = bible();
+        data.info.note = 'Exported from the church laptop.';
+        addDraft(data);
+        await handleAgentBibleXMLRequest({
+            action: 'import',
+            xmlPath: DRAFT,
+            sourceName: 'KhmerBible.xml',
+            key: 'KSV',
+            locale: 'km-KH',
+            numbers: DIGITS,
+            origin: {
+                by: 'chatbot',
+                url: 'https://github.com/o/r/blob/main/KhmerBible.xml',
+                downloadUrl:
+                    'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+                bytes: 1048576,
+                bookNames: { label: 'Khmer names', source: 'built in' },
+                unknownField: 'dropped',
+            },
+        });
+        const note: string = mocks.save.mock.calls[0][0].info.note;
+        expect(note).toMatch(
+            /^Imported on .+ UTC by the assistant \(Chatbot\) in Open Worship app 2026\.10\.15\.$/m,
+        );
+        expect(note).toContain(
+            'Downloaded from: https://github.com/o/r/blob/main/KhmerBible.xml',
+        );
+        expect(note).toContain(
+            'File link used: https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+        );
+        expect(note).toContain('File: KhmerBible.xml, 1.0 MB');
+        expect(note).toContain('Contents: 1 books, 1 chapters, 2 verses.');
+        expect(note).toContain('Key in the file: KJV');
+        expect(note).toContain(
+            'Chosen: key KSV, language km-KH, book names "Khmer names".',
+        );
+        expect(note).toMatch(
+            /\nEarlier note: Exported from the church laptop\.$/,
+        );
+        expect(note).not.toContain('dropped');
+    });
+
+    test('reads the link off the draft record when the server sent no origin', async () => {
+        // A dev app's MCP host started before `origin` existed: the chatbot's
+        // Thai Bible came in with "From the file: ThaiBible.xml" and no link.
+        addDraft();
+        state.texts.set(
+            DRAFT.replace(/\.xml$/, '.json'),
+            JSON.stringify({
+                source: 'https://raw.githubusercontent.com/o/r/master/ThaiBible.xml',
+                fileName: 'ThaiBible.xml',
+                recommended: { locale: 'th-TH' },
+            }),
+        );
+        await handleAgentBibleXMLRequest({
+            action: 'import',
+            xmlPath: DRAFT,
+            sourceName: 'ThaiBible.xml',
+            key: 'TK',
+            locale: 'en-US',
+            numbers: DIGITS,
+        });
+        const note: string = mocks.save.mock.calls[0][0].info.note;
+        expect(note).toContain(
+            'Downloaded from: https://raw.githubusercontent.com/o/r/master/ThaiBible.xml',
+        );
+        expect(note).toContain('File: ThaiBible.xml');
+        expect(note).not.toContain('From the file');
+    });
+
+    test('what the server sent wins over the record, and the record fills the rest', async () => {
+        addDraft();
+        state.texts.set(
+            DRAFT.replace(/\.xml$/, '.json'),
+            JSON.stringify({
+                url: 'https://example.org/record-page',
+                source: 'https://example.org/record.xml',
+                finalUrl: 'https://cdn.example.org/record.xml',
+                bytes: 2097152,
+            }),
+        );
+        await handleAgentBibleXMLRequest({
+            action: 'import',
+            xmlPath: DRAFT,
+            sourceName: 'bible.xml',
+            key: 'NEW',
+            locale: 'en-US',
+            numbers: DIGITS,
+            origin: { by: 'chatbot', url: 'https://example.org/given' },
+        });
+        const note: string = mocks.save.mock.calls[0][0].info.note;
+        expect(note).toContain('Downloaded from: https://example.org/given');
+        expect(note).toContain(
+            'File link used: https://example.org/record.xml',
+        );
+        expect(note).toContain(
+            'Served from: https://cdn.example.org/record.xml',
+        );
+        expect(note).toContain('File: bible.xml, 2.0 MB');
+        expect(note).not.toContain('record-page');
+    });
+
+    test('an import with no record of its source, or a made-up importer, says an agent did it', async () => {
+        addDraft();
+        await handleAgentBibleXMLRequest({
+            action: 'import',
+            xmlPath: DRAFT,
+            sourceName: 'bible.xml',
+            key: 'NEW',
+            locale: 'en-US',
+            numbers: DIGITS,
+            origin: { by: 'the-pastor', url: 'file:///C:/secret.xml' },
+        });
+        const note: string = mocks.save.mock.calls[0][0].info.note;
+        expect(note).toContain('by an AI agent connected to the app (MCP)');
+        expect(note).toContain('From the file: bible.xml');
+        expect(note).not.toContain('secret');
+    });
+
     test('does not write when the draft disappeared or the backup failed', async () => {
         const request = {
             action: 'import',
@@ -371,6 +492,16 @@ describe('Bible XML agent installation and lifecycle', () => {
             books: 1,
             file: 'custom-name.xml',
             bookNames: { GEN: 'Genesis' },
+        });
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'info', key: 'kjv' }),
+        ).not.toHaveProperty('note');
+        (state.parsed.get('installed-KJV').info as any).note =
+            'Downloaded from: https://example.org/kjv.xml';
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'info', key: 'kjv' }),
+        ).toMatchObject({
+            note: 'Downloaded from: https://example.org/kjv.xml',
         });
         expect(
             await handleAgentBibleXMLRequest({ action: 'info', key: 'BAD' }),

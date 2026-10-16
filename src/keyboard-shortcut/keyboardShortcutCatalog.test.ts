@@ -156,6 +156,15 @@ describe('keyboardShortcutCatalog', () => {
         // The remote's take-over hands keys to what a SCREEN is showing, and
         // only the Presenter steps a screen.
         expect(presenterIds).toContain('keying-take-over');
+        // Long Text Show's lit part answers the slides' own keys.
+        expect(
+            formatShortcutKeys(findEntry('presenter', 'long-text-next')!.keys),
+        ).toEqual(['→', '↓', 'Page Down', 'Space']);
+        expect(
+            formatShortcutKeys(
+                findEntry('presenter', 'long-text-previous')!.keys,
+            ),
+        ).toEqual(['←', '↑', 'Page Up', 'Shift+Space']);
         const readerIds = listEntryIds('reader');
         // The Reader shows the lookup inline: no popup to close, no Ctrl+B
         // button to open it.
@@ -165,6 +174,7 @@ describe('keyboardShortcutCatalog', () => {
         const editorIds = listEntryIds('appDocumentEditor');
         expect(editorIds).toContain('lookup-insert-slide');
         expect(editorIds).not.toContain('slide-next');
+        expect(editorIds).not.toContain('long-text-next');
         expect(editorIds).not.toContain('keying-take-over');
         expect(listEntryIds('setting')).not.toContain('find');
         expect(listEntryIds(null)).toContain('presenting-control');

@@ -54,7 +54,10 @@ const mocks = vi.hoisted(() => {
             return `(${this.bibleKey})`;
         }
 
-        async toText() {
+        readonly toTextCalls: unknown[] = [];
+
+        async toText(maxChapterCount?: number) {
+            this.toTextCalls.push(maxChapterCount);
             return this.bodyText;
         }
 
@@ -98,6 +101,7 @@ const mocks = vi.hoisted(() => {
         getBibleLocaleMock: vi.fn(),
         getChapterDataMock: vi.fn(),
         getLangDataFromBibleKeyMock: vi.fn(),
+        openBibleItemDetailPanelMock: vi.fn(async () => {}),
         reset() {
             cacheStores.length = 0;
             verseKeyMap.clear();
@@ -167,6 +171,16 @@ vi.mock('./bibleStyleHelpers', () => ({
     getLangDataFromBibleKey: mocks.getLangDataFromBibleKeyMock,
 }));
 
+vi.mock('../../location-name-lookup/detailPanelHelpers', () => ({
+    openBibleItemDetailPanel: mocks.openBibleItemDetailPanelMock,
+}));
+
+vi.mock('../errorHelpers', () => ({
+    handleError: (error: unknown) => {
+        throw error;
+    },
+}));
+
 async function loadModule() {
     return await import('./bibleLogicHelpers3');
 }
@@ -217,6 +231,14 @@ describe('bibleLogicHelpers3', () => {
                 'Thus the heavens',
             ),
         );
+        const crossItem = mocks.buildBibleItem(
+            'KJV',
+            'GEN 1:1-3',
+            'Genesis 1:1-2:3',
+            'Genesis 1:1-31 In the beginning Genesis 2:1-3 Thus the heavens',
+        );
+        (crossItem.target as any).chapterEnd = 2;
+        mocks.verseKeyMap.set('KJV:GEN 1:1-2:3', crossItem);
     });
 
     test('builds and caches newline title html with compiled verse tooltips', async () => {
@@ -233,7 +255,11 @@ describe('bibleLogicHelpers3', () => {
         expect(html).toContain('data-dict-locale="km-KH"');
         expect(html).toContain('font-family: Khmer Font');
         expect(html).toContain('app-caught-hover-pointer');
-        expect(html).toContain('Genesis 1:1  In the beginning');
+        // Only the reference is named while compiling: no verse is read for
+        // a hover that may never come.
+        expect(html).toContain('title="Genesis 1:1"');
+        expect(html).not.toContain('In the beginning');
+        expect(mocks.verseKeyMap.get('KJV:GEN 1:1').toTextCalls).toEqual([]);
 
         const cachedHtml = await module.genNewLineTitlesHtmlText('KJV', titles);
         expect(cachedHtml).toBe(html);
@@ -289,31 +315,69 @@ describe('bibleLogicHelpers3', () => {
         expect(await module.getCustomVerseText('KJV', 'GEN', 1, 2)).toBeNull();
     });
 
-    test('attaches verse click handlers and opens context menus for single verses', async () => {
-        const module = await loadModule();
+    function genTitleSpan(verseKey: string) {
         const parent = document.createElement('span');
         parent.innerHTML =
-            '<span data-title-verse-key="GEN 1:1" data-bible-key="KJV">Verse</span>';
+            `<span data-title-verse-key="${verseKey}" data-bible-key="KJV">` +
+            'Verse</span>';
         const child = parent.querySelector(
             'span[data-title-verse-key]',
         ) as HTMLSpanElement;
+        return { parent, child };
+    }
+
+    test('a click on a cited verse opens it in the floating verse panel, once', async () => {
+        const module = await loadModule();
+        const { parent, child } = genTitleSpan('GEN 1:1');
         const currentBibleItem = mocks.buildBibleItem(
             'KJV',
             'GEN 1:1',
             'Genesis 1:1',
             'Current verse',
         );
-        const viewController = {
-            addBibleItemRight: vi.fn(),
-            isLookup: false,
-        };
+        const viewController = { addBibleItemRight: vi.fn() };
 
+        // Reformed on every render of the verse: still ONE set of listeners.
+        await module.reformCustomTitle(
+            viewController as any,
+            currentBibleItem as any,
+            parent,
+        );
         await module.reformCustomTitle(
             viewController as any,
             currentBibleItem as any,
             parent,
         );
         child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await flushAsyncWork();
+        await flushAsyncWork();
+
+        expect(mocks.openBibleItemDetailPanelMock).toHaveBeenCalledTimes(1);
+        expect(mocks.openBibleItemDetailPanelMock).toHaveBeenCalledWith(
+            mocks.verseKeyMap.get('KJV:GEN 1:1'),
+        );
+        expect(mocks.showAppContextMenuMock).not.toHaveBeenCalled();
+    });
+
+    test('a right-click on a cited verse opens it beside, or copies it', async () => {
+        const module = await loadModule();
+        const { parent, child } = genTitleSpan('GEN 1:1');
+        const currentBibleItem = mocks.buildBibleItem(
+            'KJV',
+            'GEN 1:1',
+            'Genesis 1:1',
+            'Current verse',
+        );
+        const viewController = { addBibleItemRight: vi.fn() };
+
+        await module.reformCustomTitle(
+            viewController as any,
+            currentBibleItem as any,
+            parent,
+        );
+        child.dispatchEvent(
+            new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+        );
         await flushAsyncWork();
 
         const items = mocks.showAppContextMenuMock.mock.calls.at(
@@ -333,53 +397,75 @@ describe('bibleLogicHelpers3', () => {
         expect(mocks.copyToClipboardMock).toHaveBeenCalledWith(
             '(KJV) Genesis 1:1',
         );
+        expect(mocks.openBibleItemDetailPanelMock).not.toHaveBeenCalled();
     });
 
-    test('handles cross-chapter title ranges for lookup controllers', async () => {
-        vi.useFakeTimers();
+    // `យ៉ូហាន ១៨.៣៣-១៩.១៦` in a heading: the WHOLE passage, both chapters, as
+    // one item -- where it used to be two halves in a menu.
+    test('a cited range across chapters opens whole', async () => {
         const module = await loadModule();
-        const parent = document.createElement('span');
-        parent.innerHTML =
-            '<span data-title-verse-key="GEN 1:1-2:3" data-bible-key="KJV">Verse range</span>';
-        const child = parent.querySelector(
-            'span[data-title-verse-key]',
-        ) as HTMLSpanElement;
+        const { parent, child } = genTitleSpan('GEN 1:1-2:3');
         const currentBibleItem = mocks.buildBibleItem(
             'KJV',
             'GEN 1:1',
             'Genesis 1:1',
             'Current verse',
         );
-        const lookupController = {
-            addBibleItemRight: vi.fn(),
-            inputText: '',
-            isLookup: true,
-        };
+        const viewController = { addBibleItemRight: vi.fn() };
+        const crossItem = mocks.verseKeyMap.get('KJV:GEN 1:1-2:3');
 
         await module.reformCustomTitle(
-            lookupController as any,
+            viewController as any,
             currentBibleItem as any,
             parent,
         );
         child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         await flushAsyncWork();
+        await flushAsyncWork();
+        expect(mocks.openBibleItemDetailPanelMock).toHaveBeenCalledWith(
+            crossItem,
+        );
 
+        child.dispatchEvent(
+            new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+        );
+        await flushAsyncWork();
         const items = mocks.showAppContextMenuMock.mock.calls.at(
             -1,
         )?.[1] as Array<any>;
-        const combinedOpen = items.find(
-            (item) => item.title === 'Open "Genesis 1:1-2:3"',
-        );
-        expect(combinedOpen).toBeTruthy();
-        combinedOpen?.onSelect?.();
-        vi.runAllTimers();
-
-        expect(lookupController.addBibleItemRight).toHaveBeenCalledWith(
+        expect(items.map((item) => item.title)).toEqual([
+            undefined,
+            'Open "Genesis 1:1-2:3"',
+            'Copy "Genesis 1:1-2:3" to clipboard',
+        ]);
+        items[1]?.onSelect?.();
+        expect(viewController.addBibleItemRight).toHaveBeenCalledWith(
             currentBibleItem,
-            currentBibleItem,
+            crossItem,
             true,
         );
-        expect(lookupController.inputText).toBe('Genesis 1:1-2:3');
-        vi.useRealTimers();
+    });
+
+    test('the hover text of a cited verse is read on the first hover, capped', async () => {
+        const module = await loadModule();
+        const { parent, child } = genTitleSpan('GEN 1:1-2:3');
+        const crossItem = mocks.verseKeyMap.get('KJV:GEN 1:1-2:3');
+
+        await module.reformCustomTitle(
+            { addBibleItemRight: vi.fn() } as any,
+            mocks.buildBibleItem('KJV', 'GEN 1:1', 'Genesis 1:1', '') as any,
+            parent,
+        );
+        expect(crossItem.toTextCalls).toEqual([]);
+        child.dispatchEvent(new MouseEvent('mouseenter'));
+        await flushAsyncWork();
+        child.dispatchEvent(new MouseEvent('mouseenter'));
+        await flushAsyncWork();
+
+        expect(crossItem.toTextCalls).toEqual([3]);
+        expect(child.title).toBe(
+            'Genesis 1:1-2:3  Genesis 1:1-31 In the beginning ' +
+                'Genesis 2:1-3 Thus the heavens',
+        );
     });
 });

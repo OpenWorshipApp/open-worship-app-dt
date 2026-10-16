@@ -29,6 +29,9 @@ vi.mock('../../chatbot/mcpClient', () => ({
     callTool: mocks.read,
     parseToolJson: JSON.parse,
 }));
+vi.mock('../../server/appProvider', () => ({
+    default: { appInfo: { version: '2026.10.15' } },
+}));
 import BibleImportReviewComp from './BibleImportReviewComp';
 let root: Root;
 let host: HTMLDivElement;
@@ -40,7 +43,14 @@ const data = {
         numbersMap: {},
         keyBookMap: { GEN: 'Genesis' },
     },
+    books: { GEN: { '1': { '1': 'ដើមដំបូង', '2': 'ផែនដី' } } },
 } as any;
+const origin = {
+    by: 'settings',
+    url: 'https://example.org/bibles/Khmer1954.xml',
+    fileName: 'Khmer1954.xml',
+    bytes: 4718592,
+} as const;
 const importButton = () =>
     Array.from(host.querySelectorAll('button')).find(
         (x) => x.textContent === 'Import',
@@ -75,6 +85,7 @@ beforeEach(async () => {
         root.render(
             <BibleImportReviewComp
                 data={data}
+                origin={origin}
                 keyChoices={[]}
                 onCancel={vi.fn()}
                 onImported={vi.fn()}
@@ -114,6 +125,19 @@ test('offers built-in choices offline, requires a key, and saves the selected na
         }),
     );
     expect(data.info.key).toBe('');
+    // The Bible keeps where it came from and what was chosen for it.
+    const note: string = mocks.save.mock.calls[0][0].info.note;
+    expect(note).toMatch(
+        /^Imported on \d{4}-\d\d-\d\d \d\d:\d\d UTC by Settings > Bible > Import XML File in Open Worship app 2026\.10\.15\.$/m,
+    );
+    expect(note).toContain(
+        'Downloaded from: https://example.org/bibles/Khmer1954.xml',
+    );
+    expect(note).toContain('File: Khmer1954.xml, 4.5 MB');
+    expect(note).toContain('Contents: 1 books, 1 chapters, 2 verses.');
+    expect(note).toMatch(
+        /^Chosen: key KM1954, language km-KH, digits ០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩, book names "[^"]+"\.$/m,
+    );
 });
 test('Cancel does not write the preview', async () => {
     const cancel = Array.from(host.querySelectorAll('button')).find(
@@ -136,6 +160,7 @@ test('a late online result preserves the selected built-in list and adds its sou
             <BibleImportReviewComp
                 key="online"
                 data={data}
+                origin={origin}
                 keyChoices={[]}
                 onCancel={vi.fn()}
                 onImported={vi.fn()}
@@ -195,6 +220,7 @@ test('preserves a custom digit map and keeps the selected books when the locale 
                         ),
                     },
                 }}
+                origin={origin}
                 keyChoices={[]}
                 onCancel={vi.fn()}
                 onImported={vi.fn()}

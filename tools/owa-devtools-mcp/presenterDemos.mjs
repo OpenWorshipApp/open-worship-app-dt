@@ -1244,7 +1244,7 @@ export const PRESENTER_DEMO_LIST = [
         skipIfVisible: 'Bible Reference',
       },
       {
-        text: 'Double-click a history chip to put that passage back into the lookup. The version travels with the reference, so check both before presenting it again.',
+        text: 'Click a history chip to read that passage in a small floating panel. To put it back into the lookup, open More Options on the chip and choose Set to current editing. The version travels with the reference, so check both before presenting it again.',
       },
       {
         text: 'If the history is empty, look up a passage first. A history chip can also be dragged into the saved Bibles list when you want to keep it for another service.',

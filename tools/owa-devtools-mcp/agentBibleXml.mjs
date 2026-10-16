@@ -210,7 +210,10 @@ async function searchNameLists({ locale, offset, page }) {
   });
 }
 
-/** A list id, a full list, or changes by book id, as 66 names or changes. */
+/**
+ * A list id, a full list, or changes by book id, as 66 names or changes --
+ * with the chosen list's label and source, for the installed Bible's note.
+ */
 async function resolveBookNames(value, fallbackId) {
   const id = typeof value === 'string' ? value.trim() : fallbackId;
   if (value !== undefined && typeof value !== 'string') {
@@ -226,7 +229,10 @@ async function resolveBookNames(value, fallbackId) {
         'last check or names answer, or call names again.',
     );
   }
-  return { names: list.names };
+  return {
+    names: list.names,
+    chosen: { label: list.label ?? null, source: list.source ?? null },
+  };
 }
 
 // Titles compare without case or spacing: the same words, read off two
@@ -323,7 +329,13 @@ async function handleCheck({ url, find }) {
     bookNames: nameLists[0].id,
   };
   await writeBibleDraftMeta(downloaded.draftId, {
+    // Everything known of where the file came from, for the note the
+    // installed Bible carries: the link as given, the one downloaded (a
+    // share page turned into its file) and where the redirects ended.
+    url,
     source: downloaded.source,
+    finalUrl: downloaded.finalUrl,
+    bytes: downloaded.bytes,
     fileName: downloaded.fileName,
     title: analysis.title,
     recommended,
@@ -396,14 +408,10 @@ async function handleNames({ locale, draftId, key, offset }) {
   });
 }
 
-async function handleImport({
-  draftId,
-  key,
-  locale,
-  digits,
-  bookNames,
-  title,
-}) {
+async function handleImport(
+  { draftId, key, locale, digits, bookNames, title },
+  by,
+) {
   if (!key) {
     return toProblemResult(
       'key',
@@ -438,11 +446,19 @@ async function handleImport({
     isRecommendedLocale ? meta.recommended.bookNames : meta.fileListId,
   );
   let names = resolved.names;
+  let chosenList = resolved.chosen ?? null;
   if (resolved.changes) {
-    const base = (await findBibleNameList(meta.fileListId))?.names ?? null;
+    const baseList = await findBibleNameList(meta.fileListId);
+    const base = baseList?.names ?? null;
     names = BIBLE_BOOK_KEYS.map((bookKey, index) => {
       return resolved.changes[bookKey] ?? base?.[index] ?? bookKey;
     });
+    chosenList = {
+      label:
+        `${baseList?.label ?? 'The names in the file'}, ` +
+        `${Object.keys(resolved.changes).length} changed`,
+      source: baseList?.source ?? null,
+    };
   }
   const { xmlPath } = toBibleDraftPaths(draftId);
   const result = await runBibleWorker(
@@ -455,6 +471,16 @@ async function handleImport({
       numbers,
       bookNames: names,
       title,
+      // Written into the installed Bible's `note` by the app's half.
+      origin: {
+        by,
+        url: meta.url ?? null,
+        downloadUrl: meta.source ?? null,
+        finalUrl: meta.finalUrl ?? null,
+        fileName: meta.fileName ?? null,
+        bytes: meta.bytes ?? null,
+        bookNames: chosenList,
+      },
     },
     LONG_WORK_MS,
   );
@@ -502,7 +528,10 @@ async function handleUpdate({ key, title, locale, digits, bookNames }) {
     : toTextResult(result);
 }
 
-export function registerBibleXmlTool(server) {
+export function registerBibleXmlTool(server, { door = 'stdio' } = {}) {
+  // Who an installed Bible's note says brought it in: the in-app door is the
+  // chatbot, anything over stdio an outside agent.
+  const by = door === 'app' ? 'chatbot' : 'agent';
   server.registerTool(
     'owa_bible_xml',
     {
@@ -541,7 +570,7 @@ export function registerBibleXmlTool(server) {
           case 'names':
             return await handleNames(args);
           case 'import':
-            return await handleImport(args);
+            return await handleImport(args, by);
           case 'cancel':
             await removeBibleDraft(args.draftId);
             return toTextResult({ cancelled: true });

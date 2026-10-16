@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-22, ST-52, ST-58, LT-02, LT-03, LT-04]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
@@ -19,7 +19,9 @@ workflowsVersion: "2026-10-14"
      `title` gives the English name.) Some
      labels change straight away, but the switch is only complete once you click
      **[en:tran:Apply Settings]** at the bottom-left — that reloads every open
-     window. Unsaved edits in the Slide Editor are kept.
+     window. Unsaved edits in the Slide Editor are kept. The language belongs to this
+     computer, not to the data folder: switch to another data folder and the app stays
+     in the language you chose.
    - **[en:tran:Theme]:** system / light / dark.
    - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
      configured but not installed on this computer. When the chosen font comes in more
@@ -58,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-22` · `ST-52` · `ST-58` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

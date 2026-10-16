@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useState, useTransition } from 'react';
+import {
+    lazy,
+    Suspense,
+    useCallback,
+    useRef,
+    useState,
+    useTransition,
+} from 'react';
 import type { ChangeEvent, SyntheticEvent, MouseEvent } from 'react';
 
 import { tran } from '../../lang/langHelpers';
@@ -17,6 +24,38 @@ import {
 } from './bibleXMLJsonDataHelpers';
 import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import { takeBibleImportRequest } from './bibleImportRequestHelpers';
+import type { BibleImportOriginType } from './bibleImportNoteHelpers';
+
+// Where the text came from, for the note the installed Bible keeps: the link
+// (and the file name it ends in) or the chosen file, and its size.
+function genImportOrigin(
+    sourceName: string | undefined,
+    isFile: boolean,
+    dataText: string,
+    chatbotUrl: string | null,
+): BibleImportOriginType {
+    // `byteLength` counts without copying a 15 MB text into a buffer.
+    const bytes = Buffer.byteLength(dataText, 'utf8');
+    if (isFile) {
+        return { by: 'settings', fileName: sourceName ?? null, bytes };
+    }
+    let fileName: string | null = null;
+    try {
+        fileName =
+            decodeURIComponent(
+                new URL(sourceName ?? '').pathname.split('/').pop() ?? '',
+            ) || null;
+    } catch (_error) {
+        // A link with a broken escape still has its address.
+    }
+    return {
+        by: 'settings',
+        isLinkFromChatbot: chatbotUrl !== null && sourceName === chatbotUrl,
+        url: sourceName ?? null,
+        fileName,
+        bytes,
+    };
+}
 
 const LazyBibleImportReviewComp = lazy(() => import('./BibleImportReviewComp'));
 
@@ -29,13 +68,19 @@ export default function BibleXMLImportComp({
     const [selectedFileName, setSelectedFileName] = useState('');
     const [urlText, setUrlText] = useState('');
     const [reviewData, setReviewData] = useState<BibleXMLJsonType | null>(null);
+    const [reviewOrigin, setReviewOrigin] =
+        useState<BibleImportOriginType | null>(null);
     const reviewDataRef = useAppCurrentRef(reviewData);
     const [keyChoices, setKeyChoices] = useState<string[]>([]);
+    // The link the assistant typed in, so the note can say where it came
+    // from -- only while the box still holds exactly that link.
+    const chatbotUrlRef = useRef<string | null>(null);
     useAppEffect(() => {
         const takeRequest = () => {
             if (reviewDataRef.current !== null) return;
             const url = takeBibleImportRequest();
             if (url !== null) {
+                chatbotUrlRef.current = url;
                 setSelectedFileName('');
                 setUrlText(url);
             }
@@ -99,6 +144,14 @@ export default function BibleXMLImportComp({
                         );
                         return;
                     }
+                    setReviewOrigin(
+                        genImportOrigin(
+                            sourceName,
+                            isFileSelectedRef.current,
+                            dataText,
+                            chatbotUrlRef.current,
+                        ),
+                    );
                     setReviewData(dataJson);
                 } catch (error) {
                     showSimpleToast(
@@ -156,12 +209,14 @@ export default function BibleXMLImportComp({
             <Suspense fallback={<LoadingComp />}>
                 <LazyBibleImportReviewComp
                     data={reviewData}
+                    origin={reviewOrigin ?? { by: 'settings' }}
                     keyChoices={keyChoices}
                     onCancel={() => {
                         setReviewData(null);
                         setSelectedFileName('');
                     }}
                     onImported={() => {
+                        chatbotUrlRef.current = null;
                         setReviewData(null);
                         setSelectedFileName('');
                         setUrlText('');

@@ -8,11 +8,17 @@ import type { LongTextColumnStyleType } from '../_screen/screenLongTextTypeHelpe
 import { toLongTextSectionKey } from '../_screen/screenLongTextTypeHelpers';
 import type { LongTextItemDataType } from '../_screen/screenTypeHelpers';
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { slideMovingEventMappers } from '../keyboard-shortcut/appShortcutMappers';
+import {
+    KEYING_AREA_PRIORITY,
+    registerKeyingArea,
+} from '../keyboard-shortcut/keyingAreaHelpers';
 import { tran } from '../lang/langHelpers';
 import { getFileName, pathBasename } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -95,6 +101,117 @@ type LongTextRowsType = {
 
 // Lit, not filled: on a text card the words are still what is read.
 const PART_SELECTED_CLASSNAME = ' fg-part-on';
+
+// A part button carries its ROW, and what holds one card's part buttons is
+// marked, so a key steps to the next row's button in the SAME card.
+const PART_ROW_DATA_KEY = 'data-long-text-row';
+const PARTS_DATA_KEY = 'data-long-text-parts';
+const LIT_PART_SELECTOR = `[${PART_ROW_DATA_KEY}][aria-current="true"]`;
+
+// The part button holding focus inside this panel, or null.
+function findFocusedPartButton(body: HTMLElement | null) {
+    const { activeElement } = document;
+    if (
+        body === null ||
+        !(activeElement instanceof HTMLElement) ||
+        !activeElement.hasAttribute(PART_ROW_DATA_KEY) ||
+        !body.contains(activeElement)
+    ) {
+        return null;
+    }
+    return activeElement;
+}
+
+/**
+ * Space and the arrows step the song from a part button the way they step the
+ * slides preview: with the LIT part's button focused -- the one just pressed
+ * -- the next key presses the next part's, and focus goes with it so the key
+ * after steps again. Shift+Space and the back arrows go the other way.
+ *
+ * It stops at either end. A song is sung to its last part, and going round to
+ * the first would put the opening verse up in the middle of the ending.
+ *
+ * A part button that is NOT lit keeps its own keys: Space presses that one,
+ * which is what a keyboard user who tabbed to it meant.
+ */
+function useLongTextPartKeying(
+    bodyRef: { current: HTMLDivElement | null },
+    sourceId: string,
+    rowCount: number,
+) {
+    const currentRef = useAppCurrentRef({ sourceId, rowCount });
+    useKeyboardRegistering(
+        slideMovingEventMappers,
+        (event) => {
+            const button = findFocusedPartButton(bodyRef.current);
+            if (button === null) {
+                return;
+            }
+            const { sourceId, rowCount } = currentRef.current;
+            const rowIndex = Number(button.getAttribute(PART_ROW_DATA_KEY));
+            // The SCREEN's mark, not the button's lit class: the mark moves
+            // the moment a row is brought up, and the panel only catches up
+            // with it on its next render -- a quick second press would find
+            // the button it just focused not lit yet.
+            const selectedKeys =
+                ScreenLongTextManager.getLongTextSelectedSectionKeys(sourceId);
+            if (!selectedKeys.includes(toLongTextSectionKey(rowIndex))) {
+                return;
+            }
+            // The key is this panel's from here, at an end too: left to the
+            // button, Space would press the last part again.
+            event.preventDefault();
+            const isPrevious =
+                ['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key) ||
+                (event.key === ' ' && event.shiftKey);
+            const targetRowIndex = rowIndex + (isPrevious ? -1 : 1);
+            if (targetRowIndex < 0 || targetRowIndex >= rowCount) {
+                return;
+            }
+            ScreenLongTextManager.bringLongTextRowToMiddle(
+                sourceId,
+                targetRowIndex,
+            );
+            const targetButton =
+                button
+                    .closest(`[${PARTS_DATA_KEY}]`)
+                    ?.querySelector<HTMLElement>(
+                        `[${PART_ROW_DATA_KEY}="${targetRowIndex}"]`,
+                    ) ?? null;
+            if (targetButton !== null) {
+                // Not the browser's own scroll to a focused element: only as
+                // far as it takes to see the card, and at once.
+                targetButton.focus({ preventScroll: true });
+                targetButton.scrollIntoView({ block: 'nearest' });
+            }
+        },
+        [],
+    );
+    // Named to the remote's take-over (`keyingAreaHelpers`), after the run
+    // sheet and the slides: three quick presses elsewhere hand the keys to
+    // the lit part's button, and stepping quickly through a song from here
+    // is never mistaken for a remote going unanswered.
+    useAppEffect(() => {
+        return registerKeyingArea({
+            priority: KEYING_AREA_PRIORITY.longText,
+            getElement: () => {
+                const body = bodyRef.current;
+                return (
+                    findFocusedPartButton(body) ??
+                    body?.querySelector<HTMLElement>(LIT_PART_SELECTOR) ??
+                    null
+                );
+            },
+            checkHasSelected: () => {
+                const body = bodyRef.current;
+                return (
+                    body !== null &&
+                    body.querySelector(LIT_PART_SELECTOR) !== null
+                );
+            },
+        });
+    }, []);
+}
 
 function toReadProblemText(reason: LongTextReadProblemType) {
     if (reason === 'no-file') {
@@ -345,6 +462,7 @@ function LongTextLyricSourceComp({
                     className="d-flex flex-wrap align-items-start gap-1 w-100"
                     role="group"
                     aria-label={`${middleLabel} ${code}`}
+                    {...{ [PARTS_DATA_KEY]: '' }}
                 >
                     <button
                         type="button"
@@ -397,6 +515,7 @@ function LongTextLyricSourceComp({
                                 aria-label={label}
                                 aria-current={isSelected ? 'true' : undefined}
                                 disabled={!rows.isOnScreen}
+                                {...{ [PART_ROW_DATA_KEY]: rowIndex }}
                                 onClick={() => {
                                     rows.onBringingToMiddle(rowIndex);
                                 }}
@@ -462,7 +581,10 @@ function LongTextRawSourceComp({
     const titleLabel = `${tran('Title')} ${code}`;
     const addLabel = `${tran('Add Section')} ${code}`;
     return (
-        <div className="d-flex flex-column gap-1 px-1 pb-1">
+        <div
+            className="d-flex flex-column gap-1 px-1 pb-1"
+            {...{ [PARTS_DATA_KEY]: '' }}
+        >
             <input
                 type="text"
                 className="form-control form-control-sm"
@@ -508,6 +630,7 @@ function LongTextRawSourceComp({
                             disabled={
                                 !rows.isOnScreen || rows.rowIndexes === null
                             }
+                            {...{ [PART_ROW_DATA_KEY]: index }}
                             onClick={() => {
                                 rows.onBringingToMiddle(index);
                             }}
@@ -770,6 +893,7 @@ function LongTextBodyComp({
         return parseLongTextSession(getSetting(settingName));
     });
     const sessionRef = useAppCurrentRef(session);
+    const bodyRef = useRef<HTMLDivElement>(null);
     // The layer's own word that a row was marked: by a button here, or by a
     // click on the text in the mini screen. Read at render from the screens
     // themselves, so nothing is held here to go stale.
@@ -946,9 +1070,11 @@ function LongTextBodyComp({
     const selectedSectionKeys = isOnScreen
         ? ScreenLongTextManager.getLongTextSelectedSectionKeys(sourceId)
         : [];
+    const rowIndexes =
+        verifyResult?.problem === null ? verifyResult.rowIndexes : null;
+    useLongTextPartKeying(bodyRef, sourceId, rowIndexes?.length ?? 0);
     const rows: LongTextRowsType = {
-        rowIndexes:
-            verifyResult?.problem === null ? verifyResult.rowIndexes : null,
+        rowIndexes,
         isOnScreen,
         checkIsRowSelected: (rowIndex) => {
             return selectedSectionKeys.includes(toLongTextSectionKey(rowIndex));
@@ -959,7 +1085,7 @@ function LongTextBodyComp({
     };
     const showLabel = tran('Show Long Text');
     return (
-        <div className="fg-body">
+        <div className="fg-body" ref={bodyRef}>
             <div className="d-flex align-items-center gap-2">
                 <button
                     type="button"

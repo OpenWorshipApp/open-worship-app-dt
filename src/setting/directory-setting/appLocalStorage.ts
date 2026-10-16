@@ -26,6 +26,28 @@ export const SELECTED_PARENT_DIR_ID_SETTING_NAME = 'selected-parent-dir-id';
 
 export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
 export const TMP_FILES_FOLDER_NAME = 'tmp-files';
+
+/**
+ * Settings that belong to this COMPUTER, not to the data folder: read and
+ * written here like any other, but kept in the main process's own store
+ * (`appHomeStorage`), so they stay as they are when another data folder is
+ * chosen. In `local-storage/` the interface language went with the folder,
+ * and every folder switched to opened in whatever language it last had --
+ * English for a new one -- leaving the operator to find the Language buttons
+ * in a language they may not read.
+ *
+ * Spelled out again in `settingArchiveCatalog.ts` (`MOVED_TO_HOME_KEY_LIST`),
+ * which must stay pure; a test holds the two together.
+ */
+export const COMPUTER_SETTING_NAME_LIST: readonly string[] = [
+    'language-locale', // `LOCALE_SETTING_NAME`, `src/lang/langHelpers.ts`
+];
+function checkIsComputerSetting(key: string) {
+    return COMPUTER_SETTING_NAME_LIST.includes(key);
+}
+function toComputerCacheKey(key: string) {
+    return `computer:${key}`;
+}
 const cache = new CacheManager<string>(10);
 // Separate from `cache` because `CacheManager.getSync` uses null for "miss",
 // so a cached "this key has no file" cannot live in the value cache.
@@ -187,6 +209,61 @@ class AppLocalStorage {
     getItem(key: string): string | null {
         if (appProvider.screenUtils)
             return appProvider.screenUtils.getContext()?.settings[key] ?? null;
+        if (checkIsComputerSetting(key)) {
+            return this.getComputerItem(key);
+        }
+        return this.getFileItem(key);
+    }
+
+    /**
+     * Held for the same 10 s as a file: the home store answers over a
+     * SYNCHRONOUS IPC, and `tran()` asks for the locale on every label.
+     */
+    private getComputerItem(key: string): string | null {
+        const cacheKey = toComputerCacheKey(key);
+        const cachedValue = cache.getSync(cacheKey);
+        if (cachedValue !== null) {
+            return cachedValue;
+        }
+        if (absentCache.getSync(cacheKey) !== null) {
+            return null;
+        }
+        const value = this.readComputerItem(key);
+        if (value === null) {
+            absentCache.setSync(cacheKey, true);
+        } else {
+            cache.setSync(cacheKey, value);
+        }
+        return value;
+    }
+
+    /**
+     * A value chosen while the setting still lived in the data folder is
+     * given, ONCE, to the whole computer by the folder open then
+     * (`<key>-migrated` remembers it was asked). Asked whenever the computer
+     * had no value, a Language that Import Settings reset would come back as
+     * whatever an old folder still held. The folder's copy is left alone --
+     * an older version on that folder still reads it.
+     */
+    private readComputerItem(key: string): string | null {
+        const value = appHomeStorage.getItem(key);
+        if (value !== null) {
+            return value;
+        }
+        const migratedKey = `${key}-migrated`;
+        if (appHomeStorage.getItem(migratedKey) !== null) {
+            return null;
+        }
+        appHomeStorage.setItem(migratedKey, 'true');
+        const dataDirValue = this.getFileItem(key);
+        if (!dataDirValue) {
+            return null;
+        }
+        appHomeStorage.setItem(key, dataDirValue);
+        return dataDirValue;
+    }
+
+    private getFileItem(key: string): string | null {
         const fullPath = this.toFullPath(key);
         const cachedValue = cache.getSync(fullPath);
         if (cachedValue !== null) {
@@ -216,9 +293,7 @@ class AppLocalStorage {
 
     getItemForce(key: string): string | null {
         if (appProvider.screenUtils) return this.getItem(key);
-        const fullPath = this.toFullPath(key);
-        cache.deleteSync(fullPath);
-        absentCache.deleteSync(fullPath);
+        this.removeItemCache(key);
         return this.getItem(key);
     }
 
@@ -235,6 +310,12 @@ class AppLocalStorage {
             if (settings) settings[key] = value;
             return;
         }
+        if (checkIsComputerSetting(key)) {
+            appHomeStorage.setItem(key, value);
+            cache.setSync(toComputerCacheKey(key), value);
+            absentCache.deleteSync(toComputerCacheKey(key));
+            return;
+        }
         const fullPath = this.toFullPath(key);
         // Atomic: every window reads these files, and a half-written one read
         // as broken JSON (`fsWriteFileAtomicSync`).
@@ -249,6 +330,11 @@ class AppLocalStorage {
         if (appProvider.screenUtils) {
             const settings = appProvider.screenUtils.getContext()?.settings;
             if (settings) delete settings[key];
+            return;
+        }
+        if (checkIsComputerSetting(key)) {
+            this.removeItemCache(key);
+            appHomeStorage.removeItem(key);
             return;
         }
         const fullPath = this.toFullPath(key);
@@ -278,7 +364,12 @@ class AppLocalStorage {
     async listKeys(): Promise<string[]> {
         try {
             const { fsListFiles } = await import('../../server/fileHelpers');
-            return await fsListFiles(this.localStorageDir);
+            // A computer setting's file here is an older version's copy, not
+            // this folder's setting: removing it by key would remove the
+            // computer's.
+            return (await fsListFiles(this.localStorageDir)).filter((key) => {
+                return !checkIsComputerSetting(key);
+            });
         } catch (error) {
             handleError(error);
             return [];
@@ -286,6 +377,11 @@ class AppLocalStorage {
     }
 
     removeItemCache(key: string): void {
+        if (checkIsComputerSetting(key)) {
+            cache.deleteSync(toComputerCacheKey(key));
+            absentCache.deleteSync(toComputerCacheKey(key));
+            return;
+        }
         const fullPath = this.toFullPath(key);
         cache.deleteSync(fullPath);
         absentCache.deleteSync(fullPath);

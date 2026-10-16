@@ -50,6 +50,8 @@ export type BibleInfoType = Readonly<{
     legalNote: string;
     publisher: string;
     copyRights: string;
+    // An XML Bible's free text: where an import brought it from.
+    note?: string;
     keyBookMap: { [key: string]: string };
     booksAvailable: string[];
     // A downloaded Bible's digits come as `numList`, an XML Bible's as

@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('./LyricAppDocument', () => ({
     OPEN_LYRIC_NONE_KEY: 'None',
+    OPEN_LYRIC_FIRST_KEY: 'First',
+    OPEN_LYRIC_INFO_KEY: 'Info',
     default: class {},
 }));
 
@@ -24,7 +26,9 @@ vi.mock('../server/unlockingHelpers', () => ({
 }));
 
 vi.mock('../others/CacheManager', () => ({
-    default: class {},
+    default: class {
+        deleteMatchedSync() {}
+    },
 }));
 
 vi.mock('./lyricHelpers', () => ({
@@ -53,6 +57,13 @@ vi.mock('../slide-editor/canvas/CanvasItemWebsite', () => ({
 }));
 
 import LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
+import { getOpenLyricFontSetting } from './lyricHelpers';
+import {
+    getLyricWarmDeck,
+    getLyricWarmGeneration,
+    holdLyricWarmSlides,
+    setLyricWarmDeck,
+} from './lyricWarmSlidesHelpers';
 
 const BOX_PROPS = {
     id: -1,
@@ -259,5 +270,358 @@ describe('LyricAppDocumentStage1.genSlideHtml', () => {
             null,
         );
         expect(html).toContain('>Verse 1 · 2/7</span>');
+    });
+});
+
+describe('stage slide and rendering options', () => {
+    test('saved font and stage settings determine off-screen render options', () => {
+        vi.mocked(getOpenLyricFontSetting).mockReturnValue({
+            fontFamily: 'Noto Sans Khmer',
+            fontSize: 42,
+        } as any);
+        const getOptions = Object.getOwnPropertyDescriptor(
+            LyricAppDocumentStageAbstract.prototype,
+            'basicOpenLyricOptions',
+        )!.get!;
+        const context = {
+            canvasItemBounds: { width: 800, height: 450 },
+            stageStyle: {
+                backgroundAlphaPercentage: 35,
+                theme: 'dark',
+                extraFontSize: 3,
+            },
+            liveOpenLyric: null as any,
+        };
+        const saved = getOptions.call(context);
+        expect(saved).toMatchObject({
+            type: 'html',
+            width: 800,
+            height: 450,
+            backgroundAlpha: 0.35,
+            fontSize: 45,
+            fontFamily: 'Noto Sans Khmer',
+        });
+        expect(saved.css).toContain('Noto Sans Khmer, sans-serif');
+
+        context.liveOpenLyric = { fontFamily: 'Arial', fontSize: '65px' };
+        expect(getOptions.call(context)).toMatchObject({
+            fontFamily: 'Arial',
+            fontSize: 68,
+        });
+        context.liveOpenLyric.fontSize = 'bad';
+        expect(getOptions.call(context).fontSize).toBe(19);
+    });
+
+    test('single-key slides use the cached map and keep the play step metadata', async () => {
+        const genSlide = vi.fn((key: string) => ({ openLyricKey: key }));
+        const genLyricSlide = vi.fn(
+            (_id: number, key: string, items: any[]) => ({
+                openLyricKey: key,
+                canvasItems: items,
+            }),
+        );
+        const getElementMap = vi.fn(async () => ({ Chorus: '<p>Chorus</p>' }));
+        const getFirstCanvasItemProps = vi.fn(async () => ({ type: 'image' }));
+        const context = {
+            genSlide,
+            genLyricSlide,
+            getElementMap,
+            getFirstCanvasItemProps,
+            allOpenLyricOptions: { type: 'html' },
+        };
+        const method = LyricAppDocumentStageAbstract.prototype.getStageSlides;
+        expect(await method.call(context as any, 'None')).toEqual([
+            { openLyricKey: 'None' },
+        ]);
+        expect(await method.call(context as any, 'First')).toEqual([
+            { openLyricKey: 'First', canvasItems: [{ type: 'image' }] },
+        ]);
+        expect(getElementMap).not.toHaveBeenCalled();
+        expect(
+            await method.call(context as any, 'Chorus', {
+                openLyricIndex: 2,
+                openLyricRepeat: { index: 1, count: 3 },
+            } as any),
+        ).toEqual([{ openLyricKey: 'Chorus' }]);
+        expect(getElementMap).toHaveBeenCalledWith({
+            type: 'html',
+            key: 'Chorus',
+        });
+        expect(genSlide).toHaveBeenLastCalledWith(
+            'Chorus',
+            -1,
+            { Chorus: '<p>Chorus</p>' },
+            undefined,
+            2,
+            { index: 1, count: 3 },
+        );
+    });
+
+    test('whole-song slides append attachments after the play order', async () => {
+        const previewer = {
+            getInfo: () => ({
+                sections: [
+                    { partName: 'Verse', repeatText: '' },
+                    { partName: 'Chorus', repeatText: '' },
+                ],
+            }),
+            getAttachments: () => [
+                { title: 'Chart', type: 'image', link: 'https://a/chart.png' },
+            ],
+        };
+        const genSlide = vi.fn((key: string, id: number) => ({
+            id,
+            openLyricKey: key,
+        }));
+        const attachments = [{ id: -1, openLyricKey: 'Chart' }];
+        const context = {
+            getOpenLyricPreviewer: vi.fn(async () => previewer),
+            getFirstCanvasItemProps: vi.fn(async () => null),
+            getElementMap: vi.fn(async () => ({ Verse: 'v', Chorus: 'c' })),
+            allOpenLyricOptions: { type: 'html' },
+            displayDim: { width: 1280, height: 720 },
+            canvasItemBounds: { x: 10, y: 10, width: 1260, height: 700 },
+            genSlide,
+            extendExtraSlide: vi.fn((slides: any[]) => [
+                { id: 0, openLyricKey: 'First' },
+                ...slides,
+                { id: 3, openLyricKey: 'Info' },
+            ]),
+            genSlidesFromAttachments: vi.fn(() => attachments),
+        };
+        const slides =
+            await LyricAppDocumentStageAbstract.prototype.getStageSlides.call(
+                context as any,
+            );
+        expect(slides.map((slide) => slide.openLyricKey)).toEqual([
+            'First',
+            'Verse',
+            'Chorus',
+            'Info',
+            'Chart',
+        ]);
+        expect(attachments[0].id).toBe(4);
+        expect(genSlide).toHaveBeenNthCalledWith(
+            1,
+            'Verse',
+            0,
+            { Verse: 'v', Chorus: 'c' },
+            context.displayDim,
+            0,
+            null,
+            // Read once for the song and handed to every verse: each read of
+            // it is a blocking display lookup in the main process.
+            context.canvasItemBounds,
+        );
+    });
+
+    test('unrenderable attachments still retain their place in the slide list', () => {
+        const genLyricSlide = vi.fn(
+            (id: number, key: string, items: any[]) => ({
+                id,
+                openLyricKey: key,
+                canvasItems: items,
+            }),
+        );
+        const context = {
+            displayDim: { width: 1920, height: 1080 },
+            canvasItemBounds: CANVAS_ITEM_BOUNDS,
+            genCanvasItemPropsFromAttachment: vi.fn((attachment: any) =>
+                attachment.type === 'pdf' ? null : { type: 'image' },
+            ),
+            genLyricSlide,
+        };
+        const slides =
+            LyricAppDocumentStageAbstract.prototype.genSlidesFromAttachments.call(
+                context as any,
+                [
+                    {
+                        title: 'Chart',
+                        type: 'image',
+                        link: 'https://a/chart.png',
+                    },
+                    { title: 'PDF', type: 'pdf', link: 'https://a/file.pdf' },
+                ] as any,
+            );
+        expect(slides.map((slide) => slide.openLyricKey)).toEqual([
+            'Chart',
+            'PDF',
+        ]);
+        expect(
+            slides.map((slide) => (slide as any).canvasItems.length),
+        ).toEqual([1, 0]);
+        expect(genLyricSlide).toHaveBeenCalledWith(
+            -1,
+            'PDF',
+            [],
+            context.displayDim,
+        );
+    });
+
+    test('slide lookup falls back for appended slides and preserves quick ids', async () => {
+        const quick = { id: 2, openLyricKey: 'Verse' };
+        const full = { id: -1, openLyricKey: 'Verse' };
+        const slow = { id: 5, openLyricKey: 'Attachment' };
+        const context = {
+            getWarmSlide: vi.fn(() => null),
+            getSlidesQuick: vi.fn(async () => [quick]),
+            getSlides: vi.fn(async () => [full]),
+            getSlideByIdSlow: vi.fn(async () => slow),
+        };
+        const method = LyricAppDocumentStageAbstract.prototype.getSlideById;
+        expect(await method.call(context as any, 2)).toBe(full);
+        expect(full.id).toBe(2);
+        expect(context.getSlides).toHaveBeenCalledWith('Verse', quick);
+        expect(context.getSlideByIdSlow).not.toHaveBeenCalled();
+
+        expect(await method.call(context as any, 5)).toBe(slow);
+        expect(context.getSlideByIdSlow).toHaveBeenCalledWith(5);
+        context.getSlides.mockResolvedValueOnce([]);
+        expect(await method.call(context as any, 2)).toBe(slow);
+    });
+});
+
+describe('slides built ahead of the click', () => {
+    const prototype = LyricAppDocumentStageAbstract.prototype;
+    const WARM_KEY = 'deck|stage:2';
+
+    // The stage document as the click path sees it: the warm lookups are the
+    // real ones, everything that DERIVES a slide is a spy that must not run.
+    function genStageContext(filePath: string, warmKey = WARM_KEY) {
+        return {
+            filePath,
+            stage: 2,
+            genWarmDeckKey: vi.fn(() => warmKey),
+            getWarmDeck: prototype.getWarmDeck,
+            getWarmSlide: prototype.getWarmSlide,
+            getSlidesQuick: vi.fn(async () => [] as any[]),
+            getSlides: vi.fn(async () => [] as any[]),
+            getSlideByIdSlow: vi.fn(async () => null),
+            getStageSlides: vi.fn(async () => [] as any[]),
+        };
+    }
+
+    test('a click on a held song is served from its deck, deriving nothing', async () => {
+        const filePath = '/warm-click.owl';
+        const release = holdLyricWarmSlides(filePath, {} as any);
+        const deck = [{ id: 0 }, { id: 1 }, { id: 2 }];
+        setLyricWarmDeck(
+            filePath,
+            2,
+            WARM_KEY,
+            deck as any,
+            getLyricWarmGeneration(filePath),
+        );
+        const context = genStageContext(filePath);
+
+        expect(await prototype.getSlideById.call(context as any, 1)).toBe(
+            deck[1],
+        );
+        expect(context.getSlidesQuick).not.toHaveBeenCalled();
+        expect(context.getSlides).not.toHaveBeenCalled();
+        release();
+    });
+
+    test('a deck built from other options is not served', async () => {
+        const filePath = '/warm-stale-key.owl';
+        const release = holdLyricWarmSlides(filePath, {} as any);
+        setLyricWarmDeck(
+            filePath,
+            2,
+            WARM_KEY,
+            [{ id: 1 }] as any,
+            getLyricWarmGeneration(filePath),
+        );
+        // The stage's font, style or display changed since it was built.
+        const context = genStageContext(filePath, `${WARM_KEY}|changed`);
+
+        await prototype.getSlideById.call(context as any, 1);
+        expect(context.getSlidesQuick).toHaveBeenCalled();
+        release();
+    });
+
+    test('a song no pane holds never computes the deck key', async () => {
+        const context = genStageContext('/not-held-click.owl');
+        await prototype.getSlideById.call(context as any, 1);
+        // The key reads the stage's settings and asks the main process for
+        // the display; a song nobody holds has no deck to compare it with.
+        expect(context.genWarmDeckKey).not.toHaveBeenCalled();
+        expect(context.getSlidesQuick).toHaveBeenCalled();
+    });
+
+    test('the whole deck is kept only while the song is held', async () => {
+        const filePath = '/warm-store.owl';
+        const deck = [{ id: 0 }];
+        const context = genStageContext(filePath);
+        context.getStageSlides.mockResolvedValue(deck);
+
+        expect(await prototype.getSlides.call(context as any)).toBe(deck);
+        expect(context.genWarmDeckKey).not.toHaveBeenCalled();
+
+        const release = holdLyricWarmSlides(filePath, {} as any);
+        expect(await prototype.getSlides.call(context as any)).toBe(deck);
+        expect(getLyricWarmDeck(filePath, 2, WARM_KEY)).toBe(deck);
+
+        // One part's slide is not the deck, and must not replace it.
+        context.getStageSlides.mockResolvedValue([{ id: 7 }]);
+        await prototype.getSlides.call(context as any, 'Chorus');
+        expect(context.getStageSlides).toHaveBeenLastCalledWith(
+            'Chorus',
+            undefined,
+        );
+        expect(getLyricWarmDeck(filePath, 2, WARM_KEY)).toBe(deck);
+        release();
+    });
+
+    test('an edit landing mid-build keeps the stale deck out', async () => {
+        const filePath = '/warm-race.owl';
+        const release = holdLyricWarmSlides(filePath, {} as any);
+        const context = {
+            ...genStageContext(filePath),
+            clearCache: prototype.clearCache,
+        };
+        context.getStageSlides.mockImplementation(async () => {
+            // The file's `update` arrives while open-lyric is still rendering.
+            context.clearCache();
+            return [{ id: 0 }];
+        });
+
+        await prototype.getSlides.call(context as any);
+        expect(getLyricWarmDeck(filePath, 2, WARM_KEY)).toBeNull();
+        release();
+    });
+
+    test('clearing the song drops its decks at every stage', () => {
+        const filePath = '/warm-clear.owl';
+        const release = holdLyricWarmSlides(filePath, {} as any);
+        const generation = getLyricWarmGeneration(filePath);
+        setLyricWarmDeck(filePath, 0, 'a', [] as any, generation);
+        setLyricWarmDeck(filePath, 2, 'b', [] as any, generation);
+
+        prototype.clearCache.call({ filePath } as any);
+        expect(getLyricWarmDeck(filePath, 0, 'a')).toBeNull();
+        expect(getLyricWarmDeck(filePath, 2, 'b')).toBeNull();
+        release();
+    });
+
+    test('a look-ahead stage rebuilds the deck only when none is held', async () => {
+        const { withLyricLookAhead } =
+            await import('./LyricAppDocumentStageLookAhead');
+        const LookAhead = withLyricLookAhead(class {} as any, {} as any);
+        const warmSlide = { id: 3 };
+        const context = {
+            getWarmSlide: vi.fn(() => warmSlide),
+            getSlides: vi.fn(async () => [{ id: 3 }]),
+        };
+        expect(
+            await LookAhead.prototype.getSlideById.call(context as any, 3),
+        ).toBe(warmSlide);
+        expect(context.getSlides).not.toHaveBeenCalled();
+
+        context.getWarmSlide.mockReturnValue(null as any);
+        expect(
+            await LookAhead.prototype.getSlideById.call(context as any, 3),
+        ).toEqual({ id: 3 });
+        expect(context.getSlides).toHaveBeenCalledTimes(1);
     });
 });

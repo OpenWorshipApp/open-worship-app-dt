@@ -26,6 +26,9 @@ export type BibleRenderVerseType = {
     text: string;
     verseKey: string;
     kjvVerseKey: string;
+    // Only on the first verse of each chapter of a passage crossing
+    // chapters: the number its chapter divider shows.
+    chapterLabel?: string;
 };
 export type BibleItemRenderingType = {
     locale: LocaleType;
@@ -72,6 +75,26 @@ function genColumnFontFamily({ style, langData }: LongTextColumnLangType) {
     return genLongTextFontFamilyCss(style.fontFamily, langData.fontFamily);
 }
 
+// `-2-----` before the first verse of each chapter of a passage crossing
+// chapters. Spans, not divs: the screen's stylesheet lays every div of the
+// view out inline. No `tran` here -- this markup is also drawn in the screen
+// window, which may not have its language loaded yet.
+function ScreenChapterDividerComp({
+    chapterLabel,
+    fontFamily,
+}: Readonly<{ chapterLabel: string; fontFamily: string | undefined }>) {
+    return (
+        <span className="bible-chapter-divider" role="separator">
+            <span
+                className="bible-chapter-divider-label"
+                style={{ fontFamily }}
+            >
+                {chapterLabel}
+            </span>
+        </span>
+    );
+}
+
 function SectionTextElementComp({
     fontFamily,
     section,
@@ -80,15 +103,48 @@ function SectionTextElementComp({
     section: LongTextSectionType;
 }>) {
     return (
-        <span
-            className="highlight"
-            data-kjv-verse-key={section.key}
-            data-verse-key={section.verseKey}
-            style={{ fontFamily }}
-        >
-            <div className="verse-number">{section.num}</div>
-            {section.text}
-        </span>
+        <>
+            {section.chapterLabel === undefined ? null : (
+                <ScreenChapterDividerComp
+                    chapterLabel={section.chapterLabel}
+                    fontFamily={fontFamily}
+                />
+            )}
+            <span
+                className="highlight"
+                data-kjv-verse-key={section.key}
+                data-verse-key={section.verseKey}
+                style={{ fontFamily }}
+            >
+                <div className="verse-number">{section.num}</div>
+                {section.text}
+            </span>
+        </>
+    );
+}
+
+export const SCREEN_BIBLE_MORE_CHAPTER_ATTRIBUTE = 'data-bible-more-chapter';
+
+// `...` under the chapters shown: the OPERATOR's, drawn only where a label
+// was handed in -- never on the projector itself.
+function ScreenShowMoreChapterRowComp({
+    label,
+    colSpan,
+}: Readonly<{ label: string; colSpan: number }>) {
+    return (
+        <tr>
+            <td colSpan={colSpan}>
+                <button
+                    type="button"
+                    className="bible-more-chapter-button"
+                    title={label}
+                    aria-label={label}
+                    {...{ [SCREEN_BIBLE_MORE_CHAPTER_ATTRIBUTE]: '1' }}
+                >
+                    ...
+                </button>
+            </td>
+        </tr>
     );
 }
 
@@ -104,10 +160,14 @@ export function LongTextTableComp({
     columns: rawColumns,
     isLineSync,
     isLongText,
+    moreChapterLabel,
 }: Readonly<{
     columns: LongTextColumnLangType[];
     isLineSync: boolean;
     isLongText: boolean;
+    // The `...` button's label: given only to an operator's view of a
+    // passage with chapters still to show.
+    moreChapterLabel?: string;
 }>) {
     // Read once, here: a style reaches a screen from a setting file or a
     // Screen Mirror peer, and all of it is about to be written into CSS.
@@ -268,6 +328,12 @@ export function LongTextTableComp({
                                 </thead>
                                 <tbody>
                                     <tr>{renderTdBody(column, i)}</tr>
+                                    {moreChapterLabel === undefined ? null : (
+                                        <ScreenShowMoreChapterRowComp
+                                            label={moreChapterLabel}
+                                            colSpan={1}
+                                        />
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -288,6 +354,12 @@ export function LongTextTableComp({
                         Array.from({ length: rowCount }).map(renderTrBody)
                     ) : (
                         <tr>{columns.map(renderTdBody)}</tr>
+                    )}
+                    {moreChapterLabel === undefined ? null : (
+                        <ScreenShowMoreChapterRowComp
+                            label={moreChapterLabel}
+                            colSpan={columns.length}
+                        />
                     )}
                 </tbody>
             </table>

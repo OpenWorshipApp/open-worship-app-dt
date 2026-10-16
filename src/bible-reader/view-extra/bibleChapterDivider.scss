@@ -1,0 +1,35 @@
+// `-2-----`: where a passage crossing chapters starts the next one. A short
+// rule, the chapter number, then a rule to the edge. Static on purpose: it
+// stays on screen for as long as the passage does.
+.bible-chapter-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  width: 100%;
+  margin: 0.6em 0 0.2em;
+  opacity: 0.75;
+  &::before,
+  &::after {
+    content: '';
+    border-top: 1px solid currentColor;
+  }
+  &::before {
+    flex: 0 0 1.2em;
+  }
+  &::after {
+    flex: 1;
+  }
+  .bible-chapter-divider-label {
+    font-weight: bold;
+    font-size: 0.85em;
+  }
+}
+
+// `...`: one more chapter of a passage longer than what is shown.
+.bible-show-next-chapter {
+  display: block;
+  margin: 0.4em auto;
+  padding: 0 1.2em;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+}

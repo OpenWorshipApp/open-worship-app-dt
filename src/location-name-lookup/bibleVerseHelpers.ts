@@ -2,7 +2,10 @@ import type { CSSProperties } from 'react';
 import { useState } from 'react';
 
 import BibleItem from '../bible-list/BibleItem';
-import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
+import {
+    bibleRenderHelper,
+    type BibleTextSectionType,
+} from '../bible-list/bibleRenderHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
@@ -11,6 +14,10 @@ import { toLocaleNumBible } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { cloneJson } from '../helper/helpers';
+import {
+    BIBLE_SHOWN_CHAPTER_COUNT,
+    getTargetChapterCount,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { DEFAULT_LANG_CODE } from '../lang/langHelpers';
 import {
     getSelectedLookupLangCode,
@@ -22,6 +29,11 @@ export type VerseDataType = {
     title: string;
     text: string;
     style: CSSProperties;
+    // A passage crossing chapters, one section per chapter shown, each drawn
+    // under its chapter's divider; `null` for a one-chapter passage.
+    sectionList: BibleTextSectionType[] | null;
+    chapterCount: number;
+    shownChapterCount: number;
 };
 
 /**
@@ -144,13 +156,25 @@ async function shortToBibleItem(bibleKey: string, shortVerse: string) {
  * in the widget chrome, outside the body that carries `VerseDataType.style`. It
  * takes the BIBLE's font rather than the lookup language's: the two are
  * independent settings, and the reference is written by the bible.
+ *
+ * `fixedBibleKey` is the bible a panel was opened in, when it was (see
+ * `DetailPanelType.bibleKey`); the lookup setting then has no say.
  */
-export function useLookupVerseFontFamily() {
-    const bibleKey = useLookupVerseBibleKey();
+export function useLookupVerseFontFamily(fixedBibleKey?: string) {
+    const lookupBibleKey = useLookupVerseBibleKey();
+    const bibleKey = fixedBibleKey ?? lookupBibleKey;
     const [fontFamily] = useAppStateAsync(() => {
         return getBibleFontFamily(bibleKey);
     }, [bibleKey]);
     return fontFamily ?? undefined;
+}
+
+function toSectionListText(sectionList: BibleTextSectionType[]) {
+    return sectionList
+        .map(({ title, text }) => {
+            return `${title}\n${text}`;
+        })
+        .join('\n');
 }
 
 /**
@@ -159,6 +183,10 @@ export function useLookupVerseFontFamily() {
  * `toText`, NOT `toFullText`: the reference is shown once, by the panel's title
  * bar, so prefixing the body with `(KJV) Exodus 6:23` again only cost a line of
  * a small floating widget.
+ *
+ * A passage crossing chapters (`JHN 18:33-19:16`) is read only its first
+ * `BIBLE_SHOWN_CHAPTER_COUNT` chapters deep; `shortToVerseSectionList` reads
+ * the rest one chapter per press of the panel's `...`.
  */
 export async function shortToVerseData(
     bibleKey: string,
@@ -169,9 +197,88 @@ export async function shortToVerseData(
         return null;
     }
     const title = await bibleItem.toTitle();
-    const text = await bibleItem.toText();
     const fontFamily = await getBibleFontFamily(bibleKey);
-    return { bibleKey, title, text, style: { fontFamily } };
+    const chapterCount = getTargetChapterCount(bibleItem.target);
+    if (chapterCount < 2) {
+        const text = await bibleItem.toText();
+        return {
+            bibleKey,
+            title,
+            text,
+            style: { fontFamily },
+            sectionList: null,
+            chapterCount,
+            shownChapterCount: chapterCount,
+        };
+    }
+    const shownChapterCount = Math.min(chapterCount, BIBLE_SHOWN_CHAPTER_COUNT);
+    const sectionList =
+        (await bibleRenderHelper.toTextSectionList(
+            bibleKey,
+            bibleItem.target,
+            true,
+            { start: 0, count: shownChapterCount },
+        )) ?? [];
+    return {
+        bibleKey,
+        title,
+        text: toSectionListText(sectionList),
+        style: { fontFamily },
+        sectionList,
+        chapterCount,
+        shownChapterCount,
+    };
+}
+
+/**
+ * `count` more chapters of a passage crossing chapters, from the `start`-th:
+ * what the panel's `...` appends, reading nothing it already shows.
+ */
+export async function shortToVerseSectionList(
+    bibleKey: string,
+    shortVerse: string,
+    start: number,
+    count = 1,
+) {
+    const bibleItem = await shortToBibleItem(bibleKey, shortVerse);
+    if (bibleItem === null) {
+        return null;
+    }
+    return await bibleRenderHelper.toTextSectionList(
+        bibleKey,
+        bibleItem.target,
+        true,
+        { start, count },
+    );
+}
+
+/**
+ * The WHOLE passage, for the clipboard: every chapter, each under its own
+ * title. Read only when Copy is pressed, never to draw the panel.
+ */
+export async function shortToVerseCopyData(
+    bibleKey: string,
+    shortVerse: string,
+) {
+    const bibleItem = await shortToBibleItem(bibleKey, shortVerse);
+    if (bibleItem === null) {
+        return null;
+    }
+    const title = await bibleItem.toTitle();
+    const sectionList = await bibleRenderHelper.toTextSectionList(
+        bibleKey,
+        bibleItem.target,
+        true,
+    );
+    if (sectionList === null) {
+        return null;
+    }
+    return {
+        bibleKey,
+        title,
+        sectionList,
+        text: toSectionListText(sectionList),
+    };
 }
 
 /**
@@ -261,13 +368,15 @@ export async function shortToReferenceTitle(
 export async function openVerseInBibleLookup(
     viewController: LookupBibleItemController,
     shortVerse: string,
+    fixedBibleKey?: string,
 ) {
     // The reader's own key under a non-English lookup language, so opening a
     // citation reads it where the panel just showed it rather than swapping the
-    // reader to the KJV underneath the user.
-    const bibleKey = toLookupVerseBibleKey(
-        viewController.selectedBibleItem.bibleKey,
-    );
+    // reader to the KJV underneath the user. A panel opened in a bible of its
+    // own opens in that one, for the same reason.
+    const bibleKey =
+        fixedBibleKey ??
+        toLookupVerseBibleKey(viewController.selectedBibleItem.bibleKey);
     const bibleItem = await shortToBibleItem(bibleKey, shortVerse);
     if (bibleItem === null) {
         return false;

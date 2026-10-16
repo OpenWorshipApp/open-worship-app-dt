@@ -16,6 +16,8 @@ import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { handleError } from '../helper/errorHelpers';
+import { openBibleItemDetailPanel } from '../location-name-lookup/detailPanelHelpers';
 
 const historyTextListSettingManager =
     genStringListSettingManager('history-text-list');
@@ -70,19 +72,13 @@ async function getBibleItemFromHistoryText(historyText: string) {
     return result.bibleItem;
 }
 
-async function openInBibleLookup(
-    event: any,
-    viewController: LookupBibleItemController,
-    bibleItem: BibleItem,
-) {
-    event.preventDefault();
-    if (event.shiftKey) {
-        viewController.addBibleItemLeft(
-            viewController.selectedBibleItem,
-            viewController.selectedBibleItem,
-        );
-    }
-    viewController.setLookupContentFromBibleItem(bibleItem);
+/**
+ * What pressing a history entry does: the passage opens in a floating detail
+ * panel, in the bible it was read in, and the passage being edited stays as it
+ * is. Putting it back into the editing passage is in the entry's menu.
+ */
+function openHistoryBibleItem(bibleItem: BibleItem) {
+    openBibleItemDetailPanel(bibleItem).catch(handleError);
 }
 
 function removeHistory(
@@ -115,7 +111,22 @@ function openContextMenu(
                 childBefore: genContextMenuItemIcon('box-arrow-up-right'),
                 menuElement: tran('Open'),
                 onSelect: () => {
-                    openInBibleLookup(event, viewController, bibleItem);
+                    openHistoryBibleItem(bibleItem);
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('layout-split'),
+                menuElement: tran('Open beside the current verse'),
+                onSelect: () => {
+                    viewController.appendBibleItem(bibleItem);
+                },
+            },
+            // What a press on the entry did before it opened the detail panel.
+            {
+                childBefore: genContextMenuItemIcon('pencil-square'),
+                menuElement: tran('Set to current editing'),
+                onSelect: () => {
+                    viewController.setLookupContentFromBibleItem(bibleItem);
                 },
             },
             ...genBibleItemCopyingContextMenu(bibleItem),
@@ -149,14 +160,14 @@ function RendHistoryItemComp({
     historyTextList,
     setHistoryTextList,
     handleContextMenuOpening,
-    handleDoubleClicking,
+    handleOpening,
 }: Readonly<{
     historyText: string;
     extracted: { bibleKey: string; bibleTitle: string } | null;
     historyTextList: string[];
     setHistoryTextList: (newHistoryTextList: string[]) => void;
     handleContextMenuOpening: (historyText: string, event: any) => void;
-    handleDoubleClicking: (historyText: string, event: any) => void;
+    handleOpening: (historyText: string) => void;
 }>) {
     const fontFamily = useBibleFontFamily(extracted?.bibleKey ?? '');
     const historyTextListRef = useAppCurrentRef(historyTextList);
@@ -165,10 +176,10 @@ function RendHistoryItemComp({
     const handleContextMenuOpeningRef = useAppCurrentRef(
         handleContextMenuOpening,
     );
-    const handleDoubleClickingRef = useAppCurrentRef(handleDoubleClicking);
+    const handleOpeningRef = useAppCurrentRef(handleOpening);
     const handleRemoveHistory = useCallback((event: any) => {
-        // A quick second press on ✕ must not also double-click the row it
-        // sits in, which would reopen the passage it has just removed.
+        // The press on ✕ must not also reach the row it sits in, which would
+        // reopen the passage it has just removed.
         event.stopPropagation();
         removeHistory(
             historyTextListRef.current,
@@ -177,16 +188,23 @@ function RendHistoryItemComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    // The row's action is a double-click, which no keyboard can make. Enter
-    // and Space on the label do exactly what it does, Shift included (put back
-    // split) -- without handing the MOUSE a single-click action it never had.
+    // A double-click -- the gesture this row used to need, and still the
+    // habit -- reaches here twice; the second press only raises the panel the
+    // first one opened, so there is nothing to guard against.
+    const handleClick = useCallback(() => {
+        handleOpeningRef.current(historyTextRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // Enter and Space on the label do what a press does. The default is
+    // prevented so the button's own click never follows and the passage is
+    // not resolved twice.
     const handleLabelKeyDown = useCallback(
         (event: KeyboardEvent<HTMLButtonElement>) => {
             if ((event.key !== 'Enter' && event.key !== ' ') || event.repeat) {
                 return;
             }
             event.preventDefault();
-            handleDoubleClickingRef.current(historyTextRef.current, event);
+            handleOpeningRef.current(historyTextRef.current);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -205,10 +223,7 @@ function RendHistoryItemComp({
                 'btn btn-sm d-flex align-items-center app-border-white-round' +
                 ' mx-1 p-0'
             }
-            title={tran(
-                'Double click to put back, shift double click to ' +
-                    'put back split',
-            )}
+            title={tran('Click to open the verse')}
             style={{ height: '27px', fontFamily }}
             draggable
             onDragStart={async (event: any) => {
@@ -220,7 +235,7 @@ function RendHistoryItemComp({
                 handleDragStart(event, bibleItem);
             }}
             onContextMenu={handleContextMenuOpening.bind(null, historyText)}
-            onDoubleClick={handleDoubleClicking.bind(null, historyText)}
+            onClick={handleClick}
         >
             <button
                 type="button"
@@ -233,9 +248,6 @@ function RendHistoryItemComp({
                 tabIndex={-1}
                 style={{ color: 'red', lineHeight: 1 }}
                 onClick={handleRemoveHistory}
-                onDoubleClick={(event) => {
-                    event.stopPropagation();
-                }}
             >
                 <small>
                     <i className="bi bi-x" aria-hidden="true" />
@@ -283,17 +295,13 @@ export default function BibleLookupInputHistoryComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
-    const handleDoubleClicking = useCallback(
-        async (historyText: string, event: any) => {
-            const bibleItem = await getBibleItemFromHistoryText(historyText);
-            if (bibleItem === null) {
-                return;
-            }
-            openInBibleLookup(event, viewControllerRef.current, bibleItem);
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
+    const handleOpening = useCallback(async (historyText: string) => {
+        const bibleItem = await getBibleItemFromHistoryText(historyText);
+        if (bibleItem === null) {
+            return;
+        }
+        openHistoryBibleItem(bibleItem);
+    }, []);
     return (
         <div
             className="h-100 d-flex rounded px-1 me-1 app-inner-shadow"
@@ -314,7 +322,7 @@ export default function BibleLookupInputHistoryComp({
                         historyTextList={historyTextList}
                         setHistoryTextList={setHistoryTextList}
                         handleContextMenuOpening={handleContextMenuOpening}
-                        handleDoubleClicking={handleDoubleClicking}
+                        handleOpening={handleOpening}
                     />
                 );
             })}

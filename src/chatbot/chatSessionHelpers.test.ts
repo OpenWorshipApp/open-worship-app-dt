@@ -704,6 +704,40 @@ describe('attachments on a message', () => {
         );
     });
 
+    // Which window a picture or a pointed-at control came from survives a
+    // reopen -- whole, or not at all.
+    test('the window an attachment came from survives, and only a whole one', () => {
+        const window = {
+            id: 'SETTING-ID',
+            page: 'setting.html?uuid=setting',
+            label: 'Settings',
+            isMain: false,
+        };
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'this one',
+            attachments: [
+                { id: 'a1', kind: 'element', name: 'Apply', window },
+                {
+                    id: 'a2',
+                    kind: 'image',
+                    name: 'my screen',
+                    window: { ...window, isMain: 'no' },
+                },
+                {
+                    id: 'a3',
+                    kind: 'image',
+                    name: 'my screen',
+                    window: { ...window, extra: 'dropped' },
+                },
+            ],
+        });
+        expect(message.attachments?.[0].window).toEqual(window);
+        expect(message.attachments?.[1]).not.toHaveProperty('window');
+        expect(message.attachments?.[2].window).toEqual(window);
+    });
+
     test('junk in the list is dropped rather than drawn', () => {
         const message = loadOneMessage({
             id: 1,

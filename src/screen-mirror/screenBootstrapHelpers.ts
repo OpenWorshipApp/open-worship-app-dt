@@ -6,10 +6,11 @@ import type {
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import appProvider from '../server/appProvider';
 import { getScreenManagerBase } from '../_screen/managers/screenManagerBaseHelpers';
+import { LOCALE_SETTING_NAME, getCurrentLocale } from '../lang/langHelpers';
 
 // Only screen appearance settings cross the connection, never secrets or documents.
 const PRESENTATION_SETTING =
-    /^(?:screen-|pt-effect-|bible-(?:screen|font|text|style)|foreground-|background-|pdf-full-width$|page-base-|language-locale$)/;
+    /^(?:screen-|pt-effect-|bible-(?:screen|font|text|style)|foreground-|background-|pdf-full-width$|page-base-)/;
 
 export async function getMirrorBootstrap(
     manager: ScreenManager,
@@ -20,6 +21,9 @@ export async function getMirrorBootstrap(
         const value = appLocalStorage.getItem(key);
         if (value !== null && value.length < 256000) settings[key] = value;
     }
+    // This computer's, not the data folder's (`COMPUTER_SETTING_NAME_LIST`):
+    // a copy left in the folder by an older version is not the one in use.
+    settings[LOCALE_SETTING_NAME] = getCurrentLocale();
     // The whole state of every screen this one shows (Screen Show), first:
     // its overlays find it waiting when the foreground puts them up.
     const screenShowMessages: MirrorScreenMessage[] = [];

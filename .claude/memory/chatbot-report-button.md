@@ -56,6 +56,16 @@ answering 413 (two POSTs, the second with no files and its text saying they
 stayed behind), and **Stop** while sending (the POST closed on the wire, _The
 report was not sent_).
 
+**A report its server was asleep for is KEPT and sent by itself** (2026-10-15,
+after the admin's inbox -- a quick tunnel on a laptop -- slept for a day and a
+half and every report in that time was _nothing was sent, email it_):
+`electron/llmReportQueueHelpers.ts` keeps the very body for `unreachable` /
+`timeout` only (a server that answered no is not waited for), and sends it a
+minute after start, every half hour, and right after any Send that works.
+Seen live: kept with the inbox down, delivered 62 s after the app restarted
+with the inbox back, both files in it. A report is something a volunteer does
+ONCE; an email route after a failure is, in practice, a lost report.
+
 **The first report a PERSON sent showed that no report had ever carried a
 console line** (2026-10-13, the user's own, through the error dialog, once
 reporting was live): its Console section read _Nothing was logged_ under an

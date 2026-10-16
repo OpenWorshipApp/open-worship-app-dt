@@ -5,6 +5,7 @@ import {
     genLaunchdPlist,
     genSystemdUnit,
     genTaskXml,
+    toTaskTime,
     getLaunchdLabel,
     getServiceName,
     getTaskName,
@@ -174,6 +175,45 @@ describe('Windows: a Task Scheduler task', () => {
         user: 'CHURCH-PC\\reng',
         everyMinutes: 5,
         id: ID,
+        startAt: '2026-10-15T12:31:05',
+    });
+
+    // Installed in the middle of a session -- which is how it always is --
+    // a logon trigger alone ran once and never again until the next logon.
+    it('also repeats from the moment it is installed, for good', () => {
+        const trigger = xml.slice(
+            xml.indexOf('<TimeTrigger>'),
+            xml.indexOf('</TimeTrigger>'),
+        );
+        expect(trigger).toContain('<Interval>PT5M</Interval>');
+        expect(trigger).toContain(
+            '<StopAtDurationEnd>false</StopAtDurationEnd>',
+        );
+        // No Duration: the pattern repeats with no end.
+        expect(trigger).not.toContain('<Duration>');
+        expect(trigger).toContain(
+            '<StartBoundary>2026-10-15T12:31:05</StartBoundary>',
+        );
+        // The schema wants the repetition first, then the start.
+        expect(trigger.indexOf('<Repetition>')).toBeLessThan(
+            trigger.indexOf('<StartBoundary>'),
+        );
+        expect(trigger.indexOf('<StartBoundary>')).toBeLessThan(
+            trigger.indexOf('<Enabled>true'),
+        );
+        // Both triggers, in the one Triggers block.
+        expect(xml.indexOf('</LogonTrigger>')).toBeLessThan(
+            xml.indexOf('<TimeTrigger>'),
+        );
+        expect(xml.indexOf('</TimeTrigger>')).toBeLessThan(
+            xml.indexOf('</Triggers>'),
+        );
+    });
+
+    it('writes a time the way Task Scheduler reads one: local, no zone', () => {
+        expect(toTaskTime(new Date(2026, 0, 5, 7, 8, 9))).toBe(
+            '2026-01-05T07:08:09',
+        );
     });
 
     it("starts at this user's logon and repeats for good", () => {

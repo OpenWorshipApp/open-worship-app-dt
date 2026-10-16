@@ -34,7 +34,8 @@ export type LongTextLanguageType = {
     style?: LongTextColumnStyleType;
     // How a lyric card lists its parts in the panel: as buttons, or --
     // `cards` -- each with its words under it. The panel's own, never
-    // the screen's.
+    // the screen's. A new language starts as cards (`genLongTextLanguage`);
+    // one stored without it was the buttons, and stays them.
     sectionView?: 'cards';
 };
 
@@ -66,6 +67,31 @@ export function genLongTextLanguage(langCode: string): LongTextLanguageType {
         title: '',
         sections: [''],
         lyricFilePath: '',
+        // Text cards from the start, at the user's word: a song is followed
+        // by its words. Typed text has no parts to list, so it is only
+        // what a switch to `Lyric File` finds.
+        sectionView: 'cards',
+    };
+}
+
+/**
+ * A session of ONE language reading a lyric file -- what a lyric's own `Long
+ * Text Show` starts, ready to show. In English unless told otherwise; the
+ * card's language button changes it, and Add Language puts a translation
+ * beside it.
+ */
+export function genLyricLongTextSession(
+    lyricFilePath: string,
+    langCode = 'en',
+): LongTextSessionType {
+    return {
+        languages: [
+            {
+                ...genLongTextLanguage(langCode),
+                source: 'lyric',
+                lyricFilePath,
+            },
+        ],
     };
 }
 

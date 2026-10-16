@@ -2,10 +2,10 @@
 id: W-11
 title: "Read the Bible (references, text size, history, versions)"
 section: "Bible study"
-verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, ST-59, CB-125]
-screenshots: 3
+verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124, RD-125, RD-126, ST-59, CB-125]
+screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -21,6 +21,20 @@ quick lookup, and where you look a verse up when you are not presenting.
    > Typing a full reference such as `John 3:16` is an optional shortcut when the
    > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
    > last piece and **Shift+Escape** clears the box.
+
+   **A passage that runs on into later chapters of the same book.** Type its
+   first verse and its last verse, each with its chapter: `John 1:50-6:3` is one
+   passage, from John 1:50 to John 6:3. `John 1-3` takes chapters 1 to 3 whole,
+   `John 1:-2:` runs from 1:1 to the end of chapter 2, and a dot does what a colon
+   does (`យ៉ូហាន ១៨.៣៩-១៩.១៦`). Each chapter of it starts under a line with the
+   chapter's number, `─ 2 ─────`. A passage over more than three chapters opens
+   with the first three and a **...** button under them
+   (**[en:tran:Show the next chapter]**): each click adds the next chapter, and
+   the button goes once the last one is shown. 📸
+   Some Bibles print references in their section headings — `(… យ៉ូហាន
+   ១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
+   names, every chapter of it, opens in a small floating panel; the passage you
+   are reading stays as it is.
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
@@ -48,8 +62,12 @@ quick lookup, and where you look a verse up when you are not presenting.
    below) it in that version, in the same color group. A pane with no color
    splits at once, in the version it already has — its buttons read
    **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
-4. If you lose a passage, you do not need to remember and type it again. Double-click one of
-   the recent reference rows near the top to go back to it.
+4. If you lose a passage, you do not need to remember and type it again: the recent
+   reference rows near the top keep it. Click one to read it in a small floating
+   panel, in the version it was read in; the passage you are on stays as it is. To
+   go back to it, open that row's **⋮** (or right-click it) and choose
+   **[en:tran:Set to current editing]**. **[en:tran:Open beside the current verse]**
+   in the same menu opens it next to the passage you are on instead.
 5. To change the main Bible version, click its short name in the header and choose a
    version from the list. 📸
 6. To read without the side panels, click the small **⋯** at the bottom-left if the
@@ -68,7 +86,7 @@ quick lookup, and where you look a verse up when you are not presenting.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `ST-59` · `CB-125`
+`RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `RD-124` · `RD-125` · `RD-126` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

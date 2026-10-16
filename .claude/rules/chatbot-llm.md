@@ -159,7 +159,18 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   base64, more than 8 files, one over 5 MB or 12 MB together. When none
   takes it, or none is known, the registry is read ONCE
   more and whatever is new in it tried (a quick tunnel's address changes per
-  start). Ten seconds an address, forty in all — plus, for a body past 64 KB,
+  start). **A report whose server is AWAY is kept and sent later**
+  (2026-10-15, `electron/llmReportQueueHelpers.ts`): when every try ended
+  `unreachable` or `timeout` — nobody said no — `handleLlmReportPost`
+  writes the very body that was to go into `<userData>/pending-reports/`
+  and answers `queued: true`; `sendQueuedReports` posts them (oldest
+  first, through the same `deliverReportBody` a Send uses) a minute after
+  start, every half hour, and at once after any Send that went through;
+  stops at the first that still meets an absent server, lets go of one a
+  server can never take (`too-large`, `not-allowed`) and of one a week
+  old; five reports and 60 MB at most; nothing while AI is off. Found on
+  2026-10-14: the admin's inbox, a quick tunnel on a laptop, slept for a
+  day and a half and every report pressed then was _nothing was sent_. Ten seconds an address, forty in all — plus, for a body past 64 KB,
   a second for every 32 KB up to three minutes (`toReportUploadAllowance`:
   a picture and a PDF over a church hall's uplink) — five reports in ten
   minutes, 200 000 characters of text; a failure comes back as a sentence

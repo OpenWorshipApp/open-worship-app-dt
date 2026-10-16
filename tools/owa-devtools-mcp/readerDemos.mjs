@@ -541,12 +541,12 @@ export const READER_DEMO_LIST = [
     id: 'reader-history-chips',
     label: 'Reuse and arrange passage history',
     detail:
-      'Open, split, drag, save, or remove references from the history row.',
+      'Open, put back, drag, save, or remove references from the history row.',
     title: 'Reuse and arrange passage history',
     isFeatured: false,
     steps: [
       {
-        text: 'Double-click a passage in the history row to reopen it; Shift+double-click opens it in a split pane.',
+        text: 'Click a passage in the history row to read it in a small floating panel. Its More Options menu sets it back into the passage you are editing, or opens it beside the current verse.',
       },
       {
         text: 'Drag a history passage into a reading pane, use its More Options menu to open or save it, or use Remove to clear that chip.',

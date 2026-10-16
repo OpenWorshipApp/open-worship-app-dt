@@ -241,6 +241,36 @@ export function toOpenPanelKeys(raw: string): string[] {
         });
 }
 
+/** The open panels with `key` among them, opened if it was not. */
+export function toOpenedPanelKeys(raw: string, key: string) {
+    const keys = toOpenPanelKeys(raw);
+    return (keys.includes(key) ? keys : [...keys, key]).join(',');
+}
+
+// The launcher mounted in this window, for a panel opened from somewhere
+// else -- a lyric's `Long Text Show`. A launcher holds the open panels in its
+// own state, so a bare `setSetting` behind it would not open anything.
+const panelOpenerSet = new Set<(key: string) => void>();
+
+export function registerForegroundPanelOpener(opener: (key: string) => void) {
+    panelOpenerSet.add(opener);
+    return () => {
+        panelOpenerSet.delete(opener);
+    };
+}
+
+/**
+ * Opens a component's panel -- and brings it to the front if it is open
+ * already. False when no launcher is mounted to do it: the caller then writes
+ * the setting the launcher reads when it mounts.
+ */
+export function requestForegroundPanelOpening(key: string) {
+    for (const opener of panelOpenerSet) {
+        opener(key);
+    }
+    return panelOpenerSet.size > 0;
+}
+
 export function toToggledPanelKeys(raw: string, key: string) {
     const keys = toOpenPanelKeys(raw);
     return (

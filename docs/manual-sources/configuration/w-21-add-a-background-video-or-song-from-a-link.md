@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [MD-01, MD-02, MD-03, CM-24, PM-102]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-21 — Add a background video or song from a link
 
@@ -44,5 +44,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `MD-01` · `MD-02` · `MD-03` · `CM-24` · `PM-102`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

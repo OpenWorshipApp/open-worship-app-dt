@@ -1,8 +1,7 @@
-<!-- Only what CLAUDE.md and the code do not already say. One line per entry; detail lives in the topic file. -->
+<!-- Only what CLAUDE.md and the code do not already say. One line per entry; detail lives in the topic file. Related entries share a line with ` · ` to keep this index under 140 lines. -->
 
-- [Document HTML sanitization — FIXED](document-html-sanitization.md)
+- FIXED: [Document HTML sanitization](document-html-sanitization.md) · [Renderer entry static closure](renderer-entry-static-closure.md) · [On-screen slide setting all-or-nothing](screen-onscreen-setting-all-or-nothing.md) · [Apply Settings skips popups](apply-settings-skips-popups.md) · [Injected renderer URL params](injected-app-document-file-param.md) · [Screen change-bible IPC](screen-change-bible-dead-ipc.md) · [Lyric fonts registered first](screen-window-has-no-app-fonts.md) · [On-screen parse amplification](onscreen-setting-parse-amplification.md) · [PDF preload decoded all pages](pdf-preload-decodes-all-pages.md) · [Dev port 3000](dev-electron-hardcodes-port-3000.md) · [CacheManager sliding expiry](filesource-cache-sliding-ttl.md) · [Settings write race](settings-write-race-corrupts-onscreen-map.md)
 - [A static render must not parse HTML](static-render-must-not-parse-html.md) — the parser runs waiting promise callbacks mid-call
-- [Renderer entry static closure — FIXED](renderer-entry-static-closure.md)
 - [Foreground Effects in one setting](foreground-effects-one-setting.md) — one JSON key
 - [Bible text style: looks and presets](bible-text-style-looks-and-presets.md) — `effect` + its `textShadow`, in `em`; a preset is the whole style; a font beats a verse's inline one via a variable
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) · [Sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky
@@ -11,94 +10,61 @@
 - [Screen Bible columns](screen-bible-columns.md) — one scroller per Bible, same verse; only the leader is sent
 - [Long Text Show](long-text-show.md) — a song in several languages in the Bible’s layer; checked before Show
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — fixed 2026-07-22
-- [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — a write can throw "must be used within", blank the page, or leave Vite on the previous save
-- [`build` kills the running dev app](build-kills-running-dev-app.md) — rm -rf's `electron-build/`
-- [Scratch dev instance beside the user's app](scratch-dev-instance-beside-user-app.md) — a 2nd `electron .` on `OWA_USER_DATA_PATH`; never `electron:build`
-- [Pack a release from a snapshot](pack-release-from-snapshot.md) — junctioned node_modules; unlink before delete
+- [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — a write can throw "must be used within", blank the page, or leave Vite on the previous save · [A main-process change needs a relaunch](main-process-change-needs-relaunch.md) — HMR brings the renderer half only; compare start time to mtime
+- [`build` kills the running dev app](build-kills-running-dev-app.md) — rm -rf's `electron-build/` · [Scratch dev instance beside the user's app](scratch-dev-instance-beside-user-app.md) — a 2nd `electron .` on `OWA_USER_DATA_PATH`; never `electron:build` · [Pack a release from a snapshot](pack-release-from-snapshot.md) — junctioned node_modules; unlink before delete
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in a page script
-- [Bible Note popup CDP mechanics](bible-note-floating-toolbar-width.md) — a Lexical editor; only the title box is a textarea
-- [On-screen slide setting all-or-nothing — FIXED](screen-onscreen-setting-all-or-nothing.md)
-- [Apply Settings skips popups — FIXED](apply-settings-skips-popups.md)
-- [Injected renderer URL params — FIXED](injected-app-document-file-param.md)
+- Bible notes: [popup CDP mechanics](bible-note-floating-toolbar-width.md) — a Lexical editor; only the title box is a textarea · [the editor writes a history](bible-note-editing-history.md) — Save is a press; export reads the head · [Verse marks are note items](verse-marks-note-items.md)
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — blanks the page
 - [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md)
-- [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node tests importing `appProvider` need jsdom
-- [Coverage counts loaded files only](coverage-number-is-loaded-files-only.md) — 78% reported, 48% honest
-- [npm 12 install gotchas](npm-12-install-gotchas.md) — git deps fail
-- [open-lyric dist-repo dep](open-lyric-subtree-branch-dep.md) — pinned to a tag
+- Tests: [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node tests importing `appProvider` need jsdom · [`document` at module scope breaks node tests](appprovider-mock-node-env.md) · [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) · [Monaco `.css` test failure](monaco-css-test-failure-local-open-lyric.md) — three tests import the real open-lyric · [Coverage counts loaded files only](coverage-number-is-loaded-files-only.md) — 78% reported, 48% honest
+- Toolchain: [npm 12 install gotchas](npm-12-install-gotchas.md) — git deps fail · [open-lyric dist-repo dep](open-lyric-subtree-branch-dep.md) — pinned to a tag · [TypeScript 7 side-by-side](typescript-7-side-by-side.md) — `tsc` is `@typescript/native`
+- Vite: [504 → touch config](vite-dep-optimizer-504-restart.md) — stale `.vite/deps` chunk · [caches a failed import resolution](vite-caches-failed-import-resolution.md)
 - [Blob downloads pop Save As](blob-download-pops-save-dialog.md) — orphans a .tmp
-- [Screen change-bible IPC — FIXED](screen-change-bible-dead-ipc.md)
-- [TypeScript 7 side-by-side](typescript-7-side-by-side.md) — `tsc` is `@typescript/native`
 - [Dev data dir is separate](dev-data-dir-is-separate.md) — only `userData` gets `-dev`
-- [Lyric subsystem architecture](lyric-subsystem-architecture.md) — slides are HTML from `open-lyric`
+- [Language is a computer setting](language-is-a-computer-setting.md) — home store, not the data folder; `COMPUTER_SETTING_NAME_LIST`
+- Lyrics: [subsystem architecture](lyric-subsystem-architecture.md) — slides are HTML from `open-lyric` · [live in the Documents list](lyric-in-documents-list.md) — one selection, one previewer · [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — the import cycle throws · [Lyric passes the AppDocument check](lyric-passes-appdocument-typecheck.md) — `instanceof`
 - [Document stages](document-stage-previewer.md) — every non-song doc honours St:; drawn at render time
 - [On-screen check must not parse](onscreen-check-must-not-parse.md) — runs per row per screen event
 - [QA: intentional, not bugs](qa-intentional-not-bugs.md) — blank slide0; a bible present clears the slide
 - [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — wrap in `<bdi>`
-- [Vite 504 → touch config](vite-dep-optimizer-504-restart.md) — stale `.vite/deps` chunk
-- [A closed pane stays closed](full-view-toggle-collapses-widget.md) — the size is saved; Full view is not what closes it
-- [Lyrics live in the Documents list](lyric-in-documents-list.md) — one selection, one previewer
-- [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — the import cycle throws
+- Panes: [A closed pane stays closed](full-view-toggle-collapses-widget.md) — the size is saved; Full view is not what closes it · [Note pane ships closed](previewer-note-pane-ships-closed.md) — a changed default needed a migration · [Widget close persists the absorbed grow](widget-close-must-persist-absorbed-grow.md) · [View menu widget toggles](view-menu-widget-toggles.md)
 - [Presenting Flow: references vs presets](presenting-flow-references-vs-presets.md) · [rename](presenting-flow-rename.md)
-- [Lyric fonts registered first — FIXED](screen-window-has-no-app-fonts.md)
-- [On-screen parse amplification — FIXED](onscreen-setting-parse-amplification.md)
 - [Reveal Original is a context item](reveal-original-context-menu.md)
 - [Presenting Flows not dev-only](presenting-flow-panel-no-longer-dev-only.md) · [on-screen marking](presenting-flow-onscreen-marking-design.md) · [run player](presenting-flow-preview-run-player.md)
 - [PF screen pinning](presenting-flow-screen-pinning.md) · [screen actions](presenting-flow-screen-actions.md) · [Screen: Show/Hide](presenting-flow-screen-show-hide.md) · [Slide: Media Control](presenting-flow-media-control.md)
 - [PF auto next](presenting-flow-auto-next.md) · [CC elements](presenting-flow-cc-elements.md) · [Keyboard Event](presenting-flow-keyboard-event.md)
 - [Downloads are protocol-aware](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http
 - [`.owapf` archive](presenting-flow-archive-owapf.md) · [`.owadoc`/`.owbible`/`.owanote`](document-archive-owadoc.md) · [`.owadata.tar`](data-archive-owadata.md) · [Archive passwords](archive-password-protection.md)
-- [`.owabdata`](bible-xml-archive-owabdata.md) — refuses a colliding item · [Bible XML from a link](bible-xml-import-from-url.md)
+- [`.owabdata`](bible-xml-archive-owabdata.md) — refuses a colliding item · [Bible XML from a link](bible-xml-import-from-url.md) — an import writes a `note` of its source
 - [`.owasetting` — Export / Import Settings](settings-archive-owasetting.md) — import REPLACES a ticked section
 - [PF drag & setting rules](presenting-flow-drag-and-settings-rules.md) · [cue gutter](presenting-flow-cue-gutter.md)
-- [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md)
-- [PDF preload decoded all pages — FIXED](pdf-preload-decodes-all-pages.md)
-- [Dev port 3000 — FIXED](dev-electron-hardcodes-port-3000.md)
-- [`document` at module scope breaks node tests](appprovider-mock-node-env.md)
-- [CacheManager sliding expiry — FIXED](filesource-cache-sliding-ttl.md)
+- Bible lookup & view: [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md) · [Lookup has its own language](lookup-language-selection.md) · [In-verse names follow the bible](in-verse-names-follow-the-bible.md) · [Bible view controller hands out live arrays](bible-view-controller-live-arrays.md) · [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — writers call `clearBibleXMLCache`
 - [Editable docs read the history HEAD](presenting-flow-reads-editing-history-head.md) — not the saved file
 - [PF lyric attachment slide — FIXED](presenting-flow-lyric-slide-dead-row.md) · [expanded rows stale — FIXED](presenting-flow-expanded-doc-stale.md) · [expansion followed position — FIXED](presenting-flow-expansion-follows-position.md)
 - [`/owa-robot-test presentingFlow` is a MODE](owa-robot-test-presenting-flow-mode.md)
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — `audio` item is preview-only
-- [Lyric passes the AppDocument check](lyric-passes-appdocument-typecheck.md) — `instanceof`
-- [Settings write race — FIXED](settings-write-race-corrupts-onscreen-map.md)
-- [Monaco `.css` test failure](monaco-css-test-failure-local-open-lyric.md) — three tests import the real open-lyric
 - [Bootstrap button vars are dead](bootstrap-btn-vars-are-dead.md) — `.app .btn` hardcodes padding
 - [Console design tokens](console-design-system-tokens.md) — `--app-*`
-- [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md)
-- [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — `application/x-owa-drag-<kind>`
-- [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — drag surfaces get no click
+- Drag: [kind mime & dim target](drag-kind-mime-and-dim-target.md) — `application/x-owa-drag-<kind>` · [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — drag surfaces get no click
 - [Website items are screenshots](website-screenshot-not-iframe.md) — live only on the projected screen
-- [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md)
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — kills the open-lyric dev app too
-- [Note pane ships closed](previewer-note-pane-ships-closed.md) — a changed default needed a migration
-- [Widget close persists the absorbed grow](widget-close-must-persist-absorbed-grow.md)
-- [View menu widget toggles](view-menu-widget-toggles.md)
 - [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — assignment no-ops
 - [Media binaries on demand](extra-bin-on-demand.md) — `<data parent>/extra-bin/<platform>`
 - [SongSelect plugin](song-select-plugin.md) · [Public Domain Songs](public-domain-songs-plugin.md)
 - [open-lyric fence ground truth](open-lyric-fence-ground-truth.md) — P not PC, IS/S split
 - [Credentials use safeStorage](secure-storage-safestorage.md) — a separate `-secret` store
-- [Lookup has its own language](lookup-language-selection.md)
-- [In-verse names follow the bible](in-verse-names-follow-the-bible.md)
-- [Bible view controller hands out live arrays](bible-view-controller-live-arrays.md)
 - [Connection graph](graph-view-connection-graph.md) — one `GraphSourceType` per dataset
 - [No renderer `clipboard` module](renderer-has-no-clipboard-module.md) — Copy goes through main
 - [Resources panel](resources-panel.md) · [Markdown & note previews](markdown-preview-window.md) · [`.json` link list](resources-json-link-list.md) — decided by content
 - [useAppCurrentRef race guard](useappcurrentref-race-guard.md) — post-await staleness oracle
 - [Modal layer & above-modal widgets](modal-layer-above-modal.md)
-- [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — writers call `clearBibleXMLCache`
 - [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md)
-- [Bible note editor writes a history](bible-note-editing-history.md) — Save is a press; export reads the head
-- [Verse marks are note items](verse-marks-note-items.md)
 - [Agent access & in-app chatbot](agent-access-mcp-chatbot.md) — no fixed CDP port
 - [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md)
 - [`evaluate_script` is gone](evaluate-script-disposablestack.md) — the firewall refuses it
 - [MCP tool edits: two processes](mcp-tool-edit-two-processes.md) — your own tools serve stale code
 - [DOM matcher memoised in the page](dom-match-memoised-in-page.md)
-- [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md)
-- [Help → Keyboard Shortcuts](keyboard-shortcuts-panel.md) — a new key needs a row
-- [A leaked keyboard layer kills every shortcut](keyboard-layer-stack-leak.md)
+- Keys: [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) · [Help → Keyboard Shortcuts](keyboard-shortcuts-panel.md) — a new key needs a row · [A leaked keyboard layer kills every shortcut](keyboard-layer-stack-leak.md)
 - [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md) · [Remote key take-over](remote-key-take-over.md) — 3 quick presses hand the keys to what is presented; focus only
 - [An undo must not overtake its edit](document-write-then-undo-race.md) — register the write where it starts
 - [Glassy popup windows](glassy-popup-windows.md) — OS compositor, not CSS
@@ -145,9 +111,8 @@
 - [Own font list with weights](own-font-list-with-weights.md)
 - [Data folder path is aliased in files](portable-data-dir-alias.md) — `$DATA_DIR_PATH` · [Module-scope setting read before init](module-scope-setting-read-before-init.md)
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule
-- [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md)
+- Screen pages: [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md) · [A screen page's settings are its own copy](screen-page-settings-are-page-local.md) — synced settings land there; a screen never originates one
 - [A foreground camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label
-- [A screen page's settings are its own copy](screen-page-settings-are-page-local.md) — synced settings land there; a screen never originates one
 - [Screen Show draws the other screen](screen-show-foreground.md) — its screen page in an iframe, never a capture; no self, no loop
 - [Message editors hold local text](message-editor-text-is-local-state.md)
 - [Mini screen "No rendering" keeps the slide layer](mini-screen-no-rendering-keeps-slide-layer.md) — slide media sound lives there

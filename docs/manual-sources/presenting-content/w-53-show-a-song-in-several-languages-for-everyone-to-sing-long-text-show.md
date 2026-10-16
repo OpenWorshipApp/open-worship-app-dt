@@ -5,13 +5,21 @@ section: "Presenting content"
 verify: [PM-163, PM-164, PM-165, PM-166]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-14"
+workflowsVersion: "2026-10-15"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
 **Goal:** put one text — usually a song — on the screen in two or more
 languages side by side, each part beside its translation, and let it scroll
 while the room sings.
+
+**Quickest for one song:** right-click it in the **Documents** list and choose
+**[en:tran:Long Text Show]**. The panel opens on a new session named after the
+song, holding it as an **EN** card read from its **[en:tran:Lyric File]**, and
+**[en:tran:Show Long Text]** is on as soon as the card has read the song — go
+on at step 5, or at step 2 to put a translation beside it. Each press makes
+another session; the ones you no longer need are removed from their tab's
+menu.
 
 1. Open the **[en:tran:Foreground]** tab and choose **[en:tran:Long Text Show]**
    in the menu. Its panel opens.
@@ -50,12 +58,21 @@ while the room sings.
    brought to the middle of the screen in every language. The button you
    pressed stays lit, on every language's card, so the panel shows where the
    song has got to. A chorus sung twice
-   has two buttons, and each goes to its own row. On a song's card the first
-   button of that row, **[en:tran:View as Text Cards]**, turns each button
-   into a card holding that part's words, run on in one line with a slash
-   between its lines, for following the song by its words — press
-   anywhere on a card to bring it to the middle; press
-   **[en:tran:View as Text Cards]** again for the small buttons.
+   has two buttons, and each goes to its own row. On a song's card each
+   part starts as a card holding that part's words, run on in one line with
+   a slash between its lines, for following the song by its words — press
+   anywhere on a card to bring it to the middle. The first button of that
+   row, **[en:tran:View as Text Cards]**, turns them into small buttons
+   with only the part's name, and back; the card remembers which.
+
+   **Step with the keys.** Once you have pressed a part, its button has the
+   keys, the way the slides do: **Space**, **→**, **↓** or **Page Down**
+   presses the next part's button, and **Shift+Space**, **←**, **↑** or
+   **Page Up** the one before. The light and the keys move along with it, on
+   the card you pressed, so you can follow the song from the keyboard or a
+   presenter remote. It stops at the last part, and at the first: it never
+   goes round to the beginning. A part that is not lit keeps its own keys —
+   **Space** presses that one.
 8. **Give a language its own look.** Open **[en:tran:Properties]** on its card:
    **[en:tran:Font Family]**, **[en:tran:Text Color]**,
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
@@ -75,5 +92,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-163` · `PM-164` · `PM-165` · `PM-166`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
 :::

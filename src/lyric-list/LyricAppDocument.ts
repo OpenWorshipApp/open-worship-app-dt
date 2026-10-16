@@ -25,6 +25,7 @@ import {
     type CanvasItemPropsType,
 } from '../slide-editor/canvas/CanvasItem';
 import { getLyricStageStyle } from './lyricStageStyleHelpers';
+import { resolveLiveOpenLyric } from './lyricWarmSlidesHelpers';
 import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import Lyric from './Lyric';
@@ -124,10 +125,16 @@ export default class LyricAppDocument extends AppDocument {
         return canvasItemProps;
     }
 
-    genCanvasItemHtmlProps(id: number, html: string) {
+    // `canvasItemBounds` for the same reason as `genCanvasItemBoundsProps`'s:
+    // a whole song builds one of these per verse, and per look-ahead box.
+    genCanvasItemHtmlProps(
+        id: number,
+        html: string,
+        canvasItemBounds = this.canvasItemBounds,
+    ) {
         const canvasItemProps: CanvasItemHtmlPropsType = {
             ...genHtmlDefaultProps(),
-            ...this.genCanvasItemBoundsProps(id, true),
+            ...this.genCanvasItemBoundsProps(id, true, canvasItemBounds),
             html,
             type: 'html',
         };
@@ -172,6 +179,7 @@ export default class LyricAppDocument extends AppDocument {
         displayDim = this.displayDim,
         openLyricIndex = -1,
         openLyricRepeat: LyricRepeatType | null = null,
+        canvasItemBounds = this.canvasItemBounds,
     ) {
         const srcData = dataMap[key];
         const canvasItemProps = this.genCanvasItemHtmlProps(
@@ -184,6 +192,7 @@ export default class LyricAppDocument extends AppDocument {
                       openLyricRepeat,
                   )
                 : '',
+            canvasItemBounds,
         );
         return this.genLyricSlide(
             i,
@@ -230,8 +239,21 @@ export default class LyricAppDocument extends AppDocument {
         return newSlides;
     }
 
+    /**
+     * The `OpenLyric` this document derives its slides from, when one is live:
+     * the song's previewer's, held while its slides pane is mounted, else the
+     * one assigned to this document (see `resolveLiveOpenLyric` for the
+     * order). A stage no pane shows — a screen on `St: 2` under a stage-0
+     * pane — has none of its own, so it used to re-read and re-parse the song
+     * on every click.
+     */
+    get liveOpenLyric() {
+        return resolveLiveOpenLyric(this.filePath, this.openLyric);
+    }
+
     async getOpenLyricPreviewer() {
-        if (this.openLyric !== null) {
+        const liveOpenLyric = this.liveOpenLyric;
+        if (liveOpenLyric !== null) {
             // Deliberately NOT re-read from disk here. This sits on the
             // per-slide path (`getSlidesQuick` calls it on every render of
             // every stage pane), and a re-read costs a history-head lookup, a
@@ -239,7 +261,7 @@ export default class LyricAppDocument extends AppDocument {
             // setter — a full open-lyric re-parse. Whoever OWNS the shared
             // instance keeps it current instead, on the file's `update` event:
             // see `LyricManager.refreshOpenLyricContent`.
-            return this.openLyric;
+            return liveOpenLyric;
         }
         // Imported dynamically to keep this module out of the
         // `lyricHelpers → LyricAppDocumentStage0 → LyricAppDocumentStageAbstract

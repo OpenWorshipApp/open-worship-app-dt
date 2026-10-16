@@ -46,6 +46,10 @@ import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
+import {
+    checkIsCrossChapterTarget,
+    getTargetChapterEnd,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {
@@ -72,6 +76,10 @@ export async function genInputText(
             chapter,
             target?.verseStart,
             target?.verseEnd,
+            // `John 1:2-3:4` keeps its end chapter in the other version.
+            target !== undefined && checkIsCrossChapterTarget(target)
+                ? getTargetChapterEnd(target)
+                : undefined,
         );
     }
     return inputText;
@@ -319,27 +327,27 @@ export async function getOnScreenBibleItems() {
         const bibleItemData = getBibleItemData(
             screenManager.screenLongTextManager.screenViewData,
         );
-        for (const bibleItemDataList of Object.values(bibleItemData ?? {})) {
-            if (Array.isArray(bibleItemDataList)) {
-                for (const bibleItemData of bibleItemDataList) {
-                    keySet.add(
-                        toOnScreenBibleKey(
-                            bibleItemData.bibleKey,
-                            bibleItemData.title,
-                        ),
-                    );
-                }
-            } else {
-                keySet.add(
-                    toOnScreenBibleKey(
-                        bibleItemDataList.bibleKey,
-                        await bibleRenderHelper.toTitle(
-                            bibleItemDataList.bibleKey,
-                            bibleItemDataList.target,
-                        ),
+        if (bibleItemData === undefined) {
+            continue;
+        }
+        // Read by NAME: looping over the object's values read every value
+        // that was not an array as the passage, so any field added beside
+        // these two would have been titled as one.
+        const { renderedList, bibleItem } = bibleItemData;
+        // Every version on the screen, titled when it was rendered.
+        for (const rendered of renderedList ?? []) {
+            keySet.add(toOnScreenBibleKey(rendered.bibleKey, rendered.title));
+        }
+        if (bibleItem?.target) {
+            keySet.add(
+                toOnScreenBibleKey(
+                    bibleItem.bibleKey,
+                    await bibleRenderHelper.toTitle(
+                        bibleItem.bibleKey,
+                        bibleItem.target,
                     ),
-                );
-            }
+                ),
+            );
         }
     }
     return Array.from(keySet);
@@ -489,7 +497,9 @@ export function improveBibleItemTitleOnHover<T extends HTMLElement>(
         if (bibleItem === null) {
             return;
         }
-        let text = await bibleItem.toText();
+        // A tooltip cut at 1000 characters: a passage running over chapters
+        // reads its first one, never the rest.
+        let text = await bibleItem.toText(1);
         text = text.substring(0, 1000);
         element.title = text;
     });

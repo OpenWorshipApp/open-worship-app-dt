@@ -22,6 +22,7 @@ import {
 } from '../server/fileHelpers';
 import { getAppFilePathFromFile } from '../helper/localFileHelpers';
 import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
+import { checkIsSameBibleTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import {
     askForURL,
     describeDownloadError,
@@ -371,11 +372,12 @@ async function importBibleItem(item: PresentingFlowItemType) {
     if (defaultBible === null) {
         throw new Error('Unable to open the Default bible list');
     }
+    // Field by field, `chapterEnd` included: a stringified target depended on
+    // key order, so the same verse written by another version was added twice.
     const existingBibleItem = defaultBible.items.find((existing) => {
         return (
             existing.bibleKey === bibleItem.bibleKey &&
-            JSON.stringify(existing.toJson().target) ===
-                JSON.stringify(bibleItem.toJson().target)
+            checkIsSameBibleTarget(existing.target, bibleItem.target)
         );
     });
     let itemId: number;

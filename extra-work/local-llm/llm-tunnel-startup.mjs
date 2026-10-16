@@ -204,10 +204,32 @@ function toPowerShellArg(text) {
 }
 
 /**
- * A Task Scheduler task as XML: at this user's logon, repeated for good, and
- * a start that finds it running is dropped (`IgnoreNew`) -- so the repeat is
- * what brings a stopped tunnel back. PowerShell is only there to hide the
- * console window a task would otherwise open on the desktop.
+ * A time as Task Scheduler reads one: local, to the second, no zone.
+ */
+export function toTaskTime(date) {
+    const pad = (value) => {
+        return String(value).padStart(2, '0');
+    };
+    return (
+        `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+        `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    );
+}
+
+/**
+ * A Task Scheduler task as XML: at this user's logon, and every few minutes
+ * from the moment it is installed, for good -- and a start that finds it
+ * running is dropped (`IgnoreNew`), so the repeat is what brings a stopped
+ * tunnel back. PowerShell is only there to hide the console window a task
+ * would otherwise open on the desktop.
+ *
+ * TWO triggers, and the second is the one that matters on the day: a
+ * logon trigger's repeat starts at the logon, so a task installed in the
+ * middle of a session -- which is how it is always installed -- ran once and
+ * never again until the next logon (2026-10-15: the report inbox was
+ * stopped on purpose to watch it come back, and nothing came; `schtasks`
+ * said _Next Run Time: N/A_). The time trigger starts at `startAt` and
+ * repeats with no end, past restarts as well.
  */
 export function genTaskXml({
     node,
@@ -217,6 +239,7 @@ export function genTaskXml({
     user,
     everyMinutes,
     id,
+    startAt = toTaskTime(new Date()),
 }) {
     const command = `& ${[node, script, ...tunnelArgs].map(toPowerShellArg).join(' ')}`;
     const powerShellArgs = `-NoProfile -NonInteractive -WindowStyle Hidden -Command "${command.replaceAll('"', '\\"')}"`;
@@ -235,6 +258,14 @@ export function genTaskXml({
         '      <Enabled>true</Enabled>',
         `      <UserId>${toXmlText(user)}</UserId>`,
         '    </LogonTrigger>',
+        '    <TimeTrigger>',
+        '      <Repetition>',
+        `        <Interval>PT${everyMinutes}M</Interval>`,
+        '        <StopAtDurationEnd>false</StopAtDurationEnd>',
+        '      </Repetition>',
+        `      <StartBoundary>${toXmlText(startAt)}</StartBoundary>`,
+        '      <Enabled>true</Enabled>',
+        '    </TimeTrigger>',
         '  </Triggers>',
         '  <Principals>',
         '    <Principal id="Author">',

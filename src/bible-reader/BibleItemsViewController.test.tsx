@@ -836,6 +836,35 @@ describe('bible-reader BibleItemsViewController', () => {
             ).toBeGreaterThan(0);
         });
 
+        test('an earlier end chapter sorts first before the end verse', () => {
+            const order = ['JHN'];
+            const item = (verseEnd: number, chapterEnd?: number) => ({
+                bibleKey: 'KJV',
+                target: {
+                    bookKey: 'JHN',
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd,
+                    chapterEnd,
+                },
+            });
+            // JHN 1:2-3:1, JHN 1:2-9, JHN 1:2-2:7, JHN 1:2-2:3
+            const list = [item(1, 3), item(9), item(7, 2), item(3, 2)];
+            list.sort((a, b) => compareBibleItemsInBibleOrder(a, b, order));
+            expect(
+                list.map(({ target }) => [target.chapterEnd, target.verseEnd]),
+            ).toEqual([
+                [undefined, 9],
+                [2, 3],
+                [2, 7],
+                [3, 1],
+            ]);
+            // A same-chapter `chapterEnd` is no end chapter at all.
+            expect(
+                compareBibleItemsInBibleOrder(item(9, 1), item(9), order),
+            ).toBe(0);
+        });
+
         test('finalRenderer throws when not implemented', () => {
             const ctl = genController();
             expect(() => ctl.finalRenderer(genItem(1))).toThrow(

@@ -25,6 +25,7 @@ import {
     checkIsRecordLabelsMatching,
     collectVerseRecords,
     toVerseListLabel,
+    toVerseRecordChapterTarget,
 } from './verseRecordListHelpers';
 import type {
     LookupRecordLabelsType,
@@ -301,6 +302,70 @@ describe('collectVerseRecords with the KJV wording', () => {
         expect(names.map((record) => record.label)).not.toContain(
             'Herod the Tetrarch',
         );
+    });
+});
+
+// LUK 3:2-4:1 crosses into chapter 4: chapter 3 is read from verse 2 to its
+// end, which only the chapter itself can say.
+const LUKE_3_2_TO_4_1 = {
+    bookKey: 'LUK',
+    chapter: 3,
+    verseStart: 2,
+    verseEnd: 1,
+    chapterEnd: 4,
+};
+
+describe('collectVerseRecords for a passage crossing chapters', () => {
+    const KJV_LUKE_3 = {
+        '1': 'Herod being tetrarch of Galilee, and of the region of Ituraea',
+        '2': 'the word of God came unto John',
+        '3': 'And he came into all the country about Jordan',
+    };
+
+    test('reads its first chapter to the end, where it used to read nothing', () => {
+        const { names, locations } = collectVerseRecords(
+            genIndex(),
+            genRecordLabels(),
+            LUKE_3_2_TO_4_1,
+            KJV_LUKE_3,
+        );
+        // Verses 2 and 3 of chapter 3; never 3:1, nor 3:1 as `verseEnd`.
+        expect(names.map((record) => record.label)).toEqual([
+            'John the Baptist',
+        ]);
+        expect(names[0].verseList).toEqual([2, 3]);
+        expect(locations.map((record) => record.label)).toEqual(['Jordan']);
+    });
+
+    test('names one chapter of the passage as a passage of its own', () => {
+        const first = {
+            chapter: 3,
+            verseStart: 2,
+            verseEnd: null,
+            isFirstChapter: true,
+            isLastChapter: false,
+        };
+        const last = {
+            chapter: 4,
+            verseStart: 1,
+            verseEnd: 1,
+            isFirstChapter: false,
+            isLastChapter: true,
+        };
+        expect(toVerseRecordChapterTarget('LUK', first, KJV_LUKE_3)).toEqual({
+            bookKey: 'LUK',
+            chapter: 3,
+            verseStart: 2,
+            verseEnd: 3,
+        });
+        expect(toVerseRecordChapterTarget('LUK', last, null)).toEqual({
+            bookKey: 'LUK',
+            chapter: 4,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        // Without the chapter, an open end reads no verse at all.
+        expect(toVerseRecordChapterTarget('LUK', first, null).verseEnd).toBe(0);
     });
 });
 

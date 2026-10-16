@@ -24,13 +24,17 @@ vi.mock('./ForegroundCommonPropertiesSettingComp', () => ({
     DEFAULT_BACKGROUND_COLOR: '',
     DEFAULT_TEXT_COLOR: '',
     genCommonStyleSettingNames: () => ({}),
-    getForegroundCommonProperties: () => ({}),
+    getForegroundCommonProperties: () => ({
+        backgroundColor: '#123456',
+        backdropFilter: 'blur(4px)',
+    }),
 }));
 vi.mock('../others/BlendModeSelectComp', () => ({ default: () => null }));
 vi.mock('../helper/blendModeHelpers', () => ({
     DEFAULT_BLEND_MODE: 'normal',
-    checkIsBlending: () => false,
-    toValidBlendMode: () => 'normal',
+    checkIsBlending: (mode: string) => mode === 'multiply',
+    toValidBlendMode: (mode: string) =>
+        mode === 'multiply' ? 'multiply' : 'normal',
 }));
 vi.mock('./ForegroundDecorationSettingComp', () => ({ default: () => null }));
 vi.mock('./foregroundDecorationHelpers', () => ({
@@ -130,4 +134,111 @@ test('drops Always on Top from an overlay put behind the slide', () => {
     expect(genForegroundExtraStyle('logo', option)).not.toHaveProperty(
         'zIndex',
     );
+});
+
+test('anchors centered, edge and corner widgets to their selected origin', () => {
+    settings.clear();
+    const names = genPropsSettingNames('caption');
+    const option = {
+        isFontSize: false,
+        isGeometry: true,
+        isCommonStyle: false,
+        isBlendMode: false,
+    };
+    settings.set(names.offsetX, '12');
+    settings.set(names.offsetY, '-4');
+    expect(genForegroundExtraStyle('caption', option)).toMatchObject({
+        left: '50%',
+        top: '50%',
+        transform:
+            'translate(calc(-50% + 12px), calc(-50% - 4px)) scale(1) rotate(0deg)',
+        transformOrigin: 'center center',
+    });
+
+    settings.set(
+        names.alignment,
+        JSON.stringify({
+            horizontalAlignment: 'center',
+            verticalAlignment: 'start',
+        }),
+    );
+    expect(genForegroundExtraStyle('caption', option)).toMatchObject({
+        left: '50%',
+        top: '-4px',
+        transform: 'translateX(calc(-50% + 12px)) scale(1) rotate(0deg)',
+        transformOrigin: 'center top',
+    });
+
+    settings.set(
+        names.alignment,
+        JSON.stringify({
+            horizontalAlignment: 'right',
+            verticalAlignment: 'center',
+        }),
+    );
+    expect(genForegroundExtraStyle('caption', option)).toMatchObject({
+        right: '12px',
+        top: '50%',
+        transform: 'translateY(calc(-50% - 4px)) scale(1) rotate(0deg)',
+        transformOrigin: 'right center',
+    });
+
+    settings.set(
+        names.alignment,
+        JSON.stringify({
+            horizontalAlignment: 'left',
+            verticalAlignment: 'end',
+        }),
+    );
+    expect(genForegroundExtraStyle('caption', option)).toMatchObject({
+        left: '12px',
+        bottom: '-4px',
+        transformOrigin: 'left bottom',
+    });
+});
+
+test('keeps non-geometric text square until rounded and bounds opacity', () => {
+    settings.clear();
+    const names = genPropsSettingNames('marquee');
+    const option = {
+        isFontSize: true,
+        isGeometry: false,
+        isCommonStyle: false,
+        isBlendMode: false,
+    };
+    expect(genForegroundExtraStyle('marquee', option)).toMatchObject({
+        borderRadius: '0%',
+        fontSize: '100px',
+    });
+    settings.set(names.roundPercentage, '80');
+    settings.set(names.fontSize, '48');
+    expect(genForegroundExtraStyle('marquee', option)).toMatchObject({
+        borderRadius: '40%',
+        fontSize: '48px',
+    });
+    settings.set(names.roundSizePixel, '9');
+    expect(genForegroundExtraStyle('marquee', option).borderRadius).toBe('9px');
+
+    settings.set(names.opacityPercentage, '-25');
+    settings.set(names.widthPercentage, '250');
+    expect(
+        genForegroundExtraStyle('marquee', { ...option, isGeometry: true }),
+    ).toMatchObject({ opacity: 0, width: '100%' });
+});
+
+test('blending removes the backdrop filter but preserves the common color', () => {
+    settings.clear();
+    settings.set(genPropsSettingNames('image').blendMode, 'multiply');
+    expect(
+        genForegroundExtraStyle('image', {
+            isFontSize: false,
+            isGeometry: false,
+            isCommonStyle: true,
+            isBlendMode: true,
+        }),
+    ).toMatchObject({
+        backgroundColor: '#123456',
+        backdropFilter: 'none',
+        mixBlendMode: 'multiply',
+    });
 });

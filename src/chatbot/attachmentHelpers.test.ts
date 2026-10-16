@@ -287,6 +287,94 @@ describe('the name on an element chip', () => {
     });
 });
 
+// The user: _make sure screenshot and element selection have uuid
+// information to the window to let mcp know_.
+describe('the window a picture or a pointed-at control came from', () => {
+    const SETTING = {
+        id: 'SETTING-ID',
+        page: 'setting.html?uuid=setting',
+        label: 'Settings',
+        isMain: false,
+    };
+    const MAIN = {
+        id: 'MAIN-ID',
+        page: 'presenter.html',
+        label: 'Presenter',
+        isMain: true,
+    };
+
+    test('is kept on the attachment and said in the words the model reads', () => {
+        const pointed = genElementAttachment(
+            { label: 'Apply Settings', selector: '#apply' },
+            SETTING,
+        );
+        expect(pointed.window).toEqual(SETTING);
+        expect(pointed.summary).toContain(
+            'The user pointed at a control in the Settings window.',
+        );
+        // No launch-bound id in the words that are kept with the message.
+        expect(pointed.summary).not.toContain('SETTING-ID');
+        expect(genElementAttachment({ label: 'x' }).window).toBeUndefined();
+        expect(genElementAttachment({ label: 'x' }).summary).toContain(
+            'in the app window.',
+        );
+    });
+
+    test('tells the model the page its tools reach each window by, NOW', () => {
+        const attachments = [
+            {
+                ...genElementAttachment({ label: 'Apply Settings' }, SETTING),
+                number: 1,
+            },
+            {
+                id: 'gone-shot',
+                kind: 'image' as const,
+                name: 'my screen',
+                mimeType: 'image/png',
+                byteSize: 4,
+                number: 2,
+                window: MAIN,
+            },
+        ];
+        // Its stored id when nobody says otherwise.
+        expect(toAttachmentLegend(attachments)).toContain(
+            '[1] the control "Apply Settings" they pointed at, in the ' +
+                'Settings window -- for your tool calls about it, page ' +
+                '"SETTING-ID"',
+        );
+        // After a relaunch: the popup by its page and uuid, the main window
+        // by no page at all (the tools' default).
+        const relaunched = toAttachmentLegend(attachments, (takenIn) => {
+            return takenIn.isMain ? undefined : takenIn.page;
+        });
+        expect(relaunched).toContain('page "setting.html?uuid=setting"');
+        // ...with no page to pass: the tools' default IS the main window.
+        expect(
+            relaunched.endsWith(
+                '[2] a picture called "my screen", no longer attached, in ' +
+                    'the main window (on the Presenter)',
+            ),
+        ).toBe(true);
+        expect(
+            toAskedOfModel('what is this?', attachments, () => {
+                return 'NOW-ID';
+            }),
+        ).toContain('page "NOW-ID"');
+    });
+
+    test('rides into the history by name, never by id', () => {
+        const note = toAttachmentNote([
+            {
+                ...genElementAttachment({ label: 'Apply Settings' }, SETTING),
+                number: 1,
+            },
+        ]);
+        expect(note).toBe(
+            '(with the "Apply Settings" control [1] in the Settings window attached)',
+        );
+    });
+});
+
 // "Attachment should have id like 1 2 3 ... so user can mention in the
 // text" -- said over four chips all called "my screen".
 describe('the number an attachment is called by', () => {

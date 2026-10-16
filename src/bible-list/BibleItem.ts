@@ -18,6 +18,12 @@ import {
     toChapterFullKeyFormat,
     toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
+import {
+    checkIsCrossChapterTarget,
+    checkIsSameBibleTarget,
+    getTargetChapterEnd,
+    normalizeBibleTarget,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 
 const biblePresenterSettingManager = new SettingManager<AnyObjectType[]>({
     settingName: 'bible-presenter',
@@ -53,6 +59,12 @@ export default class BibleItem
         this._id = id;
         this.filePath = filePath;
         this.originalJson = cloneJson(json);
+        // `chapterEnd` only when it is a later chapter, here as everywhere.
+        if (this.originalJson.target && this.originalJson.target.bookKey) {
+            this.originalJson.target = normalizeBibleTarget(
+                this.originalJson.target,
+            );
+        }
         this.bible = bible ?? null;
     }
     get id() {
@@ -72,7 +84,7 @@ export default class BibleItem
         return this.originalJson.target;
     }
     set target(target: BibleTargetType) {
-        this.originalJson.target = target;
+        this.originalJson.target = normalizeBibleTarget(target);
     }
     get metadata() {
         return this.originalJson.metadata;
@@ -99,14 +111,7 @@ export default class BibleItem
         return this.id === bibleItem.id;
     }
     checkIsTargetIdentical(bibleItem: BibleItem) {
-        const { target } = this;
-        const { target: target2 } = bibleItem;
-        return (
-            target.bookKey === target2.bookKey &&
-            target.chapter === target2.chapter &&
-            target.verseStart === target2.verseStart &&
-            target.verseEnd === target2.verseEnd
-        );
+        return checkIsSameBibleTarget(this.target, bibleItem.target);
     }
     static fromJson(json: BibleItemType, filePath?: string) {
         this.validate(json);
@@ -137,16 +142,19 @@ export default class BibleItem
         chapter: number,
         verseStart: number,
         verseEnd: number,
+        // A later chapter `verseEnd` belongs to: `John 1:2-3:4`.
+        chapterEnd?: number,
     ) {
         return this.fromJson({
             id: -1,
             bibleKey,
-            target: {
+            target: normalizeBibleTarget({
                 bookKey,
                 chapter,
                 verseStart,
                 verseEnd,
-            },
+                chapterEnd,
+            }),
             metadata: {},
         });
     }
@@ -170,6 +178,7 @@ export default class BibleItem
             target.chapter,
             target.verseStart,
             target.verseEnd,
+            target.chapterEnd,
         );
         return bibleItem;
     }
@@ -197,7 +206,9 @@ export default class BibleItem
             !json.target.bookKey ||
             typeof json.target.chapter !== 'number' ||
             typeof json.target.verseStart !== 'number' ||
-            typeof json.target.verseEnd !== 'number'
+            typeof json.target.verseEnd !== 'number' ||
+            (json.target.chapterEnd !== undefined &&
+                !Number.isInteger(json.target.chapterEnd))
         ) {
             loggerHelpers.appError(json);
             throw new Error('Invalid bible item data');
@@ -274,16 +285,28 @@ export default class BibleItem
         const title = await this.toTitle();
         return `${this.getCopyingBibleKey()} ${title}`;
     }
-    toText() {
-        return bibleRenderHelper.toText(this.bibleKey, this.target, true);
+    // Every chapter of the passage unless `maxChapterCount` says otherwise:
+    // a hover hint reads a few, a copy reads all.
+    toText(maxChapterCount?: number) {
+        return bibleRenderHelper.toText(
+            this.bibleKey,
+            this.target,
+            true,
+            maxChapterCount,
+        );
     }
     async toFullText() {
         const text = await this.toText();
         const fullTitle = await this.toTitleWithBibleKey();
         return `${fullTitle}\n${text}`;
     }
-    toVerseTextList() {
-        return bibleRenderHelper.toVerseTextList(this.bibleKey, this.target);
+    toVerseTextList(range?: { start: number; count: number }) {
+        return bibleRenderHelper.toVerseTextList(
+            this.bibleKey,
+            this.target,
+            false,
+            range,
+        );
     }
     toChapterFullKey() {
         const { target } = this;
@@ -293,7 +316,15 @@ export default class BibleItem
     toVerseFullKey() {
         const { target } = this;
         const { bookKey, chapter, verseStart, verseEnd } = target;
-        return toVerseFullKeyFormat(bookKey, chapter, verseStart, verseEnd);
+        return toVerseFullKeyFormat(
+            bookKey,
+            chapter,
+            verseStart,
+            verseEnd,
+            checkIsCrossChapterTarget(target)
+                ? getTargetChapterEnd(target)
+                : null,
+        );
     }
     getCopyingBibleKey() {
         return `(${this.bibleKey})`;

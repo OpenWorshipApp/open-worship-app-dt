@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 16780dd5-d3fa-4663-8b19-127ebf319066
-  modified: 2026-10-13T21:18:50.228Z
+  modified: 2026-10-15T23:25:23.691Z
 ---
 
 Added 2026-10-10 at the user's ask: _"currently we have
@@ -252,10 +252,37 @@ extra-work/local-llm/tunnel-reports.log`, started with `Start-Process …
 -WindowStyle Minimized` so it has a console window of its own that the user
 can see and close with Ctrl+C (which takes its entry out of the registry),
 and outlives the session. Reports land in the kit's `report-inbox.sqlite`.
-It is NOT a logon task: after a restart of that computer it is off until
-started again, and `llm-registry.mjs list` is how to see which it is. The
-first row in that inbox is a TEST from a scratch dev instance on the real
-registry, marked done.
+It died within hours (the laptop slept, 2026-10-14) and every Send failed
+for a day and a half, so on 2026-10-15 the user said yes to the startup
+task: _Open Worship LLM Tunnel (reports)_, installed with FULL `--out` /
+`--log` paths (the task runs in the kit folder). The installer had a hole:
+its only trigger was a logon trigger, whose 5-minute repeat starts at the
+NEXT logon -- installed mid-session it ran once and never again (_Next Run
+Time: N/A_; the inbox, stopped on purpose, stayed down). It now adds a
+time trigger from the install moment as well (`genTaskXml`, `toTaskTime`).
+Proven after: the inbox killed at 12:33, back by the task and republished
+at 12:40. The same afternoon the inbox learned to SAY a new report on the
+desktop (`genNewReportNotifier` / `notifyDesktop` in
+`llm-report-inbox.mjs`: Windows PowerShell toast with the words in
+environment variables, one notice a minute, `--no-notify` to turn off),
+because under the task it has no window and reports sat unseen; and the app
+learned to KEEP a report whose server was away and send it later
+(memory [[chatbot-report-button]]), so restarting the inbox loses nothing.
+The super-computer's assistant was brought back the same day by the session
+on that machine (its own tunnel, `google/gemma-4-e4b` at 32k, no startup
+task by the user's choice). Its entry listed all nine models downloaded,
+a 12B first, with only the 4B loaded — a pick of another made LM Studio's
+JIT load it at its default context — so `readModels` in `llm-tunnel.mjs`
+now lists only LM Studio's LOADED chat models (`loaded_instances`) when any
+is, the whole list when none is (the user's choice of fix, 2026-10-15). It
+reaches that machine's entry the next time its tunnel is started there. All
+rows of that inbox are done: TESTs from scratch dev instances, and row 2,
+the user's own first report (a test throw; it showed the console bug and
+made-up STEPS, both fixed). Rows 5 and 6 were the user's own reports sent
+through the live inbox the same evening (a free model's bold frame went
+unparsed in 5 and was fixed; 6 came through with title, sections, the
+Try-this step, console and picture), and on 6 the user said reporting works
+the way they want — all six rows done.
 
 Testing the kit: a session CANNOT open a real tunnel. The permission
 classifier refuses it as `External Ingress Tunnel` — a SendMessage asking

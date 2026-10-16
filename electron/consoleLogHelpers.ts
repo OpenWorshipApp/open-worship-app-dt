@@ -25,7 +25,12 @@ const MAX_LINE_LENGTH = 500;
 // Electron's own banner about how a development window is set up, printed
 // twice at every load. It is not something that went wrong, and in the
 // first report that carried a console it was thirteen of the sixteen lines.
-const NOISE_PATTERN = /^%cElectron Security Warning/;
+// And the `bible-note` package's own development-mode advice about "the
+// playground app" and its "debug view" (2026-10-15): the only line in the
+// user's report about a slow Presenter, and the model told them to turn off
+// a debug view setting this app does not have.
+const NOISE_PATTERN =
+    /^(?:%cElectron Security Warning|If you are profiling the playground app)/;
 
 const lineMap = new Map<number, string[]>();
 

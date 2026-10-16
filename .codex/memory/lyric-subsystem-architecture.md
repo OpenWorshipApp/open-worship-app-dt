@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: da5728a5-2e42-4a20-8512-65b8dc76a945
-  modified: 2026-10-09T03:04:21.579Z
+  modified: 2026-10-15T17:26:05.358Z
 ---
 
 Lyric documents (`src/lyric-list/`) are **not** ordinary slide documents. A
@@ -28,12 +28,44 @@ Things that bite:
   (`getOpenLyricFontSetting()` in `lyricHelpers.ts`). This caused the projected
   lyric to render at open-lyric's 16px default while the operator's previewer
   showed the configured 61px.
-- **`getOpenLyricPreviewer()` returns the SHARED instance when one is set**
-  (`LyricAppDocument.ts:206`) and only falls back to `initOpenLyric`
-  (history-head read + JSON.parse + full open-lyric re-parse) on a cold miss.
-  Do NOT re-read from disk here — it sits on the per-slide path
-  (`getSlidesQuick` calls it per render per stage pane). The owner keeps it
-  current on the file's `update` event (`LyricManager.refreshOpenLyricContent`).
+- **`getOpenLyricPreviewer()` returns the SHARED instance when one is live**
+  (`liveOpenLyric`: the HELD one first, then the document's own field) and only
+  falls back to `initOpenLyric` (history-head read + JSON.parse + full
+  open-lyric re-parse) on a cold miss. Do NOT re-read from disk here — it sits
+  on the per-slide path (`getSlidesQuick` calls it per render per stage pane).
+  The owner keeps it current on the file's `update` event
+  (`LyricManager.refreshOpenLyricContent`).
+- **A song's slides are built BEFORE the click, like a PPTX's (2026-10-15).**
+  Reported as _"lyric slides is slow at clicking, should do pre-caching like
+  pptx slides"_. A card holds HTML for its PANE's stage, so a screen on another
+  `St:` re-derived the slide at click time. A look-ahead stage rebuilt the
+  whole deck. The First slide re-drew a whole-song PNG. The screen stage's
+  document had no `OpenLyric`, so the song was re-read and re-parsed 2-3x per
+  click, and the 10 s element-map cache was cold a minute later. A trace of
+  one click to an `St: 2` screen under a stage-0 pane: 2.6 s of main-thread
+  work, then 0.76 s.
+  - `lyricWarmSlidesHelpers.ts` (a leaf) is the store: per file, the live
+    `OpenLyric`s held and one deck per stage, under `genWarmDeckKey` (every
+    option + file + stage + display size).
+  - `useLyricWarmSlides`, mounted by `LyricSlidesPreviewerComp`, HOLDS the song
+    in a LAYOUT effect. That way the panes' own first `getSlides()` (a passive
+    effect lower down) is already stored.
+  - It warms every screen's `St:` that no pane shows: one stage at a time,
+    debounced per instance. It re-runs on a screen's `instance` event, when a
+    pane is added or hidden, and after the `update` handler's `clearCache`.
+  - `getSlides()` (no key) stores the deck; `getSlideById` reads it first. The
+    look-ahead mixin's override does too.
+  - Bounded by what is on screen, never by time: the last release deletes the
+    entry. The decks must NOT live on the stage documents, which are cached
+    for good.
+  - `clearCache` drops every stage's decks and takes a new generation from ONE
+    renderer-wide counter. A build reads the generation BEFORE it starts, so a
+    deck rendered from text an edit replaced mid-build is refused, and so is
+    one begun under a hold since released. A side effect: dev StrictMode's
+    remount refuses a pane's first deck.
+  - **The held `OpenLyric` beats the field.** A stage that was once a pane
+    keeps its old previewer's instance for good, and with it the song as it
+    stood then.
 - **Stages are separate document instances, and there is no ceiling on the
   number (2026-09-27).** `getLyricAppDocumentStageByStage()` returns a different
   instance per stage, each with its own `openLyric` field and its own cache

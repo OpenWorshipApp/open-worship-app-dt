@@ -27,6 +27,7 @@ vi.mock('react', async (importOriginal) => {
 import {
     closeAllDetailPanels,
     closeDetailPanel,
+    openBibleItemDetailPanel,
     openDetailPanel,
     useOpenDetailPanels,
 } from './detailPanelHelpers';
@@ -81,6 +82,75 @@ describe('opening a detail panel', () => {
         openDetailPanel({ kind: 'verse', target: 'EXO 6:23', name: 'Exodus' });
         expect(readPanels()).toHaveLength(1);
         expect(readPanels()[0].key).toBe('verse:EXO 6:23');
+    });
+
+    // A cross reference or a found verse opens in the bible it was listed
+    // in, and picking another bible in a panel's title opens a second panel
+    // rather than re-reading the first.
+    test('a verse in its own bible is one panel per bible', () => {
+        openDetailPanel({ kind: 'verse', target: 'GEN 17:5', name: 'Gen' });
+        openDetailPanel({
+            kind: 'verse',
+            target: 'GEN 17:5',
+            name: 'Gen',
+            bibleKey: 'KJV',
+        });
+        openDetailPanel({
+            kind: 'verse',
+            target: 'GEN 17:5',
+            name: 'លោកុប្បត្តិ',
+            bibleKey: 'KHM',
+        });
+        openDetailPanel({
+            kind: 'verse',
+            target: 'GEN 17:5',
+            name: 'Gen',
+            bibleKey: 'KJV',
+        });
+
+        expect(
+            readPanels().map(({ key, bibleKey, raiseCount }) => ({
+                key,
+                bibleKey,
+                raiseCount,
+            })),
+        ).toEqual([
+            { key: 'verse:GEN 17:5', bibleKey: undefined, raiseCount: 0 },
+            { key: 'verse:GEN 17:5:KJV', bibleKey: 'KJV', raiseCount: 1 },
+            { key: 'verse:GEN 17:5:KHM', bibleKey: 'KHM', raiseCount: 0 },
+        ]);
+    });
+
+    test('a record never takes a bible key', () => {
+        openDetailPanel({
+            kind: 'name',
+            target: 'n-1',
+            name: 'Moses',
+            bibleKey: 'KJV',
+        });
+
+        expect(readPanels()[0]).toMatchObject({
+            key: 'name:n-1:en',
+            bibleKey: undefined,
+        });
+    });
+
+    test('a bible item opens as a verse panel in its own bible', async () => {
+        await openBibleItemDetailPanel({
+            bibleKey: 'KJV',
+            toVerseFullKey: () => 'ROM 11:33-34',
+            toTitle: async () => 'Romans 11:33-34',
+        } as any);
+
+        expect(readPanels()).toEqual([
+            expect.objectContaining({
+                key: 'verse:ROM 11:33-34:KJV',
+                kind: 'verse',
+                target: 'ROM 11:33-34',
+                name: 'Romans 11:33-34',
+                bibleKey: 'KJV',
+            }),
+        ]);
     });
 
     test('raises the existing panel instead of stacking a duplicate', () => {

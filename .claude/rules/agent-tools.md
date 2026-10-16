@@ -795,6 +795,17 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   `x-ratelimit-remaining: 0` — `busy` now, where `denied` told a volunteer it
   may need a sign-in. None of it touched the schema: the model's bill is
   unchanged.
+  **An installed Bible says where it came from** (2026-10-15, the user's ask:
+  _see bible data that import by download from online have url … keep all
+  possible information of importing_; ST-79, memory
+  `bible-xml-import-from-url`). `check` keeps the link as given, the file link
+  downloaded, the final URL and the size in the draft's `.json`; `import` hands
+  them to the app as `origin` with the chosen list's label and source, and the
+  app writes the Bible's `note` (`genBibleImportNote`) — read back by `info`,
+  shown under its row in Settings. WHO is the server's door
+  (`createOwaMcpServer({door})`: `app` from `host.mjs` is the chatbot, stdio an
+  outside agent), never anything a caller passes; the worker drops what it
+  does not know and keeps only http(s) links. No schema changed.
 
 - **A control shut behind three dots answers `revealBy`, not `showsOnHover`**
   (2026-10-11, `autoHideOf` in `domMatch.mjs`). The footers `handleAutoHide`

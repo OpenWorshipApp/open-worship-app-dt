@@ -979,7 +979,15 @@ export type LlmReportFailureType =
  * not send it —".
  */
 export type LlmReportPostResultType =
-    { ok: true } | { ok: false; reason: LlmReportFailureType; detail: string };
+    | { ok: true }
+    | {
+          ok: false;
+          reason: LlmReportFailureType;
+          detail: string;
+          // Kept, to be sent by itself when the server is back
+          // (`llmReportQueueHelpers.ts`).
+          queued?: boolean;
+      };
 
 /**
  * What a window is told: the servers without their keys or their addresses

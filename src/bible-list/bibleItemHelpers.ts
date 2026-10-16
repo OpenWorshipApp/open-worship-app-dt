@@ -1,7 +1,10 @@
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
 import type BibleItem from './BibleItem';
-import type { BibleTargetType } from './bibleRenderHelpers';
+import {
+    checkIsSameBibleTarget,
+    type BibleTargetType,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 
@@ -82,10 +85,7 @@ export function genDuplicatedMessage(
         ({ target: target1, bibleKey: bibleKey1 }, i1) => {
             return (
                 bibleKey === bibleKey1 &&
-                target.bookKey === target1.bookKey &&
-                target.chapter === target1.chapter &&
-                target.verseStart === target1.verseStart &&
-                target.verseEnd === target1.verseEnd &&
+                checkIsSameBibleTarget(target, target1) &&
                 i !== i1
             );
         },

@@ -15,6 +15,21 @@ import {
 import type { AISecretKeyNameType } from '../helper/ai/aiHelpers';
 import { requestAIKeyFocus } from '../helper/ai/aiKeyFocusHelpers';
 import { findContactEmail, showFileOrDirExplorer } from '../server/appHelpers';
+import { electronSendAsync } from '../server/electronSendHelpers';
+import {
+    APP_WINDOWS_CHANGED_CHANNEL,
+    getCurrentWindowAim,
+    LIST_APP_WINDOWS_CHANNEL,
+    setCurrentWindowAim,
+    toAppWindowList,
+    findAttachmentWindow,
+    toAttachmentWindowPage,
+    toWindowAim,
+    toWindowAimLabel,
+    type AppWindowEntryType,
+    type AppWindowType,
+    type AttachmentWindowType,
+} from './windowAimHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import appProvider from '../server/appProvider';
@@ -162,6 +177,8 @@ import {
     NO_ASK_HISTORY_INDEX,
 } from './askHistoryHelpers';
 import {
+    checkIsChatTipHidden,
+    hideChatTip,
     pickChatTip,
     stepChatTip,
     takeChatTip,
@@ -243,6 +260,7 @@ import {
 } from './llmBotHelpers';
 import {
     callTool,
+    callToolPicture,
     checkIsToolHostError,
     getAiEndpoints,
     parseToolJson,
@@ -1026,6 +1044,64 @@ function RenderFocusSwitchComp({
     );
 }
 
+// WHICH window, when the app has more than one open (2026-10-15, the user's
+// ask: _imagine I have more child windows like slide editor lyric editor
+// bible reader ... then want the chatbot to help troubleshooting or guide in
+// child window ... Let add window selection (if more child window)_). Drawn
+// only then, on a line of its own right above the box -- the user's picture
+// with that line circled (_add the selection where I highlighted_), and the
+// story under it: _ask about some stuff on app-document editor page … select
+// the editor window and start interacting with it_. It was a fourth list in
+// the head first, which is not where anybody about to ask looks; here it sits
+// over the 📷 and the ◎, which work in it too. Choosing one sets "asking
+// about" to its kind, and the tab's tools work in that window
+// (`windowAimHelpers.ts`); the main window is the help's way of working as
+// before. Read afresh as the list opens, so a window opened a moment ago is
+// in it. A `<label>`, so the caption is a press on the list.
+function RenderWindowAimRowComp({
+    windowList,
+    windowId,
+    isAimed,
+    onChange,
+    onOpening,
+}: Readonly<{
+    windowList: AppWindowType[];
+    windowId: string;
+    isAimed: boolean;
+    onChange: (windowId: string) => void;
+    onOpening: () => void;
+}>) {
+    return (
+        <label className={'chat-window-row' + (isAimed ? ' is-aimed' : '')}>
+            <i className="bi bi-window-stack" aria-hidden="true" />
+            <span className="chat-window-caption">Working in</span>
+            <select
+                className="chat-pick"
+                aria-label="Which window"
+                title={
+                    'Which of the open windows of the app the help looks at ' +
+                    'and works in: it reads that window, outlines buttons in ' +
+                    'it, and the 📷 and ◎ beside the box work there. The ' +
+                    'main window unless you choose another.'
+                }
+                value={windowId}
+                onMouseDown={onOpening}
+                onChange={(event) => {
+                    onChange(event.target.value);
+                }}
+            >
+                {windowList.map((item) => {
+                    return (
+                        <option key={item.id} value={item.id}>
+                            {item.label}
+                        </option>
+                    );
+                })}
+            </select>
+        </label>
+    );
+}
+
 // Both keys can be set at once, and the two do not answer alike -- nor fail
 // alike: a rate limit, an expired card or a blocked domain hits one of them and
 // not the other. The switch lives in this window rather than in Settings so it
@@ -1529,6 +1605,19 @@ function toShownAttachment(show: ShowRefType): ChatAttachmentType {
     };
 }
 
+// Which window a 📷 picture or a ◎ control is of, on its chip's hover: two
+// windows can give a chip the same name.
+function toChipWindowNote(attachment: ChatAttachmentType) {
+    const takenIn = attachment.window;
+    // "my Settings window" says it already.
+    if (takenIn === undefined || attachment.name.includes(takenIn.label)) {
+        return '';
+    }
+    return takenIn.isMain
+        ? ` (main window, ${takenIn.label})`
+        : ` (${takenIn.label} window)`;
+}
+
 function RenderAttachmentChipsComp({
     attachments,
     onRemove,
@@ -1595,9 +1684,9 @@ function RenderAttachmentChipsComp({
                         }
                         title={
                             isGone
-                                ? `${attachment.name} — not attached any more`
+                                ? `${attachment.name}${toChipWindowNote(attachment)} — not attached any more`
                                 : canShow
-                                  ? `${attachment.name} — ${
+                                  ? `${attachment.name}${toChipWindowNote(attachment)} — ${
                                         attachment.selector !== undefined
                                             ? 'press to ring it in the app'
                                             : attachment.kind === 'image'
@@ -2259,6 +2348,10 @@ function RenderChatProgressComp({
 
 function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
     const [tip, setTip] = useState<ChatTipType>(takeChatTip);
+    const [isHidden, setIsHidden] = useState(checkIsChatTipHidden);
+    if (isHidden) {
+        return null;
+    }
     // Straight back to the box after any of the three. Reading another tip is
     // not leaving the question -- and a half-typed one whose caret has gone to
     // a button is a question that has to be clicked back into before it can be
@@ -2309,6 +2402,19 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
                     }}
                 >
                     <i className="bi bi-chevron-right" aria-hidden="true" />
+                </button>
+                <button
+                    type="button"
+                    className="chat-tip-step"
+                    title="Hide tips for 30 days"
+                    aria-label="Hide tips for 30 days"
+                    onClick={() => {
+                        hideChatTip();
+                        setIsHidden(true);
+                        onPressed();
+                    }}
+                >
+                    <i className="bi bi-x-lg" aria-hidden="true" />
                 </button>
             </span>
         </div>
@@ -2660,6 +2766,79 @@ export default function ChatbotAppComp() {
             window.removeEventListener('focus', handleFocusing);
         };
     }, []);
+    // The app's open windows, for the window picker (`windowAimHelpers.ts`):
+    // asked of main on mount, whenever this window gains focus, as the
+    // picker opens -- and whenever main SAYS a window came, went or changed
+    // (2026-10-15, the user, Settings opened with the help already up and
+    // missing from it: _it should real-time tracking the new opening_).
+    // Never on a timer: one loopback request each time.
+    const [appWindowList, setAppWindowList] = useState<AppWindowType[]>([]);
+    // Read by the 📷, the ◎ and a pointed-at chip at their press, and by the
+    // ask: which window an attachment is of, and the `page` reaching it now.
+    const appWindowListRef = useAppCurrentRef(appWindowList);
+    const refreshAppWindowList = useCallback(() => {
+        electronSendAsync<AppWindowEntryType[]>(LIST_APP_WINDOWS_CHANNEL)
+            .then((entryList) => {
+                setAppWindowList(
+                    toAppWindowList(Array.isArray(entryList) ? entryList : []),
+                );
+            })
+            .catch(() => {
+                setAppWindowList([]);
+            });
+    }, []);
+    useAppEffect(() => {
+        refreshAppWindowList();
+        window.addEventListener('focus', refreshAppWindowList);
+        appProvider.messageUtils.listenForData(
+            APP_WINDOWS_CHANGED_CHANNEL,
+            refreshAppWindowList,
+        );
+        return () => {
+            window.removeEventListener('focus', refreshAppWindowList);
+            appProvider.messageUtils.removeListener(
+                APP_WINDOWS_CHANGED_CHANNEL,
+                refreshAppWindowList,
+            );
+        };
+    }, []);
+    // Per tab, and only while this window is open: a window's id is good for
+    // one launch of the app, so it is never saved with the tab.
+    const [windowIdBySession, setWindowIdBySession] = useState<
+        Record<string, string>
+    >({});
+    const windowAim = useMemo(() => {
+        return toWindowAim(windowIdBySession[activeSession.id], appWindowList);
+    }, [windowIdBySession, activeSession.id, appWindowList]);
+    // What a `/` command, the offline guide and a button pressed in the tab
+    // in front work with; a model's answer is handed its own at the ask.
+    useAppEffect(() => {
+        setCurrentWindowAim(windowAim);
+    }, [windowAim]);
+    const handleWindowChanging = useCallback(
+        (windowId: string) => {
+            const found = appWindowList.find((item) => {
+                return item.id === windowId;
+            });
+            if (found === undefined) {
+                return;
+            }
+            const sessionId = activeSession.id;
+            setWindowIdBySession((oldMap) => {
+                const newMap = { ...oldMap };
+                if (found.isMain) {
+                    delete newMap[sessionId];
+                } else {
+                    newMap[sessionId] = found.id;
+                }
+                return newMap;
+            });
+            updateActiveSession((session) => {
+                return { ...session, focus: found.focus, isFocusChosen: true };
+            });
+        },
+        [appWindowList, activeSession.id, updateActiveSession],
+    );
     // The shared registry (`loadLlmRegistry`): what main holds, asked on
     // mount so its rows are in the list without a restart, and read afresh
     // from the site on the Reload button beside the assistant picker. The
@@ -3019,11 +3198,21 @@ export default function ChatbotAppComp() {
     }, []);
     const handleFocusChanging = useCallback(
         (newFocus: BotFocusType) => {
+            // Another kind of window than the one chosen is no longer that
+            // window: back to the main window's way of working.
+            if (windowAim !== null && windowAim.focus !== newFocus) {
+                const sessionId = activeSession.id;
+                setWindowIdBySession((oldMap) => {
+                    const newMap = { ...oldMap };
+                    delete newMap[sessionId];
+                    return newMap;
+                });
+            }
             updateActiveSession((session) => {
                 return { ...session, focus: newFocus, isFocusChosen: true };
             });
         },
-        [updateActiveSession],
+        [updateActiveSession, windowAim, activeSession.id],
     );
     const handleDrafting = useCallback(
         (text: string) => {
@@ -3445,10 +3634,22 @@ export default function ChatbotAppComp() {
     );
     // A picture of the app as it is right now. Deliberately of the APP window,
     // not this one: the question is always about what is behind this window.
+    // With a window of its own chosen above the box, of THAT window -- the
+    // one capture that can be aimed by its id is `owa_screenshot`'s.
     const handleSnapping = useCallback(async () => {
         try {
-            const dataUrl = await captureAppWindow();
-            const attachment = await genImageAttachment(dataUrl, 'my screen');
+            const aim = getCurrentWindowAim();
+            const dataUrl =
+                aim === null
+                    ? await captureAppWindow()
+                    : await callToolPicture('owa_screenshot', {}, null, aim);
+            const aimLabel = toWindowAimLabel(aim);
+            const attachment = await genImageAttachment(
+                dataUrl,
+                aimLabel === null ? 'my screen' : `my ${aimLabel} window`,
+                undefined,
+                findAttachmentWindow(aim, appWindowListRef.current),
+            );
             addAttachments(
                 attachment === null ? [] : [attachment],
                 attachment === null
@@ -3458,7 +3659,7 @@ export default function ChatbotAppComp() {
         } catch (error: any) {
             setAttachError(`I could not take a picture: ${error.message}`);
         }
-    }, [addAttachments]);
+    }, [addAttachments, appWindowListRef]);
     // "This one." The window goes away while they point -- it is sitting on
     // top of the very control they are being asked to click.
     const handlePicking = useCallback(async () => {
@@ -3468,9 +3669,18 @@ export default function ChatbotAppComp() {
         // still live in that gap, so a user who presses this and then clicks
         // the thing they meant really does press it -- the line is what stops
         // them.
-        setAttachError('Point at the control you mean in the app window…');
+        // Taken at the press: the pointing happens in THIS window, and the
+        // chip says so, whatever is chosen while the person points.
+        const aim = getCurrentWindowAim();
+        const aimLabel = toWindowAimLabel(aim);
+        setAttachError(
+            'Point at the control you mean in ' +
+                (aimLabel === null
+                    ? 'the app window…'
+                    : `the ${aimLabel} window…`),
+        );
         try {
-            const raw = await callTool('owa_pick_element', {});
+            const raw = await callTool('owa_pick_element', {}, null, aim);
             const result = parseToolJson(raw);
             if (result?.picked !== true) {
                 setAttachError(
@@ -3479,11 +3689,16 @@ export default function ChatbotAppComp() {
                 return;
             }
             setAttachError(null);
-            addAttachments([genElementAttachment(result.element)]);
+            addAttachments([
+                genElementAttachment(
+                    result.element,
+                    findAttachmentWindow(aim, appWindowListRef.current),
+                ),
+            ]);
         } catch (error: any) {
             setAttachError(describeAttachError(error, 'owa_pick_element'));
         }
-    }, [addAttachments]);
+    }, [addAttachments, appWindowListRef]);
     // "Where is it?" -- the question a chip reading a control's name raises
     // the moment the user has looked away from the app. Rung by its SELECTOR
     // rather than by its words: the whole point of having pointed at it is
@@ -3498,11 +3713,30 @@ export default function ChatbotAppComp() {
         async (attachment: ChatAttachmentType) => {
             setAttachError(null);
             if (attachment.selector !== undefined) {
+                // Rung in the window it was POINTED at in, whichever window
+                // the tab works with now; a chip from before windows were
+                // kept on it goes the tab's way, as it always did.
+                const takenIn = attachment.window;
+                const page =
+                    takenIn === undefined
+                        ? undefined
+                        : toAttachmentWindowPage(
+                              takenIn,
+                              appWindowListRef.current,
+                          );
                 try {
                     const result = parseToolJson(
-                        await callTool('owa_highlight_selector', {
-                            selector: attachment.selector,
-                        }),
+                        await callTool(
+                            'owa_highlight_selector',
+                            {
+                                selector: attachment.selector,
+                                ...(page === undefined ? {} : { page }),
+                            },
+                            null,
+                            takenIn === undefined
+                                ? getCurrentWindowAim()
+                                : null,
+                        ),
                     );
                     if (result?.found !== true) {
                         setAttachError(
@@ -3593,7 +3827,7 @@ export default function ChatbotAppComp() {
                     : 'There is nothing left to show for that one.',
             );
         },
-        [],
+        [appWindowListRef],
     );
     // An asset in this window is one the user may want to keep -- their own
     // screenshot, the report just written, the song just created. Copy puts
@@ -4569,6 +4803,10 @@ export default function ChatbotAppComp() {
             // as what is happening now.
             clearProgressSteps(askedSessionId);
             syncBusy();
+            // The window this tab works with, as it is NOW: the answer's tool
+            // calls go there even if another tab is in front by the time the
+            // third round runs.
+            const askedWindowAim = getCurrentWindowAim();
             let activeFocus = focus;
             if (!isFocusChosen) {
                 const openerFocus = detectOpenerFocus();
@@ -4591,11 +4829,27 @@ export default function ChatbotAppComp() {
                 // user's own sentence instead: a bubble reading back a
                 // control's selector, or words they never typed, is exactly
                 // what this window exists to avoid.
+                // Each picture and pointed-at control says which window it
+                // is of, with the `page` that reaches that window now.
+                const toAttachedPage = (takenIn: AttachmentWindowType) => {
+                    return toAttachmentWindowPage(
+                        takenIn,
+                        appWindowListRef.current,
+                    );
+                };
                 const askedOfModel =
                     generalQuestion === null
-                        ? toAskedOfModel(trimmedAsked, attachments)
+                        ? toAskedOfModel(
+                              trimmedAsked,
+                              attachments,
+                              toAttachedPage,
+                          )
                         : toGeneralQuestionAsk(
-                              toAskedOfModel(generalQuestion, attachments),
+                              toAskedOfModel(
+                                  generalQuestion,
+                                  attachments,
+                                  toAttachedPage,
+                              ),
                           );
                 // A question picked off the app's own list -- a chip, the
                 // suggestion list, More… -- is one the corpus has already
@@ -4767,6 +5021,7 @@ export default function ChatbotAppComp() {
                                     knownPageText,
                                 ),
                                 askedText: trimmedAsked,
+                                windowAim: askedWindowAim,
                                 // Pulled by the loop between rounds. The
                                 // splice is the handover: what comes out of
                                 // the queue is what was folded in, so nothing
@@ -5426,7 +5681,13 @@ export default function ChatbotAppComp() {
         if (typeof dataUrl !== 'string' || dataUrl.length === 0) {
             return;
         }
-        const attachment = await genImageAttachment(dataUrl, 'my screen');
+        // The Presenting Control photographs the main window.
+        const attachment = await genImageAttachment(
+            dataUrl,
+            'my screen',
+            undefined,
+            findAttachmentWindow(null, appWindowListRef.current),
+        );
         if (attachment !== null) {
             addAttachments([attachment]);
             inputRef.current?.focus();
@@ -5527,6 +5788,8 @@ export default function ChatbotAppComp() {
                     shot = await genImageAttachment(
                         await captureAppWindow(),
                         'app screen',
+                        undefined,
+                        findAttachmentWindow(null, appWindowListRef.current),
                     );
                 } catch (_error) {
                     // A report with no picture is still a report.
@@ -5576,7 +5839,12 @@ export default function ChatbotAppComp() {
                         // missing".
                         const attachedText = [
                             toAttachmentText(userAttachments),
-                            toAttachmentLegend(shownAttachments),
+                            toAttachmentLegend(shownAttachments, (takenIn) => {
+                                return toAttachmentWindowPage(
+                                    takenIn,
+                                    appWindowListRef.current,
+                                );
+                            }),
                         ]
                             .filter((part) => {
                                 return part.length > 0;
@@ -5597,6 +5865,9 @@ export default function ChatbotAppComp() {
                             signal,
                             {
                                 onUsage: usageTally.onUsage,
+                                // A report about a window of its own looks
+                                // at THAT window.
+                                windowAim: getCurrentWindowAim(),
                                 // Their own pictures, to a model that can
                                 // read them: a blind one refuses the ask.
                                 ...(checkCanSeeImages(
@@ -6915,6 +7186,15 @@ export default function ChatbotAppComp() {
                     </div>
                 )}
                 <RenderChatTipComp onPressed={handleTipPressed} />
+                {appWindowList.length > 1 ? (
+                    <RenderWindowAimRowComp
+                        windowList={appWindowList}
+                        windowId={windowAim?.windowId ?? appWindowList[0].id}
+                        isAimed={windowAim !== null}
+                        onChange={handleWindowChanging}
+                        onOpening={refreshAppWindowList}
+                    />
+                ) : null}
                 <div className="chat-attach-row">
                     <button
                         type="button"

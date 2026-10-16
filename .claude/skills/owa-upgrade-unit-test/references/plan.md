@@ -7,14 +7,142 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
-## Active target — 80%, 2026-10-14
+## Achieved target — 80%, 2026-10-15
 
 The user authorized continued testing to **80% of the whole source surface**.
-Current measurement: **75.46% (55,158 / 73,091)**; another **3,315 covered
-lines** are needed. Renderer + MCP is 74.11%, Electron 85.92%. The source
-denominator is unchanged from UT-12; exclusions and thresholds are unchanged.
-Continue autonomously through the batches below; the historical 99% ladder
-remains a longer-term proposal.
+The target is met: **80.01% (58,478 / 73,091)**, five lines above the 80%
+threshold. Renderer + MCP is 79.15%, Electron 86.62%. The source denominator
+is unchanged from UT-12; exclusions and thresholds are unchanged. The
+historical 99% ladder remains a longer-term proposal.
+
+### UT-69 · scrolling, keyboard controls and lyric stages
+
+`done` · actual **+147 behavioral lines, +0.20 points**, crossing the 80%
+whole-source goal. Three virtual-list tests cover shared scroll observers and
+the timeout fallback. Four keyboard tests cover slide and canvas actions.
+Five lyric-stage tests cover font options, slide creation and lookup. Full
+instrumentation covers 89 / 103 virtual-scroll, 93 / 101 keyboard-handler and
+80 / 103 lyric-stage lines, up from 46 / 103, 44 / 101 and 25 / 103. It passed
+6,693 renderer/MCP and 849 Electron tests. The full lint gate passed with
+7,542 ordinary tests; see the baseline for evidence.
+
+### UT-68 · run-sheet state, navigation tabs and mirror camera transport
+
+`done` · actual **+136 behavioral lines, +0.19 points**. Five run-sheet tests
+cover cursor and next-step summaries, missing and available sheets. Three
+router tests cover visible tabs and external windows. One mirror camera test
+covers signaling, release, failure, timeout and unload. Full instrumentation
+covers 92 / 98 run-sheet, 66 / 111 router and 57 / 60 camera transport lines,
+up from 32 / 98, 42 / 111 and 5 / 60. It passed 6,681 renderer/MCP and 849
+Electron tests. The full lint gate passed with 7,530 ordinary tests; see the
+baseline for evidence.
+
+### UT-67 · renderer startup and data-directory recovery
+
+`done` · actual **+99 behavioral lines, +0.14 points**. Eight tests cover
+initialization order, main-window controls, popup and locale behavior, error
+prompts, and the data-directory recovery choices. Full instrumentation covers
+99 / 107 `src/others/main.tsx` lines, up from zero. It passed 6,672
+renderer/MCP and 849 Electron tests. The full lint gate passed with 7,521
+ordinary tests; see the baseline for evidence.
+
+### UT-66 · drag payload transport and foreground properties
+
+`done` · actual **+39 behavioral lines, +0.05 points**. Three drag tests cover
+app-document path payloads, secondary note payloads and invalid input. Three
+foreground property tests cover alignment, rounding, opacity and blending.
+Full instrumentation covers 50 / 84 drag-helper and 86 / 165 property-helper
+lines, up from 21 / 84 and 76 / 165. It passed 6,664 renderer/MCP and 849
+Electron tests. The full lint gate passed with 7,513 ordinary tests; see the
+baseline for evidence.
+
+### UT-65 · virtual-display viewer camera and display card
+
+`done` · actual **+82 behavioral lines, +0.11 points**. One viewer test covers
+camera encoding while watched, key frames, backpressure, resize and stop. Four
+card tests cover settings, wallpaper, confirmed deletion and blocked clients.
+Full instrumentation covers 612 / 751 viewer and 115 / 145 card lines, up from
+569 / 751 and 76 / 145 respectively. It passed 6,658 renderer/MCP and 849
+Electron tests. The full lint gate passed with 7,507 ordinary tests; see the
+baseline for evidence.
+
+### UT-64 · floating widget behavior and persistence
+
+`done` · actual **+94 behavioral lines, +0.13 points**. Six tests cover
+persisted position and viewport clamping, collapse and body hiding, full view,
+pointer move and resize persistence, same-pointer release, header double press
+and close. The component now covers 121 / 128 lines, up from 63 / 128. Full
+instrumentation passed 6,653 renderer/MCP and 849 Electron tests. The full
+lint gate passed with 7,502 ordinary tests; see the baseline for evidence.
+
+### UT-63 · editable text in PowerPoint slide export
+
+`done` · actual **+63 behavioral lines, +0.09 points**. Three tests extend the
+PowerPoint measurer suite for flex text runs, separately editable positioned
+shapes, and centered/right alignment bands. Full instrumentation covers
+544 / 613 measurer lines, up from 481 / 613. It passed 6,647 renderer/MCP and
+849 Electron tests. The full lint gate passed with 7,496 ordinary tests; see
+the baseline for evidence.
+
+### UT-62 · local settings storage lifecycle
+
+`done` · actual **+65 behavioral lines, +0.08 points**. Six tests extend the
+file-local storage suite for cached misses, writes and forced reads, removal,
+folder switching, listing, clearing and error handling. Full instrumentation
+covers 123 / 129 lines in `appLocalStorage`. It passed 6,644 renderer/MCP and
+849 Electron tests. The full lint gate passed with 7,493 ordinary tests; see
+the baseline for evidence.
+
+### UT-61 · Bible Find header, graph toolbar and Bible file row
+
+`done` · actual **+158 behavioral lines, +0.22 points**. Ten tests in three
+file-local suites exercise search debounce and keys, graph relation and export
+controls, presets, fullscreen, and Bible row load, menu and drop behavior.
+Full instrumentation covers 52 / 53 Bible Find header lines, 54 / 57 graph
+toolbar lines and 53 / 53 Bible file row lines. It passed 6,638 renderer/MCP
+and 849 Electron tests. The full lint gate passed with 7,487 ordinary tests;
+see the baseline for evidence.
+
+### UT-60 · Bible view, note row and directory settings
+
+`done` · actual **+193 behavioral lines, +0.27 points**. Thirteen tests in
+three file-local suites cover Bible view scroll, drag, context menu and lookup
+behavior; note row opening, editing, export and drops; and directory setup and
+link repair. Full instrumentation covers 81 / 84 Bible view lines, 51 / 61
+note row lines and 61 / 66 directory settings lines. It passed 6,628
+renderer/MCP and 849 Electron tests. The full lint gate passed with 7,477
+ordinary tests; see the baseline for evidence.
+
+### UT-59 · virtual screen lifecycle and divider drag behavior
+
+`done` · actual **+150 behavioral lines, +0.20 points**. Three Electron tests
+exercise guest and WebSocket delivery, camera labels, and controller shutdown;
+six divider tests exercise drag, collapse, reset, context menu and media
+protection. The drag tests found and fixed loss of a pane's saved flex size
+when collapsed by pointer. The controller covers 59 / 59 lines and the
+divider 233 / 263. Full instrumentation passed 6,615 renderer/MCP and 849
+Electron tests. The full lint gate passed with 7,464 ordinary tests; see the
+baseline for evidence.
+
+### UT-57–58 · note and flow undo, SongSelect search, lookup detail panels
+
+`done` · actual **+184 behavioral lines, +0.25 points**. Five backup tests
+cover note and presenting flow history and delete cleanup. Four SongSelect
+tests cover search debounce, stale responses, errors, paging and imports.
+Three lookup detail tests cover loading, record and verse copies, locale
+selection and opening a verse. The tested files cover 251 / 287, 62 / 65,
+and 69 / 74 lines respectively. Full instrumentation passed 6,609
+renderer/MCP and 846 Electron tests. The full lint gate passed with 7,455
+ordinary tests; see the baseline for evidence.
+
+### UT-56 · backup restore lifecycle
+
+`done` · actual **+66 behavioral lines, +0.09 points**. Seven file-local
+tests exercise text and binary restore, undoing creation and rename, retaining
+the overwritten version for another undo, and backup failure paths. The
+backup helper is now 200 / 287 lines covered. Full instrumentation passed
+6,597 renderer/MCP and 846 Electron tests. The full lint gate passed with
+7,443 ordinary tests; see the baseline for evidence.
 
 ### UT-11 · restore measurement and expand behavioral coverage
 
@@ -373,6 +501,135 @@ intercom lines, up from 61 / 145. All 6,475 renderer/MCP and 846 Electron
 tests pass under instrumentation. No application code changed. The full
 `npm run lint` gate passes with 7,321 ordinary tests. See baseline for exact
 deltas and evidence.
+
+### UT-42 · Media sessions and canvas item core
+
+`done` · actual **+132 behavioral lines, +0.19 points**. Two file-local suites
+add eight tests for session persistence, selection and confirmed deletion,
+plus canvas styles, identity, edits, validation and selection contexts. Full
+instrumentation covers 72 / 73 media session lines, previously at zero, and
+107 / 124 canvas item lines, up from 47 / 124. All 6,483 renderer/MCP and
+846 Electron tests pass under instrumentation. No application code changed.
+The full `npm run lint` gate passes with 7,329 ordinary tests. See baseline
+for exact deltas and evidence.
+
+### UT-43 · Presenting flow item preview
+
+`done` · actual **+179 covered lines, +0.24 points**. One file-local suite
+adds eight behavioral tests for preview selection, menus, folding, parking,
+screen actions, drag payloads, Bible and background data, and document slide
+stepping. Full instrumentation covers 178 / 198 preview lines, previously at
+zero. All 6,491 renderer/MCP and 846 Electron tests pass under instrumentation.
+No application code changed. The full `npm run lint` gate passes with 7,337
+ordinary tests. See baseline for exact deltas and evidence.
+
+### UT-44 · Presenting flow floating preview
+
+`done` · actual **+114 net covered lines, +0.16 points**. One file-local suite
+adds six tests for independent floating widgets, file deletion, focus-gated
+stepping, UUID jumps, loading and error states, collapse controls, and auto-next.
+Full instrumentation covers 115 / 141 floating preview lines, previously at
+zero. All 6,497 renderer/MCP and 846 Electron tests pass under instrumentation.
+No application code changed. The full `npm run lint` gate passes with 7,343
+ordinary tests. See baseline for exact deltas and evidence.
+
+### UT-45 · Presenting-flow rename and note actions
+
+`done` · actual **+118 net covered lines, +0.16 points**. Eight file-local
+behavioral tests cover the one-off rename migration and Bible note context
+actions. The migration reaches 62 / 63 lines and the note helper 56 / 56,
+previously both at zero. All 6,505 renderer/MCP and 846 Electron tests pass
+under instrumentation. No application code changed. See baseline for the exact
+deltas and evidence. The full `npm run lint` gate passes with 7,351 ordinary
+tests.
+
+### UT-46 · Lookup UI and virtual rows
+
+`done` · actual **+153 net covered lines, +0.21 points**. Ten file-local
+behavioral tests cover the location/name lookup panel, verse lookup links, and
+the virtual-row hook. Full instrumentation covers 62 / 64, 33 / 33, and 58 /
+64 lines respectively, all previously at zero. All 6,515 renderer/MCP and 846
+Electron tests pass under instrumentation. No application code changed. See
+baseline for exact deltas and evidence. The full `npm run lint` gate passes with
+7,361 ordinary tests.
+
+### UT-47 · Auto-play runners and mirror camera broker
+
+`done` · actual **+122 net covered lines, +0.16 points**. Eight file-local
+behavioral tests cover timer survival and cancellation, scoped reconciliation,
+shared camera capture, candidate ordering, and intercom relay. Full
+instrumentation covers 50 / 52 runner lines and 72 / 73 camera broker lines,
+both previously at zero. All 6,523 renderer/MCP and 846 Electron tests pass
+under instrumentation. No application code changed. See baseline for the exact
+deltas and evidence. The full `npm run lint` gate passes with 7,369 ordinary
+tests.
+
+### UT-48 · Verse marks, file drops, and Finder
+
+`done` · actual **+194 stable covered lines, +0.27 points**. Eleven file-local
+behavioral tests cover verse highlight integrity and repainting, file drops and
+context menus, and Finder search and drag controls. Full instrumentation covers
+57 / 61, 64 / 65, and 73 / 73 lines respectively, all previously at zero. The
+isolated Electron repeat removed a three-line measurement variation; all 6,534
+renderer/MCP and 846 Electron tests pass under instrumentation. No application
+code changed. The full `npm run lint` gate passes with 7,380 ordinary tests.
+See baseline for exact deltas and evidence.
+
+### UT-49 · Background controls and sessions
+
+`done` · actual **+143 net covered lines, +0.20 points**. Eleven file-local
+behavioral tests cover background auto-play, per-screen colors, folder-session
+gating and cleanup, and media-card ordering and virtualization. Full
+instrumentation covers 37 / 37, 42 / 46, 35 / 35, and 29 / 30 lines,
+respectively, all previously at zero. All 6,545 renderer/MCP and 846 Electron
+tests pass under instrumentation. No application code changed. See baseline for
+exact deltas and evidence. The full `npm run lint` gate passes with 7,391
+ordinary tests.
+
+### UT-50 · Canvas ruler, container, and drop paths
+
+`done` · actual **+168 net covered lines, +0.22 points**. Eleven file-local
+behavioral tests cover canvas guide drawing and dragging, drop routing,
+scroll geometry, and container focus. Full instrumentation covers 39 / 39
+drop-helper lines, 67 / 69 ruler lines, and 62 / 69 container lines, all
+previously at zero. All 6,556 renderer/MCP and 846 Electron tests pass under
+instrumentation. The full `npm run lint` gate passed both TypeScript projects,
+7,402 ordinary tests, Prettier, ESLint, and the production build check. No
+application code changed. See baseline for exact deltas and evidence.
+
+### UT-51–52 · Bible text and foreground controls
+
+`done` · actual **+190 net covered lines, +0.26 points**. Eleven behavioral
+tests cover Bible text style and effects, foreground decoration persistence,
+and inherited/overridden transition controls. Full instrumentation covers
+76 / 82 Bible text panel lines, 71 / 71 decoration lines and 40 / 40 transition
+lines, all previously at zero. All 6,567 renderer/MCP and 846 Electron tests
+pass under instrumentation. The full `npm run lint` gate passed both TypeScript
+projects, 7,413 ordinary tests, Prettier, ESLint, and the production build
+check. No application code changed. See baseline for exact deltas and evidence.
+
+### UT-53–54 · Note lifecycle and editor
+
+`done` · actual **+151 net covered lines, +0.21 points**. Eight Note lifecycle
+tests cover item mutation, cross-file moves, default-file creation and
+editing-head synchronization. Three editor tests cover title/content saves and
+file-event refresh. Full instrumentation covers 199 / 216 Note lines and
+44 / 54 editor lines, up from 92 / 216 and zero. All 6,578 renderer/MCP and
+846 Electron tests pass under instrumentation. The full `npm run lint` gate
+passed both TypeScript projects, 7,424 ordinary tests, Prettier, ESLint and the
+production build check. No application code changed. See baseline for exact
+deltas and evidence.
+
+### UT-55 · Note file, drawing controls, and Bible XML editor
+
+`done` · actual **+180 net covered lines, +0.25 points**. Twelve behavioral
+tests cover note-file loading/actions/drops, drawing controls and shortcuts,
+and Bible XML chapter validation/merge. Full instrumentation covers 57 / 66
+Note file lines, 67 / 68 drawing-control lines and 56 / 68 Bible XML editor
+lines, all previously at zero. All 6,590 renderer/MCP and 846 Electron tests
+pass under instrumentation. The full `npm run lint` gate passed both TypeScript
+projects, 7,436 ordinary tests, Prettier, ESLint and the production build
+check. No application code changed. See baseline for exact deltas and evidence.
 
 ### Remaining batches toward 80%
 

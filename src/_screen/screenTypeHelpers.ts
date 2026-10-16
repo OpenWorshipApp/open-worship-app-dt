@@ -43,6 +43,12 @@ export type BibleItemDataType = {
     // The selected row's key: a KJV verse key for a Bible, a section key for a
     // long text. The name is the wire's, and stays.
     selectedKJVVerseKey: string | null;
+    // How many chapters of a passage crossing chapters are on the screen:
+    // `BIBLE_SHOWN_CHAPTER_COUNT` at first, one more per press of the
+    // operator's `...`. Absent for a one-chapter passage. Beside
+    // `bibleItemData` rather than in it: that object's values are read as
+    // the passage itself.
+    shownChapterCount?: number;
 };
 export type LongTextItemDataType = {
     locale: string;
