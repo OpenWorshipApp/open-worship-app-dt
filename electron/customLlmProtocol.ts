@@ -34,7 +34,19 @@ export type CustomModelType = {
     // in Settings, or read off LM Studio's own model list ("vlm"). A blind
     // model sent a picture answers 400, so nothing guesses it.
     canSeeImages?: boolean;
+    // A shared registry model's word to the person choosing it
+    // (`toRegistryNote`); never set on a row typed into Settings.
+    note?: RegistryNoteType;
 };
+
+/**
+ * What the shared registry says to the person choosing a server or a model
+ * -- _slow, but it saves us the cost of usage_ -- by language: a plain
+ * string in the file is kept under `''` (no language said), an object under
+ * each language code it names. The window shows its own language's
+ * (`pickRegistryNote`).
+ */
+export type RegistryNoteType = Record<string, string>;
 
 export type CustomServerType = {
     id: string;
@@ -50,6 +62,8 @@ export type CustomServerType = {
     // `source` is what keeps it out of the Settings editor.
     isFree?: boolean;
     source?: 'registry';
+    // The registry's word on the whole server, shown with its models.
+    note?: RegistryNoteType;
 };
 
 /**
@@ -741,13 +755,67 @@ export const LLM_REGISTRY_VERSION = 1;
 const REGISTRY_ENTRY_ID_PATTERN = /^[A-Za-z0-9-]{1,48}$/;
 const REGISTRY_NOTE_MAX = 300;
 
+// A note's language codes: `km`, `fr`, `pt-BR`.
+const REGISTRY_NOTE_LANG_PATTERN = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
+const MAX_REGISTRY_NOTE_LANGS = 12;
+
 /** A registry server as main holds it: the key stays in main, never a window. */
 export type LlmRegistryServerType = CustomServerType & {
     apiKey: string;
     isFree: boolean;
-    note: string;
     source: 'registry';
 };
+
+/**
+ * A `note` off the registry file, read as untrusted: a string, or an object
+ * of language code → string; each text trimmed and cut to 300 characters,
+ * twelve languages at most. Undefined when nothing is left to say.
+ */
+export function toRegistryNote(raw: unknown): RegistryNoteType | undefined {
+    const note: RegistryNoteType = {};
+    if (typeof raw === 'string') {
+        const text = toTrimmedString(raw, REGISTRY_NOTE_MAX);
+        if (text.length > 0) {
+            note[''] = text;
+        }
+    } else if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
+        for (const langCode of Object.keys(raw)) {
+            if (Object.keys(note).length >= MAX_REGISTRY_NOTE_LANGS) {
+                break;
+            }
+            const text = toTrimmedString(
+                (raw as Record<string, unknown>)[langCode],
+                REGISTRY_NOTE_MAX,
+            );
+            if (REGISTRY_NOTE_LANG_PATTERN.test(langCode) && text.length > 0) {
+                note[langCode] = text;
+            }
+        }
+    }
+    return Object.keys(note).length > 0 ? note : undefined;
+}
+
+/**
+ * The note in the window's language: that language's, then its base
+ * language's (`pt` for `pt-BR`), then the one with no language said, then
+ * English, then whichever there is. Empty with no note.
+ */
+export function pickRegistryNote(
+    note: RegistryNoteType | undefined,
+    langCode: string,
+): string {
+    if (note === undefined) {
+        return '';
+    }
+    const baseLangCode = langCode.split('-')[0];
+    const firstKey = Object.keys(note)[0];
+    for (const key of [langCode, baseLangCode, '', 'en', firstKey]) {
+        if (key !== undefined && typeof note[key] === 'string') {
+            return note[key];
+        }
+    }
+    return '';
+}
 
 /**
  * A registry entry marked `isAcceptingReport` (2026-10-13, the user's ask:
@@ -1029,11 +1097,13 @@ function toRegistryModels(raw: unknown): CustomModelType[] {
         if (model.length === 0) {
             continue;
         }
+        const note = toRegistryNote(item.note);
         models.push({
             id: toRegistryRowId(model, models.length),
             model,
             name: toTrimmedString(item.name, CUSTOM_NAME_MAX),
             ...(item.canSeeImages === true ? { canSeeImages: true } : {}),
+            ...(note === undefined ? {} : { note }),
         });
     }
     return models;
@@ -1106,6 +1176,7 @@ export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
                 continue;
             }
         }
+        const note = toRegistryNote(item.note);
         const server: LlmRegistryServerType = {
             id: `${REGISTRY_SERVER_ID_PREFIX}${entryId}`,
             name: toTrimmedString(item.name, CUSTOM_NAME_MAX),
@@ -1113,7 +1184,7 @@ export function toValidLlmRegistry(raw: unknown): LlmRegistryType | null {
             models: toRegistryModels(item.models),
             apiKey: toTrimmedString(item.apiKey, CUSTOM_KEY_MAX),
             isFree: item.isFree === true,
-            note: toTrimmedString(item.note, REGISTRY_NOTE_MAX),
+            ...(note === undefined ? {} : { note }),
             source: 'registry',
         };
         if (!checkIsUsableCustomServer(server)) {
@@ -1174,22 +1245,47 @@ export function hideRegistryServerHost(text: string, baseUrl: string) {
     return text.replace(new RegExp(escaped, 'gi'), REGISTRY_HIDDEN_HOST);
 }
 
+/** A note with the server's own host taken out of every language of it. */
+function toHiddenHostNote(
+    note: RegistryNoteType | undefined,
+    baseUrl: string,
+): RegistryNoteType | undefined {
+    if (note === undefined) {
+        return undefined;
+    }
+    const hidden: RegistryNoteType = {};
+    for (const langCode of Object.keys(note)) {
+        hidden[langCode] = hideRegistryServerHost(note[langCode], baseUrl);
+    }
+    return hidden;
+}
+
 /**
- * The registry's servers as a window may see them: no key, no note and no
- * address (2026-10-12, the user's ask with the address circled in Settings:
- * _hide endpoint and api key, to avoid easily copy and use_). Whether the
- * server is on the church's own network was read off the address, so it is
- * said here instead: such a server costs nothing, like one marked `isFree`.
+ * The registry's servers as a window may see them: no key and no address
+ * (2026-10-12, the user's ask with the address circled in Settings: _hide
+ * endpoint and api key, to avoid easily copy and use_). Whether the server
+ * is on the church's own network was read off the address, so it is said
+ * here instead: such a server costs nothing, like one marked `isFree`. The
+ * notes go too -- the server's and each model's, shown to the person
+ * choosing (2026-10-17, the user's ask: _for some model we want to let user
+ * know it slow but help us save cost of usage_) -- with the server's host
+ * taken out of them, as out of anything else it says.
  */
 export function toPublicRegistryServers(
     servers: readonly LlmRegistryServerType[],
 ): CustomServerType[] {
     return servers.map((server) => {
-        const { apiKey: _apiKey, note: _note, ...rest } = server;
+        const { apiKey: _apiKey, note, ...rest } = server;
+        const shownNote = toHiddenHostNote(note, server.baseUrl);
         return {
             ...rest,
             baseUrl: toHiddenRegistryBaseUrl(server.baseUrl),
             isFree: server.isFree || checkIsLocalNetworkUrl(server.baseUrl),
+            models: server.models.map((row) => {
+                const rowNote = toHiddenHostNote(row.note, server.baseUrl);
+                return rowNote === undefined ? row : { ...row, note: rowNote };
+            }),
+            ...(shownNote === undefined ? {} : { note: shownNote }),
         };
     });
 }

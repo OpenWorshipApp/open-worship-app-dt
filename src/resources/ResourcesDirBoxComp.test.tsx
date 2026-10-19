@@ -7,24 +7,22 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const {
     scanResourceFilesMock,
     invalidateMock,
-    isShowingState,
     showAppContextMenuMock,
     checkIsInResourcesDataDirMock,
     selectFilesMock,
     copyFilesMock,
     copiedMessageMock,
-    setSettingBooleanMock,
+    setItemMock,
     showSimpleToastMock,
 } = vi.hoisted(() => ({
     scanResourceFilesMock: vi.fn(),
     invalidateMock: vi.fn(),
-    isShowingState: { value: true },
     showAppContextMenuMock: vi.fn(),
     checkIsInResourcesDataDirMock: vi.fn(),
     selectFilesMock: vi.fn(),
     copyFilesMock: vi.fn(),
     copiedMessageMock: vi.fn(),
-    setSettingBooleanMock: vi.fn(),
+    setItemMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
 }));
 
@@ -77,18 +75,6 @@ vi.mock('../helper/appHooks', async (importOriginal) => {
     return { ...original, useAppEffect: useEffect };
 });
 
-vi.mock('../helper/settingHelpers', async (importOriginal) => {
-    const original =
-        await importOriginal<typeof import('../helper/settingHelpers')>();
-    return {
-        ...original,
-        useStateSettingBoolean: () => [
-            isShowingState.value,
-            setSettingBooleanMock,
-        ],
-    };
-});
-
 vi.mock('./resourcesScanHelpers', async (importOriginal) => {
     // Partial: the row below splits a name and tags the book-level ones with
     // the REAL helpers, so those stay as shipped -- only the disk walk and the
@@ -121,7 +107,7 @@ function genScanResult(overrides: any = {}) {
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
         getItem: () => null,
-        setItem: () => {},
+        setItem: setItemMock,
         removeItem: () => {},
     },
 }));
@@ -149,7 +135,6 @@ describe('ResourcesDirBoxComp', () => {
 
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
-        isShowingState.value = true;
         scanResourceFilesMock.mockResolvedValue(
             genScanResult({ filePaths: ['/a/songs/PSA.1.pdf'] }),
         );
@@ -157,7 +142,7 @@ describe('ResourcesDirBoxComp', () => {
         copyFilesMock.mockReset();
         copiedMessageMock.mockReset();
         copiedMessageMock.mockReturnValue('copied');
-        setSettingBooleanMock.mockReset();
+        setItemMock.mockReset();
         showSimpleToastMock.mockReset();
         invalidateMock.mockClear();
         container = document.createElement('div');
@@ -175,6 +160,24 @@ describe('ResourcesDirBoxComp', () => {
         container = null;
     });
 
+    function genBox(
+        searchText = '',
+        isOthersShowing = false,
+        onCopyFolderToDataDir = vi.fn(),
+    ) {
+        return (
+            <ResourcesDirBoxComp
+                dirPath="/a/songs"
+                targets={PSA_1}
+                searchText={searchText}
+                isOthersShowing={isOthersShowing}
+                onAddFolder={vi.fn()}
+                onCopyFolderToDataDir={onCopyFolderToDataDir}
+                onRemoveFolder={vi.fn()}
+            />
+        );
+    }
+
     async function renderBox(
         searchText = '',
         isOthersShowing = false,
@@ -186,15 +189,7 @@ describe('ResourcesDirBoxComp', () => {
             }
             root = createRoot(container);
             root.render(
-                <ResourcesDirBoxComp
-                    dirPath="/a/songs"
-                    targets={PSA_1}
-                    searchText={searchText}
-                    isOthersShowing={isOthersShowing}
-                    onAddFolder={vi.fn()}
-                    onCopyFolderToDataDir={onCopyFolderToDataDir}
-                    onRemoveFolder={vi.fn()}
-                />,
+                genBox(searchText, isOthersShowing, onCopyFolderToDataDir),
             );
         });
         // The scan settles a microtask later; let its `setState` land.
@@ -205,12 +200,47 @@ describe('ResourcesDirBoxComp', () => {
         });
     }
 
-    test('a collapsed folder never touches the disk', async () => {
-        isShowingState.value = false;
+    function getFolderHeader() {
+        return container?.querySelector('.app-resources-group-header');
+    }
+
+    function pressFolderHeader() {
+        act(() => {
+            getFolderHeader()?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
+        });
+    }
+
+    test('opens on every mount, and a collapse is never saved', async () => {
         await renderBox();
+        expect(getFolderHeader()?.getAttribute('aria-expanded')).toBe('true');
+        pressFolderHeader();
+        expect(getFolderHeader()?.getAttribute('aria-expanded')).toBe('false');
+        // Memory only: a collapse that was saved came back shut on every
+        // launch, a shelf that looked empty until someone pressed it.
+        expect(setItemMock).not.toHaveBeenCalled();
+        await act(async () => {
+            root?.unmount();
+        });
+        root = null;
+        await renderBox();
+        expect(getFolderHeader()?.getAttribute('aria-expanded')).toBe('true');
+        expect(
+            container?.querySelector('[title="/a/songs/PSA.1.pdf"]'),
+        ).not.toBeNull();
+    });
+
+    test('a collapsed folder never touches the disk', async () => {
+        await renderBox();
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
+        pressFolderHeader();
         // The whole reason "scan only when expanded" is free: the body is not
-        // rendered at all, so its effect never mounts.
-        expect(scanResourceFilesMock).not.toHaveBeenCalled();
+        // rendered at all, so a new search mounts no effect and walks nothing.
+        await act(async () => {
+            root?.render(genBox('psalm'));
+        });
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
         expect(
             container?.querySelector('[title="/a/songs/PSA.1.pdf"]'),
         ).toBeNull();
@@ -449,6 +479,7 @@ describe('ResourcesDirBoxComp', () => {
             error: null,
         });
         await renderBox();
+        pressFolderHeader();
         await pickAddFiles();
         expect(copyFilesMock).toHaveBeenCalledWith('/a/songs', [
             '/downloads/PSA.1.pdf',
@@ -457,7 +488,10 @@ describe('ResourcesDirBoxComp', () => {
         expect(invalidateMock).toHaveBeenCalledWith('/a/songs');
         expect(scanResourceFilesMock).toHaveBeenCalledTimes(2);
         // Opened, so a folder that was collapsed still shows what went in.
-        expect(setSettingBooleanMock).toHaveBeenCalledWith(true);
+        expect(getFolderHeader()?.getAttribute('aria-expanded')).toBe('true');
+        expect(
+            container?.querySelector('[title="/a/songs/PSA.1.pdf"]'),
+        ).not.toBeNull();
         expect(showSimpleToastMock).toHaveBeenCalledWith('Add Files', 'copied');
     });
 

@@ -12,6 +12,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type { BibleMinimalInfoType } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import { handleError } from '../helper/errorHelpers';
 import type { LocaleType } from '../lang/langHelpers';
 import { getLanguageTitle, tran } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
@@ -27,8 +28,14 @@ export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
     excludeBibleKeys: string[] = [],
 ) {
-    let localeBibleInfoList = await getAllLocalBibleInfoList();
-    if (localeBibleInfoList === null) {
+    // The list never comes back null: a failure to read it REJECTS. Checking
+    // for null meant this alert could never show -- the rejection escaped
+    // unhandled and the menu just did not open, with nothing said.
+    let localeBibleInfoList: BibleMinimalInfoType[];
+    try {
+        localeBibleInfoList = await getAllLocalBibleInfoList();
+    } catch (error) {
+        handleError(error);
         showAppAlert(
             tran('Unable to get bible info list'),
             tran(
@@ -68,7 +75,7 @@ export async function genContextMenuBibleKeys(
                 childBefore: genContextMenuItemIcon('translate'),
                 menuElement: <span data-locale-ff={locale}>{langTitle}</span>,
                 title: langTitle,
-                disabled: true,
+                isSectionHeader: true,
             },
             ...bibleInfoList.map((bibleInfo) => {
                 const { title } = bibleInfo;
@@ -76,13 +83,14 @@ export async function genContextMenuBibleKeys(
                 const menuTitle = `(${bibleInfo.key}) ${title}`;
                 return {
                     childBefore: genContextMenuItemIcon('book'),
+                    // A long title is one ellipsised line with its whole
+                    // text scrolling, muted, on a second line, like every
+                    // other menu label (see `AppContextMenuComp`); the font
+                    // marker below is carried onto that second line too.
                     menuElement: (
-                        <div
-                            className="w-100 app-overflow-hidden app-ellipsis"
-                            data-locale-ff={bibleInfo.locale}
-                        >
+                        <span data-locale-ff={bibleInfo.locale}>
                             {menuText}
-                        </div>
+                        </span>
                     ),
                     title: menuTitle,
                     onSelect: (event1: any) => {
@@ -115,7 +123,7 @@ export async function showBibleKeyOption(
             {
                 childBefore: genContextMenuItemIcon('lightbulb'),
                 menuElement: title,
-                disabled: true,
+                isSectionHeader: true,
             },
             {
                 menuElement: elementDivider,

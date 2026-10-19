@@ -24,6 +24,7 @@ newer.
 | `llm-info.schema.json` | The JSON Schema of that file (and of the `llm-info-<id>.json` each tunnel writes): what an editor checks and completes it against. |
 | `model-benchmarks.json` | Every measurement taken of a model answering for the chatbot, and what it says about which model fits whom. |
 | `model-benchmarks.mjs` | Checks that file's shape and prints it, best fit first. |
+| `models-benchmark.md` | Model shootouts through the help window, with every grade, the time and the tokens, and which to pick. Seven assistants were asked 23 Khmer asks as an elderly volunteer talks, with English shown and safety counted (2026-10-17). Five models were asked the same 21 Bible Reader questions (2026-10-16). |
 | `aws-bedrock-info.md` | What Amazon Bedrock offers the chatbot and at what price: which host serves which model, why Claude Haiku 5.5 is the pick, and what wiring it in takes (read off AWS's cards 2026-10-11). |
 | `*.test.mjs` | Their tests, run by `npm test`. |
 
@@ -56,6 +57,8 @@ with the key.
 | `--cloudflared <path>` | Which cloudflared to run. Without it: `CLOUDFLARED`, one beside the script, the app's extra-bin pack, this repo's `extra-work/experiment-building/<platform>/`, then `PATH`. |
 | `--check <seconds>` | How often it looks at itself (default 60, never under 10; `0` never). |
 | `--publish` | Add this server to the shared registry, and take it out again on stopping. |
+| `--note <text>` | What the app SHOWS the person choosing this server (up to 300 characters) — under the help window's pickers, on the model's hover, in Settings. Write it for a volunteer, not for whoever reads the file. |
+| `--model-note <model>=<text>` | The same for one model, by the id the server knows it by — `--model-note "qwen/qwen3.5-9b=Slow, but it saves us the cost of usage."`. Give it once per model. Without these, the notes already on this tunnel's entry in the site's file (added by hand, in any language) are kept when it starts again. |
 | `--out <folder>` | Where the two files above are written. |
 | `--log <file>` | Also write what it says to this file (started afresh at 1 MB, one older file kept; the key is never written to it). |
 | `--with-reports` | This tunnel's LLM server stays as it is, and its door ALSO keeps the problem reports the app posts to its address (see _Taking problem reports_). Its entry is published marked as taking reports. |

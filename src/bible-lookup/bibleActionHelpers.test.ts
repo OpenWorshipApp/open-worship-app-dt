@@ -145,6 +145,93 @@ describe('bible-lookup bibleActionHelpers', () => {
         ).toBe(true);
     });
 
+    function findCrossRef(
+        menu: ReturnType<typeof genFoundBibleItemContextMenu>,
+    ) {
+        return menu.find((m) => m.menuElement === 'Open in Cross Reference');
+    }
+
+    // CM-74: a decorated name ("Aaron" in Exodus 4:14) and the words of the
+    // extra-verses / custom-HTML layouts sit two or more levels into a verse.
+    test('genFoundBibleItemContextMenu finds the verse of a deeply nested target', () => {
+        const verse = document.createElement('div');
+        verse.dataset.verseKey = '(KJV) EXO 4:14';
+        const detail = document.createElement('span');
+        const name = document.createElement('span');
+        name.textContent = 'Aaron';
+        detail.appendChild(name);
+        verse.appendChild(detail);
+        const ctl = genController();
+        const menu = genFoundBibleItemContextMenu({ target: name }, ctl, {
+            id: 1,
+        } as any);
+        findCrossRef(menu)!.onSelect!({} as any);
+        expect(ctl.selectedVerseKey).toBe('(KJV) EXO 4:14');
+
+        // A text node (a dispatched event) resolves through its parent.
+        const textMenu = genFoundBibleItemContextMenu(
+            { target: name.firstChild },
+            genController(),
+            { id: 1 } as any,
+        );
+        expect(findCrossRef(textMenu)).toBeDefined();
+    });
+
+    test('genFoundBibleItemContextMenu falls back to a selection inside the same view', () => {
+        const view = document.createElement('div');
+        const header = document.createElement('button');
+        const verse = document.createElement('div');
+        verse.dataset.verseKey = '(KJV) JHN 3:16';
+        verse.textContent = 'For God so loved the world';
+        view.append(header, verse);
+        const otherView = document.createElement('div');
+        const otherVerse = document.createElement('div');
+        otherVerse.dataset.verseKey = '(KJV) GEN 1:1';
+        otherVerse.textContent = 'In the beginning';
+        otherView.appendChild(otherVerse);
+        document.body.append(view, otherView);
+        try {
+            // A keyboard-opened menu targets the focused control.
+            globalThis.getSelection()!.collapse(verse.firstChild!, 4);
+            const ctl = genController();
+            const menu = genFoundBibleItemContextMenu(
+                { target: header, currentTarget: view },
+                ctl,
+                { id: 1 } as any,
+            );
+            findCrossRef(menu)!.onSelect!({} as any);
+            expect(ctl.selectedVerseKey).toBe('(KJV) JHN 3:16');
+
+            // A selection left in another pane is not this menu's verse.
+            globalThis.getSelection()!.collapse(otherVerse.firstChild!, 2);
+            expect(
+                findCrossRef(
+                    genFoundBibleItemContextMenu(
+                        { target: header, currentTarget: view },
+                        genController(),
+                        { id: 1 } as any,
+                    ),
+                ),
+            ).toBeUndefined();
+
+            // Nor is a selection outside every verse.
+            globalThis.getSelection()!.removeAllRanges();
+            expect(
+                findCrossRef(
+                    genFoundBibleItemContextMenu(
+                        { target: header, currentTarget: view },
+                        genController(),
+                        { id: 1 } as any,
+                    ),
+                ),
+            ).toBeUndefined();
+        } finally {
+            globalThis.getSelection()!.removeAllRanges();
+            view.remove();
+            otherView.remove();
+        }
+    });
+
     test('genFoundBibleItemContextMenu adds presenter options', async () => {
         h.appProvider.isPagePresenter = true;
         const ctl = genController();

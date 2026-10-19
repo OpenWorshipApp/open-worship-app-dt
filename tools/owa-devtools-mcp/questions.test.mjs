@@ -9,10 +9,16 @@ import { toPassageKey } from './passageMatch.mjs';
 import {
   flattenQuestions,
   listQuestionPageIds,
+  loadQuestionOverlays,
   loadQuestionPages,
   matchQuestions,
   outlineQuestions,
 } from './questions.mjs';
+import {
+  applyQuestionOverlay,
+  findTemplateSample,
+  toEnglishTemplateAsk,
+} from './questionMatch.mjs';
 
 // Unlike `help.test.mjs`, this runs against the REAL corpus on purpose. The
 // files are the deliverable -- a question with no recipe, a duplicate id or a
@@ -518,5 +524,190 @@ describe('outlineQuestions', () => {
     expect(pages).toContain('reader');
     expect(pages).toContain('common');
     expect(pages).not.toContain('presenter');
+  });
+});
+
+// The corpus in the app's other languages (`questions/i18n/<code>.json`): a
+// translation is a row's words in that language, kept beside the English it
+// was made from. A volunteer reading Khmer is offered Khmer chips, and a
+// reworded row shows its new English until its translation is redone.
+describe('the corpus in other languages', () => {
+  const overlayDir = join(import.meta.dirname, 'questions', 'i18n');
+  const overlayList = loadQuestionOverlays();
+  const rowById = new Map(
+    ROWS.map((row) => {
+      return [row.id, row];
+    }),
+  );
+  const sectionLabelById = new Map(
+    PAGES.flatMap((page) => {
+      return page.sections.map((section) => {
+        return [`${page.page}.${section.id}`, section.label];
+      });
+    }),
+  );
+
+  it('one file per language the app has, named for it', () => {
+    const langDir = join(import.meta.dirname, '..', '..', 'src', 'lang', 'data');
+    const langCodeSet = new Set(readdirSync(langDir));
+    expect(overlayList.length).toBeGreaterThan(0);
+    for (const name of readdirSync(overlayDir)) {
+      expect(name).toMatch(/\.json$/);
+      const code = name.slice(0, -'.json'.length);
+      expect(langCodeSet.has(code), name).toBe(true);
+      const overlay = JSON.parse(readFileSync(join(overlayDir, name), 'utf8'));
+      expect(overlay.lang).toBe(code);
+    }
+  });
+
+  it('names only rows and sections that exist, with the English they say now', () => {
+    for (const overlay of overlayList) {
+      for (const [id, words] of Object.entries(overlay.questions ?? {})) {
+        const row = rowById.get(id);
+        expect(row, `${overlay.lang} ${id}`).toBeDefined();
+        expect(words.en, `${overlay.lang} ${id} is stale`).toBe(row.text);
+        // A fill-in row keeps an example of the same kind as the English
+        // one: the window tells the person's part from the row's words
+        // around it (`toEnglishTemplateAsk`).
+        if (row.isTemplate) {
+          expect(
+            findTemplateSample(words.text)?.kind,
+            `${overlay.lang} ${id} keeps its kind of example`,
+          ).toBe(findTemplateSample(row.text)?.kind);
+          expect(findTemplateSample(row.text)).not.toBeNull();
+        }
+        expect(words.text.trim().length).toBeGreaterThan(0);
+        expect(words.text, `${overlay.lang} ${id} is the English`).not.toBe(
+          words.en,
+        );
+      }
+      for (const [id, words] of Object.entries(overlay.sections ?? {})) {
+        expect(words.en, `${overlay.lang} section ${id}`).toBe(
+          sectionLabelById.get(id),
+        );
+      }
+    }
+  });
+
+  // The chips are what the empty window shows: every one of them reads in the
+  // app's language once that language has a file.
+  it('carries every starter that can be asked as it stands', () => {
+    const starterIdList = ROWS.filter((row) => {
+      return row.starter && !row.isTemplate;
+    }).map((row) => {
+      return row.id;
+    });
+    for (const overlay of overlayList) {
+      expect(
+        starterIdList.filter((id) => {
+          return overlay.questions?.[id] === undefined;
+        }),
+        overlay.lang,
+      ).toEqual([]);
+    }
+  });
+
+  // A ratchet, at nothing missing: a question added to the corpus is added
+  // with its words in every language that has a file, the way a label is
+  // added with its Khmer and French (`tranKeyCoverage.test.ts`). Fill-in
+  // rows too, since 2026-10-17: they were the last English in a Khmer
+  // window's question list, and are asked in English once finished.
+  const MAX_UNTRANSLATED_ROWS = 0;
+  it('carries every row, fill-in rows too', () => {
+    for (const overlay of overlayList) {
+      const untranslated = ROWS.filter((row) => {
+        return overlay.questions?.[row.id] === undefined;
+      }).map((row) => {
+        return row.id;
+      });
+      expect(untranslated.length, `${overlay.lang}: ${untranslated}`).toBe(
+        Math.min(untranslated.length, MAX_UNTRANSLATED_ROWS),
+      );
+    }
+  });
+
+  it('a Khmer row is written in Khmer', () => {
+    const khmer = overlayList.find((overlay) => {
+      return overlay.lang === 'km';
+    });
+    for (const [id, words] of Object.entries(khmer.questions)) {
+      expect(/[\u1780-\u17FF]/u.test(words.text), id).toBe(true);
+    }
+  });
+
+  it('a chip shows its language and is found by it, and by its English', () => {
+    const khmer = overlayList.find((overlay) => {
+      return overlay.lang === 'km';
+    });
+    const pages = applyQuestionOverlay(PAGES, khmer);
+    const verseRow = flattenQuestions(pages).find((row) => {
+      return row.id === 'presenter.bible.present-verse';
+    });
+    expect(verseRow.text).toBe(khmer.questions[verseRow.id].text);
+    expect(verseRow.textEn).toBe('How do I present a Bible verse?');
+    // Typed in Khmer, the row it is.
+    const [byKhmer] = matchQuestions(verseRow.text, { pages });
+    expect(byKhmer.id).toBe(verseRow.id);
+    // Half typed, still that row first among the presenter's.
+    const [byStart] = matchQuestions([...verseRow.text].slice(0, 12).join(''), {
+      pages,
+      focus: 'presenter',
+    });
+    expect(byStart.id).toBe(verseRow.id);
+    // Typed in English in a Khmer window, found by its English words.
+    const [byEnglish] = matchQuestions('how do I present a bible verse', {
+      pages,
+    });
+    expect(byEnglish.id).toBe(verseRow.id);
+  });
+
+  it('a translation of words the row no longer says is not shown', () => {
+    const pages = applyQuestionOverlay(PAGES, {
+      lang: 'km',
+      questions: {
+        'presenter.bible.present-verse': { en: 'Old words', text: 'ពាក្យចាស់' },
+      },
+    });
+    const row = flattenQuestions(pages).find((one) => {
+      return one.id === 'presenter.bible.present-verse';
+    });
+    expect(row.text).toBe('How do I present a Bible verse?');
+  });
+
+  // A fill-in row finished in Khmer is asked as its English, the part the
+  // person wrote kept as they wrote it -- in the middle of the row too.
+  it('reads a finished fill-in row back into its English', () => {
+    const pages = applyQuestionOverlay(PAGES, loadQuestionOverlays().find((one) => {
+      return one.lang === 'km';
+    }));
+    const rows = flattenQuestions(pages);
+    expect(
+      toEnglishTemplateAsk('តើប៊ូតុងសម្រាប់ សម្អាតទាំងអស់ នៅឯណា?', rows),
+    ).toBe('Where is the button for សម្អាតទាំងអស់');
+    expect(
+      toEnglishTemplateAsk(
+        'បង្កើតឯកសារទំនុកច្រៀងសម្រាប់ចម្រៀង "ព្រះគុណដ៏អស្ចារ្យ"',
+        rows,
+      ),
+    ).toBe('Create a lyric file for song "ព្រះគុណដ៏អស្ចារ្យ"');
+    expect(toEnglishTemplateAsk('តើប៊ូតុងសម្រាប់ នៅឯណា?', rows)).toBeNull();
+    // An example of the reader's own: "French" in the French row.
+    const frenchRows = flattenQuestions(
+      applyQuestionOverlay(
+        PAGES,
+        loadQuestionOverlays().find((one) => {
+          return one.lang === 'fr';
+        }),
+      ),
+    );
+    expect(
+      frenchRows.find((row) => {
+        return row.id === 'settings.bible-settings.import-bible-language';
+      })?.text,
+    ).toBe('Importer une Bible en "French"');
+    expect(
+      toEnglishTemplateAsk('Importer une Bible en "Spanish"', frenchRows),
+    ).toBe('Import a Bible in "Spanish"');
+    expect(toEnglishTemplateAsk('សួស្ដី', rows)).toBeNull();
   });
 });

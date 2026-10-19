@@ -134,10 +134,10 @@ export const READER_EXTRA_DEMO_LIST = [
     'sync-panes',
     reading,
     'Keep reading panes scrolling together',
-    'Give passages the same color note to follow corresponding verses as you scroll.',
+    'Give passages the same Color Note to scroll them together; Sync group scrolling turns that on or off.',
     [
       'Open two passages or split a passage. Use the color circle in each passage header and choose the same color note for both.',
-      'Scroll one passage by hand and watch the matching verse in the other. Choose different color notes to read independently.',
+      'Scroll one passage by hand and watch the matching verse in the other. Choose different color notes to read independently, or press Sync group scrolling in a header to pause or resume it.',
     ],
   ),
   lesson(
@@ -191,13 +191,16 @@ export const READER_EXTRA_DEMO_LIST = [
     'bibles-folder',
     notes,
     'Find the Reader saved-passage folder',
-    'Use Show path editor in Bibles to inspect the folder used for Reader passage lists.',
+    'Use Show path editor in Bibles to see the folder; Choose a folder picks another, and right-click the path to Copy to Clipboard.',
     [
-      click(
-        'Bibles > Show path editor',
-        'Toggle Show path editor in the Bibles panel.',
-      ),
-      'The path belongs to the Reader Bibles list. Use the folder controls yourself to choose another location; the Presenter keeps a separate passage list.',
+      // No translateFind: PathSelectorComp draws this title untranslated, so
+      // it has no km/fr key and tran() throws on it (TP-01).
+      {
+        find: 'Bibles > Show path editor',
+        text: 'Toggle Show path editor in the Bibles panel.',
+        action: 'click',
+      },
+      'The path belongs to the Reader Bibles list. Choose a folder picks another location yourself, and right-click the path for Copy to Clipboard or Edit Parent Path; the Presenter keeps a separate passage list.',
     ],
   ),
   lesson(
@@ -217,9 +220,9 @@ export const READER_EXTRA_DEMO_LIST = [
     'bibles-open-saved',
     notes,
     'Reopen a saved passage in the Reader',
-    'Expand a Bibles list, then double-click a passage; hold Shift to open it beside the current passage.',
+    'Expand a Bibles list, then double-click a passage or use Lookup in its menu; hold Shift to open it beside the current one.',
     [
-      'Click a Bibles list heading to expand its saved passages. Double-click the passage you want, or choose Open in its More Options menu.',
+      'Click a Bibles list heading to expand its saved passages. Double-click the passage you want, or choose Open in its More Options menu; Lookup there puts it into the passage you are editing.',
       'Hold Shift while opening a passage to put it beside the current reading. A saved row can also be dragged into a reading pane.',
     ],
   ),
@@ -227,7 +230,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'bibles-organize',
     notes,
     'Arrange saved Bible passages',
-    'Use a passage row menu for Duplicate, Move To, Move up or Move down, and its color circle to group it.',
+    'Use a passage row menu for Duplicate, Move To, Move up, Move down or Delete, and its color circle to group it.',
     [
       'On a saved passage row, open More Options. Duplicate makes another entry, Move To chooses another list, and Move up or Move down changes its order.',
       'Use the row color circle to group passages and the Bible abbreviation to change that saved passage translation. Delete removes the chosen row, so select it yourself only when intended.',
@@ -251,9 +254,9 @@ export const READER_EXTRA_DEMO_LIST = [
     'bibles-file-actions',
     notes,
     'Manage saved Bible list files',
-    'Right-click a list file for Rename, Duplicate, Reload, Copy Path to Clipboard and file location.',
+    'Right-click a list file for Rename, Duplicate, Empty, Copy Path to Clipboard, Reveal in File Explorer or Move to Trash.',
     [
-      'Use More Options on the list file itself, below the Bibles panel header, to rename, duplicate, reload, copy its path, or reveal its location.',
+      'Use More Options on the list file itself, below the Bibles panel header, to rename, duplicate, copy its path, or reveal its location with Reveal in File Explorer.',
       'Move All Items To relocates its passages to another list. Empty clears its entries; Move to Trash removes the file. Those choices and confirmations are yours to make.',
     ],
   ),
@@ -261,13 +264,15 @@ export const READER_EXTRA_DEMO_LIST = [
     'notes-folder',
     notes,
     'Find the Bible Notes folder',
-    'Use Show path editor in Bible Notes when you need to locate or choose your note library.',
+    'Use Show path editor in Bible Notes to locate your note library; Choose a folder picks another one.',
     [
-      click(
-        'Bible Notes > Show path editor',
-        'Toggle Show path editor in the Bible Notes panel.',
-      ),
-      'Inspect the current folder. If choosing another library, use the folder controls yourself and return here to see the files in that location.',
+      // No translateFind: see bibles-folder (TP-01).
+      {
+        find: 'Bible Notes > Show path editor',
+        text: 'Toggle Show path editor in the Bible Notes panel.',
+        action: 'click',
+      },
+      'Inspect the current folder. To use another library, press Choose a folder yourself and return here to see the files in that location.',
     ],
   ),
   lesson(
@@ -287,7 +292,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'notes-new-item',
     notes,
     'Add a note to the right file',
-    'Expand your chosen Bible Notes file and press its New Note Item plus button.',
+    'Expand your chosen Bible Notes file, press its New Note Item plus button, then double-click a note to open it.',
     [
       'Expand the note file you want in Bible Notes. Press New Note Item on that file heading to create a note there.',
       'Double-click the new note or use its Open BibleNote button when you want to write. The note editor opens separately; this Reader lesson ends at that doorway.',
@@ -297,7 +302,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'notes-organize',
     notes,
     'Arrange and move Bible note items',
-    'Use a note row menu to Duplicate, Move To, Move up or Move down; drag between note files.',
+    'Use a note row menu for Edit Title, Duplicate, Move To, Move up or Move down; Discard Change drops unsaved edits.',
     [
       'Open More Options on a note item. Choose Duplicate for a copy, Move To for another note file, or Move up and Move down to reorder it.',
       'Drag a note item to another note file to move it, or use its color circle to mark it. Delete and Discard Change are personal decisions; the demo will not run them.',
@@ -321,9 +326,9 @@ export const READER_EXTRA_DEMO_LIST = [
     'notes-file-actions',
     notes,
     'Manage Bible Notes files',
-    'Use a note file menu for Rename, Duplicate, Reload, Copy All Items and Move All Items To.',
+    'Use a note file menu for Rename, Duplicate, Copy All Items, Move All Items To, Reveal in File Explorer or Move to Trash.',
     [
-      'Right-click the note file heading, or use its More Options, to rename, duplicate, reload, reveal the file, or copy its path.',
+      'Right-click the note file heading, or use its More Options, to rename, duplicate, reveal the file with Reveal in File Explorer, or copy its path.',
       'Copy All Items copies the file contents; Move All Items To chooses a different note file. Empty and Move to Trash are destructive choices that you make yourself.',
     ],
   ),
@@ -341,7 +346,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'cross-reference-verse',
     research,
     'Choose the verse for cross references',
-    'Open Cross Reference, then select a verse to follow its related passages.',
+    'Open Cross Reference, pick a verse, then click a related verse to open it or Shift+click it to append it.',
     [
       ...study('Cross Reference'),
       'Click the verse you want to study in the reading pane. Cross Reference follows that verse; choose a related entry to read its passage.',
@@ -351,7 +356,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'names-filter',
     research,
     'Filter the people and places lookup',
-    'Switch Names or Locations, search the list, and use Filter by name type for people.',
+    'Switch Names or Locations, use Search names and Filter by name type, and Jump to page in a long list.',
     [
       {
         ...click(
@@ -361,7 +366,7 @@ export const READER_EXTRA_DEMO_LIST = [
         skipIfVisible: 'Filter by name type',
       },
       'Choose Names or Locations. Type into Search names or Search locations, then choose a result to open its details.',
-      'In Names, use Filter by name type to narrow the records. Clear search restores the list; the type filter does not apply to Locations.',
+      'In Names, use Filter by name type to narrow the records. Clear search restores the list; the type filter does not apply to Locations. In a long list, type a page number into Jump to page and press Enter.',
     ],
   ),
   lesson(
@@ -412,10 +417,9 @@ export const READER_EXTRA_DEMO_LIST = [
     'Use the Resources menu for Add Folder or Reload, and a folder menu for Refresh or Add Files.',
     [
       ...study('Resources'),
-      click(
-        'Bible Online Lookup > More Options',
-        'Open More Options at the top of Resources.',
-      ),
+      // Words, not a press: the Resources header's More Options shares its
+      // name with every folder's, so a card cannot tell which one is meant.
+      'Open More Options at the top of Resources, beside Search file name.',
       'Reload rescans the library; Add Folder chooses another folder. On an individual folder, Refresh rescans that folder and Add Files copies chosen files into it.',
     ],
   ),
@@ -423,7 +427,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'resources-portable',
     research,
     'Keep study resources with app data',
-    'Use a resource folder menu > Copy to Data Directory to make a portable library copy.',
+    'Use a resource folder menu > Copy to Data Directory for a portable copy; Remove Folder takes it off the list, files stay.',
     [
       ...study('Resources'),
       'Open More Options on the resource folder you want to keep, then choose Copy to Data Directory when offered.',
@@ -455,10 +459,10 @@ export const READER_EXTRA_DEMO_LIST = [
     'graph-layout',
     research,
     'Fit and rearrange a connection graph',
-    'Use Fit to view, Re-layout, Zoom, Collapse all, Undo and Redo inside the graph.',
+    'Use Fit to view, Re-layout, Zoom, Collapse all, Undo, Redo and Fullscreen inside the graph.',
     [
       'With a graph open, use Fit to view after expanding nodes. Drag a box to move it, drag empty space to pan, and use Zoom to inspect it.',
-      'Re-layout arranges the boxes again. Collapse all and Expand all change their detail; Undo and Redo in the graph reverse or restore graph changes.',
+      'Re-layout arranges the boxes again. Collapse all and Expand all change their detail; Undo and Redo in the graph reverse or restore graph changes, and Fullscreen fills the window with the graph.',
       'A node menu offers Set as centre, Use as root, Open detail, Verses and Remove. Remove takes a node from this drawing, not from the Bible data.',
     ],
   ),
@@ -466,10 +470,10 @@ export const READER_EXTRA_DEMO_LIST = [
     'graph-copy',
     research,
     'Copy or export a connection graph',
-    'Use the graph Copy menu for Markdown or diagram text; Presets also offers Save as image and Print.',
+    'In Graph Preview, use Copy for Markdown or Mermaid text; Presets also offers Save as image and Print.',
     [
       'Open a graph, then use its Copy menu. Choose Markdown for written study notes or a diagram format for a diagram editor.',
-      'The Copy menu also offers Open in mermaid.live. That opens an external site only when you choose it yourself.',
+      'The Copy menu also offers Open in Mermaid Live. That opens an external site only when you choose it yourself.',
       'Use Presets > Save as image or Print when you need the drawing. Select the destination or print options yourself.',
     ],
   ),
@@ -477,7 +481,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'graph-presets',
     research,
     'Save and revisit a graph preset',
-    'Use Presets > Save preset to name your graph, then pick it from Presets later.',
+    'Use Presets > Save preset to name your graph, pick it from Presets later, or Delete preset.',
     [
       'Arrange a graph, open Presets, and choose Save preset. Enter your own name and confirm it yourself.',
       'Open Presets again to choose a saved arrangement. Delete preset removes a saved arrangement only after your confirmation.',
@@ -491,6 +495,55 @@ export const READER_EXTRA_DEMO_LIST = [
     [
       'Drag the divider between Bibles and Bible Notes, or between the left sidebar and Bible Lookup, to give a panel more room.',
       'Right-click that divider for Reset Size, Close First Widget, and Close Second Widget. View > Widgets reopens a panel you closed.',
+    ],
+  ),
+  lesson(
+    'bibles-find-list',
+    notes,
+    'Find a saved Bible list',
+    'Use Filter by name and Sort at the top of Bibles to find a passage list quickly.',
+    [
+      click(
+        'Bibles > Filter by name',
+        'Click Filter by name in Bibles, then type part of a list name.',
+      ),
+      click(
+        'Bibles > Sort',
+        'Open Sort in Bibles and choose the order you want.',
+      ),
+      'Clear the filter words when you are done; every list shows again.',
+    ],
+  ),
+  lesson(
+    'bible-not-installed',
+    'Getting started',
+    'Fix a Bible that is not installed',
+    'When the Reader names a Bible you do not have, pick another, press Let the assistant import this Bible for me, or Go to Bible Setting.',
+    [
+      'A passage pane shows this card when its Bible is not installed on this computer. Pick an installed Bible from the Bible key list on the card.',
+      'Or press Let the assistant import this Bible for me: the App Assistant looks for it in a free online collection and installs it under the same short name.',
+      'Or press Go to Bible Setting to add the Bible yourself.',
+    ],
+  ),
+  lesson(
+    'verse-numbers',
+    reading,
+    'Use verse numbers inside a passage',
+    'Click a verse number to show its notes or double-click it to select the verse; Show the next chapter loads more of a long passage.',
+    [
+      'Click a small verse number in the passage to reveal the Bible notes of that verse; double-click it to select the verse.',
+      'A passage that spans several chapters opens with the first; use Show the next chapter below it to load the next.',
+      'The verse numbers left in the chapter are listed after the passage; double-click them to select those verses.',
+    ],
+  ),
+  lesson(
+    'name-in-passage',
+    research,
+    'Open a name from the passage text',
+    'Click a dotted name in the passage to open its details; Full view, collapse or close that floating panel.',
+    [
+      'Names of people and places in the passage have a dotted underline. Click one to open its details in a floating panel.',
+      "Use the panel's buttons: Full view enlarges it, Collapse floating widget folds it and Close floating widget closes it; drag its edge to resize it.",
     ],
   ),
 ];

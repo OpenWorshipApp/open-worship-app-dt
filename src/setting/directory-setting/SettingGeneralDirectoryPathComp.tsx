@@ -162,7 +162,7 @@ function RenderParentDirectoryComp({
                                     }}
                                 >
                                     {tran(
-                                        'Click here to set default data on "Desktop"',
+                                        'Click here to use the default data folder',
                                     )}{' '}
                                 </strong>
                             </div>

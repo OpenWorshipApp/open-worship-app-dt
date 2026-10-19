@@ -79,6 +79,7 @@ vi.mock('./finderOverlayHelpers', () => ({
     closeFindOverlay: vi.fn(),
     getFindOverlayHostWebContents: (webContents: any) => webContents,
     getFindOverlayWebContents: () => null,
+    setFindOverlayMounted: vi.fn(),
     startFindOverlayDragging: vi.fn(),
     stopFindOverlayDragging: vi.fn(),
 }));

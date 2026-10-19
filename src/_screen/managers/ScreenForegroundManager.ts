@@ -1,7 +1,15 @@
 import type { CSSProperties, MouseEvent } from 'react';
 
 import { showSimpleToast } from '../../toast/toastHelpers';
-import { tran } from '../../lang/langHelpers';
+import {
+    DEFAULT_LOCALE,
+    getCurrentLocale,
+    getLangData,
+    getLangDataAsync,
+    tran,
+    tranByLangData,
+} from '../../lang/langHelpers';
+import type { ClockPeriodType } from './TimingController';
 import {
     genHtmlForegroundMessage,
     genHtmlForegroundCountdown,
@@ -71,6 +79,10 @@ import {
     getAllScreenManagerBases,
     getScreenManagerBase,
 } from './screenManagerBaseHelpers';
+import {
+    FOREGROUND_MESSAGE_CLASS,
+    layOutMessageStack,
+} from '../foregroundMessageStackHelpers';
 
 export type ScreenForegroundEventType = 'update';
 
@@ -159,6 +171,31 @@ type StopwatchSetTimingType = Pick<
     'dateTime' | 'pausedMillisecond'
 >;
 
+let isClockLangDataRequested = false;
+/**
+ * A clock's AM / PM in the app's language. Not `tran()`: the screen window
+ * registers every language's fonts (`initAllLangCss`) but caches no language
+ * for lookups, and a `tran()` with none throws in dev (`ScreenCloseButtonComp`).
+ * So the first clock asks for the app's language ONCE -- its module is already
+ * imported, so this costs no download -- and reads English until it is there;
+ * the clock's next tick, a second later, picks it up.
+ */
+function toClockPeriodText(period: ClockPeriodType) {
+    const locale = getCurrentLocale();
+    const langData = getLangData(locale);
+    if (
+        langData === null &&
+        locale !== DEFAULT_LOCALE &&
+        !isClockLangDataRequested
+    ) {
+        isClockLangDataRequested = true;
+        getLangDataAsync(locale).catch(() => {
+            isClockLangDataRequested = false;
+        });
+    }
+    return tranByLangData(langData, period);
+}
+
 export default class ScreenForegroundManager extends ScreenEventHandler<ScreenForegroundEventType> {
     static readonly eventNamePrefix: string = 'screen-foreground-m';
     private _rootContainerBehind: HTMLDivElement | null = null;
@@ -179,6 +216,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             updateHandler?: (newData: any) => boolean;
         }
     >();
+    private messageLayoutFrameId: number | null = null;
+    private isListeningToFonts = false;
+    private readonly handleFontsLoaded = () => {
+        this.scheduleMessageLayout();
+    };
     foregroundData: ForegroundDataType;
     rendererMap: Map<string, (data: any) => void>;
     setterMap: Map<string, (data: any, isNoSyncGroup?: boolean) => void>;
@@ -495,9 +537,38 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             render(data);
         }
         if (toRemoveDataList.length + toRenderDataList.length > 0) {
-            return newData;
+            return this.keepRenderedItems(oldData, newData);
         }
         return oldData;
+    }
+
+    /**
+     * The list to store after a list changed: every item that stayed on the
+     * screen is kept as the OBJECT that was rendered, not the equal copy that
+     * came in. `containerMapper` is keyed by object identity, and the presenter
+     * rebuilds the whole list on every press -- storing the copy left the
+     * mounted container keyed by an object the manager no longer held, so the
+     * next hide (or F10) looked the copy up, found nothing, and the message,
+     * clock or picture stayed on the projector while the presenter said it was
+     * gone. Showing it again then mounted a second copy beside the stale one.
+     */
+    private keepRenderedItems(oldData: any, newData: any) {
+        if (!Array.isArray(oldData) || !Array.isArray(newData)) {
+            return newData;
+        }
+        return newData.map((newItem) => {
+            if (oldData.includes(newItem)) {
+                return newItem;
+            }
+            const renderedItem = oldData.find((oldItem) => {
+                return (
+                    typeof oldItem === 'object' &&
+                    typeof newItem === 'object' &&
+                    checkAreObjectsEqual(oldItem, newItem)
+                );
+            });
+            return renderedItem ?? newItem;
+        });
     }
 
     saveForegroundData() {
@@ -569,6 +640,65 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
+
+    /**
+     * Lay the messages out by their real heights on the next frame -- once,
+     * however many changes landed in this one. Also when a font finishes
+     * loading, which changes every height after the first layout.
+     */
+    scheduleMessageLayout() {
+        if (this.messageLayoutFrameId !== null) {
+            return;
+        }
+        if (!this.isListeningToFonts && globalThis.document?.fonts) {
+            this.isListeningToFonts = true;
+            document.fonts.addEventListener(
+                'loadingdone',
+                this.handleFontsLoaded,
+            );
+        }
+        this.messageLayoutFrameId = globalThis.requestAnimationFrame(() => {
+            this.messageLayoutFrameId = null;
+            this.layOutMessages();
+        });
+    }
+
+    /**
+     * Every session's shown messages, stacked one under another and shrunk to
+     * fit (`layOutMessageStack`). A rotating set is ONE box whose text keeps
+     * changing, so it is left to its own size.
+     */
+    layOutMessages() {
+        const stackMap = new Map<string, HTMLElement[]>();
+        const messageDataList = this.foregroundData.messageDataList;
+        if (!Array.isArray(messageDataList)) {
+            return;
+        }
+        for (const data of messageDataList) {
+            const isRotating =
+                data.intervalSecond !== null &&
+                data.textList.filter((text) => {
+                    return text.trim() !== '';
+                }).length > 1;
+            const element =
+                this.containerMapper
+                    .get(data)
+                    ?.container.querySelector<HTMLElement>(
+                        `.${FOREGROUND_MESSAGE_CLASS}`,
+                    ) ?? null;
+            if (isRotating || element === null || !element.isConnected) {
+                continue;
+            }
+            const key = `${data.isBehind === true}:${data.stackKey ?? `one:${data.id}`}`;
+            const elementList = stackMap.get(key) ?? [];
+            elementList.push(element);
+            stackMap.set(key, elementList);
+        }
+        for (const elementList of stackMap.values()) {
+            layOutMessageStack(elementList, this.screenManagerBase.height);
+        }
+    }
+
     setMessageDataList(
         dataList: ForegroundMessageDataType[],
         isNoSyncGroup = false,
@@ -750,6 +880,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const { handleAdding, handleRemoving } = genHtmlForegroundTime(
             data,
             this.styleAnimFor(data),
+            toClockPeriodText,
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
@@ -1528,6 +1659,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 render(data);
             }
         }
+        if ((this.foregroundData.messageDataList?.length ?? 0) > 0) {
+            this.scheduleMessageLayout();
+        }
     }
 
     applyForegroundDataWithSyncGroup(
@@ -1550,6 +1684,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             Object.assign(this.foregroundData, {
                 [key as keyof ForegroundDataType]: newData,
             });
+            if (key === 'messageDataList' && newData !== oldData) {
+                this.scheduleMessageLayout();
+            }
         }
         this.saveForegroundData();
     }
@@ -1584,6 +1721,17 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.foregroundData = ScreenForegroundManager.parseAllForegroundData(
             {},
         );
+        if (this.messageLayoutFrameId !== null) {
+            globalThis.cancelAnimationFrame(this.messageLayoutFrameId);
+            this.messageLayoutFrameId = null;
+        }
+        if (this.isListeningToFonts) {
+            this.isListeningToFonts = false;
+            document.fonts.removeEventListener(
+                'loadingdone',
+                this.handleFontsLoaded,
+            );
+        }
         this._rootContainerBehind = null;
         this._rootContainer = null;
         super.delete();

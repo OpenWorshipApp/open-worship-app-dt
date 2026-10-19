@@ -18,6 +18,7 @@ import {
     BOT_FOCUS_LIST,
     getBotFocus,
 } from '../../tools/owa-devtools-mcp/botFocus.mjs';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
 
 // As the main process lists them (`electron/appWindowListHelpers.ts`).
 export type AppWindowEntryType = {
@@ -125,11 +126,24 @@ export function toAppWindowList(
         return Number(other.isMain) - Number(one.isMain);
     });
     const seenCountMap = new Map<string, number>();
+    // The picker's words, in the window's language: nothing reads a label
+    // back, and what the model is told is `toAttachmentWindow`'s own.
     return windowList.map((item) => {
+        // The window's own title, `Setting (⚙️)`: its name in the window's
+        // language, its mark as it is.
+        const title = item.title.replace(TITLE_PREFIX_PATTERN, '').trim();
+        const [, words = title, mark = ''] =
+            /^(.*?)(\s*\([^()]*\))?$/u.exec(title) ?? [];
         const name =
-            item.title.replace(TITLE_PREFIX_PATTERN, '').trim() ||
-            (getBotFocus(item.focus)?.label ?? item.focus);
-        const base = `${name} · ${item.isMain ? 'main window' : 'own window'}`;
+            title === ''
+                ? tranLabel(getBotFocus(item.focus)?.label ?? item.focus)
+                : tranLabel(words.trim()) + mark;
+        const base = fillWords(
+            item.isMain
+                ? tran('{name} · main window')
+                : tran('{name} · own window'),
+            { name },
+        );
         const count = (seenCountMap.get(base) ?? 0) + 1;
         seenCountMap.set(base, count);
         return { ...item, label: count > 1 ? `${base} ${count}` : base };

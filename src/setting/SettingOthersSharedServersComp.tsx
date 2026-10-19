@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 
-import { tran } from '../lang/langHelpers';
+import { getCurrentLocale, getLangCode, tran } from '../lang/langHelpers';
 import {
     loadLlmRegistry,
     useLlmRegistry,
 } from '../helper/ai/customServerHelpers';
 import {
     getUsableCustomModels,
+    pickRegistryNote,
     type CustomServerType,
     type LlmRegistryStatusType,
 } from '../../electron/customLlmProtocol';
@@ -26,8 +27,9 @@ import SettingOthersGroupComp from './SettingOthersGroupComp';
  * (`toPublicRegistryServers`). The address was listed until 2026-10-12, when
  * the user circled it: _hide endpoint and api key, to avoid easily copy and
  * use_ -- a shared server is for this app to ask, not an address to take
- * away. Names and model ids are the admin's own words and NEVER go through
- * `tran()`: it throws on a key it does not know.
+ * away. Names, model ids and notes are the admin's own words and NEVER go
+ * through `tran()`: it throws on a key it does not know. A note is shown in
+ * this window's language when the file has one in it (`pickRegistryNote`).
  */
 
 function RenderSharedMarkComp() {
@@ -52,6 +54,8 @@ function RenderSharedServerComp({
         });
     }, []);
     const models = getUsableCustomModels(server);
+    const langCode = getLangCode(getCurrentLocale()) ?? '';
+    const serverNote = pickRegistryNote(server.note, langCode);
     return (
         <div
             className={
@@ -85,6 +89,12 @@ function RenderSharedServerComp({
             </div>
             {isCollapsed ? null : (
                 <>
+                    {serverNote.length > 0 ? (
+                        <div className="small mb-2">
+                            <i className="bi bi-info-circle me-1" />
+                            {serverNote}
+                        </div>
+                    ) : null}
                     <div className="app-setting-others-label">
                         {tran('Models')}
                     </div>
@@ -105,6 +115,15 @@ function RenderSharedServerComp({
                                             {tran('Sees pictures')}
                                         </>
                                     ) : null}
+                                    {row.note === undefined ? null : (
+                                        <div>
+                                            <i className="bi bi-info-circle me-1" />
+                                            {pickRegistryNote(
+                                                row.note,
+                                                langCode,
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

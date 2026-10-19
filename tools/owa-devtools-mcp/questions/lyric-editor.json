@@ -4,7 +4,7 @@
     "window": "lyricEditor.html",
     "focus": "lyricEditor",
     "description": "The window a song's words and chords are written in: the text on one side, the verses it becomes on the other.",
-    "updated": "2026-10-12",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "writing",
@@ -68,6 +68,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "puts that stage back to the defaults",
                         "guide": true
                     }
                 },
@@ -85,7 +86,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "It can turn words you already have into a song",
+                        "passage": "On a server of your own, type",
                         "tools": [
                             "owa_lyric_validate",
                             "owa_lyric_file"
@@ -117,6 +118,7 @@
                     "starterRank": 3,
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "Those two show how the song will look on the screen",
                         "guide": true
                     }
                 },
@@ -134,7 +136,8 @@
                     "starter": true,
                     "starterRank": 4,
                     "resources": {
-                        "recipe": "W-05"
+                        "recipe": "W-05",
+                        "passage": "Edit the words while the song is open"
                     }
                 }
             ]
@@ -165,6 +168,7 @@
                     "starterRank": 6,
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "The editor marks a mistake in red where it is",
                         "tools": [
                             "owa_lyric_validate"
                         ]
@@ -185,6 +189,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "The editor marks a mistake in red where it is",
                         "tools": [
                             "owa_lyric_validate"
                         ]
@@ -204,7 +209,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
-                        "passage": "How a song is written",
+                        "passage": "The order it is sung in is its Structure line",
                         "related": [
                             "W-15"
                         ],

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-11T02:24:35.084Z
+  modified: 2026-10-16T14:44:10.521Z
 ---
 
 Added 2026-10-09 at the user's ask, tested against their LM Studio
@@ -119,7 +119,19 @@ kind, baseUrl, model})`): a 404 the server WROTE (Ollama's `not_found_error`
   API at … — check the address and press Test_. A 400 saying `does not
 support tools` is _this model cannot use tools_. Ollama's context 400
   (`exceed_context_size_error`, "exceeds the available context size") matches
-  the existing pattern.
+  the existing pattern. **But Ollama does not always refuse: it can CUT the
+  question and answer it** (2026-10-16, Ollama 0.40.3 on the laptop): Auto
+  handed two questions to `gemma4:e4b`, not loaded, so the question loaded
+  it — at Ollama's 4 096 default — and both came back with `prompt_tokens`
+  2 051 of a ~13 000-token ask, the instructions and tools gone, and an
+  answer. The refusal before a round only sees a model ALREADY loaded under
+  16k, and Ollama lets a model go after five idle minutes, so that answer
+  was the usual one. `askCustomServer` now reads the model again after an
+  answer when it was not loaded before, and a context under
+  `CUSTOM_CONTEXT_MIN` throws `genContextCutText` — the answer is not shown,
+  the note says the fix, the guide answers. Do not "remember" the context a
+  model last loaded with to refuse it up front: a person who fixes the
+  setting while the model is unloaded would be refused for good.
 - **The rest of the family** (the user's list: _Ollama, LocalAI, Llamafile,
   Respawn, LiteLLM Proxy, LM Studio, Jan, GPT4All, vLLM, SGLang, llama.cpp_):
   all OpenAI-shaped at `<origin>/v1` (LiteLLM at the root too), so the

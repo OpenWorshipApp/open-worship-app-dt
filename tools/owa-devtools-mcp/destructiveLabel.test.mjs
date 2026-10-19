@@ -196,8 +196,12 @@ describe('the rule, derived from the app dictionary', () => {
         expect(checkIsDestructiveLabelText('Supprimerai', rule)).toBe(false);
     });
 
+    // 4 000 until 2026-10-16, when the help window's own words joined the
+    // dictionary in Khmer and French (its "Moving your song to the trash"
+    // lines, "Clear all chats…"): 3 915 to 4 665. Still a few kilobytes of
+    // JSON a press carries to the page, read by no model.
     it('stays small enough to ride every press', () => {
-        expect(JSON.stringify(REAL_RULE).length).toBeLessThan(4000);
+        expect(JSON.stringify(REAL_RULE).length).toBeLessThan(5000);
     });
 });
 

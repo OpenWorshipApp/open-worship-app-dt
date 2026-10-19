@@ -9,10 +9,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     send: vi.fn(),
     collapsedMap: new Map<string, boolean>(),
+    locale: 'en-US',
 }));
 
 vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => text,
+    getCurrentLocale: () => h.locale,
+    getLangCode: (locale: string) => locale.split('-')[0],
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -126,6 +129,7 @@ beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     h.collapsedMap.clear();
+    h.locale = 'en-US';
     h.send.mockReset();
     // Whatever a test before left in the window's copy is put back to empty.
     h.send.mockResolvedValue(genStatus([]));
@@ -197,6 +201,36 @@ describe('SettingOthersSharedServersComp', () => {
             findFoldButton('Church LM Studio · Models: 2').click();
         });
         expect(container.textContent).not.toContain('qwen/qwen3.5-9b');
+    });
+
+    // The registry's notes are shown to the person choosing (2026-10-17):
+    // the server's over its models, each model's under it, in the window's
+    // language when the note has one.
+    test('opened, a server shows its note and each model’s, in the window’s language', async () => {
+        h.locale = 'km-KH';
+        h.send.mockResolvedValue(
+            genStatus([
+                {
+                    ...CHURCH_SERVER,
+                    note: { en: 'Free for us', km: 'ឥតគិតថ្លៃសម្រាប់យើង' },
+                    models: [
+                        {
+                            ...CHURCH_SERVER.models[0],
+                            note: { '': 'Slow, but saves cost' },
+                        },
+                        CHURCH_SERVER.models[1],
+                    ],
+                },
+            ]),
+        );
+        await render();
+        await act(async () => {
+            findFoldButton('Church LM Studio · Models: 2').click();
+        });
+        const text = container.textContent ?? '';
+        expect(text).toContain('ឥតគិតថ្លៃសម្រាប់យើង');
+        expect(text).not.toContain('Free for us');
+        expect(text).toContain('Slow, but saves cost');
     });
 
     test('the reload button reads the site again and draws what came back', async () => {

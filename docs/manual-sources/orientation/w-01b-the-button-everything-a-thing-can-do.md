@@ -5,7 +5,7 @@ section: "Orientation"
 verify: [GL-24, GL-06, CM-04, PL-31]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-01b — The `⋮` button: everything a thing can do
 
@@ -25,8 +25,10 @@ does. Those extras live in a small menu.
 2. **Click it.** The menu opens right at the button — the same menu you get by
    **right-clicking** the row itself, which still works exactly as before.
    The menu shifts into view and can use the full window height, regardless of
-   where you clicked. Scroll inside it only when its entries exceed that height
-   or the menu has its own smaller height limit.
+   where you clicked.
+   **A long menu scrolls only when it is taller than the whole window.** Its entries
+   scroll inside it only when they exceed the window's height, or when the menu has its
+   own smaller height limit.
    > Clicking `⋮` does NOT also do what clicking the row does: a document you open the
    > menu on is not selected, and a slide is not sent to a screen.
 3. Pick an entry, or click anywhere else to close the menu without choosing.
@@ -51,5 +53,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-24` · `GL-06` · `CM-04` · `PL-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

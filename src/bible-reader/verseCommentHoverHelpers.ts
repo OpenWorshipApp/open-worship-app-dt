@@ -30,6 +30,13 @@ export type HoveredVerseCommentType = {
 let hoveredComment: HoveredVerseCommentType | null = null;
 const listeners = new Set<() => void>();
 let clearTimeoutId: ReturnType<typeof setTimeout> | null = null;
+// The pointer is on the tooltip, which keeps it up for as long as it stays.
+// A flag, not just a cancelled timer: the tooltip's `mouseenter` is built by
+// React from the words' `mouseout`, which the browser sends BEFORE the bible
+// view's own `mouseleave` -- so the view scheduled the clearing again right
+// behind the cancel, and a tooltip with the pointer resting on its Edit button
+// went away 1.2 s later (RD-110).
+let isPointerOnTooltip = false;
 
 // Long enough to READ the comment and then walk the pointer onto the tooltip,
 // which is the only way to reach its buttons.
@@ -37,8 +44,8 @@ let clearTimeoutId: ReturnType<typeof setTimeout> | null = null;
 // The timer restarts on every mousemove that lands outside the marked words, so
 // it is not the transit that spends it — it is stopping to read. At 250ms the
 // tooltip vanished the moment the pointer went still, before it could be used;
-// the pointer resting ON the tooltip cancels it outright, so a generous value
-// costs nothing but a moment of a tooltip nobody wanted.
+// the pointer resting ON the tooltip keeps it however long it stays, so a
+// generous value costs nothing but a moment of a tooltip nobody wanted.
 const HOVER_GRACE_MILLISECOND = 1200;
 
 function notifyListeners() {
@@ -58,24 +65,46 @@ function setHoveredComment(newHoveredComment: HoveredVerseCommentType | null) {
     notifyListeners();
 }
 
-export function cancelHoveredCommentClearing() {
+function stopClearing() {
     if (clearTimeoutId !== null) {
         clearTimeout(clearTimeoutId);
         clearTimeoutId = null;
     }
 }
 
-export function scheduleHoveredCommentClearing() {
-    cancelHoveredCommentClearing();
+function startClearing() {
+    stopClearing();
+    if (isPointerOnTooltip) {
+        // Whoever asked: the pointer resting on the tooltip keeps it.
+        return;
+    }
     clearTimeoutId = setTimeout(() => {
         clearTimeoutId = null;
         setHoveredComment(null);
     }, HOVER_GRACE_MILLISECOND);
 }
 
+/**
+ * The tooltip's `mouseenter`: it stays until the pointer leaves it, whatever
+ * the words the pointer came from schedule meanwhile.
+ */
+export function cancelHoveredCommentClearing() {
+    isPointerOnTooltip = true;
+    stopClearing();
+}
+
+/**
+ * The tooltip's `mouseleave`: it goes after the grace, unless the pointer
+ * comes back to it or to the words.
+ */
+export function scheduleHoveredCommentClearing() {
+    isPointerOnTooltip = false;
+    startClearing();
+}
+
 /** Now, not after the grace: the close button, and an action that made the comment moot. */
 export function clearHoveredComment() {
-    cancelHoveredCommentClearing();
+    stopClearing();
     setHoveredComment(null);
 }
 
@@ -216,8 +245,9 @@ export function useVerseCommentHover(
         // clearing that `mouseleave` had just scheduled, and with no further
         // event in this view the tooltip stayed up for good. A late run for a
         // pointer that is gone does nothing at all: `mouseleave` has already
-        // scheduled the clearing, and the tooltip's own `mouseenter` is the one
-        // thing allowed to cancel it from here on.
+        // had its say -- the clearing scheduled, or nothing if the pointer went
+        // onto the tooltip -- and from here on the tooltip decides: the pointer
+        // resting on it keeps it, leaving it schedules the clearing.
         let isPointerInside = false;
         const handleMouseMove = (event: MouseEvent) => {
             const { clientX, clientY } = event;
@@ -226,6 +256,11 @@ export function useVerseCommentHover(
                 if (!isPointerInside) {
                     return;
                 }
+                // Over this view, so not on the tooltip. Said here because a
+                // tooltip taken away from under the pointer -- its own Edit,
+                // Delete or Close -- sends no `mouseleave`, and the flag left
+                // set would hold the next tooltip up for good.
+                isPointerOnTooltip = false;
                 const found = hitTestComment(
                     containerElement,
                     annotationsMapRef.current,
@@ -235,16 +270,18 @@ export function useVerseCommentHover(
                 if (found === null) {
                     // Scheduled, not immediate: the pointer may be on its way to
                     // the tooltip, which is not over the verse text.
-                    scheduleHoveredCommentClearing();
+                    startClearing();
                     return;
                 }
-                cancelHoveredCommentClearing();
+                stopClearing();
                 setHoveredComment(found);
             });
         };
         const handleMouseLeave = () => {
             isPointerInside = false;
-            scheduleHoveredCommentClearing();
+            // Nothing at all when it left onto the tooltip: that `mouseenter`
+            // has already run.
+            startClearing();
         };
         containerElement.addEventListener('mousemove', handleMouseMove);
         containerElement.addEventListener('mouseleave', handleMouseLeave);

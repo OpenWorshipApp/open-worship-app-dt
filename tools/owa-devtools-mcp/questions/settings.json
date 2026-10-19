@@ -4,12 +4,16 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-15",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "general",
             "label": "Language, theme & fonts",
-            "recipes": ["W-16", "W-52"],
+            "recipes": [
+                "W-16",
+                "W-52",
+                "W-54"
+            ],
             "questions": [
                 {
                     "id": "open-settings",
@@ -111,7 +115,10 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": ["W-25"],
+                        "passage": "To keep everything somewhere else",
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     },
                     "starter": true,
@@ -132,7 +139,9 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "find": "Repair Links"
                     }
                 },
@@ -150,8 +159,30 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": ["W-25"],
+                        "passage": "To switch back to a previous data folder",
+                        "related": [
+                            "W-25"
+                        ],
                         "find": "Recent Folders"
+                    }
+                },
+                {
+                    "id": "move-data-folder-off-desktop",
+                    "text": "Why does the app ask me to move my data folder off the Desktop?",
+                    "kind": "what",
+                    "keywords": [
+                        "onedrive",
+                        "desktop",
+                        "move now",
+                        "files disappeared",
+                        "songs missing",
+                        "icloud"
+                    ],
+                    "resources": {
+                        "recipe": "W-54",
+                        "related": [
+                            "W-16"
+                        ]
                     }
                 },
                 {
@@ -168,7 +199,9 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
-                        "related": ["W-31"]
+                        "related": [
+                            "W-31"
+                        ]
                     }
                 },
                 {
@@ -211,7 +244,12 @@
         {
             "id": "bible-settings",
             "label": "Bible versions",
-            "recipes": ["W-16", "W-32", "W-33", "W-34"],
+            "recipes": [
+                "W-16",
+                "W-32",
+                "W-33",
+                "W-34"
+            ],
             "questions": [
                 {
                     "id": "download-bible",
@@ -226,8 +264,11 @@
                     ],
                     "starter": true,
                     "resources": {
-                        "recipe": "W-16",
-                        "related": ["W-34"],
+                        "recipe": "W-34",
+                        "passage": "and press the blue",
+                        "related": [
+                            "W-16"
+                        ],
                         "guide": true
                     },
                     "starterRank": 11
@@ -262,7 +303,10 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "related": ["W-33"],
+                        "passage": "Import a Bible XML file with the form",
+                        "related": [
+                            "W-33"
+                        ],
                         "find": "Import XML File",
                         "guide": true
                     }
@@ -278,12 +322,17 @@
                         "Khmer",
                         "locale",
                         "number mapping",
-                        "book names"
+                        "book names",
+                        "book name list from a website",
+                        "selected language",
+                        "Bible.com chapter link"
                     ],
                     "template": true,
                     "resources": {
                         "recipe": "W-34",
-                        "tools": ["owa_bible_xml"],
+                        "tools": [
+                            "owa_bible_xml"
+                        ],
                         "find": "Import XML File"
                     }
                 },
@@ -305,7 +354,9 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "tools": ["owa_bible_xml"]
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
                     }
                 },
                 {
@@ -320,7 +371,28 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "tools": ["owa_bible_xml"]
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
+                    }
+                },
+                {
+                    "id": "import-bible-source",
+                    "text": "Where do the Bibles the assistant installs come from?",
+                    "kind": "what",
+                    "keywords": [
+                        "copyright",
+                        "publisher",
+                        "permission",
+                        "license",
+                        "legal",
+                        "who made",
+                        "I agree",
+                        "allowed to use"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "passage": "Before it asks you anything, it says"
                     }
                 },
                 {
@@ -337,7 +409,9 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "tools": ["owa_bible_xml"]
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
                     }
                 },
                 {
@@ -355,7 +429,9 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "tools": ["owa_bible_xml"],
+                        "tools": [
+                            "owa_bible_xml"
+                        ],
                         "passage": "Where an imported Bible came from"
                     }
                 },
@@ -381,7 +457,11 @@
         {
             "id": "others",
             "label": "Accounts, AI and extras",
-            "recipes": ["W-35", "W-42", "W-21"],
+            "recipes": [
+                "W-35",
+                "W-42",
+                "W-21"
+            ],
             "questions": [
                 {
                     "id": "ai-key",
@@ -437,6 +517,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Your own AI server answers too",
                         "find": "Add server"
                     }
                 },
@@ -454,7 +535,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "To turn the whole feature off",
+                        "passage": "turns all of this on or off",
                         "find": "Enable AI features",
                         "guide": true
                     }
@@ -472,6 +553,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Play Bible audio automatically.",
                         "find": "Auto Play Audio AI when available",
                         "guide": true
                     }
@@ -493,7 +575,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Every part of that page folds",
+                        "passage": "Every part of the Others page of Settings folds",
                         "find": "AI Providers"
                     }
                 },
@@ -530,8 +612,10 @@
                         "missing"
                     ],
                     "resources": {
-                        "recipe": "W-35",
-                        "related": ["W-21"],
+                        "recipe": "W-21",
+                        "related": [
+                            "W-35"
+                        ],
                         "find": "Extra Binaries"
                     }
                 }

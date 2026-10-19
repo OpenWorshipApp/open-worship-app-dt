@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { pressElementLikeButton } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -31,22 +32,32 @@ const SORT_ICON_MAP: { [key: string]: string } = {
 
 // Matches the reload/add icons this sits next to in the path title row: a bare
 // icon, no button chrome, tinted only while its filter is doing something.
+// A button to a screen reader, the keyboard and the app's own tools: as a bare
+// clickable div it had no role and no name, and could not be reached by Tab.
 function RenderIconComp({
     iconClassName,
     title,
     isActive,
     onClick,
+    isOpeningMenu = false,
 }: Readonly<{
     iconClassName: string;
     title: string;
     isActive: boolean;
     onClick: (event: MouseEvent) => void;
+    isOpeningMenu?: boolean;
 }>) {
     return (
         <div
             className="px-1 app-caught-hover-pointer"
+            role="button"
+            tabIndex={0}
             title={title}
+            aria-label={title}
+            aria-haspopup={isOpeningMenu ? 'menu' : undefined}
+            aria-pressed={isOpeningMenu ? undefined : isActive}
             onClick={onClick}
+            onKeyDown={pressElementLikeButton}
             // The path title is one line in a narrow sidebar; an icon that can
             // shrink or wrap pushes the whole row to two lines.
             style={{
@@ -65,6 +76,9 @@ function genCheckIcon(isActive: boolean) {
     });
 }
 
+// `label` arrives translated, its key a literal at the call site (EN-20). Each
+// direction is named in words: the arrow icon alone left two items reading
+// "Name" and two reading "Type".
 function genSortMenuItem(
     label: string,
     key: SortKeyType,
@@ -77,7 +91,7 @@ function genSortMenuItem(
         (key === SORT_KEY_NONE || sortData.isAscending === isAscending);
     return {
         childBefore: genCheckIcon(isActive),
-        menuElement: tran(label),
+        menuElement: label,
         childAfter:
             key === SORT_KEY_NONE
                 ? undefined
@@ -135,21 +149,21 @@ export default function FileListFilterIconsComp({
         const setter = setSortDataRef.current;
         const menuItems: ContextMenuItemType[] = [
             genSortMenuItem(
-                'Default',
+                tran('Default'),
                 SORT_KEY_NONE,
                 true,
                 currentSortData,
                 setter,
             ),
             genSortMenuItem(
-                'Name',
+                tran('Name (A to Z)'),
                 SORT_KEY_NAME,
                 true,
                 currentSortData,
                 setter,
             ),
             genSortMenuItem(
-                'Name',
+                tran('Name (Z to A)'),
                 SORT_KEY_NAME,
                 false,
                 currentSortData,
@@ -159,14 +173,14 @@ export default function FileListFilterIconsComp({
         if (typeNamesRef.current.length > 1) {
             menuItems.push(
                 genSortMenuItem(
-                    'Type',
+                    tran('Type (A to Z)'),
                     SORT_KEY_TYPE,
                     true,
                     currentSortData,
                     setter,
                 ),
                 genSortMenuItem(
-                    'Type',
+                    tran('Type (Z to A)'),
                     SORT_KEY_TYPE,
                     false,
                     currentSortData,
@@ -224,6 +238,7 @@ export default function FileListFilterIconsComp({
                 title={tran('Sort')}
                 isActive={sortData.key !== SORT_KEY_NONE}
                 onClick={handleSortMenuOpening}
+                isOpeningMenu
             />
             {typeNames.length > 1 ? (
                 <RenderIconComp
@@ -237,6 +252,7 @@ export default function FileListFilterIconsComp({
                     }
                     isActive={filterTypeName !== ''}
                     onClick={handleTypeMenuOpening}
+                    isOpeningMenu
                 />
             ) : null}
         </>

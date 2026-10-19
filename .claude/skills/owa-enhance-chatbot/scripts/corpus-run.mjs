@@ -4,14 +4,30 @@
 // tool the window called. The research phase of this skill starts here.
 //
 //   node .claude/skills/owa-enhance-chatbot/scripts/corpus-run.mjs \
-//        --server="<the Assistant row>" --model="<the Model row>" \
+//        --server="<the Assistant row>" [--model="<the Model row>"] \
 //        [--out=<file.jsonl>] [--files=presenter,reader] [--ids=a,b]
 //        [--limit=N] [--timeout=480] [--skip=<regex>] [--templates]
 //        [--offline] [--pace=135] [--pace-since=<ISO>] [--pace-files=a,b]
 //        [--no-page-switch] [--as-focus=reader] [--typed] [--dry]
 //        [--profile=<data folder name>]
 //
-// --files / --ids narrow it; --skip leaves out questions matching a pattern;
+// --asks=<file.json> asks a short list of questions the corpus does not have
+// (2026-10-16): each is TYPED, so each joins the window's Alt+Up history.
+//
+// --lang=km asks every question in the app's OWN language (2026-10-17, the
+// user's ask: _test model gemma4:cloud on Khmer all questions_): the words
+// are each row's translation in `questions/i18n/<lang>.json`, pressed in the
+// More… list as that window draws it, and the app must already be shown in
+// that language. The head row's pickers are found by what they HOLD (focus
+// keys, Free/Auto, the engine), never by their aria-labels, which are
+// translated -- so this is the only way the run works in a non-English
+// window at all. --allow-more presses the spend guard's Allow more when it
+// trips and asks the paused row again: ONLY with the user's explicit word in
+// the conversation, only on a dev app, only for an assistant at $0.
+//
+// --server=Auto with no --model asks what a window on its default asks
+// (2026-10-16): Auto has no model picker, and a record's `model` is who it
+// picked. --files / --ids narrow it; --skip leaves out questions matching a pattern;
 // --templates asks the fill-in rows (typed, with a sample filled in) instead
 // of the rest; --as-focus asks the questions that belong to EVERY window as
 // one other window offers them; --no-page-switch refuses a question that
@@ -108,16 +124,8 @@ const PROFILE =
 // The guide's own answer is what is being read: an assistant that is not
 // there is the point, not a failure of the run.
 const OFFLINE = args.offline === true;
-const FOCUS_LABEL = {
-    presenter: 'Presenter',
-    reader: 'Bible Reader',
-    appDocumentEditor: 'Document Editor',
-    bibleNote: 'Bible Note',
-    setting: 'Settings',
-    webEditor: 'Web Editor',
-    lyricEditor: 'Lyric Editor',
-    lwShare: 'Local Web Share',
-};
+// The language the questions are asked in; null is the corpus's own English.
+const LANG = typeof args.lang === 'string' && args.lang !== 'en' ? args.lang : null;
 const MAIN_PAGES = {
     presenter: 'presenter.html',
     reader: 'reader.html',
@@ -126,9 +134,21 @@ const MAIN_PAGES = {
 // What a template row's placeholder is filled with: the row cannot be asked as
 // it stands, and the window fills the box instead of asking it.
 const TEMPLATE_FILL = {
-    'add-a-slide': 'Add a slide to my document that says Welcome to church',
-    'write-a-note': 'Write a Bible note about grace',
-    'find-a-control': 'Where is the button for Clear All',
+    en: {
+        'add-a-slide': 'Welcome to church',
+        'write-a-note': 'grace',
+        'find-a-control': 'Clear All',
+    },
+    km: {
+        'add-a-slide': 'សូមស្វាគមន៍មកកាន់ព្រះវិហារ',
+        'write-a-note': 'ព្រះគុណ',
+        'find-a-control': 'លុបទាំងអស់',
+    },
+    fr: {
+        'add-a-slide': 'Bienvenue à l’église',
+        'write-a-note': 'la grâce',
+        'find-a-control': 'Tout effacer',
+    },
 };
 
 // ---- plumbing: the dev instance, one CDP socket, the app's own MCP door ---
@@ -387,10 +407,22 @@ function log(...parts) {
     console.log(new Date().toISOString().slice(11, 19), ...parts);
 }
 
+function toPlainText(text) {
+    return String(text ?? '').replace(/\s+/g, ' ').trim();
+}
+
 // ---- the corpus -------------------------------------------------------------
 
 function loadCorpus() {
     const dir = path.join(REPO, 'tools/owa-devtools-mcp/questions');
+    // `<page>.<section>.<id>` → { en, text }: what the More… list shows in
+    // that language.
+    const translated =
+        LANG === null
+            ? null
+            : JSON.parse(
+                  fs.readFileSync(path.join(dir, 'i18n', `${LANG}.json`), 'utf8'),
+              ).questions;
     const rows = [];
     for (const name of fs.readdirSync(dir).sort()) {
         if (!name.endsWith('.json') || name === 'schema.json') {
@@ -402,6 +434,9 @@ function loadCorpus() {
             : (file.focus ?? 'presenter');
         for (const section of file.sections) {
             for (const question of section.questions) {
+                const local =
+                    translated?.[`${file.page}.${section.id}.${question.id}`] ??
+                    null;
                 rows.push({
                     key: `${file.page}/${section.id}/${question.id}`,
                     file: name.replace(/\.json$/, ''),
@@ -410,10 +445,15 @@ function loadCorpus() {
                     section: section.id,
                     sectionLabel: section.label,
                     id: question.id,
+                    en: question.text,
+                    isUntranslated: translated !== null && local === null,
                     text:
                         question.template === true
-                            ? (TEMPLATE_FILL[question.id] ?? question.text)
-                            : question.text,
+                            ? (local?.text ?? question.text).replace(
+                                  '...',
+                                  TEMPLATE_FILL[LANG ?? 'en']?.[question.id] ?? '...',
+                              )
+                            : (local?.text ?? question.text),
                     kind: question.kind,
                     isTemplate: question.template === true,
                     resources: question.resources ?? {},
@@ -455,16 +495,36 @@ function readDone() {
 
 // ---- page expressions -------------------------------------------------------
 
+// The head row's pickers by what they HOLD, never by their aria-labels, which
+// are translated: the focus picker's options are the windows' keys, the
+// assistant picker's include Free and Auto, the model picker is the engine.
+const FIND_PICKER_SOURCE = `const findPicker = (role) => {
+    const selects = [...document.querySelectorAll('.chat-head-row select')];
+    const valuesOf = (one) => [...one.options].map((option) => option.value);
+    if (role === 'model') {
+        return document.querySelector('.chat-head-row select.chat-engine');
+    }
+    if (role === 'focus') {
+        return selects.find((one) => {
+            const values = valuesOf(one);
+            return values.includes('presenter') && values.includes('reader') && values.includes('lwShare');
+        }) ?? null;
+    }
+    return selects.find((one) => {
+        const values = valuesOf(one);
+        return values.includes('free') || values.includes('::auto::');
+    }) ?? null;
+};`;
+
 const STATE_EXPRESSION = `(() => {
-    const readPick = (label) => {
-        const picker = document.querySelector(
-            '.chat-head-row select[aria-label="' + label + '"]',
-        );
+    ${FIND_PICKER_SOURCE}
+    const readPick = (role, isValue = false) => {
+        const picker = findPicker(role);
         if (picker === null) {
             return null;
         }
         const on = [...picker.options].find((o) => o.value === picker.value);
-        return on ? on.textContent.trim() : null;
+        return on ? (isValue ? on.value : on.textContent.trim()) : null;
     };
     const cues = [...document.querySelectorAll('.chat-cues article.cue')].map(
         (cue) => {
@@ -512,9 +572,17 @@ const STATE_EXPRESSION = `(() => {
         },
     );
     return {
-        focus: readPick('Which part of the app'),
-        provider: readPick('Which assistant answers'),
-        model: readPick('Which model answers'),
+        focus: readPick('focus'),
+        focusKey: readPick('focus', true),
+        provider: readPick('provider'),
+        // The VALUES are what puts a default back: the words are translated.
+        providerKey: readPick('provider', true),
+        modelKey: readPick('model', true),
+        // Auto has no model picker: AUTO PICK says who answered last.
+        model:
+            readPick('model') ??
+            document.querySelector('.chat-auto-pick')?.innerText.trim() ??
+            null,
         isBusy:
             document.querySelector('.chat-stop') !== null ||
             document.querySelector('.chat-progress') !== null,
@@ -537,18 +605,18 @@ const STATE_EXPRESSION = `(() => {
     };
 })()`;
 
-function genPickExpression(pickerLabel, optionLabel) {
+// An option by its words, or -- for the focus, whose words are translated --
+// by its value.
+function genPickExpression(role, wanted, isByValue) {
     return `(() => {
-        const picker = document.querySelector(
-            '.chat-head-row select[aria-label="' +
-                ${JSON.stringify(pickerLabel)} + '"]',
-        );
+        ${FIND_PICKER_SOURCE}
+        const picker = findPicker(${JSON.stringify(role)});
         if (picker === null) {
             return { ok: false, reason: 'no picker' };
         }
-        const wanted = ${JSON.stringify(optionLabel)};
+        const wanted = ${JSON.stringify(wanted)};
         const option = [...picker.options].find((one) => {
-            return one.textContent.trim() === wanted;
+            return ${isByValue ? 'one.value' : 'one.textContent.trim()'} === wanted;
         });
         if (option === undefined) {
             return {
@@ -727,26 +795,24 @@ async function waitFor(check, timeoutMs, stepMs = 300) {
     }
 }
 
-async function pick(pickerLabel, optionLabel) {
+async function pick(role, wanted, isByValue = false) {
     for (let attempt = 0; attempt < 5; attempt++) {
         const result = await cdp.evaluate(
-            genPickExpression(pickerLabel, optionLabel),
+            genPickExpression(role, wanted, isByValue),
         );
         if (!result.ok) {
             return result;
         }
         await sleep(350);
         const readBack = await cdp.evaluate(`(() => {
-            const picker = document.querySelector(
-                '.chat-head-row select[aria-label="' +
-                    ${JSON.stringify(pickerLabel)} + '"]',
-            );
+            ${FIND_PICKER_SOURCE}
+            const picker = findPicker(${JSON.stringify(role)});
             const on = picker && [...picker.options].find(
                 (o) => o.value === picker.value,
             );
-            return on ? on.textContent.trim() : null;
+            return on ? ${isByValue ? 'on.value' : 'on.textContent.trim()'} : null;
         })()`);
-        if (readBack === optionLabel) {
+        if (readBack === wanted) {
             return { ok: true };
         }
     }
@@ -799,7 +865,7 @@ function parseUsage(costFull) {
             costFull ?? '',
         );
     if (match === null) {
-        return null;
+        return LANG === null ? null : parseUsageAnyLanguage(costFull);
     }
     const toNumber = (value) => Number((value ?? '0').replace(/,/g, ''));
     return {
@@ -807,6 +873,34 @@ function parseUsage(costFull) {
         input: toNumber(match[2]),
         cacheRead: toNumber(match[3]),
         output: toNumber(match[4]),
+    };
+}
+
+// The same line in any language (`genTokenParts` in usageHelpers.ts):
+// `<rounds>: <input>[, <read>][, <written>]; <output>.`, its counts in
+// en-US digits whatever the language.
+function parseUsageAnyLanguage(costFull) {
+    const line = String(costFull ?? '')
+        .split(/\r?\n/)
+        .find((one) => /^[^:;]*\d[^:;]*: [^;]+; [^;]*\d/.test(one.trim()));
+    if (line === undefined) {
+        return null;
+    }
+    const toNumber = (text) => {
+        const found = /\d[\d,]*/.exec(text ?? '');
+        return found === null ? 0 : Number(found[0].replace(/,/g, ''));
+    };
+    const [head, rest] = line.trim().split(/: (.*)/s);
+    const [inputText, outputText] = rest.split('; ');
+    const inputParts = inputText.split(', ');
+    const readPart = inputParts.slice(1).find((part) => {
+        return /read from the cache|អានពីឃ្លាំង|lus? depuis le cache/i.test(part);
+    });
+    return {
+        rounds: toNumber(head),
+        input: toNumber(inputParts[0]),
+        cacheRead: toNumber(readPart),
+        output: toNumber(outputText),
     };
 }
 
@@ -824,7 +918,13 @@ function summariseScreens(screens) {
 // -- the questions -------------------------------------------------------------
 
 const corpus = loadCorpus();
-const CORPUS_TEXTS = new Set(corpus.map((row) => row.text));
+const CORPUS_TEXTS = new Set(corpus.map((row) => toPlainText(row.text)));
+if (LANG !== null) {
+    const missing = corpus.filter((row) => row.isUntranslated && !row.isTemplate);
+    if (missing.length > 0) {
+        log(`${missing.length} rows have no ${LANG} words; asked in English:`, missing.map((row) => row.key).join(', '));
+    }
+}
 let rows = corpus.filter((row) => {
     return args.templates ? row.isTemplate : !row.isTemplate;
 });
@@ -835,6 +935,30 @@ if (typeof args.files === 'string') {
 if (typeof args.ids === 'string') {
     const ids = args.ids.split(',');
     rows = rows.filter((row) => ids.includes(row.id) || ids.includes(row.key));
+}
+// Questions the corpus does NOT have -- a paraphrase, a question about what
+// the Bible says -- from a JSON list of {id, text, focus, kind}, INSTEAD of
+// the corpus. None is in the list, so each is typed and goes into the
+// window's Alt+Up history: keep it to the handful that proves the point.
+if (typeof args.asks === 'string') {
+    const asks = JSON.parse(fs.readFileSync(path.resolve(args.asks), 'utf8'));
+    rows = asks.map((one, index) => {
+        const id = String(one.id ?? index + 1);
+        return {
+            key: `asks/${one.focus ?? 'presenter'}/${id}`,
+            file: 'asks',
+            fileFocus: one.focus ?? 'presenter',
+            focus: one.focus ?? 'presenter',
+            section: 'asks',
+            sectionLabel: 'Typed',
+            id,
+            text: one.text,
+            kind: one.kind ?? 'howto',
+            isTemplate: false,
+            isTyped: true,
+            resources: one.resources ?? {},
+        };
+    });
 }
 // One focus after another: a change of focus is a new system prompt, which a
 // local server has to read again from the top.
@@ -891,7 +1015,7 @@ if (args.dry) {
 // message. Anything else stops the run without a press.
 
 const MARKER_FILE = path.join(WORK_DIR, 'scratch-open.json');
-const toPlain = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
+const toPlain = toPlainText;
 let scratch = null;
 
 function stopForIdentity(why) {
@@ -1011,15 +1135,16 @@ async function closeLeftover() {
 async function ensureAssistant(server, model) {
     let state = await getState();
     if (state.provider !== server) {
-        const picked = await pick('Which assistant answers', server);
+        const picked = await pick('provider', server);
         if (!picked.ok) {
             return picked;
         }
         await sleep(400);
         state = await getState();
     }
-    if (state.model !== model) {
-        const picked = await pick('Which model answers', model);
+    // --server=Auto names no model: Auto chooses one at every question.
+    if (typeof model === 'string' && state.model !== model) {
+        const picked = await pick('model', model);
         if (!picked.ok) {
             return picked;
         }
@@ -1031,7 +1156,12 @@ await closeLeftover();
 // What a NEW tab starts on is the window default this run must put back.
 const DEFAULTS_FILE = path.join(WORK_DIR, 'window-defaults.json');
 let state = await openScratchTab();
-let defaults = { provider: state.provider, model: state.model };
+let defaults = {
+    provider: state.provider,
+    model: state.model,
+    providerKey: state.providerKey,
+    modelKey: state.modelKey,
+};
 if (fs.existsSync(DEFAULTS_FILE)) {
     defaults = JSON.parse(fs.readFileSync(DEFAULTS_FILE, 'utf8'));
 } else {
@@ -1045,7 +1175,23 @@ async function restoreAndLeave(exitCode) {
             await openScratchTab();
         }
         const now = await getState();
-        if (checkIsScratch(now, null) && defaults.provider !== null) {
+        if (checkIsScratch(now, null) && defaults.providerKey) {
+            // By value, which reads the same in every language; a model is
+            // only put back where the default had a model picker (not Auto).
+            const picked = await pick('provider', defaults.providerKey, true);
+            await sleep(400);
+            const modelPicked = defaults.modelKey
+                ? await pick('model', defaults.modelKey, true)
+                : { ok: true };
+            await sleep(300);
+            await closeScratchTab(null);
+            if (picked.ok && modelPicked.ok) {
+                // Put back: the next run reads the window as it then is.
+                fs.rmSync(DEFAULTS_FILE, { force: true });
+            } else {
+                log('the window default could not be put back:', JSON.stringify(defaults));
+            }
+        } else if (checkIsScratch(now, null) && defaults.provider !== null) {
             await ensureAssistant(defaults.provider, defaults.model);
             await sleep(300);
             await closeScratchTab(null);
@@ -1149,6 +1295,8 @@ for (const row of rows) {
         id: row.id,
         kind: row.kind,
         q: row.text,
+        en: LANG === null ? undefined : row.en,
+        lang: LANG ?? undefined,
         focus: row.focus,
         fileFocus: row.fileFocus,
         resources: row.resources,
@@ -1165,10 +1313,7 @@ for (const row of rows) {
         if (!assistant.ok) {
             throw new Error(`assistant: ${assistant.reason}`);
         }
-        const focusPick = await pick(
-            'Which part of the app',
-            FOCUS_LABEL[row.focus],
-        );
+        const focusPick = await pick('focus', row.focus, true);
         if (!focusPick.ok) {
             throw new Error(`focus ${row.focus}: ${focusPick.reason}`);
         }
@@ -1189,7 +1334,7 @@ for (const row of rows) {
         toolCalls = [];
         const startedAt = Date.now();
         let sent = { ok: false, reason: 'template' };
-        if (!row.isTemplate && args.typed !== true) {
+        if (!row.isTemplate && !row.isTyped && args.typed !== true) {
             sent = await cdp.evaluate(genPickFromListExpression(row.text), 20000);
         }
         record.askedBy = sent.ok ? 'list' : 'typed';
@@ -1293,7 +1438,30 @@ for (const row of rows) {
                 return /click|type|present_bible|foreground|goto_page|guide_start/.test(name);
             });
             // Recorded, never undone: this driver does not hide a screen.
-            screensBefore = screensAfter;
+            // But an extra this question's OWN call put up comes off again
+            // (2026-10-17: once the hint said to start it, _Can you start a
+            // 5 minute countdown?_ left a countdown on both screens, off
+            // and waiting for whoever switches one on).
+            const startedWidgets = toolCalls
+                .filter((call) => {
+                    return (
+                        call.name === 'owa_foreground' &&
+                        (call.args?.action ?? 'start') === 'start' &&
+                        typeof call.args?.widget === 'string'
+                    );
+                })
+                .map((call) => call.args.widget);
+            for (const widget of [...new Set(startedWidgets)]) {
+                await mcp.call('owa_foreground', { action: 'stop', widget });
+            }
+            if (startedWidgets.length > 0) {
+                record.undoneForeground = [...new Set(startedWidgets)];
+                screensBefore = summariseScreens(
+                    await mcp.call('owa_list_screens', {}),
+                );
+            } else {
+                screensBefore = screensAfter;
+            }
         }
         const pageNow = await mcp.call('owa_app_state', {});
         if (pageNow?.mainWindow?.page && pageNow.mainWindow.page !== mainPage) {
@@ -1318,15 +1486,32 @@ for (const row of rows) {
         !OFFLINE &&
         !record.error &&
         (record.usage === null || record.usage === undefined) &&
-        /server is running|on and awake|could not be reached|took longer than|nothing answered|Request timed out|too slow|needs an assistant/i.test(
+        /server is running|on and awake|could not be reached|took longer than|nothing answered|Request timed out|too slow|needs an assistant|មិនអាចភ្ជាប់|ម៉ាស៊ីនមេប្រើពេលលើស|ត្រូវការជំនួយការ/i.test(
             `${record.note ?? ''} ${record.answer ?? ''}`,
         )
     ) {
         record.noModel = true;
     }
+    // In any language: no model round and a note under the answer is the
+    // guide standing in for an assistant that failed (2026-10-17: LM Studio
+    // could not load a model, said in Khmer, and the row was kept as answered).
+    if (
+        !OFFLINE &&
+        !record.error &&
+        (record.usage === null || record.usage === undefined) &&
+        typeof record.note === 'string' &&
+        record.note.trim().length > 0
+    ) {
+        record.noModel = true;
+    }
     // The spend guard's pause: the guide answered, not the model, and only a
     // person's press lifts it. Not an answer of this pass; the run stops.
-    if (!OFFLINE && /I have paused the assistant/.test(record.note ?? '')) {
+    if (
+        !OFFLINE &&
+        /I have paused the assistant|ខ្ញុំបានផ្អាកជំនួយការ/.test(
+            `${record.note ?? ''} ${record.answer ?? ''}`,
+        )
+    ) {
         record.noModel = true;
         record.paused = true;
     }
@@ -1346,6 +1531,23 @@ for (const row of rows) {
               `${record.timedOut ? 'TIMEOUT ' : ''}${record.reloaded ? 'RELOADED ' : ''}` +
               `| ${(record.answer ?? '').replace(/\s+/g, ' ').slice(0, 90)}`,
     );
+    if (record.paused && args['allow-more'] === true) {
+        // The user's own word in the conversation (see the header): the
+        // guard's button in the window's head, and the paused row again.
+        const pressed = await cdp.evaluate(`(() => {
+            const button = [...(document.querySelector('.chat-head')?.querySelectorAll('button') ?? [])]
+                .find((one) => /អនុញ្ញាតបន្ថែម|Allow more|Autoriser davantage/.test(one.textContent));
+            if (!button) return false;
+            button.click();
+            return true;
+        })()`);
+        log(`ALLOW MORE pressed by the driver (user-authorized): ${pressed}`);
+        if (pressed) {
+            await sleep(3000);
+            rows.push(row);
+            continue;
+        }
+    }
     if (record.paused) {
         log('STOPPING: the spend guard paused the assistant; a person must press Allow more');
         isPaused = true;

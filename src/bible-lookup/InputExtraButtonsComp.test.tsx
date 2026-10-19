@@ -174,11 +174,53 @@ describe('Bible lookup input actions', () => {
         await act(async () => action('Tab to complete').click());
         expect(controller.inputText).toBe('John 3:16-');
         controller.inputText = '';
+        h.focused = true;
         const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
-        await act(async () => h.handlers.get('tab')!(event));
+        h.handlers.get('tab')!(event);
+        // Synchronously, before the lookup resolves: a later `preventDefault`
+        // comes after the browser has already moved focus out of the box.
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
+        expect(controller.inputText).toBe('');
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
         expect(controller.inputText).toBe('John 3:16-');
-        expect(event.stopPropagation).toHaveBeenCalled();
-        expect(event.preventDefault).toHaveBeenCalled();
+    });
+
+    // PR-02: the listener is document-wide. Tab on a saved passage's version
+    // button used to pull focus into the box and widen the reading to 16-36.
+    it('leaves Tab to the browser when the reference box is not focused', async () => {
+        h.inputText = 'John 3:16';
+        h.editingResult = {
+            oldInputText: 'John 3:16',
+            result: {
+                bookKey: 'JHN',
+                guessingChapter: 3,
+                bibleItem: { target: { verseStart: 16, verseEnd: 16 } },
+            },
+        };
+        await render();
+        // Completion IS available, so only the focus check can hold it back.
+        expect(
+            action('Tab to complete').getAttribute('aria-disabled'),
+        ).toBeNull();
+        const other = document.createElement('button');
+        document.body.appendChild(other);
+        other.focus();
+        controller.inputText = 'John 3:16';
+        const lookupCount = h.getEditingResult.mock.calls.length;
+        const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
+        await act(async () => {
+            h.handlers.get('tab')!(event);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+        expect(controller.inputText).toBe('John 3:16');
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(event.stopPropagation).not.toHaveBeenCalled();
+        expect(h.getEditingResult).toHaveBeenCalledTimes(lookupCount);
+        expect(document.activeElement).toBe(other);
+        other.remove();
     });
 
     it('leaves a cross-chapter passage alone though its verses match', async () => {
@@ -202,6 +244,8 @@ describe('Bible lookup input actions', () => {
         expect(action('Tab to complete').getAttribute('aria-disabled')).toBe(
             'true',
         );
+        // Focused, and still nothing to complete: Tab leaves the box.
+        h.focused = true;
         controller.inputText = 'John 1:2-3:2';
         const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
         await act(async () => h.handlers.get('tab')!(event));

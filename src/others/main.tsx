@@ -29,13 +29,20 @@ import {
     InputContextMenuHandler,
     handleActiveSelectedElementScrolling,
 } from '../helper/domHelpers';
-import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import {
+    appLocalStorage,
+    DATA_DIR_MOVE_RESULT_SESSION_NAME,
+} from '../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { openGeneralSetting } from '../setting/settingHelpers';
 import {
+    checkIsDesktopDataDir,
+    DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
     findDataDirsOnVolumesSync,
-    getDesktopPath,
+    fsExistSync,
+    getDefaultDataDirPath,
+    getDesktopDataDirPathList,
     pathJoin,
 } from '../server/fileHelpers';
 import { escapeHtmlText } from '../helper/sanitizeHelpers';
@@ -77,12 +84,13 @@ async function askAboutMissingDataDir(missingDirPath: string) {
 
 /**
  * A computer that has never had a data folder chosen, with one on a plugged-in
- * drive (or in the default Desktop folder): offered, rather than leaving the
- * volunteer to know where Path Settings is.
+ * drive (or in the default folder, or the old default on the Desktop):
+ * offered, rather than leaving the volunteer to know where Path Settings is.
  */
 async function offerFoundDataDir() {
     const [foundDirPath] = findDataDirsOnVolumesSync([
-        pathJoin(getDesktopPath(), 'open-worship-data'),
+        getDefaultDataDirPath(),
+        ...getDesktopDataDirPathList(),
     ]);
     if (foundDirPath === undefined) {
         return false;
@@ -104,17 +112,90 @@ async function offerFoundDataDir() {
     return true;
 }
 
+// Once per launch, not per page: the main window reloads to switch between
+// the Presenter and the Reader, and its `sessionStorage` lasts as long as the
+// window does.
+const DATA_DIR_MOVE_ASKED_SESSION_NAME = 'data-dir-move-asked';
+
+function takeSessionItem(key: string) {
+    try {
+        const value = sessionStorage.getItem(key);
+        if (value !== null) {
+            sessionStorage.removeItem(key);
+        }
+        return value;
+    } catch (_error) {
+        return null;
+    }
+}
+
+function claimOncePerLaunch(key: string) {
+    try {
+        if (sessionStorage.getItem(key) !== null) {
+            return false;
+        }
+        sessionStorage.setItem(key, 'true');
+    } catch (_error) {}
+    return true;
+}
+
+/**
+ * A data folder still on the Desktop -- the old default, which OneDrive backs
+ * up -- is asked about at every launch until it is moved or the question is
+ * put away; one that was copied away is reminded of while the old copy is
+ * there. Both dialogs load only then: the common case is two path compares and
+ * one `existsSync`.
+ */
+async function checkDataDirMove(selectedDirPath: string) {
+    const isDesktopDataDir = checkIsDesktopDataDir(selectedDirPath);
+    if (
+        !isDesktopDataDir &&
+        !fsExistSync(
+            pathJoin(selectedDirPath, DATA_DIR_MOVED_FROM_FLAG_FILE_NAME),
+        )
+    ) {
+        return;
+    }
+    if (!claimOncePerLaunch(DATA_DIR_MOVE_ASKED_SESSION_NAME)) {
+        return;
+    }
+    const { askToMoveDesktopDataDir, remindOldDataDirCopy } =
+        await import('../setting/directory-setting/dataDirMoveAskHelpers');
+    if (isDesktopDataDir) {
+        await askToMoveDesktopDataDir(selectedDirPath);
+    } else {
+        await remindOldDataDirCopy(selectedDirPath);
+    }
+}
+
+// Left by `runPendingDataDirMove` as this window started. It already names
+// any old copy, so the launch reminder is not shown on top of it.
+async function showDataDirMoveResult() {
+    const resultText = takeSessionItem(DATA_DIR_MOVE_RESULT_SESSION_NAME);
+    if (resultText === null) {
+        return;
+    }
+    claimOncePerLaunch(DATA_DIR_MOVE_ASKED_SESSION_NAME);
+    const { showDataDirMoveResult } =
+        await import('../setting/directory-setting/dataDirMoveAskHelpers');
+    await showDataDirMoveResult(resultText);
+}
+
 function useCheckSetting() {
     useAppEffectAsync(async () => {
         if (!appProvider.isMainPage) {
             return;
         }
+        await showDataDirMoveResult();
         const missingDirPath = appLocalStorage.missingParentDirPath;
         if (missingDirPath !== null) {
             await askAboutMissingDataDir(missingDirPath);
             return;
         }
-        if (await appLocalStorage.getSelectedParentDirectory()) {
+        const selectedDirPath =
+            await appLocalStorage.getSelectedParentDirectory();
+        if (selectedDirPath) {
+            await checkDataDirMove(selectedDirPath);
             return;
         }
         if (await offerFoundDataDir()) {

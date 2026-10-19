@@ -416,6 +416,60 @@ describe('non-Bible screen managers', () => {
         expect(frontRoot.children).toHaveLength(2);
     });
 
+    test('a message the presenter re-sends as an equal copy still leaves when it is hidden or cleared', async () => {
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
+        const { withForegroundLayer } = await import('../screenTypeHelpers');
+
+        const manager = new ScreenForegroundManager(
+            {
+                screenId: 27,
+                width: 1280,
+                height: 720,
+                noSyncGroupMap: new Map<string, boolean>(),
+                checkIsLockedWithMessage: vi.fn(() => false),
+                sendScreenMessage: vi.fn(),
+                createScreenManagerBaseGhost: vi.fn(),
+            } as any,
+            { styleAnimList: { fade: {} } } as any,
+        );
+        const root = document.createElement('div');
+        manager.rootContainer = root;
+        // The presenter rebuilds the whole list on every press, so each list
+        // holds NEW objects -- equal to the ones on the screen, never the same.
+        const genFirst = () => {
+            return withForegroundLayer(
+                { id: 'first', textList: ['QA first'], intervalSecond: null },
+                false,
+            );
+        };
+        const second = withForegroundLayer(
+            { id: 'second', textList: ['QA second'], intervalSecond: null },
+            false,
+        );
+
+        manager.setMessageDataList([genFirst()]);
+        manager.setMessageDataList([genFirst(), second]);
+        expect(root.children).toHaveLength(2);
+
+        // Hide the first: it must come off the screen, not stay behind.
+        manager.setMessageDataList([second]);
+        await vi.waitFor(() => {
+            expect(root.children).toHaveLength(1);
+        });
+
+        // Shown again it is ONE box, not a second copy beside a stale one.
+        manager.setMessageDataList([genFirst(), second]);
+        manager.setMessageDataList([genFirst(), second]);
+        expect(root.children).toHaveLength(2);
+
+        // And Clear Foreground takes everything off.
+        manager.clear();
+        await vi.waitFor(() => {
+            expect(root.children).toHaveLength(0);
+        });
+    });
+
     test('a released foreground root stops its overlays, draws nothing while away, and the next root draws them all', async () => {
         const { default: ScreenForegroundManager } =
             await import('./ScreenForegroundManager');

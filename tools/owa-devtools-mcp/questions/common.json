@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-15",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "panels",
@@ -18,7 +18,7 @@
                     "keywords": ["context menu", "menu height", "scroll menu"],
                     "resources": {
                         "recipe": "W-01b",
-                        "passage": "The menu shifts into view"
+                        "passage": "A long menu scrolls only when it is taller than the whole window"
                     }
                 },
                 {
@@ -143,6 +143,22 @@
                         "recipe": "W-17",
                         "shortcut": "Enter / Shift+Enter",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "find-in-ai-windows",
+                    "text": "Can I search the words in the help window or in AI Chat?",
+                    "kind": "howto",
+                    "keywords": [
+                        "search chat",
+                        "find in answer",
+                        "find in ai chat",
+                        "search website",
+                        "ctrl f chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-17",
+                        "shortcut": "Ctrl+F"
                     }
                 },
                 {
@@ -596,7 +612,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Click the 🤖 button in the top-right corner of the window"
+                        "passage": "On Windows the taskbar has it too"
                     }
                 },
                 {
@@ -635,8 +651,25 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Seen enough tips? The ✕ at the very end of the line puts it away for 30 days",
+                        "passage": "at the very end of the tip line puts it away for 30 days",
                         "find": "Hide tips for 30 days"
+                    }
+                },
+                {
+                    "id": "show-tip-line-again",
+                    "text": "How do I get the tips back after I hid them?",
+                    "kind": "howto",
+                    "keywords": [
+                        "tips back",
+                        "show tips again",
+                        "/tips",
+                        "hidden tips",
+                        "bring back the tip line",
+                        "lightbulb"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Want the tips back sooner? Type /tips"
                     }
                 },
                 {
@@ -899,6 +932,7 @@
                         "escape",
                         "wrong question",
                         "asked by mistake",
+                        "send became stop",
                         "taking too long",
                         "still waiting"
                     ],
@@ -1067,7 +1101,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "With an AI key set in"
+                        "passage": "The help window still answers from the manual by itself"
                     }
                 },
                 {
@@ -1136,6 +1170,9 @@
                         "paperclip",
                         "upload",
                         "send file",
+                        "read pdf",
+                        "full bible verse",
+                        "related pdf",
                         "drag",
                         "drop"
                     ],
@@ -1158,7 +1195,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Under every answer is Copy"
+                        "passage": "Asked about reading the Bible from the wrong page?"
                     }
                 },
                 {
@@ -1341,6 +1378,7 @@
                     ],
                     "resources": {
                         "recipe": "W-44",
+                        "passage": "Sharing this computer?",
                         "find": "Sign out of every site"
                     }
                 },
@@ -1360,7 +1398,7 @@
                     ],
                     "resources": {
                         "recipe": "W-44",
-                        "passage": "This is not the app's own assistant",
+                        "passage": "opens a company's own AI chat website",
                         "related": ["W-42"],
                         "find": "AI Chat"
                     }

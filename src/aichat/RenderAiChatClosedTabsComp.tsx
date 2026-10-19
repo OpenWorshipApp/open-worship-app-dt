@@ -1,12 +1,13 @@
 import { getAiChatProvider, toAiChatHostLabel } from './aiChatProviders';
 import type { AiChatClosedTabType } from './aiChatSessionHelpers';
+import { fillWords, tran } from '../chatbot/chatTranHelpers';
 
 function genClosedTabTitle(closedTab: AiChatClosedTabType) {
     return (
         closedTab.title ||
         closedTab.pageTitle ||
         getAiChatProvider(closedTab.providerKey)?.name ||
-        'Chat'
+        tran('Chat')
     );
 }
 
@@ -18,17 +19,19 @@ function genClosedAgoText(closedAt: number, now: number) {
         return '';
     }
     if (minutes < 1) {
-        return 'just now';
+        return tran('just now');
     }
     if (minutes < 60) {
-        return `${minutes} min ago`;
+        return fillWords(tran('{count} min ago'), { count: minutes });
     }
     const hours = Math.floor(minutes / 60);
     if (hours < 24) {
-        return `${hours} h ago`;
+        return fillWords(tran('{count} h ago'), { count: hours });
     }
     const days = Math.floor(hours / 24);
-    return days === 1 ? 'yesterday' : `${days} days ago`;
+    return days === 1
+        ? tran('yesterday')
+        : fillWords(tran('{count} days ago'), { count: days });
 }
 
 /**
@@ -50,7 +53,9 @@ export default function RenderAiChatClosedTabsComp({
     if (closedTabs.length === 0) {
         return (
             <p className="aichat-closed-empty">
-                Tabs you close show up here, so you can open them again.
+                {tran(
+                    'Tabs you close show up here, so you can open them again.',
+                )}
             </p>
         );
     }
@@ -59,7 +64,7 @@ export default function RenderAiChatClosedTabsComp({
         <div className="aichat-closed">
             <ul
                 className="aichat-closed-list"
-                aria-label="Recently closed tabs"
+                aria-label={tran('Recently closed tabs')}
             >
                 {closedTabs.map((closedTab) => {
                     const provider = getAiChatProvider(closedTab.providerKey);
@@ -72,8 +77,13 @@ export default function RenderAiChatClosedTabsComp({
                                 disabled={!canReopen}
                                 title={
                                     canReopen
-                                        ? `Open “${title}” again`
-                                        : 'Close a tab before opening another'
+                                        ? fillWords(
+                                              tran('Open “{title}” again'),
+                                              { title },
+                                          )
+                                        : tran(
+                                              'Close a tab before opening another',
+                                          )
                                 }
                                 onClick={() => {
                                     onReopen(closedTab.id);
@@ -119,7 +129,7 @@ export default function RenderAiChatClosedTabsComp({
                 className="aichat-link-button aichat-closed-forget"
                 onClick={onForget}
             >
-                Clear this list
+                {tran('Clear this list')}
             </button>
         </div>
     );

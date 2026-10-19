@@ -572,16 +572,19 @@ describe('appHelpers', () => {
             })),
         );
 
+        const onStarting = vi.fn();
         const videoPromise = module.downloadVideoOrAudio(
             ' https://video ',
             '/out',
             true,
+            onStarting,
         );
 
         await expect(videoPromise).resolves.toEqual({
             filePath: '/out/video.mp4',
             fileFullName: 'Sample Title.mp4',
         });
+        expect(onStarting).toHaveBeenCalledOnce();
 
         const audioPromise = module.downloadVideoOrAudio(
             'https://audio',
@@ -670,10 +673,19 @@ describe('appHelpers', () => {
         await expect(
             module.resolveMediaStreamUrl('https://watch'),
         ).rejects.toThrow('extra-bin is not installed');
+        // The caller's "Downloading…, please wait" goes in `onStarting`: it
+        // must not announce a download that the missing tools stopped.
+        const onStarting = vi.fn();
         await expect(
-            module.downloadVideoOrAudio('https://video', '/out', true),
+            module.downloadVideoOrAudio(
+                'https://video',
+                '/out',
+                true,
+                onStarting,
+            ),
         ).rejects.toThrow('extra-bin is not installed');
 
+        expect(onStarting).not.toHaveBeenCalled();
         expect(appProviderMock.ytUtils.getYTHelper).not.toHaveBeenCalled();
     });
 

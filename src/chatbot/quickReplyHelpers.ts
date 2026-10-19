@@ -28,6 +28,15 @@
 
 import type { BotFocusType } from './helpBotHelpers';
 import { genFollowUpQuestions } from './questionHelpers';
+import {
+    checkIsChosenScript,
+    checkIsLanguageWord,
+    checkIsRemovalReply,
+    checkIsWalkthroughEchoWord,
+    findYesNoReplies,
+    listFrameAliases,
+} from './chatLangHelpers';
+import { tran } from './chatTranHelpers';
 
 // Three buttons is a row in a 460px window; two is the cap when the answer is
 // already carrying walkthrough buttons of its own, because a wall of buttons
@@ -60,7 +69,22 @@ export const MAX_REPLY_LENGTH = 40;
 // the list of what may come before the word. It is now, with its two cousins
 // -- an uppercase word and a colon straight after a sentence's end is nothing
 // a person writes.
-const OPTIONS_MARKER = /(^|[\s>*_(.!?-])OPTIONS:[ \t]*/i;
+//
+// The prompt tells a model to keep the marker in English whatever language it
+// answers in, and a small model translates it anyway (`ជម្រើស:`), so the
+// words a language's `assistant.json` lists for it are read too, with that
+// script's colon -- and its full stop may come before it.
+function escapeRegExp(text: string) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function genFrameMarker(word: string) {
+    const nameList = [word, ...listFrameAliases(word).map(escapeRegExp)];
+    return new RegExp(
+        `(^|[\\s>*_(.!?\\u17D4-])(?:${nameList.join('|')})[:\\uFF1A\\u17D6][ \\t]*`,
+        'iu',
+    );
+}
+const OPTIONS_MARKER = genFrameMarker('OPTIONS');
 // How far back the marker may sit. The model puts it last; two lines of slack
 // covers a stray blank or a closing sentence typed after it. Further back than
 // that and it is something else -- a quoted example, a step in a recipe.
@@ -94,44 +118,54 @@ function toCleanReply(raw: string) {
 }
 
 /**
- * Whether this is something a volunteer reading an English window can act on.
+ * Whether this is something the volunteer reading the answer can act on.
  *
- * The system prompt says ALWAYS answer in English, and the strong models keep
- * to it. A weaker one -- and the keyless provider is nothing but weaker models
- * -- keeps to it in the prose and then writes the options line in whatever
- * language it was thinking in. Measured live against the free tier
- * (2026-09-01): a correct English answer about the Bible Lookup button came
- * with a button under it reading `请确认显示这个按钮`.
+ * A weaker model -- and the keyless provider is nothing but weaker models --
+ * keeps to the answer's language in the prose and then writes the options
+ * line in whatever language it was thinking in. Measured live against the
+ * free tier (2026-09-01): a correct English answer about the Bible Lookup
+ * button came with a button under it reading `请确认显示这个按钮`.
  *
- * The rule is "no Latin letters AT ALL", not "non-Latin characters present".
- * Button names in this app are translated -- an answer may quite properly
- * offer "Show me លុបព្រះគម្ពីរ", and dropping that would be enforcing English
- * on the one thing that is deliberately not in English. A reply with no Latin
- * letter anywhere is not that; it is the model changing language on its own.
+ * So an option is kept when it has a Latin letter (a button name in another
+ * language inside an English option, "Show me លុបព្រះគម្ពីរ", is still
+ * English) or when it is written in a language somebody CHOSE: the answer's
+ * own, or the one the app is shown in (`checkIsChosenScript`) -- a Khmer
+ * answer's Khmer options. A script neither of them uses is the model changing
+ * language on its own.
  *
  * Enforced here rather than asked for in the prompt, which is this window's
  * standing lesson: a rule the model can ignore is not a rule.
  */
-function checkIsReadableReply(reply: string) {
-    return /[a-z]/i.test(reply);
+function checkIsReadableReply(reply: string, answerText: string) {
+    return /[a-z]/i.test(reply) || checkIsChosenScript(reply, answerText);
 }
 
-function toReplyList(raw: string) {
+// A reply's length as it is SEEN: a vowel sign or a subscript mark adds a
+// code unit to a Khmer word and nothing to its width.
+function toShownLength(reply: string) {
+    return reply.replace(/\p{M}/gu, '').length;
+}
+
+function toReplyList(raw: string, answerText = '') {
     const seen = new Set<string>();
     const replies: string[] = [];
     for (const part of raw.split('|')) {
         const reply = toCleanReply(part);
         const key = reply.toLowerCase();
-        if (reply.length === 0 || reply.length > MAX_REPLY_LENGTH) {
+        if (reply.length === 0 || toShownLength(reply) > MAX_REPLY_LENGTH) {
             continue;
         }
-        if (!checkIsReadableReply(reply)) {
+        if (!checkIsReadableReply(reply, answerText)) {
             continue;
         }
         // "OPTIONS: No options available" was drawn as a button under a
         // state answer (the same run): pressed, it asks the assistant
         // "No options available".
         if (EMPTY_REPLY_PATTERN.test(reply)) {
+            continue;
+        }
+        // A removal is said in words, never one press (`checkIsRemovalReply`).
+        if (checkIsRemovalReply(reply)) {
             continue;
         }
         if (seen.has(key)) {
@@ -205,7 +239,7 @@ export function parseAnswerOptions(text: string): {
     const cut = cutTrailingFrame(text, OPTIONS_MARKER);
     return {
         text: cut.text,
-        options: cut.tail === null ? [] : toReplyList(cut.tail),
+        options: cut.tail === null ? [] : toReplyList(cut.tail, cut.text),
     };
 }
 
@@ -233,7 +267,7 @@ export type ShowRefType = {
     name: string;
 };
 
-const SHOWS_MARKER = /(^|[\s>*_(.!?-])SHOWS:[ \t]*/i;
+const SHOWS_MARKER = genFrameMarker('SHOWS');
 // Long enough for a real path, short enough that a model cannot paste an
 // answer into one.
 const MAX_SHOW_LENGTH = 300;
@@ -309,7 +343,7 @@ export function parseAnswerShows(text: string): {
                     : kind === 'selector'
                       ? // A selector is never shown. Until the ring lands there
                         // is nothing better to call it than what it is FOR.
-                        'the control I mean'
+                        tran('the control I mean')
                       : toCleanReply(value),
         });
         if (shows.length >= MAX_SHOW_COUNT) {
@@ -327,7 +361,7 @@ export function parseAnswerShows(text: string): {
 //
 // Same shape as `OPTIONS:` for the same reason: a frame the code holds it to,
 // not a request. `EC-21`, `EC-38` and `EC-43` each paid for that lesson once.
-const NEEDS_MARKER = /(^|[\s>*_(.!?-])NEEDS:[ \t]*/i;
+const NEEDS_MARKER = genFrameMarker('NEEDS');
 
 const ATTACH_REQUEST_MAP: Record<string, AttachRequestType> = {
     screenshot: 'screenshot',
@@ -433,7 +467,8 @@ const YES_NO_LEAD =
 // Both of these are understood by the OFFLINE bot's own follow-up patterns
 // (`FOLLOW_UP_YES_PATTERN` / `FOLLOW_UP_NO_PATTERN` in `helpBotHelpers`), which
 // is why the words are these words: a press has to work with no key and with
-// the building's internet down, not only with a model behind it.
+// the building's internet down, not only with a model behind it. Stored in
+// English for that reason, and translated where the chip is drawn.
 const YES_REPLY = 'Yes';
 const NO_REPLY = 'No thanks';
 
@@ -526,10 +561,18 @@ export function genQuickReplies(text: string): string[] {
         head.lastIndexOf('!'),
         head.lastIndexOf('?'),
         head.lastIndexOf('\n'),
+        // Khmer's full stop.
+        head.lastIndexOf('។'),
     );
     const question = toCleanReply(head.slice(startIndex + 1));
     if (question.length === 0 || question.length > MAX_QUESTION_LENGTH) {
         return [];
+    }
+    // A question in another of the app's languages, read the way THAT
+    // language asks yes or no, and answered with its own two words.
+    const languageReplies = findYesNoReplies(question);
+    if (languageReplies !== null) {
+        return languageReplies;
     }
     // A choice first: naming the two things beats a yes/no that answers
     // neither of them.
@@ -540,10 +583,12 @@ export function genQuickReplies(text: string): string[] {
     return YES_NO_LEAD.test(question) ? [YES_REPLY, NO_REPLY] : [];
 }
 
+// Letters of every script: keyed on `[a-z0-9]` alone, a Khmer option had an
+// empty key and was dropped as a duplicate of nothing.
 function toMatchKey(text: string) {
     return text
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
         .trim();
 }
 
@@ -564,7 +609,10 @@ const WALKTHROUGH_ECHO_PATTERN =
 const WALKTHROUGH_ACTION_PATTERN = /step by step|do it for me/i;
 
 export function checkIsWalkthroughEcho(reply: string) {
-    return WALKTHROUGH_ECHO_PATTERN.test(String(reply ?? '').trim());
+    const text = String(reply ?? '').trim();
+    return (
+        WALKTHROUGH_ECHO_PATTERN.test(text) || checkIsWalkthroughEchoWord(text)
+    );
 }
 
 // The same mistake under a drafted song. Measured 2026-09-08 on Kimi K2.6, on
@@ -644,7 +692,9 @@ export async function genMessageReplies({
     // third, vaguer way to say what those two already say -- and the one the
     // user cannot tell apart. A named CHOICE is a different question and keeps
     // its buttons.
-    const isGenericYesNo = detected[0] === YES_REPLY;
+    const isGenericYesNo =
+        detected[0] === YES_REPLY ||
+        (detected.length > 0 && checkIsLanguageWord(detected[0], 'yes'));
     if (detected.length > 0 && !(hasActions && isGenericYesNo)) {
         return detected.slice(0, limit);
     }

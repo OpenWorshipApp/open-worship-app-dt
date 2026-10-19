@@ -14,6 +14,9 @@ export type PassageTermsType = (string | string[])[];
 
 export const EXCERPT_CHAR_LIMIT: number;
 
+/** Whether a line opens a paragraph on a bold lead (wrapped or not). */
+export function checkIsBoldLeadLine(line: string, nextLine?: string): boolean;
+
 /** Lower case, labels out of their templates, words only. */
 export function toPassageKey(text: string): string;
 

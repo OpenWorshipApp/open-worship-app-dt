@@ -14,10 +14,16 @@ import { isColor } from './helpers';
 import SettingManager from './SettingManager';
 import { tran } from '../lang/langHelpers';
 
-async function readJsonData(filePath: string) {
+/**
+ * `isSilent` for a READ of the note: the Documents list asks once per row and
+ * again to group the rows, so one unreadable file came in as three identical
+ * "Color Note" toasts -- about a feature nobody had touched. Opening the file
+ * is what says it is broken.
+ */
+async function readJsonData(filePath: string, isSilent = false) {
     const fileSource = FileSource.getInstance(filePath);
     const json = await fileSource.readFileJsonData();
-    if (json === null) {
+    if (json === null && !isSilent) {
         appProvider.appUtils.handleError(
             new Error(`Unable to read data from ${filePath}}`),
         );
@@ -191,7 +197,7 @@ export default class FileSourceMetaManager {
         if (!isAppFile) {
             return getColorNoteFilePathSetting(filePath, null);
         }
-        const json = await readJsonData(filePath);
+        const json = await readJsonData(filePath, true);
         if (json === null) {
             return;
         }

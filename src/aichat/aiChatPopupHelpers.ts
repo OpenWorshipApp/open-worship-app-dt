@@ -8,6 +8,8 @@
 // process tells this window, and the window says so on its own line, for the
 // tab in front only: a tab behind is a page nobody is looking at.
 
+import { fillWords, tran } from '../chatbot/chatTranHelpers';
+
 // Twin of the channel name in `electron/aiChatGuestHelpers.ts`.
 export const AI_CHAT_POPUP_REFUSED_CHANNEL = 'app:ai-chat:popup-refused';
 
@@ -52,8 +54,12 @@ export function checkIsPopupRefusedInFront(
 }
 
 export function genPopupRefusedText(hostname: string) {
-    return (
-        `This site tried to open ${hostname} in your browser without a ` +
-        'press, so it was not opened. Press the link again if you meant it.'
+    return fillWords(
+        tran(
+            'This site tried to open {site} in your browser without a ' +
+                'press, so it was not opened. Press the link again if you ' +
+                'meant it.',
+        ),
+        { site: hostname },
     );
 }

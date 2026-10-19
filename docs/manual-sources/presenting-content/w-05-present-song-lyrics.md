@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-05 — Present song lyrics
 
@@ -14,11 +14,15 @@ workflowsVersion: "2026-10-15"
 1. In the left column, click a song in the **[en:tran:Documents]** list — songs carry a
    music-note icon. The middle **[en:tran:Documents]** tab switches to the song view: the lyric
    **[en:tran:Previewer]** on top and the **[en:tran:Stage Previewer]** verses under it. Only one file in the
-   list is ever highlighted, so picking a song releases whatever was selected before. 📸
+   list is ever highlighted, so picking a song releases whatever was selected before.
+   Those two show how the song will look on the screen; nothing reaches the screen
+   until you click a verse. 📸
 2. **Click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
-4. If the song's `ol:Config` block lists an **`- Attachments:`** field — one link per
-   line — each link also becomes its **own slide at the end** of the Stage Previewer,
+4. To attach links to a song — web addresses, or files on this computer written
+   `file:///C:/…` — open it in the **Lyric Editor** (right-click the song →
+   **[en:tran:Edit]**) and add an **`- Attachments:`** field to its `ol:Config` block, one
+   link per line. Each link also becomes its **own slide at the end** of the Stage Previewer,
    named after the link. A YouTube link becomes a playable video, an image / video /
    audio link becomes that media, and any other web address becomes the page itself;
    each fills the whole slide. Present one the same way you present a verse. A link to
@@ -55,14 +59,17 @@ workflowsVersion: "2026-10-15"
    under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Padding (%)]** says (the padding stays
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
-9. **[en:tran:Reset]** puts that stage back to the defaults.
+9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
+   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults.
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
-11. **Edit the words while the song is open and the verses follow by themselves.** Change the
+11. **Edit the words while the song is open and the verses follow by themselves; a verse
+    already on the screen changes when you click it again.** Change the
     song in the **Lyric Editor** (right-click the song → **[en:tran:Edit]**) — or in any other window —
     and within a second or two the rendered song **and every Stage Previewer pane** show the
     new words, once the editor has saved them (**Ctrl+S**): the verses render what the
-    song's file holds. You do not have to re-pick the song. 📸
+    song's file holds. You do not have to re-pick the song. A verse already on the
+    screen keeps its old words until you click it again. 📸
 12. If you ever need to force it — a song changed by something outside the app, say — the
     **⋮** at the right end of the Stage Previewer header holds **[en:tran:Reload]**, which re-renders
     every stage at once. The same **[en:tran:Reload]** sits in the right-click menu of a stage pane and
@@ -72,21 +79,24 @@ workflowsVersion: "2026-10-15"
     backticks followed by `ol:` and the part's name — `ol:Verse 1`, `ol:Verse 2`,
     `ol:Chorus`, `ol:Bridge` — then its words, then a line of three backticks to close it.
     A chord goes in square brackets just before the syllable it falls on, like `[G]`.
-    The first block, `ol:Config`, holds the song's **Title** and its **Structure**, and
-    the Structure line IS the order the song is sung and shown in: short codes run together
-    with NO spaces. `- Structure: V1CV2C` is verse 1, chorus, verse 2, chorus; `x2` after
-    a code repeats it (`Cx2`). To change the order, change that line — the parts
-    themselves stay where they are. The codes: Verse `V`, Chorus `C`, Pre-Chorus `P`,
-    Bridge `B`, Intro `I`, Outro `O`, Tag `T`, Interlude `L`, Instrumental `IS`; a
-    numbered part takes its number (`V2`), Intro and Outro take none. The editor marks a
-    mistake in red where it is: a Structure line that is empty, has spaces in it or names a
-    part that has no block (`V3` with no `Verse 3`), two parts with the same name, a
-    chord it does not know (`[Cm7]` is one, `[Cm7b5]` is not).
+    **The order it is sung in is its Structure line, in short codes such as V1CV2C, verse 1, chorus, verse 2, chorus.** The Structure line, in the first
+    block (`ol:Config`, beside the song's **Title**), is the order the song is sung and
+    shown in, so to change the order, change that line — the parts themselves stay where
+    they are. Write it in short codes run together with NO spaces: `- Structure: V1CV2C`
+    is verse 1, chorus, verse 2, chorus, and `x2` after a code repeats it (`Cx2`). The
+    codes: Verse `V`, Chorus `C`, Pre-Chorus `P`, Bridge `B`, Intro `I`, Outro `O`, Tag
+    `T`, Interlude `L`, Instrumental `IS`; a numbered part takes its number (`V2`), Intro
+    and Outro take none.
+    **The editor marks a mistake in red where it is.** It marks a Structure line that
+    is empty, has spaces in it or names a part that has no block (`V3` with no
+    `Verse 3`), two parts with the same name, and a chord it does not know — it knows
+    `[Cm7]`, not `[Cm7b5]`, so write a chord it knows in its place. Put the marked
+    line right and the red goes.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

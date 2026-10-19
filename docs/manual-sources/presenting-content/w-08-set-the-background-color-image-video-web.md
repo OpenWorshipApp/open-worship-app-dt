@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, KB-04]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-08 — Set the background (color / image / video / web)
 
@@ -26,7 +26,8 @@ workflowsVersion: "2026-10-15"
      web address; the Web Editor, W-15, is for a page file of your own).
      **A saved address cannot be edited.** To change it, right-click its tile →
      **[en:tran:Remove URL]** (it asks first, and is not offered while that page is on a
-     screen), then **[en:tran:Add URL]** with the new address.
+     screen), then **[en:tran:Add URL]** with the new address — on the tab's **⋮** at the
+     right of the folder path, or a right-click on an empty part of the list.
 3. The live background's tab carries the on-screen dot before its name (e.g. `● Videos`).
 4. Press **F7** ([en:tran:Clear Background]) to remove it.
 
@@ -46,7 +47,10 @@ its own — with its own view mode, sort and slide show — so you can flick bet
 Sunday's pictures on a memory stick and your standing set of backgrounds without ever
 re-pointing the folder the app was set up with. **[en:tran:Default]** IS that folder: it is the
 one Path Settings names, and adding sessions never touches it. A new session starts with
-no folder and offers to use the default one; the **⋮** on the session you are on (or a
+no folder and offers to use the default one. To point a session at a folder of your own,
+press the folder line above the list (the path it is reading): a box opens under it — type
+the folder's path and press Enter, or press **[en:tran:Choose a folder]** (the folder icon)
+and pick it. The **⋮** on the session you are on (or a
 right-click on any of them) renames or removes it. Removing forgets that session's
 folder and slide show — never the files themselves. On the Images, Videos and Webs tabs
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
@@ -57,5 +61,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `KB-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

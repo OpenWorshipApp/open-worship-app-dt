@@ -281,6 +281,14 @@ export type ForegroundMessageDataType = ForegroundLayerDataType & {
      */
     intervalSecond: number | null;
     extraStyle?: CSSProperties;
+    /**
+     * The messages ONE session put up one under another share this key, and
+     * the screen lays them out by their measured heights
+     * (`layOutMessageStack`). The `marginTop` the presenter stamps is only
+     * the first frame's estimate: it counts typed lines, and a line the
+     * screen WRAPS is one it cannot count.
+     */
+    stackKey?: string;
 };
 
 export type ForegroundQuickTextDataType = ForegroundLayerDataType & {

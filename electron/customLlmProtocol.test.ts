@@ -19,7 +19,9 @@ import {
     checkIsHiddenServerAddress,
     checkIsRegistryServerId,
     hideRegistryServerHost,
+    pickRegistryNote,
     toPublicRegistryServers,
+    toRegistryNote,
     toValidLlmRegistry,
     checkIsLocalNetworkUrl,
     checkIsLoopbackUrl,
@@ -709,7 +711,7 @@ describe('the shared LLM registry file', () => {
             baseUrl: 'https://abc.trycloudflare.com/v1',
             apiKey: 'sk-shared',
             isFree: true,
-            note: 'behind a Cloudflare tunnel',
+            note: { '': 'behind a Cloudflare tunnel' },
             source: 'registry',
         });
         expect(registry.servers[0].models[0]).toMatchObject({
@@ -856,7 +858,7 @@ describe('the shared LLM registry file', () => {
         ]);
     });
 
-    it('hands a window the servers without their keys, notes or addresses', () => {
+    it('hands a window the servers without their keys or addresses', () => {
         const registry = toValidLlmRegistry({ version: 1, servers: [entry] })!;
         const shown = toPublicRegistryServers(registry.servers);
         expect(shown[0]).toEqual({
@@ -867,6 +869,7 @@ describe('the shared LLM registry file', () => {
             models: registry.servers[0].models,
             isFree: true,
             source: 'registry',
+            note: { '': 'behind a Cloudflare tunnel' },
         });
         expect(JSON.stringify(shown)).not.toContain('sk-shared');
         expect(JSON.stringify(shown)).not.toContain('trycloudflare');
@@ -874,6 +877,96 @@ describe('the shared LLM registry file', () => {
         expect(registry.servers[0].baseUrl).toBe(
             'https://abc.trycloudflare.com/v1',
         );
+    });
+
+    // The user's ask, 2026-10-17: "add `note` to endpoint and models, and
+    // show the note in chatbot, e.g. for some model we want to let user know
+    // it slow but help us save cost of usage".
+    it('reads a note on a server and on a model, by language', () => {
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                {
+                    ...entry,
+                    note: {
+                        en: ' On the church computer ',
+                        km: 'នៅលើកុំព្យូទ័រព្រះវិហារ',
+                        'not a code': 'dropped',
+                        fr: 7,
+                    },
+                    models: [
+                        {
+                            model: 'qwen/qwen3.5-9b',
+                            note: 'Slow, but it saves us the cost of usage.',
+                        },
+                        { model: 'google/gemma-4-e4b', note: '   ' },
+                        { model: 'google/gemma-4-12b', note: ['no'] },
+                    ],
+                },
+            ],
+        })!;
+        const [server] = registry.servers;
+        expect(server.note).toEqual({
+            en: 'On the church computer',
+            km: 'នៅលើកុំព្យូទ័រព្រះវិហារ',
+        });
+        expect(server.models.map((row) => row.note)).toEqual([
+            { '': 'Slow, but it saves us the cost of usage.' },
+            undefined,
+            undefined,
+        ]);
+        expect(toRegistryNote({ en: 'x'.repeat(400) })?.en.length).toBe(300);
+        expect(
+            Object.keys(
+                toRegistryNote(
+                    Object.fromEntries(
+                        Array.from({ length: 20 }, (_, index) => {
+                            return [`l${String.fromCharCode(97 + index)}`, 'x'];
+                        }),
+                    ),
+                ) ?? {},
+            ),
+        ).toHaveLength(12);
+        expect(toRegistryNote(null)).toBeUndefined();
+        expect(toRegistryNote({})).toBeUndefined();
+    });
+
+    it('picks the note in the window’s language, then a fallback', () => {
+        const note = { en: 'Slow', km: 'យឺត', pt: 'Lento' };
+        expect(pickRegistryNote(note, 'km')).toBe('យឺត');
+        expect(pickRegistryNote(note, 'pt-BR')).toBe('Lento');
+        expect(pickRegistryNote(note, 'fr')).toBe('Slow');
+        expect(pickRegistryNote({ '': 'Plain', km: 'យឺត' }, 'fr')).toBe(
+            'Plain',
+        );
+        expect(pickRegistryNote({ de: 'Langsam' }, 'fr')).toBe('Langsam');
+        expect(pickRegistryNote(undefined, 'km')).toBe('');
+    });
+
+    it('hands a window the notes with the server’s host taken out', () => {
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                {
+                    ...entry,
+                    note: 'Through abc.trycloudflare.com, restarted nightly',
+                    models: [
+                        {
+                            model: 'qwen/qwen3.5-9b',
+                            note: { en: 'Slow at abc.trycloudflare.com' },
+                        },
+                    ],
+                },
+            ],
+        })!;
+        const [shown] = toPublicRegistryServers(registry.servers);
+        expect(shown.note).toEqual({
+            '': `Through ${REGISTRY_HIDDEN_HOST}, restarted nightly`,
+        });
+        expect(shown.models[0].note).toEqual({
+            en: `Slow at ${REGISTRY_HIDDEN_HOST}`,
+        });
+        expect(JSON.stringify(shown)).not.toContain('trycloudflare');
     });
 
     it('keeps what a window reads off an address: its path, and that it is usable', () => {

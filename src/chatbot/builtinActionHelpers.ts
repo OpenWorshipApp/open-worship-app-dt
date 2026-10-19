@@ -46,6 +46,8 @@ import {
 } from './helpBotHelpers';
 import { readSongAddress, readSongTitleArgument } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
+import { checkIsChatTipHidden, pickChatTip, showChatTips } from './tipHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import {
     checkIsMainWindowUrl,
     getCurrentWindowAim,
@@ -121,26 +123,35 @@ const SCREEN_TOGGLE_LABEL = 'Toggle showing screen';
 
 // The five clear buttons on every mini screen, by the words written on them.
 // The label is what `owa_click` finds; the key is what the manual says beside
-// it, so the answer can teach the shortcut for next time.
+// it, so the answer can teach the shortcut for next time. `what` is read
+// when the answer is written, in the app's language.
 const CLEAR_MAP = {
-    'clear-all': { label: 'Clear All', key: 'F6', what: 'everything' },
+    'clear-all': {
+        label: 'Clear All',
+        key: 'F6',
+        what: () => tran('everything'),
+    },
     'clear-background': {
         label: 'Clear Background',
         key: 'F7',
-        what: 'the background',
+        what: () => tran('the background'),
     },
-    'clear-slide': { label: 'Clear Slide', key: 'F8', what: 'the slide' },
+    'clear-slide': {
+        label: 'Clear Slide',
+        key: 'F8',
+        what: () => tran('the slide'),
+    },
     // `LT` on the bar: the layer a Bible passage and a Long Text Show's
     // text are both drawn in. The command keeps the name people type.
     'clear-bible': {
         label: 'Clear Long Text',
         key: 'F9',
-        what: 'the Bible passage or long text',
+        what: () => tran('the Bible passage or long text'),
     },
     'clear-foreground': {
         label: 'Clear Foreground',
         key: 'F10',
-        what: 'the foreground (countdown, marquee, clock)',
+        what: () => tran('the foreground (countdown, marquee, clock)'),
     },
 } as const;
 
@@ -232,18 +243,41 @@ function describeScreens(state: ScreenStateType) {
             .filter(([, entry]) => !entry.isBlank)
             .map(([screenId, entry]) => {
                 return (
-                    ` Screen ${screenId} already holds ${entry.held}, ` +
-                    'so turning it on shows that.'
+                    ' ' +
+                    fillWords(
+                        tran(
+                            'Screen {id} already holds {held}, so turning it ' +
+                                'on shows that.',
+                        ),
+                        { id: screenId, held: entry.held },
+                    )
                 );
             })
             .join('');
+        const count = { count: state.displayCount };
         return (
-            '**Nothing is showing on the projector.** The screen is off' +
-            (state.displayCount > 0
-                ? `, and this computer has ${state.displayCount} display` +
-                  `${state.displayCount === 1 ? '' : 's'} to put it on.`
-                : '.') +
-            heldWhileOff
+            (state.displayCount === 0
+                ? tran(
+                      '**Nothing is showing on the projector.** The screen ' +
+                          'is off.',
+                  )
+                : state.displayCount === 1
+                  ? fillWords(
+                        tran(
+                            '**Nothing is showing on the projector.** The ' +
+                                'screen is off, and this computer has ' +
+                                '{count} display to put it on.',
+                        ),
+                        count,
+                    )
+                  : fillWords(
+                        tran(
+                            '**Nothing is showing on the projector.** The ' +
+                                'screen is off, and this computer has ' +
+                                '{count} displays to put it on.',
+                        ),
+                        count,
+                    )) + heldWhileOff
         );
     }
     const ids = state.showingScreenIds;
@@ -253,22 +287,41 @@ function describeScreens(state: ScreenStateType) {
             if (entry === undefined) {
                 return '';
             }
-            return ` Screen ${screenId} shows ${entry.held}.`;
+            return (
+                ' ' +
+                fillWords(tran('Screen {id} shows {held}.'), {
+                    id: screenId,
+                    held: entry.held,
+                })
+            );
         })
         .join('');
+    const shown = { ids: ids.join(', ') };
     return (
-        `**Screen ${ids.join(', ')} ${ids.length === 1 ? 'is' : 'are'} ` +
-        'showing right now** -- the projector has the app on it.' +
-        held
+        (ids.length === 1
+            ? fillWords(
+                  tran(
+                      '**Screen {ids} is showing right now** -- the ' +
+                          'projector has the app on it.',
+                  ),
+                  shown,
+              )
+            : fillWords(
+                  tran(
+                      '**Screen {ids} are showing right now** -- the ' +
+                          'projector has the app on it.',
+                  ),
+                  shown,
+              )) + held
     );
 }
 
 async function runScreenStatus({ report }: BuiltinRunContextType) {
-    const finish = report('Checking the projector screens');
+    const finish = report(tran('Checking the projector screens'));
     try {
         const state = await readScreens();
         if (state === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         return {
             text: describeScreens(state),
@@ -280,17 +333,21 @@ async function runScreenStatus({ report }: BuiltinRunContextType) {
 }
 
 async function runScreenShow({ report }: BuiltinRunContextType) {
-    const finish = report('Turning the screen on');
+    const finish = report(tran('Turning the screen on'));
     try {
         const before = await readScreens();
         if (before === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         if (before.isAnyShowing) {
             return {
-                text:
-                    '**The screen is already on** -- ' +
-                    `screen ${before.showingScreenIds.join(', ')} is showing.`,
+                text: fillWords(
+                    tran(
+                        '**The screen is already on** -- screen {ids} is ' +
+                            'showing.',
+                    ),
+                    { ids: before.showingScreenIds.join(', ') },
+                ),
                 actions: genScreenActions(before),
             };
         }
@@ -299,10 +356,11 @@ async function runScreenShow({ report }: BuiltinRunContextType) {
         } catch (error) {
             appError(error, 'builtin /screen-show');
             return {
-                text:
+                text: tran(
                     'I could not find the screen button in this window. It ' +
-                    'is the leftmost icon on the screen preview card in the ' +
-                    '**Presenter** (or press **F5** there).',
+                        'is the leftmost icon on the screen preview card in ' +
+                        'the **Presenter** (or press **F5** there).',
+                ),
                 actions: [
                     genCommandAction('Go to the Presenter', '/goto presenter'),
                 ],
@@ -313,18 +371,26 @@ async function runScreenShow({ report }: BuiltinRunContextType) {
         if (after?.isAnyShowing) {
             return {
                 text:
-                    '**The screen is on now** -- ' +
-                    `screen ${after.showingScreenIds.join(', ')} is showing. ` +
-                    'Next time, **F5** in the Presenter does the same.',
+                    fillWords(
+                        tran(
+                            '**The screen is on now** -- screen {ids} is ' +
+                                'showing.',
+                        ),
+                        { ids: after.showingScreenIds.join(', ') },
+                    ) +
+                    ' ' +
+                    fillWords(tran(NEXT_TIME_KEY_TEXT), { key: 'F5' }),
                 actions: genScreenActions(after),
             };
         }
         return {
-            text:
+            text: tran(
                 'I pressed the screen button, but the app still reports ' +
-                'nothing showing. Look at the screen preview card in the ' +
-                'Presenter: its leftmost icon turns the output on, and the ' +
-                '**Display** button under it says which display it goes to.',
+                    'nothing showing. Look at the screen preview card in the ' +
+                    'Presenter: its leftmost icon turns the output on, and ' +
+                    'the **Display** button under it says which display it ' +
+                    'goes to.',
+            ),
             actions: [genCommandAction('Check again', '/screen')],
         };
     } finally {
@@ -333,15 +399,17 @@ async function runScreenShow({ report }: BuiltinRunContextType) {
 }
 
 async function runScreenHide({ report }: BuiltinRunContextType) {
-    const finish = report('Turning every screen off');
+    const finish = report(tran('Turning every screen off'));
     try {
         const before = await readScreens();
         if (before === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         if (!before.isAnyShowing) {
             return {
-                text: '**The screen is already off** -- nothing is showing.',
+                text: tran(
+                    '**The screen is already off** -- nothing is showing.',
+                ),
                 actions: genScreenActions(before),
             };
         }
@@ -350,15 +418,19 @@ async function runScreenHide({ report }: BuiltinRunContextType) {
         const after = await readScreens();
         if (after !== null && !after.isAnyShowing) {
             return {
-                text: '**Every screen is off now.** The projector shows nothing from the app.',
+                text: tran(
+                    '**Every screen is off now.** The projector shows ' +
+                        'nothing from the app.',
+                ),
                 actions: genScreenActions(after),
             };
         }
         return {
-            text:
+            text: tran(
                 'I asked the app to hide its screens, but one still reports ' +
-                'showing. The leftmost icon on its preview card in the ' +
-                'Presenter turns it off (or **F5**).',
+                    'showing. The leftmost icon on its preview card in the ' +
+                    'Presenter turns it off (or **F5**).',
+            ),
             actions: [genCommandAction('Check again', '/screen')],
         };
     } finally {
@@ -366,10 +438,17 @@ async function runScreenHide({ report }: BuiltinRunContextType) {
     }
 }
 
+// The shortcut for next time, said under a press that did it by hand.
+const NEXT_TIME_KEY_TEXT =
+    'Next time, **{key}** in the Presenter does the same.';
+
 function genClearRunner(name: keyof typeof CLEAR_MAP) {
-    const { label, key, what } = CLEAR_MAP[name];
+    const { label, key } = CLEAR_MAP[name];
     return async ({ report }: BuiltinRunContextType) => {
-        const finish = report(`Clearing ${what}`);
+        const what = CLEAR_MAP[name].what();
+        // The button by the words on it in the app's language.
+        const shownLabel = tranLabel(label);
+        const finish = report(fillWords(tran('Clearing {what}'), { what }));
         try {
             const screens = await readScreens();
             // An off screen still HOLDS its layers, and shows them the moment
@@ -381,15 +460,20 @@ function genClearRunner(name: keyof typeof CLEAR_MAP) {
             const isHeld = screens?.clearable.has(label) === true;
             if (screens !== null && !screens.isAnyShowing && !isHeld) {
                 return {
-                    text:
-                        `**The screen is off**, so there is nothing to clear ` +
-                        `-- the projector shows nothing from the app.`,
+                    text: tran(
+                        '**The screen is off**, so there is nothing to clear ' +
+                            '-- the projector shows nothing from the app.',
+                    ),
                     actions: genScreenActions(screens),
                 };
             }
             const offNote =
                 screens !== null && !screens.isAnyShowing
-                    ? ' The screen is off, so this only emptied what it was holding.'
+                    ? ' ' +
+                      tran(
+                          'The screen is off, so this only emptied what it ' +
+                              'was holding.',
+                      )
                     : '';
             let pressed: any = null;
             try {
@@ -399,10 +483,14 @@ function genClearRunner(name: keyof typeof CLEAR_MAP) {
             } catch (error) {
                 appError(error, `builtin /${name}`);
                 return {
-                    text:
-                        `I could not find the **${label}** button in this ` +
-                        'window. It is on the screen preview card in the ' +
-                        `**Presenter**, or press **${key}** there.`,
+                    text: fillWords(
+                        tran(
+                            'I could not find the **{label}** button in this ' +
+                                'window. It is on the screen preview card in ' +
+                                'the **Presenter**, or press **{key}** there.',
+                        ),
+                        { label: shownLabel, key },
+                    ),
                 };
             }
             if (pressed?.didChange === false || pressed?.unverified) {
@@ -414,11 +502,16 @@ function genClearRunner(name: keyof typeof CLEAR_MAP) {
                     isHeld && after !== null && !after.clearable.has(label);
                 if (!isClearedNow) {
                     return {
-                        text:
-                            `I pressed **${label}**, and the button looks the same ` +
-                            `afterwards -- it is only lit while there is ` +
-                            `${what} to clear, so there may have been nothing on ` +
-                            `that layer. Next time, **${key}** does the same.`,
+                        text: fillWords(
+                            tran(
+                                'I pressed **{label}**, and the button looks ' +
+                                    'the same afterwards -- it is only lit ' +
+                                    'while there is {what} to clear, so there ' +
+                                    'may have been nothing on that layer. ' +
+                                    'Next time, **{key}** does the same.',
+                            ),
+                            { label: shownLabel, what, key },
+                        ),
                         actions: [
                             genCommandAction('Check the screen', '/screen'),
                         ],
@@ -427,8 +520,10 @@ function genClearRunner(name: keyof typeof CLEAR_MAP) {
             }
             return {
                 text:
-                    `**Cleared ${what}.**${offNote} Next time, **${key}** in ` +
-                    'the Presenter does the same.',
+                    fillWords(tran('**Cleared {what}.**'), { what }) +
+                    offNote +
+                    ' ' +
+                    fillWords(tran(NEXT_TIME_KEY_TEXT), { key }),
                 actions: [genCommandAction('Check the screen', '/screen')],
             };
         } finally {
@@ -440,29 +535,41 @@ function genClearRunner(name: keyof typeof CLEAR_MAP) {
 async function runFind({ argument, focus, report }: BuiltinRunContextType) {
     if (argument.length === 0) {
         return {
-            text:
+            text: tran(
                 'Tell me the words written on the control -- for example ' +
-                '`/find Clear Long Text` -- and I will outline it in the app window.',
+                    '`/find Clear Long Text` -- and I will outline it in the ' +
+                    'app window.',
+            ),
         };
     }
-    const finish = report(`Looking for “${argument}”`);
+    const finish = report(
+        fillWords(tran('Looking for “{words}”'), { words: argument }),
+    );
     try {
         const answer = await answerWhereIs(argument, focus);
         if (answer !== null) {
             return answer;
         }
         return {
-            text:
-                `I could not find anything on screen reading "${argument}". ` +
-                'Try the exact words written on the button, or open the ' +
-                'panel it belongs to first.',
+            text: fillWords(
+                tran(
+                    'I could not find anything on screen reading "{words}". ' +
+                        'Try the exact words written on the button, or open ' +
+                        'the panel it belongs to first.',
+                ),
+                { words: argument },
+            ),
         };
     } catch (error) {
         appError(error, 'builtin /find');
         return {
-            text:
-                `I could not look for "${argument}" just now -- the app ` +
-                'window may be busy. Try again in a moment.',
+            text: fillWords(
+                tran(
+                    'I could not look for "{words}" just now -- the app ' +
+                        'window may be busy. Try again in a moment.',
+                ),
+                { words: argument },
+            ),
         };
     } finally {
         finish();
@@ -473,9 +580,10 @@ async function runGoto({ argument, report }: BuiltinRunContextType) {
     const target = GOTO_MAP[argument.toLowerCase()];
     if (target === undefined) {
         return {
-            text:
+            text: tran(
                 'Say which page: `/goto presenter`, `/goto reader` or ' +
-                '`/goto editor`.',
+                    '`/goto editor`.',
+            ),
             actions: [
                 genCommandAction('Presenter', '/goto presenter'),
                 genCommandAction('Bible Reader', '/goto reader'),
@@ -483,25 +591,39 @@ async function runGoto({ argument, report }: BuiltinRunContextType) {
             ],
         };
     }
-    const finish = report(`Switching to the ${target.label}`);
+    const page = { page: tranLabel(target.label) };
+    const finish = report(fillWords(tran('Switching to the {page}'), page));
     try {
         const result = parseToolJson(
             await callTool('owa_goto_page', { page: target.page }),
         );
         if (result?.switched === false) {
-            return { text: `**You are already in the ${target.label}.**` };
+            return {
+                text: fillWords(
+                    tran('**You are already in the {page}.**'),
+                    page,
+                ),
+            };
         }
         return {
-            text:
-                `**The main window is showing the ${target.label} now.** ` +
-                'The projector is untouched.',
+            text: fillWords(
+                tran(
+                    '**The main window is showing the {page} now.** The ' +
+                        'projector is untouched.',
+                ),
+                page,
+            ),
         };
     } catch (error) {
         appError(error, 'builtin /goto');
         return {
-            text:
-                `I could not switch to the ${target.label}. Click its tab ` +
-                'in the header of the main window instead.',
+            text: fillWords(
+                tran(
+                    'I could not switch to the {page}. Click its tab in the ' +
+                        'header of the main window instead.',
+                ),
+                page,
+            ),
         };
     } finally {
         finish();
@@ -509,12 +631,12 @@ async function runGoto({ argument, report }: BuiltinRunContextType) {
 }
 
 async function runWhere({ report }: BuiltinRunContextType) {
-    const finish = report('Checking which window is in front');
+    const finish = report(tran('Checking which window is in front'));
     try {
         const state = parseToolJson(await callTool('owa_app_state', {}));
         const main = state?.mainWindow;
         if (!main) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         const descriptor = BOT_FOCUS_LIST.find((one) => {
             return one.window === main.page;
@@ -548,57 +670,114 @@ async function runWhere({ report }: BuiltinRunContextType) {
             const mainLabel = BOT_FOCUS_LIST.find((one) => {
                 return one.key === mainFocus;
             })?.label;
+            const own = {
+                window: tranLabel(label),
+                language: main.language ? languageName(main.language) : '',
+            };
             return {
                 text:
-                    `**This tab works with the ${label}, a window of its ` +
-                    'own**' +
                     (main.language
-                        ? ` in ${languageName(main.language)}`
-                        : '') +
-                    '.' +
+                        ? fillWords(
+                              tran(
+                                  '**This tab works with the {window}, a ' +
+                                      'window of its own** in {language}.',
+                              ),
+                              own,
+                          )
+                        : fillWords(
+                              tran(
+                                  '**This tab works with the {window}, a ' +
+                                      'window of its own**.',
+                              ),
+                              own,
+                          )) +
                     (mainLabel
-                        ? ` The main window is on the ${mainLabel}.`
+                        ? ' ' +
+                          fillWords(
+                              tran('The main window is on the {window}.'),
+                              {
+                                  window: tranLabel(mainLabel),
+                              },
+                          )
                         : '') +
-                    (version ? `\n\nApp version ${version}.` : ''),
+                    genVersionLine(version),
             };
         }
+        const shown = {
+            window: tranLabel(label),
+            language: main.language ? languageName(main.language) : '',
+        };
         return {
             text:
-                `**The main window is on the ${label}**` +
-                (main.language ? ` in ${languageName(main.language)}` : '') +
-                '.' +
+                (main.language
+                    ? fillWords(
+                          tran(
+                              '**The main window is on the {window}** in ' +
+                                  '{language}.',
+                          ),
+                          shown,
+                      )
+                    : fillWords(
+                          tran('**The main window is on the {window}**.'),
+                          shown,
+                      )) +
                 (extras.length > 0
-                    ? ` Also open: ${[...new Set(extras)].join(', ')}.`
+                    ? ' ' +
+                      fillWords(tran('Also open: {windows}.'), {
+                          windows: [...new Set(extras)]
+                              .map((one) => {
+                                  return tranLabel(one as string);
+                              })
+                              .join(', '),
+                      })
                     : '') +
-                (version ? `\n\nApp version ${version}.` : ''),
+                genVersionLine(version),
         };
     } finally {
         finish();
     }
 }
 
-const APP_LANGUAGE_NAME_MAP: Record<string, string> = {
-    en: 'English',
-    km: 'Khmer',
-    fr: 'French',
-};
+function genVersionLine(version: unknown) {
+    return version
+        ? '\n\n' +
+              fillWords(tran('App version {version}.'), {
+                  version: String(version),
+              })
+        : '';
+}
+
 function languageName(code: string) {
-    return APP_LANGUAGE_NAME_MAP[code] ?? code;
+    switch (code) {
+        case 'en':
+            return tran('English');
+        case 'km':
+            return tran('Khmer');
+        case 'fr':
+            return tran('French');
+        default:
+            return code;
+    }
 }
 
 async function runHelp({ argument, focus, report }: BuiltinRunContextType) {
     if (argument.length === 0) {
         return genCommandList(focus);
     }
-    const finish = report(`Searching the guide for “${argument}”`);
+    const finish = report(
+        fillWords(tran('Searching the guide for “{words}”'), {
+            words: argument,
+        }),
+    );
     try {
         return await answerFromManual(argument, focus);
     } catch (error) {
         appError(error, 'builtin /help');
         return {
-            text:
+            text: tran(
                 'I could not search the guide just now. Ask the question in ' +
-                'full and I will look it up.',
+                    'full and I will look it up.',
+            ),
         };
     } finally {
         finish();
@@ -635,17 +814,18 @@ const NOT_ON_PRESENTER_ACTIONS = [
 ];
 
 async function runSelected({ report }: BuiltinRunContextType) {
-    const finish = report('Checking what is selected');
+    const finish = report(tran('Checking what is selected'));
     try {
         const read = await readSelectedDocument();
         if (read === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         if (!read.isPresenter) {
             return {
-                text:
+                text: tran(
                     '**The main window is not on the Presenter**, and the ' +
-                    'selected song lives there.',
+                        'selected song lives there.',
+                ),
                 actions: NOT_ON_PRESENTER_ACTIONS,
             };
         }
@@ -674,18 +854,19 @@ async function runSelected({ report }: BuiltinRunContextType) {
  * congregation's screen and that is the operator's own key.
  */
 async function runRunSheet({ report }: BuiltinRunContextType) {
-    const finish = report('Reading the run sheet');
+    const finish = report(tran('Reading the run sheet'));
     try {
         const state = parseToolJson(await callTool('owa_app_state', {}));
         const main = state?.mainWindow;
         if (!main) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         if (main.page !== 'presenter.html') {
             return {
-                text:
+                text: tran(
                     '**The main window is not on the Presenter**, and the ' +
-                    'run sheet lives there.',
+                        'run sheet lives there.',
+                ),
                 actions: NOT_ON_PRESENTER_ACTIONS,
             };
         }
@@ -704,37 +885,53 @@ async function runRunSheet({ report }: BuiltinRunContextType) {
 function genSlideStepper(isNext: boolean) {
     const word = isNext ? 'next' : 'previous';
     return async ({ report }: BuiltinRunContextType) => {
-        const finish = report(`Putting the ${word} slide on the screen`);
+        const finish = report(
+            isNext
+                ? tran('Putting the next slide on the screen')
+                : tran('Putting the previous slide on the screen'),
+        );
         try {
             const read = await readSelectedDocument();
             if (read === null) {
-                return { text: COULD_NOT_REACH_APP };
+                return { text: tran(COULD_NOT_REACH_APP) };
             }
             if (!read.isPresenter) {
                 return {
-                    text:
+                    text: tran(
                         '**The main window is not on the Presenter**, so ' +
-                        'there is no slide list to step through.',
+                            'there is no slide list to step through.',
+                    ),
                     actions: NOT_ON_PRESENTER_ACTIONS,
                 };
             }
             const selected = read.selected;
             if (selected === null) {
                 return {
-                    text:
-                        '**Nothing is selected in the Documents list.** Click ' +
-                        'a song there first.',
+                    text: tran(
+                        '**Nothing is selected in the Documents list.** ' +
+                            'Click a song there first.',
+                    ),
                 };
             }
             const target = isNext ? selected.next : selected.previous;
             if (target === null) {
                 return {
                     text: isNext
-                        ? `**There is no next slide** -- "${selected.name}" ` +
-                          'has nothing after this one.'
-                        : `**There is no previous slide** -- none of ` +
-                          `"${selected.name}" is on a screen yet, so there ` +
-                          'is nothing to go back from.',
+                        ? fillWords(
+                              tran(
+                                  '**There is no next slide** -- "{name}" ' +
+                                      'has nothing after this one.',
+                              ),
+                              { name: selected.name },
+                          )
+                        : fillWords(
+                              tran(
+                                  '**There is no previous slide** -- none ' +
+                                      'of "{name}" is on a screen yet, so ' +
+                                      'there is nothing to go back from.',
+                              ),
+                              { name: selected.name },
+                          ),
                     actions: isNext
                         ? []
                         : [genCommandAction('Show its first slide', '/next')],
@@ -762,10 +959,13 @@ async function presentSlideAndReport(
     } catch (error) {
         appError(error, `builtin /${logName}`);
         return {
-            text:
-                `I could not find slide ${target.n} of ` +
-                `"${selected.name}" on the screen to press. Click ` +
-                'it in the slide list instead.',
+            text: fillWords(
+                tran(
+                    'I could not find slide {n} of "{name}" on the screen ' +
+                        'to press. Click it in the slide list instead.',
+                ),
+                { n: target.n, name: selected.name },
+            ),
         };
     }
     await sleep(SCREEN_SETTLE_MS);
@@ -773,18 +973,20 @@ async function presentSlideAndReport(
     const upNow = after?.selected?.onScreen ?? null;
     if (upNow === null || upNow.n !== target.n) {
         return {
-            text:
-                `I pressed slide ${target.n} of "${selected.name}" ` +
-                'but the app does not show it on a screen yet -- ' +
-                'please look at the Mini Screen panel.',
+            text: fillWords(
+                tran(
+                    'I pressed slide {n} of "{name}" but the app does not ' +
+                        'show it on a screen yet -- please look at the Mini ' +
+                        'Screen panel.',
+                ),
+                { n: target.n, name: selected.name },
+            ),
             actions: [genCommandAction('Is the screen on?', '/screen')],
         };
     }
     const screens = await readScreens();
     const isShowing = screens?.isAnyShowing === true;
-    const slideWords = upNow.name
-        ? `Slide ${upNow.n} "${upNow.name}"`
-        : `Slide ${upNow.n}`;
+    const slideWords = genSlideWords(upNow);
     const actions: BotActionType[] = [];
     if (after?.selected?.next) {
         actions.push(genCommandAction('Next slide', '/next'));
@@ -797,15 +999,30 @@ async function presentSlideAndReport(
     }
     return {
         text:
-            `**${slideWords} of "${selected.name}" is on the screen ` +
-            'now**' +
+            fillWords(tran('**{slide} of "{name}" is on the screen now**'), {
+                slide: slideWords,
+                name: selected.name,
+            }) +
             (upNow.text ? ` -- "${upNow.text}"` : '') +
             (isShowing
                 ? '.'
-                : '. The screen itself is off, so the projector is ' +
-                  'not showing it yet.'),
+                : '. ' +
+                  tran(
+                      'The screen itself is off, so the projector is not ' +
+                          'showing it yet.',
+                  )),
         actions,
     };
+}
+
+// "Slide 3" or "Slide 3 "(1)-Verse 1"", the way the answers name one.
+function genSlideWords(slide: SlideSummaryType) {
+    return slide.name
+        ? fillWords(tran('Slide {n} "{name}"'), {
+              n: slide.n,
+              name: slide.name,
+          })
+        : fillWords(tran('Slide {n}'), { n: slide.n });
 }
 
 function toSlideKey(text: string) {
@@ -858,47 +1075,71 @@ function describeSlideList(selected: SelectedDocumentType) {
         .join(', ');
 }
 
+function genSlideListLine(selected: SelectedDocumentType) {
+    return fillWords(tran('Its slides: {slides}.'), {
+        slides: describeSlideList(selected),
+    });
+}
+
+const NO_SLIDE_LIST_TEXT =
+    '**The main window is not on the Presenter**, so there is no slide list to choose from.';
+const NOTHING_SELECTED_ASK_AGAIN_TEXT =
+    '**Nothing is selected in the Documents list.** Click the song there first, then ask again.';
+
 /**
  * `/slide 3`, `/slide verse 1`: one slide of the selected song on the
  * screen by its number or its words, through the card's own `find`, the way
  * `/next` does. Typing it is the consent (rule 2 above).
  */
 async function runSlide({ argument, report }: BuiltinRunContextType) {
-    const finish = report('Putting the slide on the screen');
+    const finish = report(tran('Putting the slide on the screen'));
     try {
         const read = await readSelectedDocument();
         if (read === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         if (!read.isPresenter) {
             return {
-                text:
-                    '**The main window is not on the Presenter**, so there ' +
-                    'is no slide list to choose from.',
+                text: tran(NO_SLIDE_LIST_TEXT),
                 actions: NOT_ON_PRESENTER_ACTIONS,
             };
         }
         const selected = read.selected;
         if (selected === null) {
             return {
-                text:
+                text: tran(
                     '**Nothing is selected in the Documents list.** Click a ' +
-                    'song there first.',
+                        'song there first.',
+                ),
             };
         }
         if (argument.length === 0) {
             return {
                 text:
-                    `Say which slide of "${selected.name}": \`/slide 2\` or ` +
-                    `\`/slide verse 1\`. Its slides: ${describeSlideList(selected)}.`,
+                    fillWords(
+                        tran(
+                            'Say which slide of "{name}": `/slide 2` or ' +
+                                '`/slide verse 1`.',
+                        ),
+                        { name: selected.name },
+                    ) +
+                    ' ' +
+                    genSlideListLine(selected),
             };
         }
         const target = findSlideByWords(selected.slides, argument);
         if (target === null) {
             return {
                 text:
-                    `**"${selected.name}" has no slide called "${argument}".** ` +
-                    `Its slides: ${describeSlideList(selected)}.`,
+                    fillWords(
+                        tran('**"{name}" has no slide called "{words}".**'),
+                        {
+                            name: selected.name,
+                            words: argument,
+                        },
+                    ) +
+                    ' ' +
+                    genSlideListLine(selected),
             };
         }
         return await presentSlideAndReport(selected, target, 'slide');
@@ -959,19 +1200,13 @@ export async function answerSlideShowAsk(
     }
     if (!read.isPresenter) {
         return {
-            text:
-                '**The main window is not on the Presenter**, so there is ' +
-                'no slide list to choose from.',
+            text: tran(NO_SLIDE_LIST_TEXT),
             actions: NOT_ON_PRESENTER_ACTIONS,
         };
     }
     const selected = read.selected;
     if (selected === null) {
-        return {
-            text:
-                '**Nothing is selected in the Documents list.** Click the ' +
-                'song there first, then ask again.',
-        };
+        return { text: tran(NOTHING_SELECTED_ASK_AGAIN_TEXT) };
     }
     const target = findSlideByWords(selected.slides, words);
     if (target === null) {
@@ -988,21 +1223,34 @@ async function genSlideOfferAnswer(
 ): Promise<BotAnswerType> {
     const screens = await readScreens();
     const isShowing = screens?.isAnyShowing === true;
-    const slideWords = target.name
-        ? `Slide ${target.n} "${target.name}"`
-        : `Slide ${target.n}`;
     return {
         text:
-            `**${slideWords} of "${selected.name}"** -- press the button and ` +
-            'it goes on the screen' +
+            fillWords(
+                tran(
+                    '**{slide} of "{name}"** -- press the button and it goes ' +
+                        'on the screen',
+                ),
+                { slide: genSlideWords(target), name: selected.name },
+            ) +
             (target.text ? ` ("${target.text}")` : '') +
             (isShowing
                 ? '.'
-                : '. The screen is off, so it holds the slide until you turn ' +
-                  'it on.'),
+                : '. ' +
+                  tran(
+                      'The screen is off, so it holds the slide until you ' +
+                          'turn it on.',
+                  )),
         actions: [
+            // Nothing reads this label back (the press runs `/slide n`), so
+            // it is written in the app's language.
             genCommandAction(
-                `Put ${target.name ? `"${target.name}"` : `slide ${target.n}`} on the screen`,
+                target.name
+                    ? fillWords(tran('Put {what} on the screen'), {
+                          what: `"${target.name}"`,
+                      })
+                    : fillWords(tran('Put slide {n} on the screen'), {
+                          n: target.n,
+                      }),
                 `/slide ${target.n}`,
             ),
             ...(isShowing
@@ -1051,29 +1299,34 @@ export async function answerSlideStepAsk(
     }
     if (!read.isPresenter) {
         return {
-            text:
-                '**The main window is not on the Presenter**, so there is ' +
-                'no slide list to choose from.',
+            text: tran(NO_SLIDE_LIST_TEXT),
             actions: NOT_ON_PRESENTER_ACTIONS,
         };
     }
     const selected = read.selected;
     if (selected === null) {
-        return {
-            text:
-                '**Nothing is selected in the Documents list.** Click the ' +
-                'song there first, then ask again.',
-        };
+        return { text: tran(NOTHING_SELECTED_ASK_AGAIN_TEXT) };
     }
     const target = direction === 'next' ? selected.next : selected.previous;
     if (target === null) {
         return {
             text:
                 direction === 'next'
-                    ? `**"${selected.name}" has no slide to go on to.**`
-                    : `**No slide of "${selected.name}" is on a screen ` +
-                      'yet**, so there is none before it. Its slides: ' +
-                      `${describeSlideList(selected)}.`,
+                    ? fillWords(
+                          tran('**"{name}" has no slide to go on to.**'),
+                          {
+                              name: selected.name,
+                          },
+                      )
+                    : fillWords(
+                          tran(
+                              '**No slide of "{name}" is on a screen yet**, ' +
+                                  'so there is none before it.',
+                          ),
+                          { name: selected.name },
+                      ) +
+                      ' ' +
+                      genSlideListLine(selected),
         };
     }
     return await genSlideOfferAnswer(selected, target);
@@ -1188,19 +1441,25 @@ export async function answerScreenToggleAsk(
 ): Promise<BotAnswerType> {
     const state = await readScreens();
     if (state === null) {
-        return { text: COULD_NOT_REACH_APP };
+        return { text: tran(COULD_NOT_REACH_APP) };
     }
     if (kind === 'hide') {
         if (!state.isAnyShowing) {
             return {
-                text: `**Nothing to turn off.** ${describeScreens(state)}`,
+                text:
+                    tran('**Nothing to turn off.**') +
+                    ' ' +
+                    describeScreens(state),
                 actions: [
                     genCommandAction('Turn the screen on', '/screen-show'),
                 ],
             };
         }
         return {
-            text: `${describeScreens(state)} Press the button to turn it off.`,
+            text:
+                describeScreens(state) +
+                ' ' +
+                tran('Press the button to turn it off.'),
             actions: [
                 genCommandAction('Turn every screen off', '/screen-hide'),
             ],
@@ -1208,14 +1467,20 @@ export async function answerScreenToggleAsk(
     }
     if (state.isAnyShowing) {
         return {
-            text: `**The screen is already on.** ${describeScreens(state)}`,
+            text:
+                tran('**The screen is already on.**') +
+                ' ' +
+                describeScreens(state),
             actions: [
                 genCommandAction('Turn every screen off', '/screen-hide'),
             ],
         };
     }
     return {
-        text: `${describeScreens(state)} Press the button to turn it on.`,
+        text:
+            describeScreens(state) +
+            ' ' +
+            tran('Press the button to turn it on.'),
         actions: [genCommandAction('Turn the screen on', '/screen-show')],
     };
 }
@@ -1238,12 +1503,15 @@ async function runVerse({ argument, report }: BuiltinRunContextType) {
     const reference = argument.trim();
     if (reference.length === 0) {
         return {
-            text:
+            text: tran(
                 '**Say which passage** -- for example `/verse John 3:16` or ' +
-                '`/verse Psalm 23:1-6`.',
+                    '`/verse Psalm 23:1-6`.',
+            ),
         };
     }
-    const finish = report(`Putting ${reference} on the screen`);
+    const finish = report(
+        fillWords(tran('Putting {reference} on the screen'), { reference }),
+    );
     try {
         let result;
         try {
@@ -1256,14 +1524,20 @@ async function runVerse({ argument, report }: BuiltinRunContextType) {
             return {
                 text: VERSE_TROUBLE_PATTERN.test(reason)
                     ? `**${reason}**`
-                    : `**I could not put "${reference}" on the screen just ` +
-                      'now.** Write it as book, chapter and verse -- ' +
-                      '`/verse John 3:16` -- from the Presenter page.',
+                    : fillWords(
+                          tran(
+                              '**I could not put "{reference}" on the screen ' +
+                                  'just now.** Write it as book, chapter and ' +
+                                  'verse -- `/verse John 3:16` -- from the ' +
+                                  'Presenter page.',
+                          ),
+                          { reference },
+                      ),
                 actions: NOT_ON_PRESENTER_ACTIONS,
             };
         }
         if (result === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         const actions: BotActionType[] = [];
         if (result.isPresented === true && result.isAnyShowing !== true) {
@@ -1360,7 +1634,7 @@ async function runForegroundCommand(
             };
         }
         if (result === null) {
-            return { text: COULD_NOT_REACH_APP };
+            return { text: tran(COULD_NOT_REACH_APP) };
         }
         const actions: BotActionType[] = [];
         if (result.did === 'started' && result.isAnyShowing !== true) {
@@ -1388,19 +1662,22 @@ async function runCountdown(context: BuiltinRunContextType) {
     const ask = readCountdownArgument(context.argument);
     if (ask === null) {
         return {
-            text:
+            text: tran(
                 '**Say how long** -- `/countdown 5` for five minutes, ' +
-                '`/countdown 10:30` to count down to a time, or ' +
-                '`/countdown stop` to take it off.',
+                    '`/countdown 10:30` to count down to a time, or ' +
+                    '`/countdown stop` to take it off.',
+            ),
         };
     }
     if ('stop' in ask) {
         return await runForegroundCommand(
             context,
             { action: 'stop', widget: 'countdown' },
-            'Taking the countdown off the screen',
-            'I could not take the countdown off just now. Press F10 (Clear ' +
-                'Foreground) on the Presenter page.',
+            tran('Taking the countdown off the screen'),
+            tran(
+                'I could not take the countdown off just now. Press F10 ' +
+                    '(Clear Foreground) on the Presenter page.',
+            ),
             '/countdown stop',
         );
     }
@@ -1411,10 +1688,16 @@ async function runCountdown(context: BuiltinRunContextType) {
             ? { widget: 'countdown', minutes: ask.minutes }
             : { widget: 'countdown', at: ask.at },
         isMinutes
-            ? `Starting a ${ask.minutes} minute countdown`
-            : `Starting a countdown to ${ask.at}`,
-        'I could not start the countdown just now. Try again from the ' +
-            'Presenter page -- `/countdown 5`.',
+            ? fillWords(tran('Starting a {minutes} minute countdown'), {
+                  minutes: ask.minutes,
+              })
+            : fillWords(tran('Starting a countdown to {time}'), {
+                  time: ask.at,
+              }),
+        tran(
+            'I could not start the countdown just now. Try again from the ' +
+                'Presenter page -- `/countdown 5`.',
+        ),
         '/countdown stop',
     );
 }
@@ -1427,32 +1710,52 @@ function genMarqueeRunner(
     widget: 'marquee-top' | 'marquee-bottom',
     command: string,
 ) {
-    const where = widget === 'marquee-top' ? 'top' : 'bottom';
+    const isTop = widget === 'marquee-top';
     return async (context: BuiltinRunContextType) => {
         const text = context.argument.trim().replace(/\s+/g, ' ');
         if (text === '') {
             return {
-                text:
-                    `**Say the words to scroll** -- \`/${command} Please ` +
-                    `silence your phones\`; \`/${command} stop\` takes it off.`,
+                text: fillWords(
+                    tran(
+                        '**Say the words to scroll** -- `/{command} Please ' +
+                            'silence your phones`; `/{command} stop` takes ' +
+                            'it off.',
+                    ),
+                    { command },
+                ),
             };
         }
         if (/^(?:stop|off|hide|clear|end|cancel)$/i.test(text)) {
             return await runForegroundCommand(
                 context,
                 { action: 'stop', widget },
-                'Taking the scrolling message off the screen',
-                'I could not take the message off just now. Press F10 ' +
-                    '(Clear Foreground) on the Presenter page.',
+                tran('Taking the scrolling message off the screen'),
+                tran(
+                    'I could not take the message off just now. Press F10 ' +
+                        '(Clear Foreground) on the Presenter page.',
+                ),
                 `/${command} stop`,
             );
         }
         return await runForegroundCommand(
             context,
             { widget, text },
-            `Putting a scrolling message along the ${where} of the screen`,
-            'I could not put the message on the screen just now. Try ' +
-                `again from the Presenter page -- \`/${command} <words>\`.`,
+            isTop
+                ? tran(
+                      'Putting a scrolling message along the top of the screen',
+                  )
+                : tran(
+                      'Putting a scrolling message along the bottom of the ' +
+                          'screen',
+                  ),
+            fillWords(
+                tran(
+                    'I could not put the message on the screen just now. ' +
+                        'Try again from the Presenter page -- `/{command} ' +
+                        '<words>`.',
+                ),
+                { command },
+            ),
             `/${command} stop`,
         );
     };
@@ -1473,19 +1776,24 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
     const words = argument.trim();
     if (words.length === 0) {
         return {
-            text:
+            text: tran(
                 '**Give me the song** -- its title (`/lyric Amazing ' +
-                'Grace`), the address of the page it is on ' +
-                '(`/lyric https://…`), or paste its words after the ' +
-                'command. I will write it out for the Lyric Editor and ' +
-                'offer a button that saves it; nothing is saved until you ' +
-                'press it.',
+                    'Grace`), the address of the page it is on ' +
+                    '(`/lyric https://…`), or paste its words after the ' +
+                    'command. I will write it out for the Lyric Editor and ' +
+                    'offer a button that saves it; nothing is saved until ' +
+                    'you press it.',
+            ),
         };
     }
     const address = readSongAddress(words);
     if (address !== null) {
-        const site = toSiteName(address) ?? 'the page';
-        const finish = report(`Reading ${site} and writing the song out`);
+        const site = toSiteName(address) ?? tran('the page');
+        const finish = report(
+            fillWords(tran('Reading {site} and writing the song out'), {
+                site,
+            }),
+        );
         try {
             return await answerLyricLink(address);
         } finally {
@@ -1496,32 +1804,36 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
     // never one line, so nothing a paste could mean is taken from it.
     const title = readSongTitleArgument(words);
     if (title !== null) {
-        const finishLookup = report(`Looking up “${title}”`);
+        const finishLookup = report(
+            fillWords(tran('Looking up “{title}”'), { title }),
+        );
         try {
             return await answerLyricTitle(title);
         } finally {
             finishLookup();
         }
     }
-    const finish = report('Writing the song out');
+    const finish = report(tran('Writing the song out'));
     try {
         const answer = await answerLyricPaste(words);
         if (answer !== null) {
             return answer;
         }
         return {
-            text:
+            text: tran(
                 'That did not read as the words of a song. Give me the ' +
-                'address of the page it is on (`/lyric https://…`), or ' +
-                'paste the words themselves, a line each, with a label ' +
-                'like *Verse 1* or *Chorus* over each part.',
+                    'address of the page it is on (`/lyric https://…`), or ' +
+                    'paste the words themselves, a line each, with a label ' +
+                    'like *Verse 1* or *Chorus* over each part.',
+            ),
         };
     } catch (error) {
         appError(error, 'builtin /lyric');
         return {
-            text:
+            text: tran(
                 'I could not write that song out just now. Try again in a ' +
-                'moment, or paste the words as plain lines.',
+                    'moment, or paste the words as plain lines.',
+            ),
         };
     } finally {
         finish();
@@ -1588,11 +1900,21 @@ function genCommandOffPageAnswer(
     focus: BotFocusType,
 ): BotAnswerType {
     return {
-        text:
-            `\`/${action.name}\` works on the Presenter page, and this chat ` +
-            `is asking about the ${toFocusLabel(focus)}. Switch the main ` +
-            'window to the Presenter, choose **Presenter** under ASKING ' +
-            'ABOUT at the top, and type it again.',
+        text: fillWords(
+            tran(
+                '`/{command}` works on the Presenter page, and this chat is ' +
+                    'asking about the {window}. Switch the main window to ' +
+                    'the Presenter, choose **{presenter}** under ' +
+                    '{askingAbout} at the top, and type it again.',
+            ),
+            {
+                command: action.name,
+                window: tranLabel(toFocusLabel(focus)),
+                presenter: tranLabel('Presenter'),
+                // The picker's own caption (`Asking about`), as it reads.
+                askingAbout: tranLabel('ASKING ABOUT'),
+            },
+        ),
         actions: [genCommandAction('Go to the Presenter', '/goto presenter')],
     };
 }
@@ -1693,9 +2015,10 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         // an answer under an emptied tab would be its first message.
         run: async () => {
             return {
-                text:
+                text: tran(
                     'Type `/clear` in the chat window to clear the chat in ' +
-                    'front of you.',
+                        'front of you.',
+                ),
             };
         },
     },
@@ -1844,6 +2167,14 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         takesArgument: true,
         isActing: false,
         run: runGeneralUsage,
+    },
+    {
+        name: 'tips',
+        aliases: ['tip', 'show-tips'],
+        hint: 'Show the tips above the box again, and one of them now',
+        takesArgument: false,
+        isActing: false,
+        run: runTips,
     },
     {
         name: 'commands',
@@ -2026,12 +2357,13 @@ export function readInheritedGeneralQuestion(
 
 async function runGeneralUsage(): Promise<BotAnswerType> {
     return {
-        text:
-            '**Say the question after /btw** -- `/btw What is the Bible?` -- ' +
-            'and the assistant answers it from its own knowledge instead of ' +
-            'looking in this app’s guide. It takes an assistant (a key in ' +
-            'Settings → Others, or a server of your own): the built-in guide ' +
-            'cannot answer a general question.',
+        text: tran(
+            '**Say the question after /btw** -- `/btw What is the Bible?` ' +
+                '-- and the assistant answers it from its own knowledge ' +
+                'instead of looking in this app’s guide. It takes an ' +
+                'assistant (a key in Settings → Others, or a server of your ' +
+                'own): the built-in guide cannot answer a general question.',
+        ),
     };
 }
 
@@ -2043,28 +2375,41 @@ function genCommandList(focus?: BotFocusType): BotAnswerType {
         return !checkIsCommandOnPage(one, focus);
     });
     const lines = here.map((one) => {
-        return `- \`/${one.name}\` -- ${one.hint}`;
+        // A hint is stored in English (the suggestion list draws it too)
+        // and is translated where it is shown.
+        return `- \`/${one.name}\` -- ${tranLabel(one.hint)}`;
     });
     // The Presenter's own, named so they are not a secret from a Reader tab
     // -- one line, not a second list.
     const elsewhereText =
         elsewhere.length === 0
             ? ''
-            : '\n\n**On the Presenter page** (switch there first): ' +
-              elsewhere
-                  .map((one) => {
-                      return `\`/${one.name}\``;
-                  })
-                  .join(', ') +
-              '.';
+            : '\n\n' +
+              fillWords(
+                  tran(
+                      '**On the Presenter page** (switch there first): ' +
+                          '{commands}.',
+                  ),
+                  {
+                      commands: elsewhere
+                          .map((one) => {
+                              return `\`/${one.name}\``;
+                          })
+                          .join(', '),
+                  },
+              );
     return {
         text:
-            '**Commands you can type** -- each one runs on the spot, with no ' +
-            'assistant and no internet (except `/btw`, which puts a general ' +
-            'question to the assistant):\n\n' +
+            tran(
+                '**Commands you can type** -- each one runs on the spot, ' +
+                    'with no assistant and no internet (except `/btw`, ' +
+                    'which puts a general question to the assistant):',
+            ) +
+            '\n\n' +
             lines.join('\n') +
             elsewhereText +
-            '\n\nType `/` and the list appears as you type.',
+            '\n\n' +
+            tran('Type `/` and the list appears as you type.'),
         actions:
             elsewhere.length === 0
                 ? [
@@ -2088,25 +2433,64 @@ function genCommandList(focus?: BotFocusType): BotAnswerType {
  * $0.02" off the guide's own sample line -- because no tool reads the
  * window; this reads the number itself, with no model and no round paid.
  */
+/**
+ * `/tips`: the 💡 line back above the box -- put away for 30 days by its ✕,
+ * and nothing else brought it back before the month was out -- and one of
+ * its tips said here and now.
+ */
+async function runTips(): Promise<BotAnswerType> {
+    const wasHidden = checkIsChatTipHidden();
+    showChatTips();
+    const tip = pickChatTip(null);
+    return {
+        text:
+            (wasHidden
+                ? tran('The tips are back, on the line above the box.')
+                : tran('The tips are on the line above the box.')) +
+            ' ' +
+            tran(
+                'Press a tip for another one, or the arrows beside it to go ' +
+                    'through them all. Here is one:',
+            ) +
+            `\n\n💡 ${tranLabel(tip.text)}`,
+    };
+}
+
 async function runCredit({ usage }: BuiltinRunContextType) {
+    // The head row's own caption, as it reads there.
+    const credit = { credit: tranLabel('Credit used') };
     if (usage === undefined || usage.rounds === 0) {
         return {
-            text:
-                'Nothing has been spent in this chat yet: no question here ' +
-                'has been put to an assistant. The figure appears under ' +
-                'each answer, and **Credit used** under the pickers at the ' +
-                'top keeps the total.',
+            text: fillWords(
+                tran(
+                    'Nothing has been spent in this chat yet: no question ' +
+                        'here has been put to an assistant. The figure ' +
+                        'appears under each answer, and **{credit}** under ' +
+                        'the pickers at the top keeps the total.',
+                ),
+                credit,
+            ),
         };
     }
     return {
         text:
-            `**This chat so far: ${toCostLabel(usage)} · ` +
-            `${toCompactCount(toTotalTokens(usage))} tokens.**\n\n` +
+            fillWords(tran('**This chat so far: {cost} · {tokens} tokens.**'), {
+                cost: toCostLabel(usage),
+                tokens: toCompactCount(toTotalTokens(usage)),
+            }) +
+            '\n\n' +
             describeUsageInFull(usage).replace(/\n/g, '\n\n') +
-            '\n\nEach tab keeps its own total; the same figure sits under ' +
-            '**Credit used** at the top, and every answer carries its own.' +
-            `\n\n${describeSpendGuard(getSpendState())} Type \`/limit\` ` +
-            'to change the limit.',
+            '\n\n' +
+            fillWords(
+                tran(
+                    'Each tab keeps its own total; the same figure sits ' +
+                        'under **{credit}** at the top, and every answer ' +
+                        'carries its own.',
+                ),
+                credit,
+            ) +
+            `\n\n${describeSpendGuard(getSpendState())} ` +
+            tran('Type `/limit` to change the limit.'),
     };
 }
 
@@ -2124,35 +2508,54 @@ async function runLimit({ argument }: BuiltinRunContextType) {
         const state = allowMoreSpending();
         return {
             text:
-                'Carrying on: the hour starts again from now' +
-                (state.limitUsd === null
-                    ? ''
-                    : `, with ${toSpendLimitLabel(state.limitUsd)} available ` +
-                      'before I pause again') +
-                '.',
+                state.limitUsd === null
+                    ? tran('Carrying on: the hour starts again from now.')
+                    : fillWords(
+                          tran(
+                              'Carrying on: the hour starts again from now, ' +
+                                  'with {limit} available before I pause ' +
+                                  'again.',
+                          ),
+                          { limit: toSpendLimitLabel(state.limitUsd) },
+                      ),
         };
     }
     if (word.length > 0) {
         const limit = parseSpendLimitValue(word);
         if (limit === undefined) {
             return {
-                text:
-                    `I do not read "${argument.trim()}" as a limit. Say a ` +
-                    'number of dollars an hour (`/limit 2`, `/limit 0.50`), ' +
-                    '`/limit off` to keep only the pace cap, or `/limit ' +
-                    'more` to carry on after a pause.',
+                text: fillWords(
+                    tran(
+                        'I do not read "{words}" as a limit. Say a number of ' +
+                            'dollars an hour (`/limit 2`, `/limit 0.50`), ' +
+                            '`/limit off` to keep only the pace cap, or ' +
+                            '`/limit more` to carry on after a pause.',
+                    ),
+                    { words: argument.trim() },
+                ),
             };
         }
         const state = setSpendLimitUsd(limit);
         return {
             text:
                 (limit === null
-                    ? '**The money cap is off.** The assistant will still ' +
-                      `pause after ${MAX_SPEND_ROUNDS_PER_HOUR} model calls ` +
-                      'in one hour, which is more than a person asks for.'
-                    : `**The limit is now ${toSpendLimitLabel(limit)} an ` +
-                      'hour.** At that point the assistant pauses and asks ' +
-                      'before spending more.') +
+                    ? fillWords(
+                          tran(
+                              '**The money cap is off.** The assistant will ' +
+                                  'still pause after {count} model calls in ' +
+                                  'one hour, which is more than a person ' +
+                                  'asks for.',
+                          ),
+                          { count: MAX_SPEND_ROUNDS_PER_HOUR },
+                      )
+                    : fillWords(
+                          tran(
+                              '**The limit is now {limit} an hour.** At that ' +
+                                  'point the assistant pauses and asks ' +
+                                  'before spending more.',
+                          ),
+                          { limit: toSpendLimitLabel(limit) },
+                      )) +
                 '\n\n' +
                 describeSpendGuard(state),
         };
@@ -2161,10 +2564,19 @@ async function runLimit({ argument }: BuiltinRunContextType) {
     const choices = SPEND_LIMIT_CHOICE_LIST.map(toSpendLimitLabel).join(', ');
     return {
         text:
-            `**Limit: ${toSpendLimitLabel(state.limitUsd)} an hour.** ` +
-            `${describeSpendGuard(state)}\n\nChange it with ` +
-            '`/limit <dollars>` or the **Limit per hour** picker at the top ' +
-            `(${choices}), or \`/limit off\` to keep only the pace cap.`,
+            fillWords(tran('**Limit: {limit} an hour.**'), {
+                limit: toSpendLimitLabel(state.limitUsd),
+            }) +
+            ` ${describeSpendGuard(state)}\n\n` +
+            fillWords(
+                tran(
+                    'Change it with `/limit <dollars>` or the **{picker}** ' +
+                        'picker at the top ({choices}), or `/limit off` to ' +
+                        'keep only the pace cap.',
+                ),
+                // The head row's own caption, as it reads there.
+                { picker: tranLabel('Limit per hour'), choices },
+            ),
         ...(state.isTripped
             ? {
                   actions: [
@@ -2197,8 +2609,10 @@ export async function runBuiltinCommand(
             text:
                 (parsed === null
                     ? ''
-                    : `I do not know a command called \`/${parsed.name}\`.\n\n`) +
-                list.text,
+                    : fillWords(
+                          tran('I do not know a command called `/{name}`.'),
+                          { name: parsed.name },
+                      ) + '\n\n') + list.text,
         };
     }
     // Typed under a page it does not work on: said, with the way there,
@@ -2217,10 +2631,14 @@ export async function runBuiltinCommand(
     } catch (error) {
         appError(error, `builtin /${parsed.action.name}`);
         return {
-            text:
-                `I could not do \`/${parsed.action.name}\` just now. Try ` +
-                'again in a moment, or ask me in words and I will find ' +
-                'another way.',
+            text: fillWords(
+                tran(
+                    'I could not do `/{name}` just now. Try again in a ' +
+                        'moment, or ask me in words and I will find another ' +
+                        'way.',
+                ),
+                { name: parsed.action.name },
+            ),
         };
     }
 }

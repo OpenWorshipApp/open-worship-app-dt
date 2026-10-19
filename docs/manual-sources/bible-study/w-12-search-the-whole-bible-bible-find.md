@@ -2,10 +2,10 @@
 id: W-12
 title: "Search the whole Bible (Bible Find)"
 section: "Bible study"
-verify: [RD-08, RD-09, RD-45, RD-46, RD-47, RD-124]
-screenshots: 5
+verify: [RD-08, RD-09, RD-45, RD-46, RD-47, RD-124, CB-146]
+screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -30,7 +30,8 @@ workflowsVersion: "2026-10-15"
    Use it to judge whether to narrow the search: a common word runs to tens of
    thousands. If a completed search has no matches, the panel says
    **[en:tran:No verses found]**. Try different words or widen the book filter.
-   Clearing the search shows **[en:tran:No data available]**. 📸
+   To clear the search and start again, empty the words in the search box: the panel
+   then shows **[en:tran:No data available]**, ready for new words. 📸
 4. Results arrive in blocks of twenty, each headed **[en:tran:Results] 1–20**, **[en:tran:Results] 21–40**
    and so on. The numbers at the bottom right move you through them: a **filled** number
    is a block already on screen, so clicking it scrolls straight there; a **plain**
@@ -41,7 +42,7 @@ workflowsVersion: "2026-10-15"
    big enough to run to thousands of blocks it opens in steps instead, and clicking a
    **…** between two steps opens that stretch — so any block is a click or two away
    without the app ever drawing a thousand numbers at once. 📸
-5. To search part of the Bible only, click the **[en:tran:All Books]** button
+5. To search part of the Bible only, in the **[en:tran:Find]** view of step 1, click the **[en:tran:All Books]** button
    and pick a book — **Shift**-click to pick several, or choose **[en:tran:Old Testament]** /
    **[en:tran:New Testament]** for a whole half. Once a filter is on, the button shows a funnel
    and the books you chose; while it says **[en:tran:All Books]** it stays plain, so a narrowed
@@ -49,15 +50,34 @@ workflowsVersion: "2026-10-15"
    The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
    to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
-   **To put a result on the screen.** A result has no show button of its own. Open its **⋮**
+   **To put a result on the screen.** Search in the Presenter's Bible Lookup — open it with
+   **[en:tran:Bible Lookup]** at the top of the Presenter, or **Ctrl+B** — because the
+   Bible Reader puts nothing on the audience screen (W-11). There, open its search with the
+   binoculars and **[en:tran:Find]**, as in step 1, and type your words. A result has no show button of its own. Open its **⋮**
    menu and choose **[en:tran:Open beside the current verse]** — it opens as a passage in the
    lookup — then, in the Presenter, point at that passage's title and press the cast icon,
    **[en:tran:Save bible item and show on screen]**, as for any passage (W-06 step 3).
+6. **Cannot remember the words exactly?** Press **[en:tran:Find a Verse with the Assistant]** —
+   the robot at the right end of the **[en:tran:All Books]** row. The help window opens a chat of
+   its own and asks **Which Bible should I search?**, the one Find is on first. Press one, then
+   type what you remember: a few of its words in any order — _love enemies pray_ — or what the
+   verse is about — _Jesus asked Peter three times if he loved him_. The assistant searches that
+   Bible, and the internet when it cannot place the verse there, and quotes only verses it found
+   in YOUR Bible; under its answer each one has **Open … in Bible Lookup**, which opens it in the
+   lookup and puts nothing on a screen. Say more under the answer — _no, it was about sheep_ — and
+   it searches again. Under every answer, **Show in another Bible** — **Search another Bible**
+   when nothing was found — lists the other Bibles on this computer: press one (English, say,
+   when you were searching a Khmer one) and the verses found are shown from it, or what you
+   typed is searched in it, with nothing to type again; the search then goes on in that Bible.
+   With no assistant set up, the window searches your words itself and lists
+   the verses that hold the most of them, with **Search Google for it**. 📸
+   You can also just ask in the help window, in any chat: _which verse says do not worry about
+   tomorrow?_ — or in one line, `Help me find a Bible verse in "KJV": love your enemies`.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47` · `RD-124`
+`RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47` · `RD-124` · `CB-146`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

@@ -317,6 +317,38 @@ describe('toEnglishOnly', () => {
   });
 });
 
+// Two bolds side by side are two bolds. Only a pair left EMPTY (a label that
+// was Khmer and nothing else) goes: W-53 read `**Take it down.Hide Long
+// Text**` in every language.
+describe('toEnglishOnly and neighbouring bolds', () => {
+  it('keeps two bolds apart', () => {
+    const text = '**Take it down.** **Hide Long Text** clears it.';
+    expect(toEnglishOnly(text)).toBe(text);
+  });
+
+  it('takes away a bold that held only Khmer', () => {
+    expect(toEnglishOnly('Press **ស្វែងរក** to look it up.')).toBe(
+      'Press to look it up.',
+    );
+  });
+});
+
+// A question typed in Khmer is searched by the English words it names
+// (`queryLanguage.mjs`): it used to be cut into fragments at every vowel
+// sign and found nothing.
+describe('a question asked in Khmer', () => {
+  it('finds the page its words are about', () => {
+    // "How do I read the Bible?"
+    const hits = searchHelp('តើខ្ញុំអានព្រះគម្ពីរដោយរបៀបណា?', 3, 'manual');
+    expect(hits[0]?.id).toBe('W-11');
+  });
+
+  it('a question whose words the app does not know finds nothing', () => {
+    // "Hello" -- no page is about it, and its letters are no evidence.
+    expect(searchHelp('សួស្តី', 3, 'manual')).toEqual([]);
+  });
+});
+
 describe('the Khmer twin the manual writes beside every label', () => {
   it('takes the whole bracket, not only the Khmer inside it', () => {
     // The card read "...and choose Download From URL (URL)." because the

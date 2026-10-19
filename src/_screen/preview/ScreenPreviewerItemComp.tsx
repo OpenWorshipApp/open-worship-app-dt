@@ -57,9 +57,6 @@ export default function ScreenPreviewerItemComp({
     const selectedCN = screenManager.isSelected
         ? HIGHLIGHT_SELECTED_CLASSNAME
         : '';
-    const height = Math.round(
-        width * (screenManagerDim.height / screenManagerDim.width),
-    );
     const screenManagerRef = useAppCurrentRef(screenManager);
     // The custom-html previewer rescales on a scale event, so whenever its
     // container width changes (full view toggled via the button or exited
@@ -159,6 +156,10 @@ export default function ScreenPreviewerItemComp({
             style={{
                 overflow: 'hidden',
                 width: `${width}px`,
+                // Never wider than its column (less the 2px margins): on a
+                // ~900px window the zoom's pixel width ran the card past the
+                // edge, its More Options out of reach.
+                maxWidth: 'calc(100% - 4px)',
                 display: 'inline-block',
                 verticalAlign: 'top',
             }}
@@ -175,7 +176,9 @@ export default function ScreenPreviewerItemComp({
             <div
                 className="mini-screen-preview-body w-100 app-overflow-hidden"
                 style={{
-                    height: `${height}px`,
+                    // From the width the card really got, not the one asked
+                    // for -- `maxWidth` above can make them differ.
+                    aspectRatio: `${screenManagerDim.width} / ${screenManagerDim.height}`,
                     position: 'relative',
                 }}
                 onScroll={handleScroll}

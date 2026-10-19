@@ -331,7 +331,7 @@ describe('DirSource', () => {
         ]);
     });
 
-    test('getFilePaths returns nothing for a missing directory', async () => {
+    test('getFilePaths fails for a missing directory, lists none when unset', async () => {
         const settingName = genSettingName();
         const dirSource = new DirSource(settingName);
 
@@ -339,7 +339,15 @@ describe('DirSource', () => {
 
         settingStore.set(settingName, '/docs');
         fsCheckDirExistMock.mockResolvedValue(false);
+        // `[]` drew "This folder is empty" over a folder that is not there,
+        // and offered to make documents in it.
+        expect(await dirSource.getFilePaths('appDocument')).toBeNull();
+        expect(dirSource.isDirPathValid).toBe(false);
+
+        fsCheckDirExistMock.mockResolvedValue(true);
+        fsListFilesMock.mockResolvedValue([]);
         expect(await dirSource.getFilePaths('appDocument')).toEqual([]);
+        expect(dirSource.isDirPathValid).toBe(true);
     });
 
     test('getFilePaths caches results until forced', async () => {
@@ -432,5 +440,21 @@ describe('DirSource', () => {
         expect(DirSource.getInstanceByDirPath('/docs/nested/')).toBe(dirSource);
         // a substring of another dir path must not match
         expect(DirSource.getInstanceByDirPath('/docs/nes')).toBeNull();
+    });
+
+    test('a folder picked during the session is routed to its new instance', async () => {
+        const settingName = genSettingName();
+        // Before Select Default: no folder, so the key carries no path.
+        settingStore.set(settingName, '');
+        const before = await DirSource.getInstance(settingName);
+
+        settingStore.set(settingName, '/picked/webs');
+        const after = await DirSource.getInstance(settingName);
+
+        expect(after).not.toBe(before);
+        // The old instance reads the setting live and would match too; the
+        // watcher must reach the list that is actually mounted.
+        expect(DirSource.getInstanceByDirPath('/picked/webs')).toBe(after);
+        expect(DirSource.getAllInstances()).not.toContain(before);
     });
 });

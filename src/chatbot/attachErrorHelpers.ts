@@ -1,4 +1,5 @@
 import { appError } from '../helper/loggerHelpers';
+import { tran } from './chatTranHelpers';
 
 /**
  * The line under the ask box when pointing at a control, or ringing one a
@@ -9,5 +10,5 @@ import { appError } from '../helper/loggerHelpers';
  */
 export function describeAttachError(error: unknown, toolName: string): string {
     appError(error, `chatbot attach ${toolName}`);
-    return 'I could not do that just now. Try again in a moment.';
+    return tran('I could not do that just now. Try again in a moment.');
 }

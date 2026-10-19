@@ -16,6 +16,10 @@ export type AiChatGuestElementType = HTMLWebViewElement & {
     // The id the main process knows this guest by, which is how a
     // microphone ask is matched to the tab it came from.
     getWebContentsId: () => number;
+    // The language's face handed to the page (`aiChatGuestFontHelpers`):
+    // a script that adds fonts from bytes, and one style rule.
+    executeJavaScript: (code: string) => Promise<unknown>;
+    insertCSS: (css: string) => Promise<string>;
 };
 
 // Electron's guest events are plain DOM events carrying extra fields; only

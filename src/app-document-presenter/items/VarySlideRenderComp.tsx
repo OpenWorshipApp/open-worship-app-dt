@@ -110,6 +110,9 @@ function VarySlideHeaderComp({
         varySlide.filePath,
         varySlide.id,
     );
+    const dimTitle =
+        `${tran('Width')}: ${varySlide.width}, ` +
+        `${tran('Height')}: ${varySlide.height}`;
     const handleDimInfoClicking = useCallback((event: any) => {
         event.stopPropagation();
         showSimpleToast(tran('Dimensions'), event.currentTarget.title);
@@ -152,15 +155,10 @@ function VarySlideHeaderComp({
                         id={varySlide.id}
                         effect={ownTransition}
                     />
-                    <span
-                        title={
-                            `width:${varySlide.width}, ` +
-                            `height:${varySlide.height}`
-                        }
-                    >
+                    <span title={dimTitle}>
                         <i
                             className="bi bi-aspect-ratio-fill app-caught-hover-pointer"
-                            title={`width:${varySlide.width}, height:${varySlide.height}`}
+                            title={dimTitle}
                             onClick={handleDimInfoClicking}
                         />
                     </span>

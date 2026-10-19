@@ -5,13 +5,13 @@ section: "Bible study"
 verify: [RD-10, RD-49, RD-50, RD-51, RD-52, RD-124]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-13 — Cross references
 
 **Goal:** see what else in scripture speaks to the verse you are reading.
 
-1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (`bi-binoculars`, top right) to open
+1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (the binoculars, top right) to open
    the side panel, then pick **[en:tran:Cross Reference]** from the panel's dropdown —
    the second entry, after **[en:tran:Find]**. 📸
    You can also get here from the verse itself: right-click any verse in the lookup body
@@ -24,7 +24,8 @@ workflowsVersion: "2026-10-15"
    verse, or the version chip to read the references in another translation. 📸
 3. Under it, **AI [en:tran:Cross References]** with the version it is quoting on the right, and a
    line saying how much there is: **7 [en:tran:Themes] · 35 [en:tran:Verses]**. Click the title to collapse the
-   whole section; right-click it for **[en:tran:Refresh]**, which re-fetches.
+   whole section; right-click the title (not the references under it) for
+   **[en:tran:Refresh]**, which re-fetches.
 4. The references are grouped by **theme** — a sentence such as _Genealogy from Adam to
    Noah_ — set flush left, with that theme's verses hanging off a single vertical line
    beneath it. 📸 Each verse gives its reference on its own line and the opening of the
@@ -39,10 +40,10 @@ workflowsVersion: "2026-10-15"
    The version at the start of the panel's title — **(KJV)** — is a button: click it and
    choose another Bible, and the same verse opens in a second panel of its own, so the two
    can be read side by side. Close a panel with its **×**.
-6. The **`bi-cpu`** button on the section title says a model wrote these; click it for the
+6. The **chip** button on the section title (**[en:tran:Generated using AI technology.]**) says a model wrote these; click it for the
    page explaining what that costs you in accuracy. On a translation whose theme headings
-   were machine-translated, each heading carries its own **`bi-translate`** button saying
-   so — on an English bible nothing was translated and the mark is absent.
+   were machine-translated, each heading carries its own **translate** button
+   (**[en:tran:Generated using Google Translate.]**) saying so — on an English bible nothing was translated and the mark is absent.
 7. If you have put your own OpenAI or Anthropic key in Settings, **Custom OpenAI** and
    **Custom Anthropic** appear as their own sections below, each collapsing and refreshing
    the same way. The section above them needs no key.
@@ -52,5 +53,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52` · `RD-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

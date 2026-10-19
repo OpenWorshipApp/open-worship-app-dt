@@ -1,8 +1,16 @@
 import './AppRangeComp.scss';
 
-import { type ChangeEvent, type RefObject, useCallback, useState } from 'react';
+import {
+    type ChangeEvent,
+    type KeyboardEvent,
+    type RefObject,
+    useCallback,
+    useState,
+} from 'react';
 
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import { pressElementLikeButton } from '../helper/helpers';
+import { tran } from '../lang/langHelpers';
 
 export type AppRangeDefaultType = {
     size: number;
@@ -239,16 +247,54 @@ export default function AppRangeComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+    // What is being TYPED, kept as text until Enter or leaving the box. Every
+    // keystroke used to be clamped and written back: typing `0.8` into Scale
+    // (min 0.1) turned the `0` into `0.1` at once, and the next keys built on
+    // that -- it stored 0.2. A draft that is a number in range still applies
+    // as it is typed, so the screen follows, but the box keeps the keys.
+    const [draftText, setDraftText] = useState<string | null>(null);
+    const draftTextRef = useAppCurrentRef(draftText);
     const handleValueTyping = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            const typed = Number.parseFloat(event.target.value);
-            if (Number.isNaN(typed)) {
+            const text = event.target.value;
+            setDraftText(text);
+            const typed = Number.parseFloat(text);
+            const { min, max } = defaultSizeRef.current;
+            if (Number.isNaN(typed) || typed < min || typed > max) {
                 return;
             }
-            setLocalValue1Ref.current(typed);
+            const newValue = roundSize(
+                typed,
+                defaultSizeRef.current,
+                fixedSizeRef.current,
+            );
+            setLocalValue(newValue);
+            setValueRef.current(newValue);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
+    );
+    const commitDraft = useCallback(() => {
+        const text = draftTextRef.current;
+        if (text === null) {
+            return;
+        }
+        setDraftText(null);
+        const typed = Number.parseFloat(text);
+        if (!Number.isNaN(typed)) {
+            setLocalValue1Ref.current(typed);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleValueKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLInputElement>) => {
+            if (event.key === 'Enter') {
+                commitDraft();
+            } else if (event.key === 'Escape') {
+                setDraftText(null);
+            }
+        },
+        [commitDraft],
     );
     const handleZoomIn = useCallback(() => {
         setLocalValue1Ref.current(
@@ -265,8 +311,18 @@ export default function AppRangeComp({
             title={title}
             style={{ minWidth: isCompact ? '92px' : '100px' }}
         >
+            {/* Buttons with names: bare clickable divs were out of the
+                accessibility tree and out of reach of the keyboard. */}
             {isCompact ? null : (
-                <div className="pointer" onClick={handleZoomOut}>
+                <div
+                    className="pointer"
+                    role="button"
+                    tabIndex={0}
+                    title={tran('Zoom Out')}
+                    aria-label={tran('Zoom Out')}
+                    onClick={handleZoomOut}
+                    onKeyDown={pressElementLikeButton}
+                >
                     <i className="bi bi-zoom-out" />
                 </div>
             )}
@@ -283,7 +339,15 @@ export default function AppRangeComp({
                 onChange={handleRangeChange}
             />
             {isCompact ? null : (
-                <div className="pointer" onClick={handleZoomIn}>
+                <div
+                    className="pointer"
+                    role="button"
+                    tabIndex={0}
+                    title={tran('Zoom In')}
+                    aria-label={tran('Zoom In')}
+                    onClick={handleZoomIn}
+                    onKeyDown={pressElementLikeButton}
+                >
                     <i className="bi bi-zoom-in" />
                 </div>
             )}
@@ -292,11 +356,13 @@ export default function AppRangeComp({
                     className="app-range-value"
                     type="number"
                     aria-label={title}
-                    value={localValue}
+                    value={draftText ?? localValue}
                     min={defaultSize.min}
                     max={defaultSize.max}
                     step={defaultSize.step}
                     onChange={handleValueTyping}
+                    onBlur={commitDraft}
+                    onKeyDown={handleValueKeyDown}
                 />
             ) : null}
             {isShowValue && !isCompact ? (

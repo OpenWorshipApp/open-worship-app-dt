@@ -2,15 +2,16 @@
 id: W-34
 title: "Add a Bible translation from the internet (XML), and make it read in its own language"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, LT-01]
-screenshots: 8
+verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
+screenshots: 9
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
-W-33 moves translations you already have. This workflow adds a translation from an XML
-link and lets you review its language and mappings before saving it.
+Sharing your translations moves the ones you already have to another machine. This workflow
+adds a translation from an XML link and lets you review its language and mappings before
+saving it.
 
 Example: `https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
 The GitHub redirect works as supplied. You can also use **[en:tran:Choose File]** for
@@ -18,9 +19,9 @@ an XML file already on your computer.
 
 **The easy way: let the assistant do it**
 
-You do not need a link, and you do not need an AI key: this runs on buttons.
+**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
 
-1. Open **[en:tran:Settings]** → **[en:tran:Bible]** and press the blue
+1. Open **[en:tran:Settings]** (the gear at the top of the window) → **[en:tran:Bible]** and press the blue
    **[en:tran:Let the assistant import a Bible for me]** at the top of
    **[en:tran:Import XML File]**. (Or open the assistant 🤖 and type
    `Import bible for khmer`, `Import bible`, or `Import bible from` and a link. Say it
@@ -42,23 +43,39 @@ You do not need a link, and you do not need an AI key: this runs on buttons.
    you have, **You already have this Bible** with the name it is installed under
    (press **Cancel**, or go on to keep a second copy under another name). Nothing is
    installed yet.
+   Before it asks you anything, it says **where the Bible is from** and asks you to
+   agree: it was found on the internet — in the free collection on GitHub, with that
+   collection's address and the file's own — it is **not from Open Worship**, and you
+   are **responsible to its publisher**: a Bible translation belongs to the publisher
+   or Bible society that made it, and many are under copyright, so make sure the
+   publisher allows how you will use it. Both addresses are links: press one to open
+   it in your web browser, as **Open the website** does for the collection (or the
+   page the file was listed on). Press **I agree** to go on, or **Cancel** and
+   nothing is installed. 📸
 5. **Step 1 — a short name**: press a suggestion (**KSV**, **KM1954** …) or type your
    own, letters and numbers with no spaces. A name you already have is refused and
    asked again.
 6. **Step 2 — the language**: it says which it looks like and why (_the verses are
-   written in Khmer script_). Press it, or type another.
+   written in Khmer script_). Press it, or type another, such as `ខ្មែរ`.
+   Your choice controls the imported Bible's book names and numbers, even when
+   the file was detected as another language. You can change it again while
+   choosing numbers or book names; the choices reload for that language.
 7. **Step 3 — numbers**: **០ ១ ២ ៣ …** or **0 1 2 3 …** (skipped for a language that
    writes 0–9).
 8. **Step 4 — book names**: each list shows its first names, the names only it has,
    and how many of its names appear in this Bible's own verses; the suggested one
    uses the most. **Find more lists online** adds lists from Bible.com and
-   Wordproject. 📸
+   Wordproject. You can also paste a Bible website link here, including a chapter
+   link. The assistant reads that edition's book-name list in your selected
+   language and shows a source link. If it cannot find a complete matching list,
+   your previous choices remain. 📸
 9. **Ready to install** sums it up. Press **Install it**. _Done — KSV is installed_:
    choose it from the Bible version button. **Undo** under that answer moves it to
    the trash again. **Cancel** at any step stops with nothing installed.
 
 You can type instead of pressing at every step: `yes` (or `ok`) takes the suggested
-choice — and at the end, **Install it** — a number takes that line of a list (`2`,
+choice — under the notice of where it is from, **I agree**; at the end, **Install it**
+— a number takes that line of a list (`2`,
 `list 2`), the words on a button press it, and `cancel` stops.
 
 Pasting a link works the same way, and the link does not have to be the file: a
@@ -71,7 +88,8 @@ lead to a Bible, the link can be pasted on its own.
 
 The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
 it is set to a Bible this computer does not have — on a new computer, the KJV. The card
-says how the assistant gets it, in three steps, and carries the button:
+says how the assistant gets it, in three steps, and carries the button. Keep the short
+name the assistant suggests for it, or the card stays:
 
 1. Press **[en:tran:Let the assistant import this Bible for me]** on that card and
    answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
@@ -79,18 +97,21 @@ says how the assistant gets it, in three steps, and carries the button:
    collection: for KJV it lists _English KJV_ and _English NKJ 1982_. Press the one you
    want. A name the collection has no file for is answered with _None of them has … in
    its name_: type the Bible's language (`Khmer`) and press one from that list.
-3. It downloads the Bible and says _The app is looking for a Bible called **KJV**_. At
-   **Step 1 — a short name** that name comes first, **KJV (suggested)**: keep it.
-   Installed under any other name, the card stays where it is.
+3. It downloads the Bible and says where it is from; press **I agree**. It then says
+   _The app is looking for a Bible called **KJV**_. At **Step 1 — a short name** that
+   name comes first, **KJV (suggested)**: keep it. Installed under any other name,
+   the card stays where it is.
 4. Answer the language and the book names as above, then press **Install it**. _Done
    — KJV is installed_, and the card goes away by itself: the passage shows. 📸
 
 Typing `Import the Bible called "KJV"` in the assistant does the same.
 
-**Import a Bible XML file with the form**
+**Import a Bible XML file with the form.** Give it the link or choose the file, press
+**[en:tran:Import]**, answer the review, and press **[en:tran:Import]** again to install it:
 
 1. Open **[en:tran:Settings]** → **[en:tran:Bible]**. In
-   **[en:tran:Import XML File]**, paste the link into **[en:tran:URL:]**.
+   **[en:tran:Import XML File]**, paste the link into **[en:tran:URL:]** — or, for an XML
+   file already on this computer, press **[en:tran:Choose File]** and pick it.
 2. Press **[en:tran:Import]**. The download is read and its temporary file removed.
    **[en:tran:Review Bible import]** appears with the translation title. Nothing has
    been installed yet. 📸
@@ -127,9 +148,15 @@ to it or clear it there, and a Bible you export (W-33) takes it along. A Bible
 imported before this note existed has none.
 
 A Bible already installed whose book names or numbers still read in English needs no
-second import. Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
-**🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
-Those editor actions use the locale currently in the editor buffer; save after editing.
+second import, and nothing of the import — its review, the assistant's steps — is
+needed again. Later changes remain available through the pencil beside the translation in
+**[en:tran:Settings]** → **[en:tran:Bible]** (its name opens nothing) → **[en:tran:Info]** editor.
+Right-click inside that editor for its three commands, in this order: first
+**🌎 [en:tran:Choose Locale]**, and pick the language; then **#️⃣ [en:tran:Edit Numbers Map]**,
+and press **[en:tran:Ok]**; then **📚 [en:tran:Edit Books Map]**, which opens the 66 book
+names one to a line — press **[en:tran:Guessing Names]** to fill them from the lists the app
+has for that language, or type your own, and press **[en:tran:Ok]**. Those editor actions use
+the locale currently in the editor buffer; save after editing.
 
 **[en:tran:Key is already taken]**
 
@@ -158,12 +185,15 @@ existing Bible, then use its pencil instead.
 > **[en:tran:Create KJV Bible XML]** row sits at the TOP
 > of the **[en:tran:Bibles XML]** list, above the translations — not only on a brand-new install
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
-> because there is nothing left to create.
+> because there is nothing left to create. Any other translation is not carried inside the
+> app. Its file went to the Recycle Bin when it was deleted, and the way back is to import
+> it again the way it came in — **[en:tran:Let the assistant import a Bible for me]**, or
+> **[en:tran:Import XML File]** with its link or file.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `LT-01`
+`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

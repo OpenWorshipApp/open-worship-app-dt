@@ -88,6 +88,67 @@ describe('the shared DOM matcher', () => {
     expect(dm.findBest(['Bible > Videos'])?.element?.id).toBe('wrong');
   });
 
+  // T2 (robot run 2026-10-16): the Documents list is a pane stamped
+  // "Document List" whose header reads "Documents", and a scope written the
+  // way the window reads found nothing at all.
+  it('scopes by the name a panel SHOWS as well as the one it is stamped with', () => {
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<div tabindex="0" aria-labelledby="list-header">',
+      '<div class="card-header"><strong id="list-header">Documents</strong>',
+      '<button id="list" title="More Options"></button></div></div></div>',
+      // A twin of the same name in another pane.
+      '<div data-widget-name="Mini Screen">',
+      '<button id="screen" title="More Options"></button></div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Documents > More Options'])?.element?.id).toBe('list');
+    expect(dm.findBest(['Document List > More Options'])?.element?.id).toBe(
+      'list',
+    );
+    expect(dm.findBest(['Mini Screen > More Options'])?.element?.id).toBe(
+      'screen',
+    );
+    // The panel a match is reported in is still the stamped, English one.
+    expect(dm.describe(document.getElementById('list')).inPanel).toBe(
+      'Document List',
+    );
+    const found = run(genFindUiExpression('Documents > More Options', false));
+    expect(found.count).toBe(1);
+    expect(found.matches[0].inPanel).toBe('Document List');
+  });
+
+  it('does not take a control, or a sentence, for the name of a container', () => {
+    document.body.innerHTML = [
+      '<button aria-label="Documents"><span id="inner" title="Go">Go</span>',
+      '</button>',
+      '<div aria-label="' + 'a long sentence about the panel '.repeat(4) + '">',
+      '<button id="deep" title="Open"></button></div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Documents > Go'])).toBeNull();
+    expect(dm.scopePathOf(document.getElementById('deep'))).toEqual([]);
+  });
+
+  // T4: textContent reads the source of a <style> mounted inside a pane, and
+  // owa_press_key named a slide list ".play-to-bottom { padding: 0; ...".
+  it('reads no style sheet or script as words on a control', () => {
+    document.body.innerHTML = [
+      '<div id="list" tabindex="0" role="button">',
+      '<style>.play-to-bottom { padding: 0; }</style>',
+      '<script type="text/x-template">if (a) { b(); }</script>',
+      'Slide 1</div>',
+    ].join('');
+    const dm = install();
+    const list = document.getElementById('list');
+    expect(dm.labelOf(list)).toBe('Slide 1');
+    expect(dm.describe(list).label).toBe('Slide 1');
+    expect(dm.findBest(['padding'])).toBeNull();
+    // A label that merely holds a brace is read as it is.
+    document.body.innerHTML = '<button id="brace">{Verse}</button>';
+    expect(install().labelOf(document.getElementById('brace'))).toBe('{Verse}');
+  });
+
   it('tells a foreground tile from the background tile it is a copy of', () => {
     // Every foreground component reuses the Background tabs' own file grid,
     // so the same file name is on screen twice. The floating panel drew its
@@ -280,6 +341,28 @@ describe('the shared DOM matcher', () => {
     expect(dm.labelOf(element)).toBe('Toggle showing screen [F5]');
     expect(dm.listControls('', 10).map((row) => row.label)).toEqual([
       'Toggle showing screen [F5]',
+    ]);
+  });
+
+  // An unticked Behind Slide was listed as "Behind Slide on": a checkbox's
+  // value is "on" by default, a form field's and shown nowhere, and it read
+  // as the box's state. A text box is still named by what it holds.
+  it('names a checkbox by its label, never by its form value', () => {
+    document.body.innerHTML =
+      '<input id="behind" type="checkbox" aria-label="Behind Slide">' +
+      '<input id="pick" type="radio" value="fade" aria-label="Fade">' +
+      '<input id="ref" type="text" aria-label="Reference">';
+    document.getElementById('ref').value = 'John 3:16';
+    const dm = install();
+    expect(dm.labelPartsOf(document.getElementById('behind'))).toEqual([
+      'Behind Slide',
+    ]);
+    expect(dm.labelPartsOf(document.getElementById('pick'))).toEqual([
+      'Fade',
+    ]);
+    expect(dm.labelPartsOf(document.getElementById('ref'))).toEqual([
+      'Reference',
+      'John 3:16',
     ]);
   });
 
@@ -1176,6 +1259,47 @@ describe('the twins of a control', () => {
       count: 1,
       panels: ['Mini Screen'],
     });
+  });
+
+  // The Reader's Font Size (`AppRangeComp`): the range carries the name as
+  // its aria-label and its own wrapper carries it as a title. The tip that
+  // raises it was refused for "2 controls" with only this one on screen.
+  const RANGE =
+    '<div class="app-range" title="Font Size">' +
+    '<input type="range" aria-label="Font Size" title="17"></div>';
+
+  it('is not twinned with the box it sits in, whichever of the two is aimed at', () => {
+    document.body.innerHTML = `<div data-widget-name="Bible Reader">${RANGE}</div>`;
+    const dm = install();
+    const input = document.querySelector('input');
+    expect(dm.twinElementsOf(input, 'Font Size')).toEqual([input]);
+    expect(dm.twinsOf(input, 'Font Size')).toEqual({
+      count: 1,
+      panels: ['Bible Reader'],
+    });
+    const box = document.querySelector('.app-range');
+    expect(dm.twinsOf(box, 'Font Size').count).toBe(1);
+  });
+
+  it('still counts two separate controls of one name, each with its box once', () => {
+    document.body.innerHTML = [
+      `<div data-widget-name="Bible Reader">${RANGE}</div>`,
+      `<div data-widget-name="Bible Lookup">${RANGE}</div>`,
+    ].join('');
+    const dm = install();
+    const [first, second] = document.querySelectorAll('input');
+    // The other range's box is the other range, not a third control.
+    expect(dm.twinElementsOf(first, 'Font Size')).toEqual([first, second]);
+    expect(dm.twinsOf(first, 'Font Size')).toEqual({
+      count: 2,
+      panels: ['Bible Reader', 'Bible Lookup'],
+    });
+    // Two plain controls side by side are twins too: nothing nests.
+    document.body.innerHTML =
+      '<button title="Font Size">A</button><button title="Font Size">B</button>';
+    expect(
+      dm.twinsOf(document.querySelector('button'), 'Font Size').count,
+    ).toBe(2);
   });
 });
 

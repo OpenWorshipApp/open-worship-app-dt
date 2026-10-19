@@ -88,6 +88,24 @@ function checkIsKinshipContext(text: string, tokenStart: number) {
     );
 }
 
+// Words a verse uses as something OTHER than the name they spell, by KJV short
+// verse key and needle. "Eli, Eli, lama sabachthani?" (Matt 27:46) is Aramaic
+// for "My God, my God", yet `eli` is borne by exactly one record -- the priest
+// of Shiloh -- so the no-evidence fallback in `resolveNeedle` underlined both
+// and opened him. The dataset does not attest him there, and nothing in the
+// text could tell, so the verse says it here; an entry wins over verse
+// evidence too, since it is a statement about the word, not a guess.
+// Measured against the English dataset: the other transliterations that are
+// record names (Abba, Hosanna, Raca, Rabboni, Maranatha, Anathema, Selah,
+// Mene, Tekel, Upharsin, Alleluia, Talitha cumi) are deliberate `concept`
+// records whose own `verses` cite those very verses, so they stay linked;
+// "Eloi" (Mark 15:34) has no record at all.
+// A Map rather than an object literal: the key comes from the caller, and an
+// object would also answer `constructor` and `toString`.
+const VERSE_NON_NAME_NEEDLE_MAP = new Map<string, readonly string[]>([
+    ['MAT 27:46', ['eli']],
+]);
+
 /**
  * The index, or null while it is still loading. Subscribing is what triggers the
  * single shared load, and unsubscribing the last consumer releases it.
@@ -223,6 +241,7 @@ export function findLookupTextMatches(
     const verseLocationIndexSet = new Set(
         index.verseLocations[kjvShortVerse] ?? [],
     );
+    const nonNameNeedleList = VERSE_NON_NAME_NEEDLE_MAP.get(kjvShortVerse);
     const tokenList: { text: string; start: number }[] = [];
     TOKEN_PATTERN.lastIndex = 0;
     let tokenMatch = TOKEN_PATTERN.exec(text);
@@ -244,6 +263,9 @@ export function findLookupTextMatches(
                 lastToken.start + lastToken.text.length,
             );
             const needle = toNeedle(rawText);
+            if (nonNameNeedleList?.includes(needle)) {
+                continue;
+            }
             const nameCandidateList = index.names[needle];
             const resolved = resolveNeedle(
                 nameCandidateList,

@@ -14,6 +14,8 @@ const state = vi.hoisted(() => ({
     stopDrag: vi.fn(),
     unsubscribeFound: vi.fn(),
     unsubscribeFocus: vi.fn(),
+    markMounted: vi.fn(),
+    unmarkMounted: vi.fn(),
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -36,6 +38,10 @@ vi.mock('./finderHelpers', () => ({
     listenFocusFinder: (listener: () => void) => {
         state.focusListener = listener;
         return state.unsubscribeFocus;
+    },
+    markFinderMounted: () => {
+        state.markMounted();
+        return state.unmarkMounted;
     },
     listenFoundInPage: (listener: (result: object) => void) => {
         state.foundListener = listener;
@@ -107,6 +113,8 @@ beforeEach(() => {
     state.stopDrag.mockReset();
     state.unsubscribeFound.mockReset();
     state.unsubscribeFocus.mockReset();
+    state.markMounted.mockReset();
+    state.unmarkMounted.mockReset();
     host = document.createElement('div');
     document.body.append(host);
     root = createRoot(host);
@@ -205,6 +213,18 @@ describe('Finder bar', () => {
             ),
         );
         expect(state.close).toHaveBeenCalledOnce();
+    });
+
+    // Main replaces a bar that never says it is drawn, so the mark has to go
+    // out on mount and be taken back on unmount.
+    it('tells main the bar is drawn, and takes it back on unmount', async () => {
+        await act(async () => root.render(<FinderAppComp />));
+        expect(state.markMounted).toHaveBeenCalledOnce();
+        expect(state.unmarkMounted).not.toHaveBeenCalled();
+
+        await act(async () => root.unmount());
+        expect(state.unmarkMounted).toHaveBeenCalledOnce();
+        root = createRoot(host);
     });
 
     it('starts drag at the grip and stops on release, blur, or close', async () => {

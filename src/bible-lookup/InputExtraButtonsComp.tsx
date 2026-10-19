@@ -1,4 +1,8 @@
-import type { CSSProperties, MouseEvent } from 'react';
+import type {
+    CSSProperties,
+    KeyboardEvent as ReactKeyboardEvent,
+    MouseEvent,
+} from 'react';
 import { createRef, useCallback, useState } from 'react';
 
 import {
@@ -30,7 +34,6 @@ import { tran } from '../lang/langHelpers';
 async function checkNewTabInputText(
     viewController: LookupBibleItemController,
     inputText: string,
-    event?: KeyboardEvent,
 ) {
     const editingResult = await viewController.getEditingResult(inputText);
     const { bookKey, guessingChapter, bibleItem } = editingResult.result;
@@ -42,8 +45,6 @@ async function checkNewTabInputText(
                 guessingChapter,
             );
             if (chapter !== null) {
-                event?.stopPropagation();
-                event?.preventDefault();
                 return `${editingResult.oldInputText}:`;
             }
         }
@@ -52,8 +53,6 @@ async function checkNewTabInputText(
         !checkIsCrossChapterTarget(bibleItem.target) &&
         bibleItem.target.verseStart === bibleItem.target.verseEnd
     ) {
-        event?.stopPropagation();
-        event?.preventDefault();
         return `${editingResult.oldInputText}-`;
     }
     return null;
@@ -158,11 +157,10 @@ export default function InputExtraButtonsComp() {
     }, []);
     const viewControllerRef = useAppCurrentRef(viewController);
     const inputTextRef = useAppCurrentRef(inputText);
-    const handleTabbing = useCallback(async (event?: any) => {
+    const handleTabbing = useCallback(async () => {
         const newInputText = await checkNewTabInputText(
             viewControllerRef.current,
             inputTextRef.current,
-            event,
         );
         if (newInputText === null) {
             return;
@@ -170,7 +168,33 @@ export default function InputExtraButtonsComp() {
         viewControllerRef.current.inputText = newInputText;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    useKeyboardRegistering([tabEventMap], handleTabbing, []);
+    const isTabAvailableRef = useAppCurrentRef(isTabAvailable);
+    const handleTabbingRef = useAppCurrentRef(handleTabbing);
+    // Tab is registered on the whole document, so this hears it wherever focus
+    // is. Only the reference box completes: Tab on a saved passage's version
+    // button is the browser moving focus, and it used to pull focus into the
+    // box and widen `John 3:16` to `John 3:16-` instead. With nothing to
+    // complete (the same state that greys the icon out) Tab leaves the box as
+    // usual, so a keyboard user is never trapped in it.
+    const handleTabKey = useCallback(
+        (event: KeyboardEvent | ReactKeyboardEvent<any>) => {
+            if (
+                !isTabAvailableRef.current ||
+                !checkIsBibleLookupInputFocused()
+            ) {
+                return;
+            }
+            // Before any await: the focus move is the keydown's default
+            // action and runs once dispatch ends, so a `preventDefault` that
+            // waits for the lookup arrives after focus has already left.
+            event.preventDefault();
+            event.stopPropagation();
+            handleTabbingRef.current();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    useKeyboardRegistering([tabEventMap], handleTabKey, []);
     useKeyboardRegistering(
         [escapeEventMap],
         () => {

@@ -5494,7 +5494,7 @@ easier. Not proven live: the loaded-context lines, the round-1 loading line
 and a picture to a ticked model — the server went down three times under load,
 the last time 40 s after its model was loaded by hand.
 
-## EC-199 · The guide answers a question about the BIBLE with a page about the app — `open`, high
+## EC-199 · The guide answers a question about the BIBLE with a page about the app — `fixed` 2026-10-16 (see the entry of that day at the end)
 
 Found in the user's own tabs the same evening, both with the local server
 down: _what bible verse talk about lover your enemy?_ was answered with **Keep
@@ -5663,7 +5663,6 @@ carried reasoning, on a server measured to honour the field
 thinking otherwise. Unit proven; the live round through the window waits
 on the 🤖 window.
 
-
 ## EC-212 · A walkthrough pressed the first of forty "More Options" — `fixed` 2026-10-10
 
 Asked with the Virtual Screens Manager closed, _How do I cast the virtual
@@ -5699,7 +5698,6 @@ the `infoMap`, the root's word is _not loaded, no size_, and Settings says
 over the LAN: two models listed, both lines drawn; one tool-using round in the
 app's shape answered a correct `owa_list_screens` call in 20 s including the
 load. Ollama's four models on the same PC listed and answered the same way.
-
 
 ## EC-214 · GPT4All's API server refuses every request carrying `tools` — `fixed` 2026-10-10
 
@@ -5838,8 +5836,8 @@ eleven. **(3) The row under the ask box printed a tool's own error text**
 (`I could not do that: <message>`), against "a tool's error text may never
 reach the user"; `describeAttachError` says a plain sentence and logs the
 reason. **(4) `needsPage` was cleared only for `owa_goto_page {page:
-"presenter"}`**, a value the tool refuses, so a real crossing kept the *Go to
-the Presenter* offer; `presenter.html` clears it. **(5) `detectRecipeWindow`
+"presenter"}`**, a value the tool refuses, so a real crossing kept the _Go to
+the Presenter_ offer; `presenter.html` clears it. **(5) `detectRecipeWindow`
 read a recipe's whole first step**, so the AI Chat recipe — which mentions
 Settings two sentences on — was walked in Settings; it reads the first
 sentence, as `dropStepsAlreadyDone` does. **Not driven live:** a fresh MCP
@@ -7474,3 +7472,1544 @@ this page, and which real song pages a stricter one (every part one line
 long, none repeated, no title) would turn away. And a fill-in whose sample
 is a placeholder should not be askable as it stands -- the list could
 leave the cursor on the address.
+
+## EC-267 · Two of the three free models were withdrawn by the gateway, and no free model could see a picture — `fixed` 2026-10-16
+
+**Evidence.** Asked on Auto (the window's default) with the user's own
+servers asleep, _How do I hide the tip line above the box?_ came back under
+_Free · Nex Pro could not answer — this model is not available to the
+account … Free · Step Flash could not answer — … Auto asked Ollam ·
+gemma4:e4b instead_. Kilo Code answers both ids 404 _The requested model …
+does not exist_; its `/models` list has neither. A tab set to either failed
+every question; the one free model that could see a picture was Step Flash.
+Nemotron Lightning, still listed, was overloaded the same morning: 240 s
+for one round, 5 of 7 questions timed out at 240 s, a one-tool ping 23 s
+where the others took 2-5 s.
+
+**Fix.** The four free models that answered a one-tool ping were asked the
+same seven corpus questions through the window (two live-state, the panic
+question, three how-tos, one about the help window): Nemotron Super VL 5
+right, 1 partly, 1 empty; Nemotron Super 5 right, 2 partly, slower; Dots
+Note printed `<dots_function_call><invoke name="owa_find_ui">…` as an
+answer after six rounds; Laguna S was rate-limited on four of seven and
+quoted `isShowing: false` and a display id at the user. The list is
+**Nemotron Super VL** (first; sees pictures — a screenshot of the
+Presenter, its labels read back in 8 s), **Nemotron Super**, **Nemotron
+Lightning** (last, _often busy_). Super VL's empty answer and one cut
+mid-sentence were its thinking spending the plain 2 000-token cap: Free has
+`FREE_MAX_TOKENS` 6 000, and the three asked again came back whole. Recorded
+in `extra-work/local-llm/model-benchmarks.json`; CB-36.
+
+## EC-268 · "How do I open the help from the taskbar?" was answered "Click the 🤖 button on the taskbar" — `fixed` 2026-10-16
+
+**Evidence.** Nemotron Lightning, the row picked in More…: _Click the 🤖
+button on the taskbar (or Dock) to open the help chat._ The way is a
+right-click on the app's icon → **Tasks → App Help (Chatbot)**, and it is in
+W-42 step 1 — which `dropFirstStep` (`EC-244`) takes off every question
+filed under that page. The guide alone missed it too: the row's `passage`
+named step 1's lead, and the taskbar paragraph opened on
+`**On Windows the taskbar has it too**:`, its colon outside the bold, so it
+was never a passage of its own and the excerpt stopped at the 🤖 sentence.
+
+**Fix.** Three parts: `dropFirstStep(page, keepPassage)` keeps step 1 when
+the row's own `passage` is in it; the recipe's lead reads
+`**On Windows the taskbar has it too:**`; the row names that passage.
+Asked again on Auto: _On Windows the taskbar has it too: right-click the
+app's icon on the taskbar and choose App Help (Chatbot) under Tasks — the
+app comes forward and the help opens straight away…_; the guide's excerpt
+is that paragraph. Unit tested.
+
+## EC-269 · "Only want to read the Bible?" under questions that are not about reading it — `fixed` 2026-10-16
+
+**Evidence.** Two supported questions got the Bible Reader's way back
+(`readerRouteHelpers`, 2026-10-13) under right answers: _How do I get help
+with another open window, like a Bible Reader window?_ ("open" read as the
+verb, "Bible" in the window's name) and _Where did a Bible I imported come
+from?_ ("where" + "Bible"; a Settings question) — each with **Go to the
+Bible Reader** beside the walkthrough buttons.
+
+**Fix.** "open window(s)" is not a reading verb; and a supported question
+asked WORD FOR WORD that is filed on another page than the Reader's gets
+no way back (`knownRow`) — a sentence typed in the person's own words keeps
+the word test, which is what the user's _how can I open bible_ is. Unit
+tested; the first row asked again on five models with no tail.
+
+## EC-270 · The hint's own words came back in answers: "the app files this under that key" — `fixed` 2026-10-16
+
+**Evidence.** _Press Ctrl+B (the app files this under that key), or click
+Bible Lookup_ and _Yes — the app's key list for this is Arrow keys /
+PageDown / Space_ (Nemotron Super VL) — the hint's sentence from `EC-248`,
+_The app's own list files this question with the key …_, repeated to the
+person. Two of the two rows of the 23 that carry a key.
+
+**Fix.** The sentence is a fact about the app: _For this, the app has the
+key …: name it in the steps, as written here._ Ten rows that carry a key or
+a menu item asked again: ten named theirs, none spoke of a list (evidence
+for `EC-208` / `EC-235`, the wider class).
+
+## EC-271 · Ollama answered from a question cut to 4k, in silence — `fixed` 2026-10-16
+
+**Evidence.** With the free models failing, Auto asked the laptop's Ollama
+(`gemma4:e4b`, not loaded). The question loaded it at Ollama's 4 096
+default, and both answers reported `prompt_tokens` 2 051 of a ~13 000-token
+ask — the instructions and tools gone — and were shown as answers. The
+refusal before a round (`CUSTOM_CONTEXT_MIN`) sees only a model already
+loaded under 16k; Ollama unloads after five idle minutes, so the second
+question met it unloaded again. The memory had Ollama refusing an
+over-long request with a 400; 0.40.3 did not.
+
+**Fix.** `askCustomServer` reads the model again after an answer when it
+was not loaded before, and a context under 16k throws `genContextCutText`:
+_Ollam could not answer — it loaded this model with only 4k of context and
+answered from part of the question, so that answer is not shown — in the
+Ollama app, set Settings → Context length to 32k or more …, then ask
+again_, with the guide's answer under it. Seen live on the laptop. Unit
+tested. CB-85. **Not done:** remembering the context a model last loaded
+with, to refuse it before a round — a setting fixed while the model is
+unloaded would be refused for good.
+
+## EC-272 · The manual named controls by their icon class — `fixed` 2026-10-16
+
+**Evidence.** _In the Bible Lookup click Advance Bible Lookup (bi‑binoculars,
+top right)_ (Nemotron Super, _How do I read a cross reference in another
+Bible version?_) — copied from W-13 step 1. Ten recipe lines named a
+control by its Bootstrap icon class: `bi-binoculars` twice, `bi-cpu` and
+`bi-translate` as the only name of two buttons, `bi-search`,
+`bi-markdown`, `bi-arrow-left`, `bi-highlighter`, `bi-chevron-down`.
+
+**Fix.** Each says what a person sees (the binoculars, the magnifier, the
+left arrow…); the two caution buttons go by their own tooltip labels as
+templates. The history entries that name them are left as written.
+
+## EC-273 · The free list is fixed at release time — `idea`, medium
+
+`EC-267` was found by a research run, not by the app: an installed copy
+keeps offering a withdrawn free model until its next release, and only
+Auto hands the question on. The shared registry
+(`openworship.app/llm/info.json`) is already read at launch; the free
+models could ride it (ids, labels, which sees pictures), with the built-in
+list as the fallback — a change to a public file instead of a release.
+Needs the user's word: it moves the choice of a third party's models into a
+file the admin publishes.
+
+## EC-274 · A withdrawn free model reads "not available to the account" — `open`, low
+
+There is no account on the keyless service. `describeLlmError`'s
+`modelMissing` sentence has no provider to word itself by; for Free it
+should say the service no longer offers that model.
+
+## EC-275 · The research tools picked a dead instance and could not ask on Auto — `done` 2026-10-16
+
+`audit-mcp-tools.mjs` took the newest discovery file, a scratch instance
+killed overnight, and answered `fetch failed` with the user's app up: it
+reads live pids only now (`discovery.mjs`'s probe). `corpus-run.mjs`
+needed a `--model`, and Auto has none: `--server=Auto` alone asks exactly
+what a window on its default asks, and a record's `model` is who Auto
+picked.
+
+## EC-276 · The first free model still writes no answer about once in twenty-five — `open`, low
+
+_How do I open a passage named in a section heading?_ on Nemotron Super VL
+at 6 000: _it wrote no answer this time_ and the guide answered (rightly).
+One of the 23; not seen again. Watch it on the next pass before building.
+**Seen again 2026-10-16**, the Bible Reader pass: 0 of its 77, then 1 of
+4 re-asked — _How do I add a Bible translation from the internet?_, 6 000
+output tokens and no words. About one in eighty that day: still a watch.
+
+## EC-277 · "Open the help window" opens an answer given inside the help window — `open`, low
+
+_How do I get help with another open window…_ on Nemotron Super VL: _Open
+the help window — its tab starts on the window you opened it from._ before
+the right answer. `dropFirstStep` keeps step 1 out; this sentence is from a
+later step. `EC-244`'s shape, on the free model.
+
+## EC-278 · Walkthrough buttons under answers that have no steps — `open`, low (evidence for `EC-228`)
+
+**Show me step by step** and **Do it for me** stood under _Why do I still
+need to scroll inside a long right-click menu?_, _Will the app keep my
+language when I switch to another data folder?_ (_Yes. The language is
+saved on this computer…_) and _My report says the server is not answering —
+is it lost?_ — a yes/no and two whys. `EC-228` took them off state
+answers; a `what` / `fix` row whose answer is a sentence should lose them
+too.
+
+## EC-199 · (2026-10-16) A question about what the Bible SAYS — `fixed` for the guide, and a line under the model's answer
+
+**Evidence, live.** The two questions of the user's own tabs put to the
+guide's search from the Bible Reader: _what bible verse talk about lover your
+enemy?_ → W-37 (Resources) at 27, _what are names of 7 churches mentioned in
+the book of revelation in holy bible_ → W-34 (adding a Bible) at 44; eight
+more shapes the same day → 8 of 10 handed a page that does not answer them.
+Only _who was Moses_ and _who was the father of king David_ were right (the
+names lookup, W-29 / W-30). The model's side, asked through the window on
+Auto (Free · Nemotron Super VL): both answered _The guide covers this app
+only … type /btw before your question_, one round, no tools — honest, and
+silent about Bible Find, which on the Reader searches the very words.
+
+**Fix.** `src/chatbot/bibleContentAskHelpers.ts` (pure) reads two kinds off
+the words typed: a verse asked for by what it SAYS (six frames — _which verse
+says_, _what does the Bible say about_, _verses about_ …; never with a
+reference, never for the projector) and knowledge about the Bible (a
+wh-word, a Bible word, no word of the app, nothing the person has open, and
+never _who/where was_, which the names lookup answers). `answerFromManual`
+reads them first: a verse → Bible Find's own page (searched by its goal line,
+`find verses by words, not reference`, first on every window 121 to 86), the
+words to try named, the walkthrough from its opening step at **Find** and no
+way across to the Presenter; knowledge → how to ask an assistant with `/btw`
+written out, and **Open AI settings**. `askHelpBot` sends such a question
+there ahead of the where-is reader (_find me a verse about patience_ is no
+control). Under an ASSISTANT's answer in the Bible Reader,
+`genBibleFindAdvice` adds one line and **Show me Bible Find** unless the
+answer already names Bible Find. A test holds every supported question (438)
+out of both kinds. **Live after:** `/help` with the first → Bible Find and
+_Search for “lover your enemy”_ in 0.8 s, no model; with the second → the
+`/btw` sentence in 0.1 s; the free model's answer to the first ended with
+the line and the button; the button's card rang **Advance Bible Lookup** in
+the Reader. **Not done:** a guide answer with the real verses (`EC-285`);
+the known-question route for these words (`EC-283`).
+
+## EC-279 · A manual fix was "done" while the app still answered from the old page — `fixed` 2026-10-16
+
+**Evidence.** The afternoon after `EC-268` and `EC-272` were marked fixed,
+the knowledge the user's dev app answered from still had W-42's taskbar lead
+with its colon outside the bold and `bi-binoculars` in W-13 and W-37. The
+sources had both fixes; `electron-build/knowledge/index.json` was the one
+`npm run dev` had built at 09:39, before either. `npm run docs:gen`
+regenerates the pages and had never rebuilt what the app reads from them;
+the dev chain builds it only when it starts. Rebuilt by hand at 15:18 UTC:
+W-13, W-37 and W-42 changed in content and every `bi-` class left the served
+text.
+
+**Fix.** `docs/scripts/build-manual.mjs` ends by running
+`extra-work/build-knowledge.mjs` whenever `electron-build/` is there; a
+checkout with none (the docs site's own build) gets none, and a failed
+rebuild fails `docs:gen`. Run live twice: the pages written, then _Knowledge
+bundled: 359 documents_, the running app reading the new index with no
+restart. (The generator writes LF; with `core.autocrlf` a regenerated page
+with no edit shows as modified with no content diff — put back with `git
+checkout`, as before this change.)
+
+## EC-280 · Any state read off the Presenter put "Go to the Presenter" under the answer — `fixed` 2026-10-16
+
+**Evidence.** The Bible Reader's 77 questions on the free model: three
+answers — _How do I copy files into a Resources folder?_, _How do I add a
+Bible translation from the internet?_, _How do I share a Bible list with
+another machine?_ — ended _To see what is on the projector or what is
+selected, the main window needs to be on the Presenter page_ and carried
+**Go to the Presenter** where the walkthrough buttons belong. Each model had
+called `owa_app_state` to see where it was; off the Presenter that tool
+always answers `needsPage` (its selection is the Presenter's), and the watch
+took that as the question needing the page. The other 19 state reads of the
+pass were the WINDOW's own (the Bible-reading route), which the watch never
+sees.
+
+**Fix.** The watch keeps which read said so (`needsPageBy`): a
+`owa_list_screens` read stands; a state read counts only under a question
+about the projector, the selection or the running order
+(`checkIsPresenterStateAsk`, the guide's own three patterns). Unit tested on
+three questions; asked again, the three answers kept their walkthroughs.
+
+## EC-281 · A Reader user sent to the Presenter to open Settings — `fixed` 2026-10-16
+
+**Evidence.** _How do I add a Bible translation from the internet?_ and _How
+do I share my Bible translations with another machine?_ on the Reader: _1.
+Click the 🖥️ Go Back to Presenter button at the top right. 2. Open Settings
+→ Bible._ The gear is in the main window's top bar on every page
+(`AppLayoutComp`); the Reader prompt said only that the page has none of the
+Presenter's panels. **Fix.** One clause in that sentence (Reader and Document
+Editor prompts only): _Settings is not one of them: the gear at the top
+right opens it from here too._ Asked again: _Click the gear icon at the top
+right to open Settings, then click the Bible tab._
+
+## EC-282 · The guide sends a typed Reader question to the Presenter for the Reader's own Bible Lookup — `open`, medium
+
+`genBackToPresenterLead` reads **Bible Lookup** as a Presenter panel, and the
+Reader has a Bible Lookup section of its own — W-11 and W-12 name it.
+`checkIsOwnWindowQuestion` keeps a supported question asked word for word
+out of it (22 of the Reader's 70 had been sent to the Presenter,
+2026-10-12); a question in the person's own words is not one, and gets _This
+is done in the Presenter … First click Go Back to Presenter_ over steps that
+are on the Reader — seen live on Bible Find's answer before `EC-199` took
+that one out. Needs the offline pass over typed paraphrases of the Reader's
+rows before and after; the panel pattern may need to be per page.
+
+## EC-283 · A verse asked for by its words is not a known question — `idea`, medium
+
+Keyword PHRASES on the Reader's _How do I search the Bible for a word?_
+(_verse talk about_, _verse that says_, _bible say about_, _where in the
+bible_) would make W-12's page ride with _what bible verse talk about …_
+(`findRowByKeywordPhrase`), and the model answer with Bible Find's steps
+rather than `/btw` alone. Not done this run: a save under
+`tools/owa-devtools-mcp/questions/` relaunches the user's dev app and takes
+the help window with it (its caution is a person's press), and the shorter
+phrases (_verse about_) also match _add a verse about love to my list_.
+Measure the phrases against the corpus and a few paraphrases first.
+**Overtaken 2026-10-16** (`EC-285`): such a question now goes to the verse
+finder and is answered with the verses, not with Bible Find's steps.
+
+## EC-284 · The help window's own page was cut out of the search past 60 000 characters — `fixed` 2026-10-16
+
+**Evidence.** The ranking ratchet fell by one when eight lines went into
+W-42: _Can you write the notation for words I paste in?_ (a typed paraphrase)
+stopped finding its page. W-42 is 69 KB, `MANUAL_SEARCH_TEXT_LIMIT` was
+60 000, and everything after that character — step 19 on — was out of the
+search with nothing said; the eight lines only moved the cut past the
+notation passage. `agent-knowledge.md` said the manual is indexed whole.
+**Fix.** The cap is 120 000 (index +9 KB of 1.3 MB), the build prints any
+page it cuts, and `src/test-setup/knowledgeIndexLimit.test.ts` fails the
+gate on a page at or over the cap, read off the script. After: W-42 indexed
+whole (67 141), ranking 266 / 339 of 430 (top-3 +1 on the morning). Two
+pages also opened on another recipe's NUMBER as the subject — _W-33 moves
+translations you already have_, _W-24 shares a bible list_ — which
+`scrubRecipeIds` takes out, leaving _" moves translations you already
+have."_ in a guide answer seen live; both say it in words now (excerpts
+starting mid-sentence 2 → 0).
+
+## EC-285 · The app could answer "which verse says …" with the verses — `done` 2026-10-16 (`MC-59`)
+
+Bible Find's database search is `LIKE '%love%your%enemy%'`: _enemy_ never
+matches _enemies_, so running it on the person's words would often find
+nothing. A find that tries word stems (or each word alone, then the phrase)
+over the installed Bible, as an action of an existing tool rather than a new
+one (the model's surface is at its 8 350 ceiling), would let the guide and
+every assistant answer with real references, offline. Rung 5–6: the question
+a Bible reader asks most, answered by the app itself.
+
+**Done the same day** as `owa_find_verse` (`MC-59` in the MCP skill's
+backlog): each word its own match, ranked by how many and how rare, read word
+by word where the language writes spaces, English cut back to a shared start
+(_enemy_ finds _enemies_), Khmer typed with no space cut into the Bible's own
+words, and words in another script searched in the KJV and quoted back --
+offered to a verse-finding conversation alone, so the 8 350 ceiling held. A
+verse asked for by what it says in ANY chat (`readBibleContentAsk`'s verse
+kind) is that conversation now, in the lookup's Bible; with no assistant the
+window's own search is the answer. Measured through the real window with `corpus-run.mjs --asks` and the standing set `references/verse-find-asks.json` (scored by `scripts/score-verse-find.mjs`): **20 of 20** -- KJV 10/10 (exact, misremembered, modern paraphrase, described), ពគប 5/5 (Khmer with no spaces and described, through the local gemma-4-e4b in 7-13 s, 2.4-2.9k tokens; English words under it), and 5/5 typed in an ordinary chat, which before the routing took 17.6-37.1k tokens and opened no verse and after it 2.1-6.8k, 4-17 s.
+
+## EC-286 · An unasked press under a how-to question — `open`, low
+
+_How do I read a markdown file from Resources inside the app?_ on the free
+model pressed **Advance Bible Lookup** in the user's Reader (round 3 of 4)
+before answering — a section of their window toggled that nobody asked for.
+The prompt's _To do ONE thing for them right away … use owa_click_ does not
+say "when asked". One of 77; nothing reached a screen. A sentence would need
+measuring on more than one provider.
+
+## EC-287 · The page's Khmer examples are quoted into an English answer — `open`, low
+
+_How do I open a passage named in a section heading?_ came back with _(…
+យ៉ូហាន ១៨.៣៩-១៩.១៦) under a heading of Mark 15_, and _Jacob (យ៉ាកុប)_ in
+the Mermaid Live answer — the pages' own examples, which ride on the known
+question. `toEnglishOnly` strips a Khmer twin in a search excerpt, not in
+what rides. Two of 77.
+
+## EC-288 · A verse asked for in Khmer never reached the Bible search — `fixed` 2026-10-17
+
+The elder-persona run (the user's ask: _test with complex as much as
+possible in Khmer setting language_, _imagine user is an elderly
+(non-technical)_): every verse asked for in Khmer went to the ordinary
+assistant, because `readVerseFindAsk` and `readBibleContentAsk` read English
+only. Asked _ជួយរកខគម្ពីរមួយផង … ព្រះយេស៊ូប្រាប់ឲ្យស្រឡាញ់ខ្មាំងសត្រូវ_, three
+models named Matthew 5:44 and QUOTED a Khmer text of their own making
+(_ចូរស្រឡាញ់ខ្មាំងសត្រូវរបស់អ្នក_ where ពគប says _ត្រូវស្រឡាញ់ពួកខ្មាំងសត្រូវ_),
+with no button to open it; one invented the book's Khmer name (_ទំនុកតម្កាយ_
+for ទំនុកដំកើង); one told the person to type `/btw`; the typed Khmer starter
+_ជួយខ្ញុំស្វែងរកខគម្ពីរមួយ_ got steps with **Enter** and _(Projector)_.
+Fixed as language DATA: `verseFindAsks` / `verseAsks` /
+`verseAskExcludeWords` in `src/lang/data/km/assistant.json`, read by
+`src/chatbot/verseAskLanguageHelpers.ts` (zero-width spaces taken out first);
+a Khmer line naming the screen, a song or a slide ends a verse search
+(`checkIsAppWorkAsk`). Two defects found on the way, both languages: the
+frame with words and NO Bible (_Help me find a Bible verse: love your
+enemies_) asked _Which Bible?_ and dropped the words — it searches now; and
+the search went to the Bible Lookup's Bible, so a Khmer ask was answered in
+the King James' English — `pickVerseFindBible` takes an installed Bible in
+the question's language first. Still open: a verse QUOTED with no question
+around it (_ចូរមកឯខ្ញុំ អស់អ្នកដែលនឿយព្រួយ_) goes to the assistant (`EC-296`).
+
+## EC-289 · English shown to a reader who reads none — `fixed` 2026-10-17
+
+The user: _when app is in Khmer we don't expect user can understand english
+at all_. Measured in the same run: a Khmer question quoting an English phrase
+(_ខគម្ពីរដែលនិយាយថា all things work together for good នោះនៅឯណា?_) was
+answered wholly in English (more Latin letters than Khmer → `en`); answers
+carried English glosses in brackets — _(Settings)_, _(Psalm 23:1)_, _(mouse)_,
+_(Off)_, _(press and hold)_ — and buttons named in English (_🖥️ Go Back to
+Presenter_, _Mini Screen_); and the prompt itself ALLOWED "Bible references
+and the app's own name" in English. Now: `pickReplyLanguage` answers in the
+app's language whenever the question carries two letters of its script; the
+prompt's language rule says no English word at all, a book by its own name,
+the app as "this app", only a key cap as printed; and
+`answerLanguageHelpers.ts` (`toAnswerShownInLanguage`, run once at the end of
+`askLlmBot` and on the translated path) takes out a Latin-only bracket after
+the language's own words and writes an English label the dictionary knows as
+the button shows it — never one word out of a longer name, never a key,
+never inside a `REPORT:`. Still open: a whole question typed in English in a
+Khmer app is answered in English (the user's call to make).
+
+## EC-290 · Verse references drawn in English — `fixed` 2026-10-17
+
+Every found verse was drawn `Hebrews 5:14` in the line and on its button
+(_បើក HEBREWS 5:14 ក្នុងការស្វែងរកព្រះគម្ពីរ_). `owa_find_verse` now returns
+each verse's `title` as the Bible writes it (`BibleItem.toTitle()`:
+_ម៉ាថាយ ៥:៤៤_, _ទំនុកដំកើង ១០៩:៤_) for a Bible not in English, and `opened`
+carries it; the window draws lines, buttons (`toShownActionLabel`, the label
+kept English for code) and _is open in the Bible Lookup_ with it in a window
+not in English (`toShownVerseRef`); the model is shown both and told to name
+the verse by the title; `pickNamedVerses` finds a verse named by its title in
+either digits. +~10 tokens a verse to a verse search, the ordinary bill
+unchanged.
+
+## EC-291 · A removal offered as one-press chips — `fixed` 2026-10-17
+
+_លុបអ្វីៗទាំងអស់ចោលទៅ ខ្ញុំធុញហើយ_ (delete everything, I'm fed up) was
+answered with **delete all documents**, **delete the app's settings** and
+**delete the installed Bibles** as reply chips — one press each, to a model
+with tools that remove. `checkIsRemovalReply` (English in code,
+`removalWords` per language) drops such a chip in `toReplyList`; a chip that
+asks to be SHOWN a removing control (_Show me លុបព្រះគម្ពីរ_) stays.
+
+## EC-292 · "Type /btw before your question" to an elderly volunteer — `fixed` in part 2026-10-17
+
+Off-topic asks (_how much is a kilo of bananas?_, _will it rain?_, _are you a
+person?_) and one Bible question were each answered "type /btw before your
+question" — a command, with a stray backtick in the example. Every such
+answer now carries **Ask it as a general question** (`GENERAL_ASK_TOOL_NAME`,
+a pseudo tool the window presses: `/btw` and their words, asked as pressed).
+Open: the sentence still tells them to type it.
+
+## EC-293 · "I put it on the screen" after the tool refused — `open`, medium
+
+_ដាក់ ម៉ាថាយ ៥:៤៤ លើអេក្រង់ធំឲ្យខ្ញុំផង_ from the Reader: gemma4:cloud took
+the main window to the Presenter by itself, `owa_present_bible` answered _No
+screen is chosen to present to_, and the answer said _I have put Matthew
+5:44 in the app, but the big screen is not showing it yet_. A false success
+to a person about to look at the wall.
+
+## EC-294 · `owa_present_bible check` is refused off the Presenter — `fixed` 2026-10-17
+
+`action: "check"` resolves and quotes without touching a screen, yet answered
+_A Bible passage is presented from the Presenter page_ from the Reader — and
+the models then quoted the verse from memory (7 of 9 verse answers in the
+baseline called it, every call refused). Routing verse asks to the verse
+finder (`EC-288`) takes most of these away; the tool should still quote.
+**Fixed**: a check is answered from any page (`agentBibleHelpers.ts`); off
+the Presenter it carries no `screens` / `isAnyShowing` (the type made them
+optional — only the Presenter knows them) and its note says the passage
+goes up from the Presenter page. Presenting off the Presenter is refused as
+before.
+
+## EC-295 · Another script's letters inside a Khmer word — `open`, low
+
+_អេកក्रीन_ (Devanagari, gemma4:12b) and _សមាជិកមন্ডល_ (Bengali, gemma4:31b)
+for screen and congregation. The model's, not the app's; a check that drops
+or flags a word mixing the language's script with a third one would be code.
+
+## EC-296 · A verse quoted with no question is not searched — `open`, medium
+
+_ព្រះបន្ទូលទ្រង់ជាចង្កៀងដល់ជើងខ្ញុំ_ and _ចូរមកឯខ្ញុំ អស់អ្នកដែលនឿយព្រួយ_
+typed alone are answered from memory (_ទំនុក 119:105_, mixed digits). The
+window's own Bible search could tell a quote: most of the words in one verse.
+
+## EC-297 · The web search fallback is drawn as a percent-encoded address — `fixed` 2026-10-17
+
+Under a Khmer verse search with nothing found: a button reading
+`https://www.google.com/search?q=bible+verse+%E1%9E%96…`, 300 characters an
+elderly reader cannot read. The words, or _Google_, would do. **Fixed**: an
+app-written link is drawn decoded, without `https://` and `www.`, a search's
+`+` as spaces, cut at 60 characters (`toShownLinkText` in
+`chatLinkHelpers.ts`) — _google.com/search?q=bible verse ព្រះស្រឡាញ់…_ —
+the whole address on its hover and the press opening the address itself.
+
+## EC-298 · "Speak English" answered with "per my instructions" — `open`, low
+
+_និយាយភាសាអង់គ្លេសមកវិញ_ → _I can speak English, but according to the
+instructions I must answer in Khmer_ — the mechanism, said to the person.
+
+## EC-299 · One "yes, delete" emptied the person's library — `fixed` 2026-10-17
+
+The elder-persona shootout, scenario N4: _លុបអ្វីៗទាំងអស់ចោលទៅ ខ្ញុំធុញហើយ_
+(delete everything, I'm fed up), the free model (Nemotron Super VL) listed
+every kind of file, and on _បាទ ពិតមែន លុបទៅ!_ (yes, really, delete!) moved
+TEN of the person's things to the trash in one answer — the song `aa`, four
+Bible lists, five notes files, the Default list and the Default notes among
+them — until the firewall's removal budget (10 in 5 minutes) refused the
+eleventh. Every one was put back with `owa_undo`, but an elderly volunteer
+would not have known there was an undo. qwen3.5:9b read the same words as
+"clear the screen" and tried **Clear All [F6]** (refused by the firewall's
+cannot-be-undone rule); Auto and gemma4:cloud asked what to delete and
+removed nothing. **Fixed**: the chatbot's model may remove ONE thing in one
+answer (`MAX_MODEL_REMOVALS_PER_ASK`, `checkIsModelRemoval` in
+`runMcpToolCall`: any `delete…` / `remove…` / `trash…` action); the second is
+refused with a sentence telling it to say what was removed, that it can be
+put back, and to ask which ONE is next, by its name. The firewall's budget
+stays the backstop for every door.
+
+## EC-300 · A thank-you under a verse search was searched as verse words — `fixed` 2026-10-17
+
+_អរគុណច្រើន 🙏_ (thank you so much) under a found verse: on the local
+gemma-4-e4b and gemma4:12b the line was more of the search, nothing matched,
+and the answer ended with a Google search for "thank you". `checkIsClosingLine`
+(English in code, `closingWords` per language: _អរគុណ_, _merci_) ends the
+search's thread; a short line only, so _thanksgiving in his courts_ is still
+searched. Directly under a verse answer the window thanks them itself, with
+no model (`genVerseFindThanksAnswer`): handed to the ordinary assistant, the
+local e4b took 185 s to say the guide covers the app only.
+
+## EC-301 · English chips under Khmer answers — `fixed` 2026-10-17
+
+The models that work in English behind the scenes left English chips under
+Khmer answers — deepseek 14 of 23 answers, Free 19, qwen 12: _How do I show
+it on screen?_, _Look up another verse_, _/btw what does the Bible Reader
+do?_ — when the translator dropped the `OPTIONS:` line (the window then kept
+the model's English ones) and always in the verse finder, which is not
+translated. `toRepliesShownInLanguage`: every chip is cleaned as the answer
+is, and in a language with a script of its own a chip is kept only when its
+own letters outnumber the Latin ones three to one (vowel signs count, so
+_Back to the អានព្រះគម្ពីរ_ and _ទេ thanks_ go; a key cap or a name in
+capitals — _F5_, _KJV_ — is not counted), and never a `/` command — in
+`askLlmBot` and on the translated path. Live on deepseek after: every chip
+Khmer.
+
+## EC-302 · "I looked at a lot but could not reach an answer" — `open`, medium
+
+deepseek-v4.1-flash, twice in 23 (the panic's first message after ten tool
+calls; the long story's follow-up after seven): the loop ran out of rounds
+and handed the elderly person that sentence. The same model answered the
+next message right. What it spent the rounds on (`owa_goto_page`, three
+`owa_list_ui`) says it was hunting the Presenter's controls from the Reader.
+
+## EC-303 · A Khmer answer written from the English page — `fixed` 2026-10-17
+
+The whole corpus asked in Khmer for the first time (`corpus-run.mjs
+--lang=km`, 435 rows, gemma4:cloud on Ollama): graded 339 right, 85 partly,
+11 wrong, and **143 answers showed English** to a reader of none — _បើក View
+on the top menu bar again and click_, _ចុច mouse ខាងស្តាំ_, _ចាក់សោ this
+chat_, the help window's own buttons and status lines in English. The
+window read a known question's page as `{id}` (English, only its buttons in
+Khmer) and the hint said to copy the row's passage _as it stands_. **Fixed**:
+an ask answered in the person's language as it stands also reads `{id}@km`,
+cut block for block from the English cut (`toLocalizedCut`), pointed at by
+the translation's own words; a page the model opens comes `@km`
+(`ToolWatchType.pageLang`); menu items named as the menu shows them; the
+prompt says pages come in the language. agent-knowledge.md has the detail.
+
+## EC-304 · Two chips under no words after starting a countdown — `fixed` 2026-10-17
+
+_Can you start a 5 minute countdown on the screen?_ (gemma4:cloud): started
+on two screens that were OFF, answered with only an `OPTIONS:` line, shown
+as two chips and nothing else. **Fixed**: `findAnswerShapeNudge` hands a
+frames-only reply back once for the words.
+
+## EC-305 · A Khmer answer that ran away into one letter — `fixed` 2026-10-17
+
+_Does the help still work with no internet?_ became _សេវាកម្ម_ and then _ម_
+~1 900 times, to the round's 2 000 tokens. **Fixed**: handed back once, kept
+up to where it broke; a run reaching the last round is cut
+(`cutRunawayAnswer`).
+
+## EC-306 · A model control token inside a Khmer step — `fixed` 2026-10-17
+
+_ច<audio|> View_ (gemma-4-12b on LM Studio). **Fixed**: `dropModelTokens`
+on the words and the chips — and a LaTeX `$\rightarrow$` in a menu path
+(gemma4:cloud, twice) drawn as →.
+
+## EC-307 · Letters of a third script in Khmer answers — `fixed` 2026-10-17
+
+Takes over EC-295. The Khmer corpus run: Chinese _预览_, Telugu, Bengali (in
+a chip), Malayalam, Arabic _الخاص_. **Fixed**: `dropThirdScriptLetters`
+(`answerLanguageHelpers.ts`) in a language with a script of its own.
+Vietnamese words (_chuột_, _câu hỏi_) are Latin and still get through:
+open, low.
+
+## EC-308 · Every local Gemma 4 question paid for a wasted thinking round — `fixed` 2026-10-17
+
+gemma-4-12b on the user's LM Studio thought its budget away on every Khmer
+question, so EC-211's retry made each two ~12 000-token rounds, ~95 s.
+**Fixed**: the model is remembered for half an hour and asked with thinking
+off from its first round — 6-9 s on short pages.
+
+## EC-309 · "The AI account is out of credit" for a model that would not load — `fixed` 2026-10-17
+
+LM Studio's 400 _Failed to load model "google/gemma-4-26b-a4b" … insufficient
+system resources_ matched `NO_CREDIT_WORDS_PATTERN` ("insufficient") and the
+note told the person, in Khmer, that the account had run out of money. A
+local server has no account; the true sentence is that the computer could
+not load the model. **Fixed**: `modelLoad`, read before the money words
+(`MODEL_LOAD_FAILURE_PATTERN`: LM Studio's guardrail, _out of memory_, _not
+enough memory_), says the server could not load the model and to pick a
+smaller one or close another there; no billing button, no stand-in.
+
+## EC-310 · Answers that quote the passage and stop — `fixed` 2026-10-17 (re-measured below)
+
+About a third of the 85 "partly" answers on the Khmer run: the hint's
+"answer from that part in its own words … take from the others only what
+it leaves out" was read as "that part only" — Next: Timeout never says it
+runs only while the preview is open, Report stops before **Send report**,
+Custom server stops at **Add server**. The job's remaining steps are on the
+same page. **Fixed** in the hint (`genKnownQuestionHint`): still the part's
+own sentences and no step the page does not have, but "from the rest of the
+page add what the person still needs to get the WHOLE thing done: where that
+part is, a step before it that it takes for granted, and the steps after it
+that finish the job"; a control's step likewise ends with "the steps after
+it that finish the job". Measured on gemma4:cloud's Khmer pass 5.
+
+## EC-314 · The clear button read as the Delete key — `fixed` 2026-10-17
+
+The Khmer W-05 said _ចុច F8 / ប៊ូតុងលុប_ — "លុប" is the app's own word for
+Clear, and also for delete — with nowhere to find it, and gemma4:cloud wrote
+"F8 or the Delete button on the keyboard" in three stress answers (Delete
+deletes a slide in the list). **Fixed** in the translation: _ប៊ូតុងលុប
+(`SL`) នៅក្បាលអេក្រង់តូច_, as the Khmer W-03 already says it.
+
+## EC-315 · "Which page am I on?" read off a picture — `open`, low
+
+With the 📷 picture of the Presenter attached, gemma4:cloud named the page
+_ស្វែងរកបទចម្រៀង_: the Presenter's header lists the other pages as tabs and
+never its own, and the Bible Lookup button is the bright one. `owa_app_state`
+says the page outright; the prompt could say to read it for a where-am-I
+question even with a picture attached.
+
+## EC-311 · Steps written with nothing looked up — `fixed` 2026-10-17
+
+The Khmer stress run on gemma4:cloud: under a 2 500-character pasted story,
+and down a ten-turn chat about a song, every list was written with no tool
+called — _the show button with an eye on it_, _it saves by itself when you
+press Apply_. `checkIsStepsWithoutPage` waited for a search that never came.
+**Fixed**: numbered steps with no tool called at all, in an ask that can
+search the guide, are handed back once with `genOpenPageNudge`'s
+_written from memory_ sentence; a state answer (it read the app) keeps its
+steps, as before.
+
+## EC-312 · The help window's buttons in English in the Khmer manual — `fixed` 2026-10-17
+
+The Khmer W-42 and W-44 wrote the help window's and AI Chat's own buttons as
+plain English bold (**Show me step by step**, **Lock this chat**, **Send
+report**) where the window draws them in Khmer, and the model half-translated
+them: _បង្ហាញ me step by step_, _ចាក់សោ this chat_ (11 of 139 graded answers
+in one bundle). **Fixed**: 95 such labels made `[en:tran:…]` templates — the
+menu bar's names, the **English** language button and data names left as
+they are. The French pages have the same shape: open, low.
+
+## EC-313 · The menu bar's Help written as ជំនួយ — `fixed` 2026-10-17
+
+The menu bar reads File, Edit, View, Tools, Window, Help in every language,
+and the prompt's "write no English word" made the model write _ជំនួយ →
+គន្លឹះទាំងអស់_ — which is the ? button's word, a menu with no tips in it (6
+answers in a bundle). **Fixed**: the language rule names those six as words
+the screen shows in English, written as the page writes them.
+
+## EC-316 · The app's own cleaner wrote Help → as ជំនួយ → and ol:Verse as ol:ខគម្ពីរ — `fixed` 2026-10-17
+
+EC-313's prompt line did not move pass 5 (eight _ជំនួយ → …_ answers, five
+_ol:ខគម្ពីរ 1_): the model wrote **Help** and `ol:Verse 1` as asked, and
+`toAnswerShownInLanguage` translated them — a single capitalised word the
+dictionary holds is a label to it, and `Help`, `Edit`, `Tools` and `Verse`
+are all keys. **Fixed** in `answerLanguageHelpers.ts`: nothing inside a code
+span is translated (what is typed stands as it is), nor a word glued after
+`ol:`, nor a menu-bar name (`MENU_BAR_NAME_LIST`) followed by an arrow; and
+what a model translated itself is put back — the dictionary's word for a
+menu-bar name at the head of a menu path (_ជំនួយ → …_ → _Help → …_, a space
+added when it was glued to the word before), and a song part after `ol:`
+(`LYRIC_PART_NAME_LIST`, held equal to `OPEN_LYRIC_FENCE_LIST` by a test).
+Read through the dictionary, so it holds for every language.
+
+## EC-317 · A Khmer pointer aimed at the step, not the sentence — `fixed` 2026-10-17
+
+Six pass-5 answers were wrong on content with the right page in front of
+the model. Two were pointed at the wrong words: the hint's Khmer pointer was
+the BLOCK's first words, and the cast-from-the-phone passage is the fourth
+sentence of a step whose first is the app's own cast button — answered with
+that button. **Fixed** (`findLocalizedPassageLead`): a passage inside its
+block is pointed at by its own sentence when both blocks split into as many
+sentences (`SENTENCE_END_PATTERN`, Latin and Khmer marks), else the block's
+first words as before. And a part that opens by pointing back (_the end of
+THAT line_, `POINTED_BACK_PATTERN`, read off the English page) is quoted
+first WITH the part before it (`withPointedBackPart`) — _How do I see the
+other tips above the box?_ had been answered with the `/` list. Three rows
+got their sentence as a `passage`: line-sync (_The card's right-click menu
+offers_ Set Line Sync), virtual-display-https (_under it … lists the
+browser addresses_), search-reset (_Clearing the search shows_). Open: the
+audio-volume answer mixed the Audios tab with Video Show's slider with the
+right passage pointed at.
+
+## EC-318 · Messages, panel names and chips in English in the Khmer manual — `fixed` 2026-10-17
+
+After EC-312 a sweep of every code span, curly quote and italic in the
+Khmer pages against the dictionary found 51 more labels the app draws in
+Khmer: the reset-widgets confirm, View → Widgets' fourteen panel names,
+**Close Second Widget**, Settings' two reset buttons, the run sheet's
+**Next: Timeout** (five), the Clear FG items, the media-control row, the
+help window's chips (_Turn the screen on_, _Take it off again_, the three
+attach buttons, the thumbs-down choices, _free_), and `[en:tran:Add]` in
+W-42 that should have been `[en:tran:Add more]` (the help window's **Add**
+is that key; `Add` is _បូក_). All are templates now; W-42's provider doors
+(`Open {provider} billing` …) are written out in Khmer, the name in its
+gap. Left as they are: data (_Public Domain_, the **Default** notes file,
+**Info**), typed words (`Khmer`, `2019`) and example requests.
+
+## EC-319 · The Help menu named in Khmer after the word for menu, and the menus' own items translated — `fixed` 2026-10-17
+
+Pass 6 (373 of 435 right): _ម៉ឺនុយ ជំនួយ_ for the Help menu under six tips
+answers — no arrow after it, so EC-316's rule missed it — and _Help → ជជែក
+AI_, _Edit → ស្វែងរក_ under four: Help → AI Chat and Edit → Find are written
+in `electron/electronMenu.ts` as they stand, English in every language, and
+both the cleaner and the hint's `toShownMenu` translated every item after a
+menu-bar name. **Fixed**: each language says its word for a menu
+(`menuWords` in `assistant.json`, ម៉ឺនុយ / menu), and a menu-bar name after it
+is kept or put back like one before an arrow (a whole word only — _ម៉ឺនុយ
+ជំនួយការ_ is not the Help menu); `NATIVE_MENU_ITEM_MAP` lists the menus' own
+English items, held to `electronMenu.ts` by a test, kept or put back after
+their menu's name, and passed through untranslated by `toShownMenu`.
+
+## EC-320 · English messages quoted in the Khmer manual, and two Bible confirms with no translation — `fixed` 2026-10-17
+
+The Khmer W-34 quoted every step of the Bible import as **English**
+(Khmer gloss) — _Which language do you want the Bible in?_, _Did you mean_,
+_Ready to install_, _Done — KSV is installed_ — and W-42 / W-44 the help
+window's and AI Chat's messages (**LIMIT PER HOUR**, **needs an API key**,
+**Not loaded in LM Studio right now**, _This site tried to open … so it was
+not opened_, the microphone question). The window shows them in Khmer; the
+model copied the English (_this assistant_, _Sign out of every site_, _so it
+was not opened_ in pass 6). All are the app's own Khmer words now, through
+templates where the key has no gap, and the duplicate glosses after
+templates went. The run sheet's line labels in code (`⏱ Next: Timeout (5)`,
+`⌨ Keyboard Event (Shift+A)`, `⊘ Next: Clear Interval`, `Slide: Media
+Control`) and W-31's / W-08's panel names are templates too; `Screen id: N`
+stays, the app draws it in English on purpose. W-42's reading examples are
+Khmer (`checkIsBibleReadingAsk` reads Khmer). And the sweep found an APP bug:
+Settings → Bible's two delete confirms (`BibleXMLInfoComp`,
+`DownloadedBibleItemComp`) were hard-coded English template strings — now
+`tran` keys with Khmer and French.
+
+## EC-321 · Two English slips the app handed the model, and the Reader line under Settings questions — `fixed` 2026-10-17
+
+Pass 6, read for what the APP put in front of the model: _this assistant_
+inside a Khmer answer is the missing-tools hint's own _from this assistant_,
+copied as it stood — the hint now says it in no phrase to copy (_say
+plainly, in your own words, that you cannot do that for them here_). And the
+_Only want to read the Bible?_ line with **Go to the Bible Reader** came
+under four Settings and Presenter questions in a Khmer window (where a
+Bible came from, its copyright, Bible audio): `checkIsOtherPageRow` matched
+the known row by its SHOWN words, Khmer, while a pressed chip asks the row's
+English (`textEn`). Either wording is the row now.
+
+## EC-322 · The redo's partly answers: pages that read the wrong way, rows with no sentence — `fixed` 2026-10-17
+
+The 62 rows not right in pass 6, asked again with EC-319..EC-321 in: 27
+right, 33 partly (merged, 400 of 435, 92.0%). Read for causes the app owns:
+the English W-05 said a chord it does not know is `[Cm7]` "is one,
+`[Cm7b5]` is not" — backwards, and the model reversed it; W-51 said **Let
+other devices watch** is "at the top of the tab" inside the step about a
+display card, and three answers put it and **Use HTTPS** in the card. Both
+recipes say it the right way now (workflowsVersion 2026-10-17e), Khmer and
+French with them. Four rows that named only a control on a long page got
+the sentence that answers them as `passage`: foreground-padding (_is a fold
+under Properties, on every component_), foreground-text-readable (_which is
+what makes a notice readable over a busy picture_), clock-city (_puts the
+city's name above the clock_), song-order (_the Structure line IS the order
+the song is sung_). And a native menu item a few words after its menu in
+the same sentence — _ម៉ឺនុយ Help រួចជ្រើសរើស រាយការណ៍បញ្ហា_ — is put back
+like one after an arrow, unless another menu is named between.
+Open: answers that stop before the job's last step with the step in front of
+them (custom server, download a Bible, the email route of a report), the
+slide show's _that same row_ (the row is the sessions row, not the part
+before it, so `withPointedBackPart` quotes the wrong neighbour there).
+
+## EC-323 · "Can you start a countdown?" answered with a question back — `fixed` 2026-10-17
+
+The prompt says to start a countdown when asked to, but asked in Khmer
+(_តើអ្នកអាចចាប់ផ្តើម…បានទេ?_, "can you start…?") gemma4:cloud read it as a
+question about ability: "I can — shall I do it now, or would you like the
+steps?", twice. The hint now says it outright for such a row: a corpus row
+asking to start / put / show / run something whose tool is one the prompt
+has the model use when asked to put something up (`DO_ON_ASK_TOOL_SET`:
+`owa_foreground`, `owa_present_bible`) is told _it asks you to DO it, now:
+call … and say what it reports_. A tool that writes the person's files is
+never pushed this way.
+
+## EC-324 · A bug's own message printed to the person — `fixed` 2026-10-17
+
+Pass 7 found 26 Khmer answers reading _ខ្ញុំមិនអាចឆ្លើយសំណួរនោះបានទេ៖
+DO_ON_ASK_TOOL_SET is not defined_: an edit to `questionHelpers.ts` saved in
+two steps was hot-reloaded between them, and Vite's watcher missed the
+second (a `touch` brought it back; rows re-asked in a fresh window). A dev
+artefact — but it showed that any `ReferenceError` or `TypeError` in the
+window's own code reaches an elderly reader as English code words. The
+failed-ask line is `describeAnswerError` now (`answerErrorHelpers.ts`): a
+programmer's error is logged and said as _Something went wrong inside the
+app while answering that. Ask it again, or press Report…_ in their language;
+a sentence written for a person still follows _I could not answer that:_.
+For a corpus run: never edit `src/` while one runs (it also stopped pass 7
+once on a hot reload, by its tab-identity rule).
+
+## EC-325 · "I have started a 5-minute countdown" with nothing started — `fixed` 2026-10-17
+
+Pass 7 (the whole list asked fresh: 390 of 436 right, 89.4%, 44 partly, 2
+wrong): after EC-323's hint, gemma4:cloud answered _Can you start a 5
+minute countdown on the screen?_ with "I have started a 5-minute countdown
+on the screen" — having called two `owa_help_page` reads and no
+`owa_foreground`. A thing said done that is not is worse than the question
+back it replaced. Now the window passes the row's tool
+(`AskExtraType.knownDoTool`, `findDoAskTool` / `genKnownAskExtra`), the
+watch keeps it when this provider's model was SENT it (`checkIsToolLeftOut`,
+so a custom server's lean list is respected; the stand-in re-seeds for its
+own provider), notes when it is called (`isDoToolCalled`, a refusal
+included), and both loops hand an answer that ends without it back ONCE
+(`checkIsDoneWithoutTool` / `genDoToolNudge`: _Nothing has been done yet:
+you have not called … Call it now, then say what it reports_), never on the
+last round.
+
+## EC-326 · The Help menu named in Khmer before one of its own items — `fixed` 2026-10-17
+
+_ចុច ជំនួយ រួចជ្រើសរើស គន្លឹះប្រចាំថ្ងៃ_ ("click Help, then choose Tips of
+the Day") had no arrow and no word for a menu, so EC-316/EC-319 left it —
+and the **?** button, which ជំនួយ also names, has no tips. A menu-bar name
+followed in the same sentence by an item only that menu carries
+(`MENU_ONLY_ITEM_MAP`: Help's Tips of the Day, All tips, Keyboard
+Shortcuts; View's Widgets; Tools' Start Controlling and App Assistant; and
+its native items) is the menu, and written as the bar shows it. **Open
+Online Help** and **Report a Problem** are on the ? button too, and tell
+nothing.
+
+## EC-327 · Three pages that sent the model the wrong way, and EC-321's own regression — `fixed` 2026-10-17
+
+The 46 rows not right in pass 7, asked again with EC-324..EC-326 in: merged
+398 of 436 right (91.3%), 37 partly, 1 wrong — the countdown now calls
+`owa_foreground` and says the screen is off. Read for causes the app owns:
+EC-321 had made `checkIsOtherPageRow` take _I only want to read the Bible —
+how do I get back to the Bible Reader?_ for a row filed elsewhere — it is a
+`common` row, every window's, the Reader's too — so it lost its own
+**Go to the Bible Reader**; `common` is no other page now. The Khmer W-05
+called the Presenter's song view _ចម្រៀងដែលបានបង្ហាញ_ ("the song that was
+shown"), read as the projected one, and the answer said an edit reaches the
+screen by itself; it is the song view on the Presenter page now. W-08 never
+said how a Background session is pointed at a folder, and three askings sent
+the person to the session's ⋮ (rename / remove): the folder line above the
+list opens a box — a typed path and Enter, or **Choose a folder** (seen live,
+workflowsVersion 2026-10-17f, Khmer and French too). And context-menu-height
+pointed at _The menu shifts into view_, the first sentence of the step about
+pressing ⋮, so ⋮ was offered as the cure for scrolling; its passage is the
+sentence that answers now (_Scroll inside it only when its entries exceed
+that height_), as is background-folder's.
+
+## EC-328 · A bullet list read as one block: the Effects passage quoted as the volume paragraph — `fixed` 2026-10-17
+
+The third ask of the rows not right (merged 404 of 436, 92.7%, 32 partly, 0
+wrong) still left _My message text touches the edge of its box_ without
+Padding and the readable-text answer without Effects. Printed, the hint
+quoted FIRST the volume paragraph and the sessions bullet: `splitPageBlocks`
+started a block at a step, a blank line and a bold lead, so W-09's whole
+foreground bullet list (sessions, blend mode, Effects…) was ONE block opening
+on the volume paragraph, and the translated cut of the Effects passage was
+that block's start, cut at 1 500 characters before Effects. A bullet starts
+a block now (every Khmer and French page lines up with it, the ratchet
+holds), and the pointer drops the bullet's dash. W-09's slide show _sits in
+that same row_ names the row (workflowsVersion 2026-10-17g), so the
+back-reference rule no longer quotes the bullet before it.
+
+## EC-329 · A song's "Verse" written as a Bible verse, and "backtick" with no mark — `fixed` 2026-10-18
+
+Pass 8 (the whole list asked fresh: 385 of 436 right, 88.3%, 51 partly, 0
+wrong; pass 7 was 390 / 44 / 2 — the swing of a few rows between fresh
+passes is the model and the graders, not the app). `toAnswerShownInLanguage`
+translated **Verse** — the dictionary's is a BIBLE verse, ខគម្ពីរ — in a
+song's slide name (_(2)-Verse 1_ → _(2)-ខគម្ពីរ 1_) and alone in a list of
+part names whose others stayed English; a part name with its number after
+it, or beside another part name in the sentence, stays as the song writes it
+now (`checkIsSongPartName`). The Khmer W-05 said a song's block opens on a
+line of "backtick" three times and never showed the mark; it shows ``` now.
+W-42's typed complaints are Khmer (`checkIsDisputingAnswer` reads Khmer).
+Open, measured across passes 7-8 and three re-asks: about 30 answers stop
+before the step that finishes the job with that step in the page they were
+given (custom server's Server name / Base URL / Test, a report's email
+buttons, a run sheet line's "only while the preview panel is open", the
+Structure codes), and a few foreign Latin words (_tersedia_, _unggu_, _ở_)
+slip into Khmer answers.
+
+## EC-330 · Answers that stop before the job's last step: read once more against the part quoted — `fixed` 2026-10-18
+
+Fresh passes 7 and 8 levelled at 88-89% right and 0 wrong, the ~30 left
+stopping short with the step that finishes the job in the page part quoted
+to them — whatever the hint said (EC-310's whole-job sentence included).
+Each page fault found was fixed and its row came right; these had none left.
+So the loop asks for it in code: an answer to a known question whose hint
+NAMED the part that answers (`AskExtraType.isKnownPartNamed`, from a row's
+`passage` or `find`, `genKnownAskExtra`) goes back ONCE with
+`genCompletenessNudge` — read it against that part: where it is, the step
+before it takes for granted, the exact control, the step after that saves,
+starts or shows it; missing, write it again with the step and nothing the
+page lacks; else reply only KEEP — and `pickCheckedAnswer` keeps the first
+answer for KEEP or a short line with no step in it, else takes the rewrite.
+No-cost assistants only (a custom server, Free): a round more on a paid key
+is a bill nobody chose. Never on the last round, a state question, `/btw`, a
+verse search or a translation.
+
+## EC-331 · The completeness check added steps nobody needed; three pages missing a step — `fixed` 2026-10-18
+
+Pass 9 (fresh, with EC-330): 385 of 436 right, 51 partly, 0 wrong — the
+same total as pass 8, with 16 rows up (the reports, restore KJV, the
+binaries: jobs now finished) and 16 down, several because the check's "a
+step before it that it takes for granted" made the model add one the
+question did not need (**Add Virtual Display** before a display's HTTPS,
+F5 after clearing a background — which hides a showing screen). The nudge
+now asks whether the person could finish what they ASKED, and adds nothing
+the page lacks, no step the question does not need ("it does not create
+what it already has") and no press that changes the screens unless the
+part says so. The 67 rows not right in pass 9 or changed since pass 8,
+asked again: 24 right against 16 (merged 393 of 436, 90.1%, 42 partly, 1
+wrong). Pages that did not say a step, now in all three languages: W-42
+step 18 (on a server of your own, `/lyric` before pasted words), W-22d
+step 1 (Add Action puts the line at the END; drag it after the line it
+follows — read in `insertItemJson`), W-09 (Image / Video / Web Show hold
+one file per session; two pictures are two sessions — `ForegroundMediaComp`);
+the Khmer W-05 chord example is a plain "it knows [Cm7] but not [Cm7b5]"
+with the row pointed at it. Graders differ on unchanged answers by several
+rows a pass (restore-kjv right twice, partly once), so a pass's total is
+±5 rows.
+
+## EC-332 · Pass 10, and two more pages that left a step implicit — `fixed` 2026-10-18
+
+Pass 10 (fresh, with EC-331's tightened completeness check and its page
+fixes): **390 of 436 right (89.4%), 45 partly, 1 wrong** — fresh passes 7-10
+read 390 / 385 / 385 / 390, a plateau with the per-pass grader spread of ±5
+rows. The one wrong, _How do I clear the search and start again?_, was
+pointed at W-12's "Clearing the search shows No data available", which says
+what clearing shows and never how; W-12 says to empty the words in the box
+now. And W-46 step 2 said a lesson from All tips returns to its card without
+naming **Show it**, so three tips answers went straight to **Do it**; it
+says to press Show it on the card first now (workflowsVersion 2026-10-18c).
+What is left is the model leaving out a step it was shown — reports that
+stop at Report it, a custom server's Base URL, Properties folds, a run sheet
+line's "only while the preview panel is open" — and the graders disagreeing
+on unchanged answers.
+
+## EC-333 · The completeness check names the part's own controls — `fixed` 2026-10-18
+
+After EC-330/EC-331 the fresh passes still read 385-390 right; the answers
+left short skip a CONTROL the quoted part names (**Send report**, the Base
+URL box, the **Properties** fold, Padding inside Effects, **Show it**), and
+"is a step missing?" did not make the model look for it. Now the window
+hands the loop the part's controls (`findKnownPartControls`, through
+`genKnownAskExtra`'s third argument, the page in the window's language;
+`AskExtraType.knownPartControls` → `ToolWatchType.partControls`), and the
+check names them: _That part names these controls: **…**, **…** — one the
+job needs that your answer does not name is a step missing._ They are read
+off the ENGLISH part as the window has it, where a label comes resolved into
+the window's language and emphasis stays English, so in a Khmer window a
+bold in Khmer letters IS a control (the Effects part: Border, Shadow,
+Padding, Text Align …, no "every"); in an English window the two look alike
+and the check stays general. At most ten.
+
+## EC-334 · A passage pointed at the wrong sentence is pointed at none — `fixed` 2026-10-18
+
+Pass 11 (gemma4:cloud, the whole corpus in Khmer): 394 right, 42 partly,
+0 wrong (90.4%), 424 clean on the English check. Reading the 42 against the
+hints they were asked with found four of them — the report rows given
+passages that same morning — pointed at the WRONG sentence in Khmer: the
+Khmer W-42 report paragraph split one sentence more than the English
+(_**Report:** ហើយ_ ends a sentence at the colon, _**Report:**,_ does not), so
+`findLocalizedPassageLead` fell back to the block's first words, the way the
+Report button is reached, for questions about sending, keeping and email.
+Three French rows were the same (W-21, W-37, W-42), and French W-50 was a
+block out of line once its labels were filled in (a bold label ending in a
+full stop wrapped to a line's start is a bold lead). Fixed both ways: the
+translations line up again, and a passage inside a block whose sentences do
+not pair up is now pointed at by NO words (null: the part quoted first
+stands) rather than the block's first ones. A quote's `>` marks no longer
+ride in a pointer (_> > លុបវា…_). Two tests hold it: every row's passage is
+pointed at in every current translation, and the block test reads pages
+with their labels filled in.
+
+Pages, where the answer graded short had nothing to copy: W-18 says which
+press stops one screen (**Deselect**; **Solo** stops every OTHER one), that
+an unselected screen keeps what it last showed — why two screens differ —
+how to point a new card at its display, and that Line Sync needs one
+screen; W-25 says a wrong password is asked again three times and then the
+import stops (type it as set, or ask whoever made the file); W-34 says a
+Bible other than the KJV is imported again. Passages: custom-ai-server,
+download-bible (now answered from W-34) and add-translation, wrong-password,
+restore-kjv, unselect-screen, two-screens-differ, line-sync, the two
+song-from-text rows (`/lyric`), and the four report rows.
+
+Pass 12 after it: **398 right, 38 partly, 0 wrong (91.3%)**, every row aimed
+at right.
+
+## EC-335 · Long parts cut into short ones, and three backticks drawn as three — `fixed` 2026-10-18
+
+Pass 12's 38 partly were mostly the same twenty rows as every pass: a step
+the page says that the model leaves out. Three kinds of fix.
+
+**A part too long to copy is cut into parts with leads of their own.** W-42's
+report paragraph was thirty sentences under one lead, and the four report
+rows were answered with most of it pasted in; it is five parts now (it goes
+and looks, it helps first, Send report, kept for later, email it), each row
+pointed at its own. W-05's song paragraph is three (how a song is written,
+the Structure line, what the editor marks red). Eleven pages say a step they
+had left implicit (`workflowsVersion 2026-10-18e`): no internet, a shared
+server picked in the who-answers list, the demos are buttons, the Bible
+Reader tab, the tip line's ✕, the Previewer, an Audios track's volume, All
+Books in the Find view, changing the Parent Directory, selecting a card, Hold
+is the Follow button, Download and Install, a Jump to line lands at the end,
+Settings is the gear, search Messages. Twenty-one rows point at the part now.
+
+**A run of backticks is words** (`splitRichTextParts`, `richTextHelpers.ts`):
+an answer saying a song's part opens on "a line of three backticks (```)" was
+drawn with a code span from the third backtick to the next group's first —
+the backticks gone, the words between in code. A code span no longer starts
+or ends beside another backtick.
+
+**The way without a tool may be a command**: the hint for a tool this
+assistant was not sent said "give the way to do it by hand", and the
+song-from-text rows were answered without the `/lyric` their part names; it
+says "by hand, or a / command it names, written out with what to type after
+it".
+
+The alignment probe that checks a translation block for block and sentence
+for sentence, labels filled in, found the English W-16 bullet wrapping a
+label that ends in a colon to a line's start — a bold lead once filled in —
+before it shipped.
+
+Pass 13 after it: **406 right, 30 partly, 0 wrong (93.1%)**, 24 rows up and
+16 down; all four report rows right for the first time. The fence now draws
+as ` ``` ` in code (seen live through `/help`), and markdown's
+double-backtick span is read too (`toCodeSpanText`), since the Khmer manual
+writes the fence so — and no longer says "backtick" in English.
+
+## EC-336 · A help-window answer is told how its box sends — `fixed` 2026-10-18
+
+Pass 13's 30 partly, read against the hints: two help-window answers ended
+"press Enter to send" (Enter starts a new line in that box; Ctrl+Enter or
+**Ask** sends), and the song-from-text rows still gave `/lyric` second. The
+hint for a W-42 row now says how the box sends, and the missing-tool sentence
+says to LEAD with the way the guide gives without the tool. Six pages
+(`workflowsVersion 2026-10-18f`) say what pass 13's answers left short: the
+Structure paragraph opens on how to change the order and the codes; a verse
+on the screen keeps its old words until clicked again; a search result goes
+up from the Presenter's lookup (the Reader puts nothing on a screen); the At
+Time box's line is dragged into place; the form's **Choose File**; the
+per-answer cost is on the line with **Copy**; a refused key is fixed with
+**Open AI settings**; **Enable AI features** is at the top of **AI
+Providers**, and ticking it turns the features back on; the Reader's
+saved-list lessons are found by **New File**. Nine more rows point at their
+part, and French W-22b lines up sentence for sentence again (the new pointer
+test found it).
+
+Pass 14 after it: **419 right, 17 partly, 0 wrong (96.1%)**.
+
+## EC-337 · The route a server of your own has, said as a part of its own — `fixed` 2026-10-18
+
+Pass 14's 17 partly, read against their parts: the two song-from-text rows
+still led with "paste the words and ask" (on a server of your own, which is
+sent no song tools, that writes nothing) and gave `/lyric` last, because the
+page said it as the last sentence of a paragraph about the song tools. It is
+a part of its own now, _On a server of your own, type /lyric first_, and both
+rows point at it. The same cure for seven more (`workflowsVersion
+2026-10-18g`): a failed download is a note of its own (W-21); W-22f step 2
+opens on the preview panel having to be open and **Add CC Elements** being on
+the new line's right-click; casting from the phone's browser page and sharing
+a phone's camera (which opens on **Let other devices watch** and ends on
+picking the camera) are parts of their own in W-51; W-35's troubleshooting
+note opens on a grey **Sign In**; W-15 step 8 says how the colour changes;
+W-46 says the graph lessons are found by _graph_ (its own last change had sent
+a graph question to **New File**); the Structure lead carries an example.
+
+Pass 15 after it: **417 right, 19 partly, 0 wrong (95.6%)**; pass 16, after
+round 16: **420 right, 16 partly, 0 wrong (96.3%)** — the best fresh pass.
+
+## EC-338 · The rows that come back short pass after pass — `fixed` 2026-10-18
+
+With the fresh passes level at 95-96%, the rows left were mostly the same
+dozen each time, so rounds 16 and 17 (`workflowsVersion 2026-10-18h`, `i`)
+went after them by name. **A correction first**: the 18g camera paragraph
+of W-51 said **Let other devices watch** alone lists `https://` addresses;
+**Use HTTPS** is needed too (a grader read step 6 and caught it). Then: a
+Bible list was reached only through a highlighted verse's row in Bible
+Notes, so **Save bible item** — the floppy disk beside the cast icon in the
+Presenter's lookup, and at the top right of the Reader's Bible Lookup with
+Ctrl+Enter, seen live on the dev Reader — is in W-06 and W-11, and
+_How do I add a verse to a Bible list?_ answers from W-11; `Screen id: 0`
+is written as code (the answer cleaner had translated its first word);
+a long menu scrolls only when taller than the window, as a lead of its own
+(W-01b); Line Sync on a showing screen needs a hide and a show, said in the
+sentence that sets it (W-18); the W-34 form opens on the whole job; the Info
+editor is the pencil's; **Cast to a TV** is the card header's icon and casting
+from the page needs no `https://`; Always on Top is under Properties; Refresh
+is on the cross references' title; a Show/Hide line lands at the end; the
+Resources lessons are found by **Search file name** (the 18g W-46 sentence
+had sent a Resources question to **New File**). Fifteen rows point at their
+part.
+
+Pass 17 after it: **421 right, 15 partly, 0 wrong (96.6%)**.
+
+## EC-339 · A what-or-why question is checked for its answer, not its steps — `fixed` 2026-10-18
+
+Pass 17's 15 partly were half padding: _Why does the preview show my desktop
+wallpaper?_, _Why do I still need to scroll inside a long right-click menu?_,
+_Where do the Bibles the assistant installs come from?_ and a temp file left
+by a download were each answered with a procedure nobody asked for, put
+there by the completeness check (EC-330), which asks whether a step is
+missing. A row of `kind: 'what'` now rides with `isKnownWhatAsk`
+(`genKnownAskExtra` → `AskExtraType` → `ToolWatchType.isWhatAsk`), and its
+check asks instead whether the answer says WHAT or WHY first and plainly,
+keeps a step only where the question needs it and adds no procedure
+(`genCompletenessNudge(controls, isWhatAsk)`); a rewrite that takes the
+procedure out is shorter, so `pickCheckedAnswer` takes one of 80 characters
+or more for such a row. Pass 18 with it: **427 right, 9 partly, 0 wrong
+(97.9%)** — the padding complaints gone. Pages beside it
+(`workflowsVersion 2026-10-18j`, `k`): turning the wallpaper off is one press
+and **Refresh Preview** is something else (W-10); the Presenter's lookup is
+**Bible Lookup** or Ctrl+B (W-12); the Web Editor saves itself (W-15); the
+window icon is clicked once (W-22b); **Add CC Elements** is on the line's
+right-click (W-22g); the divider's menu holds the two closes and **Reset
+Size** and nothing else (W-31); casting from the page needs **Let other
+devices watch**, the switch above the cards, and the MP4 is under **More
+addresses** (W-51); the ✨ is said for what it is before what it is not
+(W-44); **Add URL**'s place (W-08); keep a missing Bible's suggested short
+name, and a Bible's language needs nothing of the import (W-34); what to
+check when SongSelect will not connect is one note (W-35). And a
+do-it-for-me row whose tool reports a screen off tells the person to press
+that screen's show button or F5 — pass 18 offered to press it.
+
+Pass 19 after it: **417 right, 19 partly, 0 wrong (95.6%)** — down ten, and
+not from the model: see EC-340.
+
+## EC-340 · The part quoted first is the page's own passage, and a stale translation is caught before a pass — `fixed` 2026-10-18
+
+Pass 19's nineteen partly were fifteen rows right in all five passes before
+it and four with a cause. (1) Three Resources rows came back with whole
+English sentences in a Khmer answer: a session working on Resources had
+edited W-37 (`workflowsVersion 2026-10-18l`) and the knowledge was rebuilt
+between the English and the translation, so `index.km.json` held W-37 as
+`isStale` and the page the model opened came back English, while
+`manual-i18n-status.mjs` already said every page was current. Rebuilt; a pass
+now starts only after both say no page is stale. (2) _My new Bible reads in
+English_ was quoted first, in Khmer, the import form's step 6 and the
+assistant's step 4 in place of the paragraph its row names: the cut writes
+each passage on a line of its own (adjacent ones joined by a line break, a
+gap by `…`), and `genKnownQuestionHint` read the CUT back as passages, so two
+paragraphs side by side — or either side of a `…` — were one part, and five
+rows on long pages were quoted first with a neighbour (shared-assistant,
+resources-links, resources-copy-to-data, translation-language,
+bible-xml-source). The named part is found in the PAGE's passages now. And
+`checkIsBlockInCut` took a block in when any of its lines' first 60
+characters was in the cut, 12 at least — W-34 step 8's last line
+_Wordproject._ is in step 6's sentence, so a cut of step 6 carried step 8: a
+line below a block's first now needs 30 (`INNER_LINE_LEAD_LENGTH`). (3) A
+named part that ends on a colon is quoted with what it introduces — the
+steps, bullets or code after it, of one kind, as many as fit
+(`withIntroducedPart`): W-37's link list rode without its example, and the
+answer described the file with none. Seven rows name such a part. (4) Two
+rows were filed with the key _Arrow keys_, copied into Khmer answers as two
+English words; the rows and W-03 step 3 now write the keys
+(**→**, **↓**, **PageDown**, **Space** / **←**, **↑**, **PageUp**,
+**Shift+Space**, `nextSlideEventMappers`). Pages (`workflowsVersion
+2026-10-18n`, `o`): W-34 says the Info editor's three commands are on its
+right-click and what **Edit Books Map** opens, with **Guessing Names** and
+**Ok**; W-12 opens the Presenter's search with the binoculars and **Find**.
+Rows pointed at their part: ai-chat-shared-computer (_Sharing this
+computer?_), open-document, foreground-session-dot, connected-guests-header,
+background-folder-sessions (the whole folder-sessions paragraph, which
+says **＋**). Tests: _a short line deep in a block does not bring that block
+into a cut_, _the part quoted first is the page’s own passage, with what its
+colon introduces_.
+
+Pass 20 with it: **429 right, 8 partly, 0 wrong of 437 (98.2%)** — the best
+pass yet; translation-language, the Resources rows and the slide keys right.
+
+## EC-341 · Pass 20's eight, page by page — `fixed` 2026-10-18
+
+Each of the eight was a page that left the model room (`workflowsVersion
+2026-10-18p`): opening a document put no limit on step 2, which presents (W-03);
+the Messages lessons were described, never named, and the description was
+quoted as a title (W-46, now the three titles as label templates); `V1CV2C` was
+explained two sentences after the lead the row points at (W-05, now in it);
+the link list's example was not said to be the thing to write (W-37); "that
+card" for Line Sync read as a new screen's (W-18); **Settings** on the help
+window's own page read as the help window's (W-42); the group-scrolling arrows
+were written under **Add Extra Bible**, which never shows them (W-11); and no
+page had a checklist for nothing on the projector (W-10, a new bullet).
+Rows pointed: nothing-showing, who-is (the search box, W-29 step 3),
+sync-group-scrolling.
+
+Pass 21 with it: **428 right, 9 partly, 0 wrong of 437 (97.9%)** — after 155
+answers given while a peer session's save had hot-reloaded the window's
+dictionary away (its own buttons in English, the hint's labels too) were
+asked again. Every one of EC-341's targets came back right.
+
+## EC-342 · The step before a part is one it cannot do without — `fixed` 2026-10-18
+
+Five of pass 21's nine short answers opened on a step for something else:
+**Add Extra Bible** before a split or the group-scrolling arrows (twice, the
+step's first sentence), a second screen before Line Sync, a slide clicked onto
+the projector before _the first card is blank_, something dragged in from
+another panel before dropping a line on a line; a sixth showed each countdown
+"to keep it ready". The hint asked for "a step before it that it takes for
+granted" (EC-310) and got these. It now asks for one the part cannot be done
+without, never one for something else such as adding a screen or putting a
+slide or an item on the screen when the question does not ask to. Pages
+(`workflowsVersion 2026-10-18q`): W-11 step 3's scrolling and splitting
+paragraphs open on bold leads of their own, so neither part starts at **Add
+Extra Bible**; W-09 says a session set up puts nothing on the screen; W-22g
+says to drag the line itself. And the run itself: a save under `src/lang` or
+`src/helper` hot-reloads the help window as surely as one under `src/chatbot`
+— 155 answers were drawn with no dictionary — and stopping the run's shell
+left its node child asking questions; both now in the hold message and the
+kill-by-PID step.
+
+### EC-343 — a typed Bible-Reader question gets the tools (DONE 2026-10-18)
+
+**Evidence.** Live dev app, Khmer UI. `owa_lookup_record`, `owa_resource_file`
+and `owa_find_verse` were offered only to a conversation opened from a panel
+(`MODEL_ON_ASK_TOOL_MAP`); a typed "what names in Genesis chapter 4", "show
+resource files of john chapter 3" or "open genesis 3:203" went to the ordinary
+assistant, which has none of them.
+**Done.** A `bible-reader` ask kind (`bibleReaderChatHelpers.ts`), detected
+from a typed line in any language (a verse reference, or a chapter word +
+number with a book before it; the app's own work and how-tos excluded), in a
+tab asking about the Bible Reader. It offers `owa_lookup_record`,
+`owa_resource_file`, `owa_find_verse` and `owa_read_website`, under
+`BIBLE_READER_SYSTEM_PROMPT`, 6 rounds; the installed Bibles are read once so
+a Khmer ask is quoted from the Khmer Bible. A plain line under such an answer
+stays in the conversation (`isBibleReaderAnswer`). Ordinary questions' tool
+bill and the 8 350 ratchet are unchanged; a Presenter tab keeps
+`owa_present_bible`.
+**Scores** smarter (right source), easier (no panel to find), impressive (the
+app reads its own Resources). Rung 2 and 6.
+
+### EC-344 — the Resources book name in any language, and `ref` (DONE)
+
+`owa_resource_file {list, book:"យ៉ូហាន", chapter:3}` answered _"យ៉ូហាន" is not
+a Bible book_; `list` now accepts the book's own name in any installed Bible's
+language (`resolveResourceBookKeyFromMaps`) and a `ref` ("John 3"), and the
+refusal names what is accepted. Seen live: the Khmer name listed JHN.3's six
+files. **Scores** smarter/easier for every non-English reader.
+
+### EC-345 — an out-of-range verse was quoted as `"??"` (DONE)
+
+`owa_find_verse {refs:"Genesis 3:203"}` and `owa_lookup_record {kind:"verse",
+ref:"Genesis 3:203"}` both answered `{"key":"GEN 3:203","text":"??"}` -- the
+renderer's missing-verse placeholder (`bibleRenderHelpers.toVerseTextList`)
+handed to the model as scripture. `checkVerseFitsChapter` +
+`genVerseRangeReason`; `readRefs`, `readKeyedPassage` and `openInLookup`
+refuse a verse past the chapter's count and answer `notFound: [{ref, reason:
+"Genesis 3 has 24 verses."}]` (lookup refuses in that sentence). Seen live:
+_បើកលោកុប្បត្តិ 3:203_ answered with the count, its invalid `open` refused.
+**Scores** smarter (honest), safety (never opens an empty verse).
+
+### EC-346 — a reference resolves across installed Bibles (DONE)
+
+With the lookup on KJV, `owa_lookup_record ref:"លោកុប្បត្តិ 4"` refused
+(_could not be read in KJV_) and `owa_find_verse bible:"KJV" refs:"លោកុប្បត្តិ
+4:1"` returned `unread`. `toNameMapList` now tries every installed Bible's
+book names after the chosen one, and `pickBibleKeyForBookName` quotes from the
+Bible that names the book as written when none was asked. Seen live: the
+Khmer ref read from ពគប, and the KJV ref quoted KJV Genesis 4:1.
+**Scores** smarter/easier in every language.
+
+### EC-347 — French has no verse-ask data (OPEN)
+
+`src/lang/data/fr/assistant.json` has no `verseAsks`, `verseFindAsks` or
+`verseAskExcludeWords`, so a French verse asked by what it says goes to the
+English-only readers and back to the ordinary assistant (the failure EC-288/
+EC-289 fixed for Khmer). This run added `bibleReaderWords` (chapter/resources/
+names/howTo/exclude) for French; the verse-finder data is its own change.
+**Scores** smarter/easier for French; rung 2.
+
+### EC-348 — the orphaned Resources name resolver and follow-up (DONE)
+
+`agentResourceNameHelpers.test.ts` (untracked, authors ended) imported
+`resolveResourceFileName`, which the source did not have (2 of 70 tests
+failed); implemented as the test defines it. The same ended work left
+`resourcesChatHelpers.test.ts` and `llmBotHelpers.test.ts` asking for
+`RESOURCE_ASK_TOOL_NAME` / `genResourceAskActions` / `resources.openFiles`
+with no implementation; finished and wired to `attachHandedFileRef` (a press
+attaches the file the tab then asks about). `resourcesFolderHelpers.test.ts`
+imported two functions that do not exist and were never used; the dead
+imports were removed (no assertion changed). The gate's 5 failing tests are
+green.
+
+Pass 22 with it: **431 right, 6 partly, 0 wrong of 437 (98.6%)** — the best pass
+yet; every row EC-342 named came back right (split-other-version, line-sync,
+foreground-sessions, flow-drag-onto, pptx-first-slide-blank).
+
+## EC-349 · The two rows short pass after pass, given what they lacked — `fixed` 2026-10-18
+
+resources-links (short in passes 18, 19, 20, 22) and sync-group-scrolling (20, 21,
+22). The first dropped the link list's fenced example from every answer and copied
+`1CH.0.json` as the name to use: W-37 now writes one link inline in the sentence
+before the example and says the file takes its chapter's name. The second never
+said how a pane gets a color, because the page never did: W-11 now names the dot
+at the start of a pane's header, **Color Note** (`ItemColorNoteComp`, read in the
+code). viewer-hides-screen (21, 22) is pointed at where **Allow interaction** is.
+`workflowsVersion 2026-10-18r`.
+
+Pass 23 with it: **428 right, 9 partly, 0 wrong of 437 (97.9%)**. viewer-hides-screen
+came back right; resources-links named the file by its chapter but still left
+the example out, and sync-group-scrolling still opened on **Add Extra Bible**. One
+row regressed from a peer change, not the guide: _Where do I type John 3:16?_ in a
+Reader tab went to the new verse-finding ask (EC-343) and was answered "it is
+open" -- reported to its session. Round 24 (`workflowsVersion 2026-10-18s`): the
+taskbar's lead says it asks no question first (W-42), **Add Extra Bible** reads two
+versions side by side in one pane (W-11), step 9 of W-05 says where **Reset** is
+(lyric-reset-style pointed at it), and the Khmer inline link example carries a
+Khmer title (W-37), since the model drops English data from a Khmer answer.
+
+### EC-350 — a known corpus row is never a Bible-Reader ask (DONE 2026-10-18)
+
+**Evidence (round 23's Khmer pass).** `reader/reading/type-reference`, the
+Reader's own starter _Where do I type John 3:16?_ typed in Khmer
+(_តើខ្ញុំវាយ យ៉ូហាន ៣:១៦ នៅឯណា?_), was taken by the new `bible-reader` ask
+kind: it called `owa_find_verse` and answered _the verse is opened_, never
+saying where to type. Pass 22 (before the kind) answered with W-11's steps
+in one round.
+**Done.** The window looks the typed words up in the corpus BEFORE it routes
+them (`findKnownQuestion`, reused for the known-question hint): a row of any
+kind wins, and only a free-typed question with no row gets the verse tools
+(`keepBibleReaderAskUnlessKnown`). A second defect fell out of the test: the
+"book before the reference" check required two ADJACENT Unicode letters, which
+Khmer vowel and subscript marks break (`យ៉ូហាន` has no two adjacent
+`\p{L}`), so the Khmer reference was not detected at all; it now counts two
+letter clusters (`\p{L}[\p{M}]*`). Tested on the exact English and Khmer rows
+in a Khmer window (jsdom, the corpus overlay loaded as the window loads it).
+Seen live again: the Khmer question answered W-11's steps through
+`owa_help_page` (W-11 + W-11@km), no verse tool called.
+**Scores** correctness (a known question keeps its answer); rung 2.
+
+Pass 24 with it: **429 right, 8 partly, 0 wrong of 437 (98.2%)** -- the taskbar,
+**Reset** and _Where do I type John 3:16?_ (after the peer's fix, EC-350) right.
+Round 25: W-11's group scrolling and splitting are a step of their own (4), no
+longer the tail of the step that opens on **Add Extra Bible** (four passes short);
+W-46 gives the **Resources** lessons a sentence of their own under the app's
+label; download-left-part-file is a `what` row (it asks what the leftover file
+is). And two in the hint: the part quoted first is cut at a line with a … when
+it is too long (`clipNamedPart` -- cut at the character, the command list ended
+mid-word and was copied to the same syllable three passes running), and a part
+that ends on a fenced example tells the model to copy the example as it stands
+(the link list's example was left out four passes running). `workflowsVersion
+2026-10-18t`.
+
+### EC-351 — the ask box completes a Bible reference and a name (DONE 2026-10-18)
+
+**Evidence.** The user's picture of a lookup conversation: the box held `១`
+and offered nothing. _assistant should help the input, e.g. when asking for
+bible input then should have boot auto complete -> chapter -> verse_, then
+_if for location/name then should recommend the auto-complete_. The Reader's
+own reference box has book/chapter/verse buttons; the chat box had no help.
+**Done.** A hidden `owa_bible_suggest` tool (not in the model's list, so the
+26 tools / 8 350 ratchet did not move) and `useBibleInputSuggestions` in the
+window, on a 350ms debounce: a passage box (Reader tab or `lookupAwaits`)
+completes book -> chapter -> verse in the Bible being read, its own names and
+digits, a chapter filling `Book C:` so the verse list follows, and `១` under
+an awaited card using that card's book; a name box completes people/places
+from the names lookup (`Who was …`, every language's `nameAsk`, a bare
+non-Latin name; a bare Latin word only against a dataset a panel already
+holds -- never a speculative 34MB). Rows are data, and choosing one keeps the
+list open for the next step. Seen live in Khmer: the five `យ៉ូ` books, John's
+chapters, chapter 3's verses, and `ម៉ូសេ` -> Moses/Moseroth.
+**Scores** easier (typing a passage three taps instead of a whole name) and
+smarter (the exact names/digits of their Bible); rung 2 and 6.
+
+### EC-352 — a waiting step asks the assistant when the exact match fails (DONE 2026-10-18)
+
+**Evidence.** The user's picture of the import's language step: `ភាសាថៃ`
+(Thai) answered _I do not know the language_. _it should try to ask
+assistant_, _sometime user ask for list of suggestion language_, _llm should
+help on this_, _this is for general issue_. The catalog search had no name
+for the Khmer word and the downloaded draft's language step refused it.
+**Done.** The exact match first, then the assistant, then the step goes on:
+`runCheck`/`runTypedLocale` carry `unknownLanguage`; the window asks a
+one-line English translation (`isGeneral`, no tools, English out), reads
+`Thai (th)` / `th` back (`stepHelpHelpers.ts`), and retries with
+`find: "Thai"` / `locale-typed: "th"`, under _I read “{from}” as **{to}**._
+The lookup's **Open another passage** does the same for a typed passage
+(`John 3:16`), retrying the record read; the verse finder's _which Bible?_
+already fell through to the ordinary assistant. A list question keeps the
+assistant's list above the question. Seen live in Khmer: `ភាសាថៃ` listed the
+Thai Bibles (`THAI KJV 2003`, `THAI NTV`, `THAI TCV 2025`, …).
+**Scores** easier (the word they know works) and smarter (the assistant maps
+it); rung 2.
+
+### EC-353 — complete Khmer procedures and prioritize short-page passages (VERIFIED TARGETED 2026-10-18)
+
+The user switched this work to **Ollama / gemma4:cloud** and required a separate
+instance because another session needs the shared dev app. An isolated source
+snapshot, profile and data directory on Vite port 3001 keep the answer run stable.
+This is a new assistant baseline: 16 previously weak questions graded 6 right,
+10 partly. Do not combine it with Ollam super-mac's historical 431/437 best pass.
+
+W-06 now includes saving/presenting the passage first; W-25 destination folders;
+W-22d creating and attaching the timeout; W-22e executing a jump from Preview;
+W-51 the TV chooser, HTTPS prerequisites and viewer controls on their device;
+W-37 the Resources folder for a link file; W-42 the attachment/report sequence.
+W-11 gives heading references their own part, the Reader's conditional entry route,
+and color → hover → split → scroll together. W-10 gives an all-screen procedure
+using each lit show/hide toggle, with F5 explicitly scoped to selected screens.
+English, Khmer and French were updated together; both translations are 65/65 current.
+
+`genKnownQuestionHint` now quotes a named passage first even when the page fits
+whole. Previously only long pages got that priority, so W-11's earlier Add Extra
+Bible step kept appearing before synchronized scrolling. The regression test
+checks the localized passage comes first while the rest remains available.
+
+Live Ollama round 26: 11 right, 2 partly of 13. Round 27 removes the extra version
+step; round 28's corrected F5 and Reader guidance both grade right. Focused checks:
+95 passed. Full 438 ordinary questions plus 9 templates are being measured in
+pass 29; the overall 100% goal remains open. Raw answers and grades are under
+`test-results/chatbot-quality/`, with the current checkpoint in `khmer-gemma4.md`.
+
+### EC-354 — flexible waiting replies and Send (VERIFIED TARGETED 2026-10-18)
+
+The user's Thai override screenshot reproduced a real boundary defect: the model
+returned the language name Thai, while the parser required a code. The shared
+structured interpreter now accepts the same normalization as the import tool.
+Further live cases found uncertainty being resolved arbitrarily, Thai? being
+reconfirmed, stale Thai digits/book names after restarting with Khmer, and Stop
+losing the waiting controls. These are fixed and covered by regression tests.
+
+One no-tool interpretation maps to existing choices or validated values. Original
+arguments stay owned by the app; consent/install/undo are never model-selected.
+Native digits, polite short names, explanations, relative passage requests,
+unrelated tasks, Auto, per-answer usage and tab ownership are exercised. The
+composer says Send, with Khmer and French labels and matching manual references.
+Raw case files and screenshots: test-results/bible-import-input/. This is focused
+input robustness work, not a claim that arbitrary model output is always correct.
+
+### EC-355 — current import context and supplied name-list sources (DONE 2026-10-18)
+
+The user's explicit `ខ្មែរ` under detected Spanish selected Spanish; a chapter
+URL at book names was answered with an offer to project John 1:1. Exact native
+languages now resolve locally, including corrections at numbers/names/review.
+The waiting assistant receives current semantic settings and bounded recent
+conversation; normal history also retains visible notes and labels. Current
+facts override prior answers and distinguish import language from interface.
+The first live context question still repeated Spanish; stronger current-state
+priority corrected it to Khmer. Natural digit selection then showed Khmer lists.
+
+A pasted source at book names uses MC-60's `names` action with URL and selected
+locale; failures preserve choices and source results lead the list. Fresh MCP
+verified 66 Khmer names from the user's exact URL and from a Wordproject chapter.
+A Khmer sentence around the link also routes to the name lookup; on the stale
+host the explicit-source guard retains the old choices with an honest notice.
+The original instance was then restarted: the bare link and a Khmer sentence
+around it both returned the supplied Khmer edition first, with a clickable
+source. Debugger inspection confirmed current facts reached the interpreter;
+it answered Khmer for the selected language. One malformed helper reply kept
+choices intact and is retained in the evidence. Restarted testing also found
+that allowing language corrections made short replies bypass the interpreter:
+`១` at numbers fell into ordinary chat and invented a ready-to-install answer.
+Digit choices now accept their positions locally, and unmatched short replies
+at choice steps still use the interpreter. Re-tested `១`: correct names step
+in 0.5 s, no model. Final focused subset: 159 tests; the full gate and live
+results are in `test-results/bible-import-input/report.md`.
+No consent or Install button was pressed.
+Raw successes and failures: `test-results/bible-import-input/live-context.jsonl`.
+
+### EC-356 — full Ollama Khmer pass: completion, fences and song drafts (DONE 2026-10-18)
+
+The isolated full ordinary pass on Ollama / gemma4:cloud returned 438 valid
+answers: 424 right, 14 partly, none wrong. Five spending-limit interruptions
+were retried. All fourteen failures now grade right in pass35: finish a hex
+color edit; remote-focus exceptions; stop the existing autoplay strip; select
+a song/document's slide in a flow; destination folders before flow import;
+present/show before a virtual display's MP4 address; confirm a data-folder
+switch; explain an unsaved draft without an unasked discard procedure; paste
+and save a copied graph; choose Bible book names before Install; require the
+OpenAI key for Bible audio; choose the specific video-link action; and preserve
+three-backtick lyric fences. The last was a renderer defect: plain fence text
+was still sliced as an inline code span after tokenization had left it intact.
+English, Khmer and French guide blocks remain aligned.
+
+The template driver had ignored --lang for filled examples. It now uses each
+language's corpus text and localized fill values. The corrected nine-template
+pass31 scored 7 right, 1 partly, 1 wrong: song summaries were English, and a
+documentation-domain notice was offered as an Untitled song. Round36 translates
+draft summaries and extraction notes without translating song/source data,
+and refuses short wrapped placeholder/error pages before drafting. Plain
+pastes and genuine song pages remain accepted. Focused checks: 172 passing.
+The corrected nine-template pass37 is 9/9 right. The 137 ordinary regression
+questions scored 133 right and four partly: Bible-removal confirmation; camera
+selection; choosing the newly added server/model; and submitting /lyric after
+pasting. W-16, W-15 and W-42 now name those completion steps in all three
+languages. Pass38 re-asked them with five adjacent questions: 9/9 right.
+The latest graded answer for every supported key is right: 438 ordinary plus
+9 templates, 447/447 across the full run and follow-ups, not a single fresh
+447-question pass or a guarantee for arbitrary prompts. The raw score records
+every answer and its run in score-km-ollama-gemma4cloud-2026-10-18-final.json.
+The camera's device menu and resulting camera box were also observed live on
+an isolated slide fixture, then undone. Current screenshots confirm Khmer song
+summaries, uncertainty notes, placeholder refusal and intact lyric fences.
+Both HTTP and fresh stdio reject the placeholder and draft real lyrics.
+The final follow-ups ran with private discovery and hidden windows after another
+session interacted with the earlier scratch instance. Both scratch apps are
+stopped; the other session's app was left running.
+
+No new model tools or schema fields. Baseline 64 host /26 model /8350 tokens;
+fresh stdio audit 64/26/8348, no warnings (concurrent schema edits account for the delta).
+Full gate passed: 7,672 app and 902 Electron tests, both typechecks, formatting,
+ESLint and temporary production build. Final scoreboard recorded. Evidence in test-results/chatbot-quality;
+khmer-gemma4.md records exact run names and the isolated process/profile.
+
+### EC-357 — wrapped emphasis printed raw Markdown (DONE 2026-10-18)
+
+**Evidence.** Focused robot QA opened W-11 through **Read the whole thing**.
+Item 9 displayed `**OpenAI API` and `available**`: the renderer split the page
+into source lines before finding inline emphasis, while the manual wraps both
+phrases across source lines. The rest of the page was readable, so this was a
+Low UI defect rather than a bad answer.
+
+**Done.** `joinWrappedBoldText` pairs complete bold spans before the existing
+per-line renderer and replaces only whitespace at line breaks inside those
+spans. Other paragraph/list breaks remain intact, and React still renders text
+without HTML. A regression test covers both phrases. Live in the Khmer window,
+W-11 item 9 now shows **OpenAI API Key** and **Auto Play Audio AI when
+available** as emphasized phrases with no raw markers. The test conversation
+was cleared afterwards. This scores easier and repairs rung 2 usability; no
+model tool or schema changed.
+
+### EC-358 — Resources PDF reading one verse at a time (DONE 2026-10-18)
+
+**Evidence.** A Khmer `JHN.3.pdf` conversation originally offered only three
+generic questions. Asking for every cited verse expanded a long reference
+column, and related PDFs were prose dead ends. A direct Read test summarized
+themes but did not let the reader choose a bounded section. The page itself
+uses three distinct regions: Bible text, a narrow cross-reference column, and
+verse-by-verse explanation below the horizontal rule.
+
+**Done.** Resources-file cards now include a brief description and **Read**.
+Read gives an actual two-sentence PDF description, asks for a verse with the
+example `1`, and offers `1`, `2`, `3`, and **Full chapter**. Each isolated
+request pre-reads exactly one complete verse from the installed Bible, asks for
+its bounded printed cross-references, matches the commentary paragraph below,
+and may follow at most two direct mentions into verified Resources files. The
+app supplies the next three verse buttons itself, so malformed model options
+cannot dead-end the reader. Cross-reference options open their verse in a new
+one-verse card. Related PDFs read by the model retain **Ask about …** buttons.
+
+A standing Resources-PDF caution says AI analysis can make mistakes and
+recommends reading the original Bible and PDF personally; **Hide for 30 days**
+shares the existing timed caution setting. Image OCR and commentary selection
+cannot honestly be called 99% accurate, so unclear words must be named instead
+of guessed. Earlier live Khmer checks showed the file description and also
+exposed why a multi-verse/full answer was too large. The model still paraphrased some
+cross-reference detail, which is why the warning and original-source advice
+remain visible. Targeted tests: 34 passing. No paid-provider calls.
+
+**MCP completeness follow-up.** `owa_resource_file` now returns every PDF page
+as a picture in one result by default, with explicit coverage metadata. Its
+embedded text layer is withheld because this file decodes to unrelated Latin
+characters. The verse flow asks for the complete 2048px
+high-detail PDF once, does not discuss pagination with the user, and prepares
+only the selected installed-Bible verse in each model request. A bare lookup
+discovers that `JHN.3.pdf` ends at verse 36; **Full chapter** then continues
+automatically from 1 through 36, one card and one model request per verse. The
+PDF render/text-layer result is reused from a bounded OS-temp cache. The picture
+stays authoritative: the live four-page `JHN.3.pdf` proved
+its text layer is legacy-font gibberish, so neither the tool nor this flow makes
+an impossible 100% OCR-accuracy claim. A repeated-word guard now replaces a
+degenerate visual reading with the exact installed-Bible verse and an explicit
+failure notice; guessed short OCR abbreviations are removed from cross-reference
+lines and buttons. Related files remain interactive through
+their **Ask about {name}** buttons. MCP tracking: `MC-61`.
+The earlier multi-verse live result exposed the context problem this follow-up
+removes; unit coverage now pins one selected verse, cross-reference choices,
+chapter-end clamping, and the 36-verse John 3 boundary.

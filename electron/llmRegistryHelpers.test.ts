@@ -72,6 +72,8 @@ describe('the shared LLM registry in main', () => {
                     baseUrl: 'https://shared-server.invalid/v1',
                     isFree: true,
                     source: 'registry',
+                    // Shown to the person choosing (2026-10-17).
+                    note: { '': 'LM Studio on the church computer' },
                     models: [
                         {
                             id: expect.any(String),
@@ -89,7 +91,7 @@ describe('the shared LLM registry in main', () => {
             id: 'registry-super-computer',
             baseUrl: 'https://abc.trycloudflare.com/v1',
             apiKey: 'sk-shared',
-            note: 'LM Studio on the church computer',
+            note: { '': 'LM Studio on the church computer' },
         });
     });
 

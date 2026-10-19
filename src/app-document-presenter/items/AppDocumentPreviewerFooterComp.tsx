@@ -25,6 +25,7 @@ import {
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { useThumbnailScaleSettingOptions } from './slidesPreviewerScopeHelpers';
 import { checkIsVaryAppDocumentSwitchRefused } from '../../app-document-list/varyAppDocumentLockHelpers';
+import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
 export const slidePreviewerMethods = {
     handleSlideItemSelected: (
@@ -33,26 +34,50 @@ export const slidePreviewerMethods = {
     ) => {},
 };
 
+type SlideItemHistoryType = {
+    viewIndex: number;
+    itemKey: string;
+    filePath: string;
+};
+
 function HistoryPreviewerFooterComp() {
     const [selectedSlideItemHistories, setSelectedSlideItemHistories] =
-        useState<[number, string][]>([]);
+        useState<SlideItemHistoryType[]>([]);
+    // A badge of a file that is gone points at nothing it could ever reveal.
+    useFileSourceEvents(['delete'], (deletedFilePath: unknown) => {
+        setSelectedSlideItemHistories((oldHistories) => {
+            const newHistories = oldHistories.filter(({ filePath }) => {
+                return filePath !== deletedFilePath;
+            });
+            return newHistories.length === oldHistories.length
+                ? oldHistories
+                : newHistories;
+        });
+    });
     useAppEffect(() => {
         slidePreviewerMethods.handleSlideItemSelected = (
             viewIndex: number,
             varySlide: VarySlideType,
         ) => {
+            const itemKey = toKeyByFilePath(varySlide.filePath, varySlide.id);
             setSelectedSlideItemHistories((oldHistories) => {
+                // Pressing the slide that is already up again shows nothing
+                // new, so it is not a second step back.
+                if (oldHistories.at(-1)?.itemKey === itemKey) {
+                    return oldHistories;
+                }
                 const newHistories = [
                     ...oldHistories,
-                    [
+                    {
                         viewIndex,
-                        toKeyByFilePath(varySlide.filePath, varySlide.id),
-                    ],
+                        itemKey,
+                        filePath: varySlide.filePath,
+                    },
                 ];
                 while (newHistories.length > 3) {
                     newHistories.shift();
                 }
-                return newHistories as [number, string][];
+                return newHistories;
             });
         };
         return () => {
@@ -64,11 +89,11 @@ function HistoryPreviewerFooterComp() {
     }, []);
     return (
         <div className="d-flex history me-1">
-            {selectedSlideItemHistories.map(([index, itemKey], i) => {
+            {selectedSlideItemHistories.map(({ viewIndex, itemKey }, i) => {
                 return (
                     <RenderSlideIndexComp
                         key={itemKey + i}
-                        viewIndex={index}
+                        viewIndex={viewIndex}
                         dataKey={itemKey}
                         title={itemKey}
                     />

@@ -26,7 +26,11 @@ import {
     getVerseTextLookupLangCode,
     toVerseTextSegments,
 } from './verseTextIndexHelpers';
-import type { LookupTextIndexType } from './verseTextIndexTypes';
+import { collectVerseRecords } from './verseRecordListHelpers';
+import type {
+    LookupRecordLabelsType,
+    LookupTextIndexType,
+} from './verseTextIndexTypes';
 import { LOOKUP_TEXT_INDEX_VERSION } from './verseTextIndexTypes';
 
 const ABRAM = 'id-abram';
@@ -282,6 +286,111 @@ describe('findLookupTextMatches', () => {
         expect(matchList.map((match) => match.text)).toEqual([
             'Abram',
             'Galilæans',
+        ]);
+    });
+});
+
+// RD-66: "Eli, Eli, lama sabachthani?" is Aramaic for "My God, my God", but
+// `eli` is borne by exactly one record, the priest of Shiloh, so the
+// no-evidence fallback linked both words to him.
+describe('a word a verse uses as something other than a name', () => {
+    const ELI_PRIEST = 'id-eli-priest';
+    const JESUS = 'id-jesus';
+    const MATTHEW_27_46 =
+        'And about the ninth hour Jesus cried with a loud voice, saying, ' +
+        'Eli, Eli, lama sabachthani? that is to say, My God, my God, why ' +
+        'hast thou forsaken me?';
+    const SAMUEL_1_3_5 =
+        'And he ran unto Eli, and said, Here am I; for thou calledst me.';
+
+    // The real dataset's shape: Eli is attested in 1 Samuel, never in
+    // Matthew, and some of his own verses are not attested either.
+    function genEliIndex(
+        verseNames: LookupTextIndexType['verseNames'] = {},
+    ): LookupTextIndexType {
+        return {
+            version: LOOKUP_TEXT_INDEX_VERSION,
+            ids: [ELI_PRIEST, JESUS],
+            names: { eli: [0], jesus: [1] },
+            locations: {},
+            verseNames: { '1SA 1:9': [0], ...verseNames },
+            verseLocations: {},
+        };
+    }
+
+    function genEliRecordLabels(): LookupRecordLabelsType {
+        return {
+            version: LOOKUP_TEXT_INDEX_VERSION,
+            labels: ['Eli', 'Jesus'],
+            kjvNames: ['', ''],
+            types: ['person', 'person'],
+            titles: ['Priest and judge of Israel at Shiloh', 'the Christ'],
+        };
+    }
+
+    test('leaves "Eli" in Matthew 27:46 plain and links the rest', () => {
+        const matchList = findLookupTextMatches(
+            genEliIndex(),
+            MATTHEW_27_46,
+            'MAT 27:46',
+        );
+        expect(matchList.map((match) => match.text)).toEqual(['Jesus']);
+        expect(matchList[0].recordId).toBe(JESUS);
+    });
+
+    test('the verse rule wins over verse evidence for that word', () => {
+        const matchList = findLookupTextMatches(
+            genEliIndex({ 'MAT 27:46': [0, 1] }),
+            MATTHEW_27_46,
+            'MAT 27:46',
+        );
+        expect(matchList.map((match) => match.recordId)).toEqual([JESUS]);
+    });
+
+    test('still links Eli the priest in 1 Samuel, with or without evidence', () => {
+        const attestedList = findLookupTextMatches(
+            genEliIndex(),
+            'Now Eli the priest sat upon a seat by a post of the temple.',
+            '1SA 1:9',
+        );
+        expect(attestedList).toHaveLength(1);
+        expect(attestedList[0]).toMatchObject({
+            text: 'Eli',
+            kind: 'name',
+            recordId: ELI_PRIEST,
+        });
+        const unattestedList = findLookupTextMatches(
+            genEliIndex(),
+            SAMUEL_1_3_5,
+            '1SA 3:5',
+        );
+        expect(unattestedList).toHaveLength(1);
+        expect(unattestedList[0]).toMatchObject({
+            text: 'Eli',
+            recordId: ELI_PRIEST,
+        });
+    });
+
+    // The "who is in what I am reading" list runs the same scan over the KJV
+    // chapter: it must not list the priest under Matthew 27 either.
+    test('the chapter record list drops him in Matthew 27:46 too', () => {
+        const matthewGroup = collectVerseRecords(
+            genEliIndex(),
+            genEliRecordLabels(),
+            { bookKey: 'MAT', chapter: 27, verseStart: 46, verseEnd: 46 },
+            { '46': MATTHEW_27_46 },
+        );
+        expect(matthewGroup.names.map((record) => record.label)).toEqual([
+            'Jesus',
+        ]);
+        const samuelGroup = collectVerseRecords(
+            genEliIndex(),
+            genEliRecordLabels(),
+            { bookKey: '1SA', chapter: 3, verseStart: 5, verseEnd: 5 },
+            { '5': SAMUEL_1_3_5 },
+        );
+        expect(samuelGroup.names.map((record) => record.label)).toEqual([
+            'Eli',
         ]);
     });
 });

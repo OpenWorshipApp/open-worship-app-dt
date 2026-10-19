@@ -654,6 +654,32 @@ const AGENT_DATA_WORKER_MAP: Record<
         return (await import('./agentBibleXMLHelpers'))
             .handleAgentBibleXMLRequest;
     },
+    // `owa_find_verse`: a verse somebody half-remembers, searched in an
+    // installed Bible, and the one they wanted opened in the Bible Lookup
+    // (2026-10-16).
+    'bible-find': async () => {
+        return (await import('./agentBibleFindHelpers'))
+            .handleAgentBibleFindRequest;
+    },
+    // `owa_lookup_record`: a person or a place of the names lookup, or a
+    // Bible passage -- what a Lookup Detail panel shows -- read whole
+    // (2026-10-18).
+    lookup: async () => {
+        return (await import('./agentLookupHelpers')).handleAgentLookupRequest;
+    },
+    // `owa_resource_file`: the Resources panel's files, listed and read --
+    // a PDF as pictures of its pages (2026-10-17).
+    resources: async () => {
+        return (await import('./agentResourcesHelpers'))
+            .handleAgentResourcesRequest;
+    },
+    // `owa_bible_suggest`: the chat box's input aid -- the books, chapters
+    // and verses of the Bible being read, and the names and places a who/where
+    // question is naming (2026-10-18).
+    'bible-suggest': async () => {
+        return (await import('./agentBibleSuggestHelpers'))
+            .handleAgentBibleSuggestRequest;
+    },
     // `owa_presenting_flow`: the run sheets and their lines (2026-10-10).
     'presenting-flow': async () => {
         return (await import('./agentPresentingFlowHelpers'))

@@ -21,7 +21,89 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-15k** (**W-06 step 6 — a passage across chapters on the projector.** Asked for by the user: _for all bible rendering add support cross chapter rendering_, _if more than 3 chapters then show 3 chapter only and have `...` button to render more 1 by 1 chapter_. A passage like `John 1:50-6:3` goes up as one passage: the projector shows the first three chapters, each opened by its chapter number on a rule, and the mini screen card ends it with **...** (**[en:tran:Show the next chapter]**), which puts one more chapter on the projector per press. Seen live 2026-10-15 on the dev app (Khmer Bible គខប, the real `screen.html?screenId=0` window): **Ctrl+Shift+Enter** put `យ៉ូហាន ១:៥០-៦:៣` up with the `១` divider and no **...** on the projector; the card's **...** took the projector from 63 verse numbers to 117 (chapter 4 added); **Ctrl+→** on the projector window went to `៦:៤` and, re-presented, **Ctrl+←** to `១:៤៩`; a second version was added from the keyboard with **Shift+Enter** on the highlighted version.)
+**workflowsVersion: 2026-10-18ah** (**W-42 Resources PDF reading.** A chapter PDF is described briefly, asks for a bounded verse range, and renders complete verses with cross-references and explanation while retaining a full-chapter choice and a 30-day AI caution. Verified live in the Khmer Resources chat.)
+Previous: **workflowsVersion: 2026-10-18ag** (**W-34 supplied book-name source.** A pasted chapter link reads its edition in the selected language; prior choices survive a failed or mismatched source. Verified in the restarted original Khmer chat.)
+Previous: **workflowsVersion: 2026-10-18af** (**Khmer regression completion steps.** W-15 selects a camera device after opening its menu; W-42 selects the added server/model and explicitly submits pasted lyrics. English, Khmer and French aligned; all nine isolated Khmer follow-ups right. Camera device selection also observed live on an isolated fixture.)
+Previous: **workflowsVersion: 2026-10-18ae** (**Khmer regression follow-up.** W-16 names Yes as the Bible-removal confirmation button and distinguishes the dialog title. English, Khmer and French aligned; live recheck pending.)
+Previous: **workflowsVersion: 2026-10-18ad** (**W-34 selected language.** A typed Khmer override controls the imported Bible’s book names and numbers even when the file was detected as Spanish; corrections reload the choices. Verified in the original Khmer chat.)
+Previous: **workflowsVersion: 2026-10-18ac** (**Khmer pass 29 final ordinary follow-ups.** W-15 gives the video-link action and completion; W-42 isolates the OpenAI-specific audio prerequisite. English, Khmer and French match; isolated live rechecks pending.)
+Previous: **workflowsVersion: 2026-10-18ab** (**Khmer pass 29 completion steps.** W-34 keeps the book-name choice in a complete import summary; W-38 finishes copying with paste and save. English, Khmer and French match; isolated live rechecks pending.)
+Previous: **workflowsVersion: 2026-10-18aa** (**Khmer pass 29 folder-switch follow-up.** W-16 names both Switch presses and the automatic reload. The unsaved-edit question is an explanation request, so its corpus kind is what. English, Khmer and French match; isolated live rechecks pending.)
+Previous: **workflowsVersion: 2026-10-18z** (**Khmer pass 29 MP4 follow-up.** W-51 keeps assigning, presenting and showing a screen together with copying its media-player address. English, Khmer and French match; isolated live recheck pending.)
+Previous: **workflowsVersion: 2026-10-18y** (**Khmer pass 29 running-order follow-ups.** W-22 distinguishes opening a document preview from presenting a slide; W-22j puts destination-folder setup before Import. English, Khmer and French match; isolated live rechecks pending.)
+Previous: **workflowsVersion: 2026-10-18x** (**Khmer pass 29 follow-ups.** W-15 completes entering and applying a text color beside the bulk font steps; W-04 starts stopping from the already open timer strip; W-49b keeps the focus exceptions beside the remote recovery steps. English, Khmer and French match; live rechecks follow the isolated corpus pass.)
+Previous: **workflowsVersion: 2026-10-18w** (**W-42 — the composer now says Send.** English, Khmer and French button references, keyboard hints and report instructions match the live label.)
+Previous: **workflowsVersion: 2026-10-18v** (**Khmer Gemma answers — complete the procedure where it is quoted.** W-06 includes saving or presenting the passage before its next operation; W-25 sets destination folders before import; W-22d creates and attaches a timeout before changing its per-line wait; W-22e names the preview press that makes a jump happen. W-10 has a separate way to hide every screen without turning already hidden screens back on. W-51 completes the TV chooser and HTTPS route, and keeps viewer controls on the viewer device. W-11 gives heading references their own paragraph and puts color, split, and synchronized scrolling in one sequence. W-37 names the folder for a links file, and W-42 gives the attachment/report sequence. English, Khmer and French carry the same steps; measured against the Ollama gemma4:cloud baseline in an isolated dev instance, with live verification tracked in the chatbot ledger.)
+Previous: **workflowsVersion: 2026-10-18u** (**W-17 — the Find bar is in every window you work in.** The user, with a picture of **Edit → Find** doing nothing in a dev Presenter: _why find not working in dev_, then _make find work in ai chat and chatbot_ and _make sure find is available in all pages_. **Ctrl/⌘+F** now drops the bar into Screen Mirror, About, Local Web Share, the Web and Lyric editors, the help window and AI Chat as well as the four windows that had it, and in AI Chat it searches the website itself. A bar whose page failed to draw — what had made Find look dead — is replaced by the next press instead of being focused while invisible. Seen live 2026-10-18 on the dev app: a search in each of those windows with its count and highlights; in AI Chat, _mistakes_ found in Claude's own footer and a Khmer word twice in its answer; a real **Ctrl+F** from the keyboard in the help window and in AI Chat; a bar forced onto a page that never draws, replaced by the next press. Not seen live: **Ctrl+F** with the cursor inside the Web Editor's code (no tool can press a menu shortcut), and the Markdown Preview window.)
+Previous: **workflowsVersion: 2026-10-18t** (**W-11 and W-46 — two parts of their own.** W-11: the group-scrolling and splitting paragraphs are step 4 now, not the tail of step 3, whose first sentence is **Add Extra Bible** — the answer about making other translations follow opened on it four passes running; steps 4–8 are 5–9. W-46: the **Resources** lessons have a sentence of their own, named by the app's label (the Khmer page had called them by another word), apart from the graph's. Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18s** (**W-42, W-11, W-05, W-37 — pass 23's rows short twice or more.** W-42 step 1: the taskbar's lead says it asks no question first (answers kept adding the **Be careful with AI** question from the step's opening). W-11 step 3: **Add Extra Bible** reads two versions side by side **in one pane**. W-05 step 9: **Reset** is in that **Stage Style** window, the **⚙** on the stage's chip in the Presenter's Stage Previewer. W-37 (Khmer only): the inline link example carries a Khmer title. Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18r** (**W-37 and W-11 — the two answers short pass after pass.** W-37: one link is written inline (`[{"title": …, "url": …}]`) in the sentence before the example, and the file is saved under its chapter's name (`JHN.3.json` for John 3, `1CH.0.json` for a whole book) — answers dropped the fenced example and copied `1CH.0.json` as the name to use. W-11: a pane gets its color from the dot at the start of its header, **Color Note** (`ItemColorNoteComp` in `RenderTitleMaterialComp`, read in the code); the page never said, and the group-scrolling answer was short three passes running. Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18q** (**W-11, W-09, W-22g — pass 21's short answers.** W-11 step 3: **Panes that share a color scroll together.** and **A pane that has a color splits into ANOTHER version.** are bold leads of their own, so neither part opens on **Add Extra Bible**, the step's first sentence, which both answers did. W-09: setting a session up puts nothing on the screen; its show button does that. W-22g: to drop one line onto another, drag that line itself. Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18p** (**Eight pages — pass 20's short answers.** W-10: a **Nothing on the projector?** bullet checks the card from the top — showing (**Toggle showing screen** or F5), the footer's **Display** naming the projector, a lit clear button. W-03 step 1: opening a document puts nothing on the screen until a slide is clicked. W-46: the three Messages lessons by their own titles. W-05: the Structure line's lead says what `V1CV2C` is. W-37: the link list is written exactly as the example under it. W-18: Set Line Sync is on the card of the screen showing the passage. W-42: **Settings** for a server of your own is the main window's gear, not the help window's. W-11: the group-scrolling arrows belong to panes split into another version, not to what **Add Extra Bible** puts in one pane. Read in the pages and the code; Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18o** (**W-03 and W-12 — the slide keys written as keys, and the Presenter's search opened.** W-03 step 3: **→**, **↓**, **PageDown** or **Space** for the next slide, **←**, **↑**, **PageUp** or **Shift+Space** for the one before — the keys `nextSlideEventMappers` / `previousSlideEventMappers` take; _Arrow keys_ was copied into a Khmer answer as English words nobody there can read. W-12: a result goes on the screen from the Presenter's lookup once its search is opened with the binoculars and **Find**, as in step 1. Read in the code and the pages; Khmer and French carry them.)
+
+Previous: **workflowsVersion: 2026-10-18n** (**W-34 — a Bible's language is fixed on the Info editor's right-click.** Pass 19 answered _My new Bible reads in English_ with the import review's book-name lists, which **Edit Books Map** does not show. The paragraph now says the three commands are on a right-click inside the **Info** editor, in their order, and that **Edit Books Map** opens the 66 names one to a line, with **Guessing Names** to fill them and **Ok** to keep them (`BibleXMLEditorComp`'s `addMonacoBibleInfoActions` and `BibleBooksMapXMLInputComp`, read in the code, driven live on 2026-08-10 per the W-34 notes). Khmer and French carry it.)
+
+Previous: **workflowsVersion: 2026-10-18n** (**W-29 — things to do with a person, a place or a passage in the chat.** Asked for by the user with a picture of a chat about Genesis 4:1-26: _"add more options, like open another verse or open other bible key, and more option to let user able be to do a lot of things on bible"_. Step 13 says what the buttons under the chat's card and answers do — the Bible Lookup, the chapter or verse before and after, another passage, another Bible, who and where is in it, family and places, the verses, save and copy — none of them asking a model. Seen live 2026-10-18 on the dev Reader. Khmer and French carry it.)
+
+Previous: **workflowsVersion: 2026-10-18m** (**W-29 — ask the assistant about a person, a place or a passage.** Asked for by the user with a picture of three record windows, the left of each title circled: _"add robot icon, click to open chatbot, make sure mcp tool provide all information to chatbot session then let user interact"_, and _"chatbot should know the location/name is from KJV"_. Step 13: the robot at the left of a record window's title opens a chat of its own that has read the whole record, offers three questions, and keeps every question in that chat about it; a Bible view's toolbar robot and its right-click (_"add robot icon to part of the icon and add contextmenu to verse preview content"_) do the same for the passage or the verse. Seen live 2026-10-18 on the dev Reader in Khmer: Adam's card and an answer from gemma4:cloud naming the KJV, Genesis 4:1-26 and 4:6 from the right-click. Khmer and French carry it.)
+
+Previous: **workflowsVersion: 2026-10-18l** (**W-37 — a Resources folder opens every time.** Asked for by the user with a picture of the folder headers, chevrons marked: _"`Resources` make it expand by default"_. Folding a group no longer sticks: it opens again whenever Resources is shown (a new launch, another tab and back, **Reload**), and a group switched to its data-directory copy opens too. Seen live 2026-10-18 on the dev Reader. Khmer and French carry it.)
+
+Previous: **workflowsVersion: 2026-10-18k** (**Six pages — pass 18's short answers.** W-44: the ✨ is said for what it is, a company's own AI chat website signed in with your own account, before what it is not. W-08: **Add URL** is on the tab's ⋮ or an empty part's right-click. W-34: a missing Bible's card wants the suggested short name kept, said before the steps; fixing a Bible's language needs nothing of the import again. W-35: what to check when SongSelect will not connect is one note, the three boxes named. W-51: **Let other devices watch** is at the top of the tab, above the cards. Read in the pages; Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18j** (**Seven pages — pass 17's short answers.** W-10: turning the wallpaper off is one press, and **Refresh Preview** is for something else. W-12: the Presenter's Bible Lookup is opened with **Bible Lookup** or Ctrl+B. W-15: the Web Editor saves itself as you type (there is no Save). W-22b: the window icon is clicked once — a second click closes the panel. W-22g: **Add CC Elements** is on the line's right-click. W-31: the divider's menu holds the two closes and **Reset Size**, nothing else (the hover arrows are not in it). W-51: casting from the page needs **Let other devices watch**, and the MP4 address is folded under **More addresses**. Read in the pages and the code beside them; Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18i** (**Eight pages — pass 16's short answers.** W-01b: a long menu scrolls only when it is taller than the whole window, as a lead of its own. W-05: a song's attachments may be files written `file:///`. W-11: the Reader keeps a verse for later with **Save bible item** at the top right of its Bible Lookup, or Ctrl+Enter — seen live 2026-10-18 on the dev Reader (`SaveButtonComp`, shown on hover), not pressed. W-18: a showing screen takes Line Sync's rows only once hidden and shown again, said in the same sentence. W-22c: `Screen id: 0` written as the app shows it, in English. W-34: the form section opens on the whole job (link or file, Import, the review, Import again); the Info editor is the pencil's, a translation's name opens nothing. W-46: the Resources lessons are found by **Search file name**. W-51: **Cast to a TV** is the cast icon in the card's header, and casting from the page needs no `https://`. Khmer and French carry them.)
+
+Previous: **workflowsVersion: 2026-10-18h** (**Seven pages — the rows that keep coming back short, and one correction.** W-51: an `https://` address needs **Use HTTPS** as well as **Let other devices watch** (the 18g camera paragraph said the first alone — wrong); a TV is reached with **Cast to a TV**, not an address; the viewing page's buttons are a part of their own (on the device watching); **Allow interaction** is on the display's card. W-05: attaching links starts in the Lyric Editor; step 11's lead says a verse on the screen changes when clicked again. W-06: **Save bible item** (the floppy disk, `RenderActionButtonsComp`) keeps a passage in the Bibles list without putting it up, in the Reader's lookup too. W-09: **Always on Top** is under Properties. W-13: Refresh is on the cross references' title. W-22c: a Show/Hide line lands at the end. W-42: the folding page is named. Read in the code and the pages; Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18g** (**Eight pages — parts with leads of their own where pass 14's answers left the step out.** W-42: _On a server of your own, type /lyric first_ is a part of its own, no longer the last sentence of a paragraph about the song tools that server is not sent. W-21: a failed download is a note of its own. W-22f step 2 opens on the preview panel having to be open, and that **Add CC Elements** is on the new line's right-click. W-05: the Structure lead carries an example. W-15: changing the words' colour, from step 8. W-35: **Sign In** grey means a box is empty. W-46: the graph lessons are found by searching _graph_ (the preset lesson's title in every language). W-51: casting from the phone's browser page is a part of its own, and sharing a phone's camera opens on turning on **Let other devices watch** and ends on picking it as a camera. Read in the code, the tip catalogs and the pages; Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18f** (**Six pages — what an answer left short in pass 13.** W-05: the Structure paragraph opens on how to change the order and the codes to write it in; a verse already on the screen keeps its old words until clicked again. W-12: a search result goes on the screen from the Presenter's Bible Lookup, the Reader putting nothing on the audience screen (W-11). W-22d: the At Time box also says to drag the new line into place. W-34: the form's **Choose File** for an XML file on this computer. W-42: the per-answer cost is on the line under each answer, with **Copy**; a refused key is fixed with **Open AI settings** and a correct key; **Enable AI features** is at the top of **AI Providers** in Settings → Others, and ticking it turns the features back on (`SettingOthersAIComp`). W-46: the Reader's saved-list lessons are found under Help → All tips by **New File**. Read in the code and the pages; Khmer and French carry them; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18e** (**Eleven pages — the step a Khmer answer kept leaving out, said where its question lands, and long parts cut into short ones.** W-42's report paragraph is five parts with leads of their own (it looks, it helps first, Send report, kept for later, email it), so a question about one of them is not answered with all thirty sentences; W-05's song paragraph is three (how a song is written, its Structure line, what the editor marks red — now with "write a chord it knows in its place"). W-42 also says what works without internet, that a shared server is picked in the who-answers list, that the guided demos are buttons under a heading, that the Bible Reader tab is in the Presenter's header, and the tip line's ✕ in a lead that is no question. W-05: the Previewer is how the song will look, and nothing reaches the screen until a verse is clicked. W-09: an Audios track has no slider; a Video Show clip's is under Properties. W-12: All Books is in the Find view. W-16: changing the Parent Directory (the folder line, Set according paths, nothing moved; `selectPathForChildDir`). W-18: how to select a card. W-19: Hold is the Follow button itself. W-21: Download and Install. W-22e: a Jump to line lands at the end. W-34: Settings is the gear. W-46: search Messages. All read in the code or the pages beside them; Khmer and French carry them. Not pressed live this time.)
+
+Previous: **workflowsVersion: 2026-10-18d** (**W-18, W-25 and W-34 — what to do, said where the question lands.** W-18 step 3 said a card can be selected, deselected or soloed and never which stops a screen: it is **Deselect**, and **Solo** does the opposite of what is wanted (every OTHER screen stops); an unselected screen keeps what it last showed, which is why two screens can differ. Step 2 now says to point the new card at its display with the footer's **Display** button, and step 5 that Set Line Sync needs one screen. W-25: a wrong password is asked again three times (`MAX_PASSWORD_ATTEMPTS`, _Wrong password, try again_ in `archivePasswordHelpers.ts`, shared by every archive import) and then the import stops; type it as set or ask whoever made the file. W-34: a Bible other than the KJV is not rebuilt; it is imported again. All read in the code, answered short in Khmer by gemma4:cloud; Khmer and French carry them. Not pressed live: no screen was deselected and no Bible deleted on the user's dev data.)
+
+Previous: **workflowsVersion: 2026-10-18c** (**W-12 and W-46 — two steps the pages left implicit.** W-12 said what clearing a search SHOWS and never how: empty the words in the search box. W-46 said a lesson chosen from All tips returns to its card, and named **Show it** only under Settings: it is pressed on the card to start the walkthrough, then **Do it** for each safe step. Both were answered wrong or short in Khmer by gemma4:cloud; Khmer and French carry both now. Wording only.)
+
+Previous: **workflowsVersion: 2026-10-18b** (**W-09 — two pictures at once are two sessions.** Image Show, Video Show and Web Show keep one file per session (`ForegroundMediaComp`: _an overlay and a logo are two sessions of Image Show, not two clicks_); the page said it of Countdown and the marquees and never of the media shows, and _Can I show two pictures over the slide at the same time?_ was answered with a second click, which replaces the first. Khmer and French carry it. Read in the code; not pressed live.)
+
+Previous: **workflowsVersion: 2026-10-18a** (**W-42 step 18 and W-22d step 1 — two steps a model kept leaving out, because the pages did not say them.** W-42: on a server of your own, sent no song tools, pasted words are written out by typing **/lyric** before them (the command needs no model); asked _Can you make a song from words I paste in?_ there, gemma4:cloud said it could not and then told the person to paste them into the same box. W-22d: **Add Action** puts the new line at the END of the running order (`PresentingFlow.insertItemJson` with no index, read in the code), so it is dragged to just after the line it should follow. Khmer and French carry both. Not seen live this time: no running order of the user's was changed to watch the line land.)
+
+Previous: **workflowsVersion: 2026-10-17g** (**W-09 — the slide show names its row.** _The slide show sits in that same row_ came several bullets after the row it meant, and a model quoted the bullet before it instead; it is _the row of session buttons at the top of the panel_ now, in Khmer and French too. Wording only.)
+
+Previous: **workflowsVersion: 2026-10-17f** (**W-08 — how a Background session is pointed at a folder of your own.** The page said a new session "offers to use the default one" and that its ⋮ renames or removes it, and nothing more; asked _How do I point the app at my own pictures folder?_ in Khmer, gemma4:cloud sent the person to that ⋮ in three askings. The folder line above the list opens a box under it: a path typed and Enter, or **Choose a folder**. Seen live 2026-10-17 on the dev Presenter: **Show path editor** on the Background panel's folder line, **ជ្រើសរើសថត** (Choose a folder) found under it, not pressed -- it opens the system's folder dialog. The Khmer and French pages carry the same sentence.)
+
+Previous: **workflowsVersion: 2026-10-17e** (**W-05 and W-51 — two sentences that read the wrong way.** Found by the whole supported list asked in Khmer of gemma4:cloud and graded: W-05's last step said a chord it does not know is `[Cm7]` "is one, `[Cm7b5]` is not", which reads backwards -- it knows `[Cm7]` and not `[Cm7b5]` (`openLyricOracle.test.mjs`), and the model answered with the example reversed; W-51 put **Let other devices watch** "at the top of the tab" inside the step about a display card's **Where to watch**, and three answers placed it and **Use HTTPS** in the card. Both now say where they are. No behaviour changed; the Khmer and French pages carry the same words.)
+
+Previous: **workflowsVersion: 2026-10-17d** (**New W-54 — move your data folder off the Desktop; W-16 names the new default.** The user: _Microsoft Windows, one-drive backup always erase content of everything in data folder. I want to move default data folder (all platforms) to ~/.owa/open-worship-data_, asked at every launch until moved, with a button to hide it for 30 days and words about OneDrive a volunteer understands; the folder moved from is never deleted by the app — _put a flag there … let user move him/her self_ — and the new one is flagged with where it came from. Seen live 2026-10-17 on a scratch dev profile with a throwaway Desktop folder, in English and Khmer: all three answers, the rename and the copy (a file held open), the result, the reminder and its end.)
+
+Previous: **workflowsVersion: 2026-10-17c** (**W-42 step 12 — Auto asks a cloud model first.** The user, with a picture of their Ollama list and `gemma4:31b-cloud` / `gemma4:cloud` circled: _in `Auto` mode it should highly prefer any models ends with `cloud` and high performance like gemma 4 31b over 12b over e4b_, then the order: _cloud/strongest -> cloud/stronger -> cloud/strong -> cloud -> non-cloud/strongest -> non-cloud/stronger -> ..._. Auto now asks a model whose name ends in `cloud` before every other assistant, the biggest first and one whose name gives no size last, then the rest by size as before; the step says such a question leaves the building, and that a server picked by name keeps it in only on a model not ending in `cloud`. Not seen live: the dev window could not be opened for it in this change (another session's instance kept being the one the tools reached); the ranking of the user's own list -- `gemma4:31b-cloud`, `deepseek-v4.1-flash:cloud`, `gemma4:cloud`, then `gemma4:12b`, `qwen3.5:9b`, Free, `gemma4:e4b` -- is unit tested.)
+
+Previous: **workflowsVersion: 2026-10-17b** (**W-12 step 6 — the Bible can be changed under any answer.** The user, with a picture of an answer quoting John 14:6 in French in a Khmer window: _chatbot for finding forgot verses, should have option for user to have a chance change bible, e.g. I'm looking in khmer then I should be able to change to english_. Every answer of the verse search now ends with **Show in another Bible** (verses found) or **Search another Bible** (none found): it lists the other Bibles on the computer, the one searched left out, and the one picked shows the same verses or searches the same words, with nothing typed again; the search then goes on in it. Seen live 2026-10-17 on the dev help window in Khmer: Matthew 5:44 and four more found in KJV, **Show in another Bible** → ពគប, the five quoted in Khmer with their buttons; then words found nowhere in ពគប, **Search another Bible** → KJV, the same words searched in KJV. Not seen live: an assistant's own answer carrying the button with the spend guard paused (unit tests hold it).)
+
+Previous: **workflowsVersion: 2026-10-17a** (**W-42 step 17 — answers, buttons and lettering in your language; step 6 — /tips brings the tip line back.** The user: _if app in Khmer then the chatbot have to be ready for khmer language_, _both chatbot and ai chat must have translation and have font-family apply_, _for khmer, behind the scene it should translate all khmer to english to work with llm or post directly to llm if it is gemma 4 family … for translation recommend using gemma 4 models_, and, with `/tips` typed in the box, _add `/tips` to open tips again_. Step 17 no longer says answers are in English: they are in the language you write in, else the app's; the help window and the AI Chat window are in Khmer with the app's Khmer lettering; and any assistant but a Gemma 4 model is asked in English, a Gemma 4 model on the computer or the network translating both ways. Step 6: typed, **/tips** brings the 💡 line back before its 30 days are up and gives one tip. Seen live 2026-10-17 on the dev app in Khmer: the help window and the AI Chat window in Khmer in Battambang; `/btw` asked in Khmer of a local nvidia/nemotron-3-nano-4b, the waiting line reading _Putting your question into English with LM Studio mac-super · google/gemma-4-12b_ and the answer arriving in Khmer, credited to the nemotron model; **/tips** bringing the line back with a tip in the answer. Not seen live: the same in French (unit tests hold the language as data).)
+
+Previous: **workflowsVersion: 2026-10-16d** (**W-12 step 6 — a verse half remembered is found with the assistant.** The user, with the place circled in Bible Find: _add robot icon somewhere in `Find` when I click it open tab in chatbot by ask for bible key (list to choose) then follow up with what ever that user can remember about the verse_, then _when found verse then it should allow user to click to open in bible lookup_. Verified live 2026-10-16 on the dev Reader: the robot, the Bible list with KJV first, _jesus asked peter three times if he loved him_ answered with John 21:15 and 21:17 by the free assistant, and **Open John 21:17 in Bible Lookup** opening it.)
+
+Previous: **workflowsVersion: 2026-10-16d** (**W-47 step 5, W-09 and W-10 — Show All takes the place of single messages, a new clock starts in a place of its own, and a stage above 0 says it changed the transition.** Fixes from the whole-Presenter robot run 20261016-1920. Seen live 2026-10-16 on a scratch profile: message 2 shown, then **[en:tran:Show All Messages]** leaving only the block, then message 1 leaving only itself; three clocks seeded at the middle, top centre and bottom centre; **Increment** on `St:` with a fade transition showing _A stage above 0 cuts between slides, so the Slide transition was set to None._ Not seen on the real `screen.html` window this time: the screen was kept hidden and read through `owa_list_screens`.)
+
+Previous: **workflowsVersion: 2026-10-16c** (**W-47 steps 2, 4 and 5, and W-09 — messages stack by what the screen draws, and the clock and the camera say more.** Fixes from the Foreground robot run 20261016-1315. W-47: two messages shown one after the other no longer overlap when the first WRAPS on the screen — a long line counts as the lines it takes; a set too tall for the screen is made smaller together until it fits, and **[en:tran:Show All Messages]** is too; moving a message while it is up moves it on the screen. W-09: a duration over 24 hours reads every hour (`25:00:00`); **[en:tran:Choose City]** writes the city's name in words above the clock, **[en:tran:Use Current Timezone]** takes that name away again (a typed name stays), AM/PM is written in the app's language, a long name wraps instead of being cut off, and with several clocks each **[en:tran:Show Time]** is numbered for a screen reader; a camera another program holds says so in its tile. Seen live 2026-10-16 on the dev app's real `screen.html?screenId=0` window: a seven-line wrapped message with a second one directly under it; Show All of both, shrunk to fill the screen; **Move up 2** putting the two in the other order on the wall; a 25-hour countdown reading `25:00:07`; clock 2 set to **Phnom Penh** reading `04:34:17 AM` and back to this computer's time with its name gone; in Khmer, the clock reading `ល្ងាច` and the OBS camera's tile reading _មិនអាចបើកកាមេរ៉ានេះបានទេ…_. Not seen live: a stack pinned to the bottom of the screen (a unit test holds it).)
+
+Previous: **workflowsVersion: 2026-10-16b** (**W-34 step 4 — a downloaded Bible says where it is from, and the assistant asks before it goes on.** The user, with a picture of the assistant's list of seven Khmer Bibles: _ask for user consent first, tell user it is randomly found on internet, show user where is from, tell user it's not provided by openworship, let user know that they hey to responsible for bible publisher. when user agree then keep going_. After the download, and before step 1, the answer says it was found on the internet — in the free collection on GitHub, with the collection's address and the file's own — that it is not from Open Worship, and that a Bible translation belongs to its publisher, so the person answers for how it is used; **I agree** goes on, **Cancel** stops with nothing installed, and **Open the website** shows the collection (or the page the file was listed on) in the web browser; both addresses in the notice are links that open there too (asked for the same day with a picture of the two addresses: _make links clickable, open in browser_ — only addresses the app wrote are links, a model's words stay words). Typed, `yes`, `ok` and `I agree` agree. A Bible an assistant downloads itself carries the same notice under its answer, and an assistant may no longer install one: that is the person's press. The "not available" section's step 3 says the same. Seen live 2026-10-16 on the dev app's help window: _Khmer Standard Version 1954 = Hammond Version_ pressed, the notice with both addresses, **I agree** to _Thank you. A few quick choices_ and step 1, `cancel` typed — the draft gone from the temp folder; then _Khmer 2005_, its two addresses drawn as links, the collection's pressed and opened in the browser with the help window left where it was. Not pressed live: **Open the website**, and the assistant's own download (unit tests hold both). Row `CB-145`.)
+
+Previous: **workflowsVersion: 2026-10-16a** (**W-42 step 6 — a question about what the Bible says gets the app's own way to it, not a page about something else; W-33 and W-34 open on their own words.** Found by asking the Bible Reader's 77 supported questions of the window's default assistant, then the user's own two Bible questions: with no assistant answering, _what bible verse talk about lover your enemy?_ had been answered with the page about keeping files beside a verse, and _what are names of 7 churches mentioned in the book of revelation in holy bible_ with the one about adding a Bible from the internet — eight of ten such questions were handed a page that does not answer them. Now the guide answers a verse asked for by what it says with **Bible Find**, naming the words to try, and anything else about the Bible itself with how to ask an assistant, **/btw** in front; and in the Bible Reader an assistant's answer to such a verse question ends with the same search and a **Show me Bible Find** button. W-33 and W-34 each opened with the other recipe's number as the subject of its first sentence, which the help window takes out of what it shows, so the guide quoted _" moves translations you already have."_ — they now say it in words. Seen live 2026-10-16 on the dev app's help window (Bible Reader, **Auto**): **/help** with both questions answered in 0.8 s and 0.1 s by no assistant; the free model's answer with the line and the button; the button's card ringing **[en:tran:Advance Bible Lookup]** in the Reader.)
+
+Previous: **workflowsVersion: 2026-10-16** (**Controls are named by what a person sees, and the taskbar way into the help is a passage of its own.** Found by asking the supported questions of the free assistant: _How do I read a cross reference in another Bible version?_ came back _click Advance Bible Lookup (bi‑binoculars, top right)_ — W-13 and W-37 named that control by its icon CLASS, and eight more lines did the same (`bi-cpu` and `bi-translate` were the only names of W-13's two caution buttons). They now say the binoculars, the magnifier, the left arrow, the highlighter icon, the markdown icon, and the two buttons go by their own tooltips. And W-42 step 1's **On Windows the taskbar has it too:** carries its colon inside the bold, so the paragraph is read as a passage of its own: _How do I open the help from the taskbar?_ had been answered _Click the 🤖 button on the taskbar_. No behaviour changed; asked again 2026-10-16 on Auto: _right-click the app's icon on the taskbar and choose App Help (Chatbot) under Tasks_.)
+
+Previous: **workflowsVersion: 2026-10-15k** (**W-06 step 6 — a passage across chapters on the projector.** Asked for by the user: _for all bible rendering add support cross chapter rendering_, _if more than 3 chapters then show 3 chapter only and have `...` button to render more 1 by 1 chapter_. A passage like `John 1:50-6:3` goes up as one passage: the projector shows the first three chapters, each opened by its chapter number on a rule, and the mini screen card ends it with **...** (**[en:tran:Show the next chapter]**), which puts one more chapter on the projector per press. Seen live 2026-10-15 on the dev app (Khmer Bible គខប, the real `screen.html?screenId=0` window): **Ctrl+Shift+Enter** put `យ៉ូហាន ១:៥០-៦:៣` up with the `១` divider and no **...** on the projector; the card's **...** took the projector from 63 verse numbers to 117 (chapter 4 added); **Ctrl+→** on the projector window went to `៦:៤` and, re-presented, **Ctrl+←** to `១:៤៩`; a second version was added from the keyboard with **Shift+Enter** on the highlighted version.)
 
 Previous: **workflowsVersion: 2026-10-15j** (**W-42 step 5 — the window list keeps up by itself, and a picture or a pointed-at control remembers its window.** The user, with a picture of Settings opened while the help was already up and no **WORKING IN** line under it: _I don't see the selection after I opened setting later, it should real-time tracking the new opening_; and then _make sure screenshot and element selection have uuid information to the window to let mcp know_. The list now follows the windows as they open, close or change page, with nothing pressed in the help window, and a 📷 picture or a ◎ control keeps the window it came from — its page and `uuid` — which its chip names on hover and the assistant is told. Seen live 2026-10-15 on a scratch dev instance: Settings opened from the main window and the line read _Reader (📖) · main window_ and _Setting (⚙️) · own window_ within 1.5 s, with no focus sent to the help window; the main window moved to the Presenter and its row became _Presenter (🖥️) · main window_; with Settings chosen, the 📷 chip read _my Settings window_ and pointing at **General** made a chip _General (Settings window)_; the picker set back to the main window, pressing that chip still rang **General** in the Settings window; Settings closed and the line went away.)
 
@@ -1547,8 +1629,10 @@ does. Those extras live in a small menu.
 2. **Click it.** The menu opens right at the button — the same menu you get by
    **right-clicking** the row itself, which still works exactly as before.
    The menu shifts into view and can use the full window height, regardless of
-   where you clicked. Scroll inside it only when its entries exceed that height
-   or the menu has its own smaller height limit.
+   where you clicked.
+   **A long menu scrolls only when it is taller than the whole window.** Its entries
+   scroll inside it only when they exceed the window's height, or when the menu has its
+   own smaller height limit.
    > Clicking `⋮` does NOT also do what clicking the row does: a document you open the
    > menu on is not selected, and a slide is not sent to a screen.
 3. Pick an entry, or click anywhere else to close the menu without choosing.
@@ -1593,12 +1677,13 @@ _Verify: NAV-01..04._
 **Preconditions:** at least one document in the **[en:tran:Documents]** list.
 
 1. In the left column, click a document in the **[en:tran:Documents]** list. It
-   highlights, and its slides appear as thumbnails in the middle **[en:tran:Documents]** tab. 📸
+   highlights, and its slides appear as thumbnails in the middle **[en:tran:Documents]** tab. That is the document
+   open; nothing goes on the screen until you click a slide (step 2). 📸
 2. **Click** a slide thumbnail. The slide goes live: it appears on the mini
    screen, and the live item is marked highlighted (on-screen indicator). 📸
-3. To step through slides with the keyboard, click once in the thumbnail area, then use
-   **Arrow keys / PageUp / PageDown**; **Space** advances and **Shift+Space** goes back.
-   The preview scrolls smoothly to the selected slide, including after several quick
+3. To step through slides with the keyboard, click once in the thumbnail area, then press
+   **→**, **↓**, **PageDown** or **Space** for the next slide, and **←**, **↑**, **PageUp**
+   or **Shift+Space** for the one before. The preview scrolls smoothly to the selected slide, including after several quick
    Next presses or wrapping from the last slide to the first.
 4. To remove the slide from the screen, press **F8** ([en:tran:Clear Slide]) or click
    the matching clear button (`SL`) in the mini screen's header.
@@ -1691,7 +1776,9 @@ _Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08._
 
    Close the rules with their **✕** or the sliders button again.
 
-5. Click **pause** to stop, or the strip's **✕** to collapse it back to the stopwatch.
+5. **Stop slides that are already advancing.** The timer strip is already open at
+   the bottom left of the slides previewer, in place of the stopwatch. Click its
+   **pause** button to stop, or its **✕** to stop and collapse it back to the stopwatch.
 
 The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Images]**,
 **[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
@@ -1708,11 +1795,15 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
 1. In the left column, click a song in the **[en:tran:Documents]** list — songs carry a
    music-note icon. The middle **[en:tran:Documents]** tab switches to the song view: the lyric
    **[en:tran:Previewer]** on top and the **[en:tran:Stage Previewer]** verses under it. Only one file in the
-   list is ever highlighted, so picking a song releases whatever was selected before. 📸
+   list is ever highlighted, so picking a song releases whatever was selected before.
+   Those two show how the song will look on the screen; nothing reaches the screen
+   until you click a verse. 📸
 2. **Click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
-4. If the song's `ol:Config` block lists an **`- Attachments:`** field — one link per
-   line — each link also becomes its **own slide at the end** of the Stage Previewer,
+4. To attach links to a song — web addresses, or files on this computer written
+   `file:///C:/…` — open it in the **Lyric Editor** (right-click the song →
+   **[en:tran:Edit]**) and add an **`- Attachments:`** field to its `ol:Config` block, one
+   link per line. Each link also becomes its **own slide at the end** of the Stage Previewer,
    named after the link. A YouTube link becomes a playable video, an image / video /
    audio link becomes that media, and any other web address becomes the page itself;
    each fills the whole slide. Present one the same way you present a verse. A link to
@@ -1749,14 +1840,17 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Padding (%)]** says (the padding stays
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
-9. **[en:tran:Reset]** puts that stage back to the defaults.
+9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
+   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults.
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
-11. **Edit the words while the song is open and the verses follow by themselves.** Change the
+11. **Edit the words while the song is open and the verses follow by themselves; a verse
+    already on the screen changes when you click it again.** Change the
     song in the **Lyric Editor** (right-click the song → **[en:tran:Edit]**) — or in any other window —
     and within a second or two the rendered song **and every Stage Previewer pane** show the
     new words, once the editor has saved them (**Ctrl+S**): the verses render what the
-    song's file holds. You do not have to re-pick the song. 📸
+    song's file holds. You do not have to re-pick the song. A verse already on the
+    screen keeps its old words until you click it again. 📸
 12. If you ever need to force it — a song changed by something outside the app, say — the
     **⋮** at the right end of the Stage Previewer header holds **[en:tran:Reload]**, which re-renders
     every stage at once. The same **[en:tran:Reload]** sits in the right-click menu of a stage pane and
@@ -1766,16 +1860,19 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
     backticks followed by `ol:` and the part's name — `ol:Verse 1`, `ol:Verse 2`,
     `ol:Chorus`, `ol:Bridge` — then its words, then a line of three backticks to close it.
     A chord goes in square brackets just before the syllable it falls on, like `[G]`.
-    The first block, `ol:Config`, holds the song's **Title** and its **Structure**, and
-    the Structure line IS the order the song is sung and shown in: short codes run together
-    with NO spaces. `- Structure: V1CV2C` is verse 1, chorus, verse 2, chorus; `x2` after
-    a code repeats it (`Cx2`). To change the order, change that line — the parts
-    themselves stay where they are. The codes: Verse `V`, Chorus `C`, Pre-Chorus `P`,
-    Bridge `B`, Intro `I`, Outro `O`, Tag `T`, Interlude `L`, Instrumental `IS`; a
-    numbered part takes its number (`V2`), Intro and Outro take none. The editor marks a
-    mistake in red where it is: a Structure line that is empty, has spaces in it or names a
-    part that has no block (`V3` with no `Verse 3`), two parts with the same name, a
-    chord it does not know (`[Cm7]` is one, `[Cm7b5]` is not).
+    **The order it is sung in is its Structure line, in short codes such as V1CV2C, verse 1, chorus, verse 2, chorus.** The Structure line, in the first
+    block (`ol:Config`, beside the song's **Title**), is the order the song is sung and
+    shown in, so to change the order, change that line — the parts themselves stay where
+    they are. Write it in short codes run together with NO spaces: `- Structure: V1CV2C`
+    is verse 1, chorus, verse 2, chorus, and `x2` after a code repeats it (`Cx2`). The
+    codes: Verse `V`, Chorus `C`, Pre-Chorus `P`, Bridge `B`, Intro `I`, Outro `O`, Tag
+    `T`, Interlude `L`, Instrumental `IS`; a numbered part takes its number (`V2`), Intro
+    and Outro take none.
+    **The editor marks a mistake in red where it is.** It marks a Structure line that
+    is empty, has spaces in it or names a part that has no block (`V3` with no
+    `Verse 3`), two parts with the same name, and a chord it does not know — it knows
+    `[Cm7]`, not `[Cm7b5]`, so write a chord it knows in its place. Put the marked
+    line right and the red goes.
 
 _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
 
@@ -1796,6 +1893,9 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    title (_John 3:16_) — its buttons appear over the end of the title — and click
    **[en:tran:Save bible item and show on screen]** (the cast icon), or just press
    **Ctrl+Shift+Enter**. The passage is saved to the **[en:tran:Bibles]** list as it goes up.
+   To keep a passage without putting it on the screen, click **[en:tran:Save bible item]**
+   (the floppy disk) beside it instead: it goes to the **[en:tran:Bibles]** list only. The
+   Bible Reader's lookup has the same button.
    Double-clicking a verse only brings it into view; it does not present. 📸
 4. The dialog closes by itself once the passage is saved, unless _[en:tran:Keep Open]_
    is ticked; to close it yourself use the red ✕ button or **Ctrl+Q**.
@@ -1821,7 +1921,9 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first. Nothing
    on the mini screen card steps the verse; from the Presenter itself, present the next
    passage the same way you presented this one.
-   **Another version on the screen.** On the mini screen card, each column of the passage
+   **Another version on the screen.** If no passage is on the screen yet, press **Ctrl+B**,
+   choose the book, chapter and verse, then press **Ctrl+Shift+Enter** to present it.
+   On the mini screen card, each column of the passage
    begins with the short name of its version (`KJV`, say). Click that name and a list of
    versions opens. A plain click on one **changes** that column to it — it adds nothing.
    To put a second version **beside** the first, hold **Shift** while you click it
@@ -1834,7 +1936,10 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    the answer says what is on the screen now; it is not saved to the **[en:tran:Bibles]**
    list. 📸
 
-8. To make an editable slide document from a saved passage, open that item's
+8. To make an editable slide document from a saved passage, first save one if needed:
+   press **Ctrl+B**, choose the book, chapter and verse, then point at the passage's title
+   to reveal its buttons and click **[en:tran:Save bible item]** (the floppy disk).
+   Open that item's
    **⋮** menu in the Presenter's **[en:tran:Bibles]** list (the right column) and choose
    **[en:tran:Generate Slides]**. In the floating panel, tick every other Bible version
    you want on the same slides — one document holds them all, so this is done once, not
@@ -1936,7 +2041,8 @@ _Verify: PM-13..14, PM-57, PM-159..162, SP-21._
      web address; the Web Editor, W-15, is for a page file of your own).
      **A saved address cannot be edited.** To change it, right-click its tile →
      **[en:tran:Remove URL]** (it asks first, and is not offered while that page is on a
-     screen), then **[en:tran:Add URL]** with the new address.
+     screen), then **[en:tran:Add URL]** with the new address — on the tab's **⋮** at the
+     right of the folder path, or a right-click on an empty part of the list.
 3. The live background's tab carries the on-screen dot before its name (e.g. `● Videos`).
 4. Press **F7** ([en:tran:Clear Background]) to remove it.
 
@@ -1956,7 +2062,10 @@ its own — with its own view mode, sort and slide show — so you can flick bet
 Sunday's pictures on a memory stick and your standing set of backgrounds without ever
 re-pointing the folder the app was set up with. **[en:tran:Default]** IS that folder: it is the
 one Path Settings names, and adding sessions never touches it. A new session starts with
-no folder and offers to use the default one; the **⋮** on the session you are on (or a
+no folder and offers to use the default one. To point a session at a folder of your own,
+press the folder line above the list (the path it is reading): a box opens under it — type
+the folder's path and press Enter, or press **[en:tran:Choose a folder]** (the folder icon)
+and pick it. The **⋮** on the session you are on (or a
 right-click on any of them) renames or removes it. Removing forgets that session's
 folder and slide show — never the files themselves. On the Images, Videos and Webs tabs
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
@@ -1993,7 +2102,8 @@ button:
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
-  clock time. _For a duration_: set the **h**, **m** and **s** boxes and press
+  clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
+  hours is fine: 25 h reads `25:00:00`) and press
   **[en:tran:Show Countdown]** — it goes up STOPPED on its full length (`00:05:00`), so it
   can be put up early and started on the cue. While it is on a screen,
   **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]**
@@ -2013,7 +2123,19 @@ button:
   of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
-- **[en:tran:Time]** (the clock), **[en:tran:Camera Show]**: same pattern — configure, Show, Hide.
+- **[en:tran:Time]** (the clock): same pattern — configure, Show, Hide.
+  **[en:tran:Choose City]** puts the city's name above the clock in words
+  (`Phnom Penh`) with its time; **[en:tran:Use Current Timezone]** goes back to
+  this computer's time and takes that name away with it (a name you typed
+  yourself stays). AM/PM is written in the app's language. A long name wraps
+  inside the box instead of being cut off. With more than one clock, each
+  **[en:tran:Show Time]** button is numbered for a screen reader, like its
+  remove button. A clock added with **[en:tran:Add Time]** starts in a place
+  of its own — the first clock in the middle, the next at the top, then the
+  bottom — so two clocks shown together never sit on top of each other; move
+  one under **[en:tran:Properties]** if you want it elsewhere.
+- **[en:tran:Camera Show]**: same pattern — configure, Show, Hide. A camera that
+  another program is holding says so in its tile instead of loading for ever.
 - **[en:tran:Screen Show]:** what one screen holds, shown on another —
   screen 1's slide in the corner of screen 0. The panel has one card per
   screen, in that screen's own colour with its number. Click a card to
@@ -2035,10 +2157,12 @@ button:
   folder of thousands opens as fast as a folder of ten. Click a tile to put it up,
   click it again to take it off, right-click to choose a display. A clip plays muted
   and loops.
-  **The volume of what is playing.** To hear a [en:tran:Video Show] clip, open
-  _[en:tran:Properties]_ in its panel and tick **[en:tran:Play With Sound]**: a
-  **[en:tran:Volume]** slider appears under it, and that slider is the clip's volume.
-  An audio track has no slider of the app's own: it is as loud as the computer's volume.
+  **The volume of what is playing.** A track from the [en:tran:Audios] tab has no
+  volume slider of the app's own: it is as loud as the computer's volume, so turn
+  that up or down. A [en:tran:Video Show] clip has one. Open it from the
+  [en:tran:Foreground] tab, open _[en:tran:Properties]_ in its panel and tick
+  **[en:tran:Play With Sound]**: a **[en:tran:Volume]** slider appears under it, and
+  that slider is the clip's volume.
 - **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
   [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
   the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
@@ -2053,6 +2177,8 @@ button:
   and **[en:tran:Web Show]** a session also owns its **own
   folder** and its **own slide show**, so one can run a show over your backgrounds
   folder while another holds a logo from somewhere else, both on screen at once.
+  Setting a session up puts nothing on the screen: its show button does that, when
+  you want that one.
 - Right-click a session (or press its **⋮**) to rename or remove it. Only one session
   is shown at a time, so each button carries its own marks: the on-screen dot when
   that session has something up, and a blue ▶ while its slide show is advancing —
@@ -2071,12 +2197,16 @@ button:
   up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
   thing on a screen, so showing from another session replaces what was there and the
-  on-screen dot moves to the session that now owns it.
+  on-screen dot moves to the session that now owns it. **[en:tran:Image Show]**,
+  **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
+  another tile replaces it. Two pictures up at once — an overlay and a logo — are two
+  sessions: add one with **＋** and show a picture from each.
 - The **[en:tran:Properties]** panel sits once beside the session buttons and governs
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
-- **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
+- **[en:tran:Always on Top]** (every foreground component, not just these — under
+  _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
 - **[en:tran:Behind Slide]** (every foreground component: under _Properties_ in its
@@ -2086,7 +2216,8 @@ button:
   back over the slide. A slide that fills the whole screen with its own picture hides
   it completely, which is the point. While it is ticked, _Always on Top_ is greyed out:
   an item behind the slide stays behind it, whatever its number.
-- The slide show sits in that same row once the session has something on a screen:
+- The slide show sits in the row of session buttons at the top of the panel once the
+  session has something on a screen:
   **[en:tran:Start Slide Show]** and the seconds beside it. It keeps running while you
   are looking at another session, or with the whole Foreground panel closed, and stops
   by itself when that session's item is cleared. The file list is **not** scrolled to
@@ -2218,18 +2349,25 @@ _Verify: PM-163, PM-164, PM-165, PM-166._
   The audience screen is a transparent window, so wherever you have put nothing
   up this is genuinely what the room would see. Right-click an empty part of the
   mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
-  turns it off and puts the plain checkered pattern back; **[en:tran:Refresh Preview]** in
-  the same menu re-reads it after you change your desktop background. A machine
+  turns it off and puts the plain checkered pattern back — that is all it takes.
+  **[en:tran:Refresh Preview]** in the same menu is for something else: it re-reads the
+  wallpaper after you change your desktop background. A machine
   that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
   output display on or off. The toggle acts on its own screen; **F5** acts on the
   **selected** screens (every screen when none is selected) and turns them all the
-  same way: on only when all of them are off, otherwise all off — so with any of
-  them showing, **F5** hides them. The icon fills in and brightens while showing. It is
+  same way: on only when all of them are off, otherwise all off.
+  An unselected screen stays as it is when another screen is selected. The icon fills in and brightens while showing. It is
   the control named **[en:tran:Toggle showing screen]** — say those words when
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
+- **Hide every screen.** In the Presenter's mini-screen panel (bottom right), check
+  every screen card, including unselected ones. On each card whose leftmost header
+  button **[en:tran:Toggle showing screen]** is filled and bright, click it once to
+  hide that screen; leave an unlit button alone. When every such button is unlit,
+  all screens are hidden and their content is kept. **F5** is a toggle for the
+  selected screens, so use these individual buttons to hide every screen safely.
 - **Clear buttons** (header — each also has a function key):
   **Clear All `F6` / BG `F7` / SL `F8` / LT `F9` / FG `F10`**
   ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Long Text] / [en:tran:Clear Foreground]).
@@ -2255,6 +2393,10 @@ _Verify: PM-163, PM-164, PM-165, PM-166._
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
+- **Nothing on the projector?** Check its card from the top: it is showing
+  (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **Display** names the
+  projector, not this computer's own screen — pick it there; and something is on it — a
+  lit clear button says which layer holds something.
 - **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
   **[en:tran:Foreground]:** buttons choose the change animation for that screen —
   **none / fade / move / zoom**. They are the fallback: a document, a slide, a
@@ -2265,7 +2407,8 @@ _Verify: PM-163, PM-164, PM-165, PM-166._
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–5, or increment/decrement) for stage-view setups. Moving a screen to any stage
-  above 0 also sets its **[en:tran:Slide]:** transition to **none**; you can pick another one
+  above 0 also sets its **[en:tran:Slide]:** transition to **none**, and a note in the
+  corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.
 
@@ -2279,7 +2422,9 @@ _Verify: PR-04..07, SP-01..09, SP-23, SP-24, KB-03..07, KB-13._
 
 **Goal:** look up and read a verse in the Bible Reader — deeper reading than the
 quick lookup, and where you look a verse up when you are not presenting.
-**Where:** header tab **[en:tran:Bible Reader]**.
+**Where:** the **[en:tran:Bible Reader]** page. If you are on the Presenter,
+click its **[en:tran:Bible Reader]** header tab to get here; the Reader itself
+has no header tabs.
 
 1. In **[en:tran:Bible Reader]**, click the **[en:tran:Bible Reference]** box at the top. If it already
    contains a reference, click **[en:tran:Clear input]**. Click the book, then the chapter, then
@@ -2299,7 +2444,7 @@ quick lookup, and where you look a verse up when you are not presenting.
    with the first three and a **...** button under them
    (**[en:tran:Show the next chapter]**): each click adds the next chapter, and
    the button goes once the last one is shown. 📸
-   Some Bibles print references in their section headings — `(… យ៉ូហាន
+   **Open a reference in a section heading.** Some Bibles print references in their section headings — `(… យ៉ូហាន
    ១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
    names, every chapter of it, opens in a small floating panel; the passage you
    are reading stays as it is.
@@ -2307,10 +2452,15 @@ quick lookup, and where you look a verse up when you are not presenting.
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
    large enough.
-3. To read two Bible versions next to each other, click **[en:tran:Add Extra Bible]**
+3. To read two Bible versions side by side in one pane, click **[en:tran:Add Extra Bible]**
    beside the version name, then click the version you want. 📸
-   When separate preview panes share a color group, the small up/down arrows
-   directly below the color dot control **[en:tran:Sync group scrolling]**.
+4. **Panes that share a color scroll together.** In the Bible Reader, click the dot
+   at the start of the passage pane's header (**[en:tran:Color Note]**) and pick a color.
+   Point at that header to reveal its buttons, click **[en:tran:Split Horizontal to]**
+   or **[en:tran:Split Vertical to]**, then choose another Bible version. The new pane
+   joins the same color group. Scroll either pane: the other version follows the same
+   verse. If it does not follow, turn on **[en:tran:Sync group scrolling]** with the
+   small up/down arrows directly below the color dot.
    The color, sync-scroll and audio icons are dimmed until you hover over
    their group or reach one of them with the keyboard.
    It starts enabled: scroll any pane and the other translations move along
@@ -2323,29 +2473,31 @@ quick lookup, and where you look a verse up when you are not presenting.
    clicked, without needing another scroll.
    The choice is remembered for that color group, and the toggle appears only
    while the group has at least two panes.
-   A pane that has a color splits into ANOTHER version. Its two split buttons,
+   **A pane that has a color splits into ANOTHER version.** Its two split buttons,
    in the row that appears while the mouse is over its header, read
    **[en:tran:Split Horizontal to]** and **[en:tran:Split Vertical to]**: click
    one, then click a version in the list, and the same passage opens beside (or
    below) it in that version, in the same color group. A pane with no color
    splits at once, in the version it already has — its buttons read
    **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
-4. If you lose a passage, you do not need to remember and type it again: the recent
+5. If you lose a passage, you do not need to remember and type it again: the recent
    reference rows near the top keep it. Click one to read it in a small floating
    panel, in the version it was read in; the passage you are on stays as it is. To
    go back to it, open that row's **⋮** (or right-click it) and choose
    **[en:tran:Set to current editing]**. **[en:tran:Open beside the current verse]**
    in the same menu opens it next to the passage you are on instead.
-5. To change the main Bible version, click its short name in the header and choose a
+6. To change the main Bible version, click its short name in the header and choose a
    version from the list. 📸
-6. To read without the side panels, click the small **⋯** at the bottom-left if the
+7. To read without the side panels, click the small **⋯** at the bottom-left if the
    footer is hidden, then click **[en:tran:Full]** at the bottom-right. Click
    **[en:tran:Exit Full]** to bring the panels back.
-7. The Bible Reader does not put a verse on the audience screen: double-clicking a verse
+8. The Bible Reader does not put a verse on the audience screen: double-clicking a verse
    here only selects it. (A double-click means pressing the left mouse button twice
    quickly in the same place.) To show a verse to the audience, go back to the Presenter
-   and present it from there (W-06).
-8. To let supported passages start their generated audio automatically, open
+   and present it from there (W-06). To keep a verse for later, point at the top right of
+   the Bible Lookup and click **[en:tran:Save bible item]** (the floppy disk), or press
+   **Ctrl+Enter**: it goes to the **[en:tran:Bibles]** list, ready to present from the Presenter.
+9. To let supported passages start their generated audio automatically, open
    **[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:AI Providers]**. After an **OpenAI API
    Key** is saved, turn on **[en:tran:Auto Play Audio AI when available]** under
    the OpenAI key. The switch lives with the provider setting, not in the Bible
@@ -2376,7 +2528,8 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124..126, ST-5
    Use it to judge whether to narrow the search: a common word runs to tens of
    thousands. If a completed search has no matches, the panel says
    **[en:tran:No verses found]**. Try different words or widen the book filter.
-   Clearing the search shows **[en:tran:No data available]**. 📸
+   To clear the search and start again, empty the words in the search box: the panel
+   then shows **[en:tran:No data available]**, ready for new words. 📸
 4. Results arrive in blocks of twenty, each headed **[en:tran:Results] 1–20**, **[en:tran:Results] 21–40**
    and so on. The numbers at the bottom right move you through them: a **filled** number
    is a block already on screen, so clicking it scrolls straight there; a **plain**
@@ -2387,7 +2540,7 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124..126, ST-5
    big enough to run to thousands of blocks it opens in steps instead, and clicking a
    **…** between two steps opens that stretch — so any block is a click or two away
    without the app ever drawing a thousand numbers at once. 📸
-5. To search part of the Bible only, click the **[en:tran:All Books]** button
+5. To search part of the Bible only, in the **[en:tran:Find]** view of step 1, click the **[en:tran:All Books]** button
    and pick a book — **Shift**-click to pick several, or choose **[en:tran:Old Testament]** /
    **[en:tran:New Testament]** for a whole half. Once a filter is on, the button shows a funnel
    and the books you chose; while it says **[en:tran:All Books]** it stays plain, so a narrowed
@@ -2395,18 +2548,37 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124..126, ST-5
    The **⋮ [en:tran:More Options]** button beside it offers **[en:tran:Reset Selected Books]** to go back
    to the whole Bible, and **[en:tran:Reset Search Data]**, which rebuilds the search index —
    that one takes a moment and reloads the app.
-   **To put a result on the screen.** A result has no show button of its own. Open its **⋮**
+   **To put a result on the screen.** Search in the Presenter's Bible Lookup — open it with
+   **[en:tran:Bible Lookup]** at the top of the Presenter, or **Ctrl+B** — because the
+   Bible Reader puts nothing on the audience screen (W-11). There, open its search with the
+   binoculars and **[en:tran:Find]**, as in step 1, and type your words. A result has no show button of its own. Open its **⋮**
    menu and choose **[en:tran:Open beside the current verse]** — it opens as a passage in the
    lookup — then, in the Presenter, point at that passage's title and press the cast icon,
    **[en:tran:Save bible item and show on screen]**, as for any passage (W-06 step 3).
+6. **Cannot remember the words exactly?** Press **[en:tran:Find a Verse with the Assistant]** —
+   the robot at the right end of the **[en:tran:All Books]** row. The help window opens a chat of
+   its own and asks **Which Bible should I search?**, the one Find is on first. Press one, then
+   type what you remember: a few of its words in any order — _love enemies pray_ — or what the
+   verse is about — _Jesus asked Peter three times if he loved him_. The assistant searches that
+   Bible, and the internet when it cannot place the verse there, and quotes only verses it found
+   in YOUR Bible; under its answer each one has **Open … in Bible Lookup**, which opens it in the
+   lookup and puts nothing on a screen. Say more under the answer — _no, it was about sheep_ — and
+   it searches again. Under every answer, **Show in another Bible** — **Search another Bible**
+   when nothing was found — lists the other Bibles on this computer: press one (English, say,
+   when you were searching a Khmer one) and the verses found are shown from it, or what you
+   typed is searched in it, with nothing to type again; the search then goes on in that Bible.
+   With no assistant set up, the window searches your words itself and lists
+   the verses that hold the most of them, with **Search Google for it**. 📸
+   You can also just ask in the help window, in any chat: _which verse says do not worry about
+   tomorrow?_ — or in one line, `Help me find a Bible verse in "KJV": love your enemies`.
 
-_Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124._
+_Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124, CB-146._
 
 ### W-13 — Cross references
 
 **Goal:** see what else in scripture speaks to the verse you are reading.
 
-1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (`bi-binoculars`, top right) to open
+1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (the binoculars, top right) to open
    the side panel, then pick **[en:tran:Cross Reference]** from the panel's dropdown —
    the second entry, after **[en:tran:Find]**. 📸
    You can also get here from the verse itself: right-click any verse in the lookup body
@@ -2419,7 +2591,8 @@ _Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124._
    verse, or the version chip to read the references in another translation. 📸
 3. Under it, **AI [en:tran:Cross References]** with the version it is quoting on the right, and a
    line saying how much there is: **7 [en:tran:Themes] · 35 [en:tran:Verses]**. Click the title to collapse the
-   whole section; right-click it for **[en:tran:Refresh]**, which re-fetches.
+   whole section; right-click the title (not the references under it) for
+   **[en:tran:Refresh]**, which re-fetches.
 4. The references are grouped by **theme** — a sentence such as _Genealogy from Adam to
    Noah_ — set flush left, with that theme's verses hanging off a single vertical line
    beneath it. 📸 Each verse gives its reference on its own line and the opening of the
@@ -2434,10 +2607,10 @@ _Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124._
    The version at the start of the panel's title — **(KJV)** — is a button: click it and
    choose another Bible, and the same verse opens in a second panel of its own, so the two
    can be read side by side. Close a panel with its **×**.
-6. The **`bi-cpu`** button on the section title says a model wrote these; click it for the
+6. The **chip** button on the section title (**[en:tran:Generated using AI technology.]**) says a model wrote these; click it for the
    page explaining what that costs you in accuracy. On a translation whose theme headings
-   were machine-translated, each heading carries its own **`bi-translate`** button saying
-   so — on an English bible nothing was translated and the mark is absent.
+   were machine-translated, each heading carries its own **translate** button
+   (**[en:tran:Generated using Google Translate.]**) saying so — on an English bible nothing was translated and the mark is absent.
 7. If you have put your own OpenAI or Anthropic key in Settings, **Custom OpenAI** and
    **Custom Anthropic** appear as their own sections below, each collapsing and refreshing
    the same way. The section above them needs no key.
@@ -2495,6 +2668,8 @@ in the same documents folder. 📸
    the same list from a right-click on the canvas. (The right-hand **[en:tran:Canvas Items]** tab
    is a preview/select list, not a place to drag boxes from.) You can also **drag items
    in from the Background panel** — see W-28.
+   **Insert a video from a link.** In the **[en:tran:Slide Editor]**, select the slide, press **[en:tran:Insert Media Link]** above the canvas, paste the direct video address into **[en:tran:Media URL:]**, and press **[en:tran:Ok]**. For a YouTube address, use **[en:tran:Insert YouTube]** and its **[en:tran:YouTube URL:]** box instead, then press **[en:tran:Ok]**. Move or resize the new box on the slide and save with **Ctrl+S**.
+   **Insert a camera on a slide.** Select the slide in **[en:tran:Slide Editor]**, press **[en:tran:Insert Camera]**, then select the camera's name from the device menu that opens. Selecting a device adds its camera box to the slide. Move or resize the box and save with **Ctrl+S**. If the app says **[en:tran:No camera found]**, connect a camera and try again.
 5. **A website box shows a picture of the page, not the running page.** Open Worship
    takes a screenshot and shows that everywhere you edit, so a service order full of
    web slides stays fast even on an old machine. Two things follow:
@@ -2542,7 +2717,10 @@ in the same documents folder. 📸
    **[en:tran:Font Family]** and press **[en:tran:Apply Font Family]**. Each button
    applies only that property, leaving the other styles and positions intact.
    The result reports how many items changed. Each application is one
-   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. 📸
+   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. To change the words'
+   colour as well, select the box and click the hex value under
+   **[en:tran:Text Properties] → [en:tran:Color]**. Type or paste the new hex color,
+   then press **Enter** or click away to apply it (step 9). 📸
 9. **Type an exact color.** Select a box, then click the hex value beside
    **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
    Type or paste a hex color, then press **Enter** or click away to apply it.
@@ -2567,7 +2745,8 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 empty part of the list). **[en:tran:Add URL]** asks for a web address and saves it as a new
 tile in the tab. **[en:tran:New File]** asks for a name and makes an `.html` page in the
 folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in its own window,
-its code beside a preview.
+its code beside a preview. The Web Editor saves itself as you type, so there is no Save
+to press.
 
 _Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124._
 
@@ -2622,14 +2801,26 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      configured but not installed on this computer. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
-   - **Directories:** where documents, lyrics, and bibles are stored on disk.
-   - **[en:tran:Recent Folders]** (under **[en:tran:Parent Directory:]**): every data folder
-     this computer has used is listed there, newest first — not the one in use. Press
-     **[en:tran:Switch]** beside one to go back to it: the app asks first, because every
-     open window reloads onto that folder. A folder that is not there (a stick that is
-     not plugged in) reads **[en:tran:Missing]** and cannot be switched to. **✕** takes
-     a folder off the list; the folder itself is not touched. The list keeps the last
-     10 and appears once a second folder has been used. 📸
+   - **Directories:** where documents, lyrics, and bibles are stored on disk. With no
+     data folder chosen, **[en:tran:Click here to use the default data folder]** makes
+     `.owa\open-worship-data` in your user folder. One still on the Desktop is asked
+     about at every start — see **W-54**.
+   - **To keep everything somewhere else**, press the folder line
+     under **[en:tran:Parent Directory:]** (the folder in use) and a box opens under it: type the
+     folder's path and press Enter, or press **[en:tran:Choose a folder]** and pick it.
+     The app asks **[en:tran:Set according paths]** first, and **[en:tran:Yes]** makes the
+     standard folders (Documents, Videos, Images and the rest) inside it, uses them and
+     reloads. What you already have is not moved. It stays in the old folder, where
+     **[en:tran:Recent Folders]** below takes you back, or a backup brings it along (W-25).
+   - **To switch back to a previous data folder.** In **[en:tran:General]**, under **[en:tran:Parent Directory:]** → **[en:tran:Recent Folders]**, press
+     **[en:tran:Switch]** beside the folder, then confirm with **[en:tran:Switch]**
+     in the **[en:tran:Switch Data Folder]** dialog. Every open window reloads onto
+     that folder automatically. The list shows this computer's previously used
+     folders, newest first, excluding the one in use. A folder that is not there
+     (a stick that is not plugged in) reads **[en:tran:Missing]** and cannot be
+     switched to. **✕** takes a folder off the list; the folder itself is not
+     touched. The list keeps the last 10 and appears once a second folder has
+     been used. 📸
    - **[en:tran:Repair Links]** (beside **[en:tran:Reset All Child Directories]**): after you
      bring the data folder from another computer — a USB stick, a copied folder — press
      it once. Pictures, videos and songs still pointing at where the folder USED to be
@@ -2645,9 +2836,9 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
    development-only and can be unavailable. 📸
    **An installed Bible has no on/off switch.** Every Bible in that list is offered
    wherever a version is chosen. To stop one being offered, take it off the computer: the
-   trash icon on its row, **[en:tran:Move to Trash]**, asks first
-   (**[en:tran:Delete Bible XML]**) and sends its file to the Recycle Bin, from where it
-   can be brought back or imported again.
+   trash icon on its row, **[en:tran:Move to Trash]**, opens a confirmation titled
+   **[en:tran:Delete Bible XML]**. Press **[en:tran:Yes]** in that dialog to send
+   its file to the Recycle Bin, from where it can be brought back or imported again.
 4. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
 
 _Verify: ST-01..ST-09, ST-22, ST-52, ST-58, LT-02..04._
@@ -2656,9 +2847,12 @@ _Verify: ST-01..ST-09, ST-22, ST-52, ST-58, LT-02..04._
 
 - **Find bar:** press **Ctrl+F** (**⌘F** on macOS) or use **Edit → Find** in the app
   menu bar. A slim bar drops in at the **top-right of the window itself** and searches
-  only that window. Presenter, Slide Editor, Bible Reader and Settings each have their
-  own; the screens, the bible note and the code editors do not (they have their own
-  search or nothing to find). 📸
+  only that window. Each of these has its own: the Presenter, Slide Editor, Bible
+  Reader, Screen Mirror and Settings, the About and Local Web Share windows, the Web
+  Editor and Lyric Editor, the help window (🤖) and **AI Chat** (✨) — where it searches
+  the website's own words too, Khmer included. The screens (nothing to search on a
+  projector) and the bible note (it has its own search) have none. In the Web Editor
+  the bar finds only the lines the editor is showing, so scroll to the rest. 📸
   - Type to search as you go; the counter shows **`<current>/<total>`**.
   - **Enter** jumps to the next match, **Shift+Enter** to the previous one; the **⌃**
     and **⌄** buttons do the same and wrap around.
@@ -2672,7 +2866,7 @@ _Verify: ST-01..ST-09, ST-22, ST-52, ST-58, LT-02..04._
     query you type is never found by your own search.
 - **About:** shows the app version and project links.
 
-_Verify: PU-01, PU-05, PU-07._
+_Verify: PU-01, PU-05, PU-07, PU-21, PU-22._
 
 ### W-18 — Use more than one screen (multi-screen)
 
@@ -2680,19 +2874,26 @@ _Verify: PU-01, PU-05, PU-07._
 
 1. **Right-click** an empty area of the mini-screen panel and choose
    **[en:tran:Add New Screen]** — a second preview card appears with its own number and color. 📸
-2. Each card targets its own physical display (W-10, the Display button) and has its
-   own show/hide, clears, transitions, and lock.
-3. Content goes to every **selected** screen. Right-click a card to
-   **[en:tran:Select] / [en:tran:Deselect]** it, or **[en:tran:Solo]** to make it the only selected one.
+2. Point the new card at the display it should fill with the **Display** button in its
+   footer (W-10), then turn it on with its own show/hide button. Every card has its own
+   clears, transitions and lock too.
+3. Content goes to every **selected** screen. To stop one screen receiving content
+   without deleting it, right-click its card and choose **[en:tran:Deselect]**, and
+   **[en:tran:Select]** there takes it back. **[en:tran:Solo]** does something else. It makes that
+   card the ONLY selected one, so every other screen stops receiving. A screen that is not
+   selected keeps what it last showed, and that, or an item dropped on one card (step 4),
+   is why two screens can show different things. Select every card — right-click one
+   that is not and choose **[en:tran:Select]** — and present the item again to put the
+   same thing on all of them.
 4. You can also **drag** a slide, background item, or foreground Show button and
    **drop it on one specific card** to present it on that screen only. 📸
 5. A Bible passage shown in more than one version is drawn as one column per version, and
    the columns keep together: scroll one of them on the card — the wheel, its scrollbar or
    the auto-scroll button — and the others move to the same verse, on the screen it shows
-   as well. The card's right-click menu offers **[en:tran:Set Line Sync]** to lay the
-   versions out verse by verse in rows instead, and **[en:tran:Unset Line Sync]** goes back
-   to columns. A screen that is already showing keeps the layout it was shown with until
-   it is hidden and shown again; its scrolling follows the card either way.
+   as well. To line the versions up verse by verse, in rows, right-click the card of the screen showing it and
+   choose **[en:tran:Set Line Sync]** — one screen is all it needs, and a screen already
+   showing takes the rows only once it is hidden and shown again — and
+   **[en:tran:Unset Line Sync]** goes back to columns. Its scrolling follows the card either way.
 6. Right-click a card → **[en:tran:Delete]** removes a screen you no longer need (the first
    screen can't be deleted while it is the only one).
 
@@ -2738,7 +2939,7 @@ this is the same pair of tools pointed at the app.
    spotlight) and with the panel **collapsed**. On the arrow tool those keys go to the app
    instead, and only the buttons act on the drawing.
 6. Click the **spotlight** to dim the whole app except a circle. In **[en:tran:Follow]** (the
-   default) the circle simply tracks your pointer; press that button (`H`) and it reads
+   default) the circle simply tracks your pointer; press the **[en:tran:Follow]** button itself (`H`) and it reads
    **[en:tran:Hold]**, which dims only while the mouse button is down. **[en:tran:Contrast]** (`X`) inverts it — the
    circle becomes the blocked area instead. Size, **[en:tran:Dim color]**, dim amount and **edge
    blur** (`,` / `.`) all have sliders. 📸
@@ -2817,8 +3018,8 @@ _Verify: coverage rows pending — same `PC-xx` block as W-19 when the matrix la
 **Goal:** get a video (or its audio as an MP3) from an online link straight into your
 Videos / Audios folder, without leaving the app. The download tools are not built into the
 app: the first time, a **[en:tran:Media Tools Required]** box offers to open
-**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, where they are
-installed once.
+**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, where
+**[en:tran:Download and Install]** installs them once.
 
 1. Open the **[en:tran:Background]** panel (W-08 step 1) and choose the **[en:tran:Videos]** tab — or the **[en:tran:Audios]** split if you want the sound only.
 2. **Right-click an empty part of the list** (or use the ⋮ [en:tran:More Options] button at
@@ -2838,6 +3039,7 @@ installed once.
 > saved as `name (1)`. Pasting something that is not a web link gets you an
 > **[en:tran:Invalid URL]** message and nothing is downloaded. Downloads need an internet connection — and
 > a busy site can cut a large download off partway, in which case just try again.
+
 > **A download that fails leaves nothing in your folders.** The app downloads into the
 > computer's own temporary folder and takes its unfinished pieces away when the download
 > fails (you are told why under **[en:tran:Download From URL]**). Only when the app was
@@ -2875,12 +3077,13 @@ foreground presets — into one running order you can work down live.
    what it is, its id, and its name. A **document** line has its own arrow at its left end —
    a song is a document too. Click the **arrow**, not the line, to see that document's
    slides underneath; clicking the line itself opens the document in the previewer. 📸
-4. **Click an element to put it on the screen** (a document opens its previewer instead;
-   an **audio track** opens the **[en:tran:Audios]** split and flashes the track there — the
-   presenting flow never plays audio itself, so that you keep the panel's safeguards like
-   "one track at a time").
-   You can also **drag an element onto a mini screen**, or **right-click → Show on
-   Screens** ([en:tran:Show on Screens]) to pick the screen.
+4. **A song or document line opens its previewer.** To present one of its slides,
+   click that slide in the previewer, or expand the document with its arrow and
+   click a slide underneath. An **audio track** opens the **[en:tran:Audios]** split
+   and flashes the track there; use that panel's play button to play it.
+   Click a **single slide**, Bible verse, background or foreground preset to put
+   it on the screen. You can also **drag an element onto a mini screen**, or
+   **right-click → [en:tran:Show on Screens]** to pick the screen.
 5. Right-click an element for **[en:tran:Move up]** / **[en:tran:Move down]**, **[en:tran:Choose Color]**
    to group your running order by colour, or **[en:tran:Remove from Presenting Flow]**. To move a line a long
    way, use **[en:tran:Move to Top]** or **[en:tran:Move to Bottom]** instead of
@@ -2925,8 +3128,8 @@ _Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96, PL-101._
 
 **Goal:** see the whole running order at a glance, and walk the service with one key.
 
-1. To see the whole service at a glance, click the **window** icon on the presenting flow row (or
-   right-click → **[en:tran:Open Preview]**). A floating panel shows every element with its real
+1. To see the whole service at a glance, click the **window** icon on the presenting flow row once (or
+   right-click → **[en:tran:Open Preview]**) — a second click on it closes the panel again. A floating panel shows every element with its real
    preview — slides look exactly as they will project, and a document shows all of its
    slides. Opening it puts nothing on a screen, and neither does scrolling it: that is
    how you look ahead. An element goes up only when you click its preview or press one
@@ -3021,14 +3224,15 @@ it — rather than something to show.
    someone notices.
 
    **These two ask which screen** when you add them, and that is the whole point: a
-   checklist of the screens you have open appears (**Screen id: 0**, **Screen id: 1**, …,
+   checklist of the screens you have open appears (`Screen id: 0`, `Screen id: 1`, …,
    each in that screen's own colour), and the line remembers your answer as its pin — the
    line shows the pin badge, and **[en:tran:Set Specific Screen]** re-aims it later. Unlike every
    other line, it goes to those screens and _only_ those: it will not fall back to
    whichever screen you happened to have selected, and it will never stop to ask, because
    at 7:05 on an unattended sheet there is nobody there to answer. Tick nothing and the
    app says **[en:tran:Please choose at least one screen]** rather than adding a line that would do
-   nothing. Firing one twice is harmless — a **[en:tran:Screen: Show]** on a screen that is already
+   nothing. Like every action, the line lands at the end of the list: drag it up to where it
+   should fire. Firing one twice is harmless — a **[en:tran:Screen: Show]** on a screen that is already
    up does nothing at all, so it is safe inside a loop. Nothing can be attached to them
    either, though they can themselves be attached to another line — "put this last slide
    up **and** light the screen" in one click. 📸
@@ -3051,6 +3255,8 @@ ends exactly when the service starts.
    row with its name on it, not the empty part of the list and not one of its lines — and
    choose **[en:tran:Add Action]** → **[en:tran:Next: Timeout]**. That adds a NEW line to
    the running order; it is never added by right-clicking a line that is already there.
+   It goes at the END of the running order: drag it up to just after the line it should
+   follow.
    It asks how many **[en:tran:Seconds]**, and the answer is part of the new
    line — `⏱ Next: Timeout (5)` — so a glance at the sheet tells you how long it waits. Got
    it wrong? Right-click that `Next: Timeout` line → **[en:tran:Change Timing]**; it opens
@@ -3063,7 +3269,7 @@ ends exactly when the service starts.
    the panel, leaves it counting, so a mis-aimed click cannot silently cost you the wait.
 3. **Or wait until a time on the clock.** A timeout does not have to be counted in
    seconds. The small box that asks for the seconds — it opens when you add the line
-   (step 1), and again from right-click → **[en:tran:Change Timing]** on that line — has a
+   (step 1, then drag the new line up to just after the line it should follow), and again from right-click → **[en:tran:Change Timing]** on that line — has a
    chooser at its left: switch it from **[en:tran:Seconds]** to **[en:tran:At Time]** and type the
    time you want the run to move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
    the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
@@ -3088,9 +3294,11 @@ ends exactly when the service starts.
    line you want it on → **[en:tran:Add CC Elements]** and pick it. Keep the
    `Next: Timeout` line itself in the list, though: a CC points at that line rather than copying it, so removing the line removes every follower of it as well (park it with **[en:tran:Disable]** if the run should not stop there — its followers still fire). Attached to
    a whole SONG it rides every slide of it, which is how a song advances by itself. 📸
-6. **Each line may wait for its own length.** This is for a `Next: Timeout` attached to a
-   line as a CC element (step 5): it shows as a CC line of its own, indented under the
-   line it is attached to. A CC line normally reads whatever the
+6. **Each line may wait for its own length.** First create a timeout if there is none:
+   right-click the presenting flow's own name → **[en:tran:Add Action]** →
+   **[en:tran:Next: Timeout]** and enter its seconds. Right-click each line that needs
+   a wait → **[en:tran:Add CC Elements]** and pick that timeout. It appears as an
+   indented CC row under each line it is attached to. A CC line normally reads whatever the
    `Next: Timeout` line is set to, so re-arming that one line re-arms every follower of it
    at once. When one line needs a different wait, click the small **stopwatch** at the
    right of **that CC line — the indented row under the line, not the line itself** (or
@@ -3146,11 +3354,14 @@ where you say, and a running order that can go back to an earlier line.
 4. **Go back, not just forward.** **[en:tran:Jump to]** is how a running
    order reaches a line that is not the next one. Add it from the same menu as the interval — right-click
    the presenting flow itself, not one of its lines → **[en:tran:Add Action]** →
-   **[en:tran:Jump to]** — then right-click the new line →
+   **[en:tran:Jump to]** — then drag the new line from the end of the list, where it
+   lands, to where the run should meet it, and right-click it →
    **[en:tran:Add CC Elements]** and pick the line it should go to — its list is everything in the
    presenting flow, **a whole song included**, because here the attached line is not something
    that rides along, it is the destination. It takes exactly one, so once you have picked
-   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another. 📸
+   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another.
+   To jump now, right-click the presenting flow → **[en:tran:Open Preview]**, then click
+   the **[en:tran:Jump to]** line in the preview; reaching it with **Space** does the same. 📸
 
    **It is the next key aimed at a line of your choosing**: when the run reaches it — or
    you click it — the panel goes to that line and does there exactly what stepping onto it
@@ -3188,7 +3399,8 @@ to it — on the screens at once, wherever the run had got to.
    the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
    **[en:tran:Change Shortcut]**. Two lines may not share a shortcut — the second one is refused
    out loud — and duplicating a line leaves the copy without one. 📸
-2. Now attach what it should put up, with **[en:tran:Add CC Elements]** — as many as you like, which
+2. **Attach what it should put up, and keep the preview panel open: the key works only
+   while it is.** Right-click the new line → **[en:tran:Add CC Elements]** — as many as you like, which
    is what makes one key worth more than one click: a slide _and_ its marquee together,
    say. Then, with the preview panel open (W-22b), pressing **Shift+A** sends the run to
    that line and puts all of it on the screens at once, wherever the run had got to.
@@ -3217,7 +3429,8 @@ to it — on the screens at once, wherever the run had got to.
      own at the end of the list — a CC points at a line of the running order — so leave that
      line in place: removing it removes the CC with it.
 
-     **Aim at the middle of a line to attach, at its top or bottom edge to move.** A line
+     **Aim at the middle of a line to attach, at its top or bottom edge to move.** To drop one line onto another, drag that line
+     itself. A line
      of the running order does both jobs, and it tells you which one it is about to do:
      lines along the top and bottom edges mean "this line moves here", a dashed box round
      the whole line means "this goes _onto_ that line". Slides and CC lines have no order
@@ -3232,7 +3445,7 @@ to it — on the screens at once, wherever the run had got to.
      only way to put it anywhere but the end of the list, since dropping on the presenting flow's
      name adds to the end.
 
-   - **[en:tran:Add CC Elements]** and pick from the other
+   - right-click the line → **[en:tran:Add CC Elements]** and pick from the other
      lines already in this presenting flow. 📸
 
    A CC element shows as a `↳` line just under the one it rides with. From then on,
@@ -3391,7 +3604,9 @@ machine as one file.
     > somewhere safe before you hand the file over, and send it by a different route than
     > the file itself.
 
-2. On the other machine, right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+2. **Import on the receiving machine.** First open **[en:tran:Settings]** →
+    **[en:tran:Path Settings]** and choose the destination folders for the file
+    types in the bundle. Then right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
     file from your file manager onto the Presenting Flows list**, which imports it the same way.
     A protected bundle asks for its password first, saying **This archive is password
     protected** ([en:tran:This archive is password protected]); get it wrong and it says
@@ -3595,8 +3810,11 @@ or to set up a second machine — use the app's **File** menu.
 3. Press **[en:tran:Ok]**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
    folder — or `open-worship-data.owadata.enc` if you set a password — and the folder
    opens. Copy it to a USB stick or the other machine.
-4. On the other machine, choose **[en:tran:Import Data]** and pick that
-   file. A protected backup asks for its password first. The panel then lists only the
+4. On the other machine, open **[en:tran:Settings]** → **[en:tran:Path Settings]**
+   and choose the destination folders first. Then choose **File** → **[en:tran:Import Data]** and pick that file. A protected backup asks for its password first. A password typed wrong is asked
+   for again under _[en:tran:Wrong password, try again]_, three times at most, and then the
+   import stops with nothing brought in. Type it exactly as it was set, capital letters and
+   all, or ask whoever made the file for it. No one can open it without. The panel then lists only the
    folders the file actually contains — again all ticked — so you can restore just the
    songs, or just the backgrounds. 📸
 
@@ -3844,6 +4062,34 @@ your Bible reading.
     opened the **[en:tran:Verses]** section — ready to paste into a note or a document.
 12. Closing the lookup window leaves the record windows you opened where they are.
     Each has its own **×**.
+13. **Ask the assistant about it.** The robot at the left end of a record window's
+    title bar — **[en:tran:Ask the Assistant About This Person]**, **[en:tran:Ask the Assistant About This Place]**,
+    or on a verse window **[en:tran:Ask the Assistant About This Passage]** — opens the
+    help window (**W-42**) in a chat of its own about what that window shows. It is
+    there only while AI features are on, and it asks the same two questions the
+    🤖 asks first. The chat reads the whole record from the app — the description,
+    the family and the places, every verse reference and the first verses
+    themselves — says it is ready and offers three questions to press, such as
+    _Who was Adam?_. Everything you type in that chat is then about that person,
+    place or passage, and the assistant looks up the people, places and verses it
+    leads to by itself. The names and places come from the King James Version,
+    and the assistant says so if you ask. The **[en:tran:Still asking about]** line above
+    the box names it; press its **×** to ask about something else. 📸
+    A passage you are reading opens the same way: the robot at the end of a Bible
+    view's toolbar (the row that shows when the mouse is over its title), or
+    right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
+    the verse under the mouse or **[en:tran:Ask the Assistant About This Passage]** for
+    the whole passage.
+    **Buttons do the rest, with no question needed.** Under a passage's card:
+    **[en:tran:Open in bible lookup]**, **[en:tran:Previous chapter]** and **[en:tran:Next chapter]**
+    (**[en:tran:Previous verse]** and **[en:tran:Next verse]** for a single verse),
+    **[en:tran:Read it in another Bible]**, **[en:tran:Who and where is in it]**,
+    **[en:tran:Open another passage]** (type the one you want, like _John 3:16_),
+    **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]**. Under a person's or a
+    place's card: **[en:tran:Its verses]**, **[en:tran:Family and places]** (a place:
+    **[en:tran:Related places]**) and **[en:tran:Read it in another Bible]**. A name, a place, a
+    verse or a Bible in the list that comes back opens its own card in the same chat, and
+    every answer ends with **[en:tran:More things to do]**.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
@@ -3854,7 +4100,7 @@ is one word out of a short, fixed list. A person's **[en:tran:Age]** is shown ex
 dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
-RD-64, RD-80, RD-91, PM-126._
+RD-64, RD-80, RD-91, PM-126, CB-149._
 
 ### W-30 — See who and where is in the passage you are reading
 
@@ -3920,7 +4166,9 @@ _Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80, RD-91, RD-113._
 Copilot — the company's own website, with your own account — in a window beside the app,
 the way a browser's AI sidebar does, without leaving the app.
 
-**The ✨ is not the 🤖.** The **🤖** is the app's own assistant: it answers from this
+**The ✨ is not the 🤖.** The **✨** opens a company's own AI chat website — ChatGPT,
+Claude, Gemini and the like — in a box, signed in with your own account there. The **🤖**
+is the app's own assistant: it answers from this
 manual and can point at things in the app. This is not the app's own assistant (W-42): nothing here reads this manual or presses
 anything in the app, and no API key is needed. It is the site itself, in a box.
 
@@ -4032,7 +4280,9 @@ control without having to search the manual.
    list for the current page. Search by a control or task, or scan the topic name
    that leads each lesson's line;
    the counter shows how many lessons match. Each lesson says what it teaches;
-   choose one to return to its card and practise it at your own pace. The
+   choose one to return to its card and practise it at your own pace: press
+   **[en:tran:Show it]** on the card to start it — the control is ringed in red — and then
+   **Do it** for each safe step. The
    Presenter has **91 topics**: 81 start with a safe **Do it** for a visible
    control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
@@ -4040,7 +4290,9 @@ control without having to search the manual.
    **Help**. _Write a note on a document or slide_ opens the previewer's **[en:tran:Note]**
    panel, which ships closed (W-03, W-31). Presenter lessons also cover lookup references and history, study
    tools inside Bible Lookup, media folder filtering and sorting, finding a service
-   flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
+   flow, and **[en:tran:Messages]** for separate notices, rotation and spacing
+   (_[en:tran:Prepare several audience messages]_, _[en:tran:Rotate notices before the service]_ and _[en:tran:Give audience messages room to breathe]_) — search
+   **[en:tran:Messages]** in **[en:tran:All tips]** to find them.
    Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
    slide show; output and style changes stay in your hands.
    The Reader has **100 topics**: 50 start with a safe **Do it** and
@@ -4070,7 +4322,10 @@ control without having to search the manual.
    **[en:tran:Search file name]**, or **[en:tran:Find Connection]** to find a
    focused lesson. Each tip explains when to use that control. Saved Bibles
    lists and Bible Notes have separate folder, creation, organization and
-   import/export tips; graph and Resources tools have their own lessons too.
+   import/export tips — open **Help → [en:tran:All tips]** in the Reader and search
+   **[en:tran:New File]** to find them. Graph and Resources tools have their own lessons
+   too: the graph's, its presets among them, are found by searching the word **graph**.
+   The **[en:tran:Resources]** lessons are found by searching **[en:tran:Search file name]**.
    Use **Back** to revisit a guide step. If a panel is hidden, reopen it through
    **View → [en:tran:Widgets]** before practising. An older walkthrough service can
    show the complete Reader lesson as a self-guided fallback.
@@ -4114,6 +4369,53 @@ it both restores default sizes and reopens collapsed panes.
 _Verify: GL-25._
 
 ---
+
+### W-54 — Move your data folder off the Desktop (OneDrive)
+
+**Goal:** keep your songs, slides, Bibles and settings where a backup program cannot
+take them away.
+
+The app used to make its data folder on the Desktop, `Desktop\open-worship-data`. On
+Windows, Microsoft OneDrive often backs up the Desktop, and while it syncs it can
+replace files with online-only copies or take them off the computer — songs, slides
+and settings went missing. A new data folder now goes to `.owa\open-worship-data` in
+your user folder (`~/.owa/open-worship-data` on a Mac or Linux), which nothing syncs.
+
+1. Start the app. While your data folder is still `Desktop\open-worship-data`, every
+   start asks **[en:tran:Move Your Data Folder Off the Desktop]**. It names your folder,
+   says why it is at risk on this computer — OneDrive on Windows, iCloud Drive on a
+   Mac — and where it will go. 📸
+2. Press **[en:tran:Move Now]**. The app closes and opens again, and moves the folder
+   before it opens anything in it. Outside OneDrive the folder is simply moved. Inside
+   OneDrive, or when a file in it is in use, every file is copied and checked, and the
+   old folder stays where it was.
+3. **[en:tran:Data Folder Moved]** says where your data is now — and, after a copy,
+   where the old copy is. Press **[en:tran:Ok]**. Pictures, videos and songs still
+   show: links that named the old place follow the folder. 📸
+4. After a copy, every start shows **[en:tran:Old Copy of Your Data Folder]** with the
+   day it was moved. Check that your songs and slides are all there, then press
+   **[en:tran:Show Folder]** and move the old folder to the Recycle Bin (Trash)
+   yourself — the app never deletes it. Once it is gone, the reminder stops. 📸
+5. Not now? **[en:tran:Not Now]** asks again at the next start.
+   **[en:tran:Hide for 30 days]** keeps the question away for 30 days.
+
+> Notes: `migration-moved-from.txt` in the new folder says where it came from and
+> when; `migration-moved-to.txt` in an old copy says where it went. A move that fails
+> changes nothing: **[en:tran:Data Folder Not Moved]** says why, the app keeps using
+> the folder where it is, and it asks again at the next start. On a Mac, a file that is
+> only in iCloud Drive stops the move until it is downloaded (Finder → **Download
+> Now**). The new folder's name starts with a dot, so Finder and Linux file managers
+> hide it; the folder picker in Settings shows it.
+
+Steps 1–5 were observed live 2026-10-17 on a scratch dev profile with a throwaway
+Desktop folder, in English and Khmer: the question with each of its three answers,
+the move as the app started again (renamed; then copied, with a file held open), the
+result, the reminder with its date in Khmer digits, and the reminder gone once the old
+copy was. **[en:tran:Show Folder]** was not pressed — it opens the computer's file
+window — and is unit-tested. Not seen live: OneDrive itself (the copy was forced by a
+file held open) and a Mac.
+
+_Verify: ST-20, ST-80, ST-81._
 
 ## Keyboard shortcut reference (tutorial appendix)
 
@@ -4192,7 +4494,8 @@ in a popup window:
    thin line between the two panels on the left of the presenter (every divider in the
    app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
    the two panels (the left one, or the upper one) collapses to its green strip and the
-   other takes its space. `Close Second Widget` does the same to the other panel.
+   other takes its space. `Close Second Widget` does the same to the other panel. The
+   menu holds those two and **[en:tran:Reset Size]** (step 9), nothing else.
    Hovering the divider shows the same two choices as small arrows, each named for
    the side it closes — **[en:tran:Collapse left panel]** / **[en:tran:Collapse right panel]**,
    or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
@@ -4270,7 +4573,7 @@ _Verify: RD-77, RD-78, RD-11, RD-26, LT-01, KB-25, KB-26, CM-79._
 
 ### W-33 — Share your Bible translations (XML) with another machine
 
-W-24 shares a **bible list** — the verses you lined up. This shares the **translations
+Sharing a **bible list** moves only the verses you lined up. This shares the **translations
 themselves**: the XML bibles you added or edited under **Settings → [en:tran:Bible]**, which
 until now could only be moved by digging the files out by hand.
 
@@ -4327,8 +4630,9 @@ _Verify: ST-34..ST-40, LT-01._
 
 ### W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
-W-33 moves translations you already have. This workflow adds a translation from an XML
-link and lets you review its language and mappings before saving it.
+Sharing your translations moves the ones you already have to another machine. This workflow
+adds a translation from an XML link and lets you review its language and mappings before
+saving it.
 
 Example: `https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
 The GitHub redirect works as supplied. You can also use **[en:tran:Choose File]** for
@@ -4336,9 +4640,9 @@ an XML file already on your computer.
 
 **The easy way: let the assistant do it**
 
-You do not need a link, and you do not need an AI key: this runs on buttons.
+**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
 
-1. Open **[en:tran:Settings]** → **[en:tran:Bible]** and press the blue
+1. Open **[en:tran:Settings]** (the gear at the top of the window) → **[en:tran:Bible]** and press the blue
    **[en:tran:Let the assistant import a Bible for me]** at the top of
    **[en:tran:Import XML File]**. (Or open the assistant 🤖 and type
    `Import bible for khmer`, `Import bible`, or `Import bible from` and a link. Say it
@@ -4360,23 +4664,39 @@ You do not need a link, and you do not need an AI key: this runs on buttons.
    you have, **You already have this Bible** with the name it is installed under
    (press **Cancel**, or go on to keep a second copy under another name). Nothing is
    installed yet.
+   Before it asks you anything, it says **where the Bible is from** and asks you to
+   agree: it was found on the internet — in the free collection on GitHub, with that
+   collection's address and the file's own — it is **not from Open Worship**, and you
+   are **responsible to its publisher**: a Bible translation belongs to the publisher
+   or Bible society that made it, and many are under copyright, so make sure the
+   publisher allows how you will use it. Both addresses are links: press one to open
+   it in your web browser, as **Open the website** does for the collection (or the
+   page the file was listed on). Press **I agree** to go on, or **Cancel** and
+   nothing is installed. 📸
 5. **Step 1 — a short name**: press a suggestion (**KSV**, **KM1954** …) or type your
    own, letters and numbers with no spaces. A name you already have is refused and
    asked again.
 6. **Step 2 — the language**: it says which it looks like and why (_the verses are
-   written in Khmer script_). Press it, or type another.
+   written in Khmer script_). Press it, or type another, such as `ខ្មែរ`.
+   Your choice controls the imported Bible's book names and numbers, even when
+   the file was detected as another language. You can change it again while
+   choosing numbers or book names; the choices reload for that language.
 7. **Step 3 — numbers**: **០ ១ ២ ៣ …** or **0 1 2 3 …** (skipped for a language that
    writes 0–9).
 8. **Step 4 — book names**: each list shows its first names, the names only it has,
    and how many of its names appear in this Bible's own verses; the suggested one
    uses the most. **Find more lists online** adds lists from Bible.com and
-   Wordproject. 📸
+   Wordproject. You can also paste a Bible website link here, including a chapter
+   link. The assistant reads that edition's book-name list in your selected
+   language and shows a source link. If it cannot find a complete matching list,
+   your previous choices remain. 📸
 9. **Ready to install** sums it up. Press **Install it**. _Done — KSV is installed_:
    choose it from the Bible version button. **Undo** under that answer moves it to
    the trash again. **Cancel** at any step stops with nothing installed.
 
 You can type instead of pressing at every step: `yes` (or `ok`) takes the suggested
-choice — and at the end, **Install it** — a number takes that line of a list (`2`,
+choice — under the notice of where it is from, **I agree**; at the end, **Install it**
+— a number takes that line of a list (`2`,
 `list 2`), the words on a button press it, and `cancel` stops.
 
 Pasting a link works the same way, and the link does not have to be the file: a
@@ -4389,7 +4709,8 @@ lead to a Bible, the link can be pasted on its own.
 
 The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
 it is set to a Bible this computer does not have — on a new computer, the KJV. The card
-says how the assistant gets it, in three steps, and carries the button:
+says how the assistant gets it, in three steps, and carries the button. Keep the short
+name the assistant suggests for it, or the card stays:
 
 1. Press **[en:tran:Let the assistant import this Bible for me]** on that card and
    answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
@@ -4397,18 +4718,21 @@ says how the assistant gets it, in three steps, and carries the button:
    collection: for KJV it lists _English KJV_ and _English NKJ 1982_. Press the one you
    want. A name the collection has no file for is answered with _None of them has … in
    its name_: type the Bible's language (`Khmer`) and press one from that list.
-3. It downloads the Bible and says _The app is looking for a Bible called **KJV**_. At
-   **Step 1 — a short name** that name comes first, **KJV (suggested)**: keep it.
-   Installed under any other name, the card stays where it is.
+3. It downloads the Bible and says where it is from; press **I agree**. It then says
+   _The app is looking for a Bible called **KJV**_. At **Step 1 — a short name** that
+   name comes first, **KJV (suggested)**: keep it. Installed under any other name,
+   the card stays where it is.
 4. Answer the language and the book names as above, then press **Install it**. _Done
    — KJV is installed_, and the card goes away by itself: the passage shows. 📸
 
 Typing `Import the Bible called "KJV"` in the assistant does the same.
 
-**Import a Bible XML file with the form**
+**Import a Bible XML file with the form.** Give it the link or choose the file, press
+**[en:tran:Import]**, answer the review, and press **[en:tran:Import]** again to install it:
 
 1. Open **[en:tran:Settings]** → **[en:tran:Bible]**. In
-   **[en:tran:Import XML File]**, paste the link into **[en:tran:URL:]**.
+   **[en:tran:Import XML File]**, paste the link into **[en:tran:URL:]** — or, for an XML
+   file already on this computer, press **[en:tran:Choose File]** and pick it.
 2. Press **[en:tran:Import]**. The download is read and its temporary file removed.
    **[en:tran:Review Bible import]** appears with the translation title. Nothing has
    been installed yet. 📸
@@ -4445,9 +4769,15 @@ to it or clear it there, and a Bible you export (W-33) takes it along. A Bible
 imported before this note existed has none.
 
 A Bible already installed whose book names or numbers still read in English needs no
-second import. Later changes remain available through the translation's pencil → **[en:tran:Info]** editor:
-**🌎 [en:tran:Choose Locale]**, then **#️⃣ [en:tran:Edit Numbers Map]**, then **📚 [en:tran:Edit Books Map]**.
-Those editor actions use the locale currently in the editor buffer; save after editing.
+second import, and nothing of the import — its review, the assistant's steps — is
+needed again. Later changes remain available through the pencil beside the translation in
+**[en:tran:Settings]** → **[en:tran:Bible]** (its name opens nothing) → **[en:tran:Info]** editor.
+Right-click inside that editor for its three commands, in this order: first
+**🌎 [en:tran:Choose Locale]**, and pick the language; then **#️⃣ [en:tran:Edit Numbers Map]**,
+and press **[en:tran:Ok]**; then **📚 [en:tran:Edit Books Map]**, which opens the 66 book
+names one to a line — press **[en:tran:Guessing Names]** to fill them from the lists the app
+has for that language, or type your own, and press **[en:tran:Ok]**. Those editor actions use
+the locale currently in the editor buffer; save after editing.
 
 **[en:tran:Key is already taken]**
 
@@ -4476,9 +4806,12 @@ existing Bible, then use its pencil instead.
 > **[en:tran:Create KJV Bible XML]** row sits at the TOP
 > of the **[en:tran:Bibles XML]** list, above the translations — not only on a brand-new install
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
-> because there is nothing left to create.
+> because there is nothing left to create. Any other translation is not carried inside the
+> app. Its file went to the Recycle Bin when it was deleted, and the way back is to import
+> it again the way it came in — **[en:tran:Let the assistant import a Bible for me]**, or
+> **[en:tran:Import XML File]** with its link or file.
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, LT-01._
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, CB-145, LT-01._
 
 ### W-35 — Bring a song in from CCLI SongSelect
 
@@ -4523,10 +4856,12 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
    **Chorus**, …). Present it like any other lyric (W-04), or polish the wording in the
    lyric editor first. 📸
 
-> **If a search or download fails**, the reason shows right in the panel or as a toast:
-> too many requests in a row asks you to wait a moment; a lapsed session says
-> **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**; no internet says
-> **[en:tran:Could not reach SongSelect]**.
+> **If SongSelect will not connect, check these.** A grey **[en:tran:Sign In]** means one
+> of the three boxes — Client ID, Subscription Key, Redirect URI — is still empty: hover
+> it and it says which. A search or download that fails says why, right in the panel or
+> as a toast: too many requests in a row asks you to wait a moment; a lapsed session says
+> **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**, so sign in
+> again; no internet says **[en:tran:Could not reach SongSelect]**.
 
 _Verify: ST-57, ST-71, PL-103, PL-104._
 
@@ -4578,7 +4913,7 @@ the Psalms, and it is listed for _every_ chapter of the Psalms, above that chapt
 files. If you have more than one such document, keep going downwards — `-1`, `-2` and so on
 all count as book-level too.
 
-1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (`bi-binoculars`, top right) to open
+1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (the binoculars, top right) to open
    the side panel, then pick **[en:tran:Resources]** from the panel's dropdown — the fourth entry
    after **[en:tran:Find]**, **[en:tran:Cross Reference]** and **[en:tran:Location-Name (KJV)]**. 📸
 2. The top line of the view is the file-name patterns being looked for, one for **each
@@ -4635,7 +4970,7 @@ all count as book-level too.
    `PSA.0.pdf` says why it is there. A group with nothing for what you are reading says
    **[en:tran:No matching files]**.
 5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
-   (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
+   at the right-hand end of the pattern line and a search box opens under it.
    Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
    folders whose name contains it is listed too, added below that folder's verse files under
    a `*abc*` heading so you can tell the two apart. Your verse files stay exactly where they
@@ -4666,13 +5001,13 @@ all count as book-level too.
      the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
      to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
      that window forward. 📸
-   - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
+   - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
      block are drawn as diagrams (a diagram with a mistake in it shows the error above its
      code). The window follows the file — save it in your editor and the preview changes.
      A link to a heading scrolls there; a link to another `.md` opens it in the same window,
-     with **[en:tran:Back]** (`bi-arrow-left`) to return; a web link opens in your browser; a
+     with **[en:tran:Back]** (the left arrow) to return; a web link opens in your browser; a
      link to any other file shows it in its folder rather than running it. HTML written
      inside the file is drawn the way GitHub shows a README — a centred picture, a table, a
      section that folds away — but nothing in it can run: scripts, buttons, forms and styles
@@ -4684,7 +5019,7 @@ all count as book-level too.
      file whose preview is already open brings that window forward. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
      listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
-     marked in it (`bi-highlighter`) with its highlights in their colour and its comments
+     marked in it (the highlighter icon) with its highlights in their colour and its comments
      underlined, what was written beside them. Click a note to open it in the **Bible Note**
      window **read-only** — the title bar says **([en:tran:Read-only])**, the lock at the
      bottom shows it is locked, and nothing you do there is saved to the file. Click a
@@ -4692,8 +5027,11 @@ all count as book-level too.
      fold it away to a count. Nothing in the file can be changed from here. A file that is
      not a bible note says **[en:tran:Not a bible note file]**. 📸
 7. **A `.json` file can hold a list of links** — videos, articles, anything on the web for
-   that chapter — and the panel shows them instead of opening the file. Write it as a list
-   of entries, each with a **title** to read and a **url** to open:
+   that chapter — and the panel shows them instead of opening the file. Save the file
+   inside a folder listed in **[en:tran:Resources]**; to add its folder, click the panel's
+   **⋮** → **[en:tran:Add Folder]** and choose that folder. Write it as a list
+   of entries, each with a **title** to read and a **url** to open — one link is
+   `[{"title": "Notes", "url": "https://www.example.com/notes"}]` — exactly as in this example:
 
    ```json
    [
@@ -4708,8 +5046,9 @@ all count as book-level too.
    ]
    ```
 
-   Save that as `1CH.0.json` beside your other files and the row for it gains a chevron
-   (`bi-chevron-down`) and a 🔗 icon, with one row per entry hanging under it. **Click a
+   Save it named after its chapter, as the files beside it are (`JHN.3.json` for John 3,
+   `1CH.0.json` for the whole of 1 Chronicles), and the row for it gains a chevron
+   and a 🔗 icon, with one row per entry hanging under it. **Click a
    title to open it in your own web browser** — Chrome, Edge, Safari, whatever you
    normally use — and the site it goes to is shown after the title when the panel is wide
    enough, with the title and the full address on the tooltip either way. Right-click a
@@ -4731,7 +5070,7 @@ all count as book-level too.
    - Right-click the `.json` row itself (or its **⋮**) for **[en:tran:Open]** if you want to edit
      the file rather than follow a link.
 
-8. Click a group's header to fold it away; it stays folded next time. Right-click a header
+8. Click a group's header to fold it away; it opens again the next time Resources is shown. Right-click a header
    for **[en:tran:Refresh]** (re-reads that one folder — **[en:tran:Reload]** in step 3 does all of them),
    **[en:tran:Add Folder]**, **[en:tran:Add Files]**, **[en:tran:Reveal in Finder]**/**[en:tran:Reveal in File Explorer]**,
    **[en:tran:Copy to Data Directory]** and **[en:tran:Remove Folder]**, which asks you to confirm and
@@ -4750,7 +5089,7 @@ all count as book-level too.
    the copy goes — a `resources` folder inside your data folder (the one Settings calls the
    parent directory). Press **[en:tran:Yes]** and everything in the folder is copied there, sub-folders
    and all, while the progress bar runs; then the group switches to the copy, in the same place
-   and folded or open as it was, and a note says where it went. **Your original folder is not
+   and open, and a note says where it went. **Your original folder is not
    touched** — it only leaves this list, so delete it yourself once you are happy with the copy.
    A second copy of a folder with the same name is called `YouTube (1)` rather than mixed into
    the first. The item is not offered on a folder that already is a copy, and a folder that
@@ -4850,7 +5189,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > and **[en:tran:Save preset]** opens the name dialog over the graph.
    > **[en:tran:Cancel]** returns to the graph without saving;
    > **[en:tran:Exit fullscreen]** returns to the floating window.
-10. **Take it away as words.** The clipboard button (📋) left of the signpost opens six
+10. **Copy a graph into your notes.** On the graph, press the clipboard button (📋) left of the signpost and choose **[en:tran:Copy as Markdown]**. Open the destination note or document, click where the graph should go, and paste with **Ctrl+V** (on macOS, **⌘V**). Save the note or document in that application. The clipboard button opens six
     ways to copy the graph: **[en:tran:Copy as Markdown]** on its own, then five diagram
     languages — **[en:tran:Copy as Mermaid (across)]**, **[en:tran:Copy as Mermaid (down)]**,
     **[en:tran:Copy as Mermaid Mindmap]**, **[en:tran:Copy as Graphviz DOT]** and
@@ -5056,7 +5395,7 @@ it is describing.
    Lyric Editor and Local Web Share — the windows a volunteer is most likely to be
    stuck in — and the menu bar is hidden on those, so the shortcut is the way in. If a
    help window is already open it comes to the front rather than a second one opening.
-   **On Windows the taskbar has it too**: right-click the app's icon on the taskbar and
+   **On Windows the taskbar has it too, and asks no question first:** right-click the app's icon on the taskbar and
    choose **App Help (Chatbot)** under **Tasks** — the app comes forward and the help
    opens straight away, without the **[en:tran:Be careful with AI]** question, which is the
    quickest way when the app is minimised or behind something else.
@@ -5135,7 +5474,7 @@ it is describing.
    answer, including a recovery choice when the first route may fail. The wording is
    respectful and plain; it does not assume the reader knows computer terms or
    keyboard shortcuts.
-6. Type a question and press **Ctrl+Enter**, click **Ask**, or click one of the
+6. Type a question and press **Ctrl+Enter**, click **[en:tran:Send]**, or click one of the
    suggestions. Answers arrive with follow-up buttons: **Read the whole thing** opens
    the full recipe, the other button is the next-best match. Pages of this guide are
    always named by their **title** — _the guide page “Set the background”_ — never
@@ -5159,7 +5498,8 @@ it is describing.
    nothing until you press **Install it**, with **Undo** under the answer afterwards (W-34).
    **The Bible Reader also has 30 guided demos that need no AI model, key or
    account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
-   use **Try a guided demo**. The original four practise text size, opening
+   press one of the demo buttons listed under **Try a guided demo** — those words
+   are a heading, and typing them does nothing. The original four practise text size, opening
    John 3:16 with buttons and finding Bible words. Nineteen more cover passage
    history, clearing the reference, people and places, two Bible versions,
    distraction-free reading, copy/split/save, automatic scrolling, line
@@ -5201,7 +5541,7 @@ it is describing.
    still run a command that needs no words after it.) The list closes by itself once
    it has nothing left to offer — a command typed in full, or the first word typed
    after one — and **Esc** closes it sooner. With no list open, **Tab** moves on to
-   the **Ask** button as it always did. 📸
+   the **[en:tran:Send]** button as it always did. 📸
    **You can just carry on talking.** Each tab is one conversation, so the answer to
    "is any screen showing?" can be replied to with **yes**, or with "how do I turn it
    off?", and it knows what you mean — you do not have to say the whole thing again.
@@ -5226,7 +5566,7 @@ it is describing.
    whether it is doing what you meant. If it says _Reading_ a site you did not
    ask about, or _Pressing_ something you did not want pressed, that is the
    moment to press **Stop**. 📸
-   **Changed your mind? Press Stop.** While an answer is on its way the **Ask**
+   **Changed your mind? Press Stop.** While an answer is on its way the **[en:tran:Send]**
    button becomes **Stop**, and the last line under the steps says so —
    _press Stop to give up on it._ Pressing it (or **Esc**, while the cursor is not in the box) calls
    the question off there and then: the chat says **Stopped**, nothing arrives
@@ -5336,6 +5676,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    that, and a new tab starts fresh); ask the assistant something not about
    the app without it — or _how can I ask a general question_ — and it tells
    you to put **/btw** in front, which the 💡 tip line above the box says too;
+   a question about what the Bible itself says is never answered with a page
+   about something else — with no assistant answering, or typed after
+   **/help**, _what bible verse talk about lover your enemy?_ is answered with
+   how to search the Bible's own words in Bible Find, the words to try named,
+   and _who wrote the book of Psalms?_ with how to ask an assistant, **/btw**
+   in front; in the Bible Reader an assistant's answer to a verse asked for by
+   its words ends with the same search and a **Show me Bible Find** button,
+   whose card rings **[en:tran:Advance Bible Lookup]**;
    on LM Studio and Ollama a general question goes out with the model's
    thinking switched off, so it answers in seconds rather than in half a
    minute; a follow-up that names something of the app — a screen, a
@@ -5379,8 +5727,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    that changed while you were still reading it. (Clicking the sentence itself
    still picks one at random, which is the quick way to be shown something
    new.) 📸
-   **Seen enough tips? The ✕ at the very end of the line puts it away for 30
-   days.** It comes back by itself after that. 📸
+   **The ✕ at the very end of the tip line puts it away for 30 days.** It comes
+   back by itself after that. **Want the tips back sooner?
+   Type /tips** in the box and ask: the line is back at once, and the answer
+   gives you one tip straight away. 📸
 7. **Show it, instead of describing it.** Beside the box are three buttons.
    **📎** attaches a picture or a file from your computer; **📷** takes a picture
    of the app as it looks right now; **🎯** lets you POINT — an outline follows
@@ -5422,6 +5772,21 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    seeing your screen it says so and puts the button right there — _Send a picture
    of my screen_, _Point at the control_, _Attach a file_ — so you never have to
    work out how to send it one. 📸
+   **Read a study PDF one verse at a time.** In the Bible Reader's Resources panel,
+   press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its chat briefly
+   describes the file. Press **[en:tran:Read]**; it asks which verse in that chapter to
+   focus on, shows `1` as the typing example, and offers the first three verses plus
+   **[en:tran:Full chapter]**. Each card puts one complete Bible verse with its
+   printed cross-references and the matching explanation paragraph below it.
+   Press a cross-reference to read that verse in its own card. Full chapter
+   continues automatically, one verse card at a time, through the chapter's end;
+   direct references to another Resources PDF may add that file's explanation
+   and an **[en:tran:Ask about {name}]** button. The PDF's embedded text is
+   not used because a legacy Khmer font can decode as unrelated Latin
+   characters. If a visual reading repeats itself, the bad explanation is
+   withheld and the exact installed-Bible verse remains. AI can misread a PDF page,
+   so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
+   that caution away temporarily.
 8. Under every answer is **Copy**, which puts that answer on the clipboard and says
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
@@ -5432,8 +5797,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    Presenter or the Document Editor, and the answer ends with one more line and
    one more button, **Go to the Bible Reader**: press it and the main window
    changes to the Bible Reader, and whatever is on the projector is left as it
-   is. A question about showing a verse on the screen does not get it — that is
-   what the Presenter is for.
+   is. The **[en:tran:Bible Reader]** tab in the header at the top of the Presenter
+   takes you there too. A question about showing a verse on the screen does not
+   get it — that is what the Presenter is for.
    **And every answer has two thumbs beside Copy.** 👍 says the answer helped and
    👎 says it was wrong or did not help. The one you pressed stays filled, and
    pressing it again takes it off; the mark is kept with the chat on this
@@ -5455,8 +5821,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    button — keeps a ring of its own, until you click somewhere else; **Tab**
    moves the same mark from the keyboard. A thumb pressed on an answer further
    up no longer makes the chat jump to its end.
-   **And every answer says what it cost.** At the right-hand end of that same line,
-   in small grey figures, is what the assistant spent answering — a few cents at
+   **And every answer says what it cost.** At the right-hand end of the line under each
+   answer, the one with **Copy** and the thumbs, in small grey figures, is what the assistant spent answering — a few cents at
    most for an ordinary question, and the tokens it used — and a line under the
    three pickers at the top, **CREDIT USED**,
    keeps the running total for the whole chat: every question in this tab, including
@@ -5490,20 +5856,25 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **/limit** says all of this in words and **/limit 2**, **/limit off** or
    **/limit more** do the same as the list and the button. The figures are the same
    estimate the credit line is. 📸
-9. **Something wrong with the app itself? Press Report.** Under **Ask** is a quieter
+9. **Something wrong with the app itself? Press Report.** Under **[en:tran:Send]** is a quieter
    **Report** button, for when the answer is not "how do I" but "this is broken".
    Say what went wrong in the box — one line is enough — and press it. It asks
    first, quoting back what it is about to report, with **Not now** beside
    **Report it**, so a mis-hit costs you nothing. (Press it with an empty box and it
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
+   **Attach a picture or PDF to a problem report.** In this help window, type what
+   went wrong into the question box, then use its paperclip to choose the picture,
+   text file or PDF. Press **[en:tran:Report]** below **[en:tran:Send]**, then
+   **[en:tran:Report it]** in the confirmation. Read the prepared report and its
+   attachment list, then press **[en:tran:Send report]** when ready to send it.
    **Two more ways lead here, from the app window.** The **[en:tran:Help]** button's
    third row, **[en:tran:Report a Problem]** (the menu bar's Help menu has the
    same row), opens the help window on a card
    that asks what went wrong — or what you wish the app did better — with a
    **Report** button on it: type a line, attach a picture or a file if it
    helps (the paperclip takes pictures, text files and a PDF), and
-   press **Ask** or **Report** — either starts it. From then on that tab IS
+   press **[en:tran:Send]** or **Report** — either starts it. From then on that tab IS
    the report: its name starts with **Report:**, and anything more you type
    or attach there is added to the report rather than answered as a
    question, until you press **Send report**. And when the app itself
@@ -5516,7 +5887,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    computer's system information, the window you are in and what is selected,
    what each screen holds, the app's console log, the end of the conversation,
    a picture of the app and any file you attach.
-   Say yes and it goes and looks: it photographs the app as it stands, notes the
+   **Say yes and it goes and looks.** It photographs the app as it stands, notes the
    version, the window you are in and what the screens are doing, reads the app's own
    error log (the errors and warnings the main window has logged, with the name of
    this computer's account taken out of any file path), and then investigates the
@@ -5527,28 +5898,30 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    Thought of something more while it is still writing? Type it and press **Add**:
    it starts the write-up again with your new words in it, and what you attached
    earlier stays with it.
-   Not every problem is a fault in the app, so it helps first: when what you
+   **Not every problem is a fault in the app, so it helps first.** When what you
    describe looks like something you can put right yourself — a setting, a step
    that was missed — the answer is **Try this first** with the steps, and the
    question _Did that solve it?_ Press **That fixed it** (or just type _yes_) and
    the report is closed with nothing sent. Press **Still a problem — report it**
    and the report it wrote while you tried is put in front of you, saying what you
    were told to try.
-   Press **Send report** and the line under the conversation reads _Sending the
-   report_ for a moment. When the app's maintainers have a report server open, the
-   write-up goes straight to it together with its files — the picture of the app
-   and whatever you attached: pictures, a PDF, text files, each up to 5 MB — and
-   the answer starts **Sent**, with the report's reference and the names of the
-   files that went. A file that could not go is named too, with why. When the
+   **Press Send report and it goes to the people who make the app.** The line under
+   the conversation reads _Sending the report_ for a moment. When the app's
+   maintainers have a report server open, the write-up goes straight to it together
+   with its files — the picture of the app and whatever you attached: pictures, a
+   PDF, text files, each up to 5 MB — and the answer starts **Sent**, with the
+   report's reference and the names of the files that went. A file that could not
+   go is named too, with why. Whatever happens to it, the whole report, with the
+   picture, is also saved into your **Downloads** folder.
+   **When the report server is not answering, the report is kept for later.** When the
    report server is there but not answering — the computer it runs on is asleep
    or restarting — the app KEEPS the report and sends it by itself as soon as that
-   server is back: it tries a minute after the app starts and every half hour
+   server is back. It tries a minute after the app starts and every half hour
    while it is open, for up to a week, and the answer says so, so there is nothing
-   more you need to do. When no report server is open at all, or it does not take
-   the report, the answer says plainly that nothing was sent, and why. Either way
-   the whole thing, with the picture, is saved into your
-   **Downloads** folder, and when nothing was sent the answer tells you who wants
-   it: it names the maintainers' email address and
+   more you need to do.
+   **When nothing was sent, email it.** When no report server is open at all, or it
+   does not take the report, the answer says plainly that nothing was sent, and why,
+   and tells you who wants it. It names the maintainers' email address and
    the subject line to use, and five buttons do the rest — **Copy report** puts the
    whole write-up on your clipboard, **Copy subject** the subject line,
    **Copy picture** the screenshot (paste it into the message and most mail apps
@@ -5574,10 +5947,13 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
     Bible Cross Reference, **Kimi** and **Amazon Bedrock** answer here only — so you can tell which key is
-    worth getting before you go and fetch one. Once the OpenAI key is saved, its card
-    also shows **[en:tran:Auto Play Audio AI when available]**; turn that switch on when
-    supported Reader passages should begin their generated audio automatically.
-    **Every part of that page folds.** Click a section's title —
+    worth getting before you go and fetch one. 
+    **Play Bible audio automatically.** Open **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:AI Providers]**, then open the **OpenAI** card and save an **OpenAI API key** there. Once that key is saved, this card shows **[en:tran:Auto Play Audio AI when available]**. Turn that switch on so supported Reader passages begin their generated audio automatically. A key for a different provider does not reveal or power this switch.
+    **No internet?** The help window still answers from the manual by itself, and
+    says so. The `/` commands still work, because they need no key and no
+    internet. A server of your own on this computer (below) still answers in full,
+    with a model that runs there — not one whose name ends in `cloud`.
+    **Every part of the Others page of Settings folds.** Click a section's title —
     **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**,
     **[en:tran:Extra Binaries]** — and it folds to one row, which still says whether it
     is set up (**[en:tran:Key set]**, **[en:tran:Installed]**) and keeps its buttons;
@@ -5614,7 +5990,11 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     asks the best assistant that can answer right now. A server that does not answer
     is left out. One that is already answering another chat tab, and one that has
     just failed or taken more than three minutes over an answer, go to the back of
-    the line. Among the rest the bigger model is asked first, read off the size in
+    the line. Among the rest, a model whose name ends in `cloud` comes first
+    (`gemma4:31b-cloud`, `gemma4:cloud`: Ollama runs it on its own computers, so it
+    is quicker and stronger than one on a church machine, and your question leaves
+    the building to reach it) — the biggest of them first, one whose name gives no
+    size last. After those the bigger model is asked first, read off the size in
     its name (`9b`, `12b`); the **Free** service counts as 8B, so a server model of
     8B or more is asked before it and a smaller one after it — which keeps a small
     model of your own for the day the internet is down. On LM Studio only a model
@@ -5627,7 +6007,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     next one is asked, and a small line over the answer says who could not answer
     and who did. Because the **Free** service may be the one that answers, an Auto
     chat carries a notice saying that your questions may leave this computer; pick
-    one of your own servers by name to keep every question in the building. Picking
+    one of your own servers by name, and a model of it whose name does not end in
+    `cloud`, to keep every question in the building. Picking
     any named row ends Auto for that tab. **Auto is what a chat starts on** until
     you pick an assistant by name: the help window opens on it the first time, and
     so does every new chat after it. Once you have picked a named assistant, new
@@ -5635,7 +6016,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
-    OpenAI API. In **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:Custom servers]** —
+    OpenAI API. In **[en:tran:Settings]** (the gear at the top of the app's main window, not this one) → **[en:tran:Others]** → **[en:tran:Custom servers]** —
     where, for anyone who has no server yet,
     **[en:tran:Watch how to set up a free AI assistant on your own computer]** is
     followed by **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]**, each
@@ -5648,7 +6029,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     `http://localhost:30000/v1`, LiteLLM `http://localhost:4000/v1`, or the other
     computer's name in place of `localhost`; a server that asks for a key (LiteLLM,
     vLLM started with one, Jan) takes it in **[en:tran:API key (optional)]** — then
-    press **[en:tran:Test]** and **[en:tran:Load models from server]**. An address
+    press **[en:tran:Test]** and **[en:tran:Load models from server]**. **To use it, return to the help window, select your server by its name in the second list (who answers), then select its model in the third list.** An address
     typed one path off is put right by **[en:tran:Test]**: Ollama's bare
     `http://localhost:11434`, an address without its `/v1`, or a door of the
     server's own such as Ollama's `/v1/systemone` is tried at the same computer and
@@ -5687,7 +6068,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     minute, and **/btw what is holy bible** took 27.5 s with the model's
     thinking on (1 069 generated tokens for a 150-token answer) — which is why
     a general question's thinking is now switched off there.
-    **A server shared by the project's own site needs no typing at all.** An
+    **A server shared by the project's own site needs no typing at all.** To use
+    one, pick it in the **who answers** list at the top of the help window, as you
+    would a server of your own; Settings only lists it. An
     admin who runs a capable computer can put its address in one file,
     `https://www.openworship.app/llm/info.json` (its shape is in the
     project's `docs/llm-registry` folder), and every copy of the app reads
@@ -5737,7 +6120,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     stood in for and never stands in — it is a choice you make yourself. With no
     other key, or when the internet itself is down, the answer comes from this guide,
     as before, under a note that says which. 📸
-    **The note says what is wrong, and carries the door to it.** The reason is read
+    **The note says what is wrong, and carries the door to it.** For a key that was
+    refused, press **Open AI settings** under the note and paste a correct key into that
+    assistant's box. The reason is read
     from what the provider actually said, not only from how loudly it said it: _the
     AI account is out of credit_ when the account is empty, _being rate-limited
     (asked too often)_ when it is a rate limit, _out of credit or being rate-limited_
@@ -5798,7 +6183,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     Reader, you are told the reader's way, never the presenter's (they differ: the
     presenter looks a verse up in a **Ctrl+B** popup, the reader has no such popup).
     It follows you: switch the app to the other page and the next answer follows,
-    unless you have chosen a half yourself in the first list. Answers are in English.
+    unless you have chosen a half yourself in the first list. **Answers are in your
+    language**: the one you write in, and the one the app is shown in whenever that
+    cannot be told — a "yes", a number, a suggestion you pressed. With the app in
+    Khmer the window's own buttons and labels are in Khmer too, drawn in the app's
+    Khmer letters, and so is the AI Chat (✨) window. Behind the scenes, an assistant
+    that is not a Gemma 4 model works in English: a Gemma 4 model running on this
+    computer or your network puts your question into English and the answer back
+    into your language, and the waiting line says so. A Gemma 4 model that answers
+    is simply asked in your language. 📸
 
 > With no key set, the **Free** assistant answers through a shared public service, so your
 > questions and anything you attach leave this computer — the notice at the top of the
@@ -5831,6 +6224,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     and a section it cannot make sense of is kept whole, with your own label above it,
     rather than dropped. If you paste something that is not a song, it says so instead
     of inventing one.
+    **On a server of your own, type /lyric first.** A server of your own is sent no
+    song tools, so pasting the words and asking does not write the song there: type
+    **/lyric** first and paste the words after it in the same message. Press **[en:tran:Send]** or **Ctrl+Enter** to submit it; the app then writes them out itself, with the same two buttons.
     **Those two buttons are the only thing to press.** The assistant sometimes
     writes its own suggestions under an answer, but under a song it never repeats
     the buttons in other words — _Create the file_ or _Copy the text_ are not
@@ -5902,11 +6298,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     "…"_ — and ask again. Everything else is the same as pasting the words yourself:
     the two buttons underneath, and nothing written to disk until you press
     **Create**.
-20. To turn the whole feature off, untick **[en:tran:Enable AI features]** in the same settings
-    section and restart the app: the chatbot, its tools and the debugging endpoint they
-    use are then never started.
+20. **[en:tran:Enable AI features]** turns all of this on or off. It is in
+    **[en:tran:Settings]** → **[en:tran:Others]**, at the top of the
+    **[en:tran:AI Providers]** section (click the section's title if it is folded). To
+    turn the whole feature off, untick it and restart the app: the chatbot, its tools
+    and the debugging endpoint they use are then never started. Tick it and restart to
+    turn it back on.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 
@@ -5920,18 +6319,23 @@ slides — a parking notice, an offering notice, a call for the next speaker.
    message gets its own box and can be **as many lines as you like** — a line
    break in the box is a line break on the screen. After typing in the second
    box, the first message still has the words you gave it. The arrows beside a
-   box move that message up or down the list; the ✕ removes it.
+   box move that message up or down the list — and on the screen too, if it is
+   up there; the ✕ removes it.
 3. **Put one up.** Press the screen button on a message's own row. It appears
    over whatever is already on the screen — the slide, the verse, the background
    — and it **stays there until you take it down**. There is no delay and no
    countdown: nothing removes it but you. Press the same button again to take it
    off; it now reads _hide_.
 4. **Several at once.** Show a second message and it sits **underneath** the
-   first rather than on top of it, however many lines each one has. Hide the one
-   above and the one below moves up to close the gap. This is how you put a
-   parking notice and an offering notice up together.
+   first rather than on top of it, however many lines each one has — a long line
+   the screen wraps onto two counts as two. Hide the one above and the one below
+   moves up to close the gap. If they would run off the bottom of the screen,
+   they are made smaller together until they fit. This is how you put a parking
+   notice and an offering notice up together.
 5. **The whole set.** **[en:tran:Show All Messages]** puts every message up at
-   once as one block. Tick **[en:tran:Rotate]** first and a seconds box appears:
+   once as one block — made smaller, too, if it would not fit on the screen. It
+   takes the place of any of them you showed one by one, and showing one again
+   takes the block down, so the same words are never on the wall twice. Tick **[en:tran:Rotate]** first and a seconds box appears:
    now the same button shows them **one at a time**, cycling until you hide it.
    That is the notice board before a service.
 6. **Make it look like a notice.** Open **[en:tran:Properties]**, then the
@@ -6109,6 +6513,9 @@ when you cannot walk back to the computer to click a panel.
 2. **Press the key three times quickly** — inside a second and a half. The
    keys go back to what is being presented. That third press only hands the
    keys over: nothing on the screen changes. The **next** press moves on.
+   If nothing happens, check whether a slider has focus or the cursor is in the
+   open **[en:tran:Bible Lookup]** box: three presses leave those controls alone.
+   Also check that one of the four panels below has something being presented.
 3. **Which panel takes them** — the first of these that has something going:
    - a presenting flow's preview panel whose run has started (one of its
      lines wears the outline);
@@ -6322,18 +6729,28 @@ cable or a second copy of the app.
    internet address you opened. Each address has **[en:tran:Copy address]**
    and **[en:tran:QR code]** (the code holds the whole link). The starred
    address sits under **[en:tran:Watch in a browser]**; every other address,
-   and the MP4 ones, fold under **[en:tran:More addresses]**. The two kinds:
+   and the MP4 ones, fold under **[en:tran:More addresses]**. A phone or a computer
+   opens an address. A TV is reached with **[en:tran:Cast to a TV]** instead, the cast icon
+   in the display card's header (step 8): choose the TV in its list and press **[en:tran:Cast]**. The two kinds:
    - **[en:tran:Watch in a browser]** — `http://<address>:<port>/vd/<number>/`.
      The browser draws the display itself from what the app sends it, so it is
      the fastest way to watch, and this computer encodes nothing for it.
-   - **[en:tran:Video for media players (MP4)]** —
+   - **[en:tran:Video for media players (MP4)]** (folded under **[en:tran:More addresses]**) —
      `http://<address>:<port>/vd/<number>/video`, an H.264 + AAC MP4 for a
      player such as VLC or OBS. It is made only while someone plays it.
+
+   **Use the display in VLC or OBS.** Choose the virtual display in a screen card's
+   display picker, present the content and turn that screen on with the card's show
+   control (F5). In the display card's **[en:tran:Where to watch]**, open
+   **[en:tran:More addresses]** and copy the **[en:tran:Video for media players (MP4)]**
+   address into VLC or OBS. If the player is on another device, first turn on
+   **[en:tran:Let other devices watch]** above the display cards.
 
    The port stays the same from one launch to the next, so a saved address
    or a printed QR code keeps working after the app restarts.
 
-   Until **[en:tran:Let other devices watch]** at the top of the tab is on,
+   Until **[en:tran:Let other devices watch]** is on — a switch at the top of
+   the **[en:tran:Virtual Displays]** tab, above the display cards, not inside one —
    only **[en:tran:This computer]** addresses are listed and nobody else can
    watch. Turned on, it lists **[en:tran:This network]** addresses; turning
    on **[en:tran:Open to the internet]** as well (the same option as Screen
@@ -6344,8 +6761,11 @@ cable or a second copy of the app.
    — or, with **[en:tran:Guest access]** set to
    **[en:tran:Require connection code]**, until it gives the code.
 
-   **[en:tran:Use HTTPS]**, under it (off until turned on), lists the browser
-   addresses for other devices as `https://`, on the same port. A phone's
+   **Give a virtual display an HTTPS address.** At the top of the **[en:tran:Virtual Displays]**
+   tab, turn on **[en:tran:Let other devices watch]**, then **[en:tran:Use HTTPS]**
+   directly below it. Open the display card's **[en:tran:Where to watch]** section
+   and copy its starred `https://` address under **[en:tran:Watch in a browser]**.
+   Other devices use that address, on the same port. A phone's
    page on this network can then do what a browser allows only a secure
    page: keep the screen awake in full screen, and send its microphone and
    camera. This computer signs its own certificate, so each browser warns
@@ -6358,17 +6778,22 @@ cable or a second copy of the app.
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
    leaves it; on a phone, full screen also turns the picture sideways where
-   the browser allows it. The buttons show while the mouse is over the page
-   and hide when it leaves; a tap on the picture shows them for a few
-   seconds. The pointer shows over the picture only while they do.
+   the browser allows it.
+   **On the device watching, the page's buttons come back with the mouse or a tap.**
+   Stay on the browser page that is already showing the display: move the mouse
+   over its picture or tap the picture once to reveal the buttons. They hide
+   when the mouse leaves, or a few seconds after a tap. The pointer shows over the
+   picture only while they do.
    **[en:tran:Turn on sound]** is
    needed once, because a browser plays sound only after the page has been
    touched; until then the page plays everything silently. A camera put on
    the screen (Camera Show, or a camera background) is streamed from this
    computer to the page, on this network.
 
-   On a page that may use a camera (an `https://` address from step 6, the
-   tunnel's, or this computer's own), **[en:tran:Share my cameras]** opens a
+   **To share a phone's camera, open the display on the phone at an `https://`
+   address.** Turn on **[en:tran:Let other devices watch]** and **[en:tran:Use HTTPS]**
+   first (step 6): only then are `https://` addresses listed under
+   **[en:tran:Where to watch]**, this computer's on the network — or use the tunnel's. On such a page **[en:tran:Share my cameras]** opens a
    list of every camera of the device, each with **[en:tran:Share]**. A
    phone lists **[en:tran:Front camera]** and **[en:tran:Back camera]** until
    the browser has been allowed a camera, then every camera it has by name —
@@ -6376,7 +6801,8 @@ cable or a second copy of the app.
    its picture above the list and reads **[en:tran:Stop]**; **[en:tran:Share]**
    on another one puts it in its place on every screen showing it, with
    nothing to add again. The app lists it among its cameras as
-   `Browser <address>: <camera>`.
+   `Browser <address>: <camera>`: pick it there, as a Camera Show or a camera
+   background, to put it on a screen.
 
    The page keeps the device from sleeping while it is open. If the app goes
    away, the page reads **[en:tran:Waiting for the display]** and joins again
@@ -6388,8 +6814,12 @@ cable or a second copy of the app.
    looked for only when the list opens: **[en:tran:Cast]** puts the display
    on one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]**
    looks once more. It needs **[en:tran:Let other devices watch]** (step 6)
-   on, because the TV plays the display's MP4 address itself. The browser
-   page has the same button, with one more row:
+   on, because the TV plays the display's MP4 address itself.
+   **On the phone or tablet watching, the browser page has the same button.** It works
+   from any address of **[en:tran:Where to watch]** the page was opened at, `http://` too,
+   so **[en:tran:Let other devices watch]** has to be on — the switch at the top of the
+   **[en:tran:Virtual Displays]** tab, above the cards (step 6). Its **[en:tran:Cast to a TV]**
+   offers one more row:
    - **[en:tran:Cast from this browser]** — a TV on the same network as the
      device holding the page (at home, in another building), through the
      browser's own picker: Chrome and Edge list Google Cast TVs, Safari
@@ -6416,7 +6846,8 @@ cable or a second copy of the app.
    listed under **[en:tran:Disconnected]**, where **[en:tran:Allow again]**
    lets it back in at once. **[en:tran:Preview]** shows the display
    inside the card, listed as **[en:tran:This app (preview)]**. A browser's
-   row has **[en:tran:Allow interaction]**, off for every new viewer. Turned
+   row — on the display's card in the **[en:tran:Virtual Displays]** tab of step 1 —
+   has **[en:tran:Allow interaction]**, off for every new viewer. Turned
    on, a hand on that browser's page reaches the app the way a hand on the
    projector's own window does: scrolling a passage or a tall slide, tapping
    a verse to pick it, and the screen's **✕** (top right, under the mouse)

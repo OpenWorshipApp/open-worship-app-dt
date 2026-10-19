@@ -22,7 +22,10 @@ import {
     ctrlShiftEnterEventMapper,
     showAddingBibleItemFail,
 } from './bibleActionHelpers';
-import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp';
+import {
+    RenderAskAssistantBibleItemButtonComp,
+    RenderCopyBibleItemActionButtonsComp,
+} from './RenderActionButtonsComp';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
@@ -266,6 +269,7 @@ export default function RenderEditingActionButtonsComp({
                     </button>
                 </>
             )}
+            <RenderAskAssistantBibleItemButtonComp bibleItem={bibleItem} />
             {viewController.extraEditingActionButtons}
         </div>
     );

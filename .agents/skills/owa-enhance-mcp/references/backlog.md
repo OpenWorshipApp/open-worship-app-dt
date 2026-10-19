@@ -6,6 +6,68 @@ evidence, so a future run can weigh it without re-deriving it.
 
 Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
+### MC-61 — Resources PDF reads expose complete, verifiable page coverage · done 2026-10-18
+
+Asked for directly after the verse-range reader: _make sure the mcp tool can
+extract 100% content and allow user read and ask and interact_. A literal 100%
+OCR promise would be false: this Khmer study PDF's embedded text is legacy-font
+Latin gibberish, while a scan has no embedded text at all. The reliable unit
+is therefore the page picture, with completeness measured by page number.
+
+`owa_resource_file read` now returns every remaining PDF page in one result by
+default, as image blocks, plus `firstPage`, `lastPage`, `nextPage`, `pageCount`,
+and `isComplete` for verifiable coverage. `pages` selects a deliberately partial
+one-to-eight-page read; `detail: "high"` renders the whole default read at
+2048px. The Resources verse prompt requests the complete PDF once, treats its
+pictures as authoritative, and keeps pagination out of the user conversation.
+It discovers the installed chapter boundary first, then injects only one exact
+verse into each isolated model request. For `JHN.3.pdf`, **Full chapter** walks
+1 through 36 as separate cards instead of sending all 36 verses in one context.
+Successful picture extraction is kept in a bounded, source-aware
+OS-temp disk cache, so those sequential cards do not rerender the PDF. Existing
+related-file reads still produce the user-facing **Ask about {name}** action,
+so a read can continue into another Resources PDF without exposing a disk path.
+
+**Live proof:** a fresh stdio server listed the `pages` and `detail` schema;
+`pdf/JHN.3.pdf` at high detail returned all pages 1–4 in one result, four image
+blocks, and `isComplete: true`. A regression check then proved the PDF's four
+embedded text layers are legacy-font Latin gibberish (4.1–4.3k false characters
+per page). They are now withheld from the model result instead of merely marked
+untrusted, preventing them from overriding the page pictures.
+Unit proof checks 1024/2048 rendering, page-number alignment, full pagination,
+and real text extraction from the Unicode fixture. Trade: the host and
+Resources-only schema grow slightly; the ordinary chatbot tool list is
+unchanged, and no new tool or permission exists. Audit: 64 host / 38 OWA / 26
+model tools, no warnings; ordinary model schemas remain 8,348 tokens per
+round, while the Resources-only tool grows 229 → 296 tokens. The before/after
+policy probe is unchanged at 15/17: both misses are explicit skips because the
+user's main window is on the Reader, not a policy failure.
+
+### MC-60 — book-name lists from the user's URL · done 2026-10-18
+
+The user pasted a Bible.com chapter link during import's name selection; the
+assistant treated it as a whole-Bible download and offered to project a verse.
+`names` now accepts the existing `url` field: recognized chapter links resolve
+to the edition index, other pages are read for stable book IDs. Four sequential
+public reads at most; complete distinct 66-book lists only, source provenance,
+selected-language checks, no fabricated names or silent catalog substitution.
+One server implementation serves both doors; no additional tool or schema field.
+The banner names the supplied site and each read retains the network policy.
+
+Fresh stdio against the original dev instance: the exact edition 4783 link
+returned all 66 Khmer names in one read. Unit checks cover unsafe addresses,
+lookalike hosts, partial/conflicting/duplicate lists, language mismatch, bounded
+reads and offline failure. Baseline policy probe 15/17: two layout-dependent
+checks skipped on Reader, not passed. No firewall rule changed. A Wordproject
+Khmer chapter also resolves to its complete edition list. After restarting the
+original app (PID 19104, CDP 58955), both the bare link and a Khmer sentence
+around it returned the supplied edition first, with Khmer retained and a
+clickable source link. A rate-limited read retained the prior choices; retry
+after the window cleared succeeded. No Bible installed. The tool surface stays
+64 host / 26 model; 8,350 → 8,348 schema tokens. Evidence and final gate:
+`test-results/bible-import-input/report.md`, `url-restarted-final.png`,
+`restarted-final-gate.log`.
+
 ---
 
 ### `MC-50` — everything a user does on the page, by its words · done 2026-10-10
@@ -1289,3 +1351,82 @@ is passed by all three callers, held by `website.test.mjs`. No schema
 changed: the model's bill is the same. **Proof:** the raw page read before —
 `isError: true`; after — 1 070 characters in 1.6 s; `example.com` reads the
 same 133 words both before and after.
+
+### `MC-59` — a verse somebody half-remembers: `owa_find_verse`, offered to one kind of ask · done 2026-10-16
+
+Asked for by the user with Bible Find circled: _as a user I want to consult
+with assistant in chatbot to find verses I forgot. add robot icon somewhere in
+`Find` when I click it open tab in chatbot by ask for bible key (list to
+choose) then follow up with what ever that user can rember about the verse_,
+then, the same evening: _when found verse then it should allow user to click to
+open in bible lookup_, _if something over what assistant can answer then try
+lookup on internet_, _try all tricks, if user input local text (non-english)
+then try translate to english … then lookup in KJV, plus try in the input
+language as well_ and _build a google link for user_.
+
+**Why a tool.** No tool searched a Bible by its words: `owa_list_ui` +
+`owa_type` could fill the user's own Find box (clobbering it) and read one page
+of results, as one phrase in the order typed -- "enemies love pray" finds
+nothing where Matthew 5:44 says "Love your enemies … pray". Bible Find's own
+query is `%love%%enemies%` over the words run together.
+
+**Why offered to one ask.** The model's ordinary list stood at its ratchet,
+8 350 of 8 350. A tool that matters to one conversation and rides every round
+of every question was the expensive answer, so `modelTools.mjs` grew
+`MODEL_ON_ASK_TOOL_MAP` (a tool → the one ask kind it goes to) and
+`MODEL_ASK_SHARED_TOOL_MAP` (ordinary tools that ask shares:
+`owa_read_website`); the verse-finding ask goes out under its own ~420-token
+prompt with those two tools alone. Trade: the host lists 61 tools (+~280 a
+round to the developer's door); the ordinary model bill is unchanged; a verse
+answer cost 5k tokens live on the free model, where an ordinary question pays
+~8 350 of schemas a round. Safe: it reads; `open` changes only the lookup's
+passage, is in `ACTING_TOOLS` (the banner names the verse) and in the
+firewall's acting budget, like every search.
+
+**What it found on the way.** Bible Find's table holds the words run together,
+so "lover" matched "I wil(l over)take" (Exodus 15:9): candidates are re-read
+word by word for languages written with spaces. English forms ("enemy" /
+"enemies") are a cut-back start. The user's own Khmer tab showed three more:
+English words under the Khmer Bible spent 38.8k tokens on a free model that
+never translated, and the offline fallback blamed the main window (now: the
+words are searched in another installed Bible, KJV first, and quoted from the
+chosen one; the result names `englishBible`); Khmer typed with no space was one
+"word" (now cut into the Bible's own words, from Bible Find's `spell` table);
+and "ឥន្ទ្រី" (eagle) matched "ឥន្ទ្រីយ" (senses) in Hebrews 5:14 -- letters,
+not words, in a script with no spaces, which the result now says.
+
+**Proof:** `enemies love pray persecute` → Matthew 5:44 first (4 of 4), ~100 ms;
+`book: "Psalms"` (KJV calls it "Psalm") → Psalm 23:1; English words under ពគប
+→ John 21:17 quoted in Khmer, `searchedIn: KJV`; `open: "MAT 5:44"` → the
+Reader on it, the split view following, the banner naming it; through the 🤖
+in Find on **Auto** (Free · Nemotron Super VL): KJV picked, _jesus asked peter
+three times if he loved him_ → John 21:15 and 21:17 with two **Open … in Bible
+Lookup** buttons, 5k tokens; the walkthrough tip `reader-find-verse-assistant`
+ringing the robot. `probe-mcp.mjs` 15/17, the two others SKIPPED because the
+main window was on the Reader (the user was testing there).
+
+**Left open:** a verse asked for by what it says in an ORDINARY tab
+(`readBibleContentAsk`, EC-199) still gets the guide's Bible Find advice, not
+the tool -- routing it into a verse-finding ask is one small change in
+`handleAsking`; a custom server's lean list gets `owa_find_verse` but not
+`owa_read_website`; and Khmer words are matched as letters, so a word inside a
+longer one still counts.
+
+**The user's own Khmer question, end to end** (the same evening, on the
+free model through Auto): _ព្រះយេស៊ូសួរពេត្រុសច្រើនដង_ (Jesus asked Peter
+many times) under ពគប -- the model searched ពគប in Khmer, then KJV with
+"Jesus asked Peter lovest thou me", read `JHN 21:15; JHN 21:17` back in
+ពគប, and answered in Khmer with both verses quoted from it (41.4k tokens,
+free). Every **Open …** button came twice -- the verse found in the KJV
+and read in ពគប were two -- so `genVerseOpenActions` keeps one per key and
+opens it in the conversation's Bible.
+
+**The goal the user then set** (_chatbot be smart enough to help user find
+verses he/she forgot_, with _for any translation attempt please prefer Gemma
+4 models_): the window now searches FIRST (`genVerseHeadStart`) -- their
+words, and for another script their English from a Gemma 4 model -- and the
+assistant starts from the results; Auto asks Gemma 4 first for such a verse;
+`Help me find a Bible verse in "KJV": <words>` is one line; and a verse
+asked for by what it says in any chat goes to the same search. The user's
+Khmer phrase: 41.4k tokens and five rounds before, 3.6k on the local
+gemma-4-e4b after. Measured through the real window with `corpus-run.mjs --asks` and the standing set `references/verse-find-asks.json` (scored by `scripts/score-verse-find.mjs`): **20 of 20** -- KJV 10/10 (exact, misremembered, modern paraphrase, described), ពគប 5/5 (Khmer with no spaces and described, through the local gemma-4-e4b in 7-13 s, 2.4-2.9k tokens; English words under it), and 5/5 typed in an ordinary chat, which before the routing took 17.6-37.1k tokens and opened no verse and after it 2.1-6.8k, 4-17 s.

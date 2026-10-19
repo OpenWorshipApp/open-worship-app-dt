@@ -12,7 +12,9 @@ export function SelectDefaultDirButtonComp({
 }>) {
     return (
         <button
-            className="btn btn-sm btn-info"
+            // Wraps: the app's `.btn` is `nowrap`, and in a ~230px sidebar the
+            // label ran out of the card on both sides.
+            className="btn btn-sm btn-info text-wrap text-break mw-100"
             onClick={() => {
                 selectDefaultDataDirName(dirSource, defaultFolderName);
             }}
@@ -26,7 +28,7 @@ export function GotoSettingDirectoryPathComp() {
     return (
         <div className="m-2">
             <button
-                className="btn btn-sm btn-warning"
+                className="btn btn-sm btn-warning text-wrap text-break mw-100"
                 onClick={() => {
                     openGeneralSetting();
                 }}
@@ -60,24 +62,21 @@ export default function NoDirSelectedComp({
     return (
         <div className="card p-1 w-100 app-overflow-hidden">
             <div className="card-body w-100">
-                <div
-                    className="ms-2"
-                    style={{
-                        color: 'purple',
-                    }}
-                >
+                {/* A theme colour: purple on the dark theme's card could
+                    barely be read. */}
+                <div className="ms-2 text-warning-emphasis">
                     <i className="bi bi-info-circle me-1" />
                     <span>{tran('No directory selected')}</span>
                 </div>
                 <div className="w-100 d-flex flex-column align-items-center justify-content-center">
-                    <div className="m-1">
+                    <div className="m-1 mw-100">
                         <SelectDefaultDirButtonComp
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
                     {isDirSettingRouteHidden ? null : (
-                        <div>
+                        <div className="mw-100">
                             <GotoSettingDirectoryPathComp />
                         </div>
                     )}

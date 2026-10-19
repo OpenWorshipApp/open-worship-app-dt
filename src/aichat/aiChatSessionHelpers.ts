@@ -18,6 +18,7 @@ import {
     genSessionId,
     toChatSessionTitle,
 } from '../chatbot/chatSessionHelpers';
+import { tran } from '../chatbot/chatTranHelpers';
 import { checkIsOnAiChatSite, getAiChatProvider } from './aiChatProviders';
 
 export type AiChatSessionType = {
@@ -99,7 +100,7 @@ export function genAiChatSessionTitle(session: AiChatSessionType) {
             ? session.pageTitle
             : session.pageTitle.slice(0, MAX_SHOWN_TITLE_LENGTH - 1) + '…';
     }
-    return provider?.name ?? 'New chat';
+    return provider?.name ?? tran('New chat');
 }
 
 /**

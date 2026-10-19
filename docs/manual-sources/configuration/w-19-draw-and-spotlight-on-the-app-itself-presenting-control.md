@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-19 — Draw and spotlight on the app itself (Presenting Control)
 
@@ -47,7 +47,7 @@ this is the same pair of tools pointed at the app.
    spotlight) and with the panel **collapsed**. On the arrow tool those keys go to the app
    instead, and only the buttons act on the drawing.
 6. Click the **spotlight** to dim the whole app except a circle. In **[en:tran:Follow]** (the
-   default) the circle simply tracks your pointer; press that button (`H`) and it reads
+   default) the circle simply tracks your pointer; press the **[en:tran:Follow]** button itself (`H`) and it reads
    **[en:tran:Hold]**, which dims only while the mouse button is down. **[en:tran:Contrast]** (`X`) inverts it — the
    circle becomes the blocked area instead. Size, **[en:tran:Dim color]**, dim amount and **edge
    blur** (`,` / `.`) all have sliders. 📸

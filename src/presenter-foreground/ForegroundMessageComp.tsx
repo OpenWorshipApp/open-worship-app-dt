@@ -280,6 +280,9 @@ export function genStackedMessageDataList(
                     ...toTransitionPart(transitionEffect),
                     textList,
                     intervalSecond: null,
+                    // The screen lays a stack out by its measured heights;
+                    // the offset below is the first frame's estimate.
+                    stackKey: prefix,
                     extraStyle: withStackOffset(extraStyle, {
                         lineCountAbove,
                         messageCountAbove,
@@ -302,6 +305,29 @@ export function checkIsShowingId(
     return showingScreenIdDataList.some(([, data]) => {
         return data.id === id;
     });
+}
+
+/**
+ * One screen's messages with a session's "all" box put up IN PLACE of that
+ * session's singly shown ones.
+ *
+ * The box already holds every one of them, and it is not part of their stack
+ * -- the screen lays out each stack on its own -- so leaving them up drew the
+ * same words twice, the single box showing through the Show-All one. Another
+ * session's messages are not touched.
+ */
+export function genAllInPlaceOfSessionMessages(
+    dataList: ForegroundMessageDataType[],
+    ownIdList: string[],
+    allData: ForegroundMessageDataType,
+) {
+    const ownIdSet = new Set(ownIdList);
+    return [
+        ...dataList.filter((item) => {
+            return !ownIdSet.has(item.id) && item.id !== allData.id;
+        }),
+        allData,
+    ];
 }
 
 /**
@@ -578,28 +604,65 @@ function MessageBodyComp({
                     return message.id;
                 }),
             );
+            const stackedDataList = genStackedMessageDataList(
+                messageListRef.current,
+                shownIdList.filter((id) => {
+                    return ownIdSet.has(id);
+                }),
+                genStyleRef.current(),
+                prefixRef.current,
+                getIsBehindRef.current(),
+                getTransitionRef.current(),
+            );
             // Everything on this screen that is NOT one of this session's
             // editors stays: another session's messages, and this session's
-            // own rotating "all" item, which is not one of the stacked ones.
+            // own "all" box while none of its messages is up on its own. A
+            // single one shown over that box would be drawn twice, apart from
+            // the box -- the two are alternatives, see
+            // `genAllInPlaceOfSessionMessages`.
             const keptDataList = (
                 screenForegroundManager.foregroundData
                     .messageDataList as ForegroundMessageDataType[]
             ).filter((item) => {
+                if (
+                    stackedDataList.length > 0 &&
+                    item.id === messageAllIdRef.current
+                ) {
+                    return false;
+                }
                 return !ownIdSet.has(item.id);
             });
             screenForegroundManager.setMessageDataList([
                 ...keptDataList,
-                ...genStackedMessageDataList(
-                    messageListRef.current,
-                    shownIdList.filter((id) => {
-                        return ownIdSet.has(id);
-                    }),
-                    genStyleRef.current(),
-                    prefixRef.current,
-                    getIsBehindRef.current(),
-                    getTransitionRef.current(),
-                ),
+                ...stackedDataList,
             ]);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const showAllOnManager = useCallback(
+        (
+            screenForegroundManager: ScreenForegroundManager,
+            data: ForegroundMessageDataType,
+        ) => {
+            const ownIdList = messageListRef.current.map((message) => {
+                return message.id;
+            });
+            const dataList =
+                screenForegroundManager.foregroundData.messageDataList;
+            if (
+                !dataList.some((item) => {
+                    return ownIdList.includes(item.id);
+                })
+            ) {
+                // Nothing of this session's is up on its own: the plain add,
+                // which leaves an unchanged box alone.
+                screenForegroundManager.addMessageData(data);
+                return;
+            }
+            screenForegroundManager.setMessageDataList(
+                genAllInPlaceOfSessionMessages(dataList, ownIdList, data),
+            );
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -681,6 +744,44 @@ function MessageBodyComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // A message MOVED while it is up moves on the wall too. The stack is laid
+    // out in session order, and Move up / Move down used to reorder only the
+    // editors: the projector kept the old order until something else was shown
+    // or hidden. Keyed on the ORDER alone -- typing in an editor does not
+    // re-send what is up -- and never on the first render, which changes
+    // nothing and would only rewrite every screen's setting.
+    const messageOrderKey = messageList
+        .map((message) => {
+            return message.id;
+        })
+        .join('\n');
+    const lastMessageOrderKeyRef = useRef<string | null>(null);
+    useAppEffect(() => {
+        const lastKey = lastMessageOrderKeyRef.current;
+        lastMessageOrderKeyRef.current = messageOrderKey;
+        if (lastKey === null || lastKey === messageOrderKey) {
+            return;
+        }
+        const shownIdListMap = new Map<number, string[]>();
+        for (const [screenId, data] of showingScreenIdDataListRef.current) {
+            if (data.id === messageAllIdRef.current) {
+                continue;
+            }
+            shownIdListMap.set(screenId, [
+                ...(shownIdListMap.get(screenId) ?? []),
+                data.id,
+            ]);
+        }
+        for (const [screenId, shownIdList] of shownIdListMap) {
+            getScreenForegroundManagerInstances(
+                screenId,
+                (screenForegroundManager) => {
+                    applyToManager(screenForegroundManager, shownIdList);
+                },
+            );
+        }
+    }, [messageOrderKey]);
+
     // F4 takes EVERYTHING down when anything is up -- the panic half of the
     // key -- and otherwise puts the whole session up. It deliberately does not
     // go through `addMessageData`'s static, whose `chooseScreenIds` opens a
@@ -714,7 +815,7 @@ function MessageBodyComp({
             getScreenForegroundManagerInstances(
                 screenId,
                 (screenForegroundManager) => {
-                    screenForegroundManager.addMessageData(data);
+                    showAllOnManager(screenForegroundManager, data);
                 },
             );
         }
@@ -727,7 +828,13 @@ function MessageBodyComp({
         if (data === null) {
             return;
         }
-        ScreenForegroundManager.addMessageData(event, data);
+        ScreenForegroundManager.setData(
+            event,
+            (screenForegroundManager) => {
+                showAllOnManager(screenForegroundManager, data);
+            },
+            false,
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleByDropped = useCallback((event: any) => {
@@ -738,7 +845,7 @@ function MessageBodyComp({
         }
         const data = genAllMessageData();
         if (data !== null) {
-            screenForegroundManager.addMessageData(data);
+            showAllOnManager(screenForegroundManager, data);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

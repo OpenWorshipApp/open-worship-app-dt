@@ -11,3 +11,14 @@ export function findModelHiddenReason(name: string): string | null;
 export function filterModelToolList<T extends { name: string }>(
     toolList: T[],
 ): T[];
+
+/** Tool name -> the one kind of ask it is offered for. */
+export const MODEL_ON_ASK_TOOL_MAP: Record<string, string>;
+/** Ask kind -> the ordinary tools it is sent beside its own. */
+export const MODEL_ASK_SHARED_TOOL_MAP: Record<string, string[]>;
+
+export function checkIsModelOnAskTool(name: string): boolean;
+export function pickAskToolList<T extends { name: string }>(
+    toolList: T[],
+    askKind: string,
+): T[];

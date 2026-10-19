@@ -321,6 +321,23 @@ describe('handleAgentBibleRequest', () => {
         ).toMatchObject({ isError: true });
     });
 
+    // EC-294: a check only reads, so the Reader asks it too.
+    it('checks off the Presenter page, saying nothing of the screens', async () => {
+        h.isPagePresenter = false;
+        const result = await handleAgentBibleRequest({
+            reference: 'John 3:16',
+            action: 'check',
+        });
+        expect(result).toMatchObject({
+            isPresented: false,
+            reference: 'John 3:16',
+            version: 'KJV',
+        });
+        expect((result as any).screens).toBeUndefined();
+        expect((result as any).note).toContain('Presenter page');
+        expect(h.presentCalls).toHaveLength(0);
+    });
+
     it('refuses off the Presenter page in words for a person', async () => {
         h.isPagePresenter = false;
         const result = await handleAgentBibleRequest({

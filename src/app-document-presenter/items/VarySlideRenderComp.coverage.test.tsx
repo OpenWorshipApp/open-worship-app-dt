@@ -425,7 +425,7 @@ describe('VarySlideRenderComp', () => {
             container
                 .querySelector('.bi-aspect-ratio-fill')
                 ?.getAttribute('title'),
-        ).toBe('width:400, height:200');
+        ).toBe('Width: 400, Height: 200');
         expect(container.textContent).toContain('*');
         const screenIcons = Array.from(
             container.querySelectorAll('[data-testid="screen-icon"]'),

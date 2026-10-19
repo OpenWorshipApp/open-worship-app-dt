@@ -60,9 +60,8 @@
                     "description": "true prices the server's answers at nothing in the help window."
                 },
                 "note": {
-                    "type": "string",
-                    "maxLength": 300,
-                    "description": "For people reading the file; not shown in the app."
+                    "$ref": "#/$defs/note",
+                    "description": "The server's word to the person choosing it, shown before each of its models' own note. It is SHOWN: a note for admins belongs somewhere else."
                 },
                 "isAcceptingReport": {
                     "type": "boolean",
@@ -92,8 +91,24 @@
                 "canSeeImages": {
                     "type": "boolean",
                     "description": "true lets a picture be attached to a question."
+                },
+                "note": {
+                    "$ref": "#/$defs/note",
+                    "description": "This model's word to the person choosing it, e.g. that it is slow but saves the cost of usage."
                 }
             }
+        },
+        "note": {
+            "description": "Shown to the person choosing the server or model: under the help window's pickers, on the model's hover, in Auto's waiting line and in Settings -> Others -> Shared servers. A string, or an object of language code to string ({\"en\": \"...\", \"km\": \"...\"}): the app shows its own language's, then the plain string, then English. Up to 300 characters each, 12 languages. The server's host is taken out of it before any window sees it.",
+            "oneOf": [
+                { "type": "string", "maxLength": 300 },
+                {
+                    "type": "object",
+                    "maxProperties": 12,
+                    "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$" },
+                    "additionalProperties": { "type": "string", "maxLength": 300 }
+                }
+            ]
         }
     }
 }

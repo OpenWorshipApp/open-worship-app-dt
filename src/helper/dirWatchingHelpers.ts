@@ -34,7 +34,6 @@ const fileExtraSuffixes = [HISTORY_DIR_NAME_SUFFIX, '-htmls', '-images'];
  * written into `song.ows.histories` IS a change to `song.ows`, and nothing else
  * would ever say so.
  */
-// TODO: support other events: 'rename', 'unlink', 'add'
 async function alertFileChanging(filePath: string) {
     // A rename or a delete reports the OLD path too, and every `update`
     // listener re-reads its file: a Bibles list renamed in the app logged an
@@ -45,6 +44,14 @@ async function alertFileChanging(filePath: string) {
         (await fsCheckDirExist(filePath))
     ) {
         FileSource.getInstance(filePath).fireUpdateEvent();
+    } else if (await fsCheckDirExist(pathDirname(filePath))) {
+        // Gone from a folder that is still here: deleted or moved away
+        // outside the app (Explorer, a sync tool, another computer). Said the
+        // way the app's own trash says it, or the previewer kept the
+        // document's slides up -- and they could still be put on a screen.
+        // A folder that is gone too may be a drive that was only unplugged,
+        // and its files are left alone, as `checkAllColorNotes` leaves them.
+        FileSource.fireDeleteEventByPath(filePath);
     }
     const sidecarSuffix = fileExtraSuffixes.find((suffix) => {
         return filePath.includes(suffix);

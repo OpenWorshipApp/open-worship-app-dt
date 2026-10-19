@@ -276,9 +276,13 @@ export default function FileItemHandlerComp({
                 // Reserving one button's width let the rail's second half sit
                 // over the row's own content -- on a presenting flow card that
                 // was the ⋮ of its FIRST line, which took no click at all.
-                (isDisabledColorNote
-                    ? ' app-has-action-rail'
-                    : ' app-has-action-rail-2') +
+                // None while renaming: the rail is not drawn then, and its
+                // reservation left the name box ~60px in a narrow sidebar.
+                (isRenaming
+                    ? ''
+                    : isDisabledColorNote
+                      ? ' app-has-action-rail'
+                      : ' app-has-action-rail-2') +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}

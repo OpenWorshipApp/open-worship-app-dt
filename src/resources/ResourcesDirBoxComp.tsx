@@ -10,7 +10,6 @@ import {
     getMenuTitleRevealFile,
     pressElementLikeButton,
 } from '../helper/helpers';
-import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import {
@@ -28,7 +27,6 @@ import {
     ResourcesCopyError,
     toResourcesFilesCopiedMessage,
 } from './resourcesCopyHelpers';
-import { toResourcesFolderExpandedSettingName } from './resourcesFolderHelpers';
 import type {
     ResourcesScanResultType,
     ResourceTargetType,
@@ -93,16 +91,15 @@ export default function ResourcesDirBoxComp({
     onCopyFolderToDataDir: (dirPath: string) => void;
     onRemoveFolder: (dirPath: string) => void;
 }>) {
-    const [isShowing, setIsShowing] = useStateSettingBoolean(
-        toResourcesFolderExpandedSettingName(dirPath),
-        true,
-    );
+    // Open every time the panel is shown; a collapse lasts only while the box
+    // stays mounted. It used to be saved per folder, so a folder collapsed
+    // once -- by a test run, by a slip of the hand -- came back shut on every
+    // launch, a shelf that looked empty until someone thought to press it.
+    const [isShowing, setIsShowing] = useState(true);
     // Bumped by Refresh. A primitive, so the scan effect below can keep a deps
     // array of primitives only -- an object dep would re-walk the tree on every
     // re-render of the parent.
     const [refreshCount, setRefreshCount] = useState(0);
-    const isShowingRef = useAppCurrentRef(isShowing);
-    const setIsShowingRef = useAppCurrentRef(setIsShowing);
     const onAddFolderRef = useAppCurrentRef(onAddFolder);
     const onCopyFolderToDataDirRef = useAppCurrentRef(onCopyFolderToDataDir);
     const onRemoveFolderRef = useAppCurrentRef(onRemoveFolder);
@@ -114,8 +111,9 @@ export default function ResourcesDirBoxComp({
     const searchTextRef = useAppCurrentRef(searchText);
     const isOthersShowingRef = useAppCurrentRef(isOthersShowing);
     const handleToggleShowing = useCallback(() => {
-        setIsShowingRef.current(!isShowingRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        setIsShowing((oldIsShowing) => {
+            return !oldIsShowing;
+        });
     }, []);
     const handleRefreshing = useCallback(() => {
         invalidateResourcesScanCache(dirPathRef.current);
@@ -158,7 +156,7 @@ export default function ResourcesDirBoxComp({
                 handleRefreshingRef.current();
                 // Opened, because a folder that was collapsed when the files
                 // went in would answer the copy with nothing at all.
-                setIsShowingRef.current(true);
+                setIsShowing(true);
             }
             const isNoneListed = result.copiedFilePaths.every((filePath) => {
                 return !checkIsResourceFileListed(

@@ -9,6 +9,7 @@ const { state, mocks } = vi.hoisted(() => ({
         panels: [] as any[],
         managers: undefined as any,
         controller: null as object | null,
+        isAiEnabled: false,
     },
     mocks: {
         closePanel: vi.fn(),
@@ -22,7 +23,15 @@ const { state, mocks } = vi.hoisted(() => ({
         showBibleKeyOption: vi.fn(),
         useLookupManagers: vi.fn(),
         verseFontFamily: vi.fn(),
+        openChatbotWithLookup: vi.fn(),
     },
+}));
+
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => state.isAiEnabled,
+}));
+vi.mock('../helper/ai/chatbotHandoffHelpers', () => ({
+    openChatbotWithLookup: mocks.openChatbotWithLookup,
 }));
 
 vi.mock('../app-modal/FloatingWidgetComp', () => ({
@@ -396,5 +405,42 @@ describe('location and name detail panels', () => {
             name: 'Genesis 1:1',
             bibleKey: 'KHM',
         });
+    });
+
+    // The robot at the left of the title (2026-10-18): which record, never
+    // its words, handed to the assistant -- and nothing at all with AI off.
+    test('asks the assistant about the record it shows, only while AI is on', async () => {
+        const record = { name: 'Abraham', verses: ['GEN.12.1'] };
+        state.panels = [
+            {
+                key: 'name-1',
+                kind: 'name',
+                target: 'n1',
+                name: 'Old name',
+                langCode: 'km',
+                raiseCount: 0,
+            },
+        ];
+        state.managers = {
+            namesLookupManager: { getRecordById: () => record },
+            locationsLookupManager: { getRecordById: () => null },
+        };
+        await act(async () => root.render(<LocationNameDetailPanelsComp />));
+        expect(
+            document.querySelector(
+                '[aria-label="Ask the Assistant About This Person"]',
+            ),
+        ).toBeNull();
+        state.isAiEnabled = true;
+        await act(async () => root.render(<LocationNameDetailPanelsComp />));
+        await act(async () => click('Ask the Assistant About This Person'));
+        expect(mocks.openChatbotWithLookup).toHaveBeenCalledWith({
+            kind: 'name',
+            target: 'n1',
+            title: 'Abraham',
+            langCode: 'km',
+            page: globalThis.location.href,
+        });
+        state.isAiEnabled = false;
     });
 });

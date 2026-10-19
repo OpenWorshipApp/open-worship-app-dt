@@ -176,7 +176,13 @@ describe('file list controls', () => {
         const sortItems = h.menu.mock.calls.at(-1)![1];
         expect(
             sortItems.map((item: { menuElement: string }) => item.menuElement),
-        ).toEqual(['Default', 'Name', 'Name', 'Type', 'Type']);
+        ).toEqual([
+            'Default',
+            'Name (A to Z)',
+            'Name (Z to A)',
+            'Type (A to Z)',
+            'Type (Z to A)',
+        ]);
         await act(async () => sortItems[2].onSelect());
         expect(filterData.setSortData).toHaveBeenCalledWith({
             key: 'name',
@@ -193,6 +199,28 @@ describe('file list controls', () => {
         ).toEqual(['All Types', 'MD', 'PDF']);
         await act(async () => typeItems[2].onSelect());
         expect(filterData.setFilterTypeName).toHaveBeenCalledWith('PDF');
+    });
+
+    it('makes the header icons named buttons the keyboard can press', async () => {
+        await renderIcons(['/docs/a.md', '/docs/b.pdf']);
+        const sortIcon =
+            container.querySelector<HTMLElement>('[title="Sort"]')!;
+        // Were role-less divs: out of the accessibility tree, and no Tab stop.
+        expect(sortIcon.getAttribute('role')).toBe('button');
+        expect(sortIcon.getAttribute('aria-label')).toBe('Sort');
+        expect(sortIcon.getAttribute('aria-haspopup')).toBe('menu');
+        expect(sortIcon.tabIndex).toBe(0);
+        const searchIcon = container.querySelector<HTMLElement>(
+            '[title="Filter by name"]',
+        )!;
+        expect(searchIcon.getAttribute('aria-pressed')).toBe('false');
+        const menuCallCount = h.menu.mock.calls.length;
+        await act(async () => {
+            sortIcon.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
+        });
+        expect(h.menu.mock.calls.length).toBe(menuCallCount + 1);
     });
 
     it('clears the name filter when search is hidden and debounces typing', async () => {
@@ -238,6 +266,29 @@ describe('file list controls', () => {
         expect(h.refresh).toHaveBeenCalledTimes(1);
         await renderList([]);
         expect(container.textContent).toBe('');
+    });
+
+    it('says a missing folder is not found, naming it, instead of empty', async () => {
+        await act(async () =>
+            root.render(
+                createElement(RenderListComp, {
+                    dirSource: {
+                        settingName: 'documents',
+                        dirPath: '/gone/documents',
+                        isDirPathValid: false,
+                        fireRefreshEvent: h.refresh,
+                    } as any,
+                    filePaths: null,
+                    filterData,
+                    bodyHandler: () => null,
+                    setIsOnScreen: vi.fn(),
+                }),
+            ),
+        );
+        // Read "This folder is empty" and offered to make documents in it.
+        expect(container.textContent).toContain('Folder not found');
+        expect(container.textContent).toContain('/gone/documents');
+        expect(container.textContent).not.toContain('Fail to Get File List');
     });
 
     it('filters and sorts the shown rows while checking the full directory on screen', async () => {

@@ -32,7 +32,18 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   its step 1 — _spending limit_ found an internal banner and no manual
   page, and the assistant said the app had no such setting. The manual is
   what answers come from, so it costs the index its whole ~200 KB; the
-  185 internal notes would cost megabytes read on every search.
+  185 internal notes would cost megabytes read on every search. **Whole
+  means under the page cap, which a test now holds** (2026-10-16,
+  `EC-284`): the help window's own page passed the old 60 000 characters
+  by itself and everything after that character left the search with
+  nothing said — _Can you write the notation for words I paste in?_ lost
+  its page the day eight lines went in above its answer. The cap is
+  `MANUAL_SEARCH_TEXT_LIMIT` 120 000, the build prints a page it cuts, and
+  `src/test-setup/knowledgeIndexLimit.test.ts` fails the gate on a page at
+  or over it. **`npm run docs:gen` rebuilds the knowledge too** whenever a
+  built app is there (`EC-279`): it had regenerated the pages only, and two
+  manual fixes marked done one morning were still the old words in the
+  running app that afternoon.
   **Every edit under `.claude/` — `CLAUDE.md`, `rules/`, `memory/`, `skills/`
   — must
   re-run `node extra-work/build-knowledge.mjs` in the SAME change**, or the
@@ -62,7 +73,52 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   nothing. The key must be a real `tran()` key: an unknown one silently falls
   back to its own English text, so `tran.test.mjs` walks the whole corpus and
   fails on one that no language can translate — and on a twin coming back. The
-  chatbot ANSWER stays English-only; only the button names inside it move.
+  knowledge stays English; the chatbot's ANSWER is in the app's language since
+  2026-10-16 (memory `chatbot-follows-app-language`): the model reads the
+  English page and writes in theirs. **A question in Khmer is searched by the
+  English words it names** (`queryLanguage.mjs`, through `searchHelp`): the
+  app's own dictionary read backwards (a short label → its English key, which
+  is how the manual writes it) plus the language's glossary in
+  `assistant.json`, longest phrase first and ending only where a letter ends;
+  a multi-word label counts as the phrase and as its words, so a Khmer
+  question ranks the pages its English wording does. `toTerms` keeps `\p{M}`
+  -- splitting on Khmer vowel signs had cut every word into pieces no page
+  holds. Not `Intl.Segmenter`: Electron's ICU and Node's split Khmer
+  differently, and the search runs in both.
+- **The corpus and the manual in the app's other languages** (2026-10-16,
+  memory `chatbot-follows-app-language`). `questions/i18n/<code>.json` holds
+  each row's words (`{ en, text }`, by `<page>.<section>.<id>`) and each
+  section's -- fill-in rows too since 2026-10-17, each keeping an example of
+  the same kind as the English (`...`, an address, a quoted name, a
+  reference; a name may be the reader's own -- `"French"` in the French row,
+  the user's ask), held by the test: finished in the language, one is
+  asked as the row's English with the person's part in it
+  (`toEnglishTemplateAsk`, `findTemplateAsk` in the window; shown as typed,
+  answered in the language typed, that part never translated), so every
+  reader that knows only English still reads it.
+  `applyQuestionOverlay` (`questionMatch.mjs`) puts a row's translation in
+  `text` and keeps its English in `textEn` -- applied in the WINDOW only, so
+  chips, suggestions and More… read in the language while the model and the
+  server keep the English. A translation counts only while its `en` is still
+  the row's words; a reworded row shows English until it is redone, and
+  `questions.test.mjs` fails until it is (a ratchet at nothing missing). A
+  question typed in a script without spaces is ranked by the whole of it, its
+  start, inside, then letter-pair overlap; one in Latin letters against both
+  `text` and `textEn`. The known-question lookups take either words
+  (`findKnownQuestion`, and the search's `findKnownQuestionRow` reads the
+  overlays for a non-Latin query). **The manual** in another language is
+  `docs/manual-i18n/<code>/<same path>.md` -- its own tree, because
+  `build-manual.mjs` rewrites `docs/manual-sources/` -- each page carrying
+  `translatedFrom`, the hash of the English body it was made from
+  (`manualI18n.mjs`); `build-knowledge.mjs` writes `index.<code>.json` with
+  `isStale`, read only for that language. It is ranked by the ENGLISH page and
+  shown in the language: a manual search in a non-English window adds
+  `titleInLanguage` / `excerptInLanguage`, the passage at the same place in
+  the translation (`genTranslatedExcerpt` -- a translation must keep its
+  page's passages, which `manual-i18n-status.mjs --check` holds), and
+  `owa_help_page` takes `W-06@km` for the page itself (the window's **Read the
+  whole thing**; no schema field). A stale or missing page is the English one.
+  The model is handed the English page: it reads it and writes in theirs.
 - **Questions**: `tools/owa-devtools-mcp/questions/*.json` is the curated list of
   questions the assistant is prepared to be asked — one file per page
   (`presenter`, `reader`, `editor`, `settings`, `screen`, `presenting-flow`,
@@ -237,6 +293,11 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   _never tell them how to open it_, was tried first and measured: one answer
   in twenty-four still did. What a model is not handed it cannot recite.
   With all of this the twenty-four graded 16 right, 7 partly, 1 wrong.
+  **Unless the row names a passage IN that step** (2026-10-16, `EC-268`):
+  _How do I open the help from the taskbar?_ is about the way in, its
+  answer is step 1's taskbar paragraph, and with the step dropped it was
+  answered _Click the 🤖 button on the taskbar_. `dropFirstStep` keeps the
+  step when the row's `passage` is in it.
 - **A page too long for one read comes in PARTS** (`toPageParts`,
   `owa_help_page`'s `part`, same day, `EC-241`). The model's cap on a
   manual page is 40 KB, set above the largest when the largest was 37; the
@@ -298,11 +359,16 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   passage that says it named and in front of the model; _How do I step to
   the next verse while presenting?_ with the slide keys -- its key is
   written in its row and on no page (`EC-251`). One sentence after the
-  hint's head, in front of the page: _The app's own list files this question
-  with the menu item … and the key …: say them in the answer, as written
-  here._ The forty-eight rows that carry one, asked again of the local
-  model: 33 right, 9 partly, 6 wrong before, 37 right, 10 partly, 1 wrong after; 27 of
-  48 named theirs before and 42 after.
+  hint's head, in front of the page: _For this, the app has the menu item …
+  and the key …: name them in the steps, as written here._ The forty-eight
+  rows that carry one, asked again of the local model: 33 right, 9 partly,
+  6 wrong before, 37 right, 10 partly, 1 wrong after; 27 of 48 named theirs
+  before and 42 after. **It is worded as a fact about the APP** (2026-10-16,
+  `EC-270`): as _the app's own list files this question with …_ it came back
+  to the person as _Press Ctrl+B (the app files this under that key)_ — two
+  of the two such answers on the free model. A model may repeat what the
+  hint says, so the hint says only what may be repeated: ten rows asked
+  again, ten named theirs and none spoke of a list.
 - **The foot note is no part of the page that is cut** (2026-10-12 night,
   `EC-252`, `clipKnownPageParts`). Every manual page ends with a note for
   the model -- where its newest copy is -- and the window measured and cut
@@ -383,9 +449,18 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   CC line's). A copied sentence cannot change its noun: asked again, the
   first came back as the page's own step. It is a sentence in a hint, and a
   hint is not a wall — a row with no `passage` gets none of it, and a model
-  can still stop one step short of what the question needs.
-  **On a page too long to quote whole the named part is quoted FIRST, by
-  itself** (`namedFirst`, mode `matching` only, 1 500 characters at most,
+  can still stop one step short of what the question needs. **And it did,
+  because the hint said so** (2026-10-17, `EC-310`): "take from the others
+  only what it leaves out" read as "that part only" — gemma4:cloud, the
+  whole corpus in Khmer, 27 of 84 marked-down answers stopped where their
+  part did (_turn the AI features on or off_ answered with the turning-off
+  part "in the same settings section", never naming which). The sentence
+  now keeps the copying and the no-new-steps rule and asks for the WHOLE
+  job from the rest of the page — where the part is, a step before it that
+  it takes for granted, the steps after it that finish the job — and a
+  control's step ends the same way.
+  **The named part is quoted FIRST, by itself, on short and long pages**
+  (`namedFirst`, 1 500 characters at most,
   under _The part that answers this question, quoted first and by itself_).
   The parts of a long page ride in the page's order, its opening first, and
   a small model answers from the first that seems to fit: told which part it
@@ -393,7 +468,11 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   it step by step?_ with the Reader's guided demos, which the help window's
   page opens on — at temperature 0, so every time. With the part first it
   answered _Every answer offers Show me step by step. Press this button …_.
-  A page that rides whole is left in its own order.
+  Short pages get the same priority since 2026-10-18 (`EC-353`): W-11's
+  earlier Add Extra Bible step kept appearing before group scrolling,
+  although splitting supplies the other version itself. Quoting the named
+  step first removed that extra action in the live Khmer check. The whole
+  page remains available for necessary prerequisites and finishing steps.
 - **Nothing that changes with a release may ride on a known question**
   (2026-10-13, `clipKnownPageParts`). A page that fits used to ride _whole,
   note and all_ — the foot note the page tool writes for a model, which says
@@ -537,3 +616,46 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   the same press now answers _Which step did not work as expected? What
   happened when you tried the steps?_, and _There is no Bible Properties
   button_ is answered with the three dots that have to be pressed first.
+- **A page rides in the language the model ANSWERS in** (2026-10-17,
+  `EC-303`; the user's goal: _gemma4:cloud 100% work for Khmer language_,
+  then the Gemma 4 models on their LM Studio). The whole corpus asked in
+  Khmer (`corpus-run.mjs --lang=km`) showed English to a reader of none in
+  143 of 435 answers, and the cause was the page, not the model: the window
+  read the known question's page as `{id}` -- English, its buttons alone
+  put into Khmer -- and the hint told the model to copy the row's passage
+  _as it stands_, so it wrote _បើក View on the top menu bar again and
+  click_. Now, for an ask answered in the person's language as it stands
+  (a Gemma 4 model, or nothing to translate -- `findPageLanguage` in
+  `chatTranslateHelpers.ts`), `ChatbotAppComp` also reads `{id}@km` and
+  `genKnownQuestionHint` takes it as `localPageText`: the cut is still
+  CHOSEN off the English page (the row's control, passage and keywords are
+  English) and READ from the translation, block for block
+  (`toLocalizedCut` -- a numbered step with what hangs under it, or a
+  paragraph, `splitPageBlocks`), the passage pointed at by the translated
+  block's own first words (`findLocalizedPassageLead`) -- or, for a passage
+  that starts INSIDE its block, by the translated sentence it starts in,
+  when both blocks have as many sentences (`EC-317`: the phone's cast
+  button is step 8's fourth sentence, and the step's first is the app's) --
+  a named part that opens by pointing back (_the end of THAT line_) quoted
+  with the part before it (`withPointedBackPart`), the control named
+  only as that app shows it or not at all, and a menu path as the menu bar
+  shows it (its own names English, the items under them translated). A
+  page the model opens itself comes `@km` too (`ToolWatchType.pageLang`,
+  `runMcpToolCall`), and the prompt's guide bullet says pages come in the
+  language. It rests on the translations being written block for block --
+  as many blocks, each of the same kind (its step number, a heading, a
+  quote, a bullet, a bold lead; a block starts at a step, a blank line and,
+  through `checkIsBoldLeadLine` shared with `toPassages`, a bold-lead line,
+  or the help window's commands were a sub-paragraph of step 6 and never
+  rode). Every current page of both languages does
+  (`questionHelpers.test.ts` holds it); one that drifts rides as the English
+  cut, never as the wrong part of the translation. A block is in the cut
+  when any of its lines is, read the way a passage writes it (lines joined
+  by spaces, quotes' `>` off), and the cut has its own ceiling, half again
+  the English one, because whole blocks ride. Seen live on gemma-4-12b:
+  _បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត ហើយចុច កំណត់ទំហំ Widgets
+  ឡើងវិញ_, the page's own sentence. **The page has to be in the language
+  too** (`EC-312`): the Khmer W-42 and W-44 had written the help window's
+  and AI Chat's buttons as English bold, and the model half-translated them
+  (_បង្ហាញ me step by step_); they are `[en:tran:…]` templates now, so a
+  label reads as the window draws it.

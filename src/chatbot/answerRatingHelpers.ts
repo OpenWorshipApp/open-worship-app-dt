@@ -23,6 +23,7 @@
  */
 import type { BotActionType } from './helpBotHelpers';
 import type { ChatMessageType } from './chatSessionHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 
 // Caught in the window's own `handleActing`, never registered on the tool
 // host: nothing but a press may change who a tab is asking.
@@ -86,10 +87,11 @@ export function genSmarterModelAdvice(
 ): { text: string; action: BotActionType | null } {
     if (!answerer.hasAssistant) {
         return {
-            text:
+            text: tran(
                 'No assistant is answering in this tab — that came from ' +
-                'the guide alone. An assistant usually answers better: pick ' +
-                'one in the ASSISTANT list at the top of this window.',
+                    'the guide alone. An assistant usually answers better: ' +
+                    'pick one in the ASSISTANT list at the top of this window.',
+            ),
             action: null,
         };
     }
@@ -102,11 +104,13 @@ export function genSmarterModelAdvice(
     if (smarter === null) {
         if (answerer.isAuto) {
             return {
-                text:
+                text: tran(
                     'A smarter model often gets right what this one did ' +
-                    'not. This tab is on Auto: pick an assistant by name in ' +
-                    'the ASSISTANT list at the top of this window, and the ' +
-                    'best model it has in the MODEL list beside it.',
+                        'not. This tab is on Auto: pick an assistant by name ' +
+                        'in the ASSISTANT list at the top of this window, ' +
+                        'and the best model it has in the MODEL list beside ' +
+                        'it.',
+                ),
                 action: null,
             };
         }
@@ -114,35 +118,51 @@ export function genSmarterModelAdvice(
         // model" would send them looking for one that is not there.
         if (answerer.rankedModels[0]?.id === answerer.modelId) {
             return {
-                text:
-                    'This tab is already asking the best model ' +
-                    `${answerer.assistantLabel} has (${modelLabel}), so a ` +
-                    'larger one is not the way out; another assistant in ' +
-                    'the ASSISTANT list at the top of this window may read ' +
-                    'it differently.',
+                text: fillWords(
+                    tran(
+                        'This tab is already asking the best model ' +
+                            '{assistant} has ({model}), so a larger one is ' +
+                            'not the way out; another assistant in the ' +
+                            'ASSISTANT list at the top of this window may ' +
+                            'read it differently.',
+                    ),
+                    { assistant: answerer.assistantLabel, model: modelLabel },
+                ),
                 action: null,
             };
         }
         return {
-            text:
-                'A smarter model often gets right what this one did ' +
-                `not. This tab is asking ${asking}: try a larger model ` +
-                'in the MODEL list at the top of this window, or ' +
-                'another assistant in the ASSISTANT list beside it.',
+            text: fillWords(
+                tran(
+                    'A smarter model often gets right what this one did ' +
+                        'not. This tab is asking {asking}: try a larger ' +
+                        'model in the MODEL list at the top of this window, ' +
+                        'or another assistant in the ASSISTANT list beside it.',
+                ),
+                { asking },
+            ),
             action: null,
         };
     }
     const trimmed = (question ?? '').trim();
     return {
-        text:
-            'A smarter model often gets right what this one did not. ' +
-            `This tab is asking ${asking}; ${smarter.label} is the next ` +
-            'one up.',
+        text: fillWords(
+            tran(
+                'A smarter model often gets right what this one did not. ' +
+                    'This tab is asking {asking}; {smarter} is the next one ' +
+                    'up.',
+            ),
+            { asking, smarter: smarter.label },
+        ),
+        // Written in the window's language: a press is read by its tool and
+        // args, never by these words.
         action:
             trimmed.length === 0
                 ? null
                 : {
-                      label: `Ask again with ${smarter.label}`,
+                      label: fillWords(tran('Ask again with {model}'), {
+                          model: smarter.label,
+                      }),
                       toolName: ASK_SMARTER_TOOL_NAME,
                       args: { model: smarter.id, question: trimmed },
                   },
@@ -186,7 +206,9 @@ export function readSmarterAsk(
 
 // Each is a sentence the dispute reader takes (`checkIsDisputingAnswer`), so
 // pressing one has the guide page's newest copy read before the model is
-// asked again. A test holds the two together.
+// asked again. A test holds the two together. Stored English for that
+// reason, and translated where the reply is drawn (`chatTranLabels.test.ts`
+// holds each to its Khmer and French).
 export const DISLIKE_REPLY_LIST = [
     'A button it names is not there',
     'The steps did not work',
@@ -313,23 +335,36 @@ export function genDislikeFollowUp(
         return {
             author: 'bot',
             isFollowUp: true,
-            text:
+            text: tran(
                 'Sorry — that did not help. Tell me in your own words what ' +
-                'you were trying to do, or what went wrong, and I will look ' +
-                'into it.',
+                    'you were trying to do, or what went wrong, and I will ' +
+                    'look into it.',
+            ),
         };
     }
     const advice = genSmarterModelAdvice(answerer, question);
-    const opening =
-        isLastAnswer || question === null
-            ? 'Sorry — that answer did not help. Tell me what was wrong ' +
-              'and I will look again' +
-              (isLastAnswer
-                  ? ': press one of these, or say it in your own words.'
-                  : '.')
-            : `Sorry — the answer to “${toQuestionQuote(question)}” did ` +
-              'not help. Ask it again in other words, or tell me what was ' +
-              'wrong, and I will look again.';
+    let opening: string;
+    if (isLastAnswer) {
+        opening = tran(
+            'Sorry — that answer did not help. Tell me what was wrong and I ' +
+                'will look again: press one of these, or say it in your own ' +
+                'words.',
+        );
+    } else if (question === null) {
+        opening = tran(
+            'Sorry — that answer did not help. Tell me what was wrong and I ' +
+                'will look again.',
+        );
+    } else {
+        opening = fillWords(
+            tran(
+                'Sorry — the answer to “{question}” did not help. Ask it ' +
+                    'again in other words, or tell me what was wrong, and I ' +
+                    'will look again.',
+            ),
+            { question: toQuestionQuote(question) },
+        );
+    }
     return {
         author: 'bot',
         isFollowUp: true,

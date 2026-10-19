@@ -114,7 +114,16 @@ export function extractBibleCatalog() {
   const versions = [];
   const isBible = location.hostname === 'www.bible.com';
   const isWordproject = location.hostname === 'www.wordproject.org';
-  if (!isBible && !isWordproject) return { books, versions };
+  const language = isBible
+    ? [...document.querySelectorAll('a[href]')]
+        .map((anchor) => new URL(anchor.href))
+        .find(
+          (url) =>
+            url.origin === location.origin &&
+            /^\/languages\/[a-z]{2,3}\/?$/i.test(url.pathname),
+        )
+        ?.pathname.split('/')[2]
+    : undefined;
   const seen = new Set();
   for (const anchor of document.querySelectorAll('a[href]')) {
     // `innerText` where the page is laid out: an edition link is three
@@ -135,10 +144,12 @@ export function extractBibleCatalog() {
         url: `https://www.bible.com/versions/${version[1]}`,
       });
     }
-    const book =
-      isBible &&
-      anchor.closest('h3') &&
-      url.pathname.match(/\/bible\/\d+\/([1-3]?[A-Z]{2,3})\.\d/i);
+    const book = isBible
+      ? anchor.closest('h3') &&
+        url.pathname.match(/\/bible\/\d+\/([1-3]?[A-Z]{2,3})\.\d/i)
+      : !isWordproject &&
+        /\p{L}/u.test(text) &&
+        url.pathname.match(/(?:^|\/)([1-3]?[A-Z]{2,3})(?=[./]|$)/i);
     const number =
       isWordproject && url.pathname.match(/\/bibles\/[^/]+\/(\d{2})\/1\.htm$/);
     if (books.length < 100 && (book || number)) {
@@ -148,7 +159,7 @@ export function extractBibleCatalog() {
       });
     }
   }
-  return { books, versions };
+  return { books, versions, ...(language ? { language } : {}) };
 }
 
 export function toCompleteBibleBookList(books) {

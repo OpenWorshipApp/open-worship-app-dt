@@ -4,13 +4,16 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-15",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "reading",
             "label": "Reading a passage",
             "panel": "Bible Lookup",
-            "recipes": ["W-11", "W-39"],
+            "recipes": [
+                "W-11",
+                "W-39"
+            ],
             "questions": [
                 {
                     "id": "look-up-verse",
@@ -26,7 +29,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-12"],
+                        "related": [
+                            "W-12"
+                        ],
                         "find": "Bible Lookup",
                         "guide": true
                     }
@@ -98,7 +103,7 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "passage": "Some Bibles print references in their section headings"
+                        "passage": "Open a reference in a section heading"
                     }
                 },
                 {
@@ -116,7 +121,10 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-32", "W-34"],
+                        "related": [
+                            "W-32",
+                            "W-34"
+                        ],
                         "guide": true
                     },
                     "starterRank": 4
@@ -125,7 +133,12 @@
                     "id": "dim-header-icons",
                     "text": "Why are the color, sync-scroll and audio icons dimmed above my Bible passage?",
                     "kind": "howto",
-                    "keywords": ["faint icons", "opacity", "hover", "keyboard focus"],
+                    "keywords": [
+                        "faint icons",
+                        "opacity",
+                        "hover",
+                        "keyboard focus"
+                    ],
                     "resources": {
                         "recipe": "W-11"
                     }
@@ -143,7 +156,10 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-39"],
+                        "passage": "Panes that share a color scroll together",
+                        "related": [
+                            "W-39"
+                        ],
                         "find": "Sync group scrolling"
                     }
                 },
@@ -162,7 +178,10 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-32"]
+                        "passage": "A pane that has a color splits into ANOTHER version",
+                        "related": [
+                            "W-32"
+                        ]
                     }
                 },
                 {
@@ -177,7 +196,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-34"],
+                        "related": [
+                            "W-34"
+                        ],
                         "guide": true
                     }
                 },
@@ -195,7 +216,9 @@
                     ],
                     "resources": {
                         "recipe": "W-32",
-                        "related": ["W-11"],
+                        "related": [
+                            "W-11"
+                        ],
                         "shortcut": "Ctrl+Shift+arrow moves the editing to the next view"
                     }
                 },
@@ -263,7 +286,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-16"],
+                        "related": [
+                            "W-16"
+                        ],
                         "guide": true
                     },
                     "starter": true,
@@ -315,7 +340,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-31"],
+                        "related": [
+                            "W-31"
+                        ],
                         "guide": true
                     }
                 },
@@ -332,7 +359,9 @@
                     ],
                     "resources": {
                         "recipe": "W-31",
-                        "related": ["W-12"],
+                        "related": [
+                            "W-12"
+                        ],
                         "find": "Advance Bible Lookup",
                         "guide": true
                     }
@@ -352,7 +381,7 @@
                     "resources": {
                         "recipe": "W-34",
                         "find": "Let the assistant import this Bible for me",
-                        "passage": "When a window says a Bible is not available"
+                        "passage": "The Bible Reader or the Bible Lookup opens on"
                     }
                 }
             ]
@@ -360,7 +389,10 @@
         {
             "id": "guided-demos",
             "label": "Guided demos without AI",
-            "recipes": ["W-42", "W-46"],
+            "recipes": [
+                "W-42",
+                "W-46"
+            ],
             "questions": [
                 {
                     "id": "reader-built-in-demos",
@@ -423,7 +455,8 @@
                         "export"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "Saved Bibles lists and Bible Notes have separate folder"
                     }
                 },
                 {
@@ -456,7 +489,8 @@
                         "copy to data directory"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "lessons are found by searching"
                     }
                 },
                 {
@@ -473,7 +507,8 @@
                         "copy"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "found by searching the word"
                     }
                 }
             ]
@@ -481,7 +516,9 @@
         {
             "id": "find",
             "label": "Searching the whole Bible",
-            "recipes": ["W-12"],
+            "recipes": [
+                "W-12"
+            ],
             "questions": [
                 {
                     "id": "search-words",
@@ -502,6 +539,40 @@
                         "guide": true
                     },
                     "starterRank": 6
+                },
+                {
+                    "id": "find-forgotten-verse",
+                    "text": "Can you help me find a Bible verse I forgot?",
+                    "kind": "howto",
+                    "keywords": [
+                        "forgot",
+                        "remember",
+                        "half remember",
+                        "which verse",
+                        "words in any order",
+                        "assistant"
+                    ],
+                    "resources": {
+                        "recipe": "W-12",
+                        "find": "Find a Verse with the Assistant",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-in-another-bible",
+                    "text": "Can I see the verse it found in another Bible?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another bible",
+                        "other bible",
+                        "change bible",
+                        "english",
+                        "khmer",
+                        "show in another bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-12"
+                    }
                 },
                 {
                     "id": "search-button",
@@ -534,6 +605,7 @@
                     ],
                     "resources": {
                         "recipe": "W-12",
+                        "passage": "To search part of the Bible only",
                         "guide": true
                     }
                 },
@@ -581,6 +653,7 @@
                     ],
                     "resources": {
                         "recipe": "W-12",
+                        "passage": "To clear the search and start again, empty the words in the search box",
                         "guide": true
                     }
                 },
@@ -597,7 +670,9 @@
                     "resources": {
                         "recipe": "W-12",
                         "passage": "To put a result on the screen",
-                        "related": ["W-06"],
+                        "related": [
+                            "W-06"
+                        ],
                         "guide": true
                     }
                 }
@@ -606,7 +681,9 @@
         {
             "id": "cross-reference",
             "label": "Cross references",
-            "recipes": ["W-13"],
+            "recipes": [
+                "W-13"
+            ],
             "questions": [
                 {
                     "id": "cross-ref-what",
@@ -671,7 +748,9 @@
                     ],
                     "resources": {
                         "recipe": "W-13",
-                        "related": ["W-42"],
+                        "related": [
+                            "W-42"
+                        ],
                         "guide": true
                     }
                 },
@@ -688,6 +767,7 @@
                     ],
                     "resources": {
                         "recipe": "W-13",
+                        "passage": "right-click the title",
                         "guide": true
                     }
                 }
@@ -697,7 +777,11 @@
             "id": "notes",
             "label": "Notes & marks",
             "panel": "Bibles / Notes",
-            "recipes": ["W-14", "W-40", "W-41"],
+            "recipes": [
+                "W-14",
+                "W-40",
+                "W-41"
+            ],
             "questions": [
                 {
                     "id": "verse-marks",
@@ -713,7 +797,9 @@
                     ],
                     "resources": {
                         "recipe": "W-40",
-                        "related": ["W-14"]
+                        "related": [
+                            "W-14"
+                        ]
                     }
                 },
                 {
@@ -815,7 +901,9 @@
                     ],
                     "resources": {
                         "recipe": "W-41",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     }
                 },
@@ -831,8 +919,11 @@
                         "prepare"
                     ],
                     "resources": {
-                        "recipe": "W-40",
-                        "related": ["W-24"],
+                        "recipe": "W-11",
+                        "passage": "To keep a verse for later",
+                        "related": [
+                            "W-06"
+                        ],
                         "guide": true
                     }
                 }
@@ -841,7 +932,10 @@
         {
             "id": "lookup",
             "label": "People & places",
-            "recipes": ["W-29", "W-30"],
+            "recipes": [
+                "W-29",
+                "W-30"
+            ],
             "questions": [
                 {
                     "id": "who-is",
@@ -857,6 +951,7 @@
                     ],
                     "resources": {
                         "recipe": "W-29",
+                        "passage": "tabs to choose what you are looking for, and type in the search box",
                         "guide": true
                     }
                 },
@@ -906,7 +1001,26 @@
                     ],
                     "resources": {
                         "recipe": "W-30",
-                        "related": ["W-29"],
+                        "related": [
+                            "W-29"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "ask-assistant-about",
+                    "text": "Can the assistant tell me more about a person or place I opened?",
+                    "kind": "howto",
+                    "keywords": [
+                        "ask the assistant",
+                        "robot",
+                        "tell me more",
+                        "explain this person",
+                        "chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Ask the assistant about it",
                         "guide": true
                     }
                 },
@@ -931,7 +1045,9 @@
         {
             "id": "graph",
             "label": "Connection graph",
-            "recipes": ["W-38"],
+            "recipes": [
+                "W-38"
+            ],
             "questions": [
                 {
                     "id": "graph-what",
@@ -946,7 +1062,9 @@
                     ],
                     "resources": {
                         "recipe": "W-38",
-                        "related": ["W-29"],
+                        "related": [
+                            "W-29"
+                        ],
                         "guide": true
                     }
                 },
@@ -1002,7 +1120,8 @@
                     ],
                     "resources": {
                         "recipe": "W-38",
-                        "guide": true
+                        "guide": true,
+                        "passage": "Copy a graph into your notes."
                     }
                 },
                 {
@@ -1047,7 +1166,9 @@
         {
             "id": "resources",
             "label": "Your own files beside the verse",
-            "recipes": ["W-37"],
+            "recipes": [
+                "W-37"
+            ],
             "questions": [
                 {
                     "id": "resources-what",
@@ -1164,7 +1285,8 @@
                         "open in browser"
                     ],
                     "resources": {
-                        "recipe": "W-37"
+                        "recipe": "W-37",
+                        "passage": "can hold a list of links"
                     }
                 },
                 {
@@ -1286,7 +1408,8 @@
                         "comments"
                     ],
                     "resources": {
-                        "recipe": "W-37"
+                        "recipe": "W-37",
+                        "passage": "A bible note file"
                     }
                 }
             ]
@@ -1294,7 +1417,11 @@
         {
             "id": "versions",
             "label": "Bible translations",
-            "recipes": ["W-32", "W-33", "W-34"],
+            "recipes": [
+                "W-32",
+                "W-33",
+                "W-34"
+            ],
             "questions": [
                 {
                     "id": "version-info",
@@ -1326,6 +1453,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Import from the internet with the assistant.",
                         "guide": true
                     }
                 },
@@ -1343,7 +1471,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "passage": "Later changes remain available through the translation",
+                        "passage": "Later changes remain available through the pencil",
                         "guide": true
                     }
                 },
@@ -1361,7 +1489,9 @@
                     ],
                     "resources": {
                         "recipe": "W-33",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     }
                 },
@@ -1379,7 +1509,9 @@
                     ],
                     "resources": {
                         "recipe": "W-24",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     }
                 }

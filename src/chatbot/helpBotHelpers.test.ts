@@ -619,6 +619,87 @@ describe('what a failed button press says', () => {
     });
 });
 
+// With no assistant answering, "what bible verse talk about lover your
+// enemy?" was answered with the page about keeping files beside a verse, and
+// "what are names of 7 churches mentioned in the book of revelation" with the
+// one about adding a Bible from the internet (EC-199).
+describe('the offline bot reads a question about what the Bible says', () => {
+    const BIBLE_FIND_HIT = {
+        id: 'W-12',
+        title: 'Search the whole Bible (Bible Find)',
+        section: 's',
+        // The real page's words: "Bible Lookup" is the Reader's own section
+        // here, and the lead used to read it as the Presenter's popup.
+        excerpt:
+            '1. Open Advance Lookup, beside Bible and Notes and Bible ' +
+            'Lookup, and choose Find.',
+    };
+
+    test('a verse asked for by its words is answered with Bible Find', async () => {
+        callTool.mockResolvedValue(JSON.stringify([BIBLE_FIND_HIT]));
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        // "find me ..." first: the where-is reader takes that word too.
+        const answer = await askHelpBot(
+            'Find me a verse about patience',
+            'reader',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(callTool).toHaveBeenCalledWith('owa_help_search', {
+            query: 'find verses by words, not reference',
+            focus: 'reader',
+            kind: 'manual',
+        });
+        expect(answer.text).toContain('Search for “patience”');
+        expect(answer.text).toContain('Search the whole Bible (Bible Find)');
+        // Bible Find is on the Reader: no way across to the Presenter.
+        expect(answer.text).not.toContain('Go Back to Presenter');
+        // From the walkthrough's start, ringing Find.
+        expect(answer.actions?.[0].args).toEqual({
+            manualId: 'W-12',
+            page: 'reader.html',
+            mode: 'show',
+            find: 'Find',
+        });
+    });
+
+    test('knowledge about the Bible says how to ask an assistant, and searches nothing', async () => {
+        const answer = await askHelpBot(
+            'what are names of 7 churches mentioned in the book of revelation in holy bible',
+            'reader',
+        );
+        expect(callTool).not.toHaveBeenCalled();
+        expect(answer.text).toContain(
+            '/btw what are names of 7 churches mentioned in the book of ' +
+                'revelation in holy bible',
+        );
+        expect(answer.actions).toEqual([
+            {
+                label: 'Open AI settings',
+                toolName: 'owa-open-ai-setting',
+                args: {},
+            },
+        ]);
+    });
+
+    test('with Bible Find’s page not found, the manual answers as before', async () => {
+        callTool.mockImplementation(async (_name: string, args: any) => {
+            return JSON.stringify(
+                args?.query === 'find verses by words, not reference'
+                    ? []
+                    : [{ ...BIBLE_FIND_HIT, id: 'W-37', title: 'Resources' }],
+            );
+        });
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        const answer = await askHelpBot('verses about hope', 'reader');
+        expect(callTool).toHaveBeenLastCalledWith('owa_help_search', {
+            query: 'verses about hope',
+            focus: 'reader',
+            kind: 'manual',
+        });
+        expect(answer.text).toContain('Resources');
+    });
+});
+
 // Measured on the standing corpus on 2026-09-02, the afternoon every provider
 // on the machine answered 429 -- so this bot was what the window had. Three
 // of its twelve answers went wrong in the same two ways, both cheap.
@@ -819,7 +900,8 @@ describe('the offline bot writes a pasted song out itself', () => {
             mode: 'draft',
         });
         expect(answer.text).toContain('Song: "Amazing Grace"');
-        expect(answer.text).toContain('so the song has none set');
+        expect(answer.text).toContain('The text did not specify');
+        expect(answer.text).toContain('Musical key, Tempo, Time signature');
         // Never the notation itself: that is what the preview box is for.
         expect(answer.text).not.toContain('```ol:');
         expect(answer.actions?.map((one) => one.label)).toEqual([

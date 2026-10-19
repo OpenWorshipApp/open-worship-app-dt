@@ -25,6 +25,7 @@
 //     over. A file ALREADY in Downloads is revealed rather than duplicated:
 //     pressing Download three times must not leave three copies.
 
+import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
 import FileSource from '../helper/FileSource';
 import {
     downloadImageBase64Data,
@@ -48,6 +49,7 @@ import {
     toImageMediaType,
     type ChatAttachmentType,
 } from './attachmentHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 
 export type ChatAssetPreviewType = {
     id: string;
@@ -75,7 +77,7 @@ const MAX_PREVIEW_TEXT_BYTES = 512 * 1024;
 // ...and what the overlay puts on screen, which is a different number: past
 // this it is a wall of characters nobody reads in a 460px window.
 const MAX_PREVIEW_TEXT_LENGTH = 20000;
-const CUT_TEXT_NOTE = '\n\n[... the rest is in the file ...]';
+const CUT_TEXT_NOTE = '[... the rest is in the file ...]';
 
 /**
  * Whether a chip stands for something that can be OPENED, as opposed to a
@@ -97,7 +99,7 @@ export function toReadableSize(byteSize: number | null) {
         return '';
     }
     if (byteSize < 1024) {
-        return `${byteSize.toString()} bytes`;
+        return fillWords(tran('{count} bytes'), { count: byteSize });
     }
     if (byteSize < 1024 * 1024) {
         return `${Math.round(byteSize / 1024).toString()} KB`;
@@ -107,7 +109,7 @@ export function toReadableSize(byteSize: number | null) {
 
 function toCutText(text: string) {
     return text.length > MAX_PREVIEW_TEXT_LENGTH
-        ? text.slice(0, MAX_PREVIEW_TEXT_LENGTH) + CUT_TEXT_NOTE
+        ? text.slice(0, MAX_PREVIEW_TEXT_LENGTH) + '\n\n' + tran(CUT_TEXT_NOTE)
         : text;
 }
 
@@ -129,7 +131,10 @@ async function readFilePreview(
             byteSize: null,
             // The one case where Download cannot work either, so it says so
             // here rather than failing under a press.
-            note: 'This file is not on this machine any more. It may have been moved, renamed or deleted.',
+            note: tran(
+                'This file is not on this machine any more. It may have ' +
+                    'been moved, renamed or deleted.',
+            ),
         };
     }
     let byteSize: number | null = null;
@@ -148,7 +153,13 @@ async function readFilePreview(
                 ...base,
                 kind: 'file',
                 byteSize,
-                note: `This picture is ${toReadableSize(byteSize)}, too big to show here. Download it or open its folder to look at it.`,
+                note: fillWords(
+                    tran(
+                        'This picture is {size}, too big to show here. ' +
+                            'Download it or open its folder to look at it.',
+                    ),
+                    { size: toReadableSize(byteSize) },
+                ),
             };
         }
         try {
@@ -169,7 +180,7 @@ async function readFilePreview(
                 ...base,
                 kind: 'file',
                 byteSize,
-                note: 'I could not read that picture from the disk.',
+                note: tran('I could not read that picture from the disk.'),
             };
         }
     }
@@ -179,13 +190,30 @@ async function readFilePreview(
     // and reading one of those as UTF-8 is a wall of mojibake at best and a
     // whole video in memory at worst.
     const heldText = toAttachedText(attachment);
+    // A Bible note is shown as the words the assistant was given, not as the
+    // editor's JSON the file is made of.
+    if (checkIsBibleNoteFileName(attachment.name) && heldText.length > 0) {
+        return {
+            ...base,
+            kind: 'text',
+            byteSize,
+            text: toCutText(heldText),
+            note: null,
+        };
+    }
     if (checkIsReadableTextName(attachment.name) || heldText.length > 0) {
         if (isTooBig(MAX_PREVIEW_TEXT_BYTES)) {
             return {
                 ...base,
                 kind: 'file',
                 byteSize,
-                note: `This file is ${toReadableSize(byteSize)}, too big to show here. Download it or open its folder to read it.`,
+                note: fillWords(
+                    tran(
+                        'This file is {size}, too big to show here. ' +
+                            'Download it or open its folder to read it.',
+                    ),
+                    { size: toReadableSize(byteSize) },
+                ),
             };
         }
         try {
@@ -206,7 +234,10 @@ async function readFilePreview(
                     kind: 'text',
                     byteSize,
                     text: toCutText(heldText),
-                    note: 'I could not re-read the file, so this is the copy attached to your question.',
+                    note: tran(
+                        'I could not re-read the file, so this is the copy ' +
+                            'attached to your question.',
+                    ),
                 };
             }
         }
@@ -255,7 +286,9 @@ export async function readAssetPreview(
                 text: null,
                 filePath: attachment.filePath,
                 byteSize: null,
-                note: `I could not open that one: ${error.message}`,
+                note: fillWords(tran('I could not open that one: {reason}'), {
+                    reason: error.message,
+                }),
             };
         }
     }
@@ -283,8 +316,11 @@ export async function readAssetPreview(
         byteSize: null,
         note:
             attachment.kind === 'image'
-                ? 'That picture is not attached any more — pictures are kept only while this window is open.'
-                : 'There is nothing left to show for that one.',
+                ? tran(
+                      'That picture is not attached any more — pictures ' +
+                          'are kept only while this window is open.',
+                  )
+                : tran('There is nothing left to show for that one.'),
     };
 }
 
@@ -327,9 +363,10 @@ export async function downloadAsset(
         if (!(await fsCheckFileExist(preview.filePath))) {
             return {
                 filePath: null,
-                message:
-                    'That file is not on this machine any more, so there is ' +
-                    'nothing to download.',
+                message: tran(
+                    'That file is not on this machine any more, so there ' +
+                        'is nothing to download.',
+                ),
             };
         }
         const fileSource = FileSource.getInstance(preview.filePath);
@@ -340,7 +377,13 @@ export async function downloadAsset(
             showFileOrDirExplorer(preview.filePath);
             return {
                 filePath: preview.filePath,
-                message: `“${preview.name}” is already in your Downloads folder — I opened it for you.`,
+                message: fillWords(
+                    tran(
+                        '“{name}” is already in your Downloads folder — I ' +
+                            'opened it for you.',
+                    ),
+                    { name: preview.name },
+                ),
             };
         }
         const savedFilePath = await fsCopyFilePathToPath(
@@ -350,13 +393,18 @@ export async function downloadAsset(
         if (savedFilePath === null || savedFilePath === undefined) {
             return {
                 filePath: null,
-                message: 'I could not save a copy into your Downloads folder.',
+                message: tran(
+                    'I could not save a copy into your Downloads folder.',
+                ),
             };
         }
         showFileOrDirExplorer(savedFilePath);
         return {
             filePath: savedFilePath,
-            message: `Saved “${FileSource.getInstance(savedFilePath).fullName}” into your Downloads folder.`,
+            message: fillWords(
+                tran('Saved “{name}” into your Downloads folder.'),
+                { name: FileSource.getInstance(savedFilePath).fullName },
+            ),
         };
     }
     if (preview.imageDataUrl !== null) {
@@ -368,11 +416,13 @@ export async function downloadAsset(
         return savedFilePath === null
             ? {
                   filePath: null,
-                  message: 'I could not save that picture.',
+                  message: tran('I could not save that picture.'),
               }
             : {
                   filePath: savedFilePath,
-                  message: 'Saved the picture into your Downloads folder.',
+                  message: tran(
+                      'Saved the picture into your Downloads folder.',
+                  ),
               };
     }
     if (preview.text !== null) {
@@ -383,11 +433,14 @@ export async function downloadAsset(
         showFileOrDirExplorer(targetFilePath);
         return {
             filePath: targetFilePath,
-            message: `Saved “${FileSource.getInstance(targetFilePath).fullName}” into your Downloads folder.`,
+            message: fillWords(
+                tran('Saved “{name}” into your Downloads folder.'),
+                { name: FileSource.getInstance(targetFilePath).fullName },
+            ),
         };
     }
     return {
         filePath: null,
-        message: 'There is nothing left of that one to download.',
+        message: tran('There is nothing left of that one to download.'),
     };
 }

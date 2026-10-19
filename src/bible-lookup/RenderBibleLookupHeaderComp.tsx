@@ -54,6 +54,12 @@ export default function RenderBibleLookupHeaderComp({
                     className="app-flex-item h-100 overflow-hidden d-flex align-items-center"
                     style={{
                         width: `calc(50% - ${INPUT_GROUP_WIDTH / 2}px)`,
+                        // Gives way first (down to `.app-flex-item`'s 120px)
+                        // when the header is short of room. Shrinking in step
+                        // with everything else, at ~925px it left the lookup's
+                        // own buttons -- Keep Open, Word, notes -- running off
+                        // the end of their strip, one icon half shown.
+                        flexShrink: 100,
                     }}
                 >
                     <BibleLookupInputHistoryComp />

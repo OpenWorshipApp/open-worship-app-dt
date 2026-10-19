@@ -5,14 +5,14 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22b — Run the service from the presenting flow's preview panel
 
 **Goal:** see the whole running order at a glance, and walk the service with one key.
 
-1. To see the whole service at a glance, click the **window** icon on the presenting flow row (or
-   right-click → **[en:tran:Open Preview]**). A floating panel shows every element with its real
+1. To see the whole service at a glance, click the **window** icon on the presenting flow row once (or
+   right-click → **[en:tran:Open Preview]**) — a second click on it closes the panel again. A floating panel shows every element with its real
    preview — slides look exactly as they will project, and a document shows all of its
    slides. Opening it puts nothing on a screen, and neither does scrolling it: that is
    how you look ahead. An element goes up only when you click its preview or press one

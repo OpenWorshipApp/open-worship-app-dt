@@ -43,6 +43,7 @@ import {
   BIBLE_XML_CATALOG_URL,
   toDigitsLabel,
 } from './bibleXmlAdvice.mjs';
+import { findBibleBookNamesFromUrl } from './bibleBookNamesUrl.mjs';
 import {
   BibleXmlProblem,
   downloadBibleXml,
@@ -190,24 +191,27 @@ async function readBundledNameSets(locale) {
   }
 }
 
-async function searchNameLists({ locale, offset, page }) {
-  return await findBibleBookNames(locale, {
-    bundled: await readBundledNameSets(locale),
-    offset,
-    readPage: async (url) => {
-      // Charge EACH public read to the shared network budget.
-      const verdict = checkToolCall('owa_read_website', { url });
-      if (!verdict.isAllowed) {
-        throw new Error(verdict.reason);
-      }
-      const { target } = await evaluateInApp('true', { match: page });
-      return await evaluateInTarget(
-        target,
-        genReadWebPageExpression({ url, bibleCatalog: true, maxChars: 200 }),
-        WEBSITE_READ_EVALUATE_TIMEOUT,
-      );
-    },
-  });
+async function searchNameLists({ locale, offset, page, url }) {
+  const readPage = async (url) => {
+    // Charge EACH public read to the shared network budget.
+    const verdict = checkToolCall('owa_read_website', { url });
+    if (!verdict.isAllowed) {
+      throw new Error(verdict.reason);
+    }
+    const { target } = await evaluateInApp('true', { match: page });
+    return await evaluateInTarget(
+      target,
+      genReadWebPageExpression({ url, bibleCatalog: true, maxChars: 200 }),
+      WEBSITE_READ_EVALUATE_TIMEOUT,
+    );
+  };
+  return url
+    ? findBibleBookNamesFromUrl(url, locale, { readPage })
+    : findBibleBookNames(locale, {
+        bundled: await readBundledNameSets(locale),
+        offset,
+        readPage,
+      });
 }
 
 /**
@@ -378,11 +382,11 @@ async function handleCheck({ url, find }) {
   });
 }
 
-async function handleNames({ locale, draftId, key, offset }) {
+async function handleNames({ locale, draftId, key, offset, url }) {
   if (!locale) {
     throw new Error('Give the locale to find book names for, e.g. km-KH.');
   }
-  const result = await searchNameLists({ locale, offset });
+  const result = await searchNameLists({ locale, offset, url });
   if (!draftId && !key) {
     // The Settings import panel's own shape, unchanged: it shows every
     // list in full and links each source.
@@ -400,6 +404,20 @@ async function handleNames({ locale, draftId, key, offset }) {
     locale: toFullLocale(result.locale),
     digits: genDigitChoices(locale),
     nameLists: toListPreviews(named),
+    ...(url
+      ? {
+          requestedUrl: url,
+          sources: result.sources,
+          ...(result.problem
+            ? {
+                problem: result.problem,
+                message: result.message,
+                foundBooks: result.foundBooks,
+                missingBooks: result.missingBooks,
+              }
+            : {}),
+        }
+      : {}),
     ...(result.warnings.length > 0 ? { warnings: result.warnings } : {}),
     ...(result.moreAvailable ? { nextOffset: result.nextOffset } : {}),
     note:
@@ -536,15 +554,14 @@ export function registerBibleXmlTool(server, { door = 'stdio' } = {}) {
     'owa_bible_xml',
     {
       description:
-        'Bibles from XML: install, list, change, remove. `check` a `url` ' +
+        'Bibles from XML. `check` a `url` ' +
         `(no link: ${BIBLE_XML_CATALOG_URL}, the language in \`find\`): ` +
         'a page answers its .xml files; a file a `draftId` and choices ' +
         'for the user to pick -- `keys`, `locales`, `digits`, `nameLists` ' +
-        '(ids), `recommended`. `names`: more lists for `locale` (web, ' +
-        'slow). `import` the draft with `key`, `locale`, `digits`, ' +
+        '(ids), `recommended`. `names`: book lists for `locale`; with `url`, read that site (chapter links use edition indexes). `import` with `draftId`, `key`, `locale`, `digits`, ' +
         '`bookNames` id; `cancel`. `info`, `update` (title, locale, ' +
-        'digits, bookNames: id or {"GEN": name}), `delete` take `key`. A ' +
-        '`problem` is about the link or key: say it plainly. ' +
+        'digits, bookNames: id or {"GEN": name}), `delete` take `key`. ' +
+        'Explain `problem` plainly. ' +
         AGENT_UNDO_TEXT,
       inputSchema: {
         action: z.enum(BIBLE_XML_ACTIONS),

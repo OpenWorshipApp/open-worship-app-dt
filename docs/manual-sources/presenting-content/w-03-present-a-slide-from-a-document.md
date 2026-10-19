@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-03 — Present a slide from a document
 
@@ -13,12 +13,13 @@ workflowsVersion: "2026-10-15"
 **Preconditions:** at least one document in the **[en:tran:Documents]** list.
 
 1. In the left column, click a document in the **[en:tran:Documents]** list. It
-   highlights, and its slides appear as thumbnails in the middle **[en:tran:Documents]** tab. 📸
+   highlights, and its slides appear as thumbnails in the middle **[en:tran:Documents]** tab. That is the document
+   open; nothing goes on the screen until you click a slide (step 2). 📸
 2. **Click** a slide thumbnail. The slide goes live: it appears on the mini
    screen, and the live item is marked highlighted (on-screen indicator). 📸
-3. To step through slides with the keyboard, click once in the thumbnail area, then use
-   **Arrow keys / PageUp / PageDown**; **Space** advances and **Shift+Space** goes back.
-   The preview scrolls smoothly to the selected slide, including after several quick
+3. To step through slides with the keyboard, click once in the thumbnail area, then press
+   **→**, **↓**, **PageDown** or **Space** for the next slide, and **←**, **↑**, **PageUp**
+   or **Shift+Space** for the one before. The preview scrolls smoothly to the selected slide, including after several quick
    Next presses or wrapping from the last slide to the first.
 4. To remove the slide from the screen, press **F8** ([en:tran:Clear Slide]) or click
    the matching clear button (`SL`) in the mini screen's header.
@@ -90,5 +91,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

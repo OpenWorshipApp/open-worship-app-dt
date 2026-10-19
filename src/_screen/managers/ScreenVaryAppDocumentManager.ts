@@ -770,11 +770,23 @@ class ScreenVaryAppDocumentManager
         return data;
     }
 
-    handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
+    /**
+     * Resolves to whether this screen holds the slide afterwards: a locked
+     * screen, or media playing on the one it would replace, refuses it, and
+     * the caller must not count that as shown.
+     */
+    async handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
         const newSlideData = this.toSlideData(filePath, itemJson);
-        this.applySlideSrcWithSyncGroup(newSlideData);
+        await this.applySlideSrcWithSyncGroup(newSlideData);
+        const data = this.varySlideData;
+        return (
+            data !== null &&
+            data.filePath === filePath &&
+            data.itemJson.id === itemJson.id
+        );
     }
 
+    /** Resolves to whether ANY chosen screen took the slide. */
     static async handleSlideSelecting(
         event: MouseEvent,
         filePath: string,
@@ -787,6 +799,7 @@ class ScreenVaryAppDocumentManager
             isForceChoosing,
             presetScreenIds,
         );
+        const shownPromises: Promise<boolean>[] = [];
         for (const screenId of screenIds) {
             const screenVaryAppDocumentManager = this.getInstance(screenId);
             if (screenVaryAppDocumentManager === null) {
@@ -798,11 +811,17 @@ class ScreenVaryAppDocumentManager
                 );
                 continue;
             }
-            screenVaryAppDocumentManager.handleSlideSelecting(
-                filePath,
-                itemJson,
+            shownPromises.push(
+                screenVaryAppDocumentManager
+                    .handleSlideSelecting(filePath, itemJson)
+                    .catch((error) => {
+                        handleError(error);
+                        return false;
+                    }),
             );
         }
+        const shownList = await Promise.all(shownPromises);
+        return shownList.includes(true);
     }
 
     renderPdf(

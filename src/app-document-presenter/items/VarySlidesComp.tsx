@@ -17,10 +17,7 @@ import SlideAutoPlayComp, {
     type NextDataType,
 } from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
-import {
-    DEFAULT_THUMBNAIL_SIZE_FACTOR,
-    MIN_THUMBNAIL_SCALE,
-} from '../../app-document-list/appDocumentTypeHelpers';
+import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
 import { useCallback, useMemo } from 'react';
 import VirtualGridComp from '../../virtual-list/VirtualGridComp';
 import {
@@ -250,9 +247,7 @@ export default function VarySlidesComp({
     menuRoom?: DocumentMenuRoomType | null;
 }>) {
     const [thumbSizeScale] = useVarySlideThumbnailSizeScale(
-        useThumbnailScaleSettingOptions({
-            defaultSize: MIN_THUMBNAIL_SCALE + 10,
-        }),
+        useThumbnailScaleSettingOptions(),
     );
     const {
         varySlides,

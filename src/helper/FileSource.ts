@@ -457,6 +457,17 @@ export default class FileSource
         );
     }
 
+    /**
+     * A file that went away WITHOUT `trash` -- the watcher's report of a
+     * delete made outside the app. Told and forgotten exactly as `trash`
+     * does, so nothing holding it can tell the two apart.
+     */
+    static fireDeleteEventByPath(filePath: string) {
+        const fileSource = this.getInstance(filePath);
+        fileSource.fireDeleteEvent();
+        instantCache.delete(fileSource.filePath);
+    }
+
     async genNextFilePath() {
         let i = 0;
         let nextFilePath = pathJoin(

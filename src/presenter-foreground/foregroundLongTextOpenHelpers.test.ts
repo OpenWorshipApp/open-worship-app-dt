@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { state, mocks } = vi.hoisted(() => ({
-    state: { settings: new Map<string, string>() },
+    state: {
+        settings: new Map<string, string>(),
+        sessions: [] as { id: string; name: string }[],
+    },
     mocks: {
         addMediaSession: vi.fn(),
         requestForegroundPanelOpening: vi.fn(),
@@ -16,6 +19,7 @@ vi.mock('../helper/settingHelpers', () => ({
 }));
 vi.mock('../media-sessions/MediaSessionsComp', () => ({
     addMediaSession: mocks.addMediaSession,
+    readSessions: () => state.sessions,
     genMediaSessionId: () => 's9ix',
     toSessionSuffix: (sessionId: string) => {
         return sessionId === '' ? '' : `-${sessionId}`;
@@ -40,10 +44,14 @@ vi.mock('./foregroundWidgetHelpers', () => ({
 }));
 
 import { parseLongTextSession } from './foregroundLongTextHelpers';
-import { openLyricInLongTextShow } from './foregroundLongTextOpenHelpers';
+import {
+    openLyricInLongTextShow,
+    toUniqueSessionName,
+} from './foregroundLongTextOpenHelpers';
 
 beforeEach(() => {
     state.settings.clear();
+    state.sessions = [{ id: '', name: 'Default' }];
     vi.clearAllMocks();
 });
 
@@ -90,6 +98,21 @@ describe("a lyric's Long Text Show", () => {
         openLyricInLongTextShow('/docs/Still.owl');
         expect(state.settings.get('foreground-open-panels')).toBe(
             'message,long-text',
+        );
+    });
+
+    test('the same song opened again gets a name of its own, not a third "Still"', () => {
+        mocks.requestForegroundPanelOpening.mockReturnValue(true);
+        state.sessions = [
+            { id: '', name: 'Default' },
+            { id: 'a', name: 'Still' },
+            { id: 'b', name: 'Still (2)' },
+        ];
+        openLyricInLongTextShow('/docs/Still.owl');
+        expect(mocks.addMediaSession.mock.calls[0][1].name).toBe('Still (3)');
+        expect(toUniqueSessionName('Still', ['Default'])).toBe('Still');
+        expect(toUniqueSessionName('Still', ['Still', 'Still (3)'])).toBe(
+            'Still (2)',
         );
     });
 

@@ -168,7 +168,249 @@ describe('a press of another kind', () => {
   });
 });
 
+// What a press brought about when the control itself carries no state of
+// its own (2026-10-16, robot run T3/T5).
+describe('what a press brought about', () => {
+  const setVisibility = (state) => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => state,
+    });
+  };
+  beforeEach(() => {
+    setVisibility('visible');
+  });
+
+  // The editing toolbar: Save greys itself out once the history status is
+  // re-read -- after the settle -- and Undo lights Redo up.
+  const TOOLBAR = [
+    '<div class="editing-menu-body btn-group">',
+    '<button id="undo" title="Undo" aria-label="Undo"></button>',
+    '<button id="redo" title="Redo" aria-label="Redo" disabled></button>',
+    '<button id="save" title="Save [Ctrl+S]" aria-label="Save"></button>',
+    '</div>',
+  ].join('');
+
+  it('reads a Save that greys itself out after the settle as its effect', async () => {
+    document.body.innerHTML = TOOLBAR;
+    const save = document.getElementById('save');
+    save.addEventListener('click', () => {
+      setTimeout(() => {
+        save.disabled = true;
+      }, 120);
+    });
+    const result = await run(genClickExpression(['Save'], 100, 10));
+    expect(result.didChange).toBe(true);
+    expect(result.nowDisabled).toEqual(['Save [Ctrl+S]']);
+    expect(result.nowEnabled).toBeUndefined();
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('reads an Undo that lights Redo up as its effect', async () => {
+    document.body.innerHTML = TOOLBAR;
+    document.getElementById('undo').addEventListener('click', () => {
+      document.getElementById('redo').disabled = false;
+    });
+    const result = await run(genClickExpression(['Undo'], 100, 10));
+    expect(result.didChange).toBe(true);
+    expect(result.nowEnabled).toEqual(['Redo']);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('still says unverified when nothing near the press changed', async () => {
+    document.body.innerHTML = TOOLBAR;
+    const startedAt = Date.now();
+    const result = await run(genClickExpression(['Undo'], 100, 10));
+    expect(result.didChange).toBe(false);
+    expect(result.unverified).toContain('nothing is proven');
+    expect(result.nowEnabled).toBeUndefined();
+    // The late-effect watch is bounded, not a hang.
+    expect(Date.now() - startedAt).toBeLessThan(3000);
+  });
+
+  // The app's own confirm, as ConfirmPopupComp renders it, opened a beat
+  // after the press -- Select Default reads the data folder first.
+  const openConfirm = () => {
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.className = 'modal-container--blocking';
+    container.innerHTML = [
+      '<div id="app-confirm-popup" role="alertdialog">',
+      '<div class="app-popup-header-title">Select Default Folder</div>',
+      '<div id="app-confirm-popup-body" class="app-popup-body">',
+      'This will select "C:\\data\\documents" (will create if not exist)',
+      '</div><button>Cancel</button><button>Ok</button></div>',
+    ].join('');
+    document.body.append(container);
+  };
+
+  it('says the press made the app ask a question, and whose it is', async () => {
+    document.body.innerHTML = '<button>Select Default "documents"</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      setTimeout(openConfirm, 150);
+    });
+    const result = await run(
+      genClickExpression(['Select Default "documents"'], 100, 10),
+    );
+    expect(result.didChange).toBe(true);
+    expect(result.opened).toBe('dialog');
+    expect(result.question).toMatchObject({
+      title: 'Select Default Folder',
+      text: expect.stringContaining('will create if not exist'),
+    });
+    expect(result.question.isWindowHidden).toBeUndefined();
+    expect(result.question.note).toContain('do not answer it for them');
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('says so when the question is in a window nobody can see', async () => {
+    setVisibility('hidden');
+    document.title = 'Open Worship app - Presenter';
+    document.body.innerHTML = '<button>Select Default "documents"</button>';
+    document.querySelector('button').addEventListener('click', openConfirm);
+    const result = await run(
+      genClickExpression(['Select Default "documents"'], 100, 10),
+    );
+    expect(result.question.isWindowHidden).toBe(true);
+    expect(result.question.note).toContain('HIDDEN');
+    expect(result.question.note).toContain('Open Worship app - Presenter');
+  });
+
+  it('does not report a question that was already up as new', async () => {
+    document.body.innerHTML = '<button id="other">Refresh</button>';
+    openConfirm();
+    const result = await run(genClickExpression(['Refresh'], 100, 10));
+    expect(result.question).toBeUndefined();
+  });
+
+  it('reports the question a key made the app ask', async () => {
+    document.body.innerHTML =
+      '<div id="list" tabindex="0" title="Slide list">slides</div>';
+    document.getElementById('list').addEventListener('keydown', openConfirm);
+    const result = await run(
+      genPressKeyExpression(toKeystroke('Delete'), {
+        finds: ['Slide list'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.question?.title).toBe('Select Default Folder');
+    expect(result.didChange).toBe(true);
+  });
+});
+
+describe('a value the press moved', () => {
+  // AppRangeComp: Zoom In steps the slider beside it, and neither carries an
+  // on/off state -- the press read `unverified` with the thumbnails plainly
+  // bigger (2026-10-16, T2 of run 20261016-1920).
+  it('reads a slider beside the pressed control as its effect', async () => {
+    document.body.innerHTML = [
+      '<div class="footer">',
+      '<button title="Zoom Out" aria-label="Zoom Out"></button>',
+      '<input type="range" aria-label="Slide Thumbnail Size Scale" value="30" />',
+      '<button id="in" title="Zoom In" aria-label="Zoom In"></button>',
+      '</div>',
+    ].join('');
+    const range = document.querySelector('input');
+    document.getElementById('in').addEventListener('click', () => {
+      range.value = '40';
+    });
+    const result = await run(genClickExpression(['Zoom In'], 100, 10));
+    expect(result.didChange).toBe(true);
+    expect(result.nowValue).toEqual(['Slide Thumbnail Size Scale: 40']);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('reads an arrow key that dragged a focused divider', async () => {
+    document.body.innerHTML = [
+      '<div class="pane">',
+      '<div id="divider" role="separator" tabindex="0" aria-valuenow="50"',
+      ' aria-label="Divider between Bibles and Bible Notes"></div>',
+      '</div>',
+    ].join('');
+    const divider = document.getElementById('divider');
+    divider.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown') {
+        divider.setAttribute('aria-valuenow', '83');
+      }
+    });
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowDown'), {
+        finds: ['Divider between Bibles and Bible Notes'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.didChange).toBe(true);
+    expect(result.nowValue).toEqual([
+      'Divider between Bibles and Bible Notes: 83',
+    ]);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('still says unverified when the value stayed where it was', async () => {
+    document.body.innerHTML = [
+      '<div class="footer">',
+      '<input type="range" aria-label="Slide Thumbnail Size Scale" value="30" />',
+      '<button title="Zoom In" aria-label="Zoom In"></button>',
+      '</div>',
+    ].join('');
+    const result = await run(genClickExpression(['Zoom In'], 100, 10));
+    expect(result.didChange).toBe(false);
+    expect(result.nowValue).toBeUndefined();
+  });
+});
+
+describe('a label an open menu shares with the page', () => {
+  // A screen card's colour-note menu open over the Background Colors grid:
+  // "red" pressed the swatch BEHIND the menu and put a red background on a
+  // screen (2026-10-16, T1 of run 20261016-1920).
+  it('presses the open menu row, not the page control behind it', async () => {
+    document.body.innerHTML = [
+      '<div class="colors">',
+      '<div id="swatch" role="button" title="red" aria-label="red"></div>',
+      '</div>',
+      '<div role="menu">',
+      '<div id="row" role="menuitem" title="red">red</div>',
+      '</div>',
+    ].join('');
+    const pressed = [];
+    for (const id of ['swatch', 'row']) {
+      document.getElementById(id).addEventListener('click', () => {
+        pressed.push(id);
+      });
+    }
+    await run(genClickExpression(['red'], 100, 10));
+    expect(pressed).toEqual(['row']);
+  });
+
+  it('presses the page control when no menu is open', async () => {
+    document.body.innerHTML =
+      '<div id="swatch" role="button" title="red" aria-label="red"></div>';
+    const pressed = [];
+    document.getElementById('swatch').addEventListener('click', () => {
+      pressed.push('swatch');
+    });
+    await run(genClickExpression(['red'], 100, 10));
+    expect(pressed).toEqual(['swatch']);
+  });
+});
+
 describe('pressing a key', () => {
+  // T4: the focused list carries a <style> of its own, and its CSS was the
+  // name the answer gave it.
+  it('names a focused control by its words, never by a style sheet in it', async () => {
+    document.body.innerHTML =
+      '<div id="list" tabindex="0" title="Slide list">' +
+      '<style>.play-to-bottom { padding: 0; }</style>slides</div>';
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowRight'), {
+        finds: ['Slide list'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.focusedFirst).toBe('slides Slide list');
+    expect(result.focusedFirst).not.toContain('padding');
+  });
+
   it('sends keydown and keyup with key and code, at the focused control', async () => {
     document.body.innerHTML =
       '<div id="list" tabindex="0" title="Slide list">slides</div>';

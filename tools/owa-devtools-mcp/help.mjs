@@ -25,10 +25,19 @@ import {
   readManualPageDate,
   toManualPageBody,
 } from './manualPage.mjs';
-import { genPassageExcerpt, genQuestionAnchors } from './passageMatch.mjs';
+import {
+  genPassageExcerpt,
+  genQuestionAnchors,
+  genTranslatedExcerpt,
+} from './passageMatch.mjs';
 import { flattenQuestions } from './questionMatch.mjs';
-import { loadQuestionPages } from './questions.mjs';
+import { loadQuestionOverlays, loadQuestionPages } from './questions.mjs';
 import { loadTranBundle, resolveTranTemplates } from './tran.mjs';
+import { listManualTranslations } from './manualI18n.mjs';
+import {
+  findQuestionLanguage,
+  toEnglishSearchWords,
+} from './queryLanguage.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // tools/owa-devtools-mcp -> repo root
@@ -185,6 +194,62 @@ export function listKnowledgeEntries() {
     return listSourceManualEntries();
   }
 }
+
+/**
+ * The manual's pages in one of the app's other languages that are still
+ * translations of the English as it stands (`manualI18n.mjs`), from the
+ * bundle's `index.<code>.json` -- read only when a window in that language
+ * asks, per call, like the English index -- or straight from
+ * `docs/manual-i18n/` in a checkout with no build.
+ */
+export function listTranslatedEntries(langCode) {
+  const code = String(langCode ?? '').split('-')[0];
+  if (code === '' || code === 'en') {
+    return [];
+  }
+  const knowledgeDirPath = findKnowledgeDirPath();
+  if (knowledgeDirPath !== null) {
+    const indexPath = path.join(knowledgeDirPath, `index.${code}.json`);
+    if (!existsSync(indexPath)) {
+      return [];
+    }
+    try {
+      const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
+      return (index.entries ?? [])
+        .filter((entry) => {
+          return entry.isStale !== true;
+        })
+        .map((entry) => {
+          return {
+            ...entry,
+            absolutePath: path.join(knowledgeDirPath, entry.file),
+          };
+        });
+    } catch (_error) {
+      return [];
+    }
+  }
+  return listManualTranslations(code)
+    .filter((page) => {
+      return !page.isStale;
+    })
+    .map((page) => {
+      return {
+        id: page.id,
+        lang: code,
+        title: page.title,
+        section: page.section,
+        kind: 'manual',
+        absolutePath: page.absolutePath,
+        searchText: toManualPageBody(page.content),
+      };
+    });
+}
+
+// A page asked for IN a language: `W-06@km`. Only the window asks this way
+// (a person's "Read the whole thing" in a Khmer window), so the tool's schema
+// carries no extra field for it.
+const LANGUAGE_PAGE_ID_PATTERN = /^(.+)@([a-z]{2})$/;
 
 // Counted on word boundaries, not as substrings: "up" used to match "group",
 // "setup" and "coverage-expansion", which is how a robot-test note about
@@ -362,8 +427,12 @@ export function toEnglishOnly(text) {
       )
       .replace(/[\u1780-\u17FF\u19E0-\u19FF][\u1780-\u17FF\u200b \t]*/gu, '')
       .replace(/\(\s*\)/g, '')
-      // A label that was Khmer and nothing else leaves its markers behind.
-      .replace(/\*\*\s*\*\*|`\s*`/g, '')
+      // A label that was Khmer and nothing else leaves its markers behind --
+      // an EMPTY pair, standing alone. Not the closing and opening markers of
+      // two bolds side by side: `**Take it down.** **Hide Long Text**` came
+      // out as one bold reading `Take it down.Hide Long Text` (W-53 and nine
+      // other pages, in every language).
+      .replace(/(^|[\s(])(?:\*\*\s*\*\*|`\s*`)(?=[\s),.;:]|$)/gm, '$1')
       .replace(/[ \t]{2,}/g, ' ')
       .replace(/[ \t]+([),.;:])/g, '$1')
       .trimEnd()
@@ -513,9 +582,11 @@ const STOP_WORDS = new Set([
 ]);
 
 function toTerms(query) {
+  // Marks are part of a word: Khmer vowel signs and its subscript mark are
+  // `\p{M}`, and splitting on them cut `ស្វែងរក` into pieces no page holds.
   const terms = query
     .toLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
+    .split(/[^\p{L}\p{M}\p{N}]+/u)
     .filter((term) => {
       return term.length > 1 && !STOP_WORDS.has(term);
     });
@@ -530,6 +601,60 @@ function toTerms(query) {
       // back, and an excerpt in the app's words is the useful half.
       return [term, ...(TERM_ALIASES[term] ?? [])];
     });
+}
+
+/**
+ * The terms a question is searched by. A question in a script the guide is
+ * not written in (Khmer) is read as the English words it names
+ * (`queryLanguage.mjs`): each label or question word one group of
+ * alternatives, the way `TERM_ALIASES` widens an English word. Whatever was
+ * in Latin letters beside it (a key name, an English word) is read as
+ * always.
+ */
+function toSearchTerms(query, bundle) {
+  const language = findQuestionLanguage(query, bundle?.languages);
+  if (language === null) {
+    return toTerms(query);
+  }
+  const { groups, rest } = toEnglishSearchWords(
+    query,
+    bundle?.dictionaries?.[language.code] ?? {},
+    language.facts,
+  );
+  // A label of several words counts as the phrase -- the page that NAMES the
+  // control scores for it -- and as its words, the way the same question
+  // typed in English is counted.
+  const groupTerms = groups
+    .flatMap((group) => {
+      const phraseWords = group.find((one) => {
+        return one.includes(' ');
+      });
+      return phraseWords === undefined
+        ? [group]
+        : [group, ...phraseWords.split(' ').map((word) => [word])];
+    })
+    .map((group) => {
+      const words = group
+        .filter((word) => {
+          return word.length > 1 && !STOP_WORDS.has(word);
+        })
+        .flatMap((word) => {
+          return [word, ...(TERM_ALIASES[word] ?? [])];
+        });
+      return [...new Set(words)];
+    })
+    .filter((group) => {
+      return group.length > 0;
+    });
+  const restTerms = /[\p{L}\p{N}]/u.test(rest) ? toTerms(rest) : [];
+  const seen = new Set();
+  return [...restTerms, ...groupTerms].filter((group) => {
+    if (seen.has(group[0])) {
+      return false;
+    }
+    seen.add(group[0]);
+    return true;
+  });
 }
 
 /**
@@ -548,10 +673,11 @@ function toTerms(query) {
  * two times in five. A paraphrase never matches here and is ranked as
  * before -- this is a lookup, not a second ranker.
  */
+// Letters of every script: a Khmer chip's words were an empty key.
 function toQuestionKey(text) {
   return String(text ?? '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
     .trim();
 }
 
@@ -567,10 +693,34 @@ export function findKnownQuestionRow(query) {
     // No corpus on disk is no reason for a search to fail.
     return null;
   }
-  const row = flattenQuestions(pages).find((one) => {
+  const rows = flattenQuestions(pages);
+  const row = rows.find((one) => {
     return toQuestionKey(one.text) === key;
   });
-  return row ?? null;
+  if (row !== undefined) {
+    return row;
+  }
+  // A chip pressed in another language is that row in its words
+  // (`questions/i18n/`), read only for a question that is not in Latin
+  // letters -- the chip a Khmer window shows.
+  if (!/(?=\p{L})\P{Script=Latin}/u.test(String(query ?? ''))) {
+    return null;
+  }
+  for (const overlay of loadQuestionOverlays()) {
+    for (const [id, words] of Object.entries(overlay.questions ?? {})) {
+      if (toQuestionKey(words?.text) !== key) {
+        continue;
+      }
+      // A translation of words the row no longer says is no label of it.
+      const translated = rows.find((one) => {
+        return one.id === id && one.text === words.en;
+      });
+      if (translated !== undefined) {
+        return translated;
+      }
+    }
+  }
+  return null;
 }
 
 export function findKnownQuestionRecipe(query) {
@@ -587,7 +737,10 @@ export function searchHelp(
   focus = null,
   langCode = null,
 ) {
-  const terms = toTerms(query);
+  // One read of the label dictionary for the whole search: the question's
+  // own words (a Khmer question is read through it) and every excerpt.
+  const tranBundle = loadTranBundle();
+  const terms = toSearchTerms(query, tranBundle);
   if (terms.length === 0) {
     return [];
   }
@@ -658,9 +811,14 @@ export function searchHelp(
             return entry.id !== knownId;
           }),
         ];
-  // One read of the label dictionary for the whole page of results, not one
-  // per excerpt.
-  const tranBundle = loadTranBundle();
+  // The translated pages, only for a manual search in another language
+  // (the offline guide's): the index of that language is read then and only
+  // then.
+  const translatedMap = new Map(
+    (kind === 'manual' ? listTranslatedEntries(langCode) : []).map((one) => {
+      return [one.id, one];
+    }),
+  );
   return picked.slice(0, limit).map(({ entry, score, isKnownQuestion }) => {
     return {
       id: entry.id,
@@ -691,8 +849,53 @@ export function searchHelp(
         langCode,
         tranBundle,
       ),
+      ...genTranslatedFields(
+        entry,
+        translatedMap,
+        terms,
+        isKnownQuestion === true ? knownAnchors : [],
+        langCode,
+        tranBundle,
+      ),
     };
   });
+}
+
+/**
+ * What a hit says in the window's language, when its page is translated and
+ * current: the same passage out of the translation, and its title. Asked for
+ * only by a manual search in a non-English window -- the guide's offline
+ * answer quotes it; a model reads the English page (`owa_help_page`).
+ */
+function genTranslatedFields(
+  entry,
+  translatedMap,
+  terms,
+  anchors,
+  langCode,
+  tranBundle,
+) {
+  const translated = translatedMap.get(entry.id);
+  if (translated === undefined) {
+    return {};
+  }
+  const excerpt = genTranslatedExcerpt(
+    entry.searchText,
+    translated.searchText,
+    terms,
+    anchors,
+  );
+  if (excerpt === null) {
+    return {};
+  }
+  return {
+    titleInLanguage: translated.title,
+    excerptInLanguage: resolveTranTemplates(
+      scrubRecipeIds(excerpt),
+      langCode,
+      tranBundle,
+    ),
+  };
 }
 
 // Where the NEWEST copy of a manual page is: the project's own repository.
@@ -731,14 +934,35 @@ export function genFreshPageUrl(entry) {
  * caller that sends none of it to a model -- the walkthrough card is built
  * from every step.
  */
-export function readHelpPage(id, langCode = null, part = 1) {
-  const wantedId = id.trim().toLowerCase();
-  const entry = listKnowledgeEntries().find((item) => {
-    return (
-      item.id.toLowerCase() === wantedId ||
-      item.title.toLowerCase() === wantedId
-    );
-  });
+export function readHelpPage(
+  id,
+  langCode = null,
+  part = 1,
+  // The page as written, `[en:tran:…]` and all: what the walkthrough card
+  // reads its steps from to put each one into the app's language AFTER every
+  // rule that reads the recipe's own English words has run (`owaTools.mjs`).
+  { keepTemplates = false } = {},
+) {
+  let wantedId = id.trim().toLowerCase();
+  // `W-06@km`: the page in that language when its translation is current,
+  // and the English page (its labels in that language) when it is not.
+  const languageMatch = LANGUAGE_PAGE_ID_PATTERN.exec(wantedId);
+  let translatedEntry;
+  if (languageMatch !== null) {
+    wantedId = languageMatch[1];
+    langCode = languageMatch[2];
+    translatedEntry = listTranslatedEntries(languageMatch[2]).find((item) => {
+      return item.id.toLowerCase() === wantedId;
+    });
+  }
+  const entry =
+    translatedEntry ??
+    listKnowledgeEntries().find((item) => {
+      return (
+        item.id.toLowerCase() === wantedId ||
+        item.title.toLowerCase() === wantedId
+      );
+    });
   if (entry === undefined) {
     return null;
   }
@@ -747,7 +971,9 @@ export function readHelpPage(id, langCode = null, part = 1) {
   // `[en:tran:Clear` to read out to somebody.
   const tranBundle = loadTranBundle();
   const toPageBody = (raw) => {
-    const text = resolveTranTemplates(raw, langCode, tranBundle);
+    const text = keepTemplates
+      ? raw
+      : resolveTranTemplates(raw, langCode, tranBundle);
     if (part === 'whole') {
       return { body: text, part: 1, partCount: 1 };
     }

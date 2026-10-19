@@ -195,15 +195,14 @@ const handleBodyRendering = (
                         ? LIST_VIEW_ROW_HEIGHT
                         : thumbnailHeight + THUMBNAIL_EXTRA_HEIGHT
                 }
-                // A forced single column is as wide as the PANEL, so the
-                // row must not be capped at one thumbnail's width and
-                // centred. Left as it was for list view, which is a column of
-                // thumbnail-width rows on purpose.
-                itemWidth={
-                    props.isSingleColumn === true
-                        ? 0
-                        : thumbnailWidth + THUMBNAIL_MARGIN
-                }
+                // A single column -- forced, or list view -- is as wide as the
+                // PANEL, so the row must not be capped at one thumbnail's
+                // width and centred. List view used to be: at the default
+                // size each row was a ~150px pill in the middle of the pane,
+                // and the file name, which is the whole point of the list,
+                // came out as "z…" (the Webs tab's list was always full
+                // width).
+                itemWidth={isOneColumn ? 0 : thumbnailWidth + THUMBNAIL_MARGIN}
                 overscan={3}
                 rowClassName="d-flex"
             />

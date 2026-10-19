@@ -72,6 +72,14 @@ test('persists empty editors and preserves per-message stack offsets after a sty
         color: 'white',
         marginTop: 'calc(5em + 4px)',
     });
+    // One session's messages share a stack key, so the screen can lay them
+    // out by their measured heights (a wrapped line is one the margin above
+    // cannot count).
+    expect(
+        data.map((item) => {
+            return item.stackKey;
+        }),
+    ).toEqual(['message', 'message']);
     // In front by default, and then with NO layer key at all.
     expect(data[0]).not.toHaveProperty('isBehind');
     // The whole stack goes to one layer.

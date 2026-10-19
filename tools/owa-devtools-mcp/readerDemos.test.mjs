@@ -8,7 +8,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('keeps the existing ids while expanding to 100 Reader lessons', () => {
+  it('keeps the existing ids while expanding to 105 Reader lessons', () => {
     expect(READER_DEMO_IDS).toEqual(
       expect.arrayContaining([
         'reader-font-larger',
@@ -73,10 +73,11 @@ describe('Reader demos', () => {
         'reader-view-widgets',
         'reader-view-reset-widgets',
         'reader-switch-split-pane',
+        'reader-find-verse-assistant',
       ]),
     );
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(100);
+    expect(READER_DEMO_LIST).toHaveLength(105);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
@@ -133,10 +134,42 @@ describe('Reader demos', () => {
       'reader-notes-new-file',
       (value) => labels[value] ?? value,
     );
+    // The panel's own name stays English on the page (data-widget-name), so
+    // the variant that can land in a translated window keeps it English, and
+    // comes last because the renderer's inline fallback takes the last find.
     expect(demo.steps[0].finds).toEqual([
       'Bible Notes > More Options',
       'NOTES > OPTIONS',
+      'Bible Notes > OPTIONS',
     ]);
+  });
+
+  it('aims list tips at their own panel, since Bibles and Bible Notes share the words', () => {
+    expect(getReaderDemo('reader-filter-notes').steps[0].finds).toEqual([
+      'Bible Notes > Filter by name',
+    ]);
+    expect(getReaderDemo('reader-sort-notes').steps[0].finds).toEqual([
+      'Bible Notes > Sort',
+    ]);
+    expect(
+      getReaderDemo('reader-bibles-find-list').steps.map((step) => step.find),
+    ).toEqual(['Bibles > Filter by name', 'Bibles > Sort', undefined]);
+    expect(getReaderDemo('reader-copy-passage').steps[0].find).toBe(
+      'Lookup > Copy',
+    );
+  });
+
+  it('leaves the untranslated path editor title untranslated (TP-01)', () => {
+    const translate = (value) => {
+      if (value === 'Show path editor') {
+        throw new Error('no km key');
+      }
+      return value;
+    };
+    for (const id of ['reader-bibles-folder', 'reader-notes-folder']) {
+      const demo = getReaderDemo(id, translate);
+      expect(demo.steps[0].finds[0]).toMatch(/ > Show path editor$/);
+    }
   });
 
   it('keeps mixed Reader lessons actionable only where a control is named', () => {

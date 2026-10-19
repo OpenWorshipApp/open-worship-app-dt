@@ -9,6 +9,7 @@ const { state, mocks } = vi.hoisted(() => ({
         controller: null as any,
         editingResult: null as any,
         movedCheck: null as any,
+        isAiEnabled: false,
     },
     mocks: {
         applyDropped: vi.fn(),
@@ -20,7 +21,17 @@ const { state, mocks } = vi.hoisted(() => ({
         register: vi.fn(),
         unregister: vi.fn(),
         followFrame: vi.fn(),
+        openWithBibleItem: vi.fn(),
+        openWithVerseKey: vi.fn(),
     },
+}));
+
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => state.isAiEnabled,
+}));
+vi.mock('../helper/ai/bibleItemAskHelpers', () => ({
+    openChatbotWithBibleItem: mocks.openWithBibleItem,
+    openChatbotWithVerseKey: mocks.openWithVerseKey,
 }));
 
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
@@ -240,6 +251,71 @@ describe('Bible view', () => {
         expect(mocks.setRecentSearch).toHaveBeenCalledWith('grace');
         expect(controller.openBibleSearch).toHaveBeenCalledWith('s');
         expect(controller.setIsAdvanceLookupOpened).toHaveBeenCalledWith(true);
+    });
+
+    // The assistant on the verse under the pointer and on the whole passage
+    // (2026-10-18), while AI is on; no verse item when the passage IS it.
+    test('offers the assistant on the verse and the passage', async () => {
+        state.controller = makeController();
+        state.isAiEnabled = true;
+        const passage = {
+            id: 'first',
+            target: { bookKey: 'GEN', chapter: 4, verseStart: 1, verseEnd: 26 },
+        } as any;
+        await act(async () =>
+            root.render(<BibleViewComp bibleItem={passage} />),
+        );
+        const verse = document.createElement('div');
+        verse.dataset.verseKey = '(KJV) GEN 4:6';
+        card().append(verse);
+        await act(async () =>
+            verse.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const [, items] = mocks.showMenu.mock.calls.at(-1)!;
+        expect(items.map((item: any) => item.menuElement)).toEqual([
+            'Copy passage',
+            'Ask the Assistant About This Verse',
+            'Ask the Assistant About This Passage',
+            'View option',
+        ]);
+        // Each is imported at the press -- one press at a time, as a
+        // person makes them.
+        await act(async () => items[1].onSelect());
+        await vi.waitFor(() => {
+            expect(mocks.openWithVerseKey).toHaveBeenCalledWith(
+                '(KJV) GEN 4:6',
+            );
+        });
+        await act(async () => items[2].onSelect());
+        await vi.waitFor(() => {
+            expect(mocks.openWithBibleItem).toHaveBeenCalledWith(passage);
+        });
+
+        const oneVerse = {
+            id: 'first',
+            target: { bookKey: 'GEN', chapter: 4, verseStart: 6, verseEnd: 6 },
+        } as any;
+        await act(async () =>
+            root.render(<BibleViewComp bibleItem={oneVerse} />),
+        );
+        card().append(verse);
+        await act(async () =>
+            verse.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        expect(
+            mocks.showMenu.mock.calls
+                .at(-1)![1]
+                .map((item: any) => item.menuElement),
+        ).toEqual([
+            'Copy passage',
+            'Ask the Assistant About This Passage',
+            'View option',
+        ]);
+        state.isAiEnabled = false;
     });
 
     test('offers the no-passage menu while editing book selection', async () => {

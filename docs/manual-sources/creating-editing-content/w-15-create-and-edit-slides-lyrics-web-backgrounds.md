@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -28,6 +28,8 @@ in the same documents folder. 📸
    the same list from a right-click on the canvas. (The right-hand **[en:tran:Canvas Items]** tab
    is a preview/select list, not a place to drag boxes from.) You can also **drag items
    in from the Background panel** — see W-28.
+   **Insert a video from a link.** In the **[en:tran:Slide Editor]**, select the slide, press **[en:tran:Insert Media Link]** above the canvas, paste the direct video address into **[en:tran:Media URL:]**, and press **[en:tran:Ok]**. For a YouTube address, use **[en:tran:Insert YouTube]** and its **[en:tran:YouTube URL:]** box instead, then press **[en:tran:Ok]**. Move or resize the new box on the slide and save with **Ctrl+S**.
+   **Insert a camera on a slide.** Select the slide in **[en:tran:Slide Editor]**, press **[en:tran:Insert Camera]**, then select the camera's name from the device menu that opens. Selecting a device adds its camera box to the slide. Move or resize the box and save with **Ctrl+S**. If the app says **[en:tran:No camera found]**, connect a camera and try again.
 5. **A website box shows a picture of the page, not the running page.** Open Worship
    takes a screenshot and shows that everywhere you edit, so a service order full of
    web slides stays fast even on an old machine. Two things follow:
@@ -75,7 +77,10 @@ in the same documents folder. 📸
    **[en:tran:Font Family]** and press **[en:tran:Apply Font Family]**. Each button
    applies only that property, leaving the other styles and positions intact.
    The result reports how many items changed. Each application is one
-   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. 📸
+   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. To change the words'
+   colour as well, select the box and click the hex value under
+   **[en:tran:Text Properties] → [en:tran:Color]**. Type or paste the new hex color,
+   then press **Enter** or click away to apply it (step 9). 📸
 9. **Type an exact color.** Select a box, then click the hex value beside
    **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
    Type or paste a hex color, then press **Enter** or click away to apply it.
@@ -100,12 +105,13 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 empty part of the list). **[en:tran:Add URL]** asks for a web address and saves it as a new
 tile in the tab. **[en:tran:New File]** asks for a name and makes an `.html` page in the
 folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in its own window,
-its code beside a preview.
+its code beside a preview. The Web Editor saves itself as you type, so there is no Save
+to press.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-27` · `CM-32` · `CM-33` · `CM-43` · `PM-33` · `PM-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

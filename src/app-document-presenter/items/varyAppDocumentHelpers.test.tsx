@@ -83,6 +83,9 @@ vi.mock('../../app-document-list/PptxSlide', () => ({
         static checkIsThisType(value: unknown) {
             return pptxCheckIsThisTypeMock(value);
         }
+        static calcIndex(i: number, j: number) {
+            return i + (j + 1) * 0.01;
+        }
     },
 }));
 
@@ -164,7 +167,15 @@ describe('varyAppDocumentHelpers', () => {
         expect(handleSlideSelectingMock).not.toHaveBeenCalled();
 
         appProviderMock.isPageAppDocumentEditor = false;
+        // A screen that refused it (locked): no history badge.
+        handleSlideSelectingMock.mockResolvedValueOnce(false);
         handleVarySlideSelecting(event, 2, varySlide, selectSelectedSlide);
+        await Promise.resolve();
+        expect(slideItemSelectedMock).not.toHaveBeenCalled();
+
+        handleSlideSelectingMock.mockResolvedValue(true);
+        handleVarySlideSelecting(event, 2, varySlide, selectSelectedSlide);
+        await Promise.resolve();
 
         expect(slideItemSelectedMock).toHaveBeenCalledWith(2, varySlide);
         expect(handleSlideSelectingMock).toHaveBeenCalledWith(
@@ -398,6 +409,9 @@ describe('varyAppDocumentHelpers', () => {
             filePath: '/docs/main.ows',
             json: { id: 3, filePath: '/docs/main.ows' },
         });
+        // A step presents like a click, so the footer's history hears of it:
+        // only a click used to be recorded. Numbered as its card is.
+        expect(slideItemSelectedMock).toHaveBeenLastCalledWith(3, slide3);
 
         handleNextItemSelecting({
             varySlides: [slide1, slide2, slide3, pptxParent],
@@ -411,6 +425,10 @@ describe('varyAppDocumentHelpers', () => {
             id: 5,
             filePath: '/docs/main.ows',
         });
+        expect(slideItemSelectedMock).toHaveBeenLastCalledWith(
+            4.01,
+            expect.objectContaining({ id: 5 }),
+        );
 
         // A sub-slide on screen steps like any other card: it is a cell of its
         // own in the grid, so nothing else owns it.

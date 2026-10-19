@@ -6,6 +6,8 @@
  */
 import { toPathScrubbed } from '../../server/accountPathHelpers';
 import { getSettingForce, removeSetting, setSetting } from '../settingHelpers';
+import type { LookupAskType } from './lookupAskHelpers';
+import { toValidLookupAsk } from './lookupAskHelpers';
 
 const HANDOFF_KEY = 'chatbot-handoff-ask';
 const HANDOFF_MAX_AGE_MS = 30 * 1000;
@@ -72,6 +74,83 @@ export function requestChatbotReport(problem: string) {
  */
 export function takeChatbotReport(): string | null {
     return takeHandoffText(REPORT_HANDOFF_KEY);
+}
+
+// A third kind (2026-10-17, the user, with a picture of the Resources
+// panel: _add robot icon to each file, click to open file in chatbot in
+// attachment to analyze_): a FILE to ask about. Its path is the whole
+// request, and is never cut -- half a path is another file, or none.
+const FILE_HANDOFF_KEY = 'chatbot-handoff-file';
+const FILE_HANDOFF_MAX_CHARS = 4096;
+
+export function requestChatbotFile(filePath: string) {
+    if (filePath.length > FILE_HANDOFF_MAX_CHARS) {
+        return;
+    }
+    setSetting(FILE_HANDOFF_KEY, JSON.stringify({ filePath, at: Date.now() }));
+}
+
+/** The waiting file's path, once; null when none waits or it is stale. */
+export function takeChatbotFile(): string | null {
+    const raw = getSettingForce(FILE_HANDOFF_KEY);
+    if (!raw) {
+        return null;
+    }
+    removeSetting(FILE_HANDOFF_KEY);
+    try {
+        const data = JSON.parse(raw);
+        if (
+            typeof data?.filePath !== 'string' ||
+            data.filePath.length === 0 ||
+            data.filePath.length > FILE_HANDOFF_MAX_CHARS ||
+            typeof data?.at !== 'number' ||
+            Math.abs(Date.now() - data.at) > HANDOFF_MAX_AGE_MS
+        ) {
+            return null;
+        }
+        return data.filePath;
+    } catch (_error) {
+        return null;
+    }
+}
+
+// A fourth kind (2026-10-18, the user, with the robot circled on three
+// Lookup Detail panels: _as a user I want to ask the chatbot about
+// location/name/bible by opening from the detail panel_): WHICH person,
+// place or passage, never its words -- the chat reads those itself through
+// `owa_lookup_record` (`lookupAskHelpers.ts`).
+const LOOKUP_HANDOFF_KEY = 'chatbot-handoff-lookup';
+
+export function requestChatbotLookup(ask: LookupAskType) {
+    const valid = toValidLookupAsk(ask);
+    if (valid === null) {
+        return;
+    }
+    setSetting(
+        LOOKUP_HANDOFF_KEY,
+        JSON.stringify({ ...valid, at: Date.now() }),
+    );
+}
+
+/** The waiting record to ask about, once; null when none waits or it is stale. */
+export function takeChatbotLookup(): LookupAskType | null {
+    const raw = getSettingForce(LOOKUP_HANDOFF_KEY);
+    if (!raw) {
+        return null;
+    }
+    removeSetting(LOOKUP_HANDOFF_KEY);
+    try {
+        const data = JSON.parse(raw);
+        if (
+            typeof data?.at !== 'number' ||
+            Math.abs(Date.now() - data.at) > HANDOFF_MAX_AGE_MS
+        ) {
+            return null;
+        }
+        return toValidLookupAsk(data);
+    } catch (_error) {
+        return null;
+    }
 }
 
 /**

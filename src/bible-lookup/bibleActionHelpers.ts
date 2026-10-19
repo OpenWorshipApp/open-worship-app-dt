@@ -38,19 +38,64 @@ export async function addBibleItemAndPresent(
     }
 }
 
+const VERSE_KEY_SELECTOR = '[data-verse-key]';
+
+function toElement(node: unknown): Element | null {
+    if (node instanceof Element) {
+        return node;
+    }
+    // A text node: a dispatched event, or a selection anchored in verse text.
+    return node instanceof Node ? node.parentElement : null;
+}
+
+function toVerseElement(element: Element | null): HTMLElement | null {
+    return element?.closest<HTMLElement>(VERSE_KEY_SELECTOR) ?? null;
+}
+
+/**
+ * The verse a bible view's context menu was opened on, or null.
+ *
+ * `closest`, not the target and its parent: a verse holds more than its own
+ * text node. A decorated name ("Aaron" in Exodus 4:14), a word of the
+ * extra-verses layout or of a custom-HTML verse sits two or more levels down,
+ * and the menu used to drop "Open in Cross Reference" on all of them.
+ *
+ * A menu opened away from any verse — from the keyboard, which targets the
+ * focused control — lets the text selection name the verse instead, but only
+ * one inside the view the menu belongs to: a selection left behind in another
+ * pane is not this menu's verse.
+ */
+function findContextMenuVerseKey(event: any): string | null {
+    const targetElement = toElement(event?.target);
+    const targetVerseElement = toVerseElement(targetElement);
+    if (targetVerseElement !== null) {
+        return targetVerseElement.dataset.verseKey ?? null;
+    }
+    // `currentTarget` is the view while React dispatches (this runs before
+    // the menu's first await); the target is inside that view anyway.
+    const viewElement = toElement(event?.currentTarget) ?? targetElement;
+    if (viewElement === null) {
+        return null;
+    }
+    const selectedVerseElement = toVerseElement(
+        toElement(globalThis.getSelection?.()?.anchorNode),
+    );
+    if (
+        selectedVerseElement === null ||
+        !viewElement.contains(selectedVerseElement)
+    ) {
+        return null;
+    }
+    return selectedVerseElement.dataset.verseKey ?? null;
+}
+
 export function genFoundBibleItemContextMenu(
     event: any,
     viewController: LookupBibleItemController,
     bibleItem: BibleItem,
     isKeyboardShortcut?: boolean,
 ): ContextMenuItemType[] {
-    let verseKey: string | null = null;
-    if (event.target instanceof HTMLElement) {
-        verseKey =
-            event.target.dataset.verseKey ??
-            event.target.parentElement?.dataset.verseKey ??
-            null;
-    }
+    const verseKey = findContextMenuVerseKey(event);
     const onDone = () => {
         viewController.onLookupSaveBibleItem();
     };

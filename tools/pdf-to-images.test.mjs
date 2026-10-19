@@ -6,6 +6,7 @@ import { fork } from 'node:child_process';
 import { PDFDocument } from 'mupdf';
 import { genPNGImages } from '../public/js/pdf-to-images.mjs';
 import { countPDFPages } from '../public/js/count-pdf-pages.mjs';
+import { genChatPageImages } from '../public/js/pdf-to-chat-images.mjs';
 
 const tempDirs = [];
 
@@ -117,4 +118,89 @@ test('count and rendering workers respond through their IPC channel', async () =
   expect(readFileSync(result.filePaths[0]).subarray(1, 4).toString()).toBe(
     'PNG',
   );
+});
+
+// The help window's assistant reads a PDF as pictures of its pages
+// (`pdf-to-chat-images.mjs`): the same 1024px long edge as any picture it
+// is sent, as many pages as a question carries, and nothing on the disk.
+test('renders chat pages in memory at the long edge a picture is sent at', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'owa-pdf-chat-'));
+  tempDirs.push(dir);
+  const pdfPath = join(dir, 'chapter.pdf');
+  const doc = new PDFDocument();
+  try {
+    for (const bounds of [
+      [0, 0, 612, 792],
+      [0, 0, 792, 612],
+      ...Array.from({ length: 10 }, () => [0, 0, 300, 400]),
+    ]) {
+      const page = doc.addPage(bounds, 0, {}, '');
+      doc.insertPage(-1, page);
+      page.destroy();
+    }
+    doc.save(pdfPath);
+  } finally {
+    doc.destroy();
+  }
+
+  const result = genChatPageImages({ filePath: pdfPath });
+  expect(result).toMatchObject({
+    isSuccessful: true,
+    pageCount: 12,
+    startPage: 0,
+  });
+  expect(result.pageTexts).toHaveLength(8);
+  expect(result.pageTexts[0]).toEqual({ page: 1, text: '' });
+  // Eight at most: each is re-sent on every round of every question.
+  expect(result.dataUrls).toHaveLength(8);
+  const dimensions = result.dataUrls.map((dataUrl) => {
+    expect(dataUrl.startsWith('data:image/png;base64,')).toBe(true);
+    const png = Buffer.from(dataUrl.split(',')[1], 'base64');
+    return [png.readUInt32BE(16), png.readUInt32BE(20)];
+  });
+  // Portrait, landscape, and a small page drawn UP to the same long edge.
+  expect(Math.max(...dimensions[0])).toBe(1024);
+  expect(dimensions[0][1]).toBe(1024);
+  expect(dimensions[1][0]).toBe(1024);
+  expect(Math.max(...dimensions[2])).toBe(1024);
+
+  const later = genChatPageImages({
+    filePath: pdfPath,
+    startPage: 10,
+    maxPages: 50,
+  });
+  expect(later).toMatchObject({ isSuccessful: true, startPage: 10 });
+  expect(later.dataUrls).toHaveLength(2);
+  expect(later.pageTexts.map((page) => page.page)).toEqual([11, 12]);
+
+  const complete = genChatPageImages({
+    filePath: pdfPath,
+    allPages: true,
+  });
+  expect(complete.dataUrls).toHaveLength(12);
+  expect(complete.pageTexts.map((page) => page.page)).toEqual([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+  ]);
+
+  const detailed = genChatPageImages({
+    filePath: pdfPath,
+    maxPages: 1,
+    longEdge: 2048,
+  });
+  const detailedPng = Buffer.from(detailed.dataUrls[0].split(',')[1], 'base64');
+  expect(
+    Math.max(detailedPng.readUInt32BE(16), detailedPng.readUInt32BE(20)),
+  ).toBe(2048);
+
+  expect(
+    genChatPageImages({ filePath: join(dir, 'missing.pdf') }),
+  ).toMatchObject({ isSuccessful: false });
+
+  const viaWorker = await runWorker('pdf-to-chat-images.mjs', {
+    filePath: resolve('docs/pdf/hello-world.pdf'),
+    maxPages: 1,
+  });
+  expect(viaWorker).toMatchObject({ isSuccessful: true });
+  expect(viaWorker.dataUrls).toHaveLength(1);
+  expect(viaWorker.pageTexts[0].text).toContain('Hello, this is PDF content');
 });

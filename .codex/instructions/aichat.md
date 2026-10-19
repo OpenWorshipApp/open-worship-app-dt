@@ -88,6 +88,43 @@ The ✨ window — a company's chat site in a sandboxed `<webview>`, owned by th
     HEADER for its sign-in hosts in `onBeforeSendHeaders`, never what page
     script reads. A first claude.ai visit shows _Verify you are human_, which
     the person ticks.
+  - **Its words and lettering are the app's language** (2026-10-17, the
+    user's picture of the window in English beside a Khmer app: _both
+    chatbot and ai chat must have translation and have font-family apply_):
+    `src/aichat.tsx` draws from `init`'s callback and plugs in the
+    chatbot's translator (`plugChatWindowLanguage`), so every label here is
+    a chatbot `tran` key with Khmer and French, and the language's face
+    rides `--chat-lang-font` in the shared font stacks. **Inside the site
+    too** (the same day, the user's picture of Claude's Khmer in the OS's
+    serif fallback: _make font-family effect page body as well_;
+    `aiChatGuestFontHelpers.ts`): on each guest's `dom-ready` and
+    `did-stop-loading` the window reads the pack's regular and bold files
+    and hands their BYTES to the page as `FontFace` objects -- nothing is
+    fetched, so neither the guest's wall nor the site's own CSP has a
+    request to allow, and nothing of the app is reachable from the page --
+    each limited to the language's letters (`unicode-range` from its
+    `scriptPattern`) and added under the web-font names the site's text is
+    drawn in, plus one `insertCSS` body rule putting the face in front of
+    the site's own list for a site on system fonts (the list read back is
+    cut to names and commas, between names, before it is written).
+    **Same weight, style and stretch as the site's face** (the same day:
+    _ai chat font-family not effect the website_): Chromium picks ONE group
+    of faces per name by those three, and only inside a group does
+    `unicode-range` share the letters out -- a Khmer face at `400` beside
+    claude.ai's `anthropic-sans` at `300 800` took regular text and sent
+    its Latin to Segoe UI. So each site face that is LOADED (the browser
+    loads a web font only for text drawn in it), or loads later
+    (`loadingdone`, so an answer's face nothing used at load still gets
+    it), gets one Khmer face with its own descriptors, ≤12 a page; a site
+    face whose own range cannot hold the letters is passed over. Cost:
+    in a site face covering every weight, bold Khmer is the regular file.
+    Once per document (`window.__owaLanguageFont`, checked before any byte
+    is sent). Seen live on claude.ai: Latin in Anthropic Sans/Serif, Khmer
+    in Battambang, read with `CSS.getPlatformFontsForNode` over the
+    guest's own `/json/list` `webview` target. That report was ALSO a dev
+    server serving a stale `AiChatAppComp.tsx` (a long-running Vite missed
+    the change; fetching the module showed no font code) -- check what is
+    served before debugging the code.
   - **Tabs**: the chatbot's strip EXTRACTED to `RenderSessionTabsComp`
     (generic over `{id, isLocked}` plus `genTitle` / `canAdd` /
     `canClearAll`), shared rules in `chatWindowShared.scss`.

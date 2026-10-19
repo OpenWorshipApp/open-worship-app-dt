@@ -64,6 +64,43 @@ function readEnvFile(filePath) {
  * app's problem reports and is no assistant. Answers the problems found,
  * empty when the file is good.
  */
+// The app's own reading of a `note` (`toRegistryNote` in
+// electron/customLlmProtocol.ts): text, or language code → text.
+const NOTE_MAX = 300;
+const MAX_NOTE_LANGS = 12;
+const NOTE_LANG_PATTERN = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
+
+/** What is wrong with a note the app would show cut or not at all, or null. */
+export function findNoteProblem(note) {
+    if (note === undefined) {
+        return null;
+    }
+    if (typeof note === 'string') {
+        return note.trim().length > NOTE_MAX
+            ? `is over ${NOTE_MAX} characters: the app cuts it`
+            : null;
+    }
+    if (note === null || typeof note !== 'object' || Array.isArray(note)) {
+        return 'must be text, or an object of language code to text';
+    }
+    const entries = Object.entries(note);
+    if (entries.length > MAX_NOTE_LANGS) {
+        return `has more than ${MAX_NOTE_LANGS} languages: the app keeps the first ${MAX_NOTE_LANGS}`;
+    }
+    for (const [langCode, text] of entries) {
+        if (!NOTE_LANG_PATTERN.test(langCode)) {
+            return `"${langCode}" is not a language code (km, fr, pt-BR)`;
+        }
+        if (typeof text !== 'string' || text.trim().length === 0) {
+            return `"${langCode}" must be text`;
+        }
+        if (text.trim().length > NOTE_MAX) {
+            return `"${langCode}" is over ${NOTE_MAX} characters: the app cuts it`;
+        }
+    }
+    return null;
+}
+
 export function findRegistryProblems(data) {
     const problems = [];
     if (data === null || typeof data !== 'object' || Array.isArray(data)) {
@@ -107,6 +144,10 @@ export function findRegistryProblems(data) {
         ) {
             problems.push(`${where}.baseUrl must be an http(s) address`);
         }
+        const noteProblem = findNoteProblem(server.note);
+        if (noteProblem !== null) {
+            problems.push(`${where}.note ${noteProblem}`);
+        }
         if (server.isAcceptingReport === true) {
             // The app posts the report to this address exactly as written,
             // and refuses one it cannot write that way.
@@ -132,6 +173,14 @@ export function findRegistryProblems(data) {
         ) {
             problems.push(`${where}.models must name at least one model`);
         }
+        models.forEach((model, modelIndex) => {
+            const modelNoteProblem = findNoteProblem(model?.note);
+            if (modelNoteProblem !== null) {
+                problems.push(
+                    `${where}.models[${modelIndex}].note ${modelNoteProblem}`,
+                );
+            }
+        });
     });
     return problems;
 }

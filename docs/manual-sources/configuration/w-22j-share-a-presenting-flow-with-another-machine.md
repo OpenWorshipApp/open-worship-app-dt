@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22j — Share a presenting flow with another machine
 
@@ -31,7 +31,9 @@ machine as one file.
     > somewhere safe before you hand the file over, and send it by a different route than
     > the file itself.
 
-2. On the other machine, right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+2. **Import on the receiving machine.** First open **[en:tran:Settings]** →
+    **[en:tran:Path Settings]** and choose the destination folders for the file
+    types in the bundle. Then right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
     file from your file manager onto the Presenting Flows list**, which imports it the same way.
     A protected bundle asks for its password first, saying **This archive is password
     protected** ([en:tran:This archive is password protected]); get it wrong and it says

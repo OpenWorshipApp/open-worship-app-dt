@@ -164,11 +164,6 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     const download = async (videoUrl: string) => {
         try {
-            showSimpleToast(
-                title,
-                `Downloading video from "${videoUrl}", please wait...`,
-            );
-            showProgressBar(videoUrl);
             // Stage in the OS temp dir, not `getDefaultDataDir()`: that one is
             // hardcoded to Desktop/open-worship-data, so it ignored both the
             // dev data-dir override and any relocated media dir — spuriously
@@ -177,6 +172,14 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 videoUrl,
                 getTempPath(),
                 true,
+                // Only once the media tools are there -- see the function.
+                () => {
+                    showSimpleToast(
+                        title,
+                        `Downloading video from "${videoUrl}", please wait...`,
+                    );
+                    showProgressBar(videoUrl);
+                },
             );
             const destFileSource = FileSource.getInstance(
                 dirSource.dirPath,
@@ -219,18 +222,23 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
 }
 
 function genExtraItemContextMenuItems(filePath: string) {
+    const src = FileSource.getInstance(filePath).src;
     return [
         {
             childBefore: genContextMenuItemIcon('magic'),
             menuElement: tran('Toggle Fading at End'),
-            title: tran('Toggle is video should fade at the end'),
+            // The menu is built as it opens, so it can say which way the
+            // switch is set. The row read the same either way, and the
+            // default (on) is not something an operator could guess.
+            childAfter: genContextMenuItemIcon(
+                getIsFadingAtTheEndSetting(src) ? 'check2-square' : 'square',
+            ),
+            title: tran('Whether this video fades out as it ends'),
             onSelect: () => {
-                const fileSource = FileSource.getInstance(filePath);
-                let isFadingAtTheEnd = getIsFadingAtTheEndSetting(
-                    fileSource.src,
+                setIsFadingAtTheEndSetting(
+                    src,
+                    !getIsFadingAtTheEndSetting(src),
                 );
-                isFadingAtTheEnd = !isFadingAtTheEnd;
-                setIsFadingAtTheEndSetting(fileSource.src, isFadingAtTheEnd);
             },
         },
         ...genBackgroundItemTransitionMenuItems(

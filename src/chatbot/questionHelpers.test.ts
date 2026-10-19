@@ -348,9 +348,12 @@ describe('a picked question is a known one', () => {
             pageText: 'A short page.',
         })!;
         expect(hint).toContain(
-            'files this question with the menu item Help → All tips and ' +
-                'the key F1: say them in the answer',
+            'For this, the app has the menu item Help → All tips and ' +
+                'the key F1: name them in the steps',
         );
+        // Nothing about a list the person never sees: a model repeats what
+        // it is told ("the app files this under that key").
+        expect(hint).not.toMatch(/files this|key list/);
         // In front of the page, which the person never sees.
         expect(hint.indexOf('Help → All tips')).toBeLessThan(
             hint.indexOf('The guide page, put here by the app itself'),
@@ -363,14 +366,16 @@ describe('a picked question is a known one', () => {
             { ...row, resources: { recipe: 'W-06', shortcut: 'F9' } },
             { focus: 'presenter', pageText: 'A short page.' },
         )!;
-        expect(keyOnly).toContain('with the key F9: say it in the answer');
+        expect(keyOnly).toContain(
+            'the app has the key F9: name it in the steps',
+        );
         // A row with neither says nothing of the kind.
         expect(
             genKnownQuestionHint(
                 { ...row, resources: { recipe: 'W-06' } },
                 { focus: 'presenter', pageText: 'A short page.' },
             ),
-        ).not.toContain('files this question with');
+        ).not.toContain('For this, the app has');
     });
 
     test('the page rides with the hint when it was read, clipped past 6 000 characters', async () => {
@@ -559,17 +564,40 @@ describe('a picked question is a known one', () => {
         expect(longHint?.slice(firstAt, pageAt)).toContain(
             '11. Under every answer is **Copy**',
         );
-        // A page that rides whole is left as it is: nothing to put first.
-        const shortHint = genKnownQuestionHint(labelled, {
-            pageText: '1. Open it.\n2. Under every answer is **Copy**.',
-        });
+        // Short pages need the same priority: an earlier step can describe
+        // a different job, such as adding a version before a pane split.
+        const shortHint = genKnownQuestionHint(
+            {
+                ...labelled,
+                resources: { ...labelled.resources, recipe: 'W-11' },
+            },
+            {
+                pageText:
+                    '1. Open the window.\n2. Under every answer is **Copy**.',
+                localPageText: '1. បើកវា។\n2. ក្រោមចម្លើយនីមួយៗមាន **ចម្លង**។',
+            },
+        );
         expect(shortHint).toContain('answer from that part in ITS OWN WORDS');
-        expect(shortHint).not.toContain('quoted first');
+        const shortFirstAt = shortHint!.indexOf('quoted first and by itself:');
+        const shortPageAt = shortHint!.indexOf(
+            'The guide page, put here by the',
+        );
+        expect(shortFirstAt).toBeGreaterThan(0);
+        expect(shortPageAt).toBeGreaterThan(shortFirstAt);
+        const shortFirst = shortHint!.slice(shortFirstAt, shortPageAt);
+        expect(shortFirst).toContain('ក្រោមចម្លើយនីមួយៗមាន **ចម្លង**');
+        expect(shortFirst).not.toContain('បើកវា');
+        expect(shortHint!.slice(shortPageAt)).toContain('បើកវា');
         // ...and to answer in the part's OWN words: a sentence copied
         // cannot change its noun (two of twenty-seven had, 2026-10-13).
         expect(genKnownQuestionHint(labelled, { pageText: page })).toContain(
             'copy the sentences you use as they stand, change no name in ' +
-                'them and add no step it does not have',
+                'them and add no step the page does not have',
+        );
+        // ...and the WHOLE job (2026-10-17, EC-310): told to take "only what
+        // it leaves out", answers stopped where their part did.
+        expect(genKnownQuestionHint(labelled, { pageText: page })).toContain(
+            'the steps after it that finish the job',
         );
         expect(genKnownQuestionHint(row, { pageText: page })).not.toContain(
             'The part that answers THIS question',
@@ -600,6 +628,31 @@ describe('a picked question is a known one', () => {
         )!;
         expect(own).toContain('2. A strip of tabs runs along the top.');
         expect(own).not.toContain('Click the robot button');
+        // A row that names a passage IN step 1 asks about the way in, and
+        // keeps it -- "How do I open the help from the taskbar?" was
+        // answered "Click the 🤖 button on the taskbar" without it.
+        const taskbar =
+            '# Ask the app for help\n\nIt answers how-do-I questions.\n\n' +
+            '1. Click the robot button.\n' +
+            '   **On Windows the taskbar has it too:** right-click the icon.\n' +
+            '2. A strip of tabs runs along the top.';
+        expect(
+            dropFirstStep(taskbar, 'On Windows the taskbar has it too'),
+        ).toBe(taskbar);
+        expect(dropFirstStep(taskbar, 'A strip of tabs')).not.toContain(
+            'right-click the icon',
+        );
+        const asked = genKnownQuestionHint(
+            {
+                resources: {
+                    recipe: HELP_WINDOW_MANUAL_ID,
+                    passage: 'On Windows the taskbar has it too',
+                },
+                focus: null,
+            } as any,
+            { pageText: taskbar },
+        )!;
+        expect(asked).toContain('right-click the icon');
         // Any other page keeps its way in: they may be in another window.
         expect(
             genKnownQuestionHint(
@@ -715,6 +768,7 @@ describe('a picked question is a known one', () => {
             knownRecipeId: 'W-31',
             isKnownPageQuoted: true,
             knownFind: 'Widgets',
+            isKnownPartNamed: true,
         });
         // The page could not be read: the walkthrough still stands, and the
         // steps may still be handed back.
@@ -722,6 +776,7 @@ describe('a picked question is a known one', () => {
             knownRecipeId: 'W-31',
             isKnownPageQuoted: false,
             knownFind: 'Widgets',
+            isKnownPartNamed: true,
         });
         // A list where a control should be is no control.
         expect(
@@ -730,6 +785,17 @@ describe('a picked question is a known one', () => {
                 'x',
             ),
         ).toEqual({ knownRecipeId: 'W-42', isKnownPageQuoted: true });
+        // A what-or-why question is checked for its answer, not its steps
+        // (pass 17, 2026-10-18).
+        expect(
+            genKnownAskExtra({ ...howto, kind: 'what' }, '# W-31\n\n1. Click.'),
+        ).toEqual({
+            knownRecipeId: 'W-31',
+            isKnownPageQuoted: true,
+            knownFind: 'Widgets',
+            isKnownPartNamed: true,
+            isKnownWhatAsk: true,
+        });
         // What the app is DOING is read off the app: no page to walk under
         // "Which page am I on right now?".
         expect(genKnownAskExtra({ ...howto, kind: 'state' }, 'x')).toEqual({});
@@ -742,9 +808,81 @@ describe('a picked question is a known one', () => {
         expect(genKnownAskExtra(null, null)).toEqual({});
     });
 
+    // The whole list asked in Khmer (EC-323): "Can you start a 5 minute
+    // countdown on the screen?" was answered with a question back.
+    test('a row asking to put something up is told to do it', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const row = (text: string, tools: string[]) => {
+            return {
+                text,
+                textEn: text,
+                resources: { tools },
+                focus: null,
+            } as any;
+        };
+        expect(
+            genKnownQuestionHint(
+                row('Can you start a 5 minute countdown on the screen?', [
+                    'owa_foreground',
+                ]),
+            ),
+        ).toContain('it asks you to DO it, now: call owa_foreground');
+        // Pass 18: a screen that is off is the person's to show.
+        expect(
+            genKnownQuestionHint(
+                row('Can you start a 5 minute countdown on the screen?', [
+                    'owa_foreground',
+                ]),
+            ),
+        ).toContain('press that screen’s show button or F5 themselves');
+        // How, not do: the manual answers it.
+        expect(
+            genKnownQuestionHint(
+                row('How do I start a countdown?', ['owa_foreground']),
+            ),
+        ).not.toContain('DO it');
+        // And the loop is told which tool the answer must have called.
+        const { genKnownAskExtra } = await import('./questionHelpers');
+        expect(
+            genKnownAskExtra(
+                row('Can you start a 5 minute countdown on the screen?', [
+                    'owa_foreground',
+                ]),
+                null,
+            ),
+        ).toEqual({ knownDoTool: 'owa_foreground' });
+        // A tool that writes the person's files is never pushed this way.
+        expect(
+            genKnownQuestionHint(
+                row('Can you put back something the assistant deleted?', [
+                    'owa_undo',
+                ]),
+            ),
+        ).not.toContain('DO it');
+    });
+
     // 2026-10-12, gemma-4-e4b on a local server, which is sent fourteen of
     // the twenty-six tools: told "the live tool for it: owa_undo", it
     // answered with the Bible note's Undo.
+    // Pass 13 (2026-10-18): two help-window answers ended "press Enter to
+    // send", and in that box Enter starts a new line.
+    test('a help-window question is told how its box sends', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const helpRow = {
+            resources: { recipe: 'W-42' },
+            focus: null,
+        } as any;
+        expect(genKnownQuestionHint(helpRow)).toContain(
+            'sent with Ctrl+Enter or the Send button',
+        );
+        expect(
+            genKnownQuestionHint({
+                resources: { recipe: 'W-05' },
+                focus: null,
+            } as any),
+        ).not.toContain('Ctrl+Enter');
+    });
+
     test('a tool the assistant was not given is named as missing, not as the live tool', async () => {
         const { genKnownQuestionHint } = await import('./questionHelpers');
         const row = {
@@ -754,7 +892,11 @@ describe('a picked question is a known one', () => {
         const hint = genKnownQuestionHint(row, { missingTools: ['owa_undo'] })!;
         expect(hint).toContain('the live tool for it: owa_app_state');
         expect(hint).toContain('has NOT been given owa_undo');
-        expect(hint).toContain('cannot do that for them from this assistant');
+        expect(hint).toContain('that you cannot do that for them here');
+        // The way without the tool may be a command (`/lyric`), not only
+        // presses by hand, and it comes first (2026-10-18).
+        expect(hint).toContain('lead with the way the guide gives');
+        expect(hint).toContain('by hand, or a / command it names');
         // Given everything, the hint reads as it did.
         expect(genKnownQuestionHint(row)).toContain(
             'the live tools for it: owa_undo, owa_app_state',
@@ -940,5 +1082,654 @@ describe('a picked question is a known one', () => {
         expect(cut.mode).toBe('matching');
         expect(cut.text).toContain('The gizmo is behind the last panel');
         expect(cut.text).not.toContain('owa_read_website');
+    });
+});
+
+// The page in the language the model is asked in (2026-10-17, the whole
+// corpus asked in Khmer of gemma4:cloud): handed the English page and told
+// to copy the part with the words "Open View on the top menu bar again and
+// click", it wrote _បើក View on the top menu bar again and click_. The cut is
+// chosen in English and quoted from the translation, block for block.
+describe('a known page rides in the language it is asked in', () => {
+    const ENGLISH_PAGE = [
+        '# W-90 — Reset the panels',
+        '',
+        '**Goal:** put the layout back the way it started.',
+        '',
+        '1. Open **View** on the top menu bar → **Widgets**.',
+        '2. Click a ticked one — it collapses.',
+        '',
+        '**Put everything back:**',
+        '',
+        '3. Open **View** on the top menu bar again and click **Reset Widgets Size**.',
+        '4. Answer **Yes**.',
+    ].join('\n');
+    const KHMER_PAGE = [
+        '# W-90 — កំណត់ផ្ទាំងឡើងវិញ',
+        '',
+        '**គោលដៅ:** ដាក់ប្លង់ត្រឡប់ដូចពេលដំបូងវិញ។',
+        '',
+        '1. បើក **View** នៅលើរបារម៉ឺនុយខាងលើ → **Widgets**។',
+        '2. ចុចលើផ្ទាំងដែលបានធីកមួយ — វាបង្រួម។',
+        '',
+        '**ដាក់អ្វីៗទាំងអស់ត្រឡប់ដូចដើមវិញ:**',
+        '',
+        '3. បើក **View** នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត ហើយចុច **កំណត់ទំហំ Widgets ឡើងវិញ**។',
+        '4. ឆ្លើយ **បាទ/ចាស**។',
+    ].join('\n');
+
+    test('a page splits into its steps and paragraphs, its foot left off', async () => {
+        const { splitPageBlocks } = await import('./questionHelpers');
+        const { FRESH_PAGE_NOTE_LEAD } =
+            await import('../../tools/owa-devtools-mcp/manualPage.mjs');
+        expect(splitPageBlocks(ENGLISH_PAGE)).toHaveLength(7);
+        expect(splitPageBlocks(KHMER_PAGE)).toHaveLength(7);
+        expect(
+            splitPageBlocks(`${KHMER_PAGE}\n\n${FRESH_PAGE_NOTE_LEAD} …`),
+        ).toEqual(splitPageBlocks(KHMER_PAGE));
+    });
+
+    test('a cut of the English page is the same blocks of the translation', async () => {
+        const { toLocalizedCut, findLocalizedPassageLead } =
+            await import('./questionHelpers');
+        const englishCut =
+            ENGLISH_PAGE.slice(0, ENGLISH_PAGE.indexOf('1. Open')) +
+            '\n…\n' +
+            ENGLISH_PAGE.slice(ENGLISH_PAGE.indexOf('3. Open'));
+        const local = toLocalizedCut(ENGLISH_PAGE, KHMER_PAGE, englishCut)!;
+        expect(local).toContain('**គោលដៅ:**');
+        expect(local).toContain('3. បើក **View** នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត');
+        expect(local).toContain('\n\n…\n\n');
+        expect(local).not.toContain('1. បើក');
+        expect(local).not.toMatch(/[A-Za-z]{4,} (?:the|on|and) /);
+        // A translation that does not line up is no translation of the cut.
+        expect(
+            toLocalizedCut(ENGLISH_PAGE, '# W-90\n\n1. មួយ។', englishCut),
+        ).toBeNull();
+        const lead = findLocalizedPassageLead(
+            ENGLISH_PAGE,
+            KHMER_PAGE,
+            'Open View on the top menu bar again and click',
+        )!;
+        expect(lead.startsWith('បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត')).toBe(
+            true,
+        );
+        expect(lead.length).toBeLessThanOrEqual(60);
+        // Cut at a space, never inside a word.
+        expect(
+            'បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត ហើយចុច កំណត់ទំហំ Widgets ឡើងវិញ។',
+        ).toContain(`${lead} `);
+        expect(
+            findLocalizedPassageLead(ENGLISH_PAGE, KHMER_PAGE, 'Feed a zebra'),
+        ).toBeNull();
+    });
+
+    // Passes 9-10 (EC-333): the short answers left out a control the part
+    // named; the check is handed the part's own controls by name.
+    test('the part a question is filed with names its controls, in the window’s words', async () => {
+        const { findKnownPartControls } = await import('./questionHelpers');
+        // The English page as the window reads it: labels resolved into
+        // Khmer, emphasis left in English.
+        const page = [
+            '1. Open the panel.',
+            '- **ការតុបតែង** is a fold under Properties, on **every** component: **ចន្លោះខាងក្នុង** is the room around it.',
+            '2. Close it.',
+        ].join('\n');
+        const local = [
+            '1. បើកផ្ទាំង។',
+            '- **ការតុបតែង** គឺជាផ្នែកបត់ **គ្រប់** សមាសធាតុ៖ **ចន្លោះខាងក្នុង**។',
+            '2. បិទវា។',
+        ].join('\n');
+        const row = { resources: { passage: 'is a fold under Properties' } };
+        expect(findKnownPartControls(row, page, local)).toEqual([
+            'ការតុបតែង',
+            'ចន្លោះខាងក្នុង',
+        ]);
+        // English: emphasis and labels look alike, so no list.
+        expect(findKnownPartControls(row, page, null)).toEqual([]);
+        expect(
+            findKnownPartControls(
+                { resources: { passage: 'not on the page' } },
+                page,
+                local,
+            ),
+        ).toEqual([]);
+    });
+
+    // Pass 7 (EC-328): W-09's foreground list was one block, so the Effects
+    // passage was quoted in Khmer as the volume paragraph that opened it.
+    test('a bullet starts a block of its own, and a bold lead is not one', async () => {
+        const { splitPageBlocks, findLocalizedPassageLead } =
+            await import('./questionHelpers');
+        const english = [
+            '**The volume of what is playing.** Tick Play With Sound.',
+            '- **Sessions** are the row of buttons at the top.',
+            '- **Effects** is a fold under Properties, with Padding.',
+        ].join('\n');
+        const khmer = [
+            '**កម្រិតសំឡេង។** ធីក ចាក់ជាមួយសំលេង។',
+            '- **វគ្គ** គឺជាជួរប៊ូតុងនៅខាងលើ។',
+            '- **ការតុបតែង** គឺជាផ្នែកបត់នៅក្រោម លក្ខណសម្បត្តិ។',
+        ].join('\n');
+        expect(splitPageBlocks(english)).toHaveLength(3);
+        expect(
+            findLocalizedPassageLead(
+                english,
+                khmer,
+                'is a fold under Properties',
+            ),
+        ).toBe('ការតុបតែង គឺជាផ្នែកបត់នៅក្រោម លក្ខណសម្បត្តិ។');
+    });
+
+    // The whole corpus asked in Khmer of gemma4:cloud (2026-10-17, EC-317):
+    // _How do I cast the virtual display to a TV from my phone?_ was pointed
+    // at its step's first words -- the app's own cast button -- where the
+    // passage is the step's later sentence about the phone's page.
+    test('a passage inside its block is pointed at by its own sentence', async () => {
+        const { findLocalizedPassageLead } = await import('./questionHelpers');
+        const english = [
+            '# Cast',
+            '',
+            '1. Click **Cast to a TV** on the card. It needs **Let other devices watch**',
+            '   on. The browser page has the same button, with one more row:',
+            '   - **Cast from this browser** uses the browser itself.',
+            '2. Close it.',
+        ].join('\n');
+        const khmer = [
+            '# បញ្ចាំង',
+            '',
+            '1. ចុច **បញ្ចាំងទៅទូរទស្សន៍** នៅលើកាត។ វាត្រូវការ **អនុញ្ញាតឲ្យមើល**',
+            '   បើក។ ទំព័រកម្មវិធីរុករកមានប៊ូតុងដូចគ្នា ដែលមានជួរមួយបន្ថែមទៀត៖',
+            '   - **បញ្ចាំងពីកម្មវិធីរុករកនេះ** ប្រើកម្មវិធីរុករកខ្លួនឯង។',
+            '2. បិទវា។',
+        ].join('\n');
+        expect(
+            findLocalizedPassageLead(
+                english,
+                khmer,
+                'The browser page has the same button',
+            ),
+        ).toBe('ទំព័រកម្មវិធីរុករកមានប៊ូតុងដូចគ្នា ដែលមានជួរមួយបន្ថែមទៀត៖');
+        // At the block's start, the block's first words.
+        expect(
+            findLocalizedPassageLead(english, khmer, 'Click Cast to a TV'),
+        ).toMatch(/^ចុច បញ្ចាំងទៅទូរទស្សន៍ នៅលើកាត។/);
+        // Sentences that do not pair up are not guessed at, and the block's
+        // first words are not the passage's either (2026-10-18).
+        expect(
+            findLocalizedPassageLead(
+                english,
+                khmer.replace('នៅលើកាត។ វាត្រូវការ', 'នៅលើកាត វាត្រូវការ'),
+                'The browser page has the same button',
+            ),
+        ).toBeNull();
+    });
+
+    // The same run: _The two small arrows at the end of that line walk them
+    // in order_, quoted by itself, does not say which line, and the question
+    // was answered with the `/` command list.
+    test('a part pointing back at the one before it is quoted with it', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const filler = (name: string) => {
+            return `${name} ${'plain words about something else entirely. '.repeat(22)}`;
+        };
+        const page = [
+            '# Ask the app for help',
+            '',
+            ...Array.from({ length: 8 }, (_, index) => {
+                return `${index + 1}. ${filler(`Part ${index + 1}.`)}`;
+            }),
+            '9. Ask your question.',
+            '   **One line above the box tells you something this window can do.** A 💡',
+            '   and a short sentence.',
+            '   **The two small arrows at the end of that line walk them in order.** **›**',
+            '   goes to the next one.',
+            `10. ${filler('Read the answer.')}`,
+        ].join('\n');
+        const hint = (passage: string) => {
+            return genKnownQuestionHint(
+                {
+                    text: 'How do I see the other tips above the box?',
+                    keywords: ['tips', 'arrows'],
+                    focus: null,
+                    resources: { recipe: 'W-42', passage },
+                } as never,
+                { pageText: page },
+            )!;
+        };
+        const quoted = (text: string) => {
+            const at = text.indexOf('quoted first and by itself:');
+            return text.slice(at, text.indexOf('The guide page, put here', at));
+        };
+        const pointing = quoted(
+            hint('The two small arrows at the end of that line walk them'),
+        );
+        expect(pointing).toContain('One line above the box');
+        expect(pointing).toContain('The two small arrows');
+        // A part that stands by itself is quoted by itself.
+        expect(
+            quoted(hint('One line above the box tells you something')),
+        ).not.toContain('The two small arrows');
+    });
+
+    // The help window's page, asked _What commands can I type?_ on
+    // gemma-4-12b: its sixth step holds paragraphs that open on a bold lead,
+    // the commands among them, and the cut that rides is made of PASSAGES --
+    // a paragraph's lines joined by spaces. Read by blank lines and the
+    // block's first characters, the commands never rode, and the hint pointed
+    // at the step's first paragraph instead.
+    test('a cut of passages finds its blocks, a bold lead starts one, and it has a ceiling', async () => {
+        const { toLocalizedCut, findLocalizedPassageLead, splitPageBlocks } =
+            await import('./questionHelpers');
+        const english = [
+            '# Help',
+            '',
+            '1. Type a question and press **Ctrl+Enter**.',
+            '   **The box takes as many lines as you need.** Plain Enter',
+            '   starts a new line.',
+            '   **Some things need no assistant at all — type `/`.** A',
+            '   line that starts with `/` is a command.',
+            '2. Close the window.',
+        ].join('\n');
+        const khmer = [
+            '# ជំនួយ',
+            '',
+            '1. វាយសំណួរ ហើយចុច **Ctrl+Enter**។',
+            '   **ប្រអប់នេះទទួលបានបន្ទាត់ច្រើន។** ការចុច Enter',
+            '   ចាប់ផ្ដើមបន្ទាត់ថ្មី។',
+            '   **រឿងខ្លះមិនត្រូវការជំនួយការសោះ — វាយ `/`។** បន្ទាត់',
+            '   ដែលចាប់ផ្ដើមដោយ `/` គឺជាពាក្យបញ្ជា។',
+            '2. បិទបង្អួច។',
+        ].join('\n');
+        expect(splitPageBlocks(english)).toHaveLength(5);
+        // The passage as `toPassages` writes it: one line, no indent.
+        const passageCut =
+            '**Some things need no assistant at all — type `/`.** A line ' +
+            'that starts with `/` is a command.';
+        const local = toLocalizedCut(english, khmer, passageCut)!;
+        expect(local).toContain('រឿងខ្លះមិនត្រូវការជំនួយការសោះ');
+        expect(local).not.toContain('ប្រអប់នេះ');
+        expect(
+            findLocalizedPassageLead(
+                english,
+                khmer,
+                'Some things need no assistant at all',
+            ),
+        ).toBe('រឿងខ្លះមិនត្រូវការជំនួយការសោះ — វាយ `/`។ បន្ទាត់');
+        // Over its ceiling the cut stops at a line and says the page goes on.
+        const whole = toLocalizedCut(english, khmer, english, 60)!;
+        expect(whole.length).toBeLessThan(140);
+        expect(whole).toContain('the page goes on');
+        // A translation whose blocks are of another kind is no translation.
+        expect(
+            toLocalizedCut(
+                english,
+                khmer.replace('2. បិទ', '- បិទ'),
+                passageCut,
+            ),
+        ).toBeNull();
+    });
+
+    // W-34's step 8 ends on a line "Wordproject." and its step 6 has the same
+    // words mid-sentence: a cut of step 6 carried step 8 in with it, and the
+    // Khmer answer to "my new Bible reads in English" pasted both (2026-10-18).
+    test('a short line deep in a block does not bring that block into a cut', async () => {
+        const { toLocalizedCut } = await import('./questionHelpers');
+        const english = [
+            '# Bibles',
+            '',
+            '1. **Step 4 — book names**: the suggested list uses the most. ' +
+                '**Find more lists online** adds lists from Bible.com and',
+            '   Wordproject.',
+            '2. Choose **Book name mapping**. Online lookup adds complete ' +
+                'lists from Bible.com and Wordproject. Each option',
+            '   shows its source.',
+        ].join('\n');
+        const khmer = [
+            '# ព្រះគម្ពីរ',
+            '',
+            '1. **ជំហាន 4 — ឈ្មោះគម្ពីរ**៖ បញ្ជីដែលវាស្នើ។ ប៊ូតុង បន្ថែមបញ្ជីពី',
+            '   Wordproject។',
+            '2. ជ្រើសរើស **Book name mapping**។ ការស្វែងរកតាមអ៊ីនធឺណិត ' +
+                'បន្ថែមបញ្ជីពេញលេញ។ ជម្រើសនីមួយៗ',
+            '   បង្ហាញប្រភពរបស់វា។',
+        ].join('\n');
+        const local = toLocalizedCut(
+            english,
+            khmer,
+            '2. Choose **Book name mapping**. Online lookup adds complete ' +
+                'lists from Bible.com and Wordproject. Each option shows ' +
+                'its source.',
+        )!;
+        expect(local).toContain('ជ្រើសរើស **Book name mapping**');
+        expect(local).not.toContain('ជំហាន 4');
+    });
+
+    // The cut writes each passage on a line of its own, and read back as
+    // passages two paragraphs riding side by side were one: W-34's "Later
+    // changes … through the pencil" was quoted first as the import form's
+    // step 6 and the note on where an import came from (2026-10-18). And a
+    // part ending on a colon was quoted without what it introduces -- W-37's
+    // link list without its example.
+    test('the part quoted first is the page’s own passage, with what its colon introduces', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const filler = Array.from({ length: 90 }, (_, index) => {
+            return (
+                `Filler paragraph ${index} about nothing in particular, kept ` +
+                'to make the page long enough to cut.'
+            );
+        });
+        const page = [
+            '# W-90 — Bibles',
+            '',
+            ...filler.flatMap((one) => [one, '']),
+            'Every imported Bible keeps a note of the language chosen for it.',
+            '',
+            'A Bible already installed that still reads in English needs no',
+            'second import. Later changes remain available through the',
+            'pencil, on a right-click inside its editor:',
+            '',
+            '1. **Choose Locale**, and pick the language.',
+            '2. **Edit Books Map**, then **Ok**.',
+            '',
+            'A closing paragraph on something else.',
+        ].join('\n');
+        const hint = genKnownQuestionHint(
+            {
+                text: 'My new Bible reads in English — how do I make it read in its own language?',
+                keywords: [],
+                resources: {
+                    recipe: 'W-90',
+                    passage:
+                        'Later changes remain available through the pencil',
+                },
+                focus: null,
+            } as any,
+            { pageText: page },
+        )!;
+        const firstAt = hint.indexOf('quoted first and by itself:');
+        const pageAt = hint.indexOf('The guide page, put here by the');
+        expect(firstAt).toBeGreaterThan(0);
+        const named = hint.slice(firstAt, pageAt);
+        expect(named).toContain('Later changes remain available');
+        expect(named).not.toContain('Every imported Bible keeps a note');
+        expect(named).toContain('1. **Choose Locale**');
+        expect(named).toContain('2. **Edit Books Map**, then **Ok**.');
+        expect(named).not.toContain('A closing paragraph');
+        // No example under the part: nothing said about copying one.
+        expect(hint).not.toContain('copy the example into your answer');
+    });
+
+    // Cut at the character, the help window's command list ended mid-word and
+    // the model copied it to the same syllable three passes running.
+    test('a long part quoted first is cut at a line and says it goes on', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const filler = Array.from({ length: 90 }, (_, index) => {
+            return (
+                `Filler paragraph ${index} about nothing in particular, kept ` +
+                'to make the page long enough to cut.'
+            );
+        });
+        const commands = Array.from({ length: 40 }, (_, index) => {
+            return `   /command${index} does one quick thing on this computer.`;
+        });
+        const page = [
+            '# W-90 — Commands',
+            '',
+            ...filler.flatMap((one) => [one, '']),
+            '**Some things need no assistant at all — type `/`.** A line',
+            'that starts with `/` is a command:',
+            ...commands,
+        ].join('\n');
+        const hint = genKnownQuestionHint(
+            {
+                text: 'What commands can I type instead of asking?',
+                keywords: ['command'],
+                resources: {
+                    recipe: 'W-90',
+                    passage: 'Some things need no assistant at all',
+                },
+                focus: null,
+            } as any,
+            { pageText: page },
+        )!;
+        const firstAt = hint.indexOf('quoted first and by itself:');
+        const pageAt = hint.indexOf('The guide page, put here by the');
+        const named = hint.slice(firstAt, pageAt).trimEnd();
+        expect(named.endsWith('\n…')).toBe(true);
+        expect(named).toMatch(/computer\.\n…$/);
+    });
+
+    // W-37's link list rode first with its example under it, and four passes
+    // in a row the Khmer answer left the example out (2026-10-18).
+    test('a part that ends on an example is answered with the example', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const filler = Array.from({ length: 90 }, (_, index) => {
+            return (
+                `Filler paragraph ${index} about nothing in particular, kept ` +
+                'to make the page long enough to cut.'
+            );
+        });
+        const page = [
+            '# W-90 — Links',
+            '',
+            ...filler.flatMap((one) => [one, '']),
+            'A json file can hold a list of links. Write it as a list of',
+            'entries, each with a title and a url:',
+            '',
+            '```json',
+            '[{ "title": "Notes", "url": "https://www.example.com/notes" }]',
+            '```',
+        ].join('\n');
+        const hint = genKnownQuestionHint(
+            {
+                text: 'Can I keep web links for a chapter?',
+                keywords: [],
+                resources: {
+                    recipe: 'W-90',
+                    passage: 'can hold a list of links',
+                },
+                focus: null,
+            } as any,
+            { pageText: page },
+        )!;
+        expect(hint).toContain('quoted first and by itself');
+        expect(hint).toContain('"url": "https://www.example.com/notes"');
+        expect(hint).toContain(
+            'copy the example into your answer as it stands, in a code block',
+        );
+    });
+
+    test('the hint quotes the translation and points at it in its words', async () => {
+        const { genKnownQuestionHint } = await import('./questionHelpers');
+        const row = {
+            text: 'How do I put the layout back the way it started?',
+            keywords: [],
+            resources: {
+                recipe: 'W-90',
+                passage: 'Open View on the top menu bar again and click',
+            },
+            focus: null,
+        } as any;
+        const local = genKnownQuestionHint(row, {
+            pageText: ENGLISH_PAGE,
+            localPageText: KHMER_PAGE,
+        })!;
+        expect(local).toContain(KHMER_PAGE.slice(0, 20));
+        expect(local).toContain(
+            'the words "បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត',
+        );
+        expect(local).not.toContain('on the top menu bar');
+        // Asked in English: the English page, pointed at by its English words.
+        const english = genKnownQuestionHint(row, { pageText: ENGLISH_PAGE })!;
+        expect(english).toContain(
+            'the words "Open View on the top menu bar again and click"',
+        );
+        expect(english).not.toContain('បើក');
+    });
+
+    // What the cut rests on: every current translation of the manual is
+    // written block for block -- as many blocks, each of the same kind
+    // (`toLocalizedCut` of the whole page is null otherwise). Measured
+    // 2026-10-17 with a bold lead starting a block: every page of both, where
+    // blank lines and steps alone had left French W-42 a block short. A
+    // translation that drifts out of line fails here; it then rides as the
+    // English cut, so the way to make it pass is to fix the translation.
+    test('every current translation lines up block for block', async () => {
+        const { readFileSync } = await import('node:fs');
+        const path = await import('node:path');
+        const { toLocalizedCut } = await import('./questionHelpers');
+        const {
+            listEnglishManualPages,
+            listManualLanguages,
+            listManualTranslations,
+            MANUAL_SOURCE_DIR,
+        } = await import('../../tools/owa-devtools-mcp/manualI18n.mjs');
+        const { toManualPageBody } =
+            await import('../../tools/owa-devtools-mcp/manualPage.mjs');
+        const englishPageMap = listEnglishManualPages();
+        const outOfLine: string[] = [];
+        for (const lang of listManualLanguages()) {
+            for (const page of listManualTranslations(lang)) {
+                const english = englishPageMap.get(page.id);
+                if (page.isStale || english === undefined) {
+                    continue;
+                }
+                // Read as the window reads it, its labels filled in: a bold
+                // label ending in a full stop that a translation wraps to
+                // the start of a line is a bold lead there, and a block
+                // more (French W-50's "The router opened the port.",
+                // 2026-10-18). The English key stands in for the word.
+                const toResolved = (text: string) => {
+                    return toManualPageBody(text).replace(
+                        /\[en:tran:([^\]]+)\]/g,
+                        '$1',
+                    );
+                };
+                const englishBody = toResolved(
+                    readFileSync(
+                        path.join(MANUAL_SOURCE_DIR, english.relativePath),
+                        'utf-8',
+                    ),
+                );
+                const localBody = toResolved(page.content);
+                if (
+                    toLocalizedCut(
+                        englishBody,
+                        localBody,
+                        englishBody,
+                        Infinity,
+                    ) === null
+                ) {
+                    outOfLine.push(`${lang}:${page.id}`);
+                }
+            }
+        }
+        expect(outOfLine).toEqual([]);
+    });
+
+    // Pass 11 (2026-10-18): Khmer W-42's report paragraph split one sentence
+    // more than the English ("Report: " ends a sentence, "Report:," does
+    // not), so four rows' passages were pointed at its opening sentence. A
+    // passage inside its block needs the block's sentences to line up in
+    // every current translation; the fix is to the translation.
+    test('every row’s passage is pointed at in every current translation', async () => {
+        const { readFileSync, readdirSync } = await import('node:fs');
+        const path = await import('node:path');
+        const { findLocalizedPassageLead } = await import('./questionHelpers');
+        const {
+            listEnglishManualPages,
+            listManualLanguages,
+            listManualTranslations,
+            MANUAL_SOURCE_DIR,
+        } = await import('../../tools/owa-devtools-mcp/manualI18n.mjs');
+        const { toManualPageBody } =
+            await import('../../tools/owa-devtools-mcp/manualPage.mjs');
+        const toResolved = (text: string) => {
+            return toManualPageBody(text).replace(
+                /\[en:tran:([^\]]+)\]/g,
+                '$1',
+            );
+        };
+        const englishPageMap = listEnglishManualPages();
+        const questionDir = path.join('tools', 'owa-devtools-mcp', 'questions');
+        const rowList: { id: string; recipe: string; passage: string }[] = [];
+        for (const name of readdirSync(questionDir)) {
+            if (!name.endsWith('.json') || name === 'schema.json') {
+                continue;
+            }
+            const page = JSON.parse(
+                readFileSync(path.join(questionDir, name), 'utf-8'),
+            );
+            for (const section of page.sections ?? []) {
+                for (const row of section.questions ?? []) {
+                    const { recipe, passage } = row.resources ?? {};
+                    if (recipe && passage) {
+                        rowList.push({ id: row.id, recipe, passage });
+                    }
+                }
+            }
+        }
+        expect(rowList.length).toBeGreaterThan(50);
+        const unpointed: string[] = [];
+        for (const lang of listManualLanguages()) {
+            const translationMap = new Map(
+                listManualTranslations(lang).map((page: any) => {
+                    return [page.id, page];
+                }),
+            );
+            for (const row of rowList) {
+                const english = englishPageMap.get(row.recipe);
+                const local: any = translationMap.get(row.recipe);
+                if (english === undefined || !local || local.isStale) {
+                    continue;
+                }
+                const englishBody = toResolved(
+                    readFileSync(
+                        path.join(MANUAL_SOURCE_DIR, english.relativePath),
+                        'utf-8',
+                    ),
+                );
+                const lead = findLocalizedPassageLead(
+                    englishBody,
+                    toResolved(local.content),
+                    row.passage,
+                );
+                if (lead === null) {
+                    unpointed.push(`${lang}:${row.id}`);
+                }
+            }
+        }
+        expect(unpointed).toEqual([]);
+    });
+
+    test('a passage in a quote is pointed at without its marks, and not at all out of line', async () => {
+        const { findLocalizedPassageLead } = await import('./questionHelpers');
+        const english = [
+            '# Bibles',
+            '',
+            '> **Putting it back.** Press Reset. It asks first.',
+            '>',
+            '> **Deleted it by mistake?** Press Create.',
+        ].join('\n');
+        const khmer = [
+            '# ព្រះគម្ពីរ',
+            '',
+            '> **ដាក់វាវិញ។** ចុច កំណត់ឡើងវិញ។ វាសួរជាមុន។',
+            '>',
+            '> **លុបវាដោយច្រឡំមែនទេ?** ចុច បង្កើត។',
+        ].join('\n');
+        expect(
+            findLocalizedPassageLead(english, khmer, 'Deleted it by mistake?'),
+        ).toBe('លុបវាដោយច្រឡំមែនទេ? ចុច បង្កើត។');
+        // One sentence more in the translation: no words are named rather
+        // than the block's first ones.
+        expect(
+            findLocalizedPassageLead(
+                english,
+                khmer.replace('វាសួរជាមុន។', 'វា: សួរជាមុន។'),
+                'Deleted it by mistake?',
+            ),
+        ).toBeNull();
     });
 });

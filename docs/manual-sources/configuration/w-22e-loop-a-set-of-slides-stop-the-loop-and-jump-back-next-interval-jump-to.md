@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22e — Loop a set of slides, stop the loop, and jump back (Next: Interval, Jump to)
 
@@ -43,11 +43,14 @@ where you say, and a running order that can go back to an earlier line.
 4. **Go back, not just forward.** **[en:tran:Jump to]** is how a running
    order reaches a line that is not the next one. Add it from the same menu as the interval — right-click
    the presenting flow itself, not one of its lines → **[en:tran:Add Action]** →
-   **[en:tran:Jump to]** — then right-click the new line →
+   **[en:tran:Jump to]** — then drag the new line from the end of the list, where it
+   lands, to where the run should meet it, and right-click it →
    **[en:tran:Add CC Elements]** and pick the line it should go to — its list is everything in the
    presenting flow, **a whole song included**, because here the attached line is not something
    that rides along, it is the destination. It takes exactly one, so once you have picked
-   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another. 📸
+   the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another.
+   To jump now, right-click the presenting flow → **[en:tran:Open Preview]**, then click
+   the **[en:tran:Jump to]** line in the preview; reaching it with **Space** does the same. 📸
 
    **It is the next key aimed at a line of your choosing**: when the run reaches it — or
    you click it — the panel goes to that line and does there exactly what stepping onto it

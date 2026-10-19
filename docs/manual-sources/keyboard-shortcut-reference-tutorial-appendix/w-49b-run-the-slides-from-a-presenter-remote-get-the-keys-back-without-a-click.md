@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-66, KB-67, KB-68]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-49b — Run the slides from a presenter remote (get the keys back without a click)
 
@@ -22,6 +22,9 @@ when you cannot walk back to the computer to click a panel.
 2. **Press the key three times quickly** — inside a second and a half. The
    keys go back to what is being presented. That third press only hands the
    keys over: nothing on the screen changes. The **next** press moves on.
+   If nothing happens, check whether a slider has focus or the cursor is in the
+   open **[en:tran:Bible Lookup]** box: three presses leave those controls alone.
+   Also check that one of the four panels below has something being presented.
 3. **Which panel takes them** — the first of these that has something going:
    - a presenting flow's preview panel whose run has started (one of its
      lines wears the outline);
@@ -53,5 +56,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-66` · `KB-67` · `KB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

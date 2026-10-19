@@ -37,6 +37,8 @@ import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
 import BibleViewHeaderComp from './view-extra/BibleViewHeaderComp';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 function checkIsParentPlayToBottom(verseElement: HTMLElement) {
     const containerElements = Array.from(
@@ -103,6 +105,60 @@ function handMovedChecking(
     }
 }
 
+/**
+ * The assistant, on the verse right-clicked and on the whole passage
+ * (2026-10-18, the user: _add contextmenu to verse preview content. to open
+ * the verse in chatbot like open from floating verse detail panel_): each
+ * opened the way a verse panel's 🤖 opens it (`bibleItemAskHelpers.ts`).
+ * While AI is on, like the 🤖s; none for a verse when the passage IS it.
+ */
+function genAskAssistantContextMenu(
+    event: any,
+    foundBibleItem: ReadIdOnlyBibleItem,
+): ContextMenuItemType[] {
+    if (!getIsAIEnabled()) {
+        return [];
+    }
+    const verseElement =
+        event?.target instanceof Element
+            ? event.target.closest('[data-verse-key]')
+            : null;
+    const verseKey =
+        verseElement instanceof HTMLElement
+            ? (verseElement.dataset.verseKey ?? '')
+            : '';
+    const target = foundBibleItem.target;
+    const isOneVerse =
+        target?.verseStart === target?.verseEnd &&
+        (target?.chapterEnd ?? target?.chapter) === target?.chapter;
+    const items: ContextMenuItemType[] = [];
+    if (verseKey.length > 0 && !isOneVerse) {
+        items.push({
+            childBefore: genContextMenuItemIcon('robot'),
+            menuElement: tran('Ask the Assistant About This Verse'),
+            onSelect: () => {
+                import('../helper/ai/bibleItemAskHelpers')
+                    .then(({ openChatbotWithVerseKey }) => {
+                        return openChatbotWithVerseKey(verseKey);
+                    })
+                    .catch(handleError);
+            },
+        });
+    }
+    items.push({
+        childBefore: genContextMenuItemIcon('robot'),
+        menuElement: tran('Ask the Assistant About This Passage'),
+        onSelect: () => {
+            import('../helper/ai/bibleItemAskHelpers')
+                .then(({ openChatbotWithBibleItem }) => {
+                    return openChatbotWithBibleItem(foundBibleItem);
+                })
+                .catch(handleError);
+        },
+    });
+    return items;
+}
+
 async function openContextMenu(
     event: any,
     {
@@ -137,6 +193,7 @@ async function openContextMenu(
         event,
         [
             ...genBibleItemCopyingContextMenu(foundBibleItem),
+            ...genAskAssistantContextMenu(event, foundBibleItem),
             ...(await viewController.genContextMenu(
                 event,
                 foundBibleItem,

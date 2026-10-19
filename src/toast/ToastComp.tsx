@@ -26,8 +26,18 @@ export default function ToastComp() {
         lastIdRef.current += 1;
         const newToast = { ...toast, id: lastIdRef.current };
         setToasts((oldToasts) => {
+            const remainingToasts =
+                toast.replacementKey === undefined
+                    ? oldToasts
+                    : oldToasts.filter((oldToast) => {
+                          return (
+                              oldToast.replacementKey !== toast.replacementKey
+                          );
+                      });
             // newest at the bottom of the stack, oldest ones are dropped
-            return [...oldToasts, newToast].slice(-MAX_STACKED_TOAST_COUNT);
+            return [...remainingToasts, newToast].slice(
+                -MAX_STACKED_TOAST_COUNT,
+            );
         });
     });
     return (

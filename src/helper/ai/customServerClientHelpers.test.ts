@@ -38,6 +38,7 @@ vi.mock('./customServerHelpers', () => ({
 }));
 
 import {
+    genContextCutText,
     getCustomServerInstance,
     relayFetch,
     checkIsToolsRefused,
@@ -214,6 +215,18 @@ describe('the custom-server client', () => {
                 'loaded with — in the Ollama app, set Settings → Context ' +
                 'length to 32k or more (or start Ollama with ' +
                 'OLLAMA_CONTEXT_LENGTH=32768), then ask again',
+        );
+    });
+
+    // Ollama answered from 2 051 tokens of a ~13 000-token question with no
+    // word of it (2026-10-16): the answer is not passed off as one, and
+    // the fix is the same one, in Ollama's own words.
+    it('says an answer came from a question cut to fit, with the same fix', () => {
+        expect(genContextCutText(4096, 'ollama')).toBe(
+            'it loaded this model with only 4k of context and answered from ' +
+                'part of the question, so that answer is not shown — in the ' +
+                'Ollama app, set Settings → Context length to 32k or more (or ' +
+                'start Ollama with OLLAMA_CONTEXT_LENGTH=32768), then ask again',
         );
     });
 

@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
     bottom: 25,
     scrollCallback: null as null | (() => void),
     scrollBand: vi.fn(),
+    scrollers: [] as { scrollTop: number }[],
     unsubscribe: vi.fn(),
     observe: vi.fn(),
     disconnect: vi.fn(),
@@ -27,7 +28,7 @@ vi.mock('../helper/appHooks', async () => {
 });
 vi.mock('./virtualScrollHelpers', () => ({
     findClippingAncestors: () => [],
-    findScrollingAncestors: () => [],
+    findScrollingAncestors: () => state.scrollers,
     toVisibleWindow: () => ({ top: state.top, bottom: state.bottom }),
     subscribeScrollerList: (_list: object[], update: () => void) => {
         state.scrollCallback = update;
@@ -73,6 +74,7 @@ beforeEach(() => {
     );
     state.top = 0;
     state.bottom = 25;
+    state.scrollers = [];
     state.scrollCallback = null;
     state.scrollBand.mockReset().mockReturnValue(true);
     state.unsubscribe.mockReset();
@@ -155,6 +157,59 @@ describe('useVirtualRows', () => {
             align: 'nearest',
             behavior: 'auto',
         });
+    });
+
+    it('keeps the row at the top still when rows above it change height', async () => {
+        // A grid scrolled down: the top of the view is inside row 4. The rows
+        // above it are then measured (or move with the median of the measured
+        // ones) -- absolutely positioned, so the browser does not anchor them.
+        const scroller = { scrollTop: 500 };
+        state.scrollers = [scroller];
+        const genRowHeight = (aboveHeight: number) => {
+            return (index: number) => {
+                return index < 4 ? aboveHeight : 10;
+            };
+        };
+        await act(async () =>
+            root.render(
+                <Harness {...options({ rowHeight: genRowHeight(10) })} />,
+            ),
+        );
+        state.top = 45;
+        state.bottom = 65;
+        await act(async () => state.scrollCallback!());
+        expect(scroller.scrollTop).toBe(500);
+
+        // Rows 0-3 grow by 15 each: row 4 now starts 60 lower, and the
+        // scroller follows it by exactly that.
+        await act(async () =>
+            root.render(
+                <Harness {...options({ rowHeight: genRowHeight(25) })} />,
+            ),
+        );
+        expect(scroller.scrollTop).toBe(560);
+
+        // A change in the row COUNT is a different list: nothing is anchored.
+        await act(async () =>
+            root.render(
+                <Harness
+                    {...options({ count: 12, rowHeight: genRowHeight(40) })}
+                />,
+            ),
+        );
+        expect(scroller.scrollTop).toBe(560);
+
+        // With the top of the list on screen there is nothing above to move.
+        state.top = -10;
+        await act(async () => state.scrollCallback!());
+        await act(async () =>
+            root.render(
+                <Harness
+                    {...options({ count: 12, rowHeight: genRowHeight(10) })}
+                />,
+            ),
+        );
+        expect(scroller.scrollTop).toBe(560);
     });
 
     it('unsubscribes and disconnects its observer on unmount', async () => {

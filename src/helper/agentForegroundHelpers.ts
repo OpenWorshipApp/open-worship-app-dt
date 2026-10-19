@@ -430,7 +430,9 @@ function stopWidget(
             manager.setQuickTextData(null);
             break;
         default:
-            manager.clear();
+            // Clear Foreground's own call (F10), so a Long Text Show -- one of
+            // the foreground extras to an operator -- comes off as well.
+            screenManager.clearForeground();
     }
 }
 
@@ -486,8 +488,14 @@ export async function handleAgentForegroundRequest(
     const isAnyShowing = allManagers.some((screenManager) => {
         return screenManager.isShowing;
     });
+    // Stopping EVERY extra is F10, and F10 clears every screen, ticked or not.
+    // Only the ticked one used to be cleared: a screen beside it in the same
+    // colour group kept its clip, and a running Video Show slide show (which
+    // carries on while its session has anything up) put new clips back on
+    // both screens seconds after "Every foreground extra is off the screen".
+    const isStoppingAll = action === 'stop' && widgetText === 'all';
     const targetScreens = allManagers.filter((screenManager) => {
-        return screenManager.isSelected;
+        return isStoppingAll || screenManager.isSelected;
     });
     if (action === 'check') {
         const screens = allManagers.map(toScreenState);

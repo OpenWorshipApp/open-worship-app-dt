@@ -20,8 +20,12 @@ vi.mock('../settingHelpers', () => {
 
 import {
     requestChatbotAsk,
+    requestChatbotFile,
+    requestChatbotLookup,
     requestChatbotReport,
     takeChatbotAsk,
+    takeChatbotFile,
+    takeChatbotLookup,
     takeChatbotReport,
     toProblemText,
 } from './chatbotHandoffStoreHelpers';
@@ -125,5 +129,80 @@ describe('toProblemText', () => {
         error.stack = 'Error: boom\n    at C:\\Users\\somebody\\app.js:1:1';
         expect(toProblemText(error, 'Presenter')).not.toContain('somebody');
         expect(toProblemText(new Error('x'.repeat(5000)), '').length).toBe(600);
+    });
+});
+
+// The Resources panel's 🤖: a file to ask about.
+describe('a file handed to the assistant', () => {
+    beforeEach(() => {
+        store.clear();
+        vi.useRealTimers();
+    });
+
+    it('is taken once, whole, apart from a question and a report', () => {
+        const longPath = `C:/Users/me/${'deep/'.repeat(150)}LUK.6.pdf`;
+        requestChatbotFile(longPath);
+        requestChatbotAsk('Import a Bible for me');
+        // Never cut: half a path is another file, or none.
+        expect(takeChatbotFile()).toBe(longPath);
+        expect(takeChatbotFile()).toBeNull();
+        expect(takeChatbotAsk()).toBe('Import a Bible for me');
+    });
+
+    it('is nothing after half a minute, or past what a path can be', () => {
+        vi.useFakeTimers();
+        requestChatbotFile('/r/LUK.6.pdf');
+        vi.advanceTimersByTime(31 * 1000);
+        expect(takeChatbotFile()).toBeNull();
+        requestChatbotFile(`/${'x'.repeat(5000)}.pdf`);
+        expect(store.size).toBe(0);
+        store.set('chatbot-handoff-file', JSON.stringify({ filePath: '' }));
+        expect(takeChatbotFile()).toBeNull();
+        store.set('chatbot-handoff-file', 'not json');
+        expect(takeChatbotFile()).toBeNull();
+    });
+});
+
+// A Lookup Detail panel's 🤖: which person, place or passage.
+describe('a record handed to the assistant', () => {
+    beforeEach(() => {
+        store.clear();
+        vi.useRealTimers();
+    });
+
+    it('is taken once, apart from the other kinds', () => {
+        requestChatbotLookup({
+            kind: 'location',
+            target: 'eden',
+            title: 'Garden of Eden',
+            langCode: 'en',
+            page: 'https://localhost:3000/reader.html',
+        });
+        requestChatbotAsk('Import a Bible for me');
+        expect(takeChatbotLookup()).toEqual({
+            kind: 'location',
+            target: 'eden',
+            title: 'Garden of Eden',
+            langCode: 'en',
+            page: 'https://localhost:3000/reader.html',
+        });
+        expect(takeChatbotLookup()).toBeNull();
+        expect(takeChatbotAsk()).toBe('Import a Bible for me');
+    });
+
+    it('is nothing after half a minute, or when the setting was edited', () => {
+        vi.useFakeTimers();
+        requestChatbotLookup({ kind: 'verse', target: 'JHN 3:16', title: '' });
+        vi.advanceTimersByTime(31 * 1000);
+        expect(takeChatbotLookup()).toBeNull();
+        requestChatbotLookup({ kind: 'song' as any, target: 'x', title: 'x' });
+        expect(store.size).toBe(0);
+        store.set(
+            'chatbot-handoff-lookup',
+            JSON.stringify({ kind: 'name', target: '', at: Date.now() }),
+        );
+        expect(takeChatbotLookup()).toBeNull();
+        store.set('chatbot-handoff-lookup', 'not json');
+        expect(takeChatbotLookup()).toBeNull();
     });
 });

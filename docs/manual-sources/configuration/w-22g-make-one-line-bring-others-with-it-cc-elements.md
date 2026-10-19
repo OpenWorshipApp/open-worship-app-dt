@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22g — Make one line bring others with it (CC elements)
 
@@ -25,7 +25,8 @@ workflowsVersion: "2026-10-15"
      own at the end of the list — a CC points at a line of the running order — so leave that
      line in place: removing it removes the CC with it.
 
-     **Aim at the middle of a line to attach, at its top or bottom edge to move.** A line
+     **Aim at the middle of a line to attach, at its top or bottom edge to move.** To drop one line onto another, drag that line
+     itself. A line
      of the running order does both jobs, and it tells you which one it is about to do:
      lines along the top and bottom edges mean "this line moves here", a dashed box round
      the whole line means "this goes _onto_ that line". Slides and CC lines have no order
@@ -40,7 +41,7 @@ workflowsVersion: "2026-10-15"
      only way to put it anywhere but the end of the list, since dropping on the presenting flow's
      name adds to the end.
 
-   - **[en:tran:Add CC Elements]** and pick from the other
+   - right-click the line → **[en:tran:Add CC Elements]** and pick from the other
      lines already in this presenting flow. 📸
 
    A CC element shows as a `↳` line just under the one it rides with. From then on,

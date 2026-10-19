@@ -317,6 +317,8 @@ describe('classifying the main process stores', () => {
             'selected-parent-dir',
             'selected-parent-dir-id',
             'selected-parent-dir-history',
+            'data-dir-move-pending',
+            'data-dir-move-hidden-until',
             'screen-mirror-identity',
             'screen-mirror-guests',
             'screen-mirror-mode',

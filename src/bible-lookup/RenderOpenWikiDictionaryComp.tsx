@@ -54,7 +54,7 @@ async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
         {
             childBefore: genContextMenuItemIcon('journal-text'),
             menuElement: tran('Open Wiki Dictionary'),
-            disabled: true,
+            isSectionHeader: true,
         },
         { menuElement: elementDivider },
         {

@@ -8,12 +8,16 @@
             "baseUrl": "https://quiet-river-1234.trycloudflare.com/v1",
             "apiKey": "",
             "isFree": true,
-            "note": "LM Studio on the church's computer, through a Cloudflare quick tunnel; the address changes when the tunnel is restarted",
+            "note": {
+                "en": "The church's own computer: free for us, and the words stay in the building.",
+                "km": "កុំព្យូទ័ររបស់ព្រះវិហារផ្ទាល់៖ ឥតគិតថ្លៃសម្រាប់យើង ហើយពាក្យរបស់អ្នកនៅតែក្នុងអគារ។"
+            },
             "models": [
                 {
                     "model": "qwen/qwen3.5-9b",
                     "name": "Qwen 3.5 9B",
-                    "canSeeImages": true
+                    "canSeeImages": true,
+                    "note": "Slow, but it saves us the cost of usage."
                 },
                 {
                     "model": "google/gemma-4-e4b",
@@ -28,7 +32,6 @@
             "baseUrl": "https://ollama.example.church/v1",
             "apiKey": "ollama-key-that-reaches-only-this-server",
             "isFree": true,
-            "note": "Ollama behind a named Cloudflare tunnel with a fixed hostname",
             "models": [
                 { "model": "qwen3-16k:8b", "name": "Qwen 3 8B (16k)" }
             ]

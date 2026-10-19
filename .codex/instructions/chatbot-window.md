@@ -303,7 +303,10 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     `getLlmModel`, window load, `askLlmBot`) and leaves a keyed provider's
     off-list pick alone. `keyField` UNSET means always available, and it sits
     LAST in the map so any real key outranks it. Only
-    `stepfun/step-3.7-flash:free` sees pictures; _More models…_ is hidden for
+    `nvidia/nemotron-3.5-super-vl:free` sees pictures (2026-10-16: the gateway
+    withdrew Step Flash and Nex Pro, two rows of three, and the list was
+    re-qualified through the window; Free has its own `FREE_MAX_TOKENS` 6 000
+    because the new models think out of the cap); _More models…_ is hidden for
     it. Its `warning` (words and attachments leave the machine and may be kept)
     is STICKY atop the log and repeated in Settings while no key is set;
     `warningLinks` come from `FREE_SERVICE_MAP` so both disclosures name the
@@ -316,8 +319,12 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     key. Free-model guards: `toCleanToolName` cuts a leaked `<|channel|>`
     marker out of the function name, `maxToolRounds` 6 (one question once cost
     ~79k tokens for nothing), and a mid-loop 429 buys ONE tools-less salvage
-    round that keeps the gathered results. `checkIsReadableReply` drops an
-    option with no Latin letter and keeps one naming a translated button.
+    round that keeps the gathered results. `checkIsReadableReply` keeps an
+    option with a Latin letter (one naming a translated button is English)
+    or written in a language somebody CHOSE -- the answer's own, or the app's
+    (`checkIsChosenScript`) -- and drops a script neither uses (`请确认…`
+    under an English answer); its match key reads every script, or a Khmer
+    option was a duplicate of nothing.
   - **Every answer ends with things to PRESS**: **Copy**, **Ask again**, and
     options from an `OPTIONS:` line that `parseAnswerOptions`
     (`quickReplyHelpers.ts`) always strips (own line or inline at the end);
@@ -359,8 +366,99 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   - With no key at all the window opens on the Free assistant (above), whose
     sticky notice offers Settings → Others; a failed call falls back to the
     offline manual bot. Written for a
-    non-technical volunteer, English-only: no ids, no paths, manual pages only;
-    `owa_guide_*` walks a task with a numbered card in the app window.
+    non-technical volunteer, in the language the app is SHOWN in: no ids, no
+    paths, manual pages only; `owa_guide_*` walks a task with a numbered card
+    in the app window.
+  - **It answers in their language** (2026-10-16, the user's ask: _if app in
+    Khmer then the chatbot have to be ready for khmer language_, _this is for
+    church elderly user_, _chatbot have to be localization friendly_; memory
+    `chatbot-follows-app-language`). The app language is the window's own
+    `<html lang>` (`getAppLangCode`, `chatLangHelpers.ts`); what a question
+    is in, `pickReplyLanguage`: what they TYPED, else the app's -- a "yes", a
+    command and anything PRESSED (`handleAsking`'s `isPressed`: a starter
+    chip, an option, a suggestion row, an action's ask, a card rescue) are
+    the app's words. Every language is DATA in
+    `src/lang/data/<code>/assistant.json`: its script, digits, words for yes
+    and no (the offline bot's follow-ups take them), the yes/no chip words and
+    how such a question is asked (`genQuickReplies`), walkthrough-echo words,
+    the markers a model translates (`ជម្រើស:` for `OPTIONS:` -- every frame
+    parser reads them) and a glossary for the search. No code names Khmer.
+  - **Behind the scenes it works in English, unless the model is a Gemma 4**
+    (2026-10-17, the user's ask: _for khmer, behind the scene it should
+    translate all khmer to english to work with llm or post directly to llm
+    if it is gemma 4 family … make sure to make it generic_, and _use gemma 4
+    as sub assistant_; `chatTranslateHelpers.ts`, pure, every rule a test).
+    For an answer in a language other than English (`pickReplyLanguage`), a
+    Gemma 4 model (`TRANSLATION_MODEL_PATTERN`) is asked in that language
+    and answers in it, as before. Any OTHER model is asked in ENGLISH: what
+    they typed is put into English, the ask goes out under the English
+    prompt with no language line (`appLang`/`replyLang` `en`), and the
+    answer, its options riding along on an `OPTIONS:` line, is put into
+    their language before it is drawn. The translating is a SUB-assistant:
+    a Gemma 4 model Auto would ask at no cost (`findTranslationPick`, the
+    same look as the verse finder's), one round with no tools each way
+    (`AskExtraType.isTranslation` — `TRANSLATION_SYSTEM_PROMPT`, and 4 000
+    tokens on a server of the user's own). Its rounds count in the cost and
+    never as who answered (`onHelperUsage`). Per question, not per
+    assistant: Auto trying three asks for the English once. A button named
+    in English in **bold** is written in the screen's words from the app's
+    dictionary first (`toBoldLabelsShown`), and the translator keeps bold
+    words as they are. With no Gemma 4 to translate, or when a translation
+    fails, the model is asked in their language directly; an answer that
+    could not be put into it is shown in English under one sentence saying
+    so. Not for a verse being looked for (it has its own English head start
+    and names verses a translation would reword), and an answer the app
+    wrote itself, already in their language, is left alone. A pressed chip
+    asks its row's ENGLISH (`StarterQuestionType.textEn`, `echoText` for
+    the transcript), so the readers that know only English -- a verse to
+    find, a Bible to import, a song link -- and the hint read the corpus's
+    own sentence.
+  - **The window's own words are in that language too** (the same day, the
+    user's picture with ASKING ABOUT, ASSISTANT, CREDIT USED, YOU, Working in,
+    the box's placeholder and STOP circled: _make sure to do maximum
+    translation for the page as well_). Through the chatbot's OWN `tran`
+    (`chatTranHelpers.ts`: `tran`, `tranLabel`, `fillWords`) -- identity
+    until `src/chatbot.tsx` plugs in a translator after `init` (the window is
+    drawn from `init`'s callback now, the language loaded), pinned to the
+    language the window was LOADED in: the app's `tran()` reads the setting on
+    every call, and a language clicked in Settings before Apply would have it
+    ask for a dictionary this window never loaded. Not `langHelpers`' `tran`:
+    that pulls `SettingManager` → `appLocalStorage` → `appProvider` into every
+    helper, which a node test cannot load. The AI Chat window plugs the same
+    one in (`plugChatWindowLanguage`, `chatWindowLanguage.ts`, called by
+    both entries), with the tab strip they share. **Both draw the language
+    in its own face** (the user's picture, Khmer in the OS's fallback: _both
+    chatbot and ai chat must have translation and have font-family apply_):
+    the pack's `fontFamily` goes on `<html>` as `--chat-lang-font`, which
+    every `--chat-font-*` stack in `chatWindowShared.scss` carries AFTER
+    the window's own faces, so Latin keeps them and Khmer is Battambang.
+    The walkthrough card, the ◎ picker's line and the action banner, drawn
+    into the app's windows, take the page body's face the same way. Named `tran` so
+    `tranKeyCoverage.test.ts` reads every key (Khmer AND French). One rule
+    decides where: words CODE reads back -- an action's label
+    (`WALKTHROUGH_ACTION_PATTERN`, `DRAFT_ACTION_PATTERN`, `findTypedPress`),
+    a thread's marker -- stay English in what is stored and are translated
+    where drawn (`tranLabel`; `chatTranLabels.test.ts` holds those words,
+    which no static sweep can read); words nothing reads back are translated
+    when written. Whole sentences with `{gaps}`, never a phrase stitched from
+    pieces (`progressHelpers` was rewritten so). What goes to a MODEL --
+    prompts, hints, tool arguments, a report's body for the maintainers --
+    stays English. A saved conversation keeps the language it was written in.
+    **Measured, not assumed** (2026-10-17, the user's goal: _work with
+    Khmer language, 99% coverage_): `node extra-work/chatbot-language-coverage.mjs`
+    drives the RUNNING dev app's help window through 24 states that need no
+    assistant -- the empty window, the folded head, a tab's menu, More…, the
+    suggestion lists, Report's first press, the `/` commands, the guide's own
+    answers, the verse finder's and the Bible import's first steps -- plus
+    the ✨ window (its bar, Recently closed, the chooser, the sign-out
+    question), each in a tab the run opens and closes itself (it refuses to
+    run without one: it once closed a person's site tab through a second
+    `.chat-tab-add`). Every visible string, title, aria-label, placeholder
+    and picker option is IN THE LANGUAGE, NEUTRAL (names, keys, links, a
+    Bible's own key and title, decoration) or NOT; a person's words and an
+    assistant's are left out. Khmer read 98.6% first, 99.6% once the
+    fill-in questions were translated (the two strings left were server
+    names the user typed); French 97.1% before its manual was translated.
   - **A step the card cannot press asks the model**: `owa-guide-help` (card) →
     `all:app:guide-help` (`domHelpers`) → `askGuideHelp` (main) → the chat
     window, which answers onto the CARD the same way (it stays minimised during
@@ -422,6 +520,88 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   as theirs. The assistant can ASK to be shown, with a
   `NEEDS: screenshot|element|file` frame that `parseAttachRequests` strips
   unconditionally, exactly like `OPTIONS:`.
+- **A PDF is read as its pages, and a file can be asked about question
+  after question** (2026-10-17, the user, with a picture of the assistant
+  answering _I cannot open PDF files_ under `1CH.0.pdf`: _convert to images
+  for pdf pages then send image as attachment_; then, with the Resources
+  panel circled: _add robot icon to each file, click to open file in
+  chatbot … let user interact to ask question around the content in the
+  file_). **Pictures, not the text layer**: a Khmer PDF is as often as not
+  set in a legacy font whose text is Latin letters drawn as Khmer, and a
+  scan has none. `public/js/pdf-to-chat-images.mjs` (MuPDF, a child process
+  per ask through `main:app:pdf-to-chat-pages` → `pdfToChatPages`) draws the
+  first EIGHT pages at the 1024px long edge every picture here is cut to,
+  PNG unless photo-sized, handed back as data URLs — nothing written to
+  disk, nothing cached in main. `genPdfAttachment` (`fileAttachHelpers.ts`)
+  holds them beside the PDF's id: the live store holds a LIST per
+  attachment (`putAttachmentPages`), so its ceilings count files and a PDF
+  is let go of whole. `toBotImages` sends them in order among the other
+  pictures, `toAttachmentLegend` counts them with those (_its pages 1 to 3
+  are the 2nd to 4th pictures_), and what the model is told of a PDF is
+  worked out AT THE ASK (`toFileSummary`): its pages and which were NOT
+  shown, or — no pages held, or a model they are not sent to
+  (`toAttachmentText(…, isSeeing)`) — that it cannot be opened. `pageCount`
+  is persisted; the pages are not. The 5 MB cap is the report's alone now.
+  **A file stays open in its tab** (`findOpenFileAttachments`): the files
+  of the LAST question that had one (a file from disk — never a 📷 picture
+  or a pointed-at control, which were of the app as it WAS) go to the model
+  with every later question until another file is attached or the ×
+  of the **Still asking about** line above the box is pressed
+  (`ChatSessionType.fileClosedAt`), read again from disk when the window
+  has let them go (`reloadFileAttachment`). Only to the model: the
+  transcript keeps the question as asked. An empty box with only files is
+  `FILE_ONLY_QUESTION` (say what it is, ask what they want), not "help with
+  whatever looks wrong". **The Resources panel's 🤖**
+  (`ResourcesFileRowComp`, `.app-resources-file-ask`, beside the ⋮ and in
+  its menu, only while AI is on and only on `checkCanAttachFileName` — a
+  picture, PDF, `.own` or text kind, never a `.docx` or a video) leaves a
+  `chatbot-handoff-file` request (`requestChatbotFile`, a whole path, 30 s)
+  through `openChatbotWithFile` — the two questions first — and the window
+  attaches it in a tab of its own with a brief description and four questions
+  to press. **Read** first gives a two-sentence content description, then asks
+  for one verse with an example (`1`) and `1`, `2`, `3` / **Full chapter**
+  buttons. Each card renders exactly one verse: that verse is pre-read from
+  the installed Bible through `owa_lookup_record`, the PDF's narrow reference
+  column supplies up to two clickable cross-references, and the matching
+  explanation paragraphs come from the commentary below the rule. Full first
+  discovers the chapter's final verse, then automatically asks for each verse
+  in order as an isolated request/card; the next three verse buttons stop at
+  the real chapter end even when a small model writes no valid `OPTIONS:` line.
+  `owa_resource_file` returns every PDF page as a picture by default, with
+  explicit coverage fields; its embedded text layer is withheld because a
+  legacy font can decode into convincing but unrelated characters. Dense pages are
+  read at the tool's 2048px high detail, and the unchanged result is reused
+  from a bounded OS-temp disk cache between verse cards; the picture
+  is the only PDF wording supplied to the model. A repeated-word detector
+  rejects a degenerate visual answer and falls back to the exact installed-
+  Bible verse instead of displaying invented commentary; raw two/three-letter
+  OCR guesses are not offered as cross-reference buttons. A Resources-PDF caution recommends
+  reading the Bible and PDF personally; its **Hide for 30 days** uses the same
+  timed AI-caution setting as the rest of this window.
+  **A Bible note is its words** (`noteFileTextHelpers.ts`): the editor's
+  JSON tree walked to headings, lines and list items, a pasted picture as
+  `[picture]`, then each marked verse with its highlights and comments —
+  sent as it was, the 16 KB cut was the start of a base64 photograph. In
+  a narrow panel the row's _Introduction_ tag goes (a container query on
+  the row) so the name keeps its room beside the 🤖. **And the rest of
+  Resources is the model's to read** (the same day, the user: _let chatbot
+  know it is from `Resources`, let chatbot access all in `Resources` …
+  like followup other chapter (look into other pdf files)_): a question
+  asked while a file inside a Resources folder is open in the tab --
+  attached now or still open, however it was attached
+  (`findResourceFileNames`, the folder list read fresh) -- is a
+  `resources` ask (`resourcesChatHelpers.ts`), shaped like the Lookup
+  panel's: the ask names the file as the tool does (`toResourcesAsk`,
+  `pdf/LUK.6.pdf`, never a whole path -- a folder's path carries the
+  account name), `RESOURCES_SYSTEM_PROMPT` (what Resources is, `LUK.6`
+  is Luke 6 and `LUK.0` its introduction, answer from the pages and say
+  which file and page), `owa_resource_file` as its on-ask tool plus shared
+  `owa_lookup_record` for exact cited passages and `owa_read_website`, five rounds, no
+  walkthrough or app hints (`isAppQuestion` is false), and Auto told it
+  needs a model that sees. Verified live 2026-10-17 on gemma4:cloud, in
+  Khmer: a tab opened on `GEN.4.links.json` asked _what does the file for
+  Luke chapter 7 say?_ listed Luke 7, read `pdf/LUK.7.pdf` (the waiting
+  lines say both) and answered with its themes by page.
 - **A question already in flight can be added to.** The box is no longer
   disabled while an answer comes; **Add** appears beside Stop once there are
   words in it. `askLlmBot` takes a `takeAdditions` pull callback that the round
@@ -614,6 +794,12 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   circled: _add option to hide it for 30 day_): `chatbot-tip-hidden-until`,
   a setting like the daily tips' own, not believed when set further off than
   60 days, back by itself — the same 30 days as the two cautions.
+  **`/tips` brings it back before then** (2026-10-17, the user's ask with
+  `/tips` typed in the box: _add `/tips` to open tips again_; also
+  `/tip`, `/show-tips`): the hide is forgotten (`showChatTips`), the line
+  is told at once by a window event (`CHAT_TIPS_SHOWN_EVENT` — it read the
+  setting when it was drawn), and the answer says where the line is and
+  gives one tip.
 - **A line starting with `/` is a COMMAND, and no model ever sees it**
   (2026-09-02, `src/chatbot/builtinActionHelpers.ts`). Measured on the standing
   corpus the afternoon three of the four providers answered 429 within an hour:
@@ -834,9 +1020,9 @@ answer` under them opens all of it for that window (302 in the Presenter on 2026
   whose report says what they were told to try. A typed _yes, thanks_ or
   _no_ under that card is its own button (`readFixReply`, short answers
   only — anything that says more IS more for the report). **A PDF can be
-  attached** (`kind: 'file'`, `genFileAttachment`): no bytes are held and
-  no model is shown it — the model is told it is there and cannot be opened
-  — it rides along for the report to send from its path. **A home folder
+  attached** (`kind: 'file'`, `genFileAttachment`): the model is shown its
+  pages as pictures (see _A PDF is read as its pages_ below) and it rides
+  along for the report to send from its path. **A home folder
   loses the account's name** in the console lines and in the error an offer
   card names (`toPathScrubbed`, a leaf `fileHelpers` re-exports), and a
   turn of the conversation is quoted cut at 2 000 characters. The prepared card carries
@@ -938,6 +1124,121 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   the Document Editor; never on the Reader, never in a window of its own,
   never twice. The line goes at the END of the answer's text, not in its
   `note`, which is drawn above an answer.
+
+- **A question about what the Bible SAYS is read as one, not searched as an
+  app question** (2026-10-16, `EC-199`, `src/chatbot/bibleContentAskHelpers.ts`
+  — pure, every rule a test; found in the user's own tabs with their server
+  down). Any Bible question shares its nouns with this manual, so the guide
+  handed _what bible verse talk about lover your enemy?_ the Resources page
+  and _what are names of 7 churches …_ the Bible-import page, far above the
+  score floor: 8 of 10 such questions measured. `readBibleContentAsk` tells
+  two kinds: a verse asked for by what it says (→ `answerFromManual` answers
+  with Bible Find's page, the words to try named, its walkthrough from
+  **Find**, no way across to the Presenter) and knowledge about the Bible
+  (→ how to ask an assistant, `/btw` written out, **Open AI settings**).
+  Never a question with a reference, about the projector, naming a part of
+  the app or what is open, nor _who/where was_ (the names lookup answers
+  that); a test holds all 438 supported questions out of both. `askHelpBot`
+  sends one there ahead of the where-is reader, and `/help` reaches it
+  through `answerFromManual` — which is how it is checked live with no
+  assistant to fail. (Since the evening of 2026-10-16 a typed VERSE ask goes
+  to the verse finder instead -- below -- so the guide's page answers it only
+  through `/help`, and the Bible Find line only when no Bible is installed.) Under an ASSISTANT's answer in the Bible Reader,
+  `genBibleFindAdvice` adds one line and **Show me Bible Find** unless the
+  answer names Bible Find already: a model answers such a question with
+  `/btw` from memory and says nothing of the search on the page. And
+  **`needsPage` from a state read counts only under a projector, selection
+  or running-order question** (`needsPageBy`, `EC-280`): a model checks
+  where it is with `owa_app_state`, which off the Presenter always says the
+  Presenter is needed, and three Reader answers had lost their walkthrough
+  to **Go to the Presenter** under a sentence about the projector.
+
+- **A typed chapter or verse in the Bible Reader is answered from the
+  Bible's own material** (2026-10-18; the user's goal: _chatbot will help
+  bible reader have more power_, with _show resource files of john chapter
+  3_, _what names in Genesis chapter 4_, _open genesis 3:203_;
+  `src/chatbot/bibleReaderChatHelpers.ts`). A typed line in a tab whose
+  ASKING ABOUT is Bible Reader that names a verse (`3:16`, `៣:១៦`) or a
+  chapter word + number (`chapter 4`, `ជំពូក 4`, `chapitre 4`) with a book
+  before it -- and not a how-to or the app's own work -- is a
+  `bible-reader` ask: the names lookup, the Resources reader and the verse
+  reader are offered together (`AskExtraType.bibleReader`), the installed
+  Bibles are read once so a Khmer ask is quoted from the Khmer Bible, and
+  the answer is marked `isBibleReaderAnswer` so the next plain line ("and
+  chapter 5?") stays in the conversation. The cue words are DATA
+  (`bibleReaderWords` in `assistant.json`); English reads in code. A
+  **Presenter** tab is left alone -- it keeps `owa_present_bible` -- so
+  "show John 3:16" on a projector still puts it up. Under a Resources
+  answer, a file the assistant READ offers **Ask about …**
+  (`genResourceAskActions`, `RESOURCE_ASK_TOOL_NAME`); the press attaches
+  that file to the tab (`attachHandedFileRef`, after
+  `resolveResourceFileName`). Seen live 2026-10-18 on the dev Reader in
+  Khmer: the Resources list by `ref: "យ៉ូហាន 3"`, Genesis 4's people and
+  places, and "Genesis 3 has 24 verses" for 3:203.
+
+- **The ask box completes a passage or a name as it is typed** (2026-10-18,
+  the user's picture of the lookup conversation whose box held `១` and
+  offered nothing: _assistant should help the input ... book auto complete ->
+  chapter -> verse_, then _if for location/name then should recommend the
+  auto-complete_). `useBibleInputSuggestions` (`ChatbotAppComp.tsx`) calls
+  the hidden `owa_bible_suggest` on a **350 ms debounce per window**, for a
+  passage box (a Reader tab, or a `lookupAwaits` line) and a name
+  (`Who was …`, every language's `nameAsk`, a bare non-Latin name); a bare
+  Latin word is only searched against a dataset a lookup panel already holds,
+  so nothing fetches the 34MB speculatively. The rows sit first in the one
+  suggestion list and are DATA (`isData`: drawn untranslated); choosing one
+  **keeps the list open**, because it is one step -- book, then chapter, then
+  verse (a chapter's fill ends in a colon). A passage box's rows win over
+  the corpus ones, and an awaited passage shows them too. Hidden from the
+  model (`MODEL_HIDDEN_TOOL_MAP`), so the model's list and ratchet are
+  unchanged. Seen live in Khmer: `យ៉ូ` -> the five books, John -> chapters,
+  chapter 3 -> verses, `ម៉ូសេ` -> Moses/Moseroth.
+
+- **Waiting questions accept ordinary words** (2026-10-18, EC-354).
+  EC-355: the interpreter also receives the originating tab's recent visible
+  conversation, current step, Bible title/summary, short name, selected
+  language, digits and source. Current settings override historical answers
+  and file detection; selected language means the imported Bible, never the
+  interface. Ordinary chat gets the same current-task hint, while history
+  retains message notes and choice labels. Context is bounded and contains no
+  raw action arguments, draft paths or full Bible. Exact native language names
+  resolve locally; a correction at numbers/names/review reloads that language
+  and clears stale numbers/name selections. At book-name selection, a bare
+  URL runs `names-url` against the supplied site; a sentence around one supplied
+  URL uses the interpreter's `acceptsLink` context. Both retain the draft and
+  selected locale. Multiple proposed URLs need clarification. Source results
+  lead the choices and carry clickable links;
+  failures retain the prior options. An older host that ignores `url` cannot
+  pass off its catalog as the requested source (`requestedUrl` must match).
+  Language correction is also allowed at choice steps, but that extra value
+  kind must not make short unknown replies fall through to normal chat: without
+  an `awaits` field, interpret every unmatched reply. Digit-format choices also
+  accept their positions locally (`១` selects the first), observed after the
+  restarted host exposed a fallthrough that invented a ready-to-install answer.
+  Exact choices, including Khmer/Thai/fullwidth digits and punctuation, run
+  locally first. Bible import, the verse finder's Bible chooser and lookup's
+  **Open another passage** share `waitingInputHelpers.ts`: one bounded
+  JSON interpretation, no tools. Only original choice IDs or validated values
+  can continue the existing step; a help/ambiguous/invalid reply keeps the
+  question and buttons. An unrelated task goes through the normal router
+  with one user echo. Model output never supplies tool arguments or presses
+  agreement, install, undo, settings or source buttons.
+  Language values use the import tool's `normalizeBibleLocale`, accepting
+  **Thai** as well as **th**; an explicit override beats detection. A restart
+  after a language change reloads that language's digits and book names.
+  Passage values require a whole valid book/chapter reference, and relative
+  replies use the last displayed passage. `askWaitingInput` respects the
+  tab's selected provider/model; Auto resolves a no-cost assistant without
+  changing the tab's selection. Usage and progress are recorded. Stop retains
+  the waiting question and actions, and late responses cannot advance it.
+  Async work stays with the originating tab, including a resumed verse search.
+  Tests: `waitingInputHelpers.test.ts`, import/verse helpers and the LLM
+  boundary; live evidence: `test-results/bible-import-input/`.
+
+- **The composer button is Send** (2026-10-18, user's screenshot), with
+  **Send — Ctrl+Enter**, Khmer **ផ្ញើ** and French **Envoyer**. Keyboard hints,
+  tips, reports and W-42 use the same label. **Ask again** remains the action
+  that brings an earlier question back.
 
 - **Two thumbs under every answer, and a thumb down is FOLLOWED UP by the
   window** (2026-10-12, `EC-259`, `src/chatbot/answerRatingHelpers.ts` — pure,
@@ -1087,3 +1388,260 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   ENGLISH, the Reader on Genesis 1:1 with no reload; `…called "KHOV"` typed
   — _None of them has “khov” in its name_ — and `Khmer` under it listing
   seven Bibles with the name still on every button.
+  **A downloaded Bible is AGREED TO before it is asked about** (2026-10-16,
+  the user's ask over the list of seven Khmer Bibles: _ask for user consent
+  first, tell user it is randomly found on internet, show user where is from,
+  tell user it's not provided by openworship, let user know that they hey to
+  responsible for bible publisher. when user agree then keep going_; CB-145).
+  `genBibleImportCheckAnswer` answers a download with `genSourceNoticeStep`,
+  not step 1: what it is, then **Where it is from** (the collection's page for
+  any Beblia file however it is linked — `checkIsCatalogLink` — else the page
+  the file was picked from, carried as `sourcePage` on every file button, else
+  _the internet, at the address below_), **The file** (the tool's `source`),
+  **It is not from Open Worship** and **You are responsible to its
+  publisher**, with **I agree** (step `agree` → `genAgreedStep`, which says
+  what step 1 needs beside it: a second copy, the wanted name), **Open the
+  website** (step `source`, the page in the system browser — only an http(s)
+  `sourcePage`, `appProvider` imported at the press) and **Cancel**, which
+  deletes the draft. Typed `yes`, `ok`, `agree`, `I agree` press **I agree**.
+  The download happens BEFORE the notice, on purpose: one place every way in
+  passes (a link, the collection, a model's own `check`), and it is the
+  file's own title and address the person agrees to; a decline deletes it.
+  A model's download carries the same buttons and, from
+  `genBibleImportUnderAnswer`, the notice appended to its words, and a
+  model's `owa_bible_xml` **`import` is refused in `runMcpToolCall`**
+  (`BIBLE_IMPORT_MODEL_REFUSAL`): the person's press is the agreement, so no
+  model may stand in for it. The stdio door is the developer's and unchanged.
+  **Its two addresses are LINKS** (same day, the user with a picture of them:
+  _make links clickable, open in browser_). An answer carries `links`
+  (`BotAnswerType` → `ChatMessageType`, persisted): the addresses the APP
+  wrote into it, and a `code` span whose words are one of them is drawn by
+  `RenderChatLinkComp` — a button, not an `<a href>`, which followed would
+  replace this window — pressed open in the browser through
+  `openExternalURL`. Only the app's own: a model's words can carry what a
+  page it read told it to say, so its addresses stay words, the provider
+  pages' rule above. `chatLinkHelpers.ts` (no imports) is the one check —
+  http(s), no user name or password, 600 characters, four a message — read
+  by the Bible import, by `toValidLinksField` on load (a hand-edited file
+  cannot make anything else a link, and a question carries none) and again
+  at the press. The model's answer gets the notice's links with the notice.
+
+- **A verse somebody half-remembers is found in a conversation of its own**
+  (2026-10-16, `src/chatbot/verseFindChatHelpers.ts`; the user's ask with
+  Bible Find circled, then four more the same evening). The way in is the
+  robot at the right end of Bible Find's **[en:tran:All Books]** row,
+  **[en:tran:Find a Verse with the Assistant]** (`RenderFindingInfoHeaderComp`):
+  `openChatbotAsking` with `Help me find a Bible verse in "KJV"`, a sentence a
+  person could type too, written and read by the leaf
+  `src/helper/ai/verseFindAskHelpers.ts`; the chat starts it in a new tab
+  (`takeHandoff`, on the window's focus AND on main's `chatbotLaunchFocus`
+  -- with the window already open, Windows did not always focus it and the
+  press did nothing, 2026-10-17; with the strip full, an empty tab), and
+  the typed sentence or the corpus row _Can you help me
+  find a Bible verse I forgot?_ starts it in the tab in front. **Two steps by
+  buttons, no model** (`VERSE_FIND_STEP_TOOL_NAME`, the whole step in the
+  args): **Which Bible should I search?**, every installed Bible, Find's
+  first and marked _(the one in Find)_ (a typed short name, number or title
+  word picks one too, `readVerseFindTypedPick`), then **What do you
+  remember about the verse?** with **Search another Bible**. That answer
+  carries `verseFind` (the Bible), persisted on the message, and **every
+  plain line typed under such an answer is more of the same search**
+  (`readVerseFindThread`) until a `/` line or the app's own work (_put it on
+  the screen_, _how do I save it_) ends it; meanwhile the box offers no app
+  questions. **The assistant is asked under a prompt of its own**
+  (`AskExtraType.verseFind` → `VERSE_FIND_SYSTEM_PROMPT`, ~420 tokens, its
+  own cached prefix) with `owa_find_verse` and `owa_read_website` as its only
+  tools and five rounds at most -- 5k tokens for the answer seen live, where
+  an ordinary question carries ~8 350 of schemas a round. It tries every
+  way: the words, the words a described verse would use, other forms, the
+  KJV with what it translated to English, references it thinks of read with
+  `refs`, then a web search page; it names only verses a search or a read
+  returned from THEIR Bible, and each one it names gets **Open … in Bible
+  Lookup** (`genVerseOpenActions`, off the tool watch's `foundVerses`, in the
+  order the answer names them). **The Bible can be changed under every
+  answer** (2026-10-17, the user's picture of John 14:6 quoted in French in a
+  Khmer window: _I'm looking in khmer then I should be able to change to
+  english_; `genVerseChangeBibleAction`): **Show in another Bible** under
+  verses found, **Search another Bible** under none -- a step button carrying
+  `current` (left out of the list), the `words` and up to five `verses`
+  (key + ref, read again at the press, `toVerseFindCarry`). A Bible picked
+  with verses quotes them from itself by `refs`, no model
+  (`genVersesInBibleAnswer`); with words alone the window asks the one line
+  for them (`toVerseFindSearchAgainAsk`, echoed as the pick), so the head
+  start, the assistant and the window's own search all run. Either way the
+  tab searches the new Bible from then on; with no other Bible the answer
+  offers the import. **Nothing found** -- no verse the answer
+  names, or the guide's own search empty -- ends with a Google link written
+  out and drawn as a link (`genVerseWebSearchLine`,
+  `https://www.google.com/search?q=bible+verse+…`, an address the APP wrote)
+  and **Search Google for it** (`VERSE_WEB_SEARCH_TOOL_NAME`, a pseudo tool:
+  the address is built at the press from the words). **With no assistant**
+  the window searches the words itself (`answerVerseFindOffline`): the
+  verses holding the most of them, _(4 of 4 words)_, a button each, and words
+  not in that Bible's language said so, never _make sure the main window is
+  open_ (the user's own Khmer tab, the free service failing). **Every answer
+  names its model** (the user's ask with _free_ circled under an answer):
+  `answeredBy` on the message, from the last round's provider and model in
+  the pickers' own words; the cost line reads _Nemotron Super VL · free · 5k
+  tokens_ and its hover, and the **Assistant** label's, _Model: Free ·
+  Nemotron Super VL_. **The window searches FIRST** (2026-10-16, the goal
+  the user set: _chatbot be smart enough to help user find verses he/she
+  forgot_; `genVerseHeadStart`): before any model round it searches the
+  chosen Bible for their words, and -- for words in another script
+  (`checkVerseFindNeedsTranslation`) -- asks a **Gemma 4** model that can
+  answer at no cost for the English in KJV wording (`translateVerseWords`:
+  one round, no tools; the user's word, _for any translation attempt please
+  prefer Gemma 4 models_) and searches that too, the tool crossing to the
+  KJV by itself and quoting back from the chosen Bible. Both lists ride the
+  ask (`toVerseHeadStartAsk`, five verses each, cut at 160 characters) and
+  seed the tool watch (`AskExtraType.verseFind.found`), so a verse the model
+  names from them gets its button with no search of its own; with no
+  assistant they ARE the answer (`genVerseHeadStartAnswer`). On **Auto** a
+  verse in another script goes to a Gemma 4 model first
+  (`AutoRankOptionsType.preferModelPattern`, after setbacks, busy servers and
+  an unloaded LM Studio). Measured on the user's Khmer phrase: 41.4k tokens
+  over five rounds on the free model before; 3.6k on the local gemma-4-e4b
+  with the head start, John 21:17 found. **One line does it all**:
+  `Help me find a Bible verse in "KJV": love your enemies` starts the
+  search with no step in front (`readVerseFindAsk`'s `remembered`).
+  **And a verse asked for by what it says in ANY chat** -- _which verse
+  says do not worry about tomorrow_, `readBibleContentAsk`'s verse kind
+  (EC-199) -- is that search too, in the Bible the lookup is on, from the
+  words the question is about (`EC-285`): an assistant had answered it from
+  memory in another translation's words, under **Show me Bible Find**.
+  Measured on the standing set
+  (`.claude/skills/owa-enhance-chatbot/references/verse-find-asks.json`,
+  scored by `scripts/score-verse-find.mjs`): 20 of 20, the typed five from
+  17.6-37.1k tokens with no verse to open down to 2.1-6.8k with every one.
+
+- **Scrolled up, a round ↓ takes them back to the newest message**
+  (2026-10-16, the user's ask with the corner circled: _when the scrollbar
+  not at bottom then should have an icon for quick scroll bottom_, then
+  _should have background transparency glassier_). `.chat-log-jump`, sticky
+  at the bottom-right of the scroller in a box of no height, drawn only while
+  the log is more than `SCROLL_END_SLACK` (48px) above its end; the state is
+  set on scroll and after a message lands, and React drops the set when it
+  did not flip. Glass: a 42% film with a 6px `backdrop-filter` over the words
+  under it -- the one blur in this window, and 32px of it; the window's own
+  ground stays the OS's glass. The press scrolls smoothly to the end. It is
+  not auto-hide: it is a control that exists only while there is somewhere
+  to go back to. Proven with a real mouse event over raw CDP: 559px up, the
+  hit-test at its centre was the button, and after the press the log was at
+  its end with the button gone.
+
+- **For a reader who reads NO English** (2026-10-17, the user: _when app is
+  in Khmer we don't expect user can understand english at all_; the
+  elder-persona run, `EC-288`..`EC-292`). Five things hold in a window shown
+  in a language other than English, each measured on a Khmer answer that broke
+  it. A question carrying two letters of the app's script is answered in the
+  app's language whatever English it quotes (`pickReplyLanguage`). The answer
+  is cleaned by CODE at the end of `askLlmBot` and on the translated path
+  (`answerLanguageHelpers.ts`): a Latin-only bracket after the language's own
+  words goes (_រូបកង់ធ្មេញ (Settings)_), an English label the dictionary
+  knows is written as the button shows it (_Go Back to Presenter_), never one
+  word out of a longer name, never a key cap, never a `REPORT:` -- and the
+  letters of a THIRD script, neither the language's own nor Latin, go with
+  the signs on them (`dropThirdScriptLetters`, 2026-10-17, `EC-307`: _预览_,
+  _పొ_, _কোথায়_, _الخاص_ in Khmer answers and a chip of the whole-corpus
+  run, letters the reader cannot even sound out). **What the screen shows in
+  English stays English** (`EC-316`): nothing in a code span is translated,
+  nor a word after `ol:`, nor a menu-bar name before an arrow -- the menu
+  bar reads File … Help in every language -- and a model's own _ជំនួយ → …_
+  and _ol:ខគម្ពីរ 1_ are put back to _Help → …_ and _ol:Verse 1_ through
+  the dictionary (`restoreEnglishNames`); the cleaner had been translating
+  **Help** itself, a one-word key. A verse asked
+  for in the person's own words is the verse finder's (`verseAskLanguageHelpers.ts`,
+  the patterns DATA in `assistant.json`: `verseFindAsks`, `verseAsks`,
+  `verseAskExcludeWords`), searched in an installed Bible of THEIR language
+  before the lookup's (`pickVerseFindBible`), and its references are drawn as
+  that Bible writes them, on the buttons too (`title` from `owa_find_verse`,
+  `toShownVerseRef`, `toShownActionLabel`). A reply chip never offers a
+  removal (`checkIsRemovalReply`, `removalWords` per language) — a chip is a
+  one-press yes; and a chip with none of the language's letters is dropped
+  (`toRepliesShownInLanguage` — a model working in English left its own when
+  the translator dropped the `OPTIONS:` line). An answer that says to type
+  `/btw` carries **Ask it as a general question** (`GENERAL_ASK_TOOL_NAME`),
+  the command written for them. A thank-you under a found verse ends the
+  search (`checkIsClosingLine`, `closingWords`) — it was searched as verse
+  words and answered with a Google search for "thank you". And an address
+  the app writes is drawn decoded and short (`toShownLinkText`): a Khmer
+  Google search had been 300 characters of `%E1%9E…`.
+
+- **A person, a place or a passage is asked about from its Lookup Detail
+  panel** (2026-10-18, the user's picture of three panels — a verse, Adam,
+  the Garden of Eden — the left of each title circled: _add robot icon,
+  click to open chatbot, make sure mcp tool provide all information to
+  chatbot session then let user interact_; the story _as a user I want to
+  ask the chatbot about location/name/bible by opening from the detail
+  panel_; and _chatbot should know the location/name is from KJV, in case
+  want to know_). The 🤖 at the LEFT of every detail panel's title
+  (`RenderAskAssistantButtonComp` in `LocationNameDetailPanelsComp.tsx`,
+  **[en:tran:Ask the Assistant About This Person]** / **Place** /
+  **Passage**, drawn only while AI is on, like the Resources panel's)
+  hands over WHICH record, never its words: `openChatbotWithLookup` → the
+  🤖's two questions → `chatbot-handoff-lookup` (`requestChatbotLookup`, 30
+  s), the request written and read by ONE leaf with no imports
+  (`src/helper/ai/lookupAskHelpers.ts`: kind, the panel's own target — a
+  record id or a short verse —, the title it shows, the passage's Bible or
+  the record's lookup language, and the address of the window the panel is
+  in). The window takes it in a tab of its own (`takeHandoff`) and reads
+  the record ITSELF, with no model, through `owa_lookup_record` in the
+  panel's window — where the ~34 MB names dataset is already held — and
+  anywhere when that window has gone (`openHandedLookupRef`); what came
+  back is kept on the card (`ChatMessageType.lookup`, bounded at 16 000
+  characters, checked field by field on load) and the card says it was
+  read — _drawn from the King James Version_ for a person or a place — with
+  three questions to press. **Every plain line under it is about that
+  record** (`readLookupThread`, `lookupChatHelpers.ts`, pure, every rule a
+  test): it is asked with the record fenced as DATA under the question
+  (`toLookupAsk`, the user turn, never the prompt), under a short prompt of
+  its own (`AskExtraType.lookup` → `LOOKUP_SYSTEM_PROMPT`, its own cached
+  prefix) with `owa_lookup_record` and `owa_read_website` as its only tools
+  for five rounds — the record tool aimed at the panel's window by the
+  loop (`ToolWatchType.lookupPage`) —, no known-question hint, no Bible
+  Find advice, no verse search and no walkthrough; translated both ways like
+  any other ask. Its answers carry `isLookupAnswer` (a failed one too), and
+  a `/` line, another kind of answer, or the × of the
+  **[en:tran:Still asking about]** line above the box (`lookupClosedAt`,
+  like a file's) ends it; meanwhile the box offers no app questions. The tab is named by
+  the record (`genChatSessionTitle`). With no assistant the window shows
+  what the app holds on it (`genLookupOfflineText`) and **Open AI
+  settings**. **A passage being read opens the same conversation** (the
+  same day, the user's picture of a Bible view's toolbar circled: _add robot
+  icon to part of the icon and add contextmenu to verse preview content. to
+  open the verse in chatbot like open from floating verse detail panel_):
+  the robot at the end of every Bible view's toolbar
+  (`RenderAskAssistantBibleItemButtonComp`, in both the plain and the
+  editing view's group) and, on its right-click,
+  **[en:tran:Ask the Assistant About This Verse]** — the verse under the pointer, read off its
+  `data-verse-key` (`readBibleVersesKey`), left out when the passage is
+  that verse — and **[en:tran:Ask the Assistant About This Passage]**
+  (`genAskAssistantContextMenu` in `BibleViewComp.tsx`), each a verse
+  request through `bibleItemAskHelpers.ts`, imported at the press.
+  **A record's inline references are written as the lookup's Bible writes
+  them** (`toLocalizedReferences` in `agentLookupHelpers.ts`, as the panel
+  draws them): seen live, the Khmer dataset's `[Genesis](book-key://GEN)`
+  came back in a Khmer answer as _Genesis_.
+  **And there is a lot to DO with it, by buttons, with no model**
+  (2026-10-18, the user's picture of a chat about Genesis 4:1-26: _add more
+  options, like open another verse or open other bible key, and more
+  option to let user able be to do a lot of things on bible_;
+  `lookupStepHelpers.ts`, pure, every rule a test). Every button is
+  `LOOKUP_STEP_TOOL_NAME`, a pseudo tool no model can press, carrying the
+  record it acts on (its listed fields only, never the words read of it), so
+  an old button acts on its own record. A passage's card carries **Open in
+  Bible Lookup** (`owa_find_verse` `open`), **Previous** / **Next chapter**
+  (**verse** for a single verse; `owa_lookup_record` `near`, across books),
+  **Read it in another Bible** (every other installed Bible a button),
+  **Who and where is in it** (`names`: the people and places a button
+  each), **Open another passage** (`lookupAwaits` on the answer: the line
+  typed under it is read as a passage in that Bible, asked again when it
+  cannot be), **Save to my Bibles list** (`owa_bible_item` `add`) and **Copy
+  the passage**; a person's or a place's card **Its verses** (the quoted
+  ones), **Family and places** / **Related places** and **Read it in another
+  Bible**. A name, a place, a verse or a Bible pressed off a list opens its
+  own card in the same tab, which the conversation is then about. Every
+  answer under it ends with **Previous** / **Next** for a passage and **More
+  things to do** (`genLookupAnswerActions`). Labels are stored in English and
+  drawn with `tranLabel` (`LOOKUP_ACTION_LABEL_LIST`, held by
+  `chatTranLabels.test.ts`), or are the name or reference itself.

@@ -182,6 +182,29 @@ export default function BibleNoteItemRenderComp({
         handleOpening(noteRef.current, noteItemRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // A double-click on the journal icon is click, click, dblclick -- and the
+    // row's own double-click opener sits right behind it. Each call opens a
+    // window under a fresh name, so nothing downstream folds them together:
+    // one double-click asked for THREE editors (and a fast one, sent by the
+    // app's own agent tool, brought the main process down). The icon opens on
+    // the first click of a run only -- `detail` counts the clicks in it -- and
+    // keeps its dblclick from reaching the row. Enter/Space open directly.
+    const handleOpenerClicking = useCallback(
+        (event: MouseEvent<HTMLElement>) => {
+            if (event.detail > 1) {
+                return;
+            }
+            handleBibleNoteOpening();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleOpenerDoubleClicking = useCallback(
+        (event: MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+        },
+        [],
+    );
 
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
@@ -218,7 +241,8 @@ export default function BibleNoteItemRenderComp({
                     // `owa_click` could say WHICH note to open.
                     aria-label={openingLabel}
                     title={openingLabel}
-                    onClick={handleBibleNoteOpening}
+                    onClick={handleOpenerClicking}
+                    onDoubleClick={handleOpenerDoubleClicking}
                     onKeyDown={(event) => {
                         if (event.key !== 'Enter' && event.key !== ' ') {
                             return;

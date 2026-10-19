@@ -22,8 +22,11 @@ import { getIsAIEnabled } from './aiHelpers';
 import { openChatbotPage } from '../domHelpers';
 import {
     requestChatbotAsk,
+    requestChatbotFile,
+    requestChatbotLookup,
     requestChatbotReport,
 } from './chatbotHandoffStoreHelpers';
+import type { LookupAskType } from './lookupAskHelpers';
 
 async function askToOpenChatbot() {
     if (!getIsAIEnabled()) {
@@ -54,6 +57,34 @@ export async function openChatbotReporting(problem = '') {
         return false;
     }
     requestChatbotReport(problem);
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant on a FILE -- the 🤖 on a row of the Resources panel:
+ * a tab of its own with the file attached and ready to be asked about. The
+ * same two questions first.
+ */
+export async function openChatbotWithFile(filePath: string) {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotFile(filePath);
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant on what a Lookup Detail panel shows -- a person, a
+ * place or a passage: a tab of its own that reads the record and is ready
+ * to be asked about it. The same two questions first.
+ */
+export async function openChatbotWithLookup(ask: LookupAskType) {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotLookup(ask);
     openChatbotPage();
     return true;
 }

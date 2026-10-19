@@ -46,6 +46,7 @@ const {
     tarExtract,
     closeFindOverlayMock,
     finderOverlayPairs,
+    setFindOverlayMountedMock,
     startFindOverlayDraggingMock,
     stopFindOverlayDraggingMock,
 } = vi.hoisted(() => ({
@@ -103,6 +104,7 @@ const {
     tarExtract: vi.fn(),
     closeFindOverlayMock: vi.fn(),
     finderOverlayPairs: new Map<any, any>(),
+    setFindOverlayMountedMock: vi.fn(),
     startFindOverlayDraggingMock: vi.fn(),
     stopFindOverlayDraggingMock: vi.fn(),
 }));
@@ -175,6 +177,7 @@ vi.mock('./finderOverlayHelpers', () => ({
         }
         return null;
     },
+    setFindOverlayMounted: setFindOverlayMountedMock,
     startFindOverlayDragging: startFindOverlayDraggingMock,
     stopFindOverlayDragging: stopFindOverlayDraggingMock,
 }));
@@ -361,6 +364,9 @@ describe('electronEventListener handlers', () => {
             { replyEventName: 'reply:dirs' },
         );
         expect(sender.send).toHaveBeenCalledWith('reply:dirs', ['/tmp/dir']);
+        expect(
+            electronMockState.dialog.showOpenDialog.mock.calls.at(-1)?.[1],
+        ).toEqual({ properties: ['openDirectory', 'showHiddenFiles'] });
     });
 
     test('an async handler needs a reply channel and reports its failures', async () => {
@@ -624,6 +630,22 @@ describe('electronEventListener handlers', () => {
         expect(closeFindOverlayMock).toHaveBeenCalledWith(sender);
         expect(startFindOverlayDraggingMock).toHaveBeenCalledWith(sender, 24);
         expect(stopFindOverlayDraggingMock).toHaveBeenCalledWith(sender);
+    });
+
+    test('the bar reports whether its page is drawn, as a strict boolean', () => {
+        initFinderEvent();
+        const sender = { id: 96 };
+        const handleMounted = findOnHandler('finder:app:mounted');
+
+        handleMounted({ sender }, true);
+        handleMounted({ sender }, false);
+        handleMounted({ sender }, 'yes');
+
+        expect(setFindOverlayMountedMock.mock.calls).toEqual([
+            [sender, true],
+            [sender, false],
+            [sender, false],
+        ]);
     });
 
     test('archive, conversion, and office handlers forward their payloads', async () => {

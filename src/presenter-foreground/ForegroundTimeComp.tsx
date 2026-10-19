@@ -5,6 +5,8 @@ import { tz } from 'moment-timezone';
 
 import { tran } from '../lang/langHelpers';
 import {
+    getSetting,
+    setSetting,
     useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
@@ -18,7 +20,10 @@ import {
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import {
+    genPropsSettingNames,
+    useForegroundPropsSetting,
+} from './propertiesSettingHelpers';
 import {
     type ForegroundTimeDataType,
     withForegroundLayer,
@@ -36,15 +41,75 @@ import {
 } from './foregroundSessionHelpers';
 import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
 import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
+import {
+    checkIsChosenCityLabel,
+    getZoneHourOffset,
+    toCityLabel,
+} from './foregroundTimeZoneHelpers';
 
 /** Every setting ONE clock owns, whichever session holds it. */
 function genClockSettingNames(id: string) {
     return [
         `foreground-city-name-setting-${id}`,
         `foreground-timezone-minute-offset-setting-${id}`,
+        `foreground-timezone-name-setting-${id}`,
         `foreground-time-is-24-hour-format-setting-${id}`,
         ...genForegroundPropsSettingNames(`time-${id}`),
     ];
+}
+
+/**
+ * The pad cell each added clock starts on, in the order they are handed out.
+ * Every clock used to start in the middle, so a second one shown beside the
+ * first sat exactly on top of it and hid it whole, and nothing said it had to
+ * be moved under Properties first.
+ */
+const NEW_CLOCK_ALIGNMENT_LIST = [
+    { horizontalAlignment: 'center', verticalAlignment: 'center' },
+    { horizontalAlignment: 'center', verticalAlignment: 'start' },
+    { horizontalAlignment: 'center', verticalAlignment: 'end' },
+    { horizontalAlignment: 'left', verticalAlignment: 'center' },
+    { horizontalAlignment: 'right', verticalAlignment: 'center' },
+    { horizontalAlignment: 'left', verticalAlignment: 'start' },
+    { horizontalAlignment: 'right', verticalAlignment: 'start' },
+    { horizontalAlignment: 'left', verticalAlignment: 'end' },
+    { horizontalAlignment: 'right', verticalAlignment: 'end' },
+] as const;
+
+function toAlignmentKey(alignmentText: string | null) {
+    try {
+        const { horizontalAlignment = 'center', verticalAlignment = 'center' } =
+            JSON.parse(alignmentText ?? '{}');
+        return `${horizontalAlignment}:${verticalAlignment}`;
+    } catch (_error) {
+        return 'center:center';
+    }
+}
+
+/**
+ * Starts a new clock on the first cell none of the session's clocks is on
+ * (the middle stays the default, so a lone clock is where it always was).
+ */
+export function seedNewClockAlignment(newId: string, idList: string[]) {
+    const takenKeySet = new Set(
+        idList.map((id) => {
+            return toAlignmentKey(
+                getSetting(genPropsSettingNames(`time-${id}`).alignment),
+            );
+        }),
+    );
+    const alignment = NEW_CLOCK_ALIGNMENT_LIST.find((item) => {
+        return !takenKeySet.has(
+            `${item.horizontalAlignment}:${item.verticalAlignment}`,
+        );
+    });
+    if (alignment === undefined || alignment === NEW_CLOCK_ALIGNMENT_LIST[0]) {
+        return;
+    }
+    setSetting(
+        genPropsSettingNames(`time-${newId}`).alignment,
+        JSON.stringify(alignment),
+    );
 }
 
 /**
@@ -70,14 +135,12 @@ function getSystemTimezoneHourOffset() {
     return -date.getTimezoneOffset() / 60;
 }
 
-function getHourOffsetFromCity(event: any) {
-    return new Promise<[string, number] | null>((resolve) => {
+function chooseZoneName(event: any) {
+    return new Promise<string | null>((resolve) => {
         const cityNames = tz
             .names()
             .map((name): [string, string] => {
-                const arr = name.split('/');
-                const city = arr.at(-1);
-                return [city ?? 'Unknown', name];
+                return [toCityLabel(name), name];
             })
             .sort((a, b) => {
                 return a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]);
@@ -85,13 +148,11 @@ function getHourOffsetFromCity(event: any) {
         const promise = showAppContextMenu(
             event,
             cityNames.map(([city, name]) => {
-                const title = `${city} (${name})`;
                 return {
                     childBefore: genContextMenuItemIcon('clock'),
-                    menuElement: title,
+                    menuElement: `${city} (${name})`,
                     onSelect: () => {
-                        const hourOffset = tz(name).utcOffset() / 60;
-                        resolve([title, hourOffset]);
+                        resolve(name);
                     },
                 };
             }),
@@ -104,12 +165,15 @@ function getHourOffsetFromCity(event: any) {
 
 function TimeInSetComp({
     id,
+    showLabel,
     genStyle,
     getIsBehind,
     getTransition,
     showingScreenIdDataList,
 }: Readonly<{
     id: string;
+    /** `Show Time`, numbered once there is more than one clock. */
+    showLabel: string;
     genStyle: () => CSSProperties;
     getIsBehind: () => boolean;
     /** This clock's own transition, else the Time component's -- or none. */
@@ -125,17 +189,37 @@ function TimeInSetComp({
             `foreground-timezone-minute-offset-setting-${id}`,
             getSystemTimezoneHourOffset,
         );
+    // The zone a city was picked from; empty once the offset is set by hand
+    // or from this device.
+    const [zoneName, setZoneName] = useStateSettingString<string>(
+        `foreground-timezone-name-setting-${id}`,
+        '',
+    );
     const [is24HourFormat, setIs24HourFormat] = useStateSettingBoolean(
         `foreground-time-is-24-hour-format-setting-${id}`,
         false,
     );
+    // A city's offset as it is TODAY, so the box says what goes up.
+    const setTimezoneMinuteOffsetRef = useAppCurrentRef(
+        setTimezoneMinuteOffset,
+    );
+    useAppEffect(() => {
+        const zoneHourOffset = getZoneHourOffset(zoneName);
+        if (
+            zoneHourOffset !== null &&
+            zoneHourOffset !== timezoneMinuteOffset
+        ) {
+            setTimezoneMinuteOffsetRef.current(zoneHourOffset);
+        }
+    }, [zoneName]);
     const genTimeData = useCallback(
         (newIs24HourFormat = is24HourFormat): ForegroundTimeDataType => {
             return withForegroundLayer(
                 {
                     id,
                     ...toTransitionPart(getTransition()),
-                    timezoneMinuteOffset,
+                    timezoneMinuteOffset:
+                        getZoneHourOffset(zoneName) ?? timezoneMinuteOffset,
                     title: cityName || null,
                     is24HourFormat: newIs24HourFormat,
                     extraStyle: genStyle(),
@@ -146,6 +230,7 @@ function TimeInSetComp({
         [
             id,
             timezoneMinuteOffset,
+            zoneName,
             cityName,
             is24HourFormat,
             genStyle,
@@ -180,21 +265,31 @@ function TimeInSetComp({
         },
         [genTimeData],
     );
-    const setTimezoneMinuteOffsetRef = useAppCurrentRef(
-        setTimezoneMinuteOffset,
-    );
+    const setCityNameRef = useAppCurrentRef(setCityName);
+    const setZoneNameRef = useAppCurrentRef(setZoneName);
+    const cityNameRef = useAppCurrentRef(cityName);
+    const zoneNameRef = useAppCurrentRef(zoneName);
     const handleUseCurrentTimezone = useCallback(() => {
         setTimezoneMinuteOffsetRef.current(getSystemTimezoneHourOffset());
+        // A caption Choose City wrote goes with its city: it used to stay,
+        // and the user's clock read "Phnom_Penh" over this device's time. A
+        // caption a person typed is theirs and stays.
+        if (checkIsChosenCityLabel(cityNameRef.current, zoneNameRef.current)) {
+            setCityNameRef.current('');
+        }
+        setZoneNameRef.current('');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const setCityNameRef = useAppCurrentRef(setCityName);
     const handleChooseCity = useCallback(async (event: any) => {
-        const result = await getHourOffsetFromCity(event);
-        if (result === null) {
+        const chosenZoneName = await chooseZoneName(event);
+        const zoneHourOffset =
+            chosenZoneName === null ? null : getZoneHourOffset(chosenZoneName);
+        if (chosenZoneName === null || zoneHourOffset === null) {
             return;
         }
-        setCityNameRef.current(result[0]);
-        setTimezoneMinuteOffsetRef.current(result[1]);
+        setZoneNameRef.current(chosenZoneName);
+        setCityNameRef.current(toCityLabel(chosenZoneName));
+        setTimezoneMinuteOffsetRef.current(zoneHourOffset);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleCityNameChange = useCallback(
@@ -214,6 +309,8 @@ function TimeInSetComp({
             if (Number.isNaN(newOffset)) {
                 return;
             }
+            // An offset typed by hand is the one meant: no city overrides it.
+            setZoneNameRef.current('');
             setTimezoneMinuteOffsetRef.current(newOffset);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -318,7 +415,8 @@ function TimeInSetComp({
             <div className="fg-actions">
                 <button
                     className="btn btn-primary"
-                    title={tran('Show Time')}
+                    title={showLabel}
+                    aria-label={showLabel}
                     onClick={handleShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
@@ -447,6 +545,14 @@ function ForegroundTimeItemComp({
                     getIsBehind={getIsBehind}
                     getTransition={getTransition}
                     id={id}
+                    // Numbered like Remove Time once there are several
+                    // clocks: two buttons both named `Show Time` could not
+                    // be told apart by a screen reader or an assistant.
+                    showLabel={
+                        onRemove
+                            ? `${tran('Show Time')} ${itemNumber}`
+                            : tran('Show Time')
+                    }
                     showingScreenIdDataList={showingScreenIdDataList}
                 />
                 {showingScreenIdDataList.length > 0 ? (
@@ -527,7 +633,9 @@ function TimeBodyComp({ suffix }: Readonly<{ suffix: string }>) {
                     className="fg-quiet-btn"
                     title={tran('Add Time')}
                     onClick={() => {
-                        setIdList([...idList, crypto.randomUUID()]);
+                        const newId = crypto.randomUUID();
+                        seedNewClockAlignment(newId, idList);
+                        setIdList([...idList, newId]);
                     }}
                 >
                     <i className="bi bi-plus-lg" />

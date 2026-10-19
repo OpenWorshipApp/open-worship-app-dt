@@ -138,6 +138,14 @@ Two lessons from doing it, both worth more than the tokens:
 - **Check for the sibling.** `owa_screenshot` was withheld for a stated reason
   and `take_screenshot` sat in the list beside it doing the same job.
 
+**Offer a tool to the one ask that needs it** (2026-10-16, `MC-59`). A tool
+useful to one conversation is a tax on every other question if it rides the
+ordinary list. `MODEL_ON_ASK_TOOL_MAP` sends it to that ask alone -- under a
+prompt of its own, with whatever ordinary tools it shares
+(`MODEL_ASK_SHARED_TOOL_MAP`) -- and the audit prints it as `[name]` with its
+own line. `owa_find_verse` went in that way with the ordinary bill at its
+ratchet: 8 350 before, 8 350 after.
+
 ### 2. Shorter descriptions
 
 A description has two readers: a model choosing between 44 of them, and a

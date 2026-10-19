@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-30, SP-31]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-51 — Show screens on a virtual display and watch it from another device
 
@@ -66,18 +66,28 @@ cable or a second copy of the app.
    internet address you opened. Each address has **[en:tran:Copy address]**
    and **[en:tran:QR code]** (the code holds the whole link). The starred
    address sits under **[en:tran:Watch in a browser]**; every other address,
-   and the MP4 ones, fold under **[en:tran:More addresses]**. The two kinds:
+   and the MP4 ones, fold under **[en:tran:More addresses]**. A phone or a computer
+   opens an address. A TV is reached with **[en:tran:Cast to a TV]** instead, the cast icon
+   in the display card's header (step 8): choose the TV in its list and press **[en:tran:Cast]**. The two kinds:
    - **[en:tran:Watch in a browser]** — `http://<address>:<port>/vd/<number>/`.
      The browser draws the display itself from what the app sends it, so it is
      the fastest way to watch, and this computer encodes nothing for it.
-   - **[en:tran:Video for media players (MP4)]** —
+   - **[en:tran:Video for media players (MP4)]** (folded under **[en:tran:More addresses]**) —
      `http://<address>:<port>/vd/<number>/video`, an H.264 + AAC MP4 for a
      player such as VLC or OBS. It is made only while someone plays it.
+
+   **Use the display in VLC or OBS.** Choose the virtual display in a screen card's
+   display picker, present the content and turn that screen on with the card's show
+   control (F5). In the display card's **[en:tran:Where to watch]**, open
+   **[en:tran:More addresses]** and copy the **[en:tran:Video for media players (MP4)]**
+   address into VLC or OBS. If the player is on another device, first turn on
+   **[en:tran:Let other devices watch]** above the display cards.
 
    The port stays the same from one launch to the next, so a saved address
    or a printed QR code keeps working after the app restarts.
 
-   Until **[en:tran:Let other devices watch]** at the top of the tab is on,
+   Until **[en:tran:Let other devices watch]** is on — a switch at the top of
+   the **[en:tran:Virtual Displays]** tab, above the display cards, not inside one —
    only **[en:tran:This computer]** addresses are listed and nobody else can
    watch. Turned on, it lists **[en:tran:This network]** addresses; turning
    on **[en:tran:Open to the internet]** as well (the same option as Screen
@@ -88,8 +98,11 @@ cable or a second copy of the app.
    — or, with **[en:tran:Guest access]** set to
    **[en:tran:Require connection code]**, until it gives the code.
 
-   **[en:tran:Use HTTPS]**, under it (off until turned on), lists the browser
-   addresses for other devices as `https://`, on the same port. A phone's
+   **Give a virtual display an HTTPS address.** At the top of the **[en:tran:Virtual Displays]**
+   tab, turn on **[en:tran:Let other devices watch]**, then **[en:tran:Use HTTPS]**
+   directly below it. Open the display card's **[en:tran:Where to watch]** section
+   and copy its starred `https://` address under **[en:tran:Watch in a browser]**.
+   Other devices use that address, on the same port. A phone's
    page on this network can then do what a browser allows only a secure
    page: keep the screen awake in full screen, and send its microphone and
    camera. This computer signs its own certificate, so each browser warns
@@ -102,17 +115,22 @@ cable or a second copy of the app.
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
    leaves it; on a phone, full screen also turns the picture sideways where
-   the browser allows it. The buttons show while the mouse is over the page
-   and hide when it leaves; a tap on the picture shows them for a few
-   seconds. The pointer shows over the picture only while they do.
+   the browser allows it.
+   **On the device watching, the page's buttons come back with the mouse or a tap.**
+   Stay on the browser page that is already showing the display: move the mouse
+   over its picture or tap the picture once to reveal the buttons. They hide
+   when the mouse leaves, or a few seconds after a tap. The pointer shows over the
+   picture only while they do.
    **[en:tran:Turn on sound]** is
    needed once, because a browser plays sound only after the page has been
    touched; until then the page plays everything silently. A camera put on
    the screen (Camera Show, or a camera background) is streamed from this
    computer to the page, on this network.
 
-   On a page that may use a camera (an `https://` address from step 6, the
-   tunnel's, or this computer's own), **[en:tran:Share my cameras]** opens a
+   **To share a phone's camera, open the display on the phone at an `https://`
+   address.** Turn on **[en:tran:Let other devices watch]** and **[en:tran:Use HTTPS]**
+   first (step 6): only then are `https://` addresses listed under
+   **[en:tran:Where to watch]**, this computer's on the network — or use the tunnel's. On such a page **[en:tran:Share my cameras]** opens a
    list of every camera of the device, each with **[en:tran:Share]**. A
    phone lists **[en:tran:Front camera]** and **[en:tran:Back camera]** until
    the browser has been allowed a camera, then every camera it has by name —
@@ -120,7 +138,8 @@ cable or a second copy of the app.
    its picture above the list and reads **[en:tran:Stop]**; **[en:tran:Share]**
    on another one puts it in its place on every screen showing it, with
    nothing to add again. The app lists it among its cameras as
-   `Browser <address>: <camera>`.
+   `Browser <address>: <camera>`: pick it there, as a Camera Show or a camera
+   background, to put it on a screen.
 
    The page keeps the device from sleeping while it is open. If the app goes
    away, the page reads **[en:tran:Waiting for the display]** and joins again
@@ -132,8 +151,12 @@ cable or a second copy of the app.
    looked for only when the list opens: **[en:tran:Cast]** puts the display
    on one and **[en:tran:Stop]** takes it off; **[en:tran:Search again]**
    looks once more. It needs **[en:tran:Let other devices watch]** (step 6)
-   on, because the TV plays the display's MP4 address itself. The browser
-   page has the same button, with one more row:
+   on, because the TV plays the display's MP4 address itself.
+   **On the phone or tablet watching, the browser page has the same button.** It works
+   from any address of **[en:tran:Where to watch]** the page was opened at, `http://` too,
+   so **[en:tran:Let other devices watch]** has to be on — the switch at the top of the
+   **[en:tran:Virtual Displays]** tab, above the cards (step 6). Its **[en:tran:Cast to a TV]**
+   offers one more row:
    - **[en:tran:Cast from this browser]** — a TV on the same network as the
      device holding the page (at home, in another building), through the
      browser's own picker: Chrome and Edge list Google Cast TVs, Safari
@@ -160,7 +183,8 @@ cable or a second copy of the app.
    listed under **[en:tran:Disconnected]**, where **[en:tran:Allow again]**
    lets it back in at once. **[en:tran:Preview]** shows the display
    inside the card, listed as **[en:tran:This app (preview)]**. A browser's
-   row has **[en:tran:Allow interaction]**, off for every new viewer. Turned
+   row — on the display's card in the **[en:tran:Virtual Displays]** tab of step 1 —
+   has **[en:tran:Allow interaction]**, off for every new viewer. Turned
    on, a hand on that browser's page reaches the app the way a hand on the
    projector's own window does: scrolling a passage or a tall slide, tapping
    a verse to pick it, and the screen's **✕** (top right, under the mouse)
@@ -177,5 +201,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-30` · `SP-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

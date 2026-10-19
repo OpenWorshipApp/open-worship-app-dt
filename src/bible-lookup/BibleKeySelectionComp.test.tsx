@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
     getBibleInfo: vi.fn(),
     menu: vi.fn(),
     alert: vi.fn(),
+    error: vi.fn(),
     openSettings: vi.fn(),
 }));
 
@@ -43,6 +44,9 @@ vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
 }));
 vi.mock('../popup-widget/popupWidgetHelpers', () => ({
     showAppAlert: h.alert,
+}));
+vi.mock('../helper/errorHelpers', () => ({
+    handleError: h.error,
 }));
 vi.mock('../lang/langHelpers', () => ({
     tran: (key: string) => key,
@@ -125,6 +129,7 @@ beforeEach(() => {
     h.getBibleInfo.mockReset().mockResolvedValue({ title: 'English' });
     h.menu.mockClear();
     h.alert.mockClear();
+    h.error.mockClear();
     h.openSettings.mockClear();
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -150,11 +155,24 @@ describe('Bible-key selection', () => {
         expect(onSelect).toHaveBeenCalledWith(event, 'fr');
     });
 
+    // GL-14: the real helper never resolves null -- a failure REJECTS -- so
+    // the alert used to wait on a null that never came while the rejection
+    // escaped and the menu silently did not open.
     it('alerts when installed Bible information cannot be loaded', async () => {
-        h.infoList.mockResolvedValue(null);
+        const failure = new Error('bible folder unreadable');
+        h.infoList.mockRejectedValue(failure);
         expect(await genContextMenuBibleKeys(vi.fn())).toBeNull();
         expect(h.alert).toHaveBeenCalledTimes(1);
-        await showBibleKeyOption(new MouseEvent('click'), vi.fn());
+        expect(h.alert).toHaveBeenCalledWith(
+            'Unable to get bible info list',
+            'We were sorry, but we are unable to get bible list at the ' +
+                'moment please try again later',
+        );
+        expect(h.error).toHaveBeenCalledWith(failure);
+        await expect(
+            showBibleKeyOption(new MouseEvent('click'), vi.fn()),
+        ).resolves.toBeUndefined();
+        expect(h.alert).toHaveBeenCalledTimes(2);
         expect(h.menu).not.toHaveBeenCalled();
     });
 
@@ -165,7 +183,7 @@ describe('Bible-key selection', () => {
         const items = h.menu.mock.calls.at(-1)![1];
         expect(items[0]).toMatchObject({
             menuElement: 'Choose a Bible',
-            disabled: true,
+            isSectionHeader: true,
         });
         const french = items.find((item: any) => item.title === '(fr) French')!;
         french.onSelect(event);

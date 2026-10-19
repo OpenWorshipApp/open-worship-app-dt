@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
-    "updated": "2026-10-15",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "screen",
@@ -28,7 +28,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-10",
-                        "passage": "Show / hide the screen",
+                        "passage": "Nothing on the projector?",
                         "related": ["W-18"],
                         "tools": ["owa_list_screens", "owa_app_state"],
                         "shortcut": "F5"
@@ -47,7 +47,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "passage": "Content goes to every",
+                        "passage": "A screen that is not selected keeps what it last showed",
                         "related": ["W-10"],
                         "tools": ["owa_list_screens"]
                     }
@@ -90,6 +90,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
+                        "passage": "Each language is listed under its",
                         "guide": true
                     }
                 },
@@ -166,6 +167,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Deleted it by mistake?",
                         "guide": true
                     }
                 },
@@ -204,7 +206,7 @@
                     ],
                     "resources": {
                         "recipe": "W-35",
-                        "passage": "A CCLI window opens for you to log in and approve",
+                        "passage": "If SongSelect will not connect, check these",
                         "find": "Sign In",
                         "related": ["W-36"]
                     }
@@ -231,6 +233,7 @@
                     ],
                     "resources": {
                         "recipe": "W-21",
+                        "passage": "The download tools are not built into the app",
                         "related": ["W-35"],
                         "find": "Extra Binaries",
                         "guide": true
@@ -239,7 +242,7 @@
                 {
                     "id": "download-left-part-file",
                     "text": "A download failed and left a temp file behind — what do I do with it?",
-                    "kind": "fix",
+                    "kind": "what",
                     "keywords": [
                         "part file",
                         "temp",
@@ -272,6 +275,7 @@
                     ],
                     "resources": {
                         "recipe": "W-25",
+                        "passage": "A password typed wrong is asked for again",
                         "related": ["W-23"]
                     }
                 }
@@ -364,7 +368,7 @@
                 {
                     "id": "unsaved-edit-on-screen",
                     "text": "The projector is showing an edit I never saved — how is that possible?",
-                    "kind": "fix",
+                    "kind": "what",
                     "keywords": [
                         "unsaved",
                         "not saved yet",
@@ -490,7 +494,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Something wrong with the app itself? Press Report"
+                        "passage": "Attach a picture or PDF to a problem report"
                     }
                 },
                 {
@@ -508,7 +512,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Something wrong with the app itself? Press Report"
+                        "passage": "When the report server is not answering, the report is kept for later"
                     }
                 },
                 {
@@ -527,7 +531,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Something wrong with the app itself? Press Report"
+                        "passage": "Press Send report and it goes to the people who make the app"
                     }
                 },
                 {
@@ -548,7 +552,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Something wrong with the app itself? Press Report",
+                        "passage": "When nothing was sent, email it",
                         "find": "Report"
                     }
                 },

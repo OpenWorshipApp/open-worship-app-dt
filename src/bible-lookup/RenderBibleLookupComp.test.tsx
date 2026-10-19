@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
     unregisterBible: vi.fn(),
     resizeProps: null as any,
     contexts: null as any,
+    hidePopup: vi.fn(),
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -90,6 +91,13 @@ vi.mock('./RenderBibleLookupHeaderComp', () => ({
 }));
 vi.mock('./RenderExtraButtonsRightComp', () => ({
     default: () => createElement('div', {}, 'Fallback header'),
+}));
+vi.mock('../app-modal/ModalComp', () => ({
+    ModalCloseButtonComp: ({ close }: { close: () => void }) =>
+        createElement('button', { onClick: close }, 'Close lookup'),
+}));
+vi.mock('../others/commonButtons', () => ({
+    useToggleBibleLookupPopupContext: () => h.hidePopup,
 }));
 vi.mock('../others/LoadingComp', () => ({
     default: () => createElement('div', {}, 'Loading Bible'),
@@ -256,6 +264,14 @@ describe('Bible lookup container', () => {
         await render();
         expect(container.textContent).toContain('Unavailable: en');
         expect(container.textContent).toContain('Fallback header');
+        // The only way out of the popup (its ✕ is also what owns Ctrl+Q)
+        // must be there when the lookup's Bible is not installed too.
+        const closeButton = Array.from(
+            container.querySelectorAll('button'),
+        ).find((button) => button.textContent === 'Close lookup');
+        expect(closeButton).toBeDefined();
+        await act(async () => closeButton!.click());
+        expect(h.hidePopup).toHaveBeenCalledOnce();
         expect(h.bibleListeners.size).toBe(1);
         await act(async () => {
             for (const listener of h.bibleListeners) await listener();

@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { RowHeightType, RowRangeType } from './virtualRowsHelpers';
@@ -73,6 +73,13 @@ export function useVirtualRows({
     // The effect below owns it; the metrics effect and `scrollToRow` reach it
     // from outside the effect's closure.
     const updateRef = useRef<() => void>(() => {});
+    // The row at the top of what is on screen, and where it started, read on
+    // every update -- what the metrics effect keeps still. See there.
+    const anchorRef = useRef<{
+        index: number;
+        count: number;
+        start: number;
+    } | null>(null);
 
     useAppEffect(() => {
         const container = containerRef.current;
@@ -92,8 +99,19 @@ export function useVirtualRows({
                 container,
                 clippingAncestorListRef.current,
             );
+            const currentMetrics = metricsRef.current;
+            if (top > 0 && currentMetrics.count > 0) {
+                const index = currentMetrics.indexAt(top);
+                anchorRef.current = {
+                    index,
+                    count: currentMetrics.count,
+                    start: currentMetrics.startOf(index),
+                };
+            } else {
+                anchorRef.current = null;
+            }
             const nextRange = toRowRange({
-                metrics: metricsRef.current,
+                metrics: currentMetrics,
                 visibleTop: top,
                 visibleBottom: bottom,
                 overscan: overscanRef.current,
@@ -136,11 +154,39 @@ export function useVirtualRows({
         };
     }, [containerRef, isEnabled]);
 
-    // A reload or a zoom moves every row without a scroll event, and the
-    // ancestors have not changed, so only the range is recomputed.
-    useAppEffect(() => {
+    // Rows ABOVE what is on screen changed height -- measured for the first
+    // time, or every row nobody has drawn moving with the median of the ones
+    // that have been (`useMeasuredRowHeights`). The rows are absolutely
+    // positioned, and the browser's own scroll anchoring skips absolutely
+    // positioned boxes, so the view slid by the difference with `scrollTop`
+    // unchanged: an Image Show grid scrolled to its last row moved that row
+    // 253 pixels down while its slide show ran and nobody touched it. The
+    // scroller follows the row at the top instead, before the frame is
+    // painted. Not across a change in the row COUNT, where an index no longer
+    // names the same row.
+    useLayoutEffect(() => {
+        const anchor = anchorRef.current;
+        if (
+            isEnabled &&
+            anchor !== null &&
+            anchor.count === metrics.count &&
+            anchor.index < metrics.count
+        ) {
+            const shift = metrics.startOf(anchor.index) - anchor.start;
+            // Looked up only when something moved: it reads each ancestor's
+            // computed style, and the metrics change on every measured row.
+            const scroller =
+                Math.abs(shift) >= 1
+                    ? findScrollingAncestors(clippingAncestorListRef.current)[0]
+                    : undefined;
+            if (scroller !== undefined) {
+                scroller.scrollTop += shift;
+            }
+        }
+        // A reload or a zoom moves every row without a scroll event, and the
+        // ancestors have not changed, so only the range is recomputed.
         updateRef.current();
-    }, [metrics]);
+    }, [metrics, isEnabled]);
 
     const rows = useMemo<VirtualRowType[]>(() => {
         const first = isEnabled ? range.first : 0;

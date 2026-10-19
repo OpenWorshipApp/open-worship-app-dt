@@ -9,6 +9,7 @@ const h = vi.hoisted(() => {
         files: new Map<string, unknown>(),
         dirEntries: new Map<string, string[]>(),
         sessionData: { defaultStorageDirPath: null as string | null },
+        specialPaths: {} as Record<string, string>,
     };
 });
 
@@ -20,6 +21,13 @@ vi.mock('./appProvider', async () => {
             isPageScreen: false,
             systemUtils: { isDev: false },
             sessionData: h.sessionData,
+            messageUtils: {
+                sendDataSync: (channel: string, name: string) => {
+                    return channel === 'main:app:get-special-path'
+                        ? h.specialPaths[name]
+                        : null;
+                },
+            },
             pathUtils: win32,
             browserUtils: {
                 pathToFileURL: (filePath: string) => {
@@ -91,7 +99,12 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
 }));
 
 import {
+    checkIsDesktopDataDir,
+    checkIsInOneDrivePath,
     DATA_DIR_MARKER_FILE_NAME,
+    DATA_DIR_MOVED_TO_FLAG_FILE_NAME,
+    getDefaultDataDirPath,
+    getDesktopDataDirPathList,
     ensureDataDirMarkerIdSync,
     findDataDirsOnVolumesSync,
     findMovedDataDirSync,
@@ -547,12 +560,88 @@ describe('finding a data folder again (Windows)', () => {
         ]);
     });
 
+    test('a folder copied away is never offered back, though it keeps its marker', () => {
+        h.dirEntries.set('F:\\', ['open-worship-data', 'old']);
+        genDataDir(String.raw`F:\open-worship-data`, 'ours');
+        genDataDir(String.raw`F:\old`, 'ours');
+        h.files.set(
+            `${String.raw`F:\old`}\\${DATA_DIR_MOVED_TO_FLAG_FILE_NAME}`,
+            'moved-to: F:\\open-worship-data',
+        );
+        const desktopDirPath = String.raw`C:\Users\me\Desktop\open-worship-data`;
+        genDataDir(desktopDirPath, 'ours');
+        h.files.set(String.raw`${desktopDirPath}\migration-moved-to.txt`, '');
+        expect(findDataDirsOnVolumesSync([desktopDirPath])).toEqual([
+            String.raw`F:\open-worship-data`,
+        ]);
+    });
+
     test('a chosen folder is given a marker once, and keeps its id', () => {
         h.dirEntries.set(String.raw`F:\data`, []);
         const id = ensureDataDirMarkerIdSync(String.raw`F:\data`);
         expect(typeof id).toBe('string');
         expect(ensureDataDirMarkerIdSync(String.raw`F:\data`)).toBe(id);
         expect(readDataDirMarkerIdSync(String.raw`F:\data`)).toBe(id);
+    });
+});
+
+describe('the default data folder is off the Desktop', () => {
+    beforeEach(() => {
+        h.specialPaths = {
+            home: String.raw`C:\Users\me`,
+            desktop: String.raw`C:\Users\Me\Desktop`,
+        };
+    });
+
+    test('a new one goes in the home folder, which nothing syncs', () => {
+        expect(getDefaultDataDirPath()).toBe(
+            String.raw`C:\Users\me\.owa\open-worship-data`,
+        );
+    });
+
+    test('the old default is known where the OS and OneDrive put the Desktop', () => {
+        // The Desktop under home is one folder, whatever its case.
+        expect(getDesktopDataDirPathList()).toEqual([
+            String.raw`C:\Users\Me\Desktop\open-worship-data`,
+        ]);
+        h.specialPaths.desktop = String.raw`C:\Users\me\OneDrive\Desktop`;
+        expect(getDesktopDataDirPathList()).toEqual([
+            String.raw`C:\Users\me\OneDrive\Desktop\open-worship-data`,
+            String.raw`C:\Users\me\Desktop\open-worship-data`,
+        ]);
+        expect(
+            checkIsDesktopDataDir(
+                'c:\\users\\me\\onedrive\\desktop\\open-worship-data\\',
+            ),
+        ).toBe(true);
+        expect(
+            checkIsDesktopDataDir(
+                String.raw`C:\Users\me\Desktop\open-worship-data-dev`,
+            ),
+        ).toBe(false);
+        expect(checkIsDesktopDataDir(getDefaultDataDirPath())).toBe(false);
+    });
+
+    test('a OneDrive folder is told from a name that only starts the same', () => {
+        expect(
+            checkIsInOneDrivePath(String.raw`C:\Users\me\OneDrive\Desktop\a`),
+        ).toBe(true);
+        expect(
+            checkIsInOneDrivePath(
+                String.raw`C:\Users\me\OneDrive - Contoso\Desktop\a`,
+            ),
+        ).toBe(true);
+        expect(checkIsInOneDrivePath('/Users/me/OneDrive/Desktop/a')).toBe(
+            true,
+        );
+        expect(
+            checkIsInOneDrivePath(
+                String.raw`C:\Users\me\Desktop\OneDriveNotes`,
+            ),
+        ).toBe(false);
+        expect(checkIsInOneDrivePath(String.raw`C:\Users\me\Desktop`)).toBe(
+            false,
+        );
     });
 });
 

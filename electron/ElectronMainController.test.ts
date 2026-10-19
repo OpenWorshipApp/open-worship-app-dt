@@ -281,13 +281,20 @@ describe('ElectronMainController', () => {
         processExit.mockRestore();
     });
 
-    test('closing the main window ends the process', () => {
+    test('closing the main window writes the settings, then ends the process', () => {
+        const calls: string[] = [];
         const processExit = vi
             .spyOn(process, 'exit')
-            .mockImplementation((() => undefined) as any);
+            .mockImplementation((() => {
+                calls.push('exit');
+            }) as any);
         try {
+            const save = vi.fn((isImmediate: boolean) => {
+                calls.push(`save:${isImmediate}`);
+            });
             const controller = new ElectronMainController({
                 mainHtmlPath: 'presenter.html',
+                save,
             } as any);
 
             const closedHandler = (controller.win.on as any).mock.calls.find(
@@ -295,6 +302,8 @@ describe('ElectronMainController', () => {
             )?.[1];
             closedHandler();
             expect(processExit).toHaveBeenCalledWith(0);
+            // At once, not after the one-second wait the exit never reaches.
+            expect(calls).toEqual(['save:true', 'exit']);
 
             controller.close();
             expect(attemptClosing).toHaveBeenCalledWith(controller.win);

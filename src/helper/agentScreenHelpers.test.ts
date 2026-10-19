@@ -277,6 +277,53 @@ describe('toForegroundSummary', () => {
         ]);
     });
 
+    // Show All Messages with Rotate off puts every message in ONE box, and
+    // only the first used to be named -- the agent was told one message was
+    // up when two were.
+    it('names every message a box shows at once, and the count of a rotating set', () => {
+        const genData = (messageDataList: any[]) => {
+            return {
+                messageDataList,
+                countdownData: null,
+                stopwatchData: null,
+                timeDataList: [],
+                marqueeTopData: null,
+                marqueeBottomData: null,
+                quickTextData: null,
+                cameraDataList: [],
+                screenDataList: [],
+                webDataList: [],
+                videoDataList: [],
+                imageDataList: [],
+            } as any;
+        };
+        expect(
+            toForegroundSummary(
+                genData([
+                    {
+                        id: 'message-all',
+                        textList: [
+                            'Car lights on\nBlue Toyota',
+                            'Offering next',
+                        ],
+                        intervalSecond: null,
+                    },
+                ]),
+            ),
+        ).toEqual(['message: "Car lights on Blue Toyota / Offering next"']);
+        expect(
+            toForegroundSummary(
+                genData([
+                    {
+                        id: 'message-all',
+                        textList: ['One', 'Two', 'Three'],
+                        intervalSecond: 3,
+                    },
+                ]),
+            ),
+        ).toEqual(['messages in turn (3), first: "One"']);
+    });
+
     // A quick text is markup from its editor; it reached the model as
     // `quick text: "<p>zz robot test</p>"` (2026-10-06).
     it('reads a quick text for its words, not its markup', () => {

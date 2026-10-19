@@ -483,6 +483,32 @@ describe('registered app tools', () => {
     expect(clicked).toMatchObject({ opened: 'panel', didChange: true });
   });
 
+  // T2 (robot run 2026-10-16): a scope now matches the name a panel SHOWS,
+  // which is in the window's language, so each half of "Panel > Control" is
+  // offered translated -- the whole string was no dictionary key.
+  it('offers a scoped label with each half translated', async () => {
+    app.evaluateInApp
+      .mockResolvedValueOnce({ value: 'km' })
+      .mockResolvedValueOnce({
+        value: { clicked: true, didChange: true },
+      });
+    answer(
+      await call('owa_click', {
+        find: 'Documents > More Options',
+        page: 'km-scope.html',
+      }),
+    );
+    const [expression] = app.evaluateInApp.mock.calls[1];
+    expect(expression).toContain('"Documents > More Options"');
+    expect(expression).toContain('"ឯកសារ > ជម្រើសបន្ថែម"');
+    // The language read is cached for ONE page; hand the cache back to the
+    // default page the later cases are written against.
+    app.evaluateInApp
+      .mockResolvedValueOnce({ value: 'en' })
+      .mockResolvedValueOnce({ value: { clicked: true, didChange: true } });
+    answer(await call('owa_click', { find: 'More Options' }));
+  });
+
   it('handles navigation already on the requested page and a completed switch', async () => {
     app.evaluateInApp.mockResolvedValueOnce({
       value: { switching: false, page: 'reader.html' },
@@ -594,6 +620,8 @@ describe('registered app tools', () => {
 
   it('starts a custom guide with the requested steps and reports its status', async () => {
     app.evaluateInApp.mockResolvedValueOnce({ value: '/presenter.html' });
+    // The window's language, which the card's words and controls are in.
+    app.evaluateInApp.mockResolvedValueOnce({ value: 'en' });
     app.evaluateInApp.mockResolvedValueOnce({
       value: { currentStep: 1, isTargetFound: true },
     });
@@ -607,10 +635,10 @@ describe('registered app tools', () => {
       ),
     );
     expect(started.currentStep).toBe(1);
-    expect(app.evaluateInApp.mock.calls[1][0]).toContain('Open Lookup');
-    expect(app.evaluateInApp.mock.calls[1][1]).toEqual({
-      match: 'presenter.html',
+    const startCall = app.evaluateInApp.mock.calls.find((call) => {
+      return String(call[0]).includes('Open Lookup');
     });
+    expect(startCall[1]).toEqual({ match: 'presenter.html' });
 
     app.evaluateInApp.mockResolvedValueOnce({
       value: { currentStep: 1, text: 'Open Lookup' },

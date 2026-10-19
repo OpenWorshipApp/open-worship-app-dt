@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-46 — Learn the page with Tips of the Day
 
@@ -34,7 +34,9 @@ control without having to search the manual.
    list for the current page. Search by a control or task, or scan the topic name
    that leads each lesson's line;
    the counter shows how many lessons match. Each lesson says what it teaches;
-   choose one to return to its card and practise it at your own pace. The
+   choose one to return to its card and practise it at your own pace: press
+   **[en:tran:Show it]** on the card to start it — the control is ringed in red — and then
+   **Do it** for each safe step. The
    Presenter has **91 topics**: 81 start with a safe **Do it** for a visible
    control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
@@ -42,7 +44,9 @@ control without having to search the manual.
    **Help**. _Write a note on a document or slide_ opens the previewer's **[en:tran:Note]**
    panel, which ships closed (W-03, W-31). Presenter lessons also cover lookup references and history, study
    tools inside Bible Lookup, media folder filtering and sorting, finding a service
-   flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
+   flow, and **[en:tran:Messages]** for separate notices, rotation and spacing
+   (_[en:tran:Prepare several audience messages]_, _[en:tran:Rotate notices before the service]_ and _[en:tran:Give audience messages room to breathe]_) — search
+   **[en:tran:Messages]** in **[en:tran:All tips]** to find them.
    Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
    slide show; output and style changes stay in your hands.
    The Reader has **100 topics**: 50 start with a safe **Do it** and
@@ -72,7 +76,10 @@ control without having to search the manual.
    **[en:tran:Search file name]**, or **[en:tran:Find Connection]** to find a
    focused lesson. Each tip explains when to use that control. Saved Bibles
    lists and Bible Notes have separate folder, creation, organization and
-   import/export tips; graph and Resources tools have their own lessons too.
+   import/export tips — open **Help → [en:tran:All tips]** in the Reader and search
+   **[en:tran:New File]** to find them. Graph and Resources tools have their own lessons
+   too: the graph's, its presets among them, are found by searching the word **graph**.
+   The **[en:tran:Resources]** lessons are found by searching **[en:tran:Search file name]**.
    Use **Back** to revisit a guide step. If a panel is hidden, reopen it through
    **View → [en:tran:Widgets]** before practising. An older walkthrough service can
    show the complete Reader lesson as a self-guided fallback.
@@ -118,5 +125,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-25`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

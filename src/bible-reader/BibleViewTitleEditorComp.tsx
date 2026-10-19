@@ -39,7 +39,9 @@ function chose<T>(
                 return {
                     menuElement: value1,
                     title: value2,
-                    disabled: i === 0 || (!isAllowAll && key === currentKey),
+                    // The first row names the list ("Book", "Verse Start").
+                    isSectionHeader: i === 0,
+                    disabled: !isAllowAll && key === currentKey,
                     onSelect: () => {
                         resolve(key);
                     },

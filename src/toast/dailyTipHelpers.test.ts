@@ -111,7 +111,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
-        expect(getDailyTips('reader')).toHaveLength(100);
+        expect(getDailyTips('reader')).toHaveLength(105);
     });
 
     it('files the added Reader practice demos under useful tip topics', () => {

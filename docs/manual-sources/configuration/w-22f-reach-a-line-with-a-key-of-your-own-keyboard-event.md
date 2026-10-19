@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22f — Reach a line with a key of your own (Keyboard Event)
 
@@ -20,7 +20,8 @@ to it — on the screens at once, wherever the run had got to.
    the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
    **[en:tran:Change Shortcut]**. Two lines may not share a shortcut — the second one is refused
    out loud — and duplicating a line leaves the copy without one. 📸
-2. Now attach what it should put up, with **[en:tran:Add CC Elements]** — as many as you like, which
+2. **Attach what it should put up, and keep the preview panel open: the key works only
+   while it is.** Right-click the new line → **[en:tran:Add CC Elements]** — as many as you like, which
    is what makes one key worth more than one click: a slide _and_ its marquee together,
    say. Then, with the preview panel open (W-22b), pressing **Shift+A** sends the run to
    that line and puts all of it on the screens at once, wherever the run had got to.

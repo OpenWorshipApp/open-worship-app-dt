@@ -49,7 +49,18 @@ font row):
   reload. Compare what is served with what is on disk —
   `curl -sk https://localhost:3000/src/<path> | grep <new name>` — and `touch`
   the file when they differ. Do this before reasoning about why half a change
-  "does not work".
+  "does not work". **Curl it with NO query** (2026-10-16, two `Edit`s to
+  `helpBotHelpers.ts` in one batch again): `?t=<now>` is a fresh URL and Vite
+  transforms it anew, so it showed the new code while the plain path and the
+  window both had the old one — two `navigate_page` reloads later the help
+  window still answered from the earlier save, until a `touch`. `?direct`
+  is a fresh transform too (2026-10-17, the PDF-chat work): the `.scss`
+  read that way had the `@container` rule while the page's own module did
+  not, and a `chatbotHandoffHelpers.ts` served without either of its two
+  batched edits made a Resources 🤖 throw `openChatbotWithFile is not a
+  function` -- twice, a _Reload is needed_ and then a _Something Went
+  Wrong_ dialog. Cheapest prevention: while the dev app is up, never send
+  two `Edit`s to ONE file in the same batch.
 
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent

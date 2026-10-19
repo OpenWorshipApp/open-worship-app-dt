@@ -109,6 +109,20 @@ describe('CountdownController', () => {
         expect(done.divBox.dataset.timeDiff).toBe('0');
     });
 
+    test('shows every hour of a long countdown, never wrapped at 24', () => {
+        // A length of time, not a time of day: 25 h read `01:00:07` once.
+        const day = CountdownController.init(
+            genAttachedContainer(),
+            new Date(Date.now() + (25 * 3600 + 6) * 1000 + 500),
+        );
+        expect(readClock(day)).toBe('25:00:07');
+        const long = CountdownController.init(
+            genAttachedContainer(),
+            new Date(Date.now() + (125 * 3600 + 6) * 1000 + 500),
+        );
+        expect(readClock(long)).toBe('125:00:07');
+    });
+
     test('counts the time over behind a "+" once the target has passed', () => {
         const over = CountdownController.init(
             genAttachedContainer(),

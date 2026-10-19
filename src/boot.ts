@@ -12,7 +12,11 @@ import {
     getAppFontWeight,
 } from './setting/appFontSettingHelpers';
 import appProvider from './server/appProvider';
-import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
+import { appHomeStorage } from './server/appHomeStorage';
+import {
+    appLocalStorage,
+    DATA_DIR_MOVE_PENDING_SETTING_NAME,
+} from './setting/directory-setting/appLocalStorage';
 
 async function initFontFamily() {
     const id = 'app-custom-style';
@@ -128,7 +132,27 @@ async function initPreviewerNoteCloseMigration() {
     }
 }
 
+/**
+ * A move of the data folder off the Desktop, asked for before the relaunch
+ * that brought this window up (`dataDirMoveHelpers.ts`). Before anything else
+ * opens a file in that folder: on Windows an open one stops the rename. The
+ * module loads only when a move is waiting.
+ */
+async function initPendingDataDirMove() {
+    if (appHomeStorage.getItem(DATA_DIR_MOVE_PENDING_SETTING_NAME) === null) {
+        return;
+    }
+    try {
+        const { runPendingDataDirMove } =
+            await import('./setting/directory-setting/dataDirMoveHelpers');
+        await runPendingDataDirMove();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
 export async function init(callback: () => void = () => {}) {
+    await initPendingDataDirMove();
     // First, before anything reads a file: the migration below reads settings,
     // and some windows (`lyricEditor`) read their data without awaiting `init`.
     appProvider.sessionData.defaultStorageDirPath =

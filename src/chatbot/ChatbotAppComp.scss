@@ -351,9 +351,21 @@ select.chat-pick {
 .chat-credit {
   // Tighter than the 8px the selects need: this row holds text alone.
   & + &,
-  .chat-head-row + & {
+  .chat-head-row + &,
+  .chat-model-notice + & {
     margin-top: 5px;
   }
+}
+
+// The shared registry's word on the model the tab asks: a quiet line under
+// the pickers, wrapped rather than cut -- it is read before the wait it
+// explains.
+.chat-model-notice {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--chat-muted);
+  overflow-wrap: anywhere;
 }
 
 .chat-credit-field {
@@ -464,6 +476,59 @@ button.chat-engine {
 
   scrollbar-width: thin;
   scrollbar-color: var(--chat-line) transparent;
+}
+
+// Scrolled up from the newest message: a round ↓ held in the bottom-right
+// corner of the scroller. Sticky in a box of no height, so it covers the
+// corner and never adds to the list's length. Nothing animates.
+.chat-log-jump {
+  position: sticky;
+  bottom: 6px;
+  height: 0;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+// Glass (the user's ask: _should have background transparency glassier_): a
+// film over the words it sits on, which it blurs. The one `backdrop-filter`
+// in this window, and a 32px one: the window's own ground is the OS's glass
+// (see `--- glass` below), and a blur this size repaints a corner, not a
+// window, while the list scrolls under it.
+.chat-log-jump-button {
+  pointer-events: auto;
+  transform: translateY(-100%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  background-color: rgb(22 30 42 / 42%);
+  backdrop-filter: blur(6px);
+  color: var(--chat-signal);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 14%),
+    0 2px 8px rgb(0 0 0 / 25%);
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--chat-signal);
+    background-color: rgb(22 30 42 / 58%);
+  }
+  [data-bs-theme='light'] & {
+    border-color: rgb(0 0 0 / 12%);
+    background-color: rgb(255 255 255 / 50%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 60%),
+      0 2px 8px rgb(0 0 0 / 12%);
+    &:hover,
+    &:focus-visible {
+      border-color: var(--chat-signal);
+      background-color: rgb(255 255 255 / 70%);
+    }
+  }
 }
 
 // The rail: from the first cue to the last, and no further.
@@ -594,6 +659,42 @@ button.chat-engine {
     background-color: var(--chat-panel-soft);
     border: 1px solid var(--chat-line);
     color: var(--chat-text);
+  }
+}
+
+// An address the app wrote into an answer, pressed open in the browser
+// (`RenderChatLinkComp`). Inline in its sentence, wrapping like the words
+// round it, and marked as a link: the signal colour, an underline, the arrow
+// the buttons that leave the app wear.
+.chatbot-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  color: var(--chat-signal);
+  cursor: pointer;
+
+  code {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .bi {
+    margin-left: 4px;
+    font-size: 0.8em;
+  }
+
+  &:hover code,
+  &:focus-visible code {
+    border-color: var(--chat-signal);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--chat-signal);
+    outline-offset: 2px;
   }
 }
 
@@ -1337,6 +1438,30 @@ button.chat-engine {
   flex-wrap: wrap;
   gap: 6px;
   padding: 4px 2px 0;
+}
+
+// The file a tab is still asking about, above the box: one quiet line, its
+// chip the same as any other, so it reads as "this is still attached" and
+// its × as the way to stop it.
+.chat-open-files {
+  flex: 0 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px 0;
+
+  > .chat-clips {
+    flex: 0 1 auto;
+    padding: 0;
+  }
+}
+
+.chat-open-files-label {
+  font-family: var(--chat-font-body);
+  font-size: 11.5px;
+  color: var(--chat-clip-ink);
+  opacity: 0.8;
 }
 
 .chat-clip {

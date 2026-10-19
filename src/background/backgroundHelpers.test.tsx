@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
     handleDragStart: vi.fn(),
     useGenDirSourceReload: vi.fn(),
     getPptx: vi.fn(),
+    checkDirExist: vi.fn(),
     dirListener: null as null | (() => void),
 }));
 
@@ -27,6 +28,9 @@ vi.mock('../helper/helpers', () => ({
 }));
 vi.mock('../helper/FileSource', () => ({
     default: { getInstance: h.getFileSource },
+}));
+vi.mock('../server/fileHelpers', () => ({
+    fsCheckDirExist: h.checkDirExist,
 }));
 vi.mock('../helper/dragHelpers', () => ({
     handleDragStart: h.handleDragStart,
@@ -84,6 +88,7 @@ beforeEach(() => {
         src: `file://${filePath}`,
     }));
     h.useGenDirSourceReload.mockReturnValue(dirSource);
+    h.checkDirExist.mockResolvedValue(true);
     dirSource.dirPath = '/documents';
     dirSource.getFilePathsQuick.mockResolvedValue(['/documents/a.pptx']);
     h.getPptx.mockReturnValue({
@@ -175,6 +180,22 @@ describe('background layer helpers', () => {
             ['refresh', 'reload'],
             expect.any(Function),
         );
+    });
+
+    it('asks nothing of a Documents folder that is not there', async () => {
+        // A typo in the path box: listing it threw an uncaught ENOENT, and
+        // the app offered a crash report, then asked to be reloaded.
+        h.checkDirExist.mockResolvedValue(false);
+        dirSource.getFilePathsQuick.mockRejectedValue(new Error('ENOENT'));
+        await act(async () => root.render(createElement(AudioData)));
+        expect(container.textContent).toBe('none');
+        expect(dirSource.getFilePathsQuick).not.toHaveBeenCalled();
+        // And a listing that fails anyway is an empty list, not a throw.
+        h.checkDirExist.mockResolvedValue(true);
+        await act(async () => {
+            await h.dirListener?.();
+        });
+        expect(container.textContent).toBe('none');
     });
 
     it('leaves the audio list empty when the folder has no audio', async () => {

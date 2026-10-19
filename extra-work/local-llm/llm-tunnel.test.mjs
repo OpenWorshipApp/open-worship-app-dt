@@ -25,7 +25,10 @@ import {
     readKey,
     readModels,
 } from './llm-tunnel.mjs';
-import { findRegistryProblems } from './s3-push-llm-registry.mjs';
+import {
+    findNoteProblem,
+    findRegistryProblems,
+} from './s3-push-llm-registry.mjs';
 
 const KEY = 'sk-test-key';
 const TUNNEL_URL = 'https://quiet-river-1234.trycloudflare.com';
@@ -126,6 +129,10 @@ describe('readArgs', () => {
                 '--new-key',
                 '--no-key',
                 '--publish',
+                '--note',
+                ' Free for us ',
+                '--model-note',
+                'qwen/qwen3.5-9b=Slow, but it saves us the cost = good',
             ]),
         ).toEqual({
             port: 11434,
@@ -143,6 +150,10 @@ describe('readArgs', () => {
             isWithReports: false,
             dbFile: '',
             isNotifying: true,
+            note: 'Free for us',
+            modelNotes: {
+                'qwen/qwen3.5-9b': 'Slow, but it saves us the cost = good',
+            },
         });
         // A new report is said on the desktop unless told not to.
         expect(readArgs(['--reports', '--no-notify']).isNotifying).toBe(false);
@@ -1083,6 +1094,104 @@ describe('the registry entry', () => {
                 '2026-10-10',
             ).servers,
         ).toEqual([other, server, another]);
+    });
+
+    // The notes are SHOWN to the person choosing (2026-10-17, the user's
+    // ask: "for some model we want to let user know it slow but help us save
+    // cost of usage"), so the entry carries only the ones it was given.
+    it('carries the notes it was given, and no line of its own', () => {
+        expect(server).not.toHaveProperty('note');
+        const noted = genRegistryServer(
+            {
+                ...args,
+                note: 'Free for us',
+                modelNotes: { 'qwen/qwen3.5-9b': 'Slow, but saves cost' },
+            },
+            `${TUNNEL_URL}/v1`,
+            KEY,
+            'LM Studio',
+            [...models, { model: 'google/gemma-4-e4b', name: 'Gemma' }],
+        );
+        expect(noted.note).toBe('Free for us');
+        expect(noted.models).toEqual([
+            { ...models[0], note: 'Slow, but saves cost' },
+            { model: 'google/gemma-4-e4b', name: 'Gemma' },
+        ]);
+        expect(
+            findRegistryProblems(
+                mergeRegistry({}, noted, 'church-llm', '2026-10-17'),
+            ),
+        ).toEqual([]);
+        expect(readArgs(['--note', '   '])).toBeNull();
+        expect(readArgs(['--note', 'x'.repeat(301)])).toBeNull();
+        expect(readArgs(['--model-note', 'no-equals-sign'])).toBeNull();
+        expect(readArgs(['--model-note', '=text'])).toBeNull();
+    });
+
+    it('keeps the notes an admin put on its entry when it starts again', () => {
+        const before = {
+            ...server,
+            baseUrl: 'http://old/v1',
+            note: { en: 'Free for us', km: 'ឥតគិតថ្លៃសម្រាប់យើង' },
+            models: [{ ...models[0], note: 'Slow, but saves cost' }],
+        };
+        const [merged] = mergeRegistry(
+            { version: 1, servers: [before] },
+            server,
+            'church-llm',
+            '2026-10-17',
+        ).servers;
+        expect(merged.baseUrl).toBe(`${TUNNEL_URL}/v1`);
+        expect(merged.note).toEqual(before.note);
+        expect(merged.models).toEqual(before.models);
+        // A note given on this start wins over the one kept.
+        const given = { ...server, note: 'New word' };
+        expect(
+            mergeRegistry(
+                { version: 1, servers: [before] },
+                given,
+                'church-llm',
+                '2026-10-17',
+            ).servers[0].note,
+        ).toBe('New word');
+        // The line a tunnel wrote by itself before is not an admin's.
+        expect(
+            mergeRegistry(
+                {
+                    version: 1,
+                    servers: [
+                        {
+                            ...server,
+                            note: "LM Studio on the church's computer through a Cloudflare quick tunnel",
+                        },
+                    ],
+                },
+                server,
+                'church-llm',
+                '2026-10-17',
+            ).servers[0],
+        ).not.toHaveProperty('note');
+    });
+
+    it('says which note the app would cut or drop', () => {
+        expect(findNoteProblem(undefined)).toBeNull();
+        expect(findNoteProblem('Slow, but saves cost')).toBeNull();
+        expect(findNoteProblem({ en: 'Slow', km: 'យឺត', 'pt-BR': 'Lento' })).toBeNull();
+        expect(findNoteProblem('x'.repeat(301))).toContain('300');
+        expect(findNoteProblem(['Slow'])).toContain('language code');
+        expect(findNoteProblem({ English: 'Slow' })).toContain('"English"');
+        expect(findNoteProblem({ en: 7 })).toContain('must be text');
+        expect(
+            findRegistryProblems({
+                version: 1,
+                servers: [
+                    {
+                        ...server,
+                        models: [{ ...models[0], note: { en: '' } }],
+                    },
+                ],
+            }),
+        ).toEqual(['servers[0].models[0].note "en" must be text']);
     });
 
     it('is the only thing taken out when its tunnel stops', () => {

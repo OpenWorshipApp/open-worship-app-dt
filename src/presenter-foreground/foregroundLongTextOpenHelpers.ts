@@ -2,6 +2,7 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
     addMediaSession,
     genMediaSessionId,
+    readSessions,
     toSessionSuffix,
 } from '../media-sessions/MediaSessionsComp';
 import { getFileName, pathBasename } from '../server/fileHelpers';
@@ -17,6 +18,23 @@ import {
     requestForegroundPanelOpening,
     toOpenedPanelKeys,
 } from './foregroundWidgetHelpers';
+
+/**
+ * `name`, or `name (2)`, `name (3)`... -- whichever no session has yet. Each
+ * press of a song's Long Text Show adds a session named after the song, and
+ * three of them read `Still · Still · Still`: chips nobody could tell apart.
+ */
+export function toUniqueSessionName(name: string, takenNameList: string[]) {
+    const takenNameSet = new Set(takenNameList);
+    if (!takenNameSet.has(name)) {
+        return name;
+    }
+    let index = 2;
+    while (takenNameSet.has(`${name} (${index})`)) {
+        index++;
+    }
+    return `${name} (${index})`;
+}
 
 /**
  * A lyric of the Documents list straight into Long Text Show: a NEW session,
@@ -35,9 +53,15 @@ export function openLyricInLongTextShow(lyricFilePath: string) {
         serializeLongTextSession(genLyricLongTextSession(lyricFilePath)),
     );
     const baseName = pathBasename(lyricFilePath);
-    addMediaSession(toForegroundSessionsTarget(LONG_TEXT_WIDGET_KEY), {
+    const target = toForegroundSessionsTarget(LONG_TEXT_WIDGET_KEY);
+    addMediaSession(target, {
         id: sessionId,
-        name: getFileName(baseName) || baseName,
+        name: toUniqueSessionName(
+            getFileName(baseName) || baseName,
+            readSessions(target).map((session) => {
+                return session.name;
+            }),
+        ),
     });
     if (!requestForegroundPanelOpening(LONG_TEXT_WIDGET_KEY)) {
         setSetting(

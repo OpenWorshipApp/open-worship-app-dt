@@ -9,7 +9,13 @@ import {
 
 import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
-import { HEX_COLOR_WHITE, type AppColorType } from './colorHelpers';
+// The leaf module, not `colorHelpers`: that one also carries the drag helpers
+// and, through them, the file and screen graph.
+import {
+    HEX_COLOR_WHITE,
+    compareColor,
+    type AppColorType,
+} from './colorValueHelpers';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { removeOpacityFromHexColor } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
@@ -30,9 +36,23 @@ export default function SelectCustomColorComp({
     const [localColor, setLocalColor] = useState(
         removeOpacityFromHexColor(color || HEX_COLOR_WHITE) as AppColorType,
     );
+    // Whether the box holds a colour nobody applied yet. Enter and blur used to
+    // apply whatever the box held, changed or not: merely clicking into it and
+    // away re-sent the colour already up -- which a screen's background reads
+    // as "toggle off" -- and, with nothing up, put white on the screens.
+    const isDirtyRef = useRef(false);
+    const colorRef = useAppCurrentRef(color);
     const applyColor = useCallback(
         (newColor: AppColorType) => {
+            isDirtyRef.current = false;
             setLocalColor(newColor);
+            // Nothing to apply: the box was set back to the colour it was
+            // given. Sent anyway, a screen's background took it as a press on
+            // the lit swatch and switched itself OFF -- the swatches toggle,
+            // this box only ever sets.
+            if (colorRef.current && compareColor(colorRef.current, newColor)) {
+                return;
+            }
             let fakeEvent = createMouseEvent(0, 0);
             if (inputRef.current !== null) {
                 fakeEvent = createMouseEvent(
@@ -42,10 +62,11 @@ export default function SelectCustomColorComp({
             }
             onColorSelected(newColor, fakeEvent);
         },
-        [onColorSelected],
+        [onColorSelected, colorRef],
     );
     const setLocalColor1 = useCallback(
         (newColor: string) => {
+            isDirtyRef.current = true;
             if (isNoImmediate) {
                 setLocalColor(newColor as AppColorType);
                 return;
@@ -72,7 +93,7 @@ export default function SelectCustomColorComp({
     const applyColorRef = useAppCurrentRef(applyColor);
     const handleKeyDown = useCallback(
         (event: KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && isDirtyRef.current) {
                 applyColorRef.current(localColorRef.current);
             }
         },
@@ -80,6 +101,9 @@ export default function SelectCustomColorComp({
         [],
     );
     const handleBlur = useCallback(() => {
+        if (!isDirtyRef.current) {
+            return;
+        }
         applyColorRef.current(localColorRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

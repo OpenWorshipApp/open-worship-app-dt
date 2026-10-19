@@ -36,9 +36,9 @@ more than ten good ones earn.
 | Rung | It is true when | Status |
 | --- | --- | --- |
 | **1 · It answers** | A question gets a relevant manual answer, offline and online, and never a stack trace. | reached — and held to the WHOLE corpus for the first time 2026-10-12: asked one by one with no assistant, three of the app's own supported questions answered _I could not answer that: (find ?? "").trim is not a function_ (`EC-226`), fixed the same day; the twelve standing shapes had never touched them |
-| **2 · It answers *correctly and usably*** | Right for the window they are in, numbered steps, no path/id/component name ever, English, honest when the app cannot do the thing. | **partly — the current front line**; measured over the corpus's first 47 questions on a small local model (2026-10-12, gemma-4-e4b, graded against the guide): 24 pass, 9 wrong, 2 empty — and every one of the eleven failures is a question whose page is longer than what rides on it (8), whose only resource is a tool the local list lacks (2), or one sent to `/btw` (1); where the page rode whole, 0 wrong of 18. `EC-225` and `EC-227` aim at the first ten and are NOT yet re-measured on a model; `EC-229` is open. **Measured over the WHOLE list, one asking each, same model at temperature 0 (2026-10-13, `EC-262`): 411 of 411 asked and graded — 318 right, 93 partly, 0 wrong standing; fourteen were wrong at some asking on the way and each was ended and asked again. Still "partly": 93 answers are short of a detail, and that is one small model on its own server** |
+| **2 · It answers *correctly and usably*** | Right for the window they are in, numbered steps, no path/id/component name ever, English, honest when the app cannot do the thing. | **partly — the current front line**; measured over the corpus's first 47 questions on a small local model (2026-10-12, gemma-4-e4b, graded against the guide): 24 pass, 9 wrong, 2 empty — and every one of the eleven failures is a question whose page is longer than what rides on it (8), whose only resource is a tool the local list lacks (2), or one sent to `/btw` (1); where the page rode whole, 0 wrong of 18. `EC-225` and `EC-227` aim at the first ten and are NOT yet re-measured on a model; `EC-229` is open. **Measured over the WHOLE list, one asking each, same model at temperature 0 (2026-10-13, `EC-262`): 411 of 411 asked and graded — 318 right, 93 partly, 0 wrong standing; fourteen were wrong at some asking on the way and each was ended and asked again. Still "partly": 93 answers are short of a detail, and that is one small model on its own server**. **On the window's own default (Auto → Free) for the first time, 2026-10-16: the 15 questions added since and 8 standing shapes — 17 right, 5 partly, 0 wrong of 23 after that run's fixes (one wrong and one timed out of the first 7 before them); and the Bible Reader's whole file of 77 the same afternoon, one asking each: 65 right, 12 partly, 0 wrong — none of the twelve a wrong step, most a sentence or a button the window added under a right answer (EC-280, EC-281)**. **In Khmer, as an elderly volunteer talks, for the first time 2026-10-17** (`elder-run.mjs`): before, 37 of 48 answers showed English to a reader of none and no Khmer verse ask reached the Bible search; after EC-288..EC-301, gemma4:cloud 19 right, 4 partly, 0 wrong of 23, 3 showing English, 5 of 5 verses — the other six assistants worse, Free worst |
 | **3 · It acts, reliably** | The ring lands on the real control, the walkthrough survives a wrong guess, demo mode does the step, and every acting call is announced and safe near a live service. | partly — measured for the first time 2026-09-08 (`demo-failure-rate.mjs`): Do it now presses only the control the step names and closes a popup in its way, but still refuses ~59% of recipe steps (most name nothing to press; `EC-108`, `EC-109`). Same day, the standing corpus caught the model pressing F5 UNASKED through `press_key` (`EC-111`); the model now has the app's own tools only and `owa_click` presses only an exactly-named control |
-| **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | partly — cost is taken (2026-09-08, `EC-57`: the corpus's input bill went from $1.63 to $0.18 on Anthropic, every round after the first a cache read) and the corpus answers in 2–3 rounds; one wrong turn of its own is recovered in code (2026-09-09, `EC-139`); honest degradation was measured for the first time 2026-09-09 on the window's OWN default — a dead ChatGPT key, every question three retries and the manual — and now degrades to the next key of the user's own before the manual (`EC-144`); the offline bot is 10/12 (`EC-84`); and since 2026-09-10 the cost is ON SCREEN -- every answer carries what it cost and a **Credit used** row keeps the tab's total, honest about being a list-price estimate, with `/credit` saying it with no model (`EC-152`, the user's own ask) -- because "cheap enough to use freely" was a figure only the research driver could read; and since 2026-09-10 (later the same day, the user's own ask again) it has a CEILING: a rolling-hour spending limit the user sets and a fixed pace cap, checked before every model round on the one seam every call goes through, that PAUSES the assistant at the cap and stays paused until a person presses **Allow more** -- a fault that keeps asking cannot press a button, and a restart does not lift it (`EC-155`); and since 2026-09-10 (the user's ask, a third time that day) an unusual answer from a provider comes with the DOOR to it: the failure is read off the body and not only the status (`insufficient_quota` is an empty account, not "or being rate-limited"; an Anthropic empty account is a 402 or a 400 the stand-in used to miss altogether), and the note carries a button to the provider's own billing, keys, limits or status page, or to the app's AI settings (`EC-158`); and since 2026-10-12 a question picked from the list is answered in ONE round — the loop had been handing the model's steps back as "written from a search excerpt" when they were written from the page the app itself had quoted, and it opened the page again and wrote the answer twice (`EC-223`: the same 23 questions, 61 rounds → 37, input tokens −41%, on every provider) |
+| **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | partly — cost is taken (2026-09-08, `EC-57`: the corpus's input bill went from $1.63 to $0.18 on Anthropic, every round after the first a cache read) and the corpus answers in 2–3 rounds; one wrong turn of its own is recovered in code (2026-09-09, `EC-139`); honest degradation was measured for the first time 2026-09-09 on the window's OWN default — a dead ChatGPT key, every question three retries and the manual — and now degrades to the next key of the user's own before the manual (`EC-144`); the offline bot is 10/12 (`EC-84`); and since 2026-09-10 the cost is ON SCREEN -- every answer carries what it cost and a **Credit used** row keeps the tab's total, honest about being a list-price estimate, with `/credit` saying it with no model (`EC-152`, the user's own ask) -- because "cheap enough to use freely" was a figure only the research driver could read; and since 2026-09-10 (later the same day, the user's own ask again) it has a CEILING: a rolling-hour spending limit the user sets and a fixed pace cap, checked before every model round on the one seam every call goes through, that PAUSES the assistant at the cap and stays paused until a person presses **Allow more** -- a fault that keeps asking cannot press a button, and a restart does not lift it (`EC-155`); and since 2026-09-10 (the user's ask, a third time that day) an unusual answer from a provider comes with the DOOR to it: the failure is read off the body and not only the status (`insufficient_quota` is an empty account, not "or being rate-limited"; an Anthropic empty account is a 402 or a 400 the stand-in used to miss altogether), and the note carries a button to the provider's own billing, keys, limits or status page, or to the app's AI settings (`EC-158`); and since 2026-10-12 a question picked from the list is answered in ONE round — the loop had been handing the model's steps back as "written from a search excerpt" when they were written from the page the app itself had quoted, and it opened the page again and wrote the answer twice (`EC-223`: the same 23 questions, 61 rounds → 37, input tokens −41%, on every provider); and on 2026-10-16 two holes in the honest degradation closed: the free default had lost two of its three models to the gateway (every question on them failed; no free model saw a picture — re-qualified, `EC-267`), and Ollama answered from a question it had cut to 4k in silence, now said in the note with the setting to change (`EC-271`) |
 | **5 · It is situational** | Knows what is on screen and what the user is in the middle of; handles "nothing is showing on the projector" end to end; suggests the next step before being asked. | partly — measured for the first time 2026-09-09 by following the panic shapes THROUGH: with the projector showing a verse the assistant had answered *"turning the screen on just gives you a blank canvas"* (9 rounds), and its "yes" took 8 rounds and a wrong press. `owa_list_screens` now says what each screen holds and names its controls; the same asks answer with the verse on the wall, and the "yes" is 3 rounds (`EC-124`). What the user is in the MIDDLE of was measured and shipped 2026-09-09 (`EC-128`, `EC-132`); the unasked next step was seen for the first time 2026-09-10 — *How do I put a Bible verse on the screen?* now ends with *Put John 3:16 up now* as an option, because the assistant has a tool that can |
 | **6 · It is the fastest way to use the app** | A volunteer would rather ask than click. | the point of the climb — reached for ONE ask on 2026-09-10: *Put John 3:16 on the screen* is one sentence, one call and a verified verse on the wall (3 rounds, 9 s; `/verse` 1.5 s with no assistant; offline one button), where the app's own way is a five-step picker. Songs by name work the same way through `selectedDocument` (two asks). Everything else is still a walkthrough |
 
@@ -58,7 +58,7 @@ Update the Status column when the evidence changes — up **or** down. A rung is
 - The tool loop burns rounds, tokens, or money → §D.
 - Something in the chatbot window itself: tabs, model picker, copy, layout → §E.
 
-Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-141`),
+Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-144`),
 and app features that merely happen to be *described* by the manual.
 
 ## The subsystem, in one list
@@ -368,9 +368,11 @@ Answers come from `electron-build/knowledge/`, built by
 (`docs/manual-sources/**`, weight 1.5) and `internal` (`.claude/CLAUDE.md`,
 `rules/`, `memory/`, `skills/`, weight 1.0).
 
-- The manual is generated from `user-workflows.md`. Fix the workflow recipe, run
-  `npm run docs:gen`, then rebuild the knowledge bundle — do not hand-edit the
-  generated page.
+- The manual is generated from `user-workflows.md`. Fix the workflow recipe and
+  run `npm run docs:gen`, which rebuilds the knowledge bundle too when a built
+  app is there (`EC-279`: it did not, and a fix was "done" for an afternoon
+  the app never saw) — do not hand-edit the generated page. Read the served
+  index, not the source, before calling a manual fix live.
 - A knowledge change needs `node extra-work/build-knowledge.mjs` before the app can
   see it — run alone it leaves the app up (the index is re-read per search), where
   `npm run electron:build` deletes `electron-build/` and kills it.
@@ -498,12 +500,60 @@ knows the app's internals.
   (`--server`, `--model`), pressed in its own **More…** list, one JSON line
   an answer: words, buttons, rounds, tokens, seconds, every tool the window
   called. `--offline` reads the guide's own answers with no model;
-  `--pace=135` keeps a model run under the spend guard. Resumable. Read its
+  `--pace=135` keeps a model run under the spend guard; `--asks=<file>`
+  types a short list of questions the corpus does not have (each joins the
+  window's Alt+↑ history), and `/help <question>` in one asks the guide
+  with no model when no assistant can be made to fail. Resumable. Read its
   header before running it: the rules there are the ones its first run
-  broke, in a dev app another session was using.
+  broke, in a dev app another session was using. **`--lang=km` asks every
+  row in the app's own language** (2026-10-17): the row's words from
+  `questions/i18n/<code>.json`, pressed in the list as that window draws it,
+  the pickers found by what they hold (their labels are translated), and a
+  window default put back by VALUE. `--allow-more` presses the spend
+  guard's Allow more and asks the paused row again — the user's word only.
+  An assistant's name may carry a zero-width space as the picker shows it
+  (`LM Studio super​-mac`): pass it exactly.
+- [scripts/lang-check.mjs](./scripts/lang-check.mjs) — model-free, over a
+  `--lang` run: per answer, every Latin run its words and chips SHOW that is
+  not a real label of that language's app (its dictionary's values, its
+  manual, the native menu bar, key names, products), plus no answer, an
+  error, a timeout, a leak. Over-eager on purpose; the grade is a person's.
+- [scripts/grade-bundle.mjs](./scripts/grade-bundle.mjs) — cuts a run into
+  bundles for graders: each answer beside its English twin, the manual files
+  in both languages, the row's passage, control, menu and tools, and what
+  `lang-check.mjs` flagged. The 2026-10-17 Khmer grades are under
+  `test-results/chatbot-quality/grade-km-*`.
+- [scripts/stress-tabs.mjs](./scripts/stress-tabs.mjs) — the STRESS test's
+  load half: K tabs of its own asking supported Presenter questions at the
+  same moment, wave after wave, each read until it answered — every tab
+  answered, by a model, to ITS own question, and how the wait grows with K.
+  Its abuse half is `elder-run.mjs` with
+  [references/stress-khmer-asks.json](./references/stress-khmer-asks.json):
+  a 2 500-character paste, emoji, one letter, typos, an injection that says
+  to delete everything, markup, Stop then Ask again, words added mid-answer,
+  ten turns, the same question three times, another script, a rant. Give a
+  scenario `"focus": "presenter"`: `elder-run.mjs` asks about the Reader
+  unless told, and the first stress run graded Reader answers against the
+  Presenter.
+- [scripts/attach-run.mjs](./scripts/attach-run.mjs) — the three buttons
+  beside the box, pressed for real in a tab of its own: 📷 as a person
+  presses it, ◎ with a real mouse click in the main window once the picker
+  is up (`#owa-picker-host` — before that the click PRESSES the control), 📎
+  by setting files on that same input over CDP (`DOM.setFileInputFiles`,
+  what choosing them does; the OS dialog cannot be driven): a Khmer text
+  file, a picture of the main window asked about by its NUMBER, a PDF.
 - [scripts/excerpt-measure.mjs](./scripts/excerpt-measure.mjs) — model-free:
   for every corpus row that names a page, whether the search's excerpt
   carries the control, key or menu item the row says answers it
   (2026-10-12: 37/166 → 160/166 controls). **The excerpt's ratchet**: run it
   before and after touching `passageMatch.mjs`, `help.mjs` or the manual.
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-141`.
+- [scripts/elder-run.mjs](./scripts/elder-run.mjs) — CONVERSATIONS in the
+  app's own language as an elderly volunteer has them
+  ([references/elder-khmer-asks.json](./references/elder-khmer-asks.json):
+  verses half-remembered, panic, nonsense, "delete everything", interrupt,
+  Stop, Ask again, a thumb down), several assistants interleaved, every
+  answer, button, tool and page error recorded; `elder-digest.mjs` prints
+  them side by side with every English word an answer SHOWS. **The
+  non-English ratchet and the model shootout** (2026-10-17: Khmer, seven
+  assistants). Read its header: `--allow-more` needs the user's word.
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-148`.

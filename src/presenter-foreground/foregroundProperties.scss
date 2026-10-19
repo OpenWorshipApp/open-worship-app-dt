@@ -482,10 +482,12 @@
 }
 
 // The nudge lives with the pad because an offset IS the position, measured
-// from the cell that is lit.
+// from the cell that is lit. One axis per row: side by side under the 84px
+// pad each box was ~30px, and an offset of "40" read "4|".
 .fg-pad-offset {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 2px;
   width: 84px;
 }
 

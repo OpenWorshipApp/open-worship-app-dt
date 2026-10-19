@@ -210,6 +210,15 @@ What holds everywhere:
   relaunches nothing. **Whenever the knowledge changes,
   `tools/owa-devtools-mcp/questions/*.json` changes in the same commit**, and the
   manual names a control as `[en:tran:Clear Long Text]`, never as an English label.
+- **The chatbot speaks the app's language, and every language is DATA**
+  (memory `chatbot-follows-app-language`): `src/lang/data/<code>/assistant.json`,
+  the corpus's words in `questions/i18n/<code>.json` (a new question needs its
+  row there in every language — `questions.test.mjs`), the manual's in
+  `docs/manual-i18n/<code>/` (`node extra-work/manual-i18n-status.mjs` lists
+  what is missing or stale). The window's own words go through the chatbot's
+  `tran` in `src/chatbot/chatTranHelpers.ts`, never `langHelpers`'. Behind the
+  scenes any model but a Gemma 4 works in ENGLISH, a no-cost Gemma 4
+  sub-assistant translating both ways (`src/chatbot/chatTranslateHelpers.ts`).
 - **An edited MCP `.mjs` needs a fresh server**: the running host cached its
   modules on its first session (memory `mcp-tool-edit-two-processes`), and
   under `electron:dev` nodemon relaunches the app on any save in
@@ -413,6 +422,11 @@ all of them are in `.claude/rules/project-skills.md`.
   from: fixes what the code contradicts and
   proposes `AD-xx` ways agents could help more. Code is the truth for facts,
   a doc for decisions; history stays history.
+- **`owa-enhance-tips`** — the in-app tips (Help → All tips and the
+  walkthrough each starts), one window at a time, e.g. `reader.html 99%`:
+  coverage of the window's control inventory from `scripts/tip-coverage.mjs`
+  (a tip counts when the search finds it by the button's own words), every
+  tip run live in English and Khmer; `TP-xx`.
 - **`review-stagged-change`** / **`review-unstagged-change`** — review only the
   staged diff (the index), or only what is not staged yet; performance first.
 

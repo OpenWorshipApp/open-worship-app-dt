@@ -15,6 +15,7 @@
 
 import type {
     MatchOptionsType,
+    QuestionOverlayType,
     QuestionPageType,
     QuestionRowType,
 } from '../../tools/owa-devtools-mcp/questionMatch.d.mts';
@@ -23,6 +24,7 @@ import { BOT_FOCUS_LIST } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 // The same reading of a page the server quotes its search hits with: small,
 // no node built-in, so it costs this window a few hundred lines and no chunk.
 import {
+    checkIsBoldLeadLine,
     clipPageToPassages,
     genQuestionAnchors,
     toPassageKey,
@@ -34,6 +36,9 @@ import {
     readPagePartNote,
 } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import type { BotFocusType } from './helpBotHelpers';
+import { DEFAULT_CHAT_LANG_CODE, getAppLangCode } from './chatLangHelpers';
+import { tranLabel } from './chatTranHelpers';
+import { NATIVE_MENU_ITEM_MAP } from './answerLanguageHelpers';
 
 export type { QuestionRowType };
 
@@ -49,7 +54,20 @@ export type { QuestionRowType };
 export type StarterQuestionType = {
     text: string;
     isTemplate: boolean;
+    // The row's English, when `text` is its translation: what a press
+    // ASKS, so every reader of the words (a verse to find, a Bible to
+    // import, a song link) and the known-question hint read the corpus's
+    // own sentence, while the transcript shows `text`.
+    textEn?: string;
 };
+
+function toTextEnField(
+    row: Pick<QuestionRowType, 'text'> & { textEn?: string },
+) {
+    return row.textEn === undefined || row.textEn === row.text
+        ? {}
+        : { textEn: row.textEn };
+}
 
 /** The hand-written copy's terse form: a bare string is not a template. */
 type StarterSourceType = string | { text: string; isTemplate: true };
@@ -145,6 +163,35 @@ const PAGE_LOADER_MAP = import.meta.glob([
     '!../../tools/owa-devtools-mcp/questions/schema.json',
 ]);
 
+// One file per language the corpus is translated into
+// (`questions/i18n/<code>.json`), a loader each, so a window loads its own
+// language's file and no other -- and an English one none at all.
+const OVERLAY_LOADER_MAP = import.meta.glob<QuestionOverlayType>(
+    '../../tools/owa-devtools-mcp/questions/i18n/*.json',
+    { import: 'default' },
+);
+
+/** The corpus words of the language this window is shown in, or null. */
+async function loadOverlay(): Promise<QuestionOverlayType | null> {
+    const langCode = getAppLangCode();
+    if (langCode === DEFAULT_CHAT_LANG_CODE) {
+        return null;
+    }
+    const loader = Object.entries(OVERLAY_LOADER_MAP).find(([path]) => {
+        return path.endsWith(`/i18n/${langCode}.json`);
+    })?.[1];
+    if (loader === undefined) {
+        return null;
+    }
+    try {
+        return await loader();
+    } catch (_error) {
+        // The English questions still work; a failed translation is no
+        // reason for an empty help window.
+        return null;
+    }
+}
+
 async function loadCorpus(): Promise<CorpusType | null> {
     try {
         const pagePathList = Object.keys(PAGE_LOADER_MAP)
@@ -154,16 +201,21 @@ async function loadCorpus(): Promise<CorpusType | null> {
                 return !path.endsWith('/schema.json');
             })
             .sort();
-        const [match, ...pageModules] = await Promise.all([
+        const [match, overlay, ...pageModules] = await Promise.all([
             import('../../tools/owa-devtools-mcp/questionMatch.mjs'),
+            loadOverlay(),
             ...pagePathList.map((path) => {
                 return PAGE_LOADER_MAP[path]();
             }),
         ]);
+        const pages = (pageModules as any[]).map((item) => {
+            return (item.default ?? item) as QuestionPageType;
+        });
         return {
-            pages: (pageModules as any[]).map((item) => {
-                return (item.default ?? item) as QuestionPageType;
-            }),
+            // In the app's language where the corpus is translated: every
+            // chip, suggestion and heading shows `text`, and keeps its
+            // English in `textEn` (`applyQuestionOverlay`).
+            pages: match.applyQuestionOverlay(pages, overlay),
             match: match.matchQuestions,
         };
     } catch (_error) {
@@ -268,17 +320,28 @@ export async function getAllQuestions(
         group.questions.push({
             text: row.text,
             isTemplate: row.isTemplate === true,
+            ...toTextEnField(row),
         });
         groupMap.set(label, group);
     }
     return [...groupMap.values()];
 }
 
+// Letters of every script: keyed on `[a-z0-9]` alone, a question in Khmer
+// was an empty key and matched nothing.
 function toFollowUpKey(text: string) {
     return text
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
         .trim();
+}
+
+// A row is the question asked in its own words or in its English ones.
+function checkIsRowAsked(row: QuestionRowType, key: string) {
+    return (
+        toFollowUpKey(row.text) === key ||
+        toFollowUpKey(row.textEn ?? row.text) === key
+    );
 }
 
 /** The starter chips for a window nobody has typed in yet. */
@@ -293,7 +356,11 @@ export async function getStarterQuestions(
         return FALLBACK_STARTERS[focus].slice(0, limit).map(toStarterQuestion);
     }
     return rows.map((row) => {
-        return { text: row.text, isTemplate: row.isTemplate === true };
+        return {
+            text: row.text,
+            isTemplate: row.isTemplate === true,
+            ...toTextEnField(row),
+        };
     });
 }
 
@@ -320,7 +387,7 @@ export async function genFollowUpQuestions(
     const rows = await suggestQuestions(asked, focus, limit + 6);
     const askedKey = toFollowUpKey(asked);
     const candidates = rows.filter((row) => {
-        return toFollowUpKey(row.text) !== askedKey;
+        return !checkIsRowAsked(row, askedKey);
     });
     const picked: QuestionRowType[] = [];
     const taken = new Set<string>();
@@ -368,7 +435,7 @@ export async function findKnownQuestion(
     // room for the near-duplicates that share every word with it.
     const rows = await suggestQuestions(asked, focus, 8);
     const own = rows.find((row) => {
-        return toFollowUpKey(row.text) === key;
+        return checkIsRowAsked(row, key);
     });
     if (own !== undefined) {
         return own;
@@ -388,7 +455,7 @@ export async function findKnownQuestion(
         corpus
             .match(asked, { pages: corpus.pages, focus: null, limit: 8 })
             .find((row) => {
-                return toFollowUpKey(row.text) === key;
+                return checkIsRowAsked(row, key);
             }) ?? null;
     if (elsewhere !== null) {
         return elsewhere;
@@ -406,6 +473,24 @@ export async function findKnownQuestion(
         findFilledTemplateRow(key, allRows) ??
         findRowByKeywordPhrase(key, allRows)
     );
+}
+
+/**
+ * A finished fill-in row typed in the window's language, as the row's
+ * English sentence with the person's part in it (`toEnglishTemplateAsk`),
+ * or null -- for an English window always, and for anything else typed.
+ */
+export async function findTemplateAsk(typed: string): Promise<string | null> {
+    if (getAppLangCode() === DEFAULT_CHAT_LANG_CODE || typed.trim() === '') {
+        return null;
+    }
+    const corpus = await getCorpus();
+    if (corpus === null) {
+        return null;
+    }
+    const { flattenQuestions, toEnglishTemplateAsk } =
+        await import('../../tools/owa-devtools-mcp/questionMatch.mjs');
+    return toEnglishTemplateAsk(typed, flattenQuestions(corpus.pages));
 }
 
 // A fill-in row's own gap: the three dots its words end on.
@@ -426,13 +511,16 @@ const TEMPLATE_GAP_PATTERN = /(\.{3}|…)\s*$/;
  */
 export function findFilledTemplateRow(
     key: string,
-    rows: QuestionRowType[],
+    rows: (QuestionRowType & { textEn?: string })[],
 ): QuestionRowType | null {
     const hits = rows.filter((row) => {
-        if (row.isTemplate !== true || !TEMPLATE_GAP_PATTERN.test(row.text)) {
+        // The ENGLISH row: a translated fill-in row is asked in English
+        // (`findTemplateAsk`).
+        const text = row.textEn ?? row.text;
+        if (row.isTemplate !== true || !TEMPLATE_GAP_PATTERN.test(text)) {
             return false;
         }
-        const opening = toFollowUpKey(row.text);
+        const opening = toFollowUpKey(text);
         return opening.length > 0 && key.startsWith(`${opening} `);
     });
     return hits.length === 1 ? hits[0] : null;
@@ -536,8 +624,18 @@ export const HELP_WINDOW_MANUAL_ID = 'W-42';
  * somebody typing in the window -- for three questions in twenty-four, and
  * again after it was told in so many words never to (gemma-4-e4b,
  * 2026-10-12). What a model is not handed it cannot recite.
+ *
+ * Kept when the row NAMES a passage in that step (`keepPassage`): then the
+ * question is about the way in itself. "How do I open the help from the
+ * taskbar?" names the step's taskbar paragraph, and with the step dropped
+ * it was answered "Click the 🤖 button on the taskbar" (Nemotron Lightning,
+ * 2026-10-16) -- the right-click on the app's icon was nowhere in what it
+ * was handed.
  */
-export function dropFirstStep(pageText: string): string {
+export function dropFirstStep(
+    pageText: string,
+    keepPassage: string | null = null,
+): string {
     // Where the step's number stands: the pattern takes in the blank line
     // and the indent in front of it.
     const toStart = (match: RegExpMatchArray | undefined) => {
@@ -550,6 +648,15 @@ export function dropFirstStep(pageText: string): string {
     const first = toStart(steps[0]);
     const second = toStart(steps[1]);
     if (first === null || second === null) {
+        return pageText;
+    }
+    if (
+        keepPassage !== null &&
+        keepPassage.trim().length > 0 &&
+        ` ${toPassageKey(pageText.slice(first, second))} `.includes(
+            ` ${toPassageKey(keepPassage)} `,
+        )
+    ) {
         return pageText;
     }
     return pageText.slice(0, first) + pageText.slice(second);
@@ -572,7 +679,8 @@ export type KnownPageModeType =
 export type KnownPageRowType = Pick<
     QuestionRowType,
     'text' | 'keywords' | 'resources'
->;
+> &
+    Partial<Pick<QuestionRowType, 'textEn'>>;
 
 /**
  * The part of the page that rides on the ask: all of it when it fits, else
@@ -632,7 +740,19 @@ export function clipKnownPageParts(
     // refused" is the last of them.
     const passage = row?.resources?.passage;
     const hasPassage = typeof passage === 'string' && passage.trim().length > 0;
-    const at = wanted.length === 0 || hasPassage ? -1 : text.indexOf(wanted);
+    // The page comes in the window's language and the row's control is
+    // written in English: in a Khmer window the button is found by its Khmer
+    // words.
+    const at =
+        wanted.length === 0 || hasPassage
+            ? -1
+            : ([wanted, tranLabel(wanted)]
+                  .map((one) => {
+                      return text.indexOf(one);
+                  })
+                  .find((index) => {
+                      return index !== -1;
+                  }) ?? -1);
     if (at !== -1 && at < head.length) {
         return { text: head + KNOWN_PAGE_TAIL_NOTE, mode: 'head' };
     }
@@ -643,7 +763,7 @@ export function clipKnownPageParts(
                 : clipPageToPassages(
                       text,
                       [
-                          ...toQuestionTerms(row.text),
+                          ...toQuestionTerms(row.textEn ?? row.text),
                           ...(row.keywords ?? []).flatMap(toQuestionTerms),
                       ],
                       genQuestionAnchors(row.resources),
@@ -695,6 +815,284 @@ export function clipKnownPage(
 }
 
 /**
+ * A page's blocks in its own order -- a numbered step with what hangs under
+ * it, or a paragraph -- with the note the page tool writes at its foot left
+ * off. A translation is written block for block: measured 2026-10-17, each of
+ * the 64 Khmer pages splits into exactly as many blocks as its English page,
+ * which is what lets a cut made of the English page be made of the
+ * translation (`toLocalizedCut`).
+ */
+export function splitPageBlocks(pageText: string): string[] {
+    const whole = pageText.trim();
+    const footAt = whole.indexOf(`\n\n${FRESH_PAGE_NOTE_LEAD}`);
+    const lines = (footAt === -1 ? whole : whole.slice(0, footAt)).split('\n');
+    const blocks: string[] = [];
+    let current: string[] = [];
+    const close = () => {
+        const block = current.join('\n').trim();
+        if (block.length > 0) {
+            blocks.push(block);
+        }
+        current = [];
+    };
+    lines.forEach((line, index) => {
+        if (line.trim().length === 0) {
+            close();
+            return;
+        }
+        // A step, and a paragraph opening on a bold lead inside one -- the
+        // help window's sixth step holds eleven of them, the commands among
+        // them, and pointed at by the step's start the commands never rode.
+        // And a bullet: W-09's foreground list -- sessions, blend mode,
+        // Effects -- was ONE block opening on the volume paragraph, so the
+        // Effects passage was quoted in Khmer as that paragraph, cut before
+        // it reached Effects (pass 7, EC-328).
+        if (
+            /^\s*\d+\.\s/.test(line) ||
+            /^\s*[-*+]\s/.test(line) ||
+            checkIsBoldLeadLine(line, lines[index + 1])
+        ) {
+            close();
+        }
+        current.push(line);
+    });
+    close();
+    return blocks;
+}
+
+// How much of a line of a block says it rides in a cut: a cut that carries
+// any line of a block carries the block, and then the whole translated block
+// rides.
+const LINE_LEAD_LENGTH = 60;
+// How many of a translated block's first characters point at it.
+const PASSAGE_LEAD_LENGTH = 60;
+// Where a sentence ends: a full stop, a question or exclamation mark, a colon
+// or semicolon -- and the marks of a script that has its own (Khmer's ។ ៕ ៖)
+// -- before a space. Read off both sides of a pair of blocks, and believed
+// only when they come to the same count.
+const SENTENCE_END_PATTERN = /(?<=[.!?:;។៕៖])\s+/u;
+
+function splitSentences(text: string) {
+    return text.split(SENTENCE_END_PATTERN).filter((sentence) => {
+        return sentence.trim().length > 0;
+    });
+}
+// How much longer than the English cut its translation may run: whole blocks
+// ride where the English cut took the start of one (the help window's
+// commands, 5 800 Khmer characters under one lead), though the translation
+// itself is no longer (W-42: 63 693 Khmer characters to 68 719 English).
+const LOCAL_PAGE_ALLOWANCE = 1.5;
+
+// A line as a cut writes it: `toPassages` joins a paragraph's lines with a
+// space, trims each and drops a quote's `>`.
+function toFlatText(text: string) {
+    return text
+        .replace(/^[ \t]*>[ \t]?/gm, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+// What a block is, in marks every language keeps: its step's number, a
+// heading, a quote, a bullet, or a paragraph.
+function toBlockShape(block: string) {
+    const step = /^(\d+)\.\s/.exec(block);
+    if (step !== null) {
+        return `step ${step[1]}`;
+    }
+    if (block.startsWith('#')) {
+        return 'heading';
+    }
+    if (block.startsWith('>')) {
+        return 'quote';
+    }
+    if (/^[-*+]\s/.test(block)) {
+        return 'bullet';
+    }
+    return block.startsWith('**') ? 'lead' : 'paragraph';
+}
+
+// The two pages' blocks, only when the translation is written block for
+// block -- as many of them and each of the same kind. A page that does not
+// line up rides as the English cut rather than as the wrong part of the
+// translation.
+function listAlignedBlocks(englishPage: string, localPage: string) {
+    const englishBlocks = splitPageBlocks(englishPage);
+    const localBlocks = splitPageBlocks(localPage);
+    if (
+        englishBlocks.length === 0 ||
+        englishBlocks.length !== localBlocks.length ||
+        englishBlocks.some((block, index) => {
+            return toBlockShape(block) !== toBlockShape(localBlocks[index]);
+        })
+    ) {
+        return null;
+    }
+    return { englishBlocks, localBlocks };
+}
+
+// A line deep in a block says the block rides only when it is long enough to
+// be that line's own words: "Wordproject." ends a line of W-34's step 8 and a
+// sentence of its step 6, and a cut of step 6 carried step 8 in with it
+// (2026-10-18, gemma4:cloud in Khmer answered with both).
+const INNER_LINE_LEAD_LENGTH = 30;
+
+function checkIsBlockInCut(block: string, flatCut: string) {
+    return block.split('\n').some((line, index) => {
+        const lead = toFlatText(line).slice(0, LINE_LEAD_LENGTH);
+        return (
+            lead.length >= (index === 0 ? 12 : INNER_LINE_LEAD_LENGTH) &&
+            flatCut.includes(lead)
+        );
+    });
+}
+
+/**
+ * A cut of the English page (`clipKnownPageParts`) made of the same page in
+ * the person's language: the translation's blocks that stand where the
+ * English cut's blocks stand, in order, with … where some were left out. The
+ * cut is CHOSEN in English, because the row's control, passage and keywords
+ * are English words, and READ in their language -- handed the English cut,
+ * gemma4:cloud answering in Khmer copied its sentences as they stood: _បើក
+ * View on the top menu bar again and click_ (2026-10-17). Null when the two
+ * pages do not line up block for block, or no block of the cut was found.
+ *
+ * Whole blocks ride, so a cut that took the start of a long one takes all of
+ * it in the translation -- the help window's commands block is 5 800 Khmer
+ * characters -- and the cut has a ceiling of its own: the English one's and
+ * half again (`LOCAL_PAGE_ALLOWANCE`), the block that crosses it cut at a
+ * line.
+ */
+export function toLocalizedCut(
+    englishPage: string,
+    localPage: string,
+    englishCut: string,
+    limit = Math.round(KNOWN_PAGE_CHAR_LIMIT * LOCAL_PAGE_ALLOWANCE),
+): string | null {
+    const aligned = listAlignedBlocks(englishPage, localPage);
+    if (aligned === null) {
+        return null;
+    }
+    const flatCut = toFlatText(englishCut);
+    const kept: string[] = [];
+    let lastIndex = -1;
+    let length = 0;
+    let isCut = englishCut.includes(KNOWN_PAGE_TAIL_NOTE);
+    for (const [index, block] of aligned.englishBlocks.entries()) {
+        if (!checkIsBlockInCut(block, flatCut)) {
+            continue;
+        }
+        const local = aligned.localBlocks[index];
+        const gap = lastIndex !== -1 && index !== lastIndex + 1 ? '…' : null;
+        const room = limit - length - (gap === null ? 0 : 3) - 2;
+        if (local.length > room) {
+            // At the last line that fits, when one does; else nothing more.
+            const lineEnd = local.lastIndexOf('\n', room);
+            if (lineEnd > 0 && kept.length > 0) {
+                if (gap !== null) {
+                    kept.push(gap);
+                }
+                kept.push(local.slice(0, lineEnd).trimEnd());
+            } else if (kept.length === 0) {
+                kept.push(local.slice(0, Math.max(room, 0)).trimEnd());
+            }
+            isCut = true;
+            break;
+        }
+        if (gap !== null) {
+            kept.push(gap);
+        }
+        kept.push(local);
+        length += local.length + 2 + (gap === null ? 0 : 3);
+        lastIndex = index;
+    }
+    if (kept.length === 0) {
+        return null;
+    }
+    return kept.join('\n\n') + (isCut ? KNOWN_PAGE_TAIL_NOTE : '');
+}
+
+/**
+ * The opening words, in the person's language, of the block an English
+ * `passage` stands in: how the hint points at the part that answers when the
+ * page rides in their language. Null when the passage is in no block.
+ */
+export function findLocalizedPassageLead(
+    englishPage: string,
+    localPage: string,
+    passage: string,
+): string | null {
+    const aligned = listAlignedBlocks(englishPage, localPage);
+    const wantedKey = toPassageKey(passage);
+    if (aligned === null || wantedKey.length === 0) {
+        return null;
+    }
+    const index = aligned.englishBlocks.findIndex((block) => {
+        return ` ${toPassageKey(block)} `.includes(` ${wantedKey} `);
+    });
+    if (index === -1) {
+        return null;
+    }
+    // A quote's `>` is no word of it: a passage inside one was pointed at as
+    // "> > លុបវា…" (W-34's KJV note, 2026-10-18).
+    const toLeadText = (text: string) => {
+        return text
+            .replace(/^[ \t]*>[ \t]?/gm, '')
+            .replace(/^(?:\d+\.\s*|[-*+]\s+)/, '')
+            .replaceAll('**', '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+    // A passage that starts INSIDE its block is pointed at by the sentence
+    // it starts in, when both blocks have as many sentences: pointed at the
+    // block's first words, _How do I cast the virtual display to a TV from
+    // my phone?_ was answered with the app's own cast button, the step's
+    // first sentence, where the passage is its fourth -- the phone's page
+    // (gemma4:cloud, the whole corpus asked in Khmer, 2026-10-17, EC-317).
+    const englishSentences = splitSentences(
+        toLeadText(aligned.englishBlocks[index]),
+    );
+    const localSentences = splitSentences(
+        toLeadText(aligned.localBlocks[index]),
+    );
+    let sentenceIndex = 0;
+    for (let at = englishSentences.length - 1; at > 0; at -= 1) {
+        const rest = englishSentences.slice(at).join(' ');
+        if (` ${toPassageKey(rest)} `.includes(` ${wantedKey} `)) {
+            sentenceIndex = at;
+            break;
+        }
+    }
+    // Inside a block whose sentences do not line up, no words of it are the
+    // passage's: its first ones had pointed four report questions at the
+    // paragraph's opening, the way the Report button is reached, where each
+    // asks about sending, keeping or email (Khmer W-42 split one sentence
+    // more, at "Report: ", 2026-10-18). The part is then the one quoted.
+    if (
+        sentenceIndex > 0 &&
+        englishSentences.length !== localSentences.length
+    ) {
+        return null;
+    }
+    const lead =
+        sentenceIndex > 0
+            ? localSentences.slice(sentenceIndex).join(' ')
+            : toLeadText(aligned.localBlocks[index]);
+    if (lead.length <= PASSAGE_LEAD_LENGTH) {
+        return lead;
+    }
+    // At a space: a cut inside a Khmer cluster leaves a vowel sign with no
+    // letter to sit on.
+    const spaceAt = lead.lastIndexOf(' ', PASSAGE_LEAD_LENGTH);
+    // Never ending on the dash of the bullet that comes next.
+    return lead
+        .slice(
+            0,
+            spaceAt > PASSAGE_LEAD_LENGTH / 3 ? spaceAt : PASSAGE_LEAD_LENGTH,
+        )
+        .replace(/\s+[-–—•]+$/u, '');
+}
+
+/**
  * Whether what rides on the ask is the page's ANSWER to the question -- the
  * whole page, or a cut that carries what the question is about. The loop is
  * told (`AskExtraType.isKnownPageQuoted`), because steps written from it are
@@ -735,18 +1133,120 @@ export function checkIsKnownPageQuoted(
 export function genKnownAskExtra(
     row: QuestionRowType | null,
     pageText: string | null,
-): { knownRecipeId?: string; knownFind?: string; isKnownPageQuoted?: boolean } {
+    // The page in the language the model is asked in, when not English: the
+    // part's controls are named as that app shows them.
+    localPageText: string | null = null,
+): {
+    knownRecipeId?: string;
+    knownFind?: string;
+    isKnownPageQuoted?: boolean;
+    knownDoTool?: string;
+    isKnownPartNamed?: boolean;
+    knownPartControls?: string[];
+    isKnownWhatAsk?: boolean;
+} {
+    const doTool = row === null ? null : findDoAskTool(row);
+    const doField = doTool === null ? {} : { knownDoTool: doTool };
     const recipe = row?.resources?.recipe;
     if (row === null || recipe === undefined || row.kind === 'state') {
-        return {};
+        return doField;
     }
     const find = row.resources?.find;
     return {
+        ...doField,
         knownRecipeId: recipe,
         isKnownPageQuoted: checkIsKnownPageQuoted(pageText, row),
         // A string or nothing: the walkthrough card takes it as text.
         ...(typeof find === 'string' ? { knownFind: find } : {}),
+        // The hint names the part that answers: an answer written from it
+        // is checked once for the steps that finish the job
+        // (`ToolWatchType.canCheckCompleteness`).
+        ...(typeof find === 'string' ||
+        typeof row.resources?.passage === 'string'
+            ? { isKnownPartNamed: true }
+            : {}),
+        // A what-or-why question is checked for its answer, not its steps:
+        // asked whether a step was missing, the model padded _Why does the
+        // preview show my desktop wallpaper?_ and _Where do the Bibles come
+        // from?_ with procedures nobody asked for (pass 17, 2026-10-18).
+        ...(row.kind === 'what' ? { isKnownWhatAsk: true } : {}),
+        ...toPartControlsField(
+            findKnownPartControls(row, pageText, localPageText),
+        ),
     };
+}
+
+function toPartControlsField(controls: string[]) {
+    return controls.length === 0 ? {} : { knownPartControls: controls };
+}
+
+// A bold that is a sentence (a lead ending in a stop) or longer than a name
+// is not a control.
+const PART_CONTROL_LIMIT = 10;
+
+/**
+ * The controls the page part a known question is filed with names -- its
+ * bold labels, as the window it rides in shows them -- for the completeness
+ * check to hold an answer against (`genCompletenessNudge`). Passes 9-10 of
+ * the whole list asked in Khmer: the answers still short left out a control
+ * that part named -- **Send report**, the Base URL box, the **Properties**
+ * fold, **Show it** -- and "is a step missing?" did not find it (EC-333).
+ */
+export function findKnownPartControls(
+    row: Pick<QuestionRowType, 'resources'>,
+    pageText: string | null,
+    localPageText: string | null = null,
+): string[] {
+    if (pageText === null) {
+        return [];
+    }
+    const passage = row.resources?.passage;
+    const find = row.resources?.find;
+    const passages = toPassages(pageText);
+    let partText: string | null = null;
+    if (typeof passage === 'string' && passage.trim().length > 0) {
+        const wantedKey = toPassageKey(passage);
+        const part = passages.find((one: { text: string }) => {
+            return ` ${toPassageKey(one.text)} `.includes(` ${wantedKey} `);
+        });
+        partText =
+            part === undefined
+                ? null
+                : withPointedBackPart(pageText, part.text);
+    } else if (typeof find === 'string' && find.trim().length > 0) {
+        const names = [find, tranLabel(find)];
+        const part = passages.find((one: { text: string }) => {
+            return names.some((name) => {
+                return one.text.includes(`**${name}**`);
+            });
+        });
+        partText = part?.text ?? null;
+    }
+    // Read off the ENGLISH part as the window has it: its labels come
+    // resolved into the window's language (`[en:tran:Padding]` →
+    // _ចន្លោះខាងក្នុង_) while emphasis stays English (**every**, **WORDS**),
+    // so in a window not in English a bold in its own letters IS a control.
+    // In English the two cannot be told apart, and the check stays general.
+    if (partText === null || localPageText === null) {
+        return [];
+    }
+    const controls: string[] = [];
+    for (const match of partText.matchAll(/\*\*([^*\n]{1,60}?)\*\*/g)) {
+        const name = match[1].trim();
+        if (
+            name.length === 0 ||
+            !/[^\p{Script=Latin}\p{N}\p{P}\p{S}\p{Z}]/u.test(name) ||
+            /[.:។៖?!]$/u.test(name) ||
+            controls.includes(name)
+        ) {
+            continue;
+        }
+        controls.push(name);
+        if (controls.length >= PART_CONTROL_LIMIT) {
+            break;
+        }
+    }
+    return controls;
 }
 
 // A page comes in two parts today, the help window's own. More than this is
@@ -825,11 +1325,131 @@ export async function readKnownQuestionPage(
 // of a long step: what is cut off is still in the page under it.
 const NAMED_PASSAGE_CHAR_LIMIT = 1500;
 
+/**
+ * The named part as it is quoted first: whole when it fits, else up to the
+ * last line that does, and a … that says it goes on. Cut at the character,
+ * the help window's command list ended mid-word, and the model copied it to
+ * the same syllable three passes running -- an answer that stopped in the
+ * middle of a sentence (2026-10-18, gemma4:cloud in Khmer).
+ */
+function clipNamedPart(text: string) {
+    if (text.length <= NAMED_PASSAGE_CHAR_LIMIT) {
+        return text;
+    }
+    const lineEnd = text.lastIndexOf('\n', NAMED_PASSAGE_CHAR_LIMIT);
+    const sentenceEnd = Math.max(
+        ...['. ', '។ ', '? ', '! '].map((mark) => {
+            return text.lastIndexOf(mark, NAMED_PASSAGE_CHAR_LIMIT);
+        }),
+    );
+    const cutAt =
+        lineEnd > NAMED_PASSAGE_CHAR_LIMIT / 2
+            ? lineEnd
+            : sentenceEnd > NAMED_PASSAGE_CHAR_LIMIT / 2
+              ? sentenceEnd + 1
+              : NAMED_PASSAGE_CHAR_LIMIT;
+    return `${text.slice(0, cutAt).trimEnd()}\n…`;
+}
+// The tools the system prompt has the model use when asked to put something
+// up ("done when asked to go UP", `llmBotHelpers.ts`), and the asks that
+// are such a request rather than a question about how.
+const DO_ON_ASK_TOOL_SET = new Set(['owa_foreground', 'owa_present_bible']);
+const DO_ASK_PATTERN =
+    /^(?:(?:can|could|would|will) you\s+)?(?:please\s+)?(?:start|put|show|run|begin|count)\b/i;
+
+/**
+ * The tool a known question asks the assistant to put something up with,
+ * or null: the hint says to do it, and the loop hands an answer back that
+ * says it was done without having called it (`AskExtraType.knownDoTool`).
+ */
+export function findDoAskTool(
+    row: Pick<QuestionRowType, 'text' | 'resources'> & { textEn?: string },
+): string | null {
+    const tool = (row.resources?.tools ?? []).find((name) => {
+        return DO_ON_ASK_TOOL_SET.has(name);
+    });
+    return tool !== undefined && DO_ASK_PATTERN.test(row.textEn ?? row.text)
+        ? tool
+        : null;
+}
+// A part whose first words point BACK at the one before it: _of that line_,
+// _in that same row_, _Fold those lists_ -- never the "that" of _a passage
+// that runs on_, nor "this", which in this manual is mostly the window in
+// front of them. Read off the English page, the one the manual is written in.
+const POINTED_BACK_PATTERN =
+    /^(?:[^\s]+\s+){0,10}?(?:(?:of|in|on|at|to|from|under|for|into|by|with)\s+that|those)\b/i;
+
+/**
+ * The part named to answer a question, with the part before it when it opens
+ * by pointing back at that one: _The two small arrows at the end of THAT
+ * line walk them in order_, quoted by itself, does not say which line, and
+ * _How do I see the other tips above the box?_ was answered with the `/`
+ * command list (gemma4:cloud, the whole corpus asked in Khmer, 2026-10-17,
+ * EC-317) -- the line is the 💡 one, in the part before it.
+ */
+function withPointedBackPart(pageText: string, partText: string) {
+    const lead = partText.replaceAll('**', '').split(/(?<=[.!?:;])\s/)[0];
+    if (!POINTED_BACK_PATTERN.test(lead)) {
+        return partText;
+    }
+    const passages = toPassages(pageText);
+    // The cut's last part carries the cut's own note after it.
+    const index = passages.findIndex((one: { text: string }) => {
+        return partText.startsWith(one.text);
+    });
+    if (index <= 0) {
+        return partText;
+    }
+    return `${passages[index - 1].text}\n\n${partText}`;
+}
+
+// A step or a bullet, or a block of code: what a part ending on a colon
+// introduces.
+const INTRODUCED_KIND_LIST = [/^\d+\.\s/, /^[-*+]\s/, /^```/];
+
+/**
+ * The part named to answer a question, with what it introduces when it ends
+ * on a colon -- the steps, the bullets or the example after it, of one kind,
+ * as many as fit: _Write it as a list of entries, each with a title to read
+ * and a url to open:_ was quoted without the example under it, and the Khmer
+ * answer described the file with no example (2026-10-18).
+ */
+function withIntroducedPart(pageText: string, partText: string) {
+    if (!/:$/.test(partText.trimEnd())) {
+        return partText;
+    }
+    const passages = toPassages(pageText);
+    const lastLine = partText.split('\n\n').at(-1) ?? partText;
+    const index = passages.findIndex((one: { text: string }) => {
+        return one.text === lastLine;
+    });
+    const kind = INTRODUCED_KIND_LIST.find((pattern) => {
+        return index !== -1 && pattern.test(passages[index + 1]?.text ?? '');
+    });
+    if (kind === undefined) {
+        return partText;
+    }
+    let text = `${partText}\n\n${passages[index + 1].text}`;
+    for (const one of passages.slice(index + 2)) {
+        const next = `${text}\n\n${one.text}`;
+        if (!kind.test(one.text) || next.length > NAMED_PASSAGE_CHAR_LIMIT) {
+            break;
+        }
+        text = next;
+    }
+    return text;
+}
+
 export function genKnownQuestionHint(
     row: QuestionRowType,
     extra: {
         focus?: BotFocusType;
         pageText?: string | null;
+        // The same page in the language the model is asked in, when that is
+        // not English (`W-31@km`): what rides is cut from `pageText` and
+        // quoted from this (`toLocalizedCut`), and the controls and menu
+        // items are named as that language's app shows them.
+        localPageText?: string | null;
         // The row's tools this assistant was NOT sent (a local server gets
         // the essentials only): named as absent, never as "the live tool".
         missingTools?: string[];
@@ -847,6 +1467,11 @@ export function genKnownQuestionHint(
         return !missingTools.includes(name);
     });
     const { focus, pageText = null } = extra;
+    const localPageText =
+        typeof extra.localPageText === 'string' &&
+        extra.localPageText.trim().length > 0
+            ? extra.localPageText
+            : null;
     const parts: string[] = [];
     if (recipe !== null) {
         parts.push(
@@ -866,12 +1491,29 @@ export function genKnownQuestionHint(
         // not provide information about your computer's physical hardware
         // ... type /btw" (gemma-4-e4b, 2026-10-13, at temperature 0, so
         // every time).
+        // A row that asks the assistant to put something UP, with the one
+        // tool the prompt lets it do that with when asked: _Can you start a
+        // 5 minute countdown on the screen?_ asked in Khmer was answered
+        // "I can -- shall I do it now, or would you like the steps?" (the
+        // whole list asked in Khmer of gemma4:cloud, 2026-10-17, EC-323).
+        const doTool = findDoAskTool(row);
+        const isDoAsk = doTool !== null && tools.includes(doTool);
         parts.push(
             (row.kind === 'state'
                 ? 'it asks what the app has or is doing RIGHT NOW, which ' +
                   `only the app can say -- call ${tools[0]} first and ` +
                   'answer from what it returns; '
                 : '') +
+                // Started on a screen that was off, the countdown was
+                // followed by "shall I turn the screen on?" -- a press no
+                // tool here may make unasked, where the person needed to be
+                // told which button is theirs (pass 18, 2026-10-18).
+                (isDoAsk
+                    ? `it asks you to DO it, now: call ${doTool} and say ` +
+                      'what it reports, rather than asking whether to -- ' +
+                      'and when it reports a screen is off, tell them to ' +
+                      'press that screen’s show button or F5 themselves; '
+                    : '') +
                 `the live tool${tools.length > 1 ? 's' : ''} for it: ` +
                 tools.join(', '),
         );
@@ -887,10 +1529,17 @@ export function genKnownQuestionHint(
         parts.push(
             `this assistant has NOT been given ${missingTools.join(', ')} ` +
                 `-- the tool${missingTools.length > 1 ? 's' : ''} that ` +
-                'would do it in the app -- so say plainly that you cannot ' +
-                'do that for them from this assistant, never write as ' +
-                'though it were done, and give the way to do it by hand ' +
-                'when the guide has one',
+                // Said without a phrase to copy: "from this assistant" came
+                // back as it stood inside a Khmer answer (pass 6, EC-321).
+                'would do it in the app -- so say plainly, in your own ' +
+                'words, that you cannot do that for them here, never write ' +
+                'as though it were done, and lead with the way the guide gives ' +
+                // "By hand" was read as "no command": _Can you write the
+                // notation for words I paste in?_ was answered without the
+                // `/lyric` its part names, pass after pass (gemma4:cloud,
+                // the whole list in Khmer, 2026-10-18).
+                'to do it without them -- by hand, or a / command it names, ' +
+                'written out with what to type after it -- when it has one',
         );
         // With no page under the row there is no way by hand to give, and a
         // model told "give one when the guide has one" gave one anyway: "Can
@@ -929,9 +1578,31 @@ export function genKnownQuestionHint(
     // with the slide keys: its key is written in the row and on no page.
     const menu = row.resources?.menu;
     const shortcut = row.resources?.shortcut;
+    // Asked in another language, a menu item is named as that app shows it:
+    // the menu bar's own names (View, Help) are English in every language,
+    // the items a window adds under them are translated (`[en:tran:Reset
+    // Widgets Size]` in every page of the Khmer manual). Told "View → Reset
+    // Widgets Size, as written here", a model writing Khmer wrote it in
+    // English. The menus' own items are English too (Help → AI Chat, Edit →
+    // Find: `NATIVE_MENU_ITEM_MAP`).
+    const toShownMenu = (path: string) => {
+        if (localPageText === null) {
+            return path.trim();
+        }
+        const parts = path.split(/\s*→\s*/);
+        const nativeItems = NATIVE_MENU_ITEM_MAP[parts[0].trim()] ?? [];
+        return parts
+            .map((part, index) => {
+                return index === 0 ||
+                    (index === 1 && nativeItems.includes(part.trim()))
+                    ? part.trim()
+                    : tranLabel(part.trim());
+            })
+            .join(' → ');
+    };
     const named = [
         typeof menu === 'string' && menu.trim().length > 0
-            ? `the menu item ${menu.trim()}`
+            ? `the menu item ${toShownMenu(menu)}`
             : null,
         typeof shortcut === 'string' && shortcut.trim().length > 0
             ? `the key ${shortcut.trim()}`
@@ -939,12 +1610,17 @@ export function genKnownQuestionHint(
     ].filter((one): one is string => {
         return one !== null;
     });
+    // Said as a fact about the APP, not about its list: worded "the app's own
+    // list files this question with the key Ctrl+B", it came back to the
+    // person as "Press Ctrl+B (the app files this under that key)" and "the
+    // app's key list for this is Arrow keys / PageDown / Space" -- two of
+    // twenty-three answers on the free model, 2026-10-16. What a model is
+    // told, it may repeat; this it may repeat.
     const namedText =
         named.length === 0
             ? ''
-            : ` The app's own list files this question with ` +
-              `${named.join(' and ')}: say ` +
-              `${named.length > 1 ? 'them' : 'it'} in the answer, as ` +
+            : ` For this, the app has ${named.join(' and ')}: name ` +
+              `${named.length > 1 ? 'them' : 'it'} in the steps, as ` +
               'written here.';
     // Asked from a window of its own about that very window: its page tells
     // the way in first, and nine of thirty-nine answers given from the Slide
@@ -975,20 +1651,45 @@ export function genKnownQuestionHint(
           'is open in front of them: start at what to do there, and never ' +
           'tell them how to open it or get to it.'
         : '';
+    // A step that ends "and send it" is written from habit as "press
+    // Enter", and in this box Enter starts a new line: two help-window
+    // answers in pass 13 left the person typing a second line (gemma4:cloud,
+    // the whole list in Khmer, 2026-10-18). The page says it; the hint says
+    // it where every help-window answer sees it.
+    const sendText =
+        recipe === HELP_WINDOW_MANUAL_ID
+            ? ' In the help window a question is sent with Ctrl+Enter or ' +
+              'the Send button -- plain Enter only starts a new line.'
+            : '';
     const head =
         `(This is one of the app's own supported questions${filedUnder}; ` +
-        `${parts.join('; ')}.)${namedText}${ownWindowText}`;
+        `${parts.join('; ')}.)${namedText}${ownWindowText}${sendText}`;
     if (pageText === null) {
         return head;
     }
     const find =
         typeof row.resources?.find === 'string' ? row.resources.find : null;
     const { text: clipped, mode } = clipKnownPageParts(
-        // Asked in the very window the page is about: not how to open it.
-        recipe === HELP_WINDOW_MANUAL_ID ? dropFirstStep(pageText) : pageText,
+        // Asked in the very window the page is about: not how to open it --
+        // unless that is what the row asks.
+        recipe === HELP_WINDOW_MANUAL_ID
+            ? dropFirstStep(
+                  pageText,
+                  typeof row.resources?.passage === 'string'
+                      ? row.resources.passage
+                      : null,
+              )
+            : pageText,
         find,
         row,
     );
+    // Asked in the person's language: the very blocks of the page that cut
+    // chose, in their words. All or nothing -- a translation that does not
+    // line up rides as the English cut, pointed at in English, as before.
+    const localClipped =
+        localPageText === null
+            ? null
+            : toLocalizedCut(pageText, localPageText, clipped);
     // Said when the page had to be cut around the control: a small model
     // handed the opening and the step recited the page from step 1 and ran
     // out of words before the step that answers (the laptop's 0.6B,
@@ -996,11 +1697,21 @@ export function genKnownQuestionHint(
     // words, so the gaps are read as gaps and not as the page's order.
     let focusText = '';
     if (mode === 'step') {
+        // In another language the control is named as that app shows it, or
+        // not at all: an English name is what gets copied into the answer.
+        const shownFind = localClipped === null ? find : tranLabel(find ?? '');
+        const findText =
+            localClipped !== null && shownFind === find
+                ? 'in the step quoted after the opening'
+                : `"${shownFind}", in the step quoted after the opening`;
+        // And the steps after it: told "answer with that step", gemma4:cloud
+        // asked how to use its own LM Studio stopped at Add server, with the
+        // name, the address and Test still to come (2026-10-17, EC-310).
         focusText =
-            ` The control this question is about is "${find}", in the ` +
-            'step quoted after the opening; the opening only says how to ' +
-            'get there, so answer with that step and name the way there ' +
-            'in one line.';
+            ` The control this question is about is ${findText}; the ` +
+            'opening only says how to ' +
+            'get there, so answer with that step, name the way there ' +
+            'in one line, and give the steps after it that finish the job.';
     } else if (mode === 'matching') {
         focusText =
             ' The page is too long to quote whole: after its opening come ' +
@@ -1019,42 +1730,101 @@ export function genKnownQuestionHint(
         passage.trim().length > 0 &&
         ` ${toPassageKey(clipped)} `.includes(` ${toPassageKey(passage)} `)
     ) {
-        // On a page too long to quote whole the parts ride in the page's
+        // Even on a page short enough to quote whole, the parts ride in the page's
         // own order, its opening first, and a small model answers from the
         // first that seems to fit -- told which part it was, in so many
         // words, gemma-4-e4b still answered "Can you walk me through it
         // step by step?" with the Reader's guided demos, which the help
         // window's page opens on (2026-10-13, at temperature 0, so every
-        // time). There the named part is quoted FIRST, by itself.
+        // time). The same happened on W-11: Add Extra Bible before group
+        // scrolling, though splitting already supplies the other version.
+        // Quote the named part FIRST on short pages as well as long ones.
+        // Found in the PAGE's passages: the cut writes each of its passages
+        // on a line of its own, so read as passages, two paragraphs that ride
+        // side by side -- or either side of a … -- were one, and W-34's
+        // "Later changes … through the pencil" was quoted first as its step 6
+        // and the note about where an import came from (2026-10-18).
         const wantedKey = toPassageKey(passage);
-        const named =
-            mode === 'matching'
-                ? toPassages(clipped).find((one: { text: string }) => {
-                      return ` ${toPassageKey(one.text)} `.includes(
-                          ` ${wantedKey} `,
-                      );
-                  })
-                : undefined;
-        if (named !== undefined) {
+        const named = toPassages(pageText).find((one: { text: string }) => {
+            return ` ${toPassageKey(one.text)} `.includes(` ${wantedKey} `);
+        });
+        const namedText =
+            named === undefined
+                ? null
+                : withIntroducedPart(
+                      pageText,
+                      withPointedBackPart(pageText, named.text),
+                  );
+        const namedShown =
+            namedText === null
+                ? null
+                : localClipped === null
+                  ? namedText
+                  : toLocalizedCut(pageText, localPageText!, namedText);
+        if (namedShown !== null) {
             namedFirst =
                 '\n\nThe part that answers this question, quoted first and ' +
                 'by itself:\n\n' +
-                named.text.slice(0, NAMED_PASSAGE_CHAR_LIMIT);
+                clipNamedPart(namedShown);
         }
+        // Pointed at by its own words in the language it rides in: the
+        // English words of the row were copied, as they stood, into a Khmer
+        // answer.
+        const pointer =
+            localClipped === null
+                ? passage.trim()
+                : findLocalizedPassageLead(pageText, localPageText!, passage);
         // "In its own words": asked twice with the temperature at 0, a 4B
         // model's answers on the running-order pages were the same both
         // times and two of twenty-seven were still wrong, each by a noun of
         // its own in place of the page's -- "right-click the line" for
         // "the presenting flow itself ... not one of its lines"
         // (2026-10-13). A sentence copied cannot change its noun.
-        focusText +=
-            ` The part that answers THIS question is the one with the words ` +
-            `"${passage.trim()}"` +
-            (namedFirst.length > 0 ? ', quoted first below' : '') +
-            ': answer from that part in ITS OWN WORDS -- ' +
-            'copy the sentences you use as they stand, change no name in ' +
-            'them and add no step it does not have -- and take from the ' +
-            'others only what it leaves out.';
+        const whichText =
+            pointer === null
+                ? namedFirst.length > 0
+                    ? 'the one quoted first below'
+                    : null
+                : `the one with the words "${pointer}"` +
+                  (namedFirst.length > 0 ? ', quoted first below' : '');
+        // "Take from the others only what it leaves out" was read as "that
+        // part only": the whole corpus asked in Khmer of gemma4:cloud
+        // (2026-10-17, EC-310) answered _How do I turn the AI features on or
+        // off?_ with the part about turning them off "in the same settings
+        // section", never naming which, and 27 of 84 answers graded short
+        // stopped where their part did. The whole job, still in the page's
+        // own sentences and nothing the page does not say.
+        //
+        // And the step before it is one the part cannot do without: told
+        // "a step before it that it takes for granted", five of pass 21's
+        // nine short answers opened on a step for something else -- Add
+        // Extra Bible before a split, a second screen before Line Sync, a
+        // slide clicked onto the projector before "the first card is blank",
+        // a countdown shown "to keep it ready" (2026-10-18, EC-342).
+        if (whichText !== null) {
+            focusText +=
+                ` The part that answers THIS question is ${whichText}: ` +
+                'answer from that part in ITS OWN WORDS -- ' +
+                'copy the sentences you use as they stand, change no name ' +
+                'in them and add no step the page does not have -- and ' +
+                'from the rest of the page add what the person still needs ' +
+                'to get the WHOLE thing done: where that part is (the ' +
+                'window, menu or panel), a step before it that it cannot ' +
+                'be done without -- never one for something else, such as ' +
+                'adding a screen, or putting a slide or an item on the ' +
+                'screen when the question does not ask to -- and the steps ' +
+                'after it that finish the job.';
+            // An example to write is the answer, not decoration: W-37's link
+            // list rode first with its example under it, and four passes in
+            // a row the Khmer answer described the file and left the example
+            // out -- inline in the sentence too (2026-10-18, EC-349).
+            if (namedFirst.includes('```')) {
+                focusText +=
+                    ' That part ends on an example of what to write: copy ' +
+                    'the example into your answer as it stands, in a code ' +
+                    'block -- it is what the person types.';
+            }
+        }
     }
     // Said to be the APP's doing: a model handed the page under the question
     // read it as something the person had pasted ("what you shared is text
@@ -1063,6 +1833,7 @@ export function genKnownQuestionHint(
     return (
         `${head}${focusText}${namedFirst}\n\nThe guide page, put here by the ` +
         'app itself -- ' +
-        `the person did not write or paste it, and never sees it:\n\n${clipped}`
+        `the person did not write or paste it, and never sees it:\n\n` +
+        (localClipped ?? clipped)
     );
 }

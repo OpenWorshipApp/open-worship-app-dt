@@ -88,6 +88,10 @@ const ACTING_TOOLS = {
     // against the wall. A `check` reads the passage and touches no screen,
     // and stays quiet like every other read.
     owa_present_bible: 'put a Bible passage on the screen',
+    // A verse found for the user, opened in the Bible Lookup: the passage
+    // the lookup was on goes into its history, so the banner NAMES the one
+    // that replaced it. A search or a read of a reference stays quiet.
+    owa_find_verse: 'opened a verse in the Bible Lookup',
     // A countdown or a message goes on the congregation's screen too, so the
     // banner names WHICH extra and, for a countdown, how long: "started a
     // 5 minute countdown on the screen" is something the operator can check
@@ -105,6 +109,11 @@ const ACTING_TOOLS = {
     // The Background tabs' files; each action names the file below.
     owa_media_file: 'changed a media file',
 };
+
+// A verse as a banner may name it: a key (`JHN 3:16`) or a short reference
+// (`1 John 4:18`, `Psalm 23:1-6`).
+const VERSE_NAME_PATTERN =
+    /^[\p{L}\d][\p{L}\p{M}\d .]{0,30} \d{1,3}:\d{1,3}(?:-\d{1,3})?$/u;
 
 // The two kinds of document the file tools write, as a banner names them.
 const AGENT_FILE_KINDS = ['song', 'slide document'];
@@ -409,6 +418,16 @@ function describeBibleXmlNotice(args) {
     const named = toQuotedName(args?.key, 'a Bible');
     const detail = [toQuotedName(args?.key, null)];
     switch (action) {
+        case 'names': {
+            const site = toSiteName(args?.url);
+            return site === null
+                ? toNotice(key)
+                : toNotice(
+                      `read a page on ${site}`,
+                      ACTING_TOOLS.owa_read_website,
+                      [site],
+                  );
+        }
         case 'check': {
             const site = toSiteName(args?.url);
             return site === null
@@ -532,6 +551,22 @@ export function describeToolNotice(name, args) {
                   ACTING_TOOLS.owa_present_bible,
                   [reference],
               );
+    }
+    if (name === 'owa_find_verse') {
+        const verse = typeof args?.open === 'string' ? args.open.trim() : '';
+        if (verse === '') {
+            return null;
+        }
+        // Named only when it reads as a verse: the banner goes up before
+        // the app has answered, and words that are no verse would be said
+        // as one that opened.
+        return VERSE_NAME_PATTERN.test(verse)
+            ? toNotice(
+                  `opened ${verse} in the Bible Lookup`,
+                  ACTING_TOOLS.owa_find_verse,
+                  [verse],
+              )
+            : toNotice(ACTING_TOOLS.owa_find_verse);
     }
     if (name === 'owa_foreground') {
         return describeForegroundNotice(args);
@@ -705,7 +740,7 @@ export function genNoticeWords(
 // and a window first given an older one (by a server started before the
 // change) must be given this one instead of being handed words it cannot
 // read.
-const NOTICE_RUNTIME_VERSION = 4;
+const NOTICE_RUNTIME_VERSION = 5;
 
 const NOTICE_RUNTIME = `
 (() => {
@@ -719,6 +754,12 @@ const NOTICE_RUNTIME = `
     host.id = 'owa-agent-notice-host';
     host.style.cssText = 'position:fixed;inset:0;z-index:2147483645;' +
         'pointer-events:none';
+    // The app's own lettering for a script the system face lacks (the
+    // Battambang a Khmer window is set in), after the system face.
+    const pageFont = getComputedStyle(document.body).fontFamily;
+    if (pageFont) {
+        host.style.setProperty('--owa-notice-page-font', pageFont);
+    }
     const root = host.attachShadow({ mode: 'open' });
     // Bottom centre, not top centre. At the top it sat over the header's
     // Bible Lookup button and over the TITLE of every app dialog -- the
@@ -751,7 +792,8 @@ const NOTICE_RUNTIME = `
                 border: 1px solid rgba(255, 187, 51, 0.55);
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
                     inset 0 1px 0 rgba(255, 255, 255, 0.12);
-                font: 13px/1.45 system-ui, -apple-system, sans-serif;
+                font: 13px/1.45 system-ui, -apple-system,
+                    var(--owa-notice-page-font, sans-serif), sans-serif;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
                 white-space: nowrap; pointer-events: none;
                 opacity: 0; visibility: hidden;

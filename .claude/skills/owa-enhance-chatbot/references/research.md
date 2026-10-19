@@ -58,6 +58,7 @@ Cover the shapes, not just the topics. Twelve questions is enough for a run.
 | 11 | Ambiguous noun | "How do I add a song?" (lyric? SongSelect? public domain?) |
 | 12 | Follow-up in the same tab | "and how do I undo that?" |
 | 13 | A chip, followed THROUGH | press *Can you make a song from words I paste in?*, then paste the words, then press what appears under the draft |
+| 14 | What the Bible SAYS (not the app), from the Reader — with an assistant AND with `/help` | "what bible verse talk about lover your enemy?", "what are names of 7 churches mentioned in the book of revelation" (added 2026-10-16, `EC-199`: the guide had answered both with app pages) |
 
 **Grade on the assistant the user's window is set to**, not on the paid key
 you would pick. Added 2026-09-08: every row before that was Claude Sonnet 5

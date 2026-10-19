@@ -435,7 +435,7 @@ describe('AppDocument.getJsonData', () => {
         expect(source.canvasItemsJson[0].uuid).toBe(uuid);
     });
 
-    test('a document on disk that cannot be read is still reset', async () => {
+    test('a document on disk that cannot be read is reset in the history only', async () => {
         mocks.fsCheckFileExistMock.mockResolvedValue(true);
         const appDocument = new AppDocument('/docs/broken.ows');
 
@@ -447,6 +447,62 @@ describe('AppDocument.getJsonData', () => {
             expect.any(String),
         );
         expect(mocks.setJsonDataMock).toHaveBeenCalledWith(jsonData);
-        expect(mocks.saveMock).toHaveBeenCalledTimes(1);
+        // Was saved over the file on the first click, with no question: the
+        // bytes someone could have repaired survived only in `.histories/0`.
+        expect(mocks.saveMock).not.toHaveBeenCalled();
+    });
+
+    test('the unreadable FILE itself gives no slides, no toast and no write', async () => {
+        mocks.fsCheckFileExistMock.mockResolvedValue(true);
+        const appDocument = new AppDocument('/docs/broken.ows');
+
+        // `getSlides` asks for the original on every update; resetting there
+        // would write a history entry, fire an update and ask again.
+        const jsonData = await appDocument.getJsonData(true);
+
+        expect(jsonData.items).toEqual([]);
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalled();
+        expect(mocks.setJsonDataMock).not.toHaveBeenCalled();
+        expect(mocks.saveMock).not.toHaveBeenCalled();
+    });
+
+    test('a reset another pane already landed is taken, not repeated', async () => {
+        mocks.fsCheckFileExistMock.mockResolvedValue(true);
+        const landedJsonData = {
+            metadata: {
+                app: 'OpenWorship',
+                fileVersion: 1,
+                initDate: '2026-10-16T00:00:00.000Z',
+            },
+            items: [],
+        };
+        // This pane read the history and the file before the other pane's
+        // reset was written; by the time it reaches the reset, it is.
+        mocks.baseGetJsonDataMock
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(landedJsonData);
+        const appDocument = new AppDocument('/docs/broken.ows');
+
+        const jsonData = await appDocument.getJsonData();
+
+        expect(jsonData).toEqual(landedJsonData);
+        // Seen live: two toasts and two history entries ~200ms apart.
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalled();
+        expect(mocks.setJsonDataMock).not.toHaveBeenCalled();
+    });
+
+    test('panes reading a broken document at once share one reset', async () => {
+        mocks.fsCheckFileExistMock.mockResolvedValue(true);
+        const appDocument = new AppDocument('/docs/broken.ows');
+
+        const [first, second] = await Promise.all([
+            appDocument.getJsonData(),
+            appDocument.getJsonData(),
+        ]);
+
+        expect(second).toBe(first);
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledTimes(1);
+        expect(mocks.setJsonDataMock).toHaveBeenCalledTimes(1);
     });
 });

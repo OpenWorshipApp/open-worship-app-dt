@@ -4,13 +4,15 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-10-12",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "slides",
             "label": "Working with slides",
             "panel": "Slides",
-            "recipes": ["W-15"],
+            "recipes": [
+                "W-15"
+            ],
             "questions": [
                 {
                     "id": "bulk-font",
@@ -141,7 +143,11 @@
             "id": "canvas",
             "label": "The slide canvas",
             "panel": "Canvas",
-            "recipes": ["W-15", "W-28", "W-48"],
+            "recipes": [
+                "W-15",
+                "W-28",
+                "W-48"
+            ],
             "questions": [
                 {
                     "id": "canvas-item-transition",
@@ -176,7 +182,9 @@
                         "sanitization",
                         "literal text"
                     ],
-                    "resources": { "recipe": "W-15" }
+                    "resources": {
+                        "recipe": "W-15"
+                    }
                 },
                 {
                     "id": "add-text",
@@ -245,7 +253,9 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": ["W-28"],
+                        "related": [
+                            "W-28"
+                        ],
                         "find": "Insert Medias",
                         "guide": true
                     },
@@ -265,7 +275,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "passage": "Add new boxes with the toolbar above the canvas",
+                        "passage": "Insert a video from a link.",
                         "find": "Insert Media Link",
                         "guide": true
                     }
@@ -291,11 +301,17 @@
                     "id": "insert-camera",
                     "text": "How do I put a camera on a slide?",
                     "kind": "howto",
-                    "keywords": ["camera", "webcam", "live feed", "video in"],
+                    "keywords": [
+                        "camera",
+                        "webcam",
+                        "live feed",
+                        "video in"
+                    ],
                     "resources": {
                         "recipe": "W-15",
                         "find": "Insert Camera",
-                        "guide": true
+                        "guide": true,
+                        "passage": "Insert a camera on a slide."
                     }
                 },
                 {

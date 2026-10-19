@@ -9,6 +9,7 @@ export type SimpleToastType = {
     title: string;
     message: string | JSX.Element;
     timeout?: number;
+    replacementKey?: symbol;
 };
 
 export const DEFAULT_TOAST_TIMEOUT = 4e3;

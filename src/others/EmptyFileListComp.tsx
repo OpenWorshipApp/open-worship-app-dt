@@ -51,7 +51,10 @@ export default function EmptyFileListComp({
                             key={item.id ?? index}
                             className={
                                 'btn btn-sm btn-outline-info' +
-                                ' d-flex align-items-center text-start'
+                                ' d-flex align-items-center text-start' +
+                                // The app's `.btn` is `nowrap`: in a narrow
+                                // sidebar "New App Document" lost its end.
+                                ' text-wrap text-break'
                             }
                             title={item.title}
                             disabled={item.disabled}

@@ -50,7 +50,9 @@
  *    different file than the caller named is worse than saying no.
  *  - **Content must satisfy the app's own validator** before any write —
  *    open-lyric's for a song, `AppDocument.validate` for a slide document, and
- *    the canvas item classes for every box a slide action writes. A file the
+ *    the canvas item classes for every box a slide action, a `create` or an
+ *    `update` writes (a text box given only some of its fields is completed
+ *    from the app's default box first). A file the
  *    app cannot parse is one that renders as nothing on a projector, which is
  *    the failure a volunteer cannot debug mid-service.
  */
@@ -83,6 +85,7 @@ import {
     type AgentSlideChangeType,
     applyAgentSlideAction,
     checkIsAgentSlideAction,
+    genAgentTextItem,
     readAgentSlideDocument,
     readAgentSlideRequest,
 } from './agentSlideHelpers';
@@ -234,6 +237,217 @@ const SLIDE_CONTENT_HELP =
     '— each `{id, canvasItems: [...], metadata: {width, height}}`. Read an ' +
     'existing document with action "info" to see the shape this app expects.';
 
+/**
+ * Every field a TEXT box must carry before the app's canvas validator
+ * (`CanvasItem.validate` + `CanvasItemText.validate`) will open it. Missing
+ * ones are what `completeSlideTextBoxes` fills.
+ */
+const TEXT_BOX_FIELD_LIST = [
+    'id',
+    'top',
+    'left',
+    'rotate',
+    'width',
+    'height',
+    'backgroundColor',
+    'text',
+    'color',
+    'fontSize',
+    'fontFamily',
+    'fontWeight',
+] as const;
+
+function checkIsPlainObject(value: unknown): value is AnyObjectType {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function checkIsTextBox(item: unknown): item is AnyObjectType {
+    return (
+        checkIsPlainObject(item) &&
+        (item.type === 'text' ||
+            (item.type === undefined && typeof item.text === 'string'))
+    );
+}
+
+function checkIsPartialTextBox(item: unknown) {
+    return (
+        checkIsTextBox(item) &&
+        TEXT_BOX_FIELD_LIST.some((key) => {
+            return item[key] === undefined;
+        })
+    );
+}
+
+function readSlideDimOf(slide: AnyObjectType) {
+    const width = slide.metadata?.width;
+    const height = slide.metadata?.height;
+    if (
+        typeof width === 'number' &&
+        typeof height === 'number' &&
+        width > 0 &&
+        height > 0
+    ) {
+        return { width, height };
+    }
+    return null;
+}
+
+/**
+ * A text box written with only some of its fields — `{"type": "text",
+ * "text": "Amazing grace"}` is how a model writes one — gets the rest the way
+ * `add-slide` gives a new box (`genAgentTextItem`): the app's own default
+ * text box, centred on that slide. It used to be written as given, and every
+ * such box rendered as the canvas's red error box (2026-10-16, T1: fourteen
+ * `Invalid canvas item text data` in the console for one created document).
+ * Only a MISSING field is filled; one the caller wrote with the wrong type is
+ * left for the validator to refuse, by name. Nothing is imported unless a
+ * box needs it, so a document with complete boxes costs what it did.
+ */
+async function completeSlideTextBoxes(items: unknown[]) {
+    const isNeeded = items.some((slide) => {
+        return (
+            checkIsPlainObject(slide) &&
+            Array.isArray(slide.canvasItems) &&
+            slide.canvasItems.some(checkIsPartialTextBox)
+        );
+    });
+    if (!isNeeded) {
+        return items;
+    }
+    const [{ default: CanvasItemText }, { default: Slide }] = await Promise.all(
+        [
+            import('../slide-editor/canvas/CanvasItemText'),
+            import('../app-document-list/Slide'),
+        ],
+    );
+    const defaults = CanvasItemText.genDefaultItem().toJson();
+    return items.map((slide) => {
+        if (!checkIsPlainObject(slide) || !Array.isArray(slide.canvasItems)) {
+            return slide;
+        }
+        const dim = readSlideDimOf(slide) ?? Slide.getDefaultDim();
+        let nextId = slide.canvasItems.reduce(
+            (maxId: number, item: unknown) => {
+                return checkIsPlainObject(item) &&
+                    typeof item.id === 'number' &&
+                    item.id > maxId
+                    ? item.id
+                    : maxId;
+            },
+            0,
+        );
+        const canvasItems = slide.canvasItems.map((item: unknown) => {
+            if (!checkIsPartialTextBox(item)) {
+                return item;
+            }
+            const box = item as AnyObjectType;
+            const id = box.id ?? (nextId += 1);
+            return {
+                ...genAgentTextItem(defaults, {}, id, dim),
+                ...box,
+                id,
+                type: 'text',
+            };
+        });
+        return { ...slide, canvasItems };
+    });
+}
+
+/** The content's slides with their text boxes completed, or null. */
+async function readSlideItems(content: string) {
+    const json = parseSlideJson(content);
+    if (json === null || !Array.isArray(json.items)) {
+        return null;
+    }
+    return (await completeSlideTextBoxes(json.items)) as AnyObjectType[];
+}
+
+/** What is wrong with a box's fields, in words a caller can fix it by. */
+function listBoxFieldProblems(item: AnyObjectType) {
+    const problems: string[] = [];
+    for (const key of ['id', 'top', 'left', 'rotate', 'width', 'height']) {
+        if (typeof item[key] !== 'number') {
+            problems.push(`${key} (a number)`);
+        }
+    }
+    if (
+        item.backgroundColor !== null &&
+        typeof item.backgroundColor !== 'string'
+    ) {
+        problems.push('backgroundColor (a colour like "#00000080", or null)');
+    }
+    if (item.type !== 'text') {
+        return problems;
+    }
+    if (typeof item.text !== 'string') {
+        problems.push('text (a string)');
+    }
+    if (typeof item.color !== 'string') {
+        problems.push('color (a colour like "#FFFFFF")');
+    }
+    if (typeof item.fontSize !== 'number') {
+        problems.push('fontSize (a number)');
+    }
+    for (const key of ['fontFamily', 'fontWeight']) {
+        if (item[key] !== null && typeof item[key] !== 'string') {
+            problems.push(`${key} (a string, or null)`);
+        }
+    }
+    return problems;
+}
+
+/**
+ * Every box the document would put on a slide, through the canvas item
+ * classes the slide renders them with — `AppDocument.validate` reads only the
+ * slides' shape, so a box it passed could still be the red error box on the
+ * projector. Imported only when there is a box to read.
+ */
+async function findInvalidCanvasItemReason(items: AnyObjectType[]) {
+    const isAnyBox = items.some((slide) => {
+        return Array.isArray(slide?.canvasItems) && slide.canvasItems.length;
+    });
+    if (!isAnyBox) {
+        return null;
+    }
+    const [{ default: Canvas }, { CanvasItemError }] = await Promise.all([
+        import('../slide-editor/canvas/Canvas'),
+        import('../slide-editor/canvas/CanvasItem'),
+    ]);
+    for (const [slideIndex, slide] of items.entries()) {
+        for (const [boxIndex, item] of (slide.canvasItems ?? []).entries()) {
+            const canvasItem = checkIsPlainObject(item)
+                ? Canvas.canvasItemFromJson(item)
+                : null;
+            if (
+                canvasItem !== null &&
+                !(canvasItem instanceof CanvasItemError)
+            ) {
+                continue;
+            }
+            const problems = checkIsPlainObject(item)
+                ? listBoxFieldProblems(item)
+                : [];
+            const kind =
+                checkIsPlainObject(item) && typeof item.type === 'string'
+                    ? item.type
+                    : 'unknown';
+            return (
+                `Box ${boxIndex + 1} of slide ${slideIndex + 1} ` +
+                `(type "${kind}") would not open in this app, so nothing ` +
+                'was written' +
+                (problems.length > 0
+                    ? `: it needs ${problems.join(', ')}.`
+                    : '. Its type is not one this app draws, or a field of ' +
+                      'its own is not what the app reads.') +
+                ' A text box may be just {"type": "text", "text": "…"} -- ' +
+                "the rest is filled from the app's default box. Read an " +
+                'existing document with action "info" for the full shape.'
+            );
+        }
+    }
+    return null;
+}
+
 async function checkSlideContent(content: string) {
     const json = parseSlideJson(content);
     if (json === null) {
@@ -242,6 +456,7 @@ async function checkSlideContent(content: string) {
     if (!Array.isArray(json.items)) {
         return `There is no \`items\` array. ${SLIDE_CONTENT_HELP}`;
     }
+    json.items = (await completeSlideTextBoxes(json.items)) as AnyObjectType[];
     const AppDocument = await getAppDocumentClass();
     // The document's own `metadata` is never taken from the caller — `create`
     // writes a fresh one and `update` keeps the file's — so it is not judged
@@ -274,7 +489,7 @@ async function checkSlideContent(content: string) {
             String(error?.message ?? error).slice(0, 300)
         );
     }
-    return null;
+    return await findInvalidCanvasItemReason(json.items);
 }
 
 export const AGENT_FILE_KIND_MAP: Record<
@@ -328,11 +543,13 @@ export const AGENT_FILE_KIND_MAP: Record<
         checkContent: checkSlideContent,
         create: async (dirPath, name, content) => {
             const AppDocument = await getAppDocumentClass();
-            const json = parseSlideJson(content) ?? {};
+            // Completed the way `checkContent` judged them, or the boxes
+            // checked would not be the boxes written.
+            const items = await readSlideItems(content);
             return await AppDocument.createWithContent(
                 dirPath,
                 name,
-                json.items as AnyObjectType[],
+                items ?? [],
             );
         },
         update: async (filePath, content) => {
@@ -342,13 +559,12 @@ export const AGENT_FILE_KIND_MAP: Record<
             if (current === null) {
                 return null;
             }
-            const json = parseSlideJson(content) ?? {};
             // The slides are replaced; the document's own metadata is KEPT.
             // A model rewriting `initDate` or the file version would be
             // changing something nobody asked it to touch.
             await appDocument.setJsonData({
                 ...current,
-                items: json.items,
+                items: await readSlideItems(content),
             } as any);
             return 'ok';
         },

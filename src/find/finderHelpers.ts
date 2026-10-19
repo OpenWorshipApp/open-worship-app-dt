@@ -45,6 +45,18 @@ export function closeFinder() {
     appProvider.messageUtils.sendData('finder:app:close');
 }
 
+/**
+ * Tells the main process the bar has drawn. Until it has, `Ctrl/Cmd+F`
+ * replaces the view instead of focusing it -- a page that never mounted is an
+ * invisible bar nobody can close. Returns the unmount mark.
+ */
+export function markFinderMounted() {
+    appProvider.messageUtils.sendData('finder:app:mounted', true);
+    return () => {
+        appProvider.messageUtils.sendData('finder:app:mounted', false);
+    };
+}
+
 export function startFinderDragging(grabOffsetX: number) {
     appProvider.messageUtils.sendData('finder:app:drag-start', grabOffsetX);
 }

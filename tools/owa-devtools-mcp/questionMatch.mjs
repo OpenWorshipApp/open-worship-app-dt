@@ -27,6 +27,123 @@ function checkMatchesFocus(page, focus) {
 }
 
 /**
+ * The corpus in a language of the app's: `overlay` is one
+ * `questions/i18n/<code>.json`, `{ sections: { "<page>.<section>": { en, text
+ * } }, questions: { "<page>.<section>.<id>": { en, text } } }`. A row reads
+ * its translation in `text` and keeps its English in `textEn` (a section the
+ * same in `label` / `labelEn`), so everything that SHOWS a question shows the
+ * language and whatever needs the English -- what is typed in English, the
+ * guide's passages, the model -- still has it.
+ *
+ * A translation counts only while its `en` still IS the row's words: a
+ * reworded question shows its new English until its translation is redone,
+ * never a translation of words it no longer says.
+ */
+export function applyQuestionOverlay(pages, overlay) {
+    if (!overlay) {
+        return pages;
+    }
+    const sectionMap = overlay.sections ?? {};
+    const questionMap = overlay.questions ?? {};
+    return pages.map((page) => {
+        return {
+            ...page,
+            sections: page.sections.map((section) => {
+                const sectionKey = `${page.page}.${section.id}`;
+                const sectionWords = sectionMap[sectionKey];
+                return {
+                    ...section,
+                    ...(sectionWords?.en === section.label &&
+                    typeof sectionWords.text === 'string'
+                        ? { label: sectionWords.text, labelEn: section.label }
+                        : {}),
+                    questions: (section.questions ?? []).map((question) => {
+                        const words = questionMap[`${sectionKey}.${question.id}`];
+                        return words?.en === question.text &&
+                            typeof words.text === 'string'
+                            ? { ...question, text: words.text, textEn: question.text }
+                            : question;
+                    }),
+                };
+            }),
+        };
+    });
+}
+
+// The part of a fill-in row the person replaces: its three dots, the
+// address, the quoted name or the reference it gives as an example. In that
+// order, because a row may carry two (`Import bible from xml url https://…`).
+const TEMPLATE_SAMPLE_PATTERN_LIST = [
+    /\.{3}|…/,
+    /https?:\/\/\S+/,
+    /["“][^"“”]+["”]/,
+    /\b(?:[1-3] )?\p{Lu}\p{Ll}+ \d+:\d+(?:-\d+)?\b/u,
+];
+
+/**
+ * Where a fill-in row's example is, or null: `{ at, sample, kind }`. A
+ * row's translation (`questions/i18n/<code>.json`) carries an example of
+ * the same KIND -- the dots, an address, a quoted name, a reference -- so
+ * the two can be told apart around it; a quoted name may be the reader's
+ * own (`"French"` in a French window, the user's ask 2026-10-17: _question
+ * should change to French if in french language_).
+ */
+export function findTemplateSample(text) {
+    for (const [kind, pattern] of TEMPLATE_SAMPLE_PATTERN_LIST.entries()) {
+        const match = pattern.exec(String(text ?? ''));
+        if (match !== null) {
+            return { at: match.index, sample: match[0], kind };
+        }
+    }
+    return null;
+}
+
+/**
+ * A finished fill-in row typed in the app's language, as the row's ENGLISH
+ * sentence with the person's own part in it -- or null. The window asks
+ * that (and shows what was typed): every reader of the words -- a song's
+ * link, a Bible to import, a button asked for, the known-question hint --
+ * reads the corpus's English, and the part they filled in is theirs either
+ * way (2026-10-17: the fill-in rows were the last English left in a Khmer
+ * window's question list, kept so because code reads their gap).
+ */
+export function toEnglishTemplateAsk(typed, rows) {
+    const said = String(typed ?? '').trim();
+    for (const row of rows) {
+        if (row.isTemplate !== true || typeof row.textEn !== 'string') {
+            continue;
+        }
+        const local = findTemplateSample(row.text);
+        const english = findTemplateSample(row.textEn);
+        if (local === null || english === null || local.kind !== english.kind) {
+            continue;
+        }
+        const before = row.text.slice(0, local.at).trim();
+        const after = row.text.slice(local.at + local.sample.length).trim();
+        if (
+            before.length === 0 ||
+            !said.startsWith(before) ||
+            !said.endsWith(after) ||
+            said.length <= before.length + after.length
+        ) {
+            continue;
+        }
+        const filled = said
+            .slice(before.length, said.length - after.length)
+            .trim();
+        if (filled.length === 0) {
+            continue;
+        }
+        return (
+            row.textEn.slice(0, english.at) +
+            filled +
+            row.textEn.slice(english.at + english.sample.length)
+        ).trim();
+    }
+    return null;
+}
+
+/**
  * The corpus as one flat list, each entry carrying where it came from. This is
  * what both the matcher and the tool hand out -- a caller never has to walk the
  * page/section nesting itself.
@@ -39,12 +156,14 @@ export function flattenQuestions(pages) {
                 rows.push({
                     id: `${page.page}.${section.id}.${question.id}`,
                     text: question.text,
+                    textEn: question.textEn ?? question.text,
                     kind: question.kind ?? 'howto',
                     page: page.page,
                     pageLabel: page.label,
                     focus: page.focus ?? null,
                     section: section.id,
                     sectionLabel: section.label,
+                    sectionLabelEn: section.labelEn ?? section.label,
                     panel: section.panel ?? null,
                     keywords: question.keywords ?? [],
                     starter: question.starter === true,
@@ -79,11 +198,83 @@ const QUERY_ALIASES = {
     stuck: ['fix'],
 };
 
+// Letters of every alphabet, not `[a-z]` alone: a French row read in French
+// (`é`) must keep its words whole.
 function normalize(text) {
     return String(text ?? '')
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
         .trim();
+}
+
+// A letter of a script that is not Latin: a question typed in Khmer, which is
+// written with no spaces between its words.
+const NON_LATIN_LETTER_PATTERN = /(?=\p{L})\P{Script=Latin}/u;
+
+function toCompact(text) {
+    return String(text ?? '')
+        .toLowerCase()
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, '');
+}
+
+function toBigramCounts(text) {
+    const characters = [...text];
+    const counts = new Map();
+    for (let at = 0; at < characters.length - 1; at += 1) {
+        const pair = characters[at] + characters[at + 1];
+        counts.set(pair, (counts.get(pair) ?? 0) + 1);
+    }
+    return counts;
+}
+
+// How much of one text's letter pairs the other shares, 0 to 1 (Dice). Words
+// cannot be told apart in a script without spaces, but pairs of letters can
+// be counted in any script, so a half-typed Khmer question still finds the
+// row it is the start of, and one typed in other words the row it is like.
+function toPairOverlap(left, right) {
+    const leftCounts = toBigramCounts(left);
+    const rightCounts = toBigramCounts(right);
+    let shared = 0;
+    let total = 0;
+    for (const [pair, count] of leftCounts) {
+        shared += Math.min(count, rightCounts.get(pair) ?? 0);
+        total += count;
+    }
+    for (const count of rightCounts.values()) {
+        total += count;
+    }
+    return total === 0 ? 0 : (2 * shared) / total;
+}
+
+const MIN_PAIR_OVERLAP = 0.3;
+
+/**
+ * A row against a question typed in a script without spaces: the whole of it,
+ * the start of it, inside it, then letter pairs in common -- the row's SHOWN
+ * words, which are that language's once its translation is in.
+ */
+function scoreScriptRow(row, compactQuery) {
+    const compact = toCompact(row.text);
+    if (compact.length === 0 || compactQuery.length === 0) {
+        return 0;
+    }
+    if (compact === compactQuery) {
+        return SCORE.exact;
+    }
+    let score = 0;
+    if (compact.startsWith(compactQuery)) {
+        score += SCORE.prefix;
+    } else if (compact.includes(compactQuery)) {
+        score += SCORE.textToken * 2;
+    }
+    const overlap = toPairOverlap(compact, compactQuery);
+    if (overlap >= MIN_PAIR_OVERLAP) {
+        score += Math.round(overlap * 100);
+    }
+    if (row.starter && score > 0) {
+        score += SCORE.starter;
+    }
+    return score;
 }
 
 // One GROUP per word the user typed, holding that word and the words it is
@@ -240,6 +431,23 @@ export function matchQuestions(
         }
         return checkMatchesFocus(row, focus);
     });
+    if (NON_LATIN_LETTER_PATTERN.test(String(query ?? ''))) {
+        const compactQuery = toCompact(query);
+        return rows
+            .map((row) => {
+                return { row, score: scoreScriptRow(row, compactQuery) };
+            })
+            .filter((item) => {
+                return item.score > 0;
+            })
+            .sort((left, right) => {
+                return right.score - left.score;
+            })
+            .slice(0, limit)
+            .map((item) => {
+                return item.row;
+            });
+    }
     const groups = toQueryGroups(query);
     if (groups.length === 0) {
         // The empty window only has room for a handful, and which handful
@@ -260,7 +468,16 @@ export function matchQuestions(
     }
     return rows
         .map((row) => {
-            return { row, score: scoreRow(row, groups) };
+            // A translated row answers to its own words and to its English
+            // ones: English typed in a Khmer window still finds it.
+            const score =
+                row.textEn === undefined || row.textEn === row.text
+                    ? scoreRow(row, groups)
+                    : Math.max(
+                          scoreRow(row, groups),
+                          scoreRow({ ...row, text: row.textEn }, groups),
+                      );
+            return { row, score };
         })
         .filter((item) => {
             return item.score > 0;

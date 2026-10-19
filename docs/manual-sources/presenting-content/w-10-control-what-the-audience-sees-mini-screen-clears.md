@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
@@ -17,18 +17,25 @@ workflowsVersion: "2026-10-15"
   The audience screen is a transparent window, so wherever you have put nothing
   up this is genuinely what the room would see. Right-click an empty part of the
   mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
-  turns it off and puts the plain checkered pattern back; **[en:tran:Refresh Preview]** in
-  the same menu re-reads it after you change your desktop background. A machine
+  turns it off and puts the plain checkered pattern back — that is all it takes.
+  **[en:tran:Refresh Preview]** in the same menu is for something else: it re-reads the
+  wallpaper after you change your desktop background. A machine
   that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
   output display on or off. The toggle acts on its own screen; **F5** acts on the
   **selected** screens (every screen when none is selected) and turns them all the
-  same way: on only when all of them are off, otherwise all off — so with any of
-  them showing, **F5** hides them. The icon fills in and brightens while showing. It is
+  same way: on only when all of them are off, otherwise all off.
+  An unselected screen stays as it is when another screen is selected. The icon fills in and brightens while showing. It is
   the control named **[en:tran:Toggle showing screen]** — say those words when
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
+- **Hide every screen.** In the Presenter's mini-screen panel (bottom right), check
+  every screen card, including unselected ones. On each card whose leftmost header
+  button **[en:tran:Toggle showing screen]** is filled and bright, click it once to
+  hide that screen; leave an unlit button alone. When every such button is unlit,
+  all screens are hidden and their content is kept. **F5** is a toggle for the
+  selected screens, so use these individual buttons to hide every screen safely.
 - **Clear buttons** (header — each also has a function key):
   **Clear All `F6` / BG `F7` / SL `F8` / LT `F9` / FG `F10`**
   ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Long Text] / [en:tran:Clear Foreground]).
@@ -54,6 +61,10 @@ workflowsVersion: "2026-10-15"
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
+- **Nothing on the projector?** Check its card from the top: it is showing
+  (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **Display** names the
+  projector, not this computer's own screen — pick it there; and something is on it — a
+  lit clear button says which layer holds something.
 - **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
   **[en:tran:Foreground]:** buttons choose the change animation for that screen —
   **none / fade / move / zoom**. They are the fallback: a document, a slide, a
@@ -64,7 +75,8 @@ workflowsVersion: "2026-10-15"
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–5, or increment/decrement) for stage-view setups. Moving a screen to any stage
-  above 0 also sets its **[en:tran:Slide]:** transition to **none**; you can pick another one
+  above 0 also sets its **[en:tran:Slide]:** transition to **none**, and a note in the
+  corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.
 
@@ -73,5 +85,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

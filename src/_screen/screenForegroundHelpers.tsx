@@ -21,7 +21,9 @@ import {
     MAX_MARQUEE_SPEED_PERCENTAGE,
     MIN_MARQUEE_SPEED_PERCENTAGE,
 } from './screenTypeHelpers';
-import TimingController from './managers/TimingController';
+import TimingController, {
+    type ClockPeriodType,
+} from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
 import { checkIsSameTimerExceptTiming } from './managers/timerStateHelpers';
 import FileSource from '../helper/FileSource';
@@ -31,6 +33,7 @@ import { playMediaElement, releaseMediaElement } from '../helper/mediaHelpers';
 import appProvider from '../server/appProvider';
 import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
 import { genMarqueeFontSize } from './marqueeBandHelpers';
+import { FOREGROUND_MESSAGE_CLASS } from './foregroundMessageStackHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
 const MARQUEE_FADE_MILLISECOND = 1000;
@@ -285,6 +288,7 @@ export function genHtmlForegroundMessage(
     const isRotating = intervalSecond !== null && validTextList.length > 1;
     const htmlString = renderToStaticMarkup(
         <div
+            className={FOREGROUND_MESSAGE_CLASS}
             style={{
                 whiteSpace: 'pre-wrap',
                 ...(isRotating
@@ -496,6 +500,7 @@ export function genHtmlForegroundStopwatch(
 export function genHtmlForegroundTime(
     timeData: ForegroundTimeDataType,
     animData: StyleAnimType,
+    toPeriodText?: (period: ClockPeriodType) => string,
 ) {
     const { timezoneMinuteOffset, title } = timeData;
     const is24HourFormat = timeData.is24HourFormat ?? false;
@@ -531,6 +536,10 @@ export function genHtmlForegroundTime(
                     textAlign: 'center',
                     padding: '2px',
                     overflow: 'hidden',
+                    // A caption is one long word as often as not -- a city
+                    // picked from the list read `Phnom_Penh (Asia/Phnom_Penh)`
+                    // -- and `overflow: hidden` cut it off mid-word. It wraps.
+                    overflowWrap: 'anywhere',
                 }}
             >
                 <small>{title}</small>
@@ -540,7 +549,9 @@ export function genHtmlForegroundTime(
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
                 {is24HourFormat ? null : (
-                    <div id="ampm" style={{ marginLeft: '8px' }}>
+                    // In `em`, so the gap grows with the clock: a fixed 8px
+                    // under a 60px+ clock read "07:10:00AM".
+                    <div id="ampm" style={{ marginLeft: '0.3em' }}>
                         AM
                     </div>
                 )}
@@ -554,6 +565,7 @@ export function genHtmlForegroundTime(
         element,
         timezoneMinuteOffset,
         is24HourFormat,
+        toPeriodText,
     );
     return {
         handleAdding: async (parentContainer: HTMLElement) => {

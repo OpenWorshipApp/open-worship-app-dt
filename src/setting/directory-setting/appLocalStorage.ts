@@ -23,6 +23,12 @@ export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
 // The chosen folder's marker id (`ensureDataDirMarkerIdSync`), kept beside its
 // path on this computer so the folder can be recognised on another drive.
 export const SELECTED_PARENT_DIR_ID_SETTING_NAME = 'selected-parent-dir-id';
+// A move of the data folder off the Desktop, asked for and waiting for the
+// next start (`dataDirMoveHelpers.ts`). Here, in the home store, so `init()`
+// can look for it without importing anything more.
+export const DATA_DIR_MOVE_PENDING_SETTING_NAME = 'data-dir-move-pending';
+// Its outcome, from that start to the same window once it has rendered.
+export const DATA_DIR_MOVE_RESULT_SESSION_NAME = 'data-dir-move-result';
 
 export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
 export const TMP_FILES_FOLDER_NAME = 'tmp-files';

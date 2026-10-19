@@ -11,6 +11,23 @@ const h = vi.hoisted(() => ({
     openPdfPreviewMock: vi.fn(),
     readResourceNoteItemsMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
+    openChatbotWithFileMock: vi.fn(),
+    isAiEnabled: false,
+}));
+
+vi.mock('../helper/ai/aiHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('../helper/ai/aiHelpers')>();
+    return {
+        ...original,
+        getIsAIEnabled: () => {
+            return h.isAiEnabled;
+        },
+    };
+});
+
+vi.mock('../helper/ai/chatbotHandoffHelpers', () => ({
+    openChatbotWithFile: h.openChatbotWithFileMock,
 }));
 
 vi.mock('./resourcePreviewOpenHelpers', () => ({
@@ -315,5 +332,64 @@ describe('ResourcesFileRowComp previews', () => {
         expect(h.openFileMock).toHaveBeenCalledWith('/r/Document/GEN.1.docx');
         expect(h.openMarkdownPreviewMock).not.toHaveBeenCalled();
         expect(h.openPdfPreviewMock).not.toHaveBeenCalled();
+    });
+
+    // 2026-10-17, the user: _add robot icon to each file, click to open file
+    // in chatbot in attachment to analyze_.
+    describe('the 🤖 that asks the assistant about a file', () => {
+        afterEach(() => {
+            h.isAiEnabled = false;
+        });
+
+        function getAskButton() {
+            return container!.querySelector<HTMLButtonElement>(
+                '.app-resources-file-ask',
+            );
+        }
+
+        test('opens the assistant on that file, not the file itself', async () => {
+            h.isAiEnabled = true;
+            for (const filePath of [
+                '/r/pdf/LUK.6.pdf',
+                '/r/YouTube/LUK.0.json',
+                '/r/notes/LUK.own',
+            ]) {
+                h.openChatbotWithFileMock.mockClear();
+                await renderRow(filePath);
+                await press(getAskButton()!);
+                expect(h.openChatbotWithFileMock).toHaveBeenCalledWith(
+                    filePath,
+                );
+                expect(h.openPdfPreviewMock).not.toHaveBeenCalledWith(filePath);
+                await act(async () => {
+                    root?.unmount();
+                });
+                root = null;
+            }
+        });
+
+        test('is in the menu too', async () => {
+            h.isAiEnabled = true;
+            await renderRow('/r/pdf/LUK.6.pdf');
+            await act(async () => {
+                getRowButton().dispatchEvent(
+                    new MouseEvent('contextmenu', { bubbles: true }),
+                );
+            });
+            expect(getMenuLabels()[0]).toBe(
+                'Ask the Assistant About This File',
+            );
+        });
+
+        test('is not offered on a file the assistant cannot read', async () => {
+            h.isAiEnabled = true;
+            await renderRow('/r/Document/GEN.1.docx');
+            expect(getAskButton()).toBeNull();
+        });
+
+        test('goes with the AI switch, as the toolbar 🤖 does', async () => {
+            await renderRow('/r/pdf/LUK.6.pdf');
+            expect(getAskButton()).toBeNull();
+        });
     });
 });

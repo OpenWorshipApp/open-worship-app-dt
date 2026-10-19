@@ -23,6 +23,12 @@ export type ContextMenuItemType = {
         data?: any,
     ) => OptionalPromise<void>;
     disabled?: boolean;
+    /**
+     * The name of the group of items under it (a Bible version menu's
+     * language), drawn as a card's header strip at full contrast. Never
+     * selectable, like a disabled item, but not faded like one.
+     */
+    isSectionHeader?: boolean;
     childBefore?: ReactElement;
     childAfter?: ReactElement;
     keyboardShortcut?: EventMapperType;
@@ -48,6 +54,79 @@ export type AppContextMenuPropsType = {
 
 // Lives in a leaf module; re-exported for the existing callers.
 export { createMouseEvent } from './contextMenuEventHelpers';
+
+const MARQUEE_DURATION_VAR = '--app-context-menu-marquee-duration';
+const MARQUEE_INDENT_VAR = '--app-context-menu-marquee-indent';
+const FONT_DATA_KEYS = ['localeFf', 'bibleKeyFf'] as const;
+
+/**
+ * Give every label too long for the menu its scrolling second line: the label
+ * stays one ellipsised line and `data-marquee-text` draws the whole text under
+ * it as a CSS pseudo-element (`AppContextMenuComp.scss`). A label that fits is
+ * cleared, so running this again is harmless. Every box is read before any is
+ * written, so a menu costs one layout however many items it has.
+ */
+export function markOverflowingMenuLabels(menu: HTMLElement) {
+    const labels = Array.from(
+        menu.querySelectorAll<HTMLElement>('.app-context-menu-item-label'),
+    );
+    const measuredList = labels.map((label) => {
+        const textElement = label.querySelector<HTMLElement>(
+            ':scope > .app-context-menu-item-text',
+        );
+        // Any overflow at all: the browser draws the "…" for a fraction of a
+        // pixel, and a label cut by one pixel ("Korean (한국어) <ko-K…") had
+        // its ellipsis with no line to read the rest on.
+        if (
+            textElement === null ||
+            textElement.scrollWidth <= textElement.clientWidth
+        ) {
+            return null;
+        }
+        const text = (textElement.textContent ?? '').replace(/\s+/g, ' ');
+        const firstElement = textElement.firstElementChild;
+        return {
+            text: text.trim(),
+            width: textElement.scrollWidth,
+            // Where the words start: a `<span>` label sits 10px in (the
+            // item's `span` margin), and the second line should start there
+            // too.
+            indent:
+                firstElement instanceof HTMLElement &&
+                textElement.firstChild === firstElement
+                    ? firstElement.offsetLeft - textElement.offsetLeft
+                    : 0,
+            fontHolder: textElement.querySelector<HTMLElement>(
+                '[data-locale-ff], [data-bible-key-ff]',
+            ),
+        };
+    });
+    labels.forEach((label, i) => {
+        const measured = measuredList[i];
+        if (measured === null || measured.text === '') {
+            delete label.dataset.marqueeText;
+            label.style.removeProperty(MARQUEE_DURATION_VAR);
+            label.style.removeProperty(MARQUEE_INDENT_VAR);
+            return;
+        }
+        label.dataset.marqueeText = measured.text;
+        label.style.setProperty(
+            MARQUEE_DURATION_VAR,
+            `${Math.max(4, Math.round(measured.width / 35))}s`,
+        );
+        label.style.setProperty(MARQUEE_INDENT_VAR, `${measured.indent}px`);
+        // The pseudo-element takes its font from this wrapper, not from the
+        // label's own `<span data-locale-ff>`; handing the wrapper the same
+        // marker lets `applyFontFamily` give it the label's font, or a Khmer
+        // Bible title would scroll in the OS fallback face.
+        for (const key of FONT_DATA_KEYS) {
+            const value = measured.fontHolder?.dataset[key];
+            if (value !== undefined && label.dataset[key] !== value) {
+                label.dataset[key] = value;
+            }
+        }
+    });
+}
 
 export const setPositionMenu = (
     menu: HTMLElement,
@@ -86,9 +165,11 @@ export const setPositionMenu = (
         if (options?.style) {
             Object.assign(menu.style, options.style);
         }
-        // Measure after the width and caller styles are applied: wrapped
-        // labels can make the menu taller. Use the whole viewport, shifting
-        // past the cursor when neither side alone has enough room.
+        markOverflowingMenuLabels(menu);
+        // Measure after the width and caller styles are applied: a label's
+        // scrolling second line makes the menu taller. Use the whole
+        // viewport, shifting past the cursor when neither side alone has
+        // enough room.
         const height = menu.getBoundingClientRect().height;
         const preferredTop =
             y > windowDim.height / 2 && y + height > windowDim.height

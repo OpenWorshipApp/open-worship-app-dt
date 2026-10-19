@@ -94,6 +94,7 @@ test('renders an accessible menu, positions it, and closes before selecting an e
                 keyboardShortcut: { key: 'k' },
             },
             { menuElement: 'Unavailable', disabled: true, onSelect: vi.fn() },
+            { menuElement: 'English', isSectionHeader: true },
         ],
     };
     await act(async () => root.render(<AppContextMenuComp />));
@@ -105,7 +106,21 @@ test('renders an accessible menu, positions it, and closes before selecting an e
         state.data.options,
     );
     const items = host.querySelectorAll('[role="menuitem"]');
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
+    // A section's name is never selectable, but it is not faded either.
+    expect(items[1].classList.contains('disabled')).toBe(true);
+    expect(items[2].getAttribute('aria-disabled')).toBe('true');
+    expect(items[2].getAttribute('tabindex')).toBe('-1');
+    expect(items[2].classList.contains('disabled')).toBe(false);
+    expect(items[2].classList.contains('app-context-menu-section-header')).toBe(
+        true,
+    );
+    // The one line that ellipsises; the scrolling second line is CSS only.
+    expect(
+        items[0].querySelector(
+            '.app-context-menu-item-label > .app-context-menu-item-text',
+        )?.textContent,
+    ).toBe('Open');
     expect(items[1].getAttribute('aria-disabled')).toBe('true');
     expect(items[0].textContent).toContain('Ctrl + K');
     await act(async () => (items[0] as HTMLDivElement).click());

@@ -379,10 +379,17 @@ export async function resolveMediaStreamUrl(targetUrl: string) {
     return streamUrl;
 }
 
+/**
+ * `onStarting` runs once the media tools are known to be there, which is when
+ * a download really begins. A caller that announced "Downloading…, please
+ * wait" before calling this left that toast up behind the Media Tools Required
+ * question -- and up for its full time after a No, with nothing downloading.
+ */
 export function downloadVideoOrAudio(
     targetUrl: string,
     outputDir: string,
     isVideo: boolean,
+    onStarting?: () => void,
 ) {
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
@@ -395,6 +402,7 @@ export function downloadVideoOrAudio(
                     reject(new Error(EXTRA_BIN_MISSING_ERROR_MESSAGE));
                     return;
                 }
+                onStarting?.();
                 const videoOrAudioUrl = targetUrl.trim();
                 const title = await getPageTitle(videoOrAudioUrl);
                 const resolvedSuccess = (resolvedFilePath: string) => {

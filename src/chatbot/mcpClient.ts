@@ -6,6 +6,7 @@
 // except that session id.
 
 import appProvider from '../server/appProvider';
+import { tran } from './chatTranHelpers';
 import {
     getCurrentWindowAim,
     toAimedToolArgs,
@@ -58,9 +59,11 @@ export class ToolHostError extends Error {
 
     constructor(hostStatus: number) {
         super(
-            "The app's own help service did not respond. Try again in a " +
-                'moment; if it keeps happening, restart the app with View → ' +
-                'Relaunch in the main window.',
+            tran(
+                "The app's own help service did not respond. Try again in a " +
+                    'moment; if it keeps happening, restart the app with View → ' +
+                    'Relaunch in the main window.',
+            ),
         );
         this.name = 'ToolHostError';
         this.hostStatus = hostStatus;
@@ -246,6 +249,39 @@ export async function callToolPicture(
         );
     }
     return `data:${image.mimeType ?? 'image/png'};base64,${image.data}`;
+}
+
+/**
+ * A tool's words AND the pictures it answered with -- `owa_resource_file`
+ * reads a PDF as pictures of its pages -- each picture's base64 apart from
+ * its media type, the shape a model loop hands a provider.
+ */
+export async function callToolWithPictures(
+    name: string,
+    args: any = {},
+    signal?: AbortSignal | null,
+    aim: WindowAimType | null = getCurrentWindowAim(),
+) {
+    const result = await postToolCall(name, args, signal, aim);
+    const text = toToolText(result);
+    if (result?.isError) {
+        throw new Error(text || 'The tool call failed');
+    }
+    const pictures = (result?.content ?? [])
+        .filter((item: any) => {
+            return (
+                item?.type === 'image' &&
+                typeof item.data === 'string' &&
+                /^image\/[a-z+]+$/i.test(String(item.mimeType ?? 'image/png'))
+            );
+        })
+        .map((item: any) => {
+            return {
+                mediaType: String(item.mimeType ?? 'image/png').toLowerCase(),
+                data: String(item.data),
+            };
+        });
+    return { text, pictures };
 }
 
 export function parseToolJson(text: string) {

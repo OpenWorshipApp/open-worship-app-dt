@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [NAV-17, NAV-18, NAV-19]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-25 — Back up everything, or move to a new computer
 
@@ -45,8 +45,11 @@ or to set up a second machine — use the app's **File** menu.
 3. Press **[en:tran:Ok]**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
    folder — or `open-worship-data.owadata.enc` if you set a password — and the folder
    opens. Copy it to a USB stick or the other machine.
-4. On the other machine, choose **[en:tran:Import Data]** and pick that
-   file. A protected backup asks for its password first. The panel then lists only the
+4. On the other machine, open **[en:tran:Settings]** → **[en:tran:Path Settings]**
+   and choose the destination folders first. Then choose **File** → **[en:tran:Import Data]** and pick that file. A protected backup asks for its password first. A password typed wrong is asked
+   for again under _[en:tran:Wrong password, try again]_, three times at most, and then the
+   import stops with nothing brought in. Type it exactly as it was set, capital letters and
+   all, or ask whoever made the file for it. No one can open it without. The panel then lists only the
    folders the file actually contains — again all ticked — so you can restore just the
    songs, or just the backgrounds. 📸
 
@@ -80,5 +83,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-17` · `NAV-18` · `NAV-19`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

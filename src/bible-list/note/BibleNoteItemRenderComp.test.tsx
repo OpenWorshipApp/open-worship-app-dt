@@ -183,6 +183,48 @@ describe('Bible note row', () => {
         expect(mocks.openPopup).toHaveBeenCalledTimes(3);
     });
 
+    // RD-12: a double-click on the icon is click, click and a dblclick that
+    // bubbles to the row's own opener -- three windows for one gesture.
+    test('opens ONE window per double-click, on the icon or on the row', async () => {
+        await renderRow();
+        const opener = host.querySelector<HTMLElement>(
+            '[aria-label="Open BibleNote: Mercy"]',
+        )!;
+        await act(async () => {
+            opener.dispatchEvent(
+                new MouseEvent('click', { bubbles: true, detail: 1 }),
+            );
+            opener.dispatchEvent(
+                new MouseEvent('click', { bubbles: true, detail: 2 }),
+            );
+            opener.dispatchEvent(
+                new MouseEvent('dblclick', { bubbles: true, detail: 2 }),
+            );
+        });
+        expect(mocks.openPopup).toHaveBeenCalledOnce();
+
+        // The row's double-click, on its title, still opens -- once.
+        mocks.openPopup.mockClear();
+        const title = [...host.querySelectorAll('div')].find(
+            (element) => element.textContent === 'Mercy',
+        )!;
+        await act(async () =>
+            title.dispatchEvent(
+                new MouseEvent('dblclick', { bubbles: true, detail: 2 }),
+            ),
+        );
+        expect(mocks.openPopup).toHaveBeenCalledOnce();
+
+        // And the keyboard path: one Enter, one window.
+        mocks.openPopup.mockClear();
+        await act(async () =>
+            opener.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            ),
+        );
+        expect(mocks.openPopup).toHaveBeenCalledOnce();
+    });
+
     test('exports the live editing head and closes title editing without saving', async () => {
         await renderRow();
         mocks.getAttachedBackground.mockResolvedValueOnce({ type: 'image' });

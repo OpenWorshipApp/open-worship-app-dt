@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -57,7 +57,8 @@ in a popup window:
    thin line between the two panels on the left of the presenter (every divider in the
    app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
    the two panels (the left one, or the upper one) collapses to its green strip and the
-   other takes its space. `Close Second Widget` does the same to the other panel.
+   other takes its space. `Close Second Widget` does the same to the other panel. The
+   menu holds those two and **[en:tran:Reset Size]** (step 9), nothing else.
    Hovering the divider shows the same two choices as small arrows, each named for
    the side it closes — **[en:tran:Collapse left panel]** / **[en:tran:Collapse right panel]**,
    or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
@@ -84,5 +85,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

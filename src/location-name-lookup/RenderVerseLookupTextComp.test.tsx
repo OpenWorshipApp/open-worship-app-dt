@@ -149,6 +149,51 @@ describe('verse lookup links', () => {
         expect(state.openPanel).toHaveBeenCalledTimes(1);
     });
 
+    // RD-92: the bible view around the verse has its own `onContextMenu`. It
+    // used to hear the same right-click through React's bubbling, build the
+    // generic verse menu after an await, and close the graph one to show it.
+    it('keeps a right-click on a name away from the surrounding view menu', async () => {
+        state.index = { id: 'index' };
+        const parentMenu = vi.fn();
+        await act(async () =>
+            root.render(
+                <div onContextMenu={parentMenu}>
+                    <RenderVerseLookupTextComp
+                        text="Before Moses after"
+                        kjvShortVerse="EXO 1:1"
+                        lookupLangCode="en"
+                    />
+                </div>,
+            ),
+        );
+        const link = host.querySelector('.verse-lookup-link')!;
+        const event = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => link.dispatchEvent(event));
+        expect(state.graphMenu).toHaveBeenCalledOnce();
+        expect(state.graphMenu).toHaveBeenCalledWith(event, {
+            kind: 'name',
+            recordId: 'person-7',
+            name: 'Moses',
+        });
+        expect(parentMenu).not.toHaveBeenCalled();
+        // The browser's own menu stays shut whatever the helper does.
+        expect(event.defaultPrevented).toBe(true);
+
+        // Anywhere else in the verse still reaches the view's menu.
+        await act(async () =>
+            host
+                .querySelector('div')!
+                .dispatchEvent(
+                    new MouseEvent('contextmenu', { bubbles: true }),
+                ),
+        );
+        expect(parentMenu).toHaveBeenCalledOnce();
+        expect(state.graphMenu).toHaveBeenCalledOnce();
+    });
+
     it('uses translated needles and leaves unmatched or empty text plain', async () => {
         state.index = { id: 'index' };
         state.needles = { id: 'needles' };

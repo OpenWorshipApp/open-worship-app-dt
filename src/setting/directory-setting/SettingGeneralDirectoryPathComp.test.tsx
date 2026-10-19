@@ -214,7 +214,9 @@ describe('general directory settings', () => {
     test('creates the default parent folder and installs it before child paths', async () => {
         await renderSettings();
         expect(host.textContent).toContain('/desktop/data');
-        await act(async () => click('Click here to set default data'));
+        await act(async () =>
+            click('Click here to use the default data folder'),
+        );
         expect(mocks.createDir).toHaveBeenCalledWith('/desktop/data');
         expect(mocks.unwatch).toHaveBeenCalledOnce();
         expect(mocks.setSelected).toHaveBeenCalledWith('/desktop/data');

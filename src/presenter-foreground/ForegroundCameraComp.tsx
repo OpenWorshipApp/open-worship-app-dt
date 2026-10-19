@@ -1,5 +1,5 @@
 import { useCallback, useMemo, type CSSProperties } from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
@@ -43,6 +43,10 @@ function RenderCameraInfoComp({
     genStyle: () => CSSProperties;
 }>) {
     const containerRef = useRef<HTMLDivElement>(null);
+    // A camera that cannot be opened -- held by another app, a virtual camera
+    // whose program is not running -- used to leave its tile spinning for
+    // good, with the reason in the console only.
+    const [isUnavailable, setIsUnavailable] = useState(false);
     // deps are the stable inputs — `containerRef.current` in the deps array
     // re-ran the effect on the second render, visibly stopping and
     // re-acquiring the camera stream
@@ -50,11 +54,15 @@ function RenderCameraInfoComp({
         if (containerRef.current === null) {
             return;
         }
+        setIsUnavailable(false);
         return await getCameraAndShowMedia({
             id: cameraInfo.deviceId,
             label: cameraInfo.label,
             parentContainer: containerRef.current,
             width,
+            onUnavailable: () => {
+                setIsUnavailable(true);
+            },
         });
     }, [cameraInfo.deviceId, cameraInfo.label, width]);
     const handleShowing = useCallback(
@@ -161,7 +169,16 @@ function RenderCameraInfoComp({
                 draggable
                 onDragStart={handleDraggingStart}
             >
-                <LoadingComp />
+                {isUnavailable ? (
+                    <div className="p-2 text-center text-warning small">
+                        <i className="bi bi-camera-video-off" />{' '}
+                        {tran(
+                            'This camera could not be started. Another app may be using it.',
+                        )}
+                    </div>
+                ) : (
+                    <LoadingComp />
+                )}
             </div>
         </div>
     );
@@ -261,7 +278,9 @@ function ForegroundCameraItemComp({
                             showingScreenIdDataList={showingScreenIdDataList}
                             buttonText={tran('Hide Camera')}
                             genTitle={(data) => {
-                                return `Camera: ${data.id}`;
+                                // The camera's NAME: its id is a hash no
+                                // operator would recognise.
+                                return data.label || data.id;
                             }}
                             handleForegroundHiding={handleCameraHiding}
                             isMini={false}

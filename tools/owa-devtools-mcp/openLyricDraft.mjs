@@ -1125,6 +1125,12 @@ export function draftOpenLyric(rawText, known = {}) {
     // a valid song called "Untitled" -- with a Create button under it.
     return genRefusal('browser-check');
   }
+  if (checkIsPlaceholderPage(text)) {
+    // A documentation-domain notice has enough short lines to become a
+    // valid "Untitled" song. Its page wrapper and notice identify it as
+    // site furniture; never offer a Create button for that content.
+    return genRefusal('not-a-song');
+  }
   const page = toCleanLines(text, {
     from: known.from,
     to: known.to,
@@ -1294,6 +1300,18 @@ const BROWSER_CHECK_PATTERN =
   /\b(?:checking your browser|just a moment|verify (?:that )?you are (?:a )?human|enable javascript and cookies to continue|please wait while we (?:check|verify)|hold tight|attention required!? \| cloudflare|ddos protection by|are you a robot|access denied|security check)\b/i;
 const MAX_BROWSER_CHECK_CHARS = 1500;
 
+export function checkIsPlaceholderPage(text) {
+  const whole = String(text ?? '');
+  const inner = stripWebsiteWrapper(whole);
+  return (
+    inner !== whole &&
+    inner.trim().length <= MAX_BROWSER_CHECK_CHARS &&
+    /\b(?:this domain is for use in (?:documentation|illustrative) examples|this domain is established to be used for illustrative examples in documents|404[\s:-]+(?:page )?not found|the page you (?:requested|are looking for) (?:could not be found|does not exist)|this domain (?:is for sale|has expired))\b/i.test(
+      inner,
+    )
+  );
+}
+
 /**
  * Is this "page" a site's bot check rather than the page that was asked for?
  */
@@ -1321,8 +1339,7 @@ export const BROWSER_CHECK_TEXT =
 const OUTCOME_TEXT = {
   'browser-check': BROWSER_CHECK_TEXT,
   'not-a-song':
-    'That does not read as a song -- there are not enough lines of words ' +
-    'in it. Ask them to paste the words themselves, or for a link to the ' +
+    'That does not read as a song. Ask them to paste the words themselves, or for a link to the ' +
     'page the words are on.',
   'already-open-lyric':
     'That is already written in Open Lyric notation, so there is nothing ' +

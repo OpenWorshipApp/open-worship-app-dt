@@ -500,6 +500,75 @@ describe('electronHelpers', () => {
         ).not.toHaveProperty('enableBlinkFeatures');
     });
 
+    test('a popup that has not navigated yet is in no group and throws nothing', async () => {
+        const parentWin = createMockBrowserWindow();
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        // Two note windows opened in quick succession: the first is already
+        // a window, but still on '' -- `new URL('')` threw in the main
+        // process and froze the app behind Electron's error dialog.
+        const noteUrl = 'https://localhost:3000/bible-note.html?uuid=note-1';
+        const notYetWin = createMockBrowserWindow({
+            webContents: createMockWebContents({ getURL: vi.fn(() => '') }),
+        });
+        const noteWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => noteUrl),
+            }),
+        });
+        for (const win of [notYetWin, noteWin]) {
+            electronMockState.setBrowserWindowFactory(() => win);
+            new electronMockState.BrowserWindowMock();
+        }
+
+        const openDetails = (url: string) => ({
+            url,
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_note`,
+            features: 'popup,width=400,height=300',
+        });
+        let response: any;
+        expect(() => {
+            response = windowOpenHandler(
+                openDetails('https://localhost:3000/bible-note.html?uuid=b'),
+            );
+        }).not.toThrow();
+        // Only `noteWin` is the same kind of window, so the new one steps
+        // off it; the URL-less one is neither cascaded from nor raised.
+        expect(response.action).toBe('allow');
+        expect(response.overrideBrowserWindowOptions).toEqual(
+            expect.objectContaining({ x: 30, y: 40 }),
+        );
+
+        // The same note again is the one already open: raised, not reopened.
+        expect(windowOpenHandler(openDetails(noteUrl)).action).toBe('deny');
+        // The raise runs on the next tick.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(noteWin.focus).toHaveBeenCalled();
+        expect(notYetWin.focus).not.toHaveBeenCalled();
+    });
+
+    test('a window.open whose URL does not parse opens nothing', () => {
+        const parentWin = createMockBrowserWindow();
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        for (const frameName of [`${POPUP_FRAME_NAME_PREFIX}_x`, '']) {
+            let response: any;
+            expect(() => {
+                response = windowOpenHandler({
+                    url: '',
+                    frameName,
+                    features: 'popup',
+                } as any);
+            }).not.toThrow();
+            expect(response).toEqual({ action: 'deny' });
+        }
+        expect(electronMockState.shell.openExternal).not.toHaveBeenCalled();
+    });
+
     describe('setGuideRunning', () => {
         // A walkthrough rings a control in the app window; the help window
         // sits on top of it and hides whatever it covers. These four cases are

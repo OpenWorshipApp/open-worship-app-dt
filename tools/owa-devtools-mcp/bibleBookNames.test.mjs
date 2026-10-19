@@ -75,6 +75,35 @@ describe('Bible import mapping choices', () => {
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(readPage).toHaveBeenCalledTimes(2);
   });
+  test('reads stable book identifiers on other public sites without treating chapter numbers as names', () => {
+    const saved = globalThis.location;
+    vi.stubGlobal('location', new URL('https://example.org/books'));
+    try {
+      document.body.innerHTML =
+        BIBLE_BOOK_KEYS.map(
+          (key) =>
+            `<a href="https://example.org/bible/${key}.1.html">Name ${key}</a>`,
+        ).join('') +
+        '<a href="https://example.org/bible/GEN.2.html">2</a>' +
+        '<a href="https://elsewhere.example/GEN.1.html">Wrong source</a>';
+      expect(toCompleteBibleBookList(extractBibleCatalog().books)).toEqual(
+        BIBLE_BOOK_KEYS.map((key) => `Name ${key}`),
+      );
+    } finally {
+      vi.stubGlobal('location', saved);
+    }
+  });
+  test('reports the edition language from its language link, not the interface language', () => {
+    const saved = globalThis.location;
+    vi.stubGlobal('location', new URL('https://www.bible.com/versions/4783'));
+    try {
+      document.body.innerHTML =
+        '<a href="https://www.bible.com/languages/khm">ភាសាខ្មែរ Bibles</a>';
+      expect(extractBibleCatalog().language).toBe('khm');
+    } finally {
+      vi.stubGlobal('location', saved);
+    }
+  });
   test('refuses injected edition URLs and deduplicates complete lists without losing sources', async () => {
     const books = BIBLE_BOOK_KEYS.map((key) => ({ key, name: `local ${key}` }));
     const readPage = vi.fn(async (url) =>

@@ -64,8 +64,13 @@ export default abstract class TimerClockController<
         );
     }
 
+    /**
+     * EVERY whole hour, never wrapped at 24: this is a length of time, not a
+     * time of day. A 25-hour countdown read `01:00:07` on the screen while the
+     * presenter said `25:00:07`.
+     */
     get hours() {
-        return Math.floor(this.shownSecond / 3600) % 24;
+        return Math.floor(this.shownSecond / 3600);
     }
 
     get minutes() {
@@ -96,8 +101,9 @@ export default abstract class TimerClockController<
         return ('0' + n.toString()).slice(-2);
     }
 
+    /** Two digits at least, all of them past 99 (`toTimeString` keeps two). */
     get hourStr() {
-        return this.toTimeString(this.hours);
+        return this.hours.toString().padStart(2, '0');
     }
 
     get minuteStr() {

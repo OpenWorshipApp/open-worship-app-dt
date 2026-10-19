@@ -28,6 +28,8 @@
 // An entry exists only while its tab has steps: cleared is deleted, so the
 // map holds at most one list per open tab.
 
+import { fillWords, tran } from './chatTranHelpers';
+
 export type BotProgressType = {
     // Order, and the handle a finishing step is matched back to its start by.
     id: number;
@@ -166,9 +168,15 @@ function toStepQuote(value: unknown, max = 38) {
     return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
 }
 
-function toQuotedStep(prefix: string, value: unknown, plain: string) {
+/**
+ * A whole sentence with the quote in its `{words}` gap, or the plain one when
+ * there is nothing to quote. Both arrive translated: a language puts the
+ * quote wherever its own grammar wants it, which a prefix glued in front of
+ * the quote never let it do.
+ */
+function toQuotedStep(sentence: string, value: unknown, plain: string) {
     const quote = toStepQuote(value);
-    return quote === null ? plain : `${prefix} “${quote}”`;
+    return quote === null ? plain : fillWords(sentence, { words: quote });
 }
 
 /**
@@ -185,203 +193,333 @@ export function toSiteName(url: unknown) {
     }
 }
 
-// What each action on a document reads as. Shared by songs and slide
-// documents, which differ only in the noun.
-const FILE_ACTION_MAP: Record<string, string> = {
-    list: 'Looking through your',
-    info: 'Reading one of your',
-    create: 'Creating a new',
-    update: 'Editing a',
-    rename: 'Renaming a',
+// What each action on a document reads as. Whole sentences, one set per kind
+// of document: a noun spliced in after a verb ("Creating a new" + "song") is
+// a sentence no translation can put in its own order.
+function toNamedStep(plain: string, sentence: string, name: string | null) {
+    return name === null ? plain : fillWords(sentence, { name });
+}
+
+function describeSongStep(action: string, name: string | null) {
+    switch (action) {
+        case 'list':
+            return tran('Looking through your songs');
+        case 'info':
+            return toNamedStep(
+                tran('Reading one of your song'),
+                tran('Reading one of your song: “{name}”'),
+                name,
+            );
+        case 'create':
+            return toNamedStep(
+                tran('Creating a new song'),
+                tran('Creating a new song: “{name}”'),
+                name,
+            );
+        case 'update':
+            return toNamedStep(
+                tran('Editing a song'),
+                tran('Editing a song: “{name}”'),
+                name,
+            );
+        case 'rename':
+            return toNamedStep(
+                tran('Renaming a song'),
+                tran('Renaming a song: “{name}”'),
+                name,
+            );
+        case 'delete':
+            return toNamedStep(
+                tran('Moving a song to the trash'),
+                tran('Moving your song “{name}” to the trash'),
+                name,
+            );
+        default:
+            return tran('Working on your songs');
+    }
+}
+
+function describeSlideDocumentStep(action: string, name: string | null) {
+    switch (action) {
+        case 'list':
+            return tran('Looking through your slide documents');
+        case 'info':
+            return toNamedStep(
+                tran('Reading one of your slide document'),
+                tran('Reading one of your slide document: “{name}”'),
+                name,
+            );
+        case 'create':
+            return toNamedStep(
+                tran('Creating a new slide document'),
+                tran('Creating a new slide document: “{name}”'),
+                name,
+            );
+        case 'update':
+            return toNamedStep(
+                tran('Editing a slide document'),
+                tran('Editing a slide document: “{name}”'),
+                name,
+            );
+        case 'rename':
+            return toNamedStep(
+                tran('Renaming a slide document'),
+                tran('Renaming a slide document: “{name}”'),
+                name,
+            );
+        case 'delete':
+            return toNamedStep(
+                tran('Moving a slide document to the trash'),
+                tran('Moving your slide document “{name}” to the trash'),
+                name,
+            );
+        default:
+            return tran('Working on your slide documents');
+    }
+}
+
+type SlideSentencesType = {
+    plain: string;
+    numbered: string;
+    named: string;
+    numberedNamed: string;
 };
 
-// The actions that name a slide or send a file somewhere, which read better
-// as whole sentences than as a verb in front of a noun.
-const FILE_SENTENCE_MAP: Record<
-    string,
-    (noun: string, name: string | null, slide: string) => string
-> = {
-    delete: (noun, name) => {
-        return name === null
-            ? `Moving a ${noun} to the trash`
-            : `Moving your ${noun} “${name}” to the trash`;
-    },
-    slides: (_noun, name) => {
-        return name === null
-            ? 'Reading the slides'
-            : `Reading the slides of “${name}”`;
-    },
-    'add-slide': (_noun, name) => {
-        return name === null ? 'Adding a slide' : `Adding a slide to “${name}”`;
-    },
-    'update-slide': (_noun, name, slide) => {
-        return name === null
-            ? `Changing ${slide}`
-            : `Changing ${slide} of “${name}”`;
-    },
-    'delete-slide': (_noun, name, slide) => {
-        return name === null
-            ? `Removing ${slide}`
-            : `Removing ${slide} from “${name}”`;
-    },
-    'move-slide': (_noun, name, slide) => {
-        return name === null
-            ? `Moving ${slide}`
-            : `Moving ${slide} of “${name}”`;
-    },
-    'duplicate-slide': (_noun, name, slide) => {
-        return name === null
-            ? `Copying ${slide}`
-            : `Copying ${slide} of “${name}”`;
-    },
-};
+function toSlideStep(
+    sentences: SlideSentencesType,
+    name: string | null,
+    slide: number | null,
+) {
+    const sentence =
+        name === null
+            ? slide === null
+                ? sentences.plain
+                : sentences.numbered
+            : slide === null
+              ? sentences.named
+              : sentences.numberedNamed;
+    return fillWords(sentence, { name: name ?? '', slide: slide ?? '' });
+}
 
-function describeFileStep(args: any, noun: string, plural: string) {
+// The actions that name a slide, the same for both kinds of document; null
+// for an action that is not one of them.
+function describeSlideStep(
+    action: string,
+    name: string | null,
+    slide: number | null,
+): string | null {
+    switch (action) {
+        case 'slides':
+            return toNamedStep(
+                tran('Reading the slides'),
+                tran('Reading the slides of “{name}”'),
+                name,
+            );
+        case 'add-slide':
+            return toNamedStep(
+                tran('Adding a slide'),
+                tran('Adding a slide to “{name}”'),
+                name,
+            );
+        case 'update-slide':
+            return toSlideStep(
+                {
+                    plain: tran('Changing a slide'),
+                    numbered: tran('Changing slide {slide}'),
+                    named: tran('Changing a slide of “{name}”'),
+                    numberedNamed: tran('Changing slide {slide} of “{name}”'),
+                },
+                name,
+                slide,
+            );
+        case 'delete-slide':
+            return toSlideStep(
+                {
+                    plain: tran('Removing a slide'),
+                    numbered: tran('Removing slide {slide}'),
+                    named: tran('Removing a slide from “{name}”'),
+                    numberedNamed: tran('Removing slide {slide} from “{name}”'),
+                },
+                name,
+                slide,
+            );
+        case 'move-slide':
+            return toSlideStep(
+                {
+                    plain: tran('Moving a slide'),
+                    numbered: tran('Moving slide {slide}'),
+                    named: tran('Moving a slide of “{name}”'),
+                    numberedNamed: tran('Moving slide {slide} of “{name}”'),
+                },
+                name,
+                slide,
+            );
+        case 'duplicate-slide':
+            return toSlideStep(
+                {
+                    plain: tran('Copying a slide'),
+                    numbered: tran('Copying slide {slide}'),
+                    named: tran('Copying a slide of “{name}”'),
+                    numberedNamed: tran('Copying slide {slide} of “{name}”'),
+                },
+                name,
+                slide,
+            );
+        default:
+            return null;
+    }
+}
+
+function describeFileStep(args: any, isSong: boolean) {
     const action = String(args?.action ?? '');
-    const sentence = FILE_SENTENCE_MAP[action];
-    if (sentence !== undefined) {
-        const slide = Number.isInteger(args?.slide)
-            ? `slide ${args.slide}`
-            : 'a slide';
-        return sentence(noun, toStepQuote(args?.name), slide);
-    }
-    const verb = FILE_ACTION_MAP[action];
-    if (verb === undefined) {
-        return `Working on your ${plural}`;
-    }
-    if (action === 'list') {
-        return `${verb} ${plural}`;
-    }
     const name = toStepQuote(args?.name);
-    if (name === null) {
-        return `${verb} ${noun}`;
-    }
-    return `${verb} ${noun}: “${name}”`;
+    const slide = Number.isInteger(args?.slide) ? (args.slide as number) : null;
+    return (
+        describeSlideStep(action, name, slide) ??
+        (isSong
+            ? describeSongStep(action, name)
+            : describeSlideDocumentStep(action, name))
+    );
 }
 
 // The saved passages and notes, and putting a change back, on the wait line.
-const DATA_STEP_MAP: Record<string, Record<string, string>> = {
+// Functions, so each line is translated when it is said.
+const DATA_STEP_MAP: Record<string, Record<string, () => string>> = {
     owa_bible_item: {
-        list: 'Looking through your saved Bible passages',
-        update: 'Changing a saved Bible passage',
-        delete: 'Removing a saved Bible passage',
-        'create-list': 'Making a Bibles list',
-        'rename-list': 'Renaming a Bibles list',
-        'delete-list': 'Moving a Bibles list to the trash',
+        list: () => tran('Looking through your saved Bible passages'),
+        update: () => tran('Changing a saved Bible passage'),
+        delete: () => tran('Removing a saved Bible passage'),
+        'create-list': () => tran('Making a Bibles list'),
+        'rename-list': () => tran('Renaming a Bibles list'),
+        'delete-list': () => tran('Moving a Bibles list to the trash'),
     },
     owa_bible_note: {
-        list: 'Looking through your Bible notes',
-        read: 'Reading a Bible note',
-        add: 'Writing a Bible note',
-        update: 'Changing a Bible note',
-        delete: 'Removing a Bible note',
-        'create-file': 'Making a notes file',
-        'rename-file': 'Renaming a notes file',
-        'delete-file': 'Moving a notes file to the trash',
+        list: () => tran('Looking through your Bible notes'),
+        read: () => tran('Reading a Bible note'),
+        add: () => tran('Writing a Bible note'),
+        update: () => tran('Changing a Bible note'),
+        delete: () => tran('Removing a Bible note'),
+        'create-file': () => tran('Making a notes file'),
+        'rename-file': () => tran('Renaming a notes file'),
+        'delete-file': () => tran('Moving a notes file to the trash'),
     },
     owa_undo: {
-        list: 'Looking through the recent changes',
-        undo: 'Putting back an earlier change',
+        list: () => tran('Looking through the recent changes'),
+        undo: () => tran('Putting back an earlier change'),
     },
     // The model has had this tool since 2026-10-10 and its steps read
     // "Looking something up" until the day the notes were checked against
     // the code: a tool added to the server and not here says nothing.
     owa_presenting_flow: {
-        list: 'Looking through your run sheets',
-        info: 'Reading a run sheet',
-        create: 'Making a run sheet',
-        rename: 'Renaming a run sheet',
-        delete: 'Moving a run sheet to the trash',
-        add: 'Adding a line to a run sheet',
-        remove: 'Taking a line off a run sheet',
-        move: 'Moving a line of a run sheet',
-        duplicate: 'Copying a line of a run sheet',
-        park: 'Parking a line of a run sheet',
-        unpark: 'Putting a parked line back in the run',
+        list: () => tran('Looking through your run sheets'),
+        info: () => tran('Reading a run sheet'),
+        create: () => tran('Making a run sheet'),
+        rename: () => tran('Renaming a run sheet'),
+        delete: () => tran('Moving a run sheet to the trash'),
+        add: () => tran('Adding a line to a run sheet'),
+        remove: () => tran('Taking a line off a run sheet'),
+        move: () => tran('Moving a line of a run sheet'),
+        duplicate: () => tran('Copying a line of a run sheet'),
+        park: () => tran('Parking a line of a run sheet'),
+        unpark: () => tran('Putting a parked line back in the run'),
     },
 };
 
-const DATA_STEP_FALLBACK_MAP: Record<string, string> = {
-    owa_bible_item: 'Working on your saved Bible passages',
-    owa_bible_note: 'Working on your Bible notes',
-    owa_undo: 'Looking through the recent changes',
-    owa_presenting_flow: 'Working on a run sheet',
+const DATA_STEP_FALLBACK_MAP: Record<string, () => string> = {
+    owa_bible_item: () => tran('Working on your saved Bible passages'),
+    owa_bible_note: () => tran('Working on your Bible notes'),
+    owa_undo: () => tran('Looking through the recent changes'),
+    owa_presenting_flow: () => tran('Working on a run sheet'),
 };
 
 function describeDataStep(name: string, args: any) {
     if (name === 'owa_bible_item' && args?.action === 'add') {
         return toQuotedStep(
-            'Saving to your Bibles list:',
+            tran('Saving to your Bibles list: “{words}”'),
             args?.reference,
-            'Saving a passage to your Bibles list',
+            tran('Saving a passage to your Bibles list'),
         );
     }
-    return (
-        DATA_STEP_MAP[name]?.[String(args?.action ?? '')] ??
-        DATA_STEP_FALLBACK_MAP[name]
-    );
+    const actionMap = DATA_STEP_MAP[name] ?? {};
+    const action = String(args?.action ?? '');
+    const step = Object.hasOwn(actionMap, action)
+        ? actionMap[action]
+        : DATA_STEP_FALLBACK_MAP[name];
+    return step?.() ?? tran('Looking something up');
 }
-
-// What each foreground extra is called on the wait line.
-const FOREGROUND_NOUN_MAP: Record<string, string> = {
-    countdown: 'the countdown',
-    stopwatch: 'the stopwatch',
-    clock: 'the clock',
-    'marquee-top': 'the scrolling message',
-    'marquee-bottom': 'the scrolling message',
-    'quick-text': 'the line of text',
-    all: 'the extras',
-};
 
 // A Bible download and install each take long enough to look stuck, so the
 // line says which one it is waiting on.
 function describeBibleXmlStep(args: any) {
     switch (args?.action) {
         case 'check':
-            return 'Downloading the Bible file and reading it';
+            return tran('Downloading the Bible file and reading it');
         case 'names':
-            return 'Finding Bible book names for your language';
+            return tran('Finding Bible book names for your language');
         case 'import':
-            return 'Installing the Bible';
+            return tran('Installing the Bible');
         case 'update':
-            return 'Changing the Bible';
+            return tran('Changing the Bible');
         case 'delete':
-            return 'Moving the Bible to the trash';
+            return tran('Moving the Bible to the trash');
         default:
-            return 'Looking at your Bibles';
+            return tran('Looking at your Bibles');
+    }
+}
+
+// Taking one foreground extra off the screen, by what the wait line calls it.
+function describeForegroundStopStep(widget: string) {
+    switch (widget) {
+        case 'countdown':
+            return tran('Taking the countdown off the screen');
+        case 'stopwatch':
+            return tran('Taking the stopwatch off the screen');
+        case 'clock':
+            return tran('Taking the clock off the screen');
+        case 'marquee-top':
+        case 'marquee-bottom':
+            return tran('Taking the scrolling message off the screen');
+        case 'quick-text':
+            return tran('Taking the line of text off the screen');
+        case 'all':
+            return tran('Taking the extras off the screen');
+        default:
+            return tran('Taking an extra off the screen');
     }
 }
 
 function describeForegroundStep(args: any) {
     const widget = String(args?.widget ?? '');
-    const noun = FOREGROUND_NOUN_MAP[widget] ?? 'an extra';
     if (args?.action === 'check') {
-        return 'Checking the extras on the screen';
+        return tran('Checking the extras on the screen');
     }
     if (args?.action === 'stop') {
-        return `Taking ${noun} off the screen`;
+        return describeForegroundStopStep(widget);
     }
     switch (widget) {
         case 'countdown':
             if (typeof args?.minutes === 'number') {
-                return `Starting a ${args.minutes} minute countdown on the screen`;
+                return fillWords(
+                    tran('Starting a {minutes} minute countdown on the screen'),
+                    { minutes: args.minutes },
+                );
             }
             return toQuotedStep(
-                'Starting a countdown to',
+                tran('Starting a countdown to “{words}”'),
                 args?.at,
-                'Starting a countdown on the screen',
+                tran('Starting a countdown on the screen'),
             );
         case 'stopwatch':
-            return 'Starting a stopwatch on the screen';
+            return tran('Starting a stopwatch on the screen');
         case 'clock':
-            return 'Putting a clock on the screen';
+            return tran('Putting a clock on the screen');
         case 'marquee-top':
         case 'marquee-bottom':
-            return 'Putting a scrolling message on the screen';
+            return tran('Putting a scrolling message on the screen');
         case 'quick-text':
-            return 'Putting a line of text on the screen';
+            return tran('Putting a line of text on the screen');
         default:
-            return 'Putting an extra on the screen';
+            return tran('Putting an extra on the screen');
     }
 }
 
@@ -398,106 +536,163 @@ export function describeToolStep(name: string, args: any): string {
     switch (name) {
         case 'owa_help_search':
             return toQuotedStep(
-                'Searching the guide for',
+                tran('Searching the guide for “{words}”'),
                 args?.query,
-                'Searching the guide',
+                tran('Searching the guide'),
             );
         case 'owa_help_page':
-            return 'Reading the guide';
+            return tran('Reading the guide');
         case 'owa_list_questions':
-            return 'Looking through what it can answer';
+            return tran('Looking through what it can answer');
         case 'owa_app_state':
-            return 'Checking what the app is showing';
+            return tran('Checking what the app is showing');
         case 'owa_list_ui':
-            return 'Looking over the buttons on screen';
+            return tran('Looking over the buttons on screen');
         case 'owa_find_ui':
             return toQuotedStep(
-                'Looking for',
+                tran('Looking for “{words}”'),
                 args?.label,
-                'Looking for a button',
+                tran('Looking for a button'),
             );
         case 'owa_click':
-            return toQuotedStep('Pressing', args?.label, 'Pressing a button');
-        case 'owa_type':
-            return toQuotedStep('Typing into', args?.label, 'Typing something');
-        case 'owa_goto_page':
-            return 'Switching the app window over';
-        case 'owa_list_screens':
-            return 'Checking the projector screens';
-        case 'owa_hide_screens':
-            return 'Clearing the projector screens';
-        case 'owa_present_bible':
             return toQuotedStep(
-                args?.action === 'check'
-                    ? 'Reading the passage'
-                    : 'Putting a Bible passage on the screen:',
-                args?.reference,
-                args?.action === 'check'
-                    ? 'Reading a Bible passage'
-                    : 'Putting a Bible passage on the screen',
+                tran('Pressing “{words}”'),
+                args?.label,
+                tran('Pressing a button'),
             );
+        case 'owa_type':
+            return toQuotedStep(
+                tran('Typing into “{words}”'),
+                args?.label,
+                tran('Typing something'),
+            );
+        case 'owa_goto_page':
+            return tran('Switching the app window over');
+        case 'owa_list_screens':
+            return tran('Checking the projector screens');
+        case 'owa_hide_screens':
+            return tran('Clearing the projector screens');
+        case 'owa_present_bible':
+            return args?.action === 'check'
+                ? toQuotedStep(
+                      tran('Reading the passage “{words}”'),
+                      args?.reference,
+                      tran('Reading a Bible passage'),
+                  )
+                : toQuotedStep(
+                      tran('Putting a Bible passage on the screen: “{words}”'),
+                      args?.reference,
+                      tran('Putting a Bible passage on the screen'),
+                  );
         case 'owa_foreground':
             return describeForegroundStep(args);
+        case 'owa_find_verse':
+            if (typeof args?.open === 'string') {
+                return toQuotedStep(
+                    tran('Opening in the Bible Lookup: “{words}”'),
+                    args.open,
+                    tran('Opening a verse in the Bible Lookup'),
+                );
+            }
+            if (typeof args?.refs === 'string') {
+                return toQuotedStep(
+                    tran('Reading “{words}”'),
+                    args.refs,
+                    tran('Reading Bible verses'),
+                );
+            }
+            return toQuotedStep(
+                tran('Searching the Bible for “{words}”'),
+                args?.words,
+                tran('Looking at the Bibles installed'),
+            );
+        case 'owa_resource_file':
+            return args?.action === 'read'
+                ? toQuotedStep(
+                      tran('Reading “{words}” from Resources'),
+                      args?.file,
+                      tran('Looking through Resources'),
+                  )
+                : tran('Looking through Resources');
+        case 'owa_lookup_record':
+            return args?.kind === 'verse'
+                ? toQuotedStep(
+                      tran('Reading “{words}”'),
+                      args?.ref,
+                      tran('Reading Bible verses'),
+                  )
+                : toQuotedStep(
+                      tran('Reading what the names lookup has on “{words}”'),
+                      args?.name,
+                      tran('Reading the names lookup'),
+                  );
         case 'owa_tran':
-            return 'Checking what that button is called here';
+            return tran('Checking what that button is called here');
         case 'owa_bible_xml':
             return describeBibleXmlStep(args);
         case 'owa_read_website': {
             const site = toSiteName(args?.url);
-            return site === null ? 'Reading a web page' : `Reading ${site}`;
+            return site === null
+                ? tran('Reading a web page')
+                : fillWords(tran('Reading {site}'), { site });
         }
         case 'owa_lyric_validate': {
             // Handed a page address, the drafter reads the page itself, and
             // that is the slow half: say which site, as a read would.
             const site = toSiteName(args?.url);
             if (site !== null) {
-                return `Reading ${site} and writing the song out`;
+                return fillWords(
+                    tran('Reading {site} and writing the song out'),
+                    {
+                        site,
+                    },
+                );
             }
             if (args?.mode === 'find') {
                 return toQuotedStep(
-                    'Looking up the song',
+                    tran('Looking up the song “{words}”'),
                     args?.title,
-                    'Looking up the song',
+                    tran('Looking up the song'),
                 );
             }
             return args?.mode === 'draft'
-                ? 'Writing the song out'
-                : 'Checking the song over';
+                ? tran('Writing the song out')
+                : tran('Checking the song over');
         }
         case 'owa_lyric_file':
-            return describeFileStep(args, 'song', 'songs');
+            return describeFileStep(args, true);
         case 'owa_slide_file':
-            return describeFileStep(args, 'slide document', 'slide documents');
+            return describeFileStep(args, false);
         case 'owa_bible_item':
         case 'owa_bible_note':
         case 'owa_undo':
         case 'owa_presenting_flow':
             return describeDataStep(name, args);
         case 'owa_guide_start':
-            return 'Setting up a walkthrough';
+            return tran('Setting up a walkthrough');
         case 'owa_guide_step':
-            return 'Moving the walkthrough on';
+            return tran('Moving the walkthrough on');
         case 'owa_guide_status':
-            return 'Checking on the walkthrough';
+            return tran('Checking on the walkthrough');
         case 'take_snapshot':
-            return 'Looking over the window';
+            return tran('Looking over the window');
         case 'list_pages':
-            return 'Checking which windows are open';
+            return tran('Checking which windows are open');
         case 'select_page':
-            return 'Switching to another window';
+            return tran('Switching to another window');
         case 'press_key':
-            return 'Pressing a key';
+            return tran('Pressing a key');
         case 'wait_for':
-            return 'Waiting for the app to catch up';
+            return tran('Waiting for the app to catch up');
         case 'list_console_messages':
         case 'get_console_message':
-            return "Reading the app's own log";
+            return tran("Reading the app's own log");
         case 'list_network_requests':
         case 'get_network_request':
-            return 'Checking what the app has downloaded';
+            return tran('Checking what the app has downloaded');
         case 'handle_dialog':
-            return 'Answering a message the app put up';
+            return tran('Answering a message the app put up');
         default:
-            return 'Looking something up';
+            return tran('Looking something up');
     }
 }

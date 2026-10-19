@@ -73,6 +73,7 @@ import {
     closeFindOverlay,
     getFindOverlayHostWebContents,
     getFindOverlayWebContents,
+    setFindOverlayMounted,
     startFindOverlayDragging,
     stopFindOverlayDragging,
 } from './finderOverlayHelpers';
@@ -86,7 +87,11 @@ import {
 } from './screenOutputRegistry';
 import { isVirtualDisplayId } from './virtualDisplayProtocol';
 import { officeFileToPdf } from './electronOfficeHelpers';
-import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
+import {
+    getPagesCount,
+    pdfToChatPages,
+    pdfToImages,
+} from './pdfToImagesHelpers';
 import {
     docxToHtmls,
     getDocxToHtmlsVersion,
@@ -296,7 +301,9 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     onAsync(ipcMain, 'main:app:select-dirs', async () => {
         const result = await dialog.showOpenDialog(appController.mainWin, {
-            properties: ['openDirectory'],
+            // The default data folder is `~/.owa/open-worship-data`, hidden
+            // on macOS and Linux: without this it cannot be picked again.
+            properties: ['openDirectory', 'showHiddenFiles'],
         });
         return result.filePaths;
     });
@@ -784,6 +791,9 @@ export function initFinderEvent() {
     ipcMain.on('finder:app:close', (event) => {
         closeFindOverlay(event.sender);
     });
+    ipcMain.on('finder:app:mounted', (event, isMounted: boolean) => {
+        setFindOverlayMounted(event.sender, isMounted === true);
+    });
     ipcMain.on('finder:app:drag-start', (event, grabOffsetX: number) => {
         startFindOverlayDragging(event.sender, grabOffsetX);
     });
@@ -990,6 +1000,35 @@ export function initEventOther(appController: ElectronAppController) {
                         // A closed renderer should not abort PDF conversion.
                     }
                 },
+            );
+        },
+    );
+
+    // A PDF's pages as pictures for the help window to put in front of its
+    // assistant. Only a `.pdf` by name: this opens whatever path it is given
+    // in a child process, and that is all it is for.
+    onAsync(
+        ipcMain,
+        'main:app:pdf-to-chat-pages',
+        (data: {
+            filePath: string;
+            startPage?: number;
+            maxPages?: number;
+            longEdge?: number;
+            allPages?: boolean;
+        }) => {
+            if (
+                typeof data?.filePath !== 'string' ||
+                !/\.pdf$/i.test(data.filePath)
+            ) {
+                return { isSuccessful: false, message: 'Not a PDF file' };
+            }
+            return pdfToChatPages(
+                data.filePath,
+                data.startPage,
+                data.maxPages,
+                data.longEdge,
+                data.allPages,
             );
         },
     );

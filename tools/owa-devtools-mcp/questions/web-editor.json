@@ -69,6 +69,7 @@
                     "starterRank": 3,
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "The Web Editor saves itself as you type",
                         "guide": true
                     }
                 }

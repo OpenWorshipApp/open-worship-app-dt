@@ -24,12 +24,14 @@
 //   is already asking in another tab, and one that has just failed or just
 //   taken minutes, go to the back of the line rather than out of it -- when
 //   they are all there is, the best of them is still asked.
-// - **smarter**: among the rest, the bigger model first.
+// - **smarter**: among the rest, a server's cloud model first, then the bigger
+//   model first.
 
 import {
     CUSTOM_CONTEXT_MIN,
     type CustomServerKindType,
 } from '../../electron/customLlmProtocol';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
 
 /** The two providers whose answers cost nothing. */
 export type AutoProviderType = 'custom' | 'free';
@@ -110,6 +112,26 @@ export function readModelSize(name: string): number {
     return size;
 }
 
+// `gemma4:cloud`, `gemma4:31b-cloud`, `deepseek-v4.1-flash:cloud`: a model
+// tag that ends in `cloud`.
+const CLOUD_MODEL_PATTERN = /(?:^|[\s:/_-])cloud(?=\s|$)/i;
+
+/**
+ * Whether a server's model runs in its maker's cloud rather than on the
+ * server itself -- Ollama's `:cloud` and `-cloud` tags. Asked for by the user
+ * with a picture of their Ollama list, two of those rows circled
+ * (2026-10-17): _in `Auto` mode it should highly prefer any models ends with
+ * `cloud` … let the choose cloud and stronger model first_, and then the
+ * order in so many words: _cloud/strongest -> cloud/stronger -> cloud/strong
+ * -> cloud -> non-cloud/strongest -> non-cloud/stronger -> ..._. Such a model
+ * is the full-size one on a data centre's cards, so it answers faster and
+ * better than anything a church's own machine holds, and costs this app
+ * nothing: the server's owner signed it in to their own account.
+ */
+export function checkIsCloudModel(name: string): boolean {
+    return CLOUD_MODEL_PATTERN.test(String(name ?? ''));
+}
+
 /** One candidate, for the memory of what just went wrong with it. */
 export function toAutoCandidateKey(candidate: {
     provider: string;
@@ -176,6 +198,11 @@ export type AutoRankOptionsType = {
     isGeneral?: boolean;
     // `toAutoBusyKey` of every ask this window still has out.
     busyKeys?: readonly string[];
+    // Models to ask FIRST among those that can answer, read off the model's
+    // name -- size and setbacks aside. A verse remembered in Khmer has to be
+    // put into English to be found in the KJV, and the user's word was _for
+    // any translation attempt please prefer Gemma 4 models_ (2026-10-16).
+    preferModelPattern?: RegExp;
     now?: number;
 };
 
@@ -269,6 +296,14 @@ export function rankAutoCandidates(
                 // Nothing of this LM Studio's is loaded (see above).
                 isLastResort:
                     state.kind === 'lm-studio' && state.isLoaded === false,
+                isPreferred:
+                    options.preferModelPattern?.test(
+                        `${candidate.modelName} ${candidate.label}`,
+                    ) === true,
+                // The keyless service is a service, not a server's model.
+                isCloud:
+                    candidate.provider === 'custom' &&
+                    checkIsCloudModel(candidate.modelName),
                 size:
                     candidate.provider === 'free'
                         ? FREE_MODEL_SIZE
@@ -287,6 +322,10 @@ export function rankAutoCandidates(
             Number(one.hasSetback) - Number(other.hasSetback) ||
             Number(one.isBusy) - Number(other.isBusy) ||
             Number(one.isLastResort) - Number(other.isLastResort) ||
+            Number(other.isPreferred) - Number(one.isPreferred) ||
+            // Every cloud model before every other, a size-less one too:
+            // within each, the bigger first.
+            Number(other.isCloud) - Number(one.isCloud) ||
             other.size - one.size ||
             // As smart as each other: the words stay in the building.
             Number(one.candidate.provider === 'free') -
@@ -384,15 +423,43 @@ export function genAutoAnswerNote(
     if (skipped.length > 0) {
         const tried = skipped
             .map((one) => {
+                const assistant = toShownPickLabel(one.pick);
                 return one.reason.length > 0
-                    ? `${one.pick.label} could not answer — ${one.reason}.`
-                    : `${one.pick.label} could not answer.`;
+                    ? fillWords(
+                          tran('{assistant} could not answer — {reason}.'),
+                          {
+                              assistant,
+                              reason: one.reason,
+                          },
+                      )
+                    : fillWords(tran('{assistant} could not answer.'), {
+                          assistant,
+                      });
             })
             .join(' ');
-        return `${tried} Auto asked ${pick.label} instead.`;
+        return fillWords(tran('{tried} Auto asked {assistant} instead.'), {
+            tried,
+            assistant: toShownPickLabel(pick),
+        });
     }
     if (previousLabel !== undefined && previousLabel !== pick.label) {
-        return `Auto asked ${pick.label} this time.`;
+        return fillWords(tran('Auto asked {assistant} this time.'), {
+            assistant: toShownPickLabel(pick),
+        });
     }
     return null;
+}
+
+/**
+ * A pick's label as the person reads it: `Free · Nemotron Super VL` says
+ * the keyless service's word in the app's language and keeps the model's
+ * name. A server's name is the user's own and stays as they wrote it, and
+ * the label itself is untouched -- it is compared and matched.
+ */
+function toShownPickLabel(pick: AutoCandidateType): string {
+    if (pick.provider !== 'free') {
+        return pick.label;
+    }
+    const [service, ...rest] = pick.label.split(' · ');
+    return [tranLabel(service), ...rest].join(' · ');
 }

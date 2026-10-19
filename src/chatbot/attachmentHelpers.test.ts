@@ -3,7 +3,13 @@ import { describe, expect, test } from 'vitest';
 import { REPORT_FILE_MAX_BYTES } from '../../electron/customLlmProtocol';
 import {
     ATTACHMENT_ONLY_QUESTION,
+    FILE_ONLY_QUESTION,
     MAX_CARRIED_FILE_BYTES,
+    checkCanAttachFileName,
+    checkIsFileAttachment,
+    findOpenFileAttachments,
+    getAttachmentPages,
+    putAttachmentPages,
     checkIsCarriedFileName,
     checkIsReadableTextFile,
     dropAttachmentData,
@@ -542,5 +548,167 @@ describe('a file that is carried, not read', () => {
 
     test('is held to the size a report carries in one file', () => {
         expect(MAX_CARRIED_FILE_BYTES).toBe(REPORT_FILE_MAX_BYTES);
+    });
+});
+
+// 2026-10-17, the user, with a picture of the assistant saying it could not
+// open PDF files: _convert to images for pdf pages then send image as
+// attachment_.
+describe('a PDF read as its pages', () => {
+    const PAGE_1 = 'data:image/png;base64,UEFHRTE=';
+    const PAGE_2 = 'data:image/jpeg;base64,UEFHRTI=';
+
+    test('sends its pages as pictures, in order, among the others', () => {
+        const pdf = {
+            ...genFileAttachment('LUK.6.pdf', 300 * 1024, '/r/LUK.6.pdf', 2),
+            number: 2,
+        };
+        putAttachmentPages(pdf.id, [PAGE_1, PAGE_2]);
+        putAttachmentData('shot', 'data:image/png;base64,U0hPVA==');
+        const shot = {
+            id: 'shot',
+            kind: 'image' as const,
+            name: 'my screen',
+            mimeType: 'image/png',
+            byteSize: 4,
+            number: 1,
+        };
+        expect(toBotImages([shot, pdf]).map((one) => one.data)).toEqual([
+            'U0hPVA==',
+            'UEFHRTE=',
+            'UEFHRTI=',
+        ]);
+        // ...and the legend counts them with the others, so "page 2" and
+        // "the 3rd picture" are the same picture to the model.
+        expect(toAttachmentLegend([shot, pdf])).toContain(
+            '[2] the file "LUK.6.pdf" -- its pages 1 to 2 are the 2nd to ' +
+                '3rd pictures attached here',
+        );
+        const asked = toAskedOfModel('what does page 2 say?', [pdf]);
+        expect(asked).toContain('(a PDF, 2 pages, 300 KB)');
+        expect(asked).toContain('All 2 of its pages are attached as pictures');
+        expect(asked).not.toContain('You cannot read what is inside it');
+        // A model the pictures do not go to is never told they are there.
+        expect(toAttachmentText([pdf], false)).toContain(
+            'You cannot read what is inside it',
+        );
+        dropAttachmentData(pdf.id);
+        dropAttachmentData('shot');
+    });
+
+    test('says which pages the model was NOT shown', () => {
+        const pdf = genFileAttachment('book.pdf', 2048, '/r/book.pdf', 40);
+        putAttachmentPages(pdf.id, [PAGE_1, PAGE_2]);
+        expect(toAttachmentText([pdf])).toContain(
+            'Its first 2 pages are attached as pictures, in order; pages 3 ' +
+                'to 40 are NOT',
+        );
+        dropAttachmentData(pdf.id);
+        // Gone with the window: back to the sentence that it cannot be read.
+        expect(toAttachmentText([pdf])).toContain(
+            'You cannot read what is inside it',
+        );
+        expect(toBotImages([pdf])).toEqual([]);
+    });
+
+    test('is held and let go of WHOLE, as one attachment', () => {
+        putAttachmentPages('doc', [PAGE_1, PAGE_2]);
+        expect(getAttachmentPages('doc')).toEqual([PAGE_1, PAGE_2]);
+        expect(getAttachmentData('doc')).toBe(PAGE_1);
+        // Eight more pictures push the oldest out -- the PDF, all of it.
+        for (let index = 0; index < 8; index++) {
+            putAttachmentData(`p${index}`, PAGE_1);
+        }
+        expect(getAttachmentPages('doc')).toEqual([]);
+        for (let index = 0; index < 8; index++) {
+            dropAttachmentData(`p${index}`);
+        }
+    });
+
+    test('is a file the assistant can be handed, as are its siblings', () => {
+        expect(checkCanAttachFileName('LUK.6.pdf')).toBe(true);
+        expect(checkCanAttachFileName('LUK.0.json')).toBe(true);
+        expect(checkCanAttachFileName('Default.own')).toBe(true);
+        expect(checkCanAttachFileName('notes.markdown')).toBe(true);
+        expect(checkCanAttachFileName('map.jpg')).toBe(true);
+        // Nothing the window would then refuse.
+        expect(checkCanAttachFileName('sermon.docx')).toBe(false);
+        expect(checkCanAttachFileName('slides.pptx')).toBe(false);
+        expect(checkCanAttachFileName('song.mp4')).toBe(false);
+    });
+});
+
+describe('a file the tab is still asking about', () => {
+    const pdf = {
+        ...genFileAttachment('LUK.6.pdf', 100, '/r/LUK.6.pdf', 3),
+        number: 1,
+    };
+    const note = {
+        ...genTextAttachment('Default.own', 'Note: Unnamed', '/r/Default.own'),
+        number: 2,
+    };
+    const shot = {
+        id: 'shot',
+        kind: 'image' as const,
+        name: 'my screen',
+        mimeType: 'image/png',
+        byteSize: 4,
+        window: {
+            id: 'main',
+            page: 'presenter.html',
+            label: 'Presenter',
+            isMain: true,
+        },
+    };
+
+    test('is the last file asked with, until another is', () => {
+        const messages = [
+            { id: 1, author: 'you', text: 'about this', attachments: [pdf] },
+            { id: 2, author: 'bot', text: 'It is Luke 6.' },
+            { id: 3, author: 'you', text: 'and verse 27?' },
+        ];
+        expect(findOpenFileAttachments(messages)).toEqual([pdf]);
+        expect(
+            findOpenFileAttachments([
+                ...messages,
+                { id: 4, author: 'you', text: 'now this', attachments: [note] },
+            ]),
+        ).toEqual([note]);
+    });
+
+    test('is never a picture of the app, which was of the app as it WAS', () => {
+        const messages = [
+            { id: 1, author: 'you', text: 'x', attachments: [pdf] },
+            { id: 2, author: 'you', text: 'y', attachments: [shot] },
+        ];
+        expect(findOpenFileAttachments(messages)).toEqual([pdf]);
+        expect(checkIsFileAttachment(shot)).toBe(false);
+    });
+
+    test('stops at its × and opens again with the next file', () => {
+        const messages = [
+            { id: 1, author: 'you', text: 'x', attachments: [pdf] },
+            { id: 2, author: 'bot', text: 'ok' },
+        ];
+        expect(findOpenFileAttachments(messages, 2)).toEqual([]);
+        expect(
+            findOpenFileAttachments(
+                [
+                    ...messages,
+                    { id: 3, author: 'you', text: 'y', attachments: [note] },
+                ],
+                2,
+            ),
+        ).toEqual([note]);
+    });
+
+    test('with nothing typed, is asked about rather than searched for faults', () => {
+        const asked = toAskedOfModel('', [note]);
+        expect(asked.startsWith(FILE_ONLY_QUESTION)).toBe(true);
+        expect(asked).toContain('Note: Unnamed');
+        // A picture of the app is still the question it always was.
+        putAttachmentData('shot', 'data:image/png;base64,AAAA');
+        expect(toAskedOfModel('', [shot])).toBe(ATTACHMENT_ONLY_QUESTION);
+        dropAttachmentData('shot');
     });
 });

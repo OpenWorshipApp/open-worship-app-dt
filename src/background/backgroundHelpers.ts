@@ -14,6 +14,7 @@ import { dirSourceSettingNames } from '../helper/constants';
 import type DirSource from '../helper/DirSource';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import FileSource from '../helper/FileSource';
+import { fsCheckDirExist } from '../server/fileHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
 
 export type RenderChildType = (
@@ -156,10 +157,19 @@ export type VaryAppDocumentAudioDataType = {
     [key: string]: VarySlideAudioDataType[];
 };
 async function getAudioDataList(dirSource: DirSource) {
-    if (!dirSource.dirPath) {
+    // A Documents path that is not there (a typo in the path box) is the
+    // Documents list's to report -- it reads "Folder not found". Listing it
+    // anyway threw an ENOENT nobody caught, and the app offered a crash report
+    // and then asked to be reloaded.
+    if (!dirSource.dirPath || !(await fsCheckDirExist(dirSource.dirPath))) {
         return null;
     }
-    const filePaths = await dirSource.getFilePathsQuick('pptx', true);
+    let filePaths: string[];
+    try {
+        filePaths = await dirSource.getFilePathsQuick('pptx', true);
+    } catch (_error) {
+        return null;
+    }
     const audioDataList = await Promise.all(
         filePaths.map(async (filePath) => {
             const pptxAppDocument = PptxAppDocument.getInstance(filePath);

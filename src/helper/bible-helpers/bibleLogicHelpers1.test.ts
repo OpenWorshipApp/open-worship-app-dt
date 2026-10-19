@@ -1,20 +1,40 @@
+// @vitest-environment jsdom
+
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const fixture = vi.hoisted(() => ({
     getBibleInfo: vi.fn(),
     getOnlineBibleInfoList: vi.fn(),
     toLocaleNumBible: vi.fn(),
+    checkIsBookAvailable: vi.fn(),
+    getChapterData: vi.fn(),
 }));
 
 vi.mock('./bibleInfoHelpers', () => ({
-    checkIsBookAvailable: vi.fn(),
+    checkIsBookAvailable: fixture.checkIsBookAvailable,
     getBibleInfo: fixture.getBibleInfo,
-    getChapterData: vi.fn(),
+    getChapterData: fixture.getChapterData,
 }));
 vi.mock('./bibleDownloadHelpers', () => ({
     getOnlineBibleInfoList: fixture.getOnlineBibleInfoList,
 }));
-vi.mock('../appHooks', () => ({ useAppEffectAsync: vi.fn() }));
+// The real hook's contract: the effect re-runs when, and only when, a dep
+// changes — which is the whole of what `useChapterMatch` gets right or wrong.
+vi.mock('../appHooks', async () => {
+    const react = await import('react');
+    return {
+        useAppEffectAsync: (
+            method: (context: object) => Promise<void>,
+            deps: unknown[],
+            methods: object,
+        ) =>
+            react.useEffect(() => {
+                void method({ ...methods });
+            }, deps),
+    };
+});
 vi.mock('./bibleLogicHelpers2', () => ({
     toLocaleNumBible: fixture.toLocaleNumBible,
 }));
@@ -39,6 +59,7 @@ import {
     getModelKeyBookMap,
     toBibleFileName,
     toChapterList,
+    useChapterMatch,
 } from './bibleLogicHelpers1';
 
 beforeEach(() => {
@@ -135,5 +156,84 @@ describe('Bible book, chapter and file-name lookup', () => {
         expect(rows[1].slice(0, 2)).toEqual(['MISSING', false]);
         fixture.getOnlineBibleInfoList.mockResolvedValueOnce(null);
         expect(await getBibleInfoWithStatusList()).toEqual([]);
+    });
+});
+
+describe('useChapterMatch', () => {
+    type ChapterListType = ReturnType<typeof useChapterMatch>;
+    let latest: ChapterListType = null;
+    function ProbeComp({ bibleKey }: Readonly<{ bibleKey: string }>) {
+        latest = useChapterMatch(bibleKey, 'GEN', null);
+        return null;
+    }
+
+    async function settle() {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    // Live: "Genesis" typed, KJV switched to a Bible with a chapter-0
+    // introduction, and the KJV list stayed — no intro toggle — until the
+    // chapter text changed.
+    it('rebuilds the list when only the Bible changes', async () => {
+        vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+        latest = null;
+        fixture.checkIsBookAvailable.mockImplementation(
+            async (bibleKey: string) => bibleKey !== 'NO_GEN',
+        );
+        fixture.getChapterData.mockImplementation(async (bibleKey: string) =>
+            bibleKey === 'WITH_INTRO' ? { verses: { 1: 'Preface' } } : null,
+        );
+        fixture.toLocaleNumBible.mockImplementation(
+            async (bibleKey: string, num: number) =>
+                bibleKey === 'WITH_INTRO' ? `#${num}` : `${num}`,
+        );
+        const host = document.createElement('div');
+        const root = createRoot(host);
+        try {
+            await act(async () => {
+                root.render(createElement(ProbeComp, { bibleKey: 'KJV' }));
+                await settle();
+            });
+            expect(latest).toEqual([
+                {
+                    chapter: 0,
+                    chapterLocaleString: 'Introduction',
+                    isIntro: false,
+                },
+                { chapter: 1, chapterLocaleString: '1' },
+                { chapter: 2, chapterLocaleString: '2' },
+            ]);
+
+            await act(async () => {
+                root.render(
+                    createElement(ProbeComp, { bibleKey: 'WITH_INTRO' }),
+                );
+                await settle();
+            });
+            expect(fixture.getChapterData).toHaveBeenLastCalledWith(
+                'WITH_INTRO',
+                'GEN',
+                0,
+            );
+            expect(latest).toEqual([
+                {
+                    chapter: 0,
+                    chapterLocaleString: 'Introduction',
+                    isIntro: true,
+                },
+                { chapter: 1, chapterLocaleString: '#1' },
+                { chapter: 2, chapterLocaleString: '#2' },
+            ]);
+
+            // A Bible without the book does not keep the last one's list.
+            await act(async () => {
+                root.render(createElement(ProbeComp, { bibleKey: 'NO_GEN' }));
+                await settle();
+            });
+            expect(latest).toBeNull();
+        } finally {
+            await act(async () => root.unmount());
+            vi.unstubAllGlobals();
+        }
     });
 });

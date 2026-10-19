@@ -22,7 +22,7 @@
 // English text: unlike the app's `tran`, a document must never blank a page
 // because somebody wrote a label that is not in the dictionary yet.
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -65,7 +65,9 @@ function readSourceDictionaries() {
     if (!existsSync(dataDirPath)) {
         return sourceDictionariesCache;
     }
-    for (const langCode of ['en', 'km', 'fr']) {
+    // Every language package there is, not a list of three: a language is
+    // added by adding its folder.
+    for (const langCode of readdirSync(dataDirPath)) {
         const filePath = path.join(dataDirPath, langCode, 'index.ts');
         if (!existsSync(filePath)) {
             continue;
@@ -178,15 +180,53 @@ export function loadTranBundle() {
     }
     const dictionaries = readSourceDictionaries();
     return {
-        languages: [
-            { code: 'en', name: 'English', nativeName: 'English' },
-            { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ' },
-            { code: 'fr', name: 'French', nativeName: 'Français' },
-        ].filter((language) => {
-            return dictionaries[language.code] !== undefined;
+        languages: Object.keys(dictionaries).map((code) => {
+            const assistant = readSourceAssistantFacts(code);
+            return {
+                code,
+                name: assistant?.name ?? code,
+                nativeName: assistant?.nativeName ?? code,
+                assistant,
+            };
         }),
         dictionaries,
     };
+}
+
+/**
+ * What a language's `src/lang/data/<code>/assistant.json` says about asking
+ * and answering in it (its script, its words for yes and no, a glossary of
+ * question words) -- the chatbot's facts, which `build-knowledge.mjs` copies
+ * into the bundle beside the dictionary. Null when the language has none.
+ */
+export function readSourceAssistantFacts(langCode) {
+    const filePath = path.join(
+        REPO_ROOT,
+        'src',
+        'lang',
+        'data',
+        langCode,
+        'assistant.json',
+    );
+    if (!existsSync(filePath)) {
+        return null;
+    }
+    try {
+        return JSON.parse(readFileSync(filePath, 'utf-8'));
+    } catch (_error) {
+        return null;
+    }
+}
+
+/** One language's assistant facts out of a bundle, or null. */
+export function getLanguageFacts(langCode, bundle = null) {
+    const code = String(langCode ?? '').split('-')[0];
+    const languages = (bundle ?? loadTranBundle()).languages ?? [];
+    return (
+        languages.find((language) => {
+            return language.code === code;
+        })?.assistant ?? null
+    );
 }
 
 /** The languages the app's interface can actually be shown in. */

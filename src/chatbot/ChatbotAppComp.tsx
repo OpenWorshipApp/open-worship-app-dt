@@ -37,16 +37,17 @@ import {
     READER_DEMO_LIST,
     type ReaderDemoType,
 } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
+import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
 import {
     MAX_ATTACHMENT_COUNT,
-    MAX_CARRIED_FILE_BYTES,
     checkIsCarriedFileName,
+    checkIsFileAttachment,
     checkIsImageName,
     checkIsReadableTextFile,
     copyImageToClipboard,
     dropAttachmentData,
+    findOpenFileAttachments,
     genElementAttachment,
-    genFileAttachment,
     genImageAttachment,
     genTextAttachment,
     getAttachmentData,
@@ -58,12 +59,64 @@ import {
     toBotImages,
     type ChatAttachmentType,
 } from './attachmentHelpers';
+import {
+    findResourceFileNames,
+    genAttachmentFromPath,
+    genPdfAttachment,
+    reloadFileAttachment,
+} from './fileAttachHelpers';
+import {
+    RESOURCE_ASK_LABEL_TEMPLATE,
+    RESOURCE_ASK_TOOL_NAME,
+    RESOURCES_CROSS_REFERENCE_HINT,
+    RESOURCES_READ_MENU_HINT,
+    RESOURCES_RANGE_HINT,
+    checkIsDegenerateResourceReading,
+    genResourceChapterVerseSequence,
+    genResourceReadingReplies,
+    genResourcesRangeHint,
+    sanitizeResourceReadingAnswer,
+    toResourceChapterRef,
+    toResourceChapterVerseCount,
+    toResourcePassageRef,
+    toWholeResourceChapterRef,
+    toResourcesAsk,
+    toResourceVerseFallback,
+} from './resourcesChatHelpers';
+import {
+    keepBibleReaderAskUnlessKnown,
+    readBibleReaderAsk,
+    readBibleReaderThread,
+    toBibleReaderAsk,
+    type BibleReaderAskType,
+} from './bibleReaderChatHelpers';
+import {
+    readBibleInputSuggestAskList,
+    toBibleInputSuggestRows,
+    type BibleInputSuggestRowType,
+} from './bibleInputSuggestHelpers';
+import {
+    resolveWaitingInput,
+    type WaitingInputContextType,
+} from './waitingInputHelpers';
+import { resolveResourceFileName } from '../helper/agentResourceNameHelpers';
+import { getResourcesFolderList } from '../resources/resourcesFolderHelpers';
+import { pathBasename, pathSeparator } from '../server/fileHelpers';
+import { toNoteFileText } from './noteFileTextHelpers';
 import { checkIsCancelError, throwIfCancelled } from './cancelHelpers';
 import {
     checkIsBibleReadingAsk,
     genReaderRouteAdvice,
     toMainWindowFocus,
 } from './readerRouteHelpers';
+import {
+    BIBLE_FIND_ADVICE_LABEL,
+    BIBLE_FIND_CONTROL,
+    BIBLE_FIND_MANUAL_ID,
+    genBibleFindAdvice,
+    readBibleContentAsk,
+    type BibleContentAskType,
+} from './bibleContentAskHelpers';
 import {
     checkIsAssetAttachment,
     downloadAsset,
@@ -101,18 +154,24 @@ const REGISTRY_RELOAD_TITLE = 'Reload the assistants shared on openworship.app';
 
 /** The Reload button's title: how the last read of the registry went. */
 export function describeRegistryStatus(status: LlmRegistryStatusType | null) {
+    const title = tran(REGISTRY_RELOAD_TITLE);
     if (status === null) {
-        return REGISTRY_RELOAD_TITLE;
+        return title;
     }
     if (status.error !== null) {
-        return `${REGISTRY_RELOAD_TITLE} — the last read failed: ${status.error}`;
+        return fillWords(tran('{title} — the last read failed: {error}'), {
+            title,
+            error: status.error,
+        });
     }
     const count = status.servers.length;
-    const when =
-        status.fetchedAt === null
-            ? ''
-            : `, read at ${new Date(status.fetchedAt).toLocaleTimeString()}`;
-    return `${REGISTRY_RELOAD_TITLE} — ${count} shared${when}`;
+    return status.fetchedAt === null
+        ? fillWords(tran('{title} — {count} shared'), { title, count })
+        : fillWords(tran('{title} — {count} shared, read at {time}'), {
+              title,
+              count,
+              time: new Date(status.fetchedAt).toLocaleTimeString(),
+          });
 }
 import { notifyChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
 
@@ -169,6 +228,8 @@ import {
     type ChatSessionStateType,
     type ChatSessionType,
 } from './chatSessionHelpers';
+import { checkIsOpenableLink, toShownLinkText } from './chatLinkHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import {
     loadAskHistory,
     saveAskHistory,
@@ -177,6 +238,7 @@ import {
     NO_ASK_HISTORY_INDEX,
 } from './askHistoryHelpers';
 import {
+    CHAT_TIPS_SHOWN_EVENT,
     checkIsChatTipHidden,
     hideChatTip,
     pickChatTip,
@@ -201,14 +263,84 @@ import {
     BIBLE_IMPORT_STEP_TOOL_NAME,
     describeBibleImportStep,
     findBibleImportState,
+    getBibleImportInputContext,
+    genBibleImportContextHint,
+    checkBibleImportReplyNeedsHelp,
+    readBibleImportHelpState,
     runBibleImportStep,
     toBibleImportEcho,
+    tranBibleImportLabel,
     type BibleImportStateType,
 } from './bibleImportChatHelpers';
 import {
     takeChatbotAsk,
+    takeChatbotFile,
+    takeChatbotLookup,
     takeChatbotReport,
 } from '../helper/ai/chatbotHandoffStoreHelpers';
+import {
+    toLookupToolArgs,
+    type LookupAskType,
+} from '../helper/ai/lookupAskHelpers';
+import {
+    LOOKUP_TOOL_NAME,
+    findOpenLookupSubject,
+    genLookupOfflineText,
+    genLookupOpeningAnswer,
+    readLookupAwaitedPassage,
+    readLookupThread,
+    toLookupAsk,
+    toLookupSubject,
+    type LookupSubjectType,
+} from './lookupChatHelpers';
+import {
+    LOOKUP_STEP_TOOL_NAME,
+    genBiblesAnswer,
+    genLookupActions,
+    genLookupAnswerActions,
+    genNamesAnswer,
+    genRelatedAnswer,
+    genVersesAnswer,
+    readLookupFacts,
+    toPassageAsk,
+    toPassageCopyText,
+    toValidLookupStep,
+    type LookupStepType,
+} from './lookupStepHelpers';
+import { readVerseFindAsk } from '../helper/ai/verseFindAskHelpers';
+import {
+    pickVerseFindBible,
+    readTypedVerseContentAsk,
+    readTypedVerseFindAsk,
+} from './verseAskLanguageHelpers';
+import { readBibleImportAskName } from '../helper/ai/bibleImportAskHelpers';
+import {
+    genShownVerseFindAsk,
+    VERSE_FIND_OFFLINE_NOTE,
+    VERSE_FIND_STEP_TOOL_NAME,
+    VERSE_FIND_TOOL_NAME,
+    VERSE_TRANSLATION_MODEL_PATTERN,
+    VERSE_WEB_SEARCH_TOOL_NAME,
+    answerVerseFindOffline,
+    checkVerseFindNeedsTranslation,
+    genVerseHeadStart,
+    genVerseHeadStartAnswer,
+    readVerseTranslation,
+    toHeadStartFoundVerses,
+    toVerseHeadStartAsk,
+    toVerseTranslationAsk,
+    type VerseHeadStartPartType,
+    readVerseFindThread,
+    readVerseFindTypedPick,
+    getVerseFindInputChoices,
+    runVerseFindStep,
+    toVerseFindAsk,
+    toVerseFindSearchAgainAsk,
+    genVerseFindThanksAnswer,
+    toShownVerseRef,
+    toVerseWebSearchUrl,
+    type VerseFindStateType,
+} from './verseFindChatHelpers';
 import {
     answerLyricLink,
     answerLyricTitle,
@@ -224,7 +356,7 @@ import {
     type ChatTurnType,
 } from './helpBotHelpers';
 import {
-    AUTO_ASSISTANT_WARNING,
+    genAutoAssistantWarning,
     askLlmBot,
     getIsLlmAuto,
     setIsLlmAuto,
@@ -244,6 +376,8 @@ import {
     getLlmModelList,
     getLlmProvider,
     getLlmProviderKeyField,
+    getLlmModelLabel,
+    getLlmModelNotice,
     getLlmProviderLabel,
     getRankedLlmModelList,
     checkIsCustomProvider,
@@ -251,6 +385,7 @@ import {
     setLlmModel,
     setLlmProvider,
     toGuideRescueAnswer,
+    GENERAL_ASK_TOOL_NAME,
     LLM_PROVIDER_LIST,
     type GuideHelpRequestType,
     type LlmModelType,
@@ -282,6 +417,7 @@ import {
     addRoundUsage,
     describeUsageBriefly,
     describeUsageInFull,
+    toAnsweredByText,
     type ChatUsageType,
     type LlmRoundUsageType,
 } from './usageHelpers';
@@ -313,6 +449,22 @@ import {
 } from './providerIssueHelpers';
 import { checkIsDisputingAnswer, readDisputeHint } from './disputeHelpers';
 import {
+    DEFAULT_CHAT_LANG_CODE,
+    getAssistantLanguage,
+    pickReplyLanguage,
+} from './chatLangHelpers';
+import {
+    findPageLanguage,
+    genAskTranslation,
+    TRANSLATION_MODEL_PATTERN,
+    type TranslatorType,
+} from './chatTranslateHelpers';
+import { parseAnswerFrames } from './quickReplyHelpers';
+import {
+    toAnswerShownInLanguage,
+    toRepliesShownInLanguage,
+} from './answerLanguageHelpers';
+import {
     applyAnswerRating,
     ASK_SMARTER_TOOL_NAME,
     checkIsLastAnswer,
@@ -325,10 +477,18 @@ import {
     type AnswerRatingType,
 } from './answerRatingHelpers';
 import { describeAttachError } from './attachErrorHelpers';
+import { describeAnswerError } from './answerErrorHelpers';
+import {
+    checkIsCodeSpan,
+    joinWrappedBoldText,
+    splitRichTextParts,
+    toCodeSpanText,
+} from './richTextHelpers';
 import {
     checkIsAlreadyTyped,
     FALLBACK_STARTERS,
     findKnownQuestion,
+    findTemplateAsk,
     genKnownAskExtra,
     genKnownQuestionHint,
     readKnownQuestionPage,
@@ -371,6 +531,10 @@ type PendingAskType = {
     controller: AbortController;
     sessionId: string;
     onCancelled?: () => void;
+    waitingAnswer?: Pick<
+        ChatMessageType,
+        'text' | 'actions' | 'lookupAwaits' | 'verseFind'
+    >;
     // Anything typed while this answer was already on its way. The loop pulls
     // from here between rounds, so it is a queue rather than an argument --
     // and it lives on the pending ask rather than inside the loop so that a
@@ -424,7 +588,16 @@ function toHistoryTurn(message: ChatMessageType): ChatTurnType {
             : toAttachmentNote(message.attachments);
     return {
         author: message.author,
-        text: note.length > 0 ? `${message.text} ${note}` : message.text,
+        text: [
+            message.text,
+            message.note,
+            note,
+            message.actions?.length
+                ? `Choices: ${message.actions.map((action) => action.label).join('; ')}`
+                : '',
+        ]
+            .filter(Boolean)
+            .join('\n'),
     };
 }
 
@@ -440,15 +613,124 @@ function toReportQuote(text: string) {
         : line;
 }
 
+// Kept English in the state, which the Use button compares against, and
+// translated where drawn. One literal each, so the key gate can read them.
 const BLIND_MODEL_MESSAGE =
-    'This assistant cannot look at pictures. Pick one that can, or take the ' +
-    'picture off and describe it instead.';
+    'This assistant cannot look at pictures. Pick one that can, or take the picture off and describe it instead.';
 // A custom server's model sees only once somebody says it does, so the way
 // forward may be a box in Settings rather than another model.
 const BLIND_CUSTOM_MODEL_MESSAGE =
-    'This model is not marked as able to look at pictures. If it can, tick ' +
-    'Sees pictures for it in Settings → Others → Custom servers; or take ' +
-    'the picture off and describe it instead.';
+    'This model is not marked as able to look at pictures. If it can, tick Sees pictures for it in Settings → Others → Custom servers; or take the picture off and describe it instead.';
+
+// Button words other modules write with a name in them. They stay English
+// where they are stored, because code matches on them, and are put into the
+// app's language only here, where they are drawn.
+// A Bible import's own buttons go through `tranBibleImportLabel` instead.
+const SHOWN_LABEL_PATTERN_LIST: [RegExp, string][] = [
+    [/^(.+) \(the one in Find\)$/, '{name} (the one in Find)'],
+    [/^Put (.+) on the screen$/, 'Put {what} on the screen'],
+    [/^Create "(.+)"$/, 'Create "{name}"'],
+    [/^Open (.+) billing$/, 'Open {provider} billing'],
+    [/^Open (.+) usage limits$/, 'Open {provider} usage limits'],
+    [/^Open (.+) API keys$/, 'Open {provider} API keys'],
+    [/^Open (.+) workspaces$/, 'Open {provider} workspaces'],
+    [/^Open (.+) in Bible Lookup$/, 'Open {verse} in Bible Lookup'],
+    [/^(.+) status page$/, '{provider} status page'],
+    [/^Ask again with (.+)$/, 'Ask again with {model}'],
+    [/^Ask about (.+)$/, RESOURCE_ASK_LABEL_TEMPLATE],
+];
+
+// What another window handed over, as the transcript shows it: the
+// person's own request, so in the app's language. The sentence itself stays
+// English -- it is what the readers below understand.
+function toShownBibleImportAsk(asked: string) {
+    const called = readBibleImportAskName(asked);
+    if (called !== null) {
+        return fillWords(tran('Import the Bible called "{name}"'), {
+            name: called.name,
+        });
+    }
+    const link = /^Import bible from (\S+)$/i.exec(asked.trim())?.[1];
+    if (link !== undefined) {
+        return fillWords(tran('Import a Bible from {link}'), { link });
+    }
+    return /^Import bible$/i.test(asked.trim())
+        ? tran('Import a Bible')
+        : asked;
+}
+
+/**
+ * An action's words as drawn. A found verse's button reads the reference the
+ * way the Bible writes it in a window not in English (`toShownVerseRef`):
+ * `បើក ម៉ាថាយ ៥:៤៤ ក្នុងការស្វែងរកព្រះគម្ពីរ`, not `… HEBREWS 5:14 …`.
+ */
+function toShownActionLabel(action: BotActionType): string {
+    const verseRef = /^Open (.+) in Bible Lookup$/.exec(action.label)?.[1];
+    if (
+        action.toolName === VERSE_FIND_TOOL_NAME &&
+        verseRef !== undefined &&
+        typeof action.args?.title === 'string'
+    ) {
+        return fillWords(tranLabel('Open {verse} in Bible Lookup'), {
+            verse: toShownVerseRef({ ref: verseRef, title: action.args.title }),
+        });
+    }
+    return toShownLabel(action.label);
+}
+
+function toShownLabel(label: string): string {
+    const shown = tranLabel(label);
+    if (shown !== label) {
+        return shown;
+    }
+    for (const [pattern, key] of SHOWN_LABEL_PATTERN_LIST) {
+        const match = pattern.exec(label);
+        const gap = /\{(\w+)\}/.exec(key)?.[1];
+        if (match !== null && gap !== undefined) {
+            return fillWords(tranLabel(key), {
+                [gap]: toShownLabel(match[1]),
+            });
+        }
+    }
+    return label;
+}
+
+// A window as the picker names it, `Presenter · main window 2`: each part in
+// the app's language, the count that tells two alike apart kept.
+function toShownWindowLabel(label: string) {
+    const parts = label.split(' · ');
+    const last = parts.pop() ?? '';
+    const [, words = last, count = ''] = /^(.*?)( \d+)?$/.exec(last) ?? [];
+    return [...parts.map(tranLabel), tranLabel(words) + count].join(' · ');
+}
+
+// A picture the window took is named in English (`my screen`) for the model
+// and for the report's file names, and a control an answer SHOWS by its
+// English words; their chips say so in the app's language.
+function toShownAttachmentName(attachment: ChatAttachmentType) {
+    const { name } = attachment;
+    if (
+        attachment.mimeType === 'application/x-owa-show' &&
+        attachment.filePath === undefined
+    ) {
+        return tranLabel(name);
+    }
+    if (attachment.kind !== 'image') {
+        return name;
+    }
+    if (name === 'my screen') {
+        return tran('my screen');
+    }
+    if (name === 'app screen') {
+        return tran('app screen');
+    }
+    const windowName = /^my (.+) window$/.exec(name)?.[1];
+    return windowName === undefined
+        ? name
+        : fillWords(tran('my {window} window'), {
+              window: tranLabel(windowName),
+          });
+}
 
 /**
  * Settings → Others, with the cursor in `keyName`'s box -- or on the AI panel
@@ -522,15 +804,17 @@ function RenderAllQuestionsComp({
         });
     }, [focus]);
     if (groups === null) {
-        return <p className="chat-hint">Fetching the list…</p>;
+        return <p className="chat-hint">{tran('Fetching the list…')}</p>;
     }
     if (groups.length === 0) {
         // The corpus failed to load. Said plainly rather than drawn as an
         // empty list, which would read as an assistant that can do nothing.
         return (
             <p className="chat-hint">
-                The full list is not available right now — the four above still
-                work, and so does anything you type.
+                {tran(
+                    'The full list is not available right now — the four ' +
+                        'above still work, and so does anything you type.',
+                )}
             </p>
         );
     }
@@ -540,13 +824,18 @@ function RenderAllQuestionsComp({
     return (
         <div className="chat-all">
             <p className="chat-hint chat-all-count">
-                {total} questions it is ready for here. Type a few words in the
-                box to narrow them down.
+                {fillWords(
+                    tran(
+                        '{count} questions it is ready for here. Type a few ' +
+                            'words in the box to narrow them down.',
+                    ),
+                    { count: total },
+                )}
             </p>
             {groups.map((group) => {
                 return (
                     <div className="chat-all-group" key={group.label}>
-                        <p className="chat-eyebrow">{group.label}</p>
+                        <p className="chat-eyebrow">{tranLabel(group.label)}</p>
                         <div className="chat-starters">
                             {group.questions.map((question) => {
                                 return (
@@ -558,7 +847,7 @@ function RenderAllQuestionsComp({
                                             onPick(question);
                                         }}
                                     >
-                                        {question.text}
+                                        {tranLabel(question.text)}
                                     </button>
                                 );
                             })}
@@ -582,39 +871,43 @@ function RenderReaderDemosComp({
     isBusy: boolean;
     onStart: (demo: ReaderDemoType) => void;
 }>) {
+    // The card's own button, named in bold wherever the sentence puts it.
+    const [noteStart, noteEnd = ''] = tran(
+        'No AI model or account needed. Press one, then use {button} in ' +
+            'the Reader for one safe step at a time.',
+    ).split('{button}');
     return (
         <section
             className="chat-demo-block"
             aria-labelledby="reader-demo-title"
         >
             <p className="chat-eyebrow" id="reader-demo-title">
-                Try a guided demo
+                {tran('Try a guided demo')}
             </p>
             <p className="chat-demo-note">
-                No AI model or account needed. Press one, then use <b>Do it</b>{' '}
-                in the Reader for one safe step at a time.
+                {noteStart}
+                <b>{tran('Do it')}</b>
+                {noteEnd}
             </p>
             <div className="chat-demo-list">
                 {READER_DEMO_LIST.filter(
                     (demo) => demo.isFeatured !== false,
                 ).map((demo) => {
+                    const label = tranLabel(demo.label);
+                    const detail = tranLabel(demo.detail);
                     return (
                         <button
                             key={demo.id}
                             type="button"
                             className="chat-demo"
-                            aria-label={`${demo.label}. ${demo.detail}`}
+                            aria-label={`${label}. ${detail}`}
                             disabled={isBusy}
                             onClick={() => {
                                 onStart(demo);
                             }}
                         >
-                            <span className="chat-demo-label">
-                                {demo.label}
-                            </span>
-                            <span className="chat-demo-detail">
-                                {demo.detail}
-                            </span>
+                            <span className="chat-demo-label">{label}</span>
+                            <span className="chat-demo-detail">{detail}</span>
                         </button>
                     );
                 })}
@@ -627,6 +920,10 @@ function RenderReaderDemosComp({
 // order, which reads as noise under a box the user has barely started typing
 // in.
 const MIN_SUGGEST_LENGTH = 2;
+
+// How far above the end of the conversation counts as "scrolled up": more
+// than a line, so the last few pixels a resize leaves do not raise the ↓.
+const SCROLL_END_SLACK = 48;
 
 function useQuestionSuggestions(query: string, focus: BotFocusType) {
     const [suggestions, setSuggestions] = useState<QuestionRowType[]>([]);
@@ -654,6 +951,82 @@ function useQuestionSuggestions(query: string, focus: BotFocusType) {
 }
 
 /**
+ * The input aid's rows: the books, chapters and verses of the Bible being
+ * read, and the names and places a who/where question is naming
+ * (`bibleInputSuggestHelpers.ts` decides WHEN; `owa_bible_suggest` reads
+ * them). Debounced per window: typing is the highest-frequency event in the
+ * app and each ask is a tool call.
+ */
+function useBibleInputSuggestions(
+    question: string,
+    focus: BotFocusType,
+    messages: ChatMessageType[],
+    isVerseFindThread: boolean,
+) {
+    const [rowList, setRowList] = useState<BibleInputSuggestRowType[]>([]);
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(350), []);
+    const questionRef = useAppCurrentRef(question);
+    useAppEffect(() => {
+        if (isVerseFindThread) {
+            setRowList([]);
+            return;
+        }
+        const awaitedAsk = readLookupAwaitedPassage(messages, question);
+        const askList = readBibleInputSuggestAskList(
+            question,
+            focus,
+            awaitedAsk !== null,
+        );
+        if (askList.length === 0) {
+            setRowList([]);
+            return;
+        }
+        const awaitedBook =
+            awaitedAsk === null
+                ? ''
+                : (String(awaitedAsk.target ?? '').split(/\s+/)[0] ?? '');
+        attemptTimeout(async () => {
+            const nextRowList: BibleInputSuggestRowType[] = [];
+            for (const ask of askList) {
+                try {
+                    const result = parseToolJson(
+                        await callTool('owa_bible_suggest', {
+                            kind: ask.kind,
+                            prefix: ask.prefix,
+                            ...(awaitedBook.length > 0
+                                ? { book: awaitedBook }
+                                : {}),
+                            ...(ask.allowLoad === undefined
+                                ? {}
+                                : { allowLoad: ask.allowLoad }),
+                            limit: ask.kind === 'reference' ? 60 : 8,
+                        }),
+                    );
+                    nextRowList.push(
+                        ...toBibleInputSuggestRows(
+                            result,
+                            ask.fillPrefix,
+                            ask.useLatinFill,
+                        ),
+                    );
+                } catch (_error) {
+                    // No suggestion is not an error: the list stays closed.
+                }
+                if (ask.kind === 'reference' && nextRowList.length > 0) {
+                    break;
+                }
+            }
+            // Typed on while the tool answered: those rows are for other words.
+            if (questionRef.current !== question) {
+                return;
+            }
+            setRowList(nextRowList.slice(0, 60));
+        });
+    }, [question, focus, messages, isVerseFindThread]);
+    return rowList;
+}
+
+/**
  * One row of the list under the box: a question from the corpus, or -- once
  * the box starts with `/` -- a built-in command. The two are one shape here
  * because the arrows, Enter and the mouse walk one list, and a second list
@@ -667,6 +1040,8 @@ type SuggestRowType = {
     fill: string;
     /** Whether choosing it ASKS on the spot -- a command with no words to add. */
     isImmediate: boolean;
+    /** A book, a reference or a name: drawn as it is, never tran()ed. */
+    isData?: boolean;
 };
 
 function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
@@ -727,10 +1102,10 @@ function RenderSuggestionsComp({
                             }}
                         >
                             <span className="chat-suggest-text">
-                                {row.text}
+                                {row.isData ? row.text : tranLabel(row.text)}
                             </span>
                             <span className="chat-suggest-where">
-                                {row.where}
+                                {row.isData ? row.where : tranLabel(row.where)}
                             </span>
                         </button>
                     </li>
@@ -746,57 +1121,90 @@ function RenderSuggestionsComp({
 // is replaced by a tick, because "-" is punctuation the model typed, not
 // something the reader needs to see.
 const BULLET_PATTERN = /^\s*[-*•]\s+/;
-const NUMBERED_PATTERN = /^\s*(\d{1,2}[.)])\s+/;
+// Khmer digits too: a step a model numbers `១.` is a step all the same.
+const NUMBERED_PATTERN = /^\s*([0-9០-៩]{1,2}[.)])\s+/u;
+
+/**
+ * A web address the APP wrote into an answer (`ChatMessageType.links`),
+ * opened in the person's own browser. A button, not an `<a href>`: an
+ * address followed inside this window would replace the window itself.
+ */
+function RenderChatLinkComp({ url }: Readonly<{ url: string }>) {
+    return (
+        <button
+            type="button"
+            className="chatbot-link"
+            title={fillWords(tran('Opens {address} in your browser'), {
+                address: url,
+            })}
+            onClick={() => {
+                if (checkIsOpenableLink(url)) {
+                    appProvider.browserUtils.openExternalURL(url);
+                }
+            }}
+        >
+            <code>{toShownLinkText(url)}</code>
+            <i className="bi bi-box-arrow-up-right" aria-hidden="true" />
+        </button>
+    );
+}
 
 // A deliberately small renderer: manual excerpts are markdown, and pulling a
 // markdown library into a help window would cost more than these few rules.
-function renderRichText(text: string) {
-    return text.split('\n').map((line, lineIndex) => {
-        const numbered = NUMBERED_PATTERN.exec(line);
-        const isBullet = numbered === null && BULLET_PATTERN.test(line);
-        const content =
-            numbered !== null
-                ? line.replace(NUMBERED_PATTERN, '')
-                : isBullet
-                  ? line.replace(BULLET_PATTERN, '')
-                  : line;
-        // Underscore emphasis only where markdown itself means it: at a
-        // word's edge. Inside a word an underscore is part of a NAME -- the
-        // starter chip's own address read `amazing_grace_how_sweet_the_sound`
-        // and was drawn as *amazing* grace *how* sweet *the* sound in the
-        // user's own message (EC-39).
-        const parts = content.split(
-            /(\*\*[^*]+\*\*|`[^`]+`|(?<![\w/.-])_[^_\s][^_]*_(?![\w/.-]))/g,
-        );
-        return (
-            <p
-                key={lineIndex}
-                className={
-                    'chatbot-line' +
-                    (numbered !== null || isBullet ? ' chatbot-item' : '') +
-                    (isBullet ? ' chatbot-item-dot' : '')
-                }
-            >
-                {numbered === null ? null : (
-                    <span className="chatbot-item-mark">{numbered[1]}</span>
-                )}
-                {parts.map((part, partIndex) => {
-                    if (part.startsWith('**') && part.endsWith('**')) {
-                        return (
-                            <strong key={partIndex}>{part.slice(2, -2)}</strong>
-                        );
+// A `code` span that is one of `links` -- addresses the app wrote, never a
+// model -- is drawn as a link; every other address stays words.
+function renderRichText(text: string, links: string[] = []) {
+    return joinWrappedBoldText(text)
+        .split('\n')
+        .map((line, lineIndex) => {
+            const numbered = NUMBERED_PATTERN.exec(line);
+            const isBullet = numbered === null && BULLET_PATTERN.test(line);
+            const content =
+                numbered !== null
+                    ? line.replace(NUMBERED_PATTERN, '')
+                    : isBullet
+                      ? line.replace(BULLET_PATTERN, '')
+                      : line;
+            const parts = splitRichTextParts(content);
+            return (
+                <p
+                    key={lineIndex}
+                    className={
+                        'chatbot-line' +
+                        (numbered !== null || isBullet ? ' chatbot-item' : '') +
+                        (isBullet ? ' chatbot-item-dot' : '')
                     }
-                    if (part.startsWith('`') && part.endsWith('`')) {
-                        return <code key={partIndex}>{part.slice(1, -1)}</code>;
-                    }
-                    if (part.startsWith('_') && part.endsWith('_')) {
-                        return <em key={partIndex}>{part.slice(1, -1)}</em>;
-                    }
-                    return <span key={partIndex}>{part}</span>;
-                })}
-            </p>
-        );
-    });
+                >
+                    {numbered === null ? null : (
+                        <span className="chatbot-item-mark">{numbered[1]}</span>
+                    )}
+                    {parts.map((part, partIndex) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return (
+                                <strong key={partIndex}>
+                                    {part.slice(2, -2)}
+                                </strong>
+                            );
+                        }
+                        if (checkIsCodeSpan(part)) {
+                            const words = toCodeSpanText(part);
+                            return links.includes(words) ? (
+                                <RenderChatLinkComp
+                                    key={partIndex}
+                                    url={words}
+                                />
+                            ) : (
+                                <code key={partIndex}>{words}</code>
+                            );
+                        }
+                        if (part.startsWith('_') && part.endsWith('_')) {
+                            return <em key={partIndex}>{part.slice(1, -1)}</em>;
+                        }
+                        return <span key={partIndex}>{part}</span>;
+                    })}
+                </p>
+            );
+        });
 }
 
 // A dropdown reading "Presenter" says what it is SET to, never what it is
@@ -853,7 +1261,7 @@ function RenderCreditLineComp({
                 className="chat-credit-field"
                 title={describeUsageInFull(usage)}
             >
-                <span className="chat-pick-caption">Credit used</span>
+                <span className="chat-pick-caption">{tran('Credit used')}</span>
                 <span className="chat-credit-value">{brief}</span>
             </span>
         </div>
@@ -923,10 +1331,12 @@ function RenderSpendGuardComp() {
             title={hover}
         >
             <label className="chat-pick-field">
-                <span className="chat-pick-caption">Limit per hour</span>
+                <span className="chat-pick-caption">
+                    {tran('Limit per hour')}
+                </span>
                 <select
                     className="chat-pick chat-spend-pick"
-                    aria-label="Spending limit per hour"
+                    aria-label={tran('Spending limit per hour')}
                     value={toSpendLimitValue(state.limitUsd)}
                     onChange={(event) => {
                         const picked = parseSpendLimitValue(event.target.value);
@@ -941,7 +1351,7 @@ function RenderSpendGuardComp() {
                                 key={toSpendLimitValue(choice)}
                                 value={toSpendLimitValue(choice)}
                             >
-                                {toSpendLimitLabel(choice)}
+                                {tranLabel(toSpendLimitLabel(choice))}
                             </option>
                         );
                     })}
@@ -956,15 +1366,15 @@ function RenderSpendGuardComp() {
                 <button
                     type="button"
                     className="chat-spend-allow"
-                    title={
+                    title={tran(
                         'Lift the pause and start the hour again: the whole ' +
-                        'limit is available once more from now.'
-                    }
+                            'limit is available once more from now.',
+                    )}
                     onClick={() => {
                         allowMoreSpending();
                     }}
                 >
-                    {SPEND_ALLOW_LABEL}
+                    {tran(SPEND_ALLOW_LABEL)}
                 </button>
             ) : null}
         </span>
@@ -1023,11 +1433,11 @@ function RenderFocusSwitchComp({
     return (
         <select
             className="chat-pick"
-            aria-label="Which part of the app"
-            title={
+            aria-label={tran('Which part of the app')}
+            title={tran(
                 'Which window of the app you are asking about. It starts on ' +
-                'the window you launch it from; your choice stays until the next launch.'
-            }
+                    'the window you launch it from; your choice stays until the next launch.',
+            )}
             value={focus}
             onChange={(event) => {
                 onChange(event.target.value as BotFocusType);
@@ -1036,7 +1446,7 @@ function RenderFocusSwitchComp({
             {BOT_FOCUS_LIST.map((item) => {
                 return (
                     <option key={item.key} value={item.key}>
-                        {item.label}
+                        {tranLabel(item.label)}
                     </option>
                 );
             })}
@@ -1074,16 +1484,16 @@ function RenderWindowAimRowComp({
     return (
         <label className={'chat-window-row' + (isAimed ? ' is-aimed' : '')}>
             <i className="bi bi-window-stack" aria-hidden="true" />
-            <span className="chat-window-caption">Working in</span>
+            <span className="chat-window-caption">{tran('Working in')}</span>
             <select
                 className="chat-pick"
-                aria-label="Which window"
-                title={
+                aria-label={tran('Which window')}
+                title={tran(
                     'Which of the open windows of the app the help looks at ' +
-                    'and works in: it reads that window, outlines buttons in ' +
-                    'it, and the 📷 and ◎ beside the box work there. The ' +
-                    'main window unless you choose another.'
-                }
+                        'and works in: it reads that window, outlines buttons in ' +
+                        'it, and the 📷 and ◎ beside the box work there. The ' +
+                        'main window unless you choose another.',
+                )}
                 value={windowId}
                 onMouseDown={onOpening}
                 onChange={(event) => {
@@ -1093,7 +1503,7 @@ function RenderWindowAimRowComp({
                 {windowList.map((item) => {
                     return (
                         <option key={item.id} value={item.id}>
-                            {item.label}
+                            {toShownWindowLabel(item.label)}
                         </option>
                     );
                 })}
@@ -1119,6 +1529,15 @@ const NO_PROVIDER_VALUE = '';
 // button, and on the one line the head folds to.
 const OFFLINE_ENGINE_LABEL = 'app guide · offline';
 
+// The button that adds words to an answer being written reads **Add**, as the
+// manual names it. The dictionary's `Add` is the blend mode's (Khmer បូក, the
+// sum), so another language says the longer key's words instead.
+const ADD_BUTTON_KEY = 'Add more';
+function toAddButtonLabel() {
+    const shown = tran(ADD_BUTTON_KEY);
+    return shown === ADD_BUTTON_KEY ? 'Add' : shown;
+}
+
 /**
  * What a row of the assistant list reads as. Three cases, and the third is the
  * reason this is a function: a provider with no key says what it needs, one
@@ -1135,12 +1554,16 @@ function genProviderOptionText(
     if (checkIsFreeProvider(provider)) {
         return {
             text: `${label}`,
-            title: ' — no key needed, shared public service',
+            title: ` ${tran('— no key needed, shared public service')}`,
         };
     }
     return isAvailable
         ? { text: label }
-        : { text: `${label} — needs an API key` };
+        : {
+              text: fillWords(tran('{name} — needs an API key'), {
+                  name: label,
+              }),
+          };
 }
 
 /**
@@ -1165,7 +1588,21 @@ function genProviderNames() {
     if (labels.length < 2) {
         return labels.join('');
     }
-    return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
+    return fillWords(tran('{names} and {last}'), {
+        names: labels.slice(0, -1).join(', '),
+        last: labels.at(-1) ?? '',
+    });
+}
+
+// A provider's row in the app's language; a server keeps the name it was
+// given.
+function toShownRowLabel(row: AssistantRowType<LlmProviderType>) {
+    return row.serverId === null ? tranLabel(row.label) : row.label;
+}
+
+// Who Auto asked, `Free · Nemotron Super VL`, in the app's language.
+function toShownPickLabel(label: string) {
+    return label.split(' · ').map(tranLabel).join(' · ');
 }
 
 /** What an assistant row needs of a custom server: its id and its name. */
@@ -1178,11 +1615,10 @@ function toCustomServerRows(servers: CustomServerType[]) {
 // The row that leaves the choice to the window (`autoAssistantHelpers`). Its
 // words are the hover's, because Windows draws no tooltip on an OS list row
 // and the closed list has room for one short name.
+// English here, translated where drawn; one literal each for the key gate.
 const AUTO_ASSISTANT_LABEL = 'Auto';
 const AUTO_ASSISTANT_TITLE =
-    'Auto picks the best assistant that costs nothing, again for every ' +
-    'question — one of your own servers that is on and not busy, the ' +
-    'bigger model first, or the free service';
+    'Auto picks the best assistant that costs nothing, again for every question — one of your own servers that is on and not busy, the bigger model first, or the free service';
 const AUTO_PICK_PENDING_TEXT = 'chosen at each question';
 
 function RenderProviderSwitchComp({
@@ -1200,12 +1636,15 @@ function RenderProviderSwitchComp({
     onChange: (row: AssistantRowType<LlmProviderType>) => void;
     onAutoChoosing: () => void;
 }>) {
+    const chosenRow = rows.find((row) => {
+        return row.value === value;
+    });
     const chosenLabel =
         value === AUTO_ASSISTANT_VALUE
-            ? AUTO_ASSISTANT_LABEL
-            : rows.find((row) => {
-                  return row.value === value;
-              })?.label;
+            ? tran(AUTO_ASSISTANT_LABEL)
+            : chosenRow === undefined
+              ? undefined
+              : toShownRowLabel(chosenRow);
     // An arrow on the CLOSED list changes its value on every press (Windows,
     // Linux). A row with no key would then open Settings under somebody who
     // was only moving through the list -- and the list, snapping back, would
@@ -1217,14 +1656,21 @@ function RenderProviderSwitchComp({
     return (
         <select
             className="chat-pick"
-            aria-label="Which assistant answers"
+            aria-label={tran('Which assistant answers')}
             title={
                 chosenLabel === undefined
-                    ? `${genProviderNames()} need an API key of your own` +
-                      ' — add one in Settings → Others'
+                    ? fillWords(
+                          tran(
+                              '{names} need an API key of your own' +
+                                  ' — add one in Settings → Others',
+                          ),
+                          { names: genProviderNames() },
+                      )
                     : value === AUTO_ASSISTANT_VALUE
-                      ? AUTO_ASSISTANT_TITLE
-                      : `${chosenLabel} answers your questions here`
+                      ? tran(AUTO_ASSISTANT_TITLE)
+                      : fillWords(tran('{name} answers your questions here'), {
+                            name: chosenLabel,
+                        })
             }
             // With no key at all there is no provider to be on, and a select
             // whose value matches no option renders blank.
@@ -1285,13 +1731,13 @@ function RenderProviderSwitchComp({
         >
             {value === null ? (
                 <option value={NO_PROVIDER_VALUE} disabled>
-                    No AI key
+                    {tran('No AI key')}
                 </option>
             ) : null}
             {rows.map((row) => {
                 const { text, title } = genProviderOptionText(
                     row.provider,
-                    row.label,
+                    toShownRowLabel(row),
                     row.isAvailable,
                 );
                 return (
@@ -1315,9 +1761,9 @@ function RenderProviderSwitchComp({
             {value === null ? null : (
                 <option
                     value={AUTO_ASSISTANT_VALUE}
-                    title={AUTO_ASSISTANT_TITLE}
+                    title={tran(AUTO_ASSISTANT_TITLE)}
                 >
-                    {AUTO_ASSISTANT_LABEL}
+                    {tran(AUTO_ASSISTANT_LABEL)}
                 </option>
             )}
         </select>
@@ -1338,13 +1784,35 @@ function RenderAutoPickComp({
             className="chat-pick chat-engine chat-auto-pick"
             title={
                 autoPick === undefined
-                    ? AUTO_ASSISTANT_TITLE
-                    : `${autoPick} answered the last question. ` +
-                      AUTO_ASSISTANT_TITLE
+                    ? tran(AUTO_ASSISTANT_TITLE)
+                    : fillWords(tran('{name} answered the last question.'), {
+                          name: toShownPickLabel(autoPick),
+                      }) +
+                      ' ' +
+                      tran(AUTO_ASSISTANT_TITLE)
             }
         >
-            {autoPick ?? AUTO_PICK_PENDING_TEXT}
+            {autoPick === undefined
+                ? tran(AUTO_PICK_PENDING_TEXT)
+                : toShownPickLabel(autoPick)}
         </span>
+    );
+}
+
+/**
+ * The shared registry's word on the model the tab asks, in the registry's
+ * own words: a line under the pickers rather than a hover, because Windows
+ * draws no hover on a list's rows and _this one is slow_ has to be read
+ * before the wait, not after it.
+ */
+function RenderModelNoticeComp({ notice }: Readonly<{ notice: string }>) {
+    if (notice.length === 0) {
+        return null;
+    }
+    return (
+        <p className="chat-model-notice">
+            <i className="bi bi-info-circle" aria-hidden="true" /> {notice}
+        </p>
     );
 }
 
@@ -1391,8 +1859,9 @@ function RenderProviderWarningComp({
     provider,
     isAuto,
 }: Readonly<{ provider: LlmProviderType | null; isAuto: boolean }>) {
+    // Both already in the app's language.
     const warning = isAuto
-        ? AUTO_ASSISTANT_WARNING
+        ? genAutoAssistantWarning()
         : getLlmProviderWarning(provider);
     const links = getLlmProviderWarningLinks(isAuto ? 'free' : provider);
     // What the notice is ABOUT. On Auto the provider underneath changes with
@@ -1423,8 +1892,9 @@ function RenderProviderWarningComp({
     }
     // The first sentence carries the whole point of the warning; the rest is
     // what to do about it. So the folded line is not a summary somebody has to
-    // keep in step with the warning -- it is the warning's own opening words.
-    const foldedText = `${warning.split('. ')[0]}.`;
+    // keep in step with the warning -- it is the warning's own opening words,
+    // ended however its language ends a sentence (`.` or Khmer `។`).
+    const foldedText = warning.split(/(?<=[.!?។])\s+/)[0];
     return (
         <p className={`chat-warn${isFolded ? ' is-folded' : ''}`} role="note">
             <span className="chat-warn-mark" aria-hidden="true">
@@ -1434,7 +1904,11 @@ function RenderProviderWarningComp({
                 type="button"
                 className="chat-warn-fold"
                 aria-expanded={!isFolded}
-                title={isFolded ? 'Read the whole notice' : 'Fold this notice'}
+                title={
+                    isFolded
+                        ? tran('Read the whole notice')
+                        : tran('Fold this notice')
+                }
                 onClick={() => {
                     setIsFolded(!isFolded);
                     // Only a fold by hand sticks. Opening it by hand starts no
@@ -1442,7 +1916,7 @@ function RenderProviderWarningComp({
                     setIsFoldedByHand(true);
                 }}
             >
-                {isFolded ? foldedText : 'Fold'}
+                {isFolded ? foldedText : tran('Fold')}
             </button>
             <span className="chat-warn-body">
                 {warning}{' '}
@@ -1451,11 +1925,11 @@ function RenderProviderWarningComp({
                     className="chat-warn-link"
                     onClick={openAiSetting}
                 >
-                    Open AI settings
+                    {tran('Open AI settings')}
                 </button>
                 {links.length > 0 ? (
                     <span className="chat-warn-links">
-                        {'Who answers: '}
+                        {`${tran('Who answers:')} `}
                         {links.map((link, index) => {
                             return (
                                 <Fragment key={link.url}>
@@ -1463,7 +1937,12 @@ function RenderProviderWarningComp({
                                     <button
                                         type="button"
                                         className="chat-warn-link"
-                                        title={`Open ${link.url}`}
+                                        title={fillWords(
+                                            tran('Open {address}'),
+                                            {
+                                                address: link.url,
+                                            },
+                                        )}
                                         onClick={() => {
                                             appProvider.browserUtils.openExternalURL(
                                                 link.url,
@@ -1529,7 +2008,7 @@ function RenderModelPickerComp({
     return (
         <select
             className="chat-pick chat-engine"
-            aria-label="Which model answers"
+            aria-label={tran('Which model answers')}
             title={chosenModel === null ? model : genLlmModelTitle(chosenModel)}
             value={model}
             disabled={isLoadingModels}
@@ -1549,7 +2028,7 @@ function RenderModelPickerComp({
                         value={item.id}
                         title={genLlmModelTitle(item)}
                     >
-                        {item.label}
+                        {tranLabel(item.label)}
                     </option>
                 );
             })}
@@ -1564,7 +2043,7 @@ function RenderModelPickerComp({
                 job. A control that does nothing is worse than no control. */}
             {hasMoreModels ? (
                 <option value={MORE_MODELS_VALUE}>
-                    {isLoadingModels ? 'Loading…' : 'More models…'}
+                    {isLoadingModels ? tran('Loading…') : tran('More models…')}
                 </option>
             ) : null}
         </select>
@@ -1613,9 +2092,51 @@ function toChipWindowNote(attachment: ChatAttachmentType) {
     if (takenIn === undefined || attachment.name.includes(takenIn.label)) {
         return '';
     }
-    return takenIn.isMain
-        ? ` (main window, ${takenIn.label})`
-        : ` (${takenIn.label} window)`;
+    const windowName = tranLabel(takenIn.label);
+    return ` ${
+        takenIn.isMain
+            ? fillWords(tran('(main window, {window})'), { window: windowName })
+            : fillWords(tran('({window} window)'), { window: windowName })
+    }`;
+}
+
+// A chip's hover: what it is, which window it is of, and what a press does.
+function toChipTitle(
+    attachment: ChatAttachmentType,
+    isGone: boolean,
+    canShow: boolean,
+) {
+    const shownName = toShownAttachmentName(attachment);
+    if (!isGone && !canShow) {
+        return shownName;
+    }
+    const name = `${shownName}${toChipWindowNote(attachment)}`;
+    if (isGone) {
+        return fillWords(tran('{name} — not attached any more'), { name });
+    }
+    if (attachment.selector !== undefined) {
+        return fillWords(tran('{name} — press to ring it in the app'), {
+            name,
+        });
+    }
+    if (attachment.kind === 'image') {
+        return fillWords(tran('{name} — press to see it bigger'), { name });
+    }
+    // A control the ANSWER named, looked up when pressed. It has no selector
+    // and no file, so it used to fall through to the folder line and every
+    // SHOWS chip promised the wrong thing.
+    if (
+        attachment.mimeType === 'application/x-owa-show' &&
+        attachment.filePath === undefined &&
+        attachment.summary !== undefined
+    ) {
+        return fillWords(tran('{name} — press to ring it in the app'), {
+            name,
+        });
+    }
+    // Every asset opens now, and the folder is one press further on, beside
+    // Download.
+    return fillWords(tran('{name} — press to open it'), { name });
 }
 
 function RenderAttachmentChipsComp({
@@ -1682,37 +2203,7 @@ function RenderAttachmentChipsComp({
                                   }
                                 : undefined
                         }
-                        title={
-                            isGone
-                                ? `${attachment.name}${toChipWindowNote(attachment)} — not attached any more`
-                                : canShow
-                                  ? `${attachment.name}${toChipWindowNote(attachment)} — ${
-                                        attachment.selector !== undefined
-                                            ? 'press to ring it in the app'
-                                            : attachment.kind === 'image'
-                                              ? 'press to see it bigger'
-                                              : // A control the ANSWER named,
-                                                // looked up when pressed. It
-                                                // has no selector and no file,
-                                                // so it used to fall through
-                                                // to the folder line and every
-                                                // SHOWS chip promised the
-                                                // wrong thing.
-                                                attachment.mimeType ===
-                                                      'application/x-owa-show' &&
-                                                  attachment.filePath ===
-                                                      undefined &&
-                                                  attachment.summary !==
-                                                      undefined
-                                                ? 'press to ring it in the app'
-                                                : // Every asset opens now, and
-                                                  // the folder is one press
-                                                  // further on, beside
-                                                  // Download.
-                                                  'press to open it'
-                                    }`
-                                  : attachment.name
-                        }
+                        title={toChipTitle(attachment, isGone, canShow)}
                     >
                         {dataUrl === null ? (
                             <i
@@ -1726,7 +2217,11 @@ function RenderAttachmentChipsComp({
                                             // file, and reads as one on its
                                             // chip unless the NAME is asked.
                                             'bi-image'
-                                          : 'bi-file-earmark-text')
+                                          : checkIsCarriedFileName(
+                                                  attachment.name,
+                                              )
+                                            ? 'bi-file-earmark-pdf'
+                                            : 'bi-file-earmark-text')
                                 }
                             />
                         ) : (
@@ -1739,19 +2234,21 @@ function RenderAttachmentChipsComp({
                             </span>
                         )}
                         <span className="chat-clip-name">
-                            {attachment.name}
+                            {toShownAttachmentName(attachment)}
                         </span>
                         {attachment.kind === 'image' && dataUrl !== null ? (
                             <RenderCopyPictureIconComp
                                 id={attachment.id}
-                                name={attachment.name}
+                                name={toShownAttachmentName(attachment)}
                             />
                         ) : null}
                         {onRemove === undefined ? null : (
                             <button
                                 type="button"
                                 className="chat-clip-x"
-                                aria-label={`Remove ${attachment.name}`}
+                                aria-label={fillWords(tran('Remove {name}'), {
+                                    name: toShownAttachmentName(attachment),
+                                })}
                                 onClick={(event) => {
                                     // Removing is not showing: the × sits
                                     // inside a chip that is itself a button.
@@ -1814,8 +2311,10 @@ function RenderAssetPreviewBodyComp({
             )}
             <p className="chat-preview-card-note">
                 {preview.note ??
-                    'This window cannot show this kind of file. Download it ' +
-                        'or open its folder to look at it.'}
+                    tran(
+                        'This window cannot show this kind of file. Download ' +
+                            'it or open its folder to look at it.',
+                    )}
             </p>
         </div>
     );
@@ -1866,14 +2365,14 @@ function RenderCopyButtonComp({ text }: Readonly<{ text: string }>) {
         <button
             type="button"
             className="cue-tool"
-            title="Copy this answer"
+            title={tran('Copy this answer')}
             onClick={handleCopying}
         >
             {copyState === 'done'
-                ? '✓ Copied'
+                ? `✓ ${tran('Copied')}`
                 : copyState === 'failed'
-                  ? 'Could not copy'
-                  : 'Copy'}
+                  ? tran('Could not copy')
+                  : tran('Copy')}
         </button>
     );
 }
@@ -1931,13 +2430,15 @@ function RenderCopyPictureIconComp({
                 'chat-clip-copy' +
                 (copyState === 'idle' ? '' : ` chat-clip-copy-${copyState}`)
             }
-            aria-label={`Copy ${name} to the clipboard`}
+            aria-label={fillWords(tran('Copy {name} to the clipboard'), {
+                name,
+            })}
             title={
                 copyState === 'done'
-                    ? 'Copied'
+                    ? tran('Copied')
                     : copyState === 'failed'
-                      ? 'Could not copy the picture'
-                      : 'Copy the picture to the clipboard'
+                      ? tran('Could not copy the picture')
+                      : tran('Copy the picture to the clipboard')
             }
             onClick={handleCopying}
             onKeyDown={(event) => {
@@ -1984,14 +2485,14 @@ function RenderLyricPreviewComp({
     const lineCount = drafted.content.split('\n').length;
     return (
         <details className="cue-lyric" open>
-            <summary>The song text, as it will be saved</summary>
+            <summary>{tran('The song text, as it will be saved')}</summary>
             <textarea
                 className="cue-lyric-text"
                 readOnly={true}
                 spellCheck={false}
                 value={drafted.content}
                 rows={Math.min(20, Math.max(6, lineCount))}
-                aria-label="The song text that would be saved"
+                aria-label={tran('The song text that would be saved')}
             />
         </details>
     );
@@ -2036,12 +2537,21 @@ function RenderMessageComp({
         // button pressed in it): see `.cue` in the stylesheet.
         <article className={`cue cue-${message.author}`} tabIndex={0}>
             <span className="cue-mark" aria-hidden="true" />
-            <p className="cue-label">
-                {message.author === 'you' ? 'You' : 'Assistant'}
+            <p
+                className="cue-label"
+                title={
+                    message.answeredBy === undefined
+                        ? undefined
+                        : toAnsweredByText(message.answeredBy)
+                }
+            >
+                {message.author === 'you' ? tran('You') : tran('Assistant')}
             </p>
             <div className="cue-body">
                 {message.note === undefined ? null : (
-                    <p className="cue-note">{message.note}</p>
+                    // A note may be a marker code reads (`REPORT_NOTE`),
+                    // stored English and put into words only here.
+                    <p className="cue-note">{tranLabel(message.note)}</p>
                 )}
                 {isAsked ? (
                     // The question itself is the button: the same words go
@@ -2050,7 +2560,7 @@ function RenderMessageComp({
                         className="cue-said"
                         role="button"
                         tabIndex={0}
-                        title="Put this question back in the box"
+                        title={tran('Put this question back in the box')}
                         onClick={handleReusing}
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
@@ -2061,7 +2571,7 @@ function RenderMessageComp({
                         {renderRichText(message.text)}
                     </div>
                 ) : (
-                    renderRichText(message.text)
+                    renderRichText(message.text, message.links)
                 )}
                 {message.attachments === undefined ? null : (
                     <RenderAttachmentChipsComp
@@ -2089,7 +2599,7 @@ function RenderMessageComp({
                                     }}
                                 >
                                     <i className={`bi ${shown.icon}`} />{' '}
-                                    {shown.label}
+                                    {tranLabel(shown.label)}
                                 </button>
                             );
                         })}
@@ -2136,13 +2646,23 @@ function RenderMessageComp({
                                     title={
                                         pageUrl === null
                                             ? undefined
-                                            : `Opens ${pageUrl} in your browser`
+                                            : fillWords(
+                                                  tran(
+                                                      'Opens {address} in your browser',
+                                                  ),
+                                                  { address: pageUrl },
+                                              )
                                     }
                                     onClick={() => {
                                         onAction(action);
                                     }}
                                 >
-                                    {action.label}
+                                    {/* Stored English, which code matches
+                                        on; drawn in the app's language. */}
+                                    {action.toolName ===
+                                    BIBLE_IMPORT_STEP_TOOL_NAME
+                                        ? tranBibleImportLabel(action.label)
+                                        : toShownActionLabel(action)}
                                     {pageUrl === null ? null : (
                                         <i
                                             className="bi bi-box-arrow-up-right"
@@ -2171,7 +2691,7 @@ function RenderMessageComp({
                                         onReply(reply);
                                     }}
                                 >
-                                    {reply}
+                                    {tranLabel(reply)}
                                 </button>
                             );
                         })}
@@ -2182,10 +2702,10 @@ function RenderMessageComp({
                         <button
                             type="button"
                             className="cue-tool"
-                            title="Put this question back in the box"
+                            title={tran('Put this question back in the box')}
                             onClick={handleReusing}
                         >
-                            Ask again
+                            {tran('Ask again')}
                         </button>
                     ) : (
                         <RenderCopyButtonComp text={message.text} />
@@ -2206,8 +2726,8 @@ function RenderMessageComp({
                                         ? ' cue-rate-on'
                                         : '')
                                 }
-                                title="This answer helped"
-                                aria-label="Good answer"
+                                title={tran('This answer helped')}
+                                aria-label={tran('Good answer')}
                                 aria-pressed={message.rating === 'like'}
                                 onClick={() => {
                                     onRate(message.id, 'like');
@@ -2230,8 +2750,10 @@ function RenderMessageComp({
                                         ? ' cue-rate-on'
                                         : '')
                                 }
-                                title="This answer was wrong or did not help"
-                                aria-label="Bad answer"
+                                title={tran(
+                                    'This answer was wrong or did not help',
+                                )}
+                                aria-label={tran('Bad answer')}
                                 aria-pressed={message.rating === 'dislike'}
                                 onClick={() => {
                                     onRate(message.id, 'dislike');
@@ -2254,9 +2776,21 @@ function RenderMessageComp({
                         // not one of the answers. The hover has the sums.
                         <span
                             className="cue-cost"
-                            title={describeUsageInFull(message.usage)}
+                            title={[
+                                message.answeredBy === undefined
+                                    ? ''
+                                    : toAnsweredByText(message.answeredBy),
+                                describeUsageInFull(message.usage),
+                            ]
+                                .filter((part) => part.length > 0)
+                                .join('\n')}
                         >
-                            {describeUsageBriefly(message.usage)}
+                            {[
+                                message.answeredBy?.model ?? '',
+                                describeUsageBriefly(message.usage),
+                            ]
+                                .filter((part) => part.length > 0)
+                                .join(' · ')}
                         </span>
                     )}
                 </div>
@@ -2317,7 +2851,7 @@ function RenderChatProgressComp({
         return (
             <p className="chat-status">
                 <span className="chat-status-dot" aria-hidden="true" />
-                Looking it up… press Stop to give up on it.
+                {tran('Looking it up… press Stop to give up on it.')}
             </p>
         );
     }
@@ -2325,8 +2859,12 @@ function RenderChatProgressComp({
         <div className="chat-progress" aria-live="polite">
             {progress.droppedCount > 0 ? (
                 <p className="chat-progress-more">
-                    {progress.droppedCount} earlier{' '}
-                    {progress.droppedCount === 1 ? 'step' : 'steps'}
+                    {fillWords(
+                        progress.droppedCount === 1
+                            ? tran('{count} earlier step')
+                            : tran('{count} earlier steps'),
+                        { count: progress.droppedCount },
+                    )}
                 </p>
             ) : null}
             {progress.steps.map((step) => {
@@ -2336,12 +2874,14 @@ function RenderChatProgressComp({
                         className={`chat-status${step.isDone ? ' is-done' : ''}`}
                     >
                         <span className="chat-status-dot" aria-hidden="true" />
-                        {step.text}
+                        {tranLabel(step.text)}
                         {step.isDone ? '' : '…'}
                     </p>
                 );
             })}
-            <p className="chat-progress-stop">press Stop to give up on it.</p>
+            <p className="chat-progress-stop">
+                {tran('press Stop to give up on it.')}
+            </p>
         </div>
     );
 }
@@ -2349,6 +2889,16 @@ function RenderChatProgressComp({
 function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
     const [tip, setTip] = useState<ChatTipType>(takeChatTip);
     const [isHidden, setIsHidden] = useState(checkIsChatTipHidden);
+    // `/tips` brings the line back while it is put away.
+    useAppEffect(() => {
+        const handleShown = () => {
+            setIsHidden(false);
+        };
+        window.addEventListener(CHAT_TIPS_SHOWN_EVENT, handleShown);
+        return () => {
+            window.removeEventListener(CHAT_TIPS_SHOWN_EVENT, handleShown);
+        };
+    }, []);
     if (isHidden) {
         return null;
     }
@@ -2360,13 +2910,19 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
         setTip(stepChatTip(tip.id, delta));
         onPressed();
     };
+    const tipText = tranLabel(tip.text);
     return (
         <div className="chat-tip-row">
             <button
                 type="button"
                 className="chat-tip"
-                title="Show me another thing this window can do"
-                aria-label={`Tip: ${tip.text} Press for another tip.`}
+                title={tran('Show me another thing this window can do')}
+                aria-label={fillWords(
+                    tran('Tip: {tip} Press for another tip.'),
+                    {
+                        tip: tipText,
+                    },
+                )}
                 onClick={() => {
                     // The line itself still gives a RANDOM one. Somebody who
                     // presses the sentence is asking to be shown something
@@ -2378,14 +2934,14 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
                 }}
             >
                 <i className="bi bi-lightbulb" aria-hidden="true" />
-                <span>{tip.text}</span>
+                <span>{tipText}</span>
             </button>
             <span className="chat-tip-walk">
                 <button
                     type="button"
                     className="chat-tip-step"
-                    title="The tip before this one"
-                    aria-label="Previous tip"
+                    title={tran('The tip before this one')}
+                    aria-label={tran('Previous tip')}
                     onClick={() => {
                         walk(-1);
                     }}
@@ -2395,8 +2951,8 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
                 <button
                     type="button"
                     className="chat-tip-step"
-                    title="The next tip"
-                    aria-label="Next tip"
+                    title={tran('The next tip')}
+                    aria-label={tran('Next tip')}
                     onClick={() => {
                         walk(1);
                     }}
@@ -2406,8 +2962,8 @@ function RenderChatTipComp({ onPressed }: Readonly<{ onPressed: () => void }>) {
                 <button
                     type="button"
                     className="chat-tip-step"
-                    title="Hide tips for 30 days"
-                    aria-label="Hide tips for 30 days"
+                    title={tran('Hide tips for 30 days')}
+                    aria-label={tran('Hide tips for 30 days')}
                     onClick={() => {
                         hideChatTip();
                         setIsHidden(true);
@@ -2490,7 +3046,10 @@ function describeAskFailure(label: string, error: any) {
         return error.message;
     }
     const reason = String(error?.message ?? '').replace(/\.+$/, '');
-    return `${label} could not answer — ${reason}.`;
+    return fillWords(tran('{name} could not answer — {reason}.'), {
+        name: label,
+        reason,
+    });
 }
 
 /**
@@ -2507,8 +3066,83 @@ function describeOfflineStandIn(answer: BotAnswerType) {
         return action.toolName === LYRIC_CREATE_TOOL_NAME;
     });
     return isDrafted
-        ? 'I wrote the song out myself instead.'
-        : "Here is what the app's own guide says.";
+        ? tran('I wrote the song out myself instead.')
+        : tran("Here is what the app's own guide says.");
+}
+
+type TranslationPickType = TranslatorType & {
+    provider: LlmProviderType;
+};
+
+/**
+ * The Gemma 4 model that translates for the window (the user's word,
+ * 2026-10-16/17: _for any translation attempt please prefer Gemma 4
+ * models_, _use gemma 4 as sub assistant_): one Auto would ask at no cost,
+ * looked for the way Auto looks (servers asked, a silent one passed over),
+ * or null when none can answer.
+ */
+async function findTranslationPick(): Promise<TranslationPickType | null> {
+    try {
+        const pick = (
+            await resolveAutoPicks({
+                isGeneral: true,
+                preferModelPattern: TRANSLATION_MODEL_PATTERN,
+            })
+        ).find((one) => {
+            return TRANSLATION_MODEL_PATTERN.test(
+                `${one.modelName} ${one.label}`,
+            );
+        });
+        return pick === undefined
+            ? null
+            : { provider: pick.provider, model: pick.model, label: pick.label };
+    } catch (_error) {
+        return null;
+    }
+}
+
+/**
+ * A verse remembered in another script, put into English (KJV wording) by a
+ * Gemma 4 model that can answer at no cost -- the user's word for any
+ * translation (2026-10-16) -- in one round with no tools, for the head
+ * start to search the KJV with. Null when none can answer or it answered no
+ * English: the assistant then translates in its own rounds.
+ */
+async function translateVerseWords(
+    words: string,
+    focus: BotFocusType,
+    signal: AbortSignal,
+    onUsage: (round: LlmRoundUsageType) => void,
+    reportStep: (text: string) => () => void,
+): Promise<string | null> {
+    const gemma = await findTranslationPick();
+    if (gemma === null) {
+        return null;
+    }
+    const finishTranslating = reportStep(
+        fillWords(tran('Putting your words into English with {model}'), {
+            model: toShownPickLabel(gemma.label),
+        }),
+    );
+    try {
+        const answer = await askLlmBot(
+            toVerseTranslationAsk(words),
+            focus,
+            gemma.provider,
+            gemma.model,
+            [],
+            signal,
+            { isGeneral: true, isTranslation: true, onUsage },
+        );
+        return readVerseTranslation(answer.text);
+    } catch (error) {
+        if (checkIsCancelError(error, signal)) {
+            throw error;
+        }
+        return null;
+    } finally {
+        finishTranslating();
+    }
 }
 
 export default function ChatbotAppComp() {
@@ -2845,9 +3479,9 @@ export default function ChatbotAppComp() {
     // button's title says how the last read went -- a failed read keeps the
     // servers of the one before, so the list alone would not show it.
     const [isReloadingRegistry, setIsReloadingRegistry] = useState(false);
-    const [registryReloadTitle, setRegistryReloadTitle] = useState(
-        REGISTRY_RELOAD_TITLE,
-    );
+    const [registryReloadTitle, setRegistryReloadTitle] = useState(() => {
+        return describeRegistryStatus(null);
+    });
     const applyRegistryStatus = useCallback(() => {
         refreshCustomServers();
         refreshAvailableProviders();
@@ -2918,6 +3552,23 @@ export default function ChatbotAppComp() {
         };
     }, [provider, model, isAuto, modelList]);
     const answererRef = useAppCurrentRef(answerer);
+    // What the shared registry says about the model this tab asks -- _slow,
+    // but it saves us the cost of usage_ (`LlmModelType.notice`) -- drawn
+    // under the pickers. On Auto, the one it picked last, once it has.
+    const modelNotice = useMemo(() => {
+        if (
+            provider === null ||
+            !checkIsCustomProvider(provider) ||
+            (isAuto && autoPick === undefined)
+        ) {
+            return '';
+        }
+        return (
+            modelListMap.custom.find((one) => {
+                return one.id === model;
+            })?.notice ?? ''
+        );
+    }, [provider, model, isAuto, autoPick, modelListMap]);
     // The head folded to one line. By hand only -- nothing in this window
     // tucks itself away -- and the window's, not the tab's: see
     // `headCollapseHelpers`.
@@ -2936,23 +3587,31 @@ export default function ChatbotAppComp() {
         if (!isHeadCollapsed) {
             return '';
         }
-        const focusLabel = BOT_FOCUS_LIST.find((item) => {
+        const focusItem = BOT_FOCUS_LIST.find((item) => {
             return item.key === focus;
-        })?.label;
+        });
+        const focusLabel =
+            focusItem === undefined ? undefined : tranLabel(focusItem.label);
         if (provider === null) {
-            return genHeadSummary([focusLabel, OFFLINE_ENGINE_LABEL]);
+            return genHeadSummary([focusLabel, tran(OFFLINE_ENGINE_LABEL)]);
         }
         if (isAuto) {
-            return genHeadSummary([focusLabel, AUTO_ASSISTANT_LABEL, autoPick]);
+            return genHeadSummary([
+                focusLabel,
+                tran(AUTO_ASSISTANT_LABEL),
+                autoPick === undefined ? undefined : toShownPickLabel(autoPick),
+            ]);
         }
+        const chosenRow = assistantRows.find((row) => {
+            return row.value === assistantRowValue;
+        });
+        const chosenModel = modelList.find((item) => {
+            return item.id === model;
+        });
         return genHeadSummary([
             focusLabel,
-            assistantRows.find((row) => {
-                return row.value === assistantRowValue;
-            })?.label,
-            modelList.find((item) => {
-                return item.id === model;
-            })?.label ?? model,
+            chosenRow === undefined ? undefined : toShownRowLabel(chosenRow),
+            chosenModel === undefined ? model : tranLabel(chosenModel.label),
         ]);
     }, [
         isHeadCollapsed,
@@ -3056,7 +3715,10 @@ export default function ChatbotAppComp() {
             });
         } catch (error: any) {
             setServiceError(
-                `The other models could not be listed — ${error.message}`,
+                fillWords(
+                    tran('The other models could not be listed — {reason}'),
+                    { reason: error.message },
+                ),
             );
         } finally {
             setIsLoadingModels(false);
@@ -3326,6 +3988,15 @@ export default function ChatbotAppComp() {
     // A box starting with `/` lists COMMANDS (`builtinActionHelpers`) and
     // nothing else: a question row under "/scr" would be offering to spend a
     // model call on something the person is about to do without one.
+    const isVerseFindThread = readVerseFindThread(messages, question) !== null;
+    // The input aid: a passage being completed (book, chapter, verse) or a
+    // name/place being typed (`bibleInputSuggestHelpers.ts`).
+    const bibleInputRows = useBibleInputSuggestions(
+        question,
+        focus,
+        messages,
+        isVerseFindThread,
+    );
     const suggestions = useMemo((): SuggestRowType[] => {
         if (isSuggestDismissed || isBusy) {
             return [];
@@ -3351,6 +4022,27 @@ export default function ChatbotAppComp() {
                 };
             });
         }
+        // The input aid's rows come first: the box is completing a passage or
+        // typing a name, and a corpus question under those words is no help.
+        if (bibleInputRows.length > 0) {
+            return bibleInputRows;
+        }
+        // Under a verse search, the box holds what they remember of a verse:
+        // app questions that share its words ("love", "peter") are no help.
+        if (isVerseFindThread) {
+            return [];
+        }
+        // ...and under a person, place or passage, the box holds a question
+        // about it.
+        if (
+            readLookupThread(
+                messages,
+                question,
+                activeSession.lookupClosedAt,
+            ) !== null
+        ) {
+            return [];
+        }
         // ...and never a question the box already holds: the row would be
         // offering them their own words back, over the conversation.
         return matchedQuestions
@@ -3358,7 +4050,17 @@ export default function ChatbotAppComp() {
                 return !checkIsAlreadyTyped(question, row.text);
             })
             .map(toQuestionSuggestRow);
-    }, [isSuggestDismissed, isBusy, question, matchedQuestions, focus]);
+    }, [
+        isSuggestDismissed,
+        isBusy,
+        question,
+        matchedQuestions,
+        focus,
+        messages,
+        activeSession.lookupClosedAt,
+        bibleInputRows,
+        isVerseFindThread,
+    ]);
     /**
      * A question this window was asked, put where the next one is walked back
      * from. Only what came out of the BOX reaches here -- not a starter chip,
@@ -3441,7 +4143,13 @@ export default function ChatbotAppComp() {
     const askFromSuggestionRef = useRef<(text: string) => void>(() => {});
     const handleChoosingSuggestion = useCallback(
         (row: SuggestRowType, isCompleting = false) => {
-            setIsSuggestDismissed(true);
+            // A book, a chapter or a name is ONE STEP of a completion: the
+            // list must stay open so the next step (chapter, then verse) is
+            // there, where a question or a command is the end of the box's
+            // work and the list gets out of the way (`isData`).
+            if (!row.isData) {
+                setIsSuggestDismissed(true);
+            }
             setSuggestIndex(-1);
             // A command with no words after it is complete as it stands, and
             // it costs nothing -- no model, no key -- so it runs on the press.
@@ -3469,6 +4177,43 @@ export default function ChatbotAppComp() {
     // place that caps the count, one place that says why something was refused,
     // and one shape the ask reads.
     const draftAttachments = draftAttachmentMap[activeSessionId] ?? [];
+    // The file this tab is still asking about (`findOpenFileAttachments`),
+    // drawn above the box with a × that closes it: its pages go with every
+    // question, which is what a person moving on to something else has to
+    // be able to see -- and stop. None while another file waits in the box:
+    // that one takes its place.
+    const openFileAttachments = draftAttachments.some(checkIsFileAttachment)
+        ? []
+        : findOpenFileAttachments(messages, activeSession.fileClosedAt);
+    const isResourcesPdfOpen = findResourceFileNames(openFileAttachments).some(
+        (name) => {
+            return /\.pdf$/i.test(name);
+        },
+    );
+    // The person, place or passage the tab is asking about
+    // (`findOpenLookupSubject`), drawn above the box with a × that puts it
+    // away: it goes with every question, so a person moving on to something
+    // else has to be able to see it -- and stop.
+    const openLookupSubject = findOpenLookupSubject(
+        messages,
+        activeSession.lookupClosedAt,
+    );
+    const handleClosingLookup = useCallback(() => {
+        updateActiveSession((session) => {
+            const lastId = session.messages.reduce((most, message) => {
+                return Math.max(most, message.id);
+            }, 0);
+            return { ...session, lookupClosedAt: lastId };
+        });
+    }, [updateActiveSession]);
+    const handleClosingOpenFiles = useCallback(() => {
+        updateActiveSession((session) => {
+            const lastId = session.messages.reduce((most, message) => {
+                return Math.max(most, message.id);
+            }, 0);
+            return { ...session, fileClosedAt: lastId };
+        });
+    }, [updateActiveSession]);
     const addAttachments = useCallback(
         (added: ChatAttachmentType[], failure?: string) => {
             if (failure !== undefined) {
@@ -3535,7 +4280,6 @@ export default function ChatbotAppComp() {
         async (files: File[]) => {
             const added: ChatAttachmentType[] = [];
             const refused: string[] = [];
-            const tooLarge: string[] = [];
             for (const file of files.slice(0, MAX_ATTACHMENT_COUNT)) {
                 // Where it came from, when it came from anywhere: the electron
                 // preload puts a getter on `File.prototype`, so this is the
@@ -3565,37 +4309,39 @@ export default function ChatbotAppComp() {
                     );
                     continue;
                 }
-                // A PDF is taken along unread, for a problem report to send
-                // to the people who can open it. It is read off the disk at
-                // that press, so it needs a place on disk, and a size a
-                // report carries.
+                // A Bible note: its notes' words, not the editor's JSON.
+                if (checkIsBibleNoteFileName(file.name)) {
+                    const text = await file.text();
+                    added.push(
+                        genTextAttachment(
+                            file.name,
+                            toNoteFileText(text) ?? text,
+                            filePath,
+                        ),
+                    );
+                    continue;
+                }
+                // A PDF: its first pages drawn as pictures by MuPDF in main,
+                // which reads it from where it is -- so it needs a place on
+                // disk. A problem report sends the file itself from there.
                 if (checkIsCarriedFileName(file.name) && filePath) {
-                    if (file.size > MAX_CARRIED_FILE_BYTES) {
-                        tooLarge.push(file.name);
-                    } else {
-                        added.push(
-                            genFileAttachment(file.name, file.size, filePath),
-                        );
-                    }
+                    added.push(
+                        await genPdfAttachment(file.name, file.size, filePath),
+                    );
                     continue;
                 }
                 refused.push(file.name);
             }
-            const problems = [
-                refused.length === 0
-                    ? ''
-                    : `I cannot read ${refused.join(', ')} — ` +
-                      'try a picture of it instead.',
-                tooLarge.length === 0
-                    ? ''
-                    : `${tooLarge.join(', ')} is too large to attach — ` +
-                      `${Math.round(MAX_CARRIED_FILE_BYTES / (1024 * 1024)).toString()} MB at most.`,
-            ].filter((one) => {
-                return one.length > 0;
-            });
             addAttachments(
                 added,
-                problems.length === 0 ? undefined : problems.join(' '),
+                refused.length === 0
+                    ? undefined
+                    : fillWords(
+                          tran(
+                              'I cannot read {names} — try a picture of it instead.',
+                          ),
+                          { names: refused.join(', ') },
+                      ),
             );
         },
         [addAttachments],
@@ -3653,11 +4399,15 @@ export default function ChatbotAppComp() {
             addAttachments(
                 attachment === null ? [] : [attachment],
                 attachment === null
-                    ? 'I could not take a picture of the app.'
+                    ? tran('I could not take a picture of the app.')
                     : undefined,
             );
         } catch (error: any) {
-            setAttachError(`I could not take a picture: ${error.message}`);
+            setAttachError(
+                fillWords(tran('I could not take a picture: {reason}'), {
+                    reason: error.message,
+                }),
+            );
         }
     }, [addAttachments, appWindowListRef]);
     // "This one." The window goes away while they point -- it is sitting on
@@ -3674,17 +4424,22 @@ export default function ChatbotAppComp() {
         const aim = getCurrentWindowAim();
         const aimLabel = toWindowAimLabel(aim);
         setAttachError(
-            'Point at the control you mean in ' +
-                (aimLabel === null
-                    ? 'the app window…'
-                    : `the ${aimLabel} window…`),
+            aimLabel === null
+                ? tran('Point at the control you mean in the app window…')
+                : fillWords(
+                      tran(
+                          'Point at the control you mean in the {window} window…',
+                      ),
+                      { window: tranLabel(aimLabel) },
+                  ),
         );
         try {
             const raw = await callTool('owa_pick_element', {}, null, aim);
             const result = parseToolJson(raw);
             if (result?.picked !== true) {
                 setAttachError(
-                    result?.reason ?? 'Nothing was picked in the app window.',
+                    result?.reason ??
+                        tran('Nothing was picked in the app window.'),
                 );
                 return;
             }
@@ -3741,7 +4496,7 @@ export default function ChatbotAppComp() {
                     if (result?.found !== true) {
                         setAttachError(
                             result?.reason ??
-                                'I could not point at that one any more.',
+                                tran('I could not point at that one any more.'),
                         );
                     }
                 } catch (error: any) {
@@ -3767,7 +4522,10 @@ export default function ChatbotAppComp() {
                     );
                     if (!result?.shownCount) {
                         setAttachError(
-                            `I could not find "${attachment.name}" on screen.`,
+                            fillWords(
+                                tran('I could not find "{name}" on screen.'),
+                                { name: attachment.name },
+                            ),
                         );
                     }
                 } catch (error: any) {
@@ -3816,15 +4574,19 @@ export default function ChatbotAppComp() {
                     // failed is not worth a second error on top of the first.
                 }
                 setAttachError(
-                    `I could not find "${attachment.name}" on screen any` +
-                        ' more.',
+                    fillWords(
+                        tran('I could not find "{name}" on screen any more.'),
+                        { name: attachment.name },
+                    ),
                 );
                 return;
             }
             setAttachError(
                 attachment.kind === 'image'
-                    ? 'That picture is not attached any more — send a new one.'
-                    : 'There is nothing left to show for that one.',
+                    ? tran(
+                          'That picture is not attached any more — send a new one.',
+                      )
+                    : tran('There is nothing left to show for that one.'),
             );
         },
         [appWindowListRef],
@@ -3843,9 +4605,13 @@ export default function ChatbotAppComp() {
                 } else {
                     return;
                 }
-                setAttachError('Copied.');
+                setAttachError(tran('Copied.'));
             } catch (error: any) {
-                setAttachError(`I could not copy it: ${error.message}`);
+                setAttachError(
+                    fillWords(tran('I could not copy it: {reason}'), {
+                        reason: error.message,
+                    }),
+                );
             }
         },
         [],
@@ -3859,7 +4625,11 @@ export default function ChatbotAppComp() {
             try {
                 setAttachError((await downloadAsset(preview)).message);
             } catch (error: any) {
-                setAttachError(`I could not download it: ${error.message}`);
+                setAttachError(
+                    fillWords(tran('I could not download it: {reason}'), {
+                        reason: error.message,
+                    }),
+                );
             }
         },
         [],
@@ -3908,8 +4678,10 @@ export default function ChatbotAppComp() {
         const { mcpUrl } = getAiEndpoints();
         if (mcpUrl === null) {
             setServiceError(
-                'The assistant is not running in this copy of the app. ' +
-                    'Restart the app, then open this window again.',
+                tran(
+                    'The assistant is not running in this copy of the app. ' +
+                        'Restart the app, then open this window again.',
+                ),
             );
         }
     }, []);
@@ -3926,11 +4698,32 @@ export default function ChatbotAppComp() {
     // answer further up rewrites that answer, and the list jumping to its
     // bottom took the card just pressed out of sight.
     const lastMessageId = messages[messages.length - 1]?.id;
+    // Scrolled up away from the newest message: a round ↓ in the corner
+    // takes them back (2026-10-16, the user's ask with the corner circled:
+    // _when the scrollbar not at bottom then should have an icon for quick
+    // scroll bottom_). Set only when it FLIPS, so a scroll costs one
+    // comparison and no render.
+    const [isAwayFromEnd, setIsAwayFromEnd] = useState(false);
+    const checkAwayFromEnd = useCallback(() => {
+        const element = listRef.current;
+        if (element === null) {
+            return;
+        }
+        setIsAwayFromEnd(
+            element.scrollHeight - element.scrollTop - element.clientHeight >
+                SCROLL_END_SLACK,
+        );
+    }, []);
+    const handleScrollingToEnd = useCallback(() => {
+        const element = listRef.current;
+        element?.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+    }, []);
     useAppEffect(() => {
         const element = listRef.current;
         if (element !== null) {
             element.scrollTop = element.scrollHeight;
         }
+        checkAwayFromEnd();
     }, [activeSessionId, messages.length, lastMessageId]);
 
     // Takes the tab it belongs to, because the answer arrives long after the
@@ -4004,21 +4797,45 @@ export default function ChatbotAppComp() {
     // that says what the conversation has cost. Addressed by id like every
     // other write, for the same reason as `addMessage`.
     const genUsageTally = useCallback(
-        (sessionId: string) => {
-            let askUsage: ChatUsageType | undefined = undefined;
+        (
+            sessionId: string,
+            initial?: Pick<ChatMessageType, 'usage' | 'answeredBy'>,
+        ) => {
+            let askUsage: ChatUsageType | undefined = initial?.usage;
+            let answeredBy: { assistant: string; model: string } | null =
+                initial?.answeredBy ?? null;
+            const addRound = (round: LlmRoundUsageType) => {
+                askUsage = addRoundUsage(askUsage, round);
+                updateSession(sessionId, (session) => {
+                    return {
+                        ...session,
+                        usage: addRoundUsage(session.usage, round),
+                    };
+                });
+            };
             return {
                 onUsage: (round: LlmRoundUsageType) => {
-                    askUsage = addRoundUsage(askUsage, round);
-                    updateSession(sessionId, (session) => {
-                        return {
-                            ...session,
-                            usage: addRoundUsage(session.usage, round),
-                        };
-                    });
+                    addRound(round);
+                    answeredBy = {
+                        assistant: getLlmProviderLabel(
+                            round.provider,
+                            round.model,
+                        ),
+                        model: getLlmModelLabel(round.provider, round.model),
+                    };
                 },
+                // A round of a SUB-assistant -- the Gemma 4 that translates:
+                // counted in what the question cost, never named as the one
+                // that answered it.
+                onHelperUsage: addRound,
                 // Spread into a message: nothing when no round came back.
                 toField: () => {
-                    return askUsage === undefined ? {} : { usage: askUsage };
+                    return askUsage === undefined
+                        ? {}
+                        : {
+                              usage: askUsage,
+                              ...(answeredBy === null ? {} : { answeredBy }),
+                          };
                 },
             };
         },
@@ -4149,15 +4966,23 @@ export default function ChatbotAppComp() {
             // over a report that was filed is the one thing not to say
             // (`handleSendingReport`).
             if (pending.kind !== 'send') {
+                const stopped =
+                    pending.kind === 'report'
+                        ? tran(
+                              'Stopped. I did not finish writing the report, and nothing was sent — press Report when you want it written.',
+                          )
+                        : tran(
+                              'Stopped. I did not finish looking that up — press the question above to ask it again.',
+                          );
                 addMessage(pending.sessionId, {
                     author: 'bot',
-                    text:
-                        pending.kind === 'report'
-                            ? 'Stopped. I did not finish writing the ' +
-                              'report, and nothing was sent — press Report ' +
-                              'when you want it written.'
-                            : 'Stopped. I did not finish looking that up — ' +
-                              'press the question above to ask it again.',
+                    text: stopped,
+                    ...(pending.waitingAnswer === undefined
+                        ? {}
+                        : {
+                              ...pending.waitingAnswer,
+                              note: stopped,
+                          }),
                 });
             }
             // A card in the app window waiting on this one is told now, so it
@@ -4206,28 +5031,252 @@ export default function ChatbotAppComp() {
         };
     }, []);
 
-    // One step of installing a Bible from a link, pressed or typed. Runs like
-    // a command: echoed as the person's own choice, answered with the next
-    // question, no model and no key -- see `bibleImportChatHelpers`.
+    // One short, tool-free interpretation for any waiting input. The chosen
+    // provider and the tab's usage are handled the same way as a normal ask.
+    const askWaitingInput = useCallback(
+        async (
+            context: WaitingInputContextType,
+            typed: string,
+            pending: PendingAskType,
+            usageTally: ReturnType<typeof genUsageTally>,
+        ) => {
+            const { signal } = pending.controller;
+            // Read the originating tab before Auto's first await; other tabs
+            // and internal action arguments never become conversation data.
+            const conversation = (
+                sessionStateRef.current.sessions.find(
+                    (one) => one.id === pending.sessionId,
+                )?.messages ?? []
+            )
+                .filter((message) => !message.isFollowUp)
+                .slice(-10)
+                .map(toHistoryTurn);
+            if (
+                conversation.at(-1)?.author === 'you' &&
+                conversation.at(-1)?.text === typed
+            )
+                conversation.pop();
+            let askedProvider = provider;
+            let askedModel = model;
+            if (isAuto) {
+                const [pick] = await resolveAutoPicks({
+                    isGeneral: true,
+                    busyKeys: pendingAskListRef.current.flatMap((one) =>
+                        one.assistantKey === undefined
+                            ? []
+                            : [one.assistantKey],
+                    ),
+                    preferModelPattern: TRANSLATION_MODEL_PATTERN,
+                });
+                throwIfCancelled(signal);
+                if (pick === undefined) {
+                    return null;
+                } else {
+                    askedProvider = pick.provider;
+                    askedModel = pick.model;
+                    updateSession(pending.sessionId, (session) => ({
+                        ...session,
+                        autoPick: pick.label,
+                    }));
+                }
+            }
+            if (askedProvider === null) {
+                return null;
+            }
+            pending.assistantKey = toAutoBusyKey(askedProvider, askedModel);
+            const language = getAssistantLanguage(
+                pickReplyLanguage(typed),
+            ).name;
+            return resolveWaitingInput(
+                { ...context, conversation },
+                typed,
+                language,
+                async (prompt) => {
+                    const help = await askLlmBot(
+                        prompt,
+                        focus,
+                        askedProvider,
+                        askedModel,
+                        [],
+                        signal,
+                        {
+                            isGeneral: true,
+                            isWaitingInput: true,
+                            // Machine-readable JSON stays in its declared
+                            // schema; its help sentence is in their language.
+                            replyLang: DEFAULT_CHAT_LANG_CODE,
+                            appLang: DEFAULT_CHAT_LANG_CODE,
+                            onUsage: usageTally.onUsage,
+                            onProgress: genSessionProgress(pending.sessionId),
+                        },
+                    );
+                    return help.text;
+                },
+                signal,
+            );
+        },
+        [provider, model, focus, isAuto, updateSession, sessionStateRef],
+    );
     const handleBibleImportStep = useCallback(
         async (
             sessionId: string,
-            state: BibleImportStateType,
+            state: BibleImportStateType | null,
             echo: string,
-        ) => {
+            waitingQuestion?: BotAnswerType,
+        ): Promise<boolean> => {
+            const previous = sessionStateRef.current.sessions
+                .find((one) => one.id === sessionId)
+                ?.messages.at(-1);
             addMessage(sessionId, { author: 'you', text: echo });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            const waiting =
+                waitingQuestion ??
+                (previous?.author === 'bot' &&
+                getBibleImportInputContext(previous) !== null
+                    ? previous
+                    : undefined);
+            if (waiting !== undefined)
+                pending.waitingAnswer = {
+                    text: waiting.text,
+                    actions: waiting.actions,
+                };
+            const usageTally = genUsageTally(sessionId);
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const finishLine = genProgressReporter(
+                genSessionProgress(sessionId),
+            )(
+                state === null
+                    ? tran('Connecting to the app')
+                    : (describeBibleImportStep(state) ??
+                          tran('Connecting to the app')),
+            );
+            try {
+                let note: string | undefined;
+                let answer =
+                    state === null
+                        ? waitingQuestion!
+                        : await runBibleImportStep(state);
+                throwIfCancelled(pending.controller.signal);
+                if (
+                    state === null ||
+                    ('unknownLanguage' in answer &&
+                        answer.unknownLanguage !== undefined)
+                ) {
+                    const question =
+                        waitingQuestion ??
+                        (previous?.author === 'bot' &&
+                        getBibleImportInputContext(previous) !== null
+                            ? previous
+                            : answer);
+                    const context = getBibleImportInputContext(question);
+                    const help =
+                        context === null
+                            ? null
+                            : await askWaitingInput(
+                                  context,
+                                  echo,
+                                  pending,
+                                  usageTally,
+                              );
+                    throwIfCancelled(pending.controller.signal);
+                    if (help?.kind === 'unrelated') {
+                        return false;
+                    }
+                    const retryState =
+                        help === null
+                            ? null
+                            : readBibleImportHelpState(question.actions, help);
+                    if (retryState !== null) {
+                        answer = await runBibleImportStep(retryState);
+                        throwIfCancelled(pending.controller.signal);
+                    } else {
+                        note =
+                            help?.kind === 'help'
+                                ? help.reply
+                                : tran(
+                                      'I could not understand that choice. Choose an option below, or say it another way.',
+                                  );
+                        answer = question;
+                    }
+                }
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: answer.text,
+                    actions: answer.actions,
+                    note,
+                    ...(answer.links?.length ? { links: answer.links } : {}),
+                    ...usageTally.toField(),
+                });
+                return true;
+            } catch (error) {
+                if (!checkIsCancelError(error, pending.controller.signal)) {
+                    const question =
+                        waitingQuestion ??
+                        (previous?.author === 'bot' ? previous : undefined);
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: question?.text ?? describeAnswerError(error),
+                        ...(question
+                            ? { note: describeAnswerError(error) }
+                            : {}),
+                        actions: question?.actions,
+                        ...usageTally.toField(),
+                    });
+                }
+                return true;
+            } finally {
+                finishLine();
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+        },
+        [
+            addMessage,
+            genPendingAsk,
+            genUsageTally,
+            endPendingAsk,
+            syncBusy,
+            settleSession,
+            askWaitingInput,
+            sessionStateRef,
+        ],
+    );
+    const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
+    // A step of finding a verse (`verseFindChatHelpers`): which Bible, then
+    // the question what they remember. No model: the choice goes into the
+    // transcript as the person's own words, the next question comes back.
+    const handleVerseFindStep = useCallback(
+        async (
+            sessionId: string,
+            state: VerseFindStateType,
+            echo: string,
+            fields: Pick<ChatMessageType, 'usage' | 'answeredBy'> = {},
+            continueSearch?: (question: string) => void,
+            withoutEcho = false,
+        ) => {
+            // Another Bible picked when nothing was found: what they
+            // remember is searched in it, the whole way, as though its one
+            // line were typed -- the choice still shown as their words.
+            const searchAgain = toVerseFindSearchAgainAsk(state);
+            if (searchAgain !== null) {
+                if (continueSearch !== undefined) {
+                    continueSearch(searchAgain);
+                } else {
+                    handleAskingRef.current(searchAgain, true, {
+                        echoText: echo,
+                        isPressed: true,
+                    });
+                }
+                return;
+            }
+            if (!withoutEcho)
+                addMessage(sessionId, { author: 'you', text: echo });
             const pending = genPendingAsk(sessionId, undefined, false);
             clearProgressSteps(sessionId);
             syncBusy();
-            const lineText = describeBibleImportStep(state);
-            const finishLine =
-                lineText === null
-                    ? null
-                    : genProgressReporter(genSessionProgress(sessionId))(
-                          lineText,
-                      );
             try {
-                const answer = await runBibleImportStep(state);
+                const answer = await runVerseFindStep(state);
                 if (pending.controller.signal.aborted) {
                     return;
                 }
@@ -4235,16 +5284,570 @@ export default function ChatbotAppComp() {
                     author: 'bot',
                     text: answer.text,
                     actions: answer.actions,
+                    ...fields,
+                    ...(answer.verseFind === undefined
+                        ? {}
+                        : { verseFind: answer.verseFind }),
                 });
+                inputRef.current?.focus();
             } finally {
-                finishLine?.();
                 endPendingAsk(pending);
                 settleSession(sessionId);
             }
         },
+        // `handleAskingRef` is a ref, declared further down: naming it here
+        // would read it before it exists.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [addMessage, genPendingAsk, endPendingAsk, syncBusy, settleSession],
     );
-    const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
+    const handleVerseFindStepRef = useAppCurrentRef(handleVerseFindStep);
+    const handleVerseFindInputRef = useAppCurrentRef(
+        async (sessionId: string, question: ChatMessageType, typed: string) => {
+            const choices = getVerseFindInputChoices(question.actions);
+            if (choices.length === 0 || typed.startsWith('/')) return false;
+            addMessage(sessionId, { author: 'you', text: typed });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            pending.waitingAnswer = {
+                text: question.text,
+                actions: question.actions,
+            };
+            const usageTally = genUsageTally(sessionId);
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const askInSession = handleAskingRef.current;
+            let picked: VerseFindStateType | null = null;
+            try {
+                const reply = await askWaitingInput(
+                    { question: question.text, choices },
+                    typed,
+                    pending,
+                    usageTally,
+                );
+                throwIfCancelled(pending.controller.signal);
+                if (reply?.kind === 'unrelated') return false;
+                if (reply?.kind === 'choice') {
+                    picked = question.actions![reply.choice - 1]
+                        .args as VerseFindStateType;
+                } else {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: question.text,
+                        note:
+                            reply?.kind === 'help'
+                                ? reply.reply
+                                : tran(
+                                      'I could not understand that choice. Choose an option below, or say it another way.',
+                                  ),
+                        actions: question.actions,
+                        ...usageTally.toField(),
+                    });
+                }
+            } catch (error) {
+                if (!checkIsCancelError(error, pending.controller.signal)) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: question.text,
+                        note: describeAnswerError(error),
+                        actions: question.actions,
+                        ...usageTally.toField(),
+                    });
+                }
+            } finally {
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+            if (picked !== null && !pending.controller.signal.aborted) {
+                const fields = usageTally.toField();
+                await handleVerseFindStepRef.current(
+                    sessionId,
+                    picked,
+                    typed,
+                    fields,
+                    (question) => {
+                        void askInSession(question, true, {
+                            echoText: typed,
+                            isPressed: true,
+                            initialUsageFields: fields,
+                            withoutEcho: true,
+                        });
+                    },
+                    true,
+                );
+            }
+            return true;
+        },
+    );
+    // A file pressed in the Resources panel (its 🤖): attached in the box of
+    // the tab it gets, with a brief description and four questions
+    // questions to press -- an elderly volunteer who opened a file to ask
+    // about it should not then have to think of how to ask.
+    const attachHandedFileRef = useAppCurrentRef(
+        async (sessionId: string, filePath: string) => {
+            setAttachError(null);
+            const result = await genAttachmentFromPath(filePath);
+            if ('failure' in result) {
+                addMessage(sessionId, { author: 'bot', text: result.failure });
+                return;
+            }
+            const session = sessionStateRef.current.sessions.find((one) => {
+                return one.id === sessionId;
+            });
+            setDraftAttachmentMap((previous) => {
+                const existing = previous[sessionId] ?? [];
+                const [attachment] = numberAttachments(
+                    [result.attachment],
+                    [
+                        ...(session?.messages ?? []).flatMap((message) => {
+                            return message.attachments ?? [];
+                        }),
+                        ...existing,
+                    ],
+                );
+                return {
+                    ...previous,
+                    [sessionId]: [...existing, attachment].slice(
+                        -MAX_ATTACHMENT_COUNT,
+                    ),
+                };
+            });
+            const isBibleChapterPdf =
+                result.attachment.mimeType === 'application/pdf' &&
+                /^[A-Z0-9]{3}\.\d+\.pdf$/i.test(result.attachment.name);
+            const introduction = fillWords(
+                tran(
+                    '{name} is attached below. Ask me anything about ' +
+                        'what is in it, or press a question.',
+                ),
+                { name: result.attachment.name },
+            );
+            addMessage(sessionId, {
+                author: 'bot',
+                text: isBibleChapterPdf
+                    ? `${introduction}\n\n${tran(
+                          'This is Bible chapter study material with verse ' +
+                              'text, cross-references, and explanations ' +
+                              'arranged by verse.',
+                      )}`
+                    : introduction,
+                replies: [
+                    tran('Read'),
+                    tran('What is this file about?'),
+                    tran('Sum up the main points'),
+                    tran('Explain it in simple words'),
+                ],
+            });
+            inputRef.current?.focus();
+        },
+    );
+    // A Lookup Detail panel's 🤖 (2026-10-18): the person, place or passage
+    // it shows, read whole through `owa_lookup_record` in the panel's own
+    // window -- where the names dataset is already held -- and kept on the
+    // card, which is what every question typed under it is asked with. No
+    // model: a card that says it is ready, and three questions to press.
+    const openHandedLookupRef = useAppCurrentRef(
+        async (sessionId: string, ask: LookupAskType) => {
+            const pending = genPendingAsk(sessionId, undefined, false);
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const finishReading = genProgressReporter(
+                genSessionProgress(sessionId),
+            )(
+                fillWords(tran('Reading {name} from the app'), {
+                    name: ask.title,
+                }),
+            );
+            let facts: string | null;
+            try {
+                const args = toLookupToolArgs(ask);
+                try {
+                    facts = await callTool(
+                        LOOKUP_TOOL_NAME,
+                        args,
+                        pending.controller.signal,
+                    );
+                } catch (_error) {
+                    // The panel's window may have gone: any window reads it.
+                    if (pending.controller.signal.aborted) {
+                        return;
+                    }
+                    const { page: _page, ...anyWindowArgs } = args;
+                    facts = await callTool(
+                        LOOKUP_TOOL_NAME,
+                        anyWindowArgs,
+                        pending.controller.signal,
+                    ).catch(() => {
+                        return null;
+                    });
+                }
+                if (pending.controller.signal.aborted) {
+                    return;
+                }
+                const subject = toLookupSubject(ask, facts);
+                const opening = genLookupOpeningAnswer(subject);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: opening.text,
+                    replies: opening.replies,
+                    actions: genLookupActions(
+                        ask,
+                        readLookupFacts(subject.facts),
+                    ),
+                    lookup: subject,
+                });
+                inputRef.current?.focus();
+            } finally {
+                finishReading();
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+        },
+    );
+    // A press of one of the things to do with the person, place or
+    // passage a tab is about (`lookupStepHelpers.ts`, 2026-10-18), answered
+    // by the window with no model: a card about another record or passage,
+    // a list to press from, or a line saying what was done. Every line it
+    // writes keeps the conversation going (`isLookupAnswer`), about the
+    // newest card's record. `awaiting`: the record a TYPED passage was
+    // asked from -- read and failing, the question is asked again.
+    // writes keeps the conversation going (`isLookupAnswer`), about the
+    // newest card's record. `awaiting`: the record a TYPED passage was
+    // asked from -- read and failing, the question is asked again.
+    const handleLookupStepRef = useAppCurrentRef(
+        async (
+            sessionId: string,
+            state: LookupStepType,
+            echo: string,
+            awaiting: LookupAskType | null = null,
+        ) => {
+            addMessage(sessionId, { author: 'you', text: echo });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            if (awaiting !== null)
+                pending.waitingAnswer = {
+                    text: tran(
+                        'Type the passage you want, like John 3:16 or Psalm 23.',
+                    ),
+                    lookupAwaits: awaiting,
+                };
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const { signal } = pending.controller;
+            const usageTally = genUsageTally(sessionId);
+            const { ask } = state;
+            const say = (
+                text: string,
+                actions: BotActionType[] = [],
+                extra: Partial<ChatMessageType> = {},
+            ) => {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text,
+                    ...(actions.length > 0 ? { actions } : {}),
+                    isLookupAnswer: true,
+                    ...usageTally.toField(),
+                    ...extra,
+                });
+            };
+            // The record tool, in the panel's window, else in any.
+            const readRecord = async (args: any): Promise<string | null> => {
+                try {
+                    return await callTool(LOOKUP_TOOL_NAME, args, signal);
+                } catch (_error) {
+                    throwIfCancelled(signal);
+                    const { page: _page, ...anyWindowArgs } = args;
+                    return await callTool(
+                        LOOKUP_TOOL_NAME,
+                        anyWindowArgs,
+                        signal,
+                    ).catch(() => {
+                        return null;
+                    });
+                }
+            };
+            // What the tab already read of this record, else a fresh read.
+            const readFacts = async () => {
+                const card = [
+                    ...(sessionStateRef.current.sessions.find((one) => {
+                        return one.id === sessionId;
+                    })?.messages ?? []),
+                ]
+                    .reverse()
+                    .find((message) => {
+                        return (
+                            message.lookup?.kind === ask.kind &&
+                            message.lookup.target === ask.target &&
+                            message.lookup.bibleKey === ask.bibleKey
+                        );
+                    });
+                if (card?.lookup !== undefined && card.lookup.facts !== '') {
+                    return readLookupFacts(card.lookup.facts);
+                }
+                const text = await readRecord(toLookupToolArgs(ask));
+                return text === null ? null : readLookupFacts(text);
+            };
+            // A card about a record or passage, with all there is to do.
+            const addCard = (cardAsk: LookupAskType, text: string | null) => {
+                const subject = toLookupSubject(cardAsk, text);
+                const opening = genLookupOpeningAnswer(subject);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: opening.text,
+                    replies: opening.replies,
+                    actions: genLookupActions(
+                        cardAsk,
+                        readLookupFacts(subject.facts),
+                    ),
+                    lookup: subject,
+                    ...usageTally.toField(),
+                });
+            };
+            const named = { name: ask.title };
+            const finishReading = genProgressReporter(
+                genSessionProgress(sessionId),
+            )(fillWords(tran('Reading {name} from the app'), named));
+            try {
+                if (state.step === 'open' || state.step === 'near') {
+                    const text = await readRecord({
+                        ...toLookupToolArgs(ask),
+                        ...(state.step === 'near' ? { near: state.near } : {}),
+                    });
+                    throwIfCancelled(signal);
+                    const facts = text === null ? null : readLookupFacts(text);
+                    if (ask.kind !== 'verse') {
+                        addCard(
+                            typeof facts?.name === 'string'
+                                ? { ...ask, title: facts.name }
+                                : ask,
+                            text,
+                        );
+                        return;
+                    }
+                    const passageAsk =
+                        facts === null ? null : toPassageAsk(ask, facts);
+                    if (passageAsk !== null) {
+                        addCard(passageAsk, text);
+                        return;
+                    }
+                    if (state.step === 'near') {
+                        say(
+                            fillWords(
+                                state.near === 'next'
+                                    ? tran(
+                                          'There is no passage after {name} in this Bible.',
+                                      )
+                                    : tran(
+                                          'There is no passage before {name} in this Bible.',
+                                      ),
+                                named,
+                            ),
+                        );
+                        return;
+                    }
+                    if (awaiting !== null) {
+                        // No exact read: ask the assistant for the passage as
+                        // a reference and try once with it, before saying it
+                        // could not be read.
+                        const help = await askWaitingInput(
+                            {
+                                question:
+                                    'Which passage would you like to read next?',
+                                previous: awaiting.title,
+                                valueKind: 'passage',
+                                choices: [],
+                            },
+                            ask.title,
+                            pending,
+                            usageTally,
+                        ).catch((error) => {
+                            throwIfCancelled(signal);
+                            return {
+                                kind: 'help' as const,
+                                reply: describeAnswerError(error),
+                            };
+                        });
+                        throwIfCancelled(signal);
+                        if (help?.kind === 'unrelated') return false;
+                        const ref = help?.kind === 'value' ? help.value : null;
+                        if (ref !== null) {
+                            const retriedAsk = {
+                                ...ask,
+                                target: ref,
+                                title: ref,
+                            };
+                            const retriedText = await readRecord(
+                                toLookupToolArgs(retriedAsk),
+                            );
+                            throwIfCancelled(signal);
+                            const retriedFacts =
+                                retriedText === null
+                                    ? null
+                                    : readLookupFacts(retriedText);
+                            const retriedPassage =
+                                retriedFacts === null
+                                    ? null
+                                    : toPassageAsk(retriedAsk, retriedFacts);
+                            if (retriedPassage !== null) {
+                                addCard(retriedPassage, retriedText);
+                                return;
+                            }
+                        }
+                        const failure = fillWords(
+                            tran(
+                                'I could not read “{words}”. Type it like ' +
+                                    'John 3:16 or Psalm 23.',
+                            ),
+                            { words: ask.title },
+                        );
+                        say(help?.kind === 'help' ? help.reply : failure, [], {
+                            lookupAwaits: awaiting,
+                        });
+                        return;
+                    }
+                    addCard(ask, null);
+                    return;
+                }
+                if (state.step === 'more') {
+                    say(
+                        fillWords(
+                            tran('What would you like to do with {name}?'),
+                            named,
+                        ),
+                        genLookupActions(ask, await readFacts()),
+                    );
+                    return;
+                }
+                if (state.step === 'lookup') {
+                    try {
+                        await callTool(
+                            VERSE_FIND_TOOL_NAME,
+                            {
+                                open: ask.target,
+                                ...(ask.bibleKey === undefined
+                                    ? {}
+                                    : { bible: ask.bibleKey }),
+                            },
+                            signal,
+                        );
+                        say(
+                            fillWords(
+                                tran('I opened {name} in the Bible Lookup.'),
+                                named,
+                            ),
+                        );
+                    } catch (_error) {
+                        throwIfCancelled(signal);
+                        say(
+                            fillWords(
+                                tran(
+                                    'I could not open {name} in the Bible Lookup just now.',
+                                ),
+                                named,
+                            ),
+                        );
+                    }
+                    return;
+                }
+                if (state.step === 'bibles') {
+                    let listed: any = null;
+                    try {
+                        listed = parseToolJson(
+                            await callTool(VERSE_FIND_TOOL_NAME, {}, signal),
+                        );
+                    } catch (_error) {
+                        throwIfCancelled(signal);
+                    }
+                    const answer = genBiblesAnswer(ask, listed);
+                    say(answer.text, answer.actions);
+                    return;
+                }
+                if (state.step === 'names') {
+                    const text = await readRecord({
+                        ...toLookupToolArgs(ask),
+                        names: true,
+                    });
+                    const answer = genNamesAnswer(
+                        ask,
+                        text === null ? null : readLookupFacts(text),
+                    );
+                    say(answer.text, answer.actions);
+                    return;
+                }
+                if (state.step === 'related' || state.step === 'verses') {
+                    const facts = await readFacts();
+                    const answer =
+                        state.step === 'related'
+                            ? genRelatedAnswer(ask, facts)
+                            : genVersesAnswer(ask, facts);
+                    say(answer.text, answer.actions);
+                    return;
+                }
+                if (state.step === 'another') {
+                    say(
+                        tran(
+                            'Type the passage you want, like John 3:16 or Psalm 23.',
+                        ),
+                        [],
+                        { lookupAwaits: ask },
+                    );
+                    return;
+                }
+                if (state.step === 'save') {
+                    const facts = await readFacts();
+                    const reference = facts?.passages?.[0]?.ref;
+                    try {
+                        if (typeof reference !== 'string') {
+                            throw new Error('Nothing to save');
+                        }
+                        await callTool(
+                            'owa_bible_item',
+                            {
+                                action: 'add',
+                                reference,
+                                ...(ask.bibleKey === undefined
+                                    ? {}
+                                    : { version: ask.bibleKey }),
+                            },
+                            signal,
+                        );
+                        say(
+                            fillWords(
+                                tran('Saved {name} to your Bibles list.'),
+                                named,
+                            ),
+                        );
+                    } catch (_error) {
+                        throwIfCancelled(signal);
+                        say(
+                            fillWords(
+                                tran('I could not save {name} just now.'),
+                                named,
+                            ),
+                        );
+                    }
+                    return;
+                }
+                if (state.step === 'copy') {
+                    const copyText = toPassageCopyText(await readFacts());
+                    try {
+                        if (copyText === null) {
+                            throw new Error('Nothing to copy');
+                        }
+                        await navigator.clipboard.writeText(copyText);
+                        say(fillWords(tran('Copied {name}.'), named));
+                    } catch (_error) {
+                        say(tran('I could not copy it just now.'));
+                    }
+                }
+            } catch (error) {
+                if (!checkIsCancelError(error, signal)) {
+                    say(tran('I could not do that just now.'));
+                }
+            } finally {
+                finishReading();
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+        },
+    );
     // A job another window handed over -- Settings → Bible's "let the
     // assistant do it" -- taken when this window opens or comes to the
     // front (it may already have been open behind). In a tab of its own, so
@@ -4252,8 +5855,22 @@ export default function ChatbotAppComp() {
     // and only a request this window knows how to run without a model.
     useAppEffect(() => {
         // The tab a handed-over job runs in: a new one while there is room.
+        // Always a tab of its own (the user's word, 2026-10-17: _when
+        // clicked it should always open new tab_); with the strip full, an
+        // empty tab, and only then the one in front.
         const openHandoffSession = () => {
             if (!checkCanAddChatSession(sessionStateRef.current.sessions)) {
+                const emptySession = sessionStateRef.current.sessions.find(
+                    (session) => {
+                        return session.messages.length === 0;
+                    },
+                );
+                if (emptySession !== undefined) {
+                    setSessionState((oldState) => {
+                        return { ...oldState, activeId: emptySession.id };
+                    });
+                    return emptySession.id;
+                }
                 return sessionStateRef.current.activeId;
             }
             const defaults = genNewSessionDefaults();
@@ -4286,7 +5903,40 @@ export default function ChatbotAppComp() {
                 inputRef.current?.focus();
                 return;
             }
+            // A Lookup Detail panel's 🤖: a person, a place or a passage.
+            const handedLookup = takeChatbotLookup();
+            if (handedLookup !== null) {
+                void openHandedLookupRef.current(
+                    openHandoffSession(),
+                    handedLookup,
+                );
+                return;
+            }
+            // The Resources panel's 🤖: a file to ask about.
+            const handedFilePath = takeChatbotFile();
+            if (handedFilePath !== null) {
+                void attachHandedFileRef.current(
+                    openHandoffSession(),
+                    handedFilePath,
+                );
+                return;
+            }
             const asked = takeChatbotAsk();
+            // Bible Find's 🤖: a verse to find, in the Bible that panel is
+            // on -- the Bibles are offered with that one first.
+            const verseAsk = asked === null ? null : readVerseFindAsk(asked);
+            if (asked !== null && verseAsk !== null) {
+                void handleVerseFindStepRef.current(
+                    openHandoffSession(),
+                    {
+                        step: 'bible',
+                        preferred: verseAsk.bibleKey,
+                        isFromFind: verseAsk.bibleKey !== null,
+                    },
+                    genShownVerseFindAsk(verseAsk.bibleKey),
+                );
+                return;
+            }
             const importState =
                 asked === null ? null : findBibleImportState([], asked);
             if (asked === null || importState === null) {
@@ -4295,13 +5945,29 @@ export default function ChatbotAppComp() {
             void handleBibleImportStepRef.current(
                 openHandoffSession(),
                 importState,
-                asked,
+                toShownBibleImportAsk(asked),
             );
         };
         takeHandoff();
         window.addEventListener('focus', takeHandoff);
+        // And when another window opens this one while it is already open:
+        // the main process says so (`chatbotLaunchFocus`) every time, where
+        // the focus event is not sure to come -- Windows does not always
+        // hand focus to a window brought forward by a program, and the press
+        // in Bible Find then did nothing at all (2026-10-17, seen live).
+        const handleLaunching = () => {
+            takeHandoff();
+        };
+        appProvider.messageUtils.listenForData(
+            'main:app:chatbot-launch-focus',
+            handleLaunching,
+        );
         return () => {
             window.removeEventListener('focus', takeHandoff);
+            appProvider.messageUtils.removeListener(
+                'main:app:chatbot-launch-focus',
+                handleLaunching,
+            );
         };
     }, []);
 
@@ -4374,10 +6040,45 @@ export default function ChatbotAppComp() {
                 // press, before React has rendered the new one.
                 model?: string;
                 askHint?: string;
+                // A deterministic menu for a local flow whose model answer
+                // may omit or malformedly punctuate its OPTIONS line.
+                repliesOverride?: string[];
                 onAnswered?: (text: string | null) => void;
+                // PRESSED rather than typed -- a chip, an option, a row of
+                // the list: the app's words, not theirs, so the answer is in
+                // the language the app is shown in (`pickReplyLanguage`).
+                isPressed?: boolean;
+                // What the transcript shows as their words when `asked` is
+                // the English of the row they pressed in their language:
+                // everything else -- the readers, the hint, the model --
+                // reads the English.
+                echoText?: string;
+                // A machine-worded ask may still be about the Resources file
+                // held open in this tab. Full-chapter reading uses this while
+                // it asks one isolated verse at a time.
+                keepOpenFiles?: boolean;
+                initialUsageFields?: Pick<
+                    ChatMessageType,
+                    'usage' | 'answeredBy'
+                >;
             },
         ) => {
-            const trimmedAsked = asked.trim();
+            const typedAsked = asked.trim();
+            let withoutEcho = options?.withoutEcho === true;
+            let leftLookup = false;
+            // A fill-in row finished in the window's language is asked as
+            // the row's English with their part in it, and shown as typed
+            // (`findTemplateAsk`): every reader below reads the English.
+            const templateAsk =
+                options?.echoText === undefined &&
+                options?.shownText === undefined &&
+                options?.isPressed !== true
+                    ? await findTemplateAsk(typedAsked)
+                    : null;
+            const trimmedAsked = templateAsk ?? typedAsked;
+            const echoText =
+                options?.echoText?.trim() ||
+                (templateAsk === null ? trimmedAsked : typedAsked);
             const askModel = options?.model ?? model;
             // An attachment IS a question -- "what is this?" with a picture of
             // the screen is the whole ask -- so an empty box with something
@@ -4413,7 +6114,7 @@ export default function ChatbotAppComp() {
                 if (fixReply !== null) {
                     addMessage(activeSessionId, {
                         author: 'you',
-                        text: trimmedAsked,
+                        text: echoText,
                     });
                     updateSession(activeSessionId, (session) => {
                         return { ...session, draft: '' };
@@ -4450,6 +6151,210 @@ export default function ChatbotAppComp() {
                           })?.messages ?? [],
                       ))
                     : null;
+            // A line typed under a Lookup Detail panel's card, or under an
+            // answer of its conversation: about the same person, place or
+            // passage (`readLookupThread`), whatever its words -- "which
+            // verses mention him" is not a verse search there, it is about
+            // him. A `/` line ends it.
+            const lookupTab = sessionStateRef.current.sessions.find(
+                (session) => {
+                    return session.id === activeSessionId;
+                },
+            );
+            // A passage typed under "Type the passage you want" (**Open
+            // another passage**): read and opened as a card, with no model.
+            const awaitedAsk =
+                options?.shownText === undefined &&
+                generalQuestion === null &&
+                attachments.length === 0
+                    ? readLookupAwaitedPassage(
+                          lookupTab?.messages ?? [],
+                          trimmedAsked,
+                      )
+                    : null;
+            if (awaitedAsk !== null) {
+                const typed = trimmedAsked
+                    .replaceAll(/\s+/g, ' ')
+                    .slice(0, 200);
+                updateSession(activeSessionId, (session) => {
+                    return { ...session, draft: '' };
+                });
+                const handled = await handleLookupStepRef.current(
+                    activeSessionId,
+                    {
+                        step: 'open',
+                        ask: {
+                            kind: 'verse',
+                            target: typed,
+                            title: typed,
+                            ...(awaitedAsk.bibleKey === undefined
+                                ? {}
+                                : { bibleKey: awaitedAsk.bibleKey }),
+                            ...(awaitedAsk.page === undefined
+                                ? {}
+                                : { page: awaitedAsk.page }),
+                        },
+                    },
+                    echoText,
+                    awaitedAsk,
+                );
+                if (handled !== false) return;
+                withoutEcho = true;
+                leftLookup = true;
+            }
+            const lookupSubject: LookupSubjectType | null =
+                options?.shownText === undefined &&
+                generalQuestion === null &&
+                !leftLookup
+                    ? readLookupThread(
+                          lookupTab?.messages ?? [],
+                          trimmedAsked,
+                          lookupTab?.lookupClosedAt,
+                      )
+                    : null;
+            // A file from the Resources folders open in this tab --
+            // attached now, or still open from an earlier question --
+            // makes it a question about Resources, the rest of the
+            // folders the model's to read (`resourcesChatHelpers.ts`).
+            const resourceFileNames =
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null
+                    ? findResourceFileNames([
+                          ...attachments,
+                          ...findOpenFileAttachments(
+                              lookupTab?.messages ?? [],
+                              lookupTab?.fileClosedAt,
+                          ),
+                      ])
+                    : [];
+            // What they remember of a verse, under a verse-finding answer:
+            // more of the same search, asked of the assistant under its own
+            // prompt with the verse finder as its only tool (`AskExtraType.
+            // verseFind`), or searched by the window when none answers.
+            // Or the whole of it in one line -- `Help me find a Bible verse
+            // in "KJV": love your enemies` -- which goes straight to the
+            // search with no step in front of it.
+            const isVerseAskable =
+                options?.shownText === undefined &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                attachments.length === 0;
+            // In English or in the person's own language
+            // (`verseAskLanguageHelpers.ts`).
+            const oneLineVerse = isVerseAskable
+                ? readTypedVerseFindAsk(trimmedAsked)
+                : null;
+            const oneLineVerseBible =
+                oneLineVerse?.remembered != null ? oneLineVerse.bibleKey : null;
+            let verseFindBible =
+                oneLineVerseBible ??
+                (isVerseAskable
+                    ? readVerseFindThread(
+                          sessionStateRef.current.sessions.find((session) => {
+                              return session.id === activeSessionId;
+                          })?.messages ?? [],
+                          trimmedAsked,
+                      )
+                    : null);
+            // What they remember: the line itself, or what follows its colon.
+            let verseFindWords =
+                oneLineVerseBible !== null
+                    ? (oneLineVerse?.remembered ?? trimmedAsked)
+                    : trimmedAsked;
+            // And a verse asked for by what it says in any tab -- "which
+            // verse says love your enemies" (`readBibleContentAsk`, EC-199)
+            // -- is a search of the Bible too: in the Bible the lookup is
+            // on, from the words the question is about. Before, an
+            // assistant answered it from memory, in another translation's
+            // words, and the guide pointed at Bible Find.
+            if (
+                verseFindBible === null &&
+                isVerseAskable &&
+                !trimmedAsked.startsWith('/')
+            ) {
+                // A Khmer "which verse says …" too: in a Khmer window every
+                // one went to an assistant with no Bible search, which
+                // quoted a Khmer text of its own making (2026-10-17). And
+                // the verse finder's own sentence with words and no Bible
+                // ("help me find a verse: love your enemies") is searched
+                // the same way: it used to ask "which Bible?" and drop the
+                // words, so the next line they typed went to an assistant.
+                const framedWords =
+                    oneLineVerse?.remembered != null &&
+                    oneLineVerse.bibleKey === null
+                        ? oneLineVerse.remembered
+                        : null;
+                const contentAsk: BibleContentAskType | null =
+                    framedWords !== null
+                        ? { kind: 'verse', words: framedWords }
+                        : (readBibleContentAsk(trimmedAsked) ??
+                          readTypedVerseContentAsk(trimmedAsked));
+                if (contentAsk?.kind === 'verse') {
+                    try {
+                        const listed = parseToolJson(
+                            await callTool(VERSE_FIND_TOOL_NAME, {}),
+                        );
+                        // The lookup's Bible, or one in their own language.
+                        const picked = pickVerseFindBible(
+                            listed,
+                            pickReplyLanguage(trimmedAsked),
+                        );
+                        if (picked !== null) {
+                            verseFindBible = picked;
+                            verseFindWords = contentAsk.words;
+                        }
+                    } catch (_error) {
+                        // No Bible to search: the guide's own answer.
+                    }
+                }
+            }
+            // A typed question about the Bible Reader's own material -- a
+            // verse, a chapter, the names in it, or its Resources files --
+            // is asked with the tools that read it
+            // (`bibleReaderChatHelpers.ts`), or stays in the conversation
+            // the last answer opened. A pressed question (the guide's own),
+            // a how-to and the app's own work are left alone; the tab must
+            // be asking about the Reader, so a Presenter "show John 3:16"
+            // keeps owa_present_bible.
+            const detectedBibleReaderAsk: BibleReaderAskType | null =
+                options?.shownText === undefined &&
+                focus === 'reader' &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                verseFindBible === null &&
+                trimmedAsked.length > 0
+                    ? (readBibleReaderAsk(trimmedAsked) ??
+                      readBibleReaderThread(
+                          lookupTab?.messages ?? [],
+                          trimmedAsked,
+                      ))
+                    : null;
+            // A typed line that is one of the app's OWN supported questions
+            // is the guide's: its row decides, and a reference inside a
+            // how-to ("Where do I type John 3:16?", W-11) is an example, not
+            // a Bible question. Only a free-typed question with no row gets
+            // the verse tools.
+            const knownQuestionForRouting =
+                detectedBibleReaderAsk === null
+                    ? undefined
+                    : await findKnownQuestion(trimmedAsked, focus);
+            const bibleReaderAsk = keepBibleReaderAskUnlessKnown(
+                detectedBibleReaderAsk,
+                knownQuestionForRouting ?? null,
+            );
+            // Neither of those two: a question about the app, which the
+            // guide's pages, the shortcuts and the advice under an answer
+            // are all for.
+            const isAppQuestion =
+                generalQuestion === null &&
+                verseFindBible === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                bibleReaderAsk === null;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -4480,14 +6385,15 @@ export default function ChatbotAppComp() {
                     if (isLocked) {
                         addMessage(commandSessionId, {
                             author: 'you',
-                            text: trimmedAsked,
+                            text: echoText,
                         });
                         addMessage(commandSessionId, {
                             author: 'bot',
-                            text:
+                            text: tran(
                                 'This chat is locked, so it keeps its ' +
-                                'messages. Unlock it from ⋮ on its tab ' +
-                                'first, then type `/clear` again.',
+                                    'messages. Unlock it from ⋮ on its tab ' +
+                                    'first, then type `/clear` again.',
+                            ),
                         });
                         updateSession(commandSessionId, (session) => {
                             return { ...session, draft: '' };
@@ -4508,7 +6414,7 @@ export default function ChatbotAppComp() {
                 }
                 addMessage(commandSessionId, {
                     author: 'you',
-                    text: trimmedAsked,
+                    text: echoText,
                 });
                 updateSession(commandSessionId, (session) => {
                     return { ...session, draft: '' };
@@ -4547,26 +6453,132 @@ export default function ChatbotAppComp() {
                 }
                 return;
             }
+            // "Help me find a Bible verse", or a Bible picked by typing its
+            // name under "Which Bible should I search?" -- the verse finder's
+            // own steps, with no model (`verseFindChatHelpers`).
+            if (
+                options?.shownText === undefined &&
+                attachments.length === 0 &&
+                lookupSubject === null
+            ) {
+                const verseMessages =
+                    sessionStateRef.current.sessions.find((session) => {
+                        return session.id === activeSessionId;
+                    })?.messages ?? [];
+                // A thank-you for a verse just found: answered at once, by
+                // the window (EC-300).
+                const verseThanks = genVerseFindThanksAnswer(
+                    verseMessages,
+                    trimmedAsked,
+                );
+                if (verseThanks !== null) {
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                    });
+                    addMessage(activeSessionId, {
+                        author: 'bot',
+                        text: verseThanks,
+                    });
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    return;
+                }
+                const verseAsk = readTypedVerseFindAsk(trimmedAsked);
+                // One line with the words (and the Bible, or the lookup's)
+                // is asked below.
+                const verseState: VerseFindStateType | null =
+                    verseFindBible !== null
+                        ? null
+                        : verseAsk !== null
+                          ? { step: 'bible', preferred: verseAsk.bibleKey }
+                          : readVerseFindTypedPick(verseMessages, trimmedAsked);
+                if (verseState !== null) {
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    await handleVerseFindStepRef.current(
+                        activeSessionId,
+                        verseState,
+                        echoText,
+                    );
+                    return;
+                }
+                const lastVerseQuestion = verseMessages.at(-1);
+                if (
+                    lastVerseQuestion?.author === 'bot' &&
+                    !trimmedAsked.startsWith('/') &&
+                    getVerseFindInputChoices(lastVerseQuestion.actions).length >
+                        0
+                ) {
+                    updateSession(activeSessionId, (session) => ({
+                        ...session,
+                        draft: '',
+                    }));
+                    if (
+                        await handleVerseFindInputRef.current(
+                            activeSessionId,
+                            lastVerseQuestion,
+                            echoText,
+                        )
+                    )
+                        return;
+                    withoutEcho = true;
+                }
+            }
             // A Bible from a link, or a typed answer to the import's own
             // question in front of them -- the import runs here, with no
             // model, the way a command does (`bibleImportChatHelpers`).
-            if (options?.shownText === undefined && attachments.length === 0) {
-                const importState = findBibleImportState(
-                    sessionStateRef.current.sessions.find((session) => {
-                        return session.id === activeSessionId;
-                    })?.messages ?? [],
-                    trimmedAsked,
-                );
+            if (
+                options?.shownText === undefined &&
+                attachments.length === 0 &&
+                lookupSubject === null
+            ) {
+                const lastImportQuestion = sessionStateRef.current.sessions
+                    .find((session) => session.id === activeSessionId)
+                    ?.messages.at(-1);
+                let isUnrelated = false;
+                if (
+                    lastImportQuestion?.author === 'bot' &&
+                    checkBibleImportReplyNeedsHelp(
+                        lastImportQuestion,
+                        trimmedAsked,
+                    )
+                ) {
+                    updateSession(activeSessionId, (session) => ({
+                        ...session,
+                        draft: '',
+                    }));
+                    const handled = await handleBibleImportStepRef.current(
+                        activeSessionId,
+                        null,
+                        echoText,
+                        lastImportQuestion,
+                    );
+                    if (handled) return;
+                    isUnrelated = true;
+                    withoutEcho = true;
+                }
+                const importState = isUnrelated
+                    ? null
+                    : findBibleImportState(
+                          sessionStateRef.current.sessions.find((session) => {
+                              return session.id === activeSessionId;
+                          })?.messages ?? [],
+                          trimmedAsked,
+                      );
                 if (importState !== null) {
                     updateSession(activeSessionId, (session) => {
                         return { ...session, draft: '' };
                     });
-                    await handleBibleImportStepRef.current(
+                    const handled = await handleBibleImportStepRef.current(
                         activeSessionId,
                         importState,
-                        trimmedAsked,
+                        echoText,
                     );
-                    return;
+                    if (handled) return;
+                    withoutEcho = true;
                 }
             }
             // A song asked for by its TITLE -- the starter chip *Create a
@@ -4589,7 +6601,7 @@ export default function ChatbotAppComp() {
             if (
                 options?.shownText === undefined &&
                 attachments.length === 0 &&
-                generalQuestion === null &&
+                isAppQuestion &&
                 checkIsCustomProvider(provider)
             ) {
                 const songLink = readSongLinkAsk(trimmedAsked);
@@ -4599,7 +6611,7 @@ export default function ChatbotAppComp() {
                     const songSessionId = activeSessionId;
                     addMessage(songSessionId, {
                         author: 'you',
-                        text: trimmedAsked,
+                        text: echoText,
                     });
                     updateSession(songSessionId, (session) => {
                         return { ...session, draft: '' };
@@ -4643,7 +6655,7 @@ export default function ChatbotAppComp() {
             if (
                 options?.shownText === undefined &&
                 attachments.length === 0 &&
-                generalQuestion === null &&
+                isAppQuestion &&
                 checkIsCustomProvider(provider)
             ) {
                 const screenToggle = readScreenToggleAsk(trimmedAsked);
@@ -4697,7 +6709,7 @@ export default function ChatbotAppComp() {
                     const directSessionId = activeSessionId;
                     addMessage(directSessionId, {
                         author: 'you',
-                        text: trimmedAsked,
+                        text: echoText,
                     });
                     updateSession(directSessionId, (session) => {
                         return { ...session, draft: '' };
@@ -4710,7 +6722,31 @@ export default function ChatbotAppComp() {
                     return;
                 }
             }
-            const images = toBotImages(attachments);
+            // The file this tab is still asking about goes with every
+            // question until another is attached or its × above the box is
+            // pressed (`findOpenFileAttachments`): its pages or its words are
+            // what a second question about it needs, and the history keeps
+            // only that it was there. Read again from disk when the window
+            // has let its pages go. To the model only -- the transcript keeps
+            // the question as asked, and the line above the box says the
+            // file is open. Never for a machine-written ask.
+            const askedTab = sessionStateRef.current.sessions.find(
+                (session) => {
+                    return session.id === activeSessionId;
+                },
+            );
+            const openFiles =
+                (options?.shownText !== undefined &&
+                    options.keepOpenFiles !== true) ||
+                attachments.some(checkIsFileAttachment)
+                    ? []
+                    : findOpenFileAttachments(
+                          askedTab?.messages ?? [],
+                          askedTab?.fileClosedAt,
+                      );
+            await Promise.all(openFiles.map(reloadFileAttachment));
+            const modelAttachments = [...openFiles, ...attachments];
+            const images = toBotImages(modelAttachments);
             // Refused BEFORE a call is made rather than after one fails: a
             // model with no eyes answers a picture with a 400, which
             // `describeLlmError` reads as an unreachable service and would
@@ -4757,10 +6793,10 @@ export default function ChatbotAppComp() {
                     return message.isFollowUp !== true;
                 })
                 .map(toHistoryTurn);
-            if (options?.withoutEcho !== true) {
+            if (!withoutEcho) {
                 addMessage(askedSessionId, {
                     author: 'you',
-                    text: options?.shownText ?? trimmedAsked,
+                    text: options?.shownText ?? echoText,
                     note: options?.note,
                     ...(attachments.length > 0 ? { attachments } : {}),
                     // So the next plain question in this tab knows to stay
@@ -4795,7 +6831,10 @@ export default function ChatbotAppComp() {
             if (provider !== null && !isAuto) {
                 pending.assistantKey = toAutoBusyKey(provider, askModel);
             }
-            const usageTally = genUsageTally(askedSessionId);
+            const usageTally = genUsageTally(
+                askedSessionId,
+                options?.initialUsageFields,
+            );
             // Last question's steps off the line before this one's go up.
             // They are cleared when an ask ENDS too; this is the one that
             // matters, because the window between the line appearing and the
@@ -4837,20 +6876,178 @@ export default function ChatbotAppComp() {
                         appWindowListRef.current,
                     );
                 };
-                const askedOfModel =
-                    generalQuestion === null
-                        ? toAskedOfModel(
-                              trimmedAsked,
-                              attachments,
-                              toAttachedPage,
+                // A verse to find: the window searches first -- their words,
+                // and, for words in another script, their English from a
+                // Gemma 4 model that can answer -- so the assistant starts
+                // from results (`genVerseHeadStart`).
+                let verseHeadStart: VerseHeadStartPartType[] = [];
+                if (verseFindBible !== null) {
+                    const reportStep = genProgressReporter(
+                        genSessionProgress(askedSessionId),
+                    );
+                    const english = checkVerseFindNeedsTranslation(
+                        verseFindWords,
+                    )
+                        ? await translateVerseWords(
+                              verseFindWords,
+                              activeFocus,
+                              signal,
+                              usageTally.onHelperUsage,
+                              reportStep,
                           )
-                        : toGeneralQuestionAsk(
-                              toAskedOfModel(
-                                  generalQuestion,
-                                  attachments,
-                                  toAttachedPage,
-                              ),
-                          );
+                        : null;
+                    throwIfCancelled(signal);
+                    const finishSearching = reportStep(
+                        fillWords(tran('Searching {bible} for your words'), {
+                            bible: verseFindBible,
+                        }),
+                    );
+                    try {
+                        verseHeadStart = await genVerseHeadStart(
+                            verseFindWords,
+                            verseFindBible,
+                            english,
+                        );
+                    } finally {
+                        finishSearching();
+                    }
+                    throwIfCancelled(signal);
+                }
+                // A quoted passage from the Bible the person reads: the
+                // installed list is read once, and the one in their language
+                // is named on the ask (`toBibleReaderAsk`), so a Khmer reader
+                // is not quoted the KJV. One tool call, no model.
+                let bibleReaderBible: string | null = null;
+                if (
+                    bibleReaderAsk !== null &&
+                    bibleReaderAsk.intent !== 'resources'
+                ) {
+                    try {
+                        bibleReaderBible = pickVerseFindBible(
+                            parseToolJson(
+                                await callTool(
+                                    VERSE_FIND_TOOL_NAME,
+                                    {},
+                                    signal,
+                                ),
+                            ),
+                            pickReplyLanguage(trimmedAsked),
+                        );
+                    } catch (_error) {
+                        // No Bible to name: the tools use the lookup's.
+                    }
+                    throwIfCancelled(signal);
+                }
+                // A question about Resources says which file is open and
+                // how to read the rest, on the ask alone.
+                const isResourcesAsk =
+                    resourceFileNames.length > 0 && verseFindBible === null;
+                const resourcePassageRef = isResourcesAsk
+                    ? (toResourcePassageRef(resourceFileNames, trimmedAsked) ??
+                      (options?.askHint === RESOURCES_CROSS_REFERENCE_HINT
+                          ? trimmedAsked
+                          : null))
+                    : null;
+                const resourceChapterRef =
+                    resourcePassageRef === null ||
+                    options?.askHint === RESOURCES_CROSS_REFERENCE_HINT
+                        ? null
+                        : toResourceChapterRef(resourceFileNames);
+                let resourceChapterVerseCount: number | null = null;
+                let resourceVerseFallback: string | null = null;
+                let resourcesRangeHint = options?.askHint;
+                if (resourcePassageRef !== null) {
+                    const finishReading = genProgressReporter(
+                        genSessionProgress(askedSessionId),
+                    )(
+                        fillWords(tran('Reading {name} from the app'), {
+                            name: resourceChapterRef ?? resourcePassageRef,
+                        }),
+                    );
+                    try {
+                        const chapterPreview = await callTool(
+                            'owa_lookup_record',
+                            {
+                                kind: 'verse',
+                                ref: resourceChapterRef ?? resourcePassageRef,
+                            },
+                            signal,
+                            askedWindowAim,
+                        );
+                        const wholeChapterRef =
+                            resourceChapterRef === null
+                                ? resourcePassageRef
+                                : toWholeResourceChapterRef(
+                                      parseToolJson(chapterPreview),
+                                      resourceChapterRef,
+                                  );
+                        resourceChapterVerseCount =
+                            resourceChapterRef === null
+                                ? null
+                                : toResourceChapterVerseCount(
+                                      parseToolJson(chapterPreview),
+                                      resourceChapterRef,
+                                  );
+                        const verseText = await callTool(
+                            'owa_lookup_record',
+                            { kind: 'verse', ref: resourcePassageRef },
+                            signal,
+                            askedWindowAim,
+                        );
+                        resourceVerseFallback = toResourceVerseFallback(
+                            parseToolJson(verseText),
+                        );
+                        const preparedRangeHint = genResourcesRangeHint(
+                            verseText,
+                            resourcePassageRef,
+                            wholeChapterRef,
+                        );
+                        resourcesRangeHint =
+                            options?.askHint === RESOURCES_CROSS_REFERENCE_HINT
+                                ? `${RESOURCES_CROSS_REFERENCE_HINT}\n\n${preparedRangeHint}`
+                                : preparedRangeHint;
+                    } catch (_error) {
+                        // The model still has the same read-only tool and the
+                        // base hint tells it to use it before answering.
+                        resourcesRangeHint = RESOURCES_RANGE_HINT;
+                    } finally {
+                        finishReading();
+                    }
+                    throwIfCancelled(signal);
+                }
+                const withResources = (text: string) => {
+                    return isResourcesAsk
+                        ? toResourcesAsk(text, resourceFileNames)
+                        : text;
+                };
+                const askedOfModel =
+                    verseFindBible !== null
+                        ? toVerseFindAsk(verseFindWords, verseFindBible) +
+                          toVerseHeadStartAsk(verseHeadStart)
+                        : lookupSubject !== null
+                          ? toLookupAsk(
+                                toAskedOfModel(
+                                    trimmedAsked,
+                                    modelAttachments,
+                                    toAttachedPage,
+                                ),
+                                lookupSubject,
+                            )
+                          : generalQuestion === null
+                            ? withResources(
+                                  toAskedOfModel(
+                                      trimmedAsked,
+                                      modelAttachments,
+                                      toAttachedPage,
+                                  ),
+                              )
+                            : toGeneralQuestionAsk(
+                                  toAskedOfModel(
+                                      generalQuestion,
+                                      modelAttachments,
+                                      toAttachedPage,
+                                  ),
+                              );
                 // A question picked off the app's own list -- a chip, the
                 // suggestion list, More… -- is one the corpus has already
                 // filed under a page. The model is told which, on the ask
@@ -4859,8 +7056,9 @@ export default function ChatbotAppComp() {
                 // machine-written and never a corpus row, nor for a general
                 // question, which is about nothing in the guide.
                 const knownQuestion =
-                    options?.shownText === undefined && generalQuestion === null
-                        ? await findKnownQuestion(trimmedAsked, activeFocus)
+                    options?.shownText === undefined && isAppQuestion
+                        ? (knownQuestionForRouting ??
+                          (await findKnownQuestion(trimmedAsked, activeFocus)))
                         : null;
                 // The page itself goes with the hint, so the first round can
                 // answer from it (`genKnownQuestionHint`): a small local model
@@ -4880,15 +7078,51 @@ export default function ChatbotAppComp() {
                                   );
                               },
                           );
+                // The same page in the language an assistant is asked in
+                // when nobody translates for it (`findPageLanguage`), read
+                // once per language and only when such an assistant is
+                // asked: handed the English page, gemma4:cloud answering in
+                // Khmer copied its sentences into the answer (2026-10-17).
+                const localPageMap = new Map<string, Promise<string | null>>();
+                const readLocalKnownPage = (pageLang: string | null) => {
+                    if (
+                        pageLang === null ||
+                        knownQuestion === null ||
+                        knownPageText === null
+                    ) {
+                        return Promise.resolve(null);
+                    }
+                    let found = localPageMap.get(pageLang);
+                    if (found === undefined) {
+                        found = readKnownQuestionPage(
+                            knownQuestion,
+                            (id, part) => {
+                                const pageId = `${id}@${pageLang}`;
+                                return callTool(
+                                    'owa_help_page',
+                                    part === undefined
+                                        ? { id: pageId }
+                                        : { id: pageId, part },
+                                );
+                            },
+                        );
+                        localPageMap.set(pageLang, found);
+                    }
+                    return found;
+                };
                 // Worked out for whoever is ASKED: on Auto that is settled
                 // further down, and may be a server of another kind than
                 // the one the tab last stood on.
-                const genKnownHint = (askedOf: LlmProviderType | null) => {
+                const genKnownHint = (
+                    askedOf: LlmProviderType | null,
+                    localPageText: string | null = null,
+                ) => {
                     return knownQuestion === null
                         ? null
                         : genKnownQuestionHint(knownQuestion, {
                               focus: activeFocus,
                               pageText: knownPageText,
+                              localPageText,
                               // A local server is sent the essential tools
                               // only: the hint must not name one it lacks.
                               missingTools: (
@@ -4909,7 +7143,7 @@ export default function ChatbotAppComp() {
                 const disputeHint =
                     provider !== null &&
                     knownHint === null &&
-                    generalQuestion === null &&
+                    isAppQuestion &&
                     options?.shownText === undefined
                         ? await readDisputeHint(
                               trimmedAsked,
@@ -4919,20 +7153,31 @@ export default function ChatbotAppComp() {
                                   return genProgressReporter(
                                       genSessionProgress(askedSessionId),
                                   )(
-                                      'Reading the newest copy of that guide page',
+                                      tran(
+                                          'Reading the newest copy of that guide page',
+                                      ),
                                   );
                               },
                               `${activeFocus}.html`,
                           )
                         : null;
-                const genAskedWithHint = (askedOf: LlmProviderType) => {
+                const genAskedWithHint = (
+                    askedOf: LlmProviderType,
+                    askedBase = askedOfModel,
+                    localPageText: string | null = null,
+                ) => {
                     return [
-                        askedOfModel,
-                        askedOf === provider
+                        askedBase,
+                        askedOf === provider && localPageText === null
                             ? knownHint
-                            : genKnownHint(askedOf),
+                            : genKnownHint(askedOf, localPageText),
                         disputeHint,
-                        options?.askHint ?? null,
+                        genBibleImportContextHint(
+                            priorMessages.findLast(
+                                (message) => message.author === 'bot',
+                            ),
+                        ),
+                        resourcesRangeHint ?? null,
                     ]
                         .filter((part) => {
                             return part !== null;
@@ -4945,17 +7190,64 @@ export default function ChatbotAppComp() {
                 // some unrelated recipe with total confidence. So when the
                 // picture WAS the question, the honest line is that it cannot
                 // see it, and asking for words is the way out of that.
+                // Their words put into English for an assistant that works
+                // in English (`askTranslation` below), kept for the guide
+                // when that assistant fails: the guide is English too, and
+                // searched with those words it finds the page their own
+                // words could not.
+                let offlineWords: string | null = null;
                 const askOffline = async (): Promise<BotAnswerType> => {
                     // The guide answers questions about the app and nothing
                     // else; a general question with no assistant to put it
                     // to is said so, with the door to one.
-                    if (generalQuestion !== null) {
+                    // A verse with no assistant: the window searches their
+                    // words itself.
+                    if (verseFindBible !== null) {
+                        return (
+                            genVerseHeadStartAnswer(
+                                verseHeadStart,
+                                verseFindWords,
+                                verseFindBible,
+                            ) ??
+                            (await answerVerseFindOffline(
+                                verseFindWords,
+                                verseFindBible,
+                            ))
+                        );
+                    }
+                    // A record with no assistant: what the app holds on it.
+                    const lookupText =
+                        lookupSubject === null
+                            ? null
+                            : genLookupOfflineText(lookupSubject);
+                    if (lookupSubject !== null) {
                         return {
                             text:
+                                lookupText ??
+                                tran(
+                                    'A question about this needs an ' +
+                                        'assistant, and none could answer just ' +
+                                        'now. Pick one in the row above, or ' +
+                                        'add a key in Settings → Others → AI ' +
+                                        'Providers, and ask again.',
+                                ),
+                            actions: [
+                                {
+                                    label: OPEN_AI_SETTING_LABEL,
+                                    toolName: OPEN_AI_SETTING_TOOL_NAME,
+                                    args: {},
+                                },
+                            ],
+                        };
+                    }
+                    if (generalQuestion !== null) {
+                        return {
+                            text: tran(
                                 'A general question needs an assistant, and ' +
-                                'none could answer just now. Pick one in the ' +
-                                'row above, or add a key in Settings → Others ' +
-                                '→ AI Providers, and ask again.',
+                                    'none could answer just now. Pick one in the ' +
+                                    'row above, or add a key in Settings → Others ' +
+                                    '→ AI Providers, and ask again.',
+                            ),
                             actions: [
                                 {
                                     label: OPEN_AI_SETTING_LABEL,
@@ -4967,15 +7259,16 @@ export default function ChatbotAppComp() {
                     }
                     if (trimmedAsked.length === 0 && images.length > 0) {
                         return {
-                            text:
+                            text: tran(
                                 'I cannot look at pictures while I am ' +
-                                'offline. Tell me in a few words what you ' +
-                                'can see and what you were trying to do, ' +
-                                'and I will look it up in the guide.',
+                                    'offline. Tell me in a few words what you ' +
+                                    'can see and what you were trying to do, ' +
+                                    'and I will look it up in the guide.',
+                            ),
                         };
                     }
                     return await askHelpBot(
-                        trimmedAsked,
+                        offlineWords ?? trimmedAsked,
                         activeFocus,
                         priorTurns,
                     );
@@ -4987,11 +7280,85 @@ export default function ChatbotAppComp() {
                     let askedProvider: LlmProviderType = provider;
                     let askedModel = askModel;
                     let hasAsked = false;
-                    const askAssistant = (
+                    // Read off the words they SEE as theirs: a fill-in row
+                    // asked in English was typed in their language.
+                    const replyLang = pickReplyLanguage(echoText, {
+                        isPressed:
+                            options?.isPressed === true ||
+                            options?.shownText !== undefined,
+                    });
+                    // Their language behind the scenes
+                    // (`chatTranslateHelpers`): a Gemma 4 model is asked in
+                    // it, any other in English, with a Gemma 4 sub-assistant
+                    // translating both ways. Not for a verse being looked
+                    // for, which puts their words into English its own way
+                    // and names verses the translation would reword.
+                    const askTranslation =
+                        verseFindBible !== null
+                            ? null
+                            : genAskTranslation({
+                                  replyLang,
+                                  words: generalQuestion ?? trimmedAsked,
+                                  isWordsEnglish: templateAsk !== null,
+                                  findTranslator: findTranslationPick,
+                                  translate: async (ask, translator, kind) => {
+                                      const finishStep = genProgressReporter(
+                                          genSessionProgress(askedSessionId),
+                                      )(
+                                          fillWords(
+                                              kind === 'question'
+                                                  ? tran(
+                                                        'Putting your question into English with {model}',
+                                                    )
+                                                  : tran(
+                                                        'Putting the answer into your language with {model}',
+                                                    ),
+                                              {
+                                                  model: toShownPickLabel(
+                                                      translator.label,
+                                                  ),
+                                              },
+                                          ),
+                                      );
+                                      try {
+                                          const translated = await askLlmBot(
+                                              ask,
+                                              activeFocus,
+                                              translator.provider as LlmProviderType,
+                                              translator.model,
+                                              [],
+                                              signal,
+                                              {
+                                                  isGeneral: true,
+                                                  isTranslation: true,
+                                                  onUsage:
+                                                      usageTally.onHelperUsage,
+                                              },
+                                          );
+                                          return translated.text;
+                                      } catch (error) {
+                                          // A Stop ends the question; any
+                                          // other failure is an empty
+                                          // answer, read as no translation.
+                                          if (
+                                              checkIsCancelError(error, signal)
+                                          ) {
+                                              throw error;
+                                          }
+                                          return '';
+                                      } finally {
+                                          finishStep();
+                                      }
+                                  },
+                              });
+                    // Said under an answer the translator could not put into
+                    // their language, so English is not a surprise.
+                    let translationNote: string | undefined;
+                    const askAssistant = async (
                         askedOf: LlmProviderType,
                         askedModelId: string,
                         onUsage: (round: LlmRoundUsageType) => void,
-                    ) => {
+                    ): Promise<LlmBotAnswerType> => {
                         askedProvider = askedOf;
                         askedModel = askedModelId;
                         hasAsked = true;
@@ -4999,8 +7366,73 @@ export default function ChatbotAppComp() {
                             askedOf,
                             askedModelId,
                         );
-                        return askLlmBot(
-                            genAskedWithHint(askedOf),
+                        const plan =
+                            askTranslation === null
+                                ? null
+                                : await askTranslation.planFor(
+                                      `${askedModelId} ${getLlmModelLabel(
+                                          askedOf,
+                                          askedModelId,
+                                      )}`,
+                                  );
+                        throwIfCancelled(signal);
+                        if (
+                            plan !== null &&
+                            generalQuestion === null &&
+                            plan.english !== trimmedAsked
+                        ) {
+                            offlineWords = plan.english;
+                        }
+                        // The English words in place of theirs, put to the
+                        // model the way their own would have been.
+                        const englishBase =
+                            plan === null ||
+                            plan.english === (generalQuestion ?? trimmedAsked)
+                                ? askedOfModel
+                                : lookupSubject !== null
+                                  ? toLookupAsk(
+                                        toAskedOfModel(
+                                            plan.english,
+                                            modelAttachments,
+                                            toAttachedPage,
+                                        ),
+                                        lookupSubject,
+                                    )
+                                  : generalQuestion === null
+                                    ? withResources(
+                                          toAskedOfModel(
+                                              plan.english,
+                                              modelAttachments,
+                                              toAttachedPage,
+                                          ),
+                                      )
+                                    : toGeneralQuestionAsk(
+                                          toAskedOfModel(
+                                              plan.english,
+                                              modelAttachments,
+                                              toAttachedPage,
+                                          ),
+                                      );
+                        // Asked in their language as it stands: the page
+                        // quoted with a known question comes in it too.
+                        const localPageText = await readLocalKnownPage(
+                            plan === null ? findPageLanguage(replyLang) : null,
+                        );
+                        throwIfCancelled(signal);
+                        const askedWithIntent =
+                            bibleReaderAsk === null
+                                ? englishBase
+                                : toBibleReaderAsk(
+                                      englishBase,
+                                      bibleReaderAsk,
+                                      bibleReaderBible,
+                                  );
+                        const modelAnswer = await askLlmBot(
+                            genAskedWithHint(
+                                askedOf,
+                                askedWithIntent,
+                                localPageText,
+                            ),
                             activeFocus,
                             askedOf,
                             askedModelId,
@@ -5011,6 +7443,47 @@ export default function ChatbotAppComp() {
                                 ...(generalQuestion === null
                                     ? {}
                                     : { isGeneral: true }),
+                                ...(lookupSubject === null
+                                    ? {}
+                                    : {
+                                          lookup: {
+                                              page: lookupSubject.page ?? null,
+                                          },
+                                      }),
+                                ...(isResourcesAsk
+                                    ? {
+                                          resources: {
+                                              canSeePictures: checkCanSeeImages(
+                                                  askedOf,
+                                                  askedModelId,
+                                              ),
+                                              openFiles: resourceFileNames,
+                                          },
+                                      }
+                                    : {}),
+                                ...(bibleReaderAsk === null
+                                    ? {}
+                                    : {
+                                          bibleReader: {
+                                              intent: bibleReaderAsk.intent,
+                                              canSeePictures: checkCanSeeImages(
+                                                  askedOf,
+                                                  askedModelId,
+                                              ),
+                                          },
+                                      }),
+                                ...(verseFindBible === null
+                                    ? {}
+                                    : {
+                                          verseFind: {
+                                              bible: verseFindBible,
+                                              words: verseFindWords,
+                                              found: toHeadStartFoundVerses(
+                                                  verseHeadStart,
+                                                  verseFindBible,
+                                              ),
+                                          },
+                                      }),
                                 // The walkthrough buttons stand under the
                                 // answer to a known question whatever the
                                 // model opened, and steps written from a
@@ -5019,8 +7492,18 @@ export default function ChatbotAppComp() {
                                 ...genKnownAskExtra(
                                     knownQuestion,
                                     knownPageText,
+                                    localPageText,
                                 ),
-                                askedText: trimmedAsked,
+                                askedText: plan?.english ?? trimmedAsked,
+                                // Worked in English: the English prompt and
+                                // no language line, the answer translated
+                                // below.
+                                ...(plan === null
+                                    ? { replyLang }
+                                    : {
+                                          replyLang: DEFAULT_CHAT_LANG_CODE,
+                                          appLang: DEFAULT_CHAT_LANG_CODE,
+                                      }),
                                 windowAim: askedWindowAim,
                                 // Pulled by the loop between rounds. The
                                 // splice is the handover: what comes out of
@@ -5044,6 +7527,58 @@ export default function ChatbotAppComp() {
                                 onUsage,
                             },
                         );
+                        if (plan === null || askTranslation === null) {
+                            return modelAnswer;
+                        }
+                        throwIfCancelled(signal);
+                        // The options go with the words, on their own line,
+                        // so one round translates both.
+                        const replies = modelAnswer.replies ?? [];
+                        const shown = await askTranslation.translateAnswer(
+                            replies.length === 0
+                                ? modelAnswer.text
+                                : `${modelAnswer.text}\n\nOPTIONS: ${replies.join(' | ')}`,
+                            plan.language,
+                            plan.translator,
+                            tranLabel,
+                        );
+                        if (shown === null) {
+                            translationNote = fillWords(
+                                tran(
+                                    'I could not put this answer into {language}, so it is in English.',
+                                ),
+                                { language: plan.language.nativeName },
+                            );
+                            return modelAnswer;
+                        }
+                        const frames = parseAnswerFrames(shown);
+                        // Put into their language by a model, with the
+                        // English a model leaves in it taken out by code
+                        // (`answerLanguageHelpers.ts`).
+                        const toShown = (text: string) => {
+                            return toAnswerShownInLanguage(
+                                text,
+                                plan.language.code,
+                                tranLabel,
+                            );
+                        };
+                        // A translator that dropped the OPTIONS line left the
+                        // model's English chips: only chips in their script.
+                        const shownReplies = toRepliesShownInLanguage(
+                            frames.options.length > 0
+                                ? frames.options
+                                : (modelAnswer.replies ?? []),
+                            plan.language.code,
+                            tranLabel,
+                        );
+                        return {
+                            ...modelAnswer,
+                            text: toShown(frames.text),
+                            replies:
+                                shownReplies.length > 0
+                                    ? shownReplies
+                                    : undefined,
+                        };
                     };
                     try {
                         if (isAuto) {
@@ -5056,15 +7591,34 @@ export default function ChatbotAppComp() {
                                 genSessionProgress(askedSessionId),
                             );
                             const finishLooking = reportStep(
-                                'Auto is checking which assistants can answer',
+                                tran(
+                                    'Auto is checking which assistants can answer',
+                                ),
                             );
                             let picks: Awaited<
                                 ReturnType<typeof resolveAutoPicks>
                             >;
                             try {
                                 picks = await resolveAutoPicks({
-                                    needsImages: images.length > 0,
+                                    // A Resources PDF is read as
+                                    // pictures, whichever file is open.
+                                    needsImages:
+                                        images.length > 0 ||
+                                        isResourcesAsk ||
+                                        bibleReaderAsk?.intent === 'resources',
                                     isGeneral: generalQuestion !== null,
+                                    // A verse remembered in another script
+                                    // is put into English in the loop: Gemma
+                                    // 4 first, the user's word.
+                                    ...(verseFindBible !== null &&
+                                    checkVerseFindNeedsTranslation(
+                                        verseFindWords,
+                                    )
+                                        ? {
+                                              preferModelPattern:
+                                                  VERSE_TRANSLATION_MODEL_PATTERN,
+                                          }
+                                        : {}),
                                     // Every OTHER ask still out, in any
                                     // tab: a server answering one of them
                                     // is the last to be handed this one.
@@ -5096,7 +7650,21 @@ export default function ChatbotAppComp() {
                                     // Opened and closed at once, so it
                                     // stays above the rounds that follow:
                                     // who this wait is on.
-                                    reportStep(`Auto picked ${pick.label}`)();
+                                    reportStep(
+                                        fillWords(tran('Auto picked {name}'), {
+                                            name: toShownPickLabel(pick.label),
+                                        }),
+                                    )();
+                                    // And what the shared registry says
+                                    // of it -- _slow, but it saves us the
+                                    // cost_ -- while they wait on it.
+                                    const pickNotice = getLlmModelNotice(
+                                        pick.provider,
+                                        pick.model,
+                                    );
+                                    if (pickNotice.length > 0) {
+                                        reportStep(pickNotice)();
+                                    }
                                     return askAssistant(
                                         pick.provider,
                                         pick.model,
@@ -5144,6 +7712,12 @@ export default function ChatbotAppComp() {
                                 usageTally.onUsage,
                             );
                         }
+                        if (translationNote !== undefined) {
+                            note =
+                                note === undefined
+                                    ? translationNote
+                                    : `${note} ${translationNote}`;
+                        }
                         // Another key of the user's own answered because the
                         // tab's provider could not (see `askLlmBot`). Said
                         // on the answer, and the TAB moves to the one that
@@ -5164,13 +7738,19 @@ export default function ChatbotAppComp() {
                                 );
                             };
                             const failedLabel = toLabel(standIn.failedProvider);
-                            note =
-                                `${failedLabel} could not answer — ` +
-                                `${standIn.reason}. ` +
-                                `${toLabel(standIn.provider)} answered ` +
-                                'instead and this chat now uses it; pick ' +
-                                `${failedLabel} in the row above to ` +
-                                'switch back.';
+                            note = fillWords(
+                                tran(
+                                    '{failed} could not answer — {reason}. ' +
+                                        '{provider} answered instead and this ' +
+                                        'chat now uses it; pick {failed} in ' +
+                                        'the row above to switch back.',
+                                ),
+                                {
+                                    failed: failedLabel,
+                                    reason: standIn.reason,
+                                    provider: toLabel(standIn.provider),
+                                },
+                            );
                             // The door to what went wrong, under the note:
                             // the billing page for an empty account, the
                             // keys page for a refused one. Named for the
@@ -5240,11 +7820,12 @@ export default function ChatbotAppComp() {
                             // A general question got no guide answer to
                             // introduce -- only the sentence saying it
                             // needs an assistant.
-                            note =
-                                generalQuestion === null
-                                    ? `${error.message} ` +
-                                      describeOfflineStandIn(answer)
-                                    : error.message;
+                            note = isAppQuestion
+                                ? `${error.message} ` +
+                                  describeOfflineStandIn(answer)
+                                : verseFindBible !== null
+                                  ? `${error.message} ${tranLabel(VERSE_FIND_OFFLINE_NOTE)}`
+                                  : error.message;
                         } else {
                             // The server's own name for a custom one; and
                             // for an Auto tab that got as far as asking
@@ -5256,6 +7837,12 @@ export default function ChatbotAppComp() {
                                           askedProvider,
                                           askedModel,
                                       );
+                            const failure = describeAskFailure(
+                                isAuto && !hasAsked
+                                    ? tran(AUTO_ASSISTANT_LABEL)
+                                    : label,
+                                error,
+                            );
                             // The door to what went wrong, under the note.
                             // The thrown line carries the SDK's error as its
                             // `cause`, and what KIND of failure that was
@@ -5286,7 +7873,7 @@ export default function ChatbotAppComp() {
                                 // back to that.
                                 addMessage(askedSessionId, {
                                     author: 'bot',
-                                    text: describeAskFailure(label, error),
+                                    text: failure,
                                     ...(issueActions.length > 0
                                         ? { actions: issueActions }
                                         : {}),
@@ -5299,11 +7886,12 @@ export default function ChatbotAppComp() {
                                 ...issueActions,
                                 ...(answer.actions ?? []),
                             ];
-                            note =
-                                generalQuestion === null
-                                    ? `${describeAskFailure(label, error)} ` +
-                                      describeOfflineStandIn(answer)
-                                    : describeAskFailure(label, error);
+                            note = isAppQuestion
+                                ? `${failure} ` + describeOfflineStandIn(answer)
+                                : verseFindBible !== null
+                                  ? `${failure} ` +
+                                    tranLabel(VERSE_FIND_OFFLINE_NOTE)
+                                  : failure;
                         }
                     }
                     // The amber line, said once on the answer that crossed
@@ -5327,8 +7915,32 @@ export default function ChatbotAppComp() {
                 if (signal.aborted) {
                     return;
                 }
-                const shownAnswer =
+                const formattedAnswer =
                     options?.formatAnswer?.(answer.text) ?? answer.text;
+                const sanitizedAnswer =
+                    resourcePassageRef === null
+                        ? formattedAnswer
+                        : sanitizeResourceReadingAnswer(formattedAnswer);
+                const resourceReadingWasRejected =
+                    resourcePassageRef !== null &&
+                    (sanitizedAnswer.length === 0 ||
+                        checkIsDegenerateResourceReading(sanitizedAnswer));
+                // Never put a looping vision/OCR failure into the transcript.
+                // The exact installed-Bible verse was prepared before the
+                // model call, so even this failure path remains useful and
+                // cannot silently invent scripture or PDF commentary.
+                const shownAnswer = resourceReadingWasRejected
+                    ? [
+                          resourceVerseFallback,
+                          tran(
+                              'I could not read the PDF explanation reliably, so I did not show it. Please check the original PDF yourself or try a model that can read pictures better.',
+                          ),
+                      ]
+                          .filter((part) => {
+                              return part !== null && part.length > 0;
+                          })
+                          .join('\n\n')
+                    : sanitizedAnswer;
                 // What they can press instead of typing the next message.
                 // Worked out ONCE, here, and carried on the message: the
                 // best of them were written by the model that wrote this
@@ -5340,21 +7952,31 @@ export default function ChatbotAppComp() {
                 // wrote: the guide's nearest questions under an answer
                 // about the Bible's books are buttons about the app.
                 const replies =
-                    options?.shownText !== undefined
-                        ? []
-                        : generalQuestion !== null
-                          ? (answer.replies ?? []).slice(0, 5)
-                          : await genMessageReplies({
-                                modelOptions: answer.replies,
-                                answerText: shownAnswer,
-                                askedText: trimmedAsked,
-                                actionLabels: (answer.actions ?? []).map(
-                                    (action) => {
-                                        return action.label;
-                                    },
-                                ),
-                                focus: activeFocus,
-                            });
+                    options?.repliesOverride !== undefined
+                        ? options.repliesOverride.slice(0, 5)
+                        : resourcePassageRef !== null
+                          ? genResourceReadingReplies(
+                                trimmedAsked,
+                                resourceReadingWasRejected
+                                    ? []
+                                    : (answer.replies ?? []),
+                                resourceChapterVerseCount,
+                            )
+                          : options?.shownText !== undefined
+                            ? []
+                            : !isAppQuestion
+                              ? (answer.replies ?? []).slice(0, 5)
+                              : await genMessageReplies({
+                                    modelOptions: answer.replies,
+                                    answerText: shownAnswer,
+                                    askedText: trimmedAsked,
+                                    actionLabels: (answer.actions ?? []).map(
+                                        (action) => {
+                                            return action.label;
+                                        },
+                                    ),
+                                    focus: activeFocus,
+                                });
                 if (signal.aborted) {
                     return;
                 }
@@ -5367,7 +7989,7 @@ export default function ChatbotAppComp() {
                 // that happens to be worded like a complaint is left alone.
                 const complaintAdvice =
                     knownQuestion === null &&
-                    generalQuestion === null &&
+                    isAppQuestion &&
                     options?.shownText === undefined &&
                     checkIsDisputingAnswer(trimmedAsked)
                         ? genComplaintAdvice(
@@ -5395,7 +8017,7 @@ export default function ChatbotAppComp() {
                 // more button beside it (`readerRouteHelpers`).
                 let readerRoute: ReturnType<typeof genReaderRouteAdvice> = null;
                 if (
-                    generalQuestion === null &&
+                    isAppQuestion &&
                     options?.shownText === undefined &&
                     checkIsBibleReadingAsk(trimmedAsked)
                 ) {
@@ -5421,6 +8043,7 @@ export default function ChatbotAppComp() {
                         trimmedAsked,
                         mainFocus ?? activeFocus,
                         answer.actions ?? [],
+                        knownQuestion,
                     );
                 }
                 if (readerRoute !== null) {
@@ -5429,17 +8052,69 @@ export default function ChatbotAppComp() {
                         readerRoute.action,
                     ];
                 }
+                // A verse asked for by what it says, in the Bible Reader:
+                // the Bible on that page can be searched for it, which an
+                // assistant answering from memory leaves out (EC-199). The
+                // Reader only, where Bible Find is on the page; the guide's
+                // own answer to it names Bible Find on every page.
+                const bibleFindAdvice =
+                    isAppQuestion &&
+                    options?.shownText === undefined &&
+                    activeFocus === 'reader'
+                        ? genBibleFindAdvice(
+                              trimmedAsked,
+                              shownAnswer,
+                              (answer.actions ?? []).map((action) => {
+                                  return String(action.args?.manualId ?? '');
+                              }),
+                          )
+                        : null;
+                if (bibleFindAdvice !== null) {
+                    answer.actions = [
+                        ...(answer.actions ?? []),
+                        {
+                            label: BIBLE_FIND_ADVICE_LABEL,
+                            toolName: 'owa_guide_start',
+                            args: {
+                                manualId: BIBLE_FIND_MANUAL_ID,
+                                page: `${activeFocus}.html`,
+                                mode: 'show',
+                                find: BIBLE_FIND_CONTROL,
+                            },
+                        },
+                    ];
+                }
                 addMessage(askedSessionId, {
                     author: 'bot',
                     // AFTER the answer, as its last paragraph, right above
                     // the button it names: a note is drawn over an answer,
                     // and this is a follow-up to one.
-                    text:
-                        readerRoute === null
-                            ? shownAnswer
-                            : `${shownAnswer}\n\n${readerRoute.text}`,
+                    text: [shownAnswer, readerRoute?.text, bibleFindAdvice]
+                        .filter((part) => {
+                            return typeof part === 'string' && part.length > 0;
+                        })
+                        .join('\n\n'),
                     note,
-                    actions: answer.actions,
+                    actions:
+                        lookupSubject === null
+                            ? answer.actions
+                            : [
+                                  ...(answer.actions ?? []),
+                                  ...genLookupAnswerActions(lookupSubject),
+                              ],
+                    ...(answer.links?.length ? { links: answer.links } : {}),
+                    // So the next plain line under it is more of the search.
+                    ...(verseFindBible !== null
+                        ? { verseFind: verseFindBible }
+                        : {}),
+                    // ...or more about the Bible-Reader material it read.
+                    ...(bibleReaderAsk !== null
+                        ? { isBibleReaderAnswer: true as const }
+                        : {}),
+                    // ...or about the same person, place or passage.
+                    ...(lookupSubject !== null
+                        ? { isLookupAnswer: true as const }
+                        : {}),
                     ...usageTally.toField(),
                     ...(replies.length > 0 ? { replies } : {}),
                     ...(answer.attachRequests !== undefined &&
@@ -5466,9 +8141,14 @@ export default function ChatbotAppComp() {
                     // answered 500", a status code and nothing to press.
                     text: checkIsToolHostError(error)
                         ? error.message
-                        : `I could not answer that: ${error.message}`,
+                        : describeAnswerError(error),
                     // The rounds a failed question paid for before it failed.
                     ...usageTally.toField(),
+                    // A failure is no reason to forget what the tab was
+                    // asking about: the next line is about it still.
+                    ...(lookupSubject !== null
+                        ? { isLookupAnswer: true as const }
+                        : {}),
                 });
                 // Told either way: a card left waiting on an answer that is
                 // never coming sits on "asking the assistant" until its own
@@ -5493,10 +8173,11 @@ export default function ChatbotAppComp() {
                 if (leftover.length > 0 && !signal.aborted) {
                     handleAskingRef.current(leftover.join('\n'), true, {
                         withoutEcho: true,
-                        answerNote:
+                        answerNote: tran(
                             'You added that after I had finished looking, so ' +
-                            'there was no round left to fold it into — I ' +
-                            'asked it on its own.',
+                                'there was no round left to fold it into — I ' +
+                                'asked it on its own.',
+                        ),
                     });
                 }
             }
@@ -5514,11 +8195,128 @@ export default function ChatbotAppComp() {
     );
 
     const handleAskingRef = useAppCurrentRef(handleAsking);
+    // A quick reply under an answer is PRESSED: the app's own words, answered
+    // in the language the app is shown in.
+    const handleReplying = useCallback(
+        (reply: string) => {
+            const session = sessionStateRef.current.sessions.find((one) => {
+                return one.id === activeSessionId;
+            });
+            const draftFiles =
+                draftAttachmentMapRef.current[activeSessionId] ?? [];
+            const resourceFileNames = findResourceFileNames([
+                ...findOpenFileAttachments(
+                    session?.messages ?? [],
+                    session?.fileClosedAt,
+                ),
+                ...draftFiles,
+            ]);
+            const isResourcesConversation = resourceFileNames.length > 0;
+            if (
+                (reply === 'Read' || reply === tran('Read')) &&
+                isResourcesConversation
+            ) {
+                handleAskingRef.current(reply, false, {
+                    isPressed: true,
+                    askHint: RESOURCES_READ_MENU_HINT,
+                    formatAnswer: (text) => {
+                        return `${text}\n\n${tran(
+                            'Which verse in this chapter do you want to ' +
+                                'focus on? For example, type 1, or choose ' +
+                                'below.',
+                        )}`;
+                    },
+                    repliesOverride: ['1', '2', '3', 'Full chapter'],
+                });
+                return;
+            }
+            if (reply === 'Full chapter' && isResourcesConversation) {
+                const chapterRef = toResourceChapterRef(resourceFileNames);
+                if (chapterRef !== null) {
+                    const sequenceSessionId = activeSessionId;
+                    void (async () => {
+                        let verseCount: number | null = null;
+                        try {
+                            verseCount = toResourceChapterVerseCount(
+                                parseToolJson(
+                                    await callTool('owa_lookup_record', {
+                                        kind: 'verse',
+                                        ref: chapterRef,
+                                    }),
+                                ),
+                                chapterRef,
+                            );
+                        } catch (_error) {
+                            // Fall back to one verse with manual next buttons.
+                        }
+                        const verses = genResourceChapterVerseSequence(
+                            verseCount ?? 1,
+                        );
+                        const askVerse = (index: number) => {
+                            if (
+                                sessionStateRef.current.activeId !==
+                                sequenceSessionId
+                            ) {
+                                return;
+                            }
+                            const verse = verses[index];
+                            handleAskingRef.current(verse.toString(), true, {
+                                isPressed: true,
+                                askHint: RESOURCES_RANGE_HINT,
+                                withoutHistory: true,
+                                withoutOfflineFallback: true,
+                                ...(verse === 1
+                                    ? {
+                                          shownText: tran('Full chapter'),
+                                          keepOpenFiles: true,
+                                      }
+                                    : { withoutEcho: true }),
+                                onAnswered: (answer) => {
+                                    if (
+                                        answer !== null &&
+                                        index + 1 < verses.length
+                                    ) {
+                                        setTimeout(() => {
+                                            askVerse(index + 1);
+                                        }, 0);
+                                    }
+                                },
+                            });
+                        };
+                        askVerse(0);
+                    })();
+                    return;
+                }
+            }
+            const isResourcesRange =
+                isResourcesConversation &&
+                (/^\d+(?:\s*[-–]\s*\d+)?$/.test(reply) ||
+                    reply === 'Full chapter');
+            const isResourcesCrossReference =
+                isResourcesConversation && /[:：]\s*\p{N}/u.test(reply);
+            handleAskingRef.current(reply, false, {
+                isPressed: true,
+                ...(isResourcesRange
+                    ? {
+                          askHint: RESOURCES_RANGE_HINT,
+                      }
+                    : isResourcesCrossReference
+                      ? { askHint: RESOURCES_CROSS_REFERENCE_HINT }
+                      : {}),
+            });
+        },
+        [
+            activeSessionId,
+            draftAttachmentMapRef,
+            handleAskingRef,
+            sessionStateRef,
+        ],
+    );
     askFromSuggestionRef.current = (text: string) => {
         // It came out of the box, so Alt+↑ can bring it back like anything
         // else typed there.
         rememberAsking(text);
-        handleAsking(text);
+        handleAsking(text, false, { isPressed: true });
     };
 
     /**
@@ -5536,7 +8334,10 @@ export default function ChatbotAppComp() {
                 handleReusing(starter.text);
                 return;
             }
-            handleAsking(starter.text);
+            handleAsking(starter.textEn ?? starter.text, false, {
+                isPressed: true,
+                echoText: starter.text,
+            });
         },
         [handleReusing, handleAsking],
     );
@@ -5598,7 +8399,7 @@ export default function ChatbotAppComp() {
         addMessage(activeSessionId, {
             author: 'you',
             text,
-            note: 'Added while it was working.',
+            note: tran('Added while it was working.'),
         });
         updateActiveSession((session) => {
             return { ...session, draft: '' };
@@ -5648,7 +8449,7 @@ export default function ChatbotAppComp() {
                 genGuideRescueQuestion(request ?? {}),
                 true,
                 {
-                    note: 'Asked by the walkthrough card, not by you.',
+                    note: tran('Asked by the walkthrough card, not by you.'),
                     shownText: genGuideRescueSummary(request ?? {}),
                     formatAnswer: toGuideRescueAnswer,
                     withoutHistory: true,
@@ -5813,9 +8614,10 @@ export default function ChatbotAppComp() {
                 let askedProvider = provider;
                 let askedModel = model;
                 if (provider === null) {
-                    note =
+                    note = tran(
                         'No assistant is set up here, so this is what the window ' +
-                        'could see for itself.';
+                            'could see for itself.',
+                    );
                 } else {
                     try {
                         if (isAuto) {
@@ -5832,13 +8634,18 @@ export default function ChatbotAppComp() {
                         // the window offering to demonstrate the fault.
                         // What came with these words, as words: a
                         // text file, a control they pointed at, and for a
-                        // PDF that there is one it cannot open.
+                        // PDF its pages -- or, to a model that is not shown
+                        // them, that there is one it cannot open.
                         const shownAttachments =
                             reportAttachments.slice(-MAX_ATTACHMENT_COUNT);
+                        const isReportSeeing = checkCanSeeImages(
+                            askedProvider,
+                            askedModel,
+                        );
                         // ...and which number is which, for "in 2 it is
                         // missing".
                         const attachedText = [
-                            toAttachmentText(userAttachments),
+                            toAttachmentText(userAttachments, isReportSeeing),
                             toAttachmentLegend(shownAttachments, (takenIn) => {
                                 return toAttachmentWindowPage(
                                     takenIn,
@@ -5865,15 +8672,16 @@ export default function ChatbotAppComp() {
                             signal,
                             {
                                 onUsage: usageTally.onUsage,
+                                // Their words decide the language of what
+                                // comes back to THEM (a TRY THIS); the
+                                // English frame around the words does not.
+                                replyLang: pickReplyLanguage(complaint),
                                 // A report about a window of its own looks
                                 // at THAT window.
                                 windowAim: getCurrentWindowAim(),
                                 // Their own pictures, to a model that can
                                 // read them: a blind one refuses the ask.
-                                ...(checkCanSeeImages(
-                                    askedProvider,
-                                    askedModel,
-                                ) && reportImages.length > 0
+                                ...(isReportSeeing && reportImages.length > 0
                                     ? { images: reportImages }
                                     : {}),
                             },
@@ -5887,10 +8695,14 @@ export default function ChatbotAppComp() {
                         // maintainer cannot get any other way, so a model that
                         // could not answer costs the report its diagnosis, not
                         // the report itself.
-                        note =
-                            `I could not look into it — ${error.message}. The ` +
-                            'report still carries what the window could see for ' +
-                            'itself.';
+                        note = fillWords(
+                            tran(
+                                'I could not look into it — {reason}. The ' +
+                                    'report still carries what the window could ' +
+                                    'see for itself.',
+                            ),
+                            { reason: error.message },
+                        );
                         if (error?.cause !== undefined) {
                             issueActions = genProviderIssueActions(
                                 askedProvider ?? provider,
@@ -5950,7 +8762,10 @@ export default function ChatbotAppComp() {
                 }
                 addMessage(reportedSessionId, {
                     author: 'bot',
-                    text: `I could not put a report together: ${error.message}`,
+                    text: fillWords(
+                        tran('I could not put a report together: {reason}'),
+                        { reason: error.message },
+                    ),
                 });
             } finally {
                 endPendingAsk(pending);
@@ -6010,10 +8825,11 @@ export default function ChatbotAppComp() {
         if (complaint.length === 0) {
             addMessage(activeSessionId, {
                 author: 'bot',
-                text:
+                text: tran(
                     'Tell me what went wrong first — one line in your own ' +
-                    'words in the box, then press Report. I will look at the ' +
-                    'app myself and write the rest of it.',
+                        'words in the box, then press Report. I will look at the ' +
+                        'app myself and write the rest of it.',
+                ),
             });
             inputRef.current?.focus();
             return;
@@ -6055,7 +8871,7 @@ export default function ChatbotAppComp() {
         if (reply === 'fixed') {
             addMessage(sessionId, {
                 author: 'bot',
-                text: REPORT_FIXED_TEXT,
+                text: tran(REPORT_FIXED_TEXT),
                 note: REPORT_RESOLVED_NOTE,
             });
             return;
@@ -6068,11 +8884,12 @@ export default function ChatbotAppComp() {
             report === null
                 ? {
                       author: 'bot',
-                      text:
+                      text: tran(
                           'That report is not prepared any more — this ' +
-                          'window has been reopened since. Say what is ' +
-                          'still wrong and press Report, and I will write ' +
-                          'it up again.',
+                              'window has been reopened since. Say what is ' +
+                              'still wrong and press Report, and I will write ' +
+                              'it up again.',
+                      ),
                   }
                 : { author: 'bot', ...genPreparedCard(report, false) },
         );
@@ -6109,10 +8926,11 @@ export default function ChatbotAppComp() {
             if (report === null) {
                 addMessage(sessionId, {
                     author: 'bot',
-                    text:
+                    text: tran(
                         'That report is not prepared any more — this window ' +
-                        'has been reopened since. Press Report again and I ' +
-                        'will put a new one together.',
+                            'has been reopened since. Press Report again and I ' +
+                            'will put a new one together.',
+                    ),
                 });
                 return;
             }
@@ -6122,7 +8940,7 @@ export default function ChatbotAppComp() {
             syncBusy();
             const finishStep = genProgressReporter(
                 genSessionProgress(sessionId),
-            )('Sending the report');
+            )(tran('Sending the report'));
             try {
                 const posted = await postIssueReport(report, signal);
                 if (signal.aborted && !posted.isSent) {
@@ -6131,11 +8949,13 @@ export default function ChatbotAppComp() {
                     addMessage(sessionId, {
                         author: 'bot',
                         text:
-                            'Stopped. The report was not sent — press Send ' +
-                            'report when you want it to go.' +
+                            tran(
+                                'Stopped. The report was not sent — press Send ' +
+                                    'report when you want it to go.',
+                            ) +
                             (posted.filePath === null
                                 ? ''
-                                : ' A copy is in your Downloads folder.'),
+                                : ` ${tran('A copy is in your Downloads folder.')}`),
                     });
                     return;
                 }
@@ -6160,7 +8980,7 @@ export default function ChatbotAppComp() {
                         // Stop pressed as the server took it: it WAS sent,
                         // and the tab must not go on offering to send it.
                         (signal.aborted
-                            ? 'It had already gone when you pressed Stop. '
+                            ? `${tran('It had already gone when you pressed Stop.')} `
                             : '') + describePostedReport(report, posted),
                     // Offered whatever the saving and the sending did: with
                     // the file gone wrong, the clipboard is the only way
@@ -6212,9 +9032,10 @@ export default function ChatbotAppComp() {
                     return false;
                 }
             };
-            const noAddressText =
+            const noAddressText = tran(
                 'This build carries no contact address — pass the saved ' +
-                'report on to whoever maintains the app for you.';
+                    'report on to whoever maintains the app for you.',
+            );
             if (action.toolName === REPORT_COPY_EMAIL_TOOL_NAME) {
                 if (contactEmail === null) {
                     addMessage(sessionId, {
@@ -6226,12 +9047,19 @@ export default function ChatbotAppComp() {
                 const isCopied = await copyText(contactEmail);
                 addMessage(sessionId, {
                     author: 'bot',
-                    text: isCopied
-                        ? `Copied \`${contactEmail}\`${contactSource}. ` +
-                          'Paste it into the To line of your email.'
-                        : 'I could not reach the clipboard. The address is ' +
-                          `\`${contactEmail}\` — you can select and copy it ` +
-                          'from here.',
+                    text: fillWords(
+                        isCopied
+                            ? tran(
+                                  'Copied `{email}`{source}. Paste it into ' +
+                                      'the To line of your email.',
+                              )
+                            : tran(
+                                  'I could not reach the clipboard. The ' +
+                                      'address is `{email}` — you can select ' +
+                                      'and copy it from here.',
+                              ),
+                        { email: contactEmail, source: contactSource },
+                    ),
                 });
                 return;
             }
@@ -6240,10 +9068,11 @@ export default function ChatbotAppComp() {
                 if (dataUrl === null) {
                     addMessage(sessionId, {
                         author: 'bot',
-                        text:
+                        text: tran(
                             'I no longer have that picture — it is not in ' +
-                            'this window and not in your Downloads folder. ' +
-                            'Press Report again and I will take a new one.',
+                                'this window and not in your Downloads folder. ' +
+                                'Press Report again and I will take a new one.',
+                        ),
                     });
                     return;
                 }
@@ -6252,22 +9081,32 @@ export default function ChatbotAppComp() {
                 } catch (_error) {
                     addMessage(sessionId, {
                         author: 'bot',
-                        text:
+                        text: tran(
                             'I could not put the picture on the clipboard. ' +
-                            'Press its chip above to open the folder and ' +
-                            'attach the file from there.',
+                                'Press its chip above to open the folder and ' +
+                                'attach the file from there.',
+                        ),
                     });
                     return;
                 }
                 addMessage(sessionId, {
                     author: 'bot',
                     text:
-                        'Copied the picture. Paste it into the email' +
-                        (contactEmail === null
-                            ? ''
-                            : ` to \`${contactEmail}\``) +
-                        ' — most mail apps take a pasted picture as an ' +
-                        'attachment.',
+                        contactEmail === null
+                            ? tran(
+                                  'Copied the picture. Paste it into the ' +
+                                      'email — most mail apps take a pasted ' +
+                                      'picture as an attachment.',
+                              )
+                            : fillWords(
+                                  tran(
+                                      'Copied the picture. Paste it into the ' +
+                                          'email to `{email}` — most mail ' +
+                                          'apps take a pasted picture as an ' +
+                                          'attachment.',
+                                  ),
+                                  { email: contactEmail },
+                              ),
                 });
                 return;
             }
@@ -6275,10 +9114,11 @@ export default function ChatbotAppComp() {
             if (markdown === null) {
                 addMessage(sessionId, {
                     author: 'bot',
-                    text:
+                    text: tran(
                         'I no longer have that report — it is not in this ' +
-                        'window and not in your Downloads folder. Press ' +
-                        'Report again and I will put a new one together.',
+                            'window and not in your Downloads folder. Press ' +
+                            'Report again and I will put a new one together.',
+                    ),
                 });
                 return;
             }
@@ -6286,9 +9126,11 @@ export default function ChatbotAppComp() {
                 kept === null
                     ? markdown.includes(`${reference}.png`)
                     : kept.imageDataUrl !== null;
-            const attachNote = hasImage
-                ? `, and attach \`${reference}.png\` from your Downloads folder`
-                : '';
+            // The gaps every sentence below may name.
+            const reportWords = {
+                email: contactEmail ?? '',
+                file: `${reference}.png`,
+            };
             // The same subject line the document names, before and after a
             // reopen alike.
             const subject = toSavedReportSubject(kept, markdown, reference);
@@ -6296,28 +9138,57 @@ export default function ChatbotAppComp() {
                 const isSubjectCopied = await copyText(subject);
                 addMessage(sessionId, {
                     author: 'bot',
-                    text: isSubjectCopied
-                        ? `Copied the subject line \`${subject}\`. Paste it ` +
-                          'into the Subject line of your email.'
-                        : 'I could not reach the clipboard. The subject line ' +
-                          `is \`${subject}\` — you can select and copy it ` +
-                          'from here.',
+                    text: fillWords(
+                        isSubjectCopied
+                            ? tran(
+                                  'Copied the subject line `{subject}`. ' +
+                                      'Paste it into the Subject line of ' +
+                                      'your email.',
+                              )
+                            : tran(
+                                  'I could not reach the clipboard. The ' +
+                                      'subject line is `{subject}` — you can ' +
+                                      'select and copy it from here.',
+                              ),
+                        { subject },
+                    ),
                 });
                 return;
             }
             const isCopied = await copyText(markdown);
             if (action.toolName === REPORT_COPY_TOOL_NAME) {
+                const copiedText =
+                    contactEmail === null
+                        ? hasImage
+                            ? tran(
+                                  'Copied the whole report. Paste it into ' +
+                                      'your message, and attach `{file}` ' +
+                                      'from your Downloads folder.',
+                              )
+                            : tran(
+                                  'Copied the whole report. Paste it into ' +
+                                      'your message.',
+                              )
+                        : hasImage
+                          ? tran(
+                                'Copied the whole report. Paste it into an ' +
+                                    'email to `{email}`, and attach `{file}` ' +
+                                    'from your Downloads folder.',
+                            )
+                          : tran(
+                                'Copied the whole report. Paste it into an ' +
+                                    'email to `{email}`.',
+                            );
                 addMessage(sessionId, {
                     author: 'bot',
                     text: isCopied
-                        ? 'Copied the whole report. Paste it into ' +
-                          (contactEmail === null
-                              ? 'your message'
-                              : `an email to \`${contactEmail}\``) +
-                          `${attachNote}.`
-                        : 'I could not reach the clipboard. Open the report ' +
-                          'file from the chip above — it is a plain text ' +
-                          'document you can select and copy from.',
+                        ? fillWords(copiedText, reportWords)
+                        : tran(
+                              'I could not reach the clipboard. Open the ' +
+                                  'report file from the chip above — it is a ' +
+                                  'plain text document you can select and ' +
+                                  'copy from.',
+                          ),
                 });
                 return;
             }
@@ -6333,18 +9204,44 @@ export default function ChatbotAppComp() {
                 hasImage,
             });
             appProvider.browserUtils.openExternalURL(url);
+            const pasteText = isCopied
+                ? hasImage
+                    ? tran(
+                          'The report is on your clipboard — paste it into ' +
+                              'the message, and attach `{file}` from your ' +
+                              'Downloads folder.',
+                      )
+                    : tran(
+                          'The report is on your clipboard — paste it into ' +
+                              'the message.',
+                      )
+                : hasImage
+                  ? tran(
+                        'I could not reach the clipboard, so press **Copy ' +
+                            'report** and paste it into the message, and ' +
+                            'attach `{file}` from your Downloads folder.',
+                    )
+                  : tran(
+                        'I could not reach the clipboard, so press **Copy ' +
+                            'report** and paste it into the message.',
+                    );
             addMessage(sessionId, {
                 author: 'bot',
-                text:
-                    `Opening your email app with \`${contactEmail}\` and the ` +
-                    'subject filled in. ' +
-                    (isCopied
-                        ? 'The report is on your clipboard — paste it into ' +
-                          'the message'
-                        : 'I could not reach the clipboard, so press ' +
-                          '**Copy report** and paste it into the message') +
-                    `${attachNote}. If nothing opened, this machine has no ` +
-                    'email app set up — use the two Copy buttons instead.',
+                text: [
+                    tran(
+                        'Opening your email app with `{email}` and the ' +
+                            'subject filled in.',
+                    ),
+                    pasteText,
+                    tran(
+                        'If nothing opened, this machine has no email app ' +
+                            'set up — use the two Copy buttons instead.',
+                    ),
+                ]
+                    .map((sentence) => {
+                        return fillWords(sentence, reportWords);
+                    })
+                    .join(' '),
             });
         },
         [addMessage],
@@ -6364,7 +9261,10 @@ export default function ChatbotAppComp() {
         async (action: BotActionType, sessionId: string) => {
             const drafted = takeDraftedLyric(action.args?.reference ?? '');
             if (drafted === null) {
-                addMessage(sessionId, { author: 'bot', text: DRAFT_GONE_TEXT });
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(DRAFT_GONE_TEXT),
+                });
                 return;
             }
             if (action.toolName === LYRIC_COPY_TOOL_NAME) {
@@ -6376,18 +9276,20 @@ export default function ChatbotAppComp() {
                     // and did not is worse than one that admits it.
                     addMessage(sessionId, {
                         author: 'bot',
-                        text:
+                        text: tran(
                             'I could not reach the clipboard. The song is in ' +
-                            'my answer above — you can select and copy it ' +
-                            'from there.',
+                                'my answer above — you can select and copy it ' +
+                                'from there.',
+                        ),
                     });
                     return;
                 }
                 addMessage(sessionId, {
                     author: 'bot',
-                    text:
+                    text: tran(
                         'Copied. Paste it into the Lyric Editor and it will ' +
-                        'open as a song.',
+                            'open as a song.',
+                    ),
                 });
                 return;
             }
@@ -6427,19 +9329,24 @@ export default function ChatbotAppComp() {
             if (typeof created?.filePath !== 'string') {
                 addMessage(sessionId, {
                     author: 'bot',
-                    text:
+                    text: tran(
                         'That song could not be saved. Check there is room ' +
-                        'in your documents folder, then press the button ' +
-                        'again.',
+                            'in your documents folder, then press the button ' +
+                            'again.',
+                    ),
                 });
                 return;
             }
             addMessage(sessionId, {
                 author: 'bot',
-                text:
-                    `Saved as "${name}". It is in your documents list now, ` +
-                    'ready to put on the screen — open it in the Lyric ' +
-                    'Editor to change the words or mark the chords.',
+                text: fillWords(
+                    tran(
+                        'Saved as "{name}". It is in your documents list now, ' +
+                            'ready to put on the screen — open it in the Lyric ' +
+                            'Editor to change the words or mark the chords.',
+                    ),
+                    { name },
+                ),
                 shows: [
                     // Where it went, in the app rather than on the disk. The
                     // row is looked up at PRESS time and rung in the window
@@ -6449,7 +9356,7 @@ export default function ChatbotAppComp() {
                     {
                         kind: 'control' as const,
                         value: `Document List > ${name}`,
-                        name: 'Show it in the list',
+                        name: tran('Show it in the list'),
                     },
                     { kind: 'file' as const, value: created.filePath, name },
                 ],
@@ -6514,12 +9421,87 @@ export default function ChatbotAppComp() {
             // A step of installing a Bible from a link: the choice goes into
             // the transcript as the person's own words, then the next
             // question comes back.
+            // A step of finding a verse: the Bible picked, or the list of
+            // them asked for again.
+            // One of the things to do with a person, place or passage.
+            if (action.toolName === LOOKUP_STEP_TOOL_NAME) {
+                const step = toValidLookupStep(action.args);
+                if (step !== null && !checkIsSessionPending(actedSessionId)) {
+                    await handleLookupStepRef.current(
+                        actedSessionId,
+                        step,
+                        toShownLabel(action.label),
+                    );
+                }
+                return;
+            }
+            if (action.toolName === VERSE_FIND_STEP_TOOL_NAME) {
+                await handleVerseFindStepRef.current(
+                    actedSessionId,
+                    action.args as VerseFindStateType,
+                    toShownLabel(action.label),
+                );
+                return;
+            }
+            // **Search the internet for it**: the browser, on a search the
+            // window writes from their words -- no address a model wrote.
+            if (action.toolName === VERSE_WEB_SEARCH_TOOL_NAME) {
+                appProvider.browserUtils.openExternalURL(
+                    toVerseWebSearchUrl(action.args?.words),
+                );
+                // Said, because the browser can open BEHIND this window.
+                addMessage(actedSessionId, {
+                    author: 'bot',
+                    text: tran(
+                        'Opening a search for it in your browser. When you ' +
+                            'find the reference, type it here and I will read it ' +
+                            'from your Bible.',
+                    ),
+                    ...(typeof action.args?.bible === 'string'
+                        ? { verseFind: action.args.bible }
+                        : {}),
+                });
+                return;
+            }
             if (action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME) {
                 await handleBibleImportStepRef.current(
                     actedSessionId,
                     action.args as BibleImportStateType,
-                    toBibleImportEcho(action.label),
+                    tranBibleImportLabel(toBibleImportEcho(action.label)),
                 );
+                return;
+            }
+            // **Ask about <another file the assistant read>** under a
+            // Resources answer: the file is attached to this tab, so the
+            // next question is about it (`resourcesChatHelpers.ts`).
+            if (action.toolName === RESOURCE_ASK_TOOL_NAME) {
+                const fileName = String(action.args?.file ?? '').trim();
+                const filePath =
+                    fileName.length === 0
+                        ? null
+                        : resolveResourceFileName(
+                              fileName,
+                              getResourcesFolderList(),
+                              {
+                                  toBaseName: pathBasename,
+                                  separator: pathSeparator,
+                              },
+                          );
+                if (filePath === null) {
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        text: fillWords(
+                            tran(
+                                '{name} is not in the Resources folders any ' +
+                                    'more.',
+                            ),
+                            { name: fileName },
+                        ),
+                    });
+                    return;
+                }
+                await attachHandedFileRef.current(actedSessionId, filePath);
                 return;
             }
             // A button that runs a built-in command. Asked as though typed,
@@ -6540,6 +9522,21 @@ export default function ChatbotAppComp() {
             // asked -- and the answer says so, because the one above costs
             // more; the stored choice for NEW tabs is left as the user set
             // it. A tab already waiting on an answer keeps waiting on it.
+            // **Ask it as a general question**, under an answer that said to
+            // type `/btw`: the command written for them, asked as pressed so
+            // it is answered in the app's language.
+            if (action.toolName === GENERAL_ASK_TOOL_NAME) {
+                const question = String(action.args?.question ?? '').trim();
+                if (
+                    question.length > 0 &&
+                    !checkIsSessionPending(actedSessionId)
+                ) {
+                    handleAskingRef.current(`/btw ${question}`, true, {
+                        isPressed: true,
+                    });
+                }
+                return;
+            }
             if (action.toolName === ASK_SMARTER_TOOL_NAME) {
                 const smarterAsk = readSmarterAsk(
                     action.args,
@@ -6549,10 +9546,11 @@ export default function ChatbotAppComp() {
                     addMessage(actedSessionId, {
                         author: 'bot',
                         isFollowUp: true,
-                        text:
+                        text: tran(
                             'This chat is not asking that assistant any ' +
-                            'more. Pick the model you want in the MODEL ' +
-                            'list at the top of this window, then ask again.',
+                                'more. Pick the model you want in the MODEL ' +
+                                'list at the top of this window, then ask again.',
+                        ),
                     });
                     return;
                 }
@@ -6565,10 +9563,14 @@ export default function ChatbotAppComp() {
                 handleAskingRef.current(smarterAsk.question, true, {
                     model: smarterAsk.model,
                     askHint: SMARTER_ASK_HINT,
-                    answerNote:
-                        `Asked again with ${smarterAsk.label}, and this ` +
-                        'chat now uses it — pick another in the MODEL list ' +
-                        'at the top of this window to switch back.',
+                    answerNote: fillWords(
+                        tran(
+                            'Asked again with {model}, and this chat now ' +
+                                'uses it — pick another in the MODEL list at ' +
+                                'the top of this window to switch back.',
+                        ),
+                        { model: tranLabel(smarterAsk.label) },
+                    ),
                 });
                 return;
             }
@@ -6582,14 +9584,20 @@ export default function ChatbotAppComp() {
                 addMessage(actedSessionId, {
                     author: 'bot',
                     text:
-                        'Carrying on: the hour starts again from now' +
                         (state.limitUsd === null
-                            ? ''
-                            : `, with ${toSpendLimitLabel(state.limitUsd)} ` +
-                              'available before I pause again') +
-                        '.' +
+                            ? tran(
+                                  'Carrying on: the hour starts again from now.',
+                              )
+                            : fillWords(
+                                  tran(
+                                      'Carrying on: the hour starts again ' +
+                                          'from now, with {limit} available ' +
+                                          'before I pause again.',
+                                  ),
+                                  { limit: toSpendLimitLabel(state.limitUsd) },
+                              )) +
                         (question.length > 0
-                            ? ' Asking your question again.'
+                            ? ` ${tran('Asking your question again.')}`
                             : ''),
                 });
                 if (question.length > 0) {
@@ -6625,7 +9633,12 @@ export default function ChatbotAppComp() {
                 // a press that shows nothing gets pressed again.
                 addMessage(actedSessionId, {
                     author: 'bot',
-                    text: `Opening ${url} in your browser.`,
+                    text: fillWords(
+                        tran('Opening {address} in your browser.'),
+                        {
+                            address: url,
+                        },
+                    ),
                 });
                 return;
             }
@@ -6721,7 +9734,9 @@ export default function ChatbotAppComp() {
             // can do (see `genGuideActions`), and it costs a minute -- which
             // is why it is never what the user waits through first.
             if (isNeedingModel && action.ask !== undefined && !signal.aborted) {
-                await handleAskingRef.current(action.ask, true);
+                await handleAskingRef.current(action.ask, true, {
+                    isPressed: true,
+                });
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -6773,9 +9788,11 @@ export default function ChatbotAppComp() {
                     aria-expanded={!isHeadCollapsed}
                     title={
                         isHeadCollapsed
-                            ? 'Show the choices again: which window, which ' +
-                              'assistant, which model and the limit per hour'
-                            : 'Fold these choices to one line'
+                            ? tran(
+                                  'Show the choices again: which window, which ' +
+                                      'assistant, which model and the limit per hour',
+                              )
+                            : tran('Fold these choices to one line')
                     }
                     onClick={handleHeadFolding}
                 >
@@ -6795,13 +9812,13 @@ export default function ChatbotAppComp() {
                 {isHeadCollapsed ? null : (
                     <div className="chat-head-body">
                         <div className="chat-head-row">
-                            <RenderPickFieldComp caption="Asking about">
+                            <RenderPickFieldComp caption={tran('Asking about')}>
                                 <RenderFocusSwitchComp
                                     focus={focus}
                                     onChange={handleFocusChanging}
                                 />
                             </RenderPickFieldComp>
-                            <RenderPickFieldComp caption="Assistant">
+                            <RenderPickFieldComp caption={tran('Assistant')}>
                                 {/* One row with the picker: the field stacks
                                  * its caption over its control at this width,
                                  * and a third child went under the picker
@@ -6824,7 +9841,9 @@ export default function ChatbotAppComp() {
                                         type="button"
                                         className="btn btn-sm btn-link p-0 chat-registry-reload"
                                         title={registryReloadTitle}
-                                        aria-label="Reload shared assistants"
+                                        aria-label={tran(
+                                            'Reload shared assistants',
+                                        )}
                                         disabled={isReloadingRegistry}
                                         onClick={handleReloadingRegistry}
                                     >
@@ -6847,32 +9866,38 @@ export default function ChatbotAppComp() {
                                 // so its caption names the way out, not a
                                 // model there is none of.
                                 <RenderPickFieldComp
-                                    caption="Answers from"
+                                    caption={tran('Answers from')}
                                     isEngine
                                 >
                                     <button
                                         type="button"
                                         className="chat-pick chat-engine chat-engine-off"
-                                        title={
-                                            `${genProviderNames()} need an API` +
-                                            ' key of your own — open AI settings'
-                                        }
+                                        title={fillWords(
+                                            tran(
+                                                '{names} need an API' +
+                                                    ' key of your own — open AI settings',
+                                            ),
+                                            { names: genProviderNames() },
+                                        )}
                                         onClick={openAiSetting}
                                     >
-                                        {OFFLINE_ENGINE_LABEL}
+                                        {tran(OFFLINE_ENGINE_LABEL)}
                                     </button>
                                 </RenderPickFieldComp>
                             ) : isAuto ? (
                                 // Nothing to pick: who answers is Auto's to
                                 // settle, so the field says who it was.
                                 <RenderPickFieldComp
-                                    caption="Auto pick"
+                                    caption={tran('Auto pick')}
                                     isEngine
                                 >
                                     <RenderAutoPickComp autoPick={autoPick} />
                                 </RenderPickFieldComp>
                             ) : (
-                                <RenderPickFieldComp caption="Model" isEngine>
+                                <RenderPickFieldComp
+                                    caption={tran('Model')}
+                                    isEngine
+                                >
                                     <RenderModelPickerComp
                                         model={model}
                                         modelList={modelList}
@@ -6887,11 +9912,12 @@ export default function ChatbotAppComp() {
                             )}
                             <RenderSpendGuardComp />
                         </div>
+                        <RenderModelNoticeComp notice={modelNotice} />
                         <RenderCreditLineComp usage={activeSession.usage} />
                     </div>
                 )}
             </header>
-            <div className="chat-log" ref={listRef}>
+            <div className="chat-log" ref={listRef} onScroll={checkAwayFromEnd}>
                 <RenderProviderWarningComp
                     provider={provider}
                     isAuto={isAuto}
@@ -6901,7 +9927,7 @@ export default function ChatbotAppComp() {
                 ) : null}
                 {messages.length === 0 ? (
                     <div className="chat-empty">
-                        <p className="chat-eyebrow">Try asking</p>
+                        <p className="chat-eyebrow">{tran('Try asking')}</p>
                         <div className="chat-starters">
                             {starters.map((starter) => {
                                 return (
@@ -6911,14 +9937,16 @@ export default function ChatbotAppComp() {
                                         className="chat-starter"
                                         title={
                                             starter.isTemplate
-                                                ? 'Press to put this in the box, then change the example to yours'
+                                                ? tran(
+                                                      'Press to put this in the box, then change the example to yours',
+                                                  )
                                                 : undefined
                                         }
                                         onClick={() => {
                                             handlePickingQuestion(starter);
                                         }}
                                     >
-                                        {starter.text}
+                                        {tranLabel(starter.text)}
                                     </button>
                                 );
                             })}
@@ -6929,7 +9957,10 @@ export default function ChatbotAppComp() {
                                 onStart={(demo) => {
                                     addMessage(activeSessionId, {
                                         author: 'you',
-                                        text: `Guided demo: ${demo.label}`,
+                                        text: fillWords(
+                                            tran('Guided demo: {demo}'),
+                                            { demo: tranLabel(demo.label) },
+                                        ),
                                     });
                                     void handleActing({
                                         label: demo.label,
@@ -6951,8 +9982,10 @@ export default function ChatbotAppComp() {
                             aria-expanded={isShowingAllQuestions}
                             title={
                                 isShowingAllQuestions
-                                    ? 'Back to the four suggestions'
-                                    : 'Show everything it is ready to be asked here'
+                                    ? tran('Back to the four suggestions')
+                                    : tran(
+                                          'Show everything it is ready to be asked here',
+                                      )
                             }
                             onClick={() => {
                                 setIsShowingAllQuestions(
@@ -6961,8 +9994,8 @@ export default function ChatbotAppComp() {
                             }}
                         >
                             {isShowingAllQuestions
-                                ? 'Fewer'
-                                : 'More… — everything it can answer'}
+                                ? tran('Fewer')
+                                : tran('More… — everything it can answer')}
                         </button>
                         {isShowingAllQuestions ? (
                             <RenderAllQuestionsComp
@@ -6971,8 +10004,10 @@ export default function ChatbotAppComp() {
                             />
                         ) : null}
                         <p className="chat-hint">
-                            Answers come from the app&apos;s own guide and from
-                            what the app is doing right now.
+                            {tran(
+                                "Answers come from the app's own guide and " +
+                                    'from what the app is doing right now.',
+                            )}
                         </p>
                         {/*
                          * The caution every answer in this window deserves,
@@ -7015,22 +10050,28 @@ export default function ChatbotAppComp() {
                                     {'⚠'}
                                 </span>
                                 <span>
-                                    <strong>Be careful with AI answers.</strong>{' '}
-                                    This assistant can be confidently wrong — it
-                                    can misread the app, describe a button that
-                                    is not there, or quote a verse inaccurately
-                                    — and what it offers to do can reach a live
-                                    projector. Check anything that matters
-                                    before a service, and read a step yourself
-                                    before you press it. It is here to help you
-                                    use the app, not to replace knowing it.{' '}
+                                    <strong>
+                                        {tran('Be careful with AI answers.')}
+                                    </strong>{' '}
+                                    {tran(
+                                        'This assistant can be confidently wrong — it ' +
+                                            'can misread the app, describe a button that ' +
+                                            'is not there, or quote a verse inaccurately ' +
+                                            '— and what it offers to do can reach a live ' +
+                                            'projector. Check anything that matters ' +
+                                            'before a service, and read a step yourself ' +
+                                            'before you press it. It is here to help you ' +
+                                            'use the app, not to replace knowing it.',
+                                    )}{' '}
                                     <button
                                         type="button"
                                         className="btn btn-link btn-sm p-0 align-baseline chat-caution-hide"
-                                        title="Put this caution away for 30 days; it comes back after that"
+                                        title={tran(
+                                            'Put this caution away for 30 days; it comes back after that',
+                                        )}
                                         onClick={handleHidingCaution}
                                     >
-                                        Hide for 30 days
+                                        {tran('Hide for 30 days')}
                                     </button>
                                 </span>
                             </p>
@@ -7041,14 +10082,19 @@ export default function ChatbotAppComp() {
                             // until there is one, and this says so where the
                             // user is already looking, with the way there.
                             <p className="chat-hint">
-                                {genProviderNames()} answer here only with an
-                                API key of your own.{' '}
+                                {fillWords(
+                                    tran(
+                                        '{names} answer here only with an ' +
+                                            'API key of your own.',
+                                    ),
+                                    { names: genProviderNames() },
+                                )}{' '}
                                 <button
                                     type="button"
                                     className="chat-link"
                                     onClick={openAiSetting}
                                 >
-                                    Open AI settings
+                                    {tran('Open AI settings')}
                                 </button>
                             </p>
                         ) : null}
@@ -7067,7 +10113,7 @@ export default function ChatbotAppComp() {
                                         index === messages.length - 1 && !isBusy
                                     }
                                     onAction={handleActing}
-                                    onReply={handleAsking}
+                                    onReply={handleReplying}
                                     onReuse={handleReusing}
                                     onRate={handleRating}
                                     onAttachRequest={handleAttachRequest}
@@ -7083,6 +10129,24 @@ export default function ChatbotAppComp() {
                     // mind three minutes before a service should not have to
                     // work out that the Ask button has become the way to stop.
                     <RenderChatProgressComp sessionId={activeSessionId} />
+                ) : null}
+                {isAwayFromEnd ? (
+                    // Sticky inside the scroller, at its bottom-right corner,
+                    // and taking no room in the list.
+                    <div className="chat-log-jump">
+                        <button
+                            type="button"
+                            className="chat-log-jump-button"
+                            title={tran('Go to the newest message')}
+                            aria-label={tran('Go to the newest message')}
+                            onClick={handleScrollingToEnd}
+                        >
+                            <i
+                                className="bi bi-arrow-down"
+                                aria-hidden="true"
+                            />
+                        </button>
+                    </div>
                 ) : null}
             </div>
             <form
@@ -7117,6 +10181,94 @@ export default function ChatbotAppComp() {
                     activeIndex={suggestIndex}
                     onChoose={handleChoosingSuggestion}
                 />
+                {openLookupSubject === null ? null : (
+                    <div
+                        className="chat-open-files"
+                        title={tran(
+                            'What the app holds on this goes with every ' +
+                                'question in this tab. Press × when you are ' +
+                                'done with it.',
+                        )}
+                    >
+                        <span className="chat-open-files-label">
+                            {tran('Still asking about')}
+                        </span>
+                        <div className="chat-clips">
+                            <span className="chat-clip">
+                                <i
+                                    className={
+                                        'bi ' +
+                                        (openLookupSubject.kind === 'verse'
+                                            ? 'bi-book-half'
+                                            : openLookupSubject.kind ===
+                                                'location'
+                                              ? 'bi-geo-alt-fill'
+                                              : 'bi-person-fill')
+                                    }
+                                />
+                                <span className="chat-clip-name">
+                                    {openLookupSubject.title}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="chat-clip-x"
+                                    aria-label={fillWords(
+                                        tran('Remove {name}'),
+                                        { name: openLookupSubject.title },
+                                    )}
+                                    onClick={handleClosingLookup}
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                )}
+                {openFileAttachments.length === 0 ? null : (
+                    <div
+                        className="chat-open-files"
+                        title={tran(
+                            'This file goes with every question in this tab. ' +
+                                'Press × when you are done with it.',
+                        )}
+                    >
+                        <span className="chat-open-files-label">
+                            {tran('Still asking about')}
+                        </span>
+                        <RenderAttachmentChipsComp
+                            attachments={openFileAttachments}
+                            onRemove={handleClosingOpenFiles}
+                            onShow={handleShowingAttachment}
+                        />
+                    </div>
+                )}
+                {!isResourcesPdfOpen || isCautionHidden ? null : (
+                    <p className="chat-caution" role="note">
+                        <span className="chat-caution-mark" aria-hidden="true">
+                            {'⚠'}
+                        </span>
+                        <span>
+                            <strong>
+                                {tran('Be careful with AI answers.')}
+                            </strong>{' '}
+                            {tran(
+                                'AI analysis can make mistakes. Please read the ' +
+                                    'passage, cross-references, and explanation ' +
+                                    'yourself in the original Bible and PDF.',
+                            )}{' '}
+                            <button
+                                type="button"
+                                className="btn btn-link btn-sm p-0 align-baseline chat-caution-hide"
+                                title={tran(
+                                    'Put this caution away for 30 days; it comes back after that',
+                                )}
+                                onClick={handleHidingCaution}
+                            >
+                                {tran('Hide for 30 days')}
+                            </button>
+                        </span>
+                    </p>
+                )}
                 <RenderAttachmentChipsComp
                     attachments={draftAttachments}
                     onRemove={handleRemovingAttachment}
@@ -7124,7 +10276,11 @@ export default function ChatbotAppComp() {
                 />
                 {attachError === null ? null : (
                     <p className="chat-attach-error">
-                        {attachError}
+                        {attachError === BLIND_MODEL_MESSAGE
+                            ? tran(BLIND_MODEL_MESSAGE)
+                            : attachError === BLIND_CUSTOM_MODEL_MESSAGE
+                              ? tran(BLIND_CUSTOM_MODEL_MESSAGE)
+                              : attachError}
                         {(attachError === BLIND_MODEL_MESSAGE ||
                             attachError === BLIND_CUSTOM_MODEL_MESSAGE) &&
                         seeingModel !== null ? (
@@ -7136,7 +10292,9 @@ export default function ChatbotAppComp() {
                                     setAttachError(null);
                                 }}
                             >
-                                Use {seeingModel.label}
+                                {fillWords(tran('Use {model}'), {
+                                    model: tranLabel(seeingModel.label),
+                                })}
                             </button>
                         ) : null}
                     </p>
@@ -7150,7 +10308,7 @@ export default function ChatbotAppComp() {
                     <div
                         className="chat-report-confirm"
                         role="alertdialog"
-                        aria-label="Report a problem"
+                        aria-label={tran('Report a problem')}
                         onKeyDown={(event) => {
                             if (event.key === 'Escape') {
                                 setReportAsk(null);
@@ -7158,10 +10316,18 @@ export default function ChatbotAppComp() {
                         }}
                     >
                         <span className="chat-report-ask">
-                            Report “{toReportQuote(reportAsk)}”? I will look
-                            into it in the app and write it up. The report
-                            carries {REPORT_COLLECTS_TEXT} — nothing is sent
-                            until you say so.
+                            {fillWords(
+                                tran(
+                                    'Report “{quote}”? I will look into it in ' +
+                                        'the app and write it up. The report ' +
+                                        'carries {collects} — nothing is sent ' +
+                                        'until you say so.',
+                                ),
+                                {
+                                    quote: toReportQuote(reportAsk),
+                                    collects: tran(REPORT_COLLECTS_TEXT),
+                                },
+                            )}
                         </span>
                         <button
                             type="button"
@@ -7171,7 +10337,7 @@ export default function ChatbotAppComp() {
                                 setReportAsk(null);
                             }}
                         >
-                            Not now
+                            {tran('Not now')}
                         </button>
                         <button
                             type="button"
@@ -7181,7 +10347,7 @@ export default function ChatbotAppComp() {
                                 startReportingRef.current(reportAsk);
                             }}
                         >
-                            Report it
+                            {tran('Report it')}
                         </button>
                     </div>
                 )}
@@ -7199,8 +10365,8 @@ export default function ChatbotAppComp() {
                     <button
                         type="button"
                         className="chat-attach"
-                        aria-label="Attach a file"
-                        title="Attach a picture or a file"
+                        aria-label={tran('Attach a file')}
+                        title={tran('Attach a picture or a file')}
                         onClick={() => {
                             fileInputRef.current?.click();
                         }}
@@ -7210,8 +10376,10 @@ export default function ChatbotAppComp() {
                     <button
                         type="button"
                         className="chat-attach"
-                        aria-label="Attach a picture of the app"
-                        title="Attach a picture of the app as it looks now"
+                        aria-label={tran('Attach a picture of the app')}
+                        title={tran(
+                            'Attach a picture of the app as it looks now',
+                        )}
                         onClick={handleSnapping}
                     >
                         <i className="bi bi-camera" />
@@ -7219,8 +10387,8 @@ export default function ChatbotAppComp() {
                     <button
                         type="button"
                         className="chat-attach"
-                        aria-label="Point at a control in the app"
-                        title="Point at a control in the app window"
+                        aria-label={tran('Point at a control in the app')}
+                        title={tran('Point at a control in the app window')}
                         onClick={handlePicking}
                     >
                         <i className="bi bi-bullseye" />
@@ -7230,7 +10398,7 @@ export default function ChatbotAppComp() {
                         className="chat-file-input"
                         type="file"
                         multiple
-                        accept="image/*,text/*,.md,.json,.csv,.log,.xml,.pdf,application/pdf"
+                        accept="image/*,text/*,.md,.markdown,.json,.csv,.log,.xml,.pdf,application/pdf,.own"
                         onChange={(event) => {
                             addFiles([...(event.target.files ?? [])]);
                             // Cleared so choosing the SAME file twice still
@@ -7257,16 +10425,18 @@ export default function ChatbotAppComp() {
                     value={question}
                     placeholder={
                         isBusy
-                            ? 'Add anything else while it works…'
-                            : 'Ask how to do something, or type / for a command…'
+                            ? tran('Add anything else while it works…')
+                            : tran(
+                                  'Ask how to do something, or type / for a command…',
+                              )
                     }
-                    aria-label="Ask how to do something in the app"
-                    title={
-                        'Ctrl+Enter asks · Enter starts a new line · ' +
-                        'Alt+↑ and Alt+↓ bring back an earlier question · ' +
-                        '/ lists the commands that need no assistant · ' +
-                        '↑ and ↓ walk a list of suggestions, Tab takes one'
-                    }
+                    aria-label={tran('Ask how to do something in the app')}
+                    title={tran(
+                        'Ctrl+Enter sends · Enter starts a new line · ' +
+                            'Alt+↑ and Alt+↓ bring back an earlier question · ' +
+                            '/ lists the commands that need no assistant · ' +
+                            '↑ and ↓ walk a list of suggestions, Tab takes one',
+                    )}
                     onPaste={handlePasting}
                     onChange={(event) => {
                         handleTypingQuestion(event.target.value);
@@ -7421,21 +10591,21 @@ export default function ChatbotAppComp() {
                                 <button
                                     className="chat-send chat-add"
                                     type="submit"
-                                    title={
+                                    title={tran(
                                         'Add this to the answer being ' +
-                                        'written — Ctrl+Enter'
-                                    }
+                                            'written — Ctrl+Enter',
+                                    )}
                                 >
-                                    Add
+                                    {toAddButtonLabel()}
                                 </button>
                             ) : null}
                             <button
                                 className="chat-send chat-stop"
                                 type="button"
-                                aria-label="Stop looking it up"
+                                aria-label={tran('Stop looking it up')}
                                 onClick={handleCancelling}
                             >
-                                Stop
+                                {tran('Stop')}
                             </button>
                         </>
                     ) : (
@@ -7443,22 +10613,24 @@ export default function ChatbotAppComp() {
                             <button
                                 className="chat-send"
                                 type="submit"
-                                title="Ask — Ctrl+Enter"
+                                title={tran('Send — Ctrl+Enter')}
                             >
-                                Ask
+                                {tran('Send')}
                             </button>
                             <button
                                 className="chat-send chat-report"
                                 type="button"
-                                aria-label="Report a problem with the app"
-                                title={
+                                aria-label={tran(
+                                    'Report a problem with the app',
+                                )}
+                                title={tran(
                                     'Report a problem: I will look into it, ' +
-                                    'collect what is on this machine and ' +
-                                    'write it up for you'
-                                }
+                                        'collect what is on this machine and ' +
+                                        'write it up for you',
+                                )}
                                 onClick={handleReportPressed}
                             >
-                                Report
+                                {tran('Report')}
                             </button>
                         </>
                     )}
@@ -7478,7 +10650,9 @@ export default function ChatbotAppComp() {
                     // them happened to have the keyboard.
                     role="dialog"
                     aria-modal="true"
-                    aria-label={`Preview of ${preview.name}`}
+                    aria-label={fillWords(tran('Preview of {name}'), {
+                        name: preview.name,
+                    })}
                     tabIndex={-1}
                     onClick={() => {
                         setPreview(null);
@@ -7518,18 +10692,23 @@ export default function ChatbotAppComp() {
                                     handleCopyingAsset(preview);
                                 }}
                             >
-                                <i className="bi bi-clipboard" /> Copy
+                                <i className="bi bi-clipboard" /> {tran('Copy')}
                             </button>
                         )}
                         <button
                             type="button"
                             className="chat-preview-tool chat-preview-tool-main"
-                            title={`Download ${preview.name} into your Downloads folder`}
+                            title={fillWords(
+                                tran(
+                                    'Download {name} into your Downloads folder',
+                                ),
+                                { name: preview.name },
+                            )}
                             onClick={() => {
                                 handleDownloadingAsset(preview);
                             }}
                         >
-                            <i className="bi bi-download" /> Download
+                            <i className="bi bi-download" /> {tran('Download')}
                         </button>
                         {preview.filePath === null ? null : (
                             <button
@@ -7543,7 +10722,8 @@ export default function ChatbotAppComp() {
                                     showFileOrDirExplorer(filePath as string);
                                 }}
                             >
-                                <i className="bi bi-folder2-open" /> Open folder
+                                <i className="bi bi-folder2-open" />{' '}
+                                {tran('Open folder')}
                             </button>
                         )}
                         {/*
@@ -7558,10 +10738,12 @@ export default function ChatbotAppComp() {
                                 setPreview(null);
                             }}
                         >
-                            <i className="bi bi-x-lg" /> Close
+                            <i className="bi bi-x-lg" /> {tran('Close')}
                         </button>
                     </div>
-                    <p className="chat-preview-hint">Press anywhere to close</p>
+                    <p className="chat-preview-hint">
+                        {tran('Press anywhere to close')}
+                    </p>
                 </div>
             )}
         </div>

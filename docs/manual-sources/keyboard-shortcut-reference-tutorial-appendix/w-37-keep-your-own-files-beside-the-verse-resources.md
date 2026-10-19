@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
 screenshots: 16
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -26,7 +26,7 @@ the Psalms, and it is listed for _every_ chapter of the Psalms, above that chapt
 files. If you have more than one such document, keep going downwards — `-1`, `-2` and so on
 all count as book-level too.
 
-1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (`bi-binoculars`, top right) to open
+1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (the binoculars, top right) to open
    the side panel, then pick **[en:tran:Resources]** from the panel's dropdown — the fourth entry
    after **[en:tran:Find]**, **[en:tran:Cross Reference]** and **[en:tran:Location-Name (KJV)]**. 📸
 2. The top line of the view is the file-name patterns being looked for, one for **each
@@ -83,7 +83,7 @@ all count as book-level too.
    `PSA.0.pdf` says why it is there. A group with nothing for what you are reading says
    **[en:tran:No matching files]**.
 5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
-   (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
+   at the right-hand end of the pattern line and a search box opens under it.
    Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
    folders whose name contains it is listed too, added below that folder's verse files under
    a `*abc*` heading so you can tell the two apart. Your verse files stay exactly where they
@@ -114,13 +114,13 @@ all count as book-level too.
      the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
      to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
      that window forward. 📸
-   - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
+   - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
      block are drawn as diagrams (a diagram with a mistake in it shows the error above its
      code). The window follows the file — save it in your editor and the preview changes.
      A link to a heading scrolls there; a link to another `.md` opens it in the same window,
-     with **[en:tran:Back]** (`bi-arrow-left`) to return; a web link opens in your browser; a
+     with **[en:tran:Back]** (the left arrow) to return; a web link opens in your browser; a
      link to any other file shows it in its folder rather than running it. HTML written
      inside the file is drawn the way GitHub shows a README — a centred picture, a table, a
      section that folds away — but nothing in it can run: scripts, buttons, forms and styles
@@ -132,7 +132,7 @@ all count as book-level too.
      file whose preview is already open brings that window forward. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
      listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
-     marked in it (`bi-highlighter`) with its highlights in their colour and its comments
+     marked in it (the highlighter icon) with its highlights in their colour and its comments
      underlined, what was written beside them. Click a note to open it in the **Bible Note**
      window **read-only** — the title bar says **([en:tran:Read-only])**, the lock at the
      bottom shows it is locked, and nothing you do there is saved to the file. Click a
@@ -140,8 +140,11 @@ all count as book-level too.
      fold it away to a count. Nothing in the file can be changed from here. A file that is
      not a bible note says **[en:tran:Not a bible note file]**. 📸
 7. **A `.json` file can hold a list of links** — videos, articles, anything on the web for
-   that chapter — and the panel shows them instead of opening the file. Write it as a list
-   of entries, each with a **title** to read and a **url** to open:
+   that chapter — and the panel shows them instead of opening the file. Save the file
+   inside a folder listed in **[en:tran:Resources]**; to add its folder, click the panel's
+   **⋮** → **[en:tran:Add Folder]** and choose that folder. Write it as a list
+   of entries, each with a **title** to read and a **url** to open — one link is
+   `[{"title": "Notes", "url": "https://www.example.com/notes"}]` — exactly as in this example:
 
    ```json
    [
@@ -156,8 +159,9 @@ all count as book-level too.
    ]
    ```
 
-   Save that as `1CH.0.json` beside your other files and the row for it gains a chevron
-   (`bi-chevron-down`) and a 🔗 icon, with one row per entry hanging under it. **Click a
+   Save it named after its chapter, as the files beside it are (`JHN.3.json` for John 3,
+   `1CH.0.json` for the whole of 1 Chronicles), and the row for it gains a chevron
+   and a 🔗 icon, with one row per entry hanging under it. **Click a
    title to open it in your own web browser** — Chrome, Edge, Safari, whatever you
    normally use — and the site it goes to is shown after the title when the panel is wide
    enough, with the title and the full address on the tooltip either way. Right-click a
@@ -179,7 +183,7 @@ all count as book-level too.
    - Right-click the `.json` row itself (or its **⋮**) for **[en:tran:Open]** if you want to edit
      the file rather than follow a link.
 
-8. Click a group's header to fold it away; it stays folded next time. Right-click a header
+8. Click a group's header to fold it away; it opens again the next time Resources is shown. Right-click a header
    for **[en:tran:Refresh]** (re-reads that one folder — **[en:tran:Reload]** in step 3 does all of them),
    **[en:tran:Add Folder]**, **[en:tran:Add Files]**, **[en:tran:Reveal in Finder]**/**[en:tran:Reveal in File Explorer]**,
    **[en:tran:Copy to Data Directory]** and **[en:tran:Remove Folder]**, which asks you to confirm and
@@ -198,7 +202,7 @@ all count as book-level too.
    the copy goes — a `resources` folder inside your data folder (the one Settings calls the
    parent directory). Press **[en:tran:Yes]** and everything in the folder is copied there, sub-folders
    and all, while the progress bar runs; then the group switches to the copy, in the same place
-   and folded or open as it was, and a note says where it went. **Your original folder is not
+   and open, and a note says where it went. **Your original folder is not
    touched** — it only leaves this list, so delete it yourself once you are happy with the copy.
    A second copy of a folder with the same name is called `YouTube (1)` rather than mixed into
    the first. The item is not offered on a folder that already is a copy, and a folder that
@@ -225,5 +229,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

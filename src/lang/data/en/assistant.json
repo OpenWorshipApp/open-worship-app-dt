@@ -1,0 +1,32 @@
+{
+    "name": "English",
+    "nativeName": "English",
+    "scriptPattern": "[A-Za-z]",
+    "functionWords": [
+        "the",
+        "how",
+        "do",
+        "does",
+        "is",
+        "are",
+        "what",
+        "where",
+        "why",
+        "when",
+        "can",
+        "my",
+        "to",
+        "in",
+        "on",
+        "it",
+        "and",
+        "you",
+        "this",
+        "with",
+        "for"
+    ],
+    "yesWords": [],
+    "noWords": [],
+    "frameAliases": {},
+    "glossary": {}
+}

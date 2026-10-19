@@ -21,7 +21,7 @@ real-time."_
 - **Shape**: `docs/llm-registry/README.md` (the table), `info.schema.json`
   (JSON Schema), `info.example.json`. `version: 1`, `servers[]` of `{id,
 name, baseUrl, apiKey?, isFree?, note?, models[{model, name?,
-canSeeImages?}]}`, up to 20; `toValidLlmRegistry` in
+canSeeImages?, note?}]}`, up to 20; `toValidLlmRegistry` in
   `electron/customLlmProtocol.ts` is the one reader, ids prefixed
   `registry-` so no saved uuid can collide, row ids made from the model
   name (`m<index>-<slug>`) so a tab keeps its model across reloads.
@@ -62,6 +62,24 @@ canSeeImages?}]}`, up to 20; `toValidLlmRegistry` in
   `isFree` prices answers at $0 and the model note reads _shared by
   openworship.app · free_; the ↻ beside the Assistant picker reloads, its
   tooltip (`describeRegistryStatus`) saying how the last read went.
+- **`note` is SHOWN to the person choosing** (2026-10-17, the user's ask:
+  _add `note` to endpoint and models, and show the note in chatbot, e.g. for
+  some model we want to let user know it slow but help us save cost of
+  usage_; until then a server's `note` was for people reading the file and
+  was stripped). On a server and on a model, a string or `{en, km, …}`
+  (`toRegistryNote` → `RegistryNoteType`, a plain string under `''`;
+  `pickRegistryNote` takes the window's language, its base, `''`, `en`,
+  then any). `toPublicRegistryServers` hands both to windows with the
+  server's host taken out (`hideRegistryServerHost`). The chatbot puts the
+  server's then the model's in `LlmModelType.notice`: a line under the
+  pickers (`RenderModelNoticeComp`, `.chat-model-notice`; on Auto once it
+  has picked), the model hover, Auto's waiting line after _Auto picked …_;
+  Settings' Shared servers shows them too. The tunnel kit no longer writes
+  its own _… through a Cloudflare quick tunnel_ note (it would be shown):
+  `--note` and `--model-note <model>=<text>` set them, and a restart keeps
+  the notes already on its entry in the site's file (`keepLiveNotes`, the
+  old automatic line excepted); `findRegistryProblems` flags a note the app
+  would cut or drop.
 - **In Settings** (2026-10-10, the user's ask with a picture of the chatbot's
   list beside the Others tab: _in setting should have those llm endpoints
   (read-only) and have refresh icon as well_): **Shared servers**, a group of

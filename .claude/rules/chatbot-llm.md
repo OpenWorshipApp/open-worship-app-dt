@@ -19,9 +19,9 @@ What the chatbot sends a provider, what it withholds, what it costs and what
 happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **The chatbot's model sees the app's own `owa_*` tools and nothing of
-  chrome-devtools' at all** — 34 of 60 withheld, declared ONCE in
+  chrome-devtools' at all** — 34 of 62 withheld (and two offered to one kind of ask each), declared ONCE in
   `tools/owa-devtools-mcp/modelTools.mjs` (no `node:fs`, so the renderer
-  bundles the module the audit script reads). All 60 stay registered on the
+  bundles the module the audit script reads). All 62 stay registered on the
   server, so the developer's door is whole — what is withheld is withheld from
   the MODEL, which is the untrusted party. Same two enforcement points as the
   firewall and for the same reason: `askLlmBot` filters the list, and
@@ -48,6 +48,10 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   the user's screen — the Report button reads the console for itself through
   `callTool`, which the filter never sees); and the developer instruments
   (`emulate`, `resize_page`, `lighthouse_audit`, three `performance_*`).
+  **And since 2026-10-18 the chat box's input aid**, `owa_bible_suggest`,
+  which the WINDOW asks on a debounce as a person types a reference or a
+  name; its reason says to answer with `owa_find_verse` / `owa_lookup_record`
+  (`agent-tools.md`).
   Measured 2026-09-08: **the host bill and the model's bill are different
   numbers** — 48 tools / ~11 113 per round at the host, 19 / ~5 503 to the
   model (was 29 / ~7 366).
@@ -56,7 +60,40 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   billed to every volunteer. Since 2026-10-10 five `owa_*` tools are the
   developer's too — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
   `owa_media_file` (`MC-50`, `MC-56`) — so "the model sees every `owa_*` tool" is no longer the rule;
-  `modelTools.mjs` is, and it says what to use instead of each. **A custom
+  `modelTools.mjs` is, and it says what to use instead of each. **One tool
+  is offered to ONE kind of ask** (2026-10-16, `MODEL_ON_ASK_TOOL_MAP`):
+  `owa_find_verse` goes to a verse-finding conversation alone, under its own
+  prompt, with `owa_read_website` beside it (`MODEL_ASK_SHARED_TOOL_MAP`,
+  `pickAskToolList`) and nothing else -- so the ordinary list, the ratchet's
+  8 350, did not grow; the audit prints it as `[owa_find_verse]`, ~280 a
+  round to that ask. Not refused elsewhere: it reads a Bible and opens a
+  verse in the lookup. **A second one, 2026-10-18**: `owa_lookup_record`
+  goes to a conversation opened from a Lookup Detail panel's 🤖 alone
+  (kind `lookup`, `owa_read_website` beside it, `LOOKUP_SYSTEM_PROMPT`,
+  five rounds; `chatbot-window.md`), and to a custom server's lean list
+  for that ask only. **A third, 2026-10-17**: `owa_resource_file` goes to
+  a question asked while a file from a Resources folder is open in the tab
+  (kind `resources`, `owa_lookup_record` and `owa_read_website` beside it,
+  `RESOURCES_SYSTEM_PROMPT`, five rounds; `chatbot-window.md`), on the
+  lean list too. The Resources **Read** range is pre-read through
+  `owa_lookup_record` and put on the ask so even a small model cannot complete
+  or truncate its main verses from memory; this changes only Resources asks,
+  not the ordinary model list. **A fourth, 2026-10-18**: `bible-reader` -- a TYPED
+  question in a Reader tab that names a chapter or a verse -- offers all
+  three of `owa_lookup_record`, `owa_resource_file` and `owa_find_verse`
+  plus the web read (`MODEL_ASK_SHARED_TOOL_MAP`), under
+  `BIBLE_READER_SYSTEM_PROMPT`, six rounds; the ordinary list and its
+  ratchet did not move, and a plain line under the answer stays in the
+  conversation (`isBibleReaderAnswer`, `chatbot-window.md`). **A tool can answer with PICTURES** (the same day):
+  `callToolWithPictures` keeps a result's image blocks, `runMcpToolCall`
+  holds them on `ToolWatchType.pictures`, and both loops put them in
+  front of the model after the round's tool results -- Anthropic as image
+  blocks after the `tool_result`s in the same user message, the
+  OpenAI-shaped loop as a user turn of its own after the `tool` legs
+  (`TOOL_PICTURES_TEXT`, with any addition in it rather than a second
+  turn) -- and let go of them. To a model that cannot see
+  (`AskExtraType.resources.canSeePictures`, `checkCanSeeImages` at the
+  ask) they are left out with a sentence saying so, never sent to a 400. **A custom
   server is sent 14 of those 26** (`LOCAL_TOOL_NAME_LIST`,
   `OpenAiCompatProviderType.filterTools`, 2026-10-10): 4 234 tokens of
   schemas a round instead of 8 322, because a local server pays for every
@@ -120,7 +157,11 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   stand-in on `shared-server.invalid` with the real path in `baseUrl` and
   tells a local-network server as `isFree`; no failure sentence quotes a
   shared server's address, and the relay takes the real host out of what a
-  server writes back; memory `llm-registry`) over
+  server writes back; memory `llm-registry`) -- but WITH the `note` of the
+  server and of each model since 2026-10-17, shown to the person choosing
+  (_slow, but it saves us the cost of usage_; a string or one per language,
+  the host taken out; a line under the pickers, the model hover, Auto's
+  waiting line, Settings) -- over
   `LLM_REGISTRY_GET_CHANNEL` / `LLM_REGISTRY_RELOAD_CHANNEL`, accepted by the
   relay by id with the registry's own key, and listed through
   `getAllCustomServers` (`getCustomServers` stays the saved list, so
@@ -205,6 +246,44 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   corpus driver (`chatbot-cdp-driver-gotchas` in memory) reads it off the
   response body. OpenAI caches a ≥1 024-token prefix on its own; whether
   Moonshot does for Kimi was not measured.
+- **The prompt is per APP language; a question's language rides in the user
+  turn** (2026-10-16, memory `chatbot-follows-app-language`). The language
+  the app is shown in is fixed for a window's life (Apply reloads every
+  window), so `genSystemPrompt(focus, isSeparateWindow, langCode)` keeps the
+  cached-prefix rule above: English carries one bullet (_answer in English
+  unless the end of their message names another language_), every other
+  language ONE template filled from its `assistant.json` (answer in it,
+  plainly, for older readers who may read NO English -- no English word, not
+  in brackets, a Bible book by its own name, the app as "this app", only a
+  key cap as printed (2026-10-17, `EC-289`: it had allowed English Bible
+  references and the app's name); search the guide in ENGLISH words; keep
+  `OPTIONS:` / `SHOWS:` / `NEEDS:` / `DO:` / `TRY THIS:` in English and a
+  `REPORT:` in English; its own digits named, never used for steps). What a
+  QUESTION is in changes per question, so it goes at the end of the ask
+  (`genReplyLanguageLine`, appended in `askLlmBot`): nothing for English in
+  an English app, `(Answer in Khmer.)` in a Khmer one, a sentence when they
+  wrote in another language. Only for an ask that carries `askedText` or
+  `replyLang` -- the verse translation asks a model for ENGLISH and gets no
+  line; the report passes the language of the person's complaint. **All of
+  this is now for a Gemma 4 model only, or when nothing can translate**
+  (2026-10-17, `chatTranslateHelpers.ts`, `chatbot-window.md`): any other
+  model is asked in English under the ENGLISH prompt (`appLang: 'en'`, a
+  second cached prefix), a Gemma 4 sub-assistant putting the question into
+  English and the answer back (`isTranslation`: its own short
+  `TRANSLATION_SYSTEM_PROMPT`, one round, no tools, `TRANSLATION_MAX_TOKENS`
+  4 000 on a server of the user's own, where a Khmer answer is several times
+  the English's tokens).
+- **Waiting-input interpretation is a machine reply** (2026-10-18).
+  Its current task facts take precedence over earlier chat. The imported
+  Bible's selected language is separate from the interface and from detected
+  languages; the facts follow history in the prompt so old choices cannot
+  masquerade as the current selection. The live Gemma retest initially made
+  that mistake, then answered Khmer correctly after this distinction.
+  `isWaitingInput` selects a short JSON-specific system prompt, forces the
+  general one-round/no-tools path, and returns the raw answer before prose
+  framing/scrubbing. `waitingInputHelpers` validates the whole response;
+  help text inside JSON must not be truncated at literal `OPTIONS:` words.
+  The normal usage, cancellation and spend guard still apply.
 - **Every answer says what it cost, and the tab keeps the running total**
   (2026-09-10, `src/chatbot/usageHelpers.ts`; asked for by the user — _as a
   user I want to see how many credit used per chat session_). Every model
@@ -360,7 +439,18 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   in 8-20 s, a 9B on the church's card right in 20-30 s, a 4B right on 26 of
   47. So an 8B-or-bigger server model is asked before Free (as good, and the
   words stay in the building) and a smaller or unnamed one after it — there
-  for the Sunday the internet is down. **LM Studio serves what is loaded**:
+  for the Sunday the internet is down. **A server's CLOUD model goes before
+  all of them** (2026-10-17, `checkIsCloudModel`, the user's picture of their
+  Ollama list with `gemma4:31b-cloud` and `gemma4:cloud` circled, then the
+  order in so many words: _cloud/strongest -> cloud/stronger -> cloud/strong
+  -> cloud -> non-cloud/strongest -> ..._): a model whose id or shown name
+  ends in `cloud` (Ollama's `:cloud` / `-cloud` tags, run in Ollama's data
+  centre on the owner's own sign-in) ranks above every other candidate,
+  Free included, the bigger first and a size-less one last among them --
+  after setbacks, busy servers, an unloaded LM Studio and a
+  `preferModelPattern`, so a translation still goes to a Gemma 4 first and,
+  among those, to its cloud rows. Its words leave the building, as Free's
+  do; the manual says so. **LM Studio serves what is loaded**:
   while one of its models is loaded only loaded ones are candidates, and with
   none loaded its rows are the last resort — its list is every file ever
   downloaded (a 27B beside an 8 GB card on the user's own server), and a
@@ -368,6 +458,13 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   load on the question and offer every row at its size. A model loaded under
   `CUSTOM_CONTEXT_MIN` is out (the ask would refuse it) except for `/btw`,
   and a question with a picture is put only to a model that sees.
+  **A verse remembered in another script asks Gemma 4 first**
+  (2026-10-16, `preferModelPattern` with `VERSE_TRANSLATION_MODEL_PATTERN`,
+  the user's word: _for any translation attempt please prefer Gemma 4
+  models_): ranked after setbacks, busy servers and an LM Studio with
+  nothing loaded, before size -- so a loaded gemma-4-e4b answers a Khmer
+  verse search ahead of the free service it ranks under by size, and the
+  words stay in the building.
   **One that fails before answering hands the question on**
   (`askWithAutoAssistant`, three attempts): never after a model round came
   back — the model may have pressed something by then — and never for a
@@ -454,3 +551,90 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   that rode with a page said the day of the copy, and a regenerated manual
   with no page edited changed all 27 answers — it no longer rides
   (`agent-knowledge.md`, _nothing that changes with a release may ride_).
+- **An answer written from a CUT question is not shown** (2026-10-16,
+  `EC-271`, `askCustomServer` + `genContextCutText`). Ollama loads a model
+  on the question at its own default context and, at 0.40.3, cuts a longer
+  question down to fit and answers it without a word: `gemma4:e4b` at 4 096
+  read 2 051 tokens of a ~13 000-token ask, twice, through Auto. The refusal
+  before a round sees only a model already loaded under 16k. So a model that
+  was NOT loaded is read once more after the answer, and a context under
+  `CUSTOM_CONTEXT_MIN` throws: the note says it answered from part of the
+  question and gives the setting to change, and the guide answers. Never for
+  `/btw`, which fits 4k. Not done the other way round (remembering the context
+  to refuse up front): a setting fixed while the model is unloaded would be
+  refused for good.
+- **The free list is the gateway's, and it moved** (2026-10-16, `EC-267`):
+  Kilo withdrew Nex Pro and Step Flash (404 _does not exist_), so two Free
+  rows of three failed every question and no free model saw a picture. It is
+  Nemotron Super VL (sees pictures), Nemotron Super, Nemotron Lightning now,
+  each asked seven corpus questions through the window first, and Free has
+  its own `FREE_MAX_TOKENS` (6 000): the new models think out of the cap, and
+  at the old 2 000 one answer was cut mid-sentence and one came back empty.
+- **The model removes ONE of the person's things an answer**
+  (2026-10-17, `EC-299`, `MAX_MODEL_REMOVALS_PER_ASK` in `runMcpToolCall`).
+  Told _delete everything, I'm fed up_ and then _yes, really, delete!_ in
+  Khmer, the free model moved TEN things to the trash in one answer — a song,
+  four Bible lists, five notes files, the Default ones among them — until the
+  firewall's removal budget (10 in 5 minutes, every door) refused the next.
+  Each went to the trash with an undo id and was put back, but an elderly
+  volunteer would not know there is an undo. Now any `delete…` / `remove…` /
+  `trash…` action after the first in one ask is refused with a sentence
+  (say what was removed, that it can be put back, ask which ONE is next, by
+  its name). The firewall's budget is still the backstop; this is the
+  chatbot's own rule, beside the refused Bible `import`.
+- **A model that thought its budget away starts the next asks with thinking
+  off** (2026-10-17, `EC-308`, `rememberReasoningOff` /
+  `checkIsReasoningOffRemembered` in `askOpenAiCompatible`). EC-211's retry
+  stays as it was -- an answer that was all thinking is asked once more with
+  `reasoning_effort: "none"` -- and the model it happened to is then asked
+  with thinking off from its FIRST round for half an hour (one entry a model
+  and server, the gone ones dropped at every write). Measured on the user's
+  LM Studio, the whole corpus asked in Khmer of gemma-4-12b: every question
+  thought its budget away, so each was two rounds of ~12 000 tokens and
+  ~95 s for the one answer the second round wrote; with the memory, one
+  round and 6-9 s. Thinking is still on for a model that has not shown it,
+  the tool-loop decision above.
+- **A reply in a shape nobody can use goes back ONCE** (2026-10-17,
+  `EC-304` / `EC-305`, `findAnswerShapeNudge` in both loops beside
+  `checkIsStepsWithoutPage`, `isShapeNudged`): a reply that is only its
+  frames (_Can you start a 5 minute countdown?_ started one on two screens
+  that were OFF and came back as two chips under no words) and one that ran
+  away into one letter (_សេវាកម្ម_ and then _ម_ nineteen hundred times, to
+  the round's 2 000 tokens) -- the second kept in the conversation only up
+  to where it broke. A run that still reaches the last round is cut where it
+  started (`cutRunawayAnswer`), and a model's own control token printed as
+  words (_ច<audio|> View_, gemma-4-12b) is taken out of the words and the
+  chips (`dropModelTokens`, which also draws a LaTeX `$\rightarrow$` as →).
+- **Steps written with NOTHING looked up go back once too** (2026-10-17,
+  `EC-311`, `checkIsStepsWithoutPage` with `ToolWatchType.toolCallCount` /
+  `canSearchGuide`): the Khmer stress run on gemma4:cloud wrote every list
+  of a pasted story and of a ten-turn chat from memory — _the show button
+  with an eye on it_ — because the rule waited for a search. Now numbered
+  steps with no tool called at all, in an ask that can search the guide (not
+  a verse search, a `/btw` question or a translation), are handed back with
+  `genOpenPageNudge`'s _written from memory_ sentence. A state answer, which
+  read the app first, still keeps its steps.
+- **The menu bar is English in every language, and the prompt says so**
+  (2026-10-17, `EC-313`, `genLanguageRule`): told to write no English word,
+  a model put the menu bar's Help into Khmer (_ជំនួយ → គន្លឹះទាំងអស់_) —
+  the ? button's word, a menu with no tips in it. File, Edit, View, Tools,
+  Window and Help, and a menu item the page writes in English, are written
+  as the page writes them.
+- **A model the server could not LOAD is said so** (2026-10-17, `EC-309`,
+  `modelLoad` in `providerIssueHelpers.ts`): LM Studio's 400 _Model loading
+  was stopped due to insufficient system resources_ had matched the
+  no-credit words on "insufficient", and a person was told in Khmer that
+  their account was out of money. Read before the money words; the sentence
+  says to pick a smaller model or close another one on that computer.
+- **An answer from a named page part is read once more for the job's
+  steps** (2026-10-18, `EC-330`, `genCompletenessNudge` /
+  `pickCheckedAnswer` in both loops, `ToolWatchType.canCheckCompleteness`).
+  Fresh passes of the whole list in Khmer on gemma4:cloud levelled at 88-89%
+  right, the rest stopping before the step that finishes the job with it
+  quoted. A known question whose hint named the part that answers goes back
+  once: add the missing step in the page's words, or reply KEEP and the
+  first answer stands. A custom server or Free only -- a paid key is not
+  billed a round nobody chose -- never on the last round. Beside it,
+  `checkIsDoneWithoutTool` (`EC-325`) hands back an ask to put something up
+  that ended without the tool that does it: gemma4:cloud had said a
+  countdown was started having called nothing.

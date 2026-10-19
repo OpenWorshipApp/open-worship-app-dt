@@ -116,6 +116,30 @@ Non-obvious:
   ([[scratch-dev-instance-beside-user-app]]), screenshot through a fresh
   server pinned with `OWA_CDP_PORT`: the row, its link, the note opened.
 
+**2026-10-16 — a downloaded Bible is agreed to before step 1** (the user,
+with a picture of the list of seven Khmer Bibles: _ask for user consent first
+… show user where is from, tell user it's not provided by openworship … when
+user agree then keep going_; CB-145, rule `chatbot-window.md`). Where it came
+from, not from Open Worship, responsible to its publisher, then **I agree** /
+**Open the website** / **Cancel**. Non-obvious:
+- **The notice comes AFTER the download, not before.** Every way in (a link,
+  the collection, a model's own `check`) passes `genBibleImportCheckAnswer`,
+  and the person agrees to the file's real title and address; Cancel deletes
+  the draft. A consent before the download would have needed a second copy of
+  it for the model's path.
+- **A model may not `import`** — refused in `runMcpToolCall` — or it could
+  have installed the draft the person never agreed to. The model's answer gets
+  the notice appended (`genBibleImportUnderAnswer`), since its own words
+  never carry it.
+- Seen live on the user's dev app: the notice, **I agree** → step 1, typed
+  `cancel` → the draft gone from `<temp>/open-worship-app-bible-import`.
+  **Open the website** was not pressed live (it opens the person's browser).
+- Only the chat import asks. The Settings form (`BibleXMLImportComp`) does
+  not — nobody asked for it there.
+- **Its addresses open in the browser** (the user, same day). Only addresses
+  the APP wrote are links (`ChatMessageType.links`, `chatLinkHelpers.ts`); a
+  model's words stay words. Pressed live: Edge opened on the collection.
+
 Unchanged: the Settings form (`BibleXMLImportComp`) still downloads in the
 renderer and reviews inline; the Info editor still edits locale/numbers/books;
 `bibles-data` follows `appLocalStorage.defaultStorageDirPath`. Verify the file on disk,

@@ -33,7 +33,13 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import {
     extractDictionary,
     extractLangMeta,
+    readSourceAssistantFacts,
 } from '../tools/owa-devtools-mcp/tran.mjs';
+import {
+    listEnglishManualPages,
+    listManualLanguages,
+    listManualTranslations,
+} from '../tools/owa-devtools-mcp/manualI18n.mjs';
 
 const REPO_ROOT = resolve('.');
 const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
@@ -47,8 +53,16 @@ const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
 // manual adds ~90 KB to the index; the internal corpus (185 notes, some of
 // them hundreds of kilobytes) stays capped or the index would be megabytes
 // read on every search.
+//
+// The page cap is a ceiling no page may reach, not a size to cut at: the
+// help window's own page passed the old 60 000 by itself, and everything
+// after that character went out of the search with nothing said --
+// measured 2026-10-16, "Can you write the notation for words I paste in?"
+// stopped finding its page the day eight lines were added above its answer
+// (EC-284). A page cut now is said here, and
+// `src/test-setup/knowledgeIndexLimit.test.ts` fails the gate on one.
 const SEARCH_TEXT_LIMIT = 3000;
-const MANUAL_SEARCH_TEXT_LIMIT = 60000;
+const MANUAL_SEARCH_TEXT_LIMIT = 120000;
 const HEADINGS_LIMIT = 1500;
 
 const SOURCES = [
@@ -237,6 +251,13 @@ for (const source of SOURCES) {
                     : SEARCH_TEXT_LIMIT,
             ),
         });
+        if (source.kind === 'manual' && body.length > MANUAL_SEARCH_TEXT_LIMIT) {
+            console.warn(
+                `✗ ${relativePath} is cut at ${MANUAL_SEARCH_TEXT_LIMIT} ` +
+                    `characters of ${body.length}: the rest cannot be found by ` +
+                    'the help search.',
+            );
+        }
     }
 }
 
@@ -244,6 +265,50 @@ writeFileSync(
     join(OUTPUT_DIR, 'index.json'),
     JSON.stringify({ generatedAt: new Date().toISOString(), entries }),
 );
+
+// The manual in the app's other languages (`docs/manual-i18n/<code>/`), an
+// index of its own per language -- `index.<code>.json` -- so a search run for
+// an English window never reads a word of Khmer. A page whose English has
+// changed since it was translated is marked stale: the help shows the English
+// for it until it is translated again.
+const englishPageMap = listEnglishManualPages();
+const translatedCounts = {};
+for (const langCode of listManualLanguages()) {
+    const translatedEntries = listManualTranslations(langCode, {
+        englishPageMap,
+    }).map((page) => {
+        const outputPath = join(
+            OUTPUT_DIR,
+            `manual-${langCode}`,
+            page.relativePath,
+        );
+        mkdirSync(dirname(outputPath), { recursive: true });
+        copyFileSync(page.absolutePath, outputPath);
+        const body = toBody(page.content);
+        return {
+            id: page.id,
+            lang: langCode,
+            title: page.title,
+            section: page.section,
+            kind: 'manual',
+            isStale: page.isStale,
+            file: `manual-${langCode}/${page.relativePath.split(sep).join('/')}`,
+            headings: genHeadings(body),
+            searchText: body.slice(0, MANUAL_SEARCH_TEXT_LIMIT),
+        };
+    });
+    writeFileSync(
+        join(OUTPUT_DIR, `index.${langCode}.json`),
+        JSON.stringify({
+            generatedAt: new Date().toISOString(),
+            entries: translatedEntries,
+        }),
+    );
+    translatedCounts[langCode] = {
+        pages: translatedEntries.length,
+        stale: translatedEntries.filter((entry) => entry.isStale).length,
+    };
+}
 
 // The app's own label dictionary, beside the documents that name those labels.
 //
@@ -281,6 +346,9 @@ for (const langCode of readdirSync(LANG_DATA_DIR)) {
         code: langCode,
         name: meta.name ?? langCode,
         nativeName: meta.nativeName ?? langCode,
+        // How a question is asked and answered in it (`assistant.json`): the
+        // help search reads a Khmer question through these.
+        assistant: readSourceAssistantFacts(langCode),
     });
     const dictionary = extractDictionary(packSource);
     if (Object.keys(dictionary).length > 0) {
@@ -296,8 +364,14 @@ const manualCount = entries.filter((entry) => entry.kind === 'manual').length;
 const tranCount = Object.values(dictionaries).reduce((total, dictionary) => {
     return total + Object.keys(dictionary).length;
 }, 0);
+const translatedText = Object.entries(translatedCounts)
+    .map(([langCode, count]) => {
+        return `${langCode} ${count.pages}${count.stale > 0 ? ` (${count.stale} stale)` : ''}`;
+    })
+    .join(', ');
 console.log(
     `Knowledge bundled: ${entries.length} documents ` +
         `(${manualCount} manual, ${entries.length - manualCount} internal), ` +
-        `${languages.length} languages, ${tranCount} translated labels`,
+        `${languages.length} languages, ${tranCount} translated labels` +
+        (translatedText === '' ? '' : `, translated manual: ${translatedText}`),
 );

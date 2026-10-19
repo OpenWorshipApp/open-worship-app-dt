@@ -41,9 +41,31 @@ const MOVER_SIZE = 40;
 
 let container: HTMLDivElement;
 let root: Root;
+// Animation frames run when a test says so, not on jsdom's own clock.
+let pendingFrames = new Map<number, FrameRequestCallback>();
+let lastFrameId = 0;
+
+function flushFrames() {
+    act(() => {
+        const frames = [...pendingFrames.values()];
+        pendingFrames.clear();
+        for (const frame of frames) {
+            frame(0);
+        }
+    });
+}
 
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    pendingFrames = new Map();
+    vi.stubGlobal('requestAnimationFrame', (frame: FrameRequestCallback) => {
+        lastFrameId += 1;
+        pendingFrames.set(lastFrameId, frame);
+        return lastFrameId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (frameId: number) => {
+        pendingFrames.delete(frameId);
+    });
     vi.clearAllMocks();
     mocks.checkMediaPlaying.mockReturnValue(false);
     container = document.createElement('div');
@@ -186,8 +208,12 @@ describe('FlexResizeActorComp keyboard', () => {
             [preNode, preSize],
             [nextNode, nextSize],
         ] as const) {
-            Object.defineProperty(node, 'offsetWidth', { value: size });
-            Object.defineProperty(node, 'offsetHeight', { value: size });
+            for (const property of ['offsetWidth', 'offsetHeight']) {
+                Object.defineProperty(node, property, {
+                    value: size,
+                    configurable: true,
+                });
+            }
         }
         return { actor, preNode, nextNode, checkSize, disableWidget };
     }
@@ -376,6 +402,78 @@ describe('FlexResizeActorComp keyboard', () => {
         act(() => menuItems[2].onSelect());
         expect(disableWidget).toHaveBeenCalledWith('second', ['second', 2]);
         expect(preNode.style.flexGrow).toBe('5');
+    });
+
+    // jsdom lays nothing out, so the fixed sizes above can never show a
+    // value going stale. Here each pane is as wide as its grow says.
+    function renderSharedPanes(type: ResizeKindType) {
+        const rendered = renderBetweenPanes(type);
+        const { preNode, nextNode } = rendered;
+        const toGrow = (node: HTMLElement) => Number(node.style.flexGrow);
+        for (const node of [preNode, nextNode]) {
+            const toSize = () => {
+                return (
+                    (600 * toGrow(node)) / (toGrow(preNode) + toGrow(nextNode))
+                );
+            };
+            Object.defineProperty(node, 'offsetWidth', { get: toSize });
+            Object.defineProperty(node, 'offsetHeight', { get: toSize });
+        }
+        return rendered;
+    }
+
+    test('says where it sits from the start, not from the first focus', () => {
+        const { actor } = renderSharedPanes('h');
+        expect(actor.getAttribute('aria-valuenow')).toBeNull();
+        flushFrames();
+        expect(actor.getAttribute('aria-valuenow')).toBe('50');
+    });
+
+    // Live: arrowed to 65%, Reset Size put the panes back to 75% and the
+    // divider still said 65.
+    test('Reset Size and a double-click say where they put it', () => {
+        const { actor } = renderSharedPanes('h');
+        flushFrames();
+        pressKey(actor, 'ArrowRight', true);
+        expect(actor.getAttribute('aria-valuenow')).toBe('67');
+
+        act(() =>
+            actor.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const menuItems = mocks.showAppContextMenu.mock.calls.at(-1)?.[1];
+        expect(menuItems[0].menuElement).toBe('Reset Size');
+        act(() => menuItems[0].onSelect());
+        flushFrames();
+        // The defaults are 3 and 2.
+        expect(actor.getAttribute('aria-valuenow')).toBe('60');
+
+        pressKey(actor, 'ArrowLeft', true);
+        expect(actor.getAttribute('aria-valuenow')).toBe('43');
+        act(() =>
+            actor.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })),
+        );
+        flushFrames();
+        expect(actor.getAttribute('aria-valuenow')).toBe('60');
+    });
+
+    test('a drag says where it left it', () => {
+        const { actor } = renderSharedPanes('h');
+        flushFrames();
+        drag(actor, 100, 250);
+        endDrag();
+        flushFrames();
+        expect(actor.getAttribute('aria-valuenow')).toBe('75');
+    });
+
+    test('a frame still waiting when it goes is dropped', () => {
+        renderSharedPanes('h');
+        expect(pendingFrames.size).toBe(1);
+        act(() => {
+            root.render(<div />);
+        });
+        expect(pendingFrames.size).toBe(0);
     });
 
     test('playing media prevents a context-menu collapse', () => {

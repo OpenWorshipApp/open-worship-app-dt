@@ -13,6 +13,9 @@ const h = vi.hoisted(() => ({
     chapterEnd: undefined as number | undefined,
     verseEnd: 3,
     toTextArgs: [] as unknown[][],
+    // What the strict parser makes of a key the data spells wrongly.
+    isUnparsable: false,
+    parsedKeys: [] as string[],
 }));
 
 vi.mock('../_owa-crypto', () => ({
@@ -41,13 +44,21 @@ vi.mock('../others/CacheManager', () => ({
 }));
 vi.mock('../bible-list/bibleRenderHelpers', () => ({
     bibleRenderHelper: {
-        fromKJVBibleVersesKey: () => ({
-            bookKey: h.bookKey,
-            chapter: 1,
-            verseStart: 2,
-            verseEnd: h.verseEnd,
-            ...(h.chapterEnd === undefined ? {} : { chapterEnd: h.chapterEnd }),
-        }),
+        parseKJVBibleVersesKey: (key: string) => {
+            h.parsedKeys.push(key);
+            if (h.isUnparsable) {
+                return null;
+            }
+            return {
+                bookKey: h.bookKey,
+                chapter: 1,
+                verseStart: 2,
+                verseEnd: h.verseEnd,
+                ...(h.chapterEnd === undefined
+                    ? {}
+                    : { chapterEnd: h.chapterEnd }),
+            };
+        },
     },
 }));
 vi.mock('../bible-list/BibleItem', () => ({
@@ -109,6 +120,8 @@ beforeEach(() => {
     h.chapterEnd = undefined;
     h.verseEnd = 3;
     h.toTextArgs.length = 0;
+    h.isUnparsable = false;
+    h.parsedKeys.length = 0;
 });
 
 describe('Bible cross-reference downloads', () => {
@@ -210,6 +223,16 @@ describe('reference display', () => {
         expect(long?.bibleText).toBe(h.bibleText);
         h.bookKey = 'UNKNOWN';
         expect(await breakItem('KJV', 'UNKNOWN 1:2-3')).toBeNull();
+    });
+
+    // RD-51: `PSA 119:ющ` is in every shipped bundle. Read leniently it was a
+    // row titled `Psalm 119:` opening "Record not found".
+    test('builds nothing for a reference that names no passage', async () => {
+        h.isUnparsable = true;
+        expect(await breakItem('KJV', 'PSA 119:ющ')).toBeNull();
+        expect(h.parsedKeys).toEqual(['PSA 119:ющ']);
+        expect(h.items).toEqual([]);
+        expect(h.toTextArgs).toEqual([]);
     });
 
     test('keeps the end chapter of a cross-chapter reference and reads one chapter', async () => {

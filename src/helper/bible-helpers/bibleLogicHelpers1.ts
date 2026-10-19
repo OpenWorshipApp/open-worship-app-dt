@@ -77,9 +77,15 @@ export function useChapterMatch(
     const [matchedChapters, setMatchedChapters] = useState<
         ChapterMatchType[] | null
     >(null);
+    // `bibleKey` is a dep like the other two: the book's availability, its
+    // chapter numerals and its chapter-0 introduction all belong to the Bible.
+    // Without it, switching KJV to a Bible with an introduction kept KJV's
+    // list, and no intro toggle, until the chapter text changed.
     useAppEffectAsync(
         async (methodContext) => {
             if (!(await checkIsBookAvailable(bibleKey, bookKey))) {
+                // Not the previous Bible's list for a book this one lacks.
+                methodContext.setMatchedChapters(null);
                 return;
             }
             const chapterLocaleStringList = await genChapterMatches(
@@ -97,7 +103,7 @@ export function useChapterMatch(
             });
             methodContext.setMatchedChapters(chapterLocaleStringList);
         },
-        [bookKey, guessingChapter],
+        [bibleKey, bookKey, guessingChapter],
         { setMatchedChapters },
     );
     return matchedChapters;

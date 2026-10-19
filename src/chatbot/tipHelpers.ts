@@ -18,6 +18,7 @@
 // back to the one I was half way through" only by a walk.
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import { tran } from './chatTranHelpers';
 
 const TIP_SETTING_NAME = 'chatbot-tip-shown';
 // The line can be put away for a while (2026-10-15, the user's ask with the
@@ -49,13 +50,13 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
     {
         id: 'send',
         text:
-            'Ctrl+Enter asks. Plain Enter starts a new line, so a long ' +
+            'Ctrl+Enter sends. Plain Enter starts a new line, so a long ' +
             'question can run across several.',
     },
     {
         id: 'stop',
         text:
-            'While an answer is on its way, Ask becomes Stop — and it really ' +
+            'While an answer is on its way, Send becomes Stop — and it really ' +
             'does call the question off.',
     },
     {
@@ -199,15 +200,19 @@ export function stepChatTip(currentId: string | null, delta: number) {
     const from = index === -1 ? 0 : index;
     // `+ count` before the modulo: JavaScript's `%` keeps the sign, so a step
     // back from the first tip would index at -1 and hand back nothing.
-    const tip = CHAT_TIP_LIST[(from + delta + count) % count];
-    rememberChatTip(tip);
-    return tip;
+    return rememberChatTip(CHAT_TIP_LIST[(from + delta + count) % count]);
 }
 
-/** One tiny setting; it is written once per press, never per keystroke. */
-function rememberChatTip(tip: ChatTipType) {
+/**
+ * One tiny setting; it is written once per press, never per keystroke. What
+ * comes back is the tip as the window shows it: the list stays English, so
+ * each one is translated here, as it is handed over -- `tran` with no
+ * literal the key gate can read, which is why `chatTranLabels.test.ts` holds
+ * every tip to its Khmer and French itself.
+ */
+function rememberChatTip(tip: ChatTipType): ChatTipType {
     setSetting(TIP_SETTING_NAME, tip.id);
-    return tip;
+    return { ...tip, text: tran(tip.text) };
 }
 
 /**
@@ -234,6 +239,22 @@ export function checkIsChatTipHidden(now = Date.now()) {
 
 export function hideChatTip(now = Date.now()) {
     setSetting(TIP_HIDDEN_UNTIL_SETTING_NAME, `${now + CHAT_TIP_HIDE_MS}`);
+}
+
+// Told to the line when `/tips` brings it back: it read the setting once,
+// when it was drawn.
+export const CHAT_TIPS_SHOWN_EVENT = 'owa-chat-tips-shown';
+
+/**
+ * The line back before its 30 days are up (`/tips`, 2026-10-17, the user's
+ * ask: _add `/tips` to open tips again_): the hide is forgotten, and the
+ * line drawn again at once.
+ */
+export function showChatTips() {
+    setSetting(TIP_HIDDEN_UNTIL_SETTING_NAME, '');
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event(CHAT_TIPS_SHOWN_EVENT));
+    }
 }
 
 /**

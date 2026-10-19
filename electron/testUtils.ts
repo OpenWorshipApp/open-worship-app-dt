@@ -15,6 +15,10 @@ export type MockWebContents = {
     findInPage: ReturnType<typeof vi.fn>;
     stopFindInPage: ReturnType<typeof vi.fn>;
     isDestroyed: ReturnType<typeof vi.fn>;
+    // Optional because the source calls it as `isLoading?.()`
+    // (`ElectronScreenController`); the fixture still provides it so tests can
+    // drive the "still loading" branch with `.mockReturnValue(true)`.
+    isLoading?: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
     focus: ReturnType<typeof vi.fn>;
     id: number;
@@ -83,6 +87,7 @@ export function createMockWebContents(
         findInPage: vi.fn(() => 1),
         stopFindInPage: vi.fn(),
         isDestroyed: vi.fn(() => false),
+        isLoading: vi.fn(() => false),
         close: vi.fn(),
         focus: vi.fn(),
         id: (lastMockWebContentsId += 1),

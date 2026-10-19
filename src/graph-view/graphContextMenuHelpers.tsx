@@ -49,9 +49,13 @@ export function genGraphPreviewContextMenuItems(
 /**
  * Right-click handler for anywhere a lookup record is already clickable.
  *
- * Takes the NATIVE event: `showAppContextMenu` calls `preventDefault` and
- * `stopPropagation` on what it is handed, which is also what stops the bible
- * view's own context menu from opening behind this one.
+ * Takes the NATIVE event, which `showAppContextMenu` `preventDefault`s and
+ * `stopPropagation`s. That does NOT keep an ancestor's React `onContextMenu`
+ * from running: React has already received the native event at its root and
+ * walks its own tree with the SYNTHETIC one, which only the synthetic
+ * `stopPropagation` halts. A caller inside such an ancestor stops the synthetic
+ * event itself first — inside a bible view the ancestor builds its own menu
+ * after an await and replaces this one (`RenderVerseLookupTextComp`).
  */
 export function showGraphPreviewContextMenu(
     event: MouseEvent,

@@ -2,10 +2,10 @@
 id: W-29
 title: "Look up a Bible name or place (people, tribes, cities, maps)"
 section: "Configuration"
-verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126]
-screenshots: 6
+verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149]
+screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -93,6 +93,34 @@ your Bible reading.
     opened the **[en:tran:Verses]** section — ready to paste into a note or a document.
 12. Closing the lookup window leaves the record windows you opened where they are.
     Each has its own **×**.
+13. **Ask the assistant about it.** The robot at the left end of a record window's
+    title bar — **[en:tran:Ask the Assistant About This Person]**, **[en:tran:Ask the Assistant About This Place]**,
+    or on a verse window **[en:tran:Ask the Assistant About This Passage]** — opens the
+    help window (**W-42**) in a chat of its own about what that window shows. It is
+    there only while AI features are on, and it asks the same two questions the
+    🤖 asks first. The chat reads the whole record from the app — the description,
+    the family and the places, every verse reference and the first verses
+    themselves — says it is ready and offers three questions to press, such as
+    _Who was Adam?_. Everything you type in that chat is then about that person,
+    place or passage, and the assistant looks up the people, places and verses it
+    leads to by itself. The names and places come from the King James Version,
+    and the assistant says so if you ask. The **[en:tran:Still asking about]** line above
+    the box names it; press its **×** to ask about something else. 📸
+    A passage you are reading opens the same way: the robot at the end of a Bible
+    view's toolbar (the row that shows when the mouse is over its title), or
+    right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
+    the verse under the mouse or **[en:tran:Ask the Assistant About This Passage]** for
+    the whole passage.
+    **Buttons do the rest, with no question needed.** Under a passage's card:
+    **[en:tran:Open in bible lookup]**, **[en:tran:Previous chapter]** and **[en:tran:Next chapter]**
+    (**[en:tran:Previous verse]** and **[en:tran:Next verse]** for a single verse),
+    **[en:tran:Read it in another Bible]**, **[en:tran:Who and where is in it]**,
+    **[en:tran:Open another passage]** (type the one you want, like _John 3:16_),
+    **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]**. Under a person's or a
+    place's card: **[en:tran:Its verses]**, **[en:tran:Family and places]** (a place:
+    **[en:tran:Related places]**) and **[en:tran:Read it in another Bible]**. A name, a place, a
+    verse or a Bible in the list that comes back opens its own card in the same chat, and
+    every answer ends with **[en:tran:More things to do]**.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
@@ -105,7 +133,7 @@ dataset wrote it, and so is a place type a newer dataset adds before the app kno
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126`
+`RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

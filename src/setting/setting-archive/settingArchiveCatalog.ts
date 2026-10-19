@@ -499,6 +499,10 @@ const EXCLUDED_HOME_KEY_LIST = [
     'selected-parent-dir',
     'selected-parent-dir-id',
     'selected-parent-dir-history',
+    // The move of that folder off the Desktop, waiting for a start, and
+    // this computer's answer to being asked about it.
+    'data-dir-move-pending',
+    'data-dir-move-hidden-until',
     // This computer's identity on the network, the devices it trusts and
     // how it lets them in -- never cloned onto a second computer.
     'screen-mirror-identity',

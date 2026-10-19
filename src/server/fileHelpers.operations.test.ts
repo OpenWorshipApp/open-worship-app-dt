@@ -109,6 +109,7 @@ vi.mock('../progress-bar/progressBarHelpers', () => ({
 vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
 
 import {
+    createNewFileDetail,
     ensureDirectory,
     fsCheckDirExist,
     fsCheckFileExist,
@@ -299,5 +300,32 @@ describe('file operations on a temporary directory', () => {
         );
         expect(toScreenFileURL(filePath)).toBe(pathToFileURL(filePath).href);
         expect(h.hideProgressBar).toHaveBeenCalledTimes(2);
+    });
+
+    it('says a missing folder in words instead of a raw ENOENT', async () => {
+        const missingDir = inWorkDir('zz-missing-dir');
+
+        const filePath = await createNewFileDetail(
+            missingDir,
+            'song',
+            '{}',
+            'appDocument',
+        );
+
+        expect(filePath).toBeNull();
+        expect(h.showSimpleToast).toHaveBeenCalledWith(
+            'Creating File',
+            `Folder not found: ${missingDir}`,
+        );
+        expect(await fsCheckDirExist(missingDir)).toBe(false);
+
+        const createdFilePath = await createNewFileDetail(
+            workDir,
+            'song',
+            '{}',
+            'appDocument',
+        );
+        expect(createdFilePath).not.toBeNull();
+        expect(await fsReadFile(createdFilePath!)).toBe('{}');
     });
 });

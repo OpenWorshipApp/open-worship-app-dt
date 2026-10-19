@@ -200,6 +200,18 @@ const ACTING_TOOL_SET = new Set([
     // counts the tool, not the argument: a loop presenting verse after verse
     // is exactly what the cap is for.
     'owa_present_bible',
+    // Opens a found verse in the Bible Lookup. A search only reads, and is
+    // counted all the same: each one scans a whole Bible, and a loop of
+    // them is the thing the cap is for.
+    'owa_find_verse',
+    // Reads a person, a place or a passage. Changes nothing, and is counted
+    // all the same: a record no open panel holds loads the ~34MB names
+    // dataset for the read, and a loop of those is a church laptop frozen.
+    'owa_lookup_record',
+    // Reads a Resources file. Changes nothing, and is counted all the
+    // same: each PDF read draws its pages in a child process, and a
+    // loop of those is a church laptop busy for minutes.
+    'owa_resource_file',
     // Starts a countdown, a clock or a message on the projector, or takes one
     // off. A `check` only reads, but the budget counts the tool, not the
     // argument, for the same reason as the passage above.

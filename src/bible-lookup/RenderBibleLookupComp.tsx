@@ -8,6 +8,8 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
+import { ModalCloseButtonComp } from '../app-modal/ModalComp';
+import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { getSetting } from '../helper/settingHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
 import {
@@ -154,6 +156,7 @@ export default function RenderBibleLookupComp({
             return viewController.getEditingResult();
         }, []);
     const { isValid: isValidBibleKey, bibleKey } = useSelectedBibleKey();
+    const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
     // Every keystroke asks for a new result, and the lookups resolve in
     // whatever order their parsing finishes -- `Psal` can land AFTER
     // `Psalm 23:1`. Applying each one as it arrived left the editing pane
@@ -240,11 +243,29 @@ export default function RenderBibleLookupComp({
                         toggleAdvanceLookup={toggleAdvanceLookup}
                     />
                 ) : (
-                    <div className="card-header d-flex justify-content-end">
+                    // The close has to be here too: `ModalCloseButtonComp` is
+                    // the only thing that registers Ctrl+Q, and the modal
+                    // silences the app's own keys. With a lookup Bible that is
+                    // not installed, this header had no ✕ and the Presenter
+                    // could only be got out of with View → Reload.
+                    <div
+                        className={
+                            'card-header d-flex justify-content-end' +
+                            (hideBibleLookupPopup === null ? '' : ' pe-5')
+                        }
+                        style={{ height: '38px' }}
+                    >
                         <RenderExtraButtonsRightComp
                             toggleAdvanceLookup={toggleAdvanceLookup}
                             isAdvanceLookupOpened={isAdvanceLookupOpened}
                         />
+                        {hideBibleLookupPopup === null ? null : (
+                            <ModalCloseButtonComp
+                                close={() => {
+                                    hideBibleLookupPopup();
+                                }}
+                            />
+                        )}
                     </div>
                 )}
                 <div

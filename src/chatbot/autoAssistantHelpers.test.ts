@@ -6,6 +6,7 @@ import {
     FREE_MODEL_SIZE,
     askWithAutoAssistant,
     checkHasAutoSetback,
+    checkIsCloudModel,
     clearAutoSetbacks,
     genAutoAnswerNote,
     markAutoSetback,
@@ -113,6 +114,25 @@ describe('readModelSize', () => {
     });
 });
 
+describe('checkIsCloudModel', () => {
+    test("reads Ollama's cloud tags, in the id and in the shown name", () => {
+        expect(checkIsCloudModel('gemma4:cloud')).toBe(true);
+        expect(checkIsCloudModel('gemma4:31b-cloud')).toBe(true);
+        expect(checkIsCloudModel('deepseek-v4.1-flash:cloud')).toBe(true);
+        // What `genAutoCandidates` hands in: the id, then the shown name.
+        expect(checkIsCloudModel('gemma4:31b-cloud Gemma 4 31B')).toBe(true);
+        expect(checkIsCloudModel('gemma4-31b Gemma 4 31B cloud')).toBe(true);
+    });
+
+    test('is false for a model that runs on the server itself', () => {
+        expect(checkIsCloudModel('gemma4:12b')).toBe(false);
+        expect(checkIsCloudModel('qwen3.5:9b')).toBe(false);
+        expect(checkIsCloudModel('icloud-model')).toBe(false);
+        expect(checkIsCloudModel('cloudy-7b')).toBe(false);
+        expect(checkIsCloudModel('')).toBe(false);
+    });
+});
+
 describe('toAutoBusyKey', () => {
     test('is the whole server for a model of one, the service otherwise', () => {
         expect(toAutoBusyKey('custom', 'server-1/row-1')).toBe(
@@ -150,6 +170,84 @@ describe('rankAutoCandidates', () => {
         expect(
             toLabels(rankAutoCandidates([unnamed, FREE], new Map())),
         ).toEqual([FREE.label, unnamed.label]);
+    });
+
+    // The user's own Ollama list, and the order in their words:
+    // cloud/strongest -> cloud/stronger -> cloud/strong -> cloud ->
+    // non-cloud/strongest -> non-cloud/stronger -> ...
+    test('asks every cloud model first, the bigger first, then the rest by size', () => {
+        const flashCloud = genServerCandidate(
+            'super-mac',
+            'deepseek-v4.1-flash:cloud',
+        );
+        const bigCloud = genServerCandidate('super-mac', 'gemma4:31b-cloud');
+        const smallCloud = genServerCandidate('super-mac', 'gemma4:4b-cloud');
+        const cloud = genServerCandidate('super-mac', 'gemma4:cloud');
+        const nine = genServerCandidate('super-mac', 'qwen3.5:9b');
+        const twelve = genServerCandidate('super-mac', 'gemma4:12b');
+        const e4b = genServerCandidate('super-mac', 'gemma4:e4b');
+        const seventy = genServerCandidate('desk', 'llama3.3:70b');
+        expect(
+            toLabels(
+                rankAutoCandidates(
+                    [
+                        flashCloud,
+                        e4b,
+                        bigCloud,
+                        cloud,
+                        FREE,
+                        nine,
+                        smallCloud,
+                        twelve,
+                        seventy,
+                    ],
+                    new Map(),
+                ),
+            ),
+        ).toEqual([
+            bigCloud.label,
+            smallCloud.label,
+            // No size in either name: the list's own order.
+            flashCloud.label,
+            cloud.label,
+            seventy.label,
+            twelve.label,
+            nine.label,
+            FREE.label,
+            e4b.label,
+        ]);
+    });
+
+    test('still leaves out a cloud model whose server does not answer, and puts a busy one at the back', () => {
+        const bigCloud = genServerCandidate('super-mac', 'gemma4:31b-cloud');
+        const unreachable = genStateMap([[bigCloud, { isReachable: false }]]);
+        expect(
+            toLabels(rankAutoCandidates([bigCloud, BIG, FREE], unreachable)),
+        ).toEqual([BIG.label, FREE.label]);
+        const options = {
+            busyKeys: [toAutoBusyKey(bigCloud.provider, bigCloud.model)],
+        };
+        expect(
+            toLabels(rankAutoCandidates([bigCloud, BIG], new Map(), options)),
+        ).toEqual([BIG.label, bigCloud.label]);
+    });
+
+    test('keeps a preferred model ahead of a cloud one, and its cloud rows first', () => {
+        const flashCloud = genServerCandidate(
+            'super-mac',
+            'deepseek-v4.1-flash:cloud',
+        );
+        const gemmaCloud = genServerCandidate('super-mac', 'gemma4:cloud');
+        const gemmaSmall = genServerCandidate('laptop', 'google/gemma-4-e4b');
+        expect(
+            toLabels(
+                rankAutoCandidates(
+                    [flashCloud, gemmaSmall, gemmaCloud],
+                    new Map(),
+                    { preferModelPattern: /gemma[-_\s]?4/i },
+                ),
+            ),
+        ).toEqual([gemmaCloud.label, gemmaSmall.label, flashCloud.label]);
     });
 
     test('leaves out a server that does not answer', () => {
@@ -258,6 +356,36 @@ describe('rankAutoCandidates', () => {
         expect(toLabels(rankAutoCandidates([FREE, second], new Map()))).toEqual(
             [FREE.label, second.label],
         );
+    });
+
+    // The user's word for a verse that has to be translated: Gemma 4 first,
+    // whatever its size -- but never one that cannot answer, and never an
+    // LM Studio model that is not loaded.
+    test('asks a preferred model first, among those that can answer', () => {
+        const gemmaSmall = genServerCandidate('laptop', 'google/gemma-4-e4b');
+        const options = { preferModelPattern: /gemma[-_\s]?4/i };
+        expect(
+            toLabels(
+                rankAutoCandidates(
+                    [NINE, FREE, gemmaSmall],
+                    new Map(),
+                    options,
+                ),
+            ),
+        ).toEqual([gemmaSmall.label, NINE.label, FREE.label]);
+        expect(
+            toLabels(rankAutoCandidates([NINE, FREE, gemmaSmall], new Map())),
+        ).toEqual([NINE.label, FREE.label, gemmaSmall.label]);
+        const unloaded = genStateMap([
+            [gemmaSmall, { kind: 'lm-studio', isLoaded: false }],
+        ]);
+        expect(
+            toLabels(rankAutoCandidates([NINE, gemmaSmall], unloaded, options)),
+        ).toEqual([NINE.label, gemmaSmall.label]);
+        const unreachable = genStateMap([[gemmaSmall, { isReachable: false }]]);
+        expect(
+            toLabels(rankAutoCandidates([gemmaSmall], unreachable, options)),
+        ).toEqual([]);
     });
 });
 

@@ -356,7 +356,16 @@ export default function FileListHandlerComp({
                             isDirSettingRouteHidden={isDirSettingRouteHidden}
                         />
                     ) : (
-                        <ul className="list-group flex-fill d-flex">
+                        <ul
+                            className="list-group flex-fill d-flex"
+                            // Room under the last row for the Scroll to the
+                            // top button (45px, 5px off the bottom right),
+                            // which floats over this list once it scrolls:
+                            // the last row's own controls -- an audio's
+                            // Repeat toggle -- sat under it, and a press
+                            // there scrolled the list instead.
+                            style={{ paddingBottom: '50px' }}
+                        >
                             {onNewFile !== undefined && isCreatingNew ? (
                                 <AskingNewNameComp
                                     applyName={handleNameApplying}

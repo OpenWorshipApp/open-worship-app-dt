@@ -20,20 +20,35 @@ const LIST_LINE_PATTERN = /^\s*(?:\d+[a-z]?[.)]|[-*•])\s+/;
 // blank lines alone, one "passage" of it ran to fourteen thousand characters.
 // A line that merely STARTS with a bold word ("**Alt+↑** puts the question
 // back") is the sentence before it carrying on, and stays where it is.
-const BOLD_LEAD_PATTERN = /^\s*\*\*[^*\n]{3,160}[.:?!]\*\*/;
+// A sentence may end in Khmer's full stop (`។`): a translated page
+// (`manualI18n.mjs`) must fall into the same passages as its English one.
+const BOLD_LEAD_PATTERN = /^\s*\*\*[^*\n]{3,160}[.:?!។]\*\*/;
 // The same lead when the manual's ninety-character wrap carried it over a
 // line break: "**Auto, the last row of that list, chooses for you — among
 // the assistants that" / "cost nothing.** Pick …". Five of the help window's
 // leads were wrapped, each stayed inside the step above it, and the step that
 // lists who answers ran to 6 800 characters -- longer than what rides.
 const BOLD_LEAD_OPEN_PATTERN = /^\s*\*\*[^*\n]{3,160}$/;
-const BOLD_LEAD_CLOSE_PATTERN = /^\s*[^*\n]{1,160}[.:?!]\*\*/;
+const BOLD_LEAD_CLOSE_PATTERN = /^\s*[^*\n]{1,160}[.:?!។]\*\*/;
 // Past this length a passage is several subjects under one lead, and its
 // words count for less (see `rankPassages`).
 const LONG_PASSAGE_LENGTH = 2500;
 // The manual marks a step that has a screenshot with a camera. It means
 // nothing to somebody reading the words, and less to a model.
 const SCREENSHOT_MARK_PATTERN = /\s*📸/gu;
+
+/**
+ * Whether a line opens a paragraph on a bold lead, wrapped over to the next
+ * line or not. Shared with the chatbot's cut of a translated page
+ * (`splitPageBlocks`), which has to fall into the same paragraphs.
+ */
+export function checkIsBoldLeadLine(line, nextLine = '') {
+  return (
+    BOLD_LEAD_PATTERN.test(line) ||
+    (BOLD_LEAD_OPEN_PATTERN.test(line) &&
+      BOLD_LEAD_CLOSE_PATTERN.test(nextLine ?? ''))
+  );
+}
 
 /** Lower case, labels out of their `[en:tran:…]` templates, words only. */
 export function toPassageKey(text) {
@@ -74,13 +89,9 @@ export function toPassages(text) {
       close();
       continue;
     }
-    const isWrappedLead =
-      BOLD_LEAD_OPEN_PATTERN.test(line) &&
-      BOLD_LEAD_CLOSE_PATTERN.test(rawLines[lineIndex + 1] ?? '');
     if (
       LIST_LINE_PATTERN.test(line) ||
-      BOLD_LEAD_PATTERN.test(line) ||
-      isWrappedLead
+      checkIsBoldLeadLine(line, rawLines[lineIndex + 1])
     ) {
       close();
       current = { text: line.trim(), at: lineAt };
@@ -202,19 +213,38 @@ export function rankPassages(passages, terms = [], anchors = []) {
     });
 }
 
+// A cut never lands inside a button's name: `**[en:tran:Line …` is a
+// template no resolver can read, and it reached the help window as those
+// very characters (2026-10-17, a Khmer excerpt). The cut goes before it,
+// with the bold that opened round it.
+function cutBeforeOpenTemplate(head) {
+  const open = head.lastIndexOf('[en:tran:');
+  if (open === -1 || head.includes(']', open)) {
+    return head;
+  }
+  return head.slice(0, open).replace(/\*+$/, '');
+}
+
+// The last place inside the text a sentence ends: a full stop of ANY script
+// (`\p{Sentence_Terminal}` -- the Khmer `។` as well as `.`, `!`, `?`)
+// with a space or the end after it.
+function findLastSentenceEnd(head) {
+  let last = -1;
+  for (const match of head.matchAll(/\p{Sentence_Terminal}(?=\s|$)/gu)) {
+    last = match.index;
+  }
+  return last;
+}
+
 function cutExcerpt(text) {
   if (text.length <= EXCERPT_CHAR_LIMIT) {
     return text;
   }
-  const head = text.slice(0, EXCERPT_CHAR_LIMIT);
+  const head = cutBeforeOpenTemplate(text.slice(0, EXCERPT_CHAR_LIMIT));
   // The last sentence that ends inside the limit, when one ends late enough
   // to be worth stopping at; else the last whole word. Said either way: a
   // quote that stops without saying so reads as the whole of it.
-  const sentenceEnd = Math.max(
-    head.lastIndexOf('. '),
-    head.lastIndexOf('! '),
-    head.lastIndexOf('? '),
-  );
+  const sentenceEnd = findLastSentenceEnd(head);
   if (sentenceEnd >= EXCERPT_CHAR_LIMIT * 0.5) {
     return `${head.slice(0, sentenceEnd + 1)} …`;
   }
@@ -264,6 +294,47 @@ export function genPassageExcerpt(text, terms = [], anchors = []) {
     next++
   ) {
     excerpt += `\n${passages[next].text}`;
+  }
+  return cutExcerpt(excerpt.replace(SCREENSHOT_MARK_PATTERN, ''));
+}
+
+/**
+ * The same excerpt out of a page's TRANSLATION: the passage that answers is
+ * chosen on the English page, by the words of the question (`rankPassages`),
+ * and the passages at the same place in the translation are quoted. A
+ * translation keeps its page's steps and paragraphs where they are
+ * (`manualI18n.mjs`); one that does not -- a different number of passages --
+ * is no match for this, and null says so: the English excerpt stands.
+ */
+export function genTranslatedExcerpt(
+  englishText,
+  translatedText,
+  terms = [],
+  anchors = [],
+) {
+  const englishPassages = toPassages(
+    String(englishText ?? '').replace(/\r\n/g, '\n'),
+  );
+  const translatedPassages = toPassages(
+    String(translatedText ?? '').replace(/\r\n/g, '\n'),
+  );
+  if (
+    englishPassages.length === 0 ||
+    englishPassages.length !== translatedPassages.length
+  ) {
+    return null;
+  }
+  const bestIndex =
+    rankPassages(englishPassages, terms, anchors)[0]?.index ?? 0;
+  let englishLength = englishPassages[bestIndex].text.length;
+  let excerpt = translatedPassages[bestIndex].text;
+  for (
+    let next = bestIndex + 1;
+    next < englishPassages.length && englishLength < EXCERPT_SHORT_LENGTH;
+    next++
+  ) {
+    englishLength += englishPassages[next].text.length + 1;
+    excerpt += `\n${translatedPassages[next].text}`;
   }
   return cutExcerpt(excerpt.replace(SCREENSHOT_MARK_PATTERN, ''));
 }

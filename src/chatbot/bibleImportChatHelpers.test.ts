@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => {
         callTool: vi.fn(),
         requestBibleImport: vi.fn(),
         openBibleSetting: vi.fn(),
+        openExternalURL: vi.fn(),
     };
 });
 
@@ -23,13 +24,23 @@ vi.mock('../setting/bible-setting/bibleImportRequestHelpers', () => {
 vi.mock('../setting/settingHelpers', () => {
     return { openBibleSetting: mocks.openBibleSetting };
 });
+vi.mock('../server/appProvider', () => {
+    return {
+        default: { browserUtils: { openExternalURL: mocks.openExternalURL } },
+    };
+});
 
 import {
     BIBLE_IMPORT_MANUAL_ID,
     BIBLE_IMPORT_STEP_TOOL_NAME,
     findBibleImportState,
+    getBibleImportInputContext,
+    genBibleImportContextHint,
+    checkBibleImportReplyNeedsHelp,
+    readBibleImportHelpState,
     genBibleImportCheckAnswer,
     genBibleImportOfferAction,
+    genBibleImportUnderAnswer,
     readBibleImportLanguageAsk,
     readBibleImportLinkAsk,
     readBibleImportTypedReply,
@@ -100,8 +111,14 @@ function pressByLabel(
     return runBibleImportStep(action.args as BibleImportStateType);
 }
 
+// Past the notice a downloaded Bible opens on, to step 1.
+function agreeTo(answer: { actions?: { label: string; args?: any }[] }) {
+    return pressByLabel(answer, 'I agree');
+}
+
 beforeEach(() => {
     mocks.callTool.mockReset();
+    mocks.openExternalURL.mockReset();
 });
 
 describe('readBibleImportLinkAsk', () => {
@@ -133,15 +150,19 @@ describe('readBibleImportLinkAsk', () => {
 describe('a step by step import, pressed through', () => {
     it('downloads, asks four things, then installs with what was pressed', async () => {
         mocks.callTool.mockResolvedValueOnce(JSON.stringify(CHECKED));
-        const first = await runBibleImportStep({ step: 'check', url: LINK });
+        const notice = await runBibleImportStep({ step: 'check', url: LINK });
         expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
             action: 'check',
             url: LINK,
         });
-        expect(first.text).toContain(
+        expect(notice.text).toContain(
             'Khmer Standard Version 1954 = Hammond Version',
         );
-        expect(first.text).toContain('31,102 verses');
+        expect(notice.text).toContain('31,102 verses');
+        // Agreed to before any question.
+        expect(notice.text).not.toContain('Step 1');
+        expect(notice.actions?.[0].label).toBe('I agree');
+        const first = await agreeTo(notice);
         expect(first.text).toContain('Step 1 of 4');
         expect(first.actions?.map((one) => one.label)).toEqual([
             'KSV (suggested)',
@@ -230,21 +251,26 @@ describe('a step by step import, pressed through', () => {
 });
 
 describe('typing instead of pressing', () => {
-    function lastActions() {
-        return genBibleImportCheckAnswer(CHECKED, {
-            step: 'check',
-            url: LINK,
-        }).actions;
+    // Step 1's buttons, past the notice.
+    async function lastActions() {
+        return (
+            await agreeTo(
+                genBibleImportCheckAnswer(CHECKED, {
+                    step: 'check',
+                    url: LINK,
+                }),
+            )
+        ).actions;
     }
 
     it('a short name of their own is the key; a taken one is asked again', async () => {
-        const state = readBibleImportTypedReply(lastActions(), 'KSV2005');
+        const state = readBibleImportTypedReply(await lastActions(), 'KSV2005');
         expect(state?.step).toBe('key');
         const next = await runBibleImportStep(state as BibleImportStateType);
         expect(next.text).toContain('Step 2 of 4');
         const again = await runBibleImportStep(
             readBibleImportTypedReply(
-                lastActions(),
+                await lastActions(),
                 'qa_khmer_xml',
             ) as BibleImportStateType,
         );
@@ -252,24 +278,24 @@ describe('typing instead of pressing', () => {
         expect(again.text).toContain('Step 1 of 4');
         const spaced = await runBibleImportStep(
             readBibleImportTypedReply(
-                lastActions(),
+                await lastActions(),
                 'my bible',
             ) as BibleImportStateType,
         );
         expect(spaced.text).toContain('has a space in it');
     });
 
-    it('a question or a link is not an answer to the step', () => {
+    it('a question or a link is not an answer to the step', async () => {
         expect(
-            readBibleImportTypedReply(lastActions(), 'what is a key?'),
+            readBibleImportTypedReply(await lastActions(), 'what is a key?'),
         ).toBeNull();
-        expect(readBibleImportTypedReply(lastActions(), LINK)).toBeNull();
+        expect(readBibleImportTypedReply(await lastActions(), LINK)).toBeNull();
         expect(readBibleImportTypedReply(undefined, 'KSV')).toBeNull();
     });
 
-    it('only the LAST answer in the tab is continued', () => {
+    it('only the LAST answer in the tab is continued', async () => {
         const messages = [
-            { author: 'bot', actions: lastActions() },
+            { author: 'bot', actions: await lastActions() },
             { author: 'you' },
             { author: 'bot', actions: [] },
         ];
@@ -285,7 +311,7 @@ describe('typing instead of pressing', () => {
 
     it('a language by name is looked up, and a wrong one asked again', async () => {
         const atLocale = {
-            ...lastActions()![0].args,
+            ...(await lastActions())![0].args,
             awaits: 'locale',
         } as BibleImportStateType;
         mocks.callTool.mockRejectedValueOnce(new Error('unknown'));
@@ -595,9 +621,12 @@ describe('a Bible asked for by the name the app is looking for', () => {
             find: 'english kj',
         });
 
-        // Through the list of files, to the file.
+        // Through the list of files, to the file, past where it came from.
         mocks.callTool.mockResolvedValueOnce(JSON.stringify(ENGLISH));
-        const first = await pressByLabel(page, '1. English KJ Bible');
+        const notice = await pressByLabel(page, '1. English KJ Bible');
+        // Said beside the question it answers, not over the notice.
+        expect(notice.text).not.toContain('The app is looking for');
+        const first = await agreeTo(notice);
         expect(first.actions?.map((one) => one.label)).toEqual([
             'KJV (suggested)',
             'EKJV',
@@ -618,10 +647,12 @@ describe('a Bible asked for by the name the app is looking for', () => {
         });
     });
 
-    it('is offered once, however the file spells it', () => {
-        const answer = genBibleImportCheckAnswer(
-            { ...ENGLISH, keys: ['EKJV', 'kjv', 'KJ'] },
-            { step: 'check', url: LINK, wantedKey: 'KJV' },
+    it('is offered once, however the file spells it', async () => {
+        const answer = await agreeTo(
+            genBibleImportCheckAnswer(
+                { ...ENGLISH, keys: ['EKJV', 'kjv', 'KJ'] },
+                { step: 'check', url: LINK, wantedKey: 'KJV' },
+            ),
         );
         expect(answer.actions?.map((one) => one.label)).toEqual([
             'KJV (suggested)',
@@ -631,34 +662,46 @@ describe('a Bible asked for by the name the app is looking for', () => {
         ]);
     });
 
-    it('is not offered when it is taken, or cannot be a short name', () => {
-        const taken = genBibleImportCheckAnswer(
-            { ...ENGLISH, takenKeys: ['kjv'] },
-            { step: 'check', url: LINK, wantedKey: 'KJV' },
+    it('is not offered when it is taken, or cannot be a short name', async () => {
+        const taken = await agreeTo(
+            genBibleImportCheckAnswer(
+                { ...ENGLISH, takenKeys: ['kjv'] },
+                { step: 'check', url: LINK, wantedKey: 'KJV' },
+            ),
         );
         expect(taken.actions?.[0].label).toBe('EKJV (suggested)');
         expect(taken.text).not.toContain('The app is looking for');
 
-        const unusable = genBibleImportCheckAnswer(ENGLISH, {
-            step: 'check',
-            url: LINK,
-            wantedKey: 'K.J/V',
-        });
+        const unusable = await agreeTo(
+            genBibleImportCheckAnswer(ENGLISH, {
+                step: 'check',
+                url: LINK,
+                wantedKey: 'K.J/V',
+            }),
+        );
         expect(unusable.actions?.[0].label).toBe('EKJV (suggested)');
         expect(unusable.text).not.toContain('The app is looking for');
 
         // A Bible they already have is found by choosing ITS name: the two
         // sentences would say opposite things.
-        const owned = genBibleImportCheckAnswer(
+        const ownedNotice = genBibleImportCheckAnswer(
             { ...ENGLISH, installedAs: 'EKJ' },
             { step: 'check', url: LINK, wantedKey: 'KJV' },
         );
-        expect(owned.text).toContain('You already have this Bible');
+        expect(ownedNotice.text).toContain('You already have this Bible');
+        const owned = await agreeTo(ownedNotice);
+        expect(owned.text).toContain('You already have this Bible as **EKJ**');
         expect(owned.text).not.toContain('The app is looking for');
         // An ordinary import says nothing of it.
         expect(
-            genBibleImportCheckAnswer(ENGLISH, { step: 'check', url: LINK })
-                .text,
+            (
+                await agreeTo(
+                    genBibleImportCheckAnswer(ENGLISH, {
+                        step: 'check',
+                        url: LINK,
+                    }),
+                )
+            ).text,
         ).not.toContain('The app is looking for');
     });
 
@@ -769,7 +812,18 @@ describe('typed instead of pressed', () => {
 
     it('"yes" takes what was suggested, "cancel" stops, a label is its button', async () => {
         mocks.callTool.mockResolvedValueOnce(JSON.stringify(CHECKED));
-        const first = await runBibleImportStep({ step: 'check', url: LINK });
+        const notice = await runBibleImportStep({ step: 'check', url: LINK });
+        // Under the notice, "yes" is agreeing -- and so is saying so.
+        for (const said of ['yes', 'I agree', 'agree.', 'ok']) {
+            expect([
+                said,
+                readBibleImportTypedReply(notice.actions, said)?.step,
+            ]).toEqual([said, 'agree']);
+        }
+        expect(readBibleImportTypedReply(notice.actions, 'no')?.step).toBe(
+            'cancel',
+        );
+        const first = await agreeTo(notice);
         // Not a Bible named "yes".
         expect(readBibleImportTypedReply(first.actions, 'yes')).toMatchObject({
             step: 'locale',
@@ -869,11 +923,159 @@ describe('a Bible they already have', () => {
         expect(checked.text).toContain('**You already have this Bible**');
         expect(checked.text).toContain('installed as **គខប**');
         // ...and still a choice: a second copy under another name.
-        expect(checked.text).toContain('Step 1 of 4');
+        const first = await agreeTo(checked);
+        expect(first.text).toContain('Step 1 of 4');
+        expect(first.text).toContain('To keep a second copy anyway');
         expect(
             genBibleImportCheckAnswer(CHECKED, { step: 'check', url: LINK })
                 .text,
         ).not.toContain('already have');
+    });
+});
+
+describe('where a downloaded Bible came from, agreed to first', () => {
+    const CATALOG = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+
+    it('says it was found on the internet, where, and whose it is', async () => {
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ ...CHECKED, source: LINK }),
+        );
+        const notice = await runBibleImportStep({
+            step: 'check',
+            url: LINK,
+            sourcePage: CATALOG,
+        });
+        expect(notice.text).toContain(
+            'I found it on the internet, in a free collection of Bible files ' +
+                `that someone shared on GitHub (Beblia): \`${CATALOG}\``,
+        );
+        expect(notice.text).toContain(`- **The file:** \`${LINK}\``);
+        expect(notice.text).toContain('**It is not from Open Worship.**');
+        expect(notice.text).toContain(
+            '**You are responsible to its publisher.**',
+        );
+        expect(notice.actions?.map((one) => one.label)).toEqual([
+            'I agree',
+            'Open the website',
+            'Cancel',
+        ]);
+        // Nothing asked, nothing installed: the one call is the download.
+        expect(mocks.callTool).toHaveBeenCalledTimes(1);
+        // Both addresses are the app's own words, so both open.
+        expect(notice.links).toEqual([CATALOG, LINK]);
+
+        const opened = await pressByLabel(notice, 'Open the website');
+        expect(mocks.openExternalURL).toHaveBeenCalledWith(CATALOG);
+        expect(opened.text).toContain('in your web browser');
+        expect(opened.links).toEqual([CATALOG]);
+        expect(opened.actions?.map((one) => one.label)).toEqual([
+            'I agree',
+            'Cancel',
+        ]);
+        expect((await agreeTo(opened)).text).toContain('Step 1 of 4');
+
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ cancelled: true }),
+        );
+        const stopped = await pressByLabel(notice, 'Cancel');
+        expect(mocks.callTool).toHaveBeenLastCalledWith('owa_bible_xml', {
+            action: 'cancel',
+            draftId: 'he10paxbbz64',
+        });
+        expect(stopped.text).toContain('Nothing was installed');
+    });
+
+    it('a file off another web page names that page, and opens it', async () => {
+        const pageUrl = 'https://example.org/bibles/';
+        const fileUrl = 'https://example.org/bibles/thai.xml';
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                kind: 'page',
+                total: 1,
+                matched: 1,
+                searchedFor: [],
+                files: [{ name: 'thai.xml', url: fileUrl }],
+            }),
+        );
+        const page = await runBibleImportStep({ step: 'check', url: pageUrl });
+        expect(page.actions?.[0].args.sourcePage).toBe(pageUrl);
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ ...CHECKED, source: fileUrl }),
+        );
+        const notice = await pressByLabel(page, '1. thai');
+        expect(notice.text).toContain(
+            `I found it on the internet, on this web page: \`${pageUrl}\``,
+        );
+        expect(notice.text).toContain(`- **The file:** \`${fileUrl}\``);
+        expect(notice.links).toEqual([pageUrl, fileUrl]);
+        await pressByLabel(notice, 'Open the website');
+        expect(mocks.openExternalURL).toHaveBeenCalledWith(pageUrl);
+    });
+
+    it('a link to the file itself shows its address, and opens nothing', async () => {
+        const fileUrl = 'https://example.org/my/bible.xml';
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ ...CHECKED, source: fileUrl }),
+        );
+        const notice = await runBibleImportStep({
+            step: 'check',
+            url: fileUrl,
+        });
+        expect(notice.text).toContain(
+            '**Where it is from:** the internet, at the address below.',
+        );
+        expect(notice.text).toContain(`- **The file:** \`${fileUrl}\``);
+        expect(notice.actions?.map((one) => one.label)).toEqual([
+            'I agree',
+            'Cancel',
+        ]);
+        expect(notice.links).toEqual([fileUrl]);
+        // A press made by hand opens no page there is none of, nor one
+        // that is no web address.
+        const agreed = notice.actions![0].args as BibleImportStateType;
+        const none = await runBibleImportStep({ ...agreed, step: 'source' });
+        await runBibleImportStep({
+            ...agreed,
+            step: 'source',
+            sourcePage: 'file:///C:/Windows/win.ini',
+        });
+        expect(mocks.openExternalURL).not.toHaveBeenCalled();
+        expect(none.actions?.map((one) => one.label)).toEqual([
+            'I agree',
+            'Cancel',
+        ]);
+    });
+
+    it('under a model’s answer: the same buttons, and the notice they are for', () => {
+        // A model's link straight into the collection is the collection's.
+        const under = genBibleImportUnderAnswer(CHECKED, LINK);
+        expect(under.actions.map((one) => one.label)).toEqual([
+            'I agree',
+            'Open the website',
+            'Cancel',
+        ]);
+        expect(under.notice).toContain(`(Beblia): \`${CATALOG}\``);
+        expect(under.notice).toContain(`- **The file:** \`${LINK}\``);
+        expect(under.notice).toContain('Press **I agree** to go on');
+        // The model said what it is; only what it is agreed to is added.
+        expect(under.notice).not.toContain('I downloaded');
+        expect(under.links).toEqual([CATALOG, LINK]);
+        // A page of files, or a link that led nowhere, is agreed to nothing.
+        expect(
+            genBibleImportUnderAnswer(
+                {
+                    kind: 'page',
+                    total: 1,
+                    matched: 1,
+                    searchedFor: [],
+                    files: [{ name: 'KhmerBible.xml', url: LINK }],
+                },
+                CATALOG,
+            ).notice,
+        ).toBeNull();
+        expect(
+            genBibleImportUnderAnswer({ problem: 'not-found' }, LINK).notice,
+        ).toBeNull();
     });
 });
 
@@ -951,4 +1153,494 @@ it('shows a file name as words', () => {
 it('echoes a choice without "(suggested)"', () => {
     expect(toBibleImportEcho('KSV (suggested)')).toBe('KSV');
     expect(toBibleImportEcho('KM1954')).toBe('KM1954');
+});
+
+describe('ordinary replies keep the waiting import state', () => {
+    const localeState: BibleImportStateType = {
+        step: 'locale',
+        key: 'QA_INPUT',
+        draftId: CHECKED.draftId,
+        locales: CHECKED.locales,
+        digitChoices: CHECKED.digits,
+        nameLists: CHECKED.nameLists,
+    };
+
+    it.each([
+        'use Thai please',
+        'សូមប្រើភាសាថៃ',
+        'quelle langue choisir ?',
+        'what languages can I use?',
+    ])(
+        'interprets the language reply %s with the original field',
+        async (typed) => {
+            const question = await runBibleImportStep(localeState);
+            const context = getBibleImportInputContext(question);
+            expect(context?.valueKind).toBe('language');
+            // Unspaced Khmer can try the literal language first; it still
+            // carries awaits:locale when that read cannot recognize it.
+            if (/\s|[?？]/u.test(typed))
+                expect(checkBibleImportReplyNeedsHelp(question, typed)).toBe(
+                    true,
+                );
+            expect(
+                readBibleImportHelpState(question.actions, {
+                    kind: 'value',
+                    value: 'th',
+                }),
+            ).toMatchObject({
+                step: 'locale-typed',
+                typed: 'th',
+                key: 'QA_INPUT',
+                draftId: CHECKED.draftId,
+            });
+        },
+    );
+
+    it('the real Thai reply overrides detected Khmer and asks for Thai digits', async () => {
+        const question = await runBibleImportStep(localeState);
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ locale: 'th', nameLists: [] }),
+        );
+        const state = readBibleImportHelpState(question.actions, {
+            kind: 'value',
+            value: 'th',
+        });
+        const answer = await runBibleImportStep(state!);
+        expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
+            action: 'names',
+            locale: 'th',
+            draftId: CHECKED.draftId,
+        });
+        expect(answer.actions?.[0].args).toMatchObject({
+            locale: 'th',
+            key: 'QA_INPUT',
+        });
+        expect(answer.actions?.[0].label).toContain('๐ ๑ ๒');
+    });
+
+    it.each(['ខ្មែរ', 'ភាសាខ្មែរ', 'Khmer?', 'km-KH'])(
+        'the explicit language %s overrides a detected Spanish file without a model',
+        async (typed) => {
+            const question = await runBibleImportStep({
+                ...localeState,
+                locales: [{ locale: 'es-ES', name: 'European Spanish' }],
+                nameLists: [
+                    { id: 'spanish', label: 'Spanish', first: ['Génesis'] },
+                ],
+            });
+            expect(checkBibleImportReplyNeedsHelp(question, typed)).toBe(false);
+            const next = readBibleImportTypedReply(question.actions, typed);
+            expect(next).toMatchObject({
+                step: 'locale-typed',
+                typed: typed === 'km-KH' ? 'km-KH' : 'km',
+            });
+            mocks.callTool.mockResolvedValueOnce(
+                JSON.stringify({
+                    locale: 'km-KH',
+                    nameLists: CHECKED.nameLists.slice(0, 1),
+                }),
+            );
+            const digits = await runBibleImportStep(next!);
+            expect(digits.actions?.[0].args).toMatchObject({
+                locale: 'km-KH',
+                nameLists: CHECKED.nameLists.slice(0, 1),
+            });
+            expect(digits.actions?.[0].label).toContain('០ ១ ២');
+            const names = await runBibleImportStep(
+                digits.actions![0].args as BibleImportStateType,
+            );
+            expect(names.text).not.toContain('Génesis');
+            expect(names.text).toContain('Khmer');
+            mocks.callTool.mockResolvedValueOnce(
+                JSON.stringify({ nameLists: [] }),
+            );
+            await pressByLabel(names, 'Find more lists online');
+            expect(mocks.callTool).toHaveBeenLastCalledWith('owa_bible_xml', {
+                action: 'names',
+                locale: 'km-KH',
+                draftId: CHECKED.draftId,
+            });
+        },
+    );
+
+    it('language corrections at review discard old names and numbers while cancel still wins', async () => {
+        const review = await runBibleImportStep({
+            ...localeState,
+            step: 'confirm',
+            locale: 'es-ES',
+            digits: 'ascii',
+            bookNames: 'spanish',
+        });
+        expect(readBibleImportTypedReply(review.actions, 'no')?.step).toBe(
+            'cancel',
+        );
+        const next = readBibleImportTypedReply(review.actions, 'ខ្មែរ');
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ locale: 'km-KH', nameLists: CHECKED.nameLists }),
+        );
+        const answer = await runBibleImportStep(next!);
+        expect(answer.actions![0].args.bookNames).toBeUndefined();
+        expect(answer.actions![0].args.locale).toBe('km-KH');
+    });
+
+    it('a link at name selection looks up that source with the selected language and retains the draft', async () => {
+        const names = await runBibleImportStep({
+            ...localeState,
+            step: 'names',
+            locale: 'km-KH',
+            digits: 'local',
+        });
+        const url = 'https://www.bible.com/bible/4783/JHN.1.KH';
+        const next = readBibleImportTypedReply(names.actions, url);
+        expect(next).toMatchObject({
+            step: 'names-url',
+            namesUrl: url,
+            locale: 'km-KH',
+            draftId: CHECKED.draftId,
+            digits: 'local',
+        });
+        expect(checkBibleImportReplyNeedsHelp(names, `Please use ${url}`)).toBe(
+            true,
+        );
+        expect(getBibleImportInputContext(names)?.acceptsLink).toBe(true);
+        expect(
+            readBibleImportHelpState(names.actions, {
+                kind: 'value',
+                value: url,
+            }),
+        ).toEqual(next);
+        const found = {
+            id: 'provided',
+            label: 'Khmer 1954',
+            first: ['លោកុប្បត្តិ'],
+        };
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                requestedUrl: url,
+                nameLists: [found],
+                sources: [{ url: 'https://www.bible.com/versions/4783' }],
+            }),
+        );
+        const answer = await runBibleImportStep(next!);
+        expect(mocks.callTool).toHaveBeenCalledExactlyOnceWith(
+            'owa_bible_xml',
+            { action: 'names', url, locale: 'km-KH', draftId: CHECKED.draftId },
+        );
+        expect(answer.actions![0].args).toMatchObject({
+            step: 'confirm',
+            bookNames: 'provided',
+            locale: 'km-KH',
+        });
+        expect(answer.links).toContain('https://www.bible.com/versions/4783');
+        expect(answer.text).toContain('`https://www.bible.com/versions/4783`');
+        expect(answer.text).toContain('លោកុប្បត្តិ');
+    });
+
+    it('an incomplete or wrong-language source preserves the current choices', async () => {
+        const names = await runBibleImportStep({
+            ...localeState,
+            step: 'names',
+            locale: 'km-KH',
+            digits: 'local',
+        });
+        const next = readBibleImportTypedReply(
+            names.actions,
+            'https://example.org/books',
+        );
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                requestedUrl: next!.namesUrl,
+                problem: 'names-language',
+                nameLists: [],
+            }),
+        );
+        const answer = await runBibleImportStep(next!);
+        expect(answer.text).toContain('do not match your selected language');
+        expect(answer.actions![0].args.nameLists).toEqual(
+            localeState.nameLists,
+        );
+        expect(answer.actions![0].args.locale).toBe('km-KH');
+    });
+
+    it.each(['old host', 'offline'])(
+        '%s preserves choices instead of passing off a catalog as the pasted source',
+        async (failure) => {
+            const names = await runBibleImportStep({
+                ...localeState,
+                step: 'names',
+                locale: 'km-KH',
+                digits: 'local',
+            });
+            const next = readBibleImportTypedReply(
+                names.actions,
+                'https://example.org/books',
+            );
+            if (failure === 'offline')
+                mocks.callTool.mockRejectedValueOnce(new Error('offline'));
+            else
+                mocks.callTool.mockResolvedValueOnce(
+                    JSON.stringify({
+                        nameLists: [
+                            {
+                                id: 'unrelated',
+                                label: 'Wrong source',
+                                first: [],
+                            },
+                        ],
+                    }),
+                );
+            const answer = await runBibleImportStep(next!);
+            expect(answer.text).toContain(
+                'previous choices are still available',
+            );
+            expect(answer.text).not.toContain('Wrong source');
+            expect(answer.actions![0].args.nameLists).toEqual(
+                localeState.nameLists,
+            );
+        },
+    );
+
+    it('context distinguishes selected Khmer from detected Spanish and excludes internal arguments', async () => {
+        const answer = await runBibleImportStep({
+            ...localeState,
+            step: 'names',
+            locale: 'km-KH',
+            localeName: 'Khmer',
+            digits: 'local',
+            locales: [{ locale: 'es-ES', name: 'European Spanish' }],
+            title: 'Test Bible',
+            summary: '66 books',
+            sourcePage: LINK,
+        });
+        const context = getBibleImportInputContext(answer)!;
+        expect(context.facts).toEqual(
+            expect.arrayContaining([
+                { label: 'Selected language', value: 'Khmer (km-KH)' },
+                {
+                    label: 'Detected languages (suggestions only)',
+                    value: 'European Spanish (es-ES)',
+                },
+                { label: 'Current step', value: 'book names' },
+                { label: 'Short name', value: 'QA_INPUT' },
+                { label: 'Selected numbers', value: 'local' },
+            ]),
+        );
+        const prompt = genBibleImportContextHint(answer)!;
+        expect(prompt).toContain('action names with url');
+        expect(prompt).toContain('km-KH');
+        expect(prompt).not.toContain(CHECKED.draftId);
+        expect(prompt).not.toContain('nc4e26c5e');
+        const question = await runBibleImportStep(localeState);
+        expect(
+            getBibleImportInputContext(question)?.facts?.some(
+                (fact) => fact.label === 'Selected language',
+            ),
+        ).toBe(false);
+    });
+
+    it('uses only the original allowed choice and leaves help and unrelated replies waiting', async () => {
+        const question = await runBibleImportStep(localeState);
+        expect(
+            readBibleImportHelpState(question.actions, {
+                kind: 'choice',
+                choice: 1,
+            }),
+        ).toBe(question.actions?.[0].args);
+        expect(
+            readBibleImportHelpState(question.actions, {
+                kind: 'choice',
+                choice: 2,
+            }),
+        ).toBeNull(); // Cancel needs a press.
+        expect(
+            readBibleImportHelpState(question.actions, {
+                kind: 'help',
+                reply: 'Which language?',
+            }),
+        ).toBeNull();
+        expect(
+            readBibleImportHelpState(question.actions, { kind: 'unrelated' }),
+        ).toBeNull();
+        const repeated = { ...question, note: 'Choose the language you want.' };
+        expect(getBibleImportInputContext(repeated)).toEqual(
+            getBibleImportInputContext(question),
+        );
+    });
+
+    it('the model cannot agree, install, undo or open a window', () => {
+        for (const step of [
+            'agree',
+            'import',
+            'undo',
+            'settings',
+            'local-file',
+            'source',
+        ] as const) {
+            const actions = [
+                {
+                    label: step,
+                    toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+                    args: { step },
+                },
+            ];
+            expect(
+                readBibleImportHelpState(actions, {
+                    kind: 'choice',
+                    choice: 1,
+                }),
+            ).toBeNull();
+            expect(
+                getBibleImportInputContext({ text: step, actions })?.choices[0]
+                    .requiresPress ?? true,
+            ).toBe(true);
+        }
+    });
+
+    it.each(['១', '១?', '１', '1?', '១។'])(
+        'reads a listed file number: %s',
+        (typed) => {
+            const actions = [
+                {
+                    label: '1. Thai Bible',
+                    toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+                    args: { step: 'check', url: LINK },
+                },
+            ];
+            expect(readBibleImportTypedReply(actions, typed)).toEqual(
+                actions[0].args,
+            );
+            expect(
+                checkBibleImportReplyNeedsHelp(
+                    { text: 'Pick a file', actions },
+                    typed,
+                ),
+            ).toBe(false);
+        },
+    );
+
+    it('does not confuse local and ASCII digit buttons', () => {
+        const actions = [
+            {
+                label: '០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩ (suggested)',
+                toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+                args: { step: 'names', digits: 'local' },
+            },
+            {
+                label: '0 1 2 3 4 5 6 7 8 9',
+                toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+                args: { step: 'names', digits: 'ascii' },
+            },
+        ];
+        expect(
+            readBibleImportTypedReply(actions, '0 1 2 3 4 5 6 7 8 9')?.digits,
+        ).toBe('ascii');
+        expect(
+            readBibleImportTypedReply(actions, '០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩')?.digits,
+        ).toBe('local');
+    });
+
+    it.each([
+        ['១', 'local'],
+        ['1?', 'local'],
+        ['២', 'ascii'],
+        ['２', 'ascii'],
+    ])('reads a digit-format choice by position: %s', (typed, digits) => {
+        const actions = ['local', 'ascii'].map((value) => ({
+            label:
+                value === 'local'
+                    ? '០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩'
+                    : '0 1 2 3 4 5 6 7 8 9',
+            toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+            args: { step: 'names', locale: 'km-KH', digits: value },
+        }));
+        expect(readBibleImportTypedReply(actions, typed)).toMatchObject({
+            step: 'names',
+            locale: 'km-KH',
+            digits,
+        });
+        expect(
+            checkBibleImportReplyNeedsHelp(
+                { text: 'Which numbers?', actions },
+                typed,
+            ),
+        ).toBe(false);
+    });
+
+    it.each(['huh', '๒'])(
+        'interprets the short reply %s under choices that also allow a language correction',
+        (typed) => {
+            const actions = [
+                {
+                    label: 'List 1',
+                    toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+                    args: { step: 'confirm', locale: 'km-KH' },
+                },
+            ];
+            expect(
+                getBibleImportInputContext({ text: 'Which names?', actions })
+                    ?.valueKind,
+            ).toBe('language');
+            expect(
+                checkBibleImportReplyNeedsHelp(
+                    { text: 'Which names?', actions },
+                    typed,
+                ),
+            ).toBe(true);
+        },
+    );
+
+    it('reads a short name from a polite reply without naming it after the sentence', () => {
+        const actions = [
+            {
+                label: 'KJV2',
+                toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+                args: {
+                    step: 'locale',
+                    awaits: 'key',
+                    draftId: 'held',
+                    wantedKey: 'KJV',
+                },
+            },
+        ];
+        expect(
+            checkBibleImportReplyNeedsHelp(
+                { text: 'Which short name?', actions },
+                'call it THAI2',
+            ),
+        ).toBe(true);
+        expect(
+            readBibleImportHelpState(actions, {
+                kind: 'value',
+                value: 'THAI2',
+            }),
+        ).toMatchObject({
+            step: 'key',
+            typed: 'THAI2',
+            draftId: 'held',
+            wantedKey: 'KJV',
+        });
+    });
+});
+
+it('returning to detected Khmer after a Thai override reloads its digits and names', async () => {
+    const question = await runBibleImportStep({
+        step: 'locale',
+        draftId: CHECKED.draftId,
+        locales: CHECKED.locales,
+        locale: 'th',
+        digitChoices: { local: '๐ ๑ ๒ ๓', ascii: '0 1 2 3' },
+        nameLists: [],
+    });
+    expect(question.actions?.[0].args).toMatchObject({
+        step: 'locale-typed',
+        typed: 'km-KH',
+    });
+    mocks.callTool.mockResolvedValueOnce(
+        JSON.stringify({ locale: 'km-KH', nameLists: CHECKED.nameLists }),
+    );
+    const digits = await runBibleImportStep(
+        question.actions![0].args as BibleImportStateType,
+    );
+    expect(digits.actions?.[0].label).toContain('០ ១ ២');
+    expect(digits.actions?.[0].args.locale).toBe('km-KH');
 });

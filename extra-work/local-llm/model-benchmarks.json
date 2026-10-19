@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "updated": "2026-10-12",
+    "updated": "2026-10-16",
     "about": "Every measurement taken of a model answering for the app's chatbot, copied from the notes of the day it was taken (each run names its source). A number that was not measured is null. `fit` is what the measurements say about offering the model for that job; `fitNote` is the sentence to tell somebody choosing.",
     "machines": [
         {
@@ -565,11 +565,51 @@
             ]
         },
         {
+            "model": "nvidia/nemotron-3.5-super-vl:free",
+            "name": "Nemotron Super VL (Kilo Code, free)",
+            "kind": "free",
+            "canSeeImages": true,
+            "fit": "good",
+            "fitNote": "The free model to start on since 2026-10-16, and the free one that sees pictures: 7 of 7 volunteer questions answered through the real loop in 12–45 seconds (after its token budget was raised; two had been cut short at 2 000). What is typed leaves the computer and may be kept by the service.",
+            "runs": [
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "5 right, 1 partly, 1 empty of 7",
+                    "seconds": 45,
+                    "rounds": 2,
+                    "outcome": "at max_tokens 2 000 one answer was cut mid-sentence and one empty: its thinking spends the same budget",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Nemotron Super VL 5 right, 1 partly, 1 empty\""
+                },
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "the three that failed or were cut, asked again at max_tokens 6 000",
+                    "score": "3 of 3",
+                    "seconds": 130,
+                    "outcome": "all three answered whole; the panic question in 2 rounds, naming the held slide and offering the show toggle",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"asked again at 6 000: 3 of 3\""
+                },
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "a picture of the Presenter, sent as a data URL",
+                    "seconds": 8,
+                    "outcome": "read back \"Quick Text\", \"Bible Notes\" and \"Presenting\" off the picture",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"a picture of the Presenter, its labels read back right in 8 s\""
+                }
+            ]
+        },
+        {
             "model": "nvidia/nemotron-3.5-lightning:free",
             "name": "Nemotron Lightning (Kilo Code, free)",
             "kind": "free",
-            "fit": "good",
-            "fitNote": "The free model to start on: 7 of 7 volunteer questions through the real tool loop in 8–20 seconds each, with no key. What is typed leaves the computer and may be kept by the service.",
+            "fit": "usable",
+            "fitNote": "Right when it answers, and often busy: on 2026-10-16 it timed out on 5 of 7 questions at 240 s and took 130–150 s over the other two. Listed last.",
             "runs": [
                 {
                     "date": "2026-09-12",
@@ -612,6 +652,16 @@
                     "asked": "make computer stay awake",
                     "outcome": "the first answer was Windows and macOS power settings and nothing about the app; told the guide page it opens it (5 rounds → 2)",
                     "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-215) — \"The first answer on that run — Windows and macOS power settings, nothing about the app\""
+                },
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "2 of 7",
+                    "seconds": 150,
+                    "outcome": "5 of 7 timed out at 240 s; the two answered took 130–150 s; a one-tool ping took 23 s where the others took 2–5 s",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Nemotron Lightning … timed out on 5 of 7 at 240 s\""
                 }
             ]
         },
@@ -619,8 +669,8 @@
             "model": "Nex Pro (Kilo Code, free)",
             "name": "Nex Pro",
             "kind": "free",
-            "fit": "good",
-            "fitNote": "As right as the first free choice and a little slower: 7 of 7 volunteer questions in 12–24 seconds each.",
+            "fit": "poor",
+            "fitNote": "Withdrawn by the gateway: since 2026-10-16 every request answers 404 \"does not exist\". Out of the app's list.",
             "runs": [
                 {
                     "date": "2026-09-12",
@@ -631,6 +681,14 @@
                     "seconds": 24,
                     "outcome": "7/7 in 12–24 s each",
                     "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Nemotron Lightning 7/7 (8–20 s), Nex Pro 7/7 (12–24 s), Step Flash 6/7 (one empty answer)\""
+                },
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "one tool call",
+                    "outcome": "404 \"The requested model 'nex-agi/nex-n2.5-pro:free' does not exist\"",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Nex Pro and Step Flash answered 404\""
                 }
             ]
         },
@@ -639,8 +697,8 @@
             "name": "Step Flash (Kilo Code, free)",
             "kind": "free",
             "canSeeImages": true,
-            "fit": "usable",
-            "fitNote": "The only free model that can look at a picture, which is why it is kept: 6 of 7 volunteer questions, one answer empty.",
+            "fit": "poor",
+            "fitNote": "Withdrawn by the gateway: since 2026-10-16 every request answers 404 \"does not exist\". Nemotron Super VL took its place as the free model that sees pictures.",
             "runs": [
                 {
                     "date": "2026-09-12",
@@ -650,15 +708,23 @@
                     "score": "6 of 7",
                     "outcome": "6/7, one empty answer",
                     "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Step Flash 6/7 (one empty answer)\"; .claude/memory/free-keyless-chatbot-provider.md — \"Only `stepfun/step-3.7-flash:free` can see a picture\""
+                },
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "one tool call",
+                    "outcome": "404 \"The requested model 'stepfun/step-3.7-flash:free' does not exist\"",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Nex Pro and Step Flash answered 404\""
                 }
             ]
         },
         {
-            "model": "Nemotron Super (Kilo Code, free)",
-            "name": "Nemotron Super",
+            "model": "nvidia/nemotron-3-super-120b-a12b:free",
+            "name": "Nemotron Super (Kilo Code, free)",
             "kind": "free",
-            "fit": "usable",
-            "fitNote": "Right, and slow: 3 of 3 questions, 33–52 seconds each. Not in the app's list.",
+            "fit": "good",
+            "fitNote": "Right, and slower than the first choice: 5 of 7 right and 2 partly in 15–73 seconds each. Second in the app's list since 2026-10-16.",
             "runs": [
                 {
                     "date": "2026-09-12",
@@ -669,6 +735,17 @@
                     "seconds": 52,
                     "outcome": "3/3 but 33–52 s each",
                     "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md — \"Nemotron Super 3/3 but 33–52 s\""
+                },
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "score": "5 right, 2 partly of 7",
+                    "seconds": 73,
+                    "rounds": 2,
+                    "outcome": "every question answered, 1–3 rounds, 15–73 s; one invented detail (the projector shows \"the app's checkered pattern\"), one answer that only named the song",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Nemotron Super 5 right, 2 partly\""
                 }
             ]
         },
@@ -930,6 +1007,41 @@
                     "totalTokens": 27000,
                     "outcome": "_No, nothing is showing on the projector right now._ ≈ $0.004 · 27k tokens",
                     "source": "docs/test-paths/coverage-matrix.md (CB-89) — \"Bedrock (Gemma 4 31B) _No, nothing is showing on the projector right now._ ≈ $0.004 · 27k\""
+                }
+            ]
+        },
+        {
+            "model": "dots-studio/dots-3-note-preview:free",
+            "name": "Dots Note (Kilo Code, free)",
+            "kind": "free",
+            "canSeeImages": true,
+            "fit": "poor",
+            "fitNote": "Sees pictures, and wrote its own tool-call markup out as an answer once in seven: left out.",
+            "runs": [
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "outcome": "5 of 7 right; one answer was a raw <dots_function_call> block after 6 rounds, one empty",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Dots Note printed its own tool-call markup; Laguna S was rate-limited on four of seven\""
+                }
+            ]
+        },
+        {
+            "model": "poolside/laguna-s-2.1:free",
+            "name": "Laguna S (Kilo Code, free)",
+            "kind": "free",
+            "fit": "poor",
+            "fitNote": "Rate-limited on 4 of 7 questions, and one answer quoted the tool's own fields (isShowing: false, a display id) at the user: left out.",
+            "runs": [
+                {
+                    "date": "2026-10-16",
+                    "program": "Kilo Code (free, no key)",
+                    "machine": null,
+                    "task": "seven volunteer questions through the real loop",
+                    "outcome": "3 of 7 answered; 4 refused as rate-limited; one answer leaked isShowing: false and a display id",
+                    "source": ".claude/skills/owa-enhance-chatbot/references/backlog.md (EC-267) — \"Dots Note printed its own tool-call markup; Laguna S was rate-limited on four of seven\""
                 }
             ]
         }

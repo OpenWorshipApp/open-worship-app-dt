@@ -191,6 +191,11 @@ export default class ElectronMainController {
             genRoutProps(currentHtmlPath).loadURL(win);
         });
         win.on('closed', () => {
+            // `process.exit` never reaches `will-quit`, where the settings
+            // still inside their one-second wait are written: a setting saved
+            // just before Relaunch -- the data folder's move off the Desktop,
+            // an Import Settings a Restart follows -- left with the process.
+            settingManager.save(true);
             process.exit(0);
         });
         win.webContents.on('context-menu', (_event, params) => {

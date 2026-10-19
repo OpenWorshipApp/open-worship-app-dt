@@ -13,6 +13,8 @@ import { addBibleItemAndPresent } from './bibleActionHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import { handleError } from '../helper/errorHelpers';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
 export function RenderCopyBibleItemActionButtonsComp({
@@ -35,6 +37,44 @@ export function RenderCopyBibleItemActionButtonsComp({
             onClick={handleCopying}
         >
             <i className="bi bi-copy" />
+        </button>
+    );
+}
+
+/**
+ * The 🤖 at the end of a Bible view's toolbar (2026-10-18, the user's
+ * picture of that toolbar circled: _add robot icon to part of the icon … to
+ * open the verse in chatbot like open from floating verse detail panel_):
+ * the passage the view shows, opened in the assistant the way a verse
+ * panel's 🤖 opens it (`bibleItemAskHelpers.ts`). Drawn only while AI is on,
+ * like that one.
+ */
+export function RenderAskAssistantBibleItemButtonComp({
+    bibleItem,
+}: Readonly<{ bibleItem: BibleItem }>) {
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleAsking = useCallback(() => {
+        // Loaded at the press: nothing a pane of verses needs until then.
+        import('../helper/ai/bibleItemAskHelpers')
+            .then(({ openChatbotWithBibleItem }) => {
+                return openChatbotWithBibleItem(bibleItemRef.current);
+            })
+            .catch(handleError);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    if (!getIsAIEnabled()) {
+        return null;
+    }
+    const label = tran('Ask the Assistant About This Passage');
+    return (
+        <button
+            className="btn btn-sm btn-secondary"
+            type="button"
+            title={label}
+            aria-label={label}
+            onClick={handleAsking}
+        >
+            <i className="bi bi-robot" />
         </button>
     );
 }
@@ -171,6 +211,7 @@ export default function RenderActionButtonsComp({
                     </button>
                 </>
             ) : null}
+            <RenderAskAssistantBibleItemButtonComp bibleItem={bibleItem} />
             {viewController.extraActionButtons}
         </div>
     );

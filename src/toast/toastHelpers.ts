@@ -2,6 +2,11 @@ import { type JSX } from 'react';
 
 import ToastEventListener from '../event/ToastEventListener';
 import appProvider from '../server/appProvider';
+import type { SimpleToastType } from './SimpleToastComp';
+
+function emitSimpleToast(toast: SimpleToastType) {
+    ToastEventListener.showSimpleToast(toast);
+}
 
 /**
  * `timeout` is for a toast that carries a control of its own (an Undo): the
@@ -13,11 +18,23 @@ export function showSimpleToast(
     message: string | JSX.Element,
     timeout?: number,
 ) {
-    ToastEventListener.showSimpleToast(
+    emitSimpleToast(
         timeout === undefined
             ? { title, message }
             : { title, message, timeout },
     );
+}
+
+/**
+ * Returns a function whose later calls replace its previous toast. This is for
+ * one operation that changes state (for example, downloading -> downloaded),
+ * so a toast held open by hover cannot keep showing stale progress.
+ */
+export function createSimpleToastUpdater() {
+    const replacementKey = Symbol('simple-toast-replacement');
+    return (title: string, message: string | JSX.Element, timeout?: number) => {
+        emitSimpleToast({ title, message, timeout, replacementKey });
+    };
 }
 
 if (appProvider.systemUtils.isDev) {

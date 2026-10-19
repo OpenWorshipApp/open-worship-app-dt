@@ -16,6 +16,7 @@ import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { getChapterData } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { tran } from '../lang/langHelpers';
 
 const OPTION_CLASS = 'bible-lookup-chapter-option';
 const OPTION_SELECTED_CLASS = 'active';
@@ -25,10 +26,12 @@ function RenderChapterZeroContentComp({
     bookKey,
 }: Readonly<{ bibleKey: string; bookKey: string }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
+    // Keyed on both: switching to another Bible that has an introduction too
+    // keeps this mounted and open, and it went on showing the old one.
     const [chapterData] = useAppStateAsync(async () => {
         const localChapterData = await getChapterData(bibleKey, bookKey, 0);
         return localChapterData;
-    });
+    }, [bibleKey, bookKey]);
     return (
         <div className="card w-100 my-2">
             <div className="card-body p-1">
@@ -66,12 +69,19 @@ function RenderChapterZeroComp({
                 marginRight: '2px',
             }}
         >
+            {/* An icon alone: without a name a screen reader announced just
+                "button", with nothing to say it opens the introduction or
+                whether it is open already. */}
             <button
+                type="button"
                 className="btn btn-outline-success"
+                title={tran('Introduction')}
+                aria-label={tran('Introduction')}
+                aria-expanded={expanded}
                 onClick={handleToggleExpanded}
             >
                 <span>
-                    <i className="bi bi-info-circle" />
+                    <i className="bi bi-info-circle" aria-hidden="true" />
                 </span>
             </button>
             {expanded ? (

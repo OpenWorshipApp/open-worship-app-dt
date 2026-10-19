@@ -2,6 +2,8 @@
 
 $resize-edge-thickness: 8px;
 $resize-corner-size: 16px;
+// The top band left to resize over a titled header (see the end of the file).
+$resize-header-band: 4px;
 
 .floating-widget {
   position: fixed;
@@ -69,6 +71,9 @@ $resize-corner-size: 16px;
 
 // A titled header bar doubles as the drag handle; it flows above the content
 // (unlike the overlay toolbar) so the title and buttons never cover children.
+// Its right padding is a resize handle's width, the way the body's right margin
+// is: the right edge is raised over the header (see the resize handles below),
+// and with the old 4px the close button's last 4px sat under it.
 .floating-widget__header {
   z-index: 5;
   display: flex;
@@ -77,7 +82,7 @@ $resize-corner-size: 16px;
   align-items: center;
   justify-content: space-between;
   height: 40px;
-  padding: 0 0.25rem 0 0.75rem;
+  padding: 0 $resize-edge-thickness 0 0.75rem;
   cursor: move;
   touch-action: none;
   user-select: none;
@@ -160,7 +165,7 @@ $resize-corner-size: 16px;
   // left to grab, only a resize cursor. The body keeps a handle's width clear on
   // the two edges a scrollbar lands on, so the bar sits beside the strip that
   // resizes rather than under it. Left and top stay flush: no scrollbar goes
-  // there, and the header already paints over the top handle.
+  // there, and a titled widget's top handles sit on its header, not the body.
   margin-right: $resize-edge-thickness;
   margin-bottom: $resize-edge-thickness;
   overflow: auto;
@@ -259,4 +264,32 @@ $resize-corner-size: 16px;
   right: 0;
   bottom: 0;
   cursor: nwse-resize;
+}
+
+// A titled header is `z-index: 5`, a flex item, so the index applies: it
+// painted over the top edge, both top corners and the top 40px of the side
+// edges, and a press on any of them was a press on the header, which MOVED the
+// widget instead of resizing it (GL-20). Those handles are raised over the
+// header -- the index only, nothing per frame. None may take a control in the
+// bar: over a header the top edge and both top corners keep a 4px band, because
+// a title's own buttons reach that high -- the window controls start 9px down,
+// but the Presenting Control's ~31px Bootstrap buttons, centred in the 40px
+// bar, start ~4.5px down and an 8px band covered their top. The side edge below
+// a corner still resizes sideways, and the header keeps the right edge's width
+// clear. The untitled overlay toolbar is not touched: its buttons sit IN the
+// corner.
+.floating-widget__header ~ .floating-widget__resize-handle--left,
+.floating-widget__header ~ .floating-widget__resize-handle--right {
+  z-index: 6;
+}
+
+.floating-widget__header ~ .floating-widget__resize-handle--top {
+  z-index: 6;
+  height: $resize-header-band;
+}
+
+.floating-widget__header ~ .floating-widget__resize-handle--top-left,
+.floating-widget__header ~ .floating-widget__resize-handle--top-right {
+  z-index: 7;
+  height: $resize-header-band;
 }

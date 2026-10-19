@@ -95,6 +95,44 @@ describe('presenting a passage names the passage', () => {
     });
 });
 
+// A found verse opened in the Bible Lookup replaces the passage being read,
+// so the banner names it; a search or a read of references stays quiet.
+describe('opening a found verse names the verse', () => {
+    it('a book-name URL announces the supplied site', () => {
+        expect(
+            describeToolNotice('owa_bible_xml', {
+                action: 'names',
+                url: 'https://example.org/books',
+            }),
+        ).toMatchObject({
+            text: 'read a page on example.org',
+            key: 'read a website',
+            detail: ['example.org'],
+        });
+    });
+    it('names a verse, and only a verse', () => {
+        expect(describeToolCall('owa_find_verse', { open: 'JHN 3:16' })).toBe(
+            'opened JHN 3:16 in the Bible Lookup',
+        );
+        expect(
+            describeToolCall('owa_find_verse', { open: '1 John 4:18-19' }),
+        ).toBe('opened 1 John 4:18-19 in the Bible Lookup');
+        expect(
+            describeToolCall('owa_find_verse', { open: 'the one about love' }),
+        ).toBe('opened a verse in the Bible Lookup');
+    });
+
+    it('says nothing for a search or a read', () => {
+        expect(
+            describeToolCall('owa_find_verse', { words: 'love enemies' }),
+        ).toBeNull();
+        expect(
+            describeToolCall('owa_find_verse', { refs: 'John 3:16' }),
+        ).toBeNull();
+        expect(describeToolCall('owa_find_verse', {})).toBeNull();
+    });
+});
+
 // A countdown or a message goes on the congregation's screen too, so the
 // banner names WHICH extra and how long -- a sentence the operator can check
 // against the wall. A check reads and stays quiet.

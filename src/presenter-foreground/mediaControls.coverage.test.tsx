@@ -157,6 +157,14 @@ vi.mock('../background/VideoTilePreviewComp', () => ({
         <span data-video-src={src}>{isHovering ? 'playing' : 'poster'}</span>
     ),
 }));
+vi.mock('../background/backgroundWebHelpers', () => ({
+    genBackgroundWebContextMenuItems: (dirSource: unknown) => [
+        { menuElement: 'New File', dirSource },
+    ],
+    genBackgroundWebExtraItemContextMenuItems: (filePath: string) => [
+        { menuElement: 'Edit', filePath },
+    ],
+}));
 vi.mock('../background/BackgroundWebChildComp', () => ({
     RenderWebChildComp: ({ fileOrUrlSource }: any) => (
         <span data-web-name={fileOrUrlSource.fullName} />
@@ -375,6 +383,24 @@ function runnerSetting(kind: string, suffix: string, value: string) {
 }
 
 describe('foreground media widgets', () => {
+    test('Web Show offers the Webs tab own New File and Edit; the other kinds add none', async () => {
+        // The shared panel had dropped both, so a page could only be made or
+        // changed from the Background tab (CM-56, CM-57).
+        await render('web');
+        const webGrid = state.grids.get('bg-web');
+        const dirSource = { dirPath: 'webs' };
+        expect(webGrid.genContextMenuItems(dirSource)).toEqual([
+            { menuElement: 'New File', dirSource },
+        ]);
+        expect(webGrid.genExtraItemContextMenuItems('C:/webs/a.html')).toEqual([
+            { menuElement: 'Edit', filePath: 'C:/webs/a.html' },
+        ]);
+        await render('video');
+        const videoGrid = state.grids.get('bg-video');
+        expect(videoGrid.genContextMenuItems).toBeUndefined();
+        expect(videoGrid.genExtraItemContextMenuItems).toBeUndefined();
+    });
+
     test.each(['video', 'image', 'web'] as const)(
         '%s replaces only its own session and toggles a shown file off',
         async (kind) => {
@@ -635,6 +661,11 @@ describe('foreground media autoplay', () => {
         state.screens = [];
         await render('image');
         expect(state.runners).toEqual([]);
+        // Nothing up any more (Clear Foreground) ends the show: the flag left
+        // on made the next single picture start the whole show again.
+        expect(
+            state.settings.get('foreground-image-a-slide-auto-play-playing'),
+        ).toBe('false');
     });
 
     test('a runner stops when its folder has no usable file list', async () => {

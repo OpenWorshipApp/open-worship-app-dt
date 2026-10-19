@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-15",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "orientation",
@@ -258,7 +258,7 @@
                     "starterRank": 3,
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "It can turn words you already have into a song",
+                        "passage": "On a server of your own, type",
                         "tools": ["owa_lyric_validate", "owa_lyric_file"],
                         "related": ["W-15"]
                     }
@@ -479,6 +479,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
+                        "passage": "In the left column, click a document in the",
                         "find": "Documents",
                         "guide": true
                     }
@@ -555,7 +556,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "shortcut": "Arrow keys / PageDown / Space",
+                        "shortcut": "→ / ↓ / PageDown / Space",
                         "guide": true
                     }
                 },
@@ -572,7 +573,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "shortcut": "Arrow keys / PageUp",
+                        "shortcut": "← / ↑ / PageUp / Shift+Space",
                         "guide": true
                     }
                 },
@@ -592,6 +593,7 @@
                     ],
                     "resources": {
                         "recipe": "W-49b",
+                        "passage": "Press the key three times quickly",
                         "related": ["W-03", "W-22b"]
                     }
                 },
@@ -649,6 +651,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
+                        "passage": "Show the person on the stage what comes next",
                         "related": ["W-05"],
                         "find": "Add Stage",
                         "guide": true
@@ -684,6 +687,7 @@
                     ],
                     "resources": {
                         "recipe": "W-04",
+                        "passage": "Stop slides that are already advancing",
                         "guide": true
                     }
                 },
@@ -1005,7 +1009,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
-                        "passage": "How a song is written",
+                        "passage": "The order it is sung in is its Structure line",
                         "guide": true
                     }
                 },
@@ -1023,6 +1027,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "To attach links to a song",
                         "guide": true
                     }
                 },
@@ -1224,7 +1229,8 @@
                     "resources": {
                         "recipe": "W-06",
                         "related": ["W-11"],
-                        "guide": true
+                        "guide": true,
+                        "passage": "Another version on the screen"
                     }
                 },
                 {
@@ -1466,6 +1472,7 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
+                        "passage": "To point a session at a folder of your own",
                         "related": ["W-16"],
                         "find": "Background > Images",
                         "guide": true
@@ -1591,7 +1598,7 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
-                        "passage": "Each one is a folder of its own",
+                        "passage": "To point a session at a folder of your own, press the folder line above the list",
                         "related": ["W-16"],
                         "guide": true
                     }
@@ -1611,6 +1618,7 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
+                        "passage": "Folder sessions (Images / Videos / Webs / Audios)",
                         "related": ["W-16"],
                         "find": "Background > Images",
                         "guide": true
@@ -1644,6 +1652,7 @@
                     ],
                     "resources": {
                         "recipe": "W-28",
+                        "passage": "a slide document open in the",
                         "related": ["W-15"],
                         "guide": true
                     }
@@ -1823,6 +1832,25 @@
                     }
                 },
                 {
+                    "id": "clock-city",
+                    "text": "How do I show the time of another city?",
+                    "kind": "howto",
+                    "keywords": [
+                        "city",
+                        "time zone",
+                        "timezone",
+                        "world clock",
+                        "another country",
+                        "choose city"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "passage": "puts the city's name above the clock in words",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
                     "id": "screen-show",
                     "text": "How do I show one screen inside another screen?",
                     "kind": "howto",
@@ -1909,7 +1937,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "passage": "The slide show sits in that same row",
+                        "passage": "The slide show sits in the row of session buttons at the top of the panel",
                         "find": "Image Show",
                         "guide": true
                     }
@@ -1983,6 +2011,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "Two pictures up at once",
                         "find": "Image Show",
                         "guide": true
                     }
@@ -2021,6 +2050,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "Only one session is shown at a time, so each button carries its own marks",
                         "find": "Messages"
                     }
                 },
@@ -2039,6 +2069,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "keeps a widget over the others",
                         "find": "Always on Top",
                         "guide": true
                     }
@@ -2095,8 +2126,26 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "is a fold under Properties, on every component, and it dresses the overlay",
                         "find": "Padding",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "message-shrinks-to-fit",
+                    "text": "Why did my messages get smaller on the screen?",
+                    "kind": "what",
+                    "keywords": [
+                        "message smaller",
+                        "text got smaller",
+                        "shrink",
+                        "does not fit",
+                        "runs off the screen",
+                        "too long message"
+                    ],
+                    "resources": {
+                        "recipe": "W-47",
+                        "find": "Show All Messages"
                     }
                 },
                 {
@@ -2115,6 +2164,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "is a fold under Properties, on every component",
                         "find": "Effects",
                         "guide": true
                     }
@@ -2134,6 +2184,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "which is what makes a notice readable over a busy picture or a moving video",
                         "find": "Text Shadow",
                         "guide": true
                     }
@@ -2225,7 +2276,7 @@
                         "recipe": "W-53",
                         "passage": "Step with the keys",
                         "find": "Long Text Show",
-                        "shortcut": "Arrow keys / PageDown / Space"
+                        "shortcut": "→ / ↓ / PageDown / Space"
                     }
                 }
             ]
@@ -2267,6 +2318,7 @@
                     ],
                     "resources": {
                         "recipe": "W-19",
+                        "passage": "to dim the whole app except a circle",
                         "shortcut": "Ctrl+Shift+P, then F",
                         "guide": true
                     }

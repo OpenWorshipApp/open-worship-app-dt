@@ -408,7 +408,7 @@ describe('Khmer translation coverage', () => {
     // check above cannot see this: the key exists; the bug is the second call.
     test('nothing hands a self-translating helper a translation', () => {
         const selfTranslatingCallPattern =
-            /(?:askForNewArchivePassword|askForArchivePassword)\(\s*tran\(|(?:confirmButtonLabel|cancelButtonLabel)\s*:\s*tran\(/g;
+            /(?:askForNewArchivePassword|askForArchivePassword)\(\s*tran\(|(?:confirmButtonLabel|cancelButtonLabel|extraButtonLabel)\s*:\s*tran\(/g;
         const offenders: string[] = [];
         for (const filePath of listSourceFiles(SRC_DIR)) {
             const text = readFileSync(filePath, 'utf-8');

@@ -20,6 +20,7 @@ import { checkIsTypingTarget } from '../../presenting-control/presentingControlS
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
 import EventHandler from '../../event/EventHandler';
+import { handleError } from '../../helper/errorHelpers';
 
 export function focusNoteEditor(varySlide: VarySlideType) {
     if (
@@ -78,14 +79,25 @@ export function handleVarySlideSelecting(
     if (appProvider.isPageAppDocumentEditor) {
         selectSelectedSlide(varySlide);
     } else {
-        slidePreviewerMethods.handleSlideItemSelected(viewIndex, varySlide);
+        // The footer history answers "what did I just show", so it hears of
+        // a slide only once a screen has TAKEN it: a locked screen refuses
+        // the press with a toast, and the badge used to go in all the same.
         ScreenVaryAppDocumentManager.handleSlideSelecting(
             event,
             varySlide.filePath,
             varySlide.toJson(),
             false,
             presetScreenIds,
-        );
+        )
+            .then((isShown) => {
+                if (isShown) {
+                    slidePreviewerMethods.handleSlideItemSelected(
+                        viewIndex,
+                        varySlide,
+                    );
+                }
+            })
+            .catch(handleError);
         focusNoteEditor(varySlide);
     }
 }
@@ -173,6 +185,34 @@ function findNextSlide(
 }
 
 /**
+ * The number a slide's card shows -- `toVarySlideGridItems`' index, plus one --
+ * found without laying the grid out.
+ */
+function toVarySlideViewIndex(
+    varySlides: VarySlideType[],
+    target: VarySlideType,
+) {
+    const index = varySlides.indexOf(target);
+    if (index !== -1) {
+        return index + 1;
+    }
+    // `subSlides` builds new objects on every read, so a sub-slide is matched
+    // by its id, and only once no top-level slide was the one.
+    for (const [i, varySlide] of varySlides.entries()) {
+        if (!PptxSlide.checkIsThisType(varySlide)) {
+            continue;
+        }
+        const j = varySlide.subSlides.findIndex((subSlide) => {
+            return subSlide.id === target.id;
+        });
+        if (j !== -1) {
+            return PptxSlide.calcIndex(i, j) + 1;
+        }
+    }
+    return null;
+}
+
+/**
  * Step every screen showing a slide of this document onto the next one.
  *
  * Asked of the SCREEN MANAGERS rather than of the DOM. It used to read the
@@ -253,6 +293,19 @@ export function handleNextItemSelecting({
     // of the document, which the caller turns into a stop.
     if (foundList.length === 0) {
         return false;
+    }
+    // A step presents a slide just as a click does, so the footer's history
+    // hears of it too -- once per slide, however many screens it went to.
+    const recordedVarySlides = new Set<VarySlideType>();
+    for (const { varySlide } of foundList) {
+        if (recordedVarySlides.has(varySlide)) {
+            continue;
+        }
+        recordedVarySlides.add(varySlide);
+        const viewIndex = toVarySlideViewIndex(varySlides, varySlide);
+        if (viewIndex !== null) {
+            slidePreviewerMethods.handleSlideItemSelected(viewIndex, varySlide);
+        }
     }
     for (let i = 0; i < foundList.length; i++) {
         const { varySlide, screenId } = foundList[i];

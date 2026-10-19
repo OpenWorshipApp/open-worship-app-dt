@@ -208,7 +208,7 @@ const TOOL_NAME_PATTERN = /\bowa_[a-z][a-z_]*[a-z]\b(?![*_])/g;
 const ENV_NAME_PATTERN = /\bOWA_[A-Z0-9_]*[A-Z0-9]\b/g;
 const NPM_RUN_PATTERN = /\bnpm\s+run\s+([\w:.-]+)/g;
 const ID_PATTERN =
-    /\b(EN|EC|MC|AC|AD|UT|W|PM|RD|PL|CM|CB|KB|ST|ED|SP|PR|GL|NAV|PU|XW|SC|AP|EX|MD|LT|PC)-(\d+[a-z]?)\b/g;
+    /\b(EN|EC|MC|AC|AD|UT|TP|W|PM|RD|PL|CM|CB|KB|ST|ED|SP|PR|GL|NAV|PU|XW|SC|AP|EX|MD|LT|PC)-(\d+[a-z]?)\b/g;
 const MEMORY_REF_PATTERN =
     /\bmemor(?:y|ies)\s+((?:`[a-z0-9][a-z0-9-]*`(?:\s*(?:,|and|\+|·|or|\/)\s*)?)+)/g;
 const WIKI_LINK_PATTERN = /\[\[([a-z0-9][a-z0-9-]*)\]\]/g;
@@ -227,6 +227,7 @@ const ID_OWNER_MAP = {
     AC: '.claude/skills/owa-enhance-aichat/references/backlog.md',
     AD: '.claude/skills/owa-enhance-agent-docs/references/backlog.md',
     UT: '.claude/skills/owa-upgrade-unit-test/references/plan.md',
+    TP: '.claude/skills/owa-enhance-tips/references/backlog.md',
     W: '.claude/skills/owa-robot-test/references/user-workflows.md',
 };
 const MATRIX_PATH = 'docs/test-paths/coverage-matrix.md';

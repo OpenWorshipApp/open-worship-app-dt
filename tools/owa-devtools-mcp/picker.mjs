@@ -26,6 +26,13 @@ import { DOM_MATCH_RUNTIME } from './domMatch.mjs';
 // where nobody is polling at all any more.
 const PICKER_TIMEOUT_MS = 60000;
 
+// The line over the window while it waits, ONE sentence with the pointed-at
+// control's name in its gap, so a translation may put the name where its own
+// grammar wants it. The English is the dictionary key; the caller hands the
+// window language's words to `start`.
+export const PICKER_HINT_TEMPLATE =
+    'Click the control you mean {name} · Esc to cancel';
+
 export const PICKER_RUNTIME = `
 (() => {
     if (window.__owaPicker !== undefined) {
@@ -39,7 +46,7 @@ export const PICKER_RUNTIME = `
     let hovered = null;
     let timer = null;
 
-    const install = () => {
+    const install = (hintText) => {
         // Same reason as the guide's: an orphan host from a runtime that was
         // replaced keeps its own listeners and comes first in the document.
         for (const stale of document.querySelectorAll('#owa-picker-host')) {
@@ -60,14 +67,26 @@ export const PICKER_RUNTIME = `
             'display:none;transition:all .08s ease-out}' +
             '.hint{position:fixed;left:50%;top:14px;transform:translateX(-50%);' +
             'background:rgba(17,17,17,.92);color:#fff;padding:7px 14px;' +
-            'border-radius:999px;font:13px system-ui,sans-serif;' +
+            'border-radius:999px;font:13px system-ui,-apple-system,' +
+            'var(--owa-picker-page-font,sans-serif),sans-serif;' +
             'pointer-events:none;white-space:nowrap;' +
             'box-shadow:0 4px 16px rgba(0,0,0,.4)}' +
             '.name{color:#7fe7f5}' +
             '</style>' +
             '<div class="outline"></div>' +
-            '<div class="hint">Click the control you mean' +
-            ' <span class="name"></span> &middot; Esc to cancel</div>';
+            '<div class="hint"></div>';
+        // Built as nodes, never as markup: the words are a dictionary's.
+        const [before, after = ''] = String(hintText).split('{name}');
+        const hintLine = root.querySelector('.hint');
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name';
+        hintLine.append(before, nameSpan, after);
+        // The app's own lettering for a script the system face lacks (the
+        // Battambang a Khmer window is set in), after the system face.
+        const pageFont = getComputedStyle(document.body).fontFamily;
+        if (pageFont) {
+            host.style.setProperty('--owa-picker-page-font', pageFont);
+        }
         document.documentElement.appendChild(host);
         outline = root.querySelector('.outline');
         hint = root.querySelector('.name');
@@ -187,14 +206,14 @@ export const PICKER_RUNTIME = `
         teardown();
     }
 
-    const start = () => {
+    const start = (hintText) => {
         // A second start replaces the first rather than stacking listeners:
         // the window can only be asked to point at one thing at a time.
         teardown();
         state.phase = 'picking';
         state.result = null;
         state.startedAt = Date.now();
-        install();
+        install(hintText || ${JSON.stringify(PICKER_HINT_TEMPLATE)});
         listen(true);
         timer = setTimeout(() => {
             if (state.phase === 'picking') {
@@ -219,8 +238,11 @@ export const PICKER_RUNTIME = `
     return window.__owaPicker;
 })()`;
 
-/** Put the picker up and start listening. */
-export function genPickerStartExpression() {
+/**
+ * Put the picker up and start listening, its line in `hintText` (the
+ * window language's `PICKER_HINT_TEMPLATE`).
+ */
+export function genPickerStartExpression(hintText = PICKER_HINT_TEMPLATE) {
     return `(() => {
         const picker = ${PICKER_RUNTIME};
         // The card and the picker are both drawn over the app, and a ring the
@@ -228,7 +250,7 @@ export function genPickerStartExpression() {
         document.dispatchEvent(new CustomEvent('owa-guide-running', {
             detail: { isRunning: true },
         }));
-        return picker.start();
+        return picker.start(${JSON.stringify(hintText)});
     })()`;
 }
 

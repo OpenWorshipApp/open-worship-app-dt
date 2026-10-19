@@ -34,6 +34,7 @@
 //          [--new-key] [--no-key] [--cloudflared <path>]
 //          [--check <seconds>] [--publish] [--out <folder>] [--log <file>]
 //          [--with-reports | --reports] [--db <file>]
+//          [--note <text>] [--model-note <model>=<text> ...]
 
 import { execFileSync, spawn } from 'node:child_process';
 import crypto from 'node:crypto';
@@ -97,6 +98,7 @@ const LOG_MAX_BYTES = 1024 * 1024;
 const MAX_MODELS = 50;
 const ID_PATTERN = /^[A-Za-z0-9-]{1,48}$/;
 const NAME_MAX = 60;
+const NOTE_MAX = 300;
 // On every answer the door gives, so the look through the public address can
 // tell "the door answered" from one of Cloudflare's own error pages.
 export const DOOR_HEADER = 'x-llm-door';
@@ -124,6 +126,7 @@ export const USAGE = [
     '         [--new-key] [--no-key] [--cloudflared <path>]',
     '         [--check <seconds>] [--publish] [--out <folder>] [--log <file>]',
     '         [--with-reports | --reports] [--db <file>]',
+    '         [--note <text>] [--model-note <model>=<text> ...]',
     '',
     '  --port         the LLM server on this computer (1234 LM Studio,',
     '                 8080 llama.cpp, 11434 Ollama)',
@@ -154,6 +157,11 @@ export const USAGE = [
     '  --no-notify    with --reports or --with-reports: no desktop notice',
     '                 on this computer when a new report arrives (one a',
     '                 minute at most; on by default).',
+    '  --note         what the app SHOWS the person choosing this server,',
+    '                 up to 300 characters ("Slow, but free for us")',
+    '  --model-note   the same for one model, as <model>=<text>; give it',
+    '                 once per model. Without these, a note already on this',
+    "                 tunnel's entry in the registry is kept.",
 ].join('\n');
 
 /**
@@ -184,6 +192,10 @@ export function readArgs(argv) {
         dbFile: '',
         // A desktop notice for each new report (`genNewReportNotifier`).
         isNotifying: true,
+        // What the app shows the person choosing the server, and each
+        // model by its id (`genRegistryServer`).
+        note: '',
+        modelNotes: {},
     };
     let isBad = false;
     let isNameGiven = false;
@@ -209,7 +221,15 @@ export function readArgs(argv) {
         else if (arg === '--new-key') args.isNewKey = true;
         else if (arg === '--no-key') args.isKeyWanted = false;
         else if (arg === '--publish') args.isPublishing = true;
-        else isBad = true;
+        else if (arg === '--note') {
+            args.note = readNext().trim();
+            isBad = isBad || args.note.length === 0;
+        } else if (arg === '--model-note') {
+            const [model, ...rest] = readNext().split('=');
+            const text = rest.join('=').trim();
+            isBad = isBad || model.trim().length === 0 || text.length === 0;
+            args.modelNotes[model.trim()] = text;
+        } else isBad = true;
     }
     // An inbox is not the LLM server on a port: it has a name and an id of
     // its own, so it and a tunnel to LM Studio are two entries untyped.
@@ -236,7 +256,11 @@ export function readArgs(argv) {
         args.checkSeconds < 0 ||
         !ID_PATTERN.test(args.id) ||
         args.name.trim().length === 0 ||
-        args.name.length > NAME_MAX
+        args.name.length > NAME_MAX ||
+        args.note.length > NOTE_MAX ||
+        Object.values(args.modelNotes).some((text) => {
+            return text.length > NOTE_MAX;
+        })
     ) {
         return null;
     }
@@ -879,18 +903,62 @@ export async function checkIsTunnelAnswering(url, key, fetchUrl = fetch) {
     }
 }
 
-export function genRegistryServer(args, baseUrl, key, kind, models) {
+/**
+ * This tunnel's entry. Its notes are what the app SHOWS the person choosing
+ * the server or a model (2026-10-17, the user's ask: _for some model we want
+ * to let user know it slow but help us save cost of usage_), so the entry
+ * carries only what --note and --model-note say: the line it wrote by
+ * itself about the tunnel was for whoever read the file, and would have
+ * been shown to every volunteer. `_kind`, the server's name, is the log's.
+ */
+export function genRegistryServer(args, baseUrl, key, _kind, models) {
+    const modelNotes = args.modelNotes ?? {};
     return {
         id: args.id,
         name: args.name,
         baseUrl,
         apiKey: key,
         isFree: true,
-        note: `${kind} on the church's computer through a Cloudflare quick tunnel`,
-        models,
+        ...(args.note ? { note: args.note } : {}),
+        models: models.map((model) => {
+            const note = modelNotes[model.model];
+            return note === undefined ? model : { ...model, note };
+        }),
         // The same address takes the app's problem reports too.
         ...(args.isWithReports === true ? { isAcceptingReport: true } : {}),
     };
+}
+
+/**
+ * The entry with the notes the registry's copy of it already carries, where
+ * this start gave none: a note an admin put on the server or on a model in
+ * the site's file is not lost when the tunnel starts again and rewrites its
+ * entry.
+ */
+// What a tunnel wrote by itself until then, which is not an admin's to keep.
+const OLD_TUNNEL_NOTE_PATTERN = / on the church's computer through a Cloudflare quick tunnel$/;
+
+function keepLiveNotes(server, before) {
+    const liveModels = Array.isArray(before?.models) ? before.models : [];
+    const liveNote =
+        typeof before?.note === 'string' &&
+        OLD_TUNNEL_NOTE_PATTERN.test(before.note)
+            ? undefined
+            : before?.note;
+    const kept = {
+        ...server,
+        models: server.models.map((model) => {
+            const live = liveModels.find((one) => {
+                return one?.model === model.model;
+            });
+            return model.note === undefined && live?.note !== undefined
+                ? { ...model, note: live.note }
+                : model;
+        }),
+    };
+    return server.note === undefined && liveNote !== undefined
+        ? { ...kept, note: liveNote }
+        : kept;
 }
 
 /**
@@ -924,7 +992,11 @@ export function mergeRegistry(live, server, id, today) {
         if (item?.id !== id) {
             servers.push(item);
         } else if (server !== null && !isPlaced) {
-            servers.push(server);
+            servers.push(
+                Array.isArray(server.models)
+                    ? keepLiveNotes(server, item)
+                    : server,
+            );
             isPlaced = true;
         }
     }

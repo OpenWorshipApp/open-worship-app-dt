@@ -194,12 +194,14 @@ describe('initHelpers', () => {
         const initHelpers = await loadModule();
 
         let latestTheme = '';
+        let latestThemeSource = '';
 
         function Probe() {
             const current = initHelpers.useThemeSource();
             useEffect(() => {
                 latestTheme = current.theme;
-            }, [current.theme]);
+                latestThemeSource = current.themeSource;
+            }, [current.theme, current.themeSource]);
             return null;
         }
 
@@ -212,6 +214,7 @@ describe('initHelpers', () => {
         });
 
         expect(latestTheme).toBe('light');
+        expect(latestThemeSource).toBe('system');
 
         await act(async () => {
             matchMediaState.matches = true;
@@ -220,5 +223,6 @@ describe('initHelpers', () => {
         });
 
         expect(latestTheme).toBe('dark');
+        expect(latestThemeSource).toBe('system');
     });
 });

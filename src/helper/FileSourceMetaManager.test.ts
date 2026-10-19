@@ -185,7 +185,7 @@ describe('FileSourceMetaManager', () => {
         ).toBeNull();
     });
 
-    test('reads color notes from app documents and reports unreadable files', async () => {
+    test('reads color notes from app documents, silent on unreadable files', async () => {
         checkIsAppFileMock.mockReturnValue(true);
 
         const goodFileSource = createFileSource('slide.owa', {
@@ -203,6 +203,20 @@ describe('FileSourceMetaManager', () => {
         expect(
             await FileSourceMetaManager.getColorNote('/docs/broken.owa'),
         ).toBeUndefined();
+        // The list reads the note per row and again to group the rows: one
+        // broken file arrived as three "Color Note" toasts.
+        expect(appHandleErrorMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+    });
+
+    test('setting a color note on an unreadable file reports it', async () => {
+        checkIsAppFileMock.mockReturnValue(true);
+        fileSourceGetInstanceMock.mockReturnValue(
+            createFileSource('broken.owa', null),
+        );
+
+        await FileSourceMetaManager.setColorNote('/docs/broken.owa', 'red');
+
         expect(appHandleErrorMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 message: 'Unable to read data from /docs/broken.owa}',

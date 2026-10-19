@@ -1,8 +1,6 @@
 import SettingManager from '../helper/SettingManager';
 import {
-    getSetting,
     removeSettingsByPrefix,
-    setSetting,
     toFilePathSettingKey,
 } from '../helper/settingHelpers';
 import {
@@ -21,6 +19,11 @@ const RESOURCES_FOLDER_LIST_SETTING_NAME = 'resources-folder-list';
  * Listed here rather than at each use site so the cleanup below cannot miss one
  * that is added later -- the whole point of it is that nothing is left behind.
  * Same reasoning, and the same shape, as `PRESENTING_FLOW_SETTING_PREFIXES`.
+ *
+ * `resources-folder-expanded` is no longer written -- a folder box opens every
+ * time now, and keeps a collapse in memory only -- but a data folder from
+ * before still holds one file per folder someone pressed, so removing that
+ * folder still clears it.
  */
 const RESOURCES_FOLDER_SETTING_PREFIXES = ['resources-folder-expanded'];
 
@@ -38,10 +41,6 @@ export const RESOURCES_SEARCH_SHOWING_SETTING_NAME = 'resources-search-showing';
  * box above, and kept out of the folder prefixes for the same reason too.
  */
 export const RESOURCES_OTHERS_SHOWING_SETTING_NAME = 'resources-others-showing';
-
-export function toResourcesFolderExpandedSettingName(dirPath: string) {
-    return `resources-folder-expanded-${toFilePathSettingKey(dirPath)}`;
-}
 
 /**
  * Compare two folder paths the way the FILE SYSTEM the user is on would.
@@ -248,25 +247,9 @@ export async function promptAddResourcesFolders(existingDirPathList: string[]) {
 }
 
 /**
- * Hand a folder's open/collapsed state to the folder replacing it, so the box
- * the user was looking at stays the way they left it. Written before the new
- * box mounts, because that is the only time it reads the setting.
- */
-export function carryResourcesFolderSettings(
-    oldDirPath: string,
-    newDirPath: string,
-) {
-    const value = getSetting(toResourcesFolderExpandedSettingName(oldDirPath));
-    if (!value) {
-        return;
-    }
-    setSetting(toResourcesFolderExpandedSettingName(newDirPath), value);
-}
-
-/**
  * Forget everything a resources folder persisted, once it is off the list.
  *
- * Settings are one FILE per key, and this feature names them after the folder,
+ * Settings are one FILE per key, and this feature named them after the folder,
  * so a removed folder would otherwise leave its `resources-folder-expanded-…`
  * behind with nothing left that could ever read or clear it again.
  */

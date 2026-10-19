@@ -36,6 +36,11 @@ import VideoTilePreviewComp, {
     HOVER_PLAY_DELAY,
 } from '../background/VideoTilePreviewComp';
 import { RenderWebChildComp } from '../background/BackgroundWebChildComp';
+import {
+    genBackgroundWebContextMenuItems,
+    genBackgroundWebExtraItemContextMenuItems,
+} from '../background/backgroundWebHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import SlideAutoPlayComp, {
     type NextDataType,
 } from '../slide-auto-play/SlideAutoPlayComp';
@@ -156,6 +161,10 @@ type ForegroundMediaConfigType = {
         manager: ScreenForegroundManager,
         data: ForegroundMediaDataType,
     ) => void;
+    /** The kind's own rows in the list's menu (a web page's New File). */
+    genContextMenuItems?: (dirSource: DirSource) => ContextMenuItemType[];
+    /** The kind's own rows in one file's menu (a web page's Edit). */
+    genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
 };
 
 function toPresentedList(
@@ -322,6 +331,15 @@ const FOREGROUND_MEDIA_CONFIG_MAP: Record<
         },
         remove: (manager, data) => {
             manager.removeWebData(data as ForegroundWebDataType);
+        },
+        // The same folder the Webs tab lists, so the same way to write a page
+        // into it and to edit one: the shared panel had dropped both, and a
+        // page could only be made or changed from the Background tab.
+        genContextMenuItems: (dirSource) => {
+            return genBackgroundWebContextMenuItems(dirSource);
+        },
+        genExtraItemContextMenuItems: (filePath) => {
+            return genBackgroundWebExtraItemContextMenuItems(filePath);
         },
     },
     video: {
@@ -816,8 +834,22 @@ function syncAutoPlayRunners() {
             const autoPlayPrefix = toAutoPlayPrefix(kind, session.id);
             const options = readSlideAutoPlayOptions(autoPlayPrefix);
             const isUntilMediaEnd = kind === 'video' && options.isUntilMediaEnd;
+            const isPlaying = checkIsSlideAutoPlaying(autoPlayPrefix);
             if (
-                !checkIsSlideAutoPlaying(autoPlayPrefix) ||
+                isPlaying &&
+                getSessionShowingList(config, session.id).length === 0
+            ) {
+                // Its last item came off -- Clear Foreground, a Hide -- so the
+                // show is OVER, as it is when its own tick finds nothing left
+                // (`onEnded`). With the panel open this sync dropped the timer
+                // before that tick, the flag stayed on, and the next single
+                // picture put up started the whole show again by itself.
+                setIsSlideAutoPlaying(autoPlayPrefix, false);
+                notifySlideAutoPlayStateChanged();
+                continue;
+            }
+            if (
+                !isPlaying ||
                 // Waiting for the clip to finish needs no seconds at all, so
                 // an empty seconds box must not stop that show from running.
                 !(
@@ -1111,6 +1143,10 @@ export default function ForegroundMediaComp({
                         // minutes before a service: the way to a folder is
                         // the picker in the row above, not another window.
                         isDirSettingRouteHidden
+                        genContextMenuItems={config.genContextMenuItems}
+                        genExtraItemContextMenuItems={
+                            config.genExtraItemContextMenuItems
+                        }
                         genItemData={genForegroundItemData.bind(
                             null,
                             config,

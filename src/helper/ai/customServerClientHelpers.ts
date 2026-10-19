@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 
 import { getIsAIEnabled } from './aiHelpers';
+import { fillWords, tran } from '../../chatbot/chatTranHelpers';
 import {
     cancelCustomLlmRequest,
     describeCustomLlmFailure,
@@ -233,26 +234,38 @@ const CONTEXT_ERROR_PATTERN =
 // SGLang's "auto" tool choice requires --enable-auto-tool-choice and
 // --tool-call-parser (a 400 until the server is started with them). The
 // first pattern that matches wins, so the specific ones come first.
-const NO_TOOLS_ERROR_LIST: { pattern: RegExp; fixText: string }[] = [
+// Each sentence is said in the help window's language when it is written
+// (`chatTranHelpers.ts`), so the list holds how to write it, not the words.
+const NO_TOOLS_ERROR_LIST: { pattern: RegExp; genFixText: () => string }[] = [
     {
         pattern: /--jinja/i,
-        fixText:
-            'this server needs tool calling switched on — start llama-server ' +
-            '(or llamafile) again with the --jinja flag, then ask again',
+        genFixText: () => {
+            return tran(
+                'this server needs tool calling switched on — start ' +
+                    'llama-server (or llamafile) again with the --jinja ' +
+                    'flag, then ask again',
+            );
+        },
     },
     {
         pattern: /enable-auto-tool-choice|tool-call-parser/i,
-        fixText:
-            'this server needs tool calling switched on — start it again ' +
-            'with --enable-auto-tool-choice and --tool-call-parser (vLLM, ' +
-            'SGLang), then ask again',
+        genFixText: () => {
+            return tran(
+                'this server needs tool calling switched on — start it ' +
+                    'again with --enable-auto-tool-choice and ' +
+                    '--tool-call-parser (vLLM, SGLang), then ask again',
+            );
+        },
     },
     {
         pattern:
             /does not support tools|tool(?:s| calls?| calling| use) (?:is |are )?not supported|function calling (?:is )?not supported/i,
-        fixText:
-            'this model cannot use tools, which the assistant needs to look ' +
-            'things up — pick a model that supports tools',
+        genFixText: () => {
+            return tran(
+                'this model cannot use tools, which the assistant needs to ' +
+                    'look things up — pick a model that supports tools',
+            );
+        },
     },
     {
         // GPT4All's API server (3.10, measured 2026-10-10): the SERVER takes
@@ -260,10 +273,14 @@ const NO_TOOLS_ERROR_LIST: { pattern: RegExp; fixText: string }[] = [
         // supported". The chat loop asks once more without them first
         // (`checkIsToolsRefused`); this sentence is for when that fails too.
         pattern: /['"‘’“”]tools['"‘’“”] (?:is |are )?not supported/i,
-        fixText:
-            'this server’s API does not take tools at all (GPT4All’s does ' +
-            'not), so the assistant can only answer from the guide text — ' +
-            'for presses and live answers use LM Studio, Ollama or llama.cpp',
+        genFixText: () => {
+            return tran(
+                'this server’s API does not take tools at all (GPT4All’s ' +
+                    'does not), so the assistant can only answer from the ' +
+                    'guide text — for presses and live answers use LM ' +
+                    'Studio, Ollama or llama.cpp',
+            );
+        },
     },
 ];
 
@@ -293,25 +310,85 @@ export function genContextTooSmallText(
     loadedContext: number | null = null,
     kind: CustomServerKindType = 'other',
 ) {
-    const loadedText =
-        loadedContext === null
-            ? "this model's context"
-            : `the ${toContextLabel(loadedContext)} context this model is loaded with`;
-    const sizeText = toContextLabel(CUSTOM_CONTEXT_COMFORTABLE);
-    const fixText =
-        kind === 'lm-studio'
-            ? `load it again in LM Studio with a Context Length of ${sizeText} ` +
-              'or more (the model’s load settings)'
-            : kind === 'ollama'
-              ? 'in the Ollama app, set Settings → Context length to ' +
-                `${sizeText} or more (or start Ollama with ` +
-                `OLLAMA_CONTEXT_LENGTH=${CUSTOM_CONTEXT_COMFORTABLE})`
-              : kind === 'llama-cpp'
-                ? 'start llama-server (or llamafile) again with a context ' +
-                  `size of ${sizeText} or more (-c ${CUSTOM_CONTEXT_COMFORTABLE})`
-                : `load it with a context length of ${sizeText} or more where ` +
-                  'the model is served';
-    return `the conversation does not fit ${loadedText} — ${fixText}, then ask again`;
+    if (loadedContext === null) {
+        return fillWords(
+            tran(
+                "the conversation does not fit this model's context — " +
+                    '{fix}, then ask again',
+            ),
+            { fix: genContextFixText(kind) },
+        );
+    }
+    return fillWords(
+        tran(
+            'the conversation does not fit the {size} context this model ' +
+                'is loaded with — {fix}, then ask again',
+        ),
+        { size: toContextLabel(loadedContext), fix: genContextFixText(kind) },
+    );
+}
+
+/**
+ * What to say when the server ANSWERED from a cut-down question: it loaded
+ * the model for this question with a context too small for it and dropped
+ * what did not fit, without a word. Ollama does exactly that -- measured
+ * 2026-10-16 on the laptop, a model loaded at its 4 096 default read 2 051
+ * tokens of a ~13 000-token question, twice, and answered both times.
+ */
+export function genContextCutText(
+    loadedContext: number,
+    kind: CustomServerKindType = 'other',
+) {
+    return fillWords(
+        tran(
+            'it loaded this model with only {size} of context and answered ' +
+                'from part of the question, so that answer is not shown — ' +
+                '{fix}, then ask again',
+        ),
+        { size: toContextLabel(loadedContext), fix: genContextFixText(kind) },
+    );
+}
+
+function genContextFixText(kind: CustomServerKindType) {
+    const values = {
+        size: toContextLabel(CUSTOM_CONTEXT_COMFORTABLE),
+        tokens: CUSTOM_CONTEXT_COMFORTABLE,
+    };
+    if (kind === 'lm-studio') {
+        return fillWords(
+            tran(
+                'load it again in LM Studio with a Context Length of {size} ' +
+                    'or more (the model’s load settings)',
+            ),
+            values,
+        );
+    }
+    if (kind === 'ollama') {
+        return fillWords(
+            tran(
+                'in the Ollama app, set Settings → Context length to {size} ' +
+                    'or more (or start Ollama with OLLAMA_CONTEXT_LENGTH=' +
+                    '{tokens})',
+            ),
+            values,
+        );
+    }
+    if (kind === 'llama-cpp') {
+        return fillWords(
+            tran(
+                'start llama-server (or llamafile) again with a context ' +
+                    'size of {size} or more (-c {tokens})',
+            ),
+            values,
+        );
+    }
+    return fillWords(
+        tran(
+            'load it with a context length of {size} or more where the ' +
+                'model is served',
+        ),
+        values,
+    );
 }
 
 /**
@@ -322,12 +399,24 @@ export function genModelMissingText(
     model: string,
     kind: CustomServerKindType = 'other',
 ) {
-    const pullText =
-        kind === 'ollama' ? `, or pull it (ollama pull ${model})` : '';
-    return (
-        `this server has no model called “${model}” — check the model id ` +
-        'in Settings → Others → Custom servers, press Load models from ' +
-        `server there${pullText}`
+    if (kind === 'ollama') {
+        return fillWords(
+            tran(
+                'this server has no model called “{model}” — check the ' +
+                    'model id in Settings → Others → Custom servers, press ' +
+                    'Load models from server there, or pull it (ollama pull ' +
+                    '{model})',
+            ),
+            { model },
+        );
+    }
+    return fillWords(
+        tran(
+            'this server has no model called “{model}” — check the model id ' +
+                'in Settings → Others → Custom servers, press Load models ' +
+                'from server there',
+        ),
+        { model },
     );
 }
 
@@ -341,18 +430,21 @@ export function genModelMissingText(
  */
 export function genWrongAddressText(baseUrl: string) {
     if (checkIsHiddenServerAddress(baseUrl)) {
-        return (
+        return tran(
             'this shared server did not answer the way the app expects — ' +
-            'its address is openworship.app’s to correct; press ↻ beside ' +
-            'the list of assistants to read the shared servers again, or ' +
-            'pick another assistant'
+                'its address is openworship.app’s to correct; press ↻ beside ' +
+                'the list of assistants to read the shared servers again, or ' +
+                'pick another assistant',
         );
     }
-    return (
-        `nothing speaks the OpenAI API at ${toCustomServerBaseUrl(baseUrl) ?? baseUrl}` +
-        ' — in Settings → Others → Custom servers, check the address and ' +
-        'press Test (Ollama: http://localhost:11434/v1, LM Studio: ' +
-        'http://localhost:1234/v1)'
+    return fillWords(
+        tran(
+            'nothing speaks the OpenAI API at {address} — in Settings → ' +
+                'Others → Custom servers, check the address and press Test ' +
+                '(Ollama: http://localhost:11434/v1, LM Studio: ' +
+                'http://localhost:1234/v1)',
+        ),
+        { address: toCustomServerBaseUrl(baseUrl) ?? baseUrl },
     );
 }
 
@@ -414,17 +506,32 @@ export function toCustomServerFailure(
         error?.constructor?.name === 'APIConnectionTimeoutError' ||
         /request timed out/i.test(message)
     ) {
-        const where =
-            baseUrl !== undefined && checkIsLoopbackUrl(baseUrl)
-                ? 'this computer is too slow'
-                : 'the computer it runs on is too slow';
+        const minutes = Math.round(CLIENT_TIMEOUT_MILLISECONDS / 60000);
         return new CustomServerError(
-            `the server took longer than ${Math.round(CLIENT_TIMEOUT_MILLISECONDS / 60000)} minutes ` +
-                'over the question and the window gave up — a local model ' +
-                `reads the assistant’s whole instruction set first, and ${where} ` +
-                'for that; a general question typed after /btw is small ' +
-                'enough to answer here, and questions about the app need a ' +
-                'faster computer or a model running on a GPU',
+            fillWords(
+                baseUrl !== undefined && checkIsLoopbackUrl(baseUrl)
+                    ? tran(
+                          'the server took longer than {minutes} minutes ' +
+                              'over the question and the window gave up — a ' +
+                              'local model reads the assistant’s whole ' +
+                              'instruction set first, and this computer is ' +
+                              'too slow for that; a general question typed ' +
+                              'after /btw is small enough to answer here, and ' +
+                              'questions about the app need a faster computer ' +
+                              'or a model running on a GPU',
+                      )
+                    : tran(
+                          'the server took longer than {minutes} minutes ' +
+                              'over the question and the window gave up — a ' +
+                              'local model reads the assistant’s whole ' +
+                              'instruction set first, and the computer it ' +
+                              'runs on is too slow for that; a general ' +
+                              'question typed after /btw is small enough to ' +
+                              'answer here, and questions about the app need ' +
+                              'a faster computer or a model running on a GPU',
+                      ),
+                { minutes },
+            ),
         );
     }
     if (typeof status !== 'number') {
@@ -447,9 +554,9 @@ export function toCustomServerFailure(
     });
     if (noTools !== undefined) {
         return new CustomServerError(
-            noTools.fixText +
+            noTools.genFixText() +
                 (kind === 'ollama'
-                    ? ' (Ollama marks them “tools” in its library)'
+                    ? ' ' + tran('(Ollama marks them “tools” in its library)')
                     : ''),
         );
     }

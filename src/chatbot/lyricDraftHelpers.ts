@@ -114,10 +114,13 @@ export function takeDraftedLyric(reference: string) {
     return draftedLyricMap.get(reference) ?? null;
 }
 
-/** What a window that has been reopened since has to say instead. */
+/**
+ * What a window that has been reopened since has to say instead. One literal,
+ * so `tran(DRAFT_GONE_TEXT)` where it is written is a key the coverage test
+ * can read.
+ */
 export const DRAFT_GONE_TEXT =
-    'That song is not held any more — this window has been reopened since. ' +
-    'Send me the words again and I will write it out afresh.';
+    'That song is not held any more — this window has been reopened since. Send me the words again and I will write it out afresh.';
 
 // ---------------------------------------------------------------------------
 // Reading a paste with no model in the loop

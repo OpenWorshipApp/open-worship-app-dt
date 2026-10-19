@@ -395,6 +395,8 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(neighbors.right?.id).toBe(3);
         });
 
+        // The root lies side by side and each level the other way, so a
+        // nested pair under the root is a COLUMN: 1 sits above 2, 3 beside 1.
         test('getNeighborBibleItems handles nested orientation', () => {
             const ctl = genController();
             ctl.nestedBibleItems = [
@@ -408,7 +410,11 @@ describe('bible-reader BibleItemsViewController', () => {
                 'top',
                 'bottom',
             ]);
-            expect(neighbors).toHaveProperty('bottom');
+            expect(neighbors.bottom?.id).toBe(2);
+            expect(neighbors.right?.id).toBe(3);
+            // Wrapping round a two-wide, two-high grid lands on the same two.
+            expect(neighbors.top?.id).toBe(2);
+            expect(neighbors.left?.id).toBe(3);
         });
 
         test('getNeighborBibleItems restricts to requested positions and wraps', () => {
@@ -422,6 +428,120 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(neighbors.bottom).toBeNull();
             // going left from the first wraps to the last item
             expect(neighbors.left?.id).toBe(3);
+        });
+
+        describe('getNeighborBibleItems picks by where the panes sit (KB-27)', () => {
+            const DIRECTIONS = ['left', 'right', 'top', 'bottom'] as const;
+            // Top-left, top-right, bottom-left, bottom-right.
+            const [TL, TR, BL, BR] = [1, 2, 3, 4];
+
+            function readNeighborIds(nestedBibleItems: any) {
+                const ctl = genController();
+                ctl.nestedBibleItems = nestedBibleItems;
+                const table: Record<number, Record<string, number | null>> = {};
+                for (const item of ctl.straightBibleItems) {
+                    const neighbors = ctl.getNeighborBibleItems(item, [
+                        ...DIRECTIONS,
+                    ]);
+                    table[item.id] = Object.fromEntries(
+                        DIRECTIONS.map((direction) => {
+                            return [
+                                direction,
+                                neighbors[direction]?.id ?? null,
+                            ];
+                        }),
+                    );
+                }
+                return table;
+            }
+
+            // Every move in a 2x2 lands in the same row or column it left.
+            // In a grid two wide and two high the wrap round the outer edge
+            // and the step inward reach the same pane.
+            const GRID_2X2 = {
+                [TL]: { left: TR, right: TR, top: BL, bottom: BL },
+                [TR]: { left: TL, right: TL, top: BR, bottom: BR },
+                [BL]: { left: BR, right: BR, top: TL, bottom: TL },
+                [BR]: { left: BL, right: BL, top: TR, bottom: TR },
+            };
+
+            // Built column by column -- split side by side, then split each
+            // half top to bottom -- which is the grid the bug was reported
+            // on: Ctrl+Shift+Left from BR went to TL, Right from BL to TR.
+            test('a 2x2 built column first', () => {
+                expect(
+                    readNeighborIds([
+                        [genItem(TL), genItem(BL)],
+                        [genItem(TR), genItem(BR)],
+                    ]),
+                ).toEqual(GRID_2X2);
+            });
+
+            // The root always lies side by side, so ROWS need a one-child
+            // root: its child stacks the rows, and each row lies side by
+            // side again. `[[TL, TR], [BL, BR]]` is two columns.
+            test('a 2x2 built row first', () => {
+                const rows = [
+                    [
+                        [genItem(TL), genItem(TR)],
+                        [genItem(BL), genItem(BR)],
+                    ],
+                ];
+                const ctl = genController();
+                ctl.nestedBibleItems = rows;
+                // Not flattened away: a lone child flips the axis under it.
+                expect(ctl.nestedBibleItems).toHaveLength(1);
+                expect(readNeighborIds(rows)).toEqual(GRID_2X2);
+            });
+
+            // One tall pane beside two stacked ones. Rightward from the tall
+            // one, its middle falls on the line between B and C; the first,
+            // the top one, wins.
+            test('an uneven grid', () => {
+                const [A, B, C] = [1, 2, 3];
+                expect(
+                    readNeighborIds([genItem(A), [genItem(B), genItem(C)]]),
+                ).toEqual({
+                    [A]: { left: B, right: B, top: null, bottom: null },
+                    [B]: { left: A, right: A, top: C, bottom: C },
+                    [C]: { left: A, right: A, top: B, bottom: B },
+                });
+            });
+
+            test('a wrap keeps the row it left', () => {
+                const ids = readNeighborIds([
+                    [genItem(1), genItem(4)],
+                    [genItem(2), genItem(5)],
+                    [genItem(3), genItem(6)],
+                ]);
+                // Top row 1 2 3, bottom row 4 5 6.
+                expect(ids[1]).toEqual({
+                    left: 3,
+                    right: 2,
+                    top: 4,
+                    bottom: 4,
+                });
+                expect(ids[6]).toEqual({
+                    left: 5,
+                    right: 4,
+                    top: 3,
+                    bottom: 3,
+                });
+            });
+
+            test('a lone pane has nowhere to go', () => {
+                expect(readNeighborIds([genItem(1)])).toEqual({
+                    1: { left: null, right: null, top: null, bottom: null },
+                });
+            });
+
+            test('an item not in the grid has no neighbours', () => {
+                const ctl = genController();
+                ctl.nestedBibleItems = [genItem(1), genItem(2)];
+                expect(
+                    ctl.getNeighborBibleItems(genItem(99), [...DIRECTIONS]),
+                ).toEqual({ left: null, right: null, top: null, bottom: null });
+            });
         });
 
         test('applyTargetOrBibleKey updates target, key and flags', () => {

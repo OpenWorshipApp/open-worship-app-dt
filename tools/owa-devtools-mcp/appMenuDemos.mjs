@@ -78,10 +78,10 @@ const APP_MENU_DEMO_LIST = [
     suffix: 'menu-help',
     label: 'Learn the Help menu',
     detail:
-      'Learn Tips of the Day, All tips, Copy Debug Info, Copy Full Debug Info, App Help (Chatbot), AI Chat, Learn More, both update checks, and About.',
+      'Learn Tips of the Day, All tips, Keyboard Shortcuts, Copy Debug Info, App Help (Chatbot), Learn More, Check for Updates, and About Open Worship app.',
     steps: [
       {
-        text: 'Tips of the Day opens one learning suggestion for this page. All tips opens its complete searchable lesson list.',
+        text: 'Tips of the Day opens one learning suggestion for this page. All tips opens its complete searchable lesson list, and Keyboard Shortcuts lists every shortcut.',
       },
       {
         text: 'Help > Copy Debug Info copies the app, runtime, operating-system, and commit versions for a support report. Help > Copy Full Debug Info also includes the complete build metadata.',

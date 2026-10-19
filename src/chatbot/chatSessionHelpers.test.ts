@@ -127,6 +127,101 @@ describe('loadChatSessions', () => {
         ]);
     });
 
+    // The marker keeps a Bible-Reader conversation going after a reopen;
+    // a question that carries it is not one.
+    test('a Bible-Reader answer keeps its conversation marker', () => {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    {
+                        id: 'one',
+                        messages: [
+                            {
+                                id: 1,
+                                author: 'bot',
+                                text: 'answered',
+                                isBibleReaderAnswer: true,
+                            },
+                            {
+                                id: 2,
+                                author: 'you',
+                                text: 'asked',
+                                isBibleReaderAnswer: true,
+                            },
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        expect(state.sessions[0].messages).toEqual([
+            {
+                id: 1,
+                author: 'bot',
+                text: 'answered',
+                isBibleReaderAnswer: true,
+            },
+            { id: 2, author: 'you', text: 'asked' },
+        ]);
+    });
+
+    // A stored link opens a page at a press: only web addresses survive a
+    // load, only on an answer, and only a few.
+    test('a link is kept only as a web address on an answer', () => {
+        const page = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    {
+                        id: 'one',
+                        messages: [
+                            {
+                                id: 1,
+                                author: 'you',
+                                text: 'asked',
+                                links: [page],
+                            },
+                            {
+                                id: 2,
+                                author: 'bot',
+                                text: 'answered',
+                                links: [
+                                    page,
+                                    page,
+                                    'file:///C:/Windows/win.ini',
+                                    'javascript:alert(1)',
+                                    'https://user:pw@example.org/x',
+                                    42,
+                                    'http://example.org/a',
+                                    'https://example.org/b',
+                                    'https://example.org/c',
+                                    'https://example.org/d',
+                                ],
+                            },
+                            { id: 3, author: 'bot', text: 'x', links: 'nope' },
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const [asked, answered, other] = loadChatSessions('presenter', null, '')
+            .sessions[0].messages;
+
+        expect(asked.links).toBeUndefined();
+        expect(answered.links).toEqual([
+            page,
+            'http://example.org/a',
+            'https://example.org/b',
+            'https://example.org/c',
+        ]);
+        expect(other.links).toBeUndefined();
+    });
+
     // A provider whose key was removed in Settings must not leave a tab
     // pointing at something that can only fail.
     test('an unknown provider becomes null rather than being trusted', () => {

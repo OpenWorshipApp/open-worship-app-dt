@@ -176,3 +176,13 @@ export function releaseLookupData(langCode = getSelectedLookupLangCode()) {
         holders.delete(langCode);
     }
 }
+
+/**
+ * The dataset a mounted panel already holds for this language, or null --
+ * never a load. The chat box's name completion asks for a bare name with
+ * this, so typing `Moses` costs nothing where no lookup panel is open
+ * (2026-10-18).
+ */
+export function getHeldLookupData(langCode = getSelectedLookupLangCode()) {
+    return holders.get(langCode)?.managers ?? null;
+}

@@ -215,6 +215,7 @@ function toPlainSearchWords(text) {
 // files are named with.
 const NATIVE_LANGUAGE_MAP = {
   ខ្មែរ: 'khmer',
+  ថៃ: 'thai',
   ไทย: 'thai',
   ລາວ: 'lao',
   မြန်မာ: 'burmese',

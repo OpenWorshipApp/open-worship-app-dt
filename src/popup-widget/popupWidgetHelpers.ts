@@ -43,6 +43,11 @@ export type ConfirmDataType = {
     extraStyles?: CSSProperties;
     cancelButtonLabel?: string;
     confirmButtonLabel?: string;
+    // A third answer beside the two, left of them ("Hide for 30 days"): it
+    // closes like Cancel, so the confirm still answers false, after
+    // `onExtraButtonClick` has run.
+    extraButtonLabel?: string;
+    onExtraButtonClick?: () => void;
 };
 
 export type InputDataType = {
@@ -115,6 +120,8 @@ export function showAppConfirm(
         extraStyles?: CSSProperties;
         cancelButtonLabel?: string;
         confirmButtonLabel?: string;
+        extraButtonLabel?: string;
+        onExtraButtonClick?: () => void;
     },
 ) {
     const { openConfirm } = popupWidgetManager;

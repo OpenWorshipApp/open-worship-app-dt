@@ -81,6 +81,7 @@ export default class AppDocument
 {
     static readonly mimetypeName: MimetypeNameType = 'appDocument';
     isEditable = true;
+    private corruptedResetting: Promise<AppDocumentType> | null = null;
 
     static genNewExtraJsonData() {
         const newCanvasItem = CanvasItemText.genDefaultItem();
@@ -107,30 +108,55 @@ export default class AppDocument
             return AppDocument.normalizeCanvasItemUuids(jsonData);
         }
         if (!isOriginal) {
-            jsonData = await this.getJsonData(true);
+            jsonData = await super.getJsonData(true);
             if (jsonData !== null) {
-                return jsonData;
+                return AppDocument.normalizeCanvasItemUuids(jsonData);
             }
         }
         // Missing is not corrupted. A run sheet can outlive a document it
         // names, and resetting one that is gone toasted "Corrupted Document",
         // failed to write it, and handed back a made-up slide that could be
         // presented on a live screen.
-        if (!(await fsCheckFileExist(this.filePath))) {
+        // The FILE asked for, and unreadable: it holds no slides. Said with
+        // no toast and no write -- `getSlides` asks this on every update, and
+        // the reset below goes through the history, which fires one.
+        if (isOriginal || !(await fsCheckFileExist(this.filePath))) {
             return AppDocument.genNewJsonData<AppDocumentType>({ items: [] });
+        }
+        // Every pane that reads the document asks at once on a click, and
+        // each used to toast and write a reset of its own.
+        this.corruptedResetting ??= this.resetCorrupted().finally(() => {
+            this.corruptedResetting = null;
+        });
+        return this.corruptedResetting;
+    }
+
+    /**
+     * A new document in the editing HISTORY only, never the file. It used to
+     * be saved straight over the file on the first click, with no question:
+     * the bytes someone could have repaired were left only in `.histories/0`,
+     * and nothing said so. Now the file is untouched until Save is pressed.
+     */
+    private async resetCorrupted() {
+        // A pane whose reads finished before another pane's reset landed
+        // arrives here after it, and reset the document a second time (two
+        // toasts, two history entries, live): that reset is the answer.
+        const resetJsonData = await super.getJsonData();
+        if (resetJsonData !== null) {
+            return AppDocument.normalizeCanvasItemUuids(resetJsonData);
         }
         showSimpleToast(
             tran('Corrupted Document'),
             tran(
                 'The document data is corrupted and cannot be loaded. ' +
-                    'We will reset the document data to a new state.',
+                    'A new document is shown instead; the file itself is ' +
+                    'not changed until you press Save.',
             ),
         );
         const extraJsonData = AppDocument.genNewExtraJsonData();
         const newJsonData =
             AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
         await this.setJsonData(newJsonData);
-        await this.save();
         return newJsonData;
     }
 
@@ -472,8 +498,8 @@ export default class AppDocument
 
     static toWrongDimensionString({ slide, display }: WrongDimensionType) {
         return (
-            `⚠️ slide:${slide.width}x${slide.height} ` +
-            `display:${display.width}x${display.height}`
+            `⚠️ ${tran('Slide')}: ${slide.width}x${slide.height} ` +
+            `${tran('Display')}: ${display.width}x${display.height}`
         );
     }
 

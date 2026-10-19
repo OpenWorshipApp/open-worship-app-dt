@@ -313,14 +313,27 @@ export function toForegroundSummary(
     // puts up mid-service and the likeliest answer to "what is that on the
     // screen?". A rotating set names its COUNT and its first line -- naming
     // only whatever happens to be up would be stale before it was read.
+    // One that does NOT rotate shows every entry at once -- an editor's lines,
+    // or Show All Messages' messages in one box -- so all of it is named: the
+    // second message of a Show All used to go unmentioned.
     for (const message of foregroundData.messageDataList ?? []) {
         const textList = message.textList ?? [];
-        const first = `"${cutText(toPlainText(textList[0] ?? ''))}"`;
-        items.push(
-            message.intervalSecond !== null && textList.length > 1
-                ? `messages in turn (${textList.length}), first: ${first}`
-                : `message: ${first}`,
-        );
+        if (message.intervalSecond !== null && textList.length > 1) {
+            const first = `"${cutText(toPlainText(textList[0] ?? ''))}"`;
+            items.push(
+                `messages in turn (${textList.length}), first: ${first}`,
+            );
+            continue;
+        }
+        const shownText = textList
+            .map((text) => {
+                return toPlainText(text);
+            })
+            .filter((text) => {
+                return text !== '';
+            })
+            .join(' / ');
+        items.push(`message: "${cutText(shownText)}"`);
     }
     // What each clock READS -- paused, not started, counting the time over --
     // because "a countdown" alone describes a wall the room is not looking at.

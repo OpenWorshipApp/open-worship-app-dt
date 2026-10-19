@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-57, ST-71, PL-103, PL-104]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-35 — Bring a song in from CCLI SongSelect
 
@@ -50,15 +50,17 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
    **Chorus**, …). Present it like any other lyric (W-04), or polish the wording in the
    lyric editor first. 📸
 
-> **If a search or download fails**, the reason shows right in the panel or as a toast:
-> too many requests in a row asks you to wait a moment; a lapsed session says
-> **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**; no internet says
-> **[en:tran:Could not reach SongSelect]**.
+> **If SongSelect will not connect, check these.** A grey **[en:tran:Sign In]** means one
+> of the three boxes — Client ID, Subscription Key, Redirect URI — is still empty: hover
+> it and it says which. A search or download that fails says why, right in the panel or
+> as a toast: too many requests in a row asks you to wait a moment; a lapsed session says
+> **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**, so sign in
+> again; no internet says **[en:tran:Could not reach SongSelect]**.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `ST-57` · `ST-71` · `PL-103` · `PL-104`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

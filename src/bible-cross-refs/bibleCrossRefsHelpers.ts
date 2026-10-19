@@ -287,8 +287,14 @@ function toPreviewText(text: string) {
     return head.replace(/[\s,;:]+$/, '') + '\u2026';
 }
 
+// Null for a reference that names no passage -- a book this model lacks, or a
+// target the data spells wrongly (`PSA 119:ющ`) -- so it gets no row at all:
+// read leniently it was a row titled `Psalm 119:` opening "Record not found".
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
-    const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
+    const extracted = bibleRenderHelper.parseKJVBibleVersesKey(bibleVerseKey);
+    if (extracted === null) {
+        return null;
+    }
     const bibleModelInfo = getBibleModelInfo();
     const bookKeysOrder = bibleModelInfo.bookKeysOrder;
     if (!bookKeysOrder.includes(extracted.bookKey)) {

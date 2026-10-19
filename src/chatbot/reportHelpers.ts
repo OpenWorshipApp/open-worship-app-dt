@@ -73,6 +73,7 @@ import {
     toAttachedText,
     type ChatAttachmentType,
 } from './attachmentHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import { describeScreenContent } from '../../tools/owa-devtools-mcp/agentScreens.mjs';
 import {
     describeRunSheet,
@@ -517,9 +518,11 @@ function toFileAttachments(attachments: readonly ChatAttachmentType[]) {
 // machine whole, and "any file you attach" is not the same as seeing which.
 function describeAttachedFiles(report: PreparedReportType) {
     const names = toFileAttachments(report.attachments).map((one) => {
-        return toQuotedName(one.name) + toNumberNote(one.number);
+        return toQuotedName(one.name) + toShownNumberNote(one.number);
     });
-    return names.length === 0 ? '' : ` — here ${names.join(', ')}`;
+    return names.length === 0
+        ? ''
+        : ` — ${fillWords(tran('here {names}'), { names: names.join(', ') })}`;
 }
 
 /**
@@ -536,12 +539,21 @@ export function genPreparedCard(
             (isSummaryShown && report.summary.length > 0
                 ? `${report.summary}\n\n`
                 : '') +
-            `I have written this up as "${report.title}". It carries ` +
-            `${REPORT_COLLECTS_TEXT}${describeAttachedFiles(report)}. Copy ` +
-            'report puts every word of it on ' +
-            'your clipboard if you want to read it first. Press Send ' +
-            'report when you want it filed — nothing goes anywhere until ' +
-            'you do.',
+            fillWords(
+                tran(
+                    'I have written this up as "{title}". It carries ' +
+                        '{collected}. Copy report puts every word of it on ' +
+                        'your clipboard if you want to read it first. Press ' +
+                        'Send report when you want it filed — nothing goes ' +
+                        'anywhere until you do.',
+                ),
+                {
+                    title: report.title,
+                    collected:
+                        tran(REPORT_COLLECTS_TEXT) +
+                        describeAttachedFiles(report),
+                },
+            ),
         actions: [
             { label: 'Send report', toolName: REPORT_SEND_TOOL_NAME, args },
             // Before the press that sends it: the whole text, for anybody
@@ -566,9 +578,11 @@ export function genFixCard(report: PreparedReportType): {
     return {
         text:
             (report.summary.length > 0 ? `${report.summary}\n\n` : '') +
-            `Try this first:\n${report.fix}\n\n` +
-            'Did that solve it? If it did, nothing needs to be sent. If it ' +
-            'did not, I have the report written up and ready.',
+            `${tran('Try this first:')}\n${report.fix}\n\n` +
+            tran(
+                'Did that solve it? If it did, nothing needs to be sent. If ' +
+                    'it did not, I have the report written up and ready.',
+            ),
         actions: [
             { label: 'That fixed it', toolName: REPORT_FIXED_TOOL_NAME, args },
             {
@@ -621,10 +635,12 @@ export function readFixReply(
         : { reply, reference: String(action.args?.reference ?? '') };
 }
 
-/** What is said when the steps worked: the report is closed, unsent. */
+/**
+ * What is said when the steps worked: the report is closed, unsent. One
+ * literal, so `tran(REPORT_FIXED_TEXT)` where it is written is a readable key.
+ */
 export const REPORT_FIXED_TEXT =
-    'Good. Nothing was sent, and this report is closed. If it comes back, ' +
-    'press Report again and I will pick it up from here.';
+    'Good. Nothing was sent, and this report is closed. If it comes back, press Report again and I will pick it up from here.';
 
 /**
  * The whole complaint of a report in progress: everything the person said
@@ -641,30 +657,36 @@ export function genReportComplaint(thread: ReportThreadType, typed: string) {
     ).join('\n\n');
 }
 
+// One literal, so `tran(REPORT_COLLECTS_TEXT)` is a key the coverage test
+// can read wherever it is drawn.
 export const REPORT_COLLECTS_TEXT =
-    "the app's version and build, this computer's system information " +
-    '(operating system, language, time zone, display scale), the window ' +
-    "you are in and what is selected, what each screen holds, the app's " +
-    'console log (its recent errors and warnings), the end of this ' +
-    'conversation, a picture of the app and any file you attach';
+    "the app's version and build, this computer's system information (operating system, language, time zone, display scale), the window you are in and what is selected, what each screen holds, the app's console log (its recent errors and warnings), the end of this conversation, a picture of the app and any file you attach";
 
 export function genReportOffer(problem: string): {
     text: string;
     actions: BotActionType[];
 } {
     const said = toCleanLine(problem, 600);
-    const promise =
-        'I will look at the app myself and write it up for the people who ' +
-        `maintain the app. The report carries ${REPORT_COLLECTS_TEXT}. ` +
-        'Nothing is sent until you then press Send report.';
+    const promise = fillWords(
+        tran(
+            'I will look at the app myself and write it up for the people ' +
+                'who maintain the app. The report carries {collected}. ' +
+                'Nothing is sent until you then press Send report.',
+        ),
+        { collected: tran(REPORT_COLLECTS_TEXT) },
+    );
     if (said.length === 0) {
         return {
-            text:
-                'Tell me what went wrong — or what you wish the app did ' +
-                'better — in the box below, in your own words, and attach a ' +
-                'picture or a file (a PDF, a text file) if it helps. Then ' +
-                'press Ask or Report — either ' +
-                `starts it: ${promise}`,
+            text: fillWords(
+                tran(
+                    'Tell me what went wrong — or what you wish the app did ' +
+                        'better — in the box below, in your own words, and ' +
+                        'attach a picture or a file (a PDF, a text file) if ' +
+                        'it helps. Then press Send or Report — either starts ' +
+                        'it: {promise}',
+                ),
+                { promise },
+            ),
             actions: [
                 { label: 'Report', toolName: REPORT_START_TOOL_NAME, args: {} },
             ],
@@ -672,11 +694,18 @@ export function genReportOffer(problem: string): {
     }
     return {
         text:
-            `The app ran into a problem:\n\`${said.replace(/`/g, "'")}\`\n\n` +
-            `Press Report to let me look into it: ${promise} If you ` +
-            'remember what you were doing when it happened, type that in ' +
-            'the box instead and press Ask — it goes into the report, and ' +
-            'so does a picture or a file you attach.',
+            `${tran('The app ran into a problem:')}\n` +
+            `\`${said.replace(/`/g, "'")}\`\n\n` +
+            fillWords(
+                tran(
+                    'Press Report to let me look into it: {promise} If you ' +
+                        'remember what you were doing when it happened, type ' +
+                        'that in the box instead and press Send — it goes ' +
+                        'into the report, and so does a picture or a file ' +
+                        'you attach.',
+                ),
+                { promise },
+            ),
         actions: [
             {
                 label: 'Report',
@@ -1145,6 +1174,13 @@ function toNumberNote(number: number | undefined) {
     return number === undefined ? '' : ` (attachment ${number.toString()})`;
 }
 
+// The same note on the card the person reads; the one above is the report's.
+function toShownNumberNote(number: number | undefined) {
+    return number === undefined
+        ? ''
+        : ` (${fillWords(tran('attachment {number}'), { number })})`;
+}
+
 export function genReportMarkdown({
     reference,
     title,
@@ -1567,10 +1603,10 @@ export function describeContactSource(
     contactSource: ContactEmailType['source'] | null,
 ) {
     if (contactSource === 'help page') {
-        return " (from the app's help page)";
+        return ` (${tran("from the app's help page")})`;
     }
     if (contactSource === 'app') {
-        return ' (the address built into the app; its help page could not be checked)';
+        return ` (${tran('the address built into the app; its help page could not be checked')})`;
     }
     return '';
 }
@@ -1587,24 +1623,49 @@ export function describeHowToSend(
     // retypes by hand when the buttons are not used, and a line inside a
     // sentence is a line half-copied.
     const subjectLine =
-        'give it this subject line (**Copy subject** copies it):\n' +
-        `\`${report.subject}\``;
+        tran('give it this subject line (**Copy subject** copies it):') +
+        `\n\`${report.subject}\``;
     if (report.contactEmail === null) {
-        return (
-            'Pass the saved file' +
-            (imageFileName === null ? '' : ' and its picture') +
-            ` on to whoever maintains the app for you, and ${subjectLine}`
+        return fillWords(
+            imageFileName === null
+                ? tran(
+                      'Pass the saved file on to whoever maintains the app ' +
+                          'for you, and {subject}',
+                  )
+                : tran(
+                      'Pass the saved file and its picture on to whoever ' +
+                          'maintains the app for you, and {subject}',
+                  ),
+            { subject: subjectLine },
         );
     }
+    const values = {
+        email: `\`${report.contactEmail}\``,
+        source: describeContactSource(report.contactSource),
+        image: `\`${imageFileName ?? ''}\``,
+        subject: subjectLine,
+    };
     return (
-        `To send it, email the report to \`${report.contactEmail}\`` +
-        `${describeContactSource(report.contactSource)} — press ` +
-        '**Copy report** and paste it into the message' +
-        (imageFileName === null
-            ? ''
-            : `, attach \`${imageFileName}\` from your Downloads folder`) +
-        `, and ${subjectLine}\n**Email it** opens your mail app with the ` +
-        'address and subject filled in and the report on your clipboard.'
+        fillWords(
+            imageFileName === null
+                ? tran(
+                      'To send it, email the report to {email}{source} — ' +
+                          'press **Copy report** and paste it into the ' +
+                          'message, and {subject}',
+                  )
+                : tran(
+                      'To send it, email the report to {email}{source} — ' +
+                          'press **Copy report** and paste it into the ' +
+                          'message, attach {image} from your Downloads ' +
+                          'folder, and {subject}',
+                  ),
+            values,
+        ) +
+        '\n' +
+        tran(
+            '**Email it** opens your mail app with the address and subject ' +
+                'filled in and the report on your clipboard.',
+        )
     );
 }
 
@@ -1918,7 +1979,9 @@ export async function postIssueReport(
             unsentFiles: [],
             filePath: null,
             imageFilePath: null,
-            failure: `I could not save the report: ${error.message}`,
+            failure: fillWords(tran('I could not save the report: {reason}'), {
+                reason: String(error.message),
+            }),
             sendFailure: null,
         };
     }
@@ -1985,37 +2048,63 @@ export function describePostedReport(
     posted: PostedReportType,
 ) {
     if (posted.failure !== null) {
-        return `${posted.failure} The report is called ${posted.reference}.`;
+        return (
+            `${posted.failure} ` +
+            fillWords(tran('The report is called {reference}.'), {
+                reference: posted.reference,
+            })
+        );
     }
     const imageFileName =
         posted.imageFilePath === null ? null : `${posted.reference}.png`;
     if (posted.isSent) {
         const sentCount = posted.sentFileNames.length;
+        let sentTemplate: string;
+        if (sentCount === 0) {
+            sentTemplate = tran(
+                'Sent. Report {reference} went to the report server ' +
+                    'openworship.app shares and I kept a copy in your ' +
+                    'Downloads folder too.',
+            );
+        } else if (sentCount === 1) {
+            sentTemplate = tran(
+                'Sent. Report {reference} went to the report server ' +
+                    'openworship.app shares, with {count} file — {names} — ' +
+                    'and I kept a copy in your Downloads folder too.',
+            );
+        } else {
+            sentTemplate = tran(
+                'Sent. Report {reference} went to the report server ' +
+                    'openworship.app shares, with {count} files — {names} — ' +
+                    'and I kept a copy in your Downloads folder too.',
+            );
+        }
         return (
-            `Sent. Report ${posted.reference} went to the report server ` +
-            'openworship.app shares' +
-            (sentCount === 0
-                ? ''
-                : `, with ${sentCount.toString()} ` +
-                  `file${sentCount === 1 ? '' : 's'} — ` +
-                  posted.sentFileNames.map(toQuotedName).join(', ') +
-                  ' —') +
-            ' and I kept a copy in your Downloads folder too.' +
+            fillWords(sentTemplate, {
+                reference: posted.reference,
+                count: sentCount,
+                names: posted.sentFileNames.map(toQuotedName).join(', '),
+            }) +
             (posted.unsentFiles.length === 0
                 ? ''
-                : ' Not sent with it: ' +
-                  posted.unsentFiles
-                      .map((file) => {
-                          return `${toQuotedName(file.name)} (${file.why ?? ''})`;
-                      })
-                      .join(', ') +
-                  '.' +
+                : ' ' +
+                  fillWords(tran('Not sent with it: {files}.'), {
+                      files: posted.unsentFiles
+                          .map((file) => {
+                              return `${toQuotedName(file.name)} (${describeUnsentWhy(file.why)})`;
+                          })
+                          .join(', '),
+                  }) +
                   (imageFileName !== null &&
                   posted.unsentFiles.some((file) => {
                       return file.name === imageFileName;
                   })
-                      ? ' The picture is still in Downloads, and the ' +
-                        'buttons below email it if somebody asks to see it.'
+                      ? ' ' +
+                        tran(
+                            'The picture is still in Downloads, and the ' +
+                                'buttons below email it if somebody asks to ' +
+                                'see it.',
+                        )
                       : ''))
         );
     }
@@ -2024,23 +2113,65 @@ export function describePostedReport(
     // volunteer told "nothing was sent, here is how to email it" mostly
     // does not, and the report was lost.
     if (posted.isQueued) {
-        return (
-            `Report ${posted.reference} is ready, but the report server is ` +
-            `not answering right now (${posted.sendFailure ?? 'it is away'}). ` +
-            'I kept it, and the app will send it by itself as soon as that ' +
-            'server is back — it tries every half hour while the app is ' +
-            'open, for up to a week — so there is nothing more you need to ' +
-            'do. A copy is in your Downloads folder too, and if it is ' +
-            'urgent the buttons below email it.'
+        return fillWords(
+            tran(
+                'Report {reference} is ready, but the report server is not ' +
+                    'answering right now ({why}). I kept it, and the app ' +
+                    'will send it by itself as soon as that server is back ' +
+                    '— it tries every half hour while the app is open, for ' +
+                    'up to a week — so there is nothing more you need to do. ' +
+                    'A copy is in your Downloads folder too, and if it is ' +
+                    'urgent the buttons below email it.',
+            ),
+            {
+                reference: posted.reference,
+                why:
+                    posted.sendFailure === null
+                        ? tran('it is away')
+                        : tranLabel(posted.sendFailure),
+            },
         );
     }
     return (
         (posted.sendFailure === null
-            ? `Report ${posted.reference} is ready. No report server is ` +
-              'shared with this app right now, so nothing was sent'
-            : `Report ${posted.reference} is ready, but I could not send ` +
-              `it: ${posted.sendFailure}. Nothing was sent`) +
-        ' — I saved the whole thing into your Downloads folder.\n\n' +
+            ? fillWords(
+                  tran(
+                      'Report {reference} is ready. No report server is ' +
+                          'shared with this app right now, so nothing was ' +
+                          'sent — I saved the whole thing into your ' +
+                          'Downloads folder.',
+                  ),
+                  { reference: posted.reference },
+              )
+            : fillWords(
+                  tran(
+                      'Report {reference} is ready, but I could not send ' +
+                          'it: {why}. Nothing was sent — I saved the whole ' +
+                          'thing into your Downloads folder.',
+                  ),
+                  {
+                      reference: posted.reference,
+                      why: tranLabel(posted.sendFailure),
+                  },
+              )) +
+        '\n\n' +
         describeHowToSend(report, imageFileName)
     );
+}
+
+/**
+ * Why a file did not go, in the person's language. The reasons are written
+ * for the report's own text, which stays English; they are translated here,
+ * where the person reads them.
+ */
+function describeUnsentWhy(why: string | undefined) {
+    if (why === undefined) {
+        return '';
+    }
+    if (why === TOO_LARGE_WHY) {
+        return fillWords(tran('larger than a report may carry, {size} MB'), {
+            size: Math.round(REPORT_FILE_MAX_BYTES / (1024 * 1024)),
+        });
+    }
+    return tranLabel(why);
 }

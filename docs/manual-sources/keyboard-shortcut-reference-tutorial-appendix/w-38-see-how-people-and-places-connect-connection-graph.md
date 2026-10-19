@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101, RD-102, RD-103, RD-104, RD-105, RD-106, RD-121]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-38 — See how people and places connect (Connection Graph)
 
@@ -81,7 +81,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > and **[en:tran:Save preset]** opens the name dialog over the graph.
    > **[en:tran:Cancel]** returns to the graph without saving;
    > **[en:tran:Exit fullscreen]** returns to the floating window.
-10. **Take it away as words.** The clipboard button (📋) left of the signpost opens six
+10. **Copy a graph into your notes.** On the graph, press the clipboard button (📋) left of the signpost and choose **[en:tran:Copy as Markdown]**. Open the destination note or document, click where the graph should go, and paste with **Ctrl+V** (on macOS, **⌘V**). Save the note or document in that application. The clipboard button opens six
     ways to copy the graph: **[en:tran:Copy as Markdown]** on its own, then five diagram
     languages — **[en:tran:Copy as Mermaid (across)]**, **[en:tran:Copy as Mermaid (down)]**,
     **[en:tran:Copy as Mermaid Mindmap]**, **[en:tran:Copy as Graphviz DOT]** and
@@ -129,5 +129,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-92` · `RD-93` · `RD-94` · `RD-95` · `RD-96` · `RD-97` · `RD-98` · `RD-99` · `RD-100` · `RD-101` · `RD-102` · `RD-103` · `RD-104` · `RD-105` · `RD-106` · `RD-121`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

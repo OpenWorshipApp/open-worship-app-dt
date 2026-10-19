@@ -12,8 +12,9 @@ import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useIsChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
 import { openChatbotReporting } from '../helper/ai/chatbotHandoffHelpers';
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { openBibleLookupEventMappers } from '../keyboard-shortcut/appShortcutMappers';
+import { registerBibleLookupPopupOpener } from './bibleLookupPopupOpener';
 import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
@@ -245,6 +246,13 @@ export function BibleLookupButtonComp() {
     );
     useKeyboardRegistering(openBibleEventMaps, () => {
         setIsBibleLookupShowingRef.current(true);
+    }, []);
+    // The assistant's "Open … in Bible Lookup" opens the popup with this
+    // press (`bibleLookupPopupOpener.ts`).
+    useAppEffect(() => {
+        return registerBibleLookupPopupOpener(() => {
+            setIsBibleLookupShowingRef.current(true);
+        });
     }, []);
     const handleClick = useCallback(() => {
         setIsBibleLookupShowingRef.current(true);

@@ -34,6 +34,7 @@ import {
     contextControl,
     handleMenuTypeahead,
     highlightClass,
+    markOverflowingMenuLabels,
     setPositionMenu,
     showAppContextMenu,
 } from './appContextMenuHelpers';
@@ -151,6 +152,86 @@ describe('showAppContextMenu', () => {
         expect(menu.style.maxWidth).toBe('210px');
         expect(menu.style.maxHeight).toBe('120px');
         expect(menu.style.color).toBe('red');
+    });
+});
+
+describe('markOverflowingMenuLabels', () => {
+    function genLabel(html: string, scrollWidth: number, clientWidth = 180) {
+        const label = document.createElement('div');
+        label.className = 'app-context-menu-item-label';
+        label.innerHTML = `<div class="app-context-menu-item-text">${html}</div>`;
+        const text = label.firstElementChild as HTMLElement;
+        Object.defineProperty(text, 'clientWidth', { value: clientWidth });
+        Object.defineProperty(text, 'scrollWidth', {
+            configurable: true,
+            value: scrollWidth,
+        });
+        Object.defineProperty(text, 'offsetLeft', { value: 20 });
+        const first = text.firstElementChild;
+        if (first !== null) {
+            Object.defineProperty(first, 'offsetLeft', { value: 30 });
+        }
+        return { label, text };
+    }
+
+    test('a label too long gets the scrolling line; one that fits does not', () => {
+        const menu = document.createElement('div');
+        const long = genLabel(
+            '<span data-locale-ff="km">(AMP)  English\n Amplified</span>',
+            420,
+        );
+        const short = genLabel('Open', 180);
+        // One pixel over still draws the "…", so it needs the line too.
+        const barely = genLabel('Korean (한국어) &lt;ko-KR&gt;', 181);
+        menu.append(long.label, short.label, barely.label);
+
+        markOverflowingMenuLabels(menu);
+        expect(barely.label.dataset.marqueeText).toBe(
+            'Korean (한국어) <ko-KR>',
+        );
+
+        // The words once: the second line is a pseudo-element, and the
+        // label's own text (what an agent reads a row by) is untouched.
+        expect(long.label.dataset.marqueeText).toBe('(AMP) English Amplified');
+        expect(long.text.textContent).toBe('(AMP)  English\n Amplified');
+        expect(
+            long.label.style.getPropertyValue(
+                '--app-context-menu-marquee-duration',
+            ),
+        ).toBe('12s');
+        expect(
+            long.label.style.getPropertyValue(
+                '--app-context-menu-marquee-indent',
+            ),
+        ).toBe('10px');
+        expect(long.label.dataset.localeFf).toBe('km');
+        expect(short.label.dataset.marqueeText).toBeUndefined();
+        expect(short.label.getAttribute('style')).toBeNull();
+
+        // Once it fits (its font came in narrower), the line goes again.
+        Object.defineProperty(long.text, 'scrollWidth', { value: 180 });
+        markOverflowingMenuLabels(menu);
+        expect(long.label.dataset.marqueeText).toBeUndefined();
+        expect(
+            long.label.style.getPropertyValue(
+                '--app-context-menu-marquee-duration',
+            ),
+        ).toBe('');
+    });
+
+    test('a short label scrolls for at least four seconds, from its edge', () => {
+        const menu = document.createElement('div');
+        // A menu squeezed against the window's edge.
+        const { label } = genLabel('Plain text label', 110, 60);
+        menu.append(label);
+        markOverflowingMenuLabels(menu);
+        expect(
+            label.style.getPropertyValue('--app-context-menu-marquee-duration'),
+        ).toBe('4s');
+        expect(
+            label.style.getPropertyValue('--app-context-menu-marquee-indent'),
+        ).toBe('0px');
+        expect(label.dataset.localeFf).toBeUndefined();
     });
 });
 

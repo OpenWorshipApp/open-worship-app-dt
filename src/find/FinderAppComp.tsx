@@ -18,6 +18,7 @@ import {
     findString,
     listenFocusFinder,
     listenFoundInPage,
+    markFinderMounted,
     startFinderDragging,
     stopFinderDragging,
 } from './finderHelpers';
@@ -82,6 +83,12 @@ export default function FinderAppComp() {
                 runFindRef.current(queryTextRef.current, {}, true);
             }
         });
+    }, []);
+
+    // After the listeners above: once main counts the bar as drawn, the next
+    // `Ctrl/Cmd+F` is sent here rather than replacing the view.
+    useAppEffect(() => {
+        return markFinderMounted();
     }, []);
 
     const handleClosing = useCallback(() => {

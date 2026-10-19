@@ -66,6 +66,17 @@ const ratchetCeiling = ratchetArg
     ? (Number(ratchetArg.split('=')[1]) || MODEL_TOKEN_CEILING)
     : null;
 
+// `discovery.mjs`'s own probe: signal 0 touches nothing, and a live process
+// owned by someone else answers EPERM rather than ESRCH.
+function checkIsProcessAlive(pid) {
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch (error) {
+        return error?.code === 'EPERM';
+    }
+}
+
 // The published instance file carries the URL and its per-launch capability;
 // neither is a default. Overrides must name both so a token cannot be sent to
 // a different local service by mistake.
@@ -97,7 +108,7 @@ function resolveMcpEndpoint() {
             const info = JSON.parse(
                 readFileSync(path.join(DISCOVERY_DIR, name), 'utf8'),
             );
-            if (info?.mcpUrl && info?.mcpToken) {
+            if (info?.mcpUrl && info?.mcpToken && checkIsProcessAlive(info.pid)) {
                 instances.push(info);
             }
         } catch {
@@ -107,7 +118,9 @@ function resolveMcpEndpoint() {
     if (instances.length === 0) {
         throw new Error('No published instance carries an MCP endpoint.');
     }
-    // Newest first: a stale file for a dead pid sorts to the back.
+    // Newest first, among the LIVE ones: a file whose app was killed outlives
+    // it, and on 2026-10-16 the newest file was a dead scratch instance's --
+    // the audit answered `fetch failed` with the user's app running.
     instances.sort((one, other) => {
         return String(other.startedAt).localeCompare(String(one.startedAt));
     });
@@ -298,13 +311,18 @@ async function main() {
         : await listTools(endpoint.mcpUrl, endpoint.mcpToken);
     const describeToolCall = (await loadPackageModule('notify.mjs'))
         ?.describeToolCall;
-    const checkIsModelHiddenTool = (await loadPackageModule('modelTools.mjs'))
-        ?.checkIsModelHiddenTool;
+    const modelToolsModule = await loadPackageModule('modelTools.mjs');
+    const checkIsModelHiddenTool = modelToolsModule?.checkIsModelHiddenTool;
+    // Offered to ONE kind of ask and to no other question (`owa_find_verse`
+    // to a verse-finding conversation): not on the ordinary bill, and not
+    // withheld either, so counted apart.
+    const onAskToolMap = modelToolsModule?.MODEL_ON_ASK_TOOL_MAP ?? {};
     const rows = tools
         .map((tool) => {
             return {
                 ...measure(tool),
                 isModelHidden: Boolean(checkIsModelHiddenTool?.(tool.name)),
+                onAsk: onAskToolMap[tool.name] ?? null,
             };
         })
         .sort((one, other) => {
@@ -317,7 +335,10 @@ async function main() {
     };
     const totalTokens = sum(rows);
     const modelRows = rows.filter((row) => {
-        return !row.isModelHidden;
+        return !row.isModelHidden && row.onAsk === null;
+    });
+    const onAskRows = rows.filter((row) => {
+        return row.onAsk !== null;
     });
     const modelTokens = sum(modelRows);
 
@@ -355,6 +376,9 @@ async function main() {
         modelToolCount: modelRows.length,
         modelTokensPerRound: modelTokens,
         modelTokensPerQuestion: modelTokens * rounds,
+        onAskTools: onAskRows.map((row) => {
+            return { name: row.name, ask: row.onAsk, tokens: row.tokens };
+        }),
         rounds,
         warnings,
         tools: rows,
@@ -387,9 +411,15 @@ async function main() {
     console.log(
         `To the model    ${report.modelToolCount} tools, ` +
             `~${report.modelTokensPerRound} tokens/round ` +
-            `(${report.toolCount - report.modelToolCount} withheld by ` +
-            'modelTools.mjs)',
+            `(${report.toolCount - report.modelToolCount - onAskRows.length} ` +
+            'withheld by modelTools.mjs)',
     );
+    for (const row of report.onAskTools) {
+        console.log(
+            `One ask only    ${row.name} ~${row.tokens} tokens/round, to a ` +
+                `${row.ask} ask alone`,
+        );
+    }
     console.log(
         `Worst case      ~${report.modelTokensPerQuestion} tokens of tool ` +
             `schema across ${rounds} rounds of ONE question ` +
@@ -405,7 +435,14 @@ async function main() {
     console.log('-'.repeat(58));
     for (const row of rows) {
         console.log(
-            pad(row.isModelHidden ? `(${row.name})` : row.name, 34) +
+            pad(
+                row.isModelHidden
+                    ? `(${row.name})`
+                    : row.onAsk !== null
+                      ? `[${row.name}]`
+                      : row.name,
+                34,
+            ) +
                 padStart(row.tokens, 8) +
                 padStart(row.descriptionChars, 8) +
                 padStart(row.schemaChars, 8),
@@ -413,6 +450,9 @@ async function main() {
     }
     console.log('');
     console.log('(name) = served to the developer, withheld from the model.');
+    if (onAskRows.length > 0) {
+        console.log('[name] = offered to the model for one kind of ask only.');
+    }
     if (warnings.length > 0) {
         console.log('');
         console.log('Warnings:');
@@ -429,7 +469,7 @@ async function main() {
         // what to withhold, and the biggest row is usually the answer.
         const biggest = rows
             .filter((row) => {
-                return !row.isModelHidden;
+                return !row.isModelHidden && row.onAsk === null;
             })
             .slice(0, 3)
             .map((row) => {

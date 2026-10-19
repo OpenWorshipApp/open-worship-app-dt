@@ -55,10 +55,14 @@ function genContextMenuItems(
         },
         {
             childBefore: genContextMenuItemIcon('pencil-square'),
+            // A fragment, as the document's own Edit: the menu gives every
+            // `span` in an item a 10px margin, which pushed this label right
+            // of all the others.
             menuElement: (
-                <span>
-                    {tran('Edit')} <i className="bi bi-box-arrow-up-right" />
-                </span>
+                <>
+                    {tran('Edit')}
+                    <i className="bi bi-box-arrow-up-right ms-1" />
+                </>
             ),
             onSelect: () => {
                 openPopupLyricEditorWindow(lyric);

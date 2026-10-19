@@ -5,15 +5,15 @@ section: "Configuration"
 verify: [MD-01, MD-02, MD-03, CM-24, PM-102]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-21 — Add a background video or song from a link
 
 **Goal:** get a video (or its audio as an MP3) from an online link straight into your
 Videos / Audios folder, without leaving the app. The download tools are not built into the
 app: the first time, a **[en:tran:Media Tools Required]** box offers to open
-**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, where they are
-installed once.
+**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, where
+**[en:tran:Download and Install]** installs them once.
 
 1. Open the **[en:tran:Background]** panel (W-08 step 1) and choose the **[en:tran:Videos]** tab — or the **[en:tran:Audios]** split if you want the sound only.
 2. **Right-click an empty part of the list** (or use the ⋮ [en:tran:More Options] button at
@@ -33,6 +33,7 @@ installed once.
 > saved as `name (1)`. Pasting something that is not a web link gets you an
 > **[en:tran:Invalid URL]** message and nothing is downloaded. Downloads need an internet connection — and
 > a busy site can cut a large download off partway, in which case just try again.
+
 > **A download that fails leaves nothing in your folders.** The app downloads into the
 > computer's own temporary folder and takes its unfinished pieces away when the download
 > fails (you are told why under **[en:tran:Download From URL]**). Only when the app was
@@ -44,5 +45,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `MD-01` · `MD-02` · `MD-03` · `CM-24` · `PM-102`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

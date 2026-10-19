@@ -108,6 +108,14 @@ paths:
     Create (`EC-161`, `createdLyric`). A site's bot check is refused, never
     drafted (`EC-162`, `checkIsBrowserCheckPage`: a page ≤1 500 characters with
     challenge words → `BROWSER_CHECK_TEXT`).
+  Short wrapped documentation notices and missing-page responses are refused
+  too (`checkIsPlaceholderPage`, EC-356): example.com's notice was drafted as
+  seven verses of an "Untitled" song in the Khmer template pass. Plain pasted
+  words are unaffected. `lyricDraftReportHelpers.ts` translates the built-in
+  answer's summary and extraction notes using the window dictionary; titles,
+  authors, section names and quoted page boundaries remain data. Tests use
+  real drafter reports and both Khmer/French dictionaries. The server's report
+  stays English, with no extra tool or schema.
 - **Checking a song**: `owa_lyric_validate`
   (`tools/owa-devtools-mcp/openLyric.mjs`) takes song text and answers with
   every mistake — line, section, and what to write instead — then what the song

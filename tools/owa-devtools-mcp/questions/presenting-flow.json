@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The running order for a service: what happens, in what order, on which screen. Built in the Presenting Flows panel and run from its own preview.",
-    "updated": "2026-10-12",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "building",
@@ -46,6 +46,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-22",
+                        "passage": "Drag things onto the presenting flow's NAME row to add them",
                         "find": "Presenting Flows",
                         "guide": true
                     },
@@ -215,6 +216,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22b",
+                        "passage": "You can have several of these panels open at once",
                         "related": [
                             "W-26"
                         ]
@@ -232,7 +234,8 @@
                         "go back"
                     ],
                     "resources": {
-                        "recipe": "W-22e"
+                        "recipe": "W-22e",
+                        "passage": "Go back, not just forward"
                     }
                 }
             ]
@@ -330,6 +333,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22f",
+                        "passage": "keep the preview panel open",
                         "guide": true
                     }
                 }
@@ -503,6 +507,7 @@
                     ],
                     "resources": {
                         "recipe": "W-22j",
+                        "passage": "Import on the receiving machine",
                         "related": [
                             "W-23"
                         ]

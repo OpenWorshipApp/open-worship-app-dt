@@ -23,12 +23,15 @@ import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
 import { tran } from '../lang/langHelpers';
 import { DATA_DIR_PATH_ALIAS } from './dataDirAliasHelpers';
+import { OWA_HOME_FOLDER_NAME } from './appHomeStorage';
 import {
     checkIsHiddenName,
     fsMkDirSync,
     getDataDirPath,
     pathJoin,
+    pathResolve,
     pathSeparator,
+    toPathCompareKey,
     toPortableFileText,
     toRealFileText,
 } from './storageFileHelpers';
@@ -36,6 +39,8 @@ import {
 export {
     checkIsHiddenName,
     DATA_DIR_MARKER_FILE_NAME,
+    DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
+    DATA_DIR_MOVED_TO_FLAG_FILE_NAME,
     ensureDataDirMarkerIdSync,
     findDataDirsOnVolumesSync,
     findMovedDataDirSync,
@@ -659,6 +664,15 @@ export const createNewFileDetail = async (
     }
     const fileFullName = `${name}.${extensions[0]}`;
     try {
+        // Said in words: the folder being gone came back as a raw
+        // "ENOENT: no such file or directory, open '…'".
+        if (!(await fsCheckDirExist(dir))) {
+            showSimpleToast(
+                tran('Creating File'),
+                `${tran('Folder not found')}: ${dir}`,
+            );
+            return null;
+        }
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
@@ -1357,6 +1371,62 @@ export function getTempPath(): string {
         'main:app:get-special-path',
         'temp',
     );
+}
+export function getHomePath(): string {
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'home',
+    );
+}
+
+export const DEFAULT_DATA_DIR_NAME = 'open-worship-data';
+
+/**
+ * Where a new data folder goes: `<home>/.owa/open-worship-data`. It was
+ * `<Desktop>/open-worship-data`, and on Windows OneDrive backs up the Desktop
+ * -- syncing it, it turned songs and settings into online-only copies or took
+ * them off the computer. Nothing syncs the home folder itself, on any OS.
+ */
+export function getDefaultDataDirPath() {
+    return pathJoin(getHomePath(), OWA_HOME_FOLDER_NAME, DEFAULT_DATA_DIR_NAME);
+}
+
+/**
+ * The old default, as the app made it (the Desktop the OS names, which
+ * OneDrive may have moved under itself) and as it sits under the home folder.
+ */
+export function getDesktopDataDirPathList() {
+    const dirPathList = [
+        pathJoin(getDesktopPath(), DEFAULT_DATA_DIR_NAME),
+        pathJoin(getHomePath(), 'Desktop', DEFAULT_DATA_DIR_NAME),
+    ];
+    return dirPathList.filter((dirPath, index) => {
+        return (
+            dirPathList.findIndex((otherDirPath) => {
+                return (
+                    toPathCompareKey(pathResolve(otherDirPath)) ===
+                    toPathCompareKey(pathResolve(dirPath))
+                );
+            }) === index
+        );
+    });
+}
+
+export function checkIsDesktopDataDir(dirPath: string) {
+    const key = toPathCompareKey(pathResolve(dirPath));
+    return getDesktopDataDirPathList().some((desktopDirPath) => {
+        return toPathCompareKey(pathResolve(desktopDirPath)) === key;
+    });
+}
+
+/**
+ * Whether a path runs through a OneDrive folder: `OneDrive` for a personal
+ * account, `OneDrive - <Organization>` for a work one.
+ */
+export function checkIsInOneDrivePath(dirPath: string) {
+    return dirPath.split(/[\\/]/).some((name) => {
+        return /^OneDrive( - .+)?$/i.test(name);
+    });
 }
 
 export function writeFileFromBase64Sync(filePath: string, base64: string) {

@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-10, PM-137, PM-138, PM-140]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-04 — Auto-play slides on a timer
 
@@ -31,7 +31,9 @@ workflowsVersion: "2026-10-15"
 
    Close the rules with their **✕** or the sliders button again.
 
-5. Click **pause** to stop, or the strip's **✕** to collapse it back to the stopwatch.
+5. **Stop slides that are already advancing.** The timer strip is already open at
+   the bottom left of the slides previewer, in place of the stopwatch. Click its
+   **pause** button to stop, or its **✕** to stop and collapse it back to the stopwatch.
 
 The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Images]**,
 **[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
@@ -44,5 +46,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-10` · `PM-137` · `PM-138` · `PM-140`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

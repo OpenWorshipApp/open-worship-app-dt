@@ -77,6 +77,16 @@ What is not obvious from a quick read:
   a link whose path is gone and whose file exists under this folder AS the
   alias, in the link's own form (raw `/`, JSON `\\`, `file:///`). The read side
   then does the rest. Never automatic: it reads every text file once.
+- **The move off the Desktop rewrites by the OLD prefix, not by existence**
+  (2026-10-17, `rewriteMovedDataDirLinks` in `dataDirMoveHelpers.ts`): after
+  the data folder moves to `~/.owa/open-worship-data`, every app text file in
+  it gets `toPortableText(text, genDataDirAlias(oldDir, …))`, so a raw old path
+  in any escape level or `file:///` form becomes the alias even when a copy
+  left the old folder in place — Repair Links would skip those, since the old
+  path still exists. It runs in `init()` before React mounts, because the
+  start-up color-note check drops a note whose file is missing. A copied-away
+  folder keeps its `.owa-data-folder.json` id, so `findDataDirsOnVolumesSync`
+  skips one carrying `migration-moved-to.txt`.
 - **Deleting on a stick**: Windows has no Recycle Bin on a flash drive and
   Electron's `trashItem` aborts there (`Operation was aborted`); the app asks
   **Delete Permanently** instead of failing, except for an agent's delete.

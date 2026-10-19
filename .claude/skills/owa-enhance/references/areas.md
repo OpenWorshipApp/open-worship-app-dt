@@ -25,6 +25,7 @@ area reads that first.
 | "this file is a mess", "we keep breaking X", "our dependencies are old" | `code-health` |
 | "the manual is wrong", "the assistant said a button that is not there", "notes are out of date" | `docs` |
 | "the chatbot answered wrong", "a tool misfired", "ChatGPT will not sign in" | routed: chatbot / MCP / AI Chat skill |
+| "add more tips", "the tips are not helpful", "nobody finds the tip for X" | routed: `owa-enhance-tips` |
 
 ---
 
@@ -236,7 +237,8 @@ states; what effects cost to paint (blur, glass, animation — `performance`
 too).
 
 **Owned elsewhere:** the chatbot and AI Chat windows (their own skills, and
-English-only by decision); QA walks and the manual → `/owa-robot-test`.
+English-only by decision); QA walks and the manual → `/owa-robot-test`; the
+in-app tips and their coverage → `/owa-enhance-tips` (`TP-xx`).
 
 **Leads:** literal English `title`, `aria-label`, `placeholder` and `alt`
 text outside `tran()` — each shows English in a Khmer window and is a label the

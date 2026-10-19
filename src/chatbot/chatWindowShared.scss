@@ -10,7 +10,10 @@
 //
 // Two rules both windows keep (see the header of `ChatbotAppComp.scss`):
 // bootstrap plus their own sheet and nothing else -- no app tokens -- and no
-// webfonts.
+// webfonts. The one face either draws that is not the system's is the
+// app language's own (`--chat-lang-font`, set by `chatWindowLanguage.ts`
+// from the language pack: Battambang for Khmer, which no face below has a
+// letter of), placed after the window's own faces so Latin keeps them.
 
 // The palette. Included INSIDE the window's root rule (`.chatbot-app`,
 // `.aichat-app`) so the light-theme block below can nest on `&`.
@@ -20,12 +23,15 @@
   // on the equipment this app drives.
   --chat-font-label:
     'Bahnschrift', 'DIN Alternate', 'Avenir Next Condensed', 'Segoe UI',
-    system-ui, sans-serif;
+    var(--chat-lang-font, system-ui), system-ui, sans-serif;
   // Answers are read under pressure: the system face, at a size that does
   // not ask anything of the reader.
   --chat-font-body:
-    system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
-  --chat-font-data: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI',
+    var(--chat-lang-font, sans-serif), sans-serif;
+  --chat-font-data:
+    ui-monospace, 'Cascadia Mono', Consolas, var(--chat-lang-font, monospace),
+    monospace;
 
   --chat-ink: #0f141c;
   --chat-panel: #161e2a;

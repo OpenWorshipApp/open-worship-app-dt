@@ -259,6 +259,21 @@ describe('genPassageExcerpt', () => {
     expect(excerpt.endsWith('. …')).toBe(true);
   });
 
+  // Seen in a Khmer excerpt: `ការតម្រឹមអក្សរ, **[en:tran:Line …` -- a
+  // template no resolver could read, cut through. And a Khmer sentence ends
+  // on `។`, which the old cut never looked for.
+  it('never cuts through a button name, and stops at a sentence of any script', () => {
+    const words = 'ពាក្យ '.repeat(85);
+    const excerpt = genPassageExcerpt(
+      `1. ${words}**[en:tran:Line Spacing]** ${'ពាក្យ '.repeat(40)}`,
+      [['ពាក្យ']],
+    );
+    expect(excerpt).not.toContain('[en:tran:');
+    expect(excerpt).not.toMatch(/\*\*\s*…$/);
+    const khmer = `1. ${'នេះជាប្រយោគមួយសម្រាប់បំពេញជំហាននេះ។ '.repeat(20)}`;
+    expect(genPassageExcerpt(khmer, [['ប្រយោគ']]).endsWith('។ …')).toBe(true);
+  });
+
   it('starts a long passage at the sentence naming the control', () => {
     const header =
       `- **Header:** ${'one more control sits here; '.repeat(22)}` +

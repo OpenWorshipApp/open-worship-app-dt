@@ -1,4 +1,5 @@
 import { detectBotFocus } from '../../tools/owa-devtools-mcp/botFocus.mjs';
+import { tran } from './chatTranHelpers';
 import { BUILTIN_TOOL_NAME, type BotActionType } from './helpBotHelpers';
 
 /**
@@ -34,11 +35,24 @@ const PRESENTING_PATTERN =
     /\b(?:screens?|projectors?|present|presenting|presentation|display|slides?|congregation|audience|live|cast)\b|\bshow(?:ing|s)?\b.*\b(?:on|to)\b|អេក្រង់|បញ្ចាំង/i;
 
 export const READER_ROUTE_COMMAND = '/goto reader';
+// Stored English on the button and translated where it is drawn
+// (`chatTranLabels.test.ts` holds it to its Khmer and French).
 export const READER_ROUTE_LABEL = 'Go to the Bible Reader';
 export const READER_ROUTE_TEXT =
     'Only want to read the Bible? The Bible Reader page is made for that. ' +
     `Press ${READER_ROUTE_LABEL} below and the main window changes to it — ` +
     'whatever is on the projector is left as it is.';
+
+// `READER_ROUTE_TEXT` in the window's language, written out so the key gate
+// can read it; the test that holds the advice to `READER_ROUTE_TEXT` holds
+// the two together.
+function genReaderRouteText() {
+    return tran(
+        'Only want to read the Bible? The Bible Reader page is made for ' +
+            'that. Press Go to the Bible Reader below and the main window ' +
+            'changes to it — whatever is on the projector is left as it is.',
+    );
+}
 
 /**
  * The page the main window is on NOW, as the name a tab's _asking about_
@@ -53,29 +67,79 @@ export function toMainWindowFocus(appState: any): string | null {
     return typeof page === 'string' ? detectBotFocus(page) : null;
 }
 
+// "Open" that describes a window rather than asks to open something: "How do
+// I get help with another open window, like a Bible Reader window?" is about
+// the help window's own window line, and was answered with that line AND
+// "Only want to read the Bible? … Go to the Bible Reader" (2026-10-16).
+const OPEN_WINDOW_PATTERN = /\bopen\s+windows?\b/gi;
+
 /** Whether the words are about reading, opening or finding the Bible. */
 export function checkIsBibleReadingAsk(asked: string) {
+    const words = asked.replace(OPEN_WINDOW_PATTERN, 'window');
     return (
-        BIBLE_PATTERN.test(asked) &&
-        READING_PATTERN.test(asked) &&
-        !PRESENTING_PATTERN.test(asked)
+        BIBLE_PATTERN.test(words) &&
+        READING_PATTERN.test(words) &&
+        !PRESENTING_PATTERN.test(words)
     );
 }
+
+const toPlainWords = (text: string) => {
+    return text
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim();
+};
+
+/**
+ * Whether the ask IS one of the app's own supported questions, word for
+ * word, filed on a page other than the Bible Reader's. Such a question is
+ * already known to be about something else: "Where did a Bible I imported
+ * come from?" -- a Settings question -- carries a Bible word and "where",
+ * and was answered about Bible notes AND "Only want to read the Bible?"
+ * (2026-10-16). Only an exact row counts: a sentence typed in the
+ * person's own words and matched by a phrase keeps the word test above,
+ * which is what an elderly reader's "how can I open bible" is.
+ */
+// Read in either of the row's wordings: it SHOWS the window's language, and a
+// pressed chip asks its English (`textEn`) -- in a Khmer window four of the
+// corpus's Bible-source and Bible-audio rows still drew the line (pass 6 of
+// the whole list asked in Khmer, 2026-10-17, EC-321).
+function checkIsOtherPageRow(asked: string, knownRow: KnownRowType | null) {
+    // A `common` row belongs to every window, the Reader's too: _I only want
+    // to read the Bible — how do I get back to the Bible Reader?_ is one, and
+    // lost its own button once the row was matched by its English (EC-321).
+    if (
+        knownRow === null ||
+        knownRow.page === 'reader' ||
+        knownRow.page === 'common'
+    ) {
+        return false;
+    }
+    const askedWords = toPlainWords(asked);
+    return [knownRow.text, knownRow.textEn].some((text) => {
+        return typeof text === 'string' && toPlainWords(text) === askedWords;
+    });
+}
+
+type KnownRowType = { text: string; textEn?: string; page: string };
 
 /**
  * The sentence and the button, or null: the question is not about reading
  * the Bible, the main window is not on another of its pages (`focus` is
- * the page it is on, `toMainWindowFocus`), or the answer already carries
- * that button.
+ * the page it is on, `toMainWindowFocus`), the answer already carries
+ * that button, or the ask is a supported question filed somewhere else
+ * (`knownRow`, the row `findKnownQuestion` matched).
  */
 export function genReaderRouteAdvice(
     asked: string,
     focus: string,
     actions: readonly BotActionType[] = [],
+    knownRow: KnownRowType | null = null,
 ): { text: string; action: BotActionType } | null {
     if (
         !OTHER_MAIN_PAGE_LIST.includes(focus) ||
         !checkIsBibleReadingAsk(asked) ||
+        checkIsOtherPageRow(asked, knownRow) ||
         actions.some((action) => {
             return (
                 action.toolName === BUILTIN_TOOL_NAME &&
@@ -86,7 +150,7 @@ export function genReaderRouteAdvice(
         return null;
     }
     return {
-        text: READER_ROUTE_TEXT,
+        text: genReaderRouteText(),
         action: {
             label: READER_ROUTE_LABEL,
             toolName: BUILTIN_TOOL_NAME,

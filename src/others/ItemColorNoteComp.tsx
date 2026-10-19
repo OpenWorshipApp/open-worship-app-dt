@@ -29,7 +29,10 @@ export function chooseColorNote(
             childBefore: genContextMenuItemIcon('x-lg', { color: 'red' }),
             menuElement: tran('No Color'),
             title: tran('Clear Color Note'),
-            disabled: colorNote === null,
+            // By truthiness, as the swatch itself reads it: the component's
+            // own async load stores a missing colour as `''`, not `null`, and
+            // a strict `=== null` left "No Color" pressable on a cleared item.
+            disabled: !colorNote,
             onSelect: () => {
                 setColorNote(null);
             },

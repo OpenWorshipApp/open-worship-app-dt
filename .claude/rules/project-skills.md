@@ -387,3 +387,52 @@ mock bundles, `createRoot` + `act` or `renderToStaticMarkup` (there is no
 `@testing-library/react` here), the `vi.mock`-factory-survives-`resetModules`
 fork, and a table of this app's recurring defect classes as ready-made test
 targets. Same mirror rule: `.agents/skills/owa-upgrade-unit-test` is a copy.
+
+## owa-enhance-tips skill
+
+`.claude/skills/owa-enhance-tips` owns the in-app TIPS (asked for on
+2026-10-16 as _make tips more useful … e.g. `/owa-enhance-tips reader.html
+99%`_): Help → Tips of the Day / All tips and the walkthrough card each tip
+starts — the catalogs `readerDemos.mjs`, `readerExtraDemos.mjs`,
+`presenterDemos.mjs`, `appMenuDemos.mjs`, `pageDemos.mjs` under
+`tools/owa-devtools-mcp`, and `src/toast/dailyTipHelpers.ts` /
+`DailyTipComp.tsx`. `/owa-enhance-tips <window> [N%] | measure | harvest |
+quality | --all | report`. The same catalogs are `owa_guide_start { demoId }`
+and the 🤖's practice shelf, so the walkthrough engine stays with
+`owa-enhance-mcp` and the shelf's place in the chatbot with
+`owa-enhance-chatbot`; this skill owns what the lessons SAY and which
+controls they reach.
+
+**A percentage is of an inventory, and the inventory has to earn it.**
+`scripts/tip-coverage.mjs` measures a window against
+`references/inventory/<page>.json` — one item per thing a volunteer can do
+there — and an item is COVERED only when a tip presses or names it AND the
+All tips search (title + detail + category, `DailyTipComp`'s `filteredTips`)
+finds that tip by the control's own words; ACTED (a safe **Do it** reaches it)
+and the same search run through the Khmer and French dictionaries are reported
+beside it. The denominator cannot be quietly shrunk: `tran()` labels in a
+control position in the inventory's source folders and in every file a live
+harvest saw rendered (`data-react-comp-fp`), plus every label `--harvest`
+reads off the live window over raw CDP (`owa_list_ui`'s own reading, nothing
+pressed), are LEADS until triaged into an item, an ignore or an exclusion with
+its reason — and the figure is printed _provisional_ until there are none.
+Measured on the day it was made: the Reader's 100 tips, 50 with a **Do it**,
+226 source and 195 live leads after one harvest; the quality pass found
+`Show path editor` translated by three tips with no Khmer or French entry
+(`PathSelectorComp` draws that title untranslated) and the Font Size tips'
+Khmer detail naming the control in other words than its button (`TP-01`,
+`TP-02`).
+
+**A tip counts once it ran.** Every new or changed tip is found through the
+All tips search, started with **Show it** and pressed **Do it** by **Do it**
+in the dev window (the product path works with a stale MCP catalog because
+the renderer sends the lesson inline), then once in Khmer, where a missing
+string throws. No **Do it** presents, removes, picks a file or a record, or
+reloads; those stay words. Every tip string gets Khmer and French, with the
+control's own dictionary name inside the translated detail. And because
+`dailyTipHelpers.ts` puts every catalog in every window that shows toasts,
+lessons stay terse and a lazy catalog is a proposal (`TP-03`), not a refactor.
+Ledger `references/backlog.md` (`TP-xx`), one row per window per run in
+`references/scoreboard.md`, method and writing rules in
+`references/method.md`. Same mirror rule: `.agents/skills/owa-enhance-tips`
+is a copy.

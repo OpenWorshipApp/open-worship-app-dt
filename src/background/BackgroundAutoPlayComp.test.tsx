@@ -160,8 +160,17 @@ describe('background auto-play control', () => {
         expect(state.runners.mock.lastCall![0]).toEqual([]);
         state.playing = true;
         state.shown = [];
+        state.setPlaying.mockReset();
+        state.notify.mockReset();
         state.controlProps!.onStateChange();
         expect(state.runners.mock.lastCall![0]).toEqual([]);
+        // A clear ends the show: left "playing", the next single picture
+        // started it again.
+        expect(state.setPlaying).toHaveBeenCalledWith(
+            'background-image',
+            false,
+        );
+        expect(state.notify).toHaveBeenCalledOnce();
     });
 
     it('uses saved URL order for web shows, including a folder with no files', async () => {

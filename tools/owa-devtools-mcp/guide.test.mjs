@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 import { describe, expect, it, beforeEach } from 'vitest';
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { genDestructiveLabelRule } from './destructiveLabel.mjs';
 import {
+  GUIDE_CARD_HINT_TEMPLATE_LIST,
+  GUIDE_CARD_LABEL_KEY_MAP,
+  listGuideCardTranKeys,
   detectRecipeWindow,
   dropStepsAlreadyDone,
   genGuideExpression,
@@ -12,9 +19,14 @@ import {
   toGuideSteps,
   toKeystroke,
 } from './guide.mjs';
-import { loadTranBundle } from './tran.mjs';
+import { extractDictionary, loadTranBundle } from './tran.mjs';
 
 const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
+const REPO_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+);
 
 // The runtime is a string evaluated in the app page, so it is exercised the
 // way the app gets it: evaluated, then driven through its own api.
@@ -56,6 +68,94 @@ beforeEach(() => {
   };
 });
 
+// The card sits in the app window and speaks its language: every word it
+// asks the dictionary for must be there in Khmer AND French, read straight
+// from the packages (a stale built bundle would hide a new key).
+describe('the card’s own words', () => {
+  it('has every one in every language', () => {
+    const readPack = (code) => {
+      return extractDictionary(
+        readFileSync(
+          path.join(REPO_DIR, 'src', 'lang', 'data', code, 'index.ts'),
+          'utf-8',
+        ),
+      );
+    };
+    const keyList = listGuideCardTranKeys();
+    expect(keyList).toEqual(
+      expect.arrayContaining(['Next', 'Done', 'Do it', 'Step by step']),
+    );
+    for (const code of ['km', 'fr']) {
+      const dictionary = readPack(code);
+      expect(
+        keyList.filter((key) => {
+          return dictionary[key.trim().toLowerCase()] === undefined;
+        }),
+        code,
+      ).toEqual([]);
+    }
+  });
+
+  // The list the server translates and the sentences the card says are two
+  // copies; one drifting from the other is a sentence left in English.
+  it('every sentence the card says is a template on the list', () => {
+    const source = genGuideExpression('status()').replace(/'\s*\+\s*'/g, '');
+    const said = [...source.matchAll(/say\(\s*'([^']*)'/g)].map((match) => {
+      return match[1];
+    });
+    expect(said.length).toBeGreaterThan(20);
+    expect(
+      said.filter((template) => {
+        return !GUIDE_CARD_HINT_TEMPLATE_LIST.includes(template);
+      }),
+    ).toEqual([]);
+    const placeWords = new Set(
+      ['top', 'middle', 'bottom'].flatMap((row) => {
+        return ['left', 'center', 'right'].map((column) => {
+          return `${row} ${column}`;
+        });
+      }),
+    );
+    expect(
+      GUIDE_CARD_HINT_TEMPLATE_LIST.filter((template) => {
+        return !placeWords.has(template) && !source.includes(`'${template}'`);
+      }),
+    ).toEqual([]);
+  });
+
+  it('says its sentences in the words it is handed', () => {
+    startGuide({
+      steps: [{ text: 'ចុចប៊ូតុង' }],
+      words: {
+        'Do this step in the window behind me.':
+          'សូមធ្វើជំហាននេះនៅក្នុងបង្អួចនៅពីក្រោយខ្ញុំ។',
+      },
+      guard: GUARD,
+    });
+    const root = document.getElementById('owa-guide-host').shadowRoot;
+    expect(root.textContent).toContain(
+      'សូមធ្វើជំហាននេះនៅក្នុងបង្អួចនៅពីក្រោយខ្ញុំ។',
+    );
+  });
+
+  it('the counter has a key of its own, not the slider’s Step', () => {
+    expect(GUIDE_CARD_LABEL_KEY_MAP.step).toBe('Walkthrough step');
+  });
+
+  it('takes the words it is handed', () => {
+    startGuide({
+      title: 'ម្តងមួយជំហាន',
+      steps: [{ text: 'ចុចប៊ូតុង' }, { text: 'រួចហើយ' }],
+      labels: { next: 'បន្ទាប់', step: 'ជំហាន' },
+      guard: GUARD,
+    });
+    const root = document.getElementById('owa-guide-host').shadowRoot;
+    expect(root.textContent).toContain('ជំហាន 1/2');
+    expect(root.textContent).toContain('បន្ទាប់');
+    expect(root.textContent).toContain('ម្តងមួយជំហាន');
+  });
+});
+
 describe('selectGuideStepsForTopic', () => {
   const steps = [
     { text: 'Type a full reference such as John 3:16.' },
@@ -92,6 +192,22 @@ describe('selectGuideStepsForTopic', () => {
 });
 
 describe('toGuideSteps', () => {
+  // A page's own translation is read for its WORDS (`withLocalStepText`):
+  // left to `toEnglishOnly`, a Khmer step was its button names and nothing
+  // else, and the card fell back to the English sentence.
+  it('keeps a translated step whole when asked to', () => {
+    const page = [
+      '1. ចុច **[en:tran:Font Size]** ហើយរំកិលវាទៅខាងស្ដាំ។',
+      '2. ចុច **[en:tran:Add Extra Bible]**។',
+    ].join('\n');
+    expect(toGuideSteps(page)[0].text).toBe('[en:tran:Font Size]');
+    const kept = toGuideSteps(page, undefined, { isTextKept: true });
+    expect(kept.map((step) => step.text)).toEqual([
+      'ចុច [en:tran:Font Size] ហើយរំកិលវាទៅខាងស្ដាំ។',
+      'ចុច [en:tran:Add Extra Bible]។',
+    ]);
+  });
+
   it('keeps a bold control label and drops keystrokes and stressed prose', () => {
     const steps = toGuideSteps(
       [
@@ -571,6 +687,52 @@ describe('the guide runtime', () => {
     );
     expect(document.getElementById('size').value).toBe('17');
 
+    const changed = await window.__owaGuide.act();
+    expect(changed.lastResult).toMatchObject({
+      done: true,
+      did: 'typed',
+      value: '25',
+    });
+    expect(document.getElementById('size').value).toBe('25');
+  });
+
+  it('raises the Font Size range its own titled box wraps, not refusing it as a twin', async () => {
+    // `AppRangeComp`'s real shape: the range is named by its aria-label and
+    // its box by a title of the same words. Hidden until the footer opens,
+    // the box was no twin; opened, the second Do it of the Reader's font tip
+    // was refused for "2 controls are called Font Size" (GL-25).
+    document.body.innerHTML = [
+      '<style>',
+      '.app-auto-hide > div { visibility: hidden; }',
+      '.app-auto-hide.auto-hide-show > div { visibility: visible; }',
+      '</style>',
+      '<div data-widget-name="Bible Reader">',
+      '  <div id="footer" class="app-auto-hide">',
+      '    <div class="app-range" title="Font Size">',
+      '      <input id="size" type="range" aria-label="Font Size" title="17" min="5" max="40" step="2" value="17">',
+      '    </div>',
+      '  </div>',
+      '  <i id="reveal" class="auto-hide-button" title="Reveal Hidden Controls"></i>',
+      '</div>',
+    ].join('');
+    document.getElementById('reveal').addEventListener('click', () => {
+      document.getElementById('footer').classList.add('auto-hide-show');
+    });
+    startGuide({
+      mode: 'demo',
+      steps: [
+        {
+          text: 'Make the words larger.',
+          find: 'Font Size',
+          action: 'type',
+          value: '+8',
+        },
+      ],
+    });
+    const opened = await window.__owaGuide.act();
+    expect(opened.lastResult).toMatchObject({ done: true, did: 'revealed' });
+
+    expect(window.__owaGuide.status().twins).toBeUndefined();
     const changed = await window.__owaGuide.act();
     expect(changed.lastResult).toMatchObject({
       done: true,

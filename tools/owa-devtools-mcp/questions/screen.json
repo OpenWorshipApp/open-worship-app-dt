@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-12",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "screens",
@@ -117,7 +117,8 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "tools": ["owa_hide_screens"]
+                        "tools": ["owa_hide_screens"],
+                        "passage": "Hide every screen"
                     }
                 },
                 {
@@ -151,6 +152,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
+                        "passage": "Behind everything the card draws sits",
                         "find": "Show Monitor Wallpaper",
                         "guide": true
                     }
@@ -204,6 +206,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
+                        "passage": "A screen that is not selected keeps what it last showed",
                         "guide": true
                     }
                 },
@@ -315,6 +318,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
+                        "passage": "Moving a screen to any stage",
                         "related": ["W-03", "W-05"],
                         "find": "Slide transition"
                     }
@@ -379,7 +383,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "passage": "Content goes to every",
+                        "passage": "To stop one screen receiving content",
                         "tools": ["owa_list_screens"]
                     }
                 },
@@ -411,7 +415,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "passage": "A Bible passage shown in more than one version is drawn as one column per version",
+                        "passage": "To line the versions up verse by verse",
                         "find": "Set Line Sync",
                         "related": ["W-06"]
                     }
@@ -507,6 +511,7 @@
                     ],
                     "resources": {
                         "recipe": "W-50",
+                        "passage": "The host lists it under",
                         "find": "Connected guests"
                     }
                 },
@@ -675,6 +680,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "Use the display in VLC or OBS",
                         "find": "Video for media players (MP4)"
                     }
                 },
@@ -726,7 +732,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
-                        "passage": "The buttons show while the mouse is over the page"
+                        "passage": "On the device watching, the page's buttons come back"
                     }
                 },
                 {
@@ -775,6 +781,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "on the display's card in the",
                         "find": "Allow interaction"
                     }
                 },
@@ -825,6 +832,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "Give a virtual display an HTTPS address",
                         "find": "Use HTTPS"
                     }
                 },
@@ -846,7 +854,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
-                        "passage": "The browser page has the same button",
+                        "passage": "On the phone or tablet watching, the browser page has the same button",
                         "related": ["W-50"],
                         "find": "Cast to a TV",
                         "guide": true
@@ -867,7 +875,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
-                        "passage": "On a page that may use a camera",
+                        "passage": "To share a phone's camera, open the display on the phone",
                         "find": "Share my cameras"
                     }
                 },
@@ -884,6 +892,7 @@
                     ],
                     "resources": {
                         "recipe": "W-51",
+                        "passage": "on the display's card in the",
                         "find": "Allow interaction"
                     }
                 },

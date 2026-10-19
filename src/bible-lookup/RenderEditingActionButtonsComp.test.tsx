@@ -46,6 +46,7 @@ vi.mock('./bibleActionHelpers', () => ({
 }));
 vi.mock('./RenderActionButtonsComp', () => ({
     RenderCopyBibleItemActionButtonsComp: () => null,
+    RenderAskAssistantBibleItemButtonComp: () => null,
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
 vi.mock('../slide-editor/canvas/canvasBibleItemHelpers', () => ({

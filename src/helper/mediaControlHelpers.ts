@@ -93,12 +93,15 @@ export function showMediaPlayingToast3Attempt() {
     );
 }
 
+/**
+ * For a press refused because a track is playing -- hiding that track's
+ * player, folding the Audios split. Nobody is leaving the page there, and
+ * pressing three times forces nothing, so it says only what to do.
+ */
 export function showAudioPlayingToast() {
     showSimpleToast(
         tran('Audio playing'),
-        tran('Please stop the audio before leaving the page.') +
-            ' ' +
-            tran('Or attempt 3 times to force leaving.'),
+        tran('Pause the audio first, then try again.'),
     );
 }
 

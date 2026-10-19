@@ -6,6 +6,7 @@ paths:
   - 'src/toast/DailyTipComp.tsx'
   - 'src/resize-actor/FlexResizeActorComp.tsx'
   - '.claude/skills/owa-enhance-chatbot/scripts/**'
+  - '.claude/skills/owa-enhance-tips/**'
 ---
 
 # Agent tools: what the `owa_*` tools do
@@ -64,6 +65,51 @@ projector, so it is offered and never done unasked.
   read-website windows never count. Any of them means `didChange: true` and no
   `unverified`. A projector change still needs `owa_list_screens`. +2 tokens a
   round.
+- **A press also says what it made the app ASK, and what it switched beside
+  it** (2026-10-16, the robot run's T3/T5, `domMatch.mjs`
+  `QUESTION_WATCH_SOURCE` / `EFFECT_WAIT_SOURCE`). Save, Undo and Redo read
+  `unverified` with the document plainly changed — none carries a state, and
+  Save greys out only once the editing status re-reads the history (up to
+  ~500 ms after the press) — so a click reads its own toolbar's buttons
+  before and after and answers `nowEnabled` / `nowDisabled`. **Select
+  Default "documents"** opened its confirm after the settle (it reads the
+  data folder first) and the press said nothing of it: `question` now carries
+  the popup's title and text and a `note` that it is the person's to answer —
+  and, when `document.visibilityState` is `hidden`, that NOBODY can see it.
+  That covers a page that knows it is hidden, NOT the case that prompted it:
+  the scratch instance's Presenter, hidden outright (`IsWindowVisible`
+  false) while its popups opened on the user's desktop, still read
+  `visible`, and Electron's CDP has no `Browser.getWindowForTarget` to ask
+  instead (checked live 2026-10-16) -- saying so there needs a signal from
+  the main process. A press that showed nothing within the settle is
+  watched 750 ms more by a `MutationObserver`, never a polling timer: a hidden
+  window throttles timer chains, and a hidden window is where a missed
+  question costs most. `owa_press_key` reports a `question` too. Both sources
+  live outside the memoised runtime. **A scope matches the name a panel
+  SHOWS** (`scopePathOf`): the Documents list is a pane stamped `Document
+List` whose header reads _Documents_, and `Documents > …` found nothing;
+  the card's `aria-labelledby` header (or a container's `aria-label`, ≤80
+  characters, never a control's) counts now, and `withTranslations`
+  translates each half of `Panel > Control`. `inPanel` stays the stamped
+  English name. **A label is never a style sheet** (`shownTextOf`): a pane
+  that mounts its own `<style>` was named by its CSS. No schema changed.
+- **A press says what VALUE it moved, and an open menu wins a tie**
+  (2026-10-16, the whole-Presenter robot run's T1/T2, `domMatch.mjs`
+  `VALUE_WATCH_SOURCE` / `checkIsBetter`). **Zoom In** grew the thumbnails
+  and an ArrowDown on a focused divider dragged it from 50 to 83, and both
+  answered `unverified`: a range, a number box, a slider and a divider
+  (`role="separator"` with `aria-valuenow`) carry no on/off state, and the
+  probe read only states, labels and its toolbar's enabled buttons. A click
+  and a key now snapshot the value of the control itself when it carries one,
+  else of the few (≤4) beside it in its own row, and answer `nowValue`
+  (`Thumbnail Size: 110`, `Divider between Bibles and Bible Notes: 56`) with
+  `didChange: true`; the late-effect watch waits for one too. And with a
+  screen card's colour-note menu open, `owa_click "red"` pressed the
+  Background Colors swatch BEHIND it and put a red background on a screen:
+  `checkIsBetter` now ranks a candidate inside an open `role="menu"` above a
+  page control of the same tier, right after `isControl` (so the row, not
+  its label, is what is pressed). `owa_find_ui` ranks the same way. No
+  schema changed.
 - **The walkthrough card presses only what the step NAMES, and only what is
   REACHABLE** (2026-09-08, `guide.mjs` + `domMatch.mjs`, measured by
   `.claude/skills/owa-enhance-chatbot/scripts/demo-failure-rate.mjs`, which
@@ -150,8 +196,49 @@ projector, so it is offered and never done unasked.
   ask the model was given, which had put the hint, the page and a recipe
   id in the transcript as the user's own message. **The
   card never outgrows the window** (`.card { max-height }`, `.body {
-  overflow: auto }`): a whole-paragraph step had pushed its title and
+overflow: auto }`): a whole-paragraph step had pushed its title and
   buttons off screen.
+- **The card speaks the window's language** (2026-10-16, memory
+  `chatbot-follows-app-language`). A recipe card was built from the page read
+  in the window's language, and `toGuideSteps` then lost every Khmer button
+  name to `toEnglishOnly` and the capital-letter test: 361 steps with a
+  control to ring in English, 217 in Khmer. It is built from the ENGLISH page
+  now (every rule that drops, picks and orders steps reads the recipe's own
+  words: the window a step goes to, the step a topic names, the known
+  question's `find`), and put into the window's language at the one choke
+  point, `prepareSteps`: the step text from the same page read with its
+  templates intact (`readHelpPage(…, { keepTemplates })`, the same steps off
+  the same lines, the English text kept if they ever differ —
+  `withLocalStepText`; since 2026-10-17 the page's own TRANSLATION first when
+  it is current, `W-11@km` read with `toGuideSteps(…, { isTextKept })` because
+  `toEnglishOnly` left a Khmer step its button names alone, and the card's
+  title from it too: 61 of the 64 Khmer pages line up step for step, the
+  three bullet-led ones fall back to the English sentence; the runtime is
+  versioned, `GUIDE_RUNTIME_VERSION`, so a page holding an older card gets
+  this one), and every step's controls tried in the window's words
+  FIRST with the English after (`localizeFinds`; a scoped one also as the
+  panel's English name over the translated control). A built-in demo carries
+  its own translations and is left alone. Its buttons and default title are
+  `GUIDE_CARD_LABEL_KEY_MAP` / `GUIDE_CARD_TITLE_KEY` handed to `start` as
+  `labels` (the counter has a key of its own, **Walkthrough step**: the
+  dictionary's `Step` is a slider's, `Pas` in French). **Its sentences too**:
+  every hint the card writes is ONE whole template said through the runtime's
+  `say(template, values)` (`'Press {act} and I will click it for you.'`, the
+  ring's place as one of nine words, `{where}`), the English template its
+  own key; `GUIDE_CARD_HINT_TEMPLATE_LIST` lists them and
+  `genGuideCardWords` hands `start` the window language's words as `words`.
+  A phrase stitched from pieces cannot be translated, which is why none is
+  left. `guide.test.mjs` holds the list to the runtime's own source (a
+  sentence said but not listed stays English in silence) and to having its
+  Khmer and French. What a press REFUSES with (`toTwinWords`, a refusal's
+  `reason`) still goes back to a model, and stays English. **And its
+  lettering** (2026-10-17, the user's picture of the card with its Khmer in
+  the OS's fallback face: _there's no font-family apply on guiding panel_):
+  the card's stack is the system face, then the PAGE BODY's face
+  (`--owa-guide-page-font`, read off `document.body` as the runtime
+  mounts -- Battambang in a Khmer window, which `main.tsx` sets), so Latin
+  keeps the system face and Khmer is the app's own. The action banner
+  (`notify.mjs`, runtime version 5) and the picker's line do the same.
 - **Guide steps and hidden controls**: A guide can also use `action: "hover"`
   when an event-driven surface creates another control; it dispatches
   pointer/mouse hover events without moving the person's real pointer. A
@@ -202,7 +289,7 @@ projector, so it is offered and never done unasked.
   empties at once and then contradicts a card that is still there.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 100
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 104
   Reader-only lessons through the same guarded card. Thirty are featured
   in the Reader assistant's zero-model practice shelf: the original font
   larger/smaller, localized John 3:16 and Bible Find demos; passage history,
@@ -210,11 +297,19 @@ projector, so it is offered and never done unasked.
   scrolling, line layout, advanced study views and book filtering; and direct
   practice for typing a complete reference, removing one reference part,
   automatic Bible audio, filtering and sorting notes, Settings and Help.
-  Fifty of the 100 Reader tips begin with a safe deterministic action;
+  Fifty-one of the 104 Reader tips begin with a safe deterministic action;
   Reader additions cover copying formats, saved list and note file management,
   Resources, names and graphs with practical searchable tips. Mixed steps use
-  `look` after the safe action, and scoped labels translate each part.
-  The coverage map is `tools/owa-devtools-mcp/reader-demo-coverage.md`.
+  `look` after the safe action, and scoped labels translate each part. **A
+  scoped label also keeps its panel's English name beside the translated
+  control** (2026-10-16): a panel answers to its `data-widget-name`, English
+  in every language, so in a Khmer window `ព្រះគម្ពីរ > ត្រងតាមឈ្មោះ`
+  matched nothing and `Bibles > ត្រងតាមឈ្មោះ` lands. That variant is the last
+  find, because the renderer's inline fallback (`getDailyTipGuide`) takes the
+  last one.
+  The coverage map is `tools/owa-devtools-mcp/reader-demo-coverage.md`; the
+  measured figure is `/owa-enhance-tips`'s, against a control inventory per
+  window (`.claude/skills/owa-enhance-tips/references/inventory/`).
   Stateful, file-dependent, native-menu, pane-visibility and audience-output
   lessons stay self-guided. The catalog is
   shared with the chatbot's empty state, so the words a senior presses and the
@@ -521,6 +616,9 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   and never pressed: a walkthrough is a request to go there, a question is
   not.
 - **The picker**: `owa_pick_element` draws an outline that follows the mouse
+  (its line, `PICKER_HINT_TEMPLATE`, in the window's language -- one
+  sentence with the control's name in its gap, translated by `owaTools.mjs`
+  and built as nodes, never markup)
   (`tools/owa-devtools-mcp/picker.mjs`) and swallows the choosing click in the
   CAPTURE phase — pointer-down as well as click, because a dropdown opens on
   mousedown — so pointing at **Clear Long Text** to ask what it does does not clear
@@ -728,6 +826,22 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   entry (the `*` clears) behind a backup of the head it replaces, where the
   button wipes the history for good — so every destructive OUTCOME a user
   reaches through a confirm now has a backed-up tool route.
+- **A supplied book-name source is `owa_bible_xml {action: "names", url,
+locale}`** (2026-10-18, MC-60). Bible.com chapter links resolve to their
+  edition index; Wordproject chapters resolve to their language index. Other
+  pages need links carrying stable book identifiers. At most four pages are
+  read sequentially through the existing sandbox, DNS/redirect checks and
+  network budget. Only a complete, unambiguous set of 66 distinct names is
+  returned, in canonical book order; extra books cannot shift it. No names
+  are invented or assembled across editions. The requested URL and actual
+  source accompany each list. Known source-language or Khmer/Thai/Lao/Myanmar
+  script mismatches yield `names-language`; incomplete/unreadable sources
+  yield `names-incomplete`. The supplied locale stays selected. With a draft
+  or installed key, results carry reusable list IDs and previews as before.
+  No extra tool/schema field: `names` reuses `url`. A source lookup never
+  installs anything. Fresh stdio verification of the user's edition 4783
+  chapter link returned all 66 Khmer names in one page read.
+
 - **Whole Bibles are `owa_bible_xml`** (2026-10-06, asked for by the user:
   _download → extract → analyze → guess keys → recommend a locale → digits →
   book names for the user to pick → import_, and _help import, edit and delete_,
@@ -822,3 +936,220 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   person pressed the dots meanwhile. The walkthrough card does not pass the
   flag: there the dots stay a press of their own (`autoHideRevealOf` in
   `guide.mjs`). No schema changed, so the model's bill did not.
+
+- **A verse somebody half-remembers is `owa_find_verse`** (2026-10-16,
+  `MC-59`; the user's ask with Bible Find circled: _as a user I want to
+  consult with assistant in chatbot to find verses I forgot_, then _when
+  found verse then it should allow user to click to open in bible lookup_).
+  `tools/owa-devtools-mcp/owaTools.mjs` → the `owa-agent-data` relay, domain
+  `bible-find` → `src/helper/agentBibleFindHelpers.ts`, the rules pure in
+  `src/helper/bibleVerseFindHelpers.ts`. It searches the table Bible Find
+  builds and keeps for each Bible (`BibleFindController.getInstant`), so a
+  Bible is indexed once, but NOT with Bible Find's query, which matches the
+  words as typed and in order: each word is its own LIKE, a verse ranked by
+  how many it holds, then by their rarity (one count per word). The table
+  holds the words run together, so for a language written with spaces up to
+  300 candidates are re-read word by word (`countWordHits`) -- "lover" had
+  ranked Exodus 15:9 by "I wil(l over)take" -- and English words are cut back
+  to their shared start (`toEnglishStem`: "enemy" finds "enemies"). Khmer and
+  its neighbours stay matched as letters, and the result says so (Hebrews
+  5:14's "ឥន្ទ្រីយ", senses, matched "ឥន្ទ្រី", eagle); a long run of
+  letters typed with no space is cut into the Bible's OWN words, read from
+  Bible Find's `spell` table for that one search (`segmentByVocabulary`,
+  "ព្រះយេស៊ូសួរពេត្រុសច្រើនដង" → six words). **Across languages, KJV
+  first** (the user's word: _KJV is the source of english … goal is to
+  generate maximum result_): words the chosen Bible's script cannot hold are
+  searched in another installed Bible that reads them -- the KJV first --
+  and every verse found is quoted from the chosen one (`searchedIn`); a
+  result from a Bible not in English names `englishBible` for the model to
+  search what it translated. `refs` quotes references (an English name, a
+  code or the Bible's own) from that Bible; `open` puts one in the Bible
+  Lookup the way the names panel's **Open in bible lookup** does
+  (`applyTargetOrBibleKey` on the live controller, or the Presenter's popup
+  through `bibleLookupPopupOpener.ts`), never on a screen. Only `open` acts:
+  the banner names the verse (when it reads as one -- the banner goes up
+  before the app has answered); all of it is counted in the firewall's
+  acting budget. **Offered to the chatbot's model only inside a
+  verse-finding conversation** (`MODEL_ON_ASK_TOOL_MAP`, with
+  `owa_read_website` shared to it by `MODEL_ASK_SHARED_TOOL_MAP`), so the
+  ordinary bill stayed at its ratchet, 8 350; the developer's door lists it
+  always (61 tools). Verified live on the dev app: "enemies love pray
+  persecute" → Matthew 5:44 first, 4 of 4 words, ~100 ms; English words
+  under the Khmer Bible → John 21:17 quoted in Khmer; `open` moving the
+  Reader to Matthew 5:44 with the split view following. **A Bible not in
+  English answers each verse with its `title` too** (2026-10-17, `EC-290`):
+  the reference as that Bible writes it -- its book's own name and digits,
+  `ម៉ាថាយ ៥:៤៤` -- off `BibleItem.toTitle()`, on a search, a `refs` read and
+  an `open`; `ref` stays English, the one every tool reads. The help window
+  draws a Khmer reader's lines and buttons with it (verified live: the
+  ពគប search for ស្រឡាញ់ ខ្មាំងសត្រូវ អធិស្ឋាន, `ម៉ាថាយ ៥:៤៤` first, Psalms as
+  `ទំនុកដំកើង ១០៩:៤`).
+
+- **What a Lookup Detail panel shows is `owa_lookup_record`** (2026-10-18;
+  the user's picture of three detail panels with the left of each title
+  circled: _make sure mcp tool provide all information to chatbot session
+  then let user interact_, then _chatbot should know the location/name is
+  from KJV, in case want to know_). `tools/owa-devtools-mcp/owaTools.mjs` →
+  the `owa-agent-data` relay, domain `lookup` →
+  `src/helper/agentLookupHelpers.ts`, what it answers built pure in
+  `src/helper/agentLookupRecordHelpers.ts`. `kind` `name` | `location` by
+  `id` (a related record's, off a result's lists) or `name` (the dataset's
+  own or the KJV's spelling, exact first, then the lookup panel's own
+  search; other people of the name come back as `otherMatches` with their
+  ids) in `lang` (the lookup's own languages, default the one shown): every
+  field the panel draws in English keys — `summary`, `description`, `type`,
+  `gender`, `age`, `years`, `places` / `parents` / `spouses` / `children` /
+  `siblings` / `cousins` / `relatedPlaces` each `{id, name, kjvName}`,
+  `links` with Wikipedia, `verseCount`, every verse key (300 at most) and the
+  first eight QUOTED in the lookup's Bible — and `source`
+  (`LOOKUP_SOURCE_TEXT`): the names lookup is drawn from the KJV, a
+  translated record is a translation of the KJV's, `kjvName` its spelling,
+  the verse keys its numbering. `kind` `verse` by `ref` (keys or references
+  in words, `;`-separated, six at most — a key read whole over chapters, the
+  rest through `owa_find_verse`'s own reader) in `bible`; `near`
+  (`previous` / `next`) reads the chapter before or after instead — for a
+  single verse the verse, into the next chapter at a chapter's end, across
+  books in the model's order — and `names` adds the people and places the
+  names lookup has in the passage (`searchByShortVerse` per verse, 200
+  verses and 40 of each at most, each with its id and verses). Reads only; the
+  names dataset is taken through `acquireLookupData` and given back at once,
+  so an open panel's copy is the one read and none is kept past the ten
+  seconds `getLookupDataCached` keeps anything — which is why the chatbot
+  aims it at the panel's own window. Counted in the firewall's acting budget
+  all the same (a record no panel holds loads ~34 MB), 60 s evaluate
+  timeout. Offered to the chatbot's model only in a conversation opened from
+  a panel's 🤖 (`MODEL_ON_ASK_TOOL_MAP` kind `lookup`), so the ordinary bill
+  did not move. Verified live through a fresh stdio server against the dev
+  app: Adam (English, 0.6 s with the dataset cold), the Garden of Eden in
+  Khmer with its related places named, `GEN 2:19-21; John 3:16`, and an
+  unknown name refused in a sentence.
+
+- **The Resources panel's files are `owa_resource_file`** (2026-10-17; the
+  user, from a conversation about `LUK.6.pdf`: _let chatbot access all in
+  `Resources` to allow user to ask everything in `Resources`, like
+  followup other chapter (look into other pdf files)_).
+  `tools/owa-devtools-mcp/owaTools.mjs` → the `owa-agent-data` relay,
+  domain `resources` → `src/helper/agentResourcesHelpers.ts`, the naming
+  rules pure in `src/helper/agentResourceNameHelpers.ts`. `list` by `book`
+  (code or English name) and `chapter` (0 = the introduction; the panel's
+  own `scanResourceFiles` match, book-level files included) or by
+  `search` words, sixty at most; every file named `<folder>/<path>` --
+  the Resources folder's own name, `pdf#2` for a second of one name --
+  never a whole path. `read` takes that name back and refuses anything
+  that would step outside its folder (`..`, a drive, an absolute path,
+  then the resolved path checked again). A PDF answers with complete pictures
+  of every remaining page from `page` in one MCP result when `pages` is
+  omitted, drawn by MuPDF in a child process of main
+  (`main:app:pdf-to-chat-pages`, the 1024px long edge) and returned as MCP
+  image blocks after the text (`toResourceFileResult`), never base64 in
+  the words. Successful render results are fingerprinted by the source file
+  and options and kept in a bounded OS-temp disk cache, so sequential verse
+  cards do not render the same PDF again. Its own text layer is deliberately
+  excluded from the model result: a scan has none and a legacy Khmer font
+  exposes unrelated Latin characters that can poison an otherwise correct
+  visual reading. `pageCount`, `firstPage`, `lastPage`, `nextPage` and `isComplete`
+  verify coverage; `pages` deliberately narrows a read to at most eight, and
+  `detail: "high"` renders the complete read at a 2048px long edge. A
+  Bible note answers as its notes' words (`toNoteFileText`), a text
+  file's words cut at 16 KB, a picture itself. Reads only, counted in the
+  acting budget (each PDF read spawns a process). Offered to the
+  chatbot's model only in a `resources` ask (`MODEL_ON_ASK_TOOL_MAP`), so
+  the ordinary bill did not move. That ask also receives the shared
+  `owa_lookup_record`: a bare chapter read discovers the real final verse,
+  then only the selected verse is fetched into each isolated model request;
+  John 3's Full chapter choice therefore produces 36 sequential one-verse
+  cards instead of one oversized answer. `owa_resource_file` lists and reads a
+  directly mentioned chapter PDF so its explanation can be included and its
+  **Ask about …** button offered. The verse prompt re-reads the attached PDF
+  at high detail in one complete read and uses only its pictures. The
+  conversation does not expose pagination. Reading remains
+  bounded to one main verse per card, two clickable cross-references and two
+  direct related-resource excerpts. A clicked cross-reference opens its verse
+  in a separate card.
+
+- **A typed Bible-Reader question gets those three tools, in any language**
+  (2026-10-18; the user's goal: _chatbot will help bible reader have more
+  power_, with _show resource files of john chapter 3_, _what names in
+  Genesis chapter 4_ and _open genesis 3:203_). A typed line in a tab asking
+  about the Bible Reader that names a verse (`3:16`, `៣:១៦`) or a chapter
+  (`chapter 4`, `ជំពូក 4`, `chapitre 4`) with a book before it -- and not the
+  app's own work (screen, slide, settings, font, download …) or a how-to --
+  is a **`bible-reader`** ask (`src/chatbot/bibleReaderChatHelpers.ts`):
+  `owa_lookup_record`, `owa_resource_file`, `owa_find_verse` and a web read,
+  under `BIBLE_READER_SYSTEM_PROMPT`, six rounds. **A known corpus row wins**:
+  the typed words are looked up first (`findKnownQuestion`, reused for the
+  hint), because a reference inside a how-to -- _Where do I type John 3:16?_,
+  the Reader's W-11 row -- is an example, not an ask; only a free-typed
+  question with no row gets the verse tools (`EC-350`, round 23's
+  regression). The "book before the reference" check counts two letter
+  CLUSTERS (`\p{L}[\p{M}]*`), because Khmer vowel and subscript marks break a
+  bare `\p{L}{2,}`. A plain line under such an
+  answer stays in the conversation (`isBibleReaderAnswer`), so _and chapter
+  5?_ is more of the same. The cue words are DATA per language
+  (`bibleReaderWords` in `assistant.json`: chapter, resources, names, howTo,
+  exclude); English reads in code. Nothing was added to the ordinary tool
+  list, so the model ratchet did not move; a **Presenter** tab keeps
+  `owa_present_bible` because the route is Reader-only. `owa_resource_file`
+  takes the book's own name in ANY installed Bible's language and a `ref`
+  (`"John 3"`); `owa_lookup_record` and `owa_find_verse` resolve a reference
+  through every installed Bible's book names and, with no `bible` asked,
+  quote from the one that NAMES the book the way it was written (a Khmer
+  reference is read from the Khmer Bible, not the KJV). A verse past its
+  chapter is refused by `readRefs`, `readKeyedPassage` and `openInLookup`
+  with `notFound: [{ref, reason: "Genesis 3 has 24 verses."}]` -- it was
+  quoted as `"??"`, the renderer's missing-verse placeholder. Verified live
+  in Khmer: the resources list read through the new `ref`, Genesis 4's 17
+  people and Nod named from the names lookup, and "Genesis 3 has only 24
+  verses" for 3:203 (the invalid `open` refused too).
+
+- **The chat box's input aid is `owa_bible_suggest`, and the model never
+  sees it** (2026-10-18; the user's picture of the lookup conversation whose
+  box held `១` and offered nothing: _assistant should help the input ... book
+  auto complete -> chapter -> verse_, then _if for location/name then should
+  recommend the auto-complete_). The WINDOW asks it on a 350 ms debounce
+  (`src/chatbot/bibleInputSuggestHelpers.ts` decides WHEN): a passage box --
+  a tab asking about the Bible Reader, or an answer that asked for another
+  passage (`lookupAwaits`) -- and a name box -- `Who was Moses` / `Where is
+Bethlehem` and every language's own way (`bibleReaderWords.nameAsk`), or a
+  bare name in a script that is not Latin. A bare LATIN word is `allowLoad:
+false` and searches only a dataset a lookup panel already holds
+  (`getHeldLookupData`) -- the 34MB names dataset is never fetched
+  speculatively. The app side (`src/helper/agentBibleSuggestHelpers.ts`)
+  completes in the Bible the READER is on (the lookup language's): books from
+  its `keyBookMap`, chapters from the model's count, verses from the chapter,
+  all in its own names and digits; a chapter's `fill` ends in `:` so choosing
+  it opens the verse list, and with only digits typed (`១`) the `book` the
+  awaited lookup card carries (`JHN`) fills them in. A name comes back with
+  the lookup's own `label` and the KJV name as `detail`; an English question
+  fills the KJV name (`Who was Moses`), a Khmer one the Khmer name. The rows
+  are DATA (no `tran`) and choosing one keeps the list open -- one step of a
+  completion, not the end of the box's work. Hidden from the model
+  (`MODEL_HIDDEN_TOOL_MAP`), so the 26-tool list and the 8 350 ratchet did not
+  move (host tools 64); a model answers with `owa_find_verse` /
+  `owa_lookup_record`. Seen live in Khmer: `យ៉ូ` -> Joshua/Job/Joel/Jonah/John,
+  John -> chapters 1..21, chapter 3 -> verses, and `ម៉ូសេ` -> Moses/Moseroth.
+
+- **A step WAITING for typed input asks the assistant when the exact match
+  fails** (2026-10-18; the user's picture of the Bible import's language step,
+  `ភាសាថៃ` answered _I do not know the language_: _it should try to ask
+  assistant_, _sometime user ask for list of suggestion language_, _llm should
+  help on this_, _this is for general issue_). Three waits, one rule: the
+  local exact match first, then the assistant, then the step goes on.
+  - **The Bible import's catalog search** (`runCheck`): a page of files with
+    `matched: 0` and a typed `find` carries `unknownLanguage`; the window
+    (`handleBibleImportStep`) asks the assistant with a ONE-LINE English
+    translation (`isGeneral`, no tools, reply language English — a Khmer
+    answer there is not the name), reads `Thai (th)` back
+    (`stepHelpHelpers.ts`), retries `check` with `find: "Thai"` and prepends
+    _I read “{from}” as **{to}**._ Seen live: `ភាសាថៃ` -> the Thai Bibles.
+  - **The downloaded draft's language step** (`runTypedLocale`): the same
+    marker, the ISO code read back (`th`), retried as `locale-typed`.
+  - **The lookup's "another passage"** (`awaiting` in `handleLookupStepRef`):
+    the failure asks for the passage as `Book chapter:verse` (`The passage is
+John 3:16` -> `John 3:16`), retries the record read and shows the card;
+    otherwise the failure keeps the await.
+    The verse finder's _which Bible?_ already falls through to the ordinary
+    assistant when the typed pick matches no button. A LIST question at the
+    language step is answered by the assistant with its words kept above the
+    question and its buttons. The parsers are pure and tested
+    (`stepHelpHelpers.test.ts`).

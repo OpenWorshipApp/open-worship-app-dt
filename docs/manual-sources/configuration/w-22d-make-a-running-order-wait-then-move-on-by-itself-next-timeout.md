@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22d — Make a running order wait, then move on by itself (Next: Timeout)
 
@@ -17,6 +17,8 @@ ends exactly when the service starts.
    row with its name on it, not the empty part of the list and not one of its lines — and
    choose **[en:tran:Add Action]** → **[en:tran:Next: Timeout]**. That adds a NEW line to
    the running order; it is never added by right-clicking a line that is already there.
+   It goes at the END of the running order: drag it up to just after the line it should
+   follow.
    It asks how many **[en:tran:Seconds]**, and the answer is part of the new
    line — `⏱ Next: Timeout (5)` — so a glance at the sheet tells you how long it waits. Got
    it wrong? Right-click that `Next: Timeout` line → **[en:tran:Change Timing]**; it opens
@@ -29,7 +31,7 @@ ends exactly when the service starts.
    the panel, leaves it counting, so a mis-aimed click cannot silently cost you the wait.
 3. **Or wait until a time on the clock.** A timeout does not have to be counted in
    seconds. The small box that asks for the seconds — it opens when you add the line
-   (step 1), and again from right-click → **[en:tran:Change Timing]** on that line — has a
+   (step 1, then drag the new line up to just after the line it should follow), and again from right-click → **[en:tran:Change Timing]** on that line — has a
    chooser at its left: switch it from **[en:tran:Seconds]** to **[en:tran:At Time]** and type the
    time you want the run to move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
    the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
@@ -54,9 +56,11 @@ ends exactly when the service starts.
    line you want it on → **[en:tran:Add CC Elements]** and pick it. Keep the
    `Next: Timeout` line itself in the list, though: a CC points at that line rather than copying it, so removing the line removes every follower of it as well (park it with **[en:tran:Disable]** if the run should not stop there — its followers still fire). Attached to
    a whole SONG it rides every slide of it, which is how a song advances by itself. 📸
-6. **Each line may wait for its own length.** This is for a `Next: Timeout` attached to a
-   line as a CC element (step 5): it shows as a CC line of its own, indented under the
-   line it is attached to. A CC line normally reads whatever the
+6. **Each line may wait for its own length.** First create a timeout if there is none:
+   right-click the presenting flow's own name → **[en:tran:Add Action]** →
+   **[en:tran:Next: Timeout]** and enter its seconds. Right-click each line that needs
+   a wait → **[en:tran:Add CC Elements]** and pick that timeout. It appears as an
+   indented CC row under each line it is attached to. A CC line normally reads whatever the
    `Next: Timeout` line is set to, so re-arming that one line re-arms every follower of it
    at once. When one line needs a different wait, click the small **stopwatch** at the
    right of **that CC line — the indented row under the line, not the line itself** (or

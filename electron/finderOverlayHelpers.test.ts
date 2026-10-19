@@ -23,6 +23,7 @@ import {
     getFindOverlayHostWebContents,
     getFindOverlayWebContents,
     openFindOverlay,
+    setFindOverlayMounted,
     startFindOverlayDragging,
     stopFindOverlayDragging,
 } from './finderOverlayHelpers';
@@ -41,6 +42,14 @@ function getLastView() {
     return electronMockState.webContentsViews.at(-1);
 }
 
+function fireViewEvent(view: any, eventName: string) {
+    const call = view.webContents.on.mock.calls.find(([name]: [string]) => {
+        return name === eventName;
+    });
+    expect(call).toBeDefined();
+    call[1]();
+}
+
 describe('finderOverlayHelpers', () => {
     beforeEach(() => {
         electronMockState.reset();
@@ -51,17 +60,49 @@ describe('finderOverlayHelpers', () => {
         vi.useRealTimers();
     });
 
-    test('only app pages host the find bar', () => {
-        expect(checkIsFindOverlayHost(createHostWindow() as any)).toBe(true);
-        expect(
-            checkIsFindOverlayHost(createHostWindow('setting.html') as any),
-        ).toBe(true);
-        expect(
-            checkIsFindOverlayHost(createHostWindow('screen.html') as any),
-        ).toBe(false);
-        expect(
-            checkIsFindOverlayHost(createHostWindow('bibleNote.html') as any),
-        ).toBe(false);
+    test.each([
+        'presenter.html',
+        'reader.html',
+        'appDocumentEditor.html',
+        'screen-mirror.html',
+        'experiment.html',
+        'setting.html',
+        'about.html',
+        'lwShare.html',
+        'markdownPreview.html',
+        'webEditor.html?file=x.html',
+        'lyricEditor.html',
+        'chatbot.html?uuid=chatbot',
+        'aichat.html?uuid=aichat_1',
+    ])('%s hosts the find bar', (page) => {
+        expect(checkIsFindOverlayHost(createHostWindow(page) as any)).toBe(
+            true,
+        );
+    });
+
+    test.each([
+        'screen.html?screenId=0',
+        'camera-broker.html',
+        'virtual-display.html',
+        'bibleNote.html',
+        'finder.html',
+    ])('%s gets no find bar', (page) => {
+        expect(checkIsFindOverlayHost(createHostWindow(page) as any)).toBe(
+            false,
+        );
+    });
+
+    test('a screen served by the mirror, a site and a blank page get none', () => {
+        for (const url of [
+            'http://127.0.0.1:39240/screen.html?screenId=0',
+            'https://accounts.example.com/oauth/authorize',
+            'about:blank',
+            '',
+        ]) {
+            const win = createMockBrowserWindow();
+            win.webContents.getURL.mockReturnValue(url);
+            expect(checkIsFindOverlayHost(win as any)).toBe(false);
+        }
     });
 
     test('pins a transparent view to the top-right of the host window', () => {
@@ -90,6 +131,7 @@ describe('finderOverlayHelpers', () => {
 
         openFindOverlay(hostWin as any);
         const view = getLastView();
+        setFindOverlayMounted(view.webContents, true);
         openFindOverlay(hostWin as any);
 
         expect(electronMockState.webContentsViews).toHaveLength(1);
@@ -97,6 +139,82 @@ describe('finderOverlayHelpers', () => {
             'main:app:focus-find',
         );
         closeFindOverlay(view.webContents);
+    });
+
+    // A loaded page that never mounted is a transparent, empty view: reusing it
+    // meant every later press focused something invisible and nothing opened.
+    test('a bar whose page never mounted is replaced on the next open', () => {
+        const hostWin = createHostWindow();
+        openFindOverlay(hostWin as any);
+        const deadView = getLastView();
+
+        openFindOverlay(hostWin as any);
+        const freshView = getLastView();
+
+        expect(freshView).not.toBe(deadView);
+        expect(deadView.webContents.send).not.toHaveBeenCalled();
+        expect(hostWin.contentView.removeChildView).toHaveBeenCalledWith(
+            deadView,
+        );
+        expect(deadView.webContents.close).toHaveBeenCalledTimes(1);
+        expect(hostWin.contentView.addChildView).toHaveBeenLastCalledWith(
+            freshView,
+        );
+        expect(freshView.webContents.loadURL).toHaveBeenCalledWith(
+            'https://localhost:3000/finder.html',
+        );
+        expect(getFindOverlayHostWebContents(deadView.webContents)).toBeNull();
+        expect(getFindOverlayWebContents(hostWin.webContents as any)).toBe(
+            freshView.webContents,
+        );
+        closeFindOverlay(freshView.webContents);
+    });
+
+    test('a bar still loading is left to finish instead of restarting', () => {
+        const hostWin = createHostWindow();
+        openFindOverlay(hostWin as any);
+        const view = getLastView();
+        view.webContents.isLoading.mockReturnValue(true);
+
+        openFindOverlay(hostWin as any);
+
+        expect(electronMockState.webContentsViews).toHaveLength(1);
+        expect(view.webContents.close).not.toHaveBeenCalled();
+        expect(view.webContents.send).not.toHaveBeenCalled();
+        closeFindOverlay(view.webContents);
+    });
+
+    test.each(['did-start-loading', 'render-process-gone'])(
+        '%s drops the mounted mark, so the next open replaces the bar',
+        (eventName) => {
+            const hostWin = createHostWindow();
+            openFindOverlay(hostWin as any);
+            const view = getLastView();
+            setFindOverlayMounted(view.webContents, true);
+
+            fireViewEvent(view, eventName);
+            openFindOverlay(hostWin as any);
+
+            expect(electronMockState.webContentsViews).toHaveLength(2);
+            expect(view.webContents.send).not.toHaveBeenCalled();
+            closeFindOverlay(getLastView().webContents);
+        },
+    );
+
+    test('the page unmounting its bar counts as not drawn', () => {
+        const hostWin = createHostWindow();
+        openFindOverlay(hostWin as any);
+        const view = getLastView();
+        setFindOverlayMounted(view.webContents, true);
+        setFindOverlayMounted(view.webContents, false);
+
+        openFindOverlay(hostWin as any);
+
+        expect(electronMockState.webContentsViews).toHaveLength(2);
+        expect(() => {
+            setFindOverlayMounted({ id: 997 } as any, true);
+        }).not.toThrow();
+        closeFindOverlay(getLastView().webContents);
     });
 
     test('maps the bar to the page it searches, both ways', () => {

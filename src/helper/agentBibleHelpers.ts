@@ -91,8 +91,10 @@ export type AgentBibleResultType =
           // The first words of the passage, so the answer can say what went
           // up in a way the user can check against the wall.
           text: string;
-          screens: AgentBibleScreenType[];
-          isAnyShowing: boolean;
+          // The screens, as the Presenter knows them: absent from a
+          // `check` made off that page.
+          screens?: AgentBibleScreenType[];
+          isAnyShowing?: boolean;
           // A popup the present left open for the operator -- see
           // `agentPendingQuestionHelpers`.
           pendingQuestion?: AgentPendingQuestionType;
@@ -264,7 +266,12 @@ export async function handleAgentBibleRequest(
     if (!(AGENT_BIBLE_ACTIONS as readonly string[]).includes(action)) {
         return toReason(`Unknown action "${action}". Use present or check.`);
     }
-    if (!appProvider.isPagePresenter) {
+    // "check" only reads the passage, so it is answered from any page
+    // (2026-10-17, EC-294: asked from the Reader, every check was refused and
+    // the models quoted the verse from memory instead); putting it up is the
+    // Presenter's.
+    const isOnPresenter = appProvider.isPagePresenter;
+    if (!isOnPresenter && action !== 'check') {
         // Written for a person as much as for a model: the `/verse` command
         // and the offline bot print this sentence, so no tool name in it.
         return toReason(
@@ -328,11 +335,13 @@ export async function handleAgentBibleRequest(
             reference: title,
             version: bibleItem.bibleKey,
             text,
-            screens: before,
-            isAnyShowing,
-            note:
-                'Nothing was put on a screen: this only read the passage. ' +
-                'Call again with action "present" to put it up.',
+            // What the screens hold is known on the Presenter only.
+            ...(isOnPresenter ? { screens: before, isAnyShowing } : {}),
+            note: isOnPresenter
+                ? 'Nothing was put on a screen: this only read the passage. ' +
+                  'Call again with action "present" to put it up.'
+                : 'Nothing was put on a screen: this only read the passage. ' +
+                  'It is put up from the Presenter page.',
         };
     }
     if (targetScreens.length === 0) {

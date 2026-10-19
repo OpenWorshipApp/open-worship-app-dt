@@ -1,0 +1,174 @@
+[
+    {
+        "id": "kjv-love-enemies",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": love your enemies and pray for them",
+        "expect": [
+            "Matthew 5:44",
+            "Luke 6:27",
+            "Luke 6:28"
+        ]
+    },
+    {
+        "id": "kjv-lover-enemy",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": lover your enemy",
+        "expect": [
+            "Matthew 5:44",
+            "Luke 6:27",
+            "Luke 6:35"
+        ]
+    },
+    {
+        "id": "kjv-worry-tomorrow",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": a verse about not worrying about tomorrow",
+        "expect": [
+            "Matthew 6:34"
+        ]
+    },
+    {
+        "id": "kjv-god-so-loved",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": God loved the world so much that he gave his only son",
+        "expect": [
+            "John 3:16"
+        ]
+    },
+    {
+        "id": "kjv-strength-christ",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": I can do everything through Christ who gives me strength",
+        "expect": [
+            "Philippians 4:13"
+        ]
+    },
+    {
+        "id": "kjv-be-still",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": be still and know I am God",
+        "expect": [
+            "Psalm 46:10"
+        ]
+    },
+    {
+        "id": "kjv-all-things-good",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": all things work together for good for those who love God",
+        "expect": [
+            "Romans 8:28"
+        ]
+    },
+    {
+        "id": "kjv-narrow-gate",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": the one about the narrow gate and the wide road",
+        "expect": [
+            "Matthew 7:13",
+            "Matthew 7:14",
+            "Luke 13:24"
+        ]
+    },
+    {
+        "id": "kjv-peter-three-times",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": Jesus asked Peter three times if he loved him",
+        "expect": [
+            "John 21:17",
+            "John 21:15",
+            "John 21:16"
+        ]
+    },
+    {
+        "id": "kjv-shepherd",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": the lord is my shepherd",
+        "expect": [
+            "Psalm 23:1"
+        ]
+    },
+    {
+        "id": "km-shepherd",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ព្រះយេហូវ៉ាជាអ្នកគង្វាលខ្ញុំ",
+        "expect": [
+            "Psalm 23:1"
+        ]
+    },
+    {
+        "id": "km-god-loved",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ព្រះស្រឡាញ់មនុស្សលោកណាស់",
+        "expect": [
+            "John 3:16"
+        ]
+    },
+    {
+        "id": "km-peter",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ព្រះយេស៊ូសួរពេត្រុសច្រើនដង",
+        "expect": [
+            "John 21:17",
+            "John 21:15",
+            "John 21:16"
+        ]
+    },
+    {
+        "id": "km-worry",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": កុំខ្វល់ខ្វាយពីថ្ងៃស្អែក",
+        "expect": [
+            "Matthew 6:34"
+        ]
+    },
+    {
+        "id": "en-in-km-be-still",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": be still and know that I am God",
+        "expect": [
+            "Psalm 46:10"
+        ]
+    },
+    {
+        "id": "typed-lover-enemy",
+        "focus": "reader",
+        "text": "what bible verse talk about lover your enemy?",
+        "expect": [
+            "Matthew 5:44",
+            "Luke 6:27",
+            "Luke 6:35"
+        ]
+    },
+    {
+        "id": "typed-worry",
+        "focus": "reader",
+        "text": "which verse says do not worry about tomorrow",
+        "expect": [
+            "Matthew 6:34"
+        ]
+    },
+    {
+        "id": "typed-shepherd",
+        "focus": "reader",
+        "text": "find me a verse about the lord being my shepherd",
+        "expect": [
+            "Psalm 23:1"
+        ]
+    },
+    {
+        "id": "typed-seventy-times",
+        "focus": "reader",
+        "text": "what does the bible say about forgiving seventy times seven",
+        "expect": [
+            "Matthew 18:22"
+        ]
+    },
+    {
+        "id": "typed-lamp",
+        "focus": "reader",
+        "text": "is there a verse about the word being a lamp to my feet",
+        "expect": [
+            "Psalm 119:105"
+        ]
+    }
+]

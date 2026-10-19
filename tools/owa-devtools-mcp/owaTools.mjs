@@ -38,11 +38,15 @@ import {
   genPresenterStateExpression,
 } from './agentPresenter.mjs';
 import {
+  GUIDE_CARD_HINT_TEMPLATE_LIST,
+  GUIDE_CARD_LABEL_KEY_MAP,
+  GUIDE_CARD_TITLE_KEY,
   detectRecipeWindow,
   dropStepsAlreadyDone,
   genGuideExpression,
   selectGuideStepIndexForTopic,
   stripInternalIds,
+  lineUpTranslatedSteps,
   toGuideSteps,
   toKeyCode,
   toKeystroke,
@@ -65,6 +69,7 @@ import {
   genPickerReadExpression,
   genPickerStartExpression,
   genPickerStopExpression,
+  PICKER_HINT_TEMPLATE,
 } from './picker.mjs';
 import {
   listQuestionPageIds,
@@ -106,7 +111,12 @@ import {
   genReadWebPageExpression,
   toReadableCharCount,
 } from './website.mjs';
-import { listTranLanguages, tranText } from './tran.mjs';
+import {
+  listTranLanguages,
+  loadTranBundle,
+  resolveTranTemplates,
+  tranText,
+} from './tran.mjs';
 import { genListScreensExpression } from './agentScreens.mjs';
 import { registerBibleXmlTool } from './agentBibleXml.mjs';
 import {
@@ -138,6 +148,18 @@ const WINDOW_LIST_TEXT =
 // what leaving it out means.
 const PAGE_TEXT =
   'Part of the window URL, e.g. "reader.html"; default the main window.';
+
+// `owa_find_verse`: the first search of a Bible builds Bible Find's index of
+// it, every verse read once -- seconds on a fast machine, longer on the ones
+// this app is for. Every later search is a few table scans.
+const BIBLE_FIND_TIMEOUT = 120 * 1000;
+
+// `owa_lookup_record`: a person or place not held by an open panel loads the
+// names-and-places dataset (~34MB of JSON) for the read -- seconds on the
+// machines this app is for -- and then quotes a few verses.
+const LOOKUP_RECORD_TIMEOUT = 60 * 1000;
+// A Resources PDF is drawn page by page in a child process of main.
+const RESOURCE_FILE_TIMEOUT = 60 * 1000;
 
 // What language the app's own interface is in RIGHT NOW.
 //
@@ -193,15 +215,143 @@ function withTranslations(labels, langCode) {
   if (!langCode || langCode === 'en') {
     return labels;
   }
+  const bundle = loadTranBundle();
   const out = [];
   for (const label of labels) {
     out.push(label);
-    const translated = tranText(label, langCode);
+    const translated = tranLabel(label, langCode, bundle);
     if (translated !== label) {
       out.push(translated);
     }
   }
   return out;
+}
+
+// "Panel > Control" is two labels, and each is translated on its own: the
+// whole string is no dictionary key, so a scope written in English was handed
+// to a Khmer window untranslated in both halves -- and a scope now matches the
+// name the window SHOWS for a panel (its header, in that language) as well as
+// its stamped English one (`scopePathOf`, 2026-10-16, T2).
+const SCOPE_SEPARATOR_PATTERN = /\s*(?:>|»)\s*/;
+function tranLabel(label, langCode, bundle) {
+  const whole = tranText(label, langCode, bundle);
+  if (whole !== label || typeof label !== 'string') {
+    return whole;
+  }
+  const parts = label.split(SCOPE_SEPARATOR_PATTERN);
+  if (parts.length < 2) {
+    return label;
+  }
+  const translatedParts = parts.map((part) => {
+    return tranText(part, langCode, bundle);
+  });
+  const isChanged = translatedParts.some((part, index) => {
+    return part !== parts[index];
+  });
+  return isChanged ? translatedParts.join(' > ') : label;
+}
+
+// The walkthrough card's own words in the window's language: Next, Back,
+// Done... and its default title. Only the words the dictionary has -- a
+// missing one stays English, never blank.
+function genGuideCardWords(langCode) {
+  if (!langCode || langCode === 'en') {
+    return { labels: {}, words: {}, title: GUIDE_CARD_TITLE_KEY };
+  }
+  const bundle = loadTranBundle();
+  const labels = {};
+  for (const [slot, key] of Object.entries(GUIDE_CARD_LABEL_KEY_MAP)) {
+    const word = tranText(key, langCode, bundle);
+    if (word !== key) {
+      labels[slot] = word;
+    }
+  }
+  // Its sentences too, the ones the dictionary has (`say` in the runtime).
+  const words = {};
+  for (const template of GUIDE_CARD_HINT_TEMPLATE_LIST) {
+    const translated = tranText(template, langCode, bundle);
+    if (translated !== template) {
+      words[template] = translated;
+    }
+  }
+  return {
+    labels,
+    words,
+    title: tranText(GUIDE_CARD_TITLE_KEY, langCode, bundle),
+  };
+}
+
+// A step's controls, the window's words FIRST: in a Khmer window the English
+// label rings nothing, and the matcher takes the first candidate on screen.
+// A scoped label also keeps its panel's English name beside the translated
+// control, because a panel answers to its `data-widget-name` in every
+// language. The English ones stay last.
+function localizeFinds(finds, langCode, bundle) {
+  if (!langCode || langCode === 'en') {
+    return finds;
+  }
+  const out = [];
+  for (const find of finds) {
+    const local = tranLabel(find, langCode, bundle);
+    if (local !== find) {
+      out.push(local);
+      const parts = String(find).split(SCOPE_SEPARATOR_PATTERN);
+      if (parts.length === 2) {
+        out.push(`${parts[0]} > ${tranText(parts[1], langCode, bundle)}`);
+      }
+    }
+    out.push(find);
+  }
+  return out.filter((one, at, all) => {
+    return all.indexOf(one) === at;
+  });
+}
+
+// Each step of a recipe card, as the window will read it: the same page read
+// with its `[en:tran:…]` templates intact, so a control's name is the one ON
+// the button. The steps are built from the English page (every rule that
+// picks, drops and orders them reads the recipe's own words) and the two are
+// the same steps in the same order, read off the same lines; when they are
+// not, the English text stands.
+// The page's own translation is read first when it is current (`W-11@km`,
+// `docs/manual-i18n/`): the whole step in the window's language, not the
+// English step with its button names translated -- which is what a Khmer
+// window had shown, an English sentence round a Khmer word (2026-10-17).
+function readLocalStepPage(manualId, langCode) {
+  const translated = readHelpPage(`${manualId}@${langCode}`, null, 'whole', {
+    keepTemplates: true,
+  });
+  return translated?.lang === langCode ? translated : null;
+}
+
+function withLocalStepText(steps, manualId, langCode) {
+  if (!langCode || langCode === 'en') {
+    return steps;
+  }
+  const englishPage = readHelpPage(manualId, null, 'whole', {
+    keepTemplates: true,
+  });
+  const localPage = readLocalStepPage(manualId, langCode);
+  // The translation's own words when it lines up with the English steps
+  // (`lineUpTranslatedSteps`), else the English page's, button names to
+  // be put into the language below.
+  let rawSteps =
+    localPage === null || englishPage === null
+      ? null
+      : lineUpTranslatedSteps(englishPage.body, localPage.body, steps.length);
+  if (rawSteps === null) {
+    rawSteps = englishPage === null ? [] : toGuideSteps(englishPage.body);
+  }
+  if (rawSteps.length !== steps.length) {
+    return steps;
+  }
+  const bundle = loadTranBundle();
+  return steps.map((step, index) => {
+    return {
+      ...step,
+      localText: resolveTranTemplates(rawSteps[index].text, langCode, bundle),
+    };
+  });
 }
 
 // Compact, never indented. A result is not read once: it stays in front of
@@ -281,6 +431,33 @@ function toImageResult(dataUrl) {
 }
 
 /**
+ * `owa_resource_file`'s answer: its words as text, and the pictures it
+ * carries -- a PDF's pages -- as image blocks after them, in order, where
+ * a model that sees pictures sees them. Never a megabyte of base64 inside
+ * the text.
+ */
+function toResourceFileResult(value) {
+  const formatted = formatAgentDataResult(value);
+  if (formatted.isError) {
+    return toErrorResult(new Error(formatted.text));
+  }
+  const { images, ...rest } = value;
+  const pictures = (Array.isArray(images) ? images : [])
+    .map((dataUrl) => {
+      return /^data:(image\/[a-z+]+);base64,(.+)$/is.exec(String(dataUrl));
+    })
+    .filter((matched) => {
+      return matched !== null;
+    })
+    .map((matched) => {
+      return { type: 'image', mimeType: matched[1], data: matched[2] };
+    });
+  return {
+    content: [{ type: 'text', text: JSON.stringify(rest) }, ...pictures],
+  };
+}
+
+/**
  * The app's own capture IPC, driven from the page.
  *
  * `capturePage` lives in the main process and this package must never import
@@ -342,7 +519,13 @@ function genCaptureExpression(screenId, isOwnWindow) {
  */
 async function runElementPicker(timeoutSeconds, page) {
   const deadline = Date.now() + (timeoutSeconds ?? 45) * 1000;
-  await evaluateInApp(genPickerStartExpression(), { match: page });
+  // Its line in the window's own language, like the walkthrough card's.
+  const langCode = await readAppLanguage(page);
+  const hintText =
+    langCode === 'en'
+      ? PICKER_HINT_TEMPLATE
+      : tranText(PICKER_HINT_TEMPLATE, langCode, loadTranBundle());
+  await evaluateInApp(genPickerStartExpression(hintText), { match: page });
   try {
     for (;;) {
       const { value } = await evaluateInApp(genPickerReadExpression(), {
@@ -1491,6 +1674,224 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     },
   );
 
+  // A verse somebody half-remembers, found in an installed Bible
+  // (`src/helper/agentBibleFindHelpers.ts`). The chatbot offers it to its
+  // model only inside a verse-finding conversation, under a prompt of its
+  // own (`modelTools.mjs`, `MODEL_ON_ASK_TOOL_MAP`), so no other question
+  // pays for the schema. The first search of a Bible builds its index --
+  // Bible Find's own first wait -- hence the long timeout.
+  server.registerTool(
+    'owa_find_verse',
+    {
+      description:
+        'Find a Bible verse the user half-remembers, in a Bible installed ' +
+        'here. `words`: what they remember, any order -- verses holding ' +
+        'the most of them come first, rarer words breaking ties; ' +
+        '`notInBible` names words this Bible never uses. For a verse ' +
+        'remembered by what it MEANS, search the words such a verse ' +
+        'would use, then other forms and synonyms. `refs`: verses you ' +
+        'think fit ("Matthew 6:34; Psalm 23"), quoted from this Bible -- ' +
+        'never quote a verse it did not return. `open`: a result’s ' +
+        '`key`, shown in the Bible Lookup (never on a screen), only when ' +
+        'asked. No arguments: the installed Bibles.',
+      inputSchema: {
+        bible: z
+          .string()
+          .optional()
+          .describe("An installed Bible's short name; default the lookup's"),
+        words: z.string().optional(),
+        refs: z.string().optional(),
+        book: z
+          .string()
+          .optional()
+          .describe('Search only these books: "Psalms", "Matthew, Mark"'),
+        open: z
+          .string()
+          .optional()
+          .describe('A verse key from a result, e.g. "JHN 3:16"'),
+        page: z.string().optional(),
+      },
+    },
+    async ({ bible, words, refs, book, open, page }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'bible-find',
+            { bible, words, refs, book, open },
+            BIBLE_FIND_TIMEOUT,
+          ),
+          { match: page, timeout: BIBLE_FIND_TIMEOUT + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // What a Lookup Detail panel shows -- a person or a place of the names
+  // lookup, or a Bible passage -- read whole (`src/helper/agentLookupHelpers.ts`,
+  // 2026-10-18). The chatbot reads the panel's own record with it when the
+  // panel's 🤖 opens a conversation, and offers it to its model inside that
+  // conversation only (`MODEL_ON_ASK_TOOL_MAP`). A record not held by an
+  // open panel loads the dataset for the read, hence the long timeout.
+  server.registerTool(
+    'owa_lookup_record',
+    {
+      description:
+        'Read a Bible person or place from the names lookup (drawn from ' +
+        'the KJV), or a Bible passage. `kind` name|location by `id` (from ' +
+        "a result's lists) or `name`: who or what it is, family, places, " +
+        'links, every verse key and the first verses quoted. `kind` verse ' +
+        'by `ref` ("GEN 2:19-21; John 3:16"): the passage in `bible` ' +
+        "(default the lookup's); `near` the chapter (or verse) before or " +
+        'after it instead; `names` also the people and places in it. ' +
+        'Reads only.',
+      inputSchema: {
+        kind: z.enum(['name', 'location', 'verse']),
+        id: z.string().optional(),
+        name: z.string().optional(),
+        ref: z.string().optional(),
+        bible: z.string().optional(),
+        lang: z
+          .string()
+          .optional()
+          .describe("The lookup's language code; default the one shown"),
+        near: z.enum(['previous', 'next']).optional(),
+        names: z.boolean().optional(),
+        page: z.string().optional(),
+      },
+    },
+    async ({ kind, id, name, ref, bible, lang, near, names, page }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'lookup',
+            { kind, id, name, ref, bible, lang, near, names },
+            LOOKUP_RECORD_TIMEOUT,
+          ),
+          { match: page, timeout: LOOKUP_RECORD_TIMEOUT + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The Resources panel's files -- listed by book, chapter or words, and
+  // read: a PDF as pictures of its pages, a note as its words
+  // (`src/helper/agentResourcesHelpers.ts`, 2026-10-17). Reads only,
+  // inside the folders the panel lists. Offered to the chatbot's model only
+  // in a conversation about a Resources file (`MODEL_ON_ASK_TOOL_MAP`).
+  server.registerTool(
+    'owa_resource_file',
+    {
+      description:
+        "The user's Resources files: study PDFs, notes, links and " +
+        'pictures named by book and chapter (LUK.6.pdf is Luke 6, LUK.0 ' +
+        'its introduction). `list` by `book` (+ `chapter`) or `search`, or ' +
+        'by `ref` (a book and chapter together: "John 3", "យ៉ូហាន 3") -- a ' +
+        "book may be named in any installed Bible's own language, its " +
+        'English name or its code; `read` a `file` as listed -- a PDF ' +
+        'returns every remaining page as a complete picture, starting at ' +
+        '`page` (default 1). An embedded text layer is excluded because legacy ' +
+        'fonts can decode to unrelated characters. Omit `pages` for the whole PDF; ' +
+        'set it only to deliberately narrow a read. Use `detail` high for dense ' +
+        'or unclear print. ' +
+        'Reads only.',
+      inputSchema: {
+        action: z.enum(['list', 'read']),
+        book: z.string().optional(),
+        chapter: z.number().int().optional(),
+        ref: z
+          .string()
+          .optional()
+          .describe('A book and chapter together, e.g. "John 3"'),
+        search: z.string().optional(),
+        file: z.string().optional(),
+        page: z.number().int().optional(),
+        pages: z.number().int().min(1).max(8).optional(),
+        detail: z.enum(['normal', 'high']).optional(),
+      },
+    },
+    async ({
+      action,
+      book,
+      chapter,
+      ref,
+      search,
+      file,
+      page,
+      pages,
+      detail,
+    }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'resources',
+            { action, book, chapter, ref, search, file, page, pages, detail },
+            RESOURCE_FILE_TIMEOUT,
+          ),
+          { timeout: RESOURCE_FILE_TIMEOUT + 5000 },
+        );
+        return toResourceFileResult(value);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The chat box's input aid, asked by the WINDOW as a person types -- never
+  // by the model (`MODEL_HIDDEN_TOOL_MAP`). `reference` completes the books,
+  // chapters and verses of the Bible being read; `name` suggests the people
+  // and places a who/where question is naming. The names dataset is 34MB, so
+  // a NAME loads only when the person is clearly naming one (`allowLoad`) or
+  // a lookup panel already holds it (`getHeldLookupData`).
+  server.registerTool(
+    'owa_bible_suggest',
+    {
+      description:
+        "The chat box's input aid, read by the WINDOW as a person types -- " +
+        'not by you. `kind` "reference" completes a book, chapter and verse ' +
+        'in the Bible being read (`prefix`, and `book` when only digits were ' +
+        'typed); "name" suggests people and places of the names lookup. ' +
+        'Reads only; answer with owa_find_verse or owa_lookup_record.',
+      inputSchema: {
+        kind: z.enum(['reference', 'name']),
+        prefix: z.string(),
+        book: z.string().optional(),
+        allowLoad: z.boolean().optional(),
+        limit: z.number().int().optional(),
+        page: z.string().optional(),
+      },
+    },
+    async ({ kind, prefix, book, allowLoad, limit, page }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'bible-suggest',
+            { kind, prefix, book, allowLoad, limit },
+            LOOKUP_RECORD_TIMEOUT,
+          ),
+          { match: page, timeout: LOOKUP_RECORD_TIMEOUT + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
   // A note open in its own window saves its WHOLE file back from the copy it
   // loaded -- every note save rewrites the file, and the lock that orders
   // writes lives in one window -- so a change made underneath it is put back
@@ -1880,7 +2281,10 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           // is a different word, so the ordinary case pays nothing.
           if ((value?.matches ?? []).length === 0) {
             const langCode = await readAppLanguage(page);
-            const translated = tranText(text, langCode);
+            const translated =
+              !langCode || langCode === 'en'
+                ? text
+                : tranLabel(text, langCode, loadTranBundle());
             if (translated !== text) {
               const retry = await evaluateInApp(
                 genFindUiExpression(translated, highlight === true),
@@ -2492,16 +2896,31 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           // Every step of it: the card is built from the page, and none
           // of it is sent to a model. Read in parts, a recipe longer than
           // one read lost its last steps here too.
-          const manualPage = readHelpPage(
-            manualId,
-            await readAppLanguage(page),
-            'whole',
-          );
+          //
+          // Read in ENGLISH, the language every rule below reads a recipe
+          // in (the window a step goes to, the step a topic names, the
+          // known question's own control). Read in the window's language,
+          // a Khmer page lost its button names to `toEnglishOnly` and the
+          // capital-letter test before a ring was ever drawn; the window's
+          // words go in at the very end, in `prepareSteps`.
+          const manualPage = readHelpPage(manualId, 'en', 'whole');
           if (manualPage === null) {
             throw new Error(`No knowledge document "${manualId}"`);
           }
-          guideSteps = toGuideSteps(manualPage.body);
-          guideTitle = guideTitle ?? manualPage.title;
+          const stepLang = await readAppLanguage(page);
+          guideSteps = withLocalStepText(
+            toGuideSteps(manualPage.body),
+            manualId,
+            stepLang,
+          );
+          // Its title in the window's language too, from the page's own
+          // translation when that is current.
+          guideTitle =
+            guideTitle ??
+            (stepLang === 'en'
+              ? null
+              : readLocalStepPage(manualId, stepLang)?.title) ??
+            manualPage.title;
           // A recipe about the Settings window cannot be walked in
           // the Presenter: every control its steps name is in the
           // other window, so the ring falls through the candidate
@@ -2600,11 +3019,19 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         // writes an id into a step it invented as readily as a
         // recipe cites a sibling recipe, and neither belongs in
         // front of the volunteer reading the card.
+        //
+        // ...and the one place a step is put into the window's language: a
+        // recipe step's text with its controls named as the buttons are
+        // (`localText`), and every step's controls tried in the window's
+        // words first. A built-in demo carries its own translations.
+        const cardLang = await readAppLanguage(wantedPage);
+        const findLang = builtInDemo === null ? cardLang : 'en';
+        const cardBundle = findLang === 'en' ? null : loadTranBundle();
         const prepareSteps = (list) => {
-          return list.map((step) => {
+          return list.map(({ localText, ...step }) => {
             return {
               ...step,
-              text: stripInternalIds(step.text),
+              text: stripInternalIds(localText ?? step.text),
               // The same id, harvested as a control to RING. A
               // recipe cites a sibling in bold ("see **W-31**") and
               // every bold becomes a candidate, so three steps
@@ -2614,17 +3041,28 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
               // line if anything came near it.
               ...(step.finds === undefined
                 ? {}
-                : { finds: step.finds.filter(checkIsNotRecipeId) }),
+                : {
+                    finds: localizeFinds(
+                      step.finds.filter(checkIsNotRecipeId),
+                      findLang,
+                      cardBundle,
+                    ),
+                  }),
             };
           });
         };
+        const cardWords = genGuideCardWords(cardLang);
         guideTitle = guideTitle === null ? null : stripInternalIds(guideTitle);
         const startCard = async (list) => {
           const { value } = await evaluateInApp(
             genGuideExpression(
               `start(${JSON.stringify({
-                title: guideTitle ?? 'Step by step',
+                title: guideTitle ?? cardWords.title,
                 steps: prepareSteps(list),
+                // Next, Back, Done and its sentences, in the window's
+                // language.
+                labels: cardWords.labels,
+                words: cardWords.words,
                 mode: wantedMode ?? 'show',
                 // What its Do it is judged by -- the card's own
                 // press as much as a tool's "do".

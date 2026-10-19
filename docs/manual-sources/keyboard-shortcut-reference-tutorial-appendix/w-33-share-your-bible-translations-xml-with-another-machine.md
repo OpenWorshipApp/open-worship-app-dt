@@ -5,11 +5,11 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-34, ST-35, ST-36, ST-37, ST-38, ST-39, ST-40, LT-01]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-33 — Share your Bible translations (XML) with another machine
 
-W-24 shares a **bible list** — the verses you lined up. This shares the **translations
+Sharing a **bible list** moves only the verses you lined up. This shares the **translations
 themselves**: the XML bibles you added or edited under **Settings → [en:tran:Bible]**, which
 until now could only be moved by digging the files out by hand.
 
@@ -65,5 +65,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-34` · `ST-35` · `ST-36` · `ST-37` · `ST-38` · `ST-39` · `ST-40` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

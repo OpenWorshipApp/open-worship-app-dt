@@ -78,7 +78,9 @@ have no research-only mode, so take their baseline and their areas and keep
 this skill's rule: report, then stop. The agent docs — CLAUDE.md, rules,
 memory, skills and the Codex mirror — are `owa-enhance-agent-docs` (its
 `audit` argument is read-only); the `docs` area here keeps the user manual and
-knowledge freshness. A QA walk is `/owa-robot-test`; a diff
+knowledge freshness. The in-app tips (Help → All tips, their coverage of a
+window, a tip that fails) are `owa-enhance-tips` (`TP-xx`; its `measure`
+argument writes nothing). A QA walk is `/owa-robot-test`; a diff
 review is `review-stagged-change` / `review-unstagged-change`.
 
 ## The research contract

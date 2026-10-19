@@ -17,12 +17,23 @@
  * Nothing is installed until **Install it** is pressed, and that answer has
  * an **Undo**.
  *
+ * And nothing is ASKED about a downloaded Bible until the person has read
+ * where it came from and agreed (`genSourceNoticeStep`) -- the user's ask,
+ * 2026-10-16, over the list of seven Khmer Bibles: say it was found on the
+ * internet and where, that Open Worship did not provide it, and that its
+ * publisher's rights are theirs to answer for; go on only when they agree.
+ *
  * The work is `owa_bible_xml`'s, the same tool a model calls -- so a model
  * that started an import itself hands over to these same buttons
  * (`genBibleImportCheckAnswer`), and the two can never disagree about what a
- * step does. English only, like the rest of this window.
+ * step does. Its sentences are written in the language the window is shown
+ * in; its button labels stay English, because a typed reply is matched to
+ * them, and are translated where they are drawn (`tranBibleImportLabel`).
  */
-import { getBibleNumberChoices } from '../../tools/owa-devtools-mcp/bibleBookNames.mjs';
+import {
+    getBibleNumberChoices,
+    normalizeBibleLocale,
+} from '../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 import {
     BIBLE_XML_CATALOG_URL,
     checkIsBibleLanguageWord,
@@ -30,8 +41,17 @@ import {
 } from '../../tools/owa-devtools-mcp/bibleXmlAdvice.mjs';
 import { readBibleImportAskName } from '../helper/ai/bibleImportAskHelpers';
 import { appError } from '../helper/loggerHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import { checkIsOpenableLink, toOpenableLinks } from './chatLinkHelpers';
 import type { BotActionType, BotAnswerType } from './helpBotHelpers';
 import { callTool, parseToolJson } from './mcpClient';
+import { checkIsLanguageWord, toAsciiDigits } from './chatLangHelpers';
+import {
+    readKnownBibleLanguage,
+    toWaitingInputData,
+    type WaitingInputContextType,
+    type WaitingInputReplyType,
+} from './waitingInputHelpers';
 
 // A pseudo tool, caught in the window's `handleActing`: no tool host ever
 // registers it, so no model can press these buttons for the person.
@@ -55,12 +75,15 @@ type LocaleChoiceType = { locale: string; name: string; why?: string };
 
 export type BibleImportStepType =
     | 'check'
+    | 'agree'
+    | 'source'
     | 'key'
     | 'locale'
     | 'locale-typed'
     | 'digits'
     | 'names'
     | 'more-names'
+    | 'names-url'
     | 'confirm'
     | 'import'
     | 'cancel'
@@ -79,6 +102,11 @@ export type BibleImportStateType = {
     pageUrl?: string;
     // ...and the words that page was searched with, which a typed word adds to.
     pageFind?: string;
+    // The web page a file was picked from: where the notice before step 1
+    // says it was found, and what its **Open the website** opens.
+    sourcePage?: string;
+    // The short name a Bible with the same title is installed under.
+    installedAs?: string;
     find?: string;
     typed?: string;
     draftId?: string;
@@ -99,6 +127,7 @@ export type BibleImportStateType = {
     nameLists?: NameListType[];
     fileList?: NameListType;
     bookNames?: string;
+    namesUrl?: string;
     undoId?: string;
     note?: string;
 };
@@ -106,6 +135,17 @@ export type BibleImportStateType = {
 // A language rarely has more editions than this; a catalog search answers
 // every one of them, not a sample.
 const MAX_FILE_BUTTONS = 12;
+
+// The press that says they read where a downloaded Bible came from.
+const AGREE_LABEL = 'I agree';
+
+// What a model is told when it tries to install a draft itself: the person's
+// press is the agreement, so no model may stand in for it.
+export const BIBLE_IMPORT_MODEL_REFUSAL =
+    'A Bible is installed by the person, not by you: the buttons under your ' +
+    'answer show where it came from for them to agree to, then ask its ' +
+    'name, language, digits and book names. Say what it is and let them ' +
+    'press.';
 
 function toAction(label: string, state: BibleImportStateType): BotActionType {
     return { label, toolName: BIBLE_IMPORT_STEP_TOOL_NAME, args: state };
@@ -219,21 +259,37 @@ function readPastedLink(typed: string) {
  */
 function findTypedPress(actions: BotActionType[], typed: string) {
     const said = typed
+        .normalize('NFKC')
+        .replace(/\p{Cf}/gu, '')
         .toLowerCase()
-        .replace(/[.!]+$/, '')
+        .replace(/[.!។៕]+$/, '')
         .trim();
     const labelOf = (action: BotActionType) => {
         return toBibleImportEcho(action.label).toLowerCase();
     };
+    // ...or as the button reads on their screen, in the app's language.
+    const shownLabelOf = (action: BotActionType) => {
+        return tranBibleImportLabel(
+            toBibleImportEcho(action.label),
+        ).toLowerCase();
+    };
     const byLabel = actions.find((action) => {
-        return labelOf(action) === said;
+        return labelOf(action) === said || shownLabelOf(action) === said;
     });
     if (byLabel !== undefined) {
         return byLabel;
     }
-    const number = /^(?:number|no\.?|list|#)?\s*(\d{1,2})$/.exec(said)?.[1];
+    const number = /^(?:number|no\.?|list|#)?\s*(\d{1,2})\??$/.exec(
+        toAsciiDigits(said),
+    )?.[1];
     if (number !== undefined) {
         const wanted = Number(number);
+        const digitChoices = actions.filter(
+            (action) =>
+                action.args?.step === 'names' &&
+                ['local', 'ascii'].includes(action.args?.digits),
+        );
+        if (digitChoices.length > 0) return digitChoices[wanted - 1] ?? null;
         return (
             actions.find((action) => {
                 const label = labelOf(action);
@@ -244,17 +300,26 @@ function findTypedPress(actions: BotActionType[], typed: string) {
             }) ?? null
         );
     }
-    if (/^(?:yes|yeah|yep|ok|okay|sure|go ahead|do it|install)$/.test(said)) {
+    if (
+        /^(?:yes|yeah|yep|ok|okay|sure|go ahead|do it|install|agree|i do)$/.test(
+            said,
+        ) ||
+        checkIsLanguageWord(said, 'yes')
+    ) {
         return (
             actions.find((action) => {
                 return (
                     /\(suggested\)$/.test(action.label) ||
-                    action.label === 'Install it'
+                    action.label === 'Install it' ||
+                    action.label === AGREE_LABEL
                 );
             }) ?? null
         );
     }
-    if (/^(?:no|stop|cancel|never mind|nevermind)$/.test(said)) {
+    if (
+        /^(?:no|stop|cancel|never mind|nevermind)$/.test(said) ||
+        checkIsLanguageWord(said, 'no')
+    ) {
         return (
             actions.find((action) => {
                 return action.label === 'Cancel';
@@ -283,11 +348,29 @@ export function readBibleImportTypedReply(
     const waiting = importActions.find((action) => {
         return typeof action.args?.awaits === 'string';
     });
+    const pressed = findTypedPress(importActions, typed);
+    if (pressed !== null) {
+        return pressed.args as BibleImportStateType;
+    }
+    const languageState =
+        waiting?.args?.awaits === 'locale'
+            ? waiting.args
+            : getLanguageChangeState(importActions);
+    const namedLanguage = languageState ? readKnownBibleLanguage(typed) : null;
+    if (namedLanguage !== null) {
+        return carry(languageState as BibleImportStateType, {
+            step: 'locale-typed',
+            typed: namedLanguage,
+        });
+    }
     // An address pasted on its own under "which Bible?" or "paste the right
     // link here" is the Bible they mean. Anywhere else a bare link is
     // nobody's answer -- it may as well be a song page.
     const link = readPastedLink(typed);
     if (link !== null) {
+        const namesState = getNameListState(importActions);
+        if (namesState)
+            return carry(namesState, { step: 'names-url', namesUrl: link });
         return ['find', 'link'].includes(waiting?.args?.awaits)
             ? {
                   step: 'check',
@@ -300,15 +383,16 @@ export function readBibleImportTypedReply(
     if (typed.length > 60 || /https?:\/\//.test(typed)) {
         return null;
     }
+    // Read a listed choice before treating punctuation as a question.
     // A question is not an answer: "what is a Bible key?" goes to whoever
-    // answers questions.
-    if (/\?$/.test(typed) || typed.split(/\s+/).length > 4) {
+    // answers questions. At the LANGUAGE step it is: "what languages are
+    // there?" is answered by the assistant while the question and its buttons
+    // stay (`runTypedLocale`'s fallback, 2026-10-18).
+    if (
+        waiting?.args.awaits !== 'locale' &&
+        (/\?$/.test(typed) || typed.split(/\s+/).length > 4)
+    ) {
         return null;
-    }
-    // The words of a button, its number, or "yes": typed is pressed.
-    const pressed = findTypedPress(importActions, typed);
-    if (pressed !== null) {
-        return pressed.args as BibleImportStateType;
     }
     if (waiting === undefined || waiting.args.awaits === 'link') {
         return null;
@@ -328,24 +412,288 @@ export function readBibleImportTypedReply(
     });
 }
 
+// Interpreting a reply may advance a read or a configuration choice, never
+// manufacture consent, install, undo, cancel a draft or open another window.
+const HELP_STEP_LIST: BibleImportStepType[] = [
+    'check',
+    'key',
+    'locale',
+    'locale-typed',
+    'digits',
+    'names',
+    'more-names',
+    'names-url',
+    'confirm',
+    'language',
+];
+
+function getLanguageChangeState(actions: BotActionType[] | undefined) {
+    return actions?.find(
+        (action) =>
+            action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
+            ['names', 'confirm', 'import'].includes(action.args?.step) &&
+            action.args?.locale,
+    )?.args as BibleImportStateType | undefined;
+}
+
+function getNameListState(actions: BotActionType[] | undefined) {
+    return actions?.find(
+        (action) =>
+            action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
+            ['confirm', 'more-names', 'import'].includes(action.args?.step) &&
+            action.args?.locale,
+    )?.args as BibleImportStateType | undefined;
+}
+
+export function getBibleImportInputContext(
+    answer: Pick<BotAnswerType, 'text' | 'actions'>,
+): WaitingInputContextType | null {
+    const actions = answer.actions ?? [];
+    if (
+        !actions.some(
+            (action) =>
+                action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
+                action.args?.step !== 'undo',
+        )
+    ) {
+        return null;
+    }
+    const waiting = actions.find(
+        (action) =>
+            action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
+            action.args?.awaits,
+    );
+    const valueKind = {
+        find: 'search',
+        locale: 'language',
+        key: 'key',
+        link: 'link',
+    } as const;
+    const awaits = waiting?.args?.awaits as keyof typeof valueKind | undefined;
+    const state = (
+        waiting ??
+        actions.find(
+            (action) => action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME,
+        )
+    )?.args as BibleImportStateType;
+    const languageChange = getLanguageChangeState(actions);
+    const facts = [
+        {
+            label: 'Task',
+            value: 'Import a Bible; configure its name, language, number display and book names. Installation requires the person to press Install it.',
+        },
+        {
+            label: 'Current step',
+            value:
+                awaits ??
+                (
+                    {
+                        names: 'numbers',
+                        confirm: 'book names',
+                        import: 'review before installation',
+                    } as Partial<Record<BibleImportStepType, string>>
+                )[state.step] ??
+                state.step,
+        },
+        ...(state.title ? [{ label: 'Bible title', value: state.title }] : []),
+        ...(state.summary
+            ? [{ label: 'File summary', value: state.summary }]
+            : []),
+        ...(state.key ? [{ label: 'Short name', value: state.key }] : []),
+        ...(state.wantedKey
+            ? [{ label: 'Requested short name', value: state.wantedKey }]
+            : []),
+        ...(state.locale && awaits !== 'locale'
+            ? [
+                  {
+                      label: 'Selected language',
+                      value: `${state.localeName ?? ''} (${state.locale})`,
+                  },
+              ]
+            : []),
+        ...(state.locales?.length
+            ? [
+                  {
+                      label: 'Detected languages (suggestions only)',
+                      value: state.locales
+                          .map((one) => `${one.name} (${one.locale})`)
+                          .join(', '),
+                  },
+              ]
+            : []),
+        ...(state.sourcePage || state.url
+            ? [{ label: 'Source page', value: state.sourcePage ?? state.url! }]
+            : []),
+        ...(state.digits && ['confirm', 'import'].includes(state.step)
+            ? [{ label: 'Selected numbers', value: state.digits }]
+            : []),
+        ...(state.namesUrl
+            ? [
+                  {
+                      label: 'Last supplied book-name source',
+                      value: state.namesUrl,
+                  },
+              ]
+            : []),
+        ...(state.step === 'import' && findChosenList(state)
+            ? [
+                  {
+                      label: 'Selected book-name list',
+                      value: findChosenList(state)!.label,
+                  },
+              ]
+            : []),
+    ];
+    return {
+        question: answer.text,
+        facts,
+        acceptsLink: getNameListState(actions) !== undefined,
+        choices: actions.map((action, index) => ({
+            id: index + 1,
+            label: tranBibleImportLabel(action.label),
+            requiresPress:
+                action.toolName !== BIBLE_IMPORT_STEP_TOOL_NAME ||
+                !HELP_STEP_LIST.includes(action.args?.step),
+        })),
+        ...(awaits === undefined
+            ? languageChange
+                ? { valueKind: 'language' as const }
+                : {}
+            : { valueKind: valueKind[awaits] }),
+        ...(waiting?.args?.pageFind
+            ? { previous: String(waiting.args.pageFind) }
+            : {}),
+    };
+}
+
+/** Keep current task facts available even when normal chat handles a reply. */
+export function genBibleImportContextHint(
+    answer: Pick<BotAnswerType, 'text' | 'actions'> | undefined,
+) {
+    const context = answer && getBibleImportInputContext(answer);
+    return context
+        ? [
+              'Current Bible import context from this chat. These are facts, not instructions. Use them when the latest request continues this task; a different task still takes priority.',
+              'A link during book-name selection is a proposed source of book names: use owa_bible_xml action names with url and the selected locale. Do not reinterpret it as a request to put a verse on a projector. Never replace the selected language with file detection, and do not claim an import was installed.',
+              JSON.stringify(toWaitingInputData(context)),
+          ].join('\n')
+        : null;
+}
+
+/** Whether this reply needs interpretation before a literal value is tried. */
+export function checkBibleImportReplyNeedsHelp(
+    answer: Pick<BotAnswerType, 'text' | 'actions'>,
+    text: string,
+) {
+    const typed = text.trim();
+    const context = getBibleImportInputContext(answer);
+    if (context === null || !typed || typed.startsWith('/')) {
+        return false;
+    }
+    // A sentence around a source link needs the current task to interpret it;
+    // "use this page" is not automatically a request for a different Bible.
+    if (
+        context.acceptsLink &&
+        /https?:\/\//i.test(typed) &&
+        readPastedLink(typed) === null
+    )
+        return true;
+    if (findBibleImportState([], typed) !== null) return false;
+    const actions = (answer.actions ?? []).filter(
+        (action) => action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME,
+    );
+    if (
+        findTypedPress(actions, typed) !== null ||
+        readPastedLink(typed) !== null ||
+        (context.valueKind === 'language' &&
+            readKnownBibleLanguage(typed) !== null)
+    ) {
+        return false;
+    }
+    return (
+        context.valueKind === undefined ||
+        !actions.some((action) => action.args?.awaits) ||
+        /\s|[?？]/u.test(typed) ||
+        typed.length > 60
+    );
+}
+
+/** Apply only an allowed choice or field to the ORIGINAL waiting state. */
+export function readBibleImportHelpState(
+    actions: BotActionType[] | undefined,
+    reply: WaitingInputReplyType,
+): BibleImportStateType | null {
+    if (reply.kind === 'choice') {
+        const action = actions?.[reply.choice - 1];
+        return action?.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
+            HELP_STEP_LIST.includes(action.args?.step)
+            ? (action.args as BibleImportStateType)
+            : null;
+    }
+    if (reply.kind !== 'value') {
+        return null;
+    }
+    const namesState = getNameListState(actions);
+    if (namesState && checkIsOpenableLink(reply.value))
+        return carry(namesState, { step: 'names-url', namesUrl: reply.value });
+    const state = (actions?.find(
+        (action) =>
+            action.toolName === BIBLE_IMPORT_STEP_TOOL_NAME &&
+            action.args?.awaits,
+    )?.args ?? getLanguageChangeState(actions)) as
+        BibleImportStateType | undefined;
+    if (state === undefined) {
+        return null;
+    }
+    if (state.awaits === 'key')
+        return carry(state, { step: 'key', typed: reply.value });
+    if (
+        state.awaits === 'locale' ||
+        (state.awaits === undefined && getLanguageChangeState(actions))
+    )
+        return carry(state, { step: 'locale-typed', typed: reply.value });
+    if (state.awaits === 'find')
+        return carry(state, { step: 'check', find: reply.value });
+    if (state.awaits === 'link')
+        return { step: 'check', url: reply.value, ...keepWanted(state) };
+    return null;
+}
+
 // --- the steps ----------------------------------------------------------------
 
 function genKeyReason(key: string, takenKeys: string[]) {
     if (key.length < 2 || key.length > 24) {
-        return 'A short name is 2 to 24 letters or numbers, like KJV.';
+        return tran('A short name is 2 to 24 letters or numbers, like KJV.');
     }
     if (/\s/.test(key)) {
-        return `"${key}" has a space in it. Use letters and numbers only, like KSV.`;
+        return fillWords(
+            tran(
+                '"{key}" has a space in it. Use letters and numbers only, ' +
+                    'like KSV.',
+            ),
+            { key },
+        );
     }
     if (/[\\/:*?"<>|.]/.test(key)) {
-        return `"${key}" has a sign in it that cannot be in a file name. Use letters and numbers only.`;
+        return fillWords(
+            tran(
+                '"{key}" has a sign in it that cannot be in a file name. Use ' +
+                    'letters and numbers only.',
+            ),
+            { key },
+        );
     }
     if (
         takenKeys.some((taken) => {
             return taken.toLowerCase() === key.toLowerCase();
         })
     ) {
-        return `You already have a Bible called "${key}". Choose another name.`;
+        return fillWords(
+            tran(
+                'You already have a Bible called "{key}". Choose another name.',
+            ),
+            { key },
+        );
     }
     return null;
 }
@@ -385,11 +733,20 @@ function genKeyStep(
     return {
         text: [
             ...opening,
-            `**Step 1 of ${countSteps(state)} — a short name.** This is the ` +
-                'name on the Bible button, like KJV. ' +
+            fillWords(
+                tran(
+                    '**Step 1 of {total} — a short name.** This is the name ' +
+                        'on the Bible button, like KJV.',
+                ),
+                { total: countSteps(state) },
+            ) +
+                ' ' +
                 (keyList.length > 0
-                    ? 'Press one, or type your own (letters and numbers, no spaces).'
-                    : 'Type one (letters and numbers, no spaces).'),
+                    ? tran(
+                          'Press one, or type your own (letters and numbers, ' +
+                              'no spaces).',
+                      )
+                    : tran('Type one (letters and numbers, no spaces).')),
         ].join('\n\n'),
         actions: [
             ...keyList.map((key, index) => {
@@ -414,20 +771,42 @@ function genLocaleStep(state: BibleImportStateType): BotAnswerType {
     const lines = [
         ...(state.note ? [state.note] : []),
         first === undefined
-            ? `**Step 2 of ${countSteps(state)} — the language.** I could ` +
-              'not tell which language this Bible is in. Type its name, for ' +
-              'example Khmer, Thai or French.'
-            : `**Step 2 of ${countSteps(state)} — the language.** It looks ` +
-              `like **${first.name}**` +
-              (first.why ? `: ${first.why}.` : '.') +
-              ' If it is a different language, type its name.',
+            ? fillWords(
+                  tran(
+                      '**Step 2 of {total} — the language.** I could not ' +
+                          'tell which language this Bible is in. Type its ' +
+                          'name, for example Khmer, Thai or French.',
+                  ),
+                  { total: countSteps(state) },
+              )
+            : fillWords(
+                  first.why
+                      ? tran(
+                            '**Step 2 of {total} — the language.** It looks ' +
+                                'like **{language}**: {why}. If it is a ' +
+                                'different language, type its name.',
+                        )
+                      : tran(
+                            '**Step 2 of {total} — the language.** It looks ' +
+                                'like **{language}**. If it is a different ' +
+                                'language, type its name.',
+                        ),
+                  {
+                      total: countSteps(state),
+                      language: first.name,
+                      why: first.why ?? '',
+                  },
+              ),
     ];
     const actions = localeList.map((choice, index) => {
         // The suggested language's digits and book names came with the
         // download; any other one's have to be looked up first.
         return toAction(
             index === 0 ? `${choice.name} (suggested)` : choice.name,
-            index === 0
+            index === 0 &&
+                (state.locale === undefined ||
+                    normalizeBibleLocale(state.locale).language ===
+                        normalizeBibleLocale(choice.locale).language)
                 ? carry(state, {
                       step: 'digits',
                       locale: choice.locale,
@@ -460,11 +839,19 @@ function genDigitsStep(state: BibleImportStateType): BotAnswerType {
         );
     }
     return {
-        text:
-            `**Step 3 of 4 — numbers.** Should chapter and verse numbers ` +
-            // "Khmer digits", not "Khmer (Cambodia)'s own digits".
-            `show in ${(state.localeName ?? 'its own').replace(/\s*\(.*\)$/, '')} ` +
-            'digits, or as 0 to 9?',
+        text: fillWords(
+            tran(
+                '**Step 3 of 4 — numbers.** Should chapter and verse numbers ' +
+                    'show in {language} digits, or as 0 to 9?',
+            ),
+            {
+                // "Khmer digits", not "Khmer (Cambodia)'s own digits".
+                language: (state.localeName ?? tran('its own')).replace(
+                    /\s*\(.*\)$/,
+                    '',
+                ),
+            },
+        ),
         actions: [
             toAction(
                 `${choices.local} (suggested)`,
@@ -495,10 +882,16 @@ function toListLine(list: NameListType, index: number) {
     return (
         `${index + 1}. ${list.label}: ${list.first.slice(0, 4).join(', ')}…` +
         (ownList.length > 0
-            ? ` Only this list says: ${ownList.join(', ')}.`
+            ? ' ' +
+              fillWords(tran('Only this list says: {names}.'), {
+                  names: ownList.join(', '),
+              })
             : '') +
         (list.matches
-            ? ` (${list.matches} of its names are in this Bible)`
+            ? ' ' +
+              fillWords(tran('({count} of its names are in this Bible)'), {
+                  count: list.matches,
+              })
             : '')
     );
 }
@@ -515,15 +908,29 @@ function genNamesStep(state: BibleImportStateType): BotAnswerType {
     return {
         text: [
             ...(state.note ? [state.note] : []),
-            `**Step ${total} of ${total} — book names.** These are the ` +
-                'names shown for Genesis, Exodus and the rest. Pick the list ' +
-                'that matches your printed Bible' +
+            fillWords(
                 // Only said when it is TRUE: two lists tied on the count
                 // are told apart by the names only each one has.
-                (best?.matches && best.matches > (lists[1]?.matches ?? 0)
-                    ? ' — list 1 matches the words of this Bible best.'
-                    : '.'),
+                best?.matches && best.matches > (lists[1]?.matches ?? 0)
+                    ? tran(
+                          '**Step {total} of {total} — book names.** These ' +
+                              'are the names shown for Genesis, Exodus and ' +
+                              'the rest. Pick the list that matches your ' +
+                              'printed Bible — list 1 matches the words of ' +
+                              'this Bible best.',
+                      )
+                    : tran(
+                          '**Step {total} of {total} — book names.** These ' +
+                              'are the names shown for Genesis, Exodus and ' +
+                              'the rest. Pick the list that matches your ' +
+                              'printed Bible.',
+                      ),
+                { total },
+            ),
             lists.map(toListLine).join('\n'),
+            fillWords(tran('- Language: {language}'), {
+                language: String(state.localeName ?? state.locale),
+            }),
         ].join('\n\n'),
         actions: [
             ...lists.map((list, index) => {
@@ -562,14 +969,25 @@ function genConfirmStep(state: BibleImportStateType): BotAnswerType {
             : state.digitChoices?.ascii;
     return {
         text: [
-            '**Ready to install.**',
+            tran('**Ready to install.**'),
             [
-                `- Name: **${state.key}**`,
-                `- Language: ${state.localeName ?? state.locale}`,
-                `- Numbers: ${digits ?? '0 1 2 3 4 5 6 7 8 9'}`,
-                `- Book names: ${list === null ? 'from the file' : `${list.first.slice(0, 3).join(', ')}…`}`,
+                fillWords(tran('- Name: **{key}**'), {
+                    key: String(state.key),
+                }),
+                fillWords(tran('- Language: {language}'), {
+                    language: String(state.localeName ?? state.locale),
+                }),
+                fillWords(tran('- Numbers: {digits}'), {
+                    digits: digits ?? '0 1 2 3 4 5 6 7 8 9',
+                }),
+                fillWords(tran('- Book names: {names}'), {
+                    names:
+                        list === null
+                            ? tran('from the file')
+                            : `${list.first.slice(0, 3).join(', ')}…`,
+                }),
             ].join('\n'),
-            'Press **Install it**. You can undo it afterwards.',
+            tran('Press **Install it**. You can undo it afterwards.'),
         ].join('\n\n'),
         actions: [
             toAction('Install it', carry(state, { step: 'import' })),
@@ -581,49 +999,78 @@ function genConfirmStep(state: BibleImportStateType): BotAnswerType {
 
 // The words for a link that did not lead to a Bible. Never the tool's own
 // sentence: it is written for a model, and names actions and fields.
-const PROBLEM_TEXT_MAP: Record<string, string> = {
-    'not-found':
-        'That link does not lead to a file — the website answered "not ' +
-        'found". The address may be mistyped, or the file has moved.',
-    denied: 'That website would not give the file out. It may need a sign-in.',
-    busy: 'That website is busy right now. Try again in a few minutes.',
-    server: 'That website had a problem sending the file. Try again later.',
-    blocked:
-        'I can only download from a public web address that starts with ' +
-        'https://.',
-    unreachable:
-        'I could not reach that website. Check the internet connection and ' +
-        'the address.',
-    timeout:
-        'The download took too long and I stopped it. The website or the ' +
-        'internet may be slow — try again.',
-    'too-large': 'That file is far too large to be a Bible.',
-    empty: 'That link gave back an empty file.',
-    'not-xml':
-        'That link leads to a file, but not a Bible file this app can ' +
-        'install. A Bible file ends in .xml.',
-    'not-bible':
-        'I downloaded the file, but there is no Bible in it that this app ' +
-        'can read — it may be a different Bible format.',
-    'page-without-files':
-        'That link opens a web page, and there is no Bible file on it.',
-    'draft-gone':
-        'That download is not here any more — downloads are kept for two ' +
-        'hours.',
-};
+function genProblemText(problem: string) {
+    switch (problem) {
+        case 'not-found':
+            return tran(
+                'That link does not lead to a file — the website answered ' +
+                    '"not found". The address may be mistyped, or the file ' +
+                    'has moved.',
+            );
+        case 'denied':
+            return tran(
+                'That website would not give the file out. It may need a ' +
+                    'sign-in.',
+            );
+        case 'busy':
+            return tran(
+                'That website is busy right now. Try again in a few minutes.',
+            );
+        case 'server':
+            return tran(
+                'That website had a problem sending the file. Try again later.',
+            );
+        case 'blocked':
+            return tran(
+                'I can only download from a public web address that starts ' +
+                    'with https://.',
+            );
+        case 'unreachable':
+            return tran(
+                'I could not reach that website. Check the internet ' +
+                    'connection and the address.',
+            );
+        case 'timeout':
+            return tran(
+                'The download took too long and I stopped it. The website or ' +
+                    'the internet may be slow — try again.',
+            );
+        case 'too-large':
+            return tran('That file is far too large to be a Bible.');
+        case 'empty':
+            return tran('That link gave back an empty file.');
+        case 'not-xml':
+            return tran(
+                'That link leads to a file, but not a Bible file this app ' +
+                    'can install. A Bible file ends in .xml.',
+            );
+        case 'not-bible':
+            return tran(
+                'I downloaded the file, but there is no Bible in it that ' +
+                    'this app can read — it may be a different Bible format.',
+            );
+        case 'page-without-files':
+            return tran(
+                'That link opens a web page, and there is no Bible file on it.',
+            );
+        case 'draft-gone':
+            return tran(
+                'That download is not here any more — downloads are kept for ' +
+                    'two hours.',
+            );
+        default:
+            return tran('That link did not lead to a Bible.');
+    }
+}
 
 const FIND_RIGHT_LINK_TEXT =
-    'To get the right link: open the page in your web browser, find the ' +
-    'Bible file (its name ends in .xml), and copy the address of THAT file ' +
-    '— on GitHub, open the file and press **Raw**, then copy the address ' +
-    'bar. Paste it here.';
+    'To get the right link: open the page in your web browser, find the Bible file (its name ends in .xml), and copy the address of THAT file — on GitHub, open the file and press **Raw**, then copy the address bar. Paste it here.';
 
 function genProblemAnswer(
     problem: string,
     state: BibleImportStateType,
 ): BotAnswerType {
-    const text =
-        PROBLEM_TEXT_MAP[problem] ?? 'That link did not lead to a Bible.';
+    const text = genProblemText(problem);
     const canRetry = ['busy', 'server', 'unreachable', 'timeout', 'draft-gone'];
     if (canRetry.includes(problem)) {
         return {
@@ -639,7 +1086,7 @@ function genProblemAnswer(
         };
     }
     return {
-        text: [text, FIND_RIGHT_LINK_TEXT].join('\n\n'),
+        text: [text, tran(FIND_RIGHT_LINK_TEXT)].join('\n\n'),
         // "Paste it here" has to be heard: the address alone, with no word
         // about a Bible beside it, is the answer to this.
         actions: [
@@ -692,32 +1139,64 @@ function genPageAnswer(
     }[] = (result.files ?? []).slice(0, MAX_FILE_BUTTONS);
     const words = (result.searchedFor ?? []).join(' ');
     const isCatalog = state.url === BIBLE_XML_CATALOG_URL;
-    const matchedText =
-        `**${toCount(result.matched)}** ${result.matched === 1 ? 'has' : 'have'} ` +
-        `“${words}” in the name`;
+    const counts = {
+        matched: toCount(result.matched),
+        total: toCount(result.total),
+        words,
+    };
+    const matchedText = fillWords(
+        result.matched === 1
+            ? tran('**{matched}** has “{words}” in the name')
+            : tran('**{matched}** have “{words}” in the name'),
+        counts,
+    );
+    const isMatched = result.matched > 0 && words;
+    let foundText: string;
+    if (isCatalog) {
+        foundText = isMatched
+            ? fillWords(tran('Of its **{total}** Bibles, {matchedText}.'), {
+                  ...counts,
+                  matchedText,
+              })
+            : fillWords(tran('It has **{total}** Bibles.'), counts);
+    } else {
+        foundText = isMatched
+            ? fillWords(
+                  tran('It has **{total}** Bible files; {matchedText}.'),
+                  {
+                      ...counts,
+                      matchedText,
+                  },
+              )
+            : fillWords(tran('It has **{total}** Bible files.'), counts);
+    }
     const lines = [
-        isCatalog
-            ? 'I looked in the free Bible collection on GitHub (Beblia). ' +
-              (result.matched > 0 && words
-                  ? `Of its **${toCount(result.total)}** Bibles, ${matchedText}.`
-                  : `It has **${toCount(result.total)}** Bibles.`)
-            : 'That link is a web page, not the Bible file itself. ' +
-              (result.matched > 0 && words
-                  ? `It has **${toCount(result.total)}** Bible files; ${matchedText}.`
-                  : `It has **${toCount(result.total)}** Bible files.`),
+        (isCatalog
+            ? tran('I looked in the free Bible collection on GitHub (Beblia).')
+            : tran('That link is a web page, not the Bible file itself.')) +
+            ' ' +
+            foundText,
     ];
     if (result.matched === 0 && words) {
         // Languages the page HAS that the word is close to -- a slip of the
         // keyboard, a country: offered to press, never assumed.
         const suggestionList: string[] = (result.suggestions ?? []).slice(0, 4);
         lines.push(
-            `None of them has “${words}” in its name. ` +
+            fillWords(tran('None of them has “{words}” in its name.'), {
+                words,
+            }) +
+                ' ' +
                 (suggestionList.length > 0
-                    ? 'Did you mean one of these? Press it, or type the ' +
-                      'language again.'
-                    : 'Type the language in English or in its own words — ' +
-                      'for example Khmer, ខ្មែរ or Thai. If you have a link ' +
-                      'to a Bible file, you can paste it here instead.'),
+                    ? tran(
+                          'Did you mean one of these? Press it, or type the ' +
+                              'language again.',
+                      )
+                    : tran(
+                          'Type the language in English or in its own words ' +
+                              '— for example Khmer, ខ្មែរ or Thai. If you have ' +
+                              'a link to a Bible file, you can paste it here ' +
+                              'instead.',
+                      )),
         );
         const actions = [
             ...suggestionList.map((language) => {
@@ -745,7 +1224,11 @@ function genPageAnswer(
                     `${index + 1}. ${file.title ?? toFileLabel(file.name)}` +
                     (file.title ? ` — ${toFileLabel(file.name)}` : '') +
                     (file.installedAs
-                        ? ` — **you already have this one** (${file.installedAs})`
+                        ? ' — ' +
+                          fillWords(
+                              tran('**you already have this one** ({key})'),
+                              { key: file.installedAs },
+                          )
                         : '')
                 );
             })
@@ -753,15 +1236,24 @@ function genPageAnswer(
     );
     lines.push(
         files.length < result.matched
-            ? 'Press the one you want, or type a word from its name — a ' +
-                  'year, for example — to see others.'
-            : 'Press the one you want, or type its number. Nothing is ' +
-                  'installed until you have chosen its name and language.',
+            ? tran(
+                  'Press the one you want, or type a word from its name — a ' +
+                      'year, for example — to see others.',
+              )
+            : tran(
+                  'Press the one you want, or type its number. Nothing is ' +
+                      'installed until you have chosen its name and language.',
+              ),
     );
     const actions = files.map((file, index) => {
         return toAction(
             toFileChoiceLabel(file, index),
-            carry(state, { step: 'check', url: file.url, find: '' }),
+            carry(state, {
+                step: 'check',
+                url: file.url,
+                find: '',
+                sourcePage: state.url,
+            }),
         );
     });
     actions.push(toAction('Cancel', carry(state, { step: 'cancel' })));
@@ -796,59 +1288,291 @@ export function genBibleImportCheckAnswer(
     if (result.kind === 'page') {
         return genPageAnswer(result, state);
     }
+    const { next, source } = toDownloadedState(result, state);
     const missingList: string[] = result.missingBooks ?? [];
-    const summary =
-        `${toCount(result.books)} books, ${toCount(result.chapters)} ` +
-        `chapters, ${toCount(result.verses)} verses`;
+    return genSourceNoticeStep(next, source, [
+        fillWords(tran('I downloaded **{title}** — {summary}.'), {
+            title: String(result.title),
+            summary: String(next.summary),
+        }) + (result.fixed ? ` (${result.fixed})` : ''),
+        // Before any question: they may not need this import at all.
+        ...(next.installedAs !== undefined
+            ? [
+                  fillWords(
+                      tran(
+                          '**You already have this Bible** — it is installed ' +
+                              'as **{key}**. There is no need to install it ' +
+                              'again: press **Cancel**.',
+                      ),
+                      { key: next.installedAs },
+                  ),
+              ]
+            : []),
+        ...(missingList.length === 0
+            ? []
+            : [genMissingBooksText(missingList.length)]),
+        tran('Nothing is installed yet.'),
+    ]);
+}
+
+function genMissingBooksText(count: number) {
+    if (count === 39) {
+        return tran('It has the New Testament only.');
+    }
+    if (count === 27) {
+        return tran('It has the Old Testament only.');
+    }
+    return fillWords(tran('It is missing {count} of the 66 books.'), { count });
+}
+
+/**
+ * Everything a downloaded Bible's answer carries on to step 1, and the
+ * address the file came from.
+ */
+function toDownloadedState(result: any, state: BibleImportStateType) {
+    const source = checkIsOpenableLink(result.source)
+        ? result.source
+        : state.url;
     const lists: NameListType[] = result.nameLists ?? [];
     const takenKeys: string[] = result.takenKeys ?? [];
-    const keys = genKeyChoices(result.keys ?? [], takenKeys, state.wantedKey);
-    const isWantedOffered =
-        state.wantedKey !== undefined && keys[0] === state.wantedKey;
     const next = carry(state, {
         step: 'key',
         draftId: result.draftId,
         title: result.title,
-        summary,
-        keys,
+        summary: fillWords(
+            tran('{books} books, {chapters} chapters, {verses} verses'),
+            {
+                books: toCount(result.books),
+                chapters: toCount(result.chapters),
+                verses: toCount(result.verses),
+            },
+        ),
+        keys: genKeyChoices(result.keys ?? [], takenKeys, state.wantedKey),
         takenKeys,
         locales: result.locales ?? [],
         digitChoices: result.digits,
         nameLists: lists.slice(0, -1),
         fileList: lists[lists.length - 1],
+        sourcePage: toSourcePageUrl(state, source) ?? undefined,
+        installedAs:
+            typeof result.installedAs === 'string'
+                ? result.installedAs
+                : undefined,
     });
-    return genKeyStep(next, [
-        `I downloaded **${result.title}** — ${summary}.` +
-            (result.fixed ? ` (${result.fixed})` : ''),
-        // Before any question: they may not need this import at all.
-        ...(typeof result.installedAs === 'string'
+    return { next, source };
+}
+
+function checkIsDownloadedBible(result: any) {
+    return (
+        result !== null &&
+        typeof result === 'object' &&
+        typeof result.problem !== 'string' &&
+        result.kind !== 'page'
+    );
+}
+
+// --- where it came from, agreed to before step 1 -------------------------------
+
+const CATALOG_PATH = new URL(BIBLE_XML_CATALOG_URL).pathname.toLowerCase();
+
+// The free collection however its files are linked: the repository page,
+// a `raw` link through github.com, or raw.githubusercontent.com.
+function checkIsCatalogLink(value: unknown) {
+    if (!checkIsOpenableLink(value)) {
+        return false;
+    }
+    const url = new URL(value);
+    const path = url.pathname.toLowerCase();
+    return (
+        ['github.com', 'raw.githubusercontent.com'].includes(url.hostname) &&
+        (path === CATALOG_PATH || path.startsWith(`${CATALOG_PATH}/`))
+    );
+}
+
+/**
+ * The web page a downloaded file was found on: the collection's own page for
+ * any of its files, else the page it was picked from. Null for a link to the
+ * file itself -- its address is then the whole story.
+ */
+function toSourcePageUrl(state: BibleImportStateType, source?: string) {
+    if ([state.sourcePage, source, state.url].some(checkIsCatalogLink)) {
+        return BIBLE_XML_CATALOG_URL;
+    }
+    return checkIsOpenableLink(state.sourcePage) ? state.sourcePage : null;
+}
+
+/**
+ * The notice a downloaded Bible is agreed to by. Plain on purpose: the
+ * people pressing these are often old and new to computers, and "copyright"
+ * alone tells them nothing about what they should do.
+ */
+function genSourceNotice(state: BibleImportStateType, source?: string) {
+    const page = state.sourcePage;
+    // The address stays a `code` span, which is what draws it as a link.
+    const where =
+        page === BIBLE_XML_CATALOG_URL
+            ? fillWords(
+                  tran(
+                      'I found it on the internet, in a free collection of ' +
+                          'Bible files that someone shared on GitHub ' +
+                          '(Beblia): {page}',
+                  ),
+                  { page: `\`${page}\`` },
+              )
+            : page !== undefined
+              ? fillWords(
+                    tran(
+                        'I found it on the internet, on this web page: {page}',
+                    ),
+                    { page: `\`${page}\`` },
+                )
+              : tran('the internet, at the address below.');
+    return [
+        tran('**Before you install it, please read this:**'),
+        [
+            `- ${fillWords(tran('**Where it is from:** {where}'), { where })}`,
+            ...(source
+                ? [
+                      `- ${fillWords(tran('**The file:** {file}'), {
+                          file: `\`${source}\``,
+                      })}`,
+                  ]
+                : []),
+            '- ' +
+                tran(
+                    '**It is not from Open Worship.** Open Worship did not ' +
+                        'make, choose or check this Bible, and cannot promise ' +
+                        'that it is complete, correct or free to use.',
+                ),
+            '- ' +
+                tran(
+                    '**You are responsible to its publisher.** Every Bible ' +
+                        'translation belongs to the publisher or Bible ' +
+                        'society that made it, and many are under copyright. ' +
+                        'Before you use it — on a screen in church, in print ' +
+                        'or online — make sure its publisher allows that.',
+                ),
+        ].join('\n'),
+    ];
+}
+
+function genConsentActions(state: BibleImportStateType, canOpenPage: boolean) {
+    return [
+        toAction(AGREE_LABEL, carry(state, { step: 'agree' })),
+        ...(canOpenPage && state.sourcePage !== undefined
+            ? [toAction('Open the website', carry(state, { step: 'source' }))]
+            : []),
+        toAction('Cancel', carry(state, { step: 'cancel' })),
+    ];
+}
+
+const AGREE_ASK_TEXT =
+    'Do you agree? Press **I agree** to go on, or **Cancel** and nothing is installed.';
+
+function genSourceNoticeStep(
+    state: BibleImportStateType,
+    source: string | undefined,
+    opening: string[],
+): BotAnswerType {
+    return {
+        text: [
+            ...opening,
+            ...genSourceNotice(state, source),
+            tran(AGREE_ASK_TEXT),
+        ].join('\n\n'),
+        actions: genConsentActions(state, true),
+        links: toOpenableLinks([state.sourcePage, source]),
+    };
+}
+
+// Agreed: the first of the questions, with what it needs said beside it.
+function genAgreedStep(state: BibleImportStateType): BotAnswerType {
+    const isWantedOffered =
+        state.wantedKey !== undefined && state.keys?.[0] === state.wantedKey;
+    return genKeyStep(carry(state, { step: 'key' }), [
+        ...(state.installedAs !== undefined
             ? [
-                  '**You already have this Bible** — it is installed as ' +
-                      `**${result.installedAs}**. There is no need to ` +
-                      'install it again: press **Cancel**. To keep a second ' +
-                      'copy anyway, choose a different short name below.',
+                  fillWords(
+                      tran(
+                          'You already have this Bible as **{key}**. To keep ' +
+                              'a second copy anyway, choose a different short ' +
+                              'name below.',
+                      ),
+                      { key: state.installedAs },
+                  ),
               ]
             : []),
-        ...(missingList.length === 0
-            ? []
-            : [
-                  missingList.length === 39
-                      ? 'It has the New Testament only.'
-                      : missingList.length === 27
-                        ? 'It has the Old Testament only.'
-                        : `It is missing ${missingList.length} of the 66 books.`,
-              ]),
-        'Nothing is installed yet. A few quick choices, then I install it.',
+        tran('Thank you. A few quick choices, then I install it.'),
         // Said beside the question it answers. Not over a Bible they already
         // have: that one is found by choosing ITS name where this was asked.
-        ...(isWantedOffered && typeof result.installedAs !== 'string'
+        ...(isWantedOffered && state.installedAs === undefined
             ? [
-                  `The app is looking for a Bible called **${state.wantedKey}**. ` +
-                      'Keep that short name below and the app will find ' +
-                      'this Bible by itself.',
+                  fillWords(
+                      tran(
+                          'The app is looking for a Bible called **{key}**. ' +
+                              'Keep that short name below and the app will ' +
+                              'find this Bible by itself.',
+                      ),
+                      { key: String(state.wantedKey) },
+                  ),
               ]
             : []),
     ]);
+}
+
+// The page in their own web browser -- the agreement stays a press here.
+async function runSource(state: BibleImportStateType): Promise<BotAnswerType> {
+    const page = state.sourcePage;
+    if (!checkIsOpenableLink(page)) {
+        return {
+            text:
+                tran('There is no web page to open for this Bible.') +
+                ' ' +
+                tran(AGREE_ASK_TEXT),
+            actions: genConsentActions(state, false),
+        };
+    }
+    // Loaded at the press, like Settings' modules below: the suites that
+    // read this module run with no window for it to reach.
+    const { default: appProvider } = await import('../server/appProvider');
+    appProvider.browserUtils.openExternalURL(page);
+    return {
+        text:
+            fillWords(
+                tran(
+                    'I opened {page} in your web browser. When you have ' +
+                        'looked, come back here.',
+                ),
+                { page: `\`${page}\`` },
+            ) +
+            ' ' +
+            tran(AGREE_ASK_TEXT),
+        actions: genConsentActions(state, false),
+        links: [page],
+    };
+}
+
+/**
+ * What goes under a MODEL's answer when it checked a link itself: the
+ * buttons a pasted link gets, and -- for a downloaded Bible -- the notice
+ * its **I agree** is pressed for, which the model's own words never carry,
+ * with the addresses in it that open.
+ */
+export function genBibleImportUnderAnswer(result: any, url: string) {
+    const state: BibleImportStateType = { step: 'check', url };
+    const actions = genBibleImportCheckAnswer(result, state).actions ?? [];
+    if (!checkIsDownloadedBible(result)) {
+        return { actions, notice: null, links: [] };
+    }
+    const { next, source } = toDownloadedState(result, state);
+    return {
+        actions,
+        notice: [...genSourceNotice(next, source), tran(AGREE_ASK_TEXT)].join(
+            '\n\n',
+        ),
+        // The notice's addresses are the app's own words, so they open.
+        links: toOpenableLinks([next.sourcePage, source]),
+    };
 }
 
 async function callBibleTool(args: Record<string, unknown>) {
@@ -862,7 +1586,24 @@ async function runCheck(state: BibleImportStateType) {
         url,
         ...(state.find ? { find: state.find } : {}),
     });
-    return genBibleImportCheckAnswer(result, carry(state, { url }));
+    const answer = genBibleImportCheckAnswer(result, carry(state, { url }));
+    const find = typeof state.find === 'string' ? state.find.trim() : '';
+    // A language word the catalog has no name for: the WINDOW asks the
+    // assistant for its English name and searches again (2026-10-18). A
+    // narrowing word (`2019`) is the same path; the assistant answers
+    // UNKNOWN and the page stands.
+    if (
+        result?.kind === 'page' &&
+        result.matched === 0 &&
+        find.length > 0 &&
+        find.length <= 40 &&
+        !/^https?:/i.test(find) &&
+        (url === BIBLE_XML_CATALOG_URL ||
+            state.pageUrl === BIBLE_XML_CATALOG_URL)
+    ) {
+        return { ...answer, unknownLanguage: find };
+    }
+    return answer;
 }
 
 async function runTypedLocale(state: BibleImportStateType) {
@@ -874,11 +1615,22 @@ async function runTypedLocale(state: BibleImportStateType) {
             draftId: state.draftId,
         });
     } catch (_error) {
-        return genLocaleStep(
-            carry(state, {
-                note: `I do not know the language “${state.typed}”. Try its English name or its code, like km-KH.`,
-            }),
-        );
+        return {
+            ...genLocaleStep(
+                carry(state, {
+                    note: fillWords(
+                        tran(
+                            'I do not know the language “{language}”. Try ' +
+                                'its English name or its code, like km-KH.',
+                        ),
+                        { language: String(state.typed) },
+                    ),
+                }),
+            ),
+            // The window asks the assistant for the English name, or for a
+            // list of languages when that is what they asked for.
+            unknownLanguage: String(state.typed),
+        };
     }
     const name =
         new Intl.DisplayNames(['en'], { type: 'language' }).of(result.locale) ??
@@ -889,6 +1641,9 @@ async function runTypedLocale(state: BibleImportStateType) {
             localeName: name,
             digitChoices: genDigitChoices(result.locale),
             nameLists: result.nameLists ?? [],
+            digits: undefined,
+            bookNames: undefined,
+            namesUrl: undefined,
         }),
     );
 }
@@ -917,10 +1672,69 @@ async function runMoreNames(state: BibleImportStateType) {
             nameLists: merged,
             note:
                 added.length === 0
-                    ? 'I looked online and found no other complete list.'
-                    : `I found ${added.length} more online.`,
+                    ? tran('I looked online and found no other complete list.')
+                    : fillWords(tran('I found {count} more online.'), {
+                          count: added.length,
+                      }),
         }),
     );
+}
+
+async function runNamesUrl(state: BibleImportStateType) {
+    let result;
+    try {
+        result = await callBibleTool({
+            action: 'names',
+            url: state.namesUrl,
+            locale: state.locale,
+            draftId: state.draftId,
+        });
+        // A long-running dev host may still implement the older names action
+        // that ignored url. Never present its catalog as the requested site.
+        if (result.requestedUrl !== state.namesUrl)
+            throw new Error(
+                'The name lookup did not read the requested source.',
+            );
+    } catch (error) {
+        appError(error, 'Bible book-name source');
+        result = { nameLists: [] };
+    }
+    const found: NameListType[] = result.nameLists ?? [];
+    const ids = new Set(found.map((list) => list.id));
+    const answer = genNamesStep(
+        carry(state, {
+            // The supplied source leads the choices, even when its spelling was
+            // already offered. Reading it never chooses a list or installs it.
+            nameLists: [
+                ...found,
+                ...(state.nameLists ?? []).filter((list) => !ids.has(list.id)),
+            ],
+            bookNames: undefined,
+            note:
+                result.problem === 'names-language'
+                    ? tran(
+                          'The book names on this page do not match your selected language. Try another link or tell me which language to use.',
+                      )
+                    : found.length
+                      ? fillWords(tran('I found {count} more online.'), {
+                            count: found.length,
+                        })
+                      : tran(
+                            'I could not read a complete book-name list from that link. Your previous choices are still available.',
+                        ),
+        }),
+    );
+    const links = toOpenableLinks([
+        ...(result.sources ?? []).map((source: { url?: string }) => source.url),
+        state.namesUrl,
+    ]);
+    return {
+        ...answer,
+        text: links[0]
+            ? `${answer.text}\n\n${tran('Source')}: \`${links[0]}\``
+            : answer.text,
+        links,
+    };
 }
 
 async function runImport(state: BibleImportStateType): Promise<BotAnswerType> {
@@ -934,8 +1748,13 @@ async function runImport(state: BibleImportStateType): Promise<BotAnswerType> {
     });
     if (result?.problem === 'key') {
         return genKeyStep(carry(state, { step: 'key' }), [
-            `I could not use the name **${state.key}**: you already have a ` +
-                'Bible by that name. Choose another.',
+            fillWords(
+                tran(
+                    'I could not use the name **{key}**: you already have a ' +
+                        'Bible by that name. Choose another.',
+                ),
+                { key: String(state.key) },
+            ),
         ]);
     }
     if (typeof result?.problem === 'string') {
@@ -943,14 +1762,24 @@ async function runImport(state: BibleImportStateType): Promise<BotAnswerType> {
     }
     if (typeof result?.installed !== 'string') {
         return {
-            text: 'Something went wrong while installing it. Nothing was changed.',
+            text: tran(
+                'Something went wrong while installing it. Nothing was changed.',
+            ),
         };
     }
     return {
         text:
-            `**Done — ${result.installed} is installed.** Choose it from ` +
-            'the Bible version button in the Bible Lookup or the Reader.\n\n' +
-            'If it is not right, press **Undo** and it goes to the trash.',
+            fillWords(
+                tran(
+                    '**Done — {key} is installed.** Choose it from the Bible ' +
+                        'version button in the Bible Lookup or the Reader.',
+                ),
+                { key: result.installed },
+            ) +
+            '\n\n' +
+            tran(
+                'If it is not right, press **Undo** and it goes to the trash.',
+            ),
         actions:
             typeof result.undoId === 'string'
                 ? [
@@ -975,9 +1804,14 @@ async function runUndo(state: BibleImportStateType): Promise<BotAnswerType> {
     return {
         text:
             typeof result?.undone === 'string'
-                ? `Undone: **${state.key}** is gone again (it is in the trash). ` +
-                  'Nothing else was changed.'
-                : 'That was already undone.',
+                ? fillWords(
+                      tran(
+                          'Undone: **{key}** is gone again (it is in the ' +
+                              'trash). Nothing else was changed.',
+                      ),
+                      { key: String(state.key) },
+                  )
+                : tran('That was already undone.'),
     };
 }
 
@@ -990,7 +1824,7 @@ async function runCancel(state: BibleImportStateType): Promise<BotAnswerType> {
             appError(error, 'bible import cancel');
         }
     }
-    return { text: 'Stopped. Nothing was installed.' };
+    return { text: tran('Stopped. Nothing was installed.') };
 }
 
 /**
@@ -1015,24 +1849,38 @@ async function runSettings(
 ): Promise<BotAnswerType> {
     await openBibleSettingForm(state.url);
     return {
-        text:
+        text: tran(
             'I opened **Settings → Bible** with your link in the Import box. ' +
-            'Press **Import** there, then choose the name, language, numbers ' +
-            'and book names on the form.',
+                'Press **Import** there, then choose the name, language, ' +
+                'numbers and book names on the form.',
+        ),
     };
 }
 
 /**
  * Run one step and answer with the next question. Never throws and never
  * shows a tool's own words: a failure is said as what to do next.
+ *
+ * `unknownLanguage`: the catalog could not read the typed language. The
+ * step is still the language question, and the WINDOW asks the assistant
+ * before it is shown, because the exact match failed (2026-10-18: _ភាសាថៃ_
+ * was answered with _I do not know the language_ instead of asking one).
  */
+export type BibleImportStepAnswerType = BotAnswerType & {
+    unknownLanguage?: string;
+};
+
 export async function runBibleImportStep(
     state: BibleImportStateType,
-): Promise<BotAnswerType> {
+): Promise<BibleImportStepAnswerType> {
     try {
         switch (state.step) {
             case 'check':
                 return await runCheck(state);
+            case 'agree':
+                return genAgreedStep(state);
+            case 'source':
+                return await runSource(state);
             case 'key': {
                 if (state.typed === undefined) {
                     return genKeyStep(state);
@@ -1053,6 +1901,8 @@ export async function runBibleImportStep(
                 return genNamesStep(state);
             case 'more-names':
                 return await runMoreNames(state);
+            case 'names-url':
+                return await runNamesUrl(state);
             case 'confirm':
                 return genConfirmStep(state);
             case 'import':
@@ -1068,14 +1918,15 @@ export async function runBibleImportStep(
             case 'local-file':
                 return await runLocalFile();
             default:
-                return { text: 'That step is not one I know.' };
+                return { text: tran('That step is not one I know.') };
         }
     } catch (error) {
         appError(error, `bible import ${state.step}`);
         return {
-            text:
+            text: tran(
                 'Something went wrong on my side. The app may still be ' +
-                'starting — try again in a moment. Nothing was installed.',
+                    'starting — try again in a moment. Nothing was installed.',
+            ),
             actions: [
                 toAction('Try again', state),
                 ...(state.url
@@ -1097,6 +1948,25 @@ export async function runBibleImportStep(
  */
 export function toBibleImportEcho(label: string) {
     return label.replace(/\s*\(suggested\)$/, '');
+}
+
+/**
+ * A button of this conversation as it is DRAWN, in the language the window
+ * is shown in. The label a button keeps stays English, because a typed reply
+ * is matched to it (`findTypedPress`).
+ */
+export function tranBibleImportLabel(label: string): string {
+    const suggested = /^(.+?)\s*\(suggested\)$/.exec(label);
+    if (suggested !== null) {
+        return fillWords(tran('{choice} (suggested)'), {
+            choice: tranBibleImportLabel(suggested[1]),
+        });
+    }
+    const list = /^List (\d+)$/.exec(label);
+    if (list !== null) {
+        return fillWords(tran('List {number}'), { number: list[1] });
+    }
+    return tranLabel(label);
 }
 
 /**
@@ -1230,12 +2100,14 @@ function genLanguageStep(state?: BibleImportStateType): BotAnswerType {
         },
     };
     return {
-        text:
+        text: tran(
             '**Which language do you want the Bible in?** Press one, or type ' +
-            'its name — in English or in its own words, for example Thai, ' +
-            'ខ្មែរ or Español. I will look in a free collection of about a ' +
-            'thousand Bibles and show you every one in that language. If ' +
-            'you have a link to a Bible file, you can paste it here instead.',
+                'its name — in English or in its own words, for example ' +
+                'Thai, ខ្មែរ or Español. I will look in a free collection of ' +
+                'about a thousand Bibles and show you every one in that ' +
+                'language. If you have a link to a Bible file, you can paste ' +
+                'it here instead.',
+        ),
         actions,
     };
 }
@@ -1243,10 +2115,11 @@ function genLanguageStep(state?: BibleImportStateType): BotAnswerType {
 async function runLocalFile(): Promise<BotAnswerType> {
     await openBibleSettingForm();
     return {
-        text:
+        text: tran(
             'I opened **Settings → Bible**. Press **Choose File**, pick the ' +
-            'Bible file (its name ends in .xml), then press **Import** below ' +
-            'it.',
+                'Bible file (its name ends in .xml), then press **Import** ' +
+                'below it.',
+        ),
     };
 }
 
@@ -1257,14 +2130,17 @@ async function runLocalFile(): Promise<BotAnswerType> {
 export function describeBibleImportStep(state: BibleImportStateType) {
     switch (state.step) {
         case 'check':
-            return 'Downloading the Bible file and reading it';
+            return tran('Downloading the Bible file and reading it');
         case 'locale-typed':
         case 'more-names':
-            return 'Looking online for Bible book names — this can take a minute';
+        case 'names-url':
+            return tran(
+                'Looking online for Bible book names — this can take a minute',
+            );
         case 'import':
-            return 'Installing the Bible';
+            return tran('Installing the Bible');
         case 'undo':
-            return 'Putting it back';
+            return tran('Putting it back');
         default:
             return null;
     }

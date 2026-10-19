@@ -26,9 +26,9 @@ the next launch or Reload, with nothing to type.
             "baseUrl": "https://quiet-river-1234.trycloudflare.com/v1",
             "apiKey": "",
             "isFree": true,
-            "note": "LM Studio on the church's computer, through a Cloudflare tunnel",
+            "note": "The church's own computer: free for us, and the words stay in the building.",
             "models": [
-                { "model": "qwen/qwen3.5-9b", "name": "Qwen 3.5 9B", "canSeeImages": true },
+                { "model": "qwen/qwen3.5-9b", "name": "Qwen 3.5 9B", "canSeeImages": true, "note": "Slow, but it saves us the cost of usage." },
                 { "model": "google/gemma-4-e4b", "name": "Gemma 4 E4B", "canSeeImages": true }
             ]
         }
@@ -46,8 +46,8 @@ the next launch or Reload, with nothing to type.
 | `servers[].baseUrl` | yes | The OpenAI-compatible base address, usually ending in `/v1`; `http` or `https`, up to 500 characters. The app calls `GET <baseUrl>/models` and `POST <baseUrl>/chat/completions`, and reads LM Studio's / Ollama's / llama.cpp's own root doors when the address allows. **Held in the main process only; never shown in any window** (see _What the app does with it_). |
 | `servers[].apiKey` | no | Sent as `Authorization: Bearer …`. **Held in the main process only; never shown in any window.** Anyone who can read this file can read the key: use a key that only reaches this server. |
 | `servers[].isFree` | no | `true` prices the server's answers at nothing in the help window (the church's own machine). Otherwise the price is "not known". |
-| `servers[].note` | no | For people reading the file; up to 300 characters; not shown in the app. |
-| `servers[].models[]` | yes, at least one — unless `isAcceptingReport` | `model` is the id the server knows (`qwen/qwen3.5-9b`); `name` what the picker shows (empty shows the id); `canSeeImages` lets a picture be attached. Up to the app's per-server model cap. |
+| `servers[].note` | no | **Shown** to the person choosing the server, before each model's own note: under the help window's pickers, on the model's hover, in Auto's waiting line and in Settings → Others → Shared servers. Text, or one per language — `{"en": "…", "km": "…"}` (the app shows its own language's, then plain text, then English); up to 300 characters each, 12 languages. The server's host is taken out of it before a window sees it. A note for whoever edits the file does not belong here. |
+| `servers[].models[]` | yes, at least one — unless `isAcceptingReport` | `model` is the id the server knows (`qwen/qwen3.5-9b`); `name` what the picker shows (empty shows the id); `canSeeImages` lets a picture be attached; `note` the model's own word to the person choosing it, the same shape as the server's — _Slow, but it saves us the cost of usage._ Up to the app's per-server model cap. |
 | `servers[].isAcceptingReport` | no | `true` makes the entry **an address that takes problem reports**, and nothing else — see below. It needs no `models`. |
 
 A server with no name, no usable address or no model is skipped; the rest of
@@ -194,6 +194,13 @@ reports_).
   as `isFree`, since a window can no longer read that off the address.
   **This hides the address inside the app, not on the internet**: the file
   itself is public (see _Safety_).
+- **The notes ARE told** (2026-10-17): a server's `note` and each model's
+  are shown to the person choosing — a line under the help window's pickers
+  for the model the chat asks (on Auto, the one it picked last), the
+  model's hover, the waiting line when Auto picks it, and Settings →
+  Others → **Shared servers** — in the app's language when the note has
+  one, with the server's host taken out. Write them for a volunteer:
+  _Slow, but it saves us the cost of usage._
 - **A developer can point the app at another file** with the environment
   variable `OWA_LLM_REGISTRY_URL` (any `http(s)` address), which is how it
   is tested against a stand-in server.

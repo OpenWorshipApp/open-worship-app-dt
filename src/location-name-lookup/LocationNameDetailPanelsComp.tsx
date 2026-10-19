@@ -9,6 +9,8 @@ import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
 import OpenGraphPreviewButtonComp from '../graph-view/OpenGraphPreviewButtonComp';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
 import { handleError } from '../helper/errorHelpers';
@@ -161,6 +163,57 @@ function RenderOpenInLookupButtonComp({
 }
 
 /**
+ * The 🤖 at the left of the title (2026-10-18, the user's picture of three
+ * panels with that corner circled: _add robot icon, click to open chatbot,
+ * make sure mcp tool provide all information to chatbot session then let
+ * user interact_). It opens the assistant on what the panel shows -- a tab
+ * of its own that reads the record through `owa_lookup_record` and is ready
+ * to be asked about it -- after the 🤖's own two questions (whether AI is
+ * on, then the caution). Handed over is WHICH record and the window it is
+ * open in (`lookupAskHelpers.ts`), where its data is already held.
+ *
+ * Drawn only while AI is on, like the Resources panel's: a control on a
+ * reading surface that can only say "AI is off" is clutter there.
+ */
+function RenderAskAssistantButtonComp({
+    ask,
+}: Readonly<{ ask: LookupAskType }>) {
+    const askRef = useAppCurrentRef(ask);
+    if (!getIsAIEnabled()) {
+        return null;
+    }
+    // Literal keys, so the dictionary check reads each one.
+    const label =
+        ask.kind === 'verse'
+            ? tran('Ask the Assistant About This Passage')
+            : ask.kind === 'location'
+              ? tran('Ask the Assistant About This Place')
+              : tran('Ask the Assistant About This Person');
+    return (
+        <button
+            type="button"
+            className={
+                'floating-widget__button flex-shrink-0' +
+                ' location-name-lookup__title-button'
+            }
+            title={label}
+            aria-label={label}
+            onClick={() => {
+                // Loaded at the press: the dialogs the assistant asks first
+                // and the window opener are nothing a panel needs until then.
+                import('../helper/ai/chatbotHandoffHelpers')
+                    .then(({ openChatbotWithLookup }) => {
+                        return openChatbotWithLookup(askRef.current);
+                    })
+                    .catch(handleError);
+            }}
+        >
+            <i className="bi bi-robot" />
+        </button>
+    );
+}
+
+/**
  * The verse panel's `(KJV)`: pressed, it lists the other installed bibles,
  * and the one picked opens as a panel of its own beside this one -- the
  * verse in two bibles is two panels, never this one re-read.
@@ -248,6 +301,23 @@ function RenderDetailPanelComp({
     // A verse panel's title is a reference, not a record name, so there is
     // never an English one to add to it.
     const kjvName = record === null ? '' : getRecordKjvName(record);
+    // What the 🤖 hands the assistant: the record as the panel was opened
+    // with it, by the name it shows -- the language's own, never the KJV's,
+    // which the record carries for the assistant -- and the passage in the
+    // Bible the body read it in.
+    const assistantAsk: LookupAskType = {
+        kind: panel.kind,
+        target: panel.target,
+        title,
+        ...(panel.kind === 'verse'
+            ? (verseData?.bibleKey ?? panel.bibleKey) === undefined
+                ? {}
+                : { bibleKey: verseData?.bibleKey ?? panel.bibleKey }
+            : panel.langCode === undefined
+              ? {}
+              : { langCode: panel.langCode }),
+        page: globalThis.location?.href ?? '',
+    };
     const handleCopy = async () => {
         if (panel.kind === 'verse' && verseData?.sectionList) {
             // Across chapters the WHOLE passage is copied, every chapter under
@@ -357,6 +427,7 @@ function RenderDetailPanelComp({
                                 : fontFamily,
                     }}
                 >
+                    <RenderAskAssistantButtonComp ask={assistantAsk} />
                     {panel.kind === 'verse' ? null : (
                         <OpenGraphPreviewButtonComp
                             kind={panel.kind}

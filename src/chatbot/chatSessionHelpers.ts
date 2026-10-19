@@ -34,15 +34,26 @@ import {
     type ShowRefType,
 } from './quickReplyHelpers';
 // A value import, like `botFocus.mjs` above, and safe for the same reason:
-// the usage module imports nothing but a type of its own, so it costs the
-// mount path arithmetic and a price table.
+// the usage module imports nothing but a type of its own and the leaf
+// `chatTranHelpers`, so it costs the mount path arithmetic and a price table.
 import { toValidUsage, type ChatUsageType } from './usageHelpers';
+// Value imports with no imports of their own, like the two above.
+import { toOpenableLinks } from './chatLinkHelpers';
+import { fillWords, tran } from './chatTranHelpers';
+// A leaf too: its validator and the request's own, nothing else.
+import {
+    toValidLookupSubject,
+    type LookupSubjectType,
+} from './lookupChatHelpers';
+import {
+    toValidLookupAsk,
+    type LookupAskType,
+} from '../helper/ai/lookupAskHelpers';
 import {
     REPORT_NOTE,
     REPORT_SEND_TOOL_NAME,
     REPORT_START_TOOL_NAME,
     REPORT_STILL_TOOL_NAME,
-    REPORT_TITLE_PREFIX,
 } from './reportMarks';
 
 /**
@@ -89,17 +100,48 @@ export type ChatMessageType = {
     attachRequests?: AttachRequestType[];
     // ...and what it offers to show the user in return.
     shows?: ShowRefType[];
+    // The web addresses in the text that are drawn as links, pressed open in
+    // the browser. Only ones the APP wrote (`chatLinkHelpers`): a model's
+    // words stay words, whatever a page it read told it to say.
+    links?: string[];
     // What this answer cost: the model rounds it took and the tokens they
     // used, with the list-price estimate worked out from them. On the answer
     // rather than derived later, because the tab's total below survives the
     // message cap and the per-answer figure has to be read off the answer.
     usage?: ChatUsageType;
+    // Which assistant and model the rounds of this answer went to, in the
+    // pickers' own words ("Free", "Nemotron Super"): the cost line names the
+    // model and its hover both (the user's ask, 2026-10-16, with "free"
+    // circled under an answer -- free said nothing of WHO). The last round's,
+    // when a stand-in or Auto asked more than one.
+    answeredBy?: { assistant: string; model: string };
     // A question that went to the assistant as a GENERAL one (`/btw`, or a
     // follow-up under one -- `readInheritedGeneralQuestion`), so the next
     // plain question in the tab stays general too. On the question, because
     // the transcript keeps the words as typed and a follow-up carries no
     // `/btw` of its own to read it off.
     isGeneral?: true;
+    // An answer of a verse-finding conversation (`verseFindChatHelpers.ts`):
+    // the Bible it searches, so the next plain line typed under it is more
+    // of the same search. On the ANSWER, because the question that asked it
+    // was a press of a button as often as words.
+    verseFind?: string;
+    // The opening card of a conversation about what a Lookup Detail panel
+    // shows (`lookupChatHelpers.ts`): which person, place or passage, and
+    // what `owa_lookup_record` read of it -- once, on the card, never on
+    // every answer under it.
+    lookup?: LookupSubjectType;
+    // An answer of that conversation, so the next plain line under it is
+    // asked about the same record.
+    isLookupAnswer?: true;
+    // An answer of a conversation about the Bible Reader's own material
+    // (`bibleReaderChatHelpers.ts`), so the next plain line under it
+    // ("and chapter 5?") stays in it.
+    isBibleReaderAnswer?: true;
+    // An answer that asked which passage to open (**Open another passage**):
+    // the record it was asked from, so the line typed under it is read as
+    // that passage, in its Bible.
+    lookupAwaits?: LookupAskType;
     // The thumb the person pressed under this answer (`answerRatingHelpers`).
     // On the answer, so a reopened tab still shows which ones helped.
     rating?: 'like' | 'dislike';
@@ -151,6 +193,14 @@ export type ChatSessionType = {
     // rather than summed off its messages because the messages are capped
     // at sixty and the credit spent on the sixty-first is still spent.
     usage?: ChatUsageType;
+    // The file the tab was asking about was CLOSED (its × above the box) at
+    // this message: the files of a question at or before it are no longer
+    // sent with the next one (`findOpenFileAttachments`). A file attached
+    // after it is open again.
+    fileClosedAt?: number;
+    // The record the tab was asking about was put away (its × on the
+    // **Still asking about** line) at this message (`findOpenLookupSubject`).
+    lookupClosedAt?: number;
 };
 
 export type ChatSessionStateType = {
@@ -265,6 +315,14 @@ export function genChatSessionTitle(session: ChatSessionType) {
     if (session.title.length > 0) {
         return session.title;
     }
+    // A tab a Lookup Detail panel's 🤖 opened is called by what it is about
+    // -- the person, the place, the passage -- not by the first question.
+    const lookupTitle = session.messages[0]?.lookup?.title;
+    if (lookupTitle !== undefined) {
+        return lookupTitle.length <= MAX_TITLE_LENGTH
+            ? lookupTitle
+            : lookupTitle.slice(0, MAX_TITLE_LENGTH - 1) + '…';
+    }
     // A tab a problem is being reported in says so before anything else
     // (2026-10-13, the user's ask with the strip circled: _I don't see title
     // start with `Report:`_): it is the one tab whose words go to the people
@@ -276,11 +334,15 @@ export function genChatSessionTitle(session: ChatSessionType) {
         .find((message) => {
             return message.author === 'you';
         });
-    const prefix = isReport ? REPORT_TITLE_PREFIX : '';
+    // Drawn, never compared: a title is worked out afresh at every render,
+    // so it is in the window's language. `Report: ` is `REPORT_TITLE_PREFIX`.
     if (firstAsked === undefined) {
-        return isReport ? `${prefix}new` : 'New chat';
+        return isReport ? tran('Report: new') : tran('New chat');
     }
-    const text = prefix + firstAsked.text.trim().replace(/\s+/g, ' ');
+    const asked = firstAsked.text.trim().replace(/\s+/g, ' ');
+    const text = isReport
+        ? fillWords(tran('Report: {words}'), { words: asked })
+        : asked;
     if (text.length <= MAX_TITLE_LENGTH) {
         return text;
     }
@@ -418,6 +480,14 @@ function toValidAttachments(raw: any) {
                     ? { number: one.number }
                     : {}),
                 ...toValidAttachmentWindow(one.window),
+                // A PDF's page count, which says how many of its pages the
+                // model was NOT shown.
+                ...(one.kind === 'file' &&
+                Number.isInteger(one.pageCount) &&
+                one.pageCount > 0 &&
+                one.pageCount < 1000000
+                    ? { pageCount: one.pageCount }
+                    : {}),
             };
         });
     return attachments.length > 0 ? { attachments } : {};
@@ -452,6 +522,13 @@ function toValidUsageField(raw: unknown) {
     return usage === null ? {} : { usage };
 }
 
+// A stored link opens a page at a press, so only web addresses, only on an
+// answer, and only a few: a hand-edited file must not make anything else one.
+function toValidLinksField(raw: any) {
+    const links = raw.author === 'bot' ? toOpenableLinks(raw.links) : [];
+    return links.length > 0 ? { links } : {};
+}
+
 // Old conversations are data, not trusted UI. Earlier model answers could
 // persist their private OPTIONS / NEEDS / SHOWS frames before the parser grew
 // strict enough to remove every malformed variant. Clean bot text again while
@@ -459,6 +536,24 @@ function toValidUsageField(raw: unknown) {
 // already visible in a senior user's saved conversation.
 function toCleanStoredBotText(text: string) {
     return parseAnswerFrames(text).text;
+}
+
+// The record a conversation is about goes back into a tool call and into a
+// model's ask, so only on an answer and only its listed fields, each checked.
+function toValidLookupField(raw: any) {
+    if (raw.author !== 'bot' || raw.lookup === undefined) {
+        return {};
+    }
+    const lookup = toValidLookupSubject(raw.lookup);
+    return lookup === null ? {} : { lookup };
+}
+
+function toValidLookupAwaitsField(raw: any) {
+    if (raw.author !== 'bot' || raw.lookupAwaits === undefined) {
+        return {};
+    }
+    const lookupAwaits = toValidLookupAsk(raw.lookupAwaits);
+    return lookupAwaits === null ? {} : { lookupAwaits };
 }
 
 function toValidMessage(raw: any): ChatMessageType | null {
@@ -477,6 +572,31 @@ function toValidMessage(raw: any): ChatMessageType | null {
             ? { isGeneral: true as const }
             : {}),
         ...(raw.author === 'bot' &&
+        typeof raw.answeredBy?.assistant === 'string' &&
+        typeof raw.answeredBy?.model === 'string'
+            ? {
+                  answeredBy: {
+                      assistant: raw.answeredBy.assistant.slice(0, 80),
+                      model: raw.answeredBy.model.slice(0, 80),
+                  },
+              }
+            : {}),
+        // A Bible's short name, nothing longer: it goes back into a tool
+        // call as the Bible to search.
+        ...(raw.author === 'bot' &&
+        typeof raw.verseFind === 'string' &&
+        /^[^\s"“”]{1,24}$/u.test(raw.verseFind)
+            ? { verseFind: raw.verseFind }
+            : {}),
+        ...toValidLookupField(raw),
+        ...(raw.author === 'bot' && raw.isLookupAnswer === true
+            ? { isLookupAnswer: true as const }
+            : {}),
+        ...(raw.author === 'bot' && raw.isBibleReaderAnswer === true
+            ? { isBibleReaderAnswer: true as const }
+            : {}),
+        ...toValidLookupAwaitsField(raw),
+        ...(raw.author === 'bot' &&
         (raw.rating === 'like' || raw.rating === 'dislike')
             ? { rating: raw.rating as 'like' | 'dislike' }
             : {}),
@@ -490,6 +610,7 @@ function toValidMessage(raw: any): ChatMessageType | null {
         ...toValidReplies(raw.replies),
         ...toValidAttachments(raw.attachments),
         ...toValidUsageField(raw.usage),
+        ...toValidLinksField(raw),
         ...(Array.isArray(raw.shows)
             ? {
                   shows: raw.shows
@@ -573,6 +694,12 @@ function toValidSession(raw: any): ChatSessionType | null {
             : {}),
         isLocked: raw.isLocked === true,
         ...toValidUsageField(raw.usage),
+        ...(Number.isInteger(raw.fileClosedAt)
+            ? { fileClosedAt: raw.fileClosedAt }
+            : {}),
+        ...(Number.isInteger(raw.lookupClosedAt)
+            ? { lookupClosedAt: raw.lookupClosedAt }
+            : {}),
     };
 }
 

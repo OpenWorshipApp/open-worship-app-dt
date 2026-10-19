@@ -192,12 +192,6 @@ function checkIsIdentical(
     }
     return nestedBibleItem1.checkIsSameId(nestedBibleItem2);
 }
-function checkIsIndexGTZero(index: number) {
-    return index > 0;
-}
-function checkIsIndexLTLengthM1(index: number, length: number) {
-    return index < length - 1;
-}
 
 function seekParent(
     nestedBibleItems: NestedBibleItemsType,
@@ -230,33 +224,6 @@ function seekParent(
     }
     return null;
 }
-function getFirstBibleItemAtIndex(
-    nestedBibleItems: NestedBibleItemsType,
-    index: number,
-    isOrientation: boolean,
-    isGoBack: boolean,
-): ReadIdOnlyBibleItem | null {
-    if (Array.isArray(nestedBibleItems)) {
-        if (index < 0) {
-            index = nestedBibleItems.length - 1;
-        } else if (index >= nestedBibleItems.length) {
-            index = 0;
-        }
-        const target = nestedBibleItems[index];
-        if (target instanceof ReadIdOnlyBibleItem) {
-            return target;
-        } else {
-            return getFirstBibleItemAtIndex(
-                target,
-                isOrientation ? 0 : target.length - 1,
-                isGoBack ? !isOrientation : isOrientation,
-                isGoBack,
-            );
-        }
-    }
-    return null;
-}
-
 const movingPosition: { [key: string]: [boolean, boolean] } = {
     // [isHorizontal, isGoBack]
     left: [true, true],
@@ -265,6 +232,95 @@ const movingPosition: { [key: string]: [boolean, boolean] } = {
     bottom: [false, false],
 };
 export type MovingPositionType = keyof typeof movingPosition;
+
+type PaneBoxType = {
+    bibleItem: ReadIdOnlyBibleItem;
+    // [start, end] across the width and down the height, as shares of the
+    // whole view.
+    x: [number, number];
+    y: [number, number];
+};
+// The shares are fractions like a third of a half, which floating point does
+// not hold exactly: two panes touch when their edges are this close.
+const PANE_EDGE_EPSILON = 1e-9;
+
+/**
+ * Every pane as a box in a 1x1 square, split the way `BibleViewRendererComp`
+ * lays the tree out: the root array side by side, each nested array the other
+ * way, in equal shares. Sizes dragged by hand are not read: which pane is
+ * beside which is the grid's shape, and the shape costs no layout read.
+ */
+function layoutPaneBoxes(
+    nestedBibleItems: NestedBibleItemsType,
+    isHorizontal = true,
+    x: [number, number] = [0, 1],
+    y: [number, number] = [0, 1],
+    paneBoxes: PaneBoxType[] = [],
+) {
+    if (!Array.isArray(nestedBibleItems)) {
+        paneBoxes.push({ bibleItem: nestedBibleItems, x, y });
+        return paneBoxes;
+    }
+    const [start, end] = isHorizontal ? x : y;
+    const share = (end - start) / nestedBibleItems.length;
+    nestedBibleItems.forEach((item, i) => {
+        const span: [number, number] = [
+            start + share * i,
+            start + share * (i + 1),
+        ];
+        layoutPaneBoxes(
+            item,
+            !isHorizontal,
+            isHorizontal ? span : x,
+            isHorizontal ? y : span,
+            paneBoxes,
+        );
+    });
+    return paneBoxes;
+}
+
+/**
+ * The pane whose facing side sits on `edge` and that overlaps `source` across
+ * the move, or null. Of several, the one level with the source's middle wins
+ * -- the first, top or left, when the middle falls on the line between two --
+ * then the one overlapping most.
+ */
+function pickNeighborPaneBox(
+    paneBoxes: PaneBoxType[],
+    source: PaneBoxType,
+    isHorizontal: boolean,
+    isGoBack: boolean,
+    edge: number,
+) {
+    const along = isHorizontal ? 'x' : 'y';
+    const across = isHorizontal ? 'y' : 'x';
+    const [sourceStart, sourceEnd] = source[across];
+    const middle = (sourceStart + sourceEnd) / 2;
+    let found: PaneBoxType | null = null;
+    let foundScore = 0;
+    for (const paneBox of paneBoxes) {
+        // Going back, it is the neighbour's far side that faces the source.
+        const facing = paneBox[along][isGoBack ? 1 : 0];
+        if (Math.abs(facing - edge) > PANE_EDGE_EPSILON) {
+            continue;
+        }
+        const [start, end] = paneBox[across];
+        const overlap = Math.min(end, sourceEnd) - Math.max(start, sourceStart);
+        if (overlap <= PANE_EDGE_EPSILON) {
+            continue;
+        }
+        const isLevel =
+            start - PANE_EDGE_EPSILON <= middle &&
+            middle <= end + PANE_EDGE_EPSILON;
+        // An overlap is at most 1, so being level outranks any of them.
+        const score = overlap + (isLevel ? 2 : 0);
+        if (score > foundScore + PANE_EDGE_EPSILON) {
+            found = paneBox;
+            foundScore = score;
+        }
+    }
+    return found;
+}
 
 const BIBLE_ITEMS_PREVIEW_SETTING = 'bible-items-preview';
 class BibleItemsViewController extends EventHandler<UpdateEventType> {
@@ -518,56 +574,50 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         top: ReadIdOnlyBibleItem | null;
         bottom: ReadIdOnlyBibleItem | null;
     } {
-        const seekNeighbor = (
-            nestedBibleItems: NestedBibleItemsType,
-            targetNestedBibleItem: NestedBibleItemsType,
-            position: MovingPositionType,
-        ): ReadIdOnlyBibleItem | null => {
-            if (!positions.includes(position)) {
+        // Geometry, not a walk of the tree. The walk climbed to the split
+        // holding the neighbour and came back down through that split's first
+        // or last child, forgetting the row (or column) it started in:
+        // Ctrl+Shift+Left from the bottom-right of a 2x2 grid landed top-left
+        // (KB-27). A handful of panes, laid out once per key press.
+        const paneBoxes = layoutPaneBoxes(this.nestedBibleItems);
+        const source = paneBoxes.find((paneBox) => {
+            return paneBox.bibleItem.checkIsSameId(bibleItem);
+        });
+        const seekNeighbor = (position: MovingPositionType) => {
+            if (source === undefined || !positions.includes(position)) {
                 return null;
             }
             const [isHorizontal, isGoBack] = movingPosition[position];
-            const found = seekParent(nestedBibleItems, targetNestedBibleItem);
-            if (found === null) {
+            const [start, end] = source[isHorizontal ? 'x' : 'y'];
+            const found =
+                pickNeighborPaneBox(
+                    paneBoxes,
+                    source,
+                    isHorizontal,
+                    isGoBack,
+                    isGoBack ? start : end,
+                ) ??
+                // Off the outer edge the move wraps round to the far side,
+                // as it always has along a row: left from the first of three
+                // is the third.
+                pickNeighborPaneBox(
+                    paneBoxes,
+                    source,
+                    isHorizontal,
+                    isGoBack,
+                    isGoBack ? 1 : 0,
+                );
+            // A pane spanning the whole view that way wraps onto itself.
+            if (found === null || found === source) {
                 return null;
             }
-            const index = found.parentNestedBibleItems.indexOf(
-                found.targetNestedBibleItem,
-            );
-            const isOrientation = found.isHorizontal === isHorizontal;
-            const isMatchIndex = isGoBack
-                ? checkIsIndexGTZero(index)
-                : checkIsIndexLTLengthM1(
-                      index,
-                      found.parentNestedBibleItems.length,
-                  );
-            if (!(isOrientation && isMatchIndex)) {
-                const found1 = seekNeighbor(
-                    nestedBibleItems,
-                    found.parentNestedBibleItems,
-                    position,
-                );
-                if (found1 !== null) {
-                    return found1;
-                }
-            }
-            return getFirstBibleItemAtIndex(
-                found.parentNestedBibleItems,
-                index + (isGoBack ? -1 : 1),
-                isOrientation,
-                isGoBack,
-            );
+            return found.bibleItem;
         };
-        const nestedBibleItems = this.nestedBibleItems;
-        const left = seekNeighbor(nestedBibleItems, bibleItem, 'left');
-        const right = seekNeighbor(nestedBibleItems, bibleItem, 'right');
-        const top = seekNeighbor(nestedBibleItems, bibleItem, 'top');
-        const bottom = seekNeighbor(nestedBibleItems, bibleItem, 'bottom');
         return {
-            left,
-            right,
-            top,
-            bottom,
+            left: seekNeighbor('left'),
+            right: seekNeighbor('right'),
+            top: seekNeighbor('top'),
+            bottom: seekNeighbor('bottom'),
         };
     }
 

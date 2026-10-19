@@ -9,6 +9,7 @@ import {
     checkCanSoloChatSession,
     toClearableChatSessions,
 } from './chatSessionHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 
 /**
  * What a tab has to be for this strip to draw it. Shared by the help chatbot
@@ -65,6 +66,37 @@ type SweepType =
           kind: 'solo';
           sessionId: string;
       };
+
+// The question asked under the strip, in whole sentences: where the count
+// and the plural go is each language's own business.
+function genSweepQuestion(
+    kind: SweepType['kind'],
+    count: number,
+    lockedKeptCount: number,
+) {
+    const isClear = kind === 'clear';
+    const question =
+        count === 1
+            ? isClear
+                ? tran('Clear {count} chat?')
+                : tran('Close {count} chat?')
+            : isClear
+              ? tran('Clear {count} chats?')
+              : tran('Close {count} chats?');
+    const locked =
+        lockedKeptCount === 0
+            ? ''
+            : ' ' +
+              (lockedKeptCount === 1
+                  ? tran('The locked one stays.')
+                  : tran('The locked ones stay.'));
+    return (
+        fillWords(question, { count }) +
+        locked +
+        ' ' +
+        tran('This cannot be undone.')
+    );
+}
 
 // The tab strip. Several conversations at once, the way a browser holds
 // several pages -- and, unlike a browser, every one of them still there after
@@ -127,9 +159,11 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
     // So is which tab has its menu open, and which sweeping action is waiting
     // to be confirmed. That question is asked in this window rather than in
     // the app's confirm popup because this window loads bootstrap and its own
-    // sheet and nothing else -- pulling the popup in here would bring `tran()`
-    // and a module-scope listener with it (see `openAiSetting`), for one
-    // question with two answers.
+    // sheet and nothing else -- pulling the popup in here would bring the
+    // app's `tran()` and a module-scope listener with it (see
+    // `openAiSetting`), for one question with two answers. The words are the
+    // chatbot's own `tran` (`chatTranHelpers`), which pulls in nothing and
+    // stays English in the AI Chat window, which never plugs a translator in.
     const [menuState, setMenuState] = useState<TabMenuStateType | null>(null);
     const [sweep, setSweep] = useState<SweepType | null>(null);
     // The menu belongs to a tab, and that tab can go out from under it -- by
@@ -276,7 +310,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
             <div
                 className="chat-tabs"
                 role="tablist"
-                aria-label="Chats"
+                aria-label={tran('Chats')}
                 ref={stripRef}
             >
                 {sessions.map((session) => {
@@ -345,10 +379,13 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             <button
                                 type="button"
                                 className="chat-tab-menu"
-                                aria-label={`More for ${title}`}
+                                aria-label={fillWords(
+                                    tran('More for {title}'),
+                                    { title },
+                                )}
                                 aria-haspopup="menu"
                                 aria-expanded={isMenuOn}
-                                title="More"
+                                title={tran('More')}
                                 onClick={(event) => {
                                     handleOpeningMenu(event, session.id);
                                 }}
@@ -361,7 +398,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     type="text"
                                     autoFocus
                                     value={renamingText}
-                                    aria-label="Name this chat"
+                                    aria-label={tran('Name this chat')}
                                     onChange={(event) => {
                                         setRenamingText(event.target.value);
                                     }}
@@ -380,7 +417,12 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     role="tab"
                                     aria-selected={isOn}
                                     className="chat-tab-name"
-                                    title={`${title} — double-click to rename`}
+                                    title={fillWords(
+                                        tran(
+                                            '{title} — double-click to rename',
+                                        ),
+                                        { title },
+                                    )}
                                     onClick={() => {
                                         onChoose(session.id);
                                     }}
@@ -399,8 +441,11 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                 <span
                                     className="chat-tab-busy"
                                     role="img"
-                                    aria-label={`${title} is working on an answer`}
-                                    title="Working on an answer"
+                                    aria-label={fillWords(
+                                        tran('{title} is working on an answer'),
+                                        { title },
+                                    )}
+                                    title={tran('Working on an answer')}
                                 >
                                     <span className="chat-status-dot" />
                                 </span>
@@ -414,11 +459,14 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                 <span
                                     className="chat-tab-lock"
                                     role="img"
-                                    aria-label={`${title} is locked`}
-                                    title={
+                                    aria-label={fillWords(
+                                        tran('{title} is locked'),
+                                        { title },
+                                    )}
+                                    title={tran(
                                         'Locked — unlock it from this tab’s ' +
-                                        'menu to close it'
-                                    }
+                                            'menu to close it',
+                                    )}
                                 >
                                     <i className="bi bi-lock-fill" />
                                 </span>
@@ -426,8 +474,13 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                 <button
                                     type="button"
                                     className="chat-tab-close"
-                                    aria-label={`Close ${title}`}
-                                    title="Close this chat"
+                                    aria-label={fillWords(
+                                        tran('Close {title}'),
+                                        {
+                                            title,
+                                        },
+                                    )}
+                                    title={tran('Close this chat')}
                                     onClick={() => {
                                         onClose(session.id);
                                     }}
@@ -441,11 +494,11 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                 <button
                     type="button"
                     className="chat-tab-add"
-                    aria-label="New chat"
+                    aria-label={tran('New chat')}
                     title={
                         canAdd
-                            ? 'New chat'
-                            : 'Close one of these before starting another'
+                            ? tran('New chat')
+                            : tran('Close one of these before starting another')
                     }
                     disabled={!canAdd}
                     onClick={onAdd}
@@ -456,8 +509,8 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                     <button
                         type="button"
                         className="chat-tab-add chat-tab-window"
-                        aria-label="New window"
-                        title="New window"
+                        aria-label={tran('New window')}
+                        title={tran('New window')}
                         onClick={onNewWindow}
                     >
                         <i className="bi bi-window-plus" />
@@ -473,8 +526,8 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                     role="alertdialog"
                     aria-label={
                         sweep.kind === 'clear'
-                            ? 'Clear all chats'
-                            : 'Close other chats'
+                            ? tran('Clear all chats')
+                            : tran('Close other chats')
                     }
                     onKeyDown={(event) => {
                         if (event.key === 'Escape') {
@@ -483,17 +536,11 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                     }}
                 >
                     <span className="chat-clear-ask">
-                        {sweep.kind === 'clear' ? 'Clear ' : 'Close '}
-                        {sweepingSessions.length} chat
-                        {sweepingSessions.length === 1 ? '' : 's'}?
-                        {lockedKeptCount === 0
-                            ? ''
-                            : ` The locked ${
-                                  lockedKeptCount === 1
-                                      ? 'one stays'
-                                      : 'ones stay'
-                              }.`}{' '}
-                        This cannot be undone.
+                        {genSweepQuestion(
+                            sweep.kind,
+                            sweepingSessions.length,
+                            lockedKeptCount,
+                        )}
                     </span>
                     <button
                         type="button"
@@ -503,7 +550,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             setSweep(null);
                         }}
                     >
-                        Keep them
+                        {tran('Keep them')}
                     </button>
                     <button
                         type="button"
@@ -517,7 +564,9 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             setSweep(null);
                         }}
                     >
-                        {sweep.kind === 'clear' ? 'Clear all' : 'Close them'}
+                        {sweep.kind === 'clear'
+                            ? tran('Clear all')
+                            : tran('Close them')}
                     </button>
                 </div>
             )}
@@ -563,7 +612,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                 setRenamingText(genTitle(menuSession));
                             }}
                         >
-                            Rename this chat
+                            {tran('Rename this chat')}
                         </button>
                         <button
                             type="button"
@@ -575,8 +624,8 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             }}
                         >
                             {menuSession.isLocked
-                                ? 'Unlock this chat'
-                                : 'Lock this chat'}
+                                ? tran('Unlock this chat')
+                                : tran('Lock this chat')}
                         </button>
                         {onOpenInNewWindow === undefined ? null : (
                             <button
@@ -588,7 +637,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     onOpenInNewWindow(menuSession.id);
                                 }}
                             >
-                                Open in new window
+                                {tran('Open in new window')}
                             </button>
                         )}
                         {menuSession.isLocked ? null : (
@@ -601,7 +650,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     onClose(menuSession.id);
                                 }}
                             >
-                                Close this chat
+                                {tran('Close this chat')}
                             </button>
                         )}
                         {checkCanSoloChatSession(sessions, menuSession.id) ? (
@@ -619,7 +668,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                         });
                                     }}
                                 >
-                                    Close other chats…
+                                    {tran('Close other chats…')}
                                 </button>
                             </>
                         ) : null}
@@ -640,7 +689,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                         setSweep({ kind: 'clear' });
                                     }}
                                 >
-                                    Clear all chats…
+                                    {tran('Clear all chats…')}
                                 </button>
                             </>
                         ) : null}

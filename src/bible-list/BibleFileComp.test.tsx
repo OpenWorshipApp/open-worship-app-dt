@@ -122,8 +122,10 @@ vi.mock('../helper/DragInf', () => ({
 vi.mock('../helper/helpers', () => ({
     stopDraggingState: mocks.stopDragging,
 }));
+// A real control, as the attached-background button is: the header must
+// leave the keys pressed on it alone.
 vi.mock('../others/AttachBackgroundIconComp', () => ({
-    default: () => <span>Background icon</span>,
+    default: () => <button type="button">Background icon</button>,
 }));
 vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: () => null,
@@ -201,6 +203,68 @@ describe('saved Bible file row', () => {
         expect(host.textContent).toContain('Saved passages');
         await act(async () => click('Reload list'));
         expect(mocks.fromFilePath).toHaveBeenCalledTimes(3);
+    });
+
+    test('header is a keyboard control that folds the file open and shut', async () => {
+        // Toggles the way the real one does, so a second press closes.
+        state.bible.setIsOpened.mockImplementation((isOpened: boolean) => {
+            state.bible.isOpened = isOpened;
+        });
+        await renderFile();
+        const header = host.querySelector<HTMLElement>(
+            '[aria-label="Default"]',
+        )!;
+        expect(header.getAttribute('role')).toBe('button');
+        expect(header.tabIndex).toBe(0);
+        expect(header.getAttribute('aria-expanded')).toBe('false');
+
+        const enter = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => header.dispatchEvent(enter));
+        expect(state.bible.setIsOpened).toHaveBeenLastCalledWith(true);
+        expect(enter.defaultPrevented).toBe(true);
+        const space = new KeyboardEvent('keydown', {
+            key: ' ',
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => header.dispatchEvent(space));
+        expect(state.bible.setIsOpened).toHaveBeenLastCalledWith(false);
+        // Space would otherwise scroll the panel out from under it.
+        expect(space.defaultPrevented).toBe(true);
+        await act(async () =>
+            header.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+            ),
+        );
+        expect(state.bible.setIsOpened).toHaveBeenCalledTimes(2);
+
+        // A key on the control INSIDE the header is that control's own.
+        const inner = [...header.querySelectorAll('button')].find(
+            (button) => button.textContent === 'Background icon',
+        )!;
+        const innerEnter = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => inner.dispatchEvent(innerEnter));
+        expect(state.bible.setIsOpened).toHaveBeenCalledTimes(2);
+        expect(innerEnter.defaultPrevented).toBe(false);
+
+        // An opened file reloads with its header saying so.
+        const openedBible = makeBible();
+        openedBible.isOpened = true;
+        state.bible = openedBible;
+        await act(async () => state.onUpdate!());
+        expect(
+            host
+                .querySelector('[aria-label="Default"]')!
+                .getAttribute('aria-expanded'),
+        ).toBe('true');
     });
 
     test('menu exports, copies and empties a list only after confirmation', async () => {

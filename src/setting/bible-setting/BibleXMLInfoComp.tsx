@@ -134,7 +134,10 @@ export default function BibleXMLInfoComp({
         event.stopPropagation();
         const isConfirmed = await showAppConfirm(
             tran('Delete Bible XML'),
-            `Are you sure to delete bible XML "${bibleKeyRef.current}"?`,
+            tran('Are you sure to delete bible XML "{key}"?').replace(
+                '{key}',
+                () => bibleKeyRef.current,
+            ),
             {
                 cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',

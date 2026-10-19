@@ -33,6 +33,7 @@
 // allows more -- so "allow another dollar" means exactly that.
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 import {
     toRoundCostUsd,
     toUsdLabel,
@@ -405,7 +406,7 @@ export function allowMoreSpending(now = Date.now()) {
 /** The picker's option text: "$1", "$0.25", "No limit". */
 export function toSpendLimitLabel(limit: number | null) {
     if (limit === null) {
-        return 'No limit';
+        return tran('No limit');
     }
     // "$1" and "$0.50", never "$1.00" or "$0.5": the same rule as the price
     // list in the model picker, so the two read as one voice.
@@ -453,25 +454,49 @@ function checkIsCapStillReached(state: SpendStateType) {
  * 460px window; the sentences are on the hover.
  */
 export function describeSpendState(state: SpendStateType) {
-    const calls = `${state.spentRounds} call${state.spentRounds === 1 ? '' : 's'}`;
+    const isOneCall = state.spentRounds === 1;
+    const values = {
+        count: state.spentRounds,
+        dollars: toUsdLabel(state.spentUsd),
+        limit: toSpendLimitLabel(state.limitUsd),
+    };
     if (state.isTripped) {
         if (!checkIsCapStillReached(state)) {
-            return 'paused · limit reached';
+            return tran('paused · limit reached');
         }
-        return state.trippedBy === 'pace'
-            ? `paused · ${calls} this hour`
-            : `paused · ≈ ${toUsdLabel(state.spentUsd)} this hour`;
+        if (state.trippedBy !== 'pace') {
+            return fillWords(tran('paused · ≈ {dollars} this hour'), values);
+        }
+        return fillWords(
+            isOneCall
+                ? tran('paused · {count} call this hour')
+                : tran('paused · {count} calls this hour'),
+            values,
+        );
     }
     if (state.spentRounds === 0) {
         return '';
     }
-    const spent =
-        state.spentUsd > 0 || state.unpricedRounds === 0
-            ? `≈ ${toUsdLabel(state.spentUsd)}`
-            : calls;
-    return state.limitUsd === null
-        ? `${spent} this hour`
-        : `${spent} of ${toSpendLimitLabel(state.limitUsd)} this hour`;
+    // Whole phrases, not "{spent} of {limit}": each language orders its own.
+    const isDollars = state.spentUsd > 0 || state.unpricedRounds === 0;
+    if (state.limitUsd === null) {
+        return fillWords(
+            isDollars
+                ? tran('≈ {dollars} this hour')
+                : isOneCall
+                  ? tran('{count} call this hour')
+                  : tran('{count} calls this hour'),
+            values,
+        );
+    }
+    return fillWords(
+        isDollars
+            ? tran('≈ {dollars} of {limit} this hour')
+            : isOneCall
+              ? tran('{count} call of {limit} this hour')
+              : tran('{count} calls of {limit} this hour'),
+        values,
+    );
 }
 
 /**
@@ -487,27 +512,86 @@ export function describeSpendFolded(state: SpendStateType) {
     }
     return state.limitUsd === null
         ? toSpendLimitLabel(null)
-        : `${toSpendLimitLabel(state.limitUsd)} an hour`;
+        : fillWords(tran('{limit} an hour'), {
+              limit: toSpendLimitLabel(state.limitUsd),
+          });
+}
+
+// What the last hour has cost, in one whole sentence of four.
+function genSpentSentence(state: SpendStateType) {
+    if (state.spentRounds === 0) {
+        return tran('Nothing has been spent in the last hour.');
+    }
+    const values = {
+        dollars: toUsdLabel(state.spentUsd),
+        count: state.spentRounds,
+        unpriced: state.unpricedRounds,
+    };
+    const isOneCall = state.spentRounds === 1;
+    if (state.unpricedRounds === 0) {
+        return fillWords(
+            isOneCall
+                ? tran(
+                      'In the last hour: about {dollars} over {count} model ' +
+                          'call, across every tab of this window. An ' +
+                          'estimate at list price.',
+                  )
+                : tran(
+                      'In the last hour: about {dollars} over {count} model ' +
+                          'calls, across every tab of this window. An ' +
+                          'estimate at list price.',
+                  ),
+            values,
+        );
+    }
+    return fillWords(
+        isOneCall
+            ? tran(
+                  'In the last hour: about {dollars} over {count} model call, ' +
+                      '{unpriced} of them on a model with no list price ' +
+                      'here, across every tab of this window. An estimate ' +
+                      'at list price.',
+              )
+            : tran(
+                  'In the last hour: about {dollars} over {count} model ' +
+                      'calls, {unpriced} of them on a model with no list ' +
+                      'price here, across every tab of this window. An ' +
+                      'estimate at list price.',
+              ),
+        values,
+    );
 }
 
 /** The hover behind that figure, and the words under the picker. */
 export function describeSpendGuard(state: SpendStateType) {
+    const values = {
+        count: MAX_SPEND_ROUNDS_PER_HOUR,
+        limit: toSpendLimitLabel(state.limitUsd),
+    };
     const cap =
         state.limitUsd === null
-            ? `The money cap is off. The assistant still pauses after ${MAX_SPEND_ROUNDS_PER_HOUR} model calls in one hour, which is more than a person asks for.`
-            : `When the assistant has spent about ${toSpendLimitLabel(state.limitUsd)} in one hour (or made ${MAX_SPEND_ROUNDS_PER_HOUR} model calls), it pauses and asks before spending more, so a fault cannot run up the bill.`;
-    const spent =
-        state.spentRounds === 0
-            ? 'Nothing has been spent in the last hour.'
-            : `In the last hour: about ${toUsdLabel(state.spentUsd)} over ${state.spentRounds} model call${state.spentRounds === 1 ? '' : 's'}` +
-              (state.unpricedRounds > 0
-                  ? `, ${state.unpricedRounds} of them on a model with no list price here`
-                  : '') +
-              ', across every tab of this window. An estimate at list price.';
+            ? fillWords(
+                  tran(
+                      'The money cap is off. The assistant still pauses ' +
+                          'after {count} model calls in one hour, which is ' +
+                          'more than a person asks for.',
+                  ),
+                  values,
+              )
+            : fillWords(
+                  tran(
+                      'When the assistant has spent about {limit} in one ' +
+                          'hour (or made {count} model calls), it pauses and ' +
+                          'asks before spending more, so a fault cannot run ' +
+                          'up the bill.',
+                  ),
+                  values,
+              );
     const paused = state.isTripped
-        ? ' The assistant is PAUSED now: press Allow more to carry on.'
+        ? ' ' +
+          tran('The assistant is PAUSED now: press Allow more to carry on.')
         : '';
-    return `${cap} ${spent}${paused}`;
+    return `${cap} ${genSpentSentence(state)}${paused}`;
 }
 
 /**
@@ -520,34 +604,63 @@ export function describeSpendPause(state: SpendStateType) {
     // Plain words, no markup: this sentence is drawn as a NOTE over the
     // offline answer, and a note is plain text -- the asterisks would show.
     const lift =
-        'Press Allow more to carry on for another hour' +
-        (state.limitUsd === null
-            ? ''
-            : ', or raise the limit under Limit per hour at the top') +
-        '. Until then the built-in guide answers for free.';
+        state.limitUsd === null
+            ? tran(
+                  'Press Allow more to carry on for another hour. Until ' +
+                      'then the built-in guide answers for free.',
+              )
+            : tran(
+                  'Press Allow more to carry on for another hour, or raise ' +
+                      'the limit under Limit per hour at the top. Until then ' +
+                      'the built-in guide answers for free.',
+              );
     // The hour's own figure only while it still says why: see
     // `checkIsCapStillReached`.
     const isStillReached = checkIsCapStillReached(state);
     if (state.trippedBy === 'pace') {
-        return (
-            'I have paused the assistant: it ' +
-            (isStillReached
-                ? `has made ${state.spentRounds} model calls in the last hour`
-                : `made ${MAX_SPEND_ROUNDS_PER_HOUR} model calls within one hour`) +
-            ', which is more than a person would ask for, so something may ' +
-            `be running away with your credit. ${lift}`
-        );
+        const why = isStillReached
+            ? fillWords(
+                  tran(
+                      'I have paused the assistant: it has made {count} ' +
+                          'model calls in the last hour, which is more than a ' +
+                          'person would ask for, so something may be running ' +
+                          'away with your credit.',
+                  ),
+                  { count: state.spentRounds },
+              )
+            : fillWords(
+                  tran(
+                      'I have paused the assistant: it made {count} model ' +
+                          'calls within one hour, which is more than a person ' +
+                          'would ask for, so something may be running away ' +
+                          'with your credit.',
+                  ),
+                  { count: MAX_SPEND_ROUNDS_PER_HOUR },
+              );
+        return `${why} ${lift}`;
     }
-    return (
-        'I have paused the assistant to protect your credit: ' +
-        (isStillReached
-            ? `it has spent about ${toUsdLabel(state.spentUsd)} in the last ` +
-              `hour, which reaches the ${toSpendLimitLabel(state.limitUsd)} ` +
-              'limit set for this window. '
-            : `within one hour it reached the ${toSpendLimitLabel(state.limitUsd)} ` +
-              'limit set for this window. ') +
-        lift
-    );
+    const values = {
+        dollars: toUsdLabel(state.spentUsd),
+        limit: toSpendLimitLabel(state.limitUsd),
+    };
+    const why = isStillReached
+        ? fillWords(
+              tran(
+                  'I have paused the assistant to protect your credit: it ' +
+                      'has spent about {dollars} in the last hour, which ' +
+                      'reaches the {limit} limit set for this window.',
+              ),
+              values,
+          )
+        : fillWords(
+              tran(
+                  'I have paused the assistant to protect your credit: ' +
+                      'within one hour it reached the {limit} limit set for ' +
+                      'this window.',
+              ),
+              values,
+          );
+    return `${why} ${lift}`;
 }
 
 /**
@@ -562,14 +675,30 @@ export function takeNearLimitNotice(now = Date.now()): string | null {
     isNearLimitNoticed = true;
     // With the share in it: at a small cap the two figures round to the
     // same cents ("$0.05 of $0.05") and the share is what says how close.
-    const figure =
+    if (
         state.limitUsd !== null &&
         state.spentUsd >= state.limitUsd * NEAR_LIMIT_RATIO
-            ? `about ${toUsdLabel(state.spentUsd)} of the ${toSpendLimitLabel(state.limitUsd)} hourly limit is used (${Math.round((state.spentUsd / state.limitUsd) * 100)}%)`
-            : `${state.spentRounds} of the ${MAX_SPEND_ROUNDS_PER_HOUR} model calls an hour are used`;
-    return (
-        `Heads-up: ${figure}. At the limit I pause and ask before ` +
-        'spending more; the guide keeps answering for free.'
+    ) {
+        return fillWords(
+            tran(
+                'Heads-up: about {dollars} of the {limit} hourly limit is ' +
+                    'used ({percent}%). At the limit I pause and ask before ' +
+                    'spending more; the guide keeps answering for free.',
+            ),
+            {
+                dollars: toUsdLabel(state.spentUsd),
+                limit: toSpendLimitLabel(state.limitUsd),
+                percent: Math.round((state.spentUsd / state.limitUsd) * 100),
+            },
+        );
+    }
+    return fillWords(
+        tran(
+            'Heads-up: {count} of the {max} model calls an hour are used. ' +
+                'At the limit I pause and ask before spending more; the ' +
+                'guide keeps answering for free.',
+        ),
+        { count: state.spentRounds, max: MAX_SPEND_ROUNDS_PER_HOUR },
     );
 }
 

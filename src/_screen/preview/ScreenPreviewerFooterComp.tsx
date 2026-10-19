@@ -282,10 +282,29 @@ export default function ScreenPreviewerFooterComp() {
     const screenManagerBase = useScreenManagerBaseContext();
     const [stageNumber, setStageNumber] = useState(screenManagerBase.stage);
     const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
+    const screenManagerRef = useAppCurrentRef(screenManager);
     const setStageNumber1 = useCallback(
         (newStageNumber: number) => {
+            const effectManager =
+                screenManagerRef.current.varyAppDocumentEffectManager;
+            const oldEffectType = effectManager?.effectType;
             screenManagerBaseRef.current.stage = newStageNumber;
             setStageNumber(newStageNumber);
+            // A stage above 0 sets the Slide transition to None (the stage
+            // setter, by request). Said out loud: the operator's own choice
+            // used to vanish with nothing on screen to say why.
+            if (
+                oldEffectType !== undefined &&
+                oldEffectType !== 'none' &&
+                effectManager?.effectType === 'none'
+            ) {
+                showSimpleToast(
+                    tran('Slide transition'),
+                    tran(
+                        'A stage above 0 cuts between slides, so the Slide transition was set to None.',
+                    ),
+                );
+            }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],

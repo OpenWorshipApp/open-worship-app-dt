@@ -16,6 +16,7 @@
 // the account's own catalogue has no price here, and a count with "price not
 // known" beside it is worth more than a blank.
 
+import { fillWords, tran } from './chatTranHelpers';
 import type { LlmProviderType } from './llmBotHelpers';
 
 /**
@@ -401,7 +402,7 @@ export function toUsdLabel(usd: number) {
     if (usd >= 0.001) {
         return `$${usd.toFixed(3)}`;
     }
-    return 'under $0.001';
+    return tran('under $0.001');
 }
 
 /**
@@ -411,13 +412,23 @@ export function toUsdLabel(usd: number) {
 export function toCostLabel(usage: ChatUsageType) {
     const pricedRounds = usage.rounds - usage.unpricedRounds;
     if (pricedRounds === 0) {
-        return usage.rounds === 0 ? '' : 'price not known';
+        return usage.rounds === 0 ? '' : tran('price not known');
     }
-    const dollars =
-        usage.costUsd > 0 ? `≈ ${toUsdLabel(usage.costUsd)}` : 'free';
-    return usage.unpricedRounds > 0
-        ? `${dollars} + some at an unknown price`
-        : dollars;
+    const isMixed = usage.unpricedRounds > 0;
+    if (usage.costUsd > 0) {
+        const dollars = toUsdLabel(usage.costUsd);
+        return isMixed
+            ? fillWords(tran('≈ {dollars} + some at an unknown price'), {
+                  dollars,
+              })
+            : `≈ ${dollars}`;
+    }
+    return isMixed ? tran('free + some at an unknown price') : tran('free');
+}
+
+// A count as the figures here print it: "1,234".
+function toCountText(count: number) {
+    return count.toLocaleString('en-US');
 }
 
 /**
@@ -429,11 +440,95 @@ export function describeUsageBriefly(usage: ChatUsageType | undefined) {
     if (usage === undefined || usage.rounds === 0) {
         return '';
     }
-    return `${toCostLabel(usage)} · ${toCompactCount(toTotalTokens(usage))} tokens`;
+    const tokens = fillWords(tran('{count} tokens'), {
+        count: toCompactCount(toTotalTokens(usage)),
+    });
+    return `${toCostLabel(usage)} · ${tokens}`;
 }
 
-function toPlural(count: number, noun: string) {
-    return `${count.toLocaleString('en-US')} ${noun}${count === 1 ? '' : 's'}`;
+/**
+ * Which assistant and model an answer's rounds went to, for the hover over
+ * its label and its cost line: "Model: Free · Nemotron Super". Neutral on
+ * purpose -- under a note saying the assistant failed and the guide answered,
+ * the rounds were still that model's.
+ */
+export function toAnsweredByText(answeredBy: {
+    assistant: string;
+    model: string;
+}) {
+    return fillWords(tran('Model: {assistant} · {model}'), answeredBy);
+}
+
+// Where the tokens went, in whole phrases: a count and its plural are each
+// language's own order.
+function genTokenParts(usage: ChatUsageType) {
+    const toFilled = (sentence: string, count: number) => {
+        return fillWords(sentence, { count: toCountText(count) });
+    };
+    const rounds = toFilled(
+        usage.rounds === 1
+            ? tran('{count} model round')
+            : tran('{count} model rounds'),
+        usage.rounds,
+    );
+    const inputParts = [
+        toFilled(
+            usage.input === 1
+                ? tran('{count} token in at the full rate')
+                : tran('{count} tokens in at the full rate'),
+            usage.input,
+        ),
+    ];
+    if (usage.cacheRead > 0) {
+        inputParts.push(
+            toFilled(tran('{count} read from the cache'), usage.cacheRead),
+        );
+    }
+    if (usage.cacheWrite > 0) {
+        inputParts.push(
+            toFilled(tran('{count} written to it'), usage.cacheWrite),
+        );
+    }
+    const output = toFilled(
+        usage.output === 1
+            ? tran('{count} token out')
+            : tran('{count} tokens out'),
+        usage.output,
+    );
+    return `${rounds}: ${inputParts.join(', ')}; ${output}.`;
+}
+
+// What the dollars are worth, with the caveat.
+function genCostSentence(usage: ChatUsageType) {
+    const values = {
+        dollars: toUsdLabel(usage.costUsd),
+        count: toCountText(usage.unpricedRounds),
+    };
+    if (usage.unpricedRounds === 0) {
+        return fillWords(
+            tran(
+                'About {dollars} at the list price. An estimate: the bill ' +
+                    'from your provider is the real figure.',
+            ),
+            values,
+        );
+    }
+    return fillWords(
+        usage.unpricedRounds === 1
+            ? tran(
+                  'About {dollars} at the list price, not counting {count} ' +
+                      'round on a model this app has no price for. An ' +
+                      'estimate: the bill from your provider is the real ' +
+                      'figure.',
+              )
+            : tran(
+                  'About {dollars} at the list price, not counting {count} ' +
+                      'rounds on a model this app has no price for. An ' +
+                      'estimate: the bill from your provider is the real ' +
+                      'figure.',
+              ),
+        values,
+    );
 }
 
 /**
@@ -446,40 +541,19 @@ export function describeUsageInFull(usage: ChatUsageType | undefined) {
     if (usage === undefined || usage.rounds === 0) {
         return '';
     }
-    const inputParts = [
-        `${toPlural(usage.input, 'token')} in at the full rate`,
-    ];
-    if (usage.cacheRead > 0) {
-        inputParts.push(
-            `${usage.cacheRead.toLocaleString('en-US')} read from the cache`,
-        );
-    }
-    if (usage.cacheWrite > 0) {
-        inputParts.push(
-            `${usage.cacheWrite.toLocaleString('en-US')} written to it`,
-        );
-    }
-    const lines = [
-        `${toPlural(usage.rounds, 'model round')}: ${inputParts.join(', ')}; ` +
-            `${toPlural(usage.output, 'token')} out.`,
-    ];
+    const lines = [genTokenParts(usage)];
     const pricedRounds = usage.rounds - usage.unpricedRounds;
     if (pricedRounds === 0) {
         lines.push(
-            'This app has no list price for the model that answered, so it ' +
-                'cannot put a figure on the cost.',
+            tran(
+                'This app has no list price for the model that answered, ' +
+                    'so it cannot put a figure on the cost.',
+            ),
         );
     } else if (usage.costUsd === 0) {
-        lines.push('Answered by a free service, so nothing was charged.');
+        lines.push(tran('Answered by a free service, so nothing was charged.'));
     } else {
-        lines.push(
-            `About ${toUsdLabel(usage.costUsd)} at the list price` +
-                (usage.unpricedRounds > 0
-                    ? `, not counting ${toPlural(usage.unpricedRounds, 'round')} ` +
-                      'on a model this app has no price for'
-                    : '') +
-                '. An estimate: the bill from your provider is the real figure.',
-        );
+        lines.push(genCostSentence(usage));
     }
     return lines.join('\n');
 }

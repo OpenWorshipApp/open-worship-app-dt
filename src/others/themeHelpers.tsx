@@ -51,14 +51,13 @@ export function getColorParts(textColor?: string) {
 export const THEME_CHANGE_EVENT = 'app:theme-changed';
 function applyDarkModeToApp() {
     themeSourceSettingCache = null;
-    const isDarkMode = checkIsDarkMode();
-    const themeSource = isDarkMode ? 'dark' : 'light';
-    EventHandler.addPropEvent(THEME_CHANGE_EVENT, themeSource);
+    EventHandler.addPropEvent(THEME_CHANGE_EVENT, getThemeSourceSetting());
 }
 export function useThemeSource() {
     const [themeSource, setThemeSource] = useState<ThemeOptionType>(() =>
         getThemeSourceSetting(),
     );
+    const [, setThemeRevision] = useState(0);
     const setThemeSource1 = (newThemeSource: ThemeOptionType) => {
         themeSourceSettingCache = newThemeSource;
         setThemeSource(newThemeSource);
@@ -66,8 +65,9 @@ export function useThemeSource() {
         appProvider.messageUtils.sendData('main:app:set-theme', newThemeSource);
     };
     useAppEffect(() => {
-        const handler = (newTheme: ThemeOptionType) => {
-            setThemeSource(newTheme);
+        const handler = (newThemeSource: ThemeOptionType) => {
+            setThemeSource(newThemeSource);
+            setThemeRevision((revision) => revision + 1);
         };
         const registeredEvent = EventHandler.registerEventListener(
             [THEME_CHANGE_EVENT],

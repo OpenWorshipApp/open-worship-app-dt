@@ -34,6 +34,12 @@ const mocks = vi.hoisted(() => ({
     initMeter: vi.fn(),
     initDragDrop: vi.fn(),
     popupWindow: vi.fn(),
+    findDataDirs: vi.fn((_candidates: string[]) => [] as string[]),
+    desktopDataDirs: ['/desktop/open-worship-data'],
+    existingPaths: new Set<string>(),
+    askToMove: vi.fn(async (_dirPath: string) => {}),
+    remindOldCopy: vi.fn(async (_dirPath: string) => {}),
+    showMoveResult: vi.fn(async (_resultText: string) => {}),
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -90,6 +96,7 @@ vi.mock('../helper/domHelpers', () => ({
     handleActiveSelectedElementScrolling: vi.fn(),
 }));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    DATA_DIR_MOVE_RESULT_SESSION_NAME: 'data-dir-move-result',
     appLocalStorage: {
         get missingParentDirPath() {
             return mocks.missingParentDirPath;
@@ -111,9 +118,22 @@ vi.mock('../setting/settingHelpers', () => ({
     openGeneralSetting: mocks.openGeneralSetting,
 }));
 vi.mock('../server/fileHelpers', () => ({
-    findDataDirsOnVolumesSync: () => mocks.foundDirs,
-    getDesktopPath: () => '/desktop',
+    checkIsDesktopDataDir: (dirPath: string) =>
+        mocks.desktopDataDirs.includes(dirPath),
+    DATA_DIR_MOVED_FROM_FLAG_FILE_NAME: 'migration-moved-from.txt',
+    findDataDirsOnVolumesSync: (candidates: string[]) => {
+        mocks.findDataDirs(candidates);
+        return mocks.foundDirs;
+    },
+    fsExistSync: (filePath: string) => mocks.existingPaths.has(filePath),
+    getDefaultDataDirPath: () => '/home/.owa/open-worship-data',
+    getDesktopDataDirPathList: () => mocks.desktopDataDirs,
     pathJoin: (...parts: string[]) => parts.join('/'),
+}));
+vi.mock('../setting/directory-setting/dataDirMoveAskHelpers', () => ({
+    askToMoveDesktopDataDir: mocks.askToMove,
+    remindOldDataDirCopy: mocks.remindOldCopy,
+    showDataDirMoveResult: mocks.showMoveResult,
 }));
 vi.mock('../helper/sanitizeHelpers', () => ({
     escapeHtmlText: (value: string) => value.replaceAll('<', '&lt;'),
@@ -158,6 +178,8 @@ beforeEach(() => {
     mocks.isPageReader = false;
     mocks.isPopup = false;
     mocks.missingParentDirPath = null;
+    mocks.existingPaths.clear();
+    sessionStorage.clear();
     mocks.selectedParentDir = null;
     mocks.foundDirs = [];
     mocks.locale = 'en';
@@ -262,6 +284,11 @@ describe('data directory startup', () => {
         mocks.foundDirs = ['/usb/open-worship-data'];
         mocks.confirm.mockResolvedValueOnce(true);
         await checkDirectory();
+        // The new default first, then the old one on the Desktop.
+        expect(mocks.findDataDirs).toHaveBeenCalledWith([
+            '/home/.owa/open-worship-data',
+            '/desktop/open-worship-data',
+        ]);
         expect(mocks.setSelectedParentDir).toHaveBeenCalledWith(
             '/usb/open-worship-data',
         );
@@ -277,6 +304,56 @@ describe('data directory startup', () => {
         );
         expect(mocks.openGeneralSetting).toHaveBeenCalledOnce();
         expect(mocks.setSelectedParentDir).not.toHaveBeenCalled();
+    });
+
+    test('asks to move a Desktop data folder once per launch', async () => {
+        mocks.selectedParentDir = '/desktop/open-worship-data';
+        await checkDirectory();
+        expect(mocks.askToMove).toHaveBeenCalledExactlyOnceWith(
+            '/desktop/open-worship-data',
+        );
+        // A Presenter <-> Reader switch reloads the window, not the launch.
+        mocks.effects.length = 0;
+        await checkDirectory();
+        expect(mocks.askToMove).toHaveBeenCalledOnce();
+        // The next launch starts with an empty sessionStorage and asks again.
+        sessionStorage.clear();
+        mocks.effects.length = 0;
+        await checkDirectory();
+        expect(mocks.askToMove).toHaveBeenCalledTimes(2);
+        expect(mocks.remindOldCopy).not.toHaveBeenCalled();
+        expect(mocks.confirm).not.toHaveBeenCalled();
+    });
+
+    test('reminds about the old copy only for a folder that was moved', async () => {
+        mocks.selectedParentDir = '/home/.owa/open-worship-data';
+        await checkDirectory();
+        expect(mocks.remindOldCopy).not.toHaveBeenCalled();
+
+        sessionStorage.clear();
+        mocks.existingPaths.add(
+            '/home/.owa/open-worship-data/migration-moved-from.txt',
+        );
+        mocks.effects.length = 0;
+        await checkDirectory();
+        expect(mocks.remindOldCopy).toHaveBeenCalledExactlyOnceWith(
+            '/home/.owa/open-worship-data',
+        );
+        expect(mocks.askToMove).not.toHaveBeenCalled();
+    });
+
+    test('says what the move at this start did, with no reminder on top', async () => {
+        mocks.selectedParentDir = '/home/.owa/open-worship-data';
+        mocks.existingPaths.add(
+            '/home/.owa/open-worship-data/migration-moved-from.txt',
+        );
+        sessionStorage.setItem('data-dir-move-result', '{"isMoved":true}');
+        await checkDirectory();
+        expect(mocks.showMoveResult).toHaveBeenCalledExactlyOnceWith(
+            '{"isMoved":true}',
+        );
+        expect(sessionStorage.getItem('data-dir-move-result')).toBeNull();
+        expect(mocks.remindOldCopy).not.toHaveBeenCalled();
     });
 
     test('does not prompt an auxiliary window or an already configured main window', async () => {

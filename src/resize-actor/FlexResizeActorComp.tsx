@@ -378,6 +378,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         globalThis.removeEventListener('touchcancel', this.touchEndListener);
 
         this.setInactive();
+        this.scheduleValueNowStamp();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
             this.close('left', this.previousGrow);
             return;
@@ -423,6 +424,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.preNode.style.flex = prevDefault;
         this.nextNode.style.flexGrow = '';
         this.nextNode.style.flex = nextDefault;
+        this.scheduleValueNowStamp();
         this.props.checkSize();
     }
 
@@ -501,10 +503,29 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                 'aria-valuenow',
                 `${Math.round((100 * preSize) / (preSize + nextSize))}`,
             );
-        } catch (error) {
-            // A divider at the very edge has no neighbour to measure.
-            console.warn(error);
+        } catch {
+            // Every pane on one side is a collapsed strip, so there is no
+            // neighbour to measure. Quietly: this runs after every re-render,
+            // and the re-render that follows a pane opening stamps it.
         }
+    }
+
+    // `aria-valuenow` is written by hand, so whatever moves the panes has to
+    // write it again or a screen reader announces where the divider WAS:
+    // Reset Size put the panes back to 75% and it still said 65. At most one
+    // read a frame, and in the frame rather than in React's commit: every
+    // divider re-renders with its parent, and a size read mid-commit forces a
+    // layout the frame then does again.
+    private valueNowFrameId: number | null = null;
+
+    scheduleValueNowStamp() {
+        if (this.valueNowFrameId !== null) {
+            return;
+        }
+        this.valueNowFrameId = globalThis.requestAnimationFrame(() => {
+            this.valueNowFrameId = null;
+            this.stampValueNow();
+        });
     }
 
     handleContextMenuOpening(event: any) {
@@ -607,6 +628,22 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         const closeType = this.props.checkCanClose();
         if (closeType !== null) {
             this.close(closeType);
+        }
+        // Before, there was no value at all until the divider took focus.
+        this.scheduleValueNowStamp();
+    }
+
+    // A pane beside it opened, closed or was resized from somewhere else --
+    // its strip, the widget menu, Reset Layout, a drag on the next divider --
+    // and each of those re-renders it through the parent.
+    componentDidUpdate() {
+        this.scheduleValueNowStamp();
+    }
+
+    componentWillUnmount() {
+        if (this.valueNowFrameId !== null) {
+            globalThis.cancelAnimationFrame(this.valueNowFrameId);
+            this.valueNowFrameId = null;
         }
     }
 

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-22c — Clear the screen, or show and hide it, from a running order
 
@@ -41,14 +41,15 @@ it — rather than something to show.
    someone notices.
 
    **These two ask which screen** when you add them, and that is the whole point: a
-   checklist of the screens you have open appears (**Screen id: 0**, **Screen id: 1**, …,
+   checklist of the screens you have open appears (`Screen id: 0`, `Screen id: 1`, …,
    each in that screen's own colour), and the line remembers your answer as its pin — the
    line shows the pin badge, and **[en:tran:Set Specific Screen]** re-aims it later. Unlike every
    other line, it goes to those screens and _only_ those: it will not fall back to
    whichever screen you happened to have selected, and it will never stop to ask, because
    at 7:05 on an unattended sheet there is nobody there to answer. Tick nothing and the
    app says **[en:tran:Please choose at least one screen]** rather than adding a line that would do
-   nothing. Firing one twice is harmless — a **[en:tran:Screen: Show]** on a screen that is already
+   nothing. Like every action, the line lands at the end of the list: drag it up to where it
+   should fire. Firing one twice is harmless — a **[en:tran:Screen: Show]** on a screen that is already
    up does nothing at all, so it is safe inside a loop. Nothing can be attached to them
    either, though they can themselves be attached to another line — "put this last slide
    up **and** light the screen" in one click. 📸

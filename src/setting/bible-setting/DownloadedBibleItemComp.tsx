@@ -28,7 +28,10 @@ export default function DownloadedBibleItemComp({
     const handleBibleDeleting = useCallback(async () => {
         const isOk = await showAppConfirm(
             tran('Delete Bible'),
-            `Are you sure to delete bible "${titleRef.current}"?`,
+            tran('Are you sure to delete bible "{title}"?').replace(
+                '{title}',
+                () => titleRef.current,
+            ),
             {
                 cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',

@@ -33,7 +33,6 @@ import {
 } from './resourcesDropHelpers';
 import {
     addResourcesFolders,
-    carryResourcesFolderSettings,
     getResourcesFolderList,
     RESOURCES_OTHERS_SHOWING_SETTING_NAME,
     RESOURCES_SEARCH_SHOWING_SETTING_NAME,
@@ -140,7 +139,7 @@ export default function ResourcesRendererComp({
         setDirPathList(newDirPathList);
         // Nothing else can reach either of these once the folder is off the
         // list: the cached matches would sit until their TTL, and the
-        // expanded-state setting file would sit forever.
+        // expanded-state setting file an older version saved would sit forever.
         invalidateResourcesScanCache(dirPath);
         await removeResourcesFolderSettings(dirPath);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,9 +177,8 @@ export default function ResourcesRendererComp({
             try {
                 const { destinationDirPath } =
                     await copyResourcesFolderToDataDir(dirPath);
-                // The copy takes the original's place, open or collapsed as it
-                // was; the original stays on disk, only off the list.
-                carryResourcesFolderSettings(dirPath, destinationDirPath);
+                // The copy takes the original's place; the original stays on
+                // disk, only off the list.
                 const newDirPathList = replaceResourcesFolder(
                     getResourcesFolderList(),
                     dirPath,

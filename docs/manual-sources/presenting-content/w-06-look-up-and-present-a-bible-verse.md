@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-15"
+workflowsVersion: "2026-10-18"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -24,6 +24,9 @@ workflowsVersion: "2026-10-15"
    title (_John 3:16_) — its buttons appear over the end of the title — and click
    **[en:tran:Save bible item and show on screen]** (the cast icon), or just press
    **Ctrl+Shift+Enter**. The passage is saved to the **[en:tran:Bibles]** list as it goes up.
+   To keep a passage without putting it on the screen, click **[en:tran:Save bible item]**
+   (the floppy disk) beside it instead: it goes to the **[en:tran:Bibles]** list only. The
+   Bible Reader's lookup has the same button.
    Double-clicking a verse only brings it into view; it does not present. 📸
 4. The dialog closes by itself once the passage is saved, unless _[en:tran:Keep Open]_
    is ticked; to close it yourself use the red ✕ button or **Ctrl+Q**.
@@ -49,7 +52,9 @@ workflowsVersion: "2026-10-15"
    Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first. Nothing
    on the mini screen card steps the verse; from the Presenter itself, present the next
    passage the same way you presented this one.
-   **Another version on the screen.** On the mini screen card, each column of the passage
+   **Another version on the screen.** If no passage is on the screen yet, press **Ctrl+B**,
+   choose the book, chapter and verse, then press **Ctrl+Shift+Enter** to present it.
+   On the mini screen card, each column of the passage
    begins with the short name of its version (`KJV`, say). Click that name and a list of
    versions opens. A plain click on one **changes** that column to it — it adds nothing.
    To put a second version **beside** the first, hold **Shift** while you click it
@@ -62,7 +67,10 @@ workflowsVersion: "2026-10-15"
    the answer says what is on the screen now; it is not saved to the **[en:tran:Bibles]**
    list. 📸
 
-8. To make an editable slide document from a saved passage, open that item's
+8. To make an editable slide document from a saved passage, first save one if needed:
+   press **Ctrl+B**, choose the book, chapter and verse, then point at the passage's title
+   to reveal its buttons and click **[en:tran:Save bible item]** (the floppy disk).
+   Open that item's
    **⋮** menu in the Presenter's **[en:tran:Bibles]** list (the right column) and choose
    **[en:tran:Generate Slides]**. In the floating panel, tick every other Bible version
    you want on the same slides — one document holds them all, so this is done once, not
@@ -91,5 +99,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
 :::

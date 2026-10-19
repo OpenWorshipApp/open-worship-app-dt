@@ -78,12 +78,11 @@ export default function BibleCrossRefAIRenderFoundItemComp({
     if (data === undefined) {
         return <div className="app-xref-status">{tran('Loading')}...</div>;
     }
+    // A reference that names no passage (see `breakItem`) gets no row. A
+    // volunteer can do nothing with "Fail to get data for `PSA 119:ющ`" but
+    // read past it, and a row there invites a press that leads nowhere.
     if (data === null) {
-        return (
-            <div className="app-xref-status is-error">
-                {tran('Fail to get data for')} "{bibleVersesKey}"
-            </div>
-        );
+        return null;
     }
     const { htmlText, bibleItem, bibleText } = data;
     return (

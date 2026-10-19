@@ -254,6 +254,71 @@ describe('bibleRenderHelper', () => {
         ).toBe('text > (KJV) GEN 1:1-3');
     });
 
+    // RD-51: the cross-reference data spells some targets in ways no passage
+    // has. Read leniently, `PSA 56:title` was verse NaN: a row titled
+    // `Psalm 56:` whose press opened "Record not found".
+    test('parses a key from data strictly, or not at all', async () => {
+        const bibleRenderHelper = await loadHelper();
+        const parse = (key: string) => {
+            return bibleRenderHelper.parseKJVBibleVersesKey(key);
+        };
+
+        expect(parse('JHN 3:16')).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 16,
+        });
+        expect(parse(' JHN 3:16-18 ')).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 18,
+        });
+        // Across chapters, and a second chapter that is the same one.
+        expect(parse('GEN 29:31-30:24')).toEqual({
+            bookKey: 'GEN',
+            chapter: 29,
+            verseStart: 31,
+            verseEnd: 24,
+            chapterEnd: 30,
+        });
+        expect(parse('JHN 1:2-1:4')).toEqual({
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+        });
+        // A psalm's heading is printed just before its verse 1.
+        expect(parse('PSA 56:title')).toEqual({
+            bookKey: 'PSA',
+            chapter: 56,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        // The garbage the shipped bundles actually hold, and its neighbours.
+        for (const key of [
+            'PSA 119:ступ-106',
+            'PSA 119:ведения',
+            'PSA 119:ющ',
+            'GEN 1:title',
+            'PSA title:1',
+            'PSA 0:title',
+            'GEN 1',
+            'GEN',
+            '',
+            'GEN 0:1',
+            'GEN 1:0',
+            `GEN ${'9'.repeat(400)}:1`,
+        ]) {
+            expect(parse(key)).toBeNull();
+        }
+        // Ranges that run backwards name no passage.
+        expect(parse('JHN 3:18-16')).toBeNull();
+        expect(parse('JHN 3:2-3:1')).toBeNull();
+        expect(parse('JHN 3:1-2:4')).toBeNull();
+    });
+
     test('renders localized titles, falls back to model book names, and reuses cached titles', async () => {
         const bibleRenderHelper = await loadHelper();
         const target = {

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
-  modified: 2026-10-04T18:35:40.037Z
+  modified: 2026-10-17T03:13:50.814Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -18,8 +18,16 @@ env -u ELECTRON_RUN_AS_NODE OWA_USER_DATA_PATH="<repo>\release\<scratch>" NODE_E
   ./node_modules/electron/dist/electron.exe .        # background
 ```
 
-with `<scratch>\setting.json` seeded `{"clientSetting":{"selected-parent-dir":"<scratch>\\data"}}`
-and `<scratch>\data` created.
+with `<scratch>\setting.json` seeded
+`{"clientSetting":{"selected-parent-dir":"<scratch>\\data","stay-awake":"false"}}` and
+`<scratch>\data` created.
+
+- **A forgotten one keeps the PC from sleeping** (2026-10-16). Stay Awake is ON when unset
+  (`toIsStayAwake`), so a scratch Presenter holds `prevent-display-sleep` for as long as it
+  lives. pid 13428 (`release/robot-chatbot-20261015-2145`, launcher gone, window hidden) did
+  that for 25 h, and the user found their PC would not sleep. Seed `stay-awake` false as above,
+  and **stop it by pid before the session ends**. Its `lockfile` in the scratch folder is
+  dated with the start time, which is how to match an orphan to its profile.
 
 - **Not `npm run dev` and not `electron:build`.** `strictPort` makes a second `npm run dev` stop on
   the busy :3000, and `electron:build` deletes the `electron-build/` the user's app runs from
@@ -33,6 +41,16 @@ and `<scratch>\data` created.
   `take_screenshot`, `click`, `fill` and `list_pages` stayed on the app that
   was up first, so a uid press meant for the scratch window lands in the
   user's. Use the `owa_*` tools there and nothing aimed by uid.
+- **Not even `owa_*` stays on it** (2026-10-16): mid-session, with the scratch
+  instance still the newest and its window still published, `owa_app_state`
+  answered with the USER's app (their song on two live screens). Check the
+  answer's content, not the pid list, before every batch. What held: a FRESH
+  stdio server pinned to the scratch port -- `OWA_CDP_PORT=<port> node
+  tools/owa-devtools-mcp/bin.mjs`, JSON-RPC on stdin (initialize →
+  `notifications/initialized` → `tools/call`). The pin is exclusive
+  ([[cdp-pin-is-exclusive]]), every call still passes the firewall, and the
+  fresh process also serves just-edited tool code
+  ([[mcp-tool-edit-two-processes]]).
 - **A scratch instance has a taskbar identity of its own** (2026-10-15,
   `toAppUserModelId` in `electron/taskbarHelpers.ts`). Before, every dev
   copy shared `app.openworship.desktop.dev`, and the jump list belongs to
@@ -48,6 +66,16 @@ and `<scratch>\data` created.
 - A name box or a confirm is the person's to answer there too: seed the
   state it would have made as a `local-storage` file and reopen the panel
   (a setting read as absent is believed for 10 s).
+- **Its Presenter window can be HIDDEN outright** (2026-10-16: pid 13428's main window
+  `IsWindowVisible = false`, while its popups — editors, Settings, print preview — still
+  show on the user's desktop). A confirm raised there (e.g. **Select Default "documents"**)
+  is answerable by NOBODY: the firewall refuses it and the user cannot see it, and both
+  instances are titled "Open Worship app - Presenter", so a request to press it lands in
+  the user's own app. Never press a control that asks a question in that window; restore
+  through the path box instead, or write the setting file and `owa_menu View > Reload`.
+  `owa_click` now reports the `question` a press raised, but cannot say the window is
+  hidden: this window's page still reads `visibilityState: 'visible'`, and Electron's
+  CDP has no `Browser.getWindowForTarget` -- check `IsWindowVisible` from the OS.
 - It shares the user's Vite: touching a file to clear a stale transform
   ([[vite-caches-failed-import-resolution]]) reloads THEIR windows too.
 - Settings → General raises **Set according paths** the first time; **Yes** creates the child

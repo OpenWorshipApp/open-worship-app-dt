@@ -13,8 +13,11 @@ redirect CLAUDE.md documents). **User content** (videos, audios, documents, lyri
 bibles) hangs off `appLocalStorage.defaultStorageDirPath`
 (`src/setting/directory-setting/appLocalStorage.ts`): the user-selected parent
 dir, falling back to `userData`. There is no `-dev` string anywhere in `src/`;
-`Desktop/open-worship-data` is only a seeded default in the folder pickers
-(`src/setting/directory-setting/directoryHelpers.ts:23-27`). The old Windows box had
+the default (`getDefaultDataDirPath` in `src/server/fileHelpers.ts`) is only a
+seeded default in the folder pickers. It is `<home>/.owa/open-worship-data`
+since 2026-10-17 — it was `Desktop/open-worship-data`, which OneDrive backs up,
+and a folder still there is asked about at launch (W-54,
+`dataDirMoveHelpers.ts`); dev and packaged share that default. The old Windows box had
 dev pointed at `Desktop\open-worship-data-dev` and packaged at
 `Desktop\open-worship-data`; on this macOS machine (`/Users/raksa/…`) the parent is
 whatever the picker was given.

@@ -545,7 +545,20 @@ export function genWebPreferences(preloadPath: string) {
     return webPreferences;
 }
 
+/**
+ * `url` with its query in one fixed order, or `null` when it is not a URL.
+ *
+ * A popup `window.open` created a moment ago is in `getAllWindows()` before it
+ * has navigated, and its `getURL()` is then `''`. With two note windows opened
+ * in quick succession, the second open groups against the first while it is
+ * still `''`, and a `new URL('')` thrown there is an uncaught exception in the
+ * main process: Electron's blocking error dialog, the whole app frozen behind
+ * it until OK is pressed.
+ */
 function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
+    if (!URL.canParse(url)) {
+        return null;
+    }
     const urlObj = new URL(url);
     if (isRemovingUuid) {
         urlObj.searchParams.delete('uuid');
@@ -783,6 +796,9 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
 
     const allWindows = BrowserWindow.getAllWindows();
 
+    // A window whose URL is not one yet -- a popup still on `''` because it
+    // was opened a moment ago -- belongs to no group: `null` never equals the
+    // asked-for URL, which `handlePopupWindowOpen` has already made sure parses.
     const sortedUrl = toUrlWithSortedParams(url, true);
     const groupWindows = allWindows.filter((win) => {
         const { webContents } = win;
@@ -790,14 +806,16 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
             webContents.getURL(),
             true,
         );
-        return currentSortedUrl === sortedUrl;
+        return currentSortedUrl !== null && currentSortedUrl === sortedUrl;
     });
 
     const originalSortedUrl = toUrlWithSortedParams(url);
     const selfWindows = groupWindows.filter((win) => {
         const { webContents } = win;
         const currentSortedUrl = toUrlWithSortedParams(webContents.getURL());
-        return currentSortedUrl === originalSortedUrl;
+        return (
+            currentSortedUrl !== null && currentSortedUrl === originalSortedUrl
+        );
     });
 
     const subDisplay = genBoundsData(
@@ -1247,6 +1265,13 @@ function handlePopupWindowOpen(
     webPreferences: WebPreferences | undefined,
     options: HandlerDetails,
 ): WindowOpenHandlerResponse {
+    // Anything thrown in here is an uncaught exception in the main process,
+    // which freezes the app behind Electron's error dialog. A URL that does
+    // not parse names no page of this app nor a site to hand the browser, so
+    // it opens nothing -- the same answer an unknown window gets below.
+    if (!URL.canParse(options.url)) {
+        return { action: 'deny' };
+    }
     if (
         !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
         webPreferences === undefined

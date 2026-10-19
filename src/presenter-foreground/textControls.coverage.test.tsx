@@ -112,19 +112,31 @@ vi.mock('../helper/SettingManager', () => ({
         },
     }),
 }));
-vi.mock('moment-timezone', () => ({
-    tz: Object.assign(
-        (name: string) => ({
-            utcOffset: () =>
-                name === 'Asia/Kathmandu'
-                    ? 345
-                    : name === 'Asia/Kolkata'
-                      ? 330
-                      : 0,
-        }),
-        { names: () => ['Etc/UTC', 'Asia/Kolkata', 'Asia/Kathmandu'] },
-    ),
-}));
+vi.mock('moment-timezone', () => {
+    const zoneNames = ['Etc/UTC', 'Asia/Kolkata', 'Asia/Kathmandu'];
+    return {
+        // Called as `tz(date, zoneName)`: the zone is the LAST argument.
+        tz: Object.assign(
+            (...args: unknown[]) => {
+                const name = String(args.at(-1));
+                return {
+                    utcOffset: () =>
+                        name === 'Asia/Kathmandu'
+                            ? 345
+                            : name === 'Asia/Kolkata'
+                              ? 330
+                              : 0,
+                };
+            },
+            {
+                names: () => zoneNames,
+                zone: (name: string) => {
+                    return zoneNames.includes(name) ? { name } : null;
+                },
+            },
+        ),
+    };
+});
 vi.mock('../helper/helpers', () => ({ getRandomUUID: () => 'saved-new' }));
 vi.mock('../_screen/managers/ScreenForegroundManager', () => ({
     MESSAGE_ALL_ID: 'message-all',
@@ -171,6 +183,9 @@ vi.mock('./foregroundHelpers', () => ({
 }));
 vi.mock('./propertiesSettingHelpers', () => ({
     getForegroundIsBehind: () => true,
+    genPropsSettingNames: (prefix: string) => ({
+        alignment: `${prefix}-alignment`,
+    }),
     useForegroundPropsSetting: (options: any) => {
         state.propsOptions.set(options.prefix, options);
         return {
@@ -1265,9 +1280,14 @@ describe('world-time panel', () => {
             'UTC (Etc/UTC)',
         ]);
         await act(async () => items[0].onSelect());
+        // The caption is the city in words; the zone is kept so the offset
+        // follows it (daylight saving) each time the clock is shown.
         expect(state.settings.get('foreground-city-name-setting-clock-a')).toBe(
-            'Kathmandu (Asia/Kathmandu)',
+            'Kathmandu',
         );
+        expect(
+            state.settings.get('foreground-timezone-name-setting-clock-a'),
+        ).toBe('Asia/Kathmandu');
         expect(
             state.settings.get(
                 'foreground-timezone-minute-offset-setting-clock-a',
@@ -1276,7 +1296,38 @@ describe('world-time panel', () => {
         await click('Choose City');
         await act(async () => dismiss());
         expect(state.settings.get('foreground-city-name-setting-clock-a')).toBe(
+            'Kathmandu',
+        );
+
+        // Use Current Timezone takes the picked city's caption with it -- it
+        // used to stay, captioning this device's time with another city.
+        await click('Use Current Timezone');
+        expect(state.settings.get('foreground-city-name-setting-clock-a')).toBe(
+            '',
+        );
+        expect(
+            state.settings.get('foreground-timezone-name-setting-clock-a'),
+        ).toBe('');
+    });
+
+    test('Use Current Timezone keeps a caption a person typed, and clears an older picked one', async () => {
+        seedClocks(['clock-a', 'clock-b']);
+        state.settings.set('foreground-city-name-setting-clock-a', 'Our time');
+        state.settings.set(
+            'foreground-city-name-setting-clock-b',
             'Kathmandu (Asia/Kathmandu)',
+        );
+        await render(<ForegroundTimeComp />);
+        for (const button of container.querySelectorAll<HTMLButtonElement>(
+            'button[title="Use this device’s timezone"]',
+        )) {
+            await act(async () => button.click());
+        }
+        expect(state.settings.get('foreground-city-name-setting-clock-a')).toBe(
+            'Our time',
+        );
+        expect(state.settings.get('foreground-city-name-setting-clock-b')).toBe(
+            '',
         );
     });
 
@@ -1317,18 +1368,30 @@ describe('world-time panel', () => {
         expect(state.settings.get('foreground-time-id-list-session-a')).toEqual(
             ['clock-b'],
         );
-        expect(container.querySelectorAll('[title="Show Time"]')).toHaveLength(
-            1,
-        );
+        // One clock: its button is just `Show Time`.
+        const showTitles = () => {
+            return Array.from(
+                container.querySelectorAll('[title^="Show Time"]'),
+            ).map((element) => {
+                return element.getAttribute('title');
+            });
+        };
+        expect(showTitles()).toEqual(['Show Time']);
         const newId = '00000000-0000-4000-8000-000000000001';
         vi.spyOn(crypto, 'randomUUID').mockReturnValue(newId);
         await click('Add Time');
         expect(state.settings.get('foreground-time-id-list-session-a')).toEqual(
             ['clock-b', newId],
         );
-        expect(container.querySelectorAll('[title="Show Time"]')).toHaveLength(
-            2,
-        );
+        // It does not start on top of clock-b, which is in the middle.
+        expect(
+            JSON.parse(state.settings.get(`time-${newId}-alignment`)),
+        ).toEqual({
+            horizontalAlignment: 'center',
+            verticalAlignment: 'start',
+        });
+        // Several: numbered like Remove Time, so each has a name of its own.
+        expect(showTitles()).toEqual(['Show Time 1', 'Show Time 2']);
     });
 
     test('a new session creates one clock; its callbacks own only that session’s clocks', async () => {
@@ -1349,6 +1412,7 @@ describe('world-time panel', () => {
             'foreground-time-id-list-session-a',
             `foreground-city-name-setting-${newId}`,
             `foreground-timezone-minute-offset-setting-${newId}`,
+            `foreground-timezone-name-setting-${newId}`,
             `foreground-time-is-24-hour-format-setting-${newId}`,
             `properties-time-${newId}`,
         ]);
@@ -1457,6 +1521,29 @@ describe('message panel', () => {
         ).toBe('Second');
     });
 
+    test('a message moved while it is up moves on the screen too, and a first render re-sends nothing', async () => {
+        seedMessages('First\n\nSecond');
+        state.screens = [
+            [
+                1,
+                {
+                    messageDataList: [
+                        { id: 'message-0-session-a', textList: ['First'] },
+                        { id: 'message-1-session-a', textList: ['Second'] },
+                    ],
+                },
+            ],
+        ];
+        await render(<ForegroundMessageComp />);
+        expect(mocks.setMessages).not.toHaveBeenCalled();
+        await clickTitle('Move down 1');
+        expect(
+            mocks.setMessages.mock.calls.at(-1)?.[0].map((item: any) => {
+                return item.id;
+            }),
+        ).toEqual(['message-1-session-a', 'message-0-session-a']);
+    });
+
     test('saved text reseeds editors only after confirmation and switching sessions reads their own text', async () => {
         seedMessages('Unsaved');
         state.settings.set(
@@ -1530,6 +1617,32 @@ describe('message panel', () => {
         expect(mocks.removeMessage).toHaveBeenCalledWith('message-0-session-a');
     });
 
+    test("a single message shown over the session's all box takes its place", async () => {
+        seedMessages();
+        const allBox = {
+            id: 'message-all-session-a',
+            textList: ['First', 'Second'],
+            intervalSecond: null,
+        };
+        const other = { id: 'message-0-session-b', textList: ['Other'] };
+        state.screens = [[1, { messageDataList: [other, allBox] }]];
+        await render(<ForegroundMessageComp />);
+        await clickTitle('Show Message 2');
+        const manager = {
+            foregroundData: state.screens[0][1],
+            setMessageDataList: mocks.setMessages,
+        };
+        mocks.showMessageSet.mock.calls.at(-1)?.[1](manager);
+        // Drawn apart from the box, the single one used to show through it.
+        expect(mocks.setMessages).toHaveBeenLastCalledWith([
+            other,
+            expect.objectContaining({
+                id: 'message-1-session-a',
+                textList: ['Second'],
+            }),
+        ]);
+    });
+
     test('show-all rotation, its drag payload and screen-specific hide preserve the session id', async () => {
         seedMessages();
         await render(<ForegroundMessageComp />);
@@ -1550,12 +1663,33 @@ describe('message panel', () => {
             isBehind: true,
             transitionEffect: 'fade',
         };
-        expect(mocks.showMessages).toHaveBeenCalledWith(
+        expect(mocks.showMessageSet).toHaveBeenCalledWith(
             expect.anything(),
-            datum,
+            expect.any(Function),
+            false,
         );
+        // Nothing of this session's is up on its own: the plain add.
+        const emptyManager = {
+            foregroundData: { messageDataList: [] },
+            addMessageData: mocks.addMessage,
+            setMessageDataList: mocks.setMessages,
+        };
+        mocks.showMessageSet.mock.calls.at(-1)?.[1](emptyManager);
+        expect(mocks.addMessage).toHaveBeenLastCalledWith(datum);
+        // A single one of its messages IS up: the box takes its place rather
+        // than being drawn over it, and another session's stays.
+        const other = { id: 'message-0-session-b', textList: ['Other'] };
+        const single = { id: 'message-1-session-a', textList: ['Second'] };
+        const busyManager = {
+            foregroundData: { messageDataList: [other, single] },
+            addMessageData: mocks.addMessage,
+            setMessageDataList: mocks.setMessages,
+        };
+        mocks.showMessageSet.mock.calls.at(-1)?.[1](busyManager);
+        expect(mocks.setMessages).toHaveBeenLastCalledWith([other, datum]);
+        mocks.addMessage.mockClear();
         await click('Show on Screens');
-        expect(mocks.showMessages).toHaveBeenCalledTimes(2);
+        expect(mocks.showMessageSet).toHaveBeenCalledTimes(2);
         const payload = await dragTitle('Show All Messages');
         expect(payload.getData()).toMatchObject({
             textList: ['First', 'Second'],
@@ -1564,7 +1698,10 @@ describe('message panel', () => {
         });
         await act(async () => state.dragStore.onDropped({}));
         expect(mocks.addMessage).not.toHaveBeenCalled();
-        state.dropManager = { addMessageData: mocks.addMessage };
+        state.dropManager = {
+            foregroundData: { messageDataList: [] },
+            addMessageData: mocks.addMessage,
+        };
         await act(async () => state.dragStore.onDropped({}));
         expect(mocks.addMessage).toHaveBeenCalledWith(datum);
         state.screens = [[1, { messageDataList: [datum] }]];
