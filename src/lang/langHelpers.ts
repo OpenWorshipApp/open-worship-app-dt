@@ -478,6 +478,9 @@ export type LanguageDataType = {
      */
     nativeName?: string;
     flagSVG: string;
+    getBibleKeyNameMap: () => {
+        [key: string]: string;
+    };
     getLookupData?: (_args: {
         readJsonFile: (url: string) => Promise<any>;
         packageDir: string;

@@ -21,7 +21,16 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-18ah** (**W-42 Resources PDF reading.** A chapter PDF is described briefly, asks for a bounded verse range, and renders complete verses with cross-references and explanation while retaining a full-chapter choice and a 30-day AI caution. Verified live in the Khmer Resources chat.)
+**workflowsVersion: 2026-10-19h** (**W-11 step 4 — every Bible pane has a color, lime until one is picked.** Asked for by the user with the pane's color dot circled: _all bible preview section should have color_ … _when not setting found for the color of the editing section then it should be `lime`_. A section with no color note shows the default **lime** and is in that color group already, so its split asks a version and panes left on the default follow one passage; **[en:tran:No Color]** returns a pane to it. Seen live 2026-10-19 on the dev Reader in Khmer: two sections on the default lime dot, the sync-scroll toggle on both, a split from a lime pane asking a version, both panes following one reference, and red → **[en:tran:No Color]** putting the dot back to lime without a reload.)
+
+Previous: **workflowsVersion: 2026-10-19g** (**W-34 — the short-name options are the BIBLE's language's own Bible keys.** Asked for by the user with the key row circled: _during choosing bible key, use `getBibleKeyNameMap()` then show the keys are options. mouse hover to name of bible key in dom title_, _exclude if the key already exist_, with `src/lang/data/km/bibleKeyMap.json` open: _for khmer it should show from this json file_, then _the list of bible keys show for the selected language only_, _if no language data … then show normal guessing_, _e.g. for Thai should show the guessing language_, and with a French import circled _it should show list from fr lang data_. Step 1 offers the keys of the `bibleKeyMap` of the language the downloaded Bible is IN — Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; French **LSG** — with the edition the file is named after first, each key's full name on hover, and a key a Bible is already installed under left out; a language with no data (Thai) keeps the file's own suggested names. Seen live 2026-10-19 on the dev chatbot in Khmer with `ពគប` installed: **GKHB (ណែនាំ)** / **គខប** / **គកស១៦** / **អគត**, `ពគប` absent, hovering reading **ព្រះគម្ពីរខ្មែរសាកល**, **ព្រះគម្ពីរភាសាខ្មែរបច្ចុប្បន្ន ២០០៥**, **ព្រះគម្ពីរបរិសុទ្ធកែសម្រួល ២០១៦**, **អាល់គីតាប**; the French and Thai lists are unit tested.)
+Previous: **workflowsVersion: 2026-10-19f** (**W-34 — a finished import offers another Bible in the same conversation.** Asked for by the user with a picture of the answer after installing `JC` and the space under its button circled: _after complete bible importing then it should have an option to add another bible. So user still can more bible in the same session._ The _Done — … is installed_ answer now carries **Add another Bible** beside **Undo** (the provided-KJV answer too); it starts a fresh import at the language question, carrying nothing of the one just installed. Seen live 2026-10-19 on the dev chatbot in Khmer: an English ASV import, the two buttons, **បន្ថែមព្រះគម្ពីរមួយទៀត** pressed to the language question, then **Undo** returning the test Bible to the trash.)
+Previous: **workflowsVersion: 2026-10-19e** (**W-34 — a missing KJV is offered before the card's other ways.** Asked for by the user with a picture of the Reader on _Bible key "KJV" is not available!_: _if KJV not exist then open confirm to tell user that KJV need to be created. When user agree then create._ The card for a missing KJV now opens its own question, **Create the KJV Bible?** — the app provides it, and creating it needs no internet and no separate download — with **Create the provided KJV** and **Cancel**; agreeing writes the app's own copy behind a progress bar and the card goes away in every window. The same **Create the provided KJV** button sits on the card for a window that cannot draw a question, or for somebody who cancelled. Seen live 2026-10-19 on a scratch dev instance with no Bible installed: the question in English and in Khmer, the card's button below it, nothing thrown. Not pressed live: the question's **Create** is a person's press; the creation is unit tested and is the Settings button's own function.)
+Previous: **workflowsVersion: 2026-10-19d** (**W-29 — a person's card researches for you: the family line, the exact count, and a Bible search.** **Family line to Jesus** reads Matthew 1:1-17 (Luke 3:23-38 when Matthew does not name the person); _how many children did he have?_ is counted from the record with every name; and a theme or half-remembered verse is searched in your Bible. The record's own lists are named in the answer instead of being left behind a button, and an answer in your language names a control in your language. Seen live 2026-10-19 on the dev Reader in Khmer with gemma4:cloud: David answered with Matthew 1:1-17 from `ពគប`, Adam with Luke 3:23-38, _តើលោកមានកូនប៉ុន្មាន?_ with 19 names (the model had said 20), and a label that read `"Its verses"` read `"ខគម្ពីររបស់វា"`.)
+Previous: **workflowsVersion: 2026-10-19c** (**W-29 — a passage chat answers what can be done with the passage.** _Show this passage in Khmer_ lists the Khmer Bibles on this computer (or shows the passage again when it is already in that language), _show it in English_ repeats the record's own words, _how do I save this?_ and _copy this passage_ name **Save to my Bibles list** / **Copy the passage** and carry their buttons, and _how do I put this passage on the screen?_ is answered by the app's own help with the Presenter route — all with no model round. Seen live 2026-10-19 on the dev Reader in Khmer with gemma4:cloud: six Khmer Bibles listed, BDS/LSG for French, KJV repeated for English, the two buttons named, and `ពគប` pressed opened `ម៉ាថាយ ១៨:១-១៤`.)
+Previous: **workflowsVersion: 2026-10-19b** (**W-42 — a range and every printed cross-reference.** **Read** now takes a small range such as `1-3`: the card quotes every verse in it, and every printed cross-reference the assistant verified becomes a button (up to thirty, across books and chapters), with the next buttons after the range, and every card keeps its reference buttons. A pressed cross-reference reads its own chapter's Resources PDF and shows that file's closest explanation. Seen live 2026-10-19 on the dev Reader in Khmer with gemma4:cloud: `1-3` quoted verses 1-3, all six printed references were buttons, and `Matthew 20:20-28` read `MAT.20.pdf`'s explanation.)
+Previous: **workflowsVersion: 2026-10-19a** (**W-42 — a study file or a chapter asked for in ordinary words.** With **ASKING ABOUT** on Bible Reader, _summarize Matthew 18_, _show the resources for John 3_ and _what does MAT.18.pdf say?_ are understood without the word “chapter” and without attaching the file: a chapter number is read with your Bible's own book name and digits, and a named Resources file is read from its folder. A PDF is read eight pages at a time and the assistant continues by itself. Seen live 2026-10-19 on the dev Reader in Khmer with gemma4:cloud: five asks that had failed now list and read `pdf/MAT.18.pdf` / `pdf/JHN.3.pdf` or quote the chapter from `ពគប`.)
+Previous: **workflowsVersion: 2026-10-18ah** (**W-42 Resources PDF reading.** A chapter PDF is described briefly, asks for a bounded verse range, and renders complete verses with cross-references and explanation while retaining a full-chapter choice and a 30-day AI caution. Verified live in the Khmer Resources chat.)
 Previous: **workflowsVersion: 2026-10-18ag** (**W-34 supplied book-name source.** A pasted chapter link reads its edition in the selected language; prior choices survive a failed or mismatched source. Verified in the restarted original Khmer chat.)
 Previous: **workflowsVersion: 2026-10-18af** (**Khmer regression completion steps.** W-15 selects a camera device after opening its menu; W-42 selects the added server/model and explicitly submits pasted lyrics. English, Khmer and French aligned; all nine isolated Khmer follow-ups right. Camera device selection also observed live on an isolated fixture.)
 Previous: **workflowsVersion: 2026-10-18ae** (**Khmer regression follow-up.** W-16 names Yes as the Bible-removal confirmation button and distinguishes the dialog title. English, Khmer and French aligned; live recheck pending.)
@@ -2473,13 +2482,14 @@ has no header tabs.
    clicked, without needing another scroll.
    The choice is remembered for that color group, and the toggle appears only
    while the group has at least two panes.
-   **A pane that has a color splits into ANOTHER version.** Its two split buttons,
-   in the row that appears while the mouse is over its header, read
+   **Every pane has a color — lime until you pick another.** Its two split
+   buttons, in the row that appears while the mouse is over its header, read
    **[en:tran:Split Horizontal to]** and **[en:tran:Split Vertical to]**: click
    one, then click a version in the list, and the same passage opens beside (or
-   below) it in that version, in the same color group. A pane with no color
-   splits at once, in the version it already has — its buttons read
-   **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
+   below) it in that version, in the same color group. Panes left on the default
+   lime are one group already, so they follow the same passage and scroll
+   together until one is given a different color; **[en:tran:No Color]** (or
+   clearing the color) returns a pane to that lime group.
 5. If you lose a passage, you do not need to remember and type it again: the recent
    reference rows near the top keep it. Click one to read it in a small floating
    panel, in the version it was read in; the passage you are on stays as it is. To
@@ -4074,7 +4084,12 @@ your Bible reading.
     place or passage, and the assistant looks up the people, places and verses it
     leads to by itself. The names and places come from the King James Version,
     and the assistant says so if you ask. The **[en:tran:Still asking about]** line above
-    the box names it; press its **×** to ask about something else. 📸
+    the box names it; press its **×** to ask about something else. A person's
+    card also carries **[en:tran:Family line to Jesus]**, which reads the Bible's
+    own genealogy — Matthew 1:1-17, or Luke 3:23-38 when Matthew does not name
+    them — and answers with it; _how many children did he have?_ is counted
+    from the record itself, with every name; and a question about a theme or a
+    verse you half-remember is searched in your Bible. 📸
     A passage you are reading opens the same way: the robot at the end of a Bible
     view's toolbar (the row that shows when the mouse is over its title), or
     right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
@@ -4090,6 +4105,13 @@ your Bible reading.
     **[en:tran:Related places]**) and **[en:tran:Read it in another Bible]**. A name, a place, a
     verse or a Bible in the list that comes back opens its own card in the same chat, and
     every answer ends with **[en:tran:More things to do]**.
+    **Ask for one of them and it tells you which button.** Type _show this passage in Khmer_
+    and the chat lists the Khmer Bibles on this computer to choose from — or shows the
+    passage again when it is already in that language — and _show this passage in English_
+    repeats the record's own words. _How do I save this?_ and _copy this passage_ name
+    **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
+    button beside the answer. A question about using the app — _how do I put this passage
+    on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
@@ -4100,7 +4122,7 @@ is one word out of a short, fixed list. A person's **[en:tran:Age]** is shown ex
 dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
-RD-64, RD-80, RD-91, PM-126, CB-149._
+RD-64, RD-80, RD-91, PM-126, CB-149, CB-154._
 
 ### W-30 — See who and where is in the passage you are reading
 
@@ -4640,7 +4662,7 @@ an XML file already on your computer.
 
 **The easy way: let the assistant do it**
 
-**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
+**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Before it asks which language, it checks for the **KJV** Bible Open Worship provides. On a computer that does not have it, it says so, recommends it, and carries **Create the provided KJV**: press that, and the app writes its own KJV with no internet and no download. The import you asked for then starts again from its language question. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
 
 1. Open **[en:tran:Settings]** (the gear at the top of the window) → **[en:tran:Bible]** and press the blue
    **[en:tran:Let the assistant import a Bible for me]** at the top of
@@ -4650,8 +4672,13 @@ an XML file already on your computer.
    `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
    import a Bible, the answer has an **Import a Bible for me** button that starts
    here.) Answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
-2. The assistant opens in a new tab and asks **Which language do you want the Bible
-   in?** Press **Khmer**, **English** or **French**, or type the language — in English
+2. Before that question, a computer with no **KJV** is offered the one Open Worship
+   provides: **Create the provided KJV** writes it from the app's own copy, with no
+   internet and no download, and then the import starts again here. (If you only
+   wanted the KJV, that is done: press **Cancel** on the import.) Press **Import
+   another Bible anyway** to go on without it.
+   The assistant then asks **Which language do you want the Bible in?** Press
+   **Khmer**, **English** or **French**, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
    **A file on this computer** opens the form below instead. A word it cannot find
    (`kmer`) is answered with **Did you mean** and the nearest languages to press.
@@ -4673,9 +4700,16 @@ an XML file already on your computer.
    it in your web browser, as **Open the website** does for the collection (or the
    page the file was listed on). Press **I agree** to go on, or **Cancel** and
    nothing is installed. 📸
-5. **Step 1 — a short name**: press a suggestion (**KSV**, **KM1954** …) or type your
-   own, letters and numbers with no spaces. A name you already have is refused and
-   asked again.
+5. **Step 1 — a short name**: the options are the names this app knows a Bible
+   by, in the language the Bible is in — the language the next step confirms.
+   In Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; in
+   English **KJV**, **NKJV**, **NIV** and the rest; in French **LSG**. The one
+   the downloaded edition is named after comes first. Hover a key to read its
+   full name (Khmer 2023 is **GKHB**, hovering reads _ព្រះគម្ពីរខ្មែរសាកល_).
+   A short name a Bible is already installed under is not offered at all. A
+   language this app has no names for — Thai — shows the file's own suggested
+   names instead. You can also type your own, letters and numbers with no
+   spaces; a name you type that you already have is refused and asked again.
 6. **Step 2 — the language**: it says which it looks like and why (_the verses are
    written in Khmer script_). Press it, or type another, such as `ខ្មែរ`.
    Your choice controls the imported Bible's book names and numbers, even when
@@ -4692,7 +4726,9 @@ an XML file already on your computer.
    your previous choices remain. 📸
 9. **Ready to install** sums it up. Press **Install it**. _Done — KSV is installed_:
    choose it from the Bible version button. **Undo** under that answer moves it to
-   the trash again. **Cancel** at any step stops with nothing installed.
+   the trash again. **Add another Bible** under it starts another import in the
+   same conversation, back at the language question — nothing of the one just
+   installed is carried over. **Cancel** at any step stops with nothing installed.
 
 You can type instead of pressing at every step: `yes` (or `ok`) takes the suggested
 choice — under the notice of where it is from, **I agree**; at the end, **Install it**
@@ -4708,24 +4744,38 @@ lead to a Bible, the link can be pasted on its own.
 **When a window says a Bible is not available**
 
 The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
-it is set to a Bible this computer does not have — on a new computer, the KJV. The card
-says how the assistant gets it, in three steps, and carries the button. Keep the short
-name the assistant suggests for it, or the card stays:
+it is set to a Bible this computer does not have — on a new computer, the KJV. **For the
+KJV the card asks first**, once per window: a question titled
+**[en:tran:Create the KJV Bible?]** says Open Worship provides it and that creating it
+needs no internet and no separate download, with **[en:tran:Create the provided KJV]**
+and **[en:tran:Cancel]**. Agreeing writes the copy the app carries inside itself, with a
+progress bar while it does, and the card goes away by itself in every window.
+**[en:tran:Cancel]** leaves the card exactly as it was, with the same
+**[en:tran:Create the provided KJV]** button under its heading (a window that cannot draw
+a question shows that button alone). 📸
 
-1. Press **[en:tran:Let the assistant import this Bible for me]** on that card and
+For any other missing Bible the card says how the assistant gets a Bible in your
+language, in three steps, and carries the button:
+
+1. Press **[en:tran:Let the assistant import a Bible for me]** on that card and
    answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
-2. The assistant opens in a new tab already looking for that Bible in the free
-   collection: for KJV it lists _English KJV_ and _English NKJ 1982_. Press the one you
-   want. A name the collection has no file for is answered with _None of them has … in
-   its name_: type the Bible's language (`Khmer`) and press one from that list.
-3. It downloads the Bible and says where it is from; press **I agree**. It then says
-   _The app is looking for a Bible called **KJV**_. At **Step 1 — a short name** that
-   name comes first, **KJV (suggested)**: keep it. Installed under any other name,
-   the card stays where it is.
-4. Answer the language and the book names as above, then press **Install it**. _Done
-   — KJV is installed_, and the card goes away by itself: the passage shows. 📸
+2. The assistant opens in a new tab already asking for a Bible in the language this
+   window is shown in — Khmer in a Khmer window. A computer with no **KJV** is offered
+   the one Open Worship provides first: press **Create the provided KJV**. It is
+   written from the app's own copy with no internet and no download, and the Reader's
+   card goes away by itself. Then the import starts again from its language question;
+   if you only wanted the KJV, press **Cancel** there. 📸
+3. Press the Bible you want in the list, or type its language (`Khmer`), then read
+   where it comes from and press **I agree**. Choose its short name, language, numbers
+   and book names as above, then press **Install it**. 📸
+4. The imported Bible appears in the list at the top of the card: choose it there,
+   and the card goes away with the passage showing.
 
-Typing `Import the Bible called "KJV"` in the assistant does the same.
+Typing `Import the Bible called "KJV"` in the assistant gets the same offer: the
+provided KJV first. Pasting a link to an English KJV from the internet is answered
+with a sentence saying Open Worship provides it and recommends it; **Use the internet
+copy anyway** still lets you install the downloaded file, after the source notice and
+**I agree**.
 
 **Import a Bible XML file with the form.** Give it the link or choose the file, press
 **[en:tran:Import]**, answer the review, and press **[en:tran:Import]** again to install it:
@@ -5772,21 +5822,31 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    seeing your screen it says so and puts the button right there — _Send a picture
    of my screen_, _Point at the control_, _Attach a file_ — so you never have to
    work out how to send it one. 📸
-   **Read a study PDF one verse at a time.** In the Bible Reader's Resources panel,
-   press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its chat briefly
-   describes the file. Press **[en:tran:Read]**; it asks which verse in that chapter to
-   focus on, shows `1` as the typing example, and offers the first three verses plus
-   **[en:tran:Full chapter]**. Each card puts one complete Bible verse with its
-   printed cross-references and the matching explanation paragraph below it.
-   Press a cross-reference to read that verse in its own card. Full chapter
-   continues automatically, one verse card at a time, through the chapter's end;
-   direct references to another Resources PDF may add that file's explanation
-   and an **[en:tran:Ask about {name}]** button. The PDF's embedded text is
+   **Read a study PDF one verse or range at a time.** In the Bible Reader's
+   Resources panel, press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its
+   chat briefly describes the file. Press **[en:tran:Read]**; it asks which verse
+   in that chapter to focus on, shows `1` as the typing example, and offers the
+   first three verses plus **[en:tran:Full chapter]**. You can also type a small
+   range such as `1-3`: each card quotes every verse in it, and every printed
+   cross-reference becomes a button. Press one to read that verse in its own
+   card; when its chapter has its own PDF in Resources, that file's closest
+   explanation comes with it. Full chapter continues automatically, one verse
+   card at a time, through the chapter's end; direct references to another
+   Resources PDF may add that file's explanation and an
+   **[en:tran:Ask about {name}]** button. The PDF's embedded text is
    not used because a legacy Khmer font can decode as unrelated Latin
    characters. If a visual reading repeats itself, the bad explanation is
    withheld and the exact installed-Bible verse remains. AI can misread a PDF page,
    so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
    that caution away temporarily.
+   **You do not have to press the 🤖 first, and you do not have to say “chapter”.**
+   With **ASKING ABOUT** on **Bible Reader**, type the sentence the way you say it —
+   _summarize Matthew 18_, _show the resources for John 3_, _what does MAT.18.pdf
+   say?_ — in English or in your own language, with your Bible's own book names and
+   digits. The assistant reads the chapter from your Bible, or the file you named from
+   Resources, and answers from it. A PDF is read up to eight pages at a time and the
+   assistant reads on by itself when the file is longer; you are not asked to turn
+   pages.
 8. Under every answer is **Copy**, which puts that answer on the clipboard and says
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a

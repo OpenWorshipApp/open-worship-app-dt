@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, test } from 'vitest';
 import {
     keepBibleReaderAskUnlessKnown,
     readBibleReaderAsk,
+    readBibleReaderBookCandidate,
     readBibleReaderThread,
 } from './bibleReaderChatHelpers';
 
@@ -40,6 +41,68 @@ describe('a typed Bible-Reader question', () => {
     });
 
     test.each([
+        // A Resources file NAMED in the question is a Resources ask, with
+        // no chapter word and no reference (2026-10-19: the model answered
+        // "I cannot read PDFs").
+        ['what does MAT.18.pdf say?', { intent: 'resources' }],
+        ['តើឯកសារធនធាន MAT.18.pdf និយាយអំពីអ្វី?', { intent: 'resources' }],
+        ['read family-tree.jpeg', { intent: 'resources' }],
+    ])('a named Resources file: %s', (asked, expected) => {
+        expect(readBibleReaderAsk(asked)).toEqual(expected);
+    });
+
+    test.each([
+        // A chapter written WITHOUT the chapter word -- how a reader
+        // actually says it. The window confirms the book name, so the
+        // matcher stands in for the reader's own Bible here.
+        ['សូមសង្ខេប ម៉ាថាយ ១៨', 'ម៉ាថាយ', { intent: 'reference' }],
+        [
+            'តើឈ្មោះអ្នកណាខ្លះនៅក្នុង លោកុប្បត្តិ ៤',
+            'លោកុប្បត្តិ',
+            { intent: 'names' },
+        ],
+        [
+            'សូមបង្ហាញឯកសារធនធានសម្រាប់ យ៉ូហាន ៣',
+            'យ៉ូហាន',
+            { intent: 'resources' },
+        ],
+        ['summarize Matthew 18', 'Matthew', { intent: 'reference' }],
+        // A numbered book: the last word alone is not its name.
+        ['show me 1 Samuel 2', '1 Samuel', { intent: 'reference' }],
+    ])('a bare book and number: %s', (asked, bookText, expected) => {
+        const checkIsBook = (value: string) => value === bookText;
+        expect(readBibleReaderAsk(asked, checkIsBook)).toEqual(expected);
+    });
+
+    test.each([
+        // Not a book: the words before the number are ordinary words, so
+        // the window's book check -- which accepts only `Matthew` here --
+        // leaves the question to the ordinary assistant.
+        ['I read 3 books today', 'Matthew'],
+        ['Show 3 resources', 'Matthew'],
+    ])('%s is not a book and number', (asked, bookText) => {
+        expect(
+            readBibleReaderAsk(asked, (value) => value === bookText),
+        ).toBeNull();
+    });
+
+    test.each([
+        // The words handed to the window's book check, shortest first.
+        ['សូមសង្ខេប ម៉ាថាយ ១៨', 'ម៉ាថាយ'],
+        ['show me 1 Samuel 2', '1 Samuel'],
+    ])('%s offers %s as a book candidate', (asked, bookText) => {
+        expect(readBibleReaderBookCandidate(asked)?.bookTextList).toContain(
+            bookText,
+        );
+    });
+
+    test('a how-to is no book candidate', () => {
+        expect(
+            readBibleReaderBookCandidate('How do I read about 3 Bibles?'),
+        ).toBeNull();
+    });
+
+    test.each([
         // The app's own work, whatever it names.
         'How do I open John 3:16 in the reader?',
         'put John 3:16 on the screen',
@@ -50,6 +113,9 @@ describe('a typed Bible-Reader question', () => {
         // No book before the number: nothing a tool could read.
         'chapter 3',
         '3:16',
+        // A web address ending in `.pdf` is a page to read, not a Resources
+        // file.
+        'summarize https://example.com/notes.pdf',
         // No reference at all: the verse finder's own asks keep it.
         'what bible verse talk about lover your enemy?',
         'Help me find a Bible verse: love your enemies',

@@ -18,12 +18,35 @@ const SETTING_TAB_REQUEST_SETTING_NAME = 'setting-tab-request';
 const SETTING_TAB_REQUEST_MAX_AGE_MILLISECONDS = 30_000;
 export type SettingTabKeyType = 'g' | 'b' | 'o';
 
+// The tab listener of THIS renderer, when it is the Settings window. A module
+// of its own would be cleaner, but `requestSettingTab` must reach it without
+// the asking window importing the settings page: the two are the same module
+// instance only when the asker IS Settings (`openOthersSetting` from the
+// assistant's "Enable AI features" prompt, answered inside Settings itself).
+// There the raise that carries a request to a window open in the background
+// fires no `focus` event -- the window is already in front -- so the tab
+// request was never taken and Yes did nothing.
+const settingTabListenerSet = new Set<(tabKey: SettingTabKeyType) => void>();
+
+/** Told when THIS window asks itself to show a tab, at once. */
+export function listenForSettingTabRequest(
+    callback: (tabKey: SettingTabKeyType) => void,
+) {
+    settingTabListenerSet.add(callback);
+    return () => {
+        settingTabListenerSet.delete(callback);
+    };
+}
+
 function requestSettingTab(tabKey: SettingTabKeyType) {
     setSetting(SETTING_SETTING_NAME, tabKey);
     setSetting(
         SETTING_TAB_REQUEST_SETTING_NAME,
         JSON.stringify({ tabKey, requestedAt: Date.now() }),
     );
+    for (const callback of settingTabListenerSet) {
+        callback(tabKey);
+    }
 }
 
 /**

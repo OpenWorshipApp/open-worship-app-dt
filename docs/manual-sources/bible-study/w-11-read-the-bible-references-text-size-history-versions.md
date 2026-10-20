@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124, RD-125, RD-126, ST-59, CB-125]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -62,13 +62,14 @@ has no header tabs.
    clicked, without needing another scroll.
    The choice is remembered for that color group, and the toggle appears only
    while the group has at least two panes.
-   **A pane that has a color splits into ANOTHER version.** Its two split buttons,
-   in the row that appears while the mouse is over its header, read
+   **Every pane has a color — lime until you pick another.** Its two split
+   buttons, in the row that appears while the mouse is over its header, read
    **[en:tran:Split Horizontal to]** and **[en:tran:Split Vertical to]**: click
    one, then click a version in the list, and the same passage opens beside (or
-   below) it in that version, in the same color group. A pane with no color
-   splits at once, in the version it already has — its buttons read
-   **[en:tran:Split horizontal]** and **[en:tran:Split vertical]**.
+   below) it in that version, in the same color group. Panes left on the default
+   lime are one group already, so they follow the same passage and scroll
+   together until one is given a different color; **[en:tran:No Color]** (or
+   clearing the color) returns a pane to that lime group.
 5. If you lose a passage, you do not need to remember and type it again: the recent
    reference rows near the top keep it. Click one to read it in a small floating
    panel, in the version it was read in; the passage you are on stays as it is. To
@@ -97,5 +98,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `RD-124` · `RD-125` · `RD-126` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

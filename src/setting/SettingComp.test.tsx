@@ -11,13 +11,15 @@ const {
     getAIKeyFocusRequestMock,
     takeAIKeyFocusRequestMock,
     warnIfAnyBibleEditorDirtyMock,
+    tabRequestListenerSet,
 } = vi.hoisted(() => ({
-    initialTab: { value: 'g' },
+    initialTab: { value: 'g' as 'g' | 'b' | 'o' },
     requestedTab: { value: null as 'g' | 'b' | 'o' | null },
     setSettingMock: vi.fn(),
     getAIKeyFocusRequestMock: vi.fn(() => null),
     takeAIKeyFocusRequestMock: vi.fn(),
     warnIfAnyBibleEditorDirtyMock: vi.fn(() => false),
+    tabRequestListenerSet: new Set<(tabKey: 'g' | 'b' | 'o') => void>(),
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -51,6 +53,14 @@ vi.mock('./settingHelpers', () => ({
         const value = requestedTab.value;
         requestedTab.value = null;
         return value;
+    },
+    listenForSettingTabRequest: (
+        callback: (tabKey: 'g' | 'b' | 'o') => void,
+    ) => {
+        tabRequestListenerSet.add(callback);
+        return () => {
+            tabRequestListenerSet.delete(callback);
+        };
     },
 }));
 
@@ -93,6 +103,7 @@ describe('SettingComp cross-window tab requests', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         initialTab.value = 'g';
         requestedTab.value = null;
+        tabRequestListenerSet.clear();
         getAIKeyFocusRequestMock.mockReturnValue(null);
         warnIfAnyBibleEditorDirtyMock.mockReturnValue(false);
         container = document.createElement('div');
@@ -119,6 +130,27 @@ describe('SettingComp cross-window tab requests', () => {
 
         requestedTab.value = 'o';
         await act(async () => window.dispatchEvent(new Event('focus')));
+
+        expect(
+            container.querySelector('[data-testid="active-tab"]')?.textContent,
+        ).toBe('o');
+        expect(container.querySelector('[data-testid="tab-o"]')).not.toBeNull();
+    });
+
+    test('switches at once when Settings itself asks for a tab', async () => {
+        await renderSetting();
+        expect(
+            container.querySelector('[data-testid="active-tab"]')?.textContent,
+        ).toBe('g');
+
+        // The assistant's "Enable AI features" prompt, answered from a window
+        // that is already in front: no focus event, so the stored request
+        // alone left the tab where it was.
+        await act(async () => {
+            for (const callback of tabRequestListenerSet) {
+                callback('o');
+            }
+        });
 
         expect(
             container.querySelector('[data-testid="active-tab"]')?.textContent,

@@ -282,20 +282,14 @@ describe('aiHelpers secret splitting', () => {
         expect(getAIIsAutoPlay()).toBe(false);
     });
 
-    // The switch decides whether the main process opens a debugging endpoint
-    // and an MCP host at all, and both drive a renderer with node
-    // integration. An install that has never been asked gets neither.
-    test('an unwritten switch is off outside dev, and on in dev', async () => {
+    // The assistant ships enabled in every build; only an explicit `false`
+    // closes it.
+    test('an unwritten switch is on', () => {
         homeStore.delete('ai-enabled');
-        expect(getIsAIEnabled()).toBe(false);
+        expect(getIsAIEnabled()).toBe(true);
 
-        const appProvider = (await import('../../server/appProvider')).default;
-        appProvider.systemUtils.isDev = true;
-        try {
-            expect(getIsAIEnabled()).toBe(true);
-        } finally {
-            appProvider.systemUtils.isDev = false;
-        }
+        homeStore.set('ai-enabled', 'yes');
+        expect(getIsAIEnabled()).toBe(true);
     });
 
     test('an explicit choice wins over the default', () => {

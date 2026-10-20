@@ -143,6 +143,7 @@ import BibleItemsViewController, {
     useBibleItemViewControllerUpdateEvent,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
+import { DEFAULT_BIBLE_COLOR_NOTE } from '../helper/colorNoteDefaults';
 
 const { FakeItem } = h;
 
@@ -359,6 +360,22 @@ describe('bible-reader BibleItemsViewController', () => {
             ctl.setColorNote(a, null);
             expect(ctl.colorNoteMap[99]).toBeUndefined();
             expect(ctl.colorNoteMap[1]).toBeUndefined();
+        });
+
+        // The user: _all bible preview section should have color_, lime when
+        // no colour note was ever set. A lime picked from the menu is written
+        // in the other case, so both spellings must be ONE group.
+        test('a default lime section groups with an explicitly lime one', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1), genItem(2)];
+            const [a, b] = ctl.straightBibleItems;
+            ctl.setColorNote(a, '#00ff00');
+
+            expect(ctl.getColorNote(a)).toBe('#00ff00');
+            expect(ctl.getColorNote(b)).toBe('#00ff00');
+            expect(
+                ctl.getBibleItemsByColorNote('#00FF00').map((i) => i.id),
+            ).toEqual([1, 2]);
         });
 
         test('isAlone reflects the item count', () => {
@@ -658,10 +675,14 @@ describe('bible-reader BibleItemsViewController', () => {
 
         // Asked for by the user: a view in a colour group hands its colour
         // to the view split off it, so its split button asks which version.
-        test('a split button splits a plain view at once, in the same version', () => {
+        test('a split button splits a view with no colour at once, in the same version', () => {
             const ctl = genController();
             ctl.nestedBibleItems = [genItem(1)];
             const item = ctl.straightBibleItems[0];
+            // Every section now has a colour (the default lime note), so the
+            // no-colour path only answers here for a controller that reports
+            // none at all.
+            vi.spyOn(ctl, 'getColorNote').mockReturnValue('');
             const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
             const addBottom = vi.spyOn(ctl, 'addBibleItemBottom');
 
@@ -671,6 +692,30 @@ describe('bible-reader BibleItemsViewController', () => {
             ctl.splitBibleItemOnPress({}, item, false);
             expect(addBottom).toHaveBeenCalledExactlyOnceWith(item, item);
             expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+        });
+
+        // The user: _all bible preview section should have color_, lime when
+        // no colour note was ever set -- so an untouched view is already
+        // grouped and its split asks which version.
+        test('a view without a colour note is in the default lime group', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1), genItem(2)];
+            const item = ctl.straightBibleItems[0];
+            const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
+            const event = { clientX: 5, clientY: 6 };
+
+            expect(ctl.getColorNote(item)).toBe(
+                DEFAULT_BIBLE_COLOR_NOTE.toLowerCase(),
+            );
+            expect(
+                ctl
+                    .getBibleItemsByColorNote(DEFAULT_BIBLE_COLOR_NOTE)
+                    .map((bibleItem) => bibleItem.id),
+            ).toEqual([1, 2]);
+            expect(ctl.checkIsSplitAskingBibleKey(item)).toBe(true);
+            ctl.splitBibleItemOnPress(event, item, true);
+            expect(addLeft).not.toHaveBeenCalled();
+            expect(h.showBibleKeyOptionMock).toHaveBeenCalledTimes(1);
         });
 
         test('a split button of a grouped view asks which version first', () => {

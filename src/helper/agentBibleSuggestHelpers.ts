@@ -110,7 +110,13 @@ async function resolveSuggestBible() {
     const looked = infoList.find((info) => {
         return info.key === lookupKey;
     });
-    const chosen = own ?? looked ?? infoList[0];
+    // The lookup's own Bible is the one the Reader draws, so its names are
+    // the ones on screen. Preferring "the first Bible in their language"
+    // picked a DIFFERENT Khmer edition whose book list did not include
+    // Genesis or Psalms: typing `លោកុប្បត្តិ` offered nothing while
+    // `ម៉ាថាយ` offered chapters (seen live 2026-10-19). `own` stays as the
+    // fallback for a lookup Bible in another language.
+    const chosen = looked ?? own ?? infoList[0];
     const info = await getBibleInfo(chosen.key).catch(() => {
         return null;
     });

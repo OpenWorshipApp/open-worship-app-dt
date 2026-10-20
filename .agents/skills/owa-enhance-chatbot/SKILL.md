@@ -148,8 +148,9 @@ It decides whether this subsystem exists at all: off, the main process opens
 neither the CDP endpoint nor the MCP host, the Help menu drops the chatbot item,
 `AppAssistantComp` withdraws its Tools entry, and the 🤖 button answers with a
 dialog offering to turn it back on instead of opening the window. Unset means ON
-in dev and OFF in a packaged build, and it is easy to arrive OFF — a `prod` pass
-flips it deliberately, and so does any run that was measuring the off state. The
+in every build, a packaged one included; only an explicit `"false"` is off, and
+it is easy to arrive OFF — a `prod` pass
+may flip it deliberately, and so does any run that was measuring the off state. The
 symptom is `No running Open Worship App was found` from every `owa_*` call, which
 reads exactly like the app being down and is really the app running with no door.
 Read it rather than guessing (dev writes its own `-dev` data dir):

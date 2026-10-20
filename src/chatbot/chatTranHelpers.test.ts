@@ -2,6 +2,9 @@ import { afterEach, describe, expect, test } from 'vitest';
 
 import {
     fillWords,
+    findChatBibleKeyByName,
+    getChatBibleKeyList,
+    getChatBibleKeyName,
     setChatTranslator,
     tran,
     tranLabel,
@@ -41,6 +44,65 @@ describe('the help window’s own words', () => {
         // A label that may not be one is never a reason to throw.
         expect(tranLabel('Not a key')).toBe('Not a key');
         expect(tranLabel('new chat')).toBe('ការសន្ទនាថ្មី');
+    });
+});
+
+describe('a Bible short name', () => {
+    test('is named by the language the BIBLE is in', () => {
+        expect(getChatBibleKeyName('KJV', 'en-US')).toBe('King James Version');
+        expect(getChatBibleKeyName('kjv', 'en-US')).toBe('King James Version');
+        expect(getChatBibleKeyName('ពគប', 'km-KH')).toBe(
+            'ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤',
+        );
+        expect(getChatBibleKeyName('LSG', 'fr-FR')).toBe(
+            'La Sainte Bible, Louis Segond',
+        );
+        // An imported file's own short name means nothing outside that file,
+        // and a language the app holds no names for has none to give.
+        expect(getChatBibleKeyName('KM2005', 'km-KH')).toBeNull();
+        expect(getChatBibleKeyName('KJV', 'th-TH')).toBeNull();
+    });
+
+    test('lists the names of ONE language only', () => {
+        expect(getChatBibleKeyList('km-KH')).toEqual([
+            'ពគប',
+            'គខប',
+            'គកស១៦',
+            'អគត',
+            'GKHB',
+            'KCB',
+        ]);
+        expect(getChatBibleKeyList('fr-FR')).toEqual(['LSG']);
+        expect(getChatBibleKeyList('en-US')).toContain('KJV');
+        expect(getChatBibleKeyList('th-TH')).toEqual([]);
+    });
+
+    test('is found from the edition name a downloaded file carries', () => {
+        expect(
+            findChatBibleKeyByName(
+                'Khmer 2012 (Khmer Christian Bible)',
+                'km-KH',
+            ),
+        ).toBe('KCB');
+        expect(
+            findChatBibleKeyByName('Khmer 2023 (ព្រះគម្ពីរខ្មែរសាកល)', 'km-KH'),
+        ).toBe('GKHB');
+        // The longest name that fits wins, so the New King James is not KJV.
+        expect(findChatBibleKeyByName('New King James Version', 'en-US')).toBe(
+            'NKJV',
+        );
+        // A file titled with its own short name names nothing, and a
+        // language with no names cannot name anything.
+        expect(findChatBibleKeyByName('English NKJV', 'en-US')).toBeNull();
+        expect(
+            findChatBibleKeyByName('Khmer Standard Version 1954', 'km-KH'),
+        ).toBeNull();
+        expect(
+            findChatBibleKeyByName(
+                'Khmer 2012 (Khmer Christian Bible)',
+                'th-TH',
+            ),
+        ).toBeNull();
     });
 });
 

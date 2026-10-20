@@ -86,10 +86,12 @@ import {
 import {
     keepBibleReaderAskUnlessKnown,
     readBibleReaderAsk,
+    readBibleReaderBookCandidate,
     readBibleReaderThread,
     toBibleReaderAsk,
     type BibleReaderAskType,
 } from './bibleReaderChatHelpers';
+import { toCompactBookName } from '../helper/bibleSuggestHelpers';
 import {
     readBibleInputSuggestAskList,
     toBibleInputSuggestRows,
@@ -284,13 +286,25 @@ import {
 } from '../helper/ai/lookupAskHelpers';
 import {
     LOOKUP_TOOL_NAME,
+    checkIsLookupAppAsk,
     findOpenLookupSubject,
     genLookupOfflineText,
     genLookupOpeningAnswer,
     readLookupAwaitedPassage,
+    LINEAGE_PASSAGE_KEY_LIST,
+    checkIsLookupLineageAsk,
+    checkLineageNamesSubject,
+    findLineagePassage,
+    genLookupCountAnswer,
+    genLookupLineageAnswer,
+    genLookupNoLineageAnswer,
+    readLookupCountAsk,
     readLookupThread,
+    readLookupVerseAsk,
+    toLookupAppAsk,
     toLookupAsk,
     toLookupSubject,
+    type LookupLineagePassageType,
     type LookupSubjectType,
 } from './lookupChatHelpers';
 import {
@@ -1044,6 +1058,20 @@ type SuggestRowType = {
     isData?: boolean;
 };
 
+/**
+ * Whether a card is a Resources reading card: it has a references line and a
+ * PDF explanation. Read off the WORDS, because a card saved by an older
+ * window has no flag -- and every one of those cards must still keep its
+ * references pressable (2026-10-19).
+ */
+function checkIsResourceReadingText(text: string) {
+    return (
+        /(?:យោង|references?|cross[- ]?references?|xref)\s*[:：៖]/iu.test(
+            text,
+        ) && /PDF/iu.test(text)
+    );
+}
+
 function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
     return {
         id: row.id,
@@ -1052,6 +1080,48 @@ function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
         fill: row.text,
         isImmediate: false,
     };
+}
+
+/**
+ * A typed question with a chapter number and no chapter word ("Matthew 18",
+ * "ម៉ាថាយ ១៨") is a Bible-Reader ask when the words before the number name a
+ * book of the Bible being read. The pure reader cannot know a book name in
+ * every installed Bible's language, so the window asks its own reference aid
+ * -- the same `owa_bible_suggest` the box completes with -- about the
+ * shortest run of words first, and hands the reader a matcher for the run
+ * that answered (2026-10-19: asked "សូមសង្ខេប ម៉ាថាយ ១៨" the assistant
+ * summarized from memory, and asked for John 3's Resources it gave the
+ * steps for opening the panel).
+ */
+async function readBibleReaderAskWithBook(asked: string) {
+    const candidate = readBibleReaderBookCandidate(asked);
+    if (candidate === null) {
+        return null;
+    }
+    for (const bookText of candidate.bookTextList) {
+        try {
+            const listed = parseToolJson(
+                await callTool('owa_bible_suggest', {
+                    kind: 'reference',
+                    prefix: bookText,
+                    limit: 1,
+                }),
+            );
+            const suggestions = Array.isArray(listed?.suggestions)
+                ? listed.suggestions
+                : [];
+            if (suggestions.length === 0) {
+                continue;
+            }
+            const wanted = toCompactBookName(bookText);
+            return readBibleReaderAsk(asked, (value: string) => {
+                return toCompactBookName(value) === wanted;
+            });
+        } catch (_error) {
+            // The next run of words, or no route at all.
+        }
+    }
+    return null;
 }
 
 function RenderSuggestionsComp({
@@ -2501,6 +2571,7 @@ function RenderLyricPreviewComp({
 function RenderMessageComp({
     message,
     canReply,
+    canReplyResource,
     onAction,
     onReply,
     onReuse,
@@ -2509,14 +2580,22 @@ function RenderMessageComp({
     onShowAttachment,
 }: Readonly<{
     message: ChatMessageType;
-    // Only the message at the BOTTOM offers its options, and not while an
+    // Only the LAST message offers its ordinary options, and not while an
     // answer is on its way. A one-press "Yes" still sitting under an offer
     // three turns back would be answering the wrong question -- the same
     // mistake the offline bot's bare-yes handling had to be taught not to
     // make.
     canReply: boolean;
+    // A Resources reading card keeps its reference buttons at ANY position:
+    // each one names its verse explicitly, so there is no wrong-question
+    // hazard, and a reader must be able to go back and try another
+    // (2026-10-19). False only while an answer is being written.
+    canReplyResource: boolean;
     onAction: (action: BotActionType) => void;
-    onReply: (text: string) => void;
+    // The card's own options, its words (what a pressed reference came
+    // from), so a press keeps the other related verses under the card it
+    // opens.
+    onReply: (text: string, replies: string[], cardText: string) => void;
     onReuse: (text: string) => void;
     // A thumb under an answer (`answerRatingHelpers`).
     onRate: (answerId: number, rating: AnswerRatingType) => void;
@@ -2524,6 +2603,32 @@ function RenderMessageComp({
     onShowAttachment: (attachment: ChatAttachmentType) => void;
 }>) {
     const isAsked = message.author === 'you';
+    // A Resources card keeps every reference it printed as a button, at any
+    // position in the transcript. A card saved before the buttons existed
+    // derives them from its own references line.
+    const isResourceReading = checkIsResourceReadingText(message.text);
+    const shownReplies = (() => {
+        if (!isResourceReading) {
+            return message.replies ?? [];
+        }
+        // Every reference on the card's line -- and every one already saved
+        // -- plus the card's own next-verse buttons. A card saved before the
+        // buttons existed, or with only some of them, gains the rest from
+        // its own words (2026-10-19).
+        const referenceList = genResourceReadingReplies(
+            '',
+            message.replies ?? [],
+            null,
+            message.text,
+        );
+        const navigation = (message.replies ?? []).filter((one) => {
+            return /^\s*\d+\s*$|^Full chapter$/u.test(one);
+        });
+        return [...new Set([...referenceList, ...navigation])].slice(0, 40);
+    })();
+    const canShowReplies =
+        shownReplies.length > 0 &&
+        (canReply || (isResourceReading && canReplyResource));
     const handleReusing = () => {
         // A click that ends a drag is someone selecting the question to copy
         // it, not someone asking it again.
@@ -2644,14 +2749,18 @@ function RenderMessageComp({
                                                 : '')
                                     }
                                     title={
-                                        pageUrl === null
+                                        // An action may carry what its own
+                                        // words mean -- a Bible short name's
+                                        // full name, for the hover.
+                                        action.title ??
+                                        (pageUrl === null
                                             ? undefined
                                             : fillWords(
                                                   tran(
                                                       'Opens {address} in your browser',
                                                   ),
                                                   { address: pageUrl },
-                                              )
+                                              ))
                                     }
                                     onClick={() => {
                                         onAction(action);
@@ -2674,9 +2783,9 @@ function RenderMessageComp({
                         })}
                     </div>
                 ) : null}
-                {canReply && message.replies?.length ? (
+                {canShowReplies ? (
                     <div className="cue-replies">
-                        {message.replies.map((reply) => {
+                        {shownReplies.map((reply) => {
                             // Pressed, not typed: it goes STRAIGHT back as
                             // the user's own words. Deliberately unlike the
                             // suggestion list, which fills the box instead --
@@ -2688,7 +2797,11 @@ function RenderMessageComp({
                                     type="button"
                                     className="cue-reply"
                                     onClick={() => {
-                                        onReply(reply);
+                                        onReply(
+                                            reply,
+                                            shownReplies,
+                                            message.text,
+                                        );
                                     }}
                                 >
                                     {tranLabel(reply)}
@@ -5755,7 +5868,11 @@ export default function ChatbotAppComp() {
                     } catch (_error) {
                         throwIfCancelled(signal);
                     }
-                    const answer = genBiblesAnswer(ask, listed);
+                    const answer = genBiblesAnswer(
+                        ask,
+                        listed,
+                        state.preferLanguage,
+                    );
                     say(answer.text, answer.actions);
                     return;
                 }
@@ -5778,6 +5895,75 @@ export default function ChatbotAppComp() {
                             ? genRelatedAnswer(ask, facts)
                             : genVersesAnswer(ask, facts);
                     say(answer.text, answer.actions);
+                    return;
+                }
+                if (state.step === 'lineage') {
+                    // The Bible's own genealogy, read by verse KEY: a
+                    // worded reference comes back cut to ~300 characters
+                    // (EC-366), and these are long passages. Matthew's
+                    // royal line first; Luke's runs back through Nathan to
+                    // Adam, so a person Matthew does not name is found
+                    // there (2026-10-19, EC-369).
+                    const facts = await readFacts();
+                    const bibleKey =
+                        typeof facts?.bible === 'string'
+                            ? facts.bible
+                            : (ask.bibleKey ?? null);
+                    let namedPassage: LookupLineagePassageType | null = null;
+                    let namedFacts: any = null;
+                    let didReadAny = false;
+                    for (const key of LINEAGE_PASSAGE_KEY_LIST) {
+                        const text = await readRecord({
+                            kind: 'verse',
+                            ref: key,
+                            ...(bibleKey === null ? {} : { bible: bibleKey }),
+                            ...(ask.page === undefined
+                                ? {}
+                                : { page: ask.page }),
+                        });
+                        throwIfCancelled(signal);
+                        const passage =
+                            text === null ? null : findLineagePassage(text);
+                        if (passage === null) {
+                            continue;
+                        }
+                        didReadAny = true;
+                        if (
+                            checkLineageNamesSubject(passage, {
+                                title: ask.title,
+                                facts,
+                            })
+                        ) {
+                            namedPassage = passage;
+                            namedFacts =
+                                text === null ? null : readLookupFacts(text);
+                            break;
+                        }
+                    }
+                    if (namedPassage === null) {
+                        say(
+                            didReadAny
+                                ? genLookupNoLineageAnswer(ask.title)
+                                : tran('I could not do that just now.'),
+                        );
+                        return;
+                    }
+                    const passageAsk = toPassageAsk(ask, namedFacts);
+                    const actions =
+                        passageAsk === null
+                            ? []
+                            : genLookupActions(passageAsk, namedFacts).filter(
+                                  (action) => {
+                                      return (
+                                          action.args?.step === 'lookup' ||
+                                          action.args?.step === 'another'
+                                      );
+                                  },
+                              );
+                    say(
+                        genLookupLineageAnswer(namedPassage, bibleKey),
+                        actions,
+                    );
                     return;
                 }
                 if (state.step === 'another') {
@@ -6043,6 +6229,13 @@ export default function ChatbotAppComp() {
                 // A deterministic menu for a local flow whose model answer
                 // may omit or malformedly punctuate its OPTIONS line.
                 repliesOverride?: string[];
+                // The card that was pressed, so its related verses stay
+                // buttons under the card this ask opens.
+                carryReplies?: string[];
+                // What the pressed option came from -- the parent card's own
+                // words -- so the assistant knows the passage and the
+                // references the person is choosing among.
+                pressContext?: string;
                 onAnswered?: (text: string | null) => void;
                 // PRESSED rather than typed -- a chip, an option, a row of
                 // the list: the app's words, not theirs, so the answer is in
@@ -6212,6 +6405,165 @@ export default function ChatbotAppComp() {
                           lookupTab?.lookupClosedAt,
                       )
                     : null;
+            // A how-to or the app's own work under the card is the ORDINARY
+            // assistant's (2026-10-19): the Bible prompt's own rule is "do
+            // not describe the app", so "how can I put this passage on the
+            // screen?" and "how can I save it to my list?" were refused --
+            // with the card's **Save to my Bibles list** button right above
+            // the answer. The passage stays on the conversation (the answer
+            // is marked as one), and the card's buttons ride the ask.
+            const isLookupAppAsk =
+                lookupSubject !== null && checkIsLookupAppAsk(trimmedAsked);
+            // The card's own wording and buttons, answered by the window
+            // with no model (2026-10-19). Measured on gemma4:cloud under a
+            // Khmer passage: "show this in Khmer" came back as an invented
+            // Khmer translation of the KJV -- one round, no tool call --
+            // while the installed Khmer Bible's words were in the record;
+            // and "how do I save this?" was refused with the card's **Save
+            // to my Bibles list** button right above the answer.
+            if (lookupSubject !== null) {
+                const verseAsk = readLookupVerseAsk(
+                    trimmedAsked,
+                    lookupSubject,
+                );
+                if (verseAsk !== null) {
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    if (verseAsk.kind === 'anotherBible') {
+                        const handled = await handleLookupStepRef.current(
+                            activeSessionId,
+                            {
+                                step: 'bibles',
+                                ask: lookupSubject,
+                                ...(verseAsk.language === undefined
+                                    ? {}
+                                    : {
+                                          preferLanguage: verseAsk.language,
+                                      }),
+                            },
+                            echoText,
+                            null,
+                        );
+                        if (handled !== false) return;
+                    } else {
+                        addMessage(activeSessionId, {
+                            author: 'you',
+                            text: echoText,
+                        });
+                        const facts = readLookupFacts(lookupSubject.facts);
+                        const cardActions = genLookupActions(
+                            lookupSubject,
+                            facts,
+                        );
+                        if (verseAsk.kind === 'sameBible') {
+                            const copyText = toPassageCopyText(facts);
+                            const biblesAction = cardActions.find((one) => {
+                                return one.args?.step === 'bibles';
+                            });
+                            addMessage(activeSessionId, {
+                                author: 'bot',
+                                text:
+                                    copyText === null
+                                        ? tran('I could not do that just now.')
+                                        : `${fillWords(
+                                              tran(
+                                                  'Here is {name} from the ' +
+                                                      'Bible it was opened in.',
+                                              ),
+                                              { name: lookupSubject.title },
+                                          )}\n\n${copyText}`,
+                                ...(biblesAction === undefined
+                                    ? {}
+                                    : { actions: [biblesAction] }),
+                                isLookupAnswer: true,
+                            });
+                        } else {
+                            const action = cardActions.find((one) => {
+                                return (
+                                    one.args?.step === verseAsk.step &&
+                                    (verseAsk.near === undefined ||
+                                        one.args?.near === verseAsk.near)
+                                );
+                            });
+                            addMessage(activeSessionId, {
+                                author: 'bot',
+                                text:
+                                    action === undefined
+                                        ? tran('I could not do that just now.')
+                                        : fillWords(
+                                              tran(
+                                                  'Press {name} under the ' +
+                                                      'passage above.',
+                                              ),
+                                              {
+                                                  name: tranLabel(action.label),
+                                              },
+                                          ),
+                                ...(action === undefined
+                                    ? {}
+                                    : { actions: [action] }),
+                                isLookupAnswer: true,
+                            });
+                        }
+                        return;
+                    }
+                }
+            }
+            // A family line asked for in words -- "names in order from
+            // David to Jesus" -- under a person's card is that card's own
+            // **Family line to Jesus** step (2026-10-19, EC-369). Measured
+            // on gemma4:cloud: answered in ONE round with no tool call from
+            // the record's `children`, ending "this record does not show
+            // every person in order", then told to press a button.
+            if (
+                lookupSubject !== null &&
+                checkIsLookupLineageAsk(trimmedAsked, lookupSubject)
+            ) {
+                updateSession(activeSessionId, (session) => {
+                    return { ...session, draft: '' };
+                });
+                await handleLookupStepRef.current(
+                    activeSessionId,
+                    { step: 'lineage', ask: lookupSubject },
+                    echoText,
+                    null,
+                );
+                return;
+            }
+            // A "how many" question the record's own lists answer is
+            // counted by the window (2026-10-19, EC-371): asked _តើលោកមាន
+            // កូនប៉ុន្មាន?_, gemma4:cloud said "20" over a list of nineteen
+            // names. The card already holds the list, so no round is spent.
+            if (lookupSubject !== null) {
+                const countField = readLookupCountAsk(
+                    trimmedAsked,
+                    lookupSubject,
+                );
+                const countFacts =
+                    countField === null
+                        ? null
+                        : readLookupFacts(lookupSubject.facts);
+                if (countField !== null && countFacts !== null) {
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                    });
+                    addMessage(activeSessionId, {
+                        author: 'bot',
+                        text: genLookupCountAnswer(
+                            lookupSubject,
+                            countField,
+                            countFacts,
+                        ),
+                        isLookupAnswer: true,
+                    });
+                    return;
+                }
+            }
             // A file from the Resources folders open in this tab --
             // attached now, or still open from an earlier question --
             // makes it a question about Resources, the rest of the
@@ -6328,6 +6680,7 @@ export default function ChatbotAppComp() {
                 verseFindBible === null &&
                 trimmedAsked.length > 0
                     ? (readBibleReaderAsk(trimmedAsked) ??
+                      (await readBibleReaderAskWithBook(trimmedAsked)) ??
                       readBibleReaderThread(
                           lookupTab?.messages ?? [],
                           trimmedAsked,
@@ -6352,7 +6705,7 @@ export default function ChatbotAppComp() {
             const isAppQuestion =
                 generalQuestion === null &&
                 verseFindBible === null &&
-                lookupSubject === null &&
+                (lookupSubject === null || isLookupAppAsk) &&
                 resourceFileNames.length === 0 &&
                 bibleReaderAsk === null;
             // A COMMAND runs here, on the spot, with no model and no key --
@@ -7016,16 +7369,37 @@ export default function ChatbotAppComp() {
                     throwIfCancelled(signal);
                 }
                 const withResources = (text: string) => {
-                    return isResourcesAsk
-                        ? toResourcesAsk(text, resourceFileNames)
-                        : text;
+                    if (!isResourcesAsk) {
+                        return text;
+                    }
+                    const base = toResourcesAsk(text, resourceFileNames);
+                    if (
+                        options?.askHint !== RESOURCES_CROSS_REFERENCE_HINT ||
+                        typeof options.pressContext !== 'string' ||
+                        options.pressContext.length === 0
+                    ) {
+                        return base;
+                    }
+                    // A pressed reference is not a blind lookup: say which
+                    // card it came from, so the assistant reads it in the
+                    // passage the person is studying and knows the other
+                    // references are choices it must keep (2026-10-19).
+                    return (
+                        `${base}\n\n(They pressed "${trimmedAsked}" on the ` +
+                        'card that answered the passage below. They are ' +
+                        'choosing among its related references: read the ' +
+                        "pressed one from the Bible and its own chapter's " +
+                        'Resources PDF, give its closest explanation, and ' +
+                        'keep every other reference on that card as a choice ' +
+                        `so they can try another.)\n${options.pressContext}`
+                    );
                 };
                 const askedOfModel =
                     verseFindBible !== null
                         ? toVerseFindAsk(verseFindWords, verseFindBible) +
                           toVerseHeadStartAsk(verseHeadStart)
                         : lookupSubject !== null
-                          ? toLookupAsk(
+                          ? (isLookupAppAsk ? toLookupAppAsk : toLookupAsk)(
                                 toAskedOfModel(
                                     trimmedAsked,
                                     modelAttachments,
@@ -7390,7 +7764,9 @@ export default function ChatbotAppComp() {
                             plan.english === (generalQuestion ?? trimmedAsked)
                                 ? askedOfModel
                                 : lookupSubject !== null
-                                  ? toLookupAsk(
+                                  ? (isLookupAppAsk
+                                        ? toLookupAppAsk
+                                        : toLookupAsk)(
                                         toAskedOfModel(
                                             plan.english,
                                             modelAttachments,
@@ -7443,7 +7819,7 @@ export default function ChatbotAppComp() {
                                 ...(generalQuestion === null
                                     ? {}
                                     : { isGeneral: true }),
-                                ...(lookupSubject === null
+                                ...(lookupSubject === null || isLookupAppAsk
                                     ? {}
                                     : {
                                           lookup: {
@@ -7955,13 +8331,34 @@ export default function ChatbotAppComp() {
                     options?.repliesOverride !== undefined
                         ? options.repliesOverride.slice(0, 5)
                         : resourcePassageRef !== null
-                          ? genResourceReadingReplies(
-                                trimmedAsked,
-                                resourceReadingWasRejected
-                                    ? []
-                                    : (answer.replies ?? []),
-                                resourceChapterVerseCount,
-                            )
+                          ? (() => {
+                                // The card that was pressed keeps its other
+                                // related verses under this one, so a reader
+                                // can try a different reference without going
+                                // back (2026-10-19). A menu's own numbers
+                                // (`4`, `Full chapter`) are not references.
+                                const carried = (
+                                    options?.carryReplies ?? []
+                                ).filter((one) => {
+                                    return (
+                                        /[:：៖]\s*\p{N}/u.test(one) &&
+                                        !/^\s*\p{N}+\s*[-–]\s*\p{N}+\s*$/u.test(
+                                            one,
+                                        )
+                                    );
+                                });
+                                const next = genResourceReadingReplies(
+                                    trimmedAsked,
+                                    resourceReadingWasRejected
+                                        ? []
+                                        : (answer.replies ?? []),
+                                    resourceChapterVerseCount,
+                                    sanitizedAnswer,
+                                );
+                                return [
+                                    ...new Set([...carried, ...next]),
+                                ].slice(0, 40);
+                            })()
                           : options?.shownText !== undefined
                             ? []
                             : !isAppQuestion
@@ -8198,7 +8595,11 @@ export default function ChatbotAppComp() {
     // A quick reply under an answer is PRESSED: the app's own words, answered
     // in the language the app is shown in.
     const handleReplying = useCallback(
-        (reply: string) => {
+        (
+            reply: string,
+            parentReplies: string[] = [],
+            parentTextArg: string = '',
+        ) => {
             const session = sessionStateRef.current.sessions.find((one) => {
                 return one.id === activeSessionId;
             });
@@ -8226,7 +8627,7 @@ export default function ChatbotAppComp() {
                                 'below.',
                         )}`;
                     },
-                    repliesOverride: ['1', '2', '3', 'Full chapter'],
+                    repliesOverride: ['1', '2', '3', '1-3', 'Full chapter'],
                 });
                 return;
             }
@@ -8294,6 +8695,16 @@ export default function ChatbotAppComp() {
                     reply === 'Full chapter');
             const isResourcesCrossReference =
                 isResourcesConversation && /[:：]\s*\p{N}/u.test(reply);
+            // The card a reply is pressed under is the window's last answer;
+            // its words name the passage and every related reference, which
+            // is what the assistant needs to read the pressed one in context
+            // (2026-10-19: a bare reference left it guessing the intention).
+            const parentText = isResourcesCrossReference
+                ? parentTextArg ||
+                  [...(session?.messages ?? [])].reverse().find((one) => {
+                      return one.author === 'bot';
+                  })?.text
+                : undefined;
             handleAskingRef.current(reply, false, {
                 isPressed: true,
                 ...(isResourcesRange
@@ -8303,6 +8714,16 @@ export default function ChatbotAppComp() {
                     : isResourcesCrossReference
                       ? { askHint: RESOURCES_CROSS_REFERENCE_HINT }
                       : {}),
+                // The card that was pressed keeps its other related verses
+                // pressable under this one (2026-10-19: opening a
+                // cross-reference lost the list it came from, so a reader
+                // could not try a different one).
+                ...(isResourcesConversation
+                    ? { carryReplies: parentReplies }
+                    : {}),
+                ...(typeof parentText === 'string' && parentText.length > 0
+                    ? { pressContext: parentText.slice(0, 1200) }
+                    : {}),
             });
         },
         [
@@ -10112,6 +10533,7 @@ export default function ChatbotAppComp() {
                                     canReply={
                                         index === messages.length - 1 && !isBusy
                                     }
+                                    canReplyResource={!isBusy}
                                     onAction={handleActing}
                                     onReply={handleReplying}
                                     onReuse={handleReusing}

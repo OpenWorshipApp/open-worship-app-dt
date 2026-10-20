@@ -197,7 +197,8 @@ What holds everywhere:
   scrubs provider keys and tokens out of every result. The off switch is the
   env var `OWA_MCP_FIREWALL=off` only. Never weaken it to make a task easier.
 - **Master switch** (Settings → Others → _Enable AI features_, `ai-enabled`):
-  unset means OFF in a packaged build and ON in dev, main's `checkIsAiEnabled()`
+  unset means ON in every build (packaged included); only an explicit `false`
+  turns it off, main's `checkIsAiEnabled()`
   and the renderer's `getIsAIEnabled()` must agree, and it takes effect on the
   next launch.
 - **Chatbot answers render as TEXT** — no `dangerouslySetInnerHTML` anywhere in

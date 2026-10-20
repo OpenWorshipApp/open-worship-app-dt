@@ -146,6 +146,7 @@ import { callTool, callToolWithPictures, listTools } from './mcpClient';
 import type { WindowAimType } from './windowAimHelpers';
 import {
     BIBLE_IMPORT_MODEL_REFUSAL,
+    BIBLE_KJV_MODEL_REFUSAL,
     genBibleImportUnderAnswer,
 } from './bibleImportChatHelpers';
 import {
@@ -1428,6 +1429,10 @@ Everything you say must survive that:
   tool's answer like "isAnyShowing" -- not even in passing, not even in
   brackets as proof. You read those; you do not repeat them.
 - Only the steps that answer the question. No background, no internals.
+- Answer the question they asked. When it is WHAT, WHO or HOW MANY, give
+  that information itself, and do not end by naming buttons or offering to
+  show it; a button or step is for a question that asked HOW (the user,
+  2026-10-19).
 - Short sentences. Plain words. Calm: they may be in a hurry and in front of a
   congregation.
 ${genLanguageRule(langCode)}
@@ -1607,15 +1612,20 @@ Rules:
   offer its show button. When they only asked HOW, answer from the manual
   and offer to put it up for them. \`action: "check"\` reads a reference
   without touching a screen.
-- **A Bible from a link is \`owa_bible_xml\`, never Settings.** Any link --
-  a file, a GitHub page or folder -- goes to \`check\`; a page answers the
-  Bible files on it, so offer the ones in their language. No link, only a
-  language: check the catalog its description names. A downloaded Bible
-  is NOT installed yet, and only the person installs it: buttons under your
-  answer show where it came from for them to agree to, then ask its name,
-  language, digits and book names -- say what it is (title, books) and let
-  them press. Changing or removing an installed one is the same tool by its
-  \`key\`, and can be undone.
+- **A Bible from a link is \`owa_bible_xml\`, never Settings -- and the
+  app's own KJV comes first.** Any link -- a file, a GitHub page or folder
+  -- goes to \`check\`; a page answers the Bible files on it, so offer the
+  ones in their language. No link, only a language: check the catalog its
+  description names. **Before any import, call \`list\` or read a
+  \`check\`'s \`hasKjv\`**: if \`KJV\` is missing, say Open Worship provides
+  the recommended King James Version and offer to create it -- the person
+  presses **Create the provided KJV**. Never install an English KJV from
+  the internet; point to the provided one. After it exists, go on with
+  their import. A downloaded Bible is NOT installed yet, and only the
+  person installs it: buttons under your answer show where it came from
+  for them to agree to, then ask its name, language, digits and book names
+  -- say what it is (title, books) and let them press. Changing or removing
+  an installed one is the same tool by its \`key\`, and can be undone.
 - **A countdown, stopwatch, clock, scrolling message or quick text is ONE
   call too**: \`owa_foreground\` with the widget and its \`minutes\`, \`at\`
   (a clock time) or \`text\` -- "start a 5 minute countdown", "count down to
@@ -2030,7 +2040,7 @@ type ToolWatchType = {
      * carries the import's own buttons, so the person PRESSES their choices
      * instead of a model asking four questions over four paid rounds.
      */
-    bibleImportCheck: { result: any; url: string } | null;
+    bibleImportCheck: { result: any; url: string; find: string } | null;
     /**
      * The title of every page a tool result named in this ask, by id -- what
      * an id the model writes anyway is replaced WITH. Per ask, never kept.
@@ -2639,7 +2649,11 @@ export function applyToolWatch(
         // Never an `import`: a model's is refused before it is called
         // (`runMcpToolCall`), so the person's press is the only way in.
         if (args?.action === 'check' && result !== null) {
-            watch.bibleImportCheck = { result, url: String(args?.url ?? '') };
+            watch.bibleImportCheck = {
+                result,
+                url: String(args?.url ?? ''),
+                find: String(args?.find ?? ''),
+            };
         }
     }
     if (name === 'owa_lyric_file' && args?.action === 'create') {
@@ -2739,6 +2753,11 @@ async function runMcpToolCall(
     // the draft itself would skip the one thing those buttons ask.
     if (name === 'owa_bible_xml' && args?.action === 'import') {
         return `Tool refused: ${BIBLE_IMPORT_MODEL_REFUSAL}`;
+    }
+    // The KJV Open Worship provides is the person's to create: the offer's
+    // own button is that consent.
+    if (name === 'owa_bible_xml' && args?.action === 'create-kjv') {
+        return `Tool refused: ${BIBLE_KJV_MODEL_REFUSAL}`;
     }
     if (checkIsModelRemoval(args)) {
         if (watch.removalCount >= MAX_MODEL_REMOVALS_PER_ASK) {
@@ -3157,10 +3176,26 @@ const LOOKUP_SYSTEM_PROMPT =
     `spells it. Read anything more with ${LOOKUP_TOOL_NAME}: a related ` +
     'person or place by its id or name, or verses by ref -- quote a verse ' +
     'only as a read returned it, in the Bible it names, and name it by its ' +
-    'title when it has one. For what the record does not hold, you may read ' +
+    'title when it has one. The record’s lists -- parents, children, ' +
+    'spouses, siblings, places -- ARE its answer: when they ask who or how ' +
+    'many, name them from the list, and never send them to a button for ' +
+    'what the list already holds; when they asked for information, answer ' +
+    'it and stop rather than ending with buttons. A family line or genealogy is never in the ' +
+    'record: its children are only the sons it names. Read the Bible’s ' +
+    'own, by key -- MAT 1:1-17 (Abraham to Jesus) or LUK 3:23-38 ' +
+    '(Jesus back to Adam), never the reference in words, which comes back ' +
+    'cut -- and name the people in its order. To find a ' +
+    'person or place when the spelling is unsure, give `search` with the ' +
+    'kind. To find verses by words -- a theme, or a verse they ' +
+    'half-remember -- search the Bible with owa_find_verse, and name only ' +
+    'the verses it returned. For what the record does not hold, you may read ' +
     'one of its links with owa_read_website, and say you did. When neither ' +
-    'the record nor the Bible says, say so rather than guess. Answer in the ' +
-    'language they write in; do not describe the app or offer a walkthrough.';
+    'the record nor the Bible says, say so rather than guess. Quote a verse ' +
+    'only as the record or a tool read returned it: never translate one ' +
+    'yourself, and never write one from memory. When they ask what they can ' +
+    'do with the record, name the button under it that does it and say ' +
+    'pressing it is theirs. Answer in the language they write in; do not ' +
+    'describe any other part of the app or offer a walkthrough.';
 
 // A translator's whole job, said once: the frame after the words says
 // which way and what to keep (`toQuestionTranslationAsk`,
@@ -5439,8 +5474,8 @@ async function askLlmBotAsWritten(
         // A downloaded one's buttons open on **I agree**, so what it is
         // agreed to goes under the model's words, which never carry it.
         if (answer.actions === undefined && watch.bibleImportCheck !== null) {
-            const { result, url } = watch.bibleImportCheck;
-            const under = genBibleImportUnderAnswer(result, url);
+            const { result, url, find } = watch.bibleImportCheck;
+            const under = genBibleImportUnderAnswer(result, url, find);
             if (under.actions.length > 0) {
                 answer.actions = under.actions;
                 if (under.notice !== null) {

@@ -36,6 +36,41 @@ describe('toAnswerShownInLanguage', () => {
         expect(show(text, 'en')).toBe(text);
     });
 
+    test('a sentence-case control name in bold is the button it names', () => {
+        // The lookup card's own labels: no capital after the first word, so
+        // the run pass below read only the first word and the label stayed
+        // English in a Khmer answer (seen live 2026-10-19).
+        const showLookup = (text: string) => {
+            return toAnswerShownInLanguage(text, 'km', (label) => {
+                return (
+                    {
+                        ...LABEL_MAP,
+                        'Its verses': 'ខគម្ពីររបស់វា',
+                        'Family and places': 'គ្រួសារ និងទីកន្លែង',
+                        'Open another passage': 'បើកបទគម្ពីរផ្សេង',
+                    }[label] ?? label
+                );
+            });
+        };
+        expect(showLookup('ចុច **Its verses** ដើម្បីមើល។')).toBe(
+            'ចុច **ខគម្ពីររបស់វា** ដើម្បីមើល។',
+        );
+        expect(showLookup('ចុច **Family and places**។')).toBe(
+            'ចុច **គ្រួសារ និងទីកន្លែង**។',
+        );
+        // A control named in quotes rather than bold (seen live 2026-10-19).
+        expect(showLookup('ចុច "Its verses" ខាងក្រោម។')).toBe(
+            'ចុច "ខគម្ពីររបស់វា" ខាងក្រោម។',
+        );
+        expect(showLookup('ចុច “Family and places”។')).toBe(
+            'ចុច "គ្រួសារ និងទីកន្លែង"។',
+        );
+        // Out of bold, the same words are left for the translator.
+        expect(showLookup('ចុច Its verses ដើម្បីមើល។')).toBe(
+            'ចុច Its verses ដើម្បីមើល។',
+        );
+    });
+
     test('an English gloss in brackets after Khmer words goes', () => {
         expect(show('ចុចលើរូបកង់ធ្មេញ (Settings) នៅខាងលើ។')).toBe(
             'ចុចលើរូបកង់ធ្មេញ នៅខាងលើ។',

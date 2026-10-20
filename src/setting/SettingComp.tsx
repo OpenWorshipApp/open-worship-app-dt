@@ -9,7 +9,11 @@ import {
 } from '../helper/ai/aiKeyFocusHelpers';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
-import { SETTING_SETTING_NAME, takeSettingTabRequest } from './settingHelpers';
+import {
+    listenForSettingTabRequest,
+    SETTING_SETTING_NAME,
+    takeSettingTabRequest,
+} from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
 import SettingArchiveButtonsComp from './setting-archive/SettingArchiveButtonsComp';
 import { toIconedLabel } from '../others/labelIconHelpers';
@@ -64,6 +68,28 @@ export default function SettingComp() {
     // AI-key requests use the same focus event, then remain stored for the AI
     // panel itself to take once Others is showing.
     useAppEffect(() => {
+        // The asker is often this very window (the assistant's "Enable AI
+        // features" prompt, answered inside Settings). It is already in front,
+        // so the raise fires no focus event and the tab request below would
+        // never be taken -- Yes would read as doing nothing.
+        const cleanUpTabRequestListener = listenForSettingTabRequest(
+            (tabKey) => {
+                // Taken here rather than on the next focus: it was just written
+                // for a window already in front, which may not see another focus
+                // for a long time. Left stored, it would be applied again later.
+                takeSettingTabRequest();
+                if (tabKey === tabKeyRef.current) {
+                    return;
+                }
+                if (!handleSettingTabRef.current(tabKey)) {
+                    // Refused over unsaved Bible changes, and the warning says so.
+                    setSetting(SETTING_SETTING_NAME, tabKeyRef.current);
+                    if (getAIKeyFocusRequest() !== null) {
+                        takeAIKeyFocusRequest();
+                    }
+                }
+            },
+        );
         const handleFocusing = () => {
             let currentTab = tabKeyRef.current;
             const requestedTab = takeSettingTabRequest();
@@ -95,6 +121,7 @@ export default function SettingComp() {
         };
         window.addEventListener('focus', handleFocusing);
         return () => {
+            cleanUpTabRequestListener();
             window.removeEventListener('focus', handleFocusing);
         };
     }, []);

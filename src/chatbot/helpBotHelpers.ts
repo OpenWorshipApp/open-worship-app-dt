@@ -93,6 +93,12 @@ export { BOT_FOCUS_LIST, DEFAULT_BOT_FOCUS, getBotFocus, toBotFocus };
 
 export type BotActionType = {
     label: string;
+    // What the button's words mean, for a hover tooltip -- the full name
+    // behind a short Bible key (`KJV` -> `King James Version`). Kept with
+    // the action, so a reopened conversation still explains it; never
+    // translated at press time, since it is already in the language it was
+    // written in.
+    title?: string;
     // An action either calls a tool directly, or -- when only a model can work
     // out what to press -- asks the model a follow-up question in the user's
     // place. `ask` wins when both are set.

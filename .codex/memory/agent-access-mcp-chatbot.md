@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
-  modified: 2026-10-09T03:04:11.631Z
+  modified: 2026-10-19T23:28:58.952Z
 ---
 
 Built 2026-08-31 (branch `enhance-after-release`). The app is now drivable by
@@ -221,9 +221,10 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   `ai-enabled` to `clientSetting` in `<userData>/setting.json`; the main
   process reads that file directly before `ready`. Off = no CDP, no MCP host,
   no chatbot menu item, and the AI providers refuse a client. Next launch only.
-  **Unset = OFF packaged, ON in dev**, and the renderer's `getIsAIEnabled()`
-  has to default the same way — two halves that disagree give you a ticked
-  switch over a process with no doors open.
+  **Unset = ON in every build**, and only an explicit `ai-enabled: "false"`
+  closes the doors; the renderer's `getIsAIEnabled()` defaults the same way —
+  two halves that disagree give you a ticked switch over a process with no
+  doors open.
 
 **Why:** the same endpoint serves the user's chatbot and every QA/agent
 workflow, so it had to stop being a dev-only hardcoded number without becoming

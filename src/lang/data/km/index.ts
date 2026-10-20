@@ -10,6 +10,7 @@ import btbThin from './fonts/Battambang/Battambang-Thin.ttf';
 import fhRegular from './fonts/Fasthand/Fasthand-Regular.ttf';
 
 import bibleBooks from './bibleBooks.json';
+import bibleKeyMap from './bibleKeyMap.json';
 import bbCR from './bb-cr.gz.bundle';
 import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
 import namesMapUrl from './location-name-map-data/namesMap.json?url';
@@ -93,6 +94,12 @@ const dictionary = {
         'រក្សាឈ្មោះខ្លីដែលវាស្នើ ឆ្លើយសំណួរផ្សេងទៀតរបស់វា រួចចុច «ដំឡើង»។ ព្រះគម្ពីរនឹងបង្ហាញនៅទីនេះដោយខ្លួនឯង។',
     'Let the assistant import this Bible for me':
         'ឱ្យជំនួយការនាំចូលព្រះគម្ពីរនេះជំនួសខ្ញុំ',
+    'Or let the assistant import a Bible in your language for you:':
+        'ឬឱ្យជំនួយការនាំចូលព្រះគម្ពីរជាភាសារបស់អ្នកសម្រាប់អ្នក៖',
+    'Press the button below. The assistant opens and looks for a Bible in your language in a free collection online.':
+        'ចុចប៊ូតុងខាងក្រោម។ ជំនួយការនឹងបើក ហើយរកមើលព្រះគម្ពីរជាភាសារបស់អ្នកក្នុងបណ្ដុំឥតគិតថ្លៃនៅលើអ៊ីនធឺណិត។',
+    'Keep the short name it suggests, answer its other questions, then press Install it. Then choose it in the list above; this card goes away.':
+        'រក្សាឈ្មោះខ្លីដែលវាស្នើ ឆ្លើយសំណួរផ្សេងទៀតរបស់វា រួចចុច «ដំឡើង»។ បន្ទាប់មកជ្រើសរើសវាក្នុងបញ្ជីខាងលើ; កាតនេះនឹងបាត់ទៅវិញ។',
     'Could not check installed Bible keys':
         'មិនអាចពិនិត្យកូនសោព្រះគម្ពីរដែលបានដំឡើង',
     'Saving...': 'កំពុងរក្សាទុក...',
@@ -1852,6 +1859,8 @@ const dictionary = {
     'Search for font': 'ស្វែងរកពុម្ពអក្សរ',
     'Full view': 'ទិដ្ឋភាពពេញ',
     'Exit full view': 'ចាកចេញពីទិដ្ឋភាពពេញ',
+    'Full size preview': 'ទិដ្ឋភាពពេញទំហំ',
+    'Exit full size preview': 'ចាកចេញពីទិដ្ឋភាពពេញទំហំ',
     'Pin document': 'ខ្ទាស់ឯកសារ',
     'Unpin document': 'ដោះខ្ទាស់ឯកសារ',
     'Document is pinned': 'ឯកសារត្រូវបានខ្ទាស់',
@@ -3036,6 +3045,10 @@ const dictionary = {
     'Fix a Bible that is not installed': 'ដោះស្រាយព្រះគម្ពីរដែលមិនទាន់បានដំឡើង',
     'When the Reader names a Bible you do not have, pick another, press Let the assistant import this Bible for me, or Go to Bible Setting.':
         'ពេលកម្មវិធីអានស្នើព្រះគម្ពីរដែលអ្នកមិនមាន ជ្រើសមួយផ្សេង ចុច ឱ្យជំនួយការនាំចូលព្រះគម្ពីរនេះជំនួសខ្ញុំ ឬ ទៅកាន់ការកំណត់ព្រះគម្ពីរ។',
+    'When the Reader names a Bible you do not have, pick another, press Let the assistant import a Bible for me, or Go to Bible Setting.':
+        'ពេលកម្មវិធីអានស្នើព្រះគម្ពីរដែលអ្នកមិនមាន ជ្រើសមួយផ្សេង ចុច ឱ្យជំនួយការនាំចូលព្រះគម្ពីរមួយសម្រាប់ខ្ញុំ ឬ ទៅកាន់ការកំណត់ព្រះគម្ពីរ។',
+    'Or press Let the assistant import a Bible for me: the Assistant offers the KJV the app itself provides first, then looks for a Bible in your language in a free online collection.':
+        'ឬចុច ឱ្យជំនួយការនាំចូលព្រះគម្ពីរមួយសម្រាប់ខ្ញុំ៖ ជំនួយការផ្តល់ KJV ដែលកម្មវិធីផ្តល់ជូនជាមុន រួចរកព្រះគម្ពីរជាភាសារបស់អ្នកក្នុងបណ្ដុំឥតគិតថ្លៃនៅលើអ៊ីនធឺណិត។',
     'Use verse numbers inside a passage': 'ប្រើលេខខនៅក្នុងបទគម្ពីរ',
     'Click a verse number to show its notes or double-click it to select the verse; Show the next chapter loads more of a long passage.':
         'ចុចលេខខដើម្បីមើលកំណត់ត្រារបស់វា ឬចុចពីរដងដើម្បីជ្រើសខនោះ; បង្ហាញជំពូកបន្ទាប់ ផ្ទុកបទគម្ពីរវែងបន្ថែម។',
@@ -3667,9 +3680,35 @@ const dictionary = {
     'Family and places': 'គ្រួសារ និងទីកន្លែង',
     'Related places': 'ទីកន្លែងដែលពាក់ព័ន្ធ',
     'Its verses': 'ខគម្ពីររបស់វា',
+    'Family line to Jesus': 'ពូជពង្សដល់ព្រះយេស៊ូវ',
     'Open another passage': 'បើកបទគម្ពីរផ្សេង',
     'Save to my Bibles list': 'រក្សាទុកក្នុងបញ្ជីព្រះគម្ពីររបស់ខ្ញុំ',
     'Copy the passage': 'ចម្លងបទគម្ពីរ',
+    'Press {name} under the passage above.': 'ចុច {name} នៅក្រោមបទគម្ពីរខាងលើ។',
+    'Here is {name} from the Bible it was opened in.':
+        'នេះជា {name} ពីព្រះគម្ពីរដែលវាត្រូវបានបើក។',
+    'Here is the family line in {passage}, in the order it gives it:':
+        'នេះជាពូជពង្សនៅក្នុង {passage} តាមលំដាប់ដែលវាបានរៀបរាប់៖',
+    'Here is the family line in {passage}, from the Bible {bible}, in the order it gives it:':
+        'នេះជាពូជពង្សនៅក្នុង {passage} ពីព្រះគម្ពីរ {bible} តាមលំដាប់ដែលវាបានរៀបរាប់៖',
+    'Neither family line the Bible gives — Matthew 1 and Luke 3 — names {name}.':
+        'គ្មានពូជពង្សណាមួយដែលព្រះគម្ពីរបានឲ្យ — ម៉ាថាយ ១ និងលូកា ៣ — មានឈ្មោះ {name} ទេ។',
+    'The record names no children of {name}.':
+        'កំណត់ត្រានេះមិនមានឈ្មោះកូនរបស់ {name} ទេ។',
+    'The record names no husband or wife of {name}.':
+        'កំណត់ត្រានេះមិនមានឈ្មោះប្ដី ឬប្រពន្ធរបស់ {name} ទេ។',
+    'The record names no brothers or sisters of {name}.':
+        'កំណត់ត្រានេះមិនមានឈ្មោះបងប្អូនរបស់ {name} ទេ។',
+    'The record names no parents of {name}.':
+        'កំណត់ត្រានេះមិនមានឈ្មោះឪពុកម្តាយរបស់ {name} ទេ។',
+    'The record names {count} children of {name}: {names}.':
+        'កំណត់ត្រានេះមានឈ្មោះកូន {count} នាក់របស់ {name}៖ {names}។',
+    'The record names {count} husbands or wives of {name}: {names}.':
+        'កំណត់ត្រានេះមានឈ្មោះប្ដី ឬប្រពន្ធ {count} នាក់របស់ {name}៖ {names}។',
+    'The record names {count} brothers and sisters of {name}: {names}.':
+        'កំណត់ត្រានេះមានឈ្មោះបងប្អូន {count} នាក់របស់ {name}៖ {names}។',
+    'The record names {count} parents of {name}: {names}.':
+        'កំណត់ត្រានេះមានឈ្មោះឪពុកម្តាយ {count} នាក់របស់ {name}៖ {names}។',
     'The names lookup lists no family or places for {name}.':
         'ទីកន្លែង-ឈ្មោះ មិនមានគ្រួសារ ឬទីកន្លែងសម្រាប់ {name} ទេ។',
     'The family and places of {name}. Press one to ask about it.':
@@ -5117,6 +5156,32 @@ const dictionary = {
         'បានត្រឡប់វិញ៖ **{key}** ត្រូវបានដកចេញវិញហើយ (វានៅក្នុងធុងសំរាម)។ គ្មានអ្វីផ្សេងទៀតត្រូវបានផ្លាស់ប្ដូរទេ។',
     'That was already undone.': 'វាត្រូវបានត្រឡប់វិញរួចហើយ។',
     'Stopped. Nothing was installed.': 'បានបញ្ឈប់។ គ្មានអ្វីត្រូវបានដំឡើងទេ។',
+    'Create the provided KJV': 'បង្កើត KJV ដែលផ្តល់ជូន',
+    // The Reader's "Bible key KJV is not available!" card asks before it
+    // builds the KJV out of the copy the app carries.
+    'Create the KJV Bible?': 'បង្កើតព្រះគម្ពីរ KJV មែនទេ?',
+    'The KJV Bible is not available. Open Worship provides it, and creating it needs no internet and no separate download: the app already holds the whole KJV.':
+        'ព្រះគម្ពីរ KJV មិនមានទេ។ Open Worship ផ្តល់វាជូន ហើយការបង្កើតវាមិនត្រូវការអ៊ីនធឺណិត ឬការទាញយកដោយឡែកទេ៖ កម្មវិធីមាន KJV ទាំងមូលរួចហើយ។',
+    'Failed to create the KJV Bible. Please try again.':
+        'បរាជ័យក្នុងការបង្កើតព្រះគម្ពីរ KJV។ សូមព្យាយាមម្តងទៀត។',
+    'Use the internet copy anyway': 'ប្រើឯកសារពីអ៊ីនធឺណិតនេះវិញ',
+    'Import another Bible anyway': 'នាំចូលព្រះគម្ពីរផ្សេងទៀតវិញ',
+    'Add another Bible': 'បន្ថែមព្រះគម្ពីរមួយទៀត',
+    'Creating the provided KJV Bible': 'កំពុងបង្កើតព្រះគម្ពីរ KJV ដែលផ្តល់ជូន',
+    'I could not create the KJV Open Worship provides. Nothing was installed. In **Settings → Bible**, press **{button}**, or try again here.':
+        'ខ្ញុំមិនអាចបង្កើត KJV ដែល Open Worship ផ្តល់ជូនបានទេ។ គ្មានអ្វីត្រូវបានដំឡើងទេ។ នៅ **ការកំណត់ → ព្រះគម្ពីរ** សូមចុច **{button}** ឬព្យាយាមម្តងទៀតនៅទីនេះ។',
+    '**You already have the KJV Open Worship provides**, installed as **KJV**. There is no need to import this file. To use the file anyway, press a choice below.':
+        '**អ្នកមាន KJV ដែល Open Worship ផ្តល់ជូនរួចហើយ** ដំឡើងជា **KJV**។ មិនចាំបាច់នាំចូលឯកសារនេះទេ។ ប្រសិនបើចង់ប្រើឯកសារនេះវិញ សូមចុចជម្រើសខាងក្រោម។',
+    '**You already have the KJV Open Worship provides**, installed as **KJV**. There is no need to import this file. To keep a second copy anyway, choose a short name below.':
+        '**អ្នកមាន KJV ដែល Open Worship ផ្តល់ជូនរួចហើយ** ដំឡើងជា **KJV**។ មិនចាំបាច់នាំចូលឯកសារនេះទេ។ ប្រសិនបើចង់រក្សាច្បាប់ចម្លងទីពីរ សូមជ្រើសរើសឈ្មោះខ្លីខាងក្រោម។',
+    '**Open Worship provides the KJV Bible** — the recommended King James Version, and it is not installed yet. Create it from the app itself and you will have the one this app recommends. To use this file instead, press a choice below.':
+        '**Open Worship ផ្តល់ព្រះគម្ពីរ KJV** — គឺជាកំណែ King James ដែលបានណែនាំ ហើយមិនទាន់បានដំឡើងនៅឡើយទេ។ បង្កើតវាពីក្នុងកម្មវិធីផ្ទាល់ ហើយអ្នកនឹងបានកំណែដែលកម្មវិធីនេះណែនាំ។ ប្រសិនបើចង់ប្រើឯកសារនេះជំនួសវិញ សូមចុចជម្រើសខាងក្រោម។',
+    '**Before another Bible: Open Worship provides the KJV Bible** — the recommended King James Version, and it is not installed yet. Create it first, and then I will start your import again. To go on without it, press a choice below.':
+        '**មុនព្រះគម្ពីរផ្សេងទៀត៖ Open Worship ផ្តល់ព្រះគម្ពីរ KJV** — គឺជាកំណែ King James ដែលបានណែនាំ ហើយមិនទាន់បានដំឡើងនៅឡើយទេ។ សូមបង្កើតវាជាមុនសិន រួចខ្ញុំនឹងចាប់ផ្តើមការនាំចូលរបស់អ្នកឡើងវិញ។ ប្រសិនបើចង់បន្តដោយគ្មានវា សូមចុចជម្រើសខាងក្រោម។',
+    'Creating it needs no internet and no separate download: the app already holds the whole KJV.':
+        'ការបង្កើតវាមិនត្រូវការអ៊ីនធឺណិត ឬការទាញយកដោយឡែកទេ៖ កម្មវិធីមាន KJV ទាំងមូលរួចហើយ។',
+    '**Done — the KJV Open Worship provides is installed.** Choose **KJV** from the Bible version button. A Bible Reader card saying the KJV is not available goes away by itself.':
+        '**រួចរាល់ — KJV ដែល Open Worship ផ្តល់ជូនត្រូវបានដំឡើងហើយ។** សូមជ្រើសរើស **KJV** ពីប៊ូតុងកំណែព្រះគម្ពីរ។ កាតក្នុងកម្មវិធីអានព្រះគម្ពីរដែលថា KJV មិនអាចប្រើបាន នឹងបាត់ទៅវិញដោយខ្លួនឯង។',
     'I opened **Settings → Bible** with your link in the Import box. Press **Import** there, then choose the name, language, numbers and book names on the form.':
         'ខ្ញុំបានបើក **ការកំណត់ → ព្រះគម្ពីរ** ដោយដាក់តំណរបស់អ្នកក្នុងប្រអប់ នាំចូល រួចហើយ។ សូមចុច **នាំចូល** នៅទីនោះ បន្ទាប់មកជ្រើសឈ្មោះ ភាសា លេខ និងឈ្មោះគម្ពីរ នៅលើទម្រង់បែបបទ។',
     'That step is not one I know.': 'ខ្ញុំមិនស្គាល់ជំហាននោះទេ។',
@@ -5450,6 +5515,9 @@ const lang: LanguageDataType = {
     langCode: 'km',
     editorLink: 'https://editor-km.openworship.app',
     bibleBooks,
+    getBibleKeyNameMap: () => {
+        return bibleKeyMap;
+    },
     checkIsThisLang: (text: string) => {
         return /[\u1780-\u17FF]/u.test(text);
     },

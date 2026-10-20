@@ -83,20 +83,18 @@ export const AI_ENABLED_SETTING_NAME = 'ai-enabled';
 /**
  * What an install with nothing written yet does.
  *
- * OFF for a packaged build, ON for dev. The doors this switch opens are a CDP
- * endpoint and an MCP host, and anything that reaches either drives a renderer
- * with node integration -- on an operator's machine that is a local code
- * execution surface, and the decrypted API keys sit behind it. Nobody gets
- * that by upgrading: it is opted into in Settings -> Others, once, knowingly.
- * Dev is the machine of whoever is building the app and has always run with
- * the endpoint open, so it keeps that default.
+ * ON everywhere, packaged build included: the assistant is part of the app,
+ * not something an operator has to discover and switch on. Turning it off is
+ * one switch away in Settings -> Others, and an explicit `false` is always
+ * honoured -- so the doors stay closable, they are simply no longer closed by
+ * a default nobody chose.
  *
  * Read in the function body, never at module load: a module-load read of
  * another module's export is what makes a partial `vi.mock` blow up on import
  * rather than where the value is used.
  */
 function checkIsAiEnabledByDefault() {
-    return isDev;
+    return true;
 }
 
 export function checkIsAiEnabled() {
@@ -142,11 +140,10 @@ function getAiInfoFilePath() {
  * free-port lookup, say) loses that race often enough to look like a debugger
  * that randomly fails to attach.
  *
- * A packaged build CAN open it -- the in-app chatbot drives the app through it
- * wherever the app runs -- but only once the operator has switched AI features
- * on, because it is bound to `127.0.0.1` and anything already on this machine
- * that reaches it drives a renderer with node integration. Dev opens it
- * without being asked; see `checkIsAiEnabledByDefault`.
+ * It is bound to `127.0.0.1`; anything already on this machine that reaches it
+ * drives a renderer with node integration, which is why Settings -> Others can
+ * switch the whole feature off (`checkIsAiEnabledByDefault`: on unless the
+ * operator turned it off).
  */
 export function enableRemoteDebugging() {
     if (!checkIsAiEnabled()) {

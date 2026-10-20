@@ -17,6 +17,16 @@
  * the names and places, and for a how-to ("របៀប", "comment"), which is the
  * app's own work and not a Bible question. English reads here. Pure: no
  * store, no tool call, no model.
+ *
+ * A reference is also written WITHOUT the chapter word -- "Matthew 18",
+ * "ម៉ាថាយ ១៨" -- which is how a reader actually says it. The words before
+ * the number are handed to `readBibleReaderAsk`'s `checkIsBook`, which the
+ * WINDOW answers from the reader's own Bible (`readBibleReaderAskWithBook`
+ * in `ChatbotAppComp.tsx`); that keeps this module pure and a book name in
+ * any installed Bible's language still routes. A Resources file named in
+ * the question (`MAT.18.pdf`) is a Resources ask on its own (2026-10-19: a
+ * live gemma4:cloud run answered "I cannot read PDFs", summarized Matthew
+ * 18 from memory, and gave John 3's Resources files as how-to steps).
  */
 import {
     checkIsInLanguageScript,
@@ -36,6 +46,9 @@ export type BibleReaderAskType = {
     /** A plain line under a Bible-reader answer: the tools, not a new read. */
     isThread?: true;
 };
+
+/** Whether one run of words before a number names a Bible book. */
+export type BibleBookNameCheckType = (bookText: string) => boolean;
 
 const ZERO_WIDTH_PATTERN = /\p{Cf}/gu;
 
@@ -86,9 +99,104 @@ export function checkHasWord(text: string, wordList: readonly string[]) {
     });
 }
 
+// A file in the user's Resources folders, named as the panel writes it
+// (`MAT.18.pdf`, `pdf/LUK.7.pdf`, `GEN.0.json`, `family-tree.jpeg`). The
+// extensions are the ones `toResourceFileKind` can read; a dotted word with
+// any other tail ("version.2", "e.g.") is not a file. A question naming one
+// is about Resources whatever else it says: asked "what does MAT.18.pdf
+// say?" the model had no Resources tool at all and answered that it cannot
+// read PDFs (seen live 2026-10-19 on gemma4:cloud).
+const RESOURCE_FILE_NAME_PATTERN =
+    /(?:^|[\s"'`(])(?:[^\s/]+\/)*[^\s/]+\.(?:pdf|own|md|markdown|txt|json|csv|log|xml|html?|ya?ml|srt|vtt|owl|ows|owpf|lyric|png|jpe?g|gif|webp|bmp|avif)\b/i;
+
+/** Whether the words name a file in the user's Resources folders. */
+export function checkHasResourceFileName(text: string) {
+    // A web address ending in `.pdf` is a page to read, not one of their
+    // files: the URL is taken out before the name is looked for.
+    return RESOURCE_FILE_NAME_PATTERN.test(
+        text.replaceAll(/\bhttps?:\/\/\S+/gi, ' '),
+    );
+}
+
+// A chapter written WITHOUT its book's chapter word -- "Matthew 18",
+// "ម៉ាថាយ ១៨": the way an elderly reader actually says it. The number must
+// not be a verse's (`3:16`), a decimal (`3.5`) or inside a word; 150 is
+// Psalms' last chapter, so anything larger is not one.
+const BARE_CHAPTER_NUMBER_PATTERN =
+    /(?<![\p{L}\p{M}\d])(\d{1,3})(?!\d)(?!\s*[:៖])(?!\.\d)/gu;
+const BOOK_RUN_PATTERN = /(?:\p{L}[\p{M}]*){2,}/u;
+const MAX_CHAPTER_NUMBER = 150;
+const MAX_BOOK_RUN_TOKENS = 3;
+const BOOK_RUN_LOOKBACK = 48;
+
+/** A number that could be a chapter, with the words before it. */
+function* iterateBookNumberMatches(
+    ascii: string,
+): Generator<{ at: number; bookTextList: string[] }> {
+    for (const match of ascii.matchAll(BARE_CHAPTER_NUMBER_PATTERN)) {
+        const chapter = Number(match[1]);
+        const at = match.index ?? -1;
+        if (at < 0 || chapter < 1 || chapter > MAX_CHAPTER_NUMBER) {
+            continue;
+        }
+        const before = ascii
+            .slice(Math.max(0, at - BOOK_RUN_LOOKBACK), at)
+            .trim();
+        const tokenList = before
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(-MAX_BOOK_RUN_TOKENS);
+        // Shortest first: "ម៉ាថាយ", then a longer run only when a numbered
+        // book needs it ("1 Samuel" after "Samuel" matched nothing).
+        const bookTextList: string[] = [];
+        for (let count = 1; count <= tokenList.length; count++) {
+            const bookText = tokenList.slice(-count).join(' ');
+            if (
+                BOOK_RUN_PATTERN.test(bookText) &&
+                !bookTextList.includes(bookText)
+            ) {
+                bookTextList.push(bookText);
+            }
+        }
+        if (bookTextList.length > 0) {
+            yield { at, bookTextList };
+        }
+    }
+}
+
+/**
+ * The words before a chapter number in a typed question, shortest first, or
+ * null. What those words ARE is the window's to ask -- a book name in the
+ * reader's own Bible (`owa_bible_suggest`) -- so this stays pure (2026-10-19).
+ */
+export function readBibleReaderBookCandidate(asked: string) {
+    const words = toPlainAsk(asked);
+    if (
+        words.length === 0 ||
+        words.startsWith('/') ||
+        checkIsHowTo(words) ||
+        checkIsAppWork(words)
+    ) {
+        return null;
+    }
+    const bookTextList: string[] = [];
+    for (const one of iterateBookNumberMatches(toAsciiDigits(words))) {
+        for (const bookText of one.bookTextList) {
+            if (!bookTextList.includes(bookText)) {
+                bookTextList.push(bookText);
+            }
+        }
+    }
+    return bookTextList.length === 0 ? null : { bookTextList };
+}
+
 // Where a reference starts, in the words as typed. A verse reference first;
-// else a chapter word of any language beside a number.
-function findReferenceAt(text: string): number | null {
+// else a chapter word of any language beside a number; else -- when the
+// window has confirmed a book name -- the number after it.
+function findReferenceAt(
+    text: string,
+    checkIsBook?: BibleBookNameCheckType,
+): number | null {
     const ascii = toAsciiDigits(text);
     const verseMatch = VERSE_REFERENCE_PATTERN.exec(ascii);
     const verseAt = verseMatch === null ? -1 : verseMatch.index;
@@ -112,14 +220,19 @@ function findReferenceAt(text: string): number | null {
             }
         }
     }
-    if (verseAt === -1 && chapterAt === -1) {
-        return null;
+    let bookAt = -1;
+    if (checkIsBook !== undefined) {
+        for (const { at, bookTextList } of iterateBookNumberMatches(ascii)) {
+            if (bookTextList.some(checkIsBook)) {
+                bookAt = at;
+                break;
+            }
+        }
     }
-    return verseAt === -1
-        ? chapterAt
-        : chapterAt === -1
-          ? verseAt
-          : Math.min(verseAt, chapterAt);
+    const atList = [verseAt, chapterAt, bookAt].filter((at) => {
+        return at >= 0;
+    });
+    return atList.length === 0 ? null : Math.min(...atList);
 }
 
 // A reference needs a book in front of it: "chapter 3" alone, or "3:16"
@@ -157,7 +270,13 @@ function readIntent(text: string): BibleReaderIntentType {
     return 'reference';
 }
 
-function checkIsHowTo(text: string) {
+/**
+ * Whether the words are a how-to ("how do I…", "របៀប", "comment"): the app's
+ * own work, never a Bible question. Shared with the passage conversation,
+ * which hands such a line to the ordinary assistant rather than answering it
+ * under the Bible prompt (2026-10-19).
+ */
+export function checkIsHowTo(text: string) {
     return (
         ENGLISH_HOW_TO_PATTERN.test(text) ||
         listAssistantLanguages().some((language) => {
@@ -169,7 +288,13 @@ function checkIsHowTo(text: string) {
     );
 }
 
-function checkIsAppWork(text: string) {
+/**
+ * Whether the words are about working the app -- a screen, a slide, saving,
+ * copying, settings -- whatever Bible words ride along. Shared with the
+ * passage conversation (2026-10-19), on the same rule: the app answers those,
+ * the Bible prompt does not.
+ */
+export function checkIsAppWork(text: string) {
     return (
         ENGLISH_APP_WORK_PATTERN.test(text) ||
         listAssistantLanguages().some((language) => {
@@ -186,7 +311,13 @@ function checkIsAppWork(text: string) {
  * Called only for a line the person TYPED: a pressed question is one the
  * guide has filed, and the app's own answers keep it.
  */
-export function readBibleReaderAsk(asked: string): BibleReaderAskType | null {
+export function readBibleReaderAsk(
+    asked: string,
+    // Whether the words before a chapter number name a Bible book, asked of
+    // the app by the window (`readBibleReaderAskWithBook`, 2026-10-19). Left
+    // out by the pure readers, which keep the chapter word and the colon.
+    checkIsBook?: BibleBookNameCheckType,
+): BibleReaderAskType | null {
     const words = toPlainAsk(asked);
     if (
         words.length === 0 ||
@@ -196,7 +327,13 @@ export function readBibleReaderAsk(asked: string): BibleReaderAskType | null {
     ) {
         return null;
     }
-    const at = findReferenceAt(words);
+    // A file named in the question is a Resources question whatever else it
+    // says: "what does MAT.18.pdf say?" has no chapter word, no reference,
+    // and used to reach a model with no Resources tool (2026-10-19).
+    if (checkHasResourceFileName(words)) {
+        return { intent: 'resources' };
+    }
+    const at = findReferenceAt(words, checkIsBook);
     if (at === null || !checkHasBookBefore(words, at)) {
         return null;
     }
@@ -268,10 +405,11 @@ export function toBibleReaderAsk(
     const line =
         ask.intent === 'resources'
             ? 'They are asking about the study files in their Resources ' +
-              'folders. Find the file for the book and chapter they named ' +
-              'with owa_resource_file (`list` by `ref` or `book`/`chapter`, ' +
-              'then `read` the name it gives); a PDF comes back as pictures ' +
-              'of its pages. Name every file `list` returned, and say which ' +
+              'folders. Find the file they named -- or the book and chapter ' +
+              'they named -- with owa_resource_file (`list` by `search` ' +
+              'for a file name, or by `ref` or `book`/`chapter`, then ' +
+              '`read` the name it gives); a PDF comes back as pictures of ' +
+              'its pages. Name every file `list` returned, and say which ' +
               'one you read and what it says.'
             : ask.intent === 'names'
               ? 'They are asking who and what places are in a Bible ' +

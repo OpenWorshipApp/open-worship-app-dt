@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-18",
+    "updated": "2026-10-19",
     "sections": [
         {
             "id": "reading",
@@ -178,7 +178,7 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "passage": "A pane that has a color splits into ANOTHER version",
+                        "passage": "Every pane has a color — lime until you pick another",
                         "related": [
                             "W-32"
                         ]
@@ -380,7 +380,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
-                        "find": "Let the assistant import this Bible for me",
+                        "find": "Let the assistant import a Bible for me",
                         "passage": "The Bible Reader or the Bible Lookup opens on"
                     }
                 }
@@ -1037,6 +1037,42 @@
                     ],
                     "resources": {
                         "recipe": "W-29",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "passage-save-or-copy",
+                    "text": "How do I save or copy the passage I am asking about?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save passage",
+                        "copy passage",
+                        "bibles list",
+                        "keep this verse",
+                        "passage card"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Ask for one of them and it tells you which button",
+                        "find": "Save to my Bibles list",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "passage-other-language",
+                    "text": "How do I read the passage I am asking about in another language?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another bible",
+                        "other language",
+                        "read in khmer",
+                        "read in english",
+                        "passage card"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Ask for one of them and it tells you which button",
+                        "find": "Read it in another Bible",
                         "guide": true
                     }
                 }

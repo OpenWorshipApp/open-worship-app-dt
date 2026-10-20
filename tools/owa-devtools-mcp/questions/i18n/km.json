@@ -1,6 +1,6 @@
 {
     "lang": "km",
-    "updated": "2026-10-18",
+    "updated": "2026-10-19",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -1432,6 +1432,14 @@
             "en": "How do I jump from a name to the verses it appears in?",
             "text": "តើខ្ញុំលោតពីឈ្មោះមួយទៅខគម្ពីរដែលមានឈ្មោះនោះដោយរបៀបណា?"
         },
+        "reader.lookup.passage-save-or-copy": {
+            "en": "How do I save or copy the passage I am asking about?",
+            "text": "តើខ្ញុំរក្សាទុក ឬចម្លងបទគម្ពីរដែលខ្ញុំកំពុងសួរដោយរបៀបណា?"
+        },
+        "reader.lookup.passage-other-language": {
+            "en": "How do I read the passage I am asking about in another language?",
+            "text": "តើខ្ញុំអានបទគម្ពីរដែលខ្ញុំកំពុងសួរជាភាសាផ្សេងដោយរបៀបណា?"
+        },
         "reader.graph.graph-what": {
             "en": "How do I see how people and places connect?",
             "text": "តើខ្ញុំមើលទំនាក់ទំនងរវាងមនុស្ស និងទីកន្លែងដោយរបៀបណា?"
@@ -1795,6 +1803,10 @@
         "settings.bible-settings.import-bible-ask-language": {
             "en": "Can you install a Bible for me?",
             "text": "តើអ្នកអាចដំឡើងព្រះគម្ពីរឲ្យខ្ញុំបានទេ?"
+        },
+        "settings.bible-settings.import-bible-kjv": {
+            "en": "Do I need the KJV Bible before importing another one?",
+            "text": "តើខ្ញុំត្រូវការព្រះគម្ពីរ KJV មុនពេលនាំចូលព្រះគម្ពីរផ្សេងទៀតទេ?"
         },
         "settings.bible-settings.import-bible-source": {
             "en": "Where do the Bibles the assistant installs come from?",

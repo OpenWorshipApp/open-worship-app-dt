@@ -21,7 +21,12 @@ const { state, mocks } = vi.hoisted(() => ({
         clearCache: vi.fn(),
         write: vi.fn(),
         error: vi.fn(),
+        initKjv: vi.fn(),
     },
+}));
+
+vi.mock('./bible-helpers/BibleDataReader', () => ({
+    bibleDataReader: { initKJVBible: mocks.initKjv },
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -150,6 +155,7 @@ beforeEach(() => {
     mocks.write.mockResolvedValue(true);
     mocks.trash.mockResolvedValue(undefined);
     mocks.clearCache.mockResolvedValue(undefined);
+    mocks.initKjv.mockReset();
 });
 
 describe('Bible XML agent request validation and analysis', () => {
@@ -479,6 +485,59 @@ describe('Bible XML agent installation and lifecycle', () => {
                 },
             ],
             downloaded: [{ key: 'WEB', title: 'World English Bible' }],
+        });
+    });
+
+    test('creates the provided KJV only when there is none', async () => {
+        addInstalled();
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'create-kjv' }),
+        ).toMatchObject({
+            created: false,
+            installed: true,
+            key: 'KJV',
+            title: 'King James Version',
+        });
+        expect(mocks.initKjv).not.toHaveBeenCalled();
+
+        state.installed = {};
+        state.heads.clear();
+        state.downloaded = [
+            { key: 'KJV', title: 'King James', locale: 'en-US' },
+        ];
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'create-kjv' }),
+        ).toMatchObject({ created: false, installed: true, key: 'KJV' });
+        expect(mocks.initKjv).not.toHaveBeenCalled();
+    });
+
+    test('generates the provided KJV and says whether it worked', async () => {
+        state.installed = {};
+        state.heads.set('/bibles/KJV.xml', {
+            title: 'King James Version',
+            locale: 'en-US',
+        });
+        mocks.initKjv.mockImplementation(async () => {
+            state.installed['KJV'] = '/bibles/KJV.xml';
+        });
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'create-kjv' }),
+        ).toMatchObject({
+            created: true,
+            installed: true,
+            key: 'KJV',
+            title: 'King James Version',
+        });
+        expect(mocks.initKjv).toHaveBeenCalledTimes(1);
+
+        // A write that did not happen is a failure, not a quiet success.
+        state.installed = {};
+        mocks.initKjv.mockResolvedValue(undefined);
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'create-kjv' }),
+        ).toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('could not be created'),
         });
     });
 

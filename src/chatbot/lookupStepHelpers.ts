@@ -21,6 +21,7 @@
 import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import { toValidLookupAsk } from '../helper/ai/lookupAskHelpers';
 import { fillWords, tran } from './chatTranHelpers';
+import { getAssistantLanguage } from './chatLangHelpers';
 import type { BotActionType } from './helpBotHelpers';
 
 export const LOOKUP_STEP_TOOL_NAME = 'owa_window_lookup_step';
@@ -34,6 +35,7 @@ export type LookupStepNameType =
     | 'names'
     | 'related'
     | 'verses'
+    | 'lineage'
     | 'another'
     | 'save'
     | 'copy';
@@ -42,7 +44,17 @@ export type LookupStepType = {
     step: LookupStepNameType;
     ask: LookupAskType;
     near?: 'previous' | 'next';
+    // A language the person named when they asked for another Bible
+    // ("show this in Khmer"): the list keeps the Bibles in it, when there
+    // are any (2026-10-19).
+    preferLanguage?: 'en' | 'km' | 'fr';
 };
+
+const PREFER_LANGUAGE_LIST: LookupStepType['preferLanguage'][] = [
+    'en',
+    'km',
+    'fr',
+];
 
 const STEP_NAME_LIST: LookupStepNameType[] = [
     'open',
@@ -53,6 +65,7 @@ const STEP_NAME_LIST: LookupStepNameType[] = [
     'names',
     'related',
     'verses',
+    'lineage',
     'another',
     'save',
     'copy',
@@ -70,6 +83,7 @@ export const LOOKUP_ACTION_LABEL_LIST = [
     'Read it in another Bible',
     'Who and where is in it',
     'Family and places',
+    'Family line to Jesus',
     'Related places',
     'Its verses',
     'Open another passage',
@@ -88,12 +102,15 @@ export function toValidLookupStep(raw: any): LookupStepType | null {
     if (ask === null) {
         return null;
     }
+    const preferLanguage = PREFER_LANGUAGE_LIST.includes(raw.preferLanguage)
+        ? { preferLanguage: raw.preferLanguage }
+        : {};
     if (raw.step === 'near') {
         return raw.near === 'previous' || raw.near === 'next'
-            ? { step: 'near', ask, near: raw.near }
+            ? { step: 'near', ask, near: raw.near, ...preferLanguage }
             : null;
     }
-    return { step: raw.step, ask };
+    return { step: raw.step, ask, ...preferLanguage };
 }
 
 function toAction(
@@ -219,6 +236,12 @@ export function genLookupActions(
                 ask,
             ),
         );
+    }
+    // A person's line to Jesus is in the Bible, never in the record: the
+    // window reads Matthew 1 / Luke 3 itself (2026-10-19, EC-369). Offered
+    // only once something was read, like every other button here.
+    if (ask.kind === 'name' && facts !== null) {
+        actions.push(toLabeled('Family line to Jesus', 'lineage', ask));
     }
     if (Number(facts?.verseCount) > 0) {
         actions.push(toLabeled('Read it in another Bible', 'bibles', ask));
@@ -432,13 +455,55 @@ export function genNamesAnswer(ask: LookupAskType, facts: any) {
     };
 }
 
+/**
+ * Whether a Bible's key or title says it is in this language: its own
+ * script for a language written in one, and its own name for a Latin one
+ * (`English NIV`, `French (BDS)`), which is how the installed list reads.
+ */
+function checkIsBibleInLanguage(bible: any, code: string) {
+    const language = getAssistantLanguage(code);
+    const sample = [bible?.key, bible?.title]
+        .filter((one) => {
+            return typeof one === 'string';
+        })
+        .join(' ');
+    if (sample.length === 0) {
+        return false;
+    }
+    if (!language.isLatinScript && language.scriptPattern.test(sample)) {
+        return true;
+    }
+    // Its own name too: an installed Khmer Bible may be titled `Khmer 2012`
+    // in English (`KCB`), and an English one `English NIV`.
+    return `${language.name} ${language.nativeName}`
+        .split(/\s+/)
+        .some((word) => {
+            return (
+                word.length > 0 &&
+                new RegExp(`\\b${word}\\b`, 'iu').test(sample)
+            );
+        });
+}
+
 /** **Read it in another Bible**: every other installed Bible, a button each. */
-export function genBiblesAnswer(ask: LookupAskType, listed: any) {
-    const bibles = (Array.isArray(listed?.bibles) ? listed.bibles : []).filter(
+export function genBiblesAnswer(
+    ask: LookupAskType,
+    listed: any,
+    preferLanguage?: LookupStepType['preferLanguage'],
+) {
+    const others = (Array.isArray(listed?.bibles) ? listed.bibles : []).filter(
         (bible: any) => {
             return typeof bible?.key === 'string' && bible.key !== ask.bibleKey;
         },
     );
+    // A language the person named: only its Bibles when there are any.
+    const inLanguage =
+        preferLanguage === undefined
+            ? []
+            : others.filter((bible: any) => {
+                  return checkIsBibleInLanguage(bible, preferLanguage);
+              });
+    const bibles = inLanguage.length > 0 ? inLanguage : others;
     if (bibles.length === 0) {
         return {
             text: tran('This is the only Bible on this computer.'),

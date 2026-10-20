@@ -257,14 +257,21 @@ function toTitleKey(title) {
  * away. Best effort -- the answer about a link must not fail because the
  * installed list could not be read.
  */
-async function readInstalledTitleMap() {
+async function readInstalledSummary() {
   const titleMap = new Map();
+  // Null when the app could not be asked: a check must not claim the
+  // provided KJV is missing because its own tool host was away.
+  let hasKjv = null;
   try {
     const result = await runBibleWorker({ action: 'list' });
-    for (const bible of [
+    const installed = [
       ...(result.bibles ?? []),
       ...(result.downloaded ?? []),
-    ]) {
+    ];
+    hasKjv = installed.some((bible) => {
+      return String(bible.key ?? '').toLowerCase() === 'kjv';
+    });
+    for (const bible of installed) {
       const titleKey = toTitleKey(bible.title);
       if (titleKey !== '' && !titleMap.has(titleKey)) {
         titleMap.set(titleKey, bible.key);
@@ -273,7 +280,7 @@ async function readInstalledTitleMap() {
   } catch {
     // Unmarked is still a list to choose from.
   }
-  return titleMap;
+  return { titleMap, hasKjv };
 }
 
 async function handleCheck({ url, find }) {
@@ -293,9 +300,10 @@ async function handleCheck({ url, find }) {
     if (downloaded.files.length === 0) {
       return toTextResult(downloaded);
     }
-    const titleMap = await readInstalledTitleMap();
+    const { titleMap, hasKjv } = await readInstalledSummary();
     return toTextResult({
       ...downloaded,
+      ...(hasKjv === null ? {} : { hasKjv }),
       files: downloaded.files.map((file) => {
         const installedAs = titleMap.get(toTitleKey(file.title));
         return installedAs === undefined ? file : { ...file, installedAs };
@@ -345,13 +353,13 @@ async function handleCheck({ url, find }) {
     recommended,
     fileListId,
   });
-  const installedAs = (await readInstalledTitleMap()).get(
-    toTitleKey(analysis.title),
-  );
+  const { titleMap, hasKjv } = await readInstalledSummary();
+  const installedAs = titleMap.get(toTitleKey(analysis.title));
   return toTextResult({
     kind: 'xml',
     draftId: downloaded.draftId,
     title: analysis.title,
+    ...(hasKjv === null ? {} : { hasKjv }),
     // Said FIRST when it is there: the user may not need this import at all.
     ...(installedAs === undefined ? {} : { installedAs }),
     source: downloaded.source,
@@ -375,6 +383,12 @@ async function handleCheck({ url, find }) {
         : `A Bible with this title is ALREADY installed as "${installedAs}"` +
           ': tell the user first, and go on only if they want a second ' +
           'copy under another key. ') +
+      (hasKjv === false
+        ? "The app's OWN KJV is not installed: say so first, say Open " +
+          'Worship provides it and recommends it, and offer to create it. ' +
+          'Never install an English KJV from the internet. ' +
+          '(The window puts that button under your answer.) '
+        : '') +
       'Nothing is installed yet. Ask the user, one choice at a time: the ' +
       'key (a short name such as KJV, shown on the Bible buttons), the ' +
       'language, the digits and the book-name list -- recommended first. ' +
@@ -557,11 +571,12 @@ export function registerBibleXmlTool(server, { door = 'stdio' } = {}) {
         'Bibles from XML. `check` a `url` ' +
         `(no link: ${BIBLE_XML_CATALOG_URL}, the language in \`find\`): ` +
         'a page answers its .xml files; a file a `draftId` and choices ' +
-        'for the user to pick -- `keys`, `locales`, `digits`, `nameLists` ' +
-        '(ids), `recommended`. `names`: book lists for `locale`; with `url`, read that site (chapter links use edition indexes). `import` with `draftId`, `key`, `locale`, `digits`, ' +
+        'to pick -- `keys`, `locales`, `digits`, `nameLists` ' +
+        '(ids), `recommended`. ' +
+        '`names`: book lists for `locale`; with `url`, read that site. `import` with `draftId`, `key`, `locale`, `digits`, ' +
         '`bookNames` id; `cancel`. `info`, `update` (title, locale, ' +
         'digits, bookNames: id or {"GEN": name}), `delete` take `key`. ' +
-        'Explain `problem` plainly. ' +
+        "`create-kjv`: the app's KJV. `problem`: explain plainly. " +
         AGENT_UNDO_TEXT,
       inputSchema: {
         action: z.enum(BIBLE_XML_ACTIONS),
@@ -593,6 +608,10 @@ export function registerBibleXmlTool(server, { door = 'stdio' } = {}) {
             return toTextResult({ cancelled: true });
           case 'list':
             return toTextResult(await runBibleWorker({ action: 'list' }));
+          case 'create-kjv':
+            return toTextResult(
+              await runBibleWorker({ action: 'create-kjv' }, LONG_WORK_MS),
+            );
           case 'info':
           case 'delete': {
             const result = await runBibleWorker(

@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-163, PM-164, PM-165, PM-166]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -92,5 +92,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-163` · `PM-164` · `PM-165` · `PM-166`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

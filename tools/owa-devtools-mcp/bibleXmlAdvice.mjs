@@ -20,6 +20,7 @@ export const BIBLE_XML_ACTIONS = [
   'info',
   'update',
   'delete',
+  'create-kjv',
 ];
 
 // Where a Bible is looked for when the person names a LANGUAGE and no link

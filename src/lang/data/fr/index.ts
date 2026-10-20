@@ -1,6 +1,7 @@
 import { type LanguageDataType } from '../../langHelpers';
 
 import bibleBooks from './bibleBooks.json';
+import bibleKeyMap from './bibleKeyMap.json';
 import bbCR from './bb-cr.gz.bundle';
 import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
 import namesMapUrl from './location-name-map-data/namesMap.json?url';
@@ -75,6 +76,12 @@ const dictionary = {
         'Gardez le nom court qu’il propose, répondez à ses autres questions, puis appuyez sur « Installer ». La Bible s’affiche ici d’elle-même.',
     'Let the assistant import this Bible for me':
         'Laisser l’assistant importer cette Bible pour moi',
+    'Or let the assistant import a Bible in your language for you:':
+        'Ou l’assistant peut importer une Bible dans votre langue pour vous :',
+    'Press the button below. The assistant opens and looks for a Bible in your language in a free collection online.':
+        'Appuyez sur le bouton ci-dessous. L’assistant s’ouvre et cherche une Bible dans votre langue dans une collection gratuite en ligne.',
+    'Keep the short name it suggests, answer its other questions, then press Install it. Then choose it in the list above; this card goes away.':
+        'Gardez le nom court qu’il propose, répondez à ses autres questions, puis appuyez sur « Installer ». Choisissez-la ensuite dans la liste ci-dessus ; cette carte disparaît.',
     'Could not check installed Bible keys':
         'Impossible de vérifier les clés bibliques installées',
     'Saving...': 'Enregistrement...',
@@ -1906,6 +1913,8 @@ const dictionary = {
     'Search for font': 'Rechercher la police',
     'Full view': 'Vue complète',
     'Exit full view': 'Quitter la vue complète',
+    'Full size preview': 'Aperçu en pleine taille',
+    'Exit full size preview': "Quitter l'aperçu en pleine taille",
     'Pin document': 'Épingler le document',
     'Unpin document': 'Désépingler le document',
     'Document is pinned': 'Le document est épinglé',
@@ -3131,6 +3140,10 @@ const dictionary = {
         'Régler une Bible qui n’est pas installée',
     'When the Reader names a Bible you do not have, pick another, press Let the assistant import this Bible for me, or Go to Bible Setting.':
         'Quand le Lecteur demande une Bible que vous n’avez pas, choisissez-en une autre, appuyez sur Laisser l’assistant importer cette Bible pour moi, ou Aller aux paramètres de la Bible.',
+    'When the Reader names a Bible you do not have, pick another, press Let the assistant import a Bible for me, or Go to Bible Setting.':
+        'Quand le Lecteur demande une Bible que vous n’avez pas, choisissez-en une autre, appuyez sur Laisser l’assistant importer une Bible pour moi, ou Aller aux paramètres de la Bible.',
+    'Or press Let the assistant import a Bible for me: the Assistant offers the KJV the app itself provides first, then looks for a Bible in your language in a free online collection.':
+        'Ou appuyez sur Laisser l’assistant importer une Bible pour moi : l’assistant propose d’abord la KJV fournie par l’application, puis cherche une Bible dans votre langue dans une collection gratuite en ligne.',
     'Use verse numbers inside a passage':
         'Utiliser les numéros de verset dans un passage',
     'Click a verse number to show its notes or double-click it to select the verse; Show the next chapter loads more of a long passage.':
@@ -3818,9 +3831,36 @@ const dictionary = {
     'Family and places': 'Famille et lieux',
     'Related places': 'Lieux liés',
     'Its verses': 'Ses versets',
+    'Family line to Jesus': 'Lignée jusqu’à Jésus',
     'Open another passage': 'Ouvrir un autre passage',
     'Save to my Bibles list': 'Enregistrer dans ma liste de Bibles',
     'Copy the passage': 'Copier le passage',
+    'Press {name} under the passage above.':
+        'Appuyez sur {name} sous le passage ci-dessus.',
+    'Here is {name} from the Bible it was opened in.':
+        'Voici {name} d’après la Bible dans laquelle il a été ouvert.',
+    'Here is the family line in {passage}, in the order it gives it:':
+        'Voici la lignée dans {passage}, dans l’ordre qu’elle donne :',
+    'Here is the family line in {passage}, from the Bible {bible}, in the order it gives it:':
+        'Voici la lignée dans {passage}, d’après la Bible {bible}, dans l’ordre qu’elle donne :',
+    'Neither family line the Bible gives — Matthew 1 and Luke 3 — names {name}.':
+        'Aucune des deux lignées que donne la Bible — Matthieu 1 et Luc 3 — ne nomme {name}.',
+    'The record names no children of {name}.':
+        'La fiche ne nomme aucun enfant de {name}.',
+    'The record names no husband or wife of {name}.':
+        'La fiche ne nomme aucun conjoint de {name}.',
+    'The record names no brothers or sisters of {name}.':
+        'La fiche ne nomme aucun frère ni sœur de {name}.',
+    'The record names no parents of {name}.':
+        'La fiche ne nomme aucun parent de {name}.',
+    'The record names {count} children of {name}: {names}.':
+        'La fiche nomme {count} enfants de {name} : {names}.',
+    'The record names {count} husbands or wives of {name}: {names}.':
+        'La fiche nomme {count} conjoints de {name} : {names}.',
+    'The record names {count} brothers and sisters of {name}: {names}.':
+        'La fiche nomme {count} frères et sœurs de {name} : {names}.',
+    'The record names {count} parents of {name}: {names}.':
+        'La fiche nomme {count} parents de {name} : {names}.',
     'The names lookup lists no family or places for {name}.':
         'Lieu-Nom n’indique ni famille ni lieux pour {name}.',
     'The family and places of {name}. Press one to ask about it.':
@@ -5332,6 +5372,32 @@ const dictionary = {
         "Annulé : **{key}** a de nouveau disparu (elle est dans la corbeille). Rien d'autre n'a été modifié.",
     'That was already undone.': "C'était déjà annulé.",
     'Stopped. Nothing was installed.': "Arrêté. Rien n'a été installé.",
+    'Create the provided KJV': 'Créer la KJV fournie',
+    // The Reader's "Bible key KJV is not available!" card asks before it
+    // builds the KJV out of the copy the app carries.
+    'Create the KJV Bible?': 'Créer la Bible KJV ?',
+    'The KJV Bible is not available. Open Worship provides it, and creating it needs no internet and no separate download: the app already holds the whole KJV.':
+        "La Bible KJV n'est pas disponible. Open Worship la fournit, et sa création ne nécessite ni Internet ni téléchargement séparé : l'application contient déjà toute la KJV.",
+    'Failed to create the KJV Bible. Please try again.':
+        'Échec de la création de la Bible KJV. Veuillez réessayer.',
+    'Use the internet copy anyway': 'Utiliser quand même la copie d’Internet',
+    'Import another Bible anyway': 'Importer quand même une autre Bible',
+    'Add another Bible': 'Ajouter une autre Bible',
+    'Creating the provided KJV Bible': 'Création de la Bible KJV fournie',
+    'I could not create the KJV Open Worship provides. Nothing was installed. In **Settings → Bible**, press **{button}**, or try again here.':
+        "Je n'ai pas pu créer la KJV fournie par Open Worship. Rien n'a été installé. Dans **Paramètres → Bible**, appuyez sur **{button}**, ou réessayez ici.",
+    '**You already have the KJV Open Worship provides**, installed as **KJV**. There is no need to import this file. To use the file anyway, press a choice below.':
+        "**Vous avez déjà la KJV fournie par Open Worship**, installée sous **KJV**. Il n'est pas nécessaire d'importer ce fichier. Pour utiliser quand même le fichier, choisissez ci-dessous.",
+    '**You already have the KJV Open Worship provides**, installed as **KJV**. There is no need to import this file. To keep a second copy anyway, choose a short name below.':
+        "**Vous avez déjà la KJV fournie par Open Worship**, installée sous **KJV**. Il n'est pas nécessaire d'importer ce fichier. Pour garder quand même une deuxième copie, choisissez un nom court ci-dessous.",
+    '**Open Worship provides the KJV Bible** — the recommended King James Version, and it is not installed yet. Create it from the app itself and you will have the one this app recommends. To use this file instead, press a choice below.':
+        "**Open Worship fournit la Bible KJV** — la version King James recommandée, et elle n'est pas encore installée. Créez-la depuis l'application elle-même et vous aurez celle que cette application recommande. Pour utiliser plutôt ce fichier, choisissez ci-dessous.",
+    '**Before another Bible: Open Worship provides the KJV Bible** — the recommended King James Version, and it is not installed yet. Create it first, and then I will start your import again. To go on without it, press a choice below.':
+        "**Avant une autre Bible : Open Worship fournit la Bible KJV** — la version King James recommandée, et elle n'est pas encore installée. Créez-la d'abord, puis je recommencerai votre import. Pour continuer sans elle, choisissez ci-dessous.",
+    'Creating it needs no internet and no separate download: the app already holds the whole KJV.':
+        "Sa création ne nécessite ni Internet ni téléchargement séparé : l'application contient déjà toute la KJV.",
+    '**Done — the KJV Open Worship provides is installed.** Choose **KJV** from the Bible version button. A Bible Reader card saying the KJV is not available goes away by itself.':
+        "**Terminé — la KJV fournie par Open Worship est installée.** Choisissez **KJV** dans le bouton de version de la Bible. La carte du Lecteur de Bible disant que la KJV n'est pas disponible disparaît d'elle-même.",
     'I opened **Settings → Bible** with your link in the Import box. Press **Import** there, then choose the name, language, numbers and book names on the form.':
         "J'ai ouvert **Paramètres → Bible** avec votre lien dans la case Importer. Appuyez sur **Importer**, puis choisissez le nom, la langue, les chiffres et les noms des livres dans le formulaire.",
     'That step is not one I know.': 'Je ne connais pas cette étape.',
@@ -5627,6 +5693,9 @@ const lang: LanguageDataType = {
     locale: 'fr-FR',
     langCode: 'fr',
     bibleBooks,
+    getBibleKeyNameMap: () => {
+        return bibleKeyMap;
+    },
     // French is Latin script, which no test here can tell apart from English;
     // claiming it would move English text in a bible note off the default
     // language. There is no French font to apply either.

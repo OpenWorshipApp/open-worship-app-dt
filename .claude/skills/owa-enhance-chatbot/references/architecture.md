@@ -82,7 +82,8 @@ in `<userData>/setting.json`.
 - `getIsAIEnabled()` (`src/helper/ai/aiHelpers.ts`) is the renderer twin and
   **must agree**, or the toggle, the 🤖 button and the provider clients contradict
   a process that opened no door.
-- **Unset = OFF packaged, ON in dev.**
+- **Unset = ON**, in dev and in a packaged build alike; only an explicit
+  `ai-enabled: "false"` closes the doors.
 - Off means: no CDP endpoint, no MCP host, no Help menu item, a 🤖 button that
   only offers to turn it back on, and the renderer's AI providers refuse to hand
   out a client.

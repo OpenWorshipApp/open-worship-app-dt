@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-18",
+    "updated": "2026-10-19",
     "sections": [
         {
             "id": "general",
@@ -371,6 +371,27 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
+                    }
+                },
+                {
+                    "id": "import-bible-kjv",
+                    "text": "Do I need the KJV Bible before importing another one?",
+                    "kind": "howto",
+                    "keywords": [
+                        "kjv",
+                        "king james",
+                        "provided",
+                        "first",
+                        "before import",
+                        "create kjv",
+                        "recommended"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "passage": "offered the one Open Worship provides",
                         "tools": [
                             "owa_bible_xml"
                         ]

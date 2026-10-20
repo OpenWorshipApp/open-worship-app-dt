@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
-  modified: 2026-10-15T23:44:20.375Z
+  modified: 2026-10-19T21:40:39.485Z
 ---
 
 Updated 2026-10-06 (twice) and 2026-10-10; W-34, ST-60, CB-80..CB-82,
@@ -115,6 +115,32 @@ Non-obvious:
   dialog covered Settings. Verified instead on a seeded scratch of our own
   ([[scratch-dev-instance-beside-user-app]]), screenshot through a fresh
   server pinned with `OWA_CDP_PORT`: the row, its link, the note opened.
+
+**2026-10-19 — the provided KJV comes first, and the card asks for the window's
+language** (the user: _during chatbot bible importing, the chatbot has to
+check for KJV first … convince user to allow auto create KJV … after KJV
+created then start over for user to import other bibles_, then _click the
+button should call to import bible for current language_). Non-obvious:
+- `owa_bible_xml` gained `create-kjv` (the app's own `initKJVBible`, the
+  Settings button's function) and `check` carries `hasKjv` from the installed
+  list it already reads. A model may not call `create-kjv`; the chat's own
+  button is the consent.
+- The import conversation gates on KJV **before** the language/list: a KJV
+  request is answered before any download, and a missing KJV shows
+  **Create the provided KJV** plus the original choices (declining still
+  allows the import). After creation the original import starts over; a KJV
+  request finishes. An external English KJV is steered to the provided one,
+  with **Use the internet copy anyway** kept as the override. **NKJV is a
+  different translation** — never steer it.
+- The Reader's missing-Bible card now leaves `Import bible for Khmer`
+  (`genBibleImportLanguageAsk(getCurrentLocale())`), not
+  `Import the Bible called "KJV"`. The app language names the collection's
+  language in English (`Intl.DisplayNames(['en'])`); the missing key is no
+  longer `wantedKey`, because a Khmer reader needs a Khmer Bible. The
+  provided KJV is still offered first by the import itself, so a new computer
+  gets both.
+- A failed installed-list check must **fail open** (`null`), or a tool host
+  that is still starting would block every import.
 
 **2026-10-16 — a downloaded Bible is agreed to before step 1** (the user,
 with a picture of the list of seven Khmer Bibles: _ask for user consent first

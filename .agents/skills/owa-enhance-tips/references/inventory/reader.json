@@ -125,7 +125,7 @@
     { "id": "bible-information", "surface": "Reference box", "labels": ["Bible Information"] },
     { "id": "previous-passage", "surface": "Reference box", "labels": ["Previous"], "strict": true, "search": ["previous"] },
     { "id": "next-passage", "surface": "Reference box", "labels": ["Next"], "strict": true, "search": ["next"] },
-    { "id": "missing-book-assistant", "surface": "Reference box", "labels": ["Let the assistant import this Bible for me"] },
+    { "id": "missing-book-assistant", "surface": "Reference box", "labels": ["Let the assistant import a Bible for me"] },
     { "id": "missing-book-setting", "surface": "Reference box", "labels": ["Go to Bible Setting"] },
 
     { "id": "open-verse-link", "surface": "Passage history", "labels": ["Click to open the verse"], "search": ["history"], "tips": ["reader-history-chips"] },

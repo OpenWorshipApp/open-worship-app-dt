@@ -31,9 +31,10 @@ publish a tutorial step not observed working live.
 PACKAGED app instead of `npm run dev`, over the same procedure. What only that
 run can see: the asar/`asarUnpack` layout, pages on `owa://local/<page>.html`
 (not `https://localhost:3000`), and every `isDev` branch flipped — AI features
-**OFF unless `ai-enabled` is `"true"`** in the un-suffixed
-`%APPDATA%\open-worship-app\setting.json` (no CDP door at all otherwise;
-`prod-app.mjs ai-status` / `enable-ai`, restored afterwards), `tran()`
+are ON by default, so the packaged app opens its CDP door unless `ai-enabled`
+is explicitly `"false"` in the un-suffixed
+`%APPDATA%\open-worship-app\setting.json` (`prod-app.mjs ai-status` /
+`enable-ai`, restored afterwards), `tran()`
 returning English instead of throwing (the locale block asserts visually and
 says the throw class is dev-only), no `data-react-comp-*` stamps, the Extra
 Binaries pack downloaded from the real CDN, no main-process stdout (`SC-05`

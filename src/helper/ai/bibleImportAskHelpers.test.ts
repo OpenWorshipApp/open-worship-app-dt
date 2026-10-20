@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     genBibleImportAsk,
+    genBibleImportLanguageAsk,
     readBibleImportAskName,
 } from './bibleImportAskHelpers';
 
@@ -48,6 +49,24 @@ describe('asking the assistant for a Bible by its short name', () => {
         expect(
             readBibleImportAskName('Import the Bible called "LIST"')?.rest,
         ).toBe('Import the Bible');
+    });
+
+    it('asks for a Bible in the language the window is shown in', () => {
+        // The card under _Bible key "KJV" is not available!_ offers a Bible
+        // the person can READ, not the key that happens to be missing.
+        expect(genBibleImportLanguageAsk('km-KH')).toBe(
+            'Import bible for Khmer',
+        );
+        expect(genBibleImportLanguageAsk('fr-FR')).toBe(
+            'Import bible for French',
+        );
+        expect(genBibleImportLanguageAsk('en-US')).toBe(
+            'Import bible for English',
+        );
+        // A code with no language part, or a region alone, still asks for a
+        // Bible rather than writing an empty name.
+        expect(genBibleImportLanguageAsk('')).toBe('Import bible');
+        expect(genBibleImportLanguageAsk('  ')).toBe('Import bible');
     });
 
     it('a sentence that names none is left alone', () => {

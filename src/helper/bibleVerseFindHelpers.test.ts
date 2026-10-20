@@ -328,6 +328,17 @@ describe('references as they are written', () => {
         expect(parseRefParts('John 3:16-2')?.verseEnd).toBe(16);
         expect(parseRefParts('no numbers here')).toBeNull();
     });
+
+    it('reads a reference in the reader’s own digits', () => {
+        // A Resources `ref` written as the person said it (2026-10-19).
+        expect(parseRefParts('ម៉ាថាយ ១៨')).toEqual({
+            book: 'ម៉ាថាយ',
+            chapter: 18,
+            verseStart: null,
+            verseEnd: null,
+        });
+        expect(parseRefParts('យ៉ូហាន ៣:១៦')?.verseStart).toBe(16);
+    });
 });
 
 describe('a verse past the end of its chapter', () => {

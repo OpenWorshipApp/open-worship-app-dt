@@ -46,16 +46,19 @@ export const RESOURCES_READ_MENU_HINT =
     'verse question and buttons after your description.';
 
 export const RESOURCES_RANGE_HINT =
-    'This is the one verse chosen from the Resources Read menu. Keep only ' +
-    'that verse as the focus. The app has already called owa_lookup_record ' +
-    'for it; never complete a verse from memory, shorten it, or use an ' +
-    'ellipsis. Render one card with, in this order: (1) its full Bible text, ' +
+    'This is the verse or range chosen from the Resources Read menu. Keep ' +
+    'exactly that passage as the focus. The app has already called ' +
+    'owa_lookup_record for it; never complete it from memory, shorten it, or ' +
+    'use an ellipsis. Render one card with, in this order: (1) the full ' +
+    'Bible text of that passage, ' +
     '(2) the directly printed cross-reference labels, without expanding ' +
     'their text in this card, and (3) the matching ' +
-    'PDF explanation below them. Also call owa_resource_file once with ' +
-    'detail "high" and without `pages`, so the complete attached Resources ' +
-    'PDF is read before answering. Treat it as one resource and do not talk ' +
-    'to the user about pages, batches, pagination, or continuing the file. ' +
+    'PDF explanation below them. Also call owa_resource_file with ' +
+    'detail "high" and without `pages`, so the attached Resources PDF is ' +
+    'read before answering; a long file says `isComplete: false` and where ' +
+    'to read on (`nextPage`) -- read the rest before answering. Treat it as ' +
+    'one resource and do not talk to the user about pages, batches, ' +
+    'pagination, or continuing the file. ' +
     'Read the pictures in document order and join any explanation paragraph ' +
     'that continues across a page boundary before using it. ' +
     'Its pictures are the only source for the PDF wording; never infer text ' +
@@ -88,7 +91,7 @@ export function genResourcesRangeHint(
         (wholeChapterRef === undefined || wholeChapterRef === null
             ? ''
             : ` (${wholeChapterRef})`) +
-        ' and loaded only this one verse into the model context' +
+        ' and loaded only this passage into the model context' +
         (selectedRef === undefined || selectedRef === null
             ? '.'
             : `: ${selectedRef}.`) +
@@ -150,6 +153,35 @@ export function genResourceChapterVerseSequence(lastVerse: number) {
     return Array.from({ length: safeLastVerse }, (_, index) => index + 1);
 }
 
+// A chosen range is read into one card up to this many verses. The Read menu
+// offers one, two and three; a longer range is cut here and the next buttons
+// carry on, so a card never becomes a chapter (the 2026-10-18 regression).
+export const MAX_RESOURCE_RANGE_VERSES = 5;
+
+/**
+ * `1`, `1-3`, `1–3`: the verse or range a person chose. The end is capped so
+ * a card stays bounded; the start is never ignored -- `1-3` used to become
+ * verse 1 only, and the person who asked for three got one (2026-10-19).
+ */
+function toResourceRangeValues(range: string) {
+    const match = /^\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*$/.exec(range);
+    if (match === null) {
+        return null;
+    }
+    const start = Number(match[1]);
+    const askedEnd = match[2] === undefined ? start : Number(match[2]);
+    if (!Number.isInteger(start) || !Number.isInteger(askedEnd) || start < 1) {
+        return null;
+    }
+    return {
+        start,
+        end: Math.min(
+            Math.max(start, askedEnd),
+            start + MAX_RESOURCE_RANGE_VERSES - 1,
+        ),
+    };
+}
+
 /** The installed-Bible reference represented by a chapter PDF plus a choice. */
 export function toResourcePassageRef(
     fileNames: readonly string[],
@@ -158,9 +190,11 @@ export function toResourcePassageRef(
     const chapterRef = toResourceChapterRef(fileNames);
     if (chapterRef === null) return null;
     if (range === 'Full chapter') return `${chapterRef}:1`;
-    const verse = /^\s*(\d+)(?:\s*[-–]\s*\d+)?\s*$/.exec(range);
-    if (verse === null) return null;
-    return `${chapterRef}:${verse[1]}`;
+    const values = toResourceRangeValues(range);
+    if (values === null) return null;
+    return values.end === values.start
+        ? `${chapterRef}:${values.start}`
+        : `${chapterRef}:${values.start}-${values.end}`;
 }
 
 /** Predictable next-verse buttons even when a small model mangles OPTIONS. */
@@ -168,62 +202,95 @@ export function genResourceRangeReplies(
     range: string,
     lastVerse?: number | null,
 ): string[] {
-    const match =
+    const last =
         range === 'Full chapter'
-            ? ['', '1']
-            : /^\s*(\d+)(?:\s*[-–]\s*\d+)?\s*$/.exec(range);
-    if (match === null) return [];
-    const verse = Number(match[1]);
-    return [
-        (verse + 1).toString(),
-        (verse + 2).toString(),
-        (verse + 3).toString(),
-    ].filter((reply) => {
-        return lastVerse == null || Number(reply) <= lastVerse;
-    });
+            ? 1
+            : (toResourceRangeValues(range)?.end ?? null);
+    if (last === null) return [];
+    return [last + 1, last + 2, last + 3]
+        .map((verse) => {
+            return verse.toString();
+        })
+        .filter((reply) => {
+            return lastVerse == null || Number(reply) <= lastVerse;
+        });
+}
+
+// Every printed cross-reference the model verified becomes a button. A study
+// page's narrow column can hold twenty or more across several chapters, and
+// the user asked for all of them, not a sample (2026-10-19). The bound is a
+// runaway guard, not a display budget.
+const MAX_RESOURCE_CROSS_REFERENCES = 30;
+
+// The line the answer writes for its cross-references, in English or Khmer:
+// `References: Matthew 9:32, ...`, `យោង៖ ម៉ាថាយ ៩:៣២, ...`.
+// The block after the label, not only its first line: a model wraps a long
+// list across lines, and the first three of six references became the only
+// buttons (seen live 2026-10-19). The split below keeps line breaks apart.
+const CROSS_REFERENCE_LINE_PATTERN =
+    /(?:^|\n)[^\n]*?(?:cross[- ]?references?|references?|xref|យោង|ខយោង)[^\n]*?[:：៖]\s*([\s\S]+)/iu;
+
+function checkIsResourceCrossReference(value: string) {
+    return (
+        value.length > 0 &&
+        value.length <= 80 &&
+        /[:：៖]\s*\p{N}/u.test(value) &&
+        // A vision model once exposed legacy-font guesses such as
+        // "mf 3:7" and "kc 23:6-8" as buttons. A verified reference can
+        // always use the full book name; do not make a raw short OCR token
+        // look authoritative.
+        !/^[A-Za-z]{1,3}\s+\p{N}/u.test(value) &&
+        !/^\s*\p{N}+\s*[-–]\s*\p{N}+\s*$/u.test(value)
+    );
+}
+
+function toResourceCrossReferences(rawTextList: readonly string[]) {
+    const list: string[] = [];
+    const seen = new Set<string>();
+    for (const rawText of rawTextList) {
+        // Small models occasionally put two verified references into one
+        // option. One button must open one verse card, so split the list here.
+        for (const part of rawText.split(/[,;|、\r\n]+/u)) {
+            const value = part
+                .trim()
+                .replace(/^\*+|\*+$/g, '')
+                .trim();
+            const key = value.toLocaleLowerCase();
+            if (!checkIsResourceCrossReference(value) || seen.has(key)) {
+                continue;
+            }
+            seen.add(key);
+            list.push(value);
+            if (list.length >= MAX_RESOURCE_CROSS_REFERENCES) return list;
+        }
+    }
+    return list;
 }
 
 /**
  * Keep reliable next-range navigation without throwing away the model's
  * cross-reference choices. The prompt permits only references it actually
- * quoted; this final shape check keeps prose and duplicate navigation out of
- * the buttons.
+ * verified; this final shape check keeps prose and duplicate navigation out
+ * of the buttons. `answerText` is read for the one line the answer writes
+ * its printed cross-references on, so every one of them is pressable -- not
+ * only the two that fitted in OPTIONS.
  */
 export function genResourceReadingReplies(
     range: string,
     modelReplies: readonly string[],
     lastVerse?: number | null,
+    answerText: string = '',
 ) {
     const navigation = genResourceRangeReplies(range, lastVerse);
-    const seen = new Set<string>();
-    const crossReferences: string[] = [];
-    for (const reply of modelReplies) {
-        // Small models occasionally put two verified references into one
-        // option. One button must open one verse card, so split the list here.
-        for (const part of reply.split(/\s*[,;|]\s*/u)) {
-            const value = part.trim();
-            const key = value.toLocaleLowerCase();
-            if (
-                value.length === 0 ||
-                value.length > 80 ||
-                !/[:：]\s*\p{N}/u.test(value) ||
-                // A vision model once exposed legacy-font guesses such as
-                // "mf 3:7" and "kc 23:6-8" as buttons. A verified reference
-                // can always use the full book name; do not make a raw short
-                // OCR token look authoritative.
-                /^[A-Za-z]{1,3}\s+\p{N}/u.test(value) ||
-                /^\s*\p{N}+\s*[-–]\s*\p{N}+\s*$/u.test(value) ||
-                seen.has(key)
-            ) {
-                continue;
-            }
-            seen.add(key);
-            crossReferences.push(value);
-            if (crossReferences.length >= 2) break;
-        }
-        if (crossReferences.length >= 2) break;
-    }
-    return [...crossReferences, ...navigation].slice(0, 5);
+    const lineMatch = CROSS_REFERENCE_LINE_PATTERN.exec(answerText);
+    const crossReferences = toResourceCrossReferences([
+        ...(lineMatch === null ? [] : [lineMatch[1]]),
+        ...modelReplies,
+    ]);
+    return [...crossReferences, ...navigation].slice(
+        0,
+        MAX_RESOURCE_CROSS_REFERENCES + navigation.length,
+    );
 }
 
 /**
@@ -369,47 +436,56 @@ export const RESOURCES_SYSTEM_PROMPT =
     'attached or read comes as pictures of its pages. For anything in ' +
     `another file -- the next chapter, another book -- use ${RESOURCES_TOOL_NAME}: ` +
     '`list` with `book` and `chapter` (or `search`) to find it, then `read` ' +
-    'the file by the name `list` gives. Read a PDF once with detail "high" ' +
-    'and omit `pages`; that returns the complete file. Treat the PDF as one ' +
-    'resource and never discuss page batches, pagination, or continuing the ' +
-    'file with the user. Read it continuously: when an explanation paragraph ' +
+    'the file by the name `list` gives. Read a PDF with detail "high" and ' +
+    'omit `pages`; that returns up to eight pages in one read. If it says ' +
+    'it is not complete, read on from `nextPage` before you answer. Treat the ' +
+    'PDF as one resource and never discuss page batches, pagination, or ' +
+    'continuing the file with the user. Read it continuously: when an ' +
+    'explanation paragraph ' +
     'starts in one picture and continues in the next, join both parts before ' +
     'answering. The pictures are authoritative: a scan may have ' +
     'no text layer and a legacy Khmer font may expose wrong characters. ' +
     'When their message is just "Read" or its translated equivalent, do not ' +
-    'start transcribing the whole chapter. Ask which one verse they want ' +
+    'start transcribing the whole chapter. Ask which verse or small range ' +
+    'they want ' +
     'and output an OPTIONS: line ' +
     'with its first three verse numbers plus a Full chapter option. Full ' +
     'chapter starts at verse 1 and continues through the same next-verse ' +
     'buttons; it never puts the chapter into one model request. Every answer ' +
-    'card has exactly one main verse. For that selected verse, quote the full ' +
-    'Bible verse from ' +
+    'card has exactly one main passage -- the verse or small range they ' +
+    'chose. For it, quote the full Bible text from ' +
     'owa_lookup_record and name the Bible that returned it. Next, show the ' +
-    'cross-reference labels printed beside that selected verse in the PDF. ' +
-    'Verify each one by calling owa_lookup_record, then write its full book ' +
-    'name; never expose a raw or uncertain abbreviation from the picture. ' +
-    'If a lookup cannot read it, omit it. Do not expand its verse text in ' +
-    'the same card. Put up to two of ' +
-    'those labels in OPTIONS so a press opens that verse in its own card. ' +
+    'cross-reference labels printed beside that passage in the PDF on ONE ' +
+    'line, after the word for "references" in their language and separated ' +
+    'by commas. Verify each one by calling owa_lookup_record, then write its ' +
+    'full book name; never expose a raw or uncertain abbreviation from the ' +
+    'picture. If a lookup cannot read it, omit it. The app turns every label ' +
+    'on that line into a button, so list EVERY one printed in the column -- ' +
+    'including references to other chapters and other books, not a sample, ' +
+    'and up to thirty. Do not expand their verse text in the same card. Put ' +
+    'up to two ' +
+    'of those labels in OPTIONS as well for a quick press. ' +
     'Then reproduce the matching ' +
     'explanation paragraph or paragraphs from the PDF. In a study Bible page, ' +
     'these explanations are normally in the commentary section below a ' +
     'horizontal rule; each paragraph begins with a bold verse reference, ' +
     'which may cover several verses. Find the paragraph whose leading ' +
-    'reference includes the selected verse. Do not merely repeat the Bible ' +
+    'reference includes the passage (or its first verse). Do not merely ' +
+    'repeat the Bible ' +
     'verse and call it an explanation. Clearly label Bible text and PDF ' +
     'explanation, retain the PDF paragraph breaks, and name the file. ' +
     'The narrow reference column beside the Bible text is cross-references, ' +
-    'not explanation: keep it with the selected verse and do not expand all ' +
+    'not explanation: keep it with the chosen passage and do not expand all ' +
     'of it automatically. After the reading, end with an OPTIONS: line ' +
     'containing up to two cross-reference verse labels that you actually ' +
     'quoted, so the user can press one to read it. Do not put navigation ' +
     'ranges or Full there; the app adds those buttons, and never invent a ' +
     'reference. If the explanation ' +
-    'for a selected verse is absent or a word is unclear in the page picture, ' +
+    'for the chosen passage is absent or a word is unclear in the page ' +
+    'picture, ' +
     'say so rather than silently guessing it. ' +
     'When an explanation paragraph itself names a related verse, keep the ' +
-    'selected verse as the only main verse: name the related reference but ' +
+    'chosen passage as the only main passage: name the related reference but ' +
     'do not expand its Bible text in this card. Use owa_resource_file to find ' +
     'and read its chapter file and include the ' +
     'matching explanation from that file when it exists. Follow only direct ' +

@@ -44,7 +44,7 @@ describe('a question about the Resources files', () => {
         expect(RESOURCES_SYSTEM_PROMPT).toContain('owa_lookup_record');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('paragraph breaks');
         expect(RESOURCES_SYSTEM_PROMPT).toContain(
-            'Every answer card has exactly one main verse',
+            'Every answer card has exactly one main passage',
         );
         expect(RESOURCES_SYSTEM_PROMPT).toContain('matching explanation');
         expect(RESOURCES_SYSTEM_PROMPT).toContain(
@@ -61,7 +61,7 @@ describe('a question about the Resources files', () => {
             'Full chapter starts at verse 1',
         );
         expect(RESOURCES_SYSTEM_PROMPT).toContain(
-            'selected verse as the only main verse',
+            'chosen passage as the only main passage',
         );
         expect(RESOURCES_SYSTEM_PROMPT).toContain(
             'at most two related resource',
@@ -69,26 +69,26 @@ describe('a question about the Resources files', () => {
         expect(RESOURCES_SYSTEM_PROMPT).toContain('OPTIONS:');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('other PDFs');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('button to continue');
-        expect(RESOURCES_SYSTEM_PROMPT).toContain('returns the complete file');
+        expect(RESOURCES_SYSTEM_PROMPT).toContain('up to eight pages');
+        expect(RESOURCES_SYSTEM_PROMPT).toContain('read on from `nextPage`');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('never discuss page batches');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('join both parts');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('detail "high"');
     });
 
-    test('the chosen verse keeps the rendered reading bounded', () => {
-        expect(RESOURCES_RANGE_HINT).toContain('one verse chosen');
+    test('the chosen verse or range keeps the rendered reading bounded', () => {
+        expect(RESOURCES_RANGE_HINT).toContain('verse or range chosen');
         expect(RESOURCES_RANGE_HINT).toContain('full Bible text');
         expect(RESOURCES_RANGE_HINT).toContain('cross-reference labels');
         expect(RESOURCES_RANGE_HINT).toContain('matching PDF explanation');
         expect(RESOURCES_RANGE_HINT).toContain('already called');
-        expect(RESOURCES_RANGE_HINT).toContain(
-            'never complete a verse from memory',
-        );
+        expect(RESOURCES_RANGE_HINT).toContain('never complete it from memory');
         expect(RESOURCES_RANGE_HINT).toContain('owa_resource_file');
         expect(RESOURCES_RANGE_HINT).toContain('detail "high"');
         expect(RESOURCES_RANGE_HINT).toContain(
-            'complete attached Resources PDF',
+            'attached Resources PDF is read before answering',
         );
+        expect(RESOURCES_RANGE_HINT).toContain('nextPage');
         expect(RESOURCES_RANGE_HINT).toContain(
             'do not talk to the user about pages',
         );
@@ -123,9 +123,12 @@ describe('a question about the Resources files', () => {
         );
     });
 
-    test('offers individual next verses and stops at the chapter end', () => {
-        expect(genResourceRangeReplies('1–3')).toEqual(['2', '3', '4']);
-        expect(genResourceRangeReplies('4-6')).toEqual(['5', '6', '7']);
+    test('offers the verses after the chosen range and stops at the end', () => {
+        // A chosen RANGE moves past its END, not its start (2026-10-19):
+        // `1-3` answered with verse 1 only, and its next buttons were 2/3/4.
+        expect(genResourceRangeReplies('1–3')).toEqual(['4', '5', '6']);
+        expect(genResourceRangeReplies('4-6')).toEqual(['7', '8', '9']);
+        expect(genResourceRangeReplies('1-5')).toEqual(['6', '7', '8']);
         expect(genResourceRangeReplies('Full chapter')).toEqual([
             '2',
             '3',
@@ -152,7 +155,7 @@ describe('a question about the Resources files', () => {
                 'John 3:16',
                 'This is prose, not a reference',
             ]),
-        ).toEqual(['John 3:16', 'យ៉ូហាន ៣:៣៦', '2', '3', '4']);
+        ).toEqual(['John 3:16', 'យ៉ូហាន ៣:៣៦', '4', '5', '6']);
         expect(
             genResourceReadingReplies(
                 '36',
@@ -166,6 +169,58 @@ describe('a question about the Resources files', () => {
         expect(
             genResourceReadingReplies('1', ['mf 3:7', 'mk 2:16', 'Luke 5:17']),
         ).toEqual(['Luke 5:17', '2', '3', '4']);
+    });
+
+    test('turns every cross-reference on the answer line into a button', () => {
+        // The page's narrow column lists six; only two fitted in OPTIONS.
+        // The user asked for all of them to be pressable (2026-10-19).
+        const answer = [
+            'គម្ពីរ៖ (១) … (២) … (៣) …',
+            'យោង៖ ម៉ាថាយ ៩:៣២, ម៉ាថាយ ៩:៣៥,',
+            'ម៉ាថាយ ២០:២០-២៨, លូកា ៩:៤៦, លូកា ១២:១៣, យ៉ូហាន ១៣:១៣-១៧',
+            'ការពន្យល់ពី PDF៖ …',
+        ].join('\n');
+        expect(genResourceReadingReplies('1–3', [], 35, answer)).toEqual([
+            'ម៉ាថាយ ៩:៣២',
+            'ម៉ាថាយ ៩:៣៥',
+            'ម៉ាថាយ ២០:២០-២៨',
+            'លូកា ៩:៤៦',
+            'លូកា ១២:១៣',
+            'យ៉ូហាន ១៣:១៣-១៧',
+            '4',
+            '5',
+            '6',
+        ]);
+        // The English word, and a bold label, read the same.
+        expect(
+            genResourceReadingReplies(
+                '1',
+                [],
+                35,
+                '**References:** Matthew 9:32, Luke 9:46',
+            ),
+        ).toEqual(['Matthew 9:32', 'Luke 9:46', '2', '3', '4']);
+        // Every printed reference is a button -- across books too -- and a
+        // range or an abbreviation still is not a reference.
+        expect(
+            genResourceReadingReplies(
+                '1',
+                [],
+                35,
+                'References: Matthew 9:32, Matthew 9:35, Matthew 20:20-28, Luke 9:46, Luke 12:13, John 13:13-17, Mark 2:16, 4-6, mf 3:7',
+            ),
+        ).toEqual([
+            'Matthew 9:32',
+            'Matthew 9:35',
+            'Matthew 20:20-28',
+            'Luke 9:46',
+            'Luke 12:13',
+            'John 13:13-17',
+            'Mark 2:16',
+            '2',
+            '3',
+            '4',
+        ]);
     });
 
     test('rejects a looping PDF reading and keeps ordinary prose', () => {
@@ -237,7 +292,17 @@ describe('a question about the Resources files', () => {
                 'JHN 3',
             ),
         ).toBe('JHN 3');
-        expect(toResourcePassageRef(['pdf/JHN.3.pdf'], '1–3')).toBe('JHN 3:1');
+        expect(toResourcePassageRef(['pdf/JHN.3.pdf'], '1–3')).toBe(
+            'JHN 3:1-3',
+        );
+        expect(toResourcePassageRef(['pdf/JHN.3.pdf'], '4-6')).toBe(
+            'JHN 3:4-6',
+        );
+        // A longer range is cut to what one card may carry; the next buttons
+        // move past what was read, never past what was asked.
+        expect(toResourcePassageRef(['pdf/JHN.3.pdf'], '1-100')).toBe(
+            'JHN 3:1-5',
+        );
         expect(toResourcePassageRef(['pdf/JHN.3.pdf'], 'Full chapter')).toBe(
             'JHN 3:1',
         );
@@ -248,7 +313,7 @@ describe('a question about the Resources files', () => {
             'JHN 3:1-36',
         );
         expect(prepared).toContain('prepared the chapter index (JHN 3:1-36)');
-        expect(prepared).toContain('only this one verse');
+        expect(prepared).toContain('only this passage');
         expect(prepared).toContain('JHN 3:1');
         expect(prepared).toContain('John 3:1 full text');
         expect(prepared).not.toContain('John 3:36 full text');

@@ -41,7 +41,14 @@ import {
 } from '../../tools/owa-devtools-mcp/bibleXmlAdvice.mjs';
 import { readBibleImportAskName } from '../helper/ai/bibleImportAskHelpers';
 import { appError } from '../helper/loggerHelpers';
-import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import {
+    fillWords,
+    findChatBibleKeyByName,
+    getChatBibleKeyList,
+    getChatBibleKeyName,
+    tran,
+    tranLabel,
+} from './chatTranHelpers';
 import { checkIsOpenableLink, toOpenableLinks } from './chatLinkHelpers';
 import type { BotActionType, BotAnswerType } from './helpBotHelpers';
 import { callTool, parseToolJson } from './mcpClient';
@@ -90,7 +97,8 @@ export type BibleImportStepType =
     | 'undo'
     | 'settings'
     | 'language'
-    | 'local-file';
+    | 'local-file'
+    | 'kjv-create';
 
 export type BibleImportStateType = {
     step: BibleImportStepType;
@@ -130,6 +138,15 @@ export type BibleImportStateType = {
     namesUrl?: string;
     undoId?: string;
     note?: string;
+    // The KJV Open Worship provides has been looked for once for this
+    // import: pressing any of the offer's buttons goes on without asking
+    // again.
+    kjvChecked?: boolean;
+    // After **Create the provided KJV**, where the original import resumes.
+    kjvNext?: 'check' | 'language' | 'local-file';
+    // The person asked for the KJV itself: once it exists the import is
+    // finished, not started again.
+    wantsKjv?: boolean;
 };
 
 // A language rarely has more editions than this; a catalog search answers
@@ -147,8 +164,186 @@ export const BIBLE_IMPORT_MODEL_REFUSAL =
     'name, language, digits and book names. Say what it is and let them ' +
     'press.';
 
-function toAction(label: string, state: BibleImportStateType): BotActionType {
-    return { label, toolName: BIBLE_IMPORT_STEP_TOOL_NAME, args: state };
+// The KJV Open Worship provides is the person's to create, like a Bible
+// install: the offer's own button is the consent.
+export const BIBLE_KJV_MODEL_REFUSAL =
+    'The KJV Open Worship provides is created by the person, not by you: ' +
+    'say that the app provides it and recommend it, and let them press ' +
+    '**Create the provided KJV** under your answer.';
+
+function toAction(
+    label: string,
+    state: BibleImportStateType,
+    title?: string,
+): BotActionType {
+    return {
+        label,
+        ...(title === undefined ? {} : { title }),
+        toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+        args: state,
+    };
+}
+
+/**
+ * The button under a FINISHED import: one more, in the same conversation.
+ * It starts a fresh import at the language question, carrying nothing of the
+ * one just installed (no draft, no short name, no wanted key), and it goes
+ * through the KJV-first check like any other import -- a computer without
+ * the provided KJV is offered it before the next Bible.
+ */
+function toAddAnotherBibleAction(): BotActionType {
+    return toAction('Add another Bible', { step: 'language' });
+}
+
+// KJV, and not NKJV: the free collection also lists _English NKJ 1982_,
+// which is a DIFFERENT translation and a fair import of its own.
+const KJV_WORD_PATTERN = /\bkjv\b/i;
+const KJV_TITLE_PATTERN = /\bking james version\b/i;
+const NEW_KING_JAMES_PATTERN = /\b(?:new king james|nkjv|nkj)\b/i;
+
+function checkIsKjvWords(value: unknown) {
+    if (typeof value !== 'string' || NEW_KING_JAMES_PATTERN.test(value)) {
+        return false;
+    }
+    return KJV_WORD_PATTERN.test(value) || KJV_TITLE_PATTERN.test(value);
+}
+
+/** The request itself names the KJV: "Import the Bible called "KJV"". */
+function checkIsKjvAsk(state: BibleImportStateType) {
+    return (
+        checkIsKjvWords(state.wantedKey) ||
+        checkIsKjvWords(state.find) ||
+        checkIsKjvWords(state.pageFind)
+    );
+}
+
+/** The file just downloaded IS an English KJV, whatever the words asked. */
+function checkIsKjvDownload(result: any, state: BibleImportStateType) {
+    if (checkIsKjvAsk(state)) {
+        return true;
+    }
+    if (result === null || typeof result !== 'object') {
+        return false;
+    }
+    if (checkIsKjvWords(result.title) || checkIsKjvWords(result.installedAs)) {
+        return true;
+    }
+    return Array.isArray(result.keys) && result.keys.some(checkIsKjvWords);
+}
+
+/**
+ * Whether the app already has its own KJV. `null` when the tool host could
+ * not be asked: an import must not be blocked because a check failed.
+ */
+async function readKjvInstalled(signal?: AbortSignal | null) {
+    try {
+        const result = await callBibleTool({ action: 'list' }, signal);
+        if (result === null || typeof result !== 'object') {
+            return null;
+        }
+        const installed = [
+            ...(Array.isArray(result.bibles) ? result.bibles : []),
+            ...(Array.isArray(result.downloaded) ? result.downloaded : []),
+        ];
+        return installed.some((bible: any) => {
+            return (
+                typeof bible?.key === 'string' &&
+                bible.key.toLowerCase() === 'kjv'
+            );
+        });
+    } catch (error) {
+        appError(error, 'bible import KJV check');
+        return null;
+    }
+}
+
+// The offer's own buttons are the person's press: nothing here is a model's
+// to fire, and every one carries the whole state on to the next step.
+function toKjvCreateAction(
+    state: BibleImportStateType,
+    wantsKjv: boolean,
+): BotActionType {
+    const nextStep =
+        state.step === 'language' || state.step === 'local-file'
+            ? state.step
+            : 'check';
+    return toAction(
+        'Create the provided KJV',
+        carry(state, {
+            step: 'kjv-create',
+            kjvChecked: true,
+            ...(wantsKjv ? { wantsKjv: true } : { kjvNext: nextStep }),
+        }),
+    );
+}
+
+// The choices that go on WITHOUT it. A page's file buttons or a downloaded
+// file's **I agree** keep working; their state is marked checked so the page
+// cannot send the person back to this same offer.
+function toKjvOverrideActions(actions: BotActionType[]) {
+    return actions.map((action) => {
+        return {
+            ...action,
+            args: {
+                ...(action.args as BibleImportStateType),
+                kjvChecked: true,
+            },
+        };
+    });
+}
+
+function genKjvOfferAnswer(
+    state: BibleImportStateType,
+    hasKjv: boolean,
+    overrideActions: BotActionType[],
+    wantsKjv: boolean,
+): BotAnswerType {
+    const overrides = toKjvOverrideActions(overrideActions);
+    if (hasKjv) {
+        return {
+            text: tran(
+                '**You already have the KJV Open Worship provides**, ' +
+                    'installed as **KJV**. There is no need to import this ' +
+                    'file. To use the file anyway, press a choice below.',
+            ),
+            actions: overrides,
+        };
+    }
+    const actions: BotActionType[] = [
+        toKjvCreateAction(state, wantsKjv),
+        ...overrides,
+    ];
+    if (
+        !overrides.some((action) => {
+            return action.label === 'Cancel';
+        })
+    ) {
+        actions.push(toAction('Cancel', { step: 'cancel' }));
+    }
+    return {
+        text: [
+            wantsKjv
+                ? tran(
+                      '**Open Worship provides the KJV Bible** — the ' +
+                          'recommended King James Version, and it is not ' +
+                          'installed yet. Create it from the app itself and ' +
+                          'you will have the one this app recommends. To ' +
+                          'use this file instead, press a choice below.',
+                  )
+                : tran(
+                      '**Before another Bible: Open Worship provides the ' +
+                          'KJV Bible** — the recommended King James ' +
+                          'Version, and it is not installed yet. Create it ' +
+                          'first, and then I will start your import again. ' +
+                          'To go on without it, press a choice below.',
+                  ),
+            tran(
+                'Creating it needs no internet and no separate download: ' +
+                    'the app already holds the whole KJV.',
+            ),
+        ].join('\n\n'),
+        actions,
+    };
 }
 
 /**
@@ -661,6 +856,12 @@ export function readBibleImportHelpState(
 
 // --- the steps ----------------------------------------------------------------
 
+function checkIsTakenKey(key: string, takenKeys: string[]) {
+    return takenKeys.some((taken) => {
+        return taken.toLowerCase() === key.toLowerCase();
+    });
+}
+
 function genKeyReason(key: string, takenKeys: string[]) {
     if (key.length < 2 || key.length > 24) {
         return tran('A short name is 2 to 24 letters or numbers, like KJV.');
@@ -683,11 +884,7 @@ function genKeyReason(key: string, takenKeys: string[]) {
             { key },
         );
     }
-    if (
-        takenKeys.some((taken) => {
-            return taken.toLowerCase() === key.toLowerCase();
-        })
-    ) {
+    if (checkIsTakenKey(key, takenKeys)) {
         return fillWords(
             tran(
                 'You already have a Bible called "{key}". Choose another name.',
@@ -721,6 +918,61 @@ function genKeyChoices(
     ];
 }
 
+/**
+ * The short names a person can press at step 1. The options are the names
+ * the BIBLE'S OWN LANGUAGE knows a Bible by -- `ពគប`, `គខប`, `គកស១៦`, `អគត`,
+ * `GKHB`, `KCB` for Khmer, `KJV`, `NKJV`, `NIV` … for English, `LSG` for
+ * French -- read from that language's `bibleKeyMap.json`, not the invented
+ * ones a downloaded file carries (`KM2023`, `KHMER2019` …). The one the
+ * file's own TITLE matches comes first, then the rest as the language lists
+ * them.
+ *
+ * A language this app holds no names for -- Thai today -- keeps the file's
+ * own suggestions, and so does a language whose every name is already
+ * installed: the normal guessing is better than a list that cannot be
+ * pressed.
+ *
+ * A key this computer ALREADY has is left out: its press could only answer
+ * "you already have a Bible called …", and a suggestion that cannot be taken
+ * is not a suggestion. A typed name is still checked the same way
+ * (`genKeyReason`).
+ */
+function genKeyCandidates(state: BibleImportStateType) {
+    const takenKeys = state.takenKeys ?? [];
+    const locale = state.locale ?? state.locales?.[0]?.locale;
+    const keyList: string[] = [];
+    const seen = new Set<string>();
+    const add = (key: string) => {
+        const lower = key.toLowerCase();
+        if (seen.has(lower) || checkIsTakenKey(key, takenKeys)) {
+            return;
+        }
+        seen.add(lower);
+        keyList.push(key);
+    };
+    // A Bible asked for BY NAME keeps the promise that its own key comes
+    // first (`genKeyChoices` ordered `keys` that way at the download).
+    if (
+        state.wantedKey !== undefined &&
+        genKeyReason(state.wantedKey, takenKeys) === null
+    ) {
+        add(state.wantedKey);
+    }
+    const knownKey = findChatBibleKeyByName(state.title ?? '', locale);
+    if (knownKey !== null) {
+        add(knownKey);
+    }
+    const languageKeyList = getChatBibleKeyList(locale).filter((key) => {
+        return !checkIsTakenKey(key, takenKeys);
+    });
+    if (languageKeyList.length > 0) {
+        languageKeyList.forEach(add);
+    } else {
+        (state.keys ?? []).forEach(add);
+    }
+    return keyList;
+}
+
 function countSteps(state: BibleImportStateType) {
     return state.digitChoices?.local ? 4 : 3;
 }
@@ -729,7 +981,10 @@ function genKeyStep(
     state: BibleImportStateType,
     opening: string[] = [],
 ): BotAnswerType {
-    const keyList = (state.keys ?? []).slice(0, 4);
+    // The short names to offer, the one this language knows the edition by
+    // first, then the file's own -- never one that already exists on this
+    // computer (`genKeyCandidates`).
+    const keyList = genKeyCandidates(state).slice(0, 4);
     return {
         text: [
             ...opening,
@@ -750,9 +1005,19 @@ function genKeyStep(
         ].join('\n\n'),
         actions: [
             ...keyList.map((key, index) => {
-                return toAction(index === 0 ? `${key} (suggested)` : key, {
-                    ...carry(state, { step: 'locale', key }),
-                });
+                // A key such as `KJV` or `ពគប` is the button's words; the
+                // name it stands for (`King James Version`, the pack's own
+                // Khmer name) is only as wide as a hover. A key the language
+                // names nowhere -- an imported file's own invention -- gets
+                // no title rather than one that says nothing.
+                return toAction(
+                    index === 0 ? `${key} (suggested)` : key,
+                    { ...carry(state, { step: 'locale', key }) },
+                    getChatBibleKeyName(
+                        key,
+                        state.locale ?? state.locales?.[0]?.locale,
+                    ) ?? undefined,
+                );
             }),
             toAction('Cancel', carry(state, { step: 'cancel' })),
         ].map((action, index) => {
@@ -1558,25 +1823,81 @@ async function runSource(state: BibleImportStateType): Promise<BotAnswerType> {
  * its **I agree** is pressed for, which the model's own words never carry,
  * with the addresses in it that open.
  */
-export function genBibleImportUnderAnswer(result: any, url: string) {
-    const state: BibleImportStateType = { step: 'check', url };
-    const actions = genBibleImportCheckAnswer(result, state).actions ?? [];
+export function genBibleImportUnderAnswer(result: any, url: string, find = '') {
+    const state: BibleImportStateType = {
+        step: 'check',
+        url,
+        ...(find.trim() ? { find } : {}),
+    };
+    const normal = genBibleImportCheckAnswer(result, state);
+    const actions = normal.actions ?? [];
+    const hasKjv = typeof result?.hasKjv === 'boolean' ? result.hasKjv : null;
     if (!checkIsDownloadedBible(result)) {
+        // A page of files: the KJV offer goes above its choices, and creating
+        // it starts the page's search again.
+        if (hasKjv === false) {
+            const offer = genKjvOfferAnswer(
+                state,
+                false,
+                actions,
+                checkIsKjvAsk(state),
+            );
+            return {
+                actions: offer.actions ?? [],
+                notice: offer.text,
+                links: [],
+            };
+        }
         return { actions, notice: null, links: [] };
     }
     const { next, source } = toDownloadedState(result, state);
-    return {
-        actions,
-        notice: [...genSourceNotice(next, source), tran(AGREE_ASK_TEXT)].join(
-            '\n\n',
-        ),
-        // The notice's addresses are the app's own words, so they open.
-        links: toOpenableLinks([next.sourcePage, source]),
-    };
+    const wantsKjv = checkIsKjvDownload(result, state);
+    const notice = [
+        ...genSourceNotice(next, source),
+        tran(AGREE_ASK_TEXT),
+    ].join('\n\n');
+    // The notice's addresses are the app's own words, so they open.
+    const links = toOpenableLinks([next.sourcePage, source]);
+    if (hasKjv === false) {
+        const offer = genKjvOfferAnswer(
+            { ...state, ...next, step: 'check' },
+            false,
+            actions,
+            wantsKjv,
+        );
+        return {
+            actions: offer.actions ?? [],
+            notice: `${offer.text}\n\n${notice}`,
+            links,
+        };
+    }
+    if (hasKjv === true && wantsKjv) {
+        return {
+            actions,
+            notice:
+                tran(
+                    '**You already have the KJV Open Worship provides**, ' +
+                        'installed as **KJV**. There is no need to import ' +
+                        'this file. To use the file anyway, press a choice ' +
+                        'below.',
+                ) +
+                '\n\n' +
+                notice,
+            links,
+        };
+    }
+    return { actions, notice, links };
 }
 
-async function callBibleTool(args: Record<string, unknown>) {
-    return parseToolJson(await callTool('owa_bible_xml', args));
+async function callBibleTool(
+    args: Record<string, unknown>,
+    signal?: AbortSignal | null,
+) {
+    return parseToolJson(
+        signal
+            ? await callTool('owa_bible_xml', args, signal)
+            : await callTool('owa_bible_xml', args),
+    );
 }
 
 async function runCheck(state: BibleImportStateType) {
@@ -1587,6 +1908,42 @@ async function runCheck(state: BibleImportStateType) {
         ...(state.find ? { find: state.find } : {}),
     });
     const answer = genBibleImportCheckAnswer(result, carry(state, { url }));
+    // The app's own KJV comes first. `hasKjv` is read by the server from the
+    // same installed list it already reads for `installedAs`; a host too old
+    // to say (or one that could not be asked) leaves the flow as it was.
+    if (!state.kjvChecked && result?.hasKjv === false) {
+        return genKjvOfferAnswer(
+            carry(state, {
+                url,
+                // Kept so the downloaded draft can be let go when the
+                // provided KJV is created instead.
+                ...(typeof result?.draftId === 'string'
+                    ? { draftId: result.draftId }
+                    : {}),
+            }),
+            false,
+            answer.actions ?? [],
+            checkIsKjvDownload(result, state),
+        );
+    }
+    if (
+        !state.kjvChecked &&
+        result?.hasKjv === true &&
+        checkIsKjvDownload(result, state)
+    ) {
+        return {
+            ...answer,
+            text:
+                tran(
+                    '**You already have the KJV Open Worship provides**, ' +
+                        'installed as **KJV**. There is no need to import ' +
+                        'this file. To use the file anyway, press a choice ' +
+                        'below.',
+                ) +
+                '\n\n' +
+                answer.text,
+        };
+    }
     const find = typeof state.find === 'string' ? state.find.trim() : '';
     // A language word the catalog has no name for: the WINDOW asks the
     // assistant for its English name and searches again (2026-10-18). A
@@ -1780,8 +2137,11 @@ async function runImport(state: BibleImportStateType): Promise<BotAnswerType> {
             tran(
                 'If it is not right, press **Undo** and it goes to the trash.',
             ),
-        actions:
-            typeof result.undoId === 'string'
+        // A service often needs more than one Bible, and a person who has
+        // just installed one should not have to remember how they got here:
+        // the same conversation starts another (`toAddAnotherBibleAction`).
+        actions: [
+            ...(typeof result.undoId === 'string'
                 ? [
                       toAction(
                           'Undo',
@@ -1791,7 +2151,9 @@ async function runImport(state: BibleImportStateType): Promise<BotAnswerType> {
                           }),
                       ),
                   ]
-                : [],
+                : []),
+            toAddAnotherBibleAction(),
+        ],
     };
 }
 
@@ -1825,6 +2187,78 @@ async function runCancel(state: BibleImportStateType): Promise<BotAnswerType> {
         }
     }
     return { text: tran('Stopped. Nothing was installed.') };
+}
+
+function genKjvCreateFailedAnswer(state: BibleImportStateType): BotAnswerType {
+    return {
+        text: fillWords(
+            tran(
+                'I could not create the KJV Open Worship provides. Nothing ' +
+                    'was installed. In **Settings → Bible**, press ' +
+                    '**{button}**, or try again here.',
+            ),
+            { button: tran('Create KJV Bible XML') },
+        ),
+        actions: [
+            toAction('Try again', { ...state, step: 'kjv-create' }),
+            toAction('Cancel', { step: 'cancel' }),
+        ],
+    };
+}
+
+// Create the app's own KJV, then either finish (they asked for the KJV) or
+// start the import they wanted again from its first step.
+async function runCreateKjv(
+    state: BibleImportStateType,
+): Promise<BotAnswerType> {
+    let result;
+    try {
+        result = await callBibleTool({ action: 'create-kjv' });
+    } catch (error) {
+        appError(error, 'bible import create KJV');
+        return genKjvCreateFailedAnswer(state);
+    }
+    if (
+        result === null ||
+        typeof result !== 'object' ||
+        result.isError === true ||
+        typeof result.problem === 'string'
+    ) {
+        return genKjvCreateFailedAnswer(state);
+    }
+    // They asked for another Bible: the draft they had downloaded is not the
+    // one this import will use any more. A draft for the KJV itself is left
+    // alone, so their own **I agree** can still choose that file.
+    if (state.draftId && !state.wantsKjv) {
+        try {
+            await callBibleTool({ action: 'cancel', draftId: state.draftId });
+        } catch (error) {
+            // Swept within two hours anyway.
+            appError(error, 'bible import cancel after KJV');
+        }
+    }
+    if (state.wantsKjv) {
+        return {
+            text: tran(
+                '**Done — the KJV Open Worship provides is installed.** ' +
+                    'Choose **KJV** from the Bible version button. A Bible ' +
+                    'Reader card saying the KJV is not available goes away ' +
+                    'by itself.',
+            ),
+            // The KJV was created IN this conversation, like any other
+            // import: the same window can go on to another Bible.
+            actions: [toAddAnotherBibleAction()],
+        };
+    }
+    const nextStep = state.kjvNext ?? 'check';
+    return runBibleImportStep({
+        ...state,
+        step: nextStep,
+        kjvChecked: true,
+        wantsKjv: undefined,
+        kjvNext: undefined,
+        draftId: undefined,
+    });
 }
 
 /**
@@ -1874,6 +2308,48 @@ export async function runBibleImportStep(
     state: BibleImportStateType,
 ): Promise<BibleImportStepAnswerType> {
     try {
+        // The KJV Open Worship provides comes first. An import already under
+        // way (`kjvChecked`) never asks again; a request that NAMES the KJV
+        // is answered here, before any file is downloaded.
+        if (!state.kjvChecked) {
+            if (state.step === 'check' && checkIsKjvAsk(state)) {
+                const hasKjv = await readKjvInstalled();
+                if (hasKjv !== null) {
+                    return genKjvOfferAnswer(
+                        state,
+                        hasKjv,
+                        [
+                            toAction(
+                                'Use the internet copy anyway',
+                                carry(state, {
+                                    step: 'check',
+                                    kjvChecked: true,
+                                }),
+                            ),
+                        ],
+                        true,
+                    );
+                }
+            } else if (
+                state.step === 'language' ||
+                state.step === 'local-file'
+            ) {
+                const hasKjv = await readKjvInstalled();
+                if (hasKjv === false) {
+                    return genKjvOfferAnswer(
+                        state,
+                        false,
+                        [
+                            toAction(
+                                'Import another Bible anyway',
+                                carry(state, { kjvChecked: true }),
+                            ),
+                        ],
+                        false,
+                    );
+                }
+            }
+        }
         switch (state.step) {
             case 'check':
                 return await runCheck(state);
@@ -1917,6 +2393,8 @@ export async function runBibleImportStep(
                 return genLanguageStep(state);
             case 'local-file':
                 return await runLocalFile();
+            case 'kjv-create':
+                return await runCreateKjv(state);
             default:
                 return { text: tran('That step is not one I know.') };
         }
@@ -2139,6 +2617,8 @@ export function describeBibleImportStep(state: BibleImportStateType) {
             );
         case 'import':
             return tran('Installing the Bible');
+        case 'kjv-create':
+            return tran('Creating the provided KJV Bible');
         case 'undo':
             return tran('Putting it back');
         default:

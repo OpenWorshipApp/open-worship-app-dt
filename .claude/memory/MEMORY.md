@@ -124,3 +124,4 @@
 - [Cast to a TV](cast-to-tv.md) — Cast/DLNA/Roku; every TV pulls the MP4; catch up by playback rate, never SEEK
 - [Cloudflare quick tunnel](cloudflare-quick-tunnel.md) — for a VPN/CGNAT; cloudflared in the extra-bin pack; all of it counts as the internet
 - [Electron has no Khmer dates](electron-icu-has-no-khmer.md) — Intl answers km-KH in English; vitest (Node) does not
+- [Twin tab close loses the chat](twin-tab-close-loses-conversation.md) — close only by a snapshot uid, never by a label two tabs share

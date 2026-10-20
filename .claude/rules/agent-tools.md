@@ -845,8 +845,14 @@ locale}`** (2026-10-18, MC-60). Bible.com chapter links resolve to their
 - **Whole Bibles are `owa_bible_xml`** (2026-10-06, asked for by the user:
   _download → extract → analyze → guess keys → recommend a locale → digits →
   book names for the user to pick → import_, and _help import, edit and delete_,
-  for elderly non-technical users). One tool, eight actions; it took over
-  `owa_bible_book_names` as `names`, so the model pays one schema. **The
+  for elderly non-technical users). One tool, nine actions; it took over
+  `owa_bible_book_names` as `names`, so the model pays one schema.
+  **`create-kjv` writes the KJV Open Worship provides** from the app's own
+  embedded copy (`bibleDataReader.initKJVBible`, the Settings button's
+  function; already installed is a no-op), and a `check` carries `hasKjv`
+  from the installed list it already reads for `installedAs`. The chatbot's
+  KJV-first rule is in `chatbot-window.md`; a model may not call
+  `create-kjv` (the person's button is the consent). **The
   download is the SERVER's** (`bibleXmlDraft.mjs`): every redirect hop is put
   through `webUrlPolicy.mjs` WITH DNS before a socket opens (a hop into
   127.0.0.1 is refused), 80 MB cap, three minutes, back-pressure to disk; a
@@ -1022,7 +1028,19 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   did not move. Verified live through a fresh stdio server against the dev
   app: Adam (English, 0.6 s with the dataset cold), the Garden of Eden in
   Khmer with its related places named, `GEN 2:19-21; John 3:16`, and an
-  unknown name refused in a sentence.
+  unknown name refused in a sentence. **And `search` with `kind` name |
+  location finds a person or place by words** (2026-10-19, `EC-370`; the
+  user, with the lookup panel's **Search names** box circled: _mpc tool
+  should provide a way for assistant to search for user_): the matches come
+  back in `records[]` (twenty-five at most, each with its id, name, KJV name,
+  title and type) and reading one is the next call. Seen live 2026-10-19
+  through a fresh stdio server: `{kind: "name", search: "dav", lang: "km"}`
+  answered five records, David first. **The lookup ask also offers
+  `owa_find_verse`** (2026-10-19, `EC-372`, `MODEL_ASK_SHARED_TOOL_MAP`): the
+  record's own verse list is a curated few, so a theme or a half-remembered
+  verse is the Bible searched by words, and the prompt says to name only what
+  the search returned. It costs ~280 tokens a round in a lookup ask alone;
+  the ordinary list and its ratchet did not move.
 
 - **The Resources panel's files are `owa_resource_file`** (2026-10-17; the
   user, from a conversation about `LUK.6.pdf`: _let chatbot access all in
@@ -1037,9 +1055,17 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   the Resources folder's own name, `pdf#2` for a second of one name --
   never a whole path. `read` takes that name back and refuses anything
   that would step outside its folder (`..`, a drive, an absolute path,
-  then the resolved path checked again). A PDF answers with complete pictures
-  of every remaining page from `page` in one MCP result when `pages` is
-  omitted, drawn by MuPDF in a child process of main
+  then the resolved path checked again), or a BARE file name (`MAT.18.pdf`)
+  when exactly one file in the folders has it -- a model and a person both
+  say a PDF by its name, and the bare name used to be refused while the next
+  round listed the same file (2026-10-19). `list` with a `book` and no
+  `chapter` lists every file of that book: `Number(null)` is 0, so it had
+  listed the introduction only. A `ref` written in the reader's own digits
+  (`ម៉ាថាយ ១៨`) parses (`toAsciiDigitText` in `bibleVerseFindHelpers.ts`).
+  A PDF answers with complete pictures
+  of up to EIGHT pages from `page` in one MCP result when `pages` is
+  omitted (`nextPage` says where to read on -- an unbounded read was a
+  whole commentary in one request), drawn by MuPDF in a child process of main
   (`main:app:pdf-to-chat-pages`, the 1024px long edge) and returned as MCP
   image blocks after the text (`toResourceFileResult`), never base64 in
   the words. Successful render results are fingerprinted by the source file
@@ -1061,18 +1087,26 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   cards instead of one oversized answer. `owa_resource_file` lists and reads a
   directly mentioned chapter PDF so its explanation can be included and its
   **Ask about …** button offered. The verse prompt re-reads the attached PDF
-  at high detail in one complete read and uses only its pictures. The
-  conversation does not expose pagination. Reading remains
-  bounded to one main verse per card, two clickable cross-references and two
-  direct related-resource excerpts. A clicked cross-reference opens its verse
-  in a separate card.
+  at high detail, up to eight pages at a time, reading on when `nextPage`
+  says so, and uses only its pictures. The conversation does not expose
+  pagination. Reading remains bounded to one main passage per card -- a
+  verse or a range of up to five verses -- with every printed
+  cross-reference that verified as a button (up to thirty, across books and
+  chapters) and two direct
+  related-resource excerpts. A clicked cross-reference opens its verse in a
+  separate card, with its own chapter PDF's closest explanation when that
+  file exists (2026-10-19: `1-3` answered with verse 1 only, and four of a
+  page's printed references were text, not buttons; a card at ANY position
+  keeps its reference buttons, and a card saved by an older window derives
+  them from its own references line).
 
 - **A typed Bible-Reader question gets those three tools, in any language**
   (2026-10-18; the user's goal: _chatbot will help bible reader have more
   power_, with _show resource files of john chapter 3_, _what names in
   Genesis chapter 4_ and _open genesis 3:203_). A typed line in a tab asking
   about the Bible Reader that names a verse (`3:16`, `៣:១៦`) or a chapter
-  (`chapter 4`, `ជំពូក 4`, `chapitre 4`) with a book before it -- and not the
+  (`chapter 4`, `ជំពូក 4`, `chapitre 4`, or just `Matthew 18` / `ម៉ាថាយ ១៨`
+  -- how a reader actually says it) with a book before it -- and not the
   app's own work (screen, slide, settings, font, download …) or a how-to --
   is a **`bible-reader`** ask (`src/chatbot/bibleReaderChatHelpers.ts`):
   `owa_lookup_record`, `owa_resource_file`, `owa_find_verse` and a web read,
@@ -1083,7 +1117,18 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   question with no row gets the verse tools (`EC-350`, round 23's
   regression). The "book before the reference" check counts two letter
   CLUSTERS (`\p{L}[\p{M}]*`), because Khmer vowel and subscript marks break a
-  bare `\p{L}{2,}`. A plain line under such an
+  bare `\p{L}{2,}`. **The window supplies the book names** (2026-10-19):
+  `readBibleReaderAskWithBook` in `ChatbotAppComp.tsx` takes the words
+  before a bare number, shortest run first, and asks the app's own reference
+  aid (`owa_bible_suggest`) whether they name a book of the Bible being read;
+  a number confirmed that way is a chapter. That keeps the router pure and
+  works in every installed Bible's language -- before it, _សង្ខេប ម៉ាថាយ ១៨_
+  was summarized from memory, _ឈ្មោះ… លោកុប្បត្តិ ៤_ named four people
+  instead of eighteen, and _ធនធាន… យ៉ូហាន ៣_ got the steps for opening the
+  panel. **A Resources file NAMED in the question** (`MAT.18.pdf`,
+  `family-tree.jpeg`) is a `resources` ask with nothing attached, so _what
+  does MAT.18.pdf say?_ reaches `owa_resource_file` instead of an assistant
+  that answers that it cannot read PDFs. A plain line under such an
   answer stays in the conversation (`isBibleReaderAnswer`), so _and chapter
   5?_ is more of the same. The cue words are DATA per language
   (`bibleReaderWords` in `assistant.json`: chapter, resources, names, howTo,
@@ -1117,6 +1162,10 @@ false` and searches only a dataset a lookup panel already holds
   speculatively. The app side (`src/helper/agentBibleSuggestHelpers.ts`)
   completes in the Bible the READER is on (the lookup language's): books from
   its `keyBookMap`, chapters from the model's count, verses from the chapter,
+  **the lookup's own Bible first** (2026-10-19: preferring "the first Bible in
+  the user's language" picked a DIFFERENT Khmer edition whose book list had no
+  Genesis or Psalms, so `លោកុប្បត្តិ` offered nothing while `ម៉ាថាយ` offered
+  chapters -- and the routing above depends on this aid knowing every book),
   all in its own names and digits; a chapter's `fill` ends in `:` so choosing
   it opens the verse list, and with only digits typed (`១`) the `book` the
   awaited lookup card carries (`JHN`) fills them in. A name comes back with

@@ -102,6 +102,17 @@ export default function RenderBibleLookupComp({
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const hasBibleAndNotes = !!leadingWidgets?.length;
+    const sideWidgetKeys = useMemo(() => {
+        // Every pane beside the passage itself: the leading sidebar panes and
+        // the Advance Lookup study panel. The header's full-size button
+        // collapses all of them.
+        return [
+            ...(leadingWidgets ?? []).map(({ key }) => {
+                return key;
+            }),
+            ADVANCE_LOOKUP_WIDGET_KEY,
+        ];
+    }, [leadingWidgets]);
     const flexSizeDefault = useMemo(() => {
         return genLookupFlexSizeDefault(hasBibleAndNotes);
     }, [hasBibleAndNotes]);
@@ -239,6 +250,8 @@ export default function RenderBibleLookupComp({
             >
                 {isValidBibleKey ? (
                     <RenderBibleLookupHeaderComp
+                        flexSizeName={flexSizeName}
+                        sideWidgetKeys={sideWidgetKeys}
                         isAdvanceLookupOpened={isAdvanceLookupOpened}
                         toggleAdvanceLookup={toggleAdvanceLookup}
                     />

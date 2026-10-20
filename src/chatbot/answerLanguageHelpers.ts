@@ -26,6 +26,7 @@ import {
     DEFAULT_CHAT_LANG_CODE,
     getAssistantLanguage,
 } from './chatLangHelpers';
+import { toBoldLabelsShown } from './chatTranslateHelpers';
 
 // Words a key is printed with. A key keeps its English: it is what the key
 // cap says.
@@ -357,6 +358,25 @@ function toMenuWordBeforePattern(menuWords: string[]) {
     );
 }
 
+// A control named in QUOTES rather than bold: _"Its verses"_. Only a phrase
+// of two words or more, and only one the dictionary knows -- a quoted single
+// word is as likely to be a word being discussed as a button, and a menu name
+// is put back afterwards.
+const QUOTED_LABEL_PATTERN = /["“]([A-Za-z][^"“”\n]{2,60})["”]/gu;
+
+function translateQuotedLabels(
+    text: string,
+    translateLabel: (label: string) => string,
+) {
+    return text.replace(QUOTED_LABEL_PATTERN, (whole, label: string) => {
+        if (!label.includes(' ')) {
+            return whole;
+        }
+        const shown = translateLabel(label.trim());
+        return shown === label.trim() ? whole : `"${shown}"`;
+    });
+}
+
 function translateEnglishLabels(
     text: string,
     translateLabel: (label: string) => string,
@@ -370,7 +390,17 @@ function translateEnglishLabels(
             if (index % 2 === 1) {
                 return part;
             }
-            return part.replace(
+            // A control's name in **bold** first, as a whole: the run below
+            // wants every word capitalised, so a sentence-case label the
+            // lookup card carries -- **Its verses**, **Family and places**,
+            // **Open another passage** -- was read as its first word only and
+            // left in English inside a Khmer answer (seen live 2026-10-19).
+            // Menu names this translates are put back by
+            // `restoreEnglishNames` after it.
+            return translateQuotedLabels(
+                toBoldLabelsShown(part, translateLabel),
+                translateLabel,
+            ).replace(
                 LABEL_RUN_PATTERN,
                 (run: string, at: number, all: string) => {
                     const before = all.slice(0, at);

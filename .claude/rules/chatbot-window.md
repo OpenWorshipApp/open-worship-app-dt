@@ -559,17 +559,24 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   through `openChatbotWithFile` — the two questions first — and the window
   attaches it in a tab of its own with a brief description and four questions
   to press. **Read** first gives a two-sentence content description, then asks
-  for one verse with an example (`1`) and `1`, `2`, `3` / **Full chapter**
-  buttons. Each card renders exactly one verse: that verse is pre-read from
-  the installed Bible through `owa_lookup_record`, the PDF's narrow reference
-  column supplies up to two clickable cross-references, and the matching
-  explanation paragraphs come from the commentary below the rule. Full first
-  discovers the chapter's final verse, then automatically asks for each verse
-  in order as an isolated request/card; the next three verse buttons stop at
-  the real chapter end even when a small model writes no valid `OPTIONS:` line.
-  `owa_resource_file` returns every PDF page as a picture by default, with
-  explicit coverage fields; its embedded text layer is withheld because a
-  legacy font can decode into convincing but unrelated characters. Dense pages are
+  for one verse or a small range with an example (`1`) and `1`, `2`, `3` /
+  **Full chapter** buttons. Each card renders one main passage -- a verse or
+  a range such as `1-3` -- pre-read from the installed Bible through
+  `owa_lookup_record`; every printed cross-reference on the answer's
+  references line becomes a clickable button (up to thirty, across books and
+  chapters; a card at any position keeps them, and an old card derives them
+  from its own line), and the matching
+  explanation paragraphs come from the commentary below the rule. A pressed
+  cross-reference opens that verse and reads its own chapter's Resources PDF
+  for the closest explanation (`MAT.20.pdf` for `Matthew 20:20-28`). Full
+  first discovers the chapter's final verse, then automatically asks for each
+  verse in order as an isolated request/card; the next three verse buttons
+  move past the chosen range and stop at the real chapter end even when a
+  small model writes no valid `OPTIONS:` line.
+  `owa_resource_file` returns up to eight PDF pages as pictures by default,
+  with explicit coverage fields and `nextPage` for a longer file; its
+  embedded text layer is withheld because a legacy font can decode into
+  convincing but unrelated characters. Dense pages are
   read at the tool's 2048px high detail, and the unchanged result is reused
   from a bounded OS-temp disk cache between verse cards; the picture
   is the only PDF wording supplied to the model. A repeated-word detector
@@ -1160,8 +1167,10 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   `src/chatbot/bibleReaderChatHelpers.ts`). A typed line in a tab whose
   ASKING ABOUT is Bible Reader that names a verse (`3:16`, `៣:១៦`) or a
   chapter word + number (`chapter 4`, `ជំពូក 4`, `chapitre 4`) with a book
-  before it -- and not a how-to or the app's own work -- is a
-  `bible-reader` ask: the names lookup, the Resources reader and the verse
+  before it -- or a bare `book + number` in any Bible's own language
+  (`Matthew 18`, `ម៉ាថាយ ១៨`, confirmed by `owa_bible_suggest`), or a
+  Resources file by name (`MAT.18.pdf`) -- and not a how-to or the app's own
+  work, is a `bible-reader` ask: the names lookup, the Resources reader and the verse
   reader are offered together (`AskExtraType.bibleReader`), the installed
   Bibles are read once so a Khmer ask is quoted from the Khmer Bible, and
   the answer is marked `isBibleReaderAnswer` so the next plain line ("and
@@ -1326,6 +1335,78 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   answer (`watch.bibleImportCheck` in `llmBotHelpers.ts`). The Settings-form
   prefill (`bibleImportRequestHelpers.ts`) is what **Do it in Settings instead**
   and **A file on this computer** use.
+  **The KJV Open Worship provides comes first** (2026-10-19, the user's asks:
+  _during chatbot bible importing, the chatbot has to check for KJV first …_
+  and _if user try to import English KJV then … tell user should allow create
+  from the provided one_). `owa_bible_xml` gained `create-kjv`, and `check`
+  now carries `hasKjv` — read by the server from the same installed list it
+  already reads for `installedAs`, so it costs no extra call. Before any
+  import, `runBibleImportStep` checks: a request that NAMES the KJV is
+  answered before anything is downloaded, and a `check`/`language`/
+  `local-file` entry with no KJV shows the offer. **Create the provided
+  KJV** calls the app's own `bibleDataReader.initKJVBible()` (the Settings
+  button's function, the 4.8 MB JSON loaded only at that press); a tool host
+  that cannot answer fails OPEN, never blocking an import. Declining still
+  allows the import — the original buttons remain, re-marked
+  `kjvChecked: true` so a page cannot loop — and an external English KJV is
+  steered to the provided one with **Use the internet copy anyway** left as
+  the explicit override (NKJV is a different Bible and is not steered).
+  After creation the original import starts over from its first step; a
+  request that was ITSELF the KJV finishes, cancelling no draft, and says the
+  Reader's card goes away. A model's own `check` gets the same offer under
+  its answer (`genBibleImportUnderAnswer`), and the model may not call
+  `create-kjv` (`runMcpToolCall`).
+  **A finished import offers another one, in the same conversation**
+  (2026-10-19, the user with a picture of the answer after installing `JC`
+  and the space under its button circled: _after complete bible importing
+  then it should have an option to add another bible. So user still can more
+  bible in the same session_). The _Done — {key} is installed_ answer carries
+  **Add another Bible** beside **Undo**, and so does the answer that
+  finishes the provided KJV (`toAddAnotherBibleAction`); the press starts a
+  fresh import at the language question, carrying nothing of the one just
+  installed (no draft, no short name, no wanted key), and goes through the
+  KJV-first check like any other import. The label is stored in English and
+  drawn with `tranBibleImportLabel`; `chatTranLabels.test.ts` holds its
+  Khmer and French. Seen live 2026-10-19 on the dev chatbot in Khmer: an
+  English ASV import answered with the two buttons, the new one reading
+  **បន្ថែមព្រះគម្ពីរមួយទៀត**, pressed to the language question, then
+  **ត្រឡប់ក្រោយ** returning the test Bible to the trash.
+  **The short-name step's options are the BIBLE's language's own keys, named
+  on hover, with the installed ones left out** (2026-10-19, the user with the
+  key row circled: _during choosing bible key, use `getBibleKeyNameMap()` then
+  show the keys are options. mouse hover to name of bible key in dom title_,
+  _exclude if the key already exist_, with
+  `src/lang/data/km/bibleKeyMap.json` open: _for khmer it should show from
+  this json file_, then _the list of bible keys show for the selected language
+  only_, _if no language data … then show normal guessing_, _e.g. for Thai
+  should show the guessing language_, and with a French import circled _it
+  should show list from fr lang data_). `genKeyCandidates` takes its options
+  from `getChatBibleKeyList(locale)` -- the `bibleKeyMap` of the language the
+  downloaded Bible is IN (`state.locale`, else the first DETECTED locale):
+  `km-KH` gives `ពគប`, `គខប`, `គកស១៦`, `អគត`, `GKHB`, `KCB`, `en-US` the
+  English seven, `fr-FR` `LSG` -- never the invented names a downloaded file
+  carries (`KM2023`, `KHMER2019` …). The three JSON maps are read directly in
+  `chatTranHelpers` rather than through a language pack: the import's language
+  is often not the window's, and loading a whole pack (dictionary, fonts,
+  lookup data) for one small map would cost a low-spec machine its memory. **A
+  language the app holds no names for -- Thai today -- keeps the file's own
+  suggestions**, and so does a language whose every name is installed: normal
+  guessing is better than a list that cannot be pressed. The one the file's
+  TITLE names comes first (`findChatBibleKeyByName`, matched in that same
+  language: a whole phrase, longest name first, never under five characters,
+  so `New King James Version` is not read as the KJV and a title that is just
+  `Khmer` claims nothing), then the rest as the language lists them. **A key
+  this computer already has is left out** (`checkIsTakenKey`, the same test a
+  typed name gets), because its press could only answer "you already have a
+  Bible called …". Each button carries its full name as the DOM `title`
+  (`getChatBibleKeyName`, drawn by `ChatbotAppComp` from
+  `BotActionType.title`), so hovering explains `GKHB` without widening the
+  button. Seen live 2026-10-19 on the dev chatbot in Khmer, `ពគប` installed:
+  the Khmer 2023 file's step 1 offered **GKHB (ណែនាំ)** / **គខប** /
+  **គកស១៦** / **អគត** -- `ពគប` absent -- the accessibility `description`
+  (the hover name) reading **ព្រះគម្ពីរខ្មែរសាកល**, **ព្រះគម្ពីរភាសាខ្មែរ
+  បច្ចុប្បន្ន ២០០៥**, **ព្រះគម្ពីរបរិសុទ្ធកែសម្រួល ២០១៦** and
+  **អាល់គីតាប**.
   **What counts as asking for one was re-read against the live window**
   (2026-10-10, the user's ask with the three Bible rows of the suggestion list
   circled: _importing bible data is the most important thing right now … make
@@ -1354,30 +1435,37 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   `genGuideActions` puts **Import a Bible for me** first on any answer whose
   page is `BIBLE_IMPORT_MANUAL_ID` (W-34) — the how-to is still TOLD from the
   guide, and the button is the guide's own "easy way".
-  **A Bible that is MISSING is asked for by its name** (2026-10-13, the
-  user's ask with a picture of the Reader on _Bible key "KJV" is not
-  available!_: _should have instruction for user to import in chatbot and
-  should have button to open chatbot to import the bible like kjv_).
-  `BibleNotAvailableComp` (`src/bible-lookup/RenderLookupSuggestionComp.tsx`)
-  says how in three steps and carries
-  **[en:tran:Let the assistant import this Bible for me]** — the fourth way
-  in, through the same handoff and the 🤖's own two questions. What it
-  leaves is a sentence a person could type, `Import the Bible called "KJV"`,
-  written and read by ONE leaf (`src/helper/ai/bibleImportAskHelpers.ts`, no
-  imports: the card must not pull the import conversation into the Reader),
-  so the two cannot drift. `readBibleImportLanguageAsk` decides whether it
-  is a request off the sentence WITHOUT the name (a Bible called LIST is no
-  list), searches the collection for the name (`kjv` alone is the English
-  one; a name with nothing to search by asks the language) and keeps it as
-  `wantedKey` on the state. `carry` takes it through every step by itself;
-  the buttons that write a state afresh hand it on (`keepWanted`: the
-  language question's, a dead link's two, a link pasted alone). At the
-  download it is the FIRST short name offered (`genKeyChoices`), with one
-  sentence saying why — a Bible installed under any other name leaves that
-  card exactly where it was — unless it is taken, cannot be a short name,
-  or the Bible is already installed under another name (that one is found
-  by choosing ITS name on the card, and the two sentences would say opposite
-  things). Installed, the card goes away by itself: the import ends in
+  **A Bible that is MISSING offers a Bible in the WINDOW'S language** (the
+  user's ask of 2026-10-13 with a picture of the Reader on _Bible key "KJV"
+  is not available!_: _should have instruction for user to import in
+  chatbot and should have button to open chatbot to import the bible like
+  kjv_; changed 2026-10-19: _click the button should call to import bible
+  for current language_). `BibleNotAvailableComp`
+  (`src/bible-lookup/RenderLookupSuggestionComp.tsx`) says how in three
+  steps and carries **[en:tran:Let the assistant import a Bible for me]**
+  — the fourth way in, through the same handoff and the 🤖's own two
+  questions. What it leaves is a sentence a person could type,
+  `Import bible for Khmer`, written and read by ONE leaf
+  (`src/helper/ai/bibleImportAskHelpers.ts`, no imports: the card must not
+  pull the import conversation into the Reader), so the two cannot drift.
+  The language is the app's own locale, named in English for the
+  collection; the missing KEY is no longer asked for, because a person who
+  reads Khmer needs a Khmer Bible, not the English key that happened to be
+  selected. The import's own KJV-first offer comes before it (below), so a
+  new computer still gets the provided KJV in the same conversation.
+  **A Bible asked for BY NAME still works**: `readBibleImportLanguageAsk`
+  decides whether it is a request off the sentence WITHOUT the name (a Bible
+  called LIST is no list), searches the collection for the name (`kjv` alone
+  is the English one; a name with nothing to search by asks the language)
+  and keeps it as `wantedKey` on the state. `carry` takes it through every
+  step by itself; the buttons that write a state afresh hand it on
+  (`keepWanted`: the language question's, a dead link's two, a link pasted
+  alone). At the download it is the FIRST short name offered
+  (`genKeyChoices`), with one sentence saying why — a Bible installed under
+  any other name leaves that card exactly where it was — unless it is
+  taken, cannot be a short name, or the Bible is already installed under
+  another name (that one is found by choosing ITS name on the card, and the
+  two sentences would say opposite things). Installed, the card goes away by itself: the import ends in
   `clearBibleXMLCache`, which tells every window, and `useSelectedBibleKey`
   asks again. **The button's text is its name and nothing more** — drawn as
   `… for me (KJV)` it could be found and not pressed, because a press by
@@ -1539,7 +1627,15 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   (`answerLanguageHelpers.ts`): a Latin-only bracket after the language's own
   words goes (_រូបកង់ធ្មេញ (Settings)_), an English label the dictionary
   knows is written as the button shows it (_Go Back to Presenter_), never one
-  word out of a longer name, never a key cap, never a `REPORT:` -- and the
+  word out of a longer name, never a key cap, never a `REPORT:`. **A
+  SENTENCE-CASE label is read whole in bold or in quotes**
+  (2026-10-19, `EC-373`): the run pass wants every word capitalised, so the
+  lookup card's own labels -- **Its verses**, `"Family and places"` -- were
+  read as their first word and stayed English in Khmer answers (seen live:
+  _ចុចប៊ូតុង "Its verses"_); `toBoldLabelsShown` and a quoted-label pass now
+  translate the span as one, and `restoreEnglishNames` still puts a menu
+  name back. A label the model mixed word by word (_អាន it in another
+  ព្រះគម្ពីរ_) is not repaired -- `EC-374` is open on it. And the
   letters of a THIRD script, neither the language's own nor Latin, go with
   the signs on them (`dropThirdScriptLetters`, 2026-10-17, `EC-307`: _预览_,
   _పొ_, _কোথায়_, _الخاص_ in Khmer answers and a chip of the whole-corpus
@@ -1645,3 +1741,57 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   things to do** (`genLookupAnswerActions`). Labels are stored in English and
   drawn with `tranLabel` (`LOOKUP_ACTION_LABEL_LIST`, held by
   `chatTranLabels.test.ts`), or are the name or reference itself.
+
+- **A line under a passage card is answered by the card, or by the app's own
+  help, when it asks for that** (2026-10-19; the user's goal: _make chatbot
+  very smart to handle user interaction (asking) on given holy bible verse_).
+  Measured on gemma4:cloud, Khmer, a KJV passage card: _show this passage in
+  Khmer_ came back as an invented Khmer translation of the KJV (one round, no
+  tool call) while the installed Khmer Bible's words sat in the record, and
+  _how do I save this?_ was refused with **Save to my Bibles list** on the
+  card. `readLookupVerseAsk` (`lookupChatHelpers.ts`) answers these with NO
+  model: a language named beside a showing verb repeats the record when it is
+  already that language, and otherwise lists only the Bibles in it
+  (`genBiblesAnswer`'s `preferLanguage`; the record's language is its script,
+  or its own function words for English against French); save, copy, the
+  Bible Lookup and the neighbouring chapter name the card's button and carry
+  it under the line, never pressing it. A how-to or the app's own work that
+  is none of those (`checkIsLookupAppAsk`, the same `checkIsHowTo` /
+  `checkIsAppWork` the Bible-Reader ask uses) goes to the ORDINARY assistant,
+  with the passage and the card's buttons in the user turn
+  (`toLookupAppAsk`) and no `lookup` tool map — so _put this passage on the
+  screen_ is answered by the guide with the Presenter's route. The answer
+  still marks `isLookupAnswer`, so the next plain line is about the passage.
+  `lookupWords` is per language in `assistant.json`; the ordinary tool list
+  and its 8 350-token ratchet did not move.
+
+- **A person's family line is read from the Bible, never from the record**
+  (2026-10-19, `EC-369`). Asked under David's card _ឈ្មោះតាមលំដាប់ពីដាវីឌដល់
+  ព្រះយ៉េស៊ូវ_ (names in order from David to Jesus), gemma4:cloud answered
+  in ONE round with no tool call, off the record's `children`, ending "this
+  record does not show every person in order" and sending the user to
+  **Family and places** — the record holds a person's own sons and parents
+  and nothing further, and the Bible gives the whole line in Matthew 1. The
+  card now carries **Family line to Jesus** (a `lineage` step,
+  `lookupStepHelpers.ts`), and a typed question that names Jesus (or a
+  family-line word beside the person, `checkIsLookupLineageAsk`) runs the
+  same step with no model. The window reads `MAT 1:1-17` first and
+  `LUK 3:23-38` when Matthew does not name the person (Luke runs back
+  through Nathan to Adam), **by verse KEY** — a worded reference comes back
+  cut to ~300 characters (`EC-366`) — in the record's own Bible, and answers
+  with the passage's words and **Open in bible lookup** / **Open another
+  passage**. The words are DATA (`lookupWords.lineage` / `.jesus` in
+  `assistant.json`); the ordinary tool list and its ratchet did not move.
+  Seen live 2026-10-19 in Khmer on gemma4:cloud: David's card and the typed
+  question both answered with Matthew 1:1-17 from `ពគប`, and Adam's answered
+  with Luke 3:23-38. **A "how many" question is counted by the window**
+  (`readLookupCountAsk` / `genLookupCountAnswer`, `EC-371`): asked _តើលោកមាន
+  កូនប៉ុន្មាន?_ the model said "20" over a list of nineteen names, so the
+  record's own `children` / `spouses` / `siblings` / `parents` list is
+  counted and every name named, no model round. The words are
+  `lookupWords.count` and one list a field. **And the lookup ask offers
+  `owa_find_verse`** (`MODEL_ASK_SHARED_TOOL_MAP`, `EC-372`): the record's
+  own verse list is a curated few, so a theme or a half-remembered verse is
+  the Bible searched by words — the assistant is told to name only what
+  that search returned. It costs ~280 tokens a round in a lookup ask alone;
+  the ordinary list did not move.

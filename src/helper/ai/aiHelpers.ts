@@ -3,7 +3,6 @@ import { useAppEffect } from '../appHooks';
 
 import { appHomeStorage } from '../../server/appHomeStorage';
 import { appSecureStorage } from '../../server/appSecureStorage';
-import appProvider from '../../server/appProvider';
 import bibleCrossRefSchemaJson from './bibleCrossRefSchema.json';
 export { bibleCrossRefSchemaJson };
 
@@ -171,15 +170,12 @@ const changingListener = new Set<() => void>();
  * packaged install would show a ticked switch, a chatbot button and a provider
  * the window can hand out -- over a process that opened neither door.
  *
- * Off unless asked for, except in dev. See the note on the main-process twin
- * for why: those doors drive a renderer with node integration.
+ * On unless the operator asked for it to be off: only the string `'false'`
+ * closes it, so an install that has never been asked still has the assistant.
  */
 export function getIsAIEnabled(): boolean {
     const value = appHomeStorage.getItem(AI_ENABLED_SETTING_NAME);
-    if (value !== 'true' && value !== 'false') {
-        return appProvider.systemUtils.isDev;
-    }
-    return value === 'true';
+    return value !== 'false';
 }
 
 export function setIsAIEnabled(isEnabled: boolean) {

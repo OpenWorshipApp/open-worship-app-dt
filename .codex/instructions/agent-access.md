@@ -159,11 +159,13 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   A reload cannot do this job (`forceReloadAppWindows` re-reads renderers,
   and this setting was read before a renderer existed), which is why the
   Apply Settings button is not the answer here.
-  **Unset means OFF in a packaged build and ON in dev**, and the renderer's
+  **Unset means ON, packaged build included** — only an explicit `"false"`
+  closes it — and the renderer's
   `getIsAIEnabled()` (`src/helper/ai/aiHelpers.ts`) MUST agree with the
   main-process twin or the Settings toggle, the 🤖 button and the provider
-  clients contradict a process that opened no door. Nobody gets a CDP endpoint
-  by upgrading: anything reaching it drives a renderer with node integration.
+  clients contradict a process that opened no door. The doors stay one switch
+  away: anything reaching the CDP endpoint drives a renderer with node
+  integration, so turning it off is still the operator's decision to make.
 - **The chatbot window is locked down separately.** It is the one renderer
   whose content comes from outside the machine and the one holding the API
   keys. `electron/client/rendererLockdown.ts`, called from the preload AFTER

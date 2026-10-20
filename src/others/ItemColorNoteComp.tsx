@@ -13,16 +13,32 @@ freezeObject(colorList);
 
 // https://www.w3.org/wiki/CSS/Properties/color/keywords
 
+/**
+ * Colour codes are written in either case across the list (`main` has
+ * `#00FF00`, `extension` `#00ff00`) and a code is stored exactly as it was
+ * picked, so name lookups and the current-row check compare case-insensitively.
+ * Without this a default lime note (the `main` spelling) read as "No Color" and
+ * left its own row unmarked.
+ */
+function toColorKey(colorCode: string) {
+    return colorCode.toLowerCase();
+}
+
 export function chooseColorNote(
     colorNote: string | null,
     setColorNote: (color: string | null) => void,
     event: any,
+    defaultColorNote: string | null = null,
 ) {
     event.stopPropagation();
     const colors = Object.entries({
         ...colorList.main,
         ...colorList.extension,
     });
+    const colorKey = colorNote ? toColorKey(colorNote) : '';
+    const defaultColorKey = defaultColorNote
+        ? toColorKey(defaultColorNote)
+        : '';
     // unique colors by key
     const items: ContextMenuItemType[] = [
         {
@@ -32,7 +48,9 @@ export function chooseColorNote(
             // By truthiness, as the swatch itself reads it: the component's
             // own async load stores a missing colour as `''`, not `null`, and
             // a strict `=== null` left "No Color" pressable on a cleared item.
-            disabled: !colorNote,
+            // An item with a default colour is already showing it -- clearing
+            // there changes nothing, so it is offered only for another colour.
+            disabled: !colorNote || colorKey === defaultColorKey,
             onSelect: () => {
                 setColorNote(null);
             },
@@ -45,7 +63,7 @@ export function chooseColorNote(
                     color: colorCode,
                 }),
                 menuElement: name,
-                disabled: colorNote === colorCode,
+                disabled: colorKey === toColorKey(colorCode),
                 onSelect: () => {
                     setColorNote(colorCode);
                 },
@@ -58,16 +76,24 @@ export function chooseColorNote(
 export default function ItemColorNoteComp({
     item,
     onChange,
+    defaultColorNote = null,
 }: Readonly<{
     item: ColorNoteInf;
     onChange?: (colorNote: string | null) => void;
+    /**
+     * The colour shown when the item has none of its own (a bible preview
+     * section, which always has a colour). "No Color" then means "back to the
+     * default", so the swatch starts at that colour instead of flashing with
+     * no colour at all.
+     */
+    defaultColorNote?: string | null;
 }>) {
     // The list already resolved this file's colour note and kept it on the
     // item (`useFilePaths`), so seed from that: re-reading it asynchronously
     // per item costs an `fsCheckFileExist` EVERY time the item mounts, and
     // with a windowed list an item mounts again on every scroll back.
     const [colorNote, setColorNote] = useState<string | null>(
-        item.colorNote ?? null,
+        item.colorNote ?? defaultColorNote ?? null,
     );
     useAppEffectAsync(
         async (contextMethods) => {
@@ -95,16 +121,19 @@ export default function ItemColorNoteComp({
             ...colorList.extension,
         }).reduce(
             (acc, [name, colorCode]) => {
-                acc[colorCode] = name;
+                acc[toColorKey(colorCode)] = name;
                 return acc;
             },
             {} as Record<string, string>,
         );
-        const colorName = reverseColorMap[colorNote ?? ''] ?? tran('No Color');
+        const colorName =
+            reverseColorMap[toColorKey(colorNote ?? '')] ?? tran('No Color');
         return `${tran('Color Note')}: ${colorName}`;
     }, [colorNote]);
 
-    const handleChoosing = chooseColorNote.bind(null, colorNote, setColorNote1);
+    const handleChoosing = (event: any) => {
+        chooseColorNote(colorNote, setColorNote1, event, defaultColorNote);
+    };
     return (
         <span className={`color-note ${colorNote ? 'active' : ''}`}>
             {/*

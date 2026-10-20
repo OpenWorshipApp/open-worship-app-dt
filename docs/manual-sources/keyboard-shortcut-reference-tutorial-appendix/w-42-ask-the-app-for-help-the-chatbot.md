@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
 screenshots: 49
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -404,21 +404,31 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    seeing your screen it says so and puts the button right there — _Send a picture
    of my screen_, _Point at the control_, _Attach a file_ — so you never have to
    work out how to send it one. 📸
-   **Read a study PDF one verse at a time.** In the Bible Reader's Resources panel,
-   press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its chat briefly
-   describes the file. Press **[en:tran:Read]**; it asks which verse in that chapter to
-   focus on, shows `1` as the typing example, and offers the first three verses plus
-   **[en:tran:Full chapter]**. Each card puts one complete Bible verse with its
-   printed cross-references and the matching explanation paragraph below it.
-   Press a cross-reference to read that verse in its own card. Full chapter
-   continues automatically, one verse card at a time, through the chapter's end;
-   direct references to another Resources PDF may add that file's explanation
-   and an **[en:tran:Ask about {name}]** button. The PDF's embedded text is
+   **Read a study PDF one verse or range at a time.** In the Bible Reader's
+   Resources panel, press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its
+   chat briefly describes the file. Press **[en:tran:Read]**; it asks which verse
+   in that chapter to focus on, shows `1` as the typing example, and offers the
+   first three verses plus **[en:tran:Full chapter]**. You can also type a small
+   range such as `1-3`: each card quotes every verse in it, and every printed
+   cross-reference becomes a button. Press one to read that verse in its own
+   card; when its chapter has its own PDF in Resources, that file's closest
+   explanation comes with it. Full chapter continues automatically, one verse
+   card at a time, through the chapter's end; direct references to another
+   Resources PDF may add that file's explanation and an
+   **[en:tran:Ask about {name}]** button. The PDF's embedded text is
    not used because a legacy Khmer font can decode as unrelated Latin
    characters. If a visual reading repeats itself, the bad explanation is
    withheld and the exact installed-Bible verse remains. AI can misread a PDF page,
    so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
    that caution away temporarily.
+   **You do not have to press the 🤖 first, and you do not have to say “chapter”.**
+   With **ASKING ABOUT** on **Bible Reader**, type the sentence the way you say it —
+   _summarize Matthew 18_, _show the resources for John 3_, _what does MAT.18.pdf
+   say?_ — in English or in your own language, with your Bible's own book names and
+   digits. The assistant reads the chapter from your Bible, or the file you named from
+   Resources, and answers from it. A PDF is read up to eight pages at a time and the
+   assistant reads on by itself when the file is longer; you are not asked to turn
+   pages.
 8. Under every answer is **Copy**, which puts that answer on the clipboard and says
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
@@ -942,5 +952,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

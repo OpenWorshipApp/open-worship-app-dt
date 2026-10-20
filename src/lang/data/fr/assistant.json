@@ -125,5 +125,35 @@
         "corbeille"
     ],
     "closingWords": ["merci", "au revoir"],
-    "menuWords": ["menu"]
+    "menuWords": ["menu"],
+    "lookupWords": {
+        "save": ["enregistrer", "sauvegarder", "ma liste", "liste de bibles"],
+        "copy": ["copier"],
+        "anotherBible": [
+            "autre bible",
+            "autre version",
+            "une autre traduction"
+        ],
+        "openLookup": [
+            "ouvrir dans la recherche biblique",
+            "recherche biblique"
+        ],
+        "lineage": ["lignée", "généalogie", "ancêtres", "descendants", "aïeux"],
+        "jesus": ["jésus", "christ"],
+        "count": ["combien", "nombre de"],
+        "countChildren": ["enfants", "fils", "filles"],
+        "countSpouses": [
+            "femmes",
+            "épouses",
+            "épouse",
+            "maris",
+            "mari",
+            "conjoints"
+        ],
+        "countSiblings": ["frères", "sœurs", "soeurs"],
+        "countParents": ["parents", "père", "mère"],
+        "previous": ["chapitre précédent", "verset précédent"],
+        "next": ["chapitre suivant", "verset suivant"],
+        "showPassage": ["montre", "affiche", "lis", "cite"]
+    }
 }

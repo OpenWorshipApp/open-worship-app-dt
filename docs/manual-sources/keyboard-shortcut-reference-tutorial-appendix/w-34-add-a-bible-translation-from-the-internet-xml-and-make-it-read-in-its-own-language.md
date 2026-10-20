@@ -3,9 +3,9 @@ id: W-34
 title: "Add a Bible translation from the internet (XML), and make it read in its own language"
 section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
-screenshots: 9
+screenshots: 11
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -19,7 +19,7 @@ an XML file already on your computer.
 
 **The easy way: let the assistant do it**
 
-**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
+**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Before it asks which language, it checks for the **KJV** Bible Open Worship provides. On a computer that does not have it, it says so, recommends it, and carries **Create the provided KJV**: press that, and the app writes its own KJV with no internet and no download. The import you asked for then starts again from its language question. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
 
 1. Open **[en:tran:Settings]** (the gear at the top of the window) → **[en:tran:Bible]** and press the blue
    **[en:tran:Let the assistant import a Bible for me]** at the top of
@@ -29,8 +29,13 @@ an XML file already on your computer.
    `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
    import a Bible, the answer has an **Import a Bible for me** button that starts
    here.) Answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
-2. The assistant opens in a new tab and asks **Which language do you want the Bible
-   in?** Press **Khmer**, **English** or **French**, or type the language — in English
+2. Before that question, a computer with no **KJV** is offered the one Open Worship
+   provides: **Create the provided KJV** writes it from the app's own copy, with no
+   internet and no download, and then the import starts again here. (If you only
+   wanted the KJV, that is done: press **Cancel** on the import.) Press **Import
+   another Bible anyway** to go on without it.
+   The assistant then asks **Which language do you want the Bible in?** Press
+   **Khmer**, **English** or **French**, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
    **A file on this computer** opens the form below instead. A word it cannot find
    (`kmer`) is answered with **Did you mean** and the nearest languages to press.
@@ -52,9 +57,16 @@ an XML file already on your computer.
    it in your web browser, as **Open the website** does for the collection (or the
    page the file was listed on). Press **I agree** to go on, or **Cancel** and
    nothing is installed. 📸
-5. **Step 1 — a short name**: press a suggestion (**KSV**, **KM1954** …) or type your
-   own, letters and numbers with no spaces. A name you already have is refused and
-   asked again.
+5. **Step 1 — a short name**: the options are the names this app knows a Bible
+   by, in the language the Bible is in — the language the next step confirms.
+   In Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; in
+   English **KJV**, **NKJV**, **NIV** and the rest; in French **LSG**. The one
+   the downloaded edition is named after comes first. Hover a key to read its
+   full name (Khmer 2023 is **GKHB**, hovering reads _ព្រះគម្ពីរខ្មែរសាកល_).
+   A short name a Bible is already installed under is not offered at all. A
+   language this app has no names for — Thai — shows the file's own suggested
+   names instead. You can also type your own, letters and numbers with no
+   spaces; a name you type that you already have is refused and asked again.
 6. **Step 2 — the language**: it says which it looks like and why (_the verses are
    written in Khmer script_). Press it, or type another, such as `ខ្មែរ`.
    Your choice controls the imported Bible's book names and numbers, even when
@@ -71,7 +83,9 @@ an XML file already on your computer.
    your previous choices remain. 📸
 9. **Ready to install** sums it up. Press **Install it**. _Done — KSV is installed_:
    choose it from the Bible version button. **Undo** under that answer moves it to
-   the trash again. **Cancel** at any step stops with nothing installed.
+   the trash again. **Add another Bible** under it starts another import in the
+   same conversation, back at the language question — nothing of the one just
+   installed is carried over. **Cancel** at any step stops with nothing installed.
 
 You can type instead of pressing at every step: `yes` (or `ok`) takes the suggested
 choice — under the notice of where it is from, **I agree**; at the end, **Install it**
@@ -87,24 +101,38 @@ lead to a Bible, the link can be pasted on its own.
 **When a window says a Bible is not available**
 
 The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
-it is set to a Bible this computer does not have — on a new computer, the KJV. The card
-says how the assistant gets it, in three steps, and carries the button. Keep the short
-name the assistant suggests for it, or the card stays:
+it is set to a Bible this computer does not have — on a new computer, the KJV. **For the
+KJV the card asks first**, once per window: a question titled
+**[en:tran:Create the KJV Bible?]** says Open Worship provides it and that creating it
+needs no internet and no separate download, with **[en:tran:Create the provided KJV]**
+and **[en:tran:Cancel]**. Agreeing writes the copy the app carries inside itself, with a
+progress bar while it does, and the card goes away by itself in every window.
+**[en:tran:Cancel]** leaves the card exactly as it was, with the same
+**[en:tran:Create the provided KJV]** button under its heading (a window that cannot draw
+a question shows that button alone). 📸
 
-1. Press **[en:tran:Let the assistant import this Bible for me]** on that card and
+For any other missing Bible the card says how the assistant gets a Bible in your
+language, in three steps, and carries the button:
+
+1. Press **[en:tran:Let the assistant import a Bible for me]** on that card and
    answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
-2. The assistant opens in a new tab already looking for that Bible in the free
-   collection: for KJV it lists _English KJV_ and _English NKJ 1982_. Press the one you
-   want. A name the collection has no file for is answered with _None of them has … in
-   its name_: type the Bible's language (`Khmer`) and press one from that list.
-3. It downloads the Bible and says where it is from; press **I agree**. It then says
-   _The app is looking for a Bible called **KJV**_. At **Step 1 — a short name** that
-   name comes first, **KJV (suggested)**: keep it. Installed under any other name,
-   the card stays where it is.
-4. Answer the language and the book names as above, then press **Install it**. _Done
-   — KJV is installed_, and the card goes away by itself: the passage shows. 📸
+2. The assistant opens in a new tab already asking for a Bible in the language this
+   window is shown in — Khmer in a Khmer window. A computer with no **KJV** is offered
+   the one Open Worship provides first: press **Create the provided KJV**. It is
+   written from the app's own copy with no internet and no download, and the Reader's
+   card goes away by itself. Then the import starts again from its language question;
+   if you only wanted the KJV, press **Cancel** there. 📸
+3. Press the Bible you want in the list, or type its language (`Khmer`), then read
+   where it comes from and press **I agree**. Choose its short name, language, numbers
+   and book names as above, then press **Install it**. 📸
+4. The imported Bible appears in the list at the top of the card: choose it there,
+   and the card goes away with the passage showing.
 
-Typing `Import the Bible called "KJV"` in the assistant does the same.
+Typing `Import the Bible called "KJV"` in the assistant gets the same offer: the
+provided KJV first. Pasting a link to an English KJV from the internet is answered
+with a sentence saying Open Worship provides it and recommends it; **Use the internet
+copy anyway** still lets you install the downloaded file, after the source notice and
+**I agree**.
 
 **Import a Bible XML file with the form.** Give it the link or choose the file, press
 **[en:tran:Import]**, answer the review, and press **[en:tran:Import]** again to install it:
@@ -195,5 +223,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

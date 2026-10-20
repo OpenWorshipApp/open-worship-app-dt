@@ -33,6 +33,7 @@ import { fsCheckFileExist, fsReadFile } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import appProvider from '../server/appProvider';
 import { getModelKeyBookMap } from './bible-helpers/bibleLogicHelpers1';
+import { BIBLE_KJV_KEY } from './bible-helpers/bibleModelHelpers';
 import { getDownloadedBibleInfoList } from './bible-helpers/bibleDownloadHelpers';
 import { checkIsBibleKeyTaken } from '../setting/bible-setting/bibleKeyHelpers';
 import {
@@ -663,6 +664,56 @@ function genNotInstalledReason(key: string, keyList: string[]) {
     );
 }
 
+// The KJV the app ships, if this computer already has one -- in either the
+// XML list or the app's own downloaded list. Case-insensitive like every
+// other key lookup here.
+async function findInstalledKjv() {
+    const keyMap = await getAllXMLFileKeys();
+    const xmlKey = Object.keys(keyMap).find((key) => {
+        return key.toLowerCase() === BIBLE_KJV_KEY.toLowerCase();
+    });
+    if (xmlKey !== undefined) {
+        const head = await getBibleHeadInfoFromFile(keyMap[xmlKey]);
+        return {
+            key: xmlKey,
+            title: head?.title ?? null,
+            locale: head?.locale ?? null,
+        };
+    }
+    const downloaded = (await getDownloadedBibleInfoList()) ?? [];
+    const found = downloaded.find((info) => {
+        return info.key.toLowerCase() === BIBLE_KJV_KEY.toLowerCase();
+    });
+    return found === undefined
+        ? null
+        : { key: found.key, title: found.title, locale: found.locale };
+}
+
+/**
+ * The KJV Open Worship provides, generated from the copy inside the app --
+ * the same thing Settings > Bible's "Create KJV Bible XML" button does. A
+ * no-op that says it is already there, so a retry is safe.
+ */
+async function handleCreateKjv() {
+    const before = await findInstalledKjv();
+    if (before !== null) {
+        return { created: false, installed: true, ...before };
+    }
+    // Loaded at the press: the embedded KJV is ~5 MB of JSON, and nothing
+    // that merely opens the app should read it.
+    const { bibleDataReader } = await import('./bible-helpers/BibleDataReader');
+    await bibleDataReader.initKJVBible();
+    const after = await findInstalledKjv();
+    if (after === null) {
+        return fail(
+            'The provided KJV Bible could not be created. In Settings > ' +
+                'Bible, press "Create KJV Bible XML". If that does not work ' +
+                'either, check that the data folder can be written to.',
+        );
+    }
+    return { created: true, installed: true, ...after };
+}
+
 async function handleList() {
     const keyMap = await getAllXMLFileKeys();
     const bibles: Record<string, unknown>[] = [];
@@ -872,6 +923,8 @@ export async function handleAgentBibleXMLRequest(
                 return await handleImport(request);
             case 'list':
                 return await handleList();
+            case 'create-kjv':
+                return await handleCreateKjv();
             case 'info':
                 return await handleInfo(request);
             case 'update':

@@ -28,5 +28,47 @@
     "yesWords": [],
     "noWords": [],
     "frameAliases": {},
-    "glossary": {}
+    "glossary": {},
+    "lookupWords": {
+        "save": [
+            "save",
+            "add to my list",
+            "my list",
+            "bibles list",
+            "bible list"
+        ],
+        "copy": ["copy", "duplicate"],
+        "anotherBible": [
+            "another bible",
+            "other bible",
+            "different bible",
+            "another version",
+            "other version",
+            "different version"
+        ],
+        "openLookup": ["open in bible lookup", "bible lookup"],
+        "lineage": [
+            "family line",
+            "family tree",
+            "genealogy",
+            "ancestors",
+            "descendants",
+            "lineage",
+            "forefathers"
+        ],
+        "jesus": ["jesus", "christ"],
+        "count": ["how many", "how much", "number of", "count of"],
+        "countChildren": ["children", "sons", "daughters", "kids"],
+        "countSpouses": ["wives", "wife", "spouses", "husbands", "husband"],
+        "countSiblings": ["brothers", "sisters", "siblings"],
+        "countParents": ["parents", "father", "mother"],
+        "previous": [
+            "previous chapter",
+            "previous verse",
+            "chapter before",
+            "verse before"
+        ],
+        "next": ["next chapter", "next verse", "chapter after", "verse after"],
+        "showPassage": ["show", "read", "display", "quote", "give me"]
+    }
 }

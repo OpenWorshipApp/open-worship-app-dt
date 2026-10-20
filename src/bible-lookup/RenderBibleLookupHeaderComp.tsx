@@ -13,6 +13,7 @@ import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
 import RenderExportWordComp from './RenderExportWordComp';
 import { useAppCurrentRef } from '../helper/appHooks';
 import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLookupToggleComp';
+import PreviewFullSizeButtonComp from './PreviewFullSizeButtonComp';
 
 // The history strip beside the input group is sized against half of this, and
 // `.app-input-group-header` in `BibleReaderComp.scss` caps it at the same value
@@ -20,9 +21,15 @@ import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLo
 const INPUT_GROUP_WIDTH = 395;
 
 export default function RenderBibleLookupHeaderComp({
+    flexSizeName,
+    sideWidgetKeys,
     toggleAdvanceLookup,
     isAdvanceLookupOpened,
 }: Readonly<{
+    flexSizeName: string;
+    // The leading side panes (the Bible and Notes sidebar) plus the Advance
+    // Lookup pane, i.e. everything the full-size preview button collapses.
+    sideWidgetKeys: string[];
     toggleAdvanceLookup: () => void;
     isAdvanceLookupOpened: boolean;
 }>) {
@@ -65,6 +72,12 @@ export default function RenderBibleLookupHeaderComp({
                     <BibleLookupInputHistoryComp />
                 </div>
             )}
+            <div className="mx-1">
+                <PreviewFullSizeButtonComp
+                    flexSizeName={flexSizeName}
+                    sideWidgetKeys={sideWidgetKeys}
+                />
+            </div>
             <div
                 className="app-flex-item input-group app-input-group-header"
                 style={{ width: INPUT_GROUP_WIDTH }}

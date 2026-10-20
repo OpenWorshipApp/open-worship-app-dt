@@ -11,6 +11,7 @@ import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { pressElementLikeButton } from '../../helper/helpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { DEFAULT_BIBLE_COLOR_NOTE } from '../../helper/colorNoteDefaults';
 
 function RenderBibleKeyComp({
     bibleKey,
@@ -94,7 +95,10 @@ export function RenderTitleMaterialComp({
         <div className="bible-view-title-material d-flex align-items-center text-nowrap">
             <div className="bible-view-title-lead d-flex">
                 <div className="ms-1 bible-view-group-controls">
-                    <ItemColorNoteComp item={colorNoteHandler} />
+                    <ItemColorNoteComp
+                        item={colorNoteHandler}
+                        defaultColorNote={DEFAULT_BIBLE_COLOR_NOTE}
+                    />
                     {isGrouped ? (
                         <button
                             type="button"

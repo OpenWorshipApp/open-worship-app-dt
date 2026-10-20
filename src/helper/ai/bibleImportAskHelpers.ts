@@ -39,6 +39,32 @@ export function genBibleImportAsk(bibleKey: string) {
 }
 
 /**
+ * The sentence that asks for a Bible in the language the app is SHOWN in --
+ * what a card offering help should say, rather than the key of one missing
+ * Bible: the person reads the window in their own language, and an import
+ * for that language is the one they can use. The language is named in
+ * English because that is how the free collection names its files.
+ */
+export function genBibleImportLanguageAsk(locale: string) {
+    const code = String(locale ?? '')
+        .trim()
+        .split('-')[0]
+        .toLowerCase();
+    if (code === '') {
+        return 'Import bible';
+    }
+    let name = code;
+    try {
+        name =
+            new Intl.DisplayNames(['en'], { type: 'language' }).of(code) ??
+            code;
+    } catch (_error) {
+        // A code is still a language the chat knows how to look up.
+    }
+    return `Import bible for ${name}`;
+}
+
+/**
  * The name a sentence asks for a Bible by, and the sentence WITHOUT it -- a
  * Bible called LIST is not a sentence about a list. Null when it names none.
  */

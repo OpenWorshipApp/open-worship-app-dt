@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-20, ST-80, ST-81]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-54 — Move your data folder off the Desktop (OneDrive)
 
@@ -57,5 +57,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-20` · `ST-80` · `ST-81`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8c7dbfa0-0489-4c4c-899b-1ef4e06fc0df
-  modified: 2026-08-30T04:25:40.287Z
+  modified: 2026-10-19T19:48:06.785Z
 ---
 
 If you edit a module to `import './NewComp'` **before** the file exists, the dev
@@ -63,7 +63,10 @@ serving the in-between version: the press threw `ReferenceError: pressElementLik
 defined` (shown as the app's _Reload is needed_ dialog) while the file on disk was complete and
 every test passed — and a second Electron started minutes later got the same stale module.
 `touch`ing the file cleared it at once. Put an import in the same edit as its first use, or touch
-every file edited that way before a live check.
+every file edited that way before a live check. Re-confirmed 2026-10-19: a new function was in
+the served module but its call site was not (the `?t=` stamp was the FIRST edit's mtime), so a
+live fix silently did nothing; `touch` + reload cleared it, and the served `?t=` URL is the
+fastest proof of which version the page actually runs.
 
 **Why:** it looks like a code bug and sends you auditing a correct file — or, in
 the silent variant, like an unimplemented feature.

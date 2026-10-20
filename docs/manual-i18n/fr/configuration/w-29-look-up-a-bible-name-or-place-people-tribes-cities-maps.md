@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: 293a3cfc8a5ccae2
+translatedFrom: e781f76c8c602e1b
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -120,6 +120,14 @@ votre lecture de la Bible.
     **[en:tran:Related places]**) et **[en:tran:Read it in another Bible]**. Un nom, un lieu, un
     verset ou une Bible de la liste qui s’affiche ouvre sa propre carte dans la même conversation, et
     chaque réponse se termine par **[en:tran:More things to do]**.
+    **Demandez-en un et il vous indique le bouton.** Tapez _montre ce passage en khmer_
+    et la conversation liste les Bibles khmères de cet ordinateur, à choisir — ou montre
+    de nouveau le passage lorsqu’il est déjà dans cette langue — et _montre ce passage en anglais_
+    reprend les mots du relevé. _Comment l’enregistrer ?_ et _copie ce passage_ nomment
+    **[en:tran:Save to my Bibles list]** et **[en:tran:Copy the passage]** et placent le
+    bouton près de la réponse. Une question sur l’utilisation de l’application — _comment mettre
+    ce passage à l’écran ?_ — est traitée par l’aide de l’application, avec la recherche biblique
+    de la page Présentation.
 
 **Astuce :** le texte de la recherche grandit et rétrécit avec le texte de votre Bible, donc le curseur
 de police de la Bible (ou **Ctrl+Scroll** sur les versets) redimensionne aussi ces fenêtres.

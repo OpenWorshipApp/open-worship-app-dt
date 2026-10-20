@@ -263,8 +263,12 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
   'verse-find': ['owa_read_website'],
   // A record names its dictionary and Wikipedia pages: a question past
   // what the lookup holds is read there, rationed and announced like any
-  // web read.
-  lookup: ['owa_read_website'],
+  // web read. The verse finder joins it (2026-10-19, EC-372): the record's
+  // own verse list is a curated few, and "which verses mention this person"
+  // or a half-remembered verse is the Bible searched by words -- the
+  // research the user asked for, in the one conversation that is about a
+  // person, place or passage.
+  lookup: ['owa_read_website', 'owa_find_verse'],
   // A study file names its sources and links; one past the files is
   // read there, rationed and announced like any web read. A passage the
   // file cites is read whole from the installed Bible rather than completed

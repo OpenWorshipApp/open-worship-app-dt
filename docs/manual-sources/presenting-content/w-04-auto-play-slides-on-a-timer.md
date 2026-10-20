@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-10, PM-137, PM-138, PM-140]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-04 — Auto-play slides on a timer
 
@@ -46,5 +46,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-10` · `PM-137` · `PM-138` · `PM-140`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

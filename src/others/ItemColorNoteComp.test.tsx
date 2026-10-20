@@ -41,7 +41,10 @@ afterEach(() => {
     host.remove();
 });
 
-function render(colorNote: string | null) {
+function render(
+    colorNote: string | null,
+    defaultColorNote: string | null = null,
+) {
     act(() => {
         root.render(
             <ItemColorNoteComp
@@ -50,19 +53,26 @@ function render(colorNote: string | null) {
                     getColorNote: async () => colorNote,
                     setColorNote: async () => {},
                 }}
+                defaultColorNote={defaultColorNote}
             />,
         );
     });
 }
 
-function renderNameOf(colorNote: string | null) {
-    render(colorNote);
+function renderNameOf(
+    colorNote: string | null,
+    defaultColorNote: string | null = null,
+) {
+    render(colorNote, defaultColorNote);
     return host.querySelector('[role="button"]')?.getAttribute('aria-label');
 }
 
 /** Opens the colour menu and returns `{ label: disabled }` for its rows. */
-function openMenuOf(colorNote: string | null) {
-    render(colorNote);
+function openMenuOf(
+    colorNote: string | null,
+    defaultColorNote: string | null = null,
+) {
+    render(colorNote, defaultColorNote);
     act(() => {
         host.querySelector<HTMLElement>('[role="button"]')!.click();
     });
@@ -102,5 +112,35 @@ describe('ItemColorNoteComp', () => {
         expect(disabledOf['No Color']).toBe(false);
         expect(disabledOf['magenta']).toBe(true);
         expect(disabledOf['red']).toBe(false);
+    });
+
+    // A bible preview section always has a colour: an unset one shows the
+    // default (lime), and clearing would change nothing, so it is not offered.
+    // `main` spells lime `#00FF00`, `extension` `#00ff00`; both are the colour.
+    test('shows the default colour when the item has none', () => {
+        expect(renderNameOf(null, '#00FF00')).toBe('Color Note: lime');
+    });
+
+    test('names a colour whichever case its code is stored in', () => {
+        expect(renderNameOf('#00FF00')).toBe('Color Note: lime');
+    });
+
+    test('offers no "No Color" while the default colour is showing', () => {
+        const disabledOf = openMenuOf(null, '#00FF00');
+        expect(disabledOf['No Color']).toBe(true);
+        expect(disabledOf['lime']).toBe(true);
+        expect(disabledOf['magenta']).toBe(false);
+    });
+
+    test('marks the current row case-insensitively', () => {
+        const disabledOf = openMenuOf('#00FF00');
+        expect(disabledOf['lime']).toBe(true);
+        expect(disabledOf['No Color']).toBe(false);
+    });
+
+    test('offers to clear a colour chosen over the default', () => {
+        const disabledOf = openMenuOf('#ff00ff', '#00FF00');
+        expect(disabledOf['No Color']).toBe(false);
+        expect(disabledOf['magenta']).toBe(true);
     });
 });

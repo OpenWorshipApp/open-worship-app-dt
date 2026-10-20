@@ -49,6 +49,7 @@ import {
     toEnglishVerseRef,
     toLocationRecordResult,
     toNameRecordResult,
+    toPlainRecordText,
     toQuotedText,
 } from './agentLookupRecordHelpers';
 import { getAllLocalBibleInfoList } from './bible-helpers/bibleDownloadHelpers';
@@ -76,6 +77,10 @@ export type AgentLookupRequestType = {
     near?: unknown;
     // With a passage, the people and places of the names lookup in it.
     names?: unknown;
+    // Find people (kind "name") or places (kind "location") by words --
+    // what the lookup panel's own **Search names** box does. Answers the
+    // matches with their ids; nothing is read whole (2026-10-19, EC-370).
+    search?: unknown;
 };
 
 type RefusalType = { isError: true; reason: string };
@@ -816,6 +821,69 @@ function toOtherMatches(
     };
 }
 
+// How many matches a search answers with: enough to choose from, never the
+// whole dataset (the panel pages its own list at a hundred).
+const MAX_SEARCH_MATCHES = 25;
+
+/**
+ * People or places found by words -- what the lookup panel's own **Search
+ * names** box does (2026-10-19, EC-370; the user, with that box circled:
+ * _mpc tool should provide a way for assistant to search for user_). A
+ * person's spelling, a partial name, or a place's name: the matches come
+ * back with their ids, and reading one is the next call.
+ */
+async function readSearchRequest(
+    kind: 'name' | 'location',
+    request: AgentLookupRequestType,
+) {
+    const query = toText(request.search, 120);
+    if (query.length === 0) {
+        return toReason('Give search: the words to find a person or place by.');
+    }
+    const askedLang = toText(request.lang, 12);
+    const langCode = await resolveLangCode(askedLang);
+    if (langCode === null) {
+        return toReason(
+            `The names lookup has no "${askedLang}" language. ` +
+                `It has: ${(await getLookupLangCodeListAsync()).join(', ')}.`,
+        );
+    }
+    const managers = await acquireLookupData(langCode);
+    try {
+        const found =
+            kind === 'name'
+                ? managers.namesLookupManager.searchNames(query, {
+                      limit: MAX_SEARCH_MATCHES,
+                  })
+                : managers.locationsLookupManager.searchLocations(query, {
+                      limit: MAX_SEARCH_MATCHES,
+                  });
+        return {
+            kind,
+            search: query,
+            lang: langCode,
+            count: found.length,
+            records: found.map((record) => {
+                const kjvName = (record.kjvName ?? '').trim();
+                const title = toPlainRecordText(record.title);
+                return {
+                    id: record.id,
+                    name: record.name,
+                    ...(kjvName !== '' && kjvName !== record.name.trim()
+                        ? { kjvName }
+                        : {}),
+                    ...(title === '' ? {} : { title }),
+                    ...(typeof record.type === 'string' && record.type !== ''
+                        ? { type: record.type }
+                        : {}),
+                };
+            }),
+        };
+    } finally {
+        releaseLookupData(langCode);
+    }
+}
+
 export async function handleAgentLookupRequest(
     request: AgentLookupRequestType,
 ) {
@@ -824,6 +892,9 @@ export async function handleAgentLookupRequest(
         return await readPassageRequest(request);
     }
     if (kind === 'name' || kind === 'location') {
+        if (toText(request.search, 120).length > 0) {
+            return await readSearchRequest(kind, request);
+        }
         return await readRecordRequest(kind, request);
     }
     return toReason(

@@ -120,6 +120,7 @@ describe('words translated through a variable', () => {
             'Email it',
             'Show it in the list',
             'Create "{name}"',
+            'Add another Bible',
             'Free',
             'Custom servers',
             // `llmBotHelpers`' button under an answer that says to type

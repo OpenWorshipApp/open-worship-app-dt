@@ -1694,7 +1694,7 @@ packaged run — confirm them the first time and drop the mark.
 
 | `isDev` branch | Dev | Packaged | QA consequence |
 |---|---|---|---|
-| AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | **OFF** — no CDP, no MCP, no chatbot menu item | Nothing can be driven until `ai-enabled` is `"true"` in `setting.json` (`prod-app.mjs enable-ai`, app closed). Restore afterwards. |
+| AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | ON — only an explicit `ai-enabled: "false"` closes the doors | Nothing is BLOCKED by default; `prod-app.mjs ai-status` (exit 2) says whether that userData was switched off (`prod-app.mjs enable-ai`, app closed, restores afterwards). |
 | `tran()` on a missing key (`src/lang/langHelpers.ts`) | throws, subtree blanks | returns the English text *(source)* | LT-01/02 assert **visually** (raw English on a Khmer screen = Low); the Critical throw class is invisible in prod and the report must say so. |
 | `data-react-comp-name` / `-fp` stamps (`vite-plugin-comp-name.ts`, `apply: 'serve'`) | present | absent | `owa_find_ui` reports no component; findings name the control's label / `data-widget-name`. |
 | `window.testSimpleToasts()` (`src/toast/toastHelpers.ts`) | defined | absent *(source)* | GL-10 toast stacking needs two real refusal toasts, or `PARTIAL`. |

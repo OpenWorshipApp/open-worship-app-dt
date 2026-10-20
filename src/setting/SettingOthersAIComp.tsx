@@ -307,7 +307,7 @@ function RenderBedrockRegionComp() {
             <label className="app-setting-others-label" htmlFor={selectId}>
                 {tran('AWS Region')}
                 <i
-                    className="bi bi-info-circle app-setting-others-hint"
+                    className="bi bi-info-circle app-setting-others-hint ps-1"
                     title={tran(
                         'The region your Bedrock models are enabled in',
                     )}
@@ -422,7 +422,7 @@ function RenderAIEnabledComp() {
                 <label className="form-check-label" htmlFor="app-ai-enabled">
                     {tran('Enable AI features')}
                     <i
-                        className="bi bi-info-circle app-setting-others-hint"
+                        className="bi bi-info-circle app-setting-others-hint ps-1"
                         title={tran(
                             'Turns off the chatbot, the assistant tools and ' +
                                 'the debugging endpoint they use.',

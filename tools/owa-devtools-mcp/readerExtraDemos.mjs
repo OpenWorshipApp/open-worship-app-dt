@@ -518,10 +518,10 @@ export const READER_EXTRA_DEMO_LIST = [
     'bible-not-installed',
     'Getting started',
     'Fix a Bible that is not installed',
-    'When the Reader names a Bible you do not have, pick another, press Let the assistant import this Bible for me, or Go to Bible Setting.',
+    'When the Reader names a Bible you do not have, pick another, press Let the assistant import a Bible for me, or Go to Bible Setting.',
     [
       'A passage pane shows this card when its Bible is not installed on this computer. Pick an installed Bible from the Bible key list on the card.',
-      'Or press Let the assistant import this Bible for me: the App Assistant looks for it in a free online collection and installs it under the same short name.',
+      'Or press Let the assistant import a Bible for me: the Assistant offers the KJV the app itself provides first, then looks for a Bible in your language in a free online collection.',
       'Or press Go to Bible Setting to add the Bible yourself.',
     ],
   ),

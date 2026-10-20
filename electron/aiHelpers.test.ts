@@ -95,31 +95,18 @@ describe('aiHelpers', () => {
         expect(evaluated).toEqual(['return 1']);
     });
 
-    // The doors this opens drive a renderer with node integration, so an
-    // install that has never been asked gets none of them. Nobody acquires a
-    // local code execution surface by upgrading; they opt in, once, knowingly.
-    test('an absent setting leaves the feature OFF in a packaged build', () => {
-        expect(checkIsAiEnabled()).toBe(false);
+    // The assistant ships enabled: an install that has never been asked has
+    // it, packaged build included.
+    test('an absent setting leaves the feature ON', () => {
+        expect(checkIsAiEnabled()).toBe(true);
         writeFileSync(path.join(dirPath, 'setting.json'), '{}');
-        expect(checkIsAiEnabled()).toBe(false);
+        expect(checkIsAiEnabled()).toBe(true);
         // ...including a setting file that cannot be read at all.
         writeFileSync(path.join(dirPath, 'setting.json'), 'not json');
-        expect(checkIsAiEnabled()).toBe(false);
+        expect(checkIsAiEnabled()).toBe(true);
     });
 
-    test('an absent setting leaves it ON in dev', async () => {
-        vi.resetModules();
-        vi.stubEnv('NODE_ENV', 'development');
-        try {
-            const devModule = await import('./aiHelpers');
-            expect(devModule.checkIsAiEnabled()).toBe(true);
-        } finally {
-            vi.unstubAllEnvs();
-            vi.resetModules();
-        }
-    });
-
-    test('an explicit choice wins over either default', () => {
+    test('an explicit choice wins over the default', () => {
         writeSetting('true');
         expect(checkIsAiEnabled()).toBe(true);
         writeSetting('false');
@@ -128,7 +115,7 @@ describe('aiHelpers', () => {
 
     test('a value that is neither falls back to the default', () => {
         writeSetting('yes');
-        expect(checkIsAiEnabled()).toBe(false);
+        expect(checkIsAiEnabled()).toBe(true);
     });
 
     test('opens the endpoint on a Chromium-picked port', () => {

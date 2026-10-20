@@ -2,10 +2,10 @@
 id: W-29
 title: "Look up a Bible name or place (people, tribes, cities, maps)"
 section: "Configuration"
-verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149]
+verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149, CB-154]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-18"
+workflowsVersion: "2026-10-19"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -105,7 +105,12 @@ your Bible reading.
     place or passage, and the assistant looks up the people, places and verses it
     leads to by itself. The names and places come from the King James Version,
     and the assistant says so if you ask. The **[en:tran:Still asking about]** line above
-    the box names it; press its **×** to ask about something else. 📸
+    the box names it; press its **×** to ask about something else. A person's
+    card also carries **[en:tran:Family line to Jesus]**, which reads the Bible's
+    own genealogy — Matthew 1:1-17, or Luke 3:23-38 when Matthew does not name
+    them — and answers with it; _how many children did he have?_ is counted
+    from the record itself, with every name; and a question about a theme or a
+    verse you half-remember is searched in your Bible. 📸
     A passage you are reading opens the same way: the robot at the end of a Bible
     view's toolbar (the row that shows when the mouse is over its title), or
     right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
@@ -121,6 +126,13 @@ your Bible reading.
     **[en:tran:Related places]**) and **[en:tran:Read it in another Bible]**. A name, a place, a
     verse or a Bible in the list that comes back opens its own card in the same chat, and
     every answer ends with **[en:tran:More things to do]**.
+    **Ask for one of them and it tells you which button.** Type _show this passage in Khmer_
+    and the chat lists the Khmer Bibles on this computer to choose from — or shows the
+    passage again when it is already in that language — and _show this passage in English_
+    repeats the record's own words. _How do I save this?_ and _copy this passage_ name
+    **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
+    button beside the answer. A question about using the app — _how do I put this passage
+    on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
@@ -133,7 +145,7 @@ dataset wrote it, and so is a place type a newer dataset adds before the app kno
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149`
+`RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149` · `CB-154`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
 :::

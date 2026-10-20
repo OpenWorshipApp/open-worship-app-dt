@@ -51,6 +51,30 @@ type AssistantLanguageFileType = {
         // taken off before the name is looked up.
         nameAskLead?: string[];
     };
+    // How a question under a passage card asks for one of the card's own
+    // actions (`lookupChatHelpers.ts`): the words a volunteer says for save,
+    // copy, another Bible, the Bible Lookup, the previous / next chapter,
+    // and the verbs that ask to SEE the passage (2026-10-19). `lineage` and
+    // `jesus` are how a question asks for a family line to Jesus, answered
+    // from the Bible's own genealogies (2026-10-19, EC-369).
+    lookupWords?: {
+        save?: string[];
+        copy?: string[];
+        anotherBible?: string[];
+        openLookup?: string[];
+        previous?: string[];
+        next?: string[];
+        showPassage?: string[];
+        lineage?: string[];
+        jesus?: string[];
+        // "how many" and the record's lists it can be counted from
+        // (`readLookupCountAsk`, 2026-10-19, EC-371).
+        count?: string[];
+        countChildren?: string[];
+        countSpouses?: string[];
+        countSiblings?: string[];
+        countParents?: string[];
+    };
 };
 
 export type AssistantLanguageType = {
@@ -109,6 +133,24 @@ export type AssistantLanguageType = {
         exclude: string[];
         nameAsk: string[];
         nameAskLead: string[];
+    };
+    // See `AssistantLanguageFileType.lookupWords`: every list is [] for a
+    // language that does not say.
+    lookupWords: {
+        save: string[];
+        copy: string[];
+        anotherBible: string[];
+        openLookup: string[];
+        previous: string[];
+        next: string[];
+        showPassage: string[];
+        lineage: string[];
+        jesus: string[];
+        count: string[];
+        countChildren: string[];
+        countSpouses: string[];
+        countSiblings: string[];
+        countParents: string[];
     };
 };
 
@@ -184,6 +226,22 @@ function toLanguage(
             exclude: file.bibleReaderWords?.exclude ?? [],
             nameAsk: file.bibleReaderWords?.nameAsk ?? [],
             nameAskLead: file.bibleReaderWords?.nameAskLead ?? [],
+        },
+        lookupWords: {
+            save: file.lookupWords?.save ?? [],
+            copy: file.lookupWords?.copy ?? [],
+            anotherBible: file.lookupWords?.anotherBible ?? [],
+            openLookup: file.lookupWords?.openLookup ?? [],
+            previous: file.lookupWords?.previous ?? [],
+            next: file.lookupWords?.next ?? [],
+            showPassage: file.lookupWords?.showPassage ?? [],
+            lineage: file.lookupWords?.lineage ?? [],
+            jesus: file.lookupWords?.jesus ?? [],
+            count: file.lookupWords?.count ?? [],
+            countChildren: file.lookupWords?.countChildren ?? [],
+            countSpouses: file.lookupWords?.countSpouses ?? [],
+            countSiblings: file.lookupWords?.countSiblings ?? [],
+            countParents: file.lookupWords?.countParents ?? [],
         },
     };
 }

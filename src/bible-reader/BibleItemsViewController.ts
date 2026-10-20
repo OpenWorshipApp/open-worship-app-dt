@@ -39,6 +39,7 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 import { BibleGroupScrollSync } from './bibleGroupScrollHelpers';
+import { DEFAULT_BIBLE_COLOR_NOTE } from '../helper/colorNoteDefaults';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -488,7 +489,19 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
 
     getColorNote(bibleItem: ReadIdOnlyBibleItem) {
-        return this.colorNoteMap[bibleItem.id] ?? '';
+        // Every bible preview section has a colour. One whose note was never
+        // set joins the default lime group instead of standing colorless, so
+        // the header's dot, group splitting and sync scrolling all treat it
+        // exactly like a section whose colour was chosen.
+        //
+        // ONE canonical spelling: a stored code keeps the case it was picked
+        // in (`main` writes lime `#00FF00`, `extension` `#00ff00`), and this
+        // string is the group key -- membership, the per-group sync switch and
+        // the scroll-sync registration all compare it. Left as picked, two
+        // sections showing the same lime were two different groups.
+        return (
+            this.colorNoteMap[bibleItem.id] || DEFAULT_BIBLE_COLOR_NOTE
+        ).toLowerCase();
     }
 
     getIsGroupScrollSynced(color: string) {
@@ -541,9 +554,18 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (!colorNote) {
             return [];
         }
-        const allBibleItems = this.straightBibleItems;
-        return allBibleItems.filter((bibleItem) => {
-            return this.getColorNote(bibleItem) === colorNote;
+        // ONE read of the map for the whole list: the getter parses the stored
+        // settings string every time it is read, and every preview section is
+        // in a colour group now, so a `getColorNote` per item would be one
+        // parse per item for each header that asks who shares its colour.
+        const colorNoteMap = this.colorNoteMap;
+        const targetColorNote = colorNote.toLowerCase();
+        return this.straightBibleItems.filter((bibleItem) => {
+            return (
+                (
+                    colorNoteMap[bibleItem.id] || DEFAULT_BIBLE_COLOR_NOTE
+                ).toLowerCase() === targetColorNote
+            );
         });
     }
 

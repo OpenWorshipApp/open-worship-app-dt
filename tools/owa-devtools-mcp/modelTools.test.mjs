@@ -163,7 +163,11 @@ describe('what the model is offered', () => {
                 ],
                 'lookup',
             ).map((tool) => tool.name),
-        ).toEqual(['owa_lookup_record', 'owa_read_website']);
+        ).toEqual([
+            'owa_find_verse',
+            'owa_lookup_record',
+            'owa_read_website',
+        ]);
         expect(checkIsModelOnAskTool('owa_lookup_record')).toBe(true);
         // A conversation about a Resources file reads the rest of them.
         expect(

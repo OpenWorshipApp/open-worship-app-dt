@@ -130,6 +130,7 @@ describe('what a person or a place can be asked to do', () => {
         expect(toLabels(genLookupActions(ADAM, ADAM_FACTS))).toEqual([
             'Its verses',
             'Family and places',
+            'Family line to Jesus',
             'Read it in another Bible',
         ]);
         expect(
@@ -229,6 +230,30 @@ describe('the lists a step answers with', () => {
             text: 'This is the only Bible on this computer.',
             actions: [],
         });
+    });
+
+    it('keeps the Bibles in a language the person named', () => {
+        const listed = {
+            bibles: [
+                { key: 'KJV', title: 'King James Version' },
+                { key: 'NIV', title: 'English NIV' },
+                { key: 'GKHB', title: 'Khmer 2019 (ព្រះគម្ពីរខ្មែរសាកល)' },
+                { key: 'KCB', title: 'Khmer 2012 (Khmer Christian Bible)' },
+                { key: 'BDS', title: 'French (BDS) 2015' },
+            ],
+        };
+        expect(
+            toLabels(genBiblesAnswer(PASSAGE, listed, 'km').actions),
+        ).toEqual([
+            'GKHB — Khmer 2019 (ព្រះគម្ពីរខ្មែរសាកល)',
+            'KCB — Khmer 2012 (Khmer Christian Bible)',
+        ]);
+        expect(
+            toLabels(genBiblesAnswer(PASSAGE, listed, 'fr').actions),
+        ).toEqual(['BDS — French (BDS) 2015']);
+        expect(
+            toLabels(genBiblesAnswer(PASSAGE, listed, 'en').actions),
+        ).toEqual(['NIV — English NIV']);
     });
 });
 

@@ -11,10 +11,12 @@
  *
  * A PDF is answered with its pages as PICTURES -- a Khmer PDF set in a
  * legacy font has nonsense for a text layer -- drawn by MuPDF in a child
- * process of main (`main:app:pdf-to-chat-pages`). An MCP read returns every
- * remaining page unless its caller deliberately supplies a smaller `pages`
- * count. The renderer may retain the PDF's own text layer in its disposable
- * cache, but the tool never sends that layer to the model: a legacy font can
+ * process of main (`main:app:pdf-to-chat-pages`). An MCP read returns up to
+ * eight pages unless its caller deliberately supplies a smaller `pages`
+ * count; a longer file says `nextPage`, so the model reads on rather than
+ * putting a whole commentary into one request. The renderer may retain the
+ * PDF's own text layer in its disposable cache, but the tool never sends
+ * that layer to the model: a legacy font can
  * make unrelated Latin characters look like valid Khmer evidence. Pagination
  * says whether every
  * page has been returned, so a long file is never silently cut. A
@@ -80,9 +82,16 @@ function toReason(reason: string): RefusalType {
 const MAX_LISTED_FILES = 60;
 const MAX_TEXT_CHARS = 16 * 1024;
 const MAX_READ_BYTES = 16 * 1024 * 1024;
-// What a deliberately partial read may carry. The default MCP read is the
-// entire PDF; ordinary chat attachments retain the renderer's bounded default.
+// What a deliberately partial read (`pages`) may carry. Ordinary chat
+// attachments retain the renderer's bounded default.
 const MAX_PDF_PAGES = 8;
+// What a read with NO `pages` carries: a study chapter's few pages whole,
+// and a bound on a 300-page commentary. Every page is a picture re-sent on
+// every later round of the question, on the machines this app targets; the
+// answer says `nextPage` and the model reads on before answering (2026-10-19).
+// Eight is `MAX_PAGES` in `public/js/pdf-to-chat-images.mjs`, the child that
+// draws them: a larger number here is silently clamped there.
+const MAX_PDF_AUTO_PAGES = 8;
 
 type ResourceFolderType = { label: string; dirPath: string };
 
@@ -108,6 +117,12 @@ function checkIsInside(dirPath: string, filePath: string) {
 }
 
 function toWholeNumber(value: unknown) {
+    // `Number(null)` is 0, and the chapter is handed in as `null` when the
+    // question names a book and no chapter -- so "list the files for
+    // Matthew" listed Matthew's INTRODUCTION only (seen live 2026-10-19).
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
     const number = Number(value);
     return Number.isInteger(number) ? number : null;
 }
@@ -306,6 +321,70 @@ function resolveResourceFile(fileName: unknown) {
     return { folder, filePath, name: toInnerName(folder, filePath) };
 }
 
+/**
+ * The file a `read` names: the panel's own `<folder>/<file>`, or a bare file
+ * name (`MAT.18.pdf`) when exactly ONE file in the Resources folders has it.
+ * A model and a person both say a PDF by its name, and the bare name used to
+ * be refused while the very next round listed the same file (seen live
+ * 2026-10-19). Two of one name are named back, never guessed.
+ */
+async function resolveResourceFileForRead(fileName: unknown) {
+    const direct = resolveResourceFile(fileName);
+    if (direct !== null) {
+        return { resolved: direct, matches: [] as string[] };
+    }
+    const raw = String(fileName ?? '').trim();
+    if (
+        raw.length < 3 ||
+        raw.includes('/') ||
+        raw.includes('\\') ||
+        raw.includes(':') ||
+        raw === '.' ||
+        raw === '..'
+    ) {
+        return { resolved: null, matches: [] as string[] };
+    }
+    const lowerName = raw.toLowerCase();
+    const matches: {
+        folder: ResourceFolderType;
+        filePath: string;
+        name: string;
+    }[] = [];
+    for (const folder of getResourceFolders()) {
+        let result;
+        try {
+            result = await scanResourceFiles(folder.dirPath, [], raw);
+        } catch (_error) {
+            continue;
+        }
+        for (const filePath of [
+            ...(result?.filePaths ?? []),
+            ...(result?.searchedFilePaths ?? []),
+        ]) {
+            if (
+                pathBasename(filePath).toLowerCase() === lowerName &&
+                !matches.some((one) => {
+                    return one.filePath === filePath;
+                })
+            ) {
+                matches.push({
+                    folder,
+                    filePath,
+                    name: toInnerName(folder, filePath),
+                });
+            }
+        }
+    }
+    return matches.length === 1
+        ? { resolved: matches[0], matches: [] as string[] }
+        : {
+              resolved: null,
+              matches: matches.map((one) => {
+                  return one.name;
+              }),
+          };
+}
+
 type PdfChatPagesType = {
     isSuccessful: boolean;
     message?: string;
@@ -325,14 +404,14 @@ async function readPdf(
     const requestedPages = toWholeNumber(request.pages);
     const maxPages =
         requestedPages === null
-            ? undefined
+            ? MAX_PDF_AUTO_PAGES
             : Math.max(1, Math.min(MAX_PDF_PAGES, requestedPages));
     const result = await electronSendAsync<PdfChatPagesType>(
         'main:app:pdf-to-chat-pages',
         {
             filePath,
             startPage: firstPage - 1,
-            ...(maxPages === undefined ? { allPages: true } : { maxPages }),
+            maxPages,
             ...(isHighDetail ? { longEdge: 2048 } : {}),
         },
     );
@@ -359,26 +438,35 @@ async function readPdf(
         isComplete,
         ...(!isComplete ? { nextPage: lastShown + 1 } : {}),
         note:
-            `Its complete pages ${shown} are the pictures after this, in order. ` +
+            `Its pages ${shown} are the pictures after this, in order. ` +
             'Treat them as one continuous document and join a paragraph that ' +
             'continues across consecutive pictures. ' +
             'The pictures are authoritative. The embedded PDF text layer is ' +
             'deliberately excluded because legacy fonts can turn it into ' +
             'unrelated characters.' +
             (!isComplete
-                ? ` Read on from \`page\` ${(lastShown + 1).toString()}.`
+                ? ` Read on from \`page\` ${(
+                      lastShown + 1
+                  ).toString()} before you answer.`
                 : ' Every page of this PDF has now been returned.'),
         images: result.dataUrls,
     };
 }
 
 async function readResource(request: AgentResourcesRequestType) {
-    const resolved = resolveResourceFile(request.file);
+    const { resolved, matches } = await resolveResourceFileForRead(
+        request.file,
+    );
     if (resolved === null) {
         return toReason(
-            'Name a file as `list` gives it, `<folder>/<file>` -- e.g. ' +
-                '"pdf/LUK.7.pdf". Only files in the Resources folders can be ' +
-                'read.',
+            matches.length > 1
+                ? `More than one Resources file is called "${String(
+                      request.file,
+                  )}": ${matches.join(', ')}. Name the one you mean.`
+                : 'Name a file as `list` gives it, `<folder>/<file>` -- e.g. ' +
+                      '"pdf/LUK.7.pdf" -- or its file name when only one file ' +
+                      'in the folders has it. Only files in the Resources ' +
+                      'folders can be read.',
         );
     }
     const { filePath, name } = resolved;

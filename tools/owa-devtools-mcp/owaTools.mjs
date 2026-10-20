@@ -1745,7 +1745,10 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         'Read a Bible person or place from the names lookup (drawn from ' +
         'the KJV), or a Bible passage. `kind` name|location by `id` (from ' +
         "a result's lists) or `name`: who or what it is, family, places, " +
-        'links, every verse key and the first verses quoted. `kind` verse ' +
+        'links, every verse key and the first verses quoted. Give `search` ' +
+        'with kind name|location to FIND people or places by words (a ' +
+        'partial or differently spelled name) -- the matches come back ' +
+        'with their ids for a read. `kind` verse ' +
         'by `ref` ("GEN 2:19-21; John 3:16"): the passage in `bible` ' +
         "(default the lookup's); `near` the chapter (or verse) before or " +
         'after it instead; `names` also the people and places in it. ' +
@@ -1754,6 +1757,10 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         kind: z.enum(['name', 'location', 'verse']),
         id: z.string().optional(),
         name: z.string().optional(),
+        search: z
+          .string()
+          .optional()
+          .describe('Words to find a person (name) or place (location) by'),
         ref: z.string().optional(),
         bible: z.string().optional(),
         lang: z
@@ -1765,12 +1772,12 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         page: z.string().optional(),
       },
     },
-    async ({ kind, id, name, ref, bible, lang, near, names, page }) => {
+    async ({ kind, id, name, search, ref, bible, lang, near, names, page }) => {
       try {
         const { value } = await evaluateInApp(
           genAgentDataExpression(
             'lookup',
-            { kind, id, name, ref, bible, lang, near, names },
+            { kind, id, name, search, ref, bible, lang, near, names },
             LOOKUP_RECORD_TIMEOUT,
           ),
           { match: page, timeout: LOOKUP_RECORD_TIMEOUT + 5000 },
@@ -1799,9 +1806,11 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         'its introduction). `list` by `book` (+ `chapter`) or `search`, or ' +
         'by `ref` (a book and chapter together: "John 3", "យ៉ូហាន 3") -- a ' +
         "book may be named in any installed Bible's own language, its " +
-        'English name or its code; `read` a `file` as listed -- a PDF ' +
-        'returns every remaining page as a complete picture, starting at ' +
-        '`page` (default 1). An embedded text layer is excluded because legacy ' +
+        'English name or its code; `read` a `file` as listed, or its bare ' +
+        'file name when only one file in the folders has it -- a PDF ' +
+        'returns up to eight pages as complete pictures, starting at ' +
+        '`page` (default 1); `nextPage` says where to read on. An embedded ' +
+        'text layer is excluded because legacy ' +
         'fonts can decode to unrelated characters. Omit `pages` for the whole PDF; ' +
         'set it only to deliberately narrow a read. Use `detail` high for dense ' +
         'or unclear print. ' +

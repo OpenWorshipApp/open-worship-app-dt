@@ -726,7 +726,24 @@ describe('bible-reader LookupBibleItemController', () => {
         expect(h.getVersesCountMock).toHaveBeenCalledWith('NIV', 'MAT', 1);
     });
 
-    test('the grid view split button splits at once outside a colour group', () => {
+    test('the grid view split button splits at once when no colour is reported', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+        // A section without a colour note is in the default lime group now,
+        // so the immediate split only answers a controller reporting none.
+        vi.spyOn(ctl, 'getColorNote').mockReturnValue('');
+
+        ctl.splitWithoutPassageOnPress({}, 'EXO', true);
+
+        expect(splitSpy).toHaveBeenCalledExactlyOnceWith('EXO', true);
+        expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+    });
+
+    // The user: _all bible preview section should have color_ -- an untouched
+    // section is in the default lime group, so its grid split asks a version.
+    test('the grid view split button asks which version by default', () => {
         const ctl = genController();
         const splitSpy = vi
             .spyOn(ctl, 'splitWithoutPassage')
@@ -734,8 +751,8 @@ describe('bible-reader LookupBibleItemController', () => {
 
         ctl.splitWithoutPassageOnPress({}, 'EXO', true);
 
-        expect(splitSpy).toHaveBeenCalledExactlyOnceWith('EXO', true);
-        expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+        expect(splitSpy).not.toHaveBeenCalled();
+        expect(h.showBibleKeyOptionMock).toHaveBeenCalledTimes(1);
     });
 
     // Asked for by the user: grouped views follow one passage, so a split of

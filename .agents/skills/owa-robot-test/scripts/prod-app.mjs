@@ -14,12 +14,13 @@
 //   status                Every live instance from the discovery dir, with
 //                         `isDev` and the exe behind its pid.
 //   ai-status             Whether `<userData>/setting.json` has AI features ON.
-//                         A packaged build with the key UNSET opens NO CDP
-//                         endpoint (dev defaults to on; packaged to off).
+//                         Unset means ON (dev and packaged alike); only an
+//                         explicit `"false"` closes the CDP endpoint.
 //   enable-ai             Write `clientSetting["ai-enabled"] = "true"` into that
-//                         file, keeping every other key. Refused while an
-//                         instance on that userData is live: the app rewrites
-//                         the file itself and would overwrite the edit.
+//                         file, keeping every other key. Needed only after a
+//                         run that switched it off; refused while an instance
+//                         on that userData is live: the app rewrites the file
+//                         itself and would overwrite the edit.
 //   launch                Start the located exe detached, with
 //                         `ELECTRON_RUN_AS_NODE` and `NODE_ENV` stripped from
 //                         the environment (VS Code's shell exports the first,
@@ -312,8 +313,8 @@ function readAiStatus(userDataPath) {
     const { settingFilePath, json } = readSettingJson(userDataPath);
     const value = json?.clientSetting?.[AI_ENABLED_SETTING_NAME] ?? null;
     // Mirrors `checkIsAiEnabled` in electron/aiHelpers.ts: only the strings
-    // 'true' / 'false' count, and a packaged build with neither is OFF.
-    const isEnabled = value === 'true';
+    // 'true' / 'false' count, and anything else (unset included) is ON.
+    const isEnabled = value !== 'false';
     return {
         userDataPath,
         settingFilePath,
@@ -322,12 +323,9 @@ function readAiStatus(userDataPath) {
         isEnabled,
         note: isEnabled
             ? 'AI features are on: the packaged app will open its CDP endpoint.'
-            : 'AI features are ' +
-              (value === 'false'
-                  ? 'OFF'
-                  : 'UNSET, which a packaged build reads as OFF') +
-              ': no CDP endpoint, nothing to drive. Run `enable-ai` with the app ' +
-              'closed, or switch it on in Settings > Others and relaunch.',
+            : 'AI features are OFF (ai-enabled: "false"): no CDP endpoint, ' +
+              'nothing to drive. Run `enable-ai` with the app closed, or ' +
+              'switch it on in Settings > Others and relaunch.',
     };
 }
 

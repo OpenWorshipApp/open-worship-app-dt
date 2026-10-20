@@ -427,6 +427,29 @@ export function splitRefList(refs: string): string[] {
 }
 
 /**
+ * A script's own digits as ASCII (`យ៉ូហាន ៣:១៦` -> `យ៉ូហាន 3:16`), so a
+ * reference written the way the reader's Bible writes it parses. Unicode's
+ * decimal digits are contiguous runs of ten, so a digit's value is its
+ * offset from the start of its own run; `\p{Nd}` alone is not enough
+ * (`Number('១')` is NaN). Needed by `owa_resource_file`'s `ref`, where a
+ * model writing what the person said gave `"ម៉ាថាយ ១៨" is not a book and
+ * chapter` (seen live 2026-10-19).
+ */
+export function toAsciiDigitText(text: string) {
+    return text.replaceAll(/\p{Nd}/gu, (digit) => {
+        const codePoint = digit.codePointAt(0) ?? 0;
+        let runStart = codePoint;
+        while (
+            runStart > 0 &&
+            /\p{Nd}/u.test(String.fromCodePoint(runStart - 1))
+        ) {
+            runStart -= 1;
+        }
+        return String(codePoint - runStart);
+    });
+}
+
+/**
  * One reference read into a book name, a chapter and a verse or a range;
  * no verse is the whole chapter (`verseStart` null). `John 3:16, 17` and
  * `John 3:16-17` are the same two verses.
@@ -434,7 +457,7 @@ export function splitRefList(refs: string): string[] {
 export function parseRefParts(ref: string) {
     const match =
         /^(.*?\S)\s*(\d{1,3})(?:\s*[:.]\s*(\d{1,3})(?:\s*[-–,]\s*(\d{1,3}))?)?$/.exec(
-            ref.trim(),
+            toAsciiDigitText(ref.trim()),
         );
     if (match === null) {
         return null;

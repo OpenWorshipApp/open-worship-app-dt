@@ -60,6 +60,9 @@ vi.mock('../event/KeyboardEventListener', () => ({
     },
 }));
 vi.mock('../helper/appHooks', () => ({
+    useAppEffect: (effect: () => void, deps: unknown[] = []) => {
+        useEffect(effect, deps);
+    },
     useAppCurrentRef: (value: unknown) => {
         const ref = useRef(value);
         ref.current = value;
@@ -145,6 +148,7 @@ vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     getChapterData: async () => null,
 }));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
+    BIBLE_KJV_KEY: 'KJV',
     kjvBibleModelInfo: { bookKeysSubtype: [] },
 }));
 vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
